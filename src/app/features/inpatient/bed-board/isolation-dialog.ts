@@ -112,7 +112,7 @@ export class IsolationDialog {
       .subscribe({
         next: (r) => {
           this.sending.set(false);
-          this.saved.emit(r.requestId);
+          this.saved.emit(r.requestId ?? '');
         },
         error: (e: unknown) => {
           this.sending.set(false);

@@ -1,17 +1,18 @@
 <app-page-header title="Tablero de camas" [subtitle]="site()?.name ?? 'Estado operativo de las camas por unidad'" [breadcrumbs]="breadcrumbs()">
-  <span page-meta class="board__freshness" data-testid="board-freshness" aria-live="polite">
-    Actualizado {{ freshness() }}
-  </span>
+  <span page-meta class="board__freshness" data-testid="board-freshness">Actualizado {{ freshness() }}</span>
   <div page-actions class="board__header-actions">
     <button app-button size="sm" variant="outline" data-testid="board-refresh" (clicked)="refresh()">Actualizar</button>
-    @if (access.can(siteId(), 'cleaning.view')) {
+    @if (access.can(siteId(), 'f2.cleaning.read')) {
       <a app-button size="sm" variant="ghost" [routerLink]="cleaningRoute" [queryParams]="{ site: siteId() }">Cola de limpieza</a>
     }
-    @if (access.can(siteId(), 'adt.admit')) {
+    @if (access.can(siteId(), 'f3.adt.place')) {
       <a app-button size="sm" [routerLink]="admissionRoute" [queryParams]="{ site: siteId() }" data-testid="board-admit">Nuevo ingreso</a>
     }
   </div>
 </app-page-header>
+
+<!-- M1: se anuncia sólo al entrar o salir de S7, no cada vez que avanza el reloj. -->
+<p class="sr-only" role="status" aria-live="polite" data-testid="board-stale-announcement">{{ staleAnnouncement() }}</p>
 
 <app-view-state-host [state]="gate()" (retry)="access.reload()">
   <app-filter-bar [filters]="filters()" [showSearch]="false" data-testid="board-filters" />
@@ -19,7 +20,7 @@
   <app-view-state-host [state]="boardState()" (retry)="refresh()" (refresh)="refresh()" data-testid="board-state">
     <app-card class="board" padding="lg" data-testid="bed-board">
       <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
-        @for (u of units(); track u.unitId) {
+        @for (u of units(); track unitKey(u)) {
           <app-tab [label]="u.name + ' · ' + u.counts.total">
             <div class="board__panel">
               <dl class="board__counts" data-testid="board-counts" [attr.aria-label]="'Recuentos de ' + u.name">
@@ -48,7 +49,7 @@
               } @else {
                 <app-data-table
                   data-testid="board-list"
-                  [state]="rows().get(u.unitId)!"
+                  [state]="rows().get(unitKey(u))!"
                   [columns]="columns()"
                   [trackBy]="byId"
                   [caption]="'Camas de ' + u.name"
@@ -76,17 +77,17 @@
 
 <app-drawer-panel [open]="selected() !== null" [heading]="selected() ? 'Cama ' + selected()!.code : 'Cama'" [subheading]="selected()?.name ?? ''" (closed)="closePanel()">
   @if (selected(); as c) {
-    <app-bed-panel [cellId]="c.id" (changed)="refresh()">
-      <app-bed-actions adtActions [cell]="c" [siteId]="siteId() ?? ''" [beds]="allCells()" (changed)="refresh()" />
+    <app-bed-panel [cellId]="c.id" [timeZone]="timeZone()" (changed)="refresh()">
+      <app-bed-actions adtActions [cell]="c" [siteId]="siteId() ?? ''" (changed)="refresh()" />
     </app-bed-panel>
   }
 </app-drawer-panel>
 
 <ng-template #cellCode let-r>
   <strong>{{ r.code }}</strong>
-  <span class="board__muted">{{ r.cell.path.at(-2)?.name }}</span>
+  <span class="board__muted">{{ r.cell.path.at(-1)?.name }}</span>
 </ng-template>
 
 <ng-template #cellStatus let-r>
-  <app-badge size="sm" [variant]="r.v2Code === 'U' ? 'success' : r.v2Code === 'O' ? 'primary' : r.v2Code === 'K' ? 'error' : r.v2Code === 'H' ? 'warning' : r.v2Code === 'R' ? 'info' : 'secondary'">{{ r.v2Code }} · {{ r.statusLabel }}</app-badge>
+  <app-badge size="sm" [variant]="$any(badgeOf(r.v2Code))">{{ r.v2Code }} · {{ r.statusLabel }}</app-badge>
 </ng-template>

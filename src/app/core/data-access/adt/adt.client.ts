@@ -5,27 +5,22 @@ import type { Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AdmissionRequest,
-  AdmissionResult,
+  AdtResult,
   AttendingPractitioner,
-  BedAssignmentResult,
+  BedAssignmentRequest,
   BedCompatibility,
   CensusAdjustment,
   CensusAdjustmentRequest,
-  CensusDay,
-  CensusView,
+  CensusDayView,
+  CloseCensusResult,
   DischargeRequest,
-  DischargeResult,
   InpatientIndicators,
-  InpatientRow,
   InpatientStay,
-  PatientCurrentStay,
-  PlacementIncident,
-  PlacementOverride,
   ProspectiveCompatibilityRequest,
+  ReviewIncidentRequest,
+  ReviewIncidentResult,
   SwapRequest,
-  SwapResult,
   TransferRequest,
-  TransferResult,
 } from './adt.types';
 
 /**
@@ -57,55 +52,45 @@ export class AdtClient {
   }
 
   /** `POST /clinical/admissions` → 201. Sin `bed` queda «pendiente de cama». */
-  admit(body: AdmissionRequest): Observable<AdmissionResult> {
-    return this.http.post<AdmissionResult>(this.url('/clinical/admissions'), body);
+  admit(body: AdmissionRequest): Observable<AdtResult> {
+    return this.http.post<AdtResult>(this.url('/clinical/admissions'), body);
   }
 
   /** `POST /clinical/encounters/:id/bed-assignment` con `If-Match`. Convierte una reserva propia en ocupación. */
   assignBed(
     encounterId: string,
     rowVersion: number,
-    body: { readonly careSpaceId: string; readonly mode: 'ASSIGN' | 'RESERVE'; readonly override?: PlacementOverride },
-  ): Observable<BedAssignmentResult> {
-    return this.http.post<BedAssignmentResult>(this.url(`/clinical/encounters/${enc(encounterId)}/bed-assignment`), body, {
+    body: BedAssignmentRequest,
+  ): Observable<AdtResult> {
+    return this.http.post<AdtResult>(this.url(`/clinical/encounters/${enc(encounterId)}/bed-assignment`), body, {
       headers: ifMatch(rowVersion),
     });
   }
 
   /** `POST /clinical/encounters/:id/transfer` con `If-Match` — atómico. */
-  transfer(encounterId: string, rowVersion: number, body: TransferRequest): Observable<TransferResult> {
-    return this.http.post<TransferResult>(this.url(`/clinical/encounters/${enc(encounterId)}/transfer`), body, {
+  transfer(encounterId: string, rowVersion: number, body: TransferRequest): Observable<AdtResult> {
+    return this.http.post<AdtResult>(this.url(`/clinical/encounters/${enc(encounterId)}/transfer`), body, {
       headers: ifMatch(rowVersion),
     });
   }
 
   /** `POST /clinical/bed-swaps` — A17, las cuatro filas en una transacción. */
-  swap(body: SwapRequest): Observable<SwapResult> {
-    return this.http.post<SwapResult>(this.url('/clinical/bed-swaps'), body);
+  swap(body: SwapRequest): Observable<AdtResult> {
+    return this.http.post<AdtResult>(this.url('/clinical/bed-swaps'), body);
   }
 
   /** `POST /clinical/encounters/:id/discharge` con `If-Match`. */
-  discharge(encounterId: string, rowVersion: number, body: DischargeRequest): Observable<DischargeResult> {
-    return this.http.post<DischargeResult>(this.url(`/clinical/encounters/${enc(encounterId)}/discharge`), body, {
+  discharge(encounterId: string, rowVersion: number, body: DischargeRequest): Observable<AdtResult> {
+    return this.http.post<AdtResult>(this.url(`/clinical/encounters/${enc(encounterId)}/discharge`), body, {
       headers: ifMatch(rowVersion),
     });
   }
 
   /** `POST /clinical/encounter-locations/:id/cancel` — reserva (A11) o traslado (A12). */
-  cancelLocation(encounterLocationId: string, reasonText: string): Observable<{ readonly requestId: string }> {
-    return this.http.post<{ readonly requestId: string }>(
+  cancelLocation(encounterLocationId: string, reasonText: string): Observable<AdtResult> {
+    return this.http.post<AdtResult>(
       this.url(`/clinical/encounter-locations/${enc(encounterLocationId)}/cancel`),
       { reasonText },
-    );
-  }
-
-  /** `GET /sites/:siteId/inpatients` — censo vivo. */
-  listInpatients(siteId: string, unitId?: string | null): Observable<{ readonly items: readonly InpatientRow[]; readonly nextCursor: string | null }> {
-    let params = new HttpParams();
-    if (unitId) params = params.set('unitId', unitId);
-    return this.http.get<{ readonly items: readonly InpatientRow[]; readonly nextCursor: string | null }>(
-      this.url(`/sites/${enc(siteId)}/inpatients`),
-      { params },
     );
   }
 
@@ -115,13 +100,13 @@ export class AdtClient {
   }
 
   /** `PATCH /clinical/placement-incidents/:id`. */
-  reviewIncident(id: string, body: { readonly status: 'PLC_INC_REVIEWED' | 'PLC_INC_CLOSED'; readonly reviewNote: string }): Observable<PlacementIncident> {
-    return this.http.patch<PlacementIncident>(this.url(`/clinical/placement-incidents/${enc(id)}`), body);
+  reviewIncident(id: string, body: ReviewIncidentRequest): Observable<ReviewIncidentResult> {
+    return this.http.patch<ReviewIncidentResult>(this.url(`/clinical/placement-incidents/${enc(id)}`), body);
   }
 
-  /** `GET /clinical/patients/:id/inpatient-stay` — `null` sin internación en curso (desvío W-F2F3-5). */
-  getPatientCurrentStay(patientProfileId: string): Observable<PatientCurrentStay | null> {
-    return this.http.get<PatientCurrentStay | null>(this.url(`/clinical/patients/${enc(patientProfileId)}/inpatient-stay`));
+  /** `GET /clinical/patients/:id/inpatient-stay` — la estancia vigente (misma forma que `/stay`); **404** sin internación. */
+  getPatientCurrentStay(patientProfileId: string): Observable<InpatientStay> {
+    return this.http.get<InpatientStay>(this.url(`/clinical/patients/${enc(patientProfileId)}/inpatient-stay`));
   }
 
   /** `GET /sites/:siteId/attending-practitioners` (desvío W-F2F3-7). */
@@ -129,16 +114,16 @@ export class AdtClient {
     return this.http.get<readonly AttendingPractitioner[]>(this.url(`/sites/${enc(siteId)}/attending-practitioners`));
   }
 
-  /** `GET /sites/:siteId/census?date&unitId` — cerrado: foto + ajustes; abierto: vista previa. */
-  getCensus(siteId: string, date: string, unitId?: string | null): Observable<CensusView> {
+  /** `GET /sites/:siteId/census?date&unitId` — una fila por unidad: cerrada (foto + ajustes) o abierta (vista previa). */
+  getCensus(siteId: string, date: string, unitId?: string | null): Observable<readonly CensusDayView[]> {
     let params = new HttpParams().set('date', date);
     if (unitId) params = params.set('unitId', unitId);
-    return this.http.get<CensusView>(this.url(`/sites/${enc(siteId)}/census`), { params });
+    return this.http.get<readonly CensusDayView[]>(this.url(`/sites/${enc(siteId)}/census`), { params });
   }
 
-  /** `POST /sites/:siteId/census/:date/close` — idempotente por unidad. */
-  closeCensus(siteId: string, date: string, unitIds?: readonly string[]): Observable<{ readonly closed: readonly CensusDay[]; readonly requestId: string }> {
-    return this.http.post<{ readonly closed: readonly CensusDay[]; readonly requestId: string }>(
+  /** `POST /sites/:siteId/census/:date/close` — idempotente por unidad; `unitIds` cierra sólo esas (M4). */
+  closeCensus(siteId: string, date: string, unitIds?: readonly string[]): Observable<CloseCensusResult> {
+    return this.http.post<CloseCensusResult>(
       this.url(`/sites/${enc(siteId)}/census/${enc(date)}/close`),
       unitIds === undefined ? {} : { unitIds },
     );

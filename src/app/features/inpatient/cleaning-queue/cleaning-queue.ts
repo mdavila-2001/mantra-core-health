@@ -1,11 +1,12 @@
 import { isPlatformBrowser } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, PLATFORM_ID, signal, untracked, viewChild, type TemplateRef } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, map, of } from 'rxjs';
+import { catchError, map, of, Subject, switchMap, type Observable } from 'rxjs';
 
 import { InfrastructureOpsClient } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.client';
-import type { CleaningOrder, CleaningOrderPage, CleaningPriorityCode, CleaningTransition } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.types';
+import type { CleaningOrder, CleaningOrderPage, CleaningOrderResult, CleaningPriorityCode } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.types';
+import { opsLabel } from '../../../core/data-access/infrastructure-ops/ops-labels';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, empty, forbidden, loading, ready, stale } from '../../../core/view-state/view-state';
@@ -25,7 +26,7 @@ import { FilterBar, type FilterDef } from '../../../shared/components/organisms/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { InpatientAccessStore } from '../inpatient-access.store';
-import { BED_BOARD_ROUTE, POLL_INTERVAL_MS, STALE_AFTER_MS, relativeAge } from '../inpatient-presentation';
+import { BED_BOARD_ROUTE, CLOCK_TICK_MS, POLL_INTERVAL_MS, STALE_AFTER_MS, relativeAge } from '../inpatient-presentation';
 import { NewOrderDialog } from './new-order-dialog';
 
 type Scope = 'all' | 'mine';
@@ -34,13 +35,23 @@ const SCOPES: readonly SegmentedOption<Scope>[] = [
   { value: 'mine', label: 'Mías' },
 ];
 
-const ACTION: Readonly<Record<CleaningTransition, Omit<RowAction, 'code'>>> = {
+/**
+ * Las acciones de la fila. La inspección son **dos** acciones (aprobar y
+ * rechazar): un solo diálogo con «Rechazar» como botón de cancelar hacía que
+ * Esc —que cancela— rechazara la limpieza.
+ */
+type RowCode = 'assign' | 'start' | 'finish' | 'inspect-pass' | 'inspect-fail' | 'cancel';
+const ACTION: Readonly<Record<RowCode, Omit<RowAction, 'code'>>> = {
   assign: { label: 'Tomarla', icon: 'people' },
   start: { label: 'Empezar', icon: 'arrow-right' },
   finish: { label: 'Terminar', icon: 'flag' },
-  inspect: { label: 'Inspeccionar', icon: 'shield' },
+  'inspect-pass': { label: 'Aprobar inspección', icon: 'shield' },
+  'inspect-fail': { label: 'Rechazar inspección', icon: 'shield', destructive: true },
   cancel: { label: 'Cancelar', icon: 'remove', destructive: true },
 };
+
+/** Las claves de la URL que filtran la cola (M8). */
+const FILTER_KEYS = ['priority', 'scope'] as const;
 
 /**
  * **Cola de limpieza** — `/inpatient/cleaning` (F2.4).
@@ -49,6 +60,10 @@ const ACTION: Readonly<Record<CleaningTransition, Omit<RowAction, 'code'>>> = {
  * fila ofrece sólo las transiciones que la API declara para este actor
  * (`allowedTransitions`); quien terminó una limpieza no la inspecciona (la API
  * responde 422 y se muestra). Sondeo cada 30 s, como el tablero.
+ *
+ * Igual que el tablero (H2): cada pedido lleva la clave de la consulta
+ * (`sede|prioridad|mías`), el anterior se cancela y el último dato bueno sólo
+ * vale para su clave.
  */
 @Component({
   selector: 'app-cleaning-queue',
@@ -71,7 +86,7 @@ export class CleaningQueue {
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
   protected readonly now = signal(Date.now());
 
-  protected readonly site = computed(() => this.access.pickSite(this.query().get('site'), 'cleaning.view'));
+  protected readonly site = computed(() => this.access.pickSite(this.query().get('site'), 'f2.cleaning.read'));
   protected readonly siteId = computed(() => this.site()?.siteId ?? null);
   protected readonly scope = computed<Scope>(() => (this.query().get('scope') === 'mine' ? 'mine' : 'all'));
 
@@ -82,8 +97,23 @@ export class CleaningQueue {
     return s === null ? forbidden({ message: 'Su rol no incluye la cola de limpieza de ningún establecimiento de esta organización.' }) : ready(s.siteId);
   });
 
-  private readonly page = signal<ViewState<CleaningOrderPage>>(loading());
-  private readonly lastGood = signal<CleaningOrderPage | null>(null);
+  protected readonly queryKey = computed<string | null>(() => {
+    const id = this.siteId();
+    if (id === null) return null;
+    const q = this.query();
+    return JSON.stringify([id, ...FILTER_KEYS.map((k) => q.get(k))]);
+  });
+  private readonly requests = new Subject<{ readonly key: string }>();
+  private readonly loaded = signal<{ readonly key: string; readonly state: ViewState<CleaningOrderPage> } | null>(null);
+  private readonly good = signal<{ readonly key: string; readonly data: CleaningOrderPage } | null>(null);
+  private readonly page = computed<ViewState<CleaningOrderPage>>(() => {
+    const l = this.loaded();
+    return l !== null && l.key === this.queryKey() ? l.state : loading();
+  });
+  private readonly lastGood = computed(() => {
+    const g = this.good();
+    return g !== null && g.key === this.queryKey() ? g.data : null;
+  });
   protected readonly failure = signal<ViewState<never> | null>(null);
   protected readonly working = signal(false);
   protected readonly creating = signal(false);
@@ -104,12 +134,14 @@ export class CleaningQueue {
   });
 
   protected readonly filters: readonly FilterDef[] = [
-    { key: 'priority', label: 'Prioridad', placeholder: 'Todas', options: [
-      { value: 'CLN_PRIO_STAT', label: 'Inmediata' },
-      { value: 'CLN_PRIO_URGENT', label: 'Urgente' },
-      { value: 'CLN_PRIO_ROUTINE', label: 'Rutina' },
-    ] },
+    { key: 'priority', label: 'Prioridad', placeholder: 'Todas', options: ['CLN_PRIO_STAT', 'CLN_PRIO_URGENT', 'CLN_PRIO_ROUTINE'].map((value) => ({ value, label: opsLabel(value) })) },
   ];
+  protected readonly label = opsLabel;
+  /** «Usted» si la orden es de quien mira; si no, «Asignada» (la API no manda nombres). */
+  protected readonly assignee = (o: CleaningOrder): string => {
+    if (o.assignedUserId === null) return 'Sin asignar';
+    return o.assignedUserId === dataOf(this.access.state())?.userId ? 'Usted' : 'Asignada';
+  };
 
   private readonly cellSpace = viewChild<TemplateRef<{ $implicit: CleaningOrder }>>('cellSpace');
   private readonly cellType = viewChild<TemplateRef<{ $implicit: CleaningOrder }>>('cellType');
@@ -121,30 +153,46 @@ export class CleaningQueue {
 
   protected readonly columns = computed<readonly ColumnDef<CleaningOrder>[]>(() => [
     { key: 'careSpaceCode', header: 'Espacio', priority: 1, cell: this.cellSpace() },
-    { key: 'type', header: 'Tipo', priority: 1, cell: this.cellType() },
-    { key: 'priority', header: 'Prioridad', priority: 2, cell: this.cellPriority() },
-    { key: 'status', header: 'Estado', priority: 1, cell: this.cellStatus() },
+    { key: 'typeCode', header: 'Tipo', priority: 1, cell: this.cellType() },
+    { key: 'priorityCode', header: 'Prioridad', priority: 2, cell: this.cellPriority() },
+    { key: 'statusCode', header: 'Estado', priority: 1, cell: this.cellStatus() },
     { key: 'requestedAt', header: 'Antigüedad', priority: 2, cell: this.cellAge() },
-    { key: 'assignedName', header: 'Asignada a', priority: 3, cell: this.cellAssigned() },
+    { key: 'assignedUserId', header: 'Asignada a', priority: 3, cell: this.cellAssigned() },
     { key: 'id', header: 'Acciones', priority: 1, align: 'end', accion: true, cell: this.cellActions() },
   ]);
 
   protected readonly byId = (o: CleaningOrder): string => o.id;
   protected readonly ago = (iso: string | null): string => relativeAge(iso, this.now()) ?? '—';
   protected actionsOf(o: CleaningOrder): RowAction[] {
-    return o.allowedTransitions.map((t) => ({ code: t, ...ACTION[t] }));
+    return (o.allowedTransitions ?? []).flatMap((t): RowCode[] => (t === 'inspect' ? ['inspect-pass', 'inspect-fail'] : [t])).map((c) => ({ code: c, ...ACTION[c] }));
   }
 
   constructor() {
     this.access.ensure();
+    this.requests
+      .pipe(
+        switchMap(({ key }) => {
+          const [siteId, priority, scope] = JSON.parse(key) as [string, string | null, string | null];
+          return this.client.listCleaningOrders(siteId, { priority: priority as CleaningPriorityCode | null, assignedTo: scope === 'mine' ? 'me' : null }).pipe(
+            map((p) => ready(p) as ViewState<CleaningOrderPage>),
+            catchError((e: unknown) => of(errorToViewState<CleaningOrderPage>(e))),
+            map((state) => ({ key, state })),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((r) => {
+        this.loaded.set(r);
+        if (r.state.status === 'ready') this.good.set({ key: r.key, data: r.state.data });
+        else if (r.state.status !== 'offline' && r.state.status !== 'error') this.good.set(null);
+        this.now.set(Date.now());
+      });
     effect(() => {
-      const id = this.siteId();
-      const q = this.query();
-      if (id === null) return;
-      untracked(() => this.load(id, q.get('priority') as CleaningPriorityCode | null, q.get('scope') === 'mine', false));
+      const key = this.queryKey();
+      if (key !== null) untracked(() => this.load(key, false));
     });
     if (this.isBrowser) {
-      const reloj = setInterval(() => this.now.set(Date.now()), 1000);
+      const reloj = setInterval(() => this.now.set(Date.now()), CLOCK_TICK_MS);
       const sondeo = setInterval(() => this.refresh(), POLL_INTERVAL_MS);
       const alVolver = () => this.refresh();
       window.addEventListener('focus', alVolver);
@@ -157,10 +205,8 @@ export class CleaningQueue {
   }
 
   protected refresh(): void {
-    const id = this.siteId();
-    if (id === null) return;
-    const q = this.query();
-    this.load(id, q.get('priority') as CleaningPriorityCode | null, q.get('scope') === 'mine', true);
+    const key = this.queryKey();
+    if (key !== null) this.load(key, true);
   }
 
   protected setScope(s: Scope): void {
@@ -169,36 +215,42 @@ export class CleaningQueue {
 
   protected async act(o: CleaningOrder, t: string): Promise<void> {
     this.failure.set(null);
-    let call;
-    switch (t as CleaningTransition) {
+    let call: Observable<CleaningOrderResult> | null = null;
+    switch (t as RowCode) {
       case 'assign':
-        call = this.client.assignCleaningOrder(o.id, o.rowVersion, this.access.state().status === 'ready' ? (dataOf(this.access.state())?.userId ?? null) : null);
+        call = this.client.assignCleaningOrder(o.id, o.rowVersion, dataOf(this.access.state())?.userId ?? null);
         break;
       case 'start':
         call = this.client.startCleaningOrder(o.id, o.rowVersion);
         break;
       case 'finish': {
         const ok = await this.dialogs.confirm({ title: 'Terminar la limpieza', message: `${o.careSpaceName} pasa a «limpia». ${o.inspectionRequired ? 'Después la inspecciona otra persona.' : ''}`, confirmLabel: 'Terminar' });
-        if (!ok) return;
-        call = this.client.finishCleaningOrder(o.id, o.rowVersion);
+        if (ok) call = this.client.finishCleaningOrder(o.id, o.rowVersion);
         break;
       }
-      case 'inspect':
-        call = await this.inspect(o);
-        if (call === null) return;
+      case 'inspect-pass': {
+        const ok = await this.dialogs.confirm({ title: `Aprobar la limpieza de ${o.careSpaceName}`, message: `Limpieza ${opsLabel(o.typeCode).toLowerCase()} terminada. Si la aprueba, la cama vuelve a estar disponible.`, confirmLabel: 'Aprobar' });
+        if (ok) call = this.client.inspectCleaningOrder(o.id, o.rowVersion, 'PASS');
         break;
+      }
+      case 'inspect-fail': {
+        const reason = await this.dialogs.confirmWithReason(
+          { title: 'Rechazar la inspección', message: 'Se crea una orden nueva y el espacio vuelve a «sucio».', confirmLabel: 'Rechazar', destructive: true },
+          { label: 'Qué falta', minLength: 5, maxLength: 300 },
+        );
+        if (reason !== null) call = this.client.inspectCleaningOrder(o.id, o.rowVersion, 'FAIL', reason);
+        break;
+      }
       case 'cancel': {
         const reason = await this.dialogs.confirmWithReason(
           { title: 'Cancelar la orden', message: `La orden de ${o.careSpaceName} queda cancelada. El espacio sigue sucio.`, confirmLabel: 'Cancelar la orden', destructive: true },
           { label: 'Motivo', minLength: 3, maxLength: 300 },
         );
-        if (reason === null) return;
-        call = this.client.cancelCleaningOrder(o.id, o.rowVersion, reason);
+        if (reason !== null) call = this.client.cancelCleaningOrder(o.id, o.rowVersion, reason);
         break;
       }
-      default:
-        return;
     }
+    if (call === null) return;
     this.working.set(true);
     call.subscribe({
       next: () => {
@@ -213,40 +265,15 @@ export class CleaningQueue {
     });
   }
 
-  /** Aprobar con confirmación; rechazar exige el reason (422 si falta). */
-  private async inspect(o: CleaningOrder) {
-    const aprobar = await this.dialogs.confirm({
-      title: `Inspeccionar ${o.careSpaceName}`,
-      message: `Limpieza ${o.type.display.toLowerCase()} terminada por ${o.finishedByName ?? 'otra persona'}. ¿Queda aprobada?`,
-      confirmLabel: 'Aprobar',
-      cancelLabel: 'Rechazar…',
-    });
-    if (aprobar) return this.client.inspectCleaningOrder(o.id, o.rowVersion, 'PASS');
-    const reason = await this.dialogs.confirmWithReason(
-      { title: 'Rechazar la inspección', message: 'Se crea una orden nueva y el espacio vuelve a «sucio».', confirmLabel: 'Rechazar', destructive: true },
-      { label: 'Qué falta', minLength: 5, maxLength: 300 },
-    );
-    return reason === null ? null : this.client.inspectCleaningOrder(o.id, o.rowVersion, 'FAIL', reason);
-  }
-
   protected afterCreate(): void {
     this.creating.set(false);
     this.refresh();
   }
 
-  private load(siteId: string, priority: CleaningPriorityCode | null, mine: boolean, silent: boolean): void {
-    if (!silent || this.lastGood() === null) this.page.set(loading());
-    this.client
-      .listCleaningOrders(siteId, { priority, assignedTo: mine ? 'me' : null })
-      .pipe(
-        map((p) => ready(p) as ViewState<CleaningOrderPage>),
-        catchError((e: unknown) => of(errorToViewState<CleaningOrderPage>(e))),
-      )
-      .subscribe((s) => {
-        this.page.set(s);
-        if (s.status === 'ready') this.lastGood.set(s.data);
-        else if (s.status !== 'offline' && s.status !== 'error') this.lastGood.set(null);
-        this.now.set(Date.now());
-      });
+  private load(key: string, silent: boolean): void {
+    const g = this.good();
+    if (g !== null && g.key !== key) this.good.set(null);
+    if (!silent || this.lastGood() === null) this.loaded.set({ key, state: loading() });
+    this.requests.next({ key });
   }
 }

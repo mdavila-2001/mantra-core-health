@@ -9,6 +9,7 @@ import type {
   AvailabilityResult,
   BedBoard,
   BedBoardQuery,
+  BlockResult,
   CareSpaceBlock,
   CleaningOrderPage,
   CleaningOrderQuery,
@@ -20,7 +21,6 @@ import type {
   InfrastructureOpsCatalog,
   IsolationRequest,
   IsolationResult,
-  MutationResult,
   OperationalState,
   StatusAxisCode,
   StatusEventPage,
@@ -87,13 +87,13 @@ export class InfrastructureOpsClient {
   }
 
   /** `POST /care-space-blocks/:id/end` — el fin de un mantenimiento deja la orden `MAINTENANCE_END`. */
-  endBlock(blockId: string, note: string): Observable<MutationResult> {
-    return this.http.post<MutationResult>(this.url(`/care-space-blocks/${enc(blockId)}/end`), { note });
+  endBlock(blockId: string, note: string): Observable<BlockResult> {
+    return this.http.post<BlockResult>(this.url(`/care-space-blocks/${enc(blockId)}/end`), { note });
   }
 
   /** `POST /care-space-blocks/:id/cancel`. */
-  cancelBlock(blockId: string, reason: string): Observable<MutationResult> {
-    return this.http.post<MutationResult>(this.url(`/care-space-blocks/${enc(blockId)}/cancel`), { reason });
+  cancelBlock(blockId: string, reason: string): Observable<BlockResult> {
+    return this.http.post<BlockResult>(this.url(`/care-space-blocks/${enc(blockId)}/cancel`), { reason });
   }
 
   /** `POST /care-spaces/:id/hygiene` con `If-Match-Ops`. */
@@ -113,14 +113,14 @@ export class InfrastructureOpsClient {
   /** `GET /sites/:siteId/cleaning-orders` — **sin datos de paciente**. */
   listCleaningOrders(siteId: string, query: CleaningOrderQuery = {}): Observable<CleaningOrderPage> {
     let params = new HttpParams();
-    if (query.status && query.status.length > 0) params = params.set('status', query.status.join(','));
+    if (query.status) params = params.set('status', query.status);
     if (query.unitId) params = params.set('unitId', query.unitId);
     if (query.assignedTo) params = params.set('assignedTo', query.assignedTo);
     if (query.priority) params = params.set('priority', query.priority);
     return this.http.get<CleaningOrderPage>(this.url(`/sites/${enc(siteId)}/cleaning-orders`), { params });
   }
 
-  /** `POST /sites/:siteId/cleaning-orders` — orden manual. */
+  /** `POST /sites/:siteId/cleaning-orders` — orden manual; responde 201 con la orden. */
   createCleaningOrder(siteId: string, body: CreateCleaningOrderRequest): Observable<CleaningOrderResult> {
     return this.http.post<CleaningOrderResult>(this.url(`/sites/${enc(siteId)}/cleaning-orders`), body);
   }

@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked, viewChild, type TemplateRef } from '@angular/core';
-import { catchError, map, of } from 'rxjs';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal, viewChild, type TemplateRef } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { catchError, map, of, startWith, switchMap } from 'rxjs';
 
 import { InfrastructureOpsClient } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.client';
 import type { CareSpaceBlock } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.types';
+import { opsLabel } from '../../../core/data-access/infrastructure-ops/ops-labels';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -29,8 +31,8 @@ import { shortDateTime } from '../inpatient-presentation';
         <app-data-table data-testid="space-ops-blocks" [state]="blocks()" [columns]="columns()" [trackBy]="byId" caption="Bloqueos vigentes y terminados" stackedOnMobile (retry)="loadBlocks()" />
       </section>
     </div>
-    <ng-template #cellKind let-b><app-badge size="sm" [variant]="b.endedAt || b.cancelledAt ? 'secondary' : 'warning'">{{ b.kind.display }}</app-badge></ng-template>
-    <ng-template #cellReason let-b>{{ b.reason.display }}@if (b.reasonText) { · {{ b.reasonText }} }</ng-template>
+    <ng-template #cellKind let-b><app-badge size="sm" [variant]="b.endedAt || b.cancelledAt ? 'secondary' : 'warning'">{{ label(b.kindCode) }}</app-badge></ng-template>
+    <ng-template #cellReason let-b>{{ label(b.reasonCode) }}@if (b.reasonText) { · {{ b.reasonText }} }</ng-template>
     <ng-template #cellPeriod let-b>{{ when(b.startsAt) }} → {{ b.endedAt ? when(b.endedAt) : b.cancelledAt ? 'cancelado' : (b.expectedEndAt ? 'estimado ' + when(b.expectedEndAt) : 'vigente') }}</ng-template>
   `,
   styles: `
@@ -47,6 +49,8 @@ export class SpaceOpsTab {
 
   private readonly raw = signal<ViewState<readonly CareSpaceBlock[]>>(loading());
   protected readonly when = (iso: string | null) => shortDateTime(iso) ?? '—';
+  protected readonly label = opsLabel;
+  private readonly reloads = signal(0);
   protected readonly byId = (b: CareSpaceBlock): string => b.id;
 
   protected readonly blocks = computed<ViewState<readonly CareSpaceBlock[]>>(() => {
@@ -58,27 +62,28 @@ export class SpaceOpsTab {
   private readonly cellReason = viewChild<TemplateRef<{ $implicit: CareSpaceBlock }>>('cellReason');
   private readonly cellPeriod = viewChild<TemplateRef<{ $implicit: CareSpaceBlock }>>('cellPeriod');
   protected readonly columns = computed<readonly ColumnDef<CareSpaceBlock>[]>(() => [
-    { key: 'kind', header: 'Tipo', priority: 1, cell: this.cellKind() },
-    { key: 'reason', header: 'Motivo', priority: 1, cell: this.cellReason() },
+    { key: 'kindCode', header: 'Tipo', priority: 1, cell: this.cellKind() },
+    { key: 'reasonCode', header: 'Motivo', priority: 1, cell: this.cellReason() },
     { key: 'startsAt', header: 'Período', priority: 2, cell: this.cellPeriod() },
-    { key: 'createdByName', header: 'Pidió', priority: 3 },
   ]);
 
   constructor() {
-    effect(() => {
-      this.careSpaceId();
-      untracked(() => this.loadBlocks());
-    });
+    // Cambiar de espacio cancela el pedido del anterior.
+    toObservable(computed(() => ({ id: this.careSpaceId(), n: this.reloads() })))
+      .pipe(
+        switchMap(({ id }) =>
+          this.client.listBlocks(id, true).pipe(
+            map((b) => ready(b) as ViewState<readonly CareSpaceBlock[]>),
+            catchError((e: unknown) => of(errorToViewState<readonly CareSpaceBlock[]>(e))),
+            startWith(loading() as ViewState<readonly CareSpaceBlock[]>),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((s) => this.raw.set(s));
   }
 
   protected loadBlocks(): void {
-    this.raw.set(loading());
-    this.client
-      .listBlocks(this.careSpaceId(), true)
-      .pipe(
-        map((b) => ready(b) as ViewState<readonly CareSpaceBlock[]>),
-        catchError((e: unknown) => of(errorToViewState<readonly CareSpaceBlock[]>(e))),
-      )
-      .subscribe((s) => this.raw.set(s));
+    this.reloads.update((n) => n + 1);
   }
 }

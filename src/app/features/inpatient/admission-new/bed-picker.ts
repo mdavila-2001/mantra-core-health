@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { catchError, debounceTime, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
 
 import { AdtClient } from '../../../core/data-access/adt/adt.client';
-import { RULE_LABEL } from '../../../core/data-access/adt/bed-compatibility';
+import { ruleLabel } from '../../../core/data-access/adt/bed-compatibility';
 import type { BedCompatibility, LevelOfCareCode, PlacementOverride } from '../../../core/data-access/adt/adt.types';
 import { InfrastructureOpsClient } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.client';
 import type { BedBoardCell } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.types';
@@ -16,7 +18,7 @@ import { SegmentedControl } from '../../../shared/components/molecules/segmented
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { askOverride } from '../bed-actions/placement-override';
-import { BED_BOARD_ROUTE, CLEANING_ROUTE, cellToTile } from '../inpatient-presentation';
+import { BED_BOARD_ROUTE, CLEANING_ROUTE, DEFAULT_TIME_ZONE, cellToTile } from '../inpatient-presentation';
 
 export type BedMode = 'ASSIGN' | 'RESERVE' | 'NONE';
 
@@ -46,12 +48,15 @@ const MODES: readonly SegmentedOption<BedMode>[] = [
             }
           </ul>
         </app-view-state-host>
+        @if (compatState(); as st) {
+          <app-view-state-host [state]="st" data-testid="bed-compat-state" (retry)="recheck()" />
+        }
         @if (compat(); as k) {
           @if (k.violations.length === 0) {
             <app-alert tone="success" title="Cama compatible" data-testid="bed-compatible">Cumple sexo, edad, aislamiento y nivel de cuidado.</app-alert>
           }
           @for (v of k.violations; track v.rule) {
-            <app-alert [tone]="v.severity === 'BLOCKING' ? 'error' : 'warning'" [title]="ruleLabel[v.rule] + (v.severity === 'BLOCKING' ? ' · no se puede forzar' : ' · se puede forzar con justificación')" data-testid="bed-violation">{{ v.detail }}</app-alert>
+            <app-alert [tone]="v.severity === 'BLOCKING' ? 'error' : 'warning'" [title]="ruleLabel(v.rule) + (v.severity === 'BLOCKING' ? ' · no se puede forzar' : ' · se puede forzar con justificación')" data-testid="bed-violation">{{ v.detail }}</app-alert>
           }
           @if (overridable() && override() === null) {
             @if (canOverride()) {
@@ -88,6 +93,7 @@ export class BedPicker {
   readonly isolationCode = input<string | null>(null);
   readonly organism = input<string | null>(null);
   readonly canOverride = input(false);
+  readonly timeZone = input(DEFAULT_TIME_ZONE);
   readonly mode = model<BedMode>('ASSIGN');
   readonly bedId = model<string | null>(null);
   readonly override = model<PlacementOverride | null>(null);
@@ -97,8 +103,30 @@ export class BedPicker {
   readonly validity = output<boolean>();
 
   protected readonly modes = MODES;
-  protected readonly ruleLabel = RULE_LABEL;
-  protected readonly compat = signal<BedCompatibility | null>(null);
+  protected readonly ruleLabel = ruleLabel;
+  private readonly checks = signal(0);
+  private readonly boardReloads = signal(0);
+  /** La consulta vigente: la clave de las entradas y su estado (H3). */
+  private readonly lastCheck = signal<{ readonly key: string; readonly state: ViewState<BedCompatibility> } | null>(null);
+  /** Las entradas de la compatibilidad, en una clave: cambiar cualquiera invalida la anterior. */
+  private readonly inputsKey = computed(() =>
+    JSON.stringify([this.bedId(), this.patientProfileId(), this.levelOfCareCode(), this.isolationCode(), this.organism()]),
+  );
+  private readonly current = computed(() => {
+    const c = this.lastCheck();
+    return c !== null && c.key === this.inputsKey() ? c.state : null;
+  });
+  protected readonly compat = computed<BedCompatibility | null>(() => {
+    const s = this.current();
+    return s?.status === 'ready' ? s.data : null;
+  });
+  /** Consultando (S2) o el error de la consulta (S9 con `requestId`); con respuesta, `null`. */
+  protected readonly compatState = computed<ViewState<BedCompatibility> | null>(() => {
+    const s = this.current();
+    if (this.bedId() === null || this.patientProfileId() === null) return null;
+    if (s === null) return loading();
+    return s.status === 'ready' ? null : s;
+  });
   private readonly cells = signal<ViewState<readonly BedBoardCell[]>>(loading());
 
   protected readonly assignable = computed(() => {
@@ -119,23 +147,54 @@ export class BedPicker {
     return v.length > 0 && v.every((x) => x.severity === 'OVERRIDABLE');
   });
 
-  protected readonly tile = (c: BedBoardCell) => cellToTile(c);
+  protected readonly tile = (c: BedBoardCell) => cellToTile(c, Date.now(), this.timeZone());
   protected readonly boardRoute = BED_BOARD_ROUTE;
 
   constructor() {
+    toObservable(computed(() => ({ site: this.siteId(), n: this.boardReloads() })))
+      .pipe(
+        switchMap(({ site }) =>
+          this.ops.getBedBoard(site).pipe(
+            map((b) => ready(b.units.flatMap((u) => u.cells)) as ViewState<readonly BedBoardCell[]>),
+            catchError((e: unknown) => of(errorToViewState<readonly BedBoardCell[]>(e))),
+            startWith(loading() as ViewState<readonly BedBoardCell[]>),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((s) => {
+        this.cells.set(s);
+        if (s.status === 'ready') this.bedCode.set(s.data.find((c) => c.id === this.bedId())?.code ?? null);
+      });
+    // H3: cualquier entrada que cambia descarta el forzado (era para otra combinación)…
     effect(() => {
-      this.siteId();
-      untracked(() => this.load());
+      this.inputsKey();
+      untracked(() => this.override.set(null));
     });
-    // Con otro paciente, nivel o aislamiento la compatibilidad cambia: se vuelve a preguntar.
-    effect(() => {
-      const bed = this.bedId();
-      const pac = this.patientProfileId();
-      const nivel = this.levelOfCareCode();
-      const iso = this.isolationCode();
-      const org = this.organism();
-      untracked(() => this.check(bed, pac, nivel, iso, org));
-    });
+    // …y vuelve a preguntar, con espera y cancelando la consulta anterior.
+    toObservable(computed(() => ({ key: this.inputsKey(), n: this.checks() })))
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged((a, b) => a.key === b.key && a.n === b.n),
+        switchMap(({ key }) => {
+          const [bed, patient, level, iso, organism] = JSON.parse(key) as (string | null)[];
+          if (bed === null || bed === undefined || patient === null || patient === undefined) return of(null);
+          return this.adt
+            .checkProspectiveCompatibility({
+              careSpaceId: bed,
+              patientProfileId: patient,
+              levelOfCareCode: (level ?? 'LOC_CARE_GENERAL') as LevelOfCareCode,
+              ...(iso ? { isolationPrecautionCode: iso } : {}),
+              ...(organism ? { isolationOrganismText: organism } : {}),
+            })
+            .pipe(
+              map((c) => ({ key, state: ready(c) as ViewState<BedCompatibility> })),
+              catchError((e: unknown) => of({ key, state: errorToViewState<BedCompatibility>(e) })),
+            );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((r) => this.lastCheck.set(r));
     effect(() => {
       const modo = this.mode();
       const ok = modo === 'NONE' || (this.bedId() !== null && this.compat() !== null && (this.compat()!.violations.length === 0 || (this.overridable() && this.override() !== null)));
@@ -144,40 +203,23 @@ export class BedPicker {
   }
 
   protected load(): void {
-    this.cells.set(loading());
-    this.ops.getBedBoard(this.siteId()).subscribe({
-      next: (b) => {
-        const todas = b.units.flatMap((u) => u.cells);
-        this.cells.set(ready(todas));
-        this.bedCode.set(todas.find((c) => c.id === this.bedId())?.code ?? null);
-      },
-      error: (e: unknown) => this.cells.set(errorToViewState<readonly BedBoardCell[]>(e)),
-    });
+    this.boardReloads.update((n) => n + 1);
   }
 
   protected choose(id: string): void {
-    this.override.set(null);
     this.bedId.set(id);
     this.bedCode.set(this.assignable().find((c) => c.id === id)?.code ?? null);
   }
 
   protected async force(): Promise<void> {
+    const key = this.inputsKey();
     const v = this.compat()?.violations ?? [];
     const o = await askOverride(this.dialogs, v);
-    if (o !== null) this.override.set(o);
+    // Si mientras justificaba cambió la cama o el paciente, el forzado ya no corresponde.
+    if (o !== null && key === this.inputsKey()) this.override.set(o);
   }
 
-  private check(bed: string | null, patient: string | null, level: LevelOfCareCode | null, iso: string | null, organism: string | null): void {
-    this.compat.set(null);
-    if (bed === null || patient === null) return;
-    this.adt
-      .checkProspectiveCompatibility({
-        careSpaceId: bed,
-        patientProfileId: patient,
-        levelOfCareCode: level ?? 'LOC_CARE_GENERAL',
-        ...(iso ? { isolationPrecautionCode: iso } : {}),
-        ...(organism ? { isolationOrganismText: organism } : {}),
-      })
-      .subscribe({ next: (c) => this.compat.set(c), error: () => this.compat.set(null) });
+  protected recheck(): void {
+    this.checks.update((n) => n + 1);
   }
 }

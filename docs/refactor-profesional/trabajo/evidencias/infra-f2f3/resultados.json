@@ -437,6 +437,645 @@
         "http://127.0.0.1:4380/inpatient/cleaning :: [API] GET /sites/c8a31663-66c1-4ae1-a281-60de9b7f6f54/cleaning-orders → 404 · NOT_FOUND · correlationId=mock-fallo {status: 404, code: NOT_FOUND, message: , correlationId: mock-fallo}",
         "http://127.0.0.1:4380/inpatient/stays/no-existe :: [API] GET /clinical/encounters/no-existe/stay → 404 · NOT_FOUND · «No encontrado» · correlationId=req-ops-mvw81jwk-1 {status: 404, code: NOT_FOUND, message: No encontrado, correlationId: req-ops-mvw81jwk-1, details: Object}"
       ]
+    },
+    {
+      "fecha": "2026-10-31T11:48:44.059Z",
+      "registro": [
+        {
+          "que": "ingreso · petición y respuesta",
+          "datos": {
+            "method": "POST",
+            "path": "/clinical/admissions",
+            "query": "",
+            "ifMatch": null,
+            "ifMatchOps": null,
+            "body": {
+              "patientProfileId": "549abc48-21c6-46b2-a083-936a92cdee1a",
+              "practiceSiteId": "c8a31663-66c1-4ae1-a281-60de9b7f6f54",
+              "openEpisode": true,
+              "attendingPractitionerId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+              "levelOfCareCode": "LOC_CARE_GENERAL",
+              "admissionSourceCode": "ADM_SRC_EMERGENCY",
+              "reasonText": "Apendicitis aguda operada; posoperatorio inmediato.",
+              "bed": {
+                "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+                "mode": "ASSIGN"
+              }
+            },
+            "status": 201,
+            "requestId": "req-ops-mvwc626h-1",
+            "at": "2026-10-31T11:46:58.314Z"
+          }
+        },
+        {
+          "que": "ingreso · encounter_locations ACTIVE",
+          "datos": [
+            {
+              "id": "loc-seed-enc-seed-mamani",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "enc-seed-mamani",
+              "careSpaceId": "1903130f-2f04-417d-a663-c04e384e9c5c",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-27T09:46:50.475Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-27T09:46:50.475Z"
+            },
+            {
+              "id": "loc-seed-enc-seed-flores",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "enc-seed-flores",
+              "careSpaceId": "c62d0dca-ecf2-441a-ac66-af90823f5384",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-29T09:46:50.475Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-29T09:46:50.475Z"
+            },
+            {
+              "id": "ccea9839-4442-4731-a4aa-7618554d127a",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "b96f67a0-5ebc-4278-a339-bed803eec198",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-31T11:46:58.313Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-31T11:46:58.314Z"
+            }
+          ]
+        },
+        {
+          "que": "ingreso · A20 ocupación",
+          "datos": [
+            {
+              "id": "e8a0cfa5-43a7-4bcf-af20-80ca66bde864",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "siteId": "c8a31663-66c1-4ae1-a281-60de9b7f6f54",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "axisCode": "OCCUPANCY",
+              "fromCode": "OCC_FREE",
+              "toCode": "OCC_OCCUPIED",
+              "reasonCode": null,
+              "reasonText": null,
+              "expectedUntil": null,
+              "v2Code": "O",
+              "sourceCode": "ADT",
+              "sourceRefId": "ccea9839-4442-4731-a4aa-7618554d127a",
+              "occurredAt": "2026-10-31T11:46:58.314Z",
+              "recordedByUserId": "e487dbd4-321d-4840-ae91-56ec38811814",
+              "recordedByName": "Luis Fernández Rivero",
+              "requestId": "req-ops-mvwc626h-1"
+            }
+          ]
+        },
+        {
+          "que": "traslado · petición y respuesta (If-Match del encuentro)",
+          "datos": {
+            "method": "POST",
+            "path": "/clinical/encounters/b96f67a0-5ebc-4278-a339-bed803eec198/transfer",
+            "query": "",
+            "ifMatch": "1",
+            "ifMatchOps": null,
+            "body": {
+              "toCareSpaceId": "3bad69a9-67b6-44e7-a1b6-105e1ec7fd00",
+              "reasonCode": "TRF_CLINICAL"
+            },
+            "status": 200,
+            "requestId": "req-ops-mvwc6f4m-1",
+            "at": "2026-10-31T11:47:15.118Z"
+          }
+        },
+        {
+          "que": "traslado · origen COMPLETED / destino ACTIVE",
+          "datos": [
+            {
+              "id": "ccea9839-4442-4731-a4aa-7618554d127a",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "b96f67a0-5ebc-4278-a339-bed803eec198",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_COMPLETED",
+              "periodStart": "2026-10-31T11:46:58.313Z",
+              "periodEnd": "2026-10-31T11:47:15.094Z",
+              "endReasonCode": "ADT_END_TRANSFER_OUT",
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-31T11:46:58.314Z"
+            },
+            {
+              "id": "556453ed-9045-417f-a76b-bb32ea02fd5c",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "b96f67a0-5ebc-4278-a339-bed803eec198",
+              "careSpaceId": "3bad69a9-67b6-44e7-a1b6-105e1ec7fd00",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_TRANSFER",
+              "previousLocationId": "ccea9839-4442-4731-a4aa-7618554d127a",
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-31T11:47:15.094Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_PRIVATE",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-31T11:47:15.094Z"
+            }
+          ]
+        }
+      ],
+      "consoleErrors": [
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_CONNECTION_RESET",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_CONNECTION_RESET",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      ]
+    },
+    {
+      "fecha": "2026-10-31T11:58:24.663Z",
+      "registro": [],
+      "consoleErrors": []
+    },
+    {
+      "fecha": "2026-10-31T12:04:55.632Z",
+      "registro": [
+        {
+          "que": "ingreso · petición y respuesta",
+          "datos": {
+            "method": "POST",
+            "path": "/clinical/admissions",
+            "query": "",
+            "ifMatch": null,
+            "ifMatchOps": null,
+            "body": {
+              "patientProfileId": "549abc48-21c6-46b2-a083-936a92cdee1a",
+              "practiceSiteId": "c8a31663-66c1-4ae1-a281-60de9b7f6f54",
+              "openEpisode": true,
+              "attendingPractitionerId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+              "levelOfCareCode": "LOC_CARE_GENERAL",
+              "admissionSourceCode": "ADM_SRC_EMERGENCY",
+              "reasonText": "Apendicitis aguda operada; posoperatorio inmediato.",
+              "bed": {
+                "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+                "mode": "ASSIGN"
+              }
+            },
+            "status": 201,
+            "requestId": "req-ops-mvwcs7vs-1",
+            "at": "2026-10-31T12:04:12.137Z"
+          }
+        },
+        {
+          "que": "ingreso · encounter_locations ACTIVE",
+          "datos": [
+            {
+              "id": "loc-seed-enc-seed-mamani",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "enc-seed-mamani",
+              "careSpaceId": "1903130f-2f04-417d-a663-c04e384e9c5c",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-27T10:04:04.654Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-27T10:04:04.654Z"
+            },
+            {
+              "id": "loc-seed-enc-seed-flores",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "enc-seed-flores",
+              "careSpaceId": "c62d0dca-ecf2-441a-ac66-af90823f5384",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-29T10:04:04.654Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-29T10:04:04.654Z"
+            },
+            {
+              "id": "1df5ca6c-ed0e-424e-add1-e562dbea519a",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "16efc780-7fa9-4874-a6b2-90f4912fb734",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-31T12:04:12.136Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-31T12:04:12.136Z"
+            }
+          ]
+        },
+        {
+          "que": "ingreso · A20 ocupación",
+          "datos": [
+            {
+              "id": "4829f890-5361-4848-a076-b1b8d1a51558",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "siteId": "c8a31663-66c1-4ae1-a281-60de9b7f6f54",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "axisCode": "OCCUPANCY",
+              "fromCode": "OCC_FREE",
+              "toCode": "OCC_OCCUPIED",
+              "reasonCode": null,
+              "reasonText": null,
+              "expectedUntil": null,
+              "v2Code": "O",
+              "sourceCode": "ADT",
+              "sourceRefId": "1df5ca6c-ed0e-424e-add1-e562dbea519a",
+              "occurredAt": "2026-10-31T12:04:12.136Z",
+              "recordedByUserId": "e487dbd4-321d-4840-ae91-56ec38811814",
+              "recordedByName": "Luis Fernández Rivero",
+              "requestId": "req-ops-mvwcs7vs-1"
+            }
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "fecha": "2026-10-31T12:22:14.891Z",
+      "registro": [
+        {
+          "que": "ingreso · petición y respuesta",
+          "datos": {
+            "method": "POST",
+            "path": "/clinical/admissions",
+            "query": "",
+            "ifMatch": null,
+            "ifMatchOps": null,
+            "body": {
+              "patientProfileId": "549abc48-21c6-46b2-a083-936a92cdee1a",
+              "practiceSiteId": "c8a31663-66c1-4ae1-a281-60de9b7f6f54",
+              "openEpisode": true,
+              "attendingPractitionerId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+              "levelOfCareCode": "LOC_CARE_GENERAL",
+              "admissionSourceCode": "ADM_SRC_EMERGENCY",
+              "reasonText": "Apendicitis aguda operada; posoperatorio inmediato.",
+              "bed": {
+                "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+                "mode": "ASSIGN"
+              }
+            },
+            "status": 201,
+            "requestId": "req-ops-mvwcwhvr-1",
+            "at": "2026-10-31T12:07:31.721Z"
+          }
+        },
+        {
+          "que": "ingreso · encounter_locations ACTIVE",
+          "datos": [
+            {
+              "id": "loc-seed-enc-seed-mamani",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "enc-seed-mamani",
+              "careSpaceId": "1903130f-2f04-417d-a663-c04e384e9c5c",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-27T10:07:24.249Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-27T10:07:24.249Z"
+            },
+            {
+              "id": "loc-seed-enc-seed-flores",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "enc-seed-flores",
+              "careSpaceId": "c62d0dca-ecf2-441a-ac66-af90823f5384",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-29T10:07:24.249Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-29T10:07:24.249Z"
+            },
+            {
+              "id": "c340b16c-0a57-4584-af2d-119873119f30",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "f7e0de4c-bd2e-4b56-a169-968a87fa3f02",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-31T12:07:31.719Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-31T12:07:31.720Z"
+            }
+          ]
+        },
+        {
+          "que": "ingreso · A20 ocupación",
+          "datos": [
+            {
+              "id": "c06252dc-2389-4824-af71-10c81c7bdd40",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "siteId": "c8a31663-66c1-4ae1-a281-60de9b7f6f54",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "axisCode": "OCCUPANCY",
+              "fromCode": "OCC_FREE",
+              "toCode": "OCC_OCCUPIED",
+              "reasonCode": null,
+              "reasonText": null,
+              "expectedUntil": null,
+              "v2Code": "O",
+              "sourceCode": "ADT",
+              "sourceRefId": "c340b16c-0a57-4584-af2d-119873119f30",
+              "occurredAt": "2026-10-31T12:07:31.720Z",
+              "recordedByUserId": "e487dbd4-321d-4840-ae91-56ec38811814",
+              "recordedByName": "Luis Fernández Rivero",
+              "requestId": "req-ops-mvwcwhvr-1"
+            }
+          ]
+        },
+        {
+          "que": "traslado · petición y respuesta (If-Match del encuentro)",
+          "datos": {
+            "method": "POST",
+            "path": "/clinical/encounters/f7e0de4c-bd2e-4b56-a169-968a87fa3f02/transfer",
+            "query": "",
+            "ifMatch": "1",
+            "ifMatchOps": null,
+            "body": {
+              "toCareSpaceId": "3bad69a9-67b6-44e7-a1b6-105e1ec7fd00",
+              "reasonCode": "TRF_CLINICAL"
+            },
+            "status": 200,
+            "requestId": "req-ops-mvwcwsk9-1",
+            "at": "2026-10-31T12:07:45.564Z"
+          }
+        },
+        {
+          "que": "traslado · origen COMPLETED / destino ACTIVE",
+          "datos": [
+            {
+              "id": "c340b16c-0a57-4584-af2d-119873119f30",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "f7e0de4c-bd2e-4b56-a169-968a87fa3f02",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_COMPLETED",
+              "periodStart": "2026-10-31T12:07:31.719Z",
+              "periodEnd": "2026-10-31T12:07:45.561Z",
+              "endReasonCode": "ADT_END_TRANSFER_OUT",
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-31T12:07:31.720Z"
+            },
+            {
+              "id": "fbe5f40b-93d4-4483-a4ac-c1d8ccfd70be",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "f7e0de4c-bd2e-4b56-a169-968a87fa3f02",
+              "careSpaceId": "3bad69a9-67b6-44e7-a1b6-105e1ec7fd00",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_TRANSFER",
+              "previousLocationId": "c340b16c-0a57-4584-af2d-119873119f30",
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-31T12:07:45.561Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_PRIVATE",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-31T12:07:45.562Z"
+            }
+          ]
+        }
+      ],
+      "consoleErrors": [
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES"
+      ]
+    },
+    {
+      "fecha": "2026-10-31T12:46:25.665Z",
+      "registro": [
+        {
+          "que": "ingreso · petición y respuesta",
+          "datos": {
+            "method": "POST",
+            "path": "/clinical/admissions",
+            "query": "",
+            "ifMatch": null,
+            "ifMatchOps": null,
+            "body": {
+              "patientProfileId": "549abc48-21c6-46b2-a083-936a92cdee1a",
+              "practiceSiteId": "c8a31663-66c1-4ae1-a281-60de9b7f6f54",
+              "openEpisode": true,
+              "attendingPractitionerId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+              "levelOfCareCode": "LOC_CARE_GENERAL",
+              "admissionSourceCode": "ADM_SRC_EMERGENCY",
+              "reasonText": "Apendicitis aguda operada; posoperatorio inmediato.",
+              "bed": {
+                "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+                "mode": "ASSIGN"
+              }
+            },
+            "status": 201,
+            "requestId": "req-ops-mvweack2-1",
+            "at": "2026-10-31T12:46:17.619Z"
+          }
+        },
+        {
+          "que": "ingreso · encounter_locations ACTIVE",
+          "datos": [
+            {
+              "id": "loc-seed-enc-seed-mamani",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "enc-seed-mamani",
+              "careSpaceId": "1903130f-2f04-417d-a663-c04e384e9c5c",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-27T10:46:10.573Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-27T10:46:10.573Z"
+            },
+            {
+              "id": "loc-seed-enc-seed-flores",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "enc-seed-flores",
+              "careSpaceId": "c62d0dca-ecf2-441a-ac66-af90823f5384",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-29T10:46:10.573Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-29T10:46:10.573Z"
+            },
+            {
+              "id": "b332d692-43aa-4f4a-a6d2-aaf831887a7c",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "encounterId": "8170d762-004e-4938-acf8-7e1686a5d41a",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "isBedAssignment": true,
+              "movementTypeCode": "ADT_ADMIT",
+              "previousLocationId": null,
+              "statusCode": "LOCATION_ACTIVE",
+              "periodStart": "2026-10-31T12:46:17.618Z",
+              "periodEnd": null,
+              "endReasonCode": null,
+              "bedCategoryCode": "BED_CAT_SHARED",
+              "placementIncidentId": null,
+              "createdAt": "2026-10-31T12:46:17.618Z"
+            }
+          ]
+        },
+        {
+          "que": "ingreso · A20 ocupación",
+          "datos": [
+            {
+              "id": "99433e25-3824-4c59-a749-42d453b3c00e",
+              "tenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+              "siteId": "c8a31663-66c1-4ae1-a281-60de9b7f6f54",
+              "careSpaceId": "1a0314a2-b021-4f42-a680-8ee0cc351804",
+              "axisCode": "OCCUPANCY",
+              "fromCode": "OCC_FREE",
+              "toCode": "OCC_OCCUPIED",
+              "reasonCode": null,
+              "reasonText": null,
+              "expectedUntil": null,
+              "v2Code": "O",
+              "sourceCode": "ADT",
+              "sourceRefId": "b332d692-43aa-4f4a-a6d2-aaf831887a7c",
+              "occurredAt": "2026-10-31T12:46:17.619Z",
+              "recordedByUserId": "e487dbd4-321d-4840-ae91-56ec38811814",
+              "recordedByName": "Luis Fernández Rivero",
+              "requestId": "req-ops-mvweack2-1"
+            }
+          ]
+        }
+      ],
+      "consoleErrors": [
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-001] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fmolecules%2Falert%2Falert.ts%40Alert&t=1793450784447 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fmolecules%2Falert%2Falert.ts%40Alert&t=1793450784447",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-001] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fmolecules%2Falert%2Falert.ts%40Alert&t=1793450784447",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-002] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fspinner%2Fspinner.ts%40Spinner&t=1793450784447 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fspinner%2Fspinner.ts%40Spinner&t=1793450784447",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-002] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fspinner%2Fspinner.ts%40Spinner&t=1793450784447",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-003] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fbutton%2Fbutton.ts%40AppButton&t=1793450784448 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fbutton%2Fbutton.ts%40AppButton&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-003] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fbutton%2Fbutton.ts%40AppButton&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-004] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Factivate-account%2Factivate-account.ts%40ActivateAccount&t=1793450784448 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Factivate-account%2Factivate-account.ts%40ActivateAccount&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-004] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Factivate-account%2Factivate-account.ts%40ActivateAccount&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-005] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fresend-verification%2Fresend-verification.ts%40ResendVerification&t=1793450784448 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fresend-verification%2Fresend-verification.ts%40ResendVerification&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-005] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fresend-verification%2Fresend-verification.ts%40ResendVerification&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-006] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Ferror-recovery%2Ferror-recovery.ts%40ErrorRecovery&t=1793450784448 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Ferror-recovery%2Ferror-recovery.ts%40ErrorRecovery&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-006] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Ferror-recovery%2Ferror-recovery.ts%40ErrorRecovery&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-007] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fverify-email%2Fverify-email.ts%40VerifyEmail&t=1793450784448 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fverify-email%2Fverify-email.ts%40VerifyEmail&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-007] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fverify-email%2Fverify-email.ts%40VerifyEmail&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-008] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fforgot-password%2Fforgot-password.ts%40ForgotPassword&t=1793450784448 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fforgot-password%2Fforgot-password.ts%40ForgotPassword&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-008] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Fforgot-password%2Fforgot-password.ts%40ForgotPassword&t=1793450784448",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-009] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Freset-password%2Freset-password.ts%40ResetPassword&t=1793450784449 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Freset-password%2Freset-password.ts%40ResetPassword&t=1793450784449",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-009] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Freset-password%2Freset-password.ts%40ResetPassword&t=1793450784449",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-010] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Ftenant-selection%2Ftenant-selection.ts%40TenantSelection&t=1793450784449 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Ftenant-selection%2Ftenant-selection.ts%40TenantSelection&t=1793450784449",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-010] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Ffeatures%2Fauth%2Ftenant-selection%2Ftenant-selection.ts%40TenantSelection&t=1793450784449",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-011] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Faccount-icon%2Faccount-icon.ts%40AccountIcon&t=1793450784449 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Faccount-icon%2Faccount-icon.ts%40AccountIcon&t=1793450784449",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-011] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Faccount-icon%2Faccount-icon.ts%40AccountIcon&t=1793450784449",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-012] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Forganisms%2Fview-state-host%2Fview-state-host.ts%40ViewStateHost&t=1793450784461 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Forganisms%2Fview-state-host%2Fview-state-host.ts%40ViewStateHost&t=1793450784461",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-012] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Forganisms%2Fview-state-host%2Fview-state-host.ts%40ViewStateHost&t=1793450784461",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-013] Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fcheckbox%2Fcheckbox.ts%40Checkbox&t=1793450784463 · 0.1.0 · /inpatient/bed-board",
+        "http://127.0.0.1:4392/inpatient/bed-board :: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fcheckbox%2Fcheckbox.ts%40Checkbox&t=1793450784463",
+        "http://127.0.0.1:4392/inpatient/bed-board :: [E-060b65713-013] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4392/@ng/component?c=src%2Fapp%2Fshared%2Fcomponents%2Fatoms%2Fcheckbox%2Fcheckbox.ts%40Checkbox&t=1793450784463",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/inpatient/bed-board :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+        "http://127.0.0.1:4392/auth :: Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES"
+      ]
     }
   ]
 }
