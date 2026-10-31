@@ -66,7 +66,7 @@ La mutación completa (UI → request → persistencia → recarga) de agendar e
 | `ng test` `features/agenda/**` | 763/763 |
 | `ng test` `features/clinical-record/patient-chart/**` | 746/746 |
 | `ng test` `core/data-access/scheduling/**` + los tres componentes | 294/294 |
-| `yarn build` | no se corrió |
+| `yarn build` (producción, hook de pre-push) | 0; avisos de presupuesto ya existentes (`agenda-create.css` ya lo pasaba en `dev`), ninguno nuevo |
 
 Revisión independiente (`visual-reviewer`, `frontend-reviewer`, `regression-auditor`):
 **pendiente** — quien implementa no aprueba.
