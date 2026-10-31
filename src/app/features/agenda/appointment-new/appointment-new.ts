@@ -73,6 +73,13 @@ type ModoDePaciente = 'registrado' | 'nuevo';
  */
 const DIGITOS_DE_CEDULA = 6;
 
+/** Lo que la pantalla dice sobre dónde queda la cita. */
+interface AppointmentLocation {
+  readonly organization: string | null;
+  readonly site: string;
+  readonly address: string | null;
+}
+
 /**
  * Alta de cita del profesional — `/schedule/appointment/new`.
  *
@@ -147,6 +154,29 @@ export class AppointmentNew {
   protected readonly opcionesDeAgenda = computed<readonly SelectOption<string>[]>(
     () => this.agendas().map((agenda) => ({ value: agenda.id, label: agenda.name })),
   );
+
+  /**
+   * Dónde queda la cita que se está por agendar.
+   *
+   * La API la ubica por la agenda, sin que nadie elija la organización: la
+   * pantalla tiene que decirlo, o quien tiene varias organizaciones agenda en
+   * la activa sin enterarse. Cambia con el selector de agenda.
+   */
+  protected readonly appointmentLocation = computed<AppointmentLocation | null>(() => {
+    const agenda = this.agendas().find((a) => a.id === this.agendaElegida());
+    if (agenda === undefined) {
+      return null;
+    }
+    const site = agenda.site?.name ?? 'Sin consultorio registrado';
+    const organization = this.activeOrganizationName();
+    return {
+      // Muchas sedes ya llevan el nombre de la organización: «Clínica X · Clínica
+      // X · Sede Central» se lee como un error.
+      organization: organization !== null && mentions(site, organization) ? null : organization,
+      site,
+      address: agenda.site?.addressText ?? null,
+    };
+  });
 
   /* -- El formulario ------------------------------------------------------- */
 
@@ -808,6 +838,19 @@ export class AppointmentNew {
   }
 
   /**
+   * El nombre de la organización activa, o `null` si el token no lo trae:
+   * `tenantName` cae al id, y un uuid no le dice nada a quien agenda.
+   */
+  private activeOrganizationName(): string | null {
+    const tenantId = this.auth.activeTenantId();
+    if (tenantId === null) {
+      return null;
+    }
+    const name = this.auth.tenantName(tenantId);
+    return name === tenantId ? null : name;
+  }
+
+  /**
    * Trae las agendas del profesional de la sesión.
    *
    * Se busca por el **perfil profesional**, que es el mismo criterio con el
@@ -836,6 +879,11 @@ export class AppointmentNew {
       },
     });
   }
+}
+
+/** Si un nombre ya incluye a otro, sin distinguir mayúsculas. */
+function mentions(name: string, sought: string): boolean {
+  return name.toLocaleLowerCase('es').includes(sought.toLocaleLowerCase('es'));
 }
 
 /** Si lo tecleado se lee como una cédula y no como el principio de un nombre. */
