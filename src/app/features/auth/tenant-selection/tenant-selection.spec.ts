@@ -81,6 +81,39 @@ describe('TenantSelection', () => {
     expect(navegar).toHaveBeenCalledWith(destino);
   });
 
+  describe('con un enlace pedido antes del login', () => {
+    async function mountAt(url: string): Promise<TenantSelection> {
+      await TestBed.inject(Router).navigateByUrl(url);
+      const montado = TestBed.createComponent(TenantSelection);
+      await montado.whenStable();
+      return montado.componentInstance;
+    }
+
+    it('vuelve a la receta compartida después de elegir', async () => {
+      const elegido = await mountAt('/?returnUrl=%2Frx%2Ftoken-de-prueba');
+      const auth = TestBed.inject(AuthService);
+      vi.spyOn(auth, 'selectTenant').mockImplementation(() => undefined);
+      vi.spyOn(auth, 'roles').mockReturnValue(['PHARMACY_STAFF']);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+      elegido.choose('tenant-1');
+
+      expect(navegar).toHaveBeenCalledWith('/rx/token-de-prueba');
+    });
+
+    it('un destino externo se ignora', async () => {
+      const elegido = await mountAt('/?returnUrl=%2F%2Fotro-sitio.test');
+      const auth = TestBed.inject(AuthService);
+      vi.spyOn(auth, 'selectTenant').mockImplementation(() => undefined);
+      vi.spyOn(auth, 'roles').mockReturnValue(['PATIENT']);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+      elegido.choose('tenant-1');
+
+      expect(navegar).toHaveBeenCalledWith('/');
+    });
+  });
+
   describe('organizaciones que no dejan entrar ahora', () => {
     let http: HttpTestingController;
     const host = (): HTMLElement => fixture.nativeElement as HTMLElement;

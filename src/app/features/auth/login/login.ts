@@ -35,6 +35,8 @@ import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 import { localLoginHint, type LocalLoginHint } from './local-login-hint';
 import { loginPolicyOutcome } from './login-policy-reasons';
+import { markPageAsNoIndex } from '../../prescription-share/no-index';
+import { isShareTokenRoute } from '../../prescription-share/share-return-url';
 
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
@@ -138,6 +140,11 @@ export class Login {
 
   constructor() {
     afterNextRender(() => this.localHint.set(localLoginHint()));
+    // Desde «Soy farmacia» el `returnUrl` lleva el token de la receta: con la
+    // política general, cada petición de esta pantalla lo mandaría en su `Referer`.
+    if (isShareTokenRoute(this.retornoPedido())) {
+      markPageAsNoIndex();
+    }
   }
 
   /** Rellena el formulario con la cuenta local; no envía: entrar sigue siendo un clic. */
@@ -218,7 +225,12 @@ export class Login {
 
   private destinoNormal(): string {
     if (this.auth.needsTenantSelection()) {
-      return TENANT_SELECTION_ROUTE;
+      // El enlace pedido viaja a la elección de organización y se usa después
+      // de elegir: la farmacia que escaneó una receta vuelve a ella.
+      const requested = this.retornoPedido();
+      return requested === null
+        ? TENANT_SELECTION_ROUTE
+        : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(requested)}`;
     }
     if (this.auth.tenants().length === 0) {
       return rolesAlcanzan(['SUPERADMIN'], this.auth.roles())
@@ -255,8 +267,9 @@ export class Login {
    * como host externo aunque parezca una ruta—. Tampoco se acepta `/\`, que
    * varios navegadores normalizan igual que `//`.
    *
-   * Se ignora cuando hay que elegir organización o cuando no hay ninguna: en
-   * los dos casos el destino no es negociable.
+   * Cuando hay que elegir organización pasa a esa pantalla, que lo usa después
+   * de la elección. Se ignora cuando no hay ninguna: ahí el destino no es
+   * negociable.
    */
   private retornoPedido(): string | null {
     const pedido = this.route.snapshot.queryParamMap.get('returnUrl');

@@ -152,6 +152,7 @@ describe('PrescriptionSharesClient', () => {
 
     expect(view).toEqual({
       status: 'VALID',
+      endedReason: null,
       issuedAt: new Date('2026-10-01T10:00:00.000Z'),
       prescriberName: 'Dra. Prueba Sintética',
       prescriberLicense: { number: 'MP-0001', authority: 'Colegio de prueba', state: 'ACTIVE' },
@@ -173,6 +174,7 @@ describe('PrescriptionSharesClient', () => {
 
     expect(view).toEqual({
       status: 'REVOKED',
+      endedReason: null,
       issuedAt: null,
       prescriberName: null,
       prescriberLicense: null,
