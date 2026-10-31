@@ -1,4 +1,4 @@
-import { ajustesDeAgenda, delegados, permisos, vinculos } from '../fixtures/support-hospital';
+import { ajustesDeAgenda, bitacora, delegados, permisos, vinculos } from '../fixtures/support-hospital';
 import { reiniciarGobierno } from '../fixtures/support-hospital-governance';
 import { factores } from './iam-mfa.store';
 import { redesDeLaOrganizacion } from './iam-security.handlers';
@@ -10,7 +10,7 @@ import { olvidarLasSesionesDeCuenta } from './auth.handlers';
 import { dispositivos, politicasDeSesion } from './support-access.session.handlers';
 
 /**
- * Deja la **sesión** del simulador (políticas, dispositivos, factores de segundo paso, redes, sesiones abiertas por cuenta) como la trae de fábrica.
+ * Deja la **sesión** del simulador (políticas, dispositivos, factores de segundo paso, redes, bitácora, sesiones abiertas por cuenta) como la trae de fábrica.
  *
  * Solo lo usan las pruebas: el corredor no aísla los módulos entre archivos de un mismo worker (`isolate: false`), así que lo
  * que un archivo guardó en estas tablas lo ve el siguiente, y cuál llegaba cambiada dependía del orden. Un archivo que supone
@@ -27,6 +27,8 @@ export function reiniciarLaSesionDelSimulador(): void {
     factores,
     redesDeLaOrganizacion,
     ajustesDeAgenda,
+    // Cada `anotar` suma un asiento: sin reiniciarla, el largo de la bitácora dependía de qué archivos habían corrido antes.
+    bitacora,
   ]) {
     tabla.reiniciar();
   }
