@@ -352,6 +352,29 @@ export function resolverCuentasDePacientes(resolver: ResolverDeCuentas): void {
   cuentaDePaciente = resolver;
 }
 
+/**
+ * Las cuentas de personal de apoyo dadas de alta en la maqueta
+ * (`/iam/auth/register-support-staff`) y la sembrada. Las resuelve
+ * `support-staff.handlers`, igual que las de pacientes: este archivo no puede
+ * importar sus tablas sin armar un ciclo.
+ */
+let cuentaDeApoyo: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasDeApoyo(resolver: ResolverDeCuentas): void {
+  cuentaDeApoyo = resolver;
+}
+
+/**
+ * Lo que la API agrega al token en cada login y refresco según el estado de la
+ * cuenta: para la secretaria, los hospitales donde tiene un vínculo de apoyo
+ * activo entran a `tenants`. Lo instala `support-staff.store`.
+ */
+let decorarCuenta: (user: MockUser) => MockUser = (user) => user;
+
+export function decorarCuentasCon(decorador: (user: MockUser) => MockUser): void {
+  decorarCuenta = decorador;
+}
+
 export function buscarUsuario(identificador: string): MockUser | undefined {
   const limpio = identificador.trim().toLocaleLowerCase('es');
   return (
@@ -361,19 +384,22 @@ export function buscarUsuario(identificador: string): MockUser | undefined {
         u.nationalId === limpio ||
         u.key === limpio ||
         u.key === limpio.replace(/@.*$/, ''),
-    ) ?? cuentaDePaciente({ identificador: limpio })
+    ) ??
+    cuentaDePaciente({ identificador: limpio }) ??
+    cuentaDeApoyo({ identificador: limpio })
   );
 }
 
 export function usuarioPorId(userId: string): MockUser | undefined {
-  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId });
+  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaDeApoyo({ id: userId });
 }
 
 /* ---- tokens ---------------------------------------------------------------- */
 
 const VIDA_TOKEN_SEGUNDOS = 60 * 60 * 8;
 
-export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
+export function emitirAccessToken(cuenta: MockUser, ahora = Date.now()): string {
+  const user = decorarCuenta(cuenta);
   const header = base64url(JSON.stringify({ alg: 'none', typ: 'JWT' }));
   // Sólo los tenants de la cuenta, y sólo los que tienen tipo conocido: mismo
   // criterio que usaría la API real (`TENANT_TYPE_CODE_BY_CONCEPT_ID`), donde
@@ -411,7 +437,7 @@ export function emitirRefreshToken(user: MockUser): string {
 export function usuarioDeRefreshToken(refreshToken: string): MockUser | undefined {
   const [prefijo, key] = refreshToken.split('.');
   if (prefijo !== 'mock-refresh' || key === undefined) return undefined;
-  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key });
+  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaDeApoyo({ key });
 }
 
 export function usuarioDeAccessToken(token: string): MockUser | undefined {

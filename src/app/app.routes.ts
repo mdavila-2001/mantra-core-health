@@ -348,6 +348,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
     ),
+  // Personal de apoyo (la secretaria), 31/10/2026: la organización, la propia
+  // secretaria y el doctor al que asiste. Quién ve cada una lo decide `APP_SECTIONS`.
+  'administration/support-staff': () =>
+    import('./features/support-staff/support-staff-admin/support-staff-admin').then((m) => m.SupportStaffAdmin),
+  'my-support': () => import('./features/support-staff/my-support/my-support').then((m) => m.MySupport),
+  'my-support-team': () =>
+    import('./features/support-staff/my-support-team/my-support-team').then((m) => m.MySupportTeam),
   'administration/delegated-access': () =>
     import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
       (m) => m.DelegatedAccessHome,
@@ -2351,6 +2358,17 @@ export const routes: Routes = [
         (m) => m.RegisterPractitioner,
       ),
     title: 'AloVida - Crear cuenta de profesional',
+  },
+  {
+    // El alta de la secretaria (personal de apoyo), armada con las piezas del
+    // alta de paciente. Diferida por lo mismo: arrastra el catálogo de
+    // departamentos y el motor de páginas.
+    path: 'auth/register/support-staff',
+    loadComponent: () =>
+      import('./features/auth/register-support-staff/register-support-staff').then(
+        (m) => m.RegisterSupportStaff,
+      ),
+    title: 'AloVida - Crear cuenta de personal de apoyo',
   },
   {
     // Signup público de una organización aseguradora: crea el tenant `PAYER`

@@ -59,6 +59,11 @@ describe('NAV_SUBGROUPS', () => {
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
     // bloque la escondería detrás de un desplegable.
     'superadmin/observability',
+    // La secretaria y el doctor (31/10/2026): cada uno es el único renglón de
+    // apoyo que ve su sesión; envolverlo en un bloque lo escondería detrás de un
+    // desplegable de uno.
+    'my-support',
+    'my-support-team',
   ];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {

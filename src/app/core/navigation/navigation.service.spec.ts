@@ -343,6 +343,10 @@ describe('NavigationService', () => {
         // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
         // por el propietario en el PR.
         'Grupos médicos',
+        // «Mi secretaría» entra el 31/10/2026 por pedido explícito del usuario:
+        // la secretaria tiene que verse en todos lados donde se muestran roles,
+        // y el doctor acepta o invita a la suya desde acá.
+        'Mi secretaría',
         'Contabilidad',
       ]);
     });
