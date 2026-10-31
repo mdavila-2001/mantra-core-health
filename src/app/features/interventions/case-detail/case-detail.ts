@@ -86,7 +86,7 @@ export class CaseDetail {
 
   protected readonly statusLabel = computed(() => {
     const c = this.surgicalCase();
-    return c === null ? '' : (this.labels().get(c.statusConceptId)?.display ?? 'Estado sin nombre');
+    return c === null ? '' : (this.labels().get(c.statusConceptId)?.display ?? '');
   });
 
   protected readonly facts = computed<readonly Hecho[]>(() => {
@@ -96,7 +96,7 @@ export class CaseDetail {
     const phase = (iso: string | null | undefined, label: string) => `${label}: ${iso ? `completa (${timeOf(iso)})` : 'pendiente'}`;
     return [
       { etiqueta: 'Número', valor: c.caseNumber },
-      { etiqueta: 'Estado', valor: this.statusLabel() },
+      { etiqueta: 'Estado', valor: this.statusLabel() || null },
       { etiqueta: 'Tipo', valor: c.caseType === undefined ? null : (CASE_TYPE_LABELS[c.caseType] ?? c.caseType) },
       { etiqueta: 'Quirófano', valor: c.operatingRoom === undefined ? null : `${c.operatingRoom.code} · ${c.operatingRoom.name}` },
       { etiqueta: 'Ubicación', valor: c.operatingRoom?.path ?? null },

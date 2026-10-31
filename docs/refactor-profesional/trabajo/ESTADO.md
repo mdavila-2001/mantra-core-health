@@ -1,6 +1,27 @@
 # Estado
 
-**Última tarea verificada:** rama `infra-f1-web` · 2026-10-30 · **Infraestructura hospitalaria F1 (web)**
+**Última tarea verificada:** rama `infra-f4f5-web` · 2026-10-31 · **Infraestructura hospitalaria F4 (quirófanos) y F5
+(integración, web)** (contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md` §F4.4, §F5).
+Detalle en `EVIDENCIAS.md` § «Infraestructura F4/F5». Revisión independiente (`visual-reviewer`,
+`frontend-reviewer`, `regression-auditor`): **pendiente** — quien implementa no aprueba.
+
+| Pantalla | Qué quedó |
+|---|---|
+| `/interventions` | columna Quirófano (código · nombre, ruta en globo), ventana reservada con +prep/+limpieza, bloque, filtro por sala (de `GET /operating-rooms`); accesos según rol; el equipo vive en `app-case-team` |
+| `/interventions/:caseId` | una tarjeta con 5 pestañas: Resumen, Equipo, Check-list OMS (3 fases con `Stepper`, excepción con motivo), Eventos de sala (orden + gates OMS explicados), Cargos (S3 con su porqué) |
+| `/interventions/new` | programar con la ventana que se reservará a la vista; 409 con «Usar la próxima ventana libre» |
+| `/interventions/operating-rooms` | `app-resource-timeline` (organismo nuevo permitido): bloques, liberados y casos con prep/limpieza sombreados; tabla a 390 px; S7 a los 5 min |
+| `/interventions/blocks` · `/utilization` | bloques de la semana y alta (serie semanal), liberar/cancelar con motivo e `If-Match`; KPI de sala y de bloque, tablas por dueño, sala y bloque |
+| Catálogo de servicios | pestaña «Tarifas de espacios» (día-cama, quirófano por tiempo, vigencias, cierre) y `bed-day-charges` (regla de medianoche, idempotente) |
+| Ficha de espacio (F1) | pestañas «Equipos» (ubicar equipo de la sede) y «Stock» (existencias, botiquín, reubicar), diferidas |
+| `medical-laboratory/equipment/:id` | ficha de equipo: General, Ubicación y DICOM (AE Title con la regla DICOM, MWL), Agenda (recurso) |
+
+Pendientes declarados (Desvíos W-F4F5 del contrato): F5b, F5d y F5f no se implementaron en esta pasada; cargo de
+quirófano por tiempo y eventos `CLEANUP_*` (dependen de F2/F5e en la API); contra la API real no se ejecutó.
+
+## Infraestructura F1 (web) — 2026-10-30
+
+Rama `infra-f1-web` · 2026-10-30 · **Infraestructura hospitalaria F1 (web)**
 (contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F0-F1.md` §4). Detalle en
 `EVIDENCIAS.md` § «Infraestructura F1». Revisión independiente (`visual-reviewer`, `frontend-reviewer`,
 `regression-auditor`): **pendiente** — quien implementa no aprueba.

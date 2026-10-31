@@ -1,7 +1,9 @@
 <app-page-header [title]="title()" [subtitle]="subtitle()" [breadcrumbs]="breadcrumbs()">
   <span page-meta class="case-detail__meta">
     @if (surgicalCase(); as c) {
-      <app-badge variant="info" data-testid="case-status">{{ statusLabel() }}</app-badge>
+      @if (statusLabel()) {
+        <app-badge variant="info" data-testid="case-status">{{ statusLabel() }}</app-badge>
+      }
       @if (c.block; as b) {
         <app-badge variant="secondary">Bloque {{ b.owner }}</app-badge>
       }
