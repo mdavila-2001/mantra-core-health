@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.composer {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+.composer__top {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+.composer__label {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.composer__target {
+  margin: var(--sp-1) 0 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.composer__atoms {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.atom {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.atom--blocked {
+  color: var(--text-muted);
+}
+
+.atom__traits {
+  margin-inline-start: var(--sp-6);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

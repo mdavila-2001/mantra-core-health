@@ -315,7 +315,7 @@ export class MembershipNew {
       error: () => {
         this.state.set(ready(null));
         this.toast.warning(
-          'La persona quedó incorporada, pero no pudimos asignarle la sede. ' +
+          'La invitación quedó enviada, pero no pudimos asignarle la sede. ' +
             'En su fila de la plantilla, use «Asignar sede».',
           'Falta la sede',
         );
@@ -327,7 +327,8 @@ export class MembershipNew {
   private terminar(): void {
     this.state.set(ready(null));
     const nombre = this.persona()?.label ?? 'La persona';
-    this.toast.success(`${nombre} ya forma parte de la organización.`, 'Alguien más adentro');
+    // Ya no se incorpora al instante: la membresía queda pendiente hasta que la persona la acepte.
+    this.toast.success(`Invitación enviada a ${nombre}: queda pendiente de aceptación. Hasta que la acepte, no cuenta en la organización.`, 'Invitación enviada');
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));
   }
 

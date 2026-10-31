@@ -16,6 +16,7 @@ import { registrarCentros } from './centros.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
+import { registrarInvitacionesDeOrganizacion } from './directory-invitations.handlers';
 import { registerHealthcareServices } from './healthcare-services.handlers';
 import { registerRoleAssignments } from './role-assignments.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
@@ -60,6 +61,8 @@ import { registrarFlujos } from './flows.handlers';
 import { registrarTrafico } from './ops-traffic.handlers';
 import { registrarSondaDeVida } from './ops-liveness.handlers';
 import { registrarHerramientas } from './ops-tools.handlers';
+import { registrarDispositivos } from './analytics-devices.handlers';
+import { registrarDinero } from './analytics-money.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 import { registerPortalInventory } from './portal-inventory.handlers';
@@ -69,10 +72,12 @@ import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerRegistrationLogo } from './registration-logo.handlers';
 import { registrarAdmisiones } from './admissions.handlers';
+import { registrarCargasMasivas } from './bulk-imports.handlers';
 import { registerPrescriptionShares } from './prescription-shares.handlers';
 import { registerPharmacyPrescriptionShares } from './pharmacy-prescription-shares.handlers';
 import { registrarInsights } from './insights.handlers';
 import { registrarReporteria } from './reporting.handlers';
+import { registrarApoyo } from './support-access.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -118,6 +123,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarArchivos(router);
   registrarNotificaciones(router);
   registrarDirectorio(router);
+  registrarInvitacionesDeOrganizacion(router);
   registrarIdentidad(router);
   registrarSeguros(router);
   registerPractitionerInsurerRequests(router);
@@ -154,11 +160,14 @@ export function crearRouterSimulado(): MockRouter {
   registrarTrafico(router);
   registrarSondaDeVida(router);
   registrarHerramientas(router);
+  registrarDispositivos(router);
+  registrarDinero(router);
   registrarFlujos(router);
   registrarAltaDeMedicoAsistida(router);
   registrarAdmisiones(router);
   registrarReporteria(router);
   registrarInsights(router);
+  registrarCargasMasivas(router);
   registerPromotions(router);
   registerPatientSpending(router);
   registerPortalInventory(router);
@@ -167,5 +176,8 @@ export function crearRouterSimulado(): MockRouter {
   registerOrganizationPracticeHandlers(router);
   // La pre-carga del logo del consultorio en el alta del médico.
   registerRegistrationLogo(router);
+  // Personal de apoyo (secretaria y otros roles). Al final: envuelve rutas que
+  // ya tienen dueño (reservas, chat, delegaciones) para atender lo del hospital.
+  registrarApoyo(router);
   return router;
 }

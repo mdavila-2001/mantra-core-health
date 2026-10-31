@@ -1,0 +1,118 @@
+:host {
+  display: block;
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.banner {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface-alt);
+}
+
+.banner__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.banner__lista {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-primary);
+}
+
+.banner__ayuda,
+.ayuda,
+.vacio {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.persona__nombre {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.persona__sub {
+  display: block;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.solicitudes,
+.items {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.solicitud {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+.solicitud__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.solicitud__sub {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.solicitud__mensaje {
+  margin: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.item {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+}
+
+.item__nombre {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.invitar {
+  display: grid;
+  gap: var(--sp-3);
+  max-inline-size: 32rem;
+}
+
+.codigo {
+  font-family: var(--f-mono);
+  letter-spacing: 0.05em;
+}

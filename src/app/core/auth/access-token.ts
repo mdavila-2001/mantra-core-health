@@ -89,6 +89,29 @@ export interface AccessTokenClaims {
    * lo deduce de la organización activa.
    */
   readonly accountKind?: AccountKind;
+  /**
+   * Minutos de inactividad tras los cuales se cierra la sesión, según la
+   * política de sesión de la organización (`iam.session_policies`). **Propuesta
+   * al contrato**: es lo que permite aplicar la política a todos los usuarios
+   * sin que cada uno tenga que leerla. Ausente = el valor por omisión
+   * (`IDLE_TIMEOUT_MS`). Es presentación del reloj, no autoriza nada: la
+   * sesión la sigue gobernando la API.
+   */
+  readonly idleTimeoutMinutes?: number;
+  /**
+   * Organizaciones de la persona que **no la dejan actuar ahora**, indexadas por tenant, con el motivo estable
+   * (`OUTSIDE_ALLOWED_HOURS`, `OUTSIDE_ALLOWED_NETWORK`, `IDLE_TIMEOUT`, `MFA_REQUIRED`, `MFA_ENROLLMENT_REQUIRED`).
+   * No están en `tenants` ni en `scopedRoles`: la política de una organización rige solo en ella y no cierra la
+   * sesión en las demás. Una petición con `X-Tenant-Id` de una de ellas recibe 403 con ese motivo. Dato para **mostrar**.
+   */
+  readonly deniedTenants?: Readonly<Record<string, string>>;
+  /**
+   * `true` en el **token de alcance limitado**: la persona debe dar de alta el segundo factor antes de usar la API.
+   * La API lo **impone**: solo deja pasar `/iam/me/mfa*`, el cierre de sesión, el refresco y `GET /iam/me`; todo lo demás
+   * es 403 `MFA_ENROLLMENT_REQUIRED`. Sale sin roles ni organizaciones. El refresco lo conserva y lo reemite completo al
+   * confirmar el factor.
+   */
+  readonly mfaEnrollment?: true;
   /** Expiración en segundos desde epoch, si el token la declara. */
   readonly exp?: number;
 }
@@ -180,6 +203,7 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
   const hpid = source['hpid'];
   const exp = source['exp'];
   const accountKind = source['accountKind'];
+  const idleTimeoutMinutes = source['idleTimeoutMinutes'];
 
   return {
     sub,
@@ -191,8 +215,13 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
     ...(typeof hpid === 'string' && hpid !== '' ? { hpid } : {}),
     ...(accountKind === 'PERSON' || accountKind === 'ORGANIZATION' ? { accountKind } : {}),
     ...(typeof exp === 'number' ? { exp } : {}),
+    ...(typeof idleTimeoutMinutes === 'number' && Number.isFinite(idleTimeoutMinutes) && idleTimeoutMinutes >= 5 && idleTimeoutMinutes <= 480
+      ? { idleTimeoutMinutes }
+      : {}),
     ...(toStringMapClaim('tenantNames', source['tenantNames']) ?? {}),
     ...(toStringMapClaim('tenantTypes', source['tenantTypes']) ?? {}),
+    ...(toStringMapClaim('deniedTenants', source['deniedTenants']) ?? {}),
+    ...(source['mfaEnrollment'] === true ? { mfaEnrollment: true as const } : {}),
     ...(toScopedRolesClaim(source['scopedRoles']) ?? {}),
   };
 }

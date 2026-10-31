@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
+import type { ChallengeRequestOptions } from '../../access-challenge/access-challenge';
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AnnulInvoiceInput,
@@ -92,25 +93,29 @@ export class BillingSimulatedClient {
   }
 
   /** Pago de una instancia del plan. Responde el cobro, con la nota de venta nueva. */
-  registerInstancePayment(chargeId: string, instanceId: string, input: RegisterInstancePaymentInput): Observable<SimulatedCharge> {
+  registerInstancePayment(chargeId: string, instanceId: string, input: RegisterInstancePaymentInput, options?: ChallengeRequestOptions): Observable<SimulatedCharge> {
     return this.http.post<SimulatedCharge>(
       this.url(
         `/billing/simulated/charges/${encodeURIComponent(chargeId)}/instances/${encodeURIComponent(instanceId)}/payments`,
       ),
       input,
+      options,
     );
   }
 
-  registerPayment(chargeId: string, methodCode: number): Observable<SimulatedCharge> {
-    return this.http.post<SimulatedCharge>(this.url(`/billing/simulated/charges/${encodeURIComponent(chargeId)}/payment`), {
-      methodCode,
-    });
+  registerPayment(chargeId: string, methodCode: number, options?: ChallengeRequestOptions): Observable<SimulatedCharge> {
+    return this.http.post<SimulatedCharge>(
+      this.url(`/billing/simulated/charges/${encodeURIComponent(chargeId)}/payment`),
+      { methodCode },
+      options,
+    );
   }
 
-  issueInvoice(chargeId: string, input: IssueInvoiceInput): Observable<SimulatedInvoice> {
+  issueInvoice(chargeId: string, input: IssueInvoiceInput, options?: ChallengeRequestOptions): Observable<SimulatedInvoice> {
     return this.http.post<SimulatedInvoice>(
       this.url(`/billing/simulated/charges/${encodeURIComponent(chargeId)}/invoices`),
       input,
+      options,
     );
   }
 
@@ -118,10 +123,11 @@ export class BillingSimulatedClient {
     return this.http.get<SimulatedInvoice>(this.url(`/billing/simulated/invoices/${encodeURIComponent(invoiceId)}`));
   }
 
-  annul(invoiceId: string, input: AnnulInvoiceInput): Observable<SimulatedInvoice> {
+  annul(invoiceId: string, input: AnnulInvoiceInput, options?: ChallengeRequestOptions): Observable<SimulatedInvoice> {
     return this.http.post<SimulatedInvoice>(
       this.url(`/billing/simulated/invoices/${encodeURIComponent(invoiceId)}/annulment`),
       input,
+      options,
     );
   }
 

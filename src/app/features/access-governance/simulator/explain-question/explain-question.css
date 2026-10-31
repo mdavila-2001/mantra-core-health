@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.pregunta {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.pregunta__fila {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--sp-3);
+}
+
+.pregunta__cuando {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.pregunta__leyenda {
+  padding: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pregunta__ayuda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.pregunta__acciones {
+  display: flex;
+  justify-content: flex-end;
+}

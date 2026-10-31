@@ -1,0 +1,145 @@
+:host {
+  display: block;
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.resumen__texto {
+  color: var(--text-secondary);
+}
+
+.resumen__vencido {
+  font-weight: 600;
+  color: var(--st-error-fg);
+}
+
+.enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.avance {
+  margin: 0 0 var(--sp-3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vacio {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.pasos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paso {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+.paso__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.paso__nombre {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.paso__opcional,
+.paso__ayuda,
+.paso__auto {
+  font-weight: 400;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.paso__ayuda,
+.paso__auto {
+  margin: 0;
+}
+
+.paso__accion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th,
+.tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+  text-align: start;
+}
+
+.asignar {
+  display: grid;
+  gap: var(--sp-3);
+  max-inline-size: 32rem;
+  margin-block-start: var(--sp-4);
+}
+
+.asignar__texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.datos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+}
+
+.datos div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.datos dt {
+  min-inline-size: 8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.datos dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.huella {
+  overflow-wrap: anywhere;
+  font-family: var(--f-mono);
+}

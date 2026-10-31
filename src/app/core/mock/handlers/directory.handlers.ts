@@ -1,5 +1,6 @@
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, STATUS, ORGANIZATION_TYPE } from '../fixtures/concepts';
+import { ALCANCE_ACCESO, INVITACIONES_PENDIENTES, MEMBRESIAS_DEL_APOYO, ROL_TENANT, TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
 import { affiliationList, MEDICAL, PROFESSIONALS, professionalById } from '../fixtures/people';
 import {
   conflict,
@@ -41,7 +42,9 @@ import {
     la agenda de la organización.
     ========================================================================== */
 
-interface TenantSimulado {
+export { ALCANCE_ACCESO, ROL_TENANT };
+
+export interface TenantSimulado {
   readonly id: string;
   readonly code: string;
   readonly legalName: string;
@@ -54,21 +57,12 @@ interface TenantSimulado {
   readonly timeZone: string;
 }
 
-export const ROL_TENANT = {
-  OWNER: uuid('concept-tenant-role-owner'),
-  ADMIN: uuid('concept-tenant-role-admin'),
-  STAFF: uuid('concept-tenant-role-staff'),
-} as const;
-export const ALCANCE_ACCESO = {
-  ALL_TENANT: uuid('concept-access-scope-all'),
-  BRANCH: uuid('concept-access-scope-branch'),
-} as const;
 const TIPO_SUCURSAL = {
   CLINIC: uuid('concept-branch-clinic'),
   OFFICE: uuid('concept-branch-office'),
 } as const;
 
-const tenants = new Coleccion<TenantSimulado>([
+export const tenants = new Coleccion<TenantSimulado>([
   {
     id: TENANT_CONSULTORIO,
     code: 'ROJAS',
@@ -105,6 +99,7 @@ const tenants = new Coleccion<TenantSimulado>([
     createdAt: iso(-800),
     timeZone: 'America/La_Paz',
   },
+  ...TENANTS_DEL_APOYO,
   {
     id: TENANT_FARMACIA,
     code: 'FARVIDA',
@@ -329,7 +324,7 @@ export function sucursalesDelTenant(tenantId: string) {
   );
 }
 
-const membresias = new Coleccion<{
+export const membresias = new Coleccion<{
   id: string;
   tenantId: string;
   userId: string;
@@ -430,6 +425,7 @@ const membresias = new Coleccion<{
     endDate: null,
     createdAt: iso(-200),
   },
+  ...MEMBRESIAS_DEL_APOYO,
   {
     id: uuid('membership-laboratorio-owner'),
     tenantId: TENANT_LABORATORIO,
@@ -442,6 +438,7 @@ const membresias = new Coleccion<{
     endDate: null,
     createdAt: iso(-200),
   },
+  ...INVITACIONES_PENDIENTES,
 ]);
 
 const asignaciones = new Coleccion<{
@@ -886,7 +883,9 @@ export function registrarDirectorio(router: MockRouter): void {
       tenantId: request.params['id']!,
       userId: datos.userId ?? '',
       tenantRoleConceptId: ROL_TENANT[datos.role ?? 'STAFF'],
-      statusConceptId: STATUS['ST-ACTIVE']!,
+      // La membresía nace PENDIENTE de aceptación: hasta que la persona la acepte no cuenta para su token, sus políticas,
+      // la lectura de la organización ni los vínculos de apoyo. Canjear un QR o una invitación dirigida sí activa al instante.
+      statusConceptId: STATUS['DIR_MEMBERSHIP_PENDING_ACCEPTANCE']!,
       accessScopeConceptId: ALCANCE_ACCESO[datos.accessScope ?? 'ALL_TENANT'],
       primaryBranchId: datos.primaryBranchId ?? null,
       startDate: isoDia(0),

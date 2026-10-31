@@ -718,6 +718,8 @@ conjunto(
 );
 export const STATUS = define('VS_RECORD_STATUS', [
   ['ST-ACTIVE', 'Activo'],
+  // Membresía creada por una organización que la persona todavía no aceptó (`DIR_MEMBERSHIP_PENDING_ACCEPTANCE`).
+  ['DIR_MEMBERSHIP_PENDING_ACCEPTANCE', 'Invitación pendiente de aceptación'],
   ['ST-INACTIVE', 'Inactivo'],
   ['ST-PENDING', 'Pendiente'],
   ['ST-VERIFIED', 'Verificado'],

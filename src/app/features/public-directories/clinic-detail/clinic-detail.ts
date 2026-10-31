@@ -16,6 +16,7 @@ import { PageHeader } from '@shared/components/organisms/page-header/page-header
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
 import { PublicCatalogDetail } from '../public-catalog-detail';
+import { SolicitarPertenecer } from './solicitar-pertenecer/solicitar-pertenecer';
 
 /**
  * **La ficha de una clínica**, dentro del panel.
@@ -42,6 +43,7 @@ import { PublicCatalogDetail } from '../public-catalog-detail';
     SectionHeading,
     ServiceIcon,
     Skeleton,
+    SolicitarPertenecer,
     ViewStateHost,
   ],
   templateUrl: './clinic-detail.html',

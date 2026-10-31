@@ -100,12 +100,14 @@ ENV PUBLIC_API_BASE_URL=$PUBLIC_API_BASE_URL
 ARG PUBLIC_AI_BASE_URL="/ai"
 ENV PUBLIC_AI_BASE_URL=$PUBLIC_AI_BASE_URL
 
-# `production` (el valor por omisión de `ng build`) es la maqueta: sin este ARG
-# el contenedor sale SIEMPRE con el backend simulado encendido, sin importar
-# qué variables de entorno se le pasen. Un despliegue real pide
-# `--build-arg BUILD_CONFIGURATION=production-api` (H1.S1): SSR encendido,
-# simulador y las cuatro demostraciones apagadas. La maqueta sigue viva sin
-# tocar nada: no pasar el ARG construye exactamente lo mismo que antes.
+# `production` (el valor por omisión de `ng build`) y `production-api` son builds de API REAL: `mockBackend: false` en
+# su entorno (lo fijan `environment.production-api.spec.ts` y `execution environments`) y, desde la revisión de seguridad,
+# `angular.json` sustituye `core/mock/mock-backend.interceptor.ts` por `mock-backend.interceptor.disabled.ts`
+# (`fileReplacements`), así que ni el simulador, ni sus cuentas y códigos de prueba (`123456`, `12345678`), ni el chunk
+# de ~4,6 MB de manejadores viajan en la imagen (F4). Un despliegue real puede pedir cualquiera de las dos
+# (`--build-arg BUILD_CONFIGURATION=production-api`); no pasar el ARG construye `production`. El backend simulado solo
+# existe en los builds `demo` y `development,demo` (`yarn start:demo`, los e2e con simulador), que NO se despliegan con
+# este Dockerfile.
 ARG BUILD_CONFIGURATION="production"
 
 # `yarn build` encadena `env:generate`, que además estampa versión y commit en

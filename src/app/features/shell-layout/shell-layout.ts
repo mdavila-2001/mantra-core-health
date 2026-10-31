@@ -57,6 +57,8 @@ const PATIENT_STYLESHEET_HREF = 'paciente.css?v=2';
 import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
 import { MIS_CUESTIONARIOS_ROUTE } from '../account/questionnaires/questionnaires.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
+import { DeniedTenantsBanner } from './denied-tenants-banner/denied-tenants-banner';
+import { NewDeviceBanner } from './new-device-banner/new-device-banner';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -117,6 +119,10 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
   PHARMACY: 'Farmacia',
   DIAGNOSTIC_CENTER: 'Laboratorio o centro de diagnóstico',
   PAYER: 'Aseguradora',
+  // Cuando la API declare `accountKind: 'ORGANIZATION'` para un hospital o una
+  // clínica, el menú de la cuenta tiene que nombrarla por lo que es.
+  HOSPITAL: 'Hospital',
+  CLINIC: 'Clínica',
 };
 
 @Component({
@@ -136,6 +142,8 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     BackLink,
     Badge,
     NavIcon,
+    NewDeviceBanner,
+    DeniedTenantsBanner,
     Tooltip,
   ],
   templateUrl: './shell-layout.html',

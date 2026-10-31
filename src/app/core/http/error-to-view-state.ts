@@ -8,6 +8,8 @@ import {
   validation,
 } from '../view-state/view-state';
 import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
+import { isTenantDenialReason, tenantDenialHint, tenantDenialText } from '../data-access/iam/tenant-denial';
+import { accessErrorText } from '../data-access/access-governance/access-errors';
 import { readApiError, readFieldViolations, type ApiErrorBody } from './api-error';
 
 /**
@@ -101,8 +103,21 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
      * **no se le ofrece una acción**. Inventar una sería mandarla a un lugar
      * donde tampoco va a poder.
      */
-    case 'FORBIDDEN':
-      return forbidden({ message: body.message, ...(requestId === undefined ? {} : { requestId }) });
+    case 'FORBIDDEN': {
+      // 403 de una organización que **niega ahora** a la persona (política de sesión): trae el motivo estable en
+      // `details.reason` y `details.tenantId`. No es un permiso que falta ni cierra la sesión: se dice qué pasa y qué hacer.
+      const denial = tenantDenialOf(body);
+      if (denial !== null) {
+        return forbidden({
+          message: `${denial.message} ${tenantDenialHint(denial.reason)}`,
+          ...(denial.reason === 'MFA_ENROLLMENT_REQUIRED' ? { nextAction: { label: 'Activar verificación en dos pasos', route: '/my-account/security/mfa' } } : {}),
+          ...(requestId === undefined ? {} : { requestId }),
+        });
+      }
+      // 403 del gobierno de accesos (paso extra, aprobación, regla de la organización…): el texto en lenguaje simple por `reason`.
+      // Quien puede resolverlo (`withAccessChallenge`) ya lo intentó; lo que llega acá es un muro o un desafío no resuelto.
+      return forbidden({ message: accessErrorText(body.reason) ?? body.message, ...(requestId === undefined ? {} : { requestId }) });
+    }
 
     /**
      * La puerta. Mismo 403, estado opuesto: hay algo que la persona puede hacer,
@@ -244,4 +259,17 @@ function retryAfterOf(error: HttpErrorResponse): number | undefined {
 
   const seconds = Number(header);
   return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
+}
+
+/**
+ * El 403 de una organización que niega ahora a la persona: `reason` y `details: { tenantId, reason }` con uno de los
+ * cinco motivos (`OUTSIDE_ALLOWED_HOURS`, `OUTSIDE_ALLOWED_NETWORK`, `IDLE_TIMEOUT`, `MFA_REQUIRED`,
+ * `MFA_ENROLLMENT_REQUIRED`), o `null` si es otro 403. El token de alcance limitado trae `MFA_ENROLLMENT_REQUIRED` sin
+ * `tenantId` (la API lo exige en todo salvo el alta del factor): también se dice con ese motivo.
+ */
+function tenantDenialOf(body: ApiErrorBody): { readonly reason: string; readonly message: string } | null {
+  const reason = body.details?.['reason'];
+  if (!isTenantDenialReason(reason)) return null;
+  const donde = typeof body.details?.['tenantId'] === 'string' ? 'La organización que eligió' : 'Su cuenta';
+  return { reason, message: `${donde} no le permite actuar ahora: ${tenantDenialText(reason)}.` };
 }

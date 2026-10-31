@@ -772,6 +772,11 @@
     <!-- El índice negativo lo hace enfocable por script tras navegar sin
          meterlo en el orden de tabulación. -->
     <main class="app-main__inner" id="contenido-principal" tabindex="-1">
+      <!-- Solo aparece si el inicio de sesión fue desde un dispositivo nuevo y la
+           política de la organización lo avisa (`NewDeviceAlert`). -->
+      <app-new-device-banner />
+      <!-- Las organizaciones que niegan ahora a la persona (`deniedTenants` del token): aviso, no bloqueo. -->
+      <app-denied-tenants-banner />
       <router-outlet />
     </main>
   </div>

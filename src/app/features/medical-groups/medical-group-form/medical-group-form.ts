@@ -3,9 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   linkedSignal,
   signal,
+  untracked,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
@@ -157,10 +159,20 @@ export class MedicalGroupForm {
   protected readonly byServiceId = (row: ServiceCatalogItem): string => row.id;
   protected readonly serviceName = (row: ServiceCatalogItem): string => row.name;
 
+  constructor() {
+    // El catálogo se lista apenas se conoce la práctica, sin esperar a que la
+    // persona escriba: con la lista vacía «Escriba para buscar» parecía que la
+    // práctica no tenía servicios y no había nada que elegir. Al cambiar de
+    // práctica se vuelve a leer, con lo que ya estaba escrito.
+    effect(() => {
+      if (this.selectedPractice() === null) return;
+      untracked(() => this.searchService(this.serviceQuery()));
+    });
+  }
+
   protected changePractice(practiceId: string | null): void {
     this.selectedPractice.set(practiceId);
     this.selectedService.set(null);
-    this.searchService(this.serviceQuery());
   }
 
   protected searchService(text: string): void {

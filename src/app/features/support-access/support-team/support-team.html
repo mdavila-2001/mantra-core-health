@@ -1,0 +1,144 @@
+<app-page-header
+  title="Equipo de apoyo"
+  subtitle="Las personas que le ayudan a administrar. Cada una tiene su propio vínculo, su rol y sus permisos: nadie comparte contraseña."
+/>
+
+<p class="equipo__enlaces">
+  <a
+    app-button
+    variant="outline"
+    size="sm"
+    routerLink="/administration/support-team/reply-templates"
+    data-testid="equipo-respuestas-enlace"
+    >Respuestas preparadas</a
+  >
+</p>
+
+<app-card class="equipo" padding="lg" data-testid="equipo-card">
+  <app-data-table
+    caption="Personal de apoyo de la organización"
+    [state]="state()"
+    [columns]="columns()"
+    [trackBy]="rowId"
+    [rowLabel]="rowLabel"
+    (retry)="cargar()"
+    (refresh)="cargar()"
+    data-testid="equipo-tabla"
+  />
+</app-card>
+
+<ng-template #personaCell let-fila>
+  <span class="equipo__nombre" [attr.data-testid]="'equipo-nombre-' + fila.id">{{
+    fila.personName
+  }}</span>
+  <span class="equipo__sub">{{ rol(fila) }} · {{ origen(fila) }}</span>
+</ng-template>
+
+<ng-template #alcanceCell let-fila>
+  <span class="equipo__alcance" [attr.data-testid]="'equipo-alcance-' + fila.id">{{
+    alcance(fila)
+  }}</span>
+  <span class="equipo__insignias" [attr.data-testid]="'equipo-insignias-' + fila.id">
+    <app-grant-badges [grants]="fila.grants" [personName]="fila.personName" />
+  </span>
+</ng-template>
+
+<ng-template #estadoCell let-fila>
+  <app-badge [variant]="estadoTono(fila)" [attr.data-testid]="'equipo-estado-' + fila.id">{{
+    estadoTexto(fila)
+  }}</app-badge>
+  @if (recertificacion(fila); as aviso) {
+    <span class="equipo__aviso">{{ aviso }}</span>
+  }
+  @if (fila.status === 'ENDED' && fila.endedReason) {
+    <span class="equipo__sub">{{ fila.endedReason }}</span>
+  }
+  @if (indicadoresDe(fila); as lista) {
+    @if (lista.length > 0) {
+      <ul
+        class="equipo__indicadores"
+        role="list"
+        [attr.aria-label]="'Indicadores de gobierno de ' + fila.personName"
+        [attr.data-testid]="'equipo-indicadores-' + fila.id"
+      >
+        @for (i of lista; track i.key) {
+          <li>
+            <app-badge [variant]="i.tone" size="sm"
+              ><span aria-hidden="true">{{ i.icon }} </span>{{ i.text }}</app-badge
+            >
+          </li>
+        }
+      </ul>
+    }
+  }
+  @if (fila.status !== 'ENDED') {
+    <span class="equipo__sub" [attr.data-testid]="'equipo-ultimo-uso-' + fila.id">
+      @if (fila.lastActivityAt) {
+        Último uso: {{ fechaHora(fila.lastActivityAt) }}
+      } @else {
+        Sin actividad registrada
+      }
+    </span>
+  }
+</ng-template>
+
+<ng-template #accionesCell let-fila>
+  @if (fila.status !== 'ENDED') {
+    <span class="equipo__acciones">
+      <a
+        app-button
+        variant="outline"
+        size="sm"
+        [routerLink]="['/administration/support-team', fila.id]"
+        [attr.aria-label]="'Permisos de ' + fila.personName"
+        [attr.data-testid]="'equipo-permisos-' + fila.id"
+      >
+        Permisos
+      </a>
+      <a
+        app-button
+        variant="ghost"
+        size="sm"
+        [routerLink]="['/administration/support-team', fila.id, 'move']"
+        [attr.aria-label]="'Cambiar de rol o alcance a ' + fila.personName"
+        [attr.data-testid]="'equipo-mover-' + fila.id"
+      >
+        Cambiar de rol
+      </a>
+      <a
+        app-button
+        variant="ghost"
+        size="sm"
+        [routerLink]="['/administration/support-team', fila.id, 'offboard']"
+        [attr.aria-label]="'Dar de baja con traspaso a ' + fila.personName"
+        [attr.data-testid]="'equipo-baja-' + fila.id"
+      >
+        Dar de baja
+      </a>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [disabled]="ocupada() !== null"
+        [attr.aria-label]="'Confirmar el vínculo de ' + fila.personName"
+        [attr.data-testid]="'equipo-recertificar-' + fila.id"
+        (clicked)="recertificar(fila)"
+      >
+        Confirmar vínculo
+      </button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [disabled]="ocupada() !== null"
+        [attr.aria-label]="'Terminar el vínculo de ' + fila.personName"
+        [attr.data-testid]="'equipo-terminar-' + fila.id"
+        (clicked)="terminar(fila)"
+      >
+        Terminar
+      </button>
+    </span>
+  }
+</ng-template>
