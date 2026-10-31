@@ -1,6 +1,7 @@
 ﻿import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { Meta } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 
 import { NewDeviceAlert } from '../../../core/auth/new-device-alert';
@@ -247,7 +248,21 @@ describe('Login', () => {
 
         expect(navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
       });
+
+      it('con varias organizaciones, el returnUrl de la receta compartida viaja a la elección', async () => {
+        await realNavigate('/auth?returnUrl=%2Frx%2Ftoken-de-prueba');
+        loginWith(sessionWithRoles(['PHARMACY_STAFF'], ['t-1', 't-2']));
+
+        expect(navegaciones).toEqual([`${TENANT_SELECTION_ROUTE}?returnUrl=%2Frx%2Ftoken-de-prueba`]);
+      });
     });
+  });
+
+  it('con la receta compartida en returnUrl, la pantalla no manda su dirección como Referer', async () => {
+    await realNavigate('/auth?returnUrl=%2Frx%2Ftoken-de-prueba');
+    TestBed.createComponent(Login);
+
+    expect(TestBed.inject(Meta).getTag('name="referrer"')?.content).toBe('no-referrer');
   });
 
   describe('errores', () => {

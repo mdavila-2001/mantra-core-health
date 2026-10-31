@@ -47,10 +47,19 @@ describe('ShareDialog', () => {
     Reflect.deleteProperty(navigator, 'share');
   });
 
-  function mount(): ComponentFixture<ShareDialog> {
+  /** Abre el diálogo y, salvo que se pida lo contrario, pulsa «Crear enlace». */
+  function mount(requestLink = true): ComponentFixture<ShareDialog> {
     const fixture = TestBed.createComponent(ShareDialog);
     fixture.componentRef.setInput('target', { encounterId: 'enc-1' });
     fixture.detectChanges();
+    if (requestLink) {
+      (
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="prescription-share-dialog-create"]',
+        ) as HTMLButtonElement
+      ).click();
+      fixture.detectChanges();
+    }
     return fixture;
   }
 
@@ -62,6 +71,20 @@ describe('ShareDialog', () => {
     http.expectOne(CREATE_URL).flush(CREATED);
     fixture.detectChanges();
   }
+
+  it('abrir el diálogo no crea ningún enlace: se crea con el botón (H12-12)', () => {
+    const fixture = mount(false);
+
+    http.expectNone(CREATE_URL);
+    expect(byTestId(fixture, 'prescription-share-dialog-create')).not.toBeNull();
+    expect(byTestId(fixture, 'prescription-share-dialog-url')).toBeNull();
+
+    // Abrir y cerrar tres veces tampoco deja tres enlaces.
+    fixture.destroy();
+    mount(false).destroy();
+    mount(false).destroy();
+    http.expectNone(CREATE_URL);
+  });
 
   it('crea el enlace una sola vez, con la receta elegida', () => {
     const fixture = mount();

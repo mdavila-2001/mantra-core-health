@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal, type OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
@@ -11,6 +11,9 @@ import { tenantDenialHint, tenantDenialText } from '../../../core/data-access/ia
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { entryDestination } from '../../reporting/reporting-access';
+import { safeReturnUrl } from '../../account/mfa-enrollment/mfa-code';
+import { markPageAsNoIndex } from '../../prescription-share/no-index';
+import { isShareTokenRoute } from '../../prescription-share/share-return-url';
 
 /**
  * Selector de organización.
@@ -37,6 +40,8 @@ export class TenantSelection implements OnInit {
   private readonly router = inject(Router);
   private readonly invitations = inject(MembershipInvitationsClient);
   private readonly directory = inject(DirectoryClient);
+  /** El enlace que se pidió antes del login (`login.ts`), ya validado como ruta interna. */
+  private readonly returnUrl = safeReturnUrl(inject(ActivatedRoute).snapshot.queryParamMap.get('returnUrl'));
 
   readonly tenants = this.auth.tenants;
 
@@ -50,6 +55,13 @@ export class TenantSelection implements OnInit {
   protected readonly pendingInvitations = signal(0);
   /** Los nombres de las organizaciones que niegan: el token solo trae el de las que dejan entrar. */
   private readonly deniedNames = signal<Readonly<Record<string, string>>>({});
+
+  constructor() {
+    // Con la receta compartida en `returnUrl`, esta pantalla no manda su dirección como `Referer`.
+    if (isShareTokenRoute(this.returnUrl)) {
+      markPageAsNoIndex();
+    }
+  }
 
   ngOnInit(): void {
     // Un aviso, no una condición: si no se puede leer, el selector sigue igual.
@@ -78,7 +90,8 @@ export class TenantSelection implements OnInit {
 
   choose(tenantId: string): void {
     this.auth.selectTenant(tenantId);
-    // Tras elegir organización, el mismo destino que el login (`login.ts`).
-    void this.router.navigateByUrl(entryDestination(this.auth.roles()));
+    // Tras elegir organización, el mismo destino que el login (`login.ts`): el
+    // enlace pedido si lo hay, como la receta que abre una farmacia.
+    void this.router.navigateByUrl(this.returnUrl ?? entryDestination(this.auth.roles()));
   }
 }

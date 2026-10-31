@@ -387,6 +387,14 @@ describe('PrescriptionsPage · compartir', () => {
 
     shareButtons(fixture)[0].click();
     fixture.detectChanges();
+    // Abrir el diálogo no crea nada: el enlace se crea con su botón.
+    http.expectNone('/clinical/prescription-shares');
+    (
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="prescription-share-dialog-create"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
 
     const req = http.expectOne('/clinical/prescription-shares');
     expect(req.request.method).toBe('POST');
