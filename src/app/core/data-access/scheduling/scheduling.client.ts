@@ -343,6 +343,8 @@ export class SchedulingClient {
         ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
         // P36: sólo si el médico lo eligió. Ausente ≡ turnos fijos.
         ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
+        // F5d: el consultorio, sólo si se eligió uno.
+        ...(template.careSpaceId === undefined ? {} : { careSpaceId: template.careSpaceId }),
       },
       tenantOptions(scope),
     );
