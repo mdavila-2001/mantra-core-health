@@ -17,12 +17,19 @@ export interface ChartTheme {
   readonly malo: string;
   readonly superficie: string;
   readonly rampa: readonly string[];
+  /**
+   * Ordinal de 4 pasos (`--chart-ord-1..4` = `--chart-seq-2..5`): etapas de embudo,
+   * cubos de latencia, niveles. Opcional para no romper a quien arma el tema a mano.
+   */
+  readonly ordinal?: readonly string[];
+  /** Divergente de 5 puntos, del polo frío al cálido, con el neutro al medio. */
+  readonly divergente?: readonly string[];
   /** Familia tipográfica real de la página: ECharts mide el texto con ella para ubicar leyendas y ejes. */
   readonly fuente: string;
 }
 
 /** Paleta categórica en orden FIJO (validada, ADR-0017); cambia por tema en `styles.css`. */
-const SERIE_TOKENS = [
+export const SERIE_TOKENS = [
   '--chart-1',
   '--chart-2',
   '--chart-3',
@@ -33,12 +40,29 @@ const SERIE_TOKENS = [
   '--chart-8',
 ] as const;
 
-const RAMPA_TOKENS = [
+export const RAMPA_TOKENS = [
   '--chart-seq-1',
   '--chart-seq-2',
   '--chart-seq-3',
   '--chart-seq-4',
   '--chart-seq-5',
+] as const;
+
+/** Ordinal validado con `--ordinal` en claro y oscuro (scripts/check-chart-palette.mjs). */
+export const ORDINAL_TOKENS = [
+  '--chart-ord-1',
+  '--chart-ord-2',
+  '--chart-ord-3',
+  '--chart-ord-4',
+] as const;
+
+/** Divergente: polo frío → neutro (`--bg-surface-alt`) → polo cálido. */
+export const DIVERGENTE_TOKENS = [
+  '--chart-div-neg',
+  '--chart-div-neg-soft',
+  '--chart-div-mid',
+  '--chart-div-pos-soft',
+  '--chart-div-pos',
 ] as const;
 
 function leer(estilo: CSSStyleDeclaration, token: string, respaldo: string): string {
@@ -60,6 +84,8 @@ export function leerTemaGraficos(): ChartTheme {
     malo: leer(estilo, '--st-error-fg', 'currentColor'),
     superficie: leer(estilo, '--bg-surface', 'Canvas'),
     rampa: RAMPA_TOKENS.map((t) => leer(estilo, t, 'currentColor')),
+    ordinal: ORDINAL_TOKENS.map((t) => leer(estilo, t, 'currentColor')),
+    divergente: DIVERGENTE_TOKENS.map((t) => leer(estilo, t, 'currentColor')),
     fuente: getComputedStyle(document.body).fontFamily || 'sans-serif',
   };
 }
