@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, Subject, tap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import * as wire from '../wire';
@@ -45,10 +45,11 @@ type WireReferral = wire.ConNulos<
  * profesional, o la deriva a una organización médica, por un servicio
  * concreto de su catálogo.
  *
- * La derivación **no reserva nada**: la API le avisa a la persona en su
- * campana, con un enlace a la ficha del profesional recomendado, y ahí reserva
- * con la reserva de siempre. Elegir otro profesional de la misma especialidad
- * sigue siendo posible.
+ * La derivación **no reserva nada**: con un encuentro, la API puede avisarle
+ * a la persona en su campana —por un profesional o una organización de la
+ * plataforma, si tiene cuenta de portal; la respuesta no dice si el aviso
+ * salió— y ahí reserva con la reserva de siempre. Elegir otro profesional de la misma especialidad sigue siendo
+ * posible.
  *
  * Quién puede recibir una derivación y qué servicios ofrece lo resuelve la API
  * (`/referrals/targets` y `/referrals/target-services`), no el directorio
@@ -58,19 +59,38 @@ type WireReferral = wire.ConNulos<
 export class ReferralsClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  private readonly issuedReferrals = new Subject<ReferralCreated>();
 
   /**
-   * `POST /referrals` — emite la derivación. 404 si el encuentro no es de esa
-   * persona o de la organización de quien deriva; 409 si ya existe una
-   * equivalente.
+   * Cada derivación emitida con éxito, de quien sea que la haya pedido.
+   *
+   * Existe para que la lista que se muestra (`ConsultationReferrals`) se relea
+   * **aunque quien emitió ya no esté montado**: si el médico cierra el modal
+   * mientras el `POST` viaja, el bloque se destruye y su `output` ya no llega
+   * a nadie; la respuesta, en cambio, sigue pasando por acá.
+   */
+  readonly issued: Observable<ReferralCreated> = this.issuedReferrals.asObservable();
+
+  /**
+   * `POST /referrals` — emite la derivación. 404 con `reason` si el destino,
+   * el servicio o el encuentro no están (`REFERRAL_TARGET_NOT_FOUND`,
+   * `REFERRAL_SERVICE_NOT_FOUND`, `REFERRAL_ENCOUNTER_NOT_FOUND`); 409
+   * `REFERRAL_ALREADY_EXISTS` si ya hay una equivalente en ese encuentro; 422
+   * si falta el destino o el servicio no corresponde (ver `referrals.errors.ts`).
    */
   create(body: NewReferral): Observable<ReferralCreated> {
     const { validUntil, transfer, ...rest } = body;
-    return this.http.post<ReferralCreated>(this.url('/referrals'), {
-      ...rest,
-      ...(validUntil === undefined ? {} : { validUntil: toLocalDay(validUntil) }),
-      ...(transfer === undefined ? {} : { transfer: transferToWire(transfer) }),
-    });
+    return this.http
+      .post<ReferralCreated>(this.url('/referrals'), {
+        ...rest,
+        ...(validUntil === undefined ? {} : { validUntil: toLocalDay(validUntil) }),
+        ...(transfer === undefined ? {} : { transfer: transferToWire(transfer) }),
+      })
+      .pipe(
+        // La persona es la del pedido: es la que se sabe seguro, venga lo que
+        // venga en la respuesta.
+        tap((created) => this.issuedReferrals.next({ ...created, patientProfileId: body.patientProfileId })),
+      );
   }
 
   /**

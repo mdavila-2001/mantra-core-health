@@ -7,6 +7,7 @@ import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarPersonalDeApoyo } from './support-staff.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registerReferralIssue } from './referral-issue.handlers';
 import { registerReferralLifecycle } from './referral-lifecycle.handlers';
 import { registerReferrals } from './referrals.handlers';
 import { registerProcedureCenters } from './procedure-centers.handlers';
@@ -110,6 +111,7 @@ export function crearRouterSimulado(): MockRouter {
   registerPrescriptionShares(router);
   registerPharmacyPrescriptionShares(router);
   registerReferrals(router);
+  registerReferralIssue(router);
   registerReferralLifecycle(router);
   registerReceivedServices(router);
   registerProcedureCenters(router);

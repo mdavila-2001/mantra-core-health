@@ -207,6 +207,7 @@
               [canWrite]="puedeEscribir()"
               [appointments]="citasParaElDiagnostico()"
               [referrals]="chartReferrals.state()"
+              [refreshError]="chartReferrals.refreshError()"
               (cambio)="chartReferrals.reload()"
               (retry)="chartReferrals.reload()"
             />
