@@ -23,6 +23,9 @@ import {
   type OpinionFilter,
 } from '../../domain/opinion';
 import { KIND_LABELS, SENTIMENT_LABELS, SOURCES, SOURCE_NAMES, TOPICS, type MentionSource, type Sentiment } from '../../domain/opinion.data';
+import { CommentsTab } from './comments-tab';
+import { EnvironmentTab } from './environment-tab';
+import { IdeasTab } from './ideas-tab';
 import { InsightsContext } from '../../insights-context';
 
 const TOPIC_NAME = new Map(TOPICS.map((t) => [t.id, t.label]));
@@ -36,7 +39,7 @@ const TOPIC_NAME = new Map(TOPICS.map((t) => [t.id, t.label]));
  */
 @Component({
   selector: 'app-insights-opinion',
-  imports: [ViewStateHost, FilterBar, Panel, Select, SegmentedControl, StatTile, InsightCard, StackedChart, ScatterChart, LineChart, BarChart],
+  imports: [ViewStateHost, FilterBar, Panel, Select, SegmentedControl, StatTile, InsightCard, StackedChart, ScatterChart, LineChart, BarChart, CommentsTab, EnvironmentTab, IdeasTab],
   templateUrl: './opinion-page.html',
   styleUrl: './opinion-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +48,8 @@ export class OpinionPage {
   protected readonly ctx = inject(InsightsContext);
   protected readonly source = signal<MentionSource | 'all'>('all');
   protected readonly sentimentView = signal<'all' | Sentiment>('all');
+  protected readonly tab = signal<'perception' | 'comments' | 'environment' | 'ideas'>('perception');
+  protected readonly tabOptions = [{ value: 'perception', label: 'Percepción' }, { value: 'comments', label: 'Comentarios' }, { value: 'environment', label: 'Salud y economía' }, { value: 'ideas', label: 'Ideas de campaña' }];
   private readonly attended = signal<ReadonlySet<string>>(new Set());
 
   protected readonly sourceOptions: readonly SelectOption<string>[] = [{ value: 'all', label: 'Todas las fuentes' }, ...SOURCES.map((s) => ({ value: s, label: SOURCE_NAMES[s] }))];
@@ -114,6 +119,7 @@ export class OpinionPage {
   protected readonly representativity = REPRESENTATIVITY_LABELS;
   protected topicName(id: string): string { return TOPIC_NAME.get(id) ?? id; }
   protected setSource(v: string): void { this.source.set(v as MentionSource | 'all'); }
+  protected setTab(v: string): void { this.tab.set(v as 'perception' | 'comments' | 'environment' | 'ideas'); }
   protected setView(v: string): void { this.sentimentView.set(v as 'all' | Sentiment); }
   protected markAttended(id: string): void { this.attended.update((s) => new Set(s).add(id)); }
   protected change(v: number | null): string { return v === null ? '—' : formatChange(v); }
