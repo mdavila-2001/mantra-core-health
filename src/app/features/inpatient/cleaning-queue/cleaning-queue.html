@@ -1,0 +1,68 @@
+<app-page-header title="Cola de limpieza" [subtitle]="site()?.name ?? 'Órdenes de limpieza del establecimiento'" [breadcrumbs]="breadcrumbs()">
+  <span page-meta class="queue__freshness" data-testid="queue-freshness" aria-live="polite">Actualizado {{ freshness() }}</span>
+  <div page-actions class="queue__header-actions">
+    <button app-button size="sm" variant="outline" (clicked)="refresh()">Actualizar</button>
+    <a app-button size="sm" variant="ghost" [routerLink]="boardRoute" [queryParams]="{ site: siteId() }">Tablero de camas</a>
+    @if (access.can(siteId(), 'f2.cleaning.create')) {
+      <button app-button size="sm" data-testid="queue-new" (clicked)="creating.set(true)">Pedir una limpieza</button>
+    }
+  </div>
+</app-page-header>
+
+<app-view-state-host [state]="gate()" (retry)="access.reload()">
+  @if (failure(); as f) {
+    <app-view-state-host class="queue__failure" data-testid="queue-failure" [state]="f" (retry)="refresh()" />
+  }
+  <app-card class="queue" padding="lg" data-testid="cleaning-queue">
+    <div class="queue__toolbar">
+      <app-filter-bar [filters]="filters" [showSearch]="false" />
+      <app-segmented-control [options]="scopes" [value]="scope()" ariaLabel="Qué órdenes ver" (valueChange)="setScope($event)" data-testid="queue-scope" />
+    </div>
+    <app-data-table
+      data-testid="queue-table"
+      [state]="rows()"
+      [columns]="columns()"
+      [trackBy]="byId"
+      caption="Órdenes de limpieza abiertas, por prioridad"
+      stackedOnMobile
+      (retry)="refresh()"
+      (refresh)="refresh()"
+    />
+  </app-card>
+</app-view-state-host>
+
+@if (creating() && siteId(); as sid) {
+  <app-new-order-dialog [siteId]="sid" (saved)="afterCreate()" (closed)="creating.set(false)" />
+}
+
+<ng-template #cellSpace let-o>
+  <strong class="queue__code">{{ o.careSpaceCode }}</strong>
+  <span class="queue__muted">{{ o.careSpaceName }}</span>
+</ng-template>
+
+<ng-template #cellType let-o>
+  <app-badge size="sm" [variant]="o.typeCode === 'CLEAN_TERMINAL' ? 'error' : 'secondary'" [attr.data-terminal]="o.typeCode === 'CLEAN_TERMINAL'">{{ label(o.typeCode) }}</app-badge>
+  <span class="queue__muted">{{ label(o.triggerCode) }}</span>
+</ng-template>
+
+<ng-template #cellPriority let-o>
+  <app-badge size="sm" [variant]="o.priorityCode === 'CLN_PRIO_STAT' ? 'error' : o.priorityCode === 'CLN_PRIO_URGENT' ? 'warning' : 'secondary'">{{ label(o.priorityCode) }}</app-badge>
+</ng-template>
+
+<ng-template #cellStatus let-o>
+  <span data-testid="queue-status">{{ label(o.statusCode) }}{{ o.statusCode === 'CLN_DONE' && o.inspectionRequired ? ' · falta inspección' : '' }}</span>
+</ng-template>
+
+<ng-template #cellAge let-o>
+  <span class="queue__age">{{ ago(o.requestedAt) }}</span>
+</ng-template>
+
+<ng-template #cellAssigned let-o>{{ assignee(o) }}</ng-template>
+
+<ng-template #cellActions let-o>
+  @if ((o.allowedTransitions ?? []).length > 0) {
+    <app-row-actions [actions]="actionsOf(o)" [fila]="o.careSpaceCode" (actionSelected)="act(o, $event)" />
+  } @else {
+    <span class="queue__muted">—</span>
+  }
+</ng-template>

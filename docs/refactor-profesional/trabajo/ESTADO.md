@@ -32,9 +32,24 @@ Pendientes declarados (Desvíos W-F4F5 del contrato, segunda pasada): F5d bloque
 hizo; la firma del informe que cierra el caso se emula en la maqueta; las rutas de limpieza se solapan con F2 (otro
 agente) y quedaron en el mismo prefijo `/cleaning-orders`; contra la API real no se ejecutó.
 
+## Infraestructura F2 + F3 (web) — 2026-10-31
+
+**Tarea verificada:** rama `infra-f2f3-web` · 2026-10-31 · **Infraestructura hospitalaria F2 + F3 (web)**
+(contrato `CONTRATO-F2-F5.md` §F2.4 y §F3.4). Detalle en `EVIDENCIAS.md` § «Infraestructura F2 + F3». Revisión
+independiente: **pendiente** — quien implementa no aprueba.
+
+| Pantalla | Qué quedó |
+|---|---|
+| `/inpatient/bed-board` | pestañas por unidad con recuentos derivados, grilla (`bed-tile`) ⇄ lista, filtros en la URL, leyenda v2-0116, «Actualizado hace N s», sondeo 30 s + foco, S7 a los 120 s; panel lateral con ejes, bloqueos, orden abierta, historial A20, acciones F2 y el slot `adtActions` (F3) |
+| `/inpatient/cleaning` | cola por prioridad sin datos de paciente, transiciones que da la API, inspección por otra persona, «mías», pedido manual |
+| `/inpatient/admissions/new` | `PaginatedForm` Paciente · Datos · Cama · Confirmar; mini tablero de asignables, compatibilidad en vivo, forzado con justificación (20+) sólo con supervisión |
+| `/inpatient/stays/:id` | una tarjeta con 4 pestañas: cama actual, movimientos (A01/A02/A17/A03), incidentes (revisión), egreso |
+| `/inpatient/census` · `/inpatient/indicators` | vista previa vs. cerrado (`StatusSeal`), cierre, ajuste «original → ajustado»; KPI OPS con fórmula, prueba cruzada, rotación, cobertura con «Cerrar censo del …» |
+| Ficha de espacio (F1) · expediente | pestaña «Operación»; `admission-block` con cama actual y «Internar» |
+
 ## Infraestructura F1 (web) — 2026-10-30
 
-Rama `infra-f1-web` · 2026-10-30 · **Infraestructura hospitalaria F1 (web)**
+**Tarea verificada:** rama `infra-f1-web` · 2026-10-30 · **Infraestructura hospitalaria F1 (web)**
 (contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F0-F1.md` §4). Detalle en
 `EVIDENCIAS.md` § «Infraestructura F1». Revisión independiente (`visual-reviewer`, `frontend-reviewer`,
 `regression-auditor`): **pendiente** — quien implementa no aprueba.

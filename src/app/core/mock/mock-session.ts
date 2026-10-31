@@ -579,7 +579,36 @@ export const MOCK_USERS: readonly MockUser[] = [
     personId: IDS.suarez.personId,
     accountKind: 'PERSON',
   },
+  // Infraestructura F2/F3 (31/10/2026): el personal del Hospital San Lucas, una
+  // cuenta por rol operativo. El token no trae el rol —es una fila de
+  // `organization_user_assignments` que resuelve la API (`fixtures/inpatient.ts`)—.
+  ...inpatientAccounts(),
 ];
+
+/** Las seis cuentas operativas del hospital (enfermería, supervisión, admisión, limpieza…). */
+function inpatientAccounts(): MockUser[] {
+  const filas: readonly [key: string, nombre: string, ci: string, semilla: string][] = [
+    ['enfermeria', 'Lic. Rosa Vargas Terrazas', '8100101', 'user-enfermeria-sanlucas'],
+    ['supervision', 'Lic. Carmen Justiniano Paz', '8100102', 'user-supervision-enfermeria-sanlucas'],
+    ['admision', 'Luis Fernández Rivero', '8100103', 'user-admision-sanlucas'],
+    ['limpieza', 'Juana Choque Mamani', '8100104', 'user-limpieza-sanlucas'],
+    // Sin punto en la clave: el refresh token simulado es `mock-refresh.<clave>.<marca>`.
+    ['supervisora-limpieza', 'Teresa Aguilera Saucedo', '8100105', 'user-supervisora-limpieza-sanlucas'],
+    ['mantenimiento', 'Óscar Suárez Montaño', '8100106', 'user-mantenimiento-sanlucas'],
+  ];
+  return filas.map(([key, displayName, nationalId, semilla]) => ({
+    key,
+    id: uuid(semilla),
+    email: `${key.replace('-', '.')}@alovida.mock`,
+    nationalId,
+    displayName,
+    roles: ['USER'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    personId: uuid(`person-${semilla}`),
+    accountKind: 'PERSON',
+  }));
+}
 
 /**
  * Las cuentas de los pacientes del padrón, que no están en {@link MOCK_USERS}.

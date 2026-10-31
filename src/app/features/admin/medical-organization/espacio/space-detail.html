@@ -148,6 +148,13 @@
           </div>
         </app-tab>
 
+        <!-- F2: ejes operativos, bloqueos e historial A20 (componente de internación). -->
+        <app-tab label="Operación">
+          @if (pestana() === 5) {
+            <app-space-ops-tab [careSpaceId]="e.id" />
+          }
+        </app-tab>
+
         <!-- F5a / F5c: pestañas de otras franjas, cada una en su carpeta. -->
         <!-- Diferidas: cada una pide sus datos recién cuando se abre. -->
         @for (extra of f5Tabs(); track extra; let i = $index) {

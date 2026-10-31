@@ -16,6 +16,7 @@ import { ActivateAccount } from './features/auth/activate-account/activate-accou
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
+import { INPATIENT_SCREENS, inpatientRoutes } from './features/inpatient/inpatient.routes';
 import { NotFound } from './features/not-found/not-found';
 import {
   ADMISSIONS_SCREENS,
@@ -96,6 +97,8 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   ...MEDICAL_CENTER_SCREENS,
   ...ADMISSIONS_SCREENS,
+  // Internación (F2/F3): tablero, cola de limpieza, censo e indicadores.
+  ...INPATIENT_SCREENS,
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
   //
@@ -984,6 +987,8 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   ...affiliationRoutes({ practitionerOnly: soloDeQuienAtiende, chunkFailed: chunkFallido }),
+  // Internación (F3): el ingreso y la ficha de una internación.
+  ...inpatientRoutes({ chunkFailed: chunkFallido }),
   {
     // La ficha de una admisión cuelga de la bandeja: hereda los roles de su sección.
     path: ADMISSION_DETAIL_PATH,

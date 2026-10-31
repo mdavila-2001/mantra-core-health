@@ -71,6 +71,7 @@ import { SpaceStockTab } from './space-stock-tab/space-stock-tab';
 /** Las pestañas que agrega F5, con su clave de `?tab=`. */
 type F5Tab = 'equipment' | 'stock';
 import { VincularUnidadDialog } from './vincular-unidad-dialog';
+import { SpaceOpsTab } from '../../../inpatient/space-ops-tab/space-ops-tab';
 
 /**
  * **Ficha de un espacio** — `administration/medical-organization/spaces/:id`.
@@ -117,6 +118,7 @@ import { VincularUnidadDialog } from './vincular-unidad-dialog';
     Tabs,
     VincularUnidadDialog,
     ViewStateHost,
+    SpaceOpsTab,
   ],
   templateUrl: './space-detail.html',
   styleUrl: './space-detail.css',

@@ -1,0 +1,81 @@
+<app-page-header [title]="title()" [subtitle]="subtitle()" [breadcrumbs]="breadcrumbs()">
+  <span page-meta>
+    @if (data(); as s) {
+      <app-badge [variant]="inProgress() ? 'success' : 'secondary'" data-testid="stay-status">{{ label(s.stay.encounter.status) }}</app-badge>
+    }
+  </span>
+  <div page-actions>
+    <a app-button size="sm" variant="ghost" [routerLink]="boardRoute" [queryParams]="{ site: data()?.siteId }">Tablero de camas</a>
+  </div>
+</app-page-header>
+
+@if (failure(); as f) {
+  <app-view-state-host class="stay__failure" data-testid="stay-failure" [state]="f" (retry)="reload()" />
+}
+
+<app-view-state-host [state]="view()" (retry)="reload()">
+  @if (data(); as s) {
+    <app-card class="stay" padding="lg" data-testid="stay">
+      <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="changeTab($event)">
+        <app-tab label="Cama actual">
+          <div class="stay__panel"><app-fact-list [hechos]="bedFacts()" etiqueta="Internación" disposicion="columnas" /></div>
+        </app-tab>
+        <app-tab label="Movimientos">
+          <div class="stay__panel">
+            <app-data-table data-testid="stay-movements" [state]="movements()" [columns]="moveColumns()" [trackBy]="byId" caption="Movimientos de la internación, del más reciente al primero" stackedOnMobile (retry)="reload()" />
+          </div>
+        </app-tab>
+        <app-tab label="Compatibilidad e incidentes">
+          <div class="stay__panel">
+            <app-data-table data-testid="stay-incidents" [state]="incidents()" [columns]="incidentColumns()" [trackBy]="byId" caption="Incidentes de ubicación forzada" stackedOnMobile (retry)="reload()" />
+          </div>
+        </app-tab>
+        <app-tab label="Egreso">
+          <div class="stay__panel">
+            @if (!inProgress()) {
+              <app-fact-list
+                data-testid="stay-discharged"
+                etiqueta="Egreso"
+                [hechos]="[{ etiqueta: 'Fecha', valor: when(s.stay.encounter.endAt) }, { etiqueta: 'Tipo de egreso', valor: label(s.stay.encounter.dischargeDisposition) }]"
+              />
+            } @else if (!canDischarge()) {
+              <p class="stay__note">Dar de alta es tarea de enfermería o admisión.</p>
+            } @else {
+              <app-discharge-form [encounterId]="s.stay.encounter.id" [rowVersion]="s.stay.encounter.rowVersion" (saved)="afterDischarge()" />
+            }
+          </div>
+        </app-tab>
+      </app-tabs>
+    </app-card>
+  }
+</app-view-state-host>
+
+<ng-template #cellEvent let-m>
+  <app-badge size="sm" variant="primary">{{ m.hl7 }}</app-badge> {{ label(m.movement) }}
+  <span class="stay__muted">{{ label(m.status) }}@if (m.endReason) { · {{ label(m.endReason) }} }</span>
+</ng-template>
+<ng-template #cellBed let-m><strong>{{ m.bedCode }}</strong><span class="stay__muted">{{ m.bedName }}</span></ng-template>
+<ng-template #cellPeriod let-m>{{ when(m.periodStart) }} → {{ m.periodEnd ? when(m.periodEnd) : 'en curso' }}</ng-template>
+<ng-template #cellMoveActions let-m>
+  @if (m.cancellable && canPlace()) {
+    <button app-button size="sm" variant="ghost" [disabled]="working()" data-testid="stay-cancel-movement" (clicked)="cancelMovement(m)">Cancelar</button>
+  } @else {
+    <span class="stay__muted">—</span>
+  }
+</ng-template>
+<ng-template #cellRules let-i>
+  @for (v of i.violations ?? []; track v.rule) {
+    <app-badge size="sm" variant="warning">{{ ruleName(v.rule) }}</app-badge>
+  }
+</ng-template>
+<ng-template #cellIncStatus let-i>
+  <app-badge size="sm" [variant]="i.status === 'PLC_INC_OPEN' ? 'warning' : 'success'">{{ label(i.status) }}</app-badge>
+  @if (i.reviewedAt) { <span class="stay__muted">{{ when(i.reviewedAt) }}</span> }
+</ng-template>
+<ng-template #cellIncActions let-i>
+  @if (canReview() && i.status === 'PLC_INC_OPEN') {
+    <button app-button size="sm" variant="outline" [disabled]="working()" data-testid="stay-review" (clicked)="review(i)">Revisar</button>
+  } @else {
+    <span class="stay__muted">—</span>
+  }
+</ng-template>
