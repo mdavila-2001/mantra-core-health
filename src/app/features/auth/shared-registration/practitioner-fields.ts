@@ -38,6 +38,8 @@ export interface PractitionerFieldsContext {
   readonly professionalTitle: string;
   /** El departamento de emisión depende del estado de su catálogo en cada pantalla. */
   readonly departmentIssuerField: (testId: string) => CampoDeFormulario;
+  /** Se llama al salir del correo personal —el de acceso—: la pantalla pregunta si ya tiene cuenta. */
+  readonly alSalirCorreoPersonal?: (valor: string) => void;
 }
 
 /** El teléfono personal del alta es obligatorio y debe estar completo. */
@@ -215,6 +217,7 @@ export function practitionerFields(
         },
         {
           key: 'personalEmail',
+          alSalir: context.alSalirCorreoPersonal,
           label: 'Su correo personal — con éste entra',
           hint: 'Es su identidad de acceso, no sólo un dato de contacto.',
           description:

@@ -13,6 +13,8 @@ export const TEST_ID = 'medical-center-signup';
 
 /** Lo que las páginas necesitan saber del momento: catálogos y papeles según el tipo societario. */
 export interface PaginasDeAlta {
+  /** Se llama al salir de la razón social: la pantalla pregunta si ya existe. */
+  readonly alSalirNombre?: (valor: string) => void;
   readonly tiposDeOrganizacion: readonly SelectOption<string>[];
   readonly tiposSocietarios: readonly SelectOption<string>[];
   /** Los cinco papeles de la empresa, con los que el tipo societario omite marcados «(opcional)». */
@@ -55,6 +57,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
         },
         {
           key: 'legalName',
+          alSalir: ctx.alSalirNombre,
           label: 'Razón social',
           control: 'text' as const,
           required: true,

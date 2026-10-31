@@ -777,6 +777,20 @@ export class IamClient {
    * quien no lo tiene recibe `403`, y la pantalla tiene que degradar a «nombre
    * no disponible», nunca al uuid.
    */
+  /**
+   * `GET /iam/auth/identifier-exists?kind=…&value=…`. Pregunta, **antes** de
+   * enviar el alta, si ese documento, correo o nombre de institución ya tiene
+   * cuenta. Es público (se usa sin sesión) y sólo responde `{ exists }`: no
+   * devuelve de quién es, para no filtrar datos de terceros.
+   */
+  identifierExists(kind: IdentifierKind, value: string): Observable<boolean> {
+    return this.http
+      .get<{ exists: boolean }>(this.url('/iam/auth/identifier-exists'), {
+        params: { kind, value },
+      })
+      .pipe(map((respuesta) => respuesta.exists === true));
+  }
+
   getUser(userId: string): Observable<UserListItem> {
     return this.http
       .get<ConNulos<WireUserListItem>>(this.url(`/iam/users/${encodeURIComponent(userId)}`))
@@ -787,6 +801,9 @@ export class IamClient {
     return apiUrl(this.baseUrl, path);
   }
 }
+
+/** Qué se pregunta en {@link IamClient.identifierExists}. */
+export type IdentifierKind = 'NATIONAL_ID' | 'EMAIL' | 'ORG_NAME';
 
 /* ---- transporte del listado de usuarios ---------------------------------- */
 
