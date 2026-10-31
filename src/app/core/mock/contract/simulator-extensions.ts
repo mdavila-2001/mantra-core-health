@@ -13,6 +13,8 @@ import {
   REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
 } from '../../data-access/referrals/referrals.types';
 import { CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS } from '../../data-access/community/community.types';
+import { EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostic-units/equipment-location.types';
+import { INVENTORY_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/pharmacy/inventory-locations.types';
 
 /* ============================================================================
     Claves que la maqueta acepta aunque el DTO de la API no las declare.
@@ -49,4 +51,8 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   'POST /consent/treatment-informed-consents': INFORMED_CONSENT_CONTRACT_PENDING_KEYS,
   // Respuesta automática redactada por la IA: falta la columna del modo en el modelo.
   'PUT /community/profiles/:profileId/auto-reply': CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
+  // Infraestructura hospitalaria F5a/F5c (`CONTRATO-F2-F5.md`): sala, AE Title
+  // y botiquín por unidad. El cliente SÍ las manda; se borran al regenerar.
+  'PATCH /diagnostic-equipment/:id': EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS,
+  'POST /pharmacy/:siteId/inventory-locations': INVENTORY_LOCATION_CONTRACT_PENDING_KEYS,
 };

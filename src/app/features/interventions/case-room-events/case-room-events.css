@@ -1,0 +1,54 @@
+:host {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.room-events__buttons {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room-events__button {
+  display: grid;
+  grid-template-columns: minmax(11rem, max-content) 1fr;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.room-events__why,
+.room-events__muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.room-events__timeline {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0 0 0 var(--sp-4);
+  border-inline-start: 2px solid var(--border-default);
+  list-style: none;
+}
+
+.room-events__event {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.room-events__time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+@media (max-width: 649.98px) {
+  .room-events__button {
+    grid-template-columns: 1fr;
+  }
+}

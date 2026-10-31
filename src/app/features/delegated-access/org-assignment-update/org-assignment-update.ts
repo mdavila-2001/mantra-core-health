@@ -18,7 +18,7 @@ import { PaginatedForm } from '../../../shared/components/organisms/paginated-fo
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
-const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT'];
+const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT', 'SPACE'];
 
 /**
  * Reasignar supervisor o suspender una asignación de organización (V29-01,
@@ -70,7 +70,7 @@ export class OrgAssignmentUpdate {
       hint: 'Al menos uno: nuevo supervisor, nuevo alcance o suspensión. Solo viaja lo elegido.',
       campos: [
         { key: 'supervisorUserId', label: 'Nuevo supervisor', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
-        { key: 'accessScope', label: 'Nuevo alcance de acceso', control: 'radio', options: [{ value: 'TENANT', label: 'Toda la organización' }, { value: 'PRACTICE', label: 'Práctica' }, { value: 'SITE', label: 'Sede' }, { value: 'UNIT', label: 'Unidad' }] },
+        { key: 'accessScope', label: 'Nuevo alcance de acceso', control: 'radio', options: [{ value: 'TENANT', label: 'Toda la organización' }, { value: 'PRACTICE', label: 'Práctica' }, { value: 'SITE', label: 'Sede' }, { value: 'UNIT', label: 'Unidad' }, { value: 'SPACE', label: 'Espacio' }] },
       ],
     },
     {

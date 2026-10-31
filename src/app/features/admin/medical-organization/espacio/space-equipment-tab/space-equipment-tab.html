@@ -1,0 +1,32 @@
+@if (canWrite() && options().length > 0) {
+  <div class="space-tab__bar">
+    <app-form-field label="Ubicar un equipo aquí" class="space-tab__field">
+      <app-select [options]="options()" [value]="choice()" placeholder="Elija un equipo de la sede" ariaLabel="Equipo a ubicar" data-testid="space-equipment-choice" (valueChange)="choice.set($event)" />
+    </app-form-field>
+    <button app-button size="sm" [disabled]="choice() === null || saving()" [isLoading]="saving()" (clicked)="locateHere()" data-testid="space-equipment-locate">Ubicar</button>
+  </div>
+}
+
+@if (failure(); as f) {
+  <app-view-state-host [state]="f" data-testid="space-equipment-failure" />
+}
+
+<app-view-state-host [state]="state()">
+  @if (state().status === 'ready') {
+    <ul class="space-tab__list" data-testid="space-equipment-list">
+      @for (e of $any(state()).data; track e.id) {
+        <li class="space-tab__item">
+          <a class="space-tab__strong" [routerLink]="['/administration/medical-laboratory/equipment', e.id]">{{ e.type.display }}</a>
+          <span class="space-tab__muted">{{ e.manufacturer }} {{ e.model }} · Nº {{ e.serialNumber }}</span>
+          <span class="space-tab__chips">
+            @if (e.modality) {
+              <app-badge variant="secondary" size="sm">{{ e.modality.code }}</app-badge>
+            }
+            <app-badge [variant]="e.aeTitle ? 'info' : 'warning'" size="sm">{{ e.aeTitle ? 'AE ' + e.aeTitle : 'Sin AE Title' }}</app-badge>
+            <app-badge [variant]="e.operationalStatus.code === 'DU_EQ_OPERATIONAL' ? 'success' : 'warning'" size="sm">{{ e.operationalStatus.display }}</app-badge>
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</app-view-state-host>

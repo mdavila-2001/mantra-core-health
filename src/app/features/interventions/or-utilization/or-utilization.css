@@ -1,0 +1,61 @@
+:host {
+  display: block;
+}
+
+.or-utilization {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
+}
+
+.or-utilization__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.or-utilization__kpis {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.or-utilization__heading {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.or-utilization__strong {
+  display: block;
+  font-weight: 600;
+}
+
+.or-utilization__muted {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Barra de proporción: el número va siempre al lado (el color no es el dato). */
+.or-utilization__bar {
+  display: inline-block;
+  vertical-align: middle;
+  inline-size: 5rem;
+  block-size: var(--sp-2);
+  margin-inline-end: var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.or-utilization__bar > span {
+  display: block;
+  block-size: 100%;
+  background: var(--brand-primary);
+}

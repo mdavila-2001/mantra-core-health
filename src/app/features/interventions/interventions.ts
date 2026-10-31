@@ -10,33 +10,44 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
-import { AuthService } from '../../core/auth/auth.service';
+import { SessionStore } from '../../core/auth/session.store';
+import { OperatingRoomsClient } from '../../core/data-access/operating-rooms/operating-rooms.client';
+import { canManageBlocks, canScheduleCases, canSeeUtilization } from '../../core/data-access/operating-rooms/operating-rooms.rules';
+import type { OperatingRoomSummary } from '../../core/data-access/operating-rooms/operating-rooms.types';
+import { SiteContextStore } from '../../core/data-access/operating-rooms/site-context.store';
 import { ProceduresClient } from '../../core/data-access/procedures/procedures.client';
-import type {
-  CaseTeamMember,
-  SurgicalCase,
-  TeamParticipationResponse,
-} from '../../core/data-access/procedures/procedures.types';
+import type { SurgicalCase } from '../../core/data-access/procedures/procedures.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
-import { empty, loading, ready } from '../../core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
-import { Textarea } from '../../shared/components/atoms/textarea/textarea';
+import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record/clinical-record.routes';
-import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
+import { CaseTeam } from './case-team/case-team';
+import { timeOf } from './interventions.presentation';
+import {
+  caseRoute,
+  OPERATING_ROOMS_ROUTE,
+  OR_BLOCKS_ROUTE,
+  OR_UTILIZATION_ROUTE,
+  SCHEDULE_CASE_ROUTE,
+} from './interventions.routes';
 
 /** Tope de filas de la agenda. Alcanza una pantalla sin paginar. */
 const TOPE = 50;
@@ -44,18 +55,8 @@ const TOPE = 50;
 /** Lo que se muestra cuando un concepto no tiene etiqueta en el catálogo. */
 const SIN_DATO = '—';
 
-/**
- * Las tres respuestas negativas, con el rótulo que las ofrece.
- *
- * Se enumeran enteras y no se colapsan en «rechazar»: pedir una modificación
- * es seguir queriendo participar, e informar indisponibilidad no objeta la
- * intervención. Al responsable le cambia qué hacer con cada una.
- */
-const RESPUESTAS: readonly SelectOption<TeamParticipationResponse>[] = [
-  { value: 'DECLINE', label: 'Rechazar la participación' },
-  { value: 'REQUEST_CHANGE', label: 'Pedir una modificación' },
-  { value: 'UNAVAILABLE', label: 'Informar indisponibilidad' },
-];
+/** El valor del filtro que significa «todas las salas». */
+const ALL_ROOMS = '';
 
 /**
  * **Intervenciones médicas** (M53) — la agenda quirúrgica y la aceptación del
@@ -68,43 +69,31 @@ const RESPUESTAS: readonly SelectOption<TeamParticipationResponse>[] = [
  * al tenant por el backend; la segunda, del equipo de cada caso.
  *
  * No contesta *qué se le hizo a esta persona*: ése es el histórico, vive en la
- * ficha del paciente y ya lo pinta `procedures-block`. Duplicarlo acá obligaría
- * a elegir un paciente antes de ver la agenda, que es lo contrario de lo que
- * hace falta.
+ * ficha del paciente y ya lo pinta `procedures-block`.
  *
  * ## Por qué la aceptación es el centro y no un detalle
  *
- * Porque sin ella el circuito no cierra. `POST /procedure-cases/:id/confirm`
- * exige que **cada** integrante con rol clínico haya aceptado; mientras alguno
- * no lo haya hecho, la intervención no se confirma por mucho que todo lo demás
- * esté en regla. La pantalla existe, sobre todo, para que ese acto tenga dónde
- * ocurrir.
+ * `POST /procedure-cases/:id/confirm` exige que **cada** integrante con rol
+ * clínico haya aceptado. La aceptación vive ahora en `app-case-team` —la misma
+ * que monta la ficha del caso— sin cambiar su contrato.
  *
- * Las cuatro respuestas de la especificación se ofrecen enteras —aceptar,
- * rechazar, pedir una modificación, informar indisponibilidad— y no reducidas a
- * un sí/no: quien pide un cambio sigue queriendo participar, y al responsable
- * le cambia la decisión.
+ * ## F4 · el quirófano en la agenda (`CONTRATO-F2-F5.md` §F4.4)
  *
- * ## Sólo se responde por uno mismo
- *
- * Los botones aparecen únicamente en la fila cuyo `practitionerProfileId`
- * coincide con el perfil profesional de la sesión. No es una decoración de
- * permisos: el backend rechaza responder por otro, y ofrecer el botón para que
- * después falle sería prometer algo que no se puede hacer.
- *
- * Quien no tiene perfil profesional en su cuenta ve la agenda y no ve ninguna
- * acción, que es exactamente su situación.
+ * Cada caso muestra su sala resuelta (`código · nombre`, con la ruta del árbol
+ * en el globo; nunca un uuid), su ventana reservada con la preparación y la
+ * limpieza que la API le sumó, y el bloque en el que cae. El filtro por
+ * quirófano se alimenta de `GET /sites/:siteId/operating-rooms`, nunca de ids
+ * fijos. Los accesos a programar, bloques y utilización se ofrecen según el
+ * rol; la API vuelve a decidir.
  *
  * ## Los estados se traducen; los uuid no se muestran
  *
- * `statusConceptId` y `teamRoleConceptId` son catálogo. Se resuelven con
- * `TerminologyClient.readConceptLabels` y, si la terminología falla, la agenda
- * se muestra igual con guiones: perder los nombres es molesto, perder la lista
- * entera porque el catálogo no respondió sería peor.
+ * `statusConceptId` es catálogo. Se resuelve con `readConceptLabels` y, si la
+ * terminología falla, la agenda se muestra igual con guiones.
  */
 @Component({
   selector: 'app-interventions',
-  imports: [Alert, AppButton, Card, DataTable, DatePipe, PageHeader, Select, Textarea, LoadingState],
+  imports: [Alert, AppButton, AppButtonLink, Badge, Card, CaseTeam, DataTable, DatePipe, PageHeader, RouterLink, Select, Tooltip],
   templateUrl: './interventions.html',
   styleUrl: './interventions.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,59 +102,75 @@ export class Interventions {
   private readonly procedures = inject(ProceduresClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
-  private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionStore);
+  private readonly siteContext = inject(SiteContextStore);
+  private readonly operatingRooms = inject(OperatingRoomsClient);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly respuestas = RESPUESTAS;
+  protected readonly caseRoute = caseRoute;
+  protected readonly timeOf = timeOf;
+  protected readonly scheduleRoute = SCHEDULE_CASE_ROUTE;
+  protected readonly roomsRoute = OPERATING_ROOMS_ROUTE;
+  protected readonly blocksRoute = OR_BLOCKS_ROUTE;
+  protected readonly utilizationRoute = OR_UTILIZATION_ROUTE;
 
-  /** El perfil profesional de la sesión, o `null` si la cuenta no tiene uno. */
-  protected readonly miPerfil = this.auth.practitionerProfileId;
+  protected readonly canSchedule = computed(() => canScheduleCases(this.session.roles()));
+  protected readonly canManage = computed(() => canManageBlocks(this.session.roles()));
+  protected readonly canMeasure = computed(() => canSeeUtilization(this.session.roles()));
 
-  private readonly celdaCaso =
-    viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('celdaCaso');
-  private readonly celdaEstado =
-    viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('celdaEstado');
-  private readonly celdaCuando =
-    viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('celdaCuando');
+  private readonly celdaCaso = viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('celdaCaso');
+  private readonly celdaEstado = viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('celdaEstado');
+  private readonly celdaCuando = viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('celdaCuando');
+  private readonly roomCell = viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('roomCell');
+  private readonly windowCell = viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('windowCell');
+  private readonly teamCell = viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('teamCell');
 
   protected readonly agenda = signal<ViewState<readonly SurgicalCase[]>>(loading());
 
-  /** El caso abierto, o `null` si no se abrió ninguno. */
+  /** El caso cuyo equipo está abierto, o `null`. */
   protected readonly casoAbierto = signal<SurgicalCase | null>(null);
-  protected readonly equipo = signal<ViewState<readonly CaseTeamMember[]>>(loading());
 
-  /** El integrante cuya respuesta negativa se está redactando. */
-  protected readonly respondiendo = signal<CaseTeamMember | null>(null);
-  protected readonly respuestaElegida = signal<TeamParticipationResponse>('DECLINE');
-  protected readonly motivo = signal('');
-
-  /** El acto en curso, para no dejar apretar dos veces el mismo botón. */
-  protected readonly enviando = signal(false);
-
-  /** El problema del último acto, ya traducido. Se limpia al reintentar. */
-  protected readonly problema = signal<string | null>(null);
+  /** Las salas de la sede, para el filtro. Vacío = sin filtro que ofrecer. */
+  private readonly rooms = signal<readonly OperatingRoomSummary[]>([]);
+  protected readonly roomFilter = signal<string>(ALL_ROOMS);
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
-  protected readonly cargando = computed(() => this.agenda().status === 'loading');
+  protected readonly roomOptions = computed<readonly SelectOption<string>[]>(() => [
+    { value: ALL_ROOMS, label: 'Todos los quirófanos' },
+    ...this.rooms().map((r) => ({ value: r.careSpace.id, label: `${r.careSpace.code} · ${r.careSpace.name}` })),
+  ]);
 
   protected readonly columnas = computed<readonly ColumnDef<SurgicalCase>[]>(() => [
     { key: 'caseNumber', header: 'Intervención', priority: 1, cell: this.celdaCaso() },
     { key: 'statusConceptId', header: 'Estado', priority: 1, cell: this.celdaEstado() },
     { key: 'scheduledStartAt', header: 'Programada', priority: 2, cell: this.celdaCuando() },
+    { key: 'operatingRoom', header: 'Quirófano', priority: 1, cell: this.roomCell() },
+    { key: 'reservedStartAt', header: 'Ventana reservada', priority: 3, cell: this.windowCell() },
+    { key: 'id', header: 'Equipo', priority: 2, cell: this.teamCell(), align: 'end' },
   ]);
 
   protected readonly porCaso = (fila: SurgicalCase): string => fila.id;
   /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
   protected readonly nombreDeCaso = (fila: SurgicalCase): string => `el caso ${fila.caseNumber}`;
-  protected readonly porIntegrante = (fila: CaseTeamMember): string => fila.id;
-
-  /** El motivo no puede ir vacío: el backend lo exige y la pantalla también. */
-  protected readonly motivoValido = computed(() => this.motivo().trim().length > 0);
 
   constructor() {
+    this.siteContext.ensure();
     effect(() => {
       untracked(() => this.cargar());
+    });
+    // Las salas salen de la primera sede de la organización activa.
+    effect(() => {
+      const context = dataOf(this.siteContext.state());
+      const site = context?.sites[0];
+      if (site === undefined) return;
+      untracked(() =>
+        this.operatingRooms.listOperatingRooms(site.id).subscribe({
+          next: (rooms) => this.rooms.set(rooms),
+          // Sin filtro no se pierde la agenda: se muestra entera.
+          error: () => this.rooms.set([]),
+        }),
+      );
     });
   }
 
@@ -177,10 +182,13 @@ export class Interventions {
     return this.etiquetas().get(conceptId)?.display ?? SIN_DATO;
   }
 
-  /** ¿Es esta fila del equipo la de quien está mirando? */
-  protected esMio(integrante: CaseTeamMember): boolean {
-    const perfil = this.miPerfil();
-    return perfil !== null && perfil === integrante.practitionerProfileId;
+  protected hasRoomFilter(): boolean {
+    return this.rooms().length > 0;
+  }
+
+  protected chooseRoom(value: string | null): void {
+    this.roomFilter.set(value ?? ALL_ROOMS);
+    this.cargar();
   }
 
   protected recargar(): void {
@@ -189,86 +197,18 @@ export class Interventions {
 
   protected abrir(caso: SurgicalCase): void {
     this.casoAbierto.set(caso);
-    this.cancelarRespuesta();
-    this.cargarEquipo(caso.id);
   }
 
   protected cerrar(): void {
     this.casoAbierto.set(null);
-    this.cancelarRespuesta();
-  }
-
-  protected aceptar(integrante: CaseTeamMember): void {
-    const caso = this.casoAbierto();
-    if (caso === null || this.enviando()) return;
-
-    this.enviando.set(true);
-    this.problema.set(null);
-    this.procedures.acceptTeamMember(caso.id, integrante.id).subscribe({
-      next: () => {
-        this.enviando.set(false);
-        this.cargarEquipo(caso.id);
-      },
-      error: (error: unknown) => {
-        this.enviando.set(false);
-        this.problema.set(mensajeDe(error));
-      },
-    });
-  }
-
-  protected empezarRespuesta(integrante: CaseTeamMember): void {
-    this.respondiendo.set(integrante);
-    this.respuestaElegida.set('DECLINE');
-    this.motivo.set('');
-    this.problema.set(null);
-  }
-
-  protected cancelarRespuesta(): void {
-    this.respondiendo.set(null);
-    this.motivo.set('');
-  }
-
-  /** El `null` del select vuelve al rechazo: es la respuesta por omisión. */
-  protected elegirRespuesta(value: TeamParticipationResponse | null): void {
-    this.respuestaElegida.set(value ?? 'DECLINE');
-  }
-
-  protected escribirMotivo(value: string): void {
-    this.motivo.set(value);
-  }
-
-  protected enviarRespuesta(): void {
-    const caso = this.casoAbierto();
-    const integrante = this.respondiendo();
-    if (caso === null || integrante === null || !this.motivoValido() || this.enviando()) {
-      return;
-    }
-
-    this.enviando.set(true);
-    this.problema.set(null);
-    this.procedures
-      .respondTeamMember(caso.id, integrante.id, {
-        response: this.respuestaElegida(),
-        reasonText: this.motivo().trim(),
-      })
-      .subscribe({
-        next: () => {
-          this.enviando.set(false);
-          this.cancelarRespuesta();
-          this.cargarEquipo(caso.id);
-        },
-        error: (error: unknown) => {
-          this.enviando.set(false);
-          this.problema.set(mensajeDe(error));
-        },
-      });
   }
 
   private cargar(): void {
     this.agenda.set(loading());
+    const room = this.roomFilter();
 
     this.procedures
-      .listAgenda({ limit: TOPE })
+      .listAgenda({ limit: TOPE, ...(room === ALL_ROOMS ? {} : { operatingRoomId: room }) })
       .pipe(
         switchMap((pagina) =>
           forkJoin({
@@ -281,17 +221,19 @@ export class Interventions {
       )
       .subscribe({
         next: ({ pagina, etiquetas }) => {
-          this.fusionarEtiquetas(etiquetas);
+          this.etiquetas.update((previas) => new Map([...previas, ...etiquetas]));
 
           if (pagina.items.length === 0) {
-            // La salida no es «programar una intervención»: el alta nace de una
-            // indicación clínica y de un quirófano disponible, no de esta
-            // pantalla. Lo que sí puede hacer quien llegó hasta acá es mirar la
-            // ficha de la persona que va a operar.
+            // Con permiso de programar, la salida es programar; si no, la
+            // ficha de la persona que se va a operar.
             this.agenda.set(
               empty(
-                { label: 'Ir al archivo clínico', route: CLINICAL_RECORD_ROUTE },
-                'No hay intervenciones programadas en la organización.',
+                this.canSchedule()
+                  ? { label: 'Programar una intervención', route: SCHEDULE_CASE_ROUTE }
+                  : { label: 'Ir al archivo clínico', route: CLINICAL_RECORD_ROUTE },
+                room === ALL_ROOMS
+                  ? 'No hay intervenciones programadas en la organización.'
+                  : 'No hay intervenciones en este quirófano.',
               ),
             );
             return;
@@ -303,85 +245,4 @@ export class Interventions {
           this.agenda.set(errorToViewState<readonly SurgicalCase[]>(error)),
       });
   }
-
-  private cargarEquipo(caseId: string): void {
-    this.equipo.set(loading());
-
-    this.procedures
-      .listTeamMembers(caseId)
-      .pipe(
-        switchMap((integrantes) =>
-          forkJoin({
-            integrantes: of(integrantes),
-            etiquetas: this.terminology
-              .readConceptLabels(conceptosDelEquipo(integrantes))
-              .pipe(catchError(() => of(new Map() as ConceptLabels))),
-          }),
-        ),
-      )
-      .subscribe({
-        next: ({ integrantes, etiquetas }) => {
-          this.fusionarEtiquetas(etiquetas);
-
-          if (integrantes.length === 0) {
-            // No debería pasar —programar el caso siembra al cirujano
-            // principal—, pero un equipo vacío es un caso que nadie puede
-            // confirmar, y decirlo es más útil que una tabla en blanco.
-            this.equipo.set(
-              empty(
-                { label: 'Volver a la agenda' },
-                'La intervención no tiene integrantes asignados.',
-              ),
-            );
-            return;
-          }
-
-          this.equipo.set(ready(integrantes));
-        },
-        error: (error: unknown) =>
-          this.equipo.set(errorToViewState<readonly CaseTeamMember[]>(error)),
-      });
-  }
-
-  /**
-   * Suma etiquetas sin perder las que ya había.
-   *
-   * La agenda y el equipo se leen por separado y traducen conceptos distintos.
-   * Reemplazar el mapa en la segunda lectura dejaría la tabla de arriba sin sus
-   * estados justo al abrir un caso.
-   */
-  private fusionarEtiquetas(nuevas: ConceptLabels): void {
-    this.etiquetas.update((previas) => new Map([...previas, ...nuevas]));
-  }
-}
-
-/** Los conceptos que la tabla del equipo necesita traducir. */
-function conceptosDelEquipo(integrantes: readonly CaseTeamMember[]): readonly string[] {
-  const ids: string[] = [];
-  for (const integrante of integrantes) {
-    ids.push(integrante.teamRoleConceptId, integrante.statusConceptId);
-  }
-  return ids;
-}
-
-/**
- * El error de un acto puntual, en una frase.
- *
- * No usa `errorToViewState` a propósito: aquélla decide qué **pantalla** se
- * pinta, y acá la pantalla ya está pintada —lo que falló es un botón—. El caso
- * que importa es el 422 de CAN-INT-002 (credencial no vigente), que no es un
- * fallo sino una precondición y tiene que leerse como tal.
- */
-function mensajeDe(error: unknown): string {
-  const estado = (error as { status?: number } | null)?.status;
-  if (estado === 422) {
-    return (
-      'No se pudo registrar: el integrante no tiene una credencial profesional ' +
-      'vigente, o la intervención ya no admite este acto.'
-    );
-  }
-  if (estado === 403) {
-    return 'Sólo el propio integrante puede responder a su participación.';
-  }
-  return 'No pudimos registrar la respuesta. Vuelva a intentarlo.';
 }

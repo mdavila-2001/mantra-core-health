@@ -1,0 +1,72 @@
+/* Pestañas de F5 en la ficha de espacio (Equipos, Stock). */
+
+:host {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.space-tab__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.space-tab__field {
+  flex: 1 1 18rem;
+}
+
+.space-tab__list {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.space-tab__item {
+  display: grid;
+  gap: var(--sp-1);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.space-tab__strong {
+  font-weight: 600;
+}
+
+.space-tab__muted {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.space-tab__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.space-tab__lines {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.space-tab__lines th,
+.space-tab__lines td {
+  padding: var(--sp-1) var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+}
+
+.space-tab__lines td.space-tab__num,
+.space-tab__lines th.space-tab__num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.space-tab__scroll {
+  overflow-x: auto;
+}
