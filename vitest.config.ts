@@ -12,6 +12,9 @@
  */
 export default defineConfig({
   test: {
+    // Una sola compilación de pruebas por vez: el mockup Angular agota la RAM
+    // del equipo cuando Vitest abre varios trabajadores en paralelo.
+    maxWorkers: 1,
     /**
      * Un `TestBed` de Angular por archivo es pesado (compila el módulo de
      * pruebas entero). Con el pool por defecto —un worker por núcleo— la

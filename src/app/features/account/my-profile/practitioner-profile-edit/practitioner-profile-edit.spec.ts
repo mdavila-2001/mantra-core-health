@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { isSignal, type WritableSignal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -3418,6 +3418,140 @@ describe('PractitionerProfileEdit', () => {
       http.expectNone('/profiles/practitioners/me');
       expect(señal<string>('errorCorreoTrabajo')()).toBe(mensaje);
       expect(señal<number>('pestana')()).toBe(1);
+    });
+  });
+
+  describe('edición aislada por pestaña', () => {
+    const pestanas = [
+      { indice: 0, nombre: 'Datos personales' },
+      { indice: 1, nombre: 'Contacto' },
+      { indice: 2, nombre: 'Facturación' },
+    ] as const;
+
+    it('muestra en el editor las etiquetas y obligatoriedad definidas por el alta', () => {
+      const fixture = montarConVista();
+      const campo = (prefijo: string) =>
+        [...fixture.nativeElement.querySelectorAll('app-form-field')].find((element) =>
+          element.querySelector('label')?.textContent?.trim().startsWith(prefijo),
+        );
+
+      expect(campo('Apellido paterno')?.querySelector('.required-asterisk')).not.toBeNull();
+      expect(campo('Nombre')?.querySelector('.required-asterisk')).not.toBeNull();
+      expect(campo('Apellido materno')?.querySelector('.required-asterisk')).toBeNull();
+
+      señal<number>('pestana').set(1);
+      fixture.detectChanges();
+      expect(campo('Su celular personal')?.querySelector('.required-asterisk')).not.toBeNull();
+      expect(campo('Su correo personal')?.querySelector('.required-asterisk')).not.toBeNull();
+    });
+
+    it.each(pestanas)('abre la edición al entrar en $nombre', ({ indice }) => {
+      montarYCargar();
+      señal<number>('pestana').set(indice);
+
+      expect(interno<() => boolean>('editandoPresentacion')()).toBe(true);
+    });
+
+    it.each(pestanas)('no manda un PATCH vacío desde $nombre', ({ indice }) => {
+      montarYCargar();
+      señal<number>('pestana').set(indice);
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('no guarda un cambio de Datos personales si el nombre requerido sigue vacío y no cambió', () => {
+      montarYCargar({ name: '' });
+      señal<number>('pestana').set(0);
+      señal<string>('bio').set('Una biografía actualizada.');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(ultimoAviso()?.message).toBe('Ingrese su nombre.');
+    });
+
+    it('no guarda otro campo de Contacto si el celular obligatorio sigue vacío', () => {
+      montarYCargar({ mobilePhone: '' });
+      señal<number>('pestana').set(1);
+      señal<string>('correoTrabajo').set('ana@clinica.bo');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(ultimoAviso()?.message).toBe('Ingrese su celular personal.');
+    });
+
+    it.each(pestanas)('guarda sólo los campos de $nombre', ({ indice }) => {
+      montarYCargar({ name: 'Ana', mobilePhone: '+591 70000001', taxId: '1' });
+      señal<number>('pestana').set(indice);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 70012345');
+      señal<string>('nit').set('5414404011');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      const esperado = [
+        { professionalTitle: 'Cardióloga intervencionista' },
+        { mobilePhone: '+591 70012345' },
+        { taxId: '5414404011' },
+      ][indice];
+      expect(req.request.body).toEqual(esperado);
+      req.flush(PERFIL_BASE);
+    });
+
+    it.each(pestanas)('cancela $nombre sin restablecer otras pestañas', ({ indice }) => {
+      montarYCargar({ name: 'Ana', taxId: '1' });
+      const celularOriginal = interno<{ value: string }>('celularPersonal').value;
+      señal<number>('pestana').set(indice);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 70012345');
+      señal<string>('nit').set('5414404011');
+      interno<() => void>('cancelarEdicion')();
+
+      if (indice === 0) expect(señal<string>('titulo')()).toBe(PERFIL_BASE.professionalTitle);
+      if (indice === 1) expect(interno<{ value: string }>('celularPersonal').value).toBe(celularOriginal);
+      if (indice === 2) expect(señal<string>('nit')()).toBe('1');
+      if (indice !== 2) expect(señal<string>('nit')()).toBe('5414404011');
+      if (indice !== 0) expect(señal<string>('titulo')()).toBe('Cardióloga intervencionista');
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it.each([
+      {
+        nombre: 'Datos personales',
+        indice: 0,
+        preparar: () => {
+          señal<string>('nombre').set('');
+        },
+        assert: () => http.expectNone('/profiles/practitioners/me'),
+      },
+      {
+        nombre: 'Contacto',
+        indice: 1,
+        preparar: () => {
+          interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
+        },
+        assert: () => http.expectNone('/profiles/practitioners/me'),
+      },
+      {
+        nombre: 'Facturación',
+        indice: 2,
+        preparar: () => {
+          interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
+          señal<string>('nit').set('5414404011');
+        },
+        assert: () => {
+          const req = http.expectOne('/profiles/practitioners/me');
+          expect(req.request.body).toEqual({ taxId: '5414404011' });
+          req.flush(PERFIL_BASE);
+        },
+      },
+    ])('valida $nombre sin bloquear ni enviar otra pestaña', ({ indice, preparar, assert }) => {
+      montarYCargar({ name: 'Ana', taxId: '1' });
+      señal<number>('pestana').set(indice);
+      preparar();
+      interno<() => void>('guardarPresentacion')();
+
+      assert();
     });
   });
 

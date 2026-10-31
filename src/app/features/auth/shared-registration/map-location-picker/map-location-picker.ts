@@ -1,13 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
@@ -284,6 +275,11 @@ export class MapLocationPicker {
     });
     // `effect` y no un valor inicial de la señal: el perfil llega por HTTP y el
     // componente ya está montado cuando aparece.
+    //
+    // Se vuelve a sembrar cuando el padre trae un punto distinto del que ya
+    // está —el alta de farmacia ubica una sucursal desde su enlace de Maps—.
+    // Lo que el propio picker confirmó vuelve igual por `inicial` y no mueve
+    // nada; un `null` (pin quitado) tampoco.
     effect(() => {
       const guardado = this.inicial();
       if (this.seeded || guardado === null) return;

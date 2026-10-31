@@ -152,6 +152,23 @@ export function validation(message: string, issues: readonly ValidationIssue[] =
   });
 }
 
+/**
+ * **422**, el de las reglas de negocio que la API valida a mano (no el del
+ * `ValidationPipe`, que es {@link validation}: 400). Lo usan los manejadores de
+ * la maqueta que modelan una regla de negocio —un horario sin días, un
+ * comprobante que no es imagen ni PDF—, cuyas pantallas y pruebas leen el 422
+ * con su lista `issues`.
+ */
+export function unprocessable(message: string, issues: readonly unknown[] = []): MockReply {
+  return reply(422, {
+    statusCode: 422,
+    code: 'VALIDATION_FAILED',
+    message,
+    error: 'Unprocessable Entity',
+    issues,
+  });
+}
+
 export function noContent(): MockReply {
   return reply(204, null);
 }

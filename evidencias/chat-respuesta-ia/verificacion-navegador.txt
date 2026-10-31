@@ -1,0 +1,79 @@
+
+── [escritorio · light] ──
+✔ [escritorio · light] el tema pedido es el que se ve
+✔ [escritorio · light] abre con lo guardado en el servidor (IA)
+✔ [escritorio · light] tres opciones, una sola decisión
+✔ [escritorio · light] apagada: la vista previa dice que no se envía nada
+✔ [escritorio · light] apagada: no ofrece configurar nada más
+✔ [escritorio · light] fijo: la vista previa sigue lo que se escribe
+✔ [escritorio · light] hay cambios sin guardar
+✔ [escritorio · light] IA: dice lo que la IA no hace
+✔ [escritorio · light] IA: el respaldo se explica en una frase
+✔ [escritorio · light] IA: la vista previa lleva la etiqueta
+✔ [escritorio · light] «Más opciones» trae espera, descanso y horario
+✔ [escritorio · light] guardar confirma con palabras — Cambios guardados. Cuando no esté, la IA responderá en nombre de su consultorio.
+✔ [escritorio · light] guardado con mensaje fijo, al recargar sigue fijo
+✔ [escritorio · light] al recargar sigue con IA
+✔ [escritorio · light] al recargar conserva el respaldo escrito
+✔ [escritorio · light] la respuesta de la IA llega rotulada
+✔ [escritorio · light] ante un signo de alarma la respuesta deriva a Emergencia
+
+── [escritorio · dark] ──
+✔ [escritorio · dark] el tema pedido es el que se ve
+✔ [escritorio · dark] abre con lo guardado en el servidor (IA)
+✔ [escritorio · dark] tres opciones, una sola decisión
+✔ [escritorio · dark] apagada: la vista previa dice que no se envía nada
+✔ [escritorio · dark] apagada: no ofrece configurar nada más
+✔ [escritorio · dark] fijo: la vista previa sigue lo que se escribe
+✔ [escritorio · dark] hay cambios sin guardar
+✔ [escritorio · dark] IA: dice lo que la IA no hace
+✔ [escritorio · dark] IA: el respaldo se explica en una frase
+✔ [escritorio · dark] IA: la vista previa lleva la etiqueta
+✔ [escritorio · dark] «Más opciones» trae espera, descanso y horario
+✔ [escritorio · dark] guardar confirma con palabras — Cambios guardados. Cuando no esté, la IA responderá en nombre de su consultorio.
+✔ [escritorio · dark] guardado con mensaje fijo, al recargar sigue fijo
+✔ [escritorio · dark] al recargar sigue con IA
+✔ [escritorio · dark] al recargar conserva el respaldo escrito
+✔ [escritorio · dark] la respuesta de la IA llega rotulada
+✔ [escritorio · dark] ante un signo de alarma la respuesta deriva a Emergencia
+
+── [movil · light] ──
+✔ [movil · light] el tema pedido es el que se ve
+✔ [movil · light] abre con lo guardado en el servidor (IA)
+✔ [movil · light] tres opciones, una sola decisión
+✔ [movil · light] apagada: la vista previa dice que no se envía nada
+✔ [movil · light] apagada: no ofrece configurar nada más
+✔ [movil · light] fijo: la vista previa sigue lo que se escribe
+✔ [movil · light] hay cambios sin guardar
+✔ [movil · light] IA: dice lo que la IA no hace
+✔ [movil · light] IA: el respaldo se explica en una frase
+✔ [movil · light] IA: la vista previa lleva la etiqueta
+✔ [movil · light] «Más opciones» trae espera, descanso y horario
+✔ [movil · light] guardar confirma con palabras — Cambios guardados. Cuando no esté, la IA responderá en nombre de su consultorio.
+✔ [movil · light] guardado con mensaje fijo, al recargar sigue fijo
+✔ [movil · light] al recargar sigue con IA
+✔ [movil · light] al recargar conserva el respaldo escrito
+✔ [movil · light] la respuesta de la IA llega rotulada
+✔ [movil · light] ante un signo de alarma la respuesta deriva a Emergencia
+
+── [movil · dark] ──
+✔ [movil · dark] el tema pedido es el que se ve
+✔ [movil · dark] abre con lo guardado en el servidor (IA)
+✔ [movil · dark] tres opciones, una sola decisión
+✔ [movil · dark] apagada: la vista previa dice que no se envía nada
+✔ [movil · dark] apagada: no ofrece configurar nada más
+✔ [movil · dark] fijo: la vista previa sigue lo que se escribe
+✔ [movil · dark] hay cambios sin guardar
+✔ [movil · dark] IA: dice lo que la IA no hace
+✔ [movil · dark] IA: el respaldo se explica en una frase
+✔ [movil · dark] IA: la vista previa lleva la etiqueta
+✔ [movil · dark] «Más opciones» trae espera, descanso y horario
+✔ [movil · dark] guardar confirma con palabras — Cambios guardados. Cuando no esté, la IA responderá en nombre de su consultorio.
+✔ [movil · dark] guardado con mensaje fijo, al recargar sigue fijo
+✔ [movil · dark] al recargar sigue con IA
+✔ [movil · dark] al recargar conserva el respaldo escrito
+✔ [movil · dark] la respuesta de la IA llega rotulada
+✔ [movil · dark] ante un signo de alarma la respuesta deriva a Emergencia
+✔ sin errores de consola
+
+TODO VERDE

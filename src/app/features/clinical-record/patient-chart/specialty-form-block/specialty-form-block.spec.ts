@@ -60,6 +60,33 @@ const PLANTILLA = {
   ],
 };
 
+/**
+ * Una plantilla con un campo de catálogo: `valueSetId` apunta al conjunto de
+ * valores de terminología, no a opciones tecleadas. Un `dataType: 'string'`
+ * a propósito — `valueSetId` convive con cualquier tipo, igual que en
+ * `ChartTemplateFieldDto`; no es el `dataType` el que decide si el campo es
+ * de catálogo.
+ */
+const PLANTILLA_CATALOGO = {
+  id: 'tpl-cat',
+  specialtyConceptId: 'sp-1',
+  code: 'CATALOGO_INTAKE',
+  name: 'Ficha con catálogo',
+  version: 1,
+  statusConceptId: 'st-1',
+  fields: [
+    {
+      assignmentId: 'as-10',
+      fieldId: 'f-10',
+      code: 'habito_tabaquico',
+      name: '¿Fuma?',
+      dataType: 'string',
+      valueSetId: 'vs-tabaco',
+      required: true,
+    },
+  ],
+};
+
 describe('SpecialtyFormBlock', () => {
   let fixture: ComponentFixture<SpecialtyFormBlock>;
   let componente: SpecialtyFormBlock;
@@ -196,6 +223,11 @@ describe('SpecialtyFormBlock', () => {
 
   function peticionDePlantillas() {
     return http.expectOne((r) => r.url === '/charts/templates' && r.method === 'GET');
+  }
+
+  /** `GET /terminology/value-sets/:id/$expand` — las opciones de un campo de catálogo. */
+  function peticionDeExpansion(valueSetId: string) {
+    return http.expectOne((r) => r.url === `/terminology/value-sets/${valueSetId}/$expand`);
   }
 
   function peticionDeRespuesta() {

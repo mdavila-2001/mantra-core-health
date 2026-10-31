@@ -51,6 +51,8 @@ interface Internal {
   dirtyCount: () => number;
   save: () => void;
   errors: () => readonly string[];
+  importOpen: { (): boolean; set: (value: boolean) => void };
+  importClosed: (imported: boolean) => void;
 }
 
 describe('LaboratoryPrices', () => {
@@ -71,6 +73,7 @@ describe('LaboratoryPrices', () => {
           provide: LabPortalClient,
           useValue: {
             listServices,
+            listCategories: vi.fn(() => of({ items: [], count: 0 })),
             updateService: vi.fn((id: string, changes: LabServiceChanges) => {
               sent.push({ id, changes });
               return of(CATALOG[0]!);
@@ -126,5 +129,29 @@ describe('LaboratoryPrices', () => {
 
     expect(sent).toEqual([]);
     expect(internal().errors()).toHaveLength(2);
+  });
+
+  it('«Importar análisis (CSV)» abre el diálogo de carga masiva', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const button = root.querySelector<HTMLButtonElement>('[data-testid="lab-prices-import"]');
+    expect(button?.textContent?.trim()).toBe('Importar análisis (CSV)');
+
+    button!.click();
+    fixture.detectChanges();
+
+    expect(root.querySelector('[data-testid="lab-import-dialog"]')).not.toBeNull();
+  });
+
+  it('al cerrar la importación relee la lista sólo si se cargó algo', () => {
+    expect(listServices).toHaveBeenCalledTimes(1);
+
+    internal().importOpen.set(true);
+    internal().importClosed(false);
+    expect(listServices).toHaveBeenCalledTimes(1);
+
+    internal().importOpen.set(true);
+    internal().importClosed(true);
+    expect(listServices).toHaveBeenCalledTimes(2);
+    expect(internal().importOpen()).toBe(false);
   });
 });

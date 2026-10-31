@@ -1,0 +1,33 @@
+
+== telefono-light
+  (modo demo: el simulador responde sin red; no hay respuesta HTTP que contrastar)
+  ✓ telefono-light
+
+== telefono-dark
+  (modo demo: el simulador responde sin red; no hay respuesta HTTP que contrastar)
+  ✓ telefono-dark
+
+Sin fallos
+exit(telefono)=0
+
+== tableta-light
+  (modo demo: el simulador responde sin red; no hay respuesta HTTP que contrastar)
+  ✓ tableta-light
+
+== tableta-dark
+  (modo demo: el simulador responde sin red; no hay respuesta HTTP que contrastar)
+  ✓ tableta-dark
+
+Sin fallos
+exit(tableta)=0
+
+== escritorio-light
+  (modo demo: el simulador responde sin red; no hay respuesta HTTP que contrastar)
+  ✓ escritorio-light
+
+== escritorio-dark
+  (modo demo: el simulador responde sin red; no hay respuesta HTTP que contrastar)
+  ✓ escritorio-dark
+
+Sin fallos
+exit(escritorio)=0

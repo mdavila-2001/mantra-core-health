@@ -15,6 +15,7 @@ import type { GlossarySourceReference } from '../../core/data-access/terminology
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type {
   GlossaryNeighborhood,
+  GlossarySourceReference,
   GlossaryTermDetail,
 } from '../../core/data-access/terminology/terminology.types';
 import { valorDeTexto } from '../../core/data-access/terminology/terminology.types';
@@ -24,6 +25,7 @@ import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Chip } from '../../shared/components/atoms/chip/chip';
+import { AppButton } from '../../shared/components/atoms/button/button';
 import { Card } from '../../shared/components/molecules/card/card';
 import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
@@ -46,7 +48,10 @@ import { GlossaryCategoryIcon } from './glossary-category-icon';
 import { GlossaryPdfService } from './glossary-pdf.service';
 import { GlossaryArticleView } from './glossary-article';
 import { enlaceSeguro, esImagenPropia, imagenesVisibles } from './glossary-article.logic';
+import { GlossaryDataFlow } from './glossary-data-flow';
+import { GlossaryPdfService } from './glossary-pdf.service';
 import { GlossaryTermCover, pictogramOfTags } from './glossary-term-cover';
+import { imagenAprobadaDelTermino } from './glossary-image.logic';
 import { buildClinicalRoute, ROUTE_ZONES } from './glossary-clinical-route';
 import type { GlossaryArticle } from '../../core/data-access/terminology/glossary-article.types';
 import type { GlossaryImage } from '../../core/data-access/terminology/terminology.types';
@@ -190,6 +195,7 @@ function editorialSourcesFromProperty(raw: unknown): readonly GlossarySourceRefe
     EmptyState,
     GlossaryArticleView,
     GlossaryCategoryIcon,
+    GlossaryDataFlow,
     GlossaryTermCover,
     PageHeader,
     RelationGroups,
@@ -318,7 +324,8 @@ export class GlossaryTerm {
     return {
       nombre: cruda['name'],
       url: typeof cruda['url'] === 'string' ? cruda['url'] : null,
-      consultado: typeof cruda['retrievedAt'] === 'string' ? cruda['retrievedAt'].slice(0, 10) : null,
+      consultado:
+        typeof cruda['retrievedAt'] === 'string' ? cruda['retrievedAt'].slice(0, 10) : null,
     };
   });
 
@@ -365,12 +372,20 @@ export class GlossaryTerm {
   /** El resumen en lenguaje llano, o vacío si el término no lo tiene. */
   protected readonly resumen = computed(() => this.ficha()?.plainSummary?.text.trim() ?? '');
 
+  /**
+   * El artículo enciclopédico (F9), o `null` si el término no tiene. Se pide
+   * aparte de la ficha y su fallo NO rompe la ficha: sin artículo, o si falla
+   * la lectura, el término conserva la ficha de siempre.
+   */
   protected readonly articulo = signal<GlossaryArticle | null>(null);
+  protected readonly imagenAprobada = computed(() => imagenAprobadaDelTermino(this.ficha()));
+
   /** El artículo ya se pidió (llegó o falló): el PDF espera a saber si lo lleva. */
   protected readonly articuloCargado = signal(false);
   protected readonly pdfOcupado = signal(false);
   protected readonly pdfError = signal('');
 
+  /** Los nombres alternativos del término, para el artículo. */
   protected readonly nombresAlternativos = computed(() =>
     (this.ficha()?.synonyms ?? []).map((sinonimo) => sinonimo.value),
   );
@@ -432,6 +447,28 @@ export class GlossaryTerm {
   });
 
   /**
+   * La cita bibliográfica del término, al estilo de «Citar» en Google Académico.
+   *
+   * Sólo arma lo que la ficha declara: nombre, fuente, código y fecha de
+   * consulta de la fuente. Sin fuente declarada no hay cita, porque citar
+   * «Alovida» sola atribuiría a la plataforma una definición que no escribió.
+   */
+  protected readonly cita = computed<string | null>(() => {
+    const ficha = this.ficha();
+    const origen = this.fuente();
+    if (ficha === null || origen === null) return null;
+    const codigo = this.codigoPublicable();
+    const partes = [
+      `${origen.nombre}.`,
+      `«${ficha.display}»${codigo === null ? '' : ` (${codigo})`}.`,
+      'En: Alovida, Glosario médico.',
+      origen.consultado === null ? '' : `Fuente consultada el ${this.fechaLegible(origen.consultado)}.`,
+      origen.licencia === null ? '' : `Condición de uso: ${origen.licencia}.`,
+    ];
+    return partes.filter((parte) => parte !== '').join(' ');
+  });
+
+  /**
    * Por qué falta la definición, dicho con honestidad.
    *
    * Vale para **cualquier** término sin definición, no sólo para los que llegan
@@ -444,7 +481,8 @@ export class GlossaryTerm {
     const propiedades = this.ficha()?.properties ?? {};
     const sistema = valorDeTexto(propiedades, 'code_system');
     const codigo = valorDeTexto(propiedades, 'external_code');
-    const quien = this.fuente()?.nombre ?? (sistema ? NOMBRE_DE_SISTEMA[sistema] ?? sistema : null);
+    const quien =
+      this.fuente()?.nombre ?? (sistema ? (NOMBRE_DE_SISTEMA[sistema] ?? sistema) : null);
     const loQuePublica =
       codigo === undefined ? 'su nombre oficial' : `el código «${codigo}» y su nombre oficial`;
     return quien === null

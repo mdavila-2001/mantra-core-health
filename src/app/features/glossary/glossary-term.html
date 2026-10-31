@@ -369,6 +369,7 @@
 
           @if (mostrarRelacionados()) {
             <app-tab label="Relacionados">
+              <app-glossary-data-flow [termino]="termino" />
               <app-view-state-host [state]="vecindario()" (retry)="recargarRelaciones()">
                 @if (zonasDeRelaciones().length === 0) {
                   <app-empty-state
@@ -438,6 +439,11 @@
                   </li>
                 }
               </ul>
+            }
+
+            @if (cita(); as texto) {
+              <h2 class="termino__subtitulo">Cómo citar</h2>
+              <p class="termino__cita" data-testid="termino-cita">{{ texto }}</p>
             }
 
             <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica

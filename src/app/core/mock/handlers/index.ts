@@ -1,5 +1,5 @@
 import { MockRouter } from '../mock-router';
-import { registrarAgenda } from './scheduling.handlers';
+import { activarAceptacionDeDemostracion, registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registerPaymentReceipts } from './payment-receipts.handlers';
@@ -12,6 +12,7 @@ import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
+import { registrarCentros } from './centros.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
@@ -87,7 +88,13 @@ export function crearRouterSimulado(): MockRouter {
   registerPrimaryPractitioner(router);
   registerSignatureAndSeal(router);
   registrarAgenda(router);
+  activarAceptacionDeDemostracion();
   registrarServiciosDeAgenda(router);
+  // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
+  // las dos atienden `/practices/…` y, ante patrones equivalentes, gana el
+  // registrado primero.
+  registerHealthcareServices(router);
+  registerRoleAssignments(router);
   registrarHorarioFlexible(router);
   registerPaymentReceipts(router);
   // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
@@ -133,6 +140,8 @@ export function crearRouterSimulado(): MockRouter {
     destinoDeOrden,
     archivos: resultadosDeLaboratorio,
   });
+  // Después de diagnóstico: usa sus unidades y la agenda que les abre.
+  registrarCentros(router);
   registrarPortalDeLaboratorio(router);
   registrarProcedimientos(router);
   registerTreatmentInformedConsents(router);

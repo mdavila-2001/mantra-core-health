@@ -1739,7 +1739,7 @@ export class PatientChart {
       case 'validation':
         return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos leerlos.';
       case 'error':
-        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+        return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
       default:
         return null;
     }

@@ -1,0 +1,65 @@
+.session-payment {
+  display: grid;
+  /* `minmax(0, 1fr)` y no `auto`: el selector de archivo nativo tiene un ancho
+     mínimo propio que, en 375 px, ensanchaba la tarjeta y sacaba la lista de
+     citas de la pantalla. */
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: 0.75rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.session-payment h4,
+.session-payment p {
+  margin: 0;
+}
+
+.session-payment canvas {
+  display: block;
+  inline-size: 11rem;
+  block-size: 11rem;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1px solid #e1e8ec;
+  border-radius: 0.5rem;
+}
+
+.session-payment__amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.session-payment__proof {
+  display: grid;
+  gap: 0.375rem;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 28rem;
+}
+
+.session-payment__label {
+  font-weight: 600;
+}
+
+.session-payment__proof input[type='file'] {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: 2.75rem;
+}
+
+.session-payment__help {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.session-payment__error {
+  color: var(--text-danger);
+  font-weight: 600;
+}

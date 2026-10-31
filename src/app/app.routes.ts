@@ -340,6 +340,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/laboratory/orders/laboratory-orders').then((m) => m.LaboratoryOrders),
   'administration/laboratory-prices': () =>
     import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
+  'administration/center-schedule': () =>
+    import('./features/laboratory/center-schedule/center-schedule').then((m) => m.CenterSchedulePage),
   'administration/laboratory-branches': () =>
     import('./features/organization/organization-branches/organization-branches').then(
       (m) => m.OrganizationBranches,
@@ -591,6 +593,17 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/checkout/checkout')
         .then((m) => m.Checkout)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Reservar el estudio de una orden médica (mockup, 2026-10-06): la orden ya
+    // dice qué estudio es, así que se elige centro y horario y se confirma.
+    path: 'my-account/diagnostic-orders/:orderId/book',
+    title: `${APP_TITLE} - Reservar estudio`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/diagnostic-orders/order-booking/order-booking')
+        .then((m) => m.OrderBooking)
         .catch(() => chunkFallido()),
   },
   {
@@ -1124,6 +1137,17 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/glossary/glossary-anatomy-atlas')
         .then((m) => m.GlossaryAnatomyAtlas)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El mismo vecindario que el mapa en columnas, abierto en profundidad:
+    // cada término con su definición y, ramificado, lo que lo rodea.
+    path: 'glossary/graph',
+    title: `${APP_TITLE} - Árbol de términos médicos`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-graph')
+        .then((m) => m.GlossaryGraph)
         .catch(() => chunkFallido()),
   },
   {

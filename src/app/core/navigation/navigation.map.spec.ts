@@ -421,6 +421,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/laboratory',
       'administration/laboratory-orders',
       'administration/laboratory-prices',
+      'administration/center-schedule',
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {

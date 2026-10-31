@@ -24,7 +24,7 @@
 
 .prefs__titulo {
   margin: 0 0 var(--e3);
-  font-size: 1.05rem;
+  font-size: var(--fs-body-lg);
 }
 
 .prefs__lista {
@@ -94,7 +94,7 @@
 
 .prefs__detalle {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--fs-body);
 }
 
 .prefs__horas {
@@ -115,7 +115,7 @@
   /* Puede encogerse y, si hay lugar, repartirse el ancho con su hermana. */
   flex: 1 1 8rem;
   min-inline-size: 0;
-  font-size: 0.9rem;
+  font-size: var(--fs-body);
 }
 
 .prefs__hora input {
@@ -135,7 +135,7 @@
 .prefs__nota {
   margin: var(--e2) 0 0 var(--e3);
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--fs-caption);
 }
 
 .prefs__acciones {

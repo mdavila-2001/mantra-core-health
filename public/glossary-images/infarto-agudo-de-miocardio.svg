@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se produce un infarto</title>
+  <desc id="d">Tres pasos. Uno: durante años se acumula una placa de colesterol en la pared de una arteria coronaria. Dos: la placa se rompe y a su alrededor se forma un coágulo. Tres: la arteria se bloquea, al músculo del corazón no le llega oxígeno y, si no se restablece el flujo pronto, esa parte del músculo empieza a morir. A la derecha, los síntomas: molestia en el pecho, falta de aire, dolor en brazos, espalda, mandíbula o cuello, sudor frío, náuseas y mareo. Abajo: es una emergencia, llame al servicio de emergencias de inmediato.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --vessel:#c0392b; --lumen:#f6d5cf; --plaque:#d9b84a; --clot:#7b1f1a; --warn:#b7791f; --warn-l:#f7e4bf; --bad:#c0392b; --bad-l:#f6d5cf; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --vessel:#ef7467; --lumen:#4a2a27; --plaque:#b39a35; --clot:#ff8a7d; --warn:#e0b25a; --warn-l:#4a3b1f; --bad:#ef7467; --bad-l:#4a2a27; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .hd { font-size: 14px; font-weight: 700; }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="440" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Infarto: una arteria del corazón se bloquea</text>
+
+  <!-- paso 1 -->
+  <rect x="40" y="76" width="140" height="190" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="110" y="100" text-anchor="middle" class="hd">1 · Placa</text>
+  <rect x="55" y="120" width="110" height="60" fill="var(--lumen)" stroke="var(--vessel)" stroke-width="3"/>
+  <path d="M55 120 Q110 150 165 120 L165 128 Q110 156 55 128 Z" fill="var(--plaque)"/>
+  <text x="110" y="208" text-anchor="middle" class="small">Se acumula colesterol</text>
+  <text x="110" y="224" text-anchor="middle" class="small">en la pared durante</text>
+  <text x="110" y="240" text-anchor="middle" class="small">años</text>
+
+  <!-- paso 2 -->
+  <path d="M182 170 L 200 170" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <rect x="204" y="76" width="140" height="190" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="274" y="100" text-anchor="middle" class="hd">2 · Coágulo</text>
+  <rect x="219" y="120" width="110" height="60" fill="var(--lumen)" stroke="var(--vessel)" stroke-width="3"/>
+  <path d="M219 120 Q274 150 329 120 L329 128 Q274 156 219 128 Z" fill="var(--plaque)"/>
+  <circle cx="274" cy="146" r="12" fill="var(--clot)"/>
+  <text x="274" y="208" text-anchor="middle" class="small">La placa se rompe y se</text>
+  <text x="274" y="224" text-anchor="middle" class="small">forma un coágulo</text>
+
+  <!-- paso 3 -->
+  <path d="M346 170 L 364 170" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <rect x="368" y="76" width="140" height="190" rx="10" fill="var(--bad-l)" stroke="var(--bad)" stroke-width="2"/>
+  <text x="438" y="100" text-anchor="middle" class="hd" style="fill:var(--bad)">3 · Bloqueo</text>
+  <rect x="383" y="120" width="110" height="60" fill="var(--lumen)" stroke="var(--vessel)" stroke-width="3"/>
+  <ellipse cx="438" cy="150" rx="44" ry="26" fill="var(--clot)"/>
+  <text x="438" y="208" text-anchor="middle" class="small">Sin sangre, el músculo</text>
+  <text x="438" y="224" text-anchor="middle" class="small">del corazón no recibe</text>
+  <text x="438" y="240" text-anchor="middle" class="small">oxígeno y empieza</text>
+  <text x="438" y="256" text-anchor="middle" class="small">a morir</text>
+
+  <!-- síntomas -->
+  <rect x="530" y="76" width="230" height="190" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
+  <text x="645" y="100" text-anchor="middle" class="hd" style="fill:var(--warn)">Síntomas frecuentes</text>
+  <text x="645" y="128" text-anchor="middle" class="lab">Molestia en el pecho (más de</text>
+  <text x="645" y="145" text-anchor="middle" class="lab">unos minutos) · falta de aire</text>
+  <text x="645" y="171" text-anchor="middle" class="lab">Dolor en brazos, espalda,</text>
+  <text x="645" y="188" text-anchor="middle" class="lab">mandíbula, cuello u hombros</text>
+  <text x="645" y="214" text-anchor="middle" class="lab">Sudor frío · náuseas · mareo</text>
+  <text x="645" y="240" text-anchor="middle" class="small muted">En mujeres, a veces:</text>
+  <text x="645" y="256" text-anchor="middle" class="small muted">cansancio sin motivo</text>
+
+  <rect x="40" y="290" width="720" height="100" rx="10" fill="var(--bad-l)" stroke="var(--bad)" stroke-width="3"/>
+  <text x="400" y="326" text-anchor="middle" class="title" style="fill:var(--bad)">Es una emergencia: llame al servicio de emergencias</text>
+  <text x="400" y="352" text-anchor="middle" class="lab">Llame aunque no esté seguro de que sea un infarto</text>
+  <text x="400" y="372" text-anchor="middle" class="small muted">El tratamiento rápido puede limitar el daño al corazón</text>
+</svg>

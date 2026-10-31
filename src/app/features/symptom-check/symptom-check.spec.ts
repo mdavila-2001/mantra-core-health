@@ -1304,3 +1304,4 @@ describe('SymptomCheck · dictar', () => {
     expect(boton().textContent).toContain('Dictar');
   });
 });
+

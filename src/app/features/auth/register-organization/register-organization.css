@@ -116,27 +116,6 @@ form {
   gap: var(--sp-4);
 }
 
-.registro__submit {
-  margin-top: var(--sp-2);
-  width: 100%;
-}
-
-/* Pie: acción secundaria separada del cuerpo por una regla, como el pie de un
-   formulario oficial. */
-.registro__footer {
-  margin-top: var(--sp-6);
-  padding-top: var(--sp-5);
-  border-top: 1px solid var(--border-default);
-}
-
-.registro__pie {
-  margin: 0;
-  text-align: center;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
 /* El acordeón de las tres gerencias (subtarea 1.4): dos columnas para celular
    y correo cuando entran; una sola en pantalla angosta, antes que estrechar
    los controles a menos de lo que se escribe adentro. */

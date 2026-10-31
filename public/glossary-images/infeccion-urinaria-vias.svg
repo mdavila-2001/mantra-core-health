@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-labelledby="t d">
+  <title id="t">Las vías urinarias y los dos niveles de infección</title>
+  <desc id="d">Esquema del aparato urinario con dos riñones, dos uréteres, la vejiga y la uretra. Una llave marca la infección baja, de vejiga y uretra, con ardor y ganas frecuentes de orinar. Otra marca la infección alta, de uréteres y riñones, con fiebre, escalofríos y dolor de espalda.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --kidney:#c0392b; --tube:#7d8fa3; --bladder:#e7c85a; --low:#1f6fb2; --high:#b7791f; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --kidney:#ef7467; --tube:#8ea2b6; --bladder:#b39a35; --low:#6aa7e8; --high:#e0b25a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .hd { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="440" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Aparato urinario: dónde se infecta</text>
+
+  <!-- esquema central -->
+  <ellipse cx="350" cy="130" rx="24" ry="40" fill="var(--kidney)"/>
+  <ellipse cx="450" cy="130" rx="24" ry="40" fill="var(--kidney)"/>
+  <path d="M355 168 C 355 220, 385 250, 400 280" fill="none" stroke="var(--tube)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M445 168 C 445 220, 415 250, 400 280" fill="none" stroke="var(--tube)" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="400" cy="312" rx="42" ry="34" fill="var(--bladder)"/>
+  <path d="M400 346 L 400 395" stroke="var(--tube)" stroke-width="6" stroke-linecap="round"/>
+  <text x="400" y="316" text-anchor="middle" class="small" style="fill:var(--ink)">Vejiga</text>
+  <text x="350" y="134" text-anchor="middle" class="small" style="fill:var(--ink)">Riñón</text>
+  <text x="450" y="134" text-anchor="middle" class="small" style="fill:var(--ink)">Riñón</text>
+  <text x="326" y="226" text-anchor="end" class="small muted">Uréter</text>
+  <text x="414" y="398" class="small muted">Uretra</text>
+
+  <!-- alta -->
+  <rect x="520" y="86" width="240" height="110" rx="10" fill="var(--panel)" stroke="var(--high)" stroke-width="2"/>
+  <text x="536" y="110" class="hd" style="fill:var(--high)">Infección alta (pielonefritis)</text>
+  <text x="536" y="132" class="lab">Fiebre y escalofríos</text>
+  <text x="536" y="152" class="lab">Dolor en el costado o la espalda</text>
+  <text x="536" y="172" class="lab">Náuseas · malestar general</text>
+  <text x="536" y="190" class="small muted">Requiere consulta el mismo día</text>
+  <path d="M520 140 L 476 130" stroke="var(--high)" stroke-width="2"/>
+
+  <!-- baja -->
+  <rect x="520" y="256" width="240" height="110" rx="10" fill="var(--panel)" stroke="var(--low)" stroke-width="2"/>
+  <text x="536" y="280" class="hd" style="fill:var(--low)">Infección baja (cistitis)</text>
+  <text x="536" y="302" class="lab">Ardor al orinar</text>
+  <text x="536" y="322" class="lab">Ganas frecuentes y urgentes</text>
+  <text x="536" y="342" class="lab">Presión en el bajo vientre</text>
+  <text x="536" y="360" class="small muted">La más frecuente, suele ser leve</text>
+  <path d="M520 312 L 444 312" stroke="var(--low)" stroke-width="2"/>
+</svg>

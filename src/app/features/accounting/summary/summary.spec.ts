@@ -163,6 +163,11 @@ describe('Resumen contable', () => {
     globalThis.localStorage?.removeItem(VERSION_STORAGE_KEY);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+    globalThis.localStorage?.removeItem(VERSION_STORAGE_KEY);
+  });
+
   describe('los tres tramos', () => {
     it('pide el estado de resultados SEIS veces, cada una con su ventana', () => {
       vi.useFakeTimers({ toFake: ['Date'] });
@@ -398,7 +403,7 @@ describe('Resumen contable', () => {
       expect(c.overdueYouOwe()).toBe(1);
     });
 
-    it('«Ya me pagaron» compensa la partida y vuelve a leer el tablero', () => {
+    it('«Marcar como cobrada» compensa la partida y vuelve a leer el tablero', () => {
       // Es la misma compensación que el cockpit llama «Compensar». Cambia el
       // verbo porque cambia el lector, no el contrato.
       const { fixture, http } = montarConCartera();
@@ -606,6 +611,8 @@ describe('Resumen contable', () => {
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
     });
 
+    // La contabilidad simple sólo existe en la maqueta (`simulatorAvailable()`).
+    // Cada caso fija el interruptor que necesita en vez de heredar el de la rama.
     it('en Registros no hay tableros ni se pide el dinero del tablero de nuevo', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);

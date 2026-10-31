@@ -28,10 +28,12 @@ import {
   SPECIMEN_TYPE,
   displayOf,
 } from '../fixtures/concepts';
+import type { ServiceRequestPerformerInput } from '../../data-access/diagnostics/service-request-performer.types';
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, patientById, professionalById } from '../fixtures/people';
 import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
+import { citaDeLaOrden } from '../fixtures/centros';
 import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
 import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } from './service-request-performer.mock';
 import { categoriaDeLaOrden, esRechazo, resolverCategoria, validarNotas, type RechazoDeOrden } from './service-request-category.mock';
@@ -307,6 +309,49 @@ export const labInboxOrders = new Coleccion<LabInboxOrderRecord>(
   })),
 );
 
+/* ---- la orden que llega mientras se mira la recepción --------------------
+
+   El registro de procesos (4.2) pide que la orden *llegue* con alarma, «muy
+   similar a PEDIDOS YA», y que el laboratorio vea «que medico realizo la
+   solicitud». Con todo sembrado de antemano no llega nada: esta orden nace la
+   primera vez que el Laboratorio Central mira su recepción, con la fecha de
+   pedido unos segundos en el futuro (menos que el sondeo de la pantalla); la
+   bandeja esconde lo que todavía no fue pedido, así que entra en el sondeo
+   siguiente y suena. Una sola vez por sesión: queda en la colección. */
+
+export const ID_ORDEN_ENTRANTE = uuid('inbox-order-entrante');
+const SEGUNDOS_HASTA_LA_ORDEN_ENTRANTE = 15;
+
+function sembrarOrdenEntrante(): void {
+  if (labInboxOrders.get(ID_ORDEN_ENTRANTE) !== undefined) return;
+  const paciente = PATIENTS[8] ?? PATIENTS[0]!;
+  labInboxOrders.agregar({
+    id: ID_ORDEN_ENTRANTE,
+    patientProfileId: paciente.id,
+    codeConceptId: ESTUDIO['STUDY-PERFIL-LIPIDICO']!,
+    categoryConceptId: ORDER_CATEGORY['SRQ-LAB']!,
+    priorityConceptId: PRIORITY['PRI-ROUTINE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    requesterProfileId: MEDICAL.id,
+    requestingTenantId: TENANT_CLINICA,
+    performerTenantId: TENANT_LABORATORIO,
+    requestedAt: new Date(Date.parse(ahora()) + SEGUNDOS_HASTA_LA_ORDEN_ENTRANTE * 1000).toISOString(),
+  });
+}
+
+/** Lo que ya fue pedido: una orden con la fecha en el futuro todavía no llegó. */
+function yaLlego(o: LabInboxOrderRecord): boolean {
+  return Date.parse(o.requestedAt) <= Date.parse(ahora());
+}
+
+/** Quién pidió la orden, en palabras: «Nombre · Especialidad». */
+function solicitante(profileId: string): string | null {
+  const profesional = PROFESSIONALS.find((p) => p.id === profileId);
+  if (profesional === undefined) return null;
+  const especialidad = profesional.especialidades[0];
+  return especialidad === undefined ? profesional.displayName : `${profesional.displayName} · ${displayOf(especialidad)}`;
+}
+
 /** Las muestras sembradas de la bandeja: una recibida y una rechazada. */
 function seedInboxSpecimens(): void {
   const [, received, , rejected] = labInboxOrders.todos();
@@ -339,7 +384,7 @@ function seedInboxSpecimens(): void {
 }
 seedInboxSpecimens();
 
-const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; laboratoryAccessionId: string; statusConceptId: string; priorityConceptId: string; assignedProfileId: string | null; scheduledAt: string; completedAt: string | null }>(
+const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; laboratoryAccessionId: string; statusConceptId: string; priorityConceptId: string; assignedProfileId: string | null; scheduledAt: string; completedAt: string | null; tenantId?: string }>(
   LAB_ORDERS.map((o, i) => ({
     id: uuid(`work-order-${o.id}`),
     workOrderNumber: `OT-2026-${String(400 + i).padStart(4, '0')}`,
@@ -354,7 +399,7 @@ const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; la
 
 /* ---- centros de diagnóstico ------------------------------------------------ */
 
-interface UnidadSimulada {
+export interface UnidadSimulada {
   readonly id: string;
   readonly tenantId: string;
   readonly code: string;
@@ -467,7 +512,7 @@ const UNIDADES_DE_LA_PLANILLA: readonly UnidadSimulada[] = PHARMACIES_AND_LABS.f
   },
 }));
 
-const UNIDADES: readonly UnidadSimulada[] = [...UNIDADES_DEL_CORPUS, ...UNIDADES_DE_LA_PLANILLA, ...UNIDADES_DE_MAQUETA];
+export const UNIDADES: readonly UnidadSimulada[] = [...UNIDADES_DEL_CORPUS, ...UNIDADES_DE_LA_PLANILLA, ...UNIDADES_DE_MAQUETA];
 
 /** El laboratorio del corpus detrás de una unidad, si lo hay. */
 function corpusDe(u: UnidadSimulada) {
@@ -553,7 +598,7 @@ function ciudadesDe(u: UnidadSimulada): readonly string[] {
 }
 
 /** La sede principal: la que ancla precios, equipos y acreditaciones. */
-function sitioDe(u: UnidadSimulada) {
+export function sitioDe(u: UnidadSimulada) {
   return sedesDe(u)[0]!;
 }
 
@@ -616,7 +661,7 @@ function estudiosDelCorpus(u: UnidadSimulada) {
  */
 const ESTUDIOS_EN_MEMORIA = new Map<string, ReturnType<typeof construirEstudios>>();
 
-function estudiosDe(u: UnidadSimulada) {
+export function estudiosDe(u: UnidadSimulada) {
   const memorizado = ESTUDIOS_EN_MEMORIA.get(u.id);
   if (memorizado !== undefined) return memorizado;
   const calculado = construirEstudios(u);
@@ -644,11 +689,13 @@ const MODALIDAD_DE_ESTUDIO: Readonly<Record<string, readonly [code: string, disp
   'STUDY-DENSITOMETRIA': ['BMD', 'Densitometría ósea'],
 };
 
-/**
- * El menor precio publicado entre los estudios del centro, o `null` si ninguno
- * tiene tarifa (los laboratorios del corpus no publican precios). Con `null` el
- * filtro por importe máximo deja pasar al centro: no hay precio que lo excluya.
- */
+/** Haversine redondeado a 100 m, como el resto de los dobles. */
+function kmEnLineaRecta(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const rad = (g: number): number => (g * Math.PI) / 180;
+  const h = Math.sin(rad(bLat - aLat) / 2) ** 2 + Math.cos(rad(aLat)) * Math.cos(rad(bLat)) * Math.sin(rad(bLng - aLng) / 2) ** 2;
+  return Math.round(6371 * 2 * Math.asin(Math.sqrt(h)) * 10) / 10;
+}
+
 function precioMinimoDe(u: UnidadSimulada): number | null {
   const precios = estudiosDe(u).flatMap((e) => (e.prices[0] === undefined ? [] : [Number(e.prices[0].amount)]));
   return precios.length === 0 ? null : Math.min(...precios);
@@ -764,7 +811,7 @@ function itemDeDirectorio(u: UnidadSimulada) {
  * número de serie y fecha de calibración es inventar el inventario de una
  * institución real. El corpus no lo declara y la ficha no lo dibuja.
  */
-function equipoDe(u: UnidadSimulada) {
+export function equipoDe(u: UnidadSimulada) {
   if (u.corpusId !== undefined) return [];
   // Nueve y ocho, no cuatro: con cuatro equipos la sección nunca cruzaba el
   // umbral del buscador ni el de la paginación, así que esos controles no se
@@ -829,7 +876,7 @@ function resultadoPropio(r: InformeSimulado) {
   };
 }
 
-function pacienteDeSesion(request: MockRequest): string {
+export function pacienteDeSesion(request: MockRequest): string {
   return request.user?.patientProfileId ?? (request.user?.key === 'medica' ? PACIENTE.id : '');
 }
 
@@ -1005,7 +1052,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       previousDiagnosticReportId?: string;
       reusePreviousReport?: boolean;
       duplicateOverrideReason?: string;
-    }>(request);
+    } & ServiceRequestPerformerInput>(request);
 
     const patientProfileId = datos.patientProfileId ?? '';
     const codeConceptId = datos.codeConceptId ?? '';
@@ -1150,8 +1197,12 @@ export function registrarDiagnostico(router: MockRouter): void {
     }
     const status = texto(query, 'statusConceptId');
     const assigned = texto(query, 'assignedProfileId');
-    return ordenesDeTrabajo
-      .todos()
+    // Lo que nació de una accesión del laboratorio activo va primero; las
+    // sembradas no declaran laboratorio y se ven como antes.
+    const propias = ordenesDeTrabajo.filtrar((w) => w.tenantId !== undefined && w.tenantId === tenantId).reverse();
+    const sembradas = ordenesDeTrabajo.filtrar((w) => w.tenantId === undefined);
+    return [...propias, ...sembradas]
+      .map(({ tenantId: _t, ...w }) => w)
       .filter((w) => status === null || w.statusConceptId === status)
       .filter((w) => assigned === null || w.assignedProfileId === assigned)
       .slice(Number(query.get('offset') ?? 0), Number(query.get('offset') ?? 0) + (Number(query.get('limit') ?? 50) || 50));
@@ -1242,6 +1293,19 @@ export function registrarDiagnostico(router: MockRouter): void {
       items,
     };
     labAccessions.agregar(accession);
+    // La accesión abre la orden de trabajo: «Cada orden de trabajo nace
+    // cuando registrás la accesión», dice la cola. Antes no nacía ninguna.
+    ordenesDeTrabajo.agregar({
+      id: nuevoId('work-order'),
+      workOrderNumber: `OT-2026-${String(400 + ordenesDeTrabajo.todos().length).padStart(4, '0')}`,
+      laboratoryAccessionId: accession.id,
+      statusConceptId: STATUS['ST-IN-PROGRESS']!,
+      priorityConceptId: accession.priorityConceptId,
+      assignedProfileId: null,
+      scheduledAt: receivedAt,
+      completedAt: null,
+      tenantId: accession.custodianTenantId,
+    });
     return reply(201, { id: accession.id, status: accession.statusConceptId, accessionSpecimenIds: items.map((item) => item.accessionSpecimenId) });
   });
 
@@ -1344,6 +1408,7 @@ export function registrarDiagnostico(router: MockRouter): void {
     }
     const cursorKey = after;
 
+    if (tenantId === TENANT_LABORATORIO) sembrarOrdenEntrante();
     const accessioned = new Set(
       labAccessions
         .filtrar((a) => a.custodianTenantId === tenantId && a.serviceRequestId !== null)
@@ -1351,7 +1416,7 @@ export function registrarDiagnostico(router: MockRouter): void {
     );
     const needle = typeof query === 'string' ? normalizeText(query) : null;
     const pending = labInboxOrders
-      .filtrar((o) => o.performerTenantId === tenantId && o.statusConceptId === STATUS['ST-ACTIVE'] && !accessioned.has(o.id))
+      .filtrar((o) => o.performerTenantId === tenantId && o.statusConceptId === STATUS['ST-ACTIVE'] && !accessioned.has(o.id) && yaLlego(o))
       .filter((o) => {
         if (needle === null) return true;
         const patient = patientById(o.patientProfileId);
@@ -1384,6 +1449,9 @@ export function registrarDiagnostico(router: MockRouter): void {
           priorityConceptId: o.priorityConceptId,
           statusConceptId: o.statusConceptId,
           requesterProfileId: o.requesterProfileId,
+          // Sólo simulador por ahora (P-LAB-SOLICITANTE): el DTO real trae el
+          // id y no el nombre, y 4.2 pide que el laboratorio vea quién pidió.
+          requesterDisplayName: solicitante(o.requesterProfileId),
           requestingTenantId: o.requestingTenantId,
           requestingTenantName: TENANT_NAMES[o.requestingTenantId] ?? null,
           requestedAt: o.requestedAt,
@@ -1486,6 +1554,8 @@ export function registrarDiagnostico(router: MockRouter): void {
         preparationInstructions: preparacionDelEstudio(o.codeConceptId),
         hasReleasedResult: informe !== undefined && esVisibleParaPaciente(informe),
         reportId: informe !== undefined && esVisibleParaPaciente(informe) ? informe.id : undefined,
+        // El turno que el paciente reservó en un centro para esta orden.
+        appointment: citaDeLaOrden(o.id),
         ...performerFieldsOfOrder(o),
       };
     });

@@ -16,6 +16,7 @@ import { Input } from '../../atoms/input/input';
 import { Textarea } from '../../atoms/textarea/textarea';
 import { FormField } from '../form-field/form-field';
 import { nextControlId } from '@shared/forms/form-control.context';
+import { playExitAnimation } from '@shared/motion/exit-animation';
 import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 import {
   DEFAULT_CANCEL_LABEL,

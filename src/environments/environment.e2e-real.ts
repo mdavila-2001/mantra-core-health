@@ -1,14 +1,20 @@
 import type { Environment } from './environment.types';
 import { environment as developmentEnvironment } from './environment.development';
 
-/** Alias de desarrollo contra la API real, sin datos fabricados. */
+/**
+ * Entorno exclusivo del recorrido contra la API real.
+ *
+ * Hereda los respaldos de desarrollo porque el runner usa `ng serve`, pero
+ * apaga el interceptor simulado en el artefacto compilado. A diferencia del
+ * interruptor manual del stock, este valor sobrevive refresh y logout/login.
+ */
 export const environment: Environment = {
   ...developmentEnvironment,
-  demoPresets: false,
-  paymentDemo: false,
-  loyaltyDemo: false,
-  campaignsDemo: false,
-  billingSiatDemo: false,
-  designMockups: false,
   mockBackend: false,
+  // Sin backend simulado no hay motor fiscal simulado: la facturación
+  // SIMULADA (FACT-SIAT-MOCK) no puede pintar nada ni pedir sus rutas acá.
+  billingSiatDemo: false,
+  // Contra la API real las pantallas de la bóveda (datos de ejemplo) no se
+  // registran, igual que en `real-api` y `production-api`.
+  designMockups: false,
 };

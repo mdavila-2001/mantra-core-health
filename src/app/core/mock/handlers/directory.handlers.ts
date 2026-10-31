@@ -235,7 +235,99 @@ const sucursales = new Coleccion<{
     timeZone: 'America/La_Paz',
     createdAt: iso(-300),
   },
+  // Laboratorio Central: su sede principal, la misma que publica la vitrina
+  // (Calle Sucre N.º 210). Antes «Sucursales» del laboratorio no tenía ni una.
+  {
+    id: uuid('branch-laboratorio-central-principal'),
+    tenantId: TENANT_LABORATORIO,
+    code: 'PRINCIPAL',
+    name: 'Sede principal',
+    branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    timeZone: 'America/La_Paz',
+    createdAt: iso(-900),
+    description: 'Toma de muestras y laboratorio · Calle Sucre N.º 210',
+    latitude: -17.784,
+    longitude: -63.1815,
+    locationUrl: 'https://www.openstreetmap.org/?mlat=-17.784&mlon=-63.1815#map=17/-17.784/-63.1815',
+  },
+  // Farmacia Vida: las mismas tres sedes que ofrece la bandeja del mostrador
+  // («Sede») en `pharmacy.handlers`. Antes «Sucursales» decía «Todavía no
+  // cargaste sucursales» mientras la bandeja ya repartía pedidos entre tres.
+  ...(
+    [
+      ['central', 'CENTRAL', 'Sucursal Central', 'Casa matriz · Av. Alemana N.º 2100', -17.769, -63.165, -700],
+      ['equipetrol', 'EQ', 'Sucursal Equipetrol', 'Av. San Martín, Equipetrol', -17.76, -63.199, -420],
+      ['plan3000', 'P3', 'Sucursal Plan 3000', 'Av. Paraguá, Plan 3000', -17.814, -63.137, -210],
+    ] as const
+  ).map(([clave, code, name, description, latitude, longitude, dias]) => ({
+    id: uuid(`branch-farmacia-vida-${clave}`),
+    tenantId: TENANT_FARMACIA,
+    code,
+    name,
+    branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    timeZone: 'America/La_Paz',
+    createdAt: iso(dias),
+    description,
+    latitude,
+    longitude,
+    locationUrl: `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=17/${latitude}/${longitude}`,
+  })),
 ]);
+
+/**
+ * Suma las sucursales que una farmacia declaró en su alta pública, para que
+ * «Sucursales» las muestre al entrar: el alta las pide (3.1, «ubicación GPS de
+ * cada sucursal») y perderlas obligaba a cargarlas dos veces. Una que ya
+ * existe con el mismo nombre no se repite.
+ */
+export function sumarSucursalesDelAlta(
+  tenantId: string,
+  declaradas: readonly {
+    readonly name: string;
+    readonly description?: string;
+    readonly latitude?: number;
+    readonly longitude?: number;
+    readonly locationUrl?: string;
+  }[],
+): void {
+  for (const d of declaradas) {
+    const existentes = sucursales.filtrar((s) => s.tenantId === tenantId);
+    if (existentes.some((s) => s.name === d.name)) continue;
+    const base = d.name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    const usados = new Set(existentes.map((s) => s.code));
+    const raiz = base === '' ? 'SUC' : base;
+    let code = raiz;
+    for (let n = 2; usados.has(code); n++) code = `${raiz}-${n}`;
+    sucursales.agregar({
+      id: nuevoId('branch'),
+      tenantId,
+      code,
+      name: d.name,
+      branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
+      statusConceptId: STATUS['ST-ACTIVE']!,
+      timeZone: 'America/La_Paz',
+      createdAt: ahora(),
+      ...(d.latitude === undefined ? {} : { latitude: d.latitude }),
+      ...(d.longitude === undefined ? {} : { longitude: d.longitude }),
+      ...(d.description === undefined ? {} : { description: d.description }),
+      ...(d.locationUrl === undefined ? {} : { locationUrl: d.locationUrl }),
+    });
+  }
+}
+
+/** Las sucursales activas de una organización, como las carga «Sucursales». */
+export function sucursalesDelTenant(tenantId: string) {
+  return sucursales.filtrar(
+    (s) => s.tenantId === tenantId && s.statusConceptId === STATUS['ST-ACTIVE'],
+  );
+}
 
 const membresias = new Coleccion<{
   id: string;

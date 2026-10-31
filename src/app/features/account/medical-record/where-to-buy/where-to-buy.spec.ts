@@ -2068,6 +2068,35 @@ function byTestId(id: string): string {
   return `[data-testid="${id}"]`;
 }
 
+describe('pendingImagingStudies', () => {
+  const concept = (conceptId: string, code: string, display: string) =>
+    [conceptId, { conceptId, code, display, codeSystemVersionId: 'v1' }] as const;
+  const labels = new Map([
+    concept('c-eco', 'STUDY-ECO-ABD', 'Ecografía abdominal'),
+    concept('c-glu', 'STUDY-GLUCOSA', 'Glucosa'),
+  ]);
+  const sortOrder = (id: string, codeConceptId: string) => ({
+    id,
+    codeConceptId,
+    statusConceptId: 's-1',
+    createdAt: new Date('2026-10-01T10:00:00Z'),
+    hasReleasedResult: false,
+  });
+
+  it('sin categoría, un análisis de laboratorio no cuenta como imagen', () => {
+    expect(pendingImagingStudies([sortOrder('o-1', 'c-eco'), sortOrder('o-2', 'c-glu')], labels)).toEqual([
+      { conceptId: 'c-eco', name: 'Ecografía abdominal' },
+    ]);
+  });
+});
+
+describe('partialCountLabel', () => {
+  it('concuerda en singular y en plural', () => {
+    expect(partialCountLabel(1, 'la', 'las')).toBe('Ver la que tiene una parte');
+    expect(partialCountLabel(3, 'los', 'los')).toBe('Ver los 3 que tienen una parte');
+  });
+});
+
 describe('pendingImagingStudies con los códigos de la API', () => {
   const concept = (conceptId: string, code: string, display: string) =>
     [conceptId, { conceptId, code, display, codeSystemVersionId: 'v1' }] as const;

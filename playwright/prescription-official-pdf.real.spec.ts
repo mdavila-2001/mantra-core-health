@@ -113,5 +113,5 @@ test('la paciente descarga el PDF oficial de una receta real, emitida por la doc
     ([evento]) => evento,
   );
   expect(descarga.suggestedFilename()).toBe(`receta-${requestId}.pdf`);
-  await expect(page.getByText('Descarga iniciada exitosamente')).toBeVisible();
+  await expect(page.getByText('Su receta se está descargando.')).toBeVisible();
 });
