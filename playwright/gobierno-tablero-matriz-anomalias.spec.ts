@@ -78,10 +78,11 @@ test('el administrador recorre el tablero, resuelve una anomalía, pregunta «¿
   /* 2 · anomalías: abrir, descartar sin comentario, descartar con comentario */
   await expect(page.getByTestId('anomalies-table')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: /Ver el detalle de Marcos Ribera/ }).click();
+  // Con la forma de evidencia de la API real (sin serie ni texto) la pantalla arma el texto y tres barras: observado, habitual y umbral.
   await expect(page.getByTestId('anomaly-description')).toContainText(
-    'Las búsquedas de Marcos Ribera',
+    'Muchas búsquedas de pacientes: se observó 18, lo habitual es 4 y el umbral de la organización es 15.',
   );
-  await expect(page.locator('[data-testid="anomaly-bar"]')).toHaveCount(8);
+  await expect(page.locator('[data-testid="anomaly-bar"]')).toHaveCount(3);
   await expect(page.getByTestId('anomaly-baseline')).toContainText('Línea base');
 
   await page.getByTestId('anomaly-dismiss').click();

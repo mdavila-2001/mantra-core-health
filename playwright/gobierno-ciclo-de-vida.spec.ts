@@ -108,7 +108,7 @@ test('ciclo de vida: sin dueño, baja con traspaso y administración delegada de
   // El caso de ingreso de Nora marca el paso como hecho.
   await page.locator('[data-testid^="case-open-"]').first().click();
   await expect(page.getByTestId('step-status-SUPERVISOR_ASSIGNED')).toContainText('Hecho');
-  await expect(page.getByTestId('step-auto-CONFIDENTIALITY_ACKNOWLEDGED')).toContainText(
+  await expect(page.getByTestId('step-auto-CONFIDENTIALITY_ACK')).toContainText(
     'Este paso se completa solo',
   );
 
