@@ -144,6 +144,7 @@ export class PharmacyInventory {
   private readonly route = inject(ActivatedRoute);
   private readonly csv = inject(CsvExportService);
   protected readonly sites = inject(InventorySites);
+  private readonly sitePanel = viewChild(SiteStockPanel);
 
   protected readonly allSites = ALL_SITES;
   /** La sucursal elegida, o «Todas». */
@@ -469,6 +470,12 @@ export class PharmacyInventory {
       { header: INVENTORY_CSV_HEADERS.available, value: (row) => row.available },
     ];
     this.csv.download(inventoryCsvRows(dataOf(this.products()) ?? []), columns, 'inventario-de-la-farmacia.csv');
+  }
+
+  /** Tras una subida: se relee el catálogo y, con una sucursal elegida, su stock. */
+  protected uploadApplied(): void {
+    this.reload();
+    this.sitePanel()?.refresh();
   }
 
   protected openUpload(): void {
