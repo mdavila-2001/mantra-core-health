@@ -3,6 +3,7 @@ import { type ReplyTemplate } from '../../data-access/support-access/support-inb
 import { CONCEPT, conversationList, messageList, showcaseOf, showcases, type SimulatedConversation, type SimulatedMessage, type SimulatedShowcase } from './community';
 import { patientById, PATIENTS } from './people';
 import {
+  accesosClinicos,
   ANTELO,
   asignaciones,
   autorias,
@@ -97,9 +98,16 @@ const DELEGADO_MARIELA: FilaDelegado = {
   replyDisclosure: 'SHOW',
   acceptedAt: iso(-15),
 };
-if (!vinculos.has(VINCULO_MARIELA.id)) vinculos.agregar(VINCULO_MARIELA);
-if (!permisos.has(PERMISO_MARIELA.id)) permisos.agregar(PERMISO_MARIELA);
-if (!delegados.has(DELEGADO_MARIELA.id)) delegados.agregar(DELEGADO_MARIELA);
+/**
+ * Suma a Mariela (vínculo, permiso y aceptación de Pérez). Al cargar, solo si falta: lo guardado en la sesión gana. Al
+ * reiniciar, `pisar` la deja como de fábrica aunque una prueba anterior le haya terminado el vínculo.
+ */
+function sumarAMariela(pisar: boolean): void {
+  if (pisar || !vinculos.has(VINCULO_MARIELA.id)) vinculos.agregar(VINCULO_MARIELA);
+  if (pisar || !permisos.has(PERMISO_MARIELA.id)) permisos.agregar(PERMISO_MARIELA);
+  if (pisar || !delegados.has(DELEGADO_MARIELA.id)) delegados.agregar(DELEGADO_MARIELA);
+}
+sumarAMariela(false);
 
 /* ---- los perfiles de chat de los doctores --------------------------------------- */
 
@@ -386,6 +394,29 @@ const NOTA_DE_SEMILLA: FilaNota = {
   createdAt: hace(60),
 };
 if (!notasInternas.has(NOTA_DE_SEMILLA.id)) notasInternas.agregar(NOTA_DE_SEMILLA);
+
+/**
+ * Deja la **bandeja de chat compartida** como la trae de fábrica: las conversaciones sembradas con sus mensajes (sin lo que se
+ * respondió después), quién tiene cada una, las notas, las autorías, los pedidos de acceso clínico, las plantillas y la
+ * aceptación de cada doctor, con Mariela incluida.
+ *
+ * Solo lo usan las pruebas: el corredor no aísla los módulos entre archivos de un mismo worker (`isolate: false`). Estas tablas
+ * nacen vacías o con filas de otro módulo y reciben las de la bandeja **al cargar este archivo**, así que `reiniciar()` solo las
+ * dejaría sin ellas; por eso se reinician acá y se vuelven a sembrar. También vale después de `reiniciarElGobiernoDeAccesos()`,
+ * que vuelve los vínculos y permisos a los del constructor y se lleva los de Mariela. Lo que no es de la bandeja no se toca:
+ * los vínculos de las demás personas son del gobierno de accesos.
+ */
+export function reiniciarLaBandejaDeApoyo(): void {
+  for (const tabla of [asignaciones, notasInternas, autorias, accesosClinicos, delegados, plantillas]) {
+    tabla.reiniciar();
+  }
+  const sembradas = new Set(CONVERSACIONES_DE_SEMILLA.map((c) => conversacionId(c.clave)));
+  for (const mensaje of messageList.filtrar((m) => sembradas.has(m.conversationId))) messageList.borrar(mensaje.id);
+  for (const id of sembradas) conversationList.borrar(id);
+  sumarAMariela(true);
+  for (const c of CONVERSACIONES_DE_SEMILLA) sembrar(c);
+  notasInternas.agregar(NOTA_DE_SEMILLA);
+}
 
 /** Los datos de partida de una conversación (el motivo de consulta, por ejemplo). */
 export function semillaDe(conversationId: string): ConversacionDeSemilla | undefined {
