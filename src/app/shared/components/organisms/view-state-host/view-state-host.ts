@@ -16,6 +16,7 @@ import { DatePipe, isPlatformBrowser } from '@angular/common';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Alert } from '../../molecules/alert/alert';
 import { AppButton } from '../../atoms/button/button';
+import { SupportCode } from '../../molecules/support-code/support-code';
 import { EmptyState } from '../../molecules/empty-state/empty-state';
 import { Link } from '../../atoms/link/link';
 import { Router, RouterLink, type UrlTree } from '@angular/router';
@@ -47,7 +48,7 @@ import { Spinner } from '../../atoms/spinner/spinner';
  */
 @Component({
   selector: 'app-view-state-host',
-  imports: [Alert, AppButton, DatePipe, EmptyState, Link, RouterLink, Skeleton, Spinner],
+  imports: [Alert, AppButton, DatePipe, EmptyState, Link, RouterLink, Skeleton, Spinner, SupportCode],
   templateUrl: './view-state-host.html',
   styleUrl: './view-state-host.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

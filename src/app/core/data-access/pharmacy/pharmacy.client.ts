@@ -10,6 +10,8 @@ import type {
   CatalogProductQuery,
   CatalogRequestCreated,
   CatalogRequestDraft,
+  MedicationAvailabilityQuery,
+  MedicationAvailabilityResult,
   PharmacyCategory,
   PharmacyCategoryPage,
   PharmacyContacts,
@@ -304,6 +306,29 @@ export class PharmacyClient {
     return this.http.get<AvailabilityResult>(this.url('/pharmacy-inventory/availability'), {
       params,
     });
+  }
+
+  /**
+   * `GET /pharmacy-inventory/availability/medications` — qué sedes de toda la
+   * red pueden surtir los medicamentos de una receta, en una sola consulta.
+   *
+   * Cada sede trae un producto **suyo** por medicamento que tiene y nombra los
+   * que le faltan; el orden es el de {@link availability}.
+   */
+  availabilityByMedication(
+    query: MedicationAvailabilityQuery,
+  ): Observable<MedicationAvailabilityResult> {
+    let params = new HttpParams().set('medications', query.medicationConceptIds.join(','));
+    if (query.origin !== undefined) {
+      params = params.set('lat', String(query.origin.lat)).set('lng', String(query.origin.lng));
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+    return this.http.get<MedicationAvailabilityResult>(
+      this.url('/pharmacy-inventory/availability/medications'),
+      { params },
+    );
   }
 
   /**

@@ -237,11 +237,12 @@ describe('PharmacyImport', () => {
       expect(host.querySelector('app-page-header')).toBeNull();
     });
 
-    it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos en una sola tarjeta', () => {
+    it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos sin tarjeta propia (la pone el catálogo)', () => {
       mount();
 
       expect(root().querySelector('.import__pharmacy')).toBeNull();
-      expect(root().querySelectorAll('app-card')).toHaveLength(1);
+      expect(root().querySelectorAll('app-card')).toHaveLength(0);
+      expect(byId('import-card')).not.toBeNull();
       expect(root().querySelector('h1')?.textContent).toContain('Importación masiva');
       for (const label of ['Subir archivo', 'Asignar columnas', 'Revisar datos', 'Resultado']) {
         expect(text()).toContain(label);
@@ -494,6 +495,7 @@ describe('PharmacyImport', () => {
         'concentracion',
         'presentacion',
         'receta',
+        'medicamento',
         'cadena_frio',
         'codigo_barras',
         'precio',
@@ -720,6 +722,66 @@ describe('PharmacyImport', () => {
       expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
       answerPreview();
       expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).not.toBe('true');
+    });
+    it('con la vista previa fallida tampoco deja cargar: no se publica sin saber qué diría el servidor', async () => {
+      mount();
+      await upload('codigo;marca\nA-1;Uno\n', []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      http
+        .expectOne(bulkUrl(PHARMACY.id))
+        .flush({ message: 'caído' }, { status: 503, statusText: 'Service Unavailable' });
+      fixture.detectChanges();
+
+      expect(byId('import-preview-error')).not.toBeNull();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('con la vista previa a medias (un lote contestado de dos) tampoco deja cargar', async () => {
+      mount();
+      const lines = Array.from({ length: 251 }, (_, index) => `P-${index + 1};Producto ${index + 1}`);
+      await upload(`codigo;marca\n${lines.join('\n')}\n`, []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      const [first] = http.match(bulkUrl(PHARMACY.id));
+      bulkAnswer(first!);
+      fixture.detectChanges();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+
+      answerPreview();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).not.toBe('true');
+    });
+
+    it('si el servidor contesta menos filas de las mandadas, la vista previa no vale y no deja cargar', async () => {
+      mount();
+      await upload('codigo;marca\nA-1;Uno\nB-2;Dos\n', []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      http.expectOne(bulkUrl(PHARMACY.id)).flush({ dryRun: true, results: [{ row: 1, outcome: 'CREATED' }] });
+      fixture.detectChanges();
+
+      expect(textOf('import-preview-error')).toContain('llegó incompleta');
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('la columna «medicamento» viaja como medicationName y un recetable sin medicamento se avisa antes de cargar', async () => {
+      mount();
+      await upload('codigo;generico;receta;medicamento\nA-1;Amoxicilina;sí;Amoxicilina\nA-2;Otro;sí;\n', []);
+
+      const [preview] = review((row) =>
+        row.productCode === 'A-2'
+          ? {
+              warnings: [
+                { field: 'medicationConceptId', reason: 'MEDICATION_NOT_LINKED', message: 'Pide receta sin medicamento' },
+              ],
+            }
+          : {},
+      );
+
+      expect(preview!.request.body.rows[0]).toMatchObject({ productCode: 'A-1', medicationName: 'Amoxicilina' });
+      expect(preview!.request.body.rows[1]).not.toHaveProperty('medicationName');
+      expect(textOf('import-preview-warned')).toContain('1 fila se cargaría');
     });
   });
 

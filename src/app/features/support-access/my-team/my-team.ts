@@ -25,6 +25,8 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { formatDateTime, templateLabel } from '../support-labels';
+import { InviteSupport } from './invite-support/invite-support';
+import { esInvitacionSinResponder } from './invite-support/invite-support.rules';
 import { TeamAttention } from './team-attention/team-attention';
 import { TeamExplain } from './team-explain/team-explain';
 
@@ -48,6 +50,7 @@ import { TeamExplain } from './team-explain/team-explain';
     AppButtonLink,
     Badge,
     Card,
+    InviteSupport,
     PageHeader,
     RouterLink,
     Switch,
@@ -66,6 +69,8 @@ export class MyTeam implements OnInit {
   private readonly toasts = inject(ToastService);
 
   protected readonly state = signal<ViewState<readonly DoctorTeamMember[]>>(loading());
+  /** Lo que el doctor ofreció y la secretaria todavía no respondió: no es su equipo hasta que ella acepte. */
+  protected readonly invitaciones = signal<readonly DoctorTeamMember[]>([]);
   protected readonly actividad = signal<readonly SupportActivityEntry[]>([]);
   protected readonly ocupado = signal<string | null>(null);
   /** La persona sobre la que el doctor pregunta «¿por qué pudo o no pudo…?». */
@@ -80,17 +85,22 @@ export class MyTeam implements OnInit {
   protected cargar(): void {
     this.state.set(loading());
     this.support.getMyTeam().subscribe({
-      next: ({ items }) =>
+      next: ({ items }) => {
+        const equipo = items.filter((m) => !esInvitacionSinResponder(m));
+        this.invitaciones.set(items.filter(esInvitacionSinResponder));
         this.state.set(
-          items.length === 0
+          equipo.length === 0
             ? empty(
                 { label: 'Cuando la organización le asigne a alguien, aparecerá acá' },
                 'Todavía no tiene equipo de apoyo.',
               )
-            : ready(items),
-        ),
-      error: (failure: unknown) =>
-        this.state.set(errorToViewState<readonly DoctorTeamMember[]>(failure)),
+            : ready(equipo),
+        );
+      },
+      error: (failure: unknown) => {
+        this.invitaciones.set([]);
+        this.state.set(errorToViewState<readonly DoctorTeamMember[]>(failure));
+      },
     });
     this.support.getMyTeamActivity().subscribe({
       next: ({ items }) => this.actividad.set(items),

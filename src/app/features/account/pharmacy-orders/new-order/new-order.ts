@@ -192,7 +192,7 @@ export class NewOrder {
   /** Medications that block the complete order under the approved policy. */
   protected readonly unresolvedProductNames =
     this.borrador?.lineas
-      .filter((line) => line.productId === null)
+      .filter((line) => line.productId === null && line.missingAtSite !== true)
       .map((line) => line.medicamento) ?? [];
 
   protected readonly hasUnresolvedProducts = this.unresolvedProductNames.length > 0;

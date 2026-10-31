@@ -5,7 +5,12 @@ import type {
   BulkSiteRow,
 } from '../../../../core/data-access/pharmacy/pharmacy-bulk.types';
 import { BULK_MAX_ROWS } from '../../../../core/data-access/pharmacy/pharmacy-bulk.types';
-import { ArchivoInvalido, leerTablaCsv, parsePrice } from '../../catalog-rules/catalog.rules';
+import {
+  ArchivoInvalido,
+  leerTablaCsv,
+  parsePrice,
+  withoutAccents,
+} from '../../catalog-rules/catalog.rules';
 
 /* ============================================================================
     Los CSV de categorías, precios y sucursales de la pestaña «Importación».
@@ -20,9 +25,16 @@ import { ArchivoInvalido, leerTablaCsv, parsePrice } from '../../catalog-rules/c
     Esta capa sólo lleva cada renglón a la fila que espera la API: un número
     con coma decimal, un `si`/`no`. Qué fila vale lo decide el servidor en la
     vista previa (`dryRun`): un nombre vacío, un código que no existe o una
-    latitud sin longitud vuelven rechazados con su motivo. Lo único que se frena
-    acá es lo que no se puede ni mandar (un precio o una latitud que no son un
-    número), con su línea.
+    latitud sin longitud vuelven rechazados con su motivo. Lo que se frena acá
+    es lo que no se puede ni mandar (un precio o una latitud que no son un
+    número) y la **clave repetida en el archivo**, con su línea.
+
+    La clave repetida se frena acá porque el servidor sólo la ve dentro de un
+    pedido y el archivo viaja en lotes de 250: una clave que caía en dos lotes
+    se aplicaba dos veces (la segunda pisaba a la primera) mientras la vista
+    previa la daba por buena. La regla es la del asistente de productos: no se
+    manda **ninguna** de las filas repetidas, porque elegir una por el orden
+    sería decidir en silencio cuál vale.
     ========================================================================== */
 
 /** Lo que importa el componente genérico; los productos tienen su propio asistente. */
@@ -86,6 +98,11 @@ export interface EntityCsvRow {
   readonly payload: EntityRowPayload | null;
   /** Por qué no se puede mandar; vacío si se manda. */
   readonly errors: readonly string[];
+  /**
+   * Sólo si otra fila del archivo trae la misma clave: las líneas de todas
+   * ellas. Ninguna se manda (`payload` es `null`).
+   */
+  readonly repeatedOnLines?: readonly number[];
 }
 
 export interface EntityCsvReading {
@@ -116,7 +133,63 @@ export function readEntityCsv(entity: ImportEntity, content: string): EntityCsvR
     };
     return { line: linea, ...ROW_READERS[entity](cell) };
   });
-  return { rows, ignored: table.encabezados.filter((header) => !known.has(header)) };
+  return {
+    rows: markRepeatedKeys(entity, rows),
+    ignored: table.encabezados.filter((header) => !known.has(header)),
+  };
+}
+
+/** Largo máximo de un nombre de categoría; más largo no tiene clave (lo rechaza el servidor). */
+const CATEGORY_NAME_MAX = 60;
+
+/**
+ * La clave de upsert de una fila, la misma que usa el servidor para
+ * `DUPLICATE_IN_FILE` (`keyOf` de cada manejador de la carga masiva):
+ *
+ * - categorías: el nombre sin espacios de más, mayúsculas ni tildes;
+ * - precios: el código del producto, tal cual (distingue mayúsculas);
+ * - sucursales: el código de la sede, tal cual.
+ *
+ * `null` si la fila no tiene clave: la vacía o la de un nombre demasiado largo
+ * se mandan igual y las rechaza el servidor con su motivo.
+ */
+export function upsertKeyOf(entity: ImportEntity, payload: EntityRowPayload): string | null {
+  if (entity === 'categories') {
+    const name = (payload as BulkCategoryRow).name.trim().replace(/\s+/g, ' ');
+    return name.length >= 1 && name.length <= CATEGORY_NAME_MAX ? withoutAccents(name) : null;
+  }
+  const code =
+    entity === 'prices' ? (payload as BulkPriceRow).productCode : (payload as BulkSiteRow).code;
+  return code.trim() === '' ? null : code.trim();
+}
+
+/**
+ * Frena **todas** las filas que comparten su clave con otra **del archivo
+ * entero**, no sólo del lote. Sólo cuentan las filas que se mandarían: una que
+ * no sale (un precio ilegible) ya tiene su error y el servidor nunca la vería.
+ */
+function markRepeatedKeys(entity: ImportEntity, rows: readonly EntityCsvRow[]): EntityCsvRow[] {
+  const linesOf = new Map<string, number[]>();
+  const keys = rows.map((row) => (row.payload === null ? null : upsertKeyOf(entity, row.payload)));
+  keys.forEach((key, index) => {
+    if (key !== null) {
+      linesOf.set(key, [...(linesOf.get(key) ?? []), rows[index]!.line]);
+    }
+  });
+  return rows.map((row, index) => {
+    const lines = keys[index] === null ? undefined : linesOf.get(keys[index]!);
+    if (lines === undefined || lines.length < 2) {
+      return row;
+    }
+    return {
+      ...row,
+      payload: null,
+      errors: [
+        `La misma clave está en las líneas ${lines.join(', ')}: no se envía ninguna. Deje una sola.`,
+      ],
+      repeatedOnLines: lines,
+    };
+  });
 }
 
 type RowReader = (cell: (header: string) => string) => Omit<EntityCsvRow, 'line'>;

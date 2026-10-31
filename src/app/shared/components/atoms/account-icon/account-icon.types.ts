@@ -31,6 +31,10 @@
  * de salud. Sale a la red contra `register-organization` con un tipo de salud
  * que ya existe, y su segundo paso —abrir la práctica y la primera sede— vive
  * en `medical-center-setup`.
+ *
+ * `support` entró con el alta de la secretaria (personal de apoyo): una
+ * tablilla con una persona. Su alta (`register-support-staff`) crea la cuenta;
+ * el hospital o el doctor la suman después por solicitud y aceptación.
  */
 export const ACCOUNT_ICON_NAMES = [
   'patient',
@@ -40,6 +44,7 @@ export const ACCOUNT_ICON_NAMES = [
   'imaging',
   'pharmacy',
   'clinic',
+  'support',
 ] as const;
 
 export type AccountIconName = (typeof ACCOUNT_ICON_NAMES)[number];

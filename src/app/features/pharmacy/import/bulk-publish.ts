@@ -86,7 +86,13 @@ export interface OutcomeCounts {
  */
 export function productBulkRow(row: ReadyRow): BulkProductRow {
   if (row.accion === 'ACTUALIZAR') {
-    return { productCode: row.borrador.productCode, ...draftChanges(row.borrador, false) };
+    const { medicationName } = row.borrador;
+    return {
+      productCode: row.borrador.productCode,
+      ...draftChanges(row.borrador, false),
+      // El medicamento por su nombre lo resuelve el servidor; vacío no desvincula.
+      ...(medicationName === undefined ? {} : { medicationName }),
+    };
   }
   return withoutEmptyValues(row.borrador);
 }
@@ -125,8 +131,15 @@ export function toFileRows(
   return results.map((result) => ({
     number: lines[result.row - 1] ?? result.row,
     outcome: result.outcome,
-    message: result.outcome === 'REJECTED' ? bulkRowMessage(result) : '',
+    message: result.outcome === 'REJECTED' ? bulkRowMessage(result) : bulkRowWarnings(result),
   }));
+}
+
+/** Los avisos de una fila que se carga igual; vacío si no tiene ninguno. */
+export function bulkRowWarnings(result: BulkRowResult): string {
+  return (result.warnings ?? [])
+    .map((warning) => warning.message ?? REASON_TEXT[warning.reason] ?? warning.reason)
+    .join(' ');
 }
 
 /**
@@ -147,6 +160,8 @@ const REASON_TEXT: Readonly<Record<string, string>> = {
   NOT_FOUND: 'No existe: eligió sólo actualizar.',
   PRODUCT_NOT_FOUND: 'No hay un producto con ese código en su catálogo.',
   PRODUCT_RETIRED: 'El producto de ese código está retirado.',
+  MEDICATION_NOT_FOUND: 'Ese medicamento no está en el catálogo con que se receta.',
+  MEDICATION_NOT_LINKED: 'Pide receta y no tiene medicamento vinculado: ninguna receta lo encuentra.',
 };
 
 export function countOutcomes(results: readonly FileRowResult[]): OutcomeCounts {

@@ -530,6 +530,39 @@ describe('ClinicalClient', () => {
 
     const buscar = () =>
       http.expectOne((r) => r.url === '/terminology/concepts' && r.params.get('q') === 'COND_PROVISIONAL');
+    /** La segunda búsqueda: la clave con la que la API real guarda el concepto. */
+    const buscarClave = () =>
+      http.expectOne((r) => r.url === '/terminology/concepts' && r.params.get('q') === 'CONDITION_PROVISIONAL');
+
+    it('encuentra el concepto con la clave real de la API (clinical:CONDITION_PROVISIONAL)', () => {
+      client
+        .createCondition({
+          custodianTenantId: 't-1',
+          patientProfileId: 'p-1',
+          codeConceptId: 'cod-1',
+          verificationStatus: 'PROVISIONAL',
+        })
+        .subscribe();
+
+      // Contra la API real la forma corta no aparece: el catálogo guarda la clave del módulo.
+      buscar().flush({ items: [], count: 0, limit: 50 });
+      buscarClave().flush({
+        items: [
+          { conceptId: 'ajeno', code: 'clinical:CONDITION_PROVISIONAL_X', display: 'Otro', codeSystemVersionId: 'v' },
+          {
+            conceptId: 'cid-real',
+            code: 'clinical:CONDITION_PROVISIONAL',
+            display: 'Condition provisional',
+            codeSystemVersionId: 'v',
+          },
+        ],
+        count: 2,
+        limit: 50,
+      });
+      const req = http.expectOne('/clinical/conditions');
+      expect((req.request.body as Record<string, unknown>)['verificationStatusConceptId']).toBe('cid-real');
+      req.flush(CONDICION_REGISTRADA);
+    });
 
     it('traduce PROVISIONAL al concepto del catálogo y no manda la palabra', () => {
       client
@@ -565,6 +598,7 @@ describe('ClinicalClient', () => {
         .subscribe({ error: (e: unknown) => (falla = e) });
 
       buscar().flush({ items: [BUSQUEDA.items[0]], count: 1, limit: 50 });
+      buscarClave().flush({ items: [], count: 0, limit: 50 });
 
       expect(falla).toBeInstanceOf(Error);
     });
@@ -581,6 +615,7 @@ describe('ClinicalClient', () => {
         .subscribe({ error: (e: unknown) => (falla = e) });
 
       buscar().flush({ items: [], count: 0, limit: 50 });
+      buscarClave().flush({ items: [], count: 0, limit: 50 });
 
       http.expectNone('/clinical/conditions');
       expect((falla as Error).message).toContain('COND_PROVISIONAL');

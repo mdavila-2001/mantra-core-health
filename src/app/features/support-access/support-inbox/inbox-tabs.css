@@ -53,3 +53,10 @@
   background: var(--brand-primary);
   color: var(--text-inverse);
 }
+
+/* Celular: las pestañas miden 44 px de alto (medían 31). `px` y no `rem`: acá 1 rem son 14 px. */
+@media (max-width: 779px) {
+  .pestana {
+    min-block-size: 44px;
+  }
+}

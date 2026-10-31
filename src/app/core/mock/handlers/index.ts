@@ -5,7 +5,9 @@ import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registerPaymentReceipts } from './payment-receipts.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
+import { registrarPersonalDeApoyo } from './support-staff.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registerReferralIssue } from './referral-issue.handlers';
 import { registerReferralLifecycle } from './referral-lifecycle.handlers';
 import { registerReferrals } from './referrals.handlers';
 import { registerProcedureCenters } from './procedure-centers.handlers';
@@ -73,6 +75,7 @@ import { registerRegistrationLogo } from './registration-logo.handlers';
 import { registrarAdmisiones } from './admissions.handlers';
 import { registrarCargasMasivas } from './bulk-imports.handlers';
 import { registerPrescriptionShares } from './prescription-shares.handlers';
+import { registerPharmacyMedicationAvailability } from './pharmacy-medication-availability.handlers';
 import { registerPharmacyPrescriptionShares } from './pharmacy-prescription-shares.handlers';
 import { registrarInsights } from './insights.handlers';
 import { registrarReporteria } from './reporting.handlers';
@@ -86,6 +89,8 @@ import { registrarApoyo } from './support-access.handlers';
 export function crearRouterSimulado(): MockRouter {
   const router = new MockRouter();
   registrarAuth(router);
+  // El alta de la secretaria (`/iam/auth/register-support-staff`).
+  registrarPersonalDeApoyo(router);
   registrarTerminologia(router);
   registrarPerfiles(router);
   registrarLibretaDeDirecciones(router);
@@ -106,6 +111,7 @@ export function crearRouterSimulado(): MockRouter {
   registerPrescriptionShares(router);
   registerPharmacyPrescriptionShares(router);
   registerReferrals(router);
+  registerReferralIssue(router);
   registerReferralLifecycle(router);
   registerReceivedServices(router);
   registerProcedureCenters(router);
@@ -133,6 +139,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarContabilidadSimple(router);
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
+  registerPharmacyMedicationAvailability(router);
   registrarDiagnostico(router);
   registrarOrdenesDeLaboratorio(router, {
     laboratorioDe,

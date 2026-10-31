@@ -12,6 +12,8 @@ import { tenantDenialHint, tenantDenialText } from '../../../core/data-access/ia
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { entryDestination } from '../../reporting/reporting-access';
+import { markPageAsNoIndex } from '../../prescription-share/no-index';
+import { isShareTokenRoute } from '../../prescription-share/share-return-url';
 
 /**
  * Las pantallas de elección: volver a ellas tras elegir dejaría a la persona donde empezó.
@@ -48,6 +50,8 @@ export class TenantSelection implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly invitations = inject(MembershipInvitationsClient);
   private readonly directory = inject(DirectoryClient);
+  /** El enlace que se pidió antes del login (`login.ts`), ya validado como ruta interna. */
+  private readonly returnUrl = safeReturnUrl(inject(ActivatedRoute).snapshot.queryParamMap.get('returnUrl'));
 
   readonly tenants = this.auth.tenants;
 
@@ -61,6 +65,13 @@ export class TenantSelection implements OnInit {
   protected readonly pendingInvitations = signal(0);
   /** Los nombres de las organizaciones que niegan: el token solo trae el de las que dejan entrar. */
   private readonly deniedNames = signal<Readonly<Record<string, string>>>({});
+
+  constructor() {
+    // Con la receta compartida en `returnUrl`, esta pantalla no manda su dirección como `Referer`.
+    if (isShareTokenRoute(this.returnUrl)) {
+      markPageAsNoIndex();
+    }
+  }
 
   ngOnInit(): void {
     // Un aviso, no una condición: si no se puede leer, el selector sigue igual.
@@ -89,7 +100,8 @@ export class TenantSelection implements OnInit {
 
   choose(tenantId: string): void {
     this.auth.selectTenant(tenantId);
-    // Si venía de una pantalla que pidió organización (`returnUrl`, validado), vuelve a ella; si no, el destino del login.
+    // Si venía de una pantalla que pidió organización o de un enlace pedido antes del login
+    // (`returnUrl`, validado; p. ej. la receta compartida), vuelve a ella; si no, el destino del login.
     const back = safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
     void this.router.navigateByUrl(back !== null && !isSelectionRoute(back) ? back : entryDestination(this.auth.roles()));
   }

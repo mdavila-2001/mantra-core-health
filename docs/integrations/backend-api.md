@@ -1,6 +1,6 @@
 # API de backend
 
-Las 784 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 785 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -560,6 +560,17 @@ las pantallas son paneles de operación con identificadores pegados.
 **La evaluación vive bajo `/authz`** aunque el módulo sea el M29: el evaluador
 del actor efectivo es el PDP, y el backend lo publica junto al resto de la
 autorización.
+
+### `SupportStaffClient` — 1 operación · alta de la secretaria
+
+El alta de la secretaria (31/10/2026), contra el contrato de la rama
+`claude/secretaria-alta-dev` de la API. `SUPPORT_STAFF` es un rol global desde el
+alta; lo que ve la secretaria lo deciden sus **vínculos** con hospitales y
+doctores, que se piden y aceptan con `SupportAccessClient`.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/iam/auth/register-support-staff` | `RegisterSupportStaff` |
 
 ### `AuthProvidersClient` — 12 operaciones · sólo comando
 
@@ -1932,7 +1943,7 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 |---|---|---|---|
 | `GET` | `/admin/catalog/permission-drift` | `DataCatalogClient` | No |
 
-### `SupportAccessClient` — 35 operaciones
+### `SupportAccessClient` — 36 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -1940,6 +1951,7 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 | `POST` | `/community/conversations/:conversationId/assignment` | `SupportAccessClient` | No |
 | `POST` | `/community/conversations/:conversationId/internal-notes` | `SupportAccessClient` | No |
 | `GET` | `/me/practitioner/support-activity` | `SupportAccessClient` | No |
+| `POST` | `/me/practitioner/support-invitations` | `SupportAccessClient` | No |
 | `GET` | `/me/practitioner/support-team` | `SupportAccessClient` | No |
 | `POST` | `/me/support-access-requests` | `SupportAccessClient` | No |
 | `GET` | `/me/support-activity` | `SupportAccessClient` | No |

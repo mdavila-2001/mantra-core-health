@@ -159,6 +159,26 @@ import type { AccountIconName } from './account-icon.types';
           <path d="M9.5 12h5" />
         </svg>
       }
+      @case ('support') {
+        <!-- Una tablilla con una persona: quien lleva la agenda y recibe a los
+             pacientes de otros. No es el estetoscopio —no atiende— ni la persona
+             sola del paciente, que viene a atenderse. -->
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect x="5" y="4.25" width="14" height="16.5" rx="2.5" />
+          <path d="M9.5 4.25V3.5h5v.75" />
+          <circle cx="12" cy="10.25" r="2.25" />
+          <path d="M8.25 17.25a3.75 3.75 0 0 1 7.5 0" />
+        </svg>
+      }
     }
   `,
   styles: `

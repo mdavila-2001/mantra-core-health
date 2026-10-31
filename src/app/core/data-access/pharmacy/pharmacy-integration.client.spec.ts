@@ -132,4 +132,30 @@ describe('PharmacyIntegrationClient', () => {
 
     http.expectOne('/pharmacies/a%2Fb/integration-connections/c%20d/product-mappings').flush({ items: [] });
   });
+
+  it('corrige un vínculo con PATCH y sólo lo que cambia; `null` borra la unidad', () => {
+    client
+      .updateMapping(PHARMACY, CONNECTION, 'm 1', {
+        pharmacyProductId: undefined,
+        externalProductCode: 'ERP-0009',
+        externalUnitCode: null,
+      })
+      .subscribe();
+
+    const req = http.expectOne(`${BASE}/${CONNECTION}/product-mappings/m%201`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ externalProductCode: 'ERP-0009', externalUnitCode: null });
+    req.flush({ id: 'm 1', pharmacyProductId: 'p-a', externalProductCode: 'ERP-0009', externalUnitCode: null });
+  });
+
+  it('deshace un vínculo con DELETE', () => {
+    let removed: string | null = null;
+    client.deleteMapping(PHARMACY, CONNECTION, 'm-1').subscribe((mapping) => (removed = mapping.externalProductCode));
+
+    const req = http.expectOne(`${BASE}/${CONNECTION}/product-mappings/m-1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ id: 'm-1', pharmacyProductId: 'p-a', externalProductCode: 'ERP-0001', externalUnitCode: 'BOX' });
+
+    expect(removed).toBe('ERP-0001');
+  });
 });

@@ -15,6 +15,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../shared/components/molecules/card/card';
 import type { AlertTone } from '../../../shared/components/molecules/alert/alert.types';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
@@ -290,6 +291,7 @@ export function avisoDeLaCarpeta(
   imports: [
     Alert,
     AppButton,
+    Card,
     Chip,
     CompanyData,
     LegalDocuments,

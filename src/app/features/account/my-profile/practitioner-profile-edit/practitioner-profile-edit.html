@@ -830,7 +830,11 @@
                del documento lo deja en 0 px de alto. -->
           <app-tab [label]="pestanas[3]">
             @if (pestana() === pestanaEditor.dondeAtiendo) {
-              <app-work-history secciones="consultorios" />
+              <app-work-history
+                secciones="consultorios"
+                [lugarSugerido]="lugarSugerido()"
+                (lugarSugeridoTomado)="lugarSugerido.set(null)"
+              />
             }
           </app-tab>
 
@@ -847,7 +851,13 @@
                aquélla: montado pide el historial. -->
           <app-tab [label]="pestanas[4]">
             @if (pestana() === pestanaEditor.trayectoria) {
-              <app-work-history class="edicion__historial" secciones="historial" layout="tabla" />
+              <app-work-history
+                class="edicion__historial"
+                secciones="historial"
+                layout="tabla"
+                [ofreceLlevarADondeAtiendo]="true"
+                (llevarADondeAtiendo)="llevarADondeAtiendo($event)"
+              />
             }
           </app-tab>
 

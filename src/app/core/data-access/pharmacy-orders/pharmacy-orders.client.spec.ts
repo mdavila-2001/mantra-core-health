@@ -149,20 +149,26 @@ describe('PharmacyOrdersClient real HTTP contract', () => {
       siteName: 'Sucursal Centro',
       addressText: null,
     };
-    cart.add(sede, {
-      productId: PRODUCT_A,
-      name: 'Marca A',
-      presentation: '500 mg',
-      unitAmount: '21.25',
-      currency: 'BOB',
-      requiresPrescription: false,
-      medicationConceptId: null,
-    }, 2);
+    cart.add(
+      sede,
+      {
+        productId: PRODUCT_A,
+        name: 'Marca A',
+        presentation: '500 mg',
+        unitAmount: '21.25',
+        currency: 'BOB',
+        requiresPrescription: false,
+        medicationConceptId: null,
+      },
+      2,
+    );
     expect(cart.unitCount()).toBe(2);
 
     const prepared = draft();
     client.prepararBorrador(prepared);
-    client.enviar({ borrador: prepared, modalidad: 'RETIRO', direccionDeEntrega: null }).subscribe();
+    client
+      .enviar({ borrador: prepared, modalidad: 'RETIRO', direccionDeEntrega: null })
+      .subscribe();
 
     http.expectOne('/pharmacy/orders').flush(orderDto());
 
@@ -415,8 +421,7 @@ describe('PharmacyOrdersClient real HTTP contract', () => {
         .prescriptor,
     ).toBe('Dr. Luis Paz');
     expect(
-      pharmacyOrder(orderDto({ prescriber: { name: null, specialty: 'Cardiología' } }))
-        .prescriptor,
+      pharmacyOrder(orderDto({ prescriber: { name: null, specialty: 'Cardiología' } })).prescriptor,
     ).toBeNull();
     expect(pharmacyOrder(orderDto({ prescriber: null })).prescriptor).toBeNull();
   });
@@ -436,6 +441,28 @@ describe('PharmacyOrdersClient real HTTP contract', () => {
     expect(() =>
       pharmacyOrder(orderDto({ status: { code: 'PINV_ORDER_NEW', display: 'New' } })),
     ).toThrowError('Estado de pedido desconocido: PINV_ORDER_NEW');
+  });
+});
+
+describe('línea «por confirmar» (D-5)', () => {
+  it('una línea que la sede ofrecía sin existencias llega disponible y por confirmar', () => {
+    const base = orderDto();
+    const linea = pharmacyOrder({
+      ...base,
+      lines: [
+        {
+          ...base.lines[0],
+          reservedQuantity: 0,
+          status: { code: 'PINV_RES_LINE_PENDING_CONFIRMATION', display: 'Por confirmar' },
+        },
+      ],
+    }).lineas[0];
+    expect(linea.disponible).toBe(true);
+    expect(linea.porConfirmar).toBe(true);
+  });
+
+  it('una línea confirmada no queda por confirmar', () => {
+    expect(pharmacyOrder(orderDto()).lineas[0].porConfirmar).toBe(false);
   });
 });
 

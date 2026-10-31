@@ -20,9 +20,19 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="categories" padding="lg" data-testid="categories-card">
+    <div class="categories" data-testid="categories-card">
       <div class="categories__panel">
         <div class="categories__bar">
+          <button
+            app-button
+            variant="outline"
+            type="button"
+            [disabled]="categories().status !== 'ready'"
+            (clicked)="exportCsv()"
+            data-testid="categories-export"
+          >
+            Exportar CSV
+          </button>
           <button app-button type="button" (clicked)="openNew()" data-testid="categories-new">
             Nueva categoría
           </button>
@@ -36,16 +46,19 @@
 
         <app-data-table
           caption="Categorías de su farmacia"
-          [state]="categories()"
+          [state]="sortedCategories()"
           [columns]="columns()"
           [trackBy]="rowId"
           [rowLabel]="rowLabel"
+          dense
+          [sort]="sort()"
+          (sortChanged)="sort.set($event)"
           (retry)="reload()"
           (refresh)="reload()"
           data-testid="categories-table"
         />
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 
