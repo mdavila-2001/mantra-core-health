@@ -104,7 +104,7 @@ export function telefonoCompleto(control: AbstractControl): ValidationErrors | n
  *
  * ## Lo que se guarda no es lo que se ve
  *
- * Se ve `7001 2345`; se guarda `+591 70012345`. Es deliberado: el espacio de
+ * Se ve `70012345` (Bolivia, sin espacio); se guarda `+591 70012345`. Es deliberado: el espacio de
  * grupo es ayuda de lectura y no dato, y persistirlo obligaría a limpiarlo en
  * cada consulta. Con el campo vacío se guarda cadena vacía —no `+591` suelto—,
  * porque un prefijo sin número es un teléfono que no existe y el alta lo
