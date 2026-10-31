@@ -10,7 +10,7 @@
   <app-tabs
     appearance="browser"
     [selectedIndex]="selected()"
-    (selectedIndexChange)="select($event)"
+    (selectedIndexChange)="requestTab($event)"
     data-testid="pharmacy-catalog-tabs"
   >
     <app-tab [label]="labels[tabs[0]]">

@@ -35,7 +35,7 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 
 /** Largo máximo del nombre de una categoría (el mismo tope del servidor). */
 const NAME_MAX_LENGTH = 60;
@@ -72,7 +72,7 @@ const ROW_ACTIONS: readonly RowAction[] = [
     Select,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-categories.html',
   styleUrl: './pharmacy-categories.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

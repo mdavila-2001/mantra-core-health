@@ -60,7 +60,7 @@ import {
   type CsvReading,
   type LoadMode,
 } from '../catalog-rules/catalog.rules';
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import {
   OUTCOME_BADGE,
   bulkFailureMessage,
@@ -162,7 +162,7 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
     Stepper,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-import.html',
   styleUrl: './pharmacy-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

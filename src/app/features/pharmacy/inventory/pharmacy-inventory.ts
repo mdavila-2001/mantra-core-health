@@ -40,7 +40,7 @@ import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { productName, productStatus } from '../products/product-view';
 import {
   INVENTORY_CSV_HEADERS,
@@ -127,7 +127,7 @@ interface InventoryEdit {
     Switch,
     ViewStateHost,
   ],
-  providers: [PharmacyScope, InventorySites],
+  providers: [providePharmacyScope(), InventorySites],
   templateUrl: './pharmacy-inventory.html',
   styleUrl: './pharmacy-inventory.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -184,6 +184,9 @@ export class PharmacyInventory {
     () =>
       new Set([...Object.keys(this.edits()), ...Object.keys(this.availabilityEdits())]).size,
   );
+
+  /** Si hay existencias o «hay / no hay» escritos sin guardar: el catálogo pregunta antes de salir. */
+  readonly hasUnsavedChanges = computed(() => this.dirtyCount() > 0);
 
   private readonly visible = computed<ViewState<readonly PharmacyProduct[]>>(() => {
     const state = this.products();

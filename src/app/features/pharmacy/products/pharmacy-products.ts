@@ -47,7 +47,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import { CSV_COLUMNS } from '../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { ProductDialog } from './product-dialog/product-dialog';
 import {
   PRODUCT_STATUS_LABEL,
@@ -148,7 +148,7 @@ function rowActionsOf(product: PharmacyProduct): readonly RowAction[] {
     Select,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-products.html',
   styleUrl: './pharmacy-products.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -37,7 +37,7 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 
 import { MAX_PRICE, parsePrice } from '../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { productName, productStatus } from '../products/product-view';
 
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
@@ -78,7 +78,7 @@ interface PriceRejection {
     Select,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-prices.html',
   styleUrl: './pharmacy-prices.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,6 +101,9 @@ export class PharmacyPrices {
   protected readonly offset = signal(0);
 
   protected readonly dirtyCount = computed(() => Object.keys(this.edits()).length);
+
+  /** Si hay precios escritos sin guardar: el catálogo pregunta antes de cambiar de pestaña. */
+  readonly hasUnsavedChanges = computed(() => this.dirtyCount() > 0);
 
   private readonly visible = computed<ViewState<readonly PharmacyProduct[]>>(() => {
     const state = this.products();

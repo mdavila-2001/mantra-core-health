@@ -30,7 +30,7 @@ import type { ColumnDef } from '../../../../shared/components/organisms/data-tab
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { CsvExportService } from '../../../../shared/utils/csv-export/csv-export';
 import { ArchivoInvalido, FILE_MAX_BYTES, decodificarCsv } from '../../catalog-rules/catalog.rules';
-import { PharmacyScope } from '../../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../../pharmacy-scope';
 import {
   OUTCOME_BADGE,
   bulkFailureMessage,
@@ -106,7 +106,7 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
 @Component({
   selector: 'app-entity-import',
   imports: [Alert, AppButton, Badge, DataTable, FileInput, FormField, Select, ViewStateHost],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './entity-import.html',
   styleUrl: './entity-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
