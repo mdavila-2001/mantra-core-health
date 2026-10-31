@@ -24,6 +24,7 @@ const MEDICOS: ReferenceOption[] = [
       [minQueryLength]="minQueryLength()"
       label="Médico tratante"
       (searched)="searches.push($event)"
+      (queryCleared)="cleared = cleared + 1"
       (selectionChange)="selections.push($event)"
     />
   `,
@@ -36,6 +37,7 @@ class Host {
   readonly selected = signal<ReferenceOption | null>(null);
   readonly minQueryLength = signal(1);
   readonly searches: string[] = [];
+  cleared = 0;
   readonly selections: (ReferenceOption | null)[] = [];
 }
 
@@ -174,6 +176,36 @@ describe('ReferenceCombobox', () => {
       await type('pé');
 
       expect(host.searches).toEqual([]);
+    });
+
+    it('avisa queryCleared cuando lo escrito baja del mínimo, sin consultar', async () => {
+      host.minQueryLength.set(3);
+      fixture.detectChanges();
+
+      await type('pér');
+      expect(host.cleared).toBe(0);
+      await type('pé');
+
+      expect(host.searches).toEqual(['pér']);
+      expect(host.cleared).toBe(1);
+    });
+
+    it('avisa queryCleared cuando Escape descarta lo escrito', async () => {
+      await type('pér');
+      expect(host.cleared).toBe(0);
+      press('Escape');
+      expect(host.cleared).toBe(1);
+    });
+
+    it('avisa queryCleared cuando Tab o salir del campo descartan lo escrito', async () => {
+      await type('pér');
+      press('Tab');
+      expect(host.cleared).toBe(1);
+
+      await type('ram');
+      input().dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+      fixture.detectChanges();
+      expect(host.cleared).toBe(2);
     });
 
     it('no consulta al hidratar una selección existente', async () => {

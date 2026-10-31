@@ -195,7 +195,7 @@ export class NotificationCenter {
 
   /** La ruta de un aviso, o `null` si no navega a ninguna. */
   protected rutaDe(aviso: InAppNotification): string | null {
-    return rutaDeNotificacion(aviso.destination);
+    return rutaDeNotificacion(aviso.destination, aviso.payloadJson);
   }
 
   /**
