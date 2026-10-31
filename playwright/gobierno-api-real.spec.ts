@@ -35,11 +35,17 @@ interface Trazo {
   readonly status: number;
   readonly headers: Readonly<Record<string, string>>;
   readonly body: unknown;
-  readonly response: unknown;
+  /** El cuerpo de la respuesta: se completa al leerlo (la traza se anota en cuanto llega la respuesta, para que `hubo` no pierda la carrera). */
+  response: unknown;
 }
 
 let page: Page;
 let trazos: Trazo[] = [];
+/** Las respuestas que aún se están leyendo: `drenar()` las espera antes de mirar `trazos` justo después de que la pantalla reaccionó. */
+const lecturas = new Set<Promise<void>>();
+const drenar = async (): Promise<void> => {
+  await Promise.all([...lecturas]);
+};
 /** Los errores de JavaScript que la pantalla dejó en la consola (un fallo mudo de la pantalla sale por acá). */
 let consola: string[] = [];
 
@@ -63,15 +69,20 @@ function vigilar(p: Page): void {
         return crudo;
       }
     })();
-    const response: unknown = await r.json().catch(() => null);
-    trazos.push({
+    const traza: Trazo = {
       method: req.method(),
       path: url.pathname + url.search,
       status: r.status(),
       headers: req.headers(),
       body,
-      response,
-    });
+      response: null,
+    };
+    trazos.push(traza);
+    const lectura = (async (): Promise<void> => {
+      traza.response = await r.json().catch(() => null);
+    })();
+    lecturas.add(lectura);
+    void lectura.finally(() => lecturas.delete(lectura));
   });
 }
 
@@ -324,6 +335,7 @@ test('01 · editor de permisos: la vista previa es de la API y «Guardar» manda
   await page.getByTestId('cond-time-add').click();
   await expect(page.getByTestId('preview-valid')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('preview-summary')).not.toBeEmpty();
+  await drenar();
   expect(hubo('POST', '/org/access/simulate', 200)).toBe(true);
 
   // Una franja que empieza y termina a la hora la rechaza la API: el error sale junto al campo y «Guardar» sigue apagado.
@@ -348,7 +360,9 @@ test('01 · editor de permisos: la vista previa es de la API y «Guardar» manda
       message: 'la API tiene que contestar 200 al guardar',
     })
     .toBe(true);
+  await drenar();
   expect(hubo('PATCH', '/org/support-engagements/', 403)).toBe(true);
+  await drenar();
   expect(
     (ultima('PATCH', '/org/support-engagements/', 403)!.response as { reason?: string }).reason,
   ).toBe('STEP_UP_REQUIRED');
@@ -409,6 +423,7 @@ test('02 · campaña: la lista trae la del demo vencida, el asistente muestra la
   await expect(page.getByTestId('vista-previa-total')).toContainText(/\d+ accesos? por revisar/, {
     timeout: 30_000,
   });
+  await drenar();
   expect(hubo('POST', '/org/access-reviews/campaigns/preview', 200)).toBe(true);
   expect(
     trazos.some((t) => t.method === 'POST' && t.path.endsWith('/org/access-reviews/campaigns')),
@@ -427,8 +442,10 @@ test('02 · campaña: la lista trae la del demo vencida, el asistente muestra la
   await expect(page.getByTestId('campana-estado')).toHaveText('Abierta');
 
   // La API contestó `{ id }` al crear (no la campaña entera) y lanzó con ítems.
+  await drenar();
   const creada = ultima('POST', '/org/access-reviews/campaigns', 201)!;
   expect(creada.response).toEqual({ id: idDeLaCampana });
+  await drenar();
   expect(ultima('POST', '/launch', 200)!.response).toMatchObject({ ok: true, withoutReviewer: 0 });
 });
 
@@ -447,6 +464,7 @@ test('03 · «Mis revisiones»: quien otorgó el permiso no lo certifica (403), 
     'Usted no es quien debe revisar este acceso',
     { timeout: 30_000 },
   );
+  await drenar();
   expect(ultima('POST', '/me/access-reviews/items/bulk-decision')?.status).toBe(403);
 
   // El segundo administrador de seguridad (Gonzalo) sí es revisor de los accesos de la campaña nueva.
@@ -475,6 +493,7 @@ test('03 · «Mis revisiones»: quien otorgó el permiso no lo certifica (403), 
     await expect(gonzalo.getByTestId('revisiones-lote-error')).toContainText(
       'No se mantuvo ninguno',
     );
+    await drenar();
     expect(ultima('POST', '/me/access-reviews/items/bulk-decision', 422)?.response).toMatchObject({
       reason: 'REVIEW_BULK_NOT_ALLOWED',
     });
@@ -504,6 +523,7 @@ test('03 · «Mis revisiones»: quien otorgó el permiso no lo certifica (403), 
     await expect(gonzalo.getByTestId('revision-estado-detalle')).toHaveText('Mantenido', {
       timeout: 30_000,
     });
+    await drenar();
     expect(ultima('POST', '/decision', 200)?.response).toMatchObject({
       ok: true,
       state: 'CERTIFIED',
@@ -565,6 +585,7 @@ test('05 · cuatro ojos: Marcos pide cancelar con menos de 24 horas, Suárez apr
     await expect(marcos.getByTestId('desafio-estado')).toHaveAttribute('data-status', 'PENDING', {
       timeout: 30_000,
     });
+    await drenar();
     const pedido = ultima('POST', '/me/support-approvals', 201)!;
     const aprobacionId = (pedido.response as { id: string }).id;
 
@@ -705,12 +726,14 @@ test('06 · paso extra: en una sesión nueva, crear una barandilla pide el segun
     await expect(admin.getByTestId('desafio')).toHaveAttribute('data-kind', 'STEP_UP', {
       timeout: 30_000,
     });
+    await drenar();
     expect(ultima('POST', '/org/governance/rules', 403)?.response).toMatchObject({
       reason: 'STEP_UP_REQUIRED',
     });
     await admin.getByTestId('desafio-codigo').fill('000000');
     await admin.getByTestId('desafio-verificar').click();
     await expect.poll(() => hubo('POST', '/iam/me/step-up', 422)).toBe(true);
+    await drenar();
     expect(ultima('POST', '/iam/me/step-up', 422)?.response).toMatchObject({
       reason: 'MFA_CODE_INVALID',
     });
@@ -823,6 +846,7 @@ test('07 · ciclo de vida: la cuenta sin dueño recibe uno y la baja de Pablo re
     'Sofía Camacho es ahora responsable de la cuenta de Nora Villarroel.',
     { timeout: 30_000 },
   );
+  await drenar();
   expect(ultima('PUT', '/owner', 200)).toBeDefined();
   expect(
     consulta(
@@ -849,6 +873,7 @@ test('07 · ciclo de vida: la cuenta sin dueño recibe uno y la baja de Pablo re
     'primero se revocó y después se reasignó el trabajo',
     { timeout: 30_000 },
   );
+  await drenar();
   const baja = ultima('POST', '/offboard', 200)!;
   expect(baja.body).toMatchObject({
     reason: 'Renuncia de Pablo',
@@ -898,6 +923,7 @@ test('08 · cambio de rol: el simulado sin suba de privilegios se aplica (200) y
   await expect(page.getByTestId('move-result')).toContainText('El cambio ya está aplicado', {
     timeout: 30_000,
   });
+  await drenar();
   const movido = ultima('POST', '/move', 200)!;
   expect((movido.body as { simulationToken?: string }).simulationToken).toMatch(/^sim_/);
   expect(movido.response).toMatchObject({ status: 'EXECUTED' });
@@ -1071,6 +1097,7 @@ test('10 · explicar y simular: lo que dice la pantalla es lo que contestó la A
   await page.getByTestId('explicar-hora').fill('09:00');
   await page.getByTestId('explicar-enviar').click();
   await expect(page.getByTestId('veredicto')).toBeVisible({ timeout: 30_000 });
+  await drenar();
   const explicacion = ultima('POST', '/org/access/explain', 200)!;
   const veredicto = (
     explicacion.response as { decision: { effect: string }; reasons: { order: number }[] }
@@ -1096,6 +1123,7 @@ test('10 · explicar y simular: lo que dice la pantalla es lo que contestó la A
         { timeout: 30_000 },
       )
       .toBeGreaterThan(1);
+    await drenar();
     expect(
       (ultima('POST', '/org/access/explain', 200)!.body as { assume?: unknown }).assume,
     ).toBeDefined();
@@ -1109,6 +1137,7 @@ test('10 · explicar y simular: lo que dice la pantalla es lo que contestó la A
   await page.getByTestId('borrador-agregar').click();
   await page.getByTestId('borrador-simular').click();
   await expect(page.getByTestId('simulacion-resultado')).toBeVisible({ timeout: 30_000 });
+  await drenar();
   const simulacion = ultima('POST', '/org/access/simulate', 200)!;
   expect(simulacion.body).toMatchObject({
     engagementId: expect.any(String),
@@ -1136,6 +1165,7 @@ test('11 · tablero, matriz y anomalías con los números de la API', async () =
   await expect(page.locator('[data-testid="governance-tiles"] li')).toHaveCount(10, {
     timeout: 30_000,
   });
+  await drenar();
   const tiles = (
     ultima('GET', '/org/governance/summary', 200)!.response as { tiles: Record<string, number> }
   ).tiles;
@@ -1180,8 +1210,10 @@ test('11 · tablero, matriz y anomalías con los números de la API', async () =
   await expect(page.getByTestId('anomaly-detail-status')).toContainText('Descartada', {
     timeout: 30_000,
   });
+  await drenar();
   expect(ultima('POST', '/ack', 200)?.response).toMatchObject({ ok: true, status: 'DISMISSED' });
   // Una anomalía ya atendida no se atiende dos veces: la API contesta 409 ANOMALY_ALREADY_RESOLVED.
+  await drenar();
   const idAtendida = ultima('POST', '/ack', 200)!.path.split('/').at(-2)!;
   const admin = await iniciarSesionApi('DEMO-ADMINISTRADOR-HOSPITAL-PILOTO');
   const otraVez = await api(admin, 'POST', `/org/governance/anomalies/${idAtendida}/ack`, {
@@ -1192,6 +1224,7 @@ test('11 · tablero, matriz y anomalías con los números de la API', async () =
 
   // Matriz: se lee de la API, «¿por qué?» y exportación (con paso extra real si hace falta).
   await irA('/administration/access-governance/matrix', 'matrix-grid');
+  await drenar();
   const matriz = ultima('GET', '/org/governance/access-matrix', 200)!.response as {
     rows: { name: string; cells: Record<string, { effective?: boolean }> }[];
   };
@@ -1233,6 +1266,7 @@ test('11 · tablero, matriz y anomalías con los números de la API', async () =
   await expect(page.getByTestId('matrix-export-done')).toContainText('SHA-256', {
     timeout: 30_000,
   });
+  await drenar();
   expect(ultima('POST', '/reports/access-matrix/export', 200)?.response).toMatchObject({
     format: 'csv',
     sha256: expect.stringMatching(/^[0-9a-f]{64}$/),
@@ -1252,6 +1286,7 @@ test('12 · cerrar la campaña quita lo que nadie decidió (por eso va al final:
   await expect(page.getByTestId('campana-resultado')).toContainText(
     /Se quit(ó 1 acceso|aron \d+ accesos)/,
   );
+  await drenar();
   const cierre = ultima('POST', '/close', 200)!;
   expect(cierre.response).toMatchObject({ ok: true });
   expect((cierre.response as { autoRevoked: number }).autoRevoked).toBeGreaterThan(0);
@@ -1264,11 +1299,13 @@ test('12 · cerrar la campaña quita lo que nadie decidió (por eso va al final:
     /^certificacion-q1-2027-\d{4}-\d{2}-\d{2}\.csv$/,
   );
   await expect(page.getByTestId('campana-exportado')).toContainText('Huella SHA-256');
+  await drenar();
   expect(ultima('GET', '/export?format=csv&reasonCode=AUDIT_REVIEW', 200)?.response).toMatchObject({
     format: 'csv',
     kind: 'campaign-results',
   });
   // Lo que la persona ve en el seguimiento sale de `results`: lo quitado por no revisarse figura como tal.
+  await drenar();
   expect(
     (ultima('GET', '/results', 200)?.response as { autoRevokedItemIds: string[] })
       .autoRevokedItemIds.length,
