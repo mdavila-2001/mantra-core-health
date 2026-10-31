@@ -4,7 +4,9 @@ Revisión independiente de la casilla «Derivar» de
 `/medical-records/:profileId/consultation` (PR #1584 y #1585, ya mergeados):
 hallazgos de código (H1, M2–M6, L7, L8) y visuales (a 390 px puntuaba 75/100).
 
-- Fecha: 2026-10-31 · Rama: `claude/sleepy-bardeen-m8dn2i` (sobre `origin/dev`)
+- Fecha: 2026-10-31 · Rama: `claude/sleepy-bardeen-m8dn2i`, ya con `origin/dev`
+  integrado (`dafaa2974`, el formulario en dos pestañas «Derivación» y
+  «Traslado»): las capturas son de ese estado
 - Modo: **maqueta** (`yarn start:demo --port 4321`, `mockBackend: true`) · Chromium headless · cuenta `medica@alovida.mock`
 - Persona: Ana Lucía Pérez Quiroga, **sintética** (fixture de la maqueta)
 - Script: [`referral-review-evidence.cjs`](./referral-review-evidence.cjs) —
@@ -28,6 +30,7 @@ hallazgos de código (H1, M2–M6, L7, L8) y visuales (a 390 px puntuaba 75/100)
 | L — ícono doble en Vigencia | rótulos de «Tipo» y «Vigencia» a la misma altura a 768, 1440 y 1920 | `11-modal-{768,1440,1920}.png` |
 | L — «Sin tipo» | ninguna fila de la lista lo dice (la fila sembrada sin tipo se titula con el destino) | `02-no-encounter-390.png` |
 | L — sufijo de la casilla | «4 derivaciones», no «en la historia» | `01-grid-390.png`, `10-grid-*.png` |
+| Pista del motivo | con una organización: «La persona lo ve en su lista de derivaciones, no en el aviso» (el aviso de la API no lleva el motivo) | `07-submit-409-390.png` |
 | Persistencia | UI → POST → respuesta → F5 → la casilla pasa de 4 a 5 y la fila «Hospital San Lucas · Solicitada» sigue | `09-after-reload-390.png` |
 | Responsive | sin desborde horizontal a 390, 768, 1440 y 1920 | todas |
 
