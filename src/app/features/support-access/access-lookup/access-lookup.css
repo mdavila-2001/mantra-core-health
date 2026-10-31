@@ -1,0 +1,58 @@
+:host {
+  display: block;
+}
+
+.lookup__filtros {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+  max-inline-size: 100%;
+}
+
+@media (min-width: 780px) {
+  .lookup__filtros {
+    grid-template-columns: auto minmax(16rem, 28rem);
+    align-items: end;
+  }
+}
+
+.lookup__error {
+  margin: 0 0 var(--sp-3);
+  color: var(--st-error-fg);
+}
+
+.lookup__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.lookup__fila {
+  display: grid;
+  gap: var(--sp-2) var(--sp-4);
+  align-items: center;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+@media (min-width: 780px) {
+  .lookup__fila {
+    grid-template-columns: 14rem minmax(0, 1fr) auto;
+  }
+}
+
+.lookup__nombre {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lookup__detalle,
+.lookup__acciones {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}

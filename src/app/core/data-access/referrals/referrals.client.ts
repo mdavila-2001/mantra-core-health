@@ -1,9 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, Subject, tap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import * as wire from '../wire';
+import type { ReferralArrivalInput, ReferralTransferInput } from './referral-transfer.types';
+import { arrivalToWire, transferFromWire, transferToWire } from './referral-transfer.wire';
 import {
   REFERRAL_STATUSES,
   REFERRAL_TYPES,
@@ -23,7 +25,10 @@ export const REFERRAL_TARGET_MIN_QUERY = 2;
 
 /** La fila de la lista tal como viaja: fechas en texto y opcionales en `null`. */
 type WireReferral = wire.ConNulos<
-  Omit<Referral, 'createdAt' | 'validUntil' | 'respondedAt' | 'counterReferralAt' | 'referralType' | 'status'>
+  Omit<
+    Referral,
+    'createdAt' | 'validUntil' | 'respondedAt' | 'counterReferralAt' | 'referralType' | 'status' | 'transfer'
+  >
 > & {
   readonly createdAt: string;
   readonly validUntil?: string | null;
@@ -31,6 +36,8 @@ type WireReferral = wire.ConNulos<
   readonly counterReferralAt?: string | null;
   readonly referralType?: string | null;
   readonly status?: string | null;
+  /** v4274: se normaliza en `transferFromWire`. */
+  readonly transfer?: unknown;
 };
 
 /**
@@ -38,10 +45,11 @@ type WireReferral = wire.ConNulos<
  * profesional, o la deriva a una organización médica, por un servicio
  * concreto de su catálogo.
  *
- * La derivación **no reserva nada**: la API le avisa a la persona en su
- * campana, con un enlace a la ficha del profesional recomendado, y ahí reserva
- * con la reserva de siempre. Elegir otro profesional de la misma especialidad
- * sigue siendo posible.
+ * La derivación **no reserva nada**: con un encuentro, la API puede avisarle
+ * a la persona en su campana —por un profesional o una organización de la
+ * plataforma, si tiene cuenta de portal; la respuesta no dice si el aviso
+ * salió— y ahí reserva con la reserva de siempre. Elegir otro profesional de la misma especialidad sigue siendo
+ * posible.
  *
  * Quién puede recibir una derivación y qué servicios ofrece lo resuelve la API
  * (`/referrals/targets` y `/referrals/target-services`), no el directorio
@@ -51,18 +59,38 @@ type WireReferral = wire.ConNulos<
 export class ReferralsClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  private readonly issuedReferrals = new Subject<ReferralCreated>();
 
   /**
-   * `POST /referrals` — emite la derivación. 404 si el encuentro no es de esa
-   * persona o de la organización de quien deriva; 409 si ya existe una
-   * equivalente.
+   * Cada derivación emitida con éxito, de quien sea que la haya pedido.
+   *
+   * Existe para que la lista que se muestra (`ConsultationReferrals`) se relea
+   * **aunque quien emitió ya no esté montado**: si el médico cierra el modal
+   * mientras el `POST` viaja, el bloque se destruye y su `output` ya no llega
+   * a nadie; la respuesta, en cambio, sigue pasando por acá.
+   */
+  readonly issued: Observable<ReferralCreated> = this.issuedReferrals.asObservable();
+
+  /**
+   * `POST /referrals` — emite la derivación. 404 con `reason` si el destino,
+   * el servicio o el encuentro no están (`REFERRAL_TARGET_NOT_FOUND`,
+   * `REFERRAL_SERVICE_NOT_FOUND`, `REFERRAL_ENCOUNTER_NOT_FOUND`); 409
+   * `REFERRAL_ALREADY_EXISTS` si ya hay una equivalente en ese encuentro; 422
+   * si falta el destino o el servicio no corresponde (ver `referrals.errors.ts`).
    */
   create(body: NewReferral): Observable<ReferralCreated> {
-    const { validUntil, ...rest } = body;
-    return this.http.post<ReferralCreated>(this.url('/referrals'), {
-      ...rest,
-      ...(validUntil === undefined ? {} : { validUntil: toLocalDay(validUntil) }),
-    });
+    const { validUntil, transfer, ...rest } = body;
+    return this.http
+      .post<ReferralCreated>(this.url('/referrals'), {
+        ...rest,
+        ...(validUntil === undefined ? {} : { validUntil: toLocalDay(validUntil) }),
+        ...(transfer === undefined ? {} : { transfer: transferToWire(transfer) }),
+      })
+      .pipe(
+        // La persona es la del pedido: es la que se sabe seguro, venga lo que
+        // venga en la respuesta.
+        tap((created) => this.issuedReferrals.next({ ...created, patientProfileId: body.patientProfileId })),
+      );
   }
 
   /**
@@ -150,6 +178,29 @@ export class ReferralsClient {
       .pipe(map(toReferral));
   }
 
+  /**
+   * `PATCH /referrals/:id/transfer` — quien deriva completa o corrige la
+   * salida mientras la derivación está pendiente o aceptada y sin llegada.
+   * 400 con `reason` `TRANSFER_*` si no cumple las reglas; 422
+   * `REFERRAL_ARRIVAL_ALREADY_RECORDED` o `REFERRAL_ALREADY_CLOSED`.
+   */
+  updateTransfer(id: string, body: ReferralTransferInput): Observable<Referral> {
+    return this.http
+      .patch<WireReferral>(this.url(`/referrals/${encodeURIComponent(id)}/transfer`), transferToWire(body, true))
+      .pipe(map(toReferral));
+  }
+
+  /**
+   * `PATCH /referrals/:id/arrival` — el destino registra la llegada. Quien no
+   * es destino recibe 404 `REFERRAL_NOT_FOUND`; exige organización activa. Si
+   * el destino es sólo externo, la registra quien puede escribir la historia.
+   */
+  recordArrival(id: string, body: ReferralArrivalInput): Observable<Referral> {
+    return this.http
+      .patch<WireReferral>(this.url(`/referrals/${encodeURIComponent(id)}/arrival`), arrivalToWire(body))
+      .pipe(map(toReferral));
+  }
+
   /** `PATCH /referrals/:id/cancel` — anula una pendiente o aceptada. Sin cuerpo. */
   cancel(id: string): Observable<Referral> {
     return this.http
@@ -163,7 +214,7 @@ export class ReferralsClient {
 }
 
 function toReferral(row: WireReferral): Referral {
-  const { createdAt, validUntil, respondedAt, counterReferralAt, referralType, status, ...rest } = row;
+  const { createdAt, validUntil, respondedAt, counterReferralAt, referralType, status, transfer, ...rest } = row;
   // `respond` devuelve además `ok`: no es parte de la derivación.
   const { ok: _ok, ...fields } = rest as typeof rest & { readonly ok?: unknown };
   const clean = wire.sinNulos(fields as wire.ConNulos<Omit<Referral, 'createdAt'>>);
@@ -172,6 +223,7 @@ function toReferral(row: WireReferral): Referral {
   const validDay = wire.maybeDateOnly(validUntil);
   const responded = wire.maybeDate(respondedAt);
   const countered = wire.maybeDate(counterReferralAt);
+  const moved = transferFromWire(transfer);
   return {
     ...clean,
     createdAt: new Date(createdAt),
@@ -180,6 +232,7 @@ function toReferral(row: WireReferral): Referral {
     ...(validDay === undefined ? {} : { validUntil: validDay }),
     ...(responded === undefined ? {} : { respondedAt: responded }),
     ...(countered === undefined ? {} : { counterReferralAt: countered }),
+    ...(moved === undefined ? {} : { transfer: moved }),
   };
 }
 

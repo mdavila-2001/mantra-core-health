@@ -260,3 +260,18 @@ export interface StudyPriceCreated {
 export interface AdminOperationResult {
   readonly ok: boolean;
 }
+
+/**
+ * Cuerpo de `PATCH /diagnostic-unit-sites/:id`: lo que se puede cambiar de una
+ * sucursal sin tocar su vínculo con la sede de la organización.
+ */
+export interface UpdateSiteInput {
+  readonly accessionPrefix?: string;
+  readonly sampleCollectionAvailable?: boolean;
+  readonly imagingAvailable?: boolean;
+}
+
+/** La sucursal tras el cambio. */
+export interface SiteUpdated {
+  readonly id: string;
+}

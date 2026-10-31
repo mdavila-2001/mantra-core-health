@@ -35,6 +35,7 @@ import {
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
+import { mfaEnrollmentGuard } from './core/auth/mfa-enrollment.guard';
 import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from './core/navigation/navigation.map';
 import {
   RUTAS_HEREDADAS_CON_PARAMETRO,
@@ -46,6 +47,7 @@ import {
   ROLES_ADMINISTRACION,
   ROLES_REPORTERIA,
 } from './features/reporting/reporting-access';
+import { RUTAS_DE_GOBIERNO } from './app.routes.governance';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
@@ -233,6 +235,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // `SECCIONES_REDIRIGIDAS`).
   'superadmin/observability': () =>
     import('./features/admin/observability/observability').then((m) => m.Observability),
+  'superadmin/measurement': () =>
+    import('./features/admin/measurement/measurement').then((m) => m.Measurement),
   'superadmin/data-catalog': () =>
     import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
   // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
@@ -246,6 +250,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   'superadmin/instances': () =>
     import('./features/admin/instances/instances').then((m) => m.Instances),
+  'superadmin/bulk-imports': () =>
+    import('./features/admin/bulk-imports/bulk-imports').then((m) => m.BulkImports),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
   'my-account/dependents': () =>
@@ -351,6 +357,34 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
       (m) => m.VerificationCases,
     ),
+  // Personal de apoyo (secretaria y otros roles), diseño de 2026-10. Cada una se
+  // enciende con su fila del registro; quién la ve lo decide `APP_SECTIONS`.
+  'administration/support-requests': () =>
+    import('./features/support-access/support-requests/support-requests').then((m) => m.SupportRequests),
+  'administration/support-team': () =>
+    import('./features/support-access/support-team/support-team').then((m) => m.SupportTeam),
+  'administration/support-access-lookup': () =>
+    import('./features/support-access/access-lookup/access-lookup').then((m) => m.AccessLookup),
+  'administration/support-invitations': () =>
+    import('./features/support-access/invitations/invitations').then((m) => m.Invitations),
+  'administration/session-controls': () =>
+    import('./features/support-access/session-controls/session-controls').then((m) => m.SessionControls),
+  'administration/support-review': () =>
+    import('./features/support-access/support-review/support-review').then((m) => m.SupportReview),
+  'administration/support-activity': () =>
+    import('./features/support-access/support-activity/support-activity').then((m) => m.SupportActivity),
+  // Gobierno de accesos (fase 5): el tablero, la administración delegada y la bandeja del revisor. Las hijas, más abajo.
+  'administration/access-governance': () =>
+    import('./features/access-governance/governance-home/governance-home').then((m) => m.GovernanceHome),
+  'administration/team-management': () =>
+    import('./features/access-governance/team-management/team-management').then((m) => m.TeamManagement),
+  'my-reviews': () => import('./features/access-governance/my-reviews/my-reviews').then((m) => m.MyReviews),
+  'my-team': () => import('./features/support-access/my-team/my-team').then((m) => m.MyTeam),
+  'my-support': () => import('./features/support-access/my-support/my-support').then((m) => m.MySupport),
+  'combined-agenda': () =>
+    import('./features/support-access/combined-agenda/combined-agenda').then((m) => m.CombinedAgenda),
+  'support-inbox': () =>
+    import('./features/support-access/support-inbox/support-inbox').then((m) => m.SupportInbox),
   'administration/delegated-access': () =>
     import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
       (m) => m.DelegatedAccessHome,
@@ -1201,6 +1235,12 @@ const pantallaDeSeccion =
 
 const pantallaDeAccesoDelegado = pantallaDeSeccion('administration/delegated-access');
 
+const pantallaDeEquipoDeApoyo = pantallaDeSeccion('administration/support-team');
+
+const pantallaDeMiEquipo = pantallaDeSeccion('my-team');
+
+const pantallaDeMisAccesos = pantallaDeSeccion('my-support');
+
 const pantallaDeProveedoresDeIdentidad = pantallaDeSeccion('administration/identity-providers');
 
 const pantallaDeVerificacionIdentidad = pantallaDeSeccion('administration/identity-assurance');
@@ -1824,6 +1864,9 @@ export const routes: Routes = [
     path: '',
     component: ShellLayout,
     canActivate: [authGuard],
+    // Quien entró sin el segundo paso que su organización exige no usa el resto de
+    // la aplicación hasta darlo de alta: la API lo deja entrar y lo cumple el cliente.
+    canActivateChild: [mfaEnrollmentGuard],
     children: [
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
@@ -1918,6 +1961,38 @@ export const routes: Routes = [
       ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
         import('./features/agenda/appointment-new/appointment-new').then((m) => m.AppointmentNew),
+      ),
+      // El editor de permisos de una persona. Cuelga de «Equipo de apoyo»: hereda
+      // su regla (solo la cuenta de organización), que `seccionRolesGuard` resuelve
+      // por prefijo.
+      // Las respuestas preparadas del chat de apoyo: cuelgan de «Equipo de apoyo» (heredan su
+      // regla) y van **antes** de `:engagementId`, que de lo contrario se las quedaría.
+      pantallaDeEquipoDeApoyo('reply-templates', 'Respuestas preparadas', () =>
+        import('./features/support-access/reply-templates/reply-templates').then((m) => m.ReplyTemplates),
+      ),
+      ...RUTAS_DE_GOBIERNO,
+      pantallaDeEquipoDeApoyo(':engagementId', 'Permisos de una persona de apoyo', () =>
+        import('./features/support-access/permissions-editor/permissions-editor').then(
+          (m) => m.PermissionsEditor,
+        ),
+      ),
+      // La actividad del equipo para el doctor y «Mi actividad» de la persona de apoyo:
+      // cuelgan de su sección y heredan su regla. Propuestas (no están en el contrato).
+      pantallaDeMiEquipo('activity', 'Actividad de mi equipo', () =>
+        import('./features/support-access/support-activity/support-activity').then((m) => m.SupportActivity),
+      ),
+      // Dar de alta la verificación en dos pasos (TOTP). Cuelga de «Seguridad de la
+      // cuenta»; es la única ruta del armazón que `mfaEnrollmentGuard` deja abierta.
+      pantallaDeOperacion('my-account/security', 'mfa', 'Verificación en dos pasos', () =>
+        import('./features/account/mfa-enrollment/mfa-enrollment').then((m) => m.MfaEnrollment),
+      ),
+      // Las organizaciones que invitaron a la persona y a las que todavía no dijo que sí: aceptar o rechazar. Cuelga de
+      // «Seguridad de la cuenta» y no tiene renglón propio en el menú.
+      pantallaDeOperacion('my-account/security', 'organization-invitations', 'Invitaciones de organizaciones', () =>
+        import('./features/account/organization-invitations/organization-invitations').then((m) => m.OrganizationInvitations),
+      ),
+      pantallaDeMisAccesos('activity', 'Mi actividad', () =>
+        import('./features/support-access/support-activity/support-activity').then((m) => m.SupportActivity),
       ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import('./features/delegated-access/practitioner-delegate-form/practitioner-delegate-form').then(
@@ -2356,6 +2431,17 @@ export const routes: Routes = [
         (m) => m.RegisterPractitioner,
       ),
     title: 'AloVida - Crear cuenta de profesional',
+  },
+  {
+    // El alta de la secretaria (personal de apoyo), armada con las piezas del
+    // alta de paciente. Diferida por lo mismo: arrastra el catálogo de
+    // departamentos y el motor de páginas.
+    path: 'auth/register/support-staff',
+    loadComponent: () =>
+      import('./features/auth/register-support-staff/register-support-staff').then(
+        (m) => m.RegisterSupportStaff,
+      ),
+    title: 'AloVida - Crear cuenta de personal de apoyo',
   },
   {
     // Signup público de una organización aseguradora: crea el tenant `PAYER`

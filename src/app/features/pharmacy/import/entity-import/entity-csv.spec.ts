@@ -1,5 +1,6 @@
+import type { BulkPriceRow } from '../../../../core/data-access/pharmacy/pharmacy-bulk.types';
 import { ArchivoInvalido } from '../../catalog-rules/catalog.rules';
-import { ENTITY_COLUMNS, ENTITY_TEMPLATE_ROWS, readEntityCsv } from './entity-csv';
+import { ENTITY_COLUMNS, ENTITY_TEMPLATE_ROWS, readEntityCsv, upsertKeyOf } from './entity-csv';
 
 describe('entity-csv', () => {
   it('los encabezados de cada plantilla van en castellano', () => {
@@ -82,5 +83,73 @@ describe('entity-csv', () => {
     const rows = Array.from({ length: 1000 }, (_, i) => `C-${i}`);
     expect(readEntityCsv('categories', ['nombre', ...rows].join('\n')).rows).toHaveLength(1000);
     expect(() => readEntityCsv('categories', ['nombre', ...rows, 'otra'].join('\n'))).toThrow(ArchivoInvalido);
+  });
+
+  describe('clave repetida en el archivo (también entre lotes de 250)', () => {
+    it('categorías: 600 filas con una clave en la línea 7 y en la 402 (otro lote): no se manda ninguna de las dos', () => {
+      const names = Array.from({ length: 600 }, (_, i) => `far45-cx-${String(i + 1).padStart(4, '0')}`);
+      names[400] = 'FAR45-CX-0006'; // línea 402: segundo lote; repite la línea 7
+      const reading = readEntityCsv('categories', ['nombre', ...names].join('\n'));
+
+      const repeated = reading.rows.filter((row) => row.repeatedOnLines !== undefined);
+      expect(repeated.map((row) => row.line)).toEqual([7, 402]);
+      for (const row of repeated) {
+        expect(row).toMatchObject({
+          payload: null,
+          repeatedOnLines: [7, 402],
+          errors: ['La misma clave está en las líneas 7, 402: no se envía ninguna. Deje una sola.'],
+        });
+      }
+      expect(reading.rows.filter((row) => row.payload !== null)).toHaveLength(598);
+    });
+
+    it('categorías: se comparan sin mayúsculas, tildes ni espacios de más', () => {
+      const reading = readEntityCsv(
+        'categories',
+        'nombre\nAnalgésicos\n  analgesicos \nANALGÉSICOS\nAnalgesicos  extra\nOtra\n',
+      );
+
+      expect(reading.rows.map((row) => row.payload === null)).toEqual([true, true, true, false, false]);
+      expect(reading.rows[0]!.repeatedOnLines).toEqual([2, 3, 4]);
+    });
+
+    it('categorías: dos nombres vacíos o de más de 60 caracteres no son «repetidos»: los rechaza el servidor', () => {
+      const long = 'x'.repeat(61);
+      const reading = readEntityCsv('categories', `nombre;nota\n;a\n;b\n${long};\n${long};\n`);
+
+      expect(reading.rows.every((row) => row.payload !== null && row.repeatedOnLines === undefined)).toBe(true);
+    });
+
+    it('precios: el mismo código dos veces; el código distingue mayúsculas, como el servidor', () => {
+      const reading = readEntityCsv('prices', 'codigo,precio\nP-1,10\np-1,11\n P-1 ,12\nP-2,3\n');
+
+      expect(reading.rows.map((row) => (row.payload as BulkPriceRow | null)?.unitPrice ?? null)).toEqual([
+        null,
+        11,
+        null,
+        3,
+      ]);
+    });
+
+    it('sucursales: el mismo código dos veces', () => {
+      const reading = readEntityCsv('sites', 'codigo;nombre\nSUR;Sur\nNORTE;Norte\nSUR;Sur renombrada\n');
+
+      expect(reading.rows.map((row) => row.payload === null)).toEqual([true, false, true]);
+    });
+
+    it('una fila que no sale (precio ilegible) no cuenta: la otra con ese código sí se envía', () => {
+      const reading = readEntityCsv('prices', 'codigo,precio\nP-1,doce\nP-1,12\n');
+
+      expect(reading.rows[0]!.payload).toBeNull();
+      expect(reading.rows[0]!.repeatedOnLines).toBeUndefined();
+      expect(reading.rows[1]!.payload).toEqual({ productCode: 'P-1', unitPrice: 12 });
+    });
+
+    it('la clave de cada tipo es la que usa el servidor', () => {
+      expect(upsertKeyOf('categories', { name: ' Niños   y Niñas ' })).toBe('ninos y ninas');
+      expect(upsertKeyOf('prices', { productCode: ' AB-1 ', unitPrice: 1 })).toBe('AB-1');
+      expect(upsertKeyOf('sites', { code: 'Sur', name: 'x' })).toBe('Sur');
+      expect(upsertKeyOf('sites', { code: '  ', name: 'x' })).toBeNull();
+    });
   });
 });

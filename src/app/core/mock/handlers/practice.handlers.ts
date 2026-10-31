@@ -3,7 +3,7 @@ import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS, PRACTICE_SANLUCAS, SITIO_CONSULT
 import { CARGO, SPECIALTY, STATUS, PROCEDIMIENTO, displayOf } from '../fixtures/concepts';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
 import { MEDICAL, PROFESSIONALS, professionalById } from '../fixtures/people';
-import { myAffiliations, requestAffiliation, CM_PRACTICES } from '../fixtures/role-assignments';
+import { hospitalRoleAssignmentsOf, myAffiliations, requestAffiliation, CM_PRACTICES } from '../fixtures/role-assignments';
 import { noContent, notFound, type MockRouter } from '../mock-router';
 import { infraestructuraDeLaConsola, tenantDePractica } from './infrastructure.handlers';
 import { TENANT_CLINICA, TENANT_HOSPITAL } from '../mock-session';
@@ -383,7 +383,7 @@ export function registrarPracticas(router: MockRouter): void {
   router.get('/practitioners/me/role-assignments', (request) => {
     const hpid = request.user?.practitionerProfileId;
     const own = vinculaciones.filtrar((v) => v.practitionerProfileId === hpid).map(({ practitionerProfileId: _p, ...v }) => ({ ...v, status: conceptoDeVinculacion(v.status) }));
-    return [...own, ...myAffiliations(hpid ?? '')];
+    return [...own, ...hospitalRoleAssignmentsOf(request.user?.id), ...myAffiliations(hpid ?? '')];
   });
 
   router.post('/practices/:id/role-assignments/self-request', (request) => {

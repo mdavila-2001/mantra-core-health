@@ -1,0 +1,5 @@
+/* Lo común del alta vive en `shared-registration/registration.css`: esta hoja
+   sólo existe para lo propio, y por ahora no hay nada propio. */
+:host {
+  display: block;
+}

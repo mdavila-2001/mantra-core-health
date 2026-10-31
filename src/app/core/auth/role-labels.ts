@@ -51,6 +51,12 @@ export const ROLE_LABELS: Readonly<Record<string, string>> = {
   REPORT_AUTHOR: 'Autoría de reportes',
   REPORT_VIEWER: 'Lectura de reportes',
   DATA_STEWARD: 'Custodia de datos',
+  /**
+   * La secretaria (personal de apoyo), rol propio desde su alta
+   * (`register-support-staff`). Sin esta entrada el rol se omitía en toda
+   * insignia y lista, y la secretaria no aparecía en ningún lado.
+   */
+  SUPPORT_STAFF: 'Secretaria · personal de apoyo',
 };
 
 /**
@@ -115,6 +121,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
   'SCHEDULING_AGENT',
   'PRACTITIONER',
   'CLINICIAN',
+  'SUPPORT_STAFF',
 ];
 
 /**

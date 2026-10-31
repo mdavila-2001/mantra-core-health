@@ -1,0 +1,67 @@
+<div
+  #scroller
+  class="grid"
+  [class.grid--snap]="snap()"
+  role="region"
+  tabindex="0"
+  [attr.aria-label]="ariaLabel()"
+  data-scroll
+  data-testid="agenda-grilla"
+  (scroll)="alDeslizar()"
+>
+  <div class="grid__cabeza" [style.grid-template-columns]="'var(--eje) ' + template()">
+    <div class="grid__esquina"></div>
+    @for (col of placedColumns(); track col.column.key) {
+      <div class="grid__titulo" [class.grid__titulo--hoy]="col.column.today" [attr.data-col]="col.column.key">
+        <span class="grid__rotulo">{{ col.column.label }}</span>
+        @if (col.column.sub) {
+          <span class="grid__sub">{{ col.column.sub }}</span>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="grid__cuerpo" [style.grid-template-columns]="'var(--eje) ' + template()" [style.height.px]="bodyHeight()">
+    <div class="grid__eje" aria-hidden="true">
+      @for (hora of hours(); track hora.label) {
+        <span class="grid__hora" [style.top.px]="hora.top">{{ hora.label }}</span>
+      }
+    </div>
+    @for (col of placedColumns(); track col.column.key) {
+      <div
+        class="grid__col"
+        [class.grid__col--hoy]="col.column.today"
+        role="group"
+        [attr.aria-label]="col.column.label + (col.column.sub ? ', ' + col.column.sub : '')"
+        [attr.data-col]="col.column.key"
+        [style.--hora-alto.px]="60 * pxPerMinute()"
+      >
+        @for (p of col.placed; track p.event.id) {
+          <!-- El contenido y el nombre accesible los pone `app-agenda-event` en su propia plantilla. -->
+          <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
+          <button
+            app-agenda-event
+            [event]="p.event"
+            [color]="color(p.event)"
+            [multiOrg]="multiOrg()"
+            [compact]="compact(p)"
+            [dense]="dense()"
+            [subline]="subline()"
+            [selected]="selectedId() === p.event.id"
+            [dragRole]="role(p.event)"
+            [tooltip]="tip(p.event)"
+            [style.top.px]="p.top"
+            [style.height.px]="p.height"
+            [style.left.%]="(p.lane / p.lanes) * 100"
+            [style.width.%]="100 / p.lanes"
+            (click)="pick.emit(p.event)"
+            (pointerdown)="eventPointerDown.emit({ event: $event, item: p.event })"
+          ></button>
+        }
+        @if (col.nowTop !== null) {
+          <div class="grid__ahora" [style.top.px]="col.nowTop" aria-hidden="true" data-testid="agenda-ahora"></div>
+        }
+      </div>
+    }
+  </div>
+</div>

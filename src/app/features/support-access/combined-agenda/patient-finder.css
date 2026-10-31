@@ -1,0 +1,139 @@
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.buscador app-segmented-control {
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+.buscador {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.buscador__ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.buscador__resultado {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.buscador__como {
+  display: block;
+  margin-block-start: var(--sp-1);
+}
+
+.resultados {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.paciente {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+}
+
+.paciente__datos {
+  display: grid;
+  gap: 2px;
+}
+
+.paciente__nombre {
+  color: var(--text-primary);
+}
+
+.paciente__linea {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.paciente__menor {
+  justify-self: start;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-xs);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.representante {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+}
+
+.representante legend {
+  padding-inline: var(--sp-1);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.representante__opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 2.25rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.representante__opcion input {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  accent-color: var(--brand-primary);
+}
+
+.registro-aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+/* Celular: la opción de cada representante es un blanco de 44 px y el control de modo se toca con el pulgar. */
+@media (max-width: 779px) {
+  .representante__opcion {
+    min-block-size: 44px;
+  }
+
+  .representante__opcion input {
+    inline-size: 20px;
+    block-size: 20px;
+  }
+
+  .buscador app-segmented-control ::ng-deep .segmentado__opcion {
+    position: relative;
+    min-block-size: 38px;
+  }
+
+  .buscador app-segmented-control ::ng-deep .segmentado__opcion::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
+}

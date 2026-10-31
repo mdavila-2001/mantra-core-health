@@ -1,0 +1,292 @@
+:host {
+  display: block;
+}
+
+.lateral {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+app-select {
+  display: block;
+  min-inline-size: 0;
+}
+
+.bloque {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.bloque__cabeza {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.bloque__titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bloque__cuenta {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.bloque__nota {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.acciones-rapidas {
+  display: flex;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-1);
+}
+
+.enlace {
+  padding: var(--sp-1) 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.enlace:disabled {
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+.enlace:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.grupo-org {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-1);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sigla {
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-xs);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+}
+
+/* Mis doctores: casillas de color, como Google Calendar. */
+.doctores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.doctor {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  min-block-size: 2.75rem;
+  box-sizing: border-box;
+}
+
+.doctor:hover {
+  background: var(--bg-hover);
+}
+
+.doctor:focus-within {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.doctor__casilla {
+  position: absolute;
+  opacity: 0;
+  inline-size: 1px;
+  block-size: 1px;
+}
+
+.doctor__muestra {
+  flex: none;
+  position: relative;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border-radius: var(--r-xs);
+  border: 2px solid var(--doctor-color, var(--c-petrol-600));
+  background: transparent;
+}
+
+.doctor__casilla:checked + .doctor__muestra {
+  background: var(--doctor-color, var(--c-petrol-600));
+}
+
+/* La marca de «prendido» no es solo color: lleva su tilde. */
+.doctor__casilla:checked + .doctor__muestra::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--c-neutral-50);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.doctor__texto {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.doctor__nombre {
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.doctor__esp {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* Árbol de ubicaciones */
+.arbol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  max-block-size: 16rem;
+  overflow: auto;
+}
+
+.arbol__fila {
+  display: flex;
+  align-items: center;
+}
+
+.abrir {
+  flex: none;
+  inline-size: 1.75rem;
+  block-size: 2rem;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.abrir--vacio {
+  cursor: default;
+}
+
+.abrir:focus-visible,
+.nodo:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.nodo {
+  flex: 1;
+  min-inline-size: 0;
+  min-block-size: 2rem;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  text-align: start;
+  cursor: pointer;
+}
+
+.nodo:hover {
+  background: var(--bg-hover);
+}
+
+.nodo--elegido {
+  background: var(--bg-active);
+  border-color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.nodo__tipo {
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  text-transform: uppercase;
+}
+
+.interruptor {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.interruptor input {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin-block-start: 2px;
+  accent-color: var(--brand-primary);
+}
+
+.interruptor small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* Celular: cada fila del costado es un blanco de 44 px. */
+@media (max-width: 779px) {
+  .enlace {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: var(--sp-2);
+  }
+
+  .doctor {
+    min-block-size: 44px;
+  }
+
+  .abrir {
+    inline-size: 44px;
+    block-size: 44px;
+  }
+
+  .nodo {
+    min-block-size: 44px;
+  }
+
+  .interruptor {
+    align-items: center;
+    min-block-size: 44px;
+  }
+
+  .interruptor input {
+    inline-size: 20px;
+    block-size: 20px;
+    margin-block-start: 0;
+  }
+}

@@ -107,6 +107,22 @@ export function operationDetail(over: Partial<OperacionDetalle> = {}): Operacion
   };
 }
 
+/**
+ * Los accesos a tablas de `POST /billing/bills` tal como los trae el inventario
+ * (`inventario/endpoints/billing.json`): `billing.bills` aparece dos veces, una
+ * como `ESCRIBE/CREA` y otra como `LEE`. Son metadatos del código, no datos de personas.
+ */
+export function billingTables(): OperacionDetalle['datos'] {
+  const via = (leaf: string): readonly string[] => ['BillingPayablesController.registerBill', 'BillsService.register', leaf];
+  return [
+    { schema: 'billing', tabla: 'bill_lines', operacion: 'ESCRIBE', detalle: 'CREA', confianza: 'DIRECTA', via: via('BillsRepository.createLine'), fuente: 'src/modules/billing/repositories/bills.repository.ts:209', catalogada: true },
+    { schema: 'billing', tabla: 'bills', operacion: 'ESCRIBE', detalle: 'CREA', confianza: 'DIRECTA', via: via('BillsRepository.create'), fuente: 'src/modules/billing/repositories/bills.repository.ts:177', catalogada: true },
+    { schema: 'billing', tabla: 'bills', operacion: 'LEE', detalle: 'LEE', confianza: 'DIRECTA', via: via('BillsRepository.findByNumber'), fuente: 'src/modules/billing/repositories/bills.repository.ts:155', catalogada: true },
+    { schema: 'billing', tabla: 'vendors', operacion: 'LEE', detalle: 'LEE', confianza: 'POR_SQL', via: via('BillsRepository.findVendor'), fuente: 'src/modules/billing/repositories/bills.repository.ts:166', catalogada: true },
+    { schema: 'erp', tabla: 'contracts', operacion: 'LEE', detalle: 'LEE', confianza: 'DIRECTA', via: [], fuente: 'src/modules/billing/repositories/link-targets.repository.ts:47', catalogada: false },
+  ];
+}
+
 export function tree(): Arbol {
   return {
     id: 'SchedulingController_listSlots',

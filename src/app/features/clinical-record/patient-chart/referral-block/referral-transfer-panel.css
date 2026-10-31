@@ -1,0 +1,67 @@
+.transfer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.transfer-panel__title {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+
+.transfer-panel__data {
+  margin: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* Rótulo y valor en dos columnas, como el resto del detalle; una sola en un teléfono. */
+.transfer-panel__row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 12rem) 1fr;
+  gap: var(--sp-3);
+}
+
+@media (max-width: 649px) { /* por debajo de --bp-sm (650 px) */
+  .transfer-panel__row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+  }
+}
+
+.transfer-panel__row dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.transfer-panel__row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.transfer-panel__muted {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.transfer-panel__inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.transfer-panel__issues {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+.transfer-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

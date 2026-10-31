@@ -1,0 +1,537 @@
+<app-page-header
+  title="Matriz de accesos"
+  subtitle="Quién tiene qué y quién puede actuar sobre un doctor, un servicio o un piso."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-access-matrix">
+  <div class="barra">
+    <app-segmented-control
+      [options]="viewOptions"
+      [value]="view()"
+      (valueChange)="setView($event)"
+      ariaLabel="Qué quiere ver"
+      size="md"
+      data-testid="matrix-view"
+    />
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      type="button"
+      aria-controls="matrix-export-panel"
+      [attr.aria-expanded]="exportOpen()"
+      (clicked)="toggleExport()"
+      data-testid="matrix-export-open"
+    >
+      Exportar…
+    </button>
+  </div>
+
+  <div class="controles">
+    @if (view() === 'person') {
+      <div class="controles__grupo">
+        <span class="controles__rotulo" id="matrix-group-label">Agrupar por</span>
+        <app-segmented-control
+          [options]="groupOptions"
+          [value]="group()"
+          (valueChange)="setGroup($event)"
+          ariaLabel="Agrupar los permisos por"
+          data-testid="matrix-group"
+        />
+      </div>
+    } @else {
+      <div class="controles__grupo">
+        <span class="controles__rotulo">Ver sobre</span>
+        <app-segmented-control
+          [options]="kindOptions"
+          [value]="targetKind()"
+          (valueChange)="setTargetKind($event)"
+          ariaLabel="Sobre qué ver quién puede actuar"
+          data-testid="matrix-target-kind"
+        />
+      </div>
+      <app-form-field label="Elija el destino">
+        <app-select
+          [options]="targetOptions()"
+          [value]="targetId()"
+          (valueChange)="setTarget($event)"
+          placeholder="Elegir de la lista"
+          ariaLabel="Doctor, servicio o espacio a consultar"
+          data-testid="matrix-target"
+        />
+      </app-form-field>
+    }
+  </div>
+
+  <div class="controles" role="group" aria-label="Filtros de la matriz">
+    <app-form-field label="Plantilla de rol">
+      <app-select
+        [options]="templateOptions()"
+        [value]="filters().template"
+        (valueChange)="setTemplate($event)"
+        ariaLabel="Filtrar por plantilla de rol"
+        data-testid="matrix-filter-template"
+      />
+    </app-form-field>
+    <app-form-field label="Vigencia">
+      <app-select
+        [options]="stateOptions"
+        [value]="filters().state"
+        (valueChange)="setState($event)"
+        ariaLabel="Filtrar por vigencia del vínculo"
+        data-testid="matrix-filter-state"
+      />
+    </app-form-field>
+    <app-form-field label="Sensibilidad" hint="Muestra solo los permisos de ese nivel o más.">
+      <app-select
+        [options]="sensitivityOptions"
+        [value]="filters().sensitivity"
+        (valueChange)="setSensitivity($event)"
+        ariaLabel="Filtrar por sensibilidad del permiso"
+        data-testid="matrix-filter-sensitivity"
+      />
+    </app-form-field>
+    @if (filtered()) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        (clicked)="clearFilters()"
+        data-testid="matrix-reset-filters"
+      >
+        Quitar los filtros
+      </button>
+    }
+  </div>
+
+  @if (exportOpen()) {
+    <section
+      id="matrix-export-panel"
+      class="exportar"
+      aria-labelledby="matrix-export-title"
+      data-testid="matrix-export-panel"
+    >
+      <h2 id="matrix-export-title" class="exportar__titulo">Exportar lo que está viendo</h2>
+      <p class="exportar__texto">
+        Se exporta esta vista con sus filtros y la exportación queda registrada en la bitácora con
+        su motivo. No escriba datos de pacientes en el motivo. Antes de entregar el archivo se le
+        pedirá confirmar con el segundo paso.
+      </p>
+      <app-segmented-control
+        [options]="formatOptions"
+        [value]="exportFormat()"
+        (valueChange)="exportFormat.set($event)"
+        ariaLabel="Formato del archivo"
+        data-testid="matrix-export-format"
+      />
+      <app-form-field
+        label="Motivo de la exportación"
+        [required]="true"
+        [errorMessage]="exportReasonError() ?? ''"
+        hint="Al menos 10 caracteres. Por ejemplo: «Revisión trimestral de auditoría interna»."
+      >
+        <app-textarea
+          [value]="exportReason()"
+          (valueChange)="changeReason($event)"
+          [rows]="3"
+          [maxLength]="300"
+          [hasError]="exportReasonError() !== null"
+          data-testid="matrix-export-reason"
+        />
+      </app-form-field>
+      @if (exportError(); as failure) {
+        <app-alert tone="error" role="alert" data-testid="matrix-export-error">{{
+          failure
+        }}</app-alert>
+      }
+      @if (exportDone(); as done) {
+        <app-alert tone="success" role="status" data-testid="matrix-export-done">
+          Se descargó «{{ done.fileName }}» con {{ done.rowCount }} filas. Huella de control
+          (SHA-256): <code class="huella">{{ done.sha256 }}</code>
+        </app-alert>
+      }
+      <div class="exportar__botones">
+        <button
+          app-button
+          variant="primary"
+          type="button"
+          [isLoading]="exporting()"
+          [disabled]="exporting()"
+          (clicked)="submitExport()"
+          data-testid="matrix-export-submit"
+        >
+          Exportar
+        </button>
+        <button app-button variant="outline" type="button" (clicked)="toggleExport()">
+          Cerrar
+        </button>
+      </div>
+    </section>
+  }
+
+  <app-view-state-host [state]="matrix()" (retry)="reload()" (refresh)="reload()">
+    @if (view() === 'person') {
+      @if (personMatrix(); as m) {
+        @if (noMatches()) {
+          <p class="sin-coincidencias" data-testid="matrix-no-matches">
+            Ninguna persona coincide con los filtros.
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="clearFilters()"
+              data-testid="matrix-clear-filters"
+            >
+              Quitar los filtros
+            </button>
+          </p>
+        } @else {
+          <ul class="leyenda" data-testid="matrix-legend" aria-label="Qué significa cada símbolo">
+            @for (item of legend; track item.status) {
+              <li class="leyenda__item">
+                <span aria-hidden="true">{{ item.glyph }}</span> <strong>{{ item.text }}</strong
+                >: {{ item.meaning }}.
+              </li>
+            }
+          </ul>
+          <div
+            class="grilla"
+            role="region"
+            tabindex="0"
+            aria-label="Matriz de accesos: use las flechas para desplazarse si no entra completa"
+          >
+            <table class="grilla__tabla" data-testid="matrix-grid">
+              <caption class="grilla__titulo">
+                Quién tiene qué: los permisos de cada persona del equipo de apoyo, por
+                {{
+                  group() === 'category' ? 'categoría' : 'permiso'
+                }}
+              </caption>
+              <thead>
+                <tr>
+                  <th
+                    scope="col"
+                    class="grilla__persona"
+                    [attr.aria-sort]="
+                      nameSort() === null
+                        ? 'none'
+                        : nameSort() === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                    "
+                  >
+                    <button
+                      type="button"
+                      class="grilla__orden"
+                      (click)="toggleNameSort()"
+                      data-testid="matrix-sort-name"
+                    >
+                      Persona
+                      <span aria-hidden="true">{{
+                        nameSort() === 'asc' ? '▲' : nameSort() === 'desc' ? '▼' : '↕'
+                      }}</span>
+                    </button>
+                  </th>
+                  @for (column of columns(); track column) {
+                    <th scope="col" class="grilla__columna">{{ columnLabel(column) }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of personPage().items; track row.engagementId) {
+                  <tr>
+                    <th scope="row" class="grilla__persona">
+                      <span class="persona__nombre">{{ personName(row) }}</span>
+                      <span class="persona__sub"
+                        >{{ templateLabel(row.templateCode) }} · {{ stateText(row.state) }}</span
+                      >
+                    </th>
+                    @for (column of columns(); track column) {
+                      @let cell = cellOf(row, column);
+                      <td class="grilla__celda">
+                        <button
+                          type="button"
+                          class="celda"
+                          [class]="'celda celda--' + cell.status"
+                          [attr.aria-pressed]="isCellSelected(row, column)"
+                          [attr.aria-label]="
+                            personName(row) +
+                            ', ' +
+                            columnLabel(column) +
+                            ': ' +
+                            cellText[cell.status]
+                          "
+                          [attr.data-testid]="'matrix-cell-' + row.engagementId + '-' + column"
+                          (click)="pickCell(row, column)"
+                        >
+                          <span aria-hidden="true">{{ cellGlyph[cell.status] }}</span>
+                          {{ cellText[cell.status] }}
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <nav class="paginas" aria-label="Paginación de la matriz">
+            <span class="paginas__resumen" aria-live="polite" data-testid="matrix-page-summary">{{
+              pageSummary()
+            }}</span>
+            @if (personPage().pages > 1) {
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                type="button"
+                [disabled]="personPage().page === 0"
+                (clicked)="goToPage(personPage().page - 1)"
+                data-testid="matrix-prev"
+              >
+                Anterior
+              </button>
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                type="button"
+                [disabled]="personPage().page + 1 >= personPage().pages"
+                (clicked)="goToPage(personPage().page + 1)"
+                data-testid="matrix-next"
+              >
+                Siguiente
+              </button>
+            }
+          </nav>
+        }
+      }
+    } @else {
+      @if (targetMatrix(); as t) {
+        @if (noMatches()) {
+          <p class="sin-coincidencias" data-testid="matrix-no-matches">
+            Ninguna persona coincide con los filtros.
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="clearFilters()"
+              data-testid="matrix-clear-filters"
+            >
+              Quitar los filtros
+            </button>
+          </p>
+        } @else {
+          <app-data-table
+            [caption]="'Quién puede actuar sobre ' + targetName()"
+            [state]="targetTable()"
+            [columns]="targetColumns()"
+            [trackBy]="rowId"
+            [rowLabel]="rowLabel"
+            [sort]="targetSort()"
+            [cursor]="targetCursor()"
+            [pageSummary]="pageSummary()"
+            (sortChanged)="changeTargetSort($event)"
+            (cursorChanged)="changeTargetPage($event)"
+            data-testid="matrix-target-table"
+          />
+        }
+      }
+    }
+  </app-view-state-host>
+</app-card>
+
+@if (selection(); as sel) {
+  <app-card class="detalle" padding="lg">
+    <section
+      class="detalle__cuerpo"
+      aria-labelledby="matrix-detail-title"
+      data-testid="matrix-detail"
+    >
+      @if (sel.kind === 'cell') {
+        @let cell = cellOf(sel.row, sel.column);
+        <h2 id="matrix-detail-title" class="detalle__titulo">
+          {{ personName(sel.row) }} · {{ columnLabel(sel.column) }}
+        </h2>
+        <dl class="datos">
+          <div class="datos__par">
+            <dt>Qué tiene</dt>
+            <dd>
+              <span aria-hidden="true">{{ cellGlyph[cell.status] }}</span>
+              {{ cellText[cell.status] }}
+            </dd>
+          </div>
+          <div class="datos__par">
+            <dt>Permisos que lo dan</dt>
+            <dd>{{ cell.grantIds.length }}</dd>
+          </div>
+          <div class="datos__par">
+            <dt>Condiciones</dt>
+            <dd>
+              {{
+                cell.conditions.length === 0
+                  ? 'Ninguna'
+                  : conditionTexts(cell.conditions).join(', ')
+              }}
+            </dd>
+          </div>
+        </dl>
+      } @else {
+        <h2 id="matrix-detail-title" class="detalle__titulo">
+          {{ personName(sel.row) }} sobre {{ targetName() }}
+        </h2>
+        <dl class="datos">
+          <div class="datos__par">
+            <dt>Hoy</dt>
+            <dd>
+              @if (sel.row.effective) {
+                <span aria-hidden="true">✓</span> Puede actuar
+              } @else {
+                <span aria-hidden="true">!</span> Bloqueada: {{ blockText(sel.row.reason) }}
+              }
+            </dd>
+          </div>
+          <div class="datos__par">
+            <dt>Permisos</dt>
+            <dd>{{ atomNames(sel.row) || 'Ninguno a este nivel' }}</dd>
+          </div>
+          <div class="datos__par">
+            <dt>Condiciones</dt>
+            <dd>
+              {{
+                sel.row.conditions.length === 0
+                  ? 'Ninguna'
+                  : conditionTexts(sel.row.conditions).join(', ')
+              }}
+            </dd>
+          </div>
+        </dl>
+      }
+      <p class="detalle__enlace">
+        <a
+          [routerLink]="['/administration/support-team', sel.row.engagementId]"
+          [attr.aria-label]="'Abrir los permisos de ' + personName(sel.row)"
+          >Abrir los permisos de {{ personName(sel.row) }}</a
+        >
+      </p>
+
+      <div class="porque">
+        <h3 class="porque__titulo">¿Por qué?</h3>
+        @if (explainOptions().length === 0) {
+          <p class="porque__nota">Esta persona no tiene permisos de este tipo que explicar.</p>
+        } @else {
+          @if (!explainFixed()) {
+            <app-form-field label="Permiso que quiere explicar">
+              <app-select
+                [options]="explainOptions()"
+                [value]="explainAtom()"
+                (valueChange)="explainAtom.set($event)"
+                ariaLabel="Permiso que quiere explicar"
+                data-testid="matrix-explain-atom"
+              />
+            </app-form-field>
+          }
+          <div>
+            <button
+              app-button
+              variant="primary"
+              size="sm"
+              type="button"
+              [disabled]="explain().status === 'loading'"
+              [isLoading]="explain().status === 'loading'"
+              (clicked)="runExplain()"
+              data-testid="matrix-explain-run"
+            >
+              ¿Por qué?
+            </button>
+          </div>
+        }
+        <div aria-live="polite" class="porque__salida">
+          @let e = explain();
+          @if (e.status === 'ready') {
+            @let d = decisionView(e.response.decision.effect);
+            <div class="resultado" data-testid="matrix-explain-result">
+              <p class="resultado__decision">
+                <span aria-hidden="true">{{ d.glyph }}</span> <strong>{{ d.text }}</strong>
+              </p>
+              <p class="resultado__resumen">{{ e.response.summary }}</p>
+              <ol class="razones">
+                @for (r of e.response.reasons; track r.order) {
+                  <li class="razones__item" [attr.data-passed]="r.passed">
+                    <span aria-hidden="true">{{ r.passed ? '✓' : '✕' }}</span>
+                    <span class="sr-only">{{ r.passed ? 'Cumple:' : 'No cumple:' }}</span>
+                    {{ r.message }}
+                  </li>
+                }
+              </ol>
+              @if (e.response.missing.length > 0) {
+                <h4 class="resultado__subtitulo">Qué hace falta</h4>
+                <ul class="resultado__lista">
+                  @for (m of e.response.missing; track m.message) {
+                    <li>{{ m.message }}</li>
+                  }
+                </ul>
+              }
+              @if (e.response.adminFixes && e.response.adminFixes.length > 0) {
+                <h4 class="resultado__subtitulo">Qué puede cambiar el administrador</h4>
+                <ul class="resultado__lista">
+                  @for (f of e.response.adminFixes; track f.message) {
+                    <li>{{ f.message }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          } @else if (e.status === 'error') {
+            <app-alert tone="error" role="alert" data-testid="matrix-explain-error">{{
+              e.message
+            }}</app-alert>
+          }
+        </div>
+      </div>
+    </section>
+  </app-card>
+}
+
+<ng-template #personCell let-row>
+  <span class="persona__nombre">{{ personName(row) }}</span>
+  <span class="persona__sub"
+    >{{ templateLabel(row.templateCode) }} · {{ stateText(row.state) }}</span
+  >
+</ng-template>
+
+<ng-template #effectiveCell let-row>
+  <span [attr.data-testid]="'matrix-effective-' + row.engagementId">
+    @if (row.effective) {
+      <span aria-hidden="true">✓</span> Puede hoy
+    } @else {
+      <span aria-hidden="true">!</span> Hoy está bloqueado: {{ blockText(row.reason) }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #atomsCell let-row>
+  <span>{{ atomNames(row) || '—' }}</span>
+</ng-template>
+
+<ng-template #conditionsCell let-row>
+  <span>{{
+    row.conditions.length === 0 ? 'Sin condiciones' : conditionTexts(row.conditions).join(', ')
+  }}</span>
+</ng-template>
+
+<ng-template #whyCell let-row>
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    type="button"
+    [attr.aria-pressed]="selectedRow()?.engagementId === row.engagementId"
+    [attr.aria-label]="'¿Por qué? ' + personName(row)"
+    [attr.data-testid]="'matrix-why-' + row.engagementId"
+    (clicked)="pickTarget(row)"
+  >
+    ¿Por qué?
+  </button>
+</ng-template>

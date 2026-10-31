@@ -62,7 +62,7 @@ export function writeFailureMessage(
     case 'error':
       // El identificador de petición es obligatorio en S9: sin él, quien
       // reporta el problema y quien lo busca en los registros no se encuentran.
-      return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;
+      return `${unexpectedErrorText(estado.message)} (${estado.requestId})`;
     default:
       // `ready`, `loading` y los demás no son fallos. `stale` y `empty` no
       // aplican a una escritura: no hay dato viejo que refrescar ni lista
@@ -92,4 +92,32 @@ export function writeMessage(
     return estado.issues[0]?.message ?? `No pudimos ${textos.accion}.`;
   }
   return writeFailureMessage(estado, textos);
+}
+
+/** El texto de S9 sin el código: el del servidor, o el de respaldo. */
+function unexpectedErrorText(message: string | undefined): string {
+  return message || 'Ocurrió un error inesperado.';
+}
+
+/** {@link writeFailureMessage} con el código de soporte aparte, para pintarlo con `app-support-code`. */
+export interface FailureParts {
+  readonly text: string;
+  /** El `requestId` de S4, S5 o S9 cuando la API lo mandó; `null` si no. */
+  readonly code: string | null;
+}
+
+/**
+ * Lo mismo que {@link writeFailureMessage} —los mismos textos de respaldo—,
+ * pero con el código de soporte separado del texto en vez de pegado al final.
+ * Para S4 (validación) no hay texto acá: lo decide quien llama.
+ *
+ * @returns Las partes, o `null` si el estado no es un fallo de escritura.
+ */
+export function writeFailureParts(estado: ViewState<null>, textos: FailureTexts): FailureParts | null {
+  if (estado.status === 'error') {
+    return { text: unexpectedErrorText(estado.message), code: estado.requestId };
+  }
+  const text = writeFailureMessage(estado, textos);
+  if (text === null) return null;
+  return { text, code: estado.status === 'forbidden' ? (estado.requestId ?? null) : null };
 }

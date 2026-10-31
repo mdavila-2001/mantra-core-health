@@ -28,7 +28,6 @@ import {
 } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import type { OrderLine } from '../../../../core/promotions-engine/promotion-mechanics.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
-import { describeApiFailure } from '../../../../core/http/api-failure';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { empty, notFound, ready } from '../../../../core/view-state/view-state';
@@ -52,6 +51,7 @@ import { CLAVE_DEL_TRASPASO, type TraspasoDeLaReceta } from '../new-order/new-or
 import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders.routes';
 import { contenidoDelQrDeEjemplo, TARJETA_DE_EJEMPLO } from './checkout.fixtures';
 import { resumirPedido, type RenglonACobrar } from './checkout.summary';
+import { describeOrderSendFailure } from './order-send-failure';
 import { OrderSummary } from './order-summary/order-summary';
 
 /** La orden médica, para volver sin perder el borrador. */
@@ -155,8 +155,9 @@ export class Checkout {
 
   /** Lo que la farmacia no puede recibir: bloquea la confirmación, como en E. */
   protected readonly productosSinPublicar =
-    this.borrador?.lineas.filter((linea) => linea.productId === null).map((l) => l.medicamento) ??
-    [];
+    this.borrador?.lineas
+      .filter((linea) => linea.productId === null && linea.missingAtSite !== true)
+      .map((l) => l.medicamento) ?? [];
 
   /**
    * El borrador que se envía: el vivo, con las cantidades elegidas en la orden
@@ -332,7 +333,7 @@ export class Checkout {
         },
         error: (error: unknown) => {
           this.enviando.set(false);
-          this.falloAlConfirmar.set(describeApiFailure(error, 'No se pudo enviar el pedido a la farmacia.'));
+          this.falloAlConfirmar.set(describeOrderSendFailure(error));
         },
       });
   }

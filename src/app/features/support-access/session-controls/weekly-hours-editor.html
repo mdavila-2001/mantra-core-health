@@ -1,0 +1,76 @@
+<div class="horario" [attr.data-testid]="idPrefix() + '-editor'">
+  <div class="horario__interruptor">
+    <app-switch
+      [checked]="limitado()"
+      (checkedChange)="alternar($event)"
+      label="Limitar a un horario laboral"
+      [attr.data-testid]="idPrefix() + '-limitar'"
+    />
+  </div>
+
+  @if (value(); as horario) {
+    <div class="horario__controles">
+      <div class="horario__campo">
+        <span class="horario__rotulo" [id]="idPrefix() + '-desde-rotulo'">Desde</span>
+        <app-select
+          [options]="horas"
+          [value]="horario.from"
+          (valueChange)="cambiarDesde($event)"
+          ariaLabel="Hora de inicio del horario"
+          [attr.data-testid]="idPrefix() + '-desde'"
+        />
+      </div>
+      <div class="horario__campo">
+        <span class="horario__rotulo" [id]="idPrefix() + '-hasta-rotulo'">Hasta</span>
+        <app-select
+          [options]="horas"
+          [value]="horario.to"
+          (valueChange)="cambiarHasta($event)"
+          ariaLabel="Hora de fin del horario"
+          [attr.data-testid]="idPrefix() + '-hasta'"
+        />
+      </div>
+      <div class="horario__atajos">
+        <button app-button variant="outline" size="sm" type="button" (clicked)="oficina()" [attr.data-testid]="idPrefix() + '-oficina'">
+          Oficina: lunes a viernes, 08:00 a 18:00
+        </button>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="turnoDeNoche()" [attr.data-testid]="idPrefix() + '-noche'">
+          Turno de noche: todos los días, 22:00 a 06:00
+        </button>
+      </div>
+    </div>
+
+    <div class="semana" role="group" aria-label="Días y horas en que se puede entrar" [attr.data-testid]="idPrefix() + '-semana'">
+      <div class="semana__horas" aria-hidden="true">
+        <span></span>
+        <span class="semana__marcas"><span>0</span><span>6</span><span>12</span><span>18</span><span>24 h</span></span>
+      </div>
+      @for (fila of filas(); track fila.day) {
+        <button
+          type="button"
+          class="semana__dia"
+          [class.semana__dia--activo]="fila.on"
+          [attr.aria-pressed]="fila.on"
+          [attr.aria-label]="fila.label"
+          [attr.data-testid]="idPrefix() + '-dia-' + fila.day"
+          (click)="alternarDia(fila.day)"
+        >
+          <span class="semana__nombre">{{ fila.name }}</span>
+          <span class="semana__pista" aria-hidden="true">
+            @for (tramo of fila.segments; track $index) {
+              <span class="semana__tramo" [style.inset-inline-start.%]="tramo.left" [style.inline-size.%]="tramo.width"></span>
+            }
+          </span>
+        </button>
+      }
+    </div>
+
+    @if (problema(); as motivo) {
+      <p class="horario__problema" role="alert" data-testid="horario-problema">El horario no se puede guardar así: {{ motivo }}</p>
+    }
+
+    <p class="horario__resumen" data-testid="horario-resumen">{{ resumen() }}. Hora de {{ zona === 'America/La_Paz' ? 'La Paz' : zona }}.</p>
+  } @else {
+    <p class="horario__resumen">{{ resumen() }}</p>
+  }
+</div>

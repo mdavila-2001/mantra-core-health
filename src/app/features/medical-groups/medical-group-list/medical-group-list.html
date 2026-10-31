@@ -15,6 +15,9 @@
 </app-page-header>
 
 <div class="grupos">
+  @if (deleteError(); as error) {
+    <app-alert tone="error" data-testid="medical-group-list-error">{{ error }}</app-alert>
+  }
   <app-tabs [(selectedIndex)]="selectedIndex">
     @for (tab of tabs; track tab) {
       <app-tab
@@ -72,4 +75,33 @@
       </span>
     }
   </span>
+</ng-template>
+
+<ng-template #actionsCell let-group>
+  <div class="grupos__acciones">
+    <a
+      app-button
+      variant="ghost"
+      size="sm"
+      data-testid="medical-group-list-edit"
+      [routerLink]="detailRoute(group.id)"
+      [attr.aria-label]="'Abrir ' + (group.serviceName ?? 'el grupo médico')"
+    >
+      {{ canDelete(group) ? 'Editar' : 'Abrir' }}
+    </a>
+    @if (canDelete(group)) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-testid="medical-group-list-delete"
+        [disabled]="deleting()"
+        [attr.aria-label]="'Eliminar ' + (group.serviceName ?? 'el grupo médico')"
+        (clicked)="remove(group)"
+      >
+        Eliminar
+      </button>
+    }
+  </div>
 </ng-template>

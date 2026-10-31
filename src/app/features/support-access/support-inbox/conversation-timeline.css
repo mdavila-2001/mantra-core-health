@@ -1,0 +1,131 @@
+:host {
+  display: block;
+}
+
+.hilo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.burbuja {
+  display: grid;
+  gap: var(--sp-1);
+  max-inline-size: min(100%, 36rem);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.burbuja--paciente {
+  justify-self: start;
+}
+
+.burbuja--doctor {
+  justify-self: end;
+  background: var(--st-info-bg);
+  border-color: var(--st-info-bd);
+}
+
+.burbuja--clinica {
+  border-color: var(--st-error-bd);
+  border-inline-start: 4px solid var(--st-error-fg);
+}
+
+.burbuja--oculta {
+  border-style: dashed;
+}
+
+.oculto {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+}
+
+.oculto__titulo,
+.oculto__texto {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+.oculto__texto {
+  font-size: var(--fs-caption);
+}
+
+.burbuja__quien {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.burbuja__quien strong {
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+}
+
+.burbuja__hora {
+  margin-inline-start: auto;
+}
+
+.burbuja__texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.burbuja__autora {
+  margin: 0;
+  padding-block-start: var(--sp-1);
+  border-block-start: 1px dashed var(--border-default);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* La nota interna no se parece a un mensaje: fondo cálido, borde punteado y su propio aviso. */
+.nota {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 2px dashed var(--st-warning-bd);
+  border-radius: var(--r-md);
+  background: var(--st-warning-bg);
+}
+
+.nota__cabeza {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.nota__aviso,
+.nota__autora {
+  font-size: var(--fs-caption);
+  color: var(--st-warning-fg);
+}
+
+.nota__texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--st-warning-fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.nota__autora {
+  margin: 0;
+}

@@ -1,0 +1,162 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+  --eje: 3.5rem;
+}
+
+.grid {
+  position: relative;
+  overflow: auto;
+  max-block-size: min(72vh, 52rem);
+  /* `dvh` descuenta la barra de direcciones del navegador móvil; `vh` queda de respaldo. */
+  max-block-size: min(72dvh, 52rem);
+  min-block-size: 18rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.grid:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.grid__cabeza,
+.grid__cuerpo {
+  display: grid;
+  inline-size: 100%;
+  min-inline-size: max-content;
+}
+
+.grid__cabeza {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 6;
+  background: var(--bg-surface-alt);
+  border-block-end: 1px solid var(--border-strong);
+}
+
+.grid__esquina,
+.grid__eje {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 5;
+  background: var(--bg-surface-alt);
+}
+
+.grid__titulo {
+  display: grid;
+  gap: 0;
+  padding: var(--sp-2);
+  border-inline-start: 1px solid var(--border-default);
+  min-inline-size: 0;
+  align-content: center;
+  text-align: center;
+}
+
+.grid__titulo--hoy .grid__rotulo {
+  color: var(--brand-primary);
+}
+
+.grid__titulo--hoy {
+  box-shadow: inset 0 -3px 0 var(--brand-primary);
+}
+
+.grid__rotulo {
+  font-weight: 600;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grid__rotulo::first-letter {
+  text-transform: uppercase;
+}
+
+.grid__sub {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grid__cuerpo {
+  position: relative;
+}
+
+.grid__eje {
+  background: var(--bg-surface);
+  border-inline-end: 1px solid var(--border-default);
+}
+
+.grid__hora {
+  position: absolute;
+  inset-inline-end: var(--sp-2);
+  transform: translateY(-0.55em);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  background: var(--bg-surface);
+  padding-inline: 2px;
+}
+
+.grid__hora:first-child {
+  transform: none;
+}
+
+.grid__col {
+  position: relative;
+  border-inline-start: 1px solid var(--border-default);
+  /* Las líneas de cada hora y de cada media hora. */
+  background-image:
+    linear-gradient(to bottom, var(--border-default) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--bg-hover) 1px, transparent 1px);
+  background-size:
+    100% var(--hora-alto, 84px),
+    100% calc(var(--hora-alto, 84px) / 2);
+}
+
+.grid__col--hoy {
+  background-color: var(--bg-hover);
+}
+
+.grid__col > :where(button) {
+  position: absolute;
+  padding-inline-end: var(--sp-1);
+}
+
+.grid__ahora {
+  position: absolute;
+  inset-inline: 0;
+  block-size: 0;
+  border-block-start: 2px solid var(--st-error-fg);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.grid__ahora::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -5px;
+  inset-block-start: -6px;
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: var(--r-full);
+  background: var(--st-error-fg);
+}
+
+/* Celular: una columna por pantalla y se desliza entre ellas. */
+.grid--snap {
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline-start: var(--eje);
+  overscroll-behavior-x: contain;
+}
+
+.grid--snap .grid__titulo,
+.grid--snap .grid__col {
+  scroll-snap-align: start;
+}

@@ -1,0 +1,21 @@
+@if (locked()) {
+  <p class="medication-link__note" data-testid="medication-link-locked">
+    <strong>Medicamento de la receta:</strong> {{ current()?.display }}. Viene del registro
+    oficial y no se cambia.
+  </p>
+} @else {
+  <app-form-field label="Medicamento de la receta" [hint]="hint()">
+    <app-reference-combobox
+      [options]="options()"
+      [selected]="selected()"
+      [loading]="status() === 'loading'"
+      [minQueryLength]="2"
+      label="Medicamento de la receta"
+      placeholder="Ej. amoxicilina"
+      emptyMessage="No está en el catálogo de medicamentos"
+      (searched)="search($event)"
+      (selectionChange)="choose($event)"
+      data-testid="medication-link"
+    />
+  </app-form-field>
+}
