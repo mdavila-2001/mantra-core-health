@@ -17,9 +17,9 @@ export class SettingsDrawer {
   protected readonly densities: readonly { value: Density; label: string }[] = [{ value: 'comfortable', label: 'Cómoda' }, { value: 'compact', label: 'Compacta' }];
   protected readonly themes: readonly { value: ThemeChoice; label: string }[] = [{ value: 'system', label: 'Según el sistema' }, { value: 'light', label: 'Claro' }, { value: 'dark', label: 'Oscuro' }];
   private readonly sync = effect(() => {
-    const el = this.dialog()?.nativeElement;
-    if (!el) return;
-    if (this.open() && !el.open) el.showModal();
-    if (!this.open() && el.open) el.close();
+    const dialogEl = this.dialog()?.nativeElement;
+    if (!dialogEl) return;
+    if (this.open() && !dialogEl.open) dialogEl.showModal();
+    if (!this.open() && dialogEl.open) dialogEl.close();
   });
 }
