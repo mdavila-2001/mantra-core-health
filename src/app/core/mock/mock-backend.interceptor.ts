@@ -186,6 +186,9 @@ function anotarEnElRegistro(method: MockMethod, path: string, request: HttpReque
       body: request.body,
       status: respuesta.status,
       requestId: requestIdOf(respuesta.body),
+      // F4/F5: el cuerpo de la respuesta (con su `correlationId`), para que la
+      // evidencia muestre la cadena entera y no sólo el estado.
+      response: respuesta.body,
       at: new Date().toISOString(),
     });
     sessionStorage.setItem('mock:registro', JSON.stringify(lista));

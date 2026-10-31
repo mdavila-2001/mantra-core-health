@@ -535,7 +535,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Intervenciones',
     group: 'Atención',
     icon: 'scalpel',
-    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN'],
+    // F4 (`CONTRATO-F2-F5.md` §F4.3): Facturación y la administración leen la
+    // agenda de quirófanos y la utilización. La API decide cada acción.
+    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN', 'BILLING', 'SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Mire las intervenciones programadas y confirme su participación.',
     module: 'M53 procedures_perioperative',
@@ -1168,7 +1170,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Catálogo de servicios',
     group: 'Administración',
     icon: 'tag',
-    roles: ['SECURITY_ADMIN'],
+    // F5e: Facturación carga las tarifas de espacios y revisa el día-cama.
+    roles: ['SECURITY_ADMIN', 'BILLING'],
     availability: 'disponible',
     summary: 'Mantenga la lista fija de servicios sobre la que se arman los presupuestos.',
     module: 'M17 billing',

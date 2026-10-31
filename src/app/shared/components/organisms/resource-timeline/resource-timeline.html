@@ -1,0 +1,65 @@
+<div class="resource-timeline" role="group" [attr.aria-label]="label()">
+  <div class="resource-timeline__axis" aria-hidden="true">
+    <span class="resource-timeline__axis-spacer"></span>
+    <div class="resource-timeline__ticks">
+      @for (hour of hours(); track hour.label) {
+        <span class="resource-timeline__tick" [style.left.%]="hour.left">{{ hour.label }}</span>
+      }
+    </div>
+  </div>
+
+  @for (row of rows(); track row.id) {
+    <div class="resource-timeline__row" data-testid="timeline-row">
+      <div class="resource-timeline__resource">
+        <span class="resource-timeline__resource-name">{{ row.label }}</span>
+        @if (row.description) {
+          <span class="resource-timeline__resource-desc">{{ row.description }}</span>
+        }
+      </div>
+      <!-- Las líneas de la grilla quedan fuera de la lista: el lector anuncia sólo los segmentos. -->
+      <div class="resource-timeline__lane">
+        @for (hour of hours(); track hour.label) {
+          <span class="resource-timeline__gridline" aria-hidden="true" [style.left.%]="hour.left"></span>
+        }
+        <ul class="resource-timeline__segments" [attr.aria-label]="row.label">
+        @for (p of segmentsOf(row.id); track p.segment.id) {
+          <li
+            class="resource-timeline__segment"
+            [class]="'resource-timeline__segment resource-timeline__segment--' + p.segment.kind + ' resource-timeline__segment--' + (p.segment.tone ?? 'primary')"
+            [style.left.%]="p.left"
+            [style.width.%]="p.width"
+            [attr.data-testid]="'timeline-' + p.segment.kind"
+          >
+            @if (p.reservedLeft !== null) {
+              <span class="resource-timeline__core" [style.left.%]="p.reservedLeft" [style.width.%]="p.reservedWidth"></span>
+            }
+            @if (p.segment.route) {
+              <a class="resource-timeline__label" [routerLink]="p.segment.route" [attr.aria-label]="p.segment.detail">
+                <span aria-hidden="true">{{ p.segment.label }}</span>
+              </a>
+            } @else {
+              <span class="resource-timeline__label">
+                <span aria-hidden="true">{{ p.segment.label }}</span>
+                <span class="resource-timeline__sr">{{ p.segment.detail }}</span>
+              </span>
+            }
+          </li>
+        }
+        </ul>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- La misma información para pantallas angostas (y para quien prefiere una tabla). -->
+<div class="resource-timeline__list">
+  <app-data-table [state]="listState()" [columns]="columns()" [trackBy]="byId" [caption]="label()" />
+</div>
+
+<ng-template #resourceCell let-entry>
+  @if (entry.route) {
+    <a [routerLink]="entry.route">{{ entry.what }}</a>
+  } @else {
+    {{ entry.what }}
+  }
+</ng-template>

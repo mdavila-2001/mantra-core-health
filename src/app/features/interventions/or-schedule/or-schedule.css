@@ -1,0 +1,84 @@
+:host {
+  display: block;
+}
+
+.or-schedule {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
+}
+
+.or-schedule__toolbar,
+.or-schedule__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.or-schedule__as-of {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.or-schedule__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.or-schedule__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.or-schedule__swatch {
+  display: inline-block;
+  inline-size: var(--sp-4);
+  block-size: var(--sp-3);
+  border-radius: var(--r-xs);
+  border: 1px solid var(--border-default);
+}
+
+.or-schedule__swatch--band {
+  background: var(--st-info-bg);
+  border-color: var(--st-info-bd);
+}
+
+.or-schedule__swatch--released {
+  background: repeating-linear-gradient(135deg, var(--bg-inset) 0 3px, var(--bg-surface-alt) 3px 6px);
+}
+
+.or-schedule__swatch--case {
+  background: var(--st-primary-bg);
+  border-color: var(--st-primary-bd);
+}
+
+.or-schedule__swatch--reserve {
+  background: repeating-linear-gradient(135deg, var(--st-warning-bg) 0 3px, var(--bg-surface) 3px 6px);
+  border-color: var(--st-warning-bd);
+}
+
+/* El día no necesita todo el ancho: las flechas quedan al lado. */
+.or-schedule__toolbar app-input {
+  inline-size: 11rem;
+}
+
+.or-schedule__site {
+  margin-block-end: var(--sp-3);
+}

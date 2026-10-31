@@ -1,0 +1,76 @@
+/* El equipo del caso: una fila por integrante, con las acciones al final. */
+
+:host {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.case-team__members {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Se envuelve en pantallas angostas en vez de recortar: los botones son el
+   acto de la pantalla y no pueden quedar fuera de vista. */
+.case-team__member {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.case-team__member:last-child {
+  border-block-end: none;
+}
+
+.case-team__data {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.case-team__role {
+  font-weight: 600;
+}
+
+.case-team__status {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.case-team__mine {
+  color: var(--st-info-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.case-team__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.case-team__response {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.case-team__response-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
