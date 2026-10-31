@@ -2,7 +2,7 @@ import { HttpHeaders } from '@angular/common/http';
 
 import type { CostCenter, InfrastructureItem } from '../../data-access/accounting/infrastructure-items.types';
 import type { SampleCollectionPoint } from '../../data-access/diagnostics/sample-collection.types';
-import type { EncounterCharges } from '../../data-access/space-billing/space-billing.types';
+import type { ChargeCapture } from '../../data-access/space-billing/space-billing.types';
 import { recursos, SITIO_SANLUCAS } from '../fixtures/agenda';
 import { ESTUDIO, ORDER_CATEGORY } from '../fixtures/concepts';
 import { idDeEspacio, idDeUnidad, SITIOS_INFRA } from '../fixtures/infraestructura';
@@ -184,19 +184,27 @@ describe('maqueta de integración F5b · F5d · F5f · quirófano por tiempo', (
       expect(event('INCISION', 25).status).toBe(201);
       expect(event('CLOSURE', 80).status).toBe(201);
       sign('SIGN_OUT', 2);
-      expect(event('PATIENT_OUT_OF_ROOM', 95).status).toBe(201);
+      const out = event('PATIENT_OUT_OF_ROOM', 95);
+      expect(out.status).toBe(201);
+      // La salida de sala informa la orden de recambio, como `RecordRoomEventUseCase`.
+      expect((out.body as { cleaningOrderId: string | null }).cleaningOrderId).not.toBeNull();
 
-      const detail = call('GET', `/procedure-cases/${id}`, { user: jefe }).body as { case: { encounterId: string }; turnoverCleaning: { id: string; status: string; rowVersion: number } };
+      const detail = call('GET', `/procedure-cases/${id}`, { user: jefe }).body as { case: { encounterId: string }; turnoverCleaning: { id: string; status: string; rowVersion: number; allowedTransitions: string[] } };
+      // Forma de `CaseOrViewBuilder.detail`: `status` y las transiciones del actor.
       expect(detail.turnoverCleaning.status).toBe('CLN_PENDING');
-      const charges = call('GET', `/billing/encounters/${detail.case.encounterId}/pending-charges`, { user: facturacion }).body as EncounterCharges;
-      const or = charges.charges.find((c) => c.sourceKind.code === 'CHG_SRC_OR_TIME')!;
+      expect(detail.turnoverCleaning.allowedTransitions).toContain('start');
+      // `pending-charges` es un arreglo de `chargeView` (forma de la API).
+      const charges = call('GET', `/billing/encounters/${detail.case.encounterId}/pending-charges`, { user: facturacion }).body as ChargeCapture[];
+      expect(Array.isArray(charges)).toBe(true);
+      const or = charges.find((c) => c.source === 'OR_TIME')!;
       // 95 min con fracción de 30 y mínimo 2 → 4 fracciones (criterio de §F5e).
       expect(or.quantity).toBe('4');
-      expect(or.minutes).toBe(95);
+      expect(or.sourceRefId).toBe(id);
+      expect(Object.keys(or).sort()).toEqual(['bedCategoryConceptId', 'careSpaceId', 'costCenterId', 'encounterId', 'id', 'idempotencyKey', 'quantity', 'serviceDate', 'source', 'sourceRefId', 'spaceTariffId', 'status', 'unitPrice']);
       expect(or.idempotencyKey).toBe(`ORTIME:${id}`);
 
       // El recambio: iniciar → terminar → inspeccionar; cada paso deja su evento.
-      let t = detail.turnoverCleaning;
+      let t = { id: detail.turnoverCleaning.id, status: detail.turnoverCleaning.status, rowVersion: detail.turnoverCleaning.rowVersion };
       expect(reason(call('POST', `/cleaning-orders/${t.id}/finish`, { user: jefe }))).toBe('CLEANING_ORDER_INVALID_TRANSITION');
       // Aislamiento, permiso y concurrencia: la API decide, la pantalla sólo refleja.
       expect(call('POST', `/cleaning-orders/${t.id}/start`, { user: jefe, tenant: TENANT_CLINICA }).status).toBe(404);
@@ -208,12 +216,14 @@ describe('maqueta de integración F5b · F5d · F5f · quirófano por tiempo', (
         if (step === 'inspect') expect(reason(call('POST', `/cleaning-orders/${t.id}/inspect`, { user: jefe, body: { result: 'FAIL' } }))).toBe('INSPECTION_REASON_REQUIRED');
         const r = call('POST', `/cleaning-orders/${t.id}/${step}`, { user: jefe, ifMatch: `"${t.rowVersion}"`, body: step === 'inspect' ? { result: 'PASS' } : {} });
         expect(r.status).toBe(200);
-        t = r.body as typeof t;
+        // `CleaningOrderDto` de F2; `inspect` lo envuelve en `{order, nextOrderId}`.
+        const o = (step === 'inspect' ? (r.body as { order: unknown; nextOrderId: null }).order : r.body) as { id: string; statusCode: string; rowVersion: number };
+        t = { id: o.id, status: o.statusCode, rowVersion: o.rowVersion };
       }
       expect(t.status).toBe('CLN_INSPECTED');
       // El cargo es idempotente: volver a pedir los pendientes no lo duplica.
-      const again = call('GET', `/billing/encounters/${detail.case.encounterId}/pending-charges`, { user: facturacion }).body as EncounterCharges;
-      expect(again.charges.filter((c) => c.sourceKind.code === 'CHG_SRC_OR_TIME')).toHaveLength(1);
+      const again = call('GET', `/billing/encounters/${detail.case.encounterId}/pending-charges`, { user: facturacion }).body as ChargeCapture[];
+      expect(again.filter((c) => c.source === 'OR_TIME')).toHaveLength(1);
       const after = call('GET', `/procedure-cases/${id}`, { user: jefe }).body as { roomEvents: { eventCode: string }[] };
       expect(after.roomEvents.map((e) => e.eventCode).slice(-3)).toEqual(['CLEANUP_START', 'CLEANUP_END', 'ROOM_READY']);
     });

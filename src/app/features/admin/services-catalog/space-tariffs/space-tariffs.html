@@ -4,45 +4,41 @@
     <a app-button variant="outline" size="sm" routerLink="/administration/services-catalog/bed-day-charges" data-testid="space-tariffs-charges-link">Cargos de día-cama</a>
   </div>
 
-  @if (canWrite()) {
-    <form class="space-tariffs__form" (submit)="$event.preventDefault(); create()" novalidate data-testid="space-tariff-form">
-      <h3 class="space-tariffs__title">Nueva tarifa</h3>
-      <div class="space-tariffs__grid">
-        <app-form-field label="Tipo" [required]="true">
-          <app-segmented-control [options]="kinds" [value]="kind()" ariaLabel="Tipo de tarifa" (valueChange)="kind.set($event)" />
+  <form class="space-tariffs__form" (submit)="$event.preventDefault(); create()" novalidate data-testid="space-tariff-form">
+    <h3 class="space-tariffs__title">Nueva tarifa</h3>
+    <div class="space-tariffs__grid">
+      <app-form-field label="Tipo" [required]="true">
+        <app-segmented-control [options]="kinds" [value]="kind()" ariaLabel="Tipo de tarifa" (valueChange)="kind.set($event)" />
+      </app-form-field>
+      @if (kind() === 'BED_DAY') {
+        <app-form-field label="Categoría de cama" [required]="true">
+          <app-select [options]="categoryOptions()" [value]="categoryCode()" placeholder="Elija la categoría" ariaLabel="Categoría de cama" data-testid="space-tariff-category" (valueChange)="categoryCode.set($event)" />
         </app-form-field>
-        @if (kind() === 'TARIFF_BED_DAY') {
-          <app-form-field label="Categoría de cama" [required]="true">
-            <app-select [options]="categoryOptions()" [value]="categoryCode()" placeholder="Elija la categoría" ariaLabel="Categoría de cama" data-testid="space-tariff-category" (valueChange)="categoryCode.set($event)" />
-          </app-form-field>
-        } @else {
-          <app-form-field label="Fracción facturable" [required]="true">
-            <app-select [options]="unitMinuteOptions" [value]="unitMinutes()" ariaLabel="Fracción facturable" (valueChange)="unitMinutes.set($event)" />
-          </app-form-field>
-          <app-form-field label="Mínimo de fracciones">
-            <app-input type="number" [step]="1" [value]="minimumUnits()" (valueChange)="minimumUnits.set(+($event ?? 0))" />
-          </app-form-field>
-        }
-        <app-form-field label="Ítem del catálogo" [required]="true" hint="Del catálogo de esta práctica.">
-          <app-select [options]="serviceOptions()" [value]="serviceId()" placeholder="Elija el ítem" ariaLabel="Ítem del catálogo" [searchable]="true" data-testid="space-tariff-service" (valueChange)="serviceId.set($event)" />
+      } @else {
+        <app-form-field label="Fracción facturable" [required]="true">
+          <app-select [options]="unitMinuteOptions" [value]="unitMinutes()" ariaLabel="Fracción facturable" (valueChange)="unitMinutes.set($event)" />
         </app-form-field>
-        <app-form-field label="Precio unitario (BOB)" [required]="true" [errorMessage]="unitPrice() === '' || valid() || !serviceId() ? '' : 'Revise el precio: número con hasta 6 decimales.'">
-          <app-input [value]="unitPrice()" inputMode="decimal" testId="space-tariff-price" (valueChange)="unitPrice.set($any($event) ?? '')" />
+        <app-form-field label="Mínimo de fracciones">
+          <app-input type="number" [step]="1" [value]="minimumUnits()" (valueChange)="minimumUnits.set(+($event ?? 0))" />
         </app-form-field>
-        <app-form-field label="Vigente desde" [required]="true">
-          <app-input type="date" [value]="validFrom()" testId="space-tariff-from" (valueChange)="validFrom.set($any($event) ?? '')" />
-        </app-form-field>
-        <app-form-field label="Vigente hasta" hint="Vacío: sin fecha de cierre.">
-          <app-input type="date" [value]="validTo()" (valueChange)="validTo.set($any($event) ?? '')" />
-        </app-form-field>
-      </div>
-      <div class="space-tariffs__actions">
-        <button app-button type="submit" [disabled]="!valid() || sending()" [isLoading]="sending()" data-testid="space-tariff-submit">Guardar tarifa</button>
-      </div>
-    </form>
-  } @else {
-    <app-alert tone="info" title="Sólo lectura">Las tarifas las cargan Facturación y la administración de la organización.</app-alert>
-  }
+      }
+      <app-form-field label="Ítem del catálogo" [required]="true" hint="Del catálogo de esta práctica.">
+        <app-select [options]="serviceOptions()" [value]="serviceId()" placeholder="Elija el ítem" ariaLabel="Ítem del catálogo" [searchable]="true" data-testid="space-tariff-service" (valueChange)="serviceId.set($event)" />
+      </app-form-field>
+      <app-form-field label="Precio unitario (BOB)" [required]="true" [errorMessage]="unitPrice() === '' || valid() || !serviceId() ? '' : 'Revise el precio: número con hasta 6 decimales.'">
+        <app-input [value]="unitPrice()" inputMode="decimal" testId="space-tariff-price" (valueChange)="unitPrice.set($any($event) ?? '')" />
+      </app-form-field>
+      <app-form-field label="Vigente desde" [required]="true">
+        <app-input type="date" [value]="validFrom()" testId="space-tariff-from" (valueChange)="validFrom.set($any($event) ?? '')" />
+      </app-form-field>
+      <app-form-field label="Vigente hasta" hint="Vacío: sin fecha de cierre.">
+        <app-input type="date" [value]="validTo()" (valueChange)="validTo.set($any($event) ?? '')" />
+      </app-form-field>
+    </div>
+    <div class="space-tariffs__actions">
+      <button app-button type="submit" [disabled]="!valid() || sending()" [isLoading]="sending()" data-testid="space-tariff-submit">Guardar tarifa</button>
+    </div>
+  </form>
 
   @if (failure(); as f) {
     <app-view-state-host [state]="f" data-testid="space-tariff-failure" />
@@ -50,7 +46,7 @@
 
   @if (closing(); as t) {
     <div class="space-tariffs__closing" data-testid="space-tariff-closing">
-      <p class="space-tariffs__closing-text">Cerrar «{{ t.tariffKind.display }}{{ t.bedCategory ? ' · ' + t.bedCategory.display : '' }}» vigente desde {{ t.validFrom }}. El último día de vigencia es el anterior a:</p>
+      <p class="space-tariffs__closing-text">Cerrar «{{ kindLabel(t) }} · {{ targetOf(t) }}» vigente desde {{ t.validFrom }}. El último día de vigencia es el anterior a:</p>
       <app-input type="date" [value]="closeDate()" ariaLabel="Fecha de cierre" (valueChange)="closeDate.set($any($event) ?? '')" />
       <button app-button size="sm" [isLoading]="sending()" (clicked)="confirmClose()" data-testid="space-tariff-close-confirm">Cerrar la tarifa</button>
       <button app-button variant="ghost" size="sm" (clicked)="closing.set(null)">Volver</button>
@@ -61,9 +57,9 @@
 </div>
 
 <ng-template #targetCell let-t>
-  <span class="space-tariffs__strong">{{ t.tariffKind.display }}</span>
+  <span class="space-tariffs__strong">{{ kindLabel(t) }}</span>
   <span class="space-tariffs__muted">
-    {{ t.bedCategory?.display ?? (t.careSpace ? t.careSpace.code + ' · ' + t.careSpace.name : 'Cualquier quirófano') }}
+    {{ targetOf(t) }}
     @if (t.unitMinutes) {
       · fracción de {{ t.unitMinutes }} min{{ t.minimumUnits ? ', mínimo ' + t.minimumUnits : '' }}
     }
@@ -72,8 +68,10 @@
 
 <ng-template #priceCell let-t>{{ price(t) }}</ng-template>
 
+<ng-template #serviceCell let-t>{{ serviceOf(t) }}</ng-template>
+
 <ng-template #validityCell let-t>
-  <app-badge [variant]="t.status.code === 'TARIFF_ACTIVE' ? 'success' : 'secondary'" size="sm">{{ t.status.display }}</app-badge>
+  <app-badge [variant]="statusOf(t).variant" size="sm">{{ statusOf(t).label }}</app-badge>
   <span class="space-tariffs__muted">{{ t.validFrom }} → {{ t.validTo ?? 'sin cierre' }}</span>
 </ng-template>
 

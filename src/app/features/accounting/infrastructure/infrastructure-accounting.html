@@ -5,6 +5,7 @@
 }
 
 <app-card class="infra-accounting" padding="lg" data-testid="infra-accounting">
+  <app-site-switch class="infra-accounting__site" />
   <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="changeTab($event)">
     <app-tab label="Activos de infraestructura">
       <div class="infra-accounting__panel">

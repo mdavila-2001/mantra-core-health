@@ -56,3 +56,7 @@
   color: var(--st-warning-fg);
   font-weight: 600;
 }
+
+.infra-accounting__site {
+  margin-block-end: var(--sp-3);
+}
