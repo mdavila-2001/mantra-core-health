@@ -1,0 +1,89 @@
+.centro__area {
+  margin-block-end: var(--sp-4);
+}
+
+.centro__area-titulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  margin: 0 0 var(--sp-1);
+}
+
+.centro__area-texto {
+  margin: 0 0 var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.centro__seccion {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin-block: var(--e5) var(--e3);
+}
+
+.centro__estado {
+  display: grid;
+  gap: var(--e4);
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+.centro__titulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  margin: 0 0 var(--sp-3);
+}
+
+.centro__cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-3);
+}
+
+.centro__cifras dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.centro__cifras dd {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.centro__nota,
+.centro__vacio {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.centro__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.centro__lista .centro__nota {
+  display: block;
+}
+
+.centro__estado-global {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+
+/* El estado no se dice sólo con color: lleva su texto, y el tono acompaña. */
+.centro__estado-global[data-estado='READY'] {
+  color: var(--text-success, var(--text-primary));
+}
+
+.centro__estado-global[data-estado='NOT_READY'] {
+  color: var(--text-danger, var(--text-primary));
+}
