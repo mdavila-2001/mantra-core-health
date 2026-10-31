@@ -8,7 +8,7 @@
 .sg__h { margin: var(--sp-4) 0 var(--sp-2); font-size: var(--fs-body); }
 .sg__bars { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
 .sg__bars li { display: grid; grid-template-columns: minmax(90px, 200px) 1fr 64px; gap: var(--sp-3); align-items: center; }
-.sg__bar { display: block; block-size: 10px; background: var(--bg-muted); border-radius: var(--r-pill); overflow: hidden; }
+.sg__bar { display: block; block-size: 10px; background: var(--bg-inset); border-radius: var(--r-pill); overflow: hidden; }
 .sg__bar > span { display: block; block-size: 100%; background: var(--chart-1); }
 .sg__val, .sg__n { text-align: end; font-variant-numeric: tabular-nums; }
 .sg__wrap { margin-block-start: var(--sp-4); overflow-x: auto; }
