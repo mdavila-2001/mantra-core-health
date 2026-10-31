@@ -394,9 +394,33 @@ describe('Glossary', () => {
     ]);
   });
 
-  it('la rejilla sigue visible con un filtro puesto: es el mapa', async () => {
+  it('al buscar por texto las categorías desaparecen (pedido del propietario)', async () => {
+    await responderLanding();
+    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
+
+    await irA({ q: 'hiper' });
+    responderPagina();
+    await harness.fixture.whenStable();
+
+    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(0);
+    expect(html().querySelector('.glosario__categorias')).toBeNull();
+    expect(html().textContent).toContain('Resultados de «hiper»');
+  });
+
+  it('al borrar el texto las categorías vuelven', async () => {
     await responderLanding();
     await irA({ q: 'hiper' });
+    responderPagina();
+    await irA({});
+    responderPagina();
+    await harness.fixture.whenStable();
+
+    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
+  });
+
+  it('con una categoría elegida la rejilla sigue: es el mapa para cambiar de tema', async () => {
+    await responderLanding();
+    await irA({ category: 'glossary-category-disease' });
     responderPagina();
     await harness.fixture.whenStable();
 
