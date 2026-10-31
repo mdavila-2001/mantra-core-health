@@ -218,8 +218,27 @@ export class LabAnalysisPicker {
     });
   }
 
-  protected onParent(analysis: LabAnalysisOption): void {
+  /**
+   * La casilla del padre es tri-estado: el clic nativo la alterna, pero el
+   * estado correcto lo dicta la selección (parcial → todos sigue «marcada»).
+   * Como el binding no cambia en ese caso, Angular no reescribe el DOM: hay
+   * que devolverle el valor correcto al modelo de la casilla Y a su `<input>`.
+   */
+  protected onParent(analysis: LabAnalysisOption, event: Event, box: Checkbox): void {
     this.selection.set(toggleAnalysis(this.selection(), analysis));
+    const checked = this.parentState(analysis) !== 'none';
+    box.checked.set(checked);
+    if (event.target instanceof HTMLInputElement) {
+      event.target.checked = checked;
+    }
+  }
+
+  /** Clic en el texto de una fila: lo traslada a la casilla de al lado (mismo camino que el teclado). */
+  protected clickBox(event: Event): void {
+    const text = event.currentTarget;
+    if (text instanceof HTMLElement) {
+      text.previousElementSibling?.querySelector('input')?.click();
+    }
   }
 
   protected onComponent(analysis: LabAnalysisOption, componentId: string, checked: boolean): void {

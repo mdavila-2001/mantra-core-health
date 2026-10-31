@@ -114,10 +114,8 @@ export function highlightSegments(text: string, tokens: readonly string[]): read
   const origin: number[] = []; // índice normalizado → índice original
   for (let i = 0; i < text.length; i++) {
     const piece = (text[i] as string).normalize('NFD').replace(COMBINING_MARKS, '').toLowerCase();
-    for (let k = 0; k < piece.length; k++) {
-      normalized += piece[k];
-      origin.push(i);
-    }
+    normalized += piece;
+    origin.push(...new Array<number>(piece.length).fill(i));
   }
 
   const marked = new Array<boolean>(text.length).fill(false);

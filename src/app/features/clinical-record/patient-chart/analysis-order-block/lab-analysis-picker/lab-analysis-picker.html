@@ -78,15 +78,16 @@
             <li class="lab__tarjeta" [class.is-elegido]="parentState(hit.analysis) !== 'none'" data-testid="lab-picker-card">
               <div class="lab__cabecera">
                 <app-checkbox
+                  #parentBox
                   [checked]="parentState(hit.analysis) !== 'none'"
                   [indeterminate]="parentState(hit.analysis) === 'some'"
                   [disabled]="disabled()"
                   [label]="hit.analysis.label"
                   [hideLabel]="true"
-                  (checkedChange)="onParent(hit.analysis)"
+                  (change)="onParent(hit.analysis, $event, parentBox)"
                   data-testid="lab-picker-parent"
                 />
-                <span class="lab__texto lab__texto--titulo" (click)="!disabled() && onParent(hit.analysis)">
+                <span class="lab__texto lab__texto--titulo" role="presentation" (click)="clickBox($event)">
                   <ng-container *ngTemplateOutlet="hl; context: { $implicit: hit.analysis.label }" />
                 </span>
               </div>
@@ -102,7 +103,7 @@
                         (checkedChange)="onComponent(hit.analysis, c.conceptId, $event)"
                         data-testid="lab-picker-component"
                       />
-                      <span class="lab__texto" (click)="!disabled() && onComponent(hit.analysis, c.conceptId, !componentChecked(hit.analysis, c.conceptId))">
+                      <span class="lab__texto" role="presentation" (click)="clickBox($event)">
                         <ng-container *ngTemplateOutlet="hl; context: { $implicit: c.label }" />
                         @if (c.unit) {
                           <span class="lab__unidad">{{ c.unit }}</span>
@@ -121,15 +122,16 @@
             <li class="lab__item" [class.is-elegido]="parentState(hit.analysis) !== 'none'" data-testid="lab-picker-row">
               <div class="lab__fila lab__fila--padre">
                 <app-checkbox
+                  #parentBox
                   [checked]="parentState(hit.analysis) !== 'none'"
                   [indeterminate]="parentState(hit.analysis) === 'some'"
                   [disabled]="disabled()"
                   [label]="hit.analysis.label"
                   [hideLabel]="true"
-                  (checkedChange)="onParent(hit.analysis)"
+                  (change)="onParent(hit.analysis, $event, parentBox)"
                   data-testid="lab-picker-parent"
                 />
-                <span class="lab__texto lab__texto--titulo" (click)="!disabled() && onParent(hit.analysis)">
+                <span class="lab__texto lab__texto--titulo" role="presentation" (click)="clickBox($event)">
                   <ng-container *ngTemplateOutlet="hl; context: { $implicit: hit.analysis.label }" />
                 </span>
                 <span class="lab__seccion">{{ sectionLabel(hit.analysis.section) }}</span>
@@ -159,7 +161,7 @@
                         (checkedChange)="onComponent(hit.analysis, c.conceptId, $event)"
                         data-testid="lab-picker-component"
                       />
-                      <span class="lab__texto" (click)="!disabled() && onComponent(hit.analysis, c.conceptId, !componentChecked(hit.analysis, c.conceptId))">
+                      <span class="lab__texto" role="presentation" (click)="clickBox($event)">
                         <ng-container *ngTemplateOutlet="hl; context: { $implicit: c.label }" />
                         @if (c.unit) {
                           <span class="lab__unidad">{{ c.unit }}</span>
