@@ -1,5 +1,12 @@
-import { HttpErrorResponse, type HttpInterceptorFn } from '@angular/common/http';
-import { timeout, catchError, throwError, TimeoutError } from 'rxjs';
+import {
+  HttpErrorResponse,
+  type HttpEvent,
+  type HttpInterceptorFn,
+  type HttpRequest,
+} from '@angular/common/http';
+import { timeout, catchError, throwError, TimeoutError, type Observable } from 'rxjs';
+
+import { ACCESS_CHALLENGE } from '../access-challenge/access-challenge';
 
 /**
  * Cuánto se espera una respuesta antes de darla por perdida.
@@ -46,11 +53,31 @@ const RUTAS_LENTAS: readonly string[] = ['/common/files/upload'];
  * la pantalla sigue ahí, esperando**.
  */
 export const timeoutInterceptor: HttpInterceptorFn = (request, next) => {
-  const limite = RUTAS_LENTAS.some((ruta) => request.url.includes(ruta))
+  // Las peticiones marcadas con `withAccessChallenge()` pueden esperar a una **persona** (motivo, código de la app
+  // autenticadora, aprobación de otra persona: minutos). Su límite lo pone `accessChallengeInterceptor` alrededor de
+  // cada ida a la red y no de la espera del diálogo (F1): si el límite cubriera el diálogo, se destruiría a los 30 s,
+  // se perdería la aprobación y la pantalla diría «sin conexión».
+  if (request.context.get(ACCESS_CHALLENGE) !== null) return next(request);
+  return conLimiteDeEspera(request, next(request));
+};
+
+/** El límite de espera de una petición (más largo para las subidas de archivos). */
+export function limiteDeEsperaMs(request: HttpRequest<unknown>): number {
+  return RUTAS_LENTAS.some((ruta) => request.url.includes(ruta))
     ? UPLOAD_TIMEOUT_MS
     : DEFAULT_TIMEOUT_MS;
+}
 
-  return next(request).pipe(
+/**
+ * Pone el límite de espera a **una ida a la red** y traduce el vencimiento a `HttpErrorResponse` de estado 0. Lo usa
+ * `timeoutInterceptor` para toda petición y `accessChallengeInterceptor` para cada `next(req)` de las marcadas.
+ */
+export function conLimiteDeEspera<T extends HttpEvent<unknown>>(
+  request: HttpRequest<unknown>,
+  respuesta: Observable<T>,
+): Observable<T> {
+  const limite = limiteDeEsperaMs(request);
+  return respuesta.pipe(
     timeout(limite),
     catchError((error: unknown) => {
       if (error instanceof TimeoutError) {
@@ -67,4 +94,4 @@ export const timeoutInterceptor: HttpInterceptorFn = (request, next) => {
       return throwError(() => error);
     }),
   );
-};
+}

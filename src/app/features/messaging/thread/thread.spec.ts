@@ -1327,6 +1327,70 @@ describe('Thread', () => {
       expect(store.estaBloqueado('pp-2')).toBe(true);
     });
   });
+  /**
+   * Personal de apoyo que responde en nombre del doctor (diseño de 2026-10).
+   *
+   * El remitente es **el doctor**: el paciente lo ve a él. Lo único que cambia es
+   * una leyenda, y quién la ve lo decide la API: el paciente, «respondido por su
+   * equipo» si el doctor lo activó; el doctor, el nombre de quien escribió.
+   */
+  describe('respuestas del equipo en nombre del doctor', () => {
+    it('el paciente ve el mensaje como del doctor, con la leyenda «Respondido por su equipo»', () => {
+      abrir([
+        { ...mensaje('m-2', 'pp-2', 'Le confirmamos el jueves a las 15:30.'), repliedByTeam: true },
+        mensaje('m-1', 'pp-1', '¿Puedo cambiar mi cita?'),
+      ]);
+
+      const respuesta = burbujas()[1]!;
+      expect(respuesta.textContent).toContain('Le confirmamos el jueves');
+      expect(respuesta.getAttribute('data-propio')).toBe('false');
+      expect(respuesta.querySelector('[data-testid="hilo-respondido-por-equipo"]')?.textContent).toContain('Respondido por su equipo');
+      expect(respuesta.querySelector('[data-testid="hilo-equipo-autora"]')).toBeNull();
+      // Lo que escribió el propio paciente no lleva leyenda.
+      expect(burbujas()[0]!.querySelector('[data-testid="hilo-respondido-por-equipo"]')).toBeNull();
+    });
+
+    it('si el doctor apagó el aviso, el paciente no ve ninguna leyenda', () => {
+      abrir([mensaje('m-2', 'pp-2', 'Le confirmamos el jueves a las 15:30.'), mensaje('m-1', 'pp-1', 'Hola')]);
+
+      expect(consultar('hilo-respondido-por-equipo')).toBeNull();
+      expect(consultar('hilo-equipo-autora')).toBeNull();
+    });
+
+    it('el doctor ve quién de su equipo respondió por él y puede ir a «Mi equipo» para retirarla', () => {
+      abrir([
+        { ...mensaje('m-2', 'pp-1', 'Le confirmamos el jueves a las 15:30.'), repliedByTeam: true, teamAuthorName: 'Ana Gutiérrez' },
+        mensaje('m-1', 'pp-2', '¿Puedo cambiar mi cita?'),
+      ]);
+
+      const autora = consultar('hilo-equipo-autora')!;
+      expect(autora.textContent).toContain('Respondió Ana Gutiérrez en su nombre');
+      const enlace = consultar('hilo-equipo-enlace') as HTMLAnchorElement;
+      expect(enlace.textContent?.trim()).toBe('Mi equipo');
+      expect(enlace.getAttribute('href')).toBe('/my-team');
+      // La autora real tiene prioridad sobre la leyenda genérica: no se dicen las dos.
+      expect(consultar('hilo-respondido-por-equipo')).toBeNull();
+    });
+
+    it('al doctor se le avisa que su equipo le derivó la conversación; a nadie más', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Tengo dolor de pecho')]);
+      expect(consultar('hilo-derivada')).toBeNull();
+
+      store.conversaciones.set([
+        {
+          id: 'c-1',
+          conversationTypeConceptId: 'c-direct',
+          unreadCount: 0,
+          peers: [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }],
+          awaitingDoctor: true,
+        },
+      ]);
+      fixture.detectChanges();
+
+      expect(consultar('hilo-derivada')?.textContent).toContain('Su equipo le derivó esta conversación');
+      expect(consultar('hilo-derivada')?.getAttribute('role')).toBe('status');
+    });
+  });
 });
 
 describe('Thread · pulsación larga y vacío', () => {

@@ -30,6 +30,15 @@
         }
       </section>
 
+      @if (rechazo(); as r) {
+        <app-alert tone="warning" title="No se pudo hacer" role="alert" data-testid="caja-rechazo">
+          {{ r.mensaje }}
+          @if (r.pregunta; as pregunta) {
+            <app-access-why-not [request]="pregunta" idPrefix="caja-por-que" />
+          }
+        </app-alert>
+      }
+
       <!-- Las dos cifras de la pizarra -->
       <section class="cifras" aria-label="Resumen">
         <app-card>

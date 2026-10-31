@@ -22,6 +22,14 @@ export const REFERRAL_ERROR_REASONS = [
   'REFERRAL_COUNTER_REFERRAL_NOT_ALLOWED',
   'REFERRAL_ALREADY_CLOSED',
   'TENANT_REQUIRED',
+  // v4274: traslado y llegada.
+  'TRANSFER_INCOMPLETE',
+  'TRANSFER_UNSAFE_TRANSPORT',
+  'TRANSFER_RECEIVER_NOT_CONTACTED',
+  'TRANSFER_VITALS_OUT_OF_RANGE',
+  'TRANSFER_DETAIL_REQUIRED',
+  'TRANSFER_ARRIVAL_BEFORE_DEPARTURE',
+  'REFERRAL_ARRIVAL_ALREADY_RECORDED',
 ] as const;
 
 export type ReferralErrorReason = (typeof REFERRAL_ERROR_REASONS)[number];
@@ -42,9 +50,22 @@ export const REFERRAL_REASON_MESSAGE: Readonly<Record<ReferralErrorReason, strin
   REFERRAL_REJECT_REASON_REQUIRED: 'Para rechazar, escriba el motivo.',
   REFERRAL_COUNTER_REFERRAL_NOT_ALLOWED:
     'En su estado actual la derivación no admite contrarreferencia: primero tiene que ser aceptada.',
-  REFERRAL_ALREADY_CLOSED: 'La derivación ya está cerrada: no se puede anular.',
+  REFERRAL_ALREADY_CLOSED:
+    'La derivación ya está cerrada: no admite este cambio. Recargue para ver su estado actual.',
   TENANT_REQUIRED:
     'Para responder una derivación elija primero la organización desde la que atiende.',
+  TRANSFER_INCOMPLETE:
+    'Faltan datos del traslado: si el paciente se traslada, indique el medio de transporte y su estado al salir.',
+  TRANSFER_UNSAFE_TRANSPORT:
+    'Un paciente inestable o crítico viaja en ambulancia y acompañado por personal de salud. Corrija el medio o el acompañante.',
+  TRANSFER_RECEIVER_NOT_CONTACTED:
+    'Con el paciente inestable o crítico, avise antes al establecimiento receptor y anote quién recibió el aviso.',
+  TRANSFER_VITALS_OUT_OF_RANGE:
+    'Hay signos vitales fuera de rango o la diastólica no es menor que la sistólica. Revíselos en la pestaña Traslado.',
+  TRANSFER_DETAIL_REQUIRED: 'Con «Otro» medio de transporte, describa cuál es.',
+  TRANSFER_ARRIVAL_BEFORE_DEPARTURE: 'La llegada no puede ser anterior a la salida registrada.',
+  REFERRAL_ARRIVAL_ALREADY_RECORDED:
+    'La llegada ya está registrada: el traslado no admite más cambios. Recargue para ver los datos actuales.',
 };
 
 /** Lo que el error de una derivación trae además del `code`. */

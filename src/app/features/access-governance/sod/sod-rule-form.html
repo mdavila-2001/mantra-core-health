@@ -1,0 +1,162 @@
+<form
+  class="regla-form"
+  (submit)="$event.preventDefault(); enviar()"
+  novalidate
+  data-testid="sod-form"
+  aria-label="Regla de separación de funciones"
+>
+  <h3 class="regla-form__titulo">
+    {{ editando() ? 'Editar la regla' : 'Nueva regla de su organización' }}
+  </h3>
+  <p class="regla-form__ayuda">
+    Una regla propia solo puede ser igual o más estricta que la de la plataforma en que se apoya.
+  </p>
+
+  @if (!editando()) {
+    <app-form-field
+      label="Código"
+      [required]="true"
+      hint="Por ejemplo SOD-ORG-01."
+      [errorMessage]="errorDe('codigo')"
+    >
+      <app-input
+        [value]="codigo()"
+        (valueChange)="codigo.set('' + ($event ?? ''))"
+        ariaLabel="Código de la regla"
+        [hasError]="errorDe('codigo') !== ''"
+        testId="sod-form-codigo"
+      />
+    </app-form-field>
+  }
+
+  <app-form-field label="Nombre" [required]="true" [errorMessage]="errorDe('nombre')">
+    <app-input
+      [value]="nombre()"
+      (valueChange)="nombre.set('' + ($event ?? ''))"
+      ariaLabel="Nombre de la regla"
+      [hasError]="errorDe('nombre') !== ''"
+      testId="sod-form-nombre"
+    />
+  </app-form-field>
+
+  @if (!editando()) {
+    <app-form-field
+      label="Se apoya en la regla de la plataforma"
+      hint="Elija una para endurecerla; la suya no puede aflojarla."
+    >
+      <app-select
+        [options]="opcionesDeBase()"
+        [value]="base() ?? ''"
+        (valueChange)="base.set($event === '' ? null : $event)"
+        ariaLabel="Regla de la plataforma en que se apoya"
+        data-testid="sod-form-base"
+      />
+    </app-form-field>
+  }
+
+  <app-atom-picker
+    [(selected)]="lado1"
+    label="Primer grupo de permisos"
+    idPrefix="sod-form-a"
+    [hasError]="errorDe('lado1') !== ''"
+  />
+  @if (errorDe('lado1'); as texto) {
+    <p class="regla-form__error" role="alert">{{ texto }}</p>
+  }
+  <app-atom-picker
+    [(selected)]="lado2"
+    label="Segundo grupo de permisos"
+    idPrefix="sod-form-b"
+    [hasError]="errorDe('lado2') !== ''"
+  />
+  @if (errorDe('lado2'); as texto) {
+    <p class="regla-form__error" role="alert">{{ texto }}</p>
+  }
+
+  <div class="regla-form__fila">
+    <app-form-field label="Dónde no deben reunirse">
+      <app-select
+        [options]="alcances"
+        [value]="alcance()"
+        (valueChange)="alcance.set($event ?? 'PERSON')"
+        ariaLabel="Dónde no deben reunirse"
+        data-testid="sod-form-alcance"
+      />
+    </app-form-field>
+    <app-form-field label="Qué pasa si se reúnen">
+      <app-select
+        [options]="acciones"
+        [value]="accion()"
+        (valueChange)="accion.set($event ?? 'WARN')"
+        ariaLabel="Qué pasa si se reúnen"
+        data-testid="sod-form-accion"
+      />
+    </app-form-field>
+  </div>
+
+  <app-checkbox
+    [checked]="dura()"
+    (checkedChange)="dura.set($event)"
+    label="No admite excepciones"
+    data-testid="sod-form-dura"
+  />
+  @if (!dura()) {
+    <app-form-field
+      label="Días máximos de una excepción"
+      hint="Déjelo vacío para usar el tope de la organización."
+      [errorMessage]="errorDe('dias')"
+    >
+      <app-input
+        type="number"
+        [value]="diasMaximos()"
+        (valueChange)="diasMaximos.set('' + ($event ?? ''))"
+        ariaLabel="Días máximos de una excepción"
+        [hasError]="errorDe('dias') !== ''"
+        testId="sod-form-dias"
+      />
+    </app-form-field>
+  }
+
+  <app-form-field label="Por qué importa (opcional)">
+    <app-textarea
+      [value]="motivo()"
+      (valueChange)="motivo.set($event)"
+      [rows]="2"
+      data-testid="sod-form-motivo"
+    />
+  </app-form-field>
+
+  @if (intento() && problemas().length > 0) {
+    <app-alert tone="warning" title="Falta completar" role="alert" data-testid="sod-form-problemas">
+      <ul class="regla-form__lista">
+        @for (p of problemas(); track p.campo) {
+          <li>{{ p.texto }}</li>
+        }
+      </ul>
+    </app-alert>
+  }
+  @if (failure(); as texto) {
+    <app-alert tone="error" role="alert" data-testid="sod-form-error">{{ texto }}</app-alert>
+  }
+
+  <div class="regla-form__acciones">
+    <button
+      app-button
+      type="submit"
+      [isLoading]="busy()"
+      [disabled]="busy()"
+      data-testid="sod-form-guardar"
+    >
+      {{ editando() ? 'Guardar los cambios' : 'Crear la regla' }}
+    </button>
+    <button
+      app-button
+      variant="outline"
+      type="button"
+      (clicked)="cancelled.emit()"
+      data-testid="sod-form-cancelar"
+    >
+      Cancelar
+    </button>
+  </div>
+</form>

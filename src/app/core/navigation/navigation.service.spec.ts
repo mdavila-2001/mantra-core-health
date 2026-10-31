@@ -343,6 +343,12 @@ describe('NavigationService', () => {
         // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
         // por el propietario en el PR.
         'Grupos médicos',
+        // «Mi equipo» entra con el personal de apoyo (2026-10): es la única
+        // puerta del doctor a quienes le ayudan con su agenda y sus mensajes —
+        // aceptarlos una vez, decidir si responden en su nombre, aprobar el acceso
+        // clínico temporal—. Decisión a confirmar por el propietario en el PR: la
+        // lista cerrada pasa de once a doce.
+        'Mi equipo',
         // «Facturación» entra el 31/10/2026: el médico cobra y factura SUS
         // consultas (la API acota el alcance en `billing-simulated.access.ts`).
         'Facturación',

@@ -1,0 +1,92 @@
+<app-page-header
+  title="Invitaciones y QR"
+  subtitle="Emita un código —y su QR— para afiliar a un doctor o sumar personal de apoyo. El código se muestra una sola vez."
+/>
+
+<app-card class="invitaciones" padding="lg" data-testid="invitaciones-card">
+  <form class="invitaciones__form" (submit)="$event.preventDefault(); emitir()" novalidate>
+    <app-segmented-control [options]="tipos" [value]="tipo()" (valueChange)="tipo.set($event)" ariaLabel="A quién invita" data-testid="invitacion-tipo" />
+    <app-segmented-control [options]="usos" [value]="uso()" (valueChange)="uso.set($event)" ariaLabel="Cuántas veces se puede usar" data-testid="invitacion-uso" />
+
+    <div class="invitaciones__campos">
+      @if (uso() === 'MULTI') {
+        <app-form-field label="Cuántas veces se puede usar" [required]="true">
+          <app-input type="number" [value]="usosMaximos()" (valueChange)="usosMaximos.set($event)" ariaLabel="Usos máximos" data-testid="invitacion-usos" />
+        </app-form-field>
+      }
+      @if (tipo() === 'SUPPORT_STAFF') {
+        <app-form-field label="Rol con el que se suman" [required]="true">
+          <app-select [options]="opcionesDeRol" [value]="rol()" (valueChange)="rol.set($event)" ariaLabel="Rol" data-testid="invitacion-rol" />
+        </app-form-field>
+      }
+      <app-form-field label="Cuánto dura">
+        <app-select [options]="vigencias" [value]="vigencia()" (valueChange)="vigencia.set($event)" [searchable]="false" ariaLabel="Vigencia" data-testid="invitacion-vigencia" />
+      </app-form-field>
+    </div>
+
+    <app-alert tone="info" data-testid="invitacion-portador">
+      El código es de portador: cualquiera que tenga este código —o su QR— puede usarlo hasta que venza o se agote. No queda
+      atado a ninguna persona; compártalo solo con quien corresponde. Usted decide qué puede hacer quien lo use.
+    </app-alert>
+
+    @if (intento() && falta(); as problema) {
+      <app-alert tone="warning" data-testid="invitacion-falta">{{ problema }}</app-alert>
+    }
+    @if (falloDeEmision(); as mensaje) {
+      <app-alert tone="error" role="alert" data-testid="invitacion-error">{{ mensaje }}</app-alert>
+    }
+
+    <div class="invitaciones__enviar">
+      <button app-button type="submit" [isLoading]="emitiendo()" [disabled]="emitiendo()" data-testid="invitacion-emitir">Emitir invitación</button>
+    </div>
+  </form>
+
+  @if (emitida(); as invitacion) {
+    <section class="resultado" aria-labelledby="resultado-titulo" data-testid="invitacion-resultado">
+      <h2 id="resultado-titulo" class="resultado__titulo">Invitación lista</h2>
+      <p class="resultado__texto">
+        {{ tipoDe(invitacion) }}
+        · {{ invitacion.maxUses === 1 ? 'un solo uso' : invitacion.maxUses + ' usos' }}
+        · vence el {{ dia(invitacion.expiresAt) }}
+      </p>
+      <p class="resultado__texto" data-testid="invitacion-resultado-portador">
+        Recuerde: cualquiera que tenga este código puede usarlo hasta que venza o se agote.
+      </p>
+      <div class="resultado__cuerpo">
+        <div>
+          <p class="resultado__etiqueta" id="codigo-etiqueta">Código</p>
+          <p class="resultado__codigo" aria-labelledby="codigo-etiqueta" data-testid="invitacion-codigo">{{ invitacion.code }}</p>
+          <div class="resultado__botones">
+            <button app-button variant="outline" size="sm" type="button" (clicked)="copiar(invitacion.code!)" data-testid="invitacion-copiar">Copiar código</button>
+            <button app-button variant="ghost" size="sm" type="button" (clicked)="cerrarResultado()">Ya lo copié</button>
+          </div>
+        </div>
+        @if (qrDisponible()) {
+          <canvas #qr class="resultado__qr" width="192" height="192" role="img" aria-label="Código QR de la invitación" data-testid="invitacion-qr"></canvas>
+        } @else {
+          <p class="resultado__texto">No pudimos dibujar el QR; use el código.</p>
+        }
+      </div>
+    </section>
+  }
+</app-card>
+
+<app-card class="invitaciones" padding="lg" data-testid="invitaciones-emitidas">
+  <h2 class="invitaciones__subtitulo">Invitaciones emitidas</h2>
+  <app-view-state-host [state]="lista()" (retry)="cargar()" (refresh)="cargar()">
+    <ul class="emitidas" role="list">
+      @for (i of filas(); track i.id) {
+        <li class="emitidas__fila" [attr.data-testid]="'invitacion-' + i.id">
+          <div>
+            <p class="emitidas__nombre">{{ tipoDe(i) }}</p>
+            <p class="emitidas__detalle">
+              @if (rolDe(i)) { {{ rolDe(i) }} · }
+              {{ i.usesCount }} de {{ i.maxUses }} usos · emitida el {{ dia(i.createdAt) }} · {{ vence(i) }}
+            </p>
+          </div>
+          <app-badge [variant]="estadoTono(i)" size="sm">{{ estadoTexto(i) }}</app-badge>
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+</app-card>

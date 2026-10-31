@@ -324,6 +324,24 @@ describe('AppMap', () => {
     fixture.destroy();
     expect(registro.mapasQuitados).toBe(1);
   });
+
+  it('al destruirse en medio de un zoom animado, corta la animación antes de `remove()`', async () => {
+    // Leaflet cierra la animación con un timeout de 250 ms que `remove()` no
+    // cancela; si sigue «animando», ese timeout lee un panel que ya no existe
+    // (`_leaflet_pos`). Lo que importa es el estado al momento de quitarlo.
+    const { fixture, registro } = await crearMontado();
+    const mapa = (fixture.componentInstance as unknown as { mapa: { _animatingZoom?: boolean; remove: () => void } }).mapa;
+    mapa._animatingZoom = true;
+    let animandoAlQuitar: boolean | undefined;
+    const quitar = mapa.remove;
+    mapa.remove = () => {
+      animandoAlQuitar = mapa._animatingZoom;
+      quitar();
+    };
+    fixture.destroy();
+    expect(animandoAlQuitar).toBe(false);
+    expect(registro.mapasQuitados).toBe(1);
+  });
 });
 
 describe('construirPopup', () => {

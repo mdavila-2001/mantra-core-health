@@ -1,0 +1,44 @@
+<aside class="panel" aria-labelledby="panel-titulo" data-testid="agenda-reservado">
+  <div class="panel__cabeza">
+    <h2 class="panel__titulo" id="panel-titulo" tabindex="-1" data-testid="panel-titulo">
+      {{ label }}
+    </h2>
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      (clicked)="closed.emit()"
+      aria-label="Cerrar el detalle"
+      data-testid="agenda-reservado-cerrar"
+    >
+      Cerrar
+    </button>
+  </div>
+
+  <p class="panel__org">
+    <span
+      class="panel__org-sigla"
+      [style.background]="orgColors().bg"
+      [style.color]="orgColors().fg"
+      >{{ event().orgShort }}</span
+    >
+    <strong>{{ event().orgName }}</strong>
+  </p>
+
+  <p class="panel__texto" data-testid="agenda-reservado-texto">
+    Este horario está ocupado, pero el detalle de la cita no está disponible para usted. No se
+    muestra quién es el paciente ni el motivo.
+  </p>
+
+  <dl class="panel__datos">
+    <dt>Día</dt>
+    <dd>{{ dateText() }}, {{ clock(event().start) }} a {{ clock(event().end) }}</dd>
+    <dt>Doctor</dt>
+    <dd>{{ event().doctorName }}</dd>
+    <dt>Lugar</dt>
+    <dd>{{ event().careSpaceName }}</dd>
+  </dl>
+
+  <app-access-why-not [request]="pregunta()" idPrefix="agenda-por-que" />
+</aside>

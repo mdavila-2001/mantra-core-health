@@ -11,6 +11,9 @@
           <p class="ficha-publica__bio">{{ perfil.biography }}</p>
         }
       </app-card>
+
+      <!-- Sólo se dibuja para un profesional; la API decide si procede. -->
+      <app-solicitar-pertenecer [nombre]="perfil.displayName" />
     }
   </app-view-state-host>
 
