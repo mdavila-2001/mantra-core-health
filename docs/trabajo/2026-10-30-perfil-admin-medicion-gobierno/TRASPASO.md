@@ -6,6 +6,73 @@
 > **Escalera de evidencia:** casi todo está en `TESTED` contra dobles o `VERIFIED_FUNCTIONAL_ONLY` contra el simulador.
 > **Nada se ejecutó contra Postgres, Redis ni la API real.** No digas «listo» sin subir ese peldaño.
 
+## PASO 0 — Reconciliar con `dev` ANTES de cualquier otra cosa (hallazgo del 31/10/2026)
+
+`dev` **ya contiene versiones paralelas de parte de este trabajo**, llevadas por otra vía (PR #1751 `claude/admin-herramientas-dev` del front y el commit
+`feat(ops_console): sonda de vida de instancias y catálogo de herramientas` de la API): menú del perfil de gestión, portada «Centro de la plataforma»,
+pantalla «Instancias y herramientas», sonda de vida y registro de herramientas. Por eso los PRs de esta rama salen con `mergeable_state: dirty` y los conflictos son
+**add/add** (los mismos nombres de archivo con contenido distinto). `git cherry` confirma que 3 commits del front ya están en `dev` por equivalencia de parche; el resto no.
+
+Qué hacer:
+1. `git fetch origin dev && git merge origin/dev` en cada repo (o rebase) y resolver archivo por archivo. **No** resolver a ciegas con «ours/theirs»: comparar las dos
+   versiones y quedarse con la mejor. Criterio: la de esta rama trae los arreglos de lint/tipos, la `fuente` de tablas, el filtro por alcance de plataforma y las
+   pruebas; compruébese qué trae la de `dev` que esta no (p. ej. otros nombres de ruta o de campos del contrato) y mantener el contrato de `contratos/*.md`.
+2. Tras resolver: `typecheck`, lint, pruebas dirigidas y, en el front, el build de producción (lo corre el pre-push). Volver a pedir la doble revisión visual.
+3. Lo que NO está en conflicto (dinero, heatmap, dispositivos, catálogos, gobernanza, iam/authz, `bulk_import`, medición, cargas masivas, detalle del portal)
+   debería entrar limpio.
+
+### Archivos en conflicto — API (13)
+- `src/modules/ops_console/domain/instance-liveness.env.ts`
+- `src/modules/ops_console/domain/instance-liveness.spec.ts`
+- `src/modules/ops_console/domain/instance-liveness.ts`
+- `src/modules/ops_console/domain/instance-registry.spec.ts`
+- `src/modules/ops_console/domain/instance-registry.ts`
+- `src/modules/ops_console/infrastructure/repositories/instance-heartbeat.repository.ts`
+- `src/modules/ops_console/ops_console.module.ts`
+- `src/modules/ops_console/presentation/controllers/ops-heartbeat.controller.ts`
+- `src/modules/ops_console/presentation/dto/ops-heartbeat.dto.ts`
+- `src/worker/bootstrap.spec.ts`
+- `src/worker/bootstrap.ts`
+- `src/worker/worker-heartbeat.service.spec.ts`
+- `src/worker/worker-heartbeat.service.ts`
+
+### Archivos en conflicto — front (35)
+- `docs/trabajo/2026-10-30-perfil-admin-medicion-gobierno/PLAN.md`
+- `scripts/contracts/admin-portal-known-gaps.json`
+- `src/app/app.routes.ts`
+- `src/app/core/data-access/admin-portal/ops-liveness.client.spec.ts`
+- `src/app/core/data-access/admin-portal/ops-liveness.client.ts`
+- `src/app/core/data-access/admin-portal/ops-liveness.types.ts`
+- `src/app/core/data-access/admin-portal/ops-tools.client.spec.ts`
+- `src/app/core/data-access/admin-portal/ops-tools.client.ts`
+- `src/app/core/data-access/admin-portal/ops-tools.types.ts`
+- `src/app/core/mock/handlers/index.ts`
+- `src/app/core/mock/handlers/ops-liveness.handlers.spec.ts`
+- `src/app/core/mock/handlers/ops-liveness.handlers.ts`
+- `src/app/core/mock/handlers/ops-tools.handlers.spec.ts`
+- `src/app/core/mock/handlers/ops-tools.handlers.ts`
+- `src/app/core/mock/handlers/portal-inventory.handlers.ts`
+- `src/app/core/navigation/navigation.management.ts`
+- `src/app/core/navigation/navigation.platform.ts`
+- `src/app/core/navigation/navigation.subgroups.ts`
+- `src/app/features/admin/instances/instances-labels.ts`
+- `src/app/features/admin/instances/instances.css`
+- `src/app/features/admin/instances/instances.html`
+- `src/app/features/admin/instances/instances.spec.ts`
+- `src/app/features/admin/instances/instances.ts`
+- `src/app/features/admin/portal/operations/operation-data.css`
+- `src/app/features/admin/portal/operations/operation-data.html`
+- `src/app/features/admin/portal/operations/operation-data.ts`
+- `src/app/features/admin/portal/operations/operation-detail-page.spec.ts`
+- `src/app/features/admin/portal/operations/operation-detail-page.ts`
+- `src/app/features/admin/portal/operations/request-cycle.ts`
+- `src/app/features/admin/portal/portal-labels.ts`
+- `src/app/features/dashboard/dashboard.ts`
+- `src/app/features/dashboard/platform-home/platform-home.css`
+- `src/app/features/dashboard/platform-home/platform-home.html`
+- `src/app/features/dashboard/platform-home/platform-home.spec.ts`
+- `src/app/features/dashboard/platform-home/platform-home.ts`
+
 ## Qué quedó hecho (y dónde)
 
 | Pieza | Repo | Dónde | Estado |
