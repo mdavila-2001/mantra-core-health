@@ -1,0 +1,96 @@
+:host {
+  display: block;
+}
+
+.estudios__historico {
+  display: grid;
+  gap: var(--sp-3);
+  /* Separado del formulario por una línea y no sólo por espacio: son dos
+     momentos distintos —pedir y consultar— dentro de la misma tarjeta. */
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.estudios__subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.estudios__vacio {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.estudios__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.estudios__fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: baseline;
+  justify-content: space-between;
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.estudios__fila:last-child {
+  border-block-end: none;
+}
+
+.estudios__principal,
+.estudios__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  align-items: baseline;
+}
+
+.estudios__nombre {
+  font-weight: 600;
+}
+
+.estudios__categoria,
+.estudios__estado,
+.estudios__resultado {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* La justificación guardada al repetir un estudio: texto del médico, así que
+   se parte en líneas largas en vez de ensanchar la fila. */
+.estudios__justificacion {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+/* El único acento de color de la tarjeta, y va donde está la respuesta a la
+   pregunta que trajo a la persona hasta acá: si el resultado ya está. */
+.estudios__resultado--listo {
+  color: var(--st-success-fg);
+  font-weight: 600;
+}
+
+/* La línea de detalle ocupa su propio renglón bajo el nombre: componentes
+   marcados, o región y lado de una imagen. */
+.estudios__detalle {
+  flex: 1 0 100%;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  overflow-wrap: anywhere;
+}
