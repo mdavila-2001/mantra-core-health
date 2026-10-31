@@ -67,6 +67,16 @@
     }
   </dl>
 
+  <!-- El traslado: lo registrado y, según quién mira, completar la salida o
+       registrar la llegada (la API decide). -->
+  <app-referral-transfer-panel
+    [referral]="referral()"
+    [canWrite]="canWrite()"
+    [issuedByMe]="issuedByMe()"
+    [externalOnly]="externalOnly()"
+    (changed)="changed.emit($event)"
+  />
+
   @if (canRespond() || canCounterRefer() || canCancel()) {
     <div class="detail__actions">
       @if (canCancel()) {
