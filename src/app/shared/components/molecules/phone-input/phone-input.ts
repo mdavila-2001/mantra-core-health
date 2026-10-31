@@ -148,6 +148,10 @@ export class PhoneInput implements ControlValueAccessor {
   /** Ver `Input.testId`: el `<input>` real vive dos componentes más adentro. */
   readonly testId = input<string | null>(null);
 
+  /** Lo que el `<input>` deja escribir: sólo dígitos del país elegido, ya agrupados. */
+  protected readonly filtro = (valor: string): string =>
+    group(numberNational(valor, this.pais()), this.pais().grupos);
+
   protected readonly paises = PHONE_COUNTRIES;
   protected readonly idLista = `paises-${(siguienteId += 1)}`;
 

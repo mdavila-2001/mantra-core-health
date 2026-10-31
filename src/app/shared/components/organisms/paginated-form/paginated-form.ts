@@ -1,4 +1,5 @@
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+import { soloLetrasDeNombre, soloLetrasYNumeros } from '../../../forms/input-filters';
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -205,6 +206,13 @@ type RespuestaSiNo = 'si' | 'no' | '';
   },
 })
 export class PaginatedForm {
+  /** Ver `FieldDef.soloLetras`. */
+  protected filtroDe(campo: { soloLetras?: boolean; soloAlfanumerico?: boolean }) {
+    if (campo.soloLetras) return soloLetrasDeNombre;
+    if (campo.soloAlfanumerico) return soloLetrasYNumeros;
+    return null;
+  }
+
   private readonly platformId = inject(PLATFORM_ID);
   private readonly dialogs = inject(DialogService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
