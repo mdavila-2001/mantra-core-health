@@ -1,7 +1,8 @@
 # Estado
 
 **Última tarea verificada:** rama `infra-f4f5-web` · 2026-10-31 · **Infraestructura hospitalaria F4 (quirófanos) y F5
-(integración, web)** (contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md` §F4.4, §F5).
+(integración, web)**, primera y segunda pasada (la segunda: F5b, F5d, F5f, cargo de quirófano por tiempo y recambio
+`CLEANUP_*`) (contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md` §F4.4, §F5).
 Detalle en `EVIDENCIAS.md` § «Infraestructura F4/F5». Revisión independiente (`visual-reviewer`,
 `frontend-reviewer`, `regression-auditor`): **pendiente** — quien implementa no aprueba.
 
@@ -16,8 +17,19 @@ Detalle en `EVIDENCIAS.md` § «Infraestructura F4/F5». Revisión independiente
 | Ficha de espacio (F1) | pestañas «Equipos» (ubicar equipo de la sede) y «Stock» (existencias, botiquín, reubicar), diferidas |
 | `medical-laboratory/equipment/:id` | ficha de equipo: General, Ubicación y DICOM (AE Title con la regla DICOM, MWL), Agenda (recurso) |
 
-Pendientes declarados (Desvíos W-F4F5 del contrato): F5b, F5d y F5f no se implementaron en esta pasada; cargo de
-quirófano por tiempo y eventos `CLEANUP_*` (dependen de F2/F5e en la API); contra la API real no se ejecutó.
+Segunda pasada (detalle en `EVIDENCIAS.md` § «Infraestructura F4/F5 — segunda pasada»):
+
+| Pantalla | Qué quedó |
+|---|---|
+| Ficha clínica › pedir estudios | «Punto de toma» (sugerencia opcional, sólo espacios `SAMPLE_COLLECTION` activos de la sede) → `suggestedCareSpaceId`; la fila del estudio lo muestra |
+| `/diagnostics` (cola de laboratorio) | columna «Punto de toma» y filtro por punto (`collectionCareSpaceId`) |
+| `/schedule/edit` (alta de horario) | «Consultorio» opcional de la plantilla (`careSpaceId`, CONSULTING/PROCEDURE/IMAGING); 422 de función, sede o solape; el detalle del turno muestra el consultorio; 409 `CARE_SPACE_DOUBLE_BOOKED` en la maqueta |
+| `/administration/accounting/infrastructure` | una tarjeta con pestañas «Activos» (ubicar el activo en un espacio con el árbol físico, ruta visible) y «Centros de costo» (ligar a unidad; 409 `UNIT_ALREADY_HAS_COST_CENTER`) |
+| `/interventions/:caseId` | «Eventos de sala» suma el recambio (orden de limpieza: iniciar, terminar, sala lista con `If-Match`); «Cargos» muestra el cargo `OR_TIME` (minutos, fracciones, centro de costo) |
+
+Pendientes declarados (Desvíos W-F4F5 del contrato, segunda pasada): F5d bloqueo de agenda por origen de espacio no se
+hizo; la firma del informe que cierra el caso se emula en la maqueta; las rutas de limpieza se solapan con F2 (otro
+agente) y quedaron en el mismo prefijo `/cleaning-orders`; contra la API real no se ejecutó.
 
 ## Infraestructura F1 (web) — 2026-10-30
 

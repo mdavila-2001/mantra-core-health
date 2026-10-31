@@ -75,6 +75,7 @@
       "/billing/bed-day",
       "/or-blocks",
       "/diagnostic-equipment",
+      "/cleaning-orders",
       "/diagnostics/patients",
       "/diagnostics/work-orders",
       "/diagnostics/accessions",
