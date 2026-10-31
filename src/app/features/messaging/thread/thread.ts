@@ -30,6 +30,7 @@ import {
   conversationVerification as verificacionDe,
 } from '../../../core/messaging/conversation-label';
 import { dayLabel, clockTime } from '../../../shared/date/chat-time';
+import { releaseObjectUrlLater } from '../../../shared/utils/file-download/release-object-url';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -1391,14 +1392,12 @@ export class Thread {
       if (json === null) {
         return;
       }
-      const url = URL.createObjectURL(
-        new Blob([json], { type: 'application/json' }),
-      );
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
       const enlace = document.createElement('a');
       enlace.href = url;
       enlace.download = nombreDeArchivo(this.conQuien());
       enlace.click();
-      URL.revokeObjectURL(url);
+      releaseObjectUrlLater(url);
     });
   }
 

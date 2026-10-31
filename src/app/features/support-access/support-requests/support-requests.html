@@ -1,0 +1,185 @@
+<app-page-header
+  title="Solicitudes de apoyo"
+  subtitle="Lo que pide su personal para ayudar a administrar. Decida cada permiso por separado: apruébelo, ajústelo o recházelo con un motivo."
+/>
+
+<app-card class="solicitudes" padding="lg" data-testid="solicitudes-card">
+  <div class="solicitudes__barra">
+    <app-segmented-control
+      [options]="vistasConConteo()"
+      [value]="vistaEfectiva()"
+      (valueChange)="cambiarVista($event)"
+      ariaLabel="Qué solicitudes ver"
+      data-testid="solicitudes-vista"
+    />
+  </div>
+
+  <app-filter-bar
+    searchLabel="Buscar solicitudes"
+    [showSearch]="false"
+    [filters]="opcionesDeFiltro()"
+    [wrap]="true"
+    (filtersChanged)="filtrosCambiaron()"
+    data-testid="solicitudes-filtros"
+  />
+
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (visibles().length === 0) {
+      <p class="solicitudes__vacio" data-testid="solicitudes-sin-resultados">
+        @if (todasSinFiltro()) {
+          {{ vistaEfectiva() === 'PENDING' ? 'No hay solicitudes esperando su decisión.' : 'Todavía no resolvió ninguna solicitud.' }}
+        } @else {
+          Ninguna solicitud coincide con los filtros.
+        }
+      </p>
+    }
+
+    <ul class="solicitudes__lista" role="list">
+      @for (solicitud of visibles(); track solicitud.id) {
+        <li class="solicitud" [attr.data-testid]="'solicitud-' + solicitud.id">
+          <header class="solicitud__cabeza">
+            <div>
+              <h2 class="solicitud__titulo">{{ solicitud.requesterName }}</h2>
+              <p class="solicitud__sub">
+                {{ plantilla(solicitud) }}
+                @if (solicitud.parentEngagementId) {
+                  · pide <strong>ampliar</strong> su vínculo actual
+                } @else {
+                  · pide un vínculo nuevo
+                }
+                · enviada el {{ dia(solicitud.createdAt) }}
+                @if (esPendiente(solicitud)) {
+                  · <span class="solicitud__vence" [class.solicitud__vence--urgente]="esUrgente(solicitud)" [attr.data-testid]="'solicitud-vence-' + solicitud.id">{{ vence(solicitud) }}</span>
+                }
+              </p>
+            </div>
+            <app-badge [variant]="estadoTono(estadoDe(solicitud))" [attr.data-testid]="'solicitud-estado-' + solicitud.id">
+              {{ estadoTexto(estadoDe(solicitud)) }}
+            </app-badge>
+          </header>
+
+          @if (esVencida(solicitud)) {
+            <app-alert tone="warning" title="Esta solicitud venció" [attr.data-testid]="'solicitud-vencida-' + solicitud.id">
+              Pasaron 15 días sin decisión (venció el {{ dia(solicitud.expiresAt) }}). Ya no se puede aprobar ni rechazar.
+              Si {{ solicitud.requesterName }} todavía lo necesita, tiene que enviar una solicitud nueva.
+            </app-alert>
+          }
+
+          @if (solicitud.message) {
+            <blockquote class="solicitud__mensaje">«{{ solicitud.message }}»</blockquote>
+          }
+
+          <ul class="solicitud__items" role="list">
+            @for (item of solicitud.items; track item.id) {
+              <li class="item" [attr.data-testid]="'item-' + item.id">
+                <div class="item__cabeza">
+                  <div>
+                    <p class="item__nombre">{{ nombreDelItem(item) }}</p>
+                    <p class="item__detalle">Pidió poder {{ accionesTexto(item.proposedActions) }}.</p>
+                  </div>
+                  @if (!esPendiente(solicitud)) {
+                    <app-badge [variant]="decisionTono(item.decision)" size="sm">{{ decisionTexto(item.decision) }}</app-badge>
+                  }
+                </div>
+
+                @if (esPendiente(solicitud)) {
+                  <app-segmented-control
+                    [options]="decisiones"
+                    [value]="decisionActual(solicitud, item)"
+                    (valueChange)="decidir(solicitud, item, $event)"
+                    [ariaLabel]="'Decisión sobre ' + nombreDelItem(item)"
+                    [attr.data-testid]="'decision-' + item.id"
+                  />
+
+                  @if (borrador(solicitud, item).decision === 'ADJUSTED') {
+                    <div class="item__ajuste">
+                      <p class="item__ayuda">Marque solo lo que sí concede. Lo demás no se otorga.</p>
+                      <app-support-action-picker
+                        [actions]="borrador(solicitud, item).actions"
+                        (actionsChange)="ajustarAcciones(solicitud, item, $event)"
+                        [idPrefix]="'ajuste-' + item.id"
+                      />
+                    </div>
+                  }
+
+                  @if (borrador(solicitud, item).decision === 'REJECTED') {
+                    <app-form-field label="Motivo del rechazo" [required]="true">
+                      <app-textarea
+                        [value]="borrador(solicitud, item).comment"
+                        (valueChange)="escribirComentario(solicitud, item, $event)"
+                        [rows]="2"
+                        placeholder="Se lo explicamos a quien lo pidió"
+                        [attr.data-testid]="'motivo-' + item.id"
+                      />
+                    </app-form-field>
+                  }
+                } @else if (item.decisionComment) {
+                  <p class="item__detalle">Motivo: {{ item.decisionComment }}</p>
+                }
+              </li>
+            }
+          </ul>
+
+          @if (esPendiente(solicitud)) {
+            <app-form-field label="Nota para quien lo pidió (opcional)">
+              <app-textarea
+                [value]="motivoGeneral(solicitud)"
+                (valueChange)="escribirMotivo(solicitud, $event)"
+                [rows]="2"
+                [attr.data-testid]="'nota-' + solicitud.id"
+              />
+            </app-form-field>
+
+            @if (mostrarFaltantes(solicitud) && faltantes(solicitud).length > 0) {
+              <app-alert tone="warning" title="Falta decidir" [attr.data-testid]="'faltantes-' + solicitud.id">
+                <ul class="solicitud__faltantes">
+                  @for (problema of faltantes(solicitud); track problema) {
+                    <li>{{ problema }}</li>
+                  }
+                </ul>
+              </app-alert>
+            }
+            @if (falloDeGuardado() && guardando() === null) {
+              <app-alert tone="error" role="alert" data-testid="solicitud-error">{{ falloDeGuardado() }}</app-alert>
+            }
+
+            <div class="solicitud__acciones">
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                type="button"
+                (clicked)="aprobarTodo(solicitud)"
+                [attr.data-testid]="'aprobar-todo-' + solicitud.id"
+              >
+                Aprobar todo como se pidió
+              </button>
+              <button
+                app-button
+                type="button"
+                [isLoading]="guardando() === solicitud.id"
+                [disabled]="guardando() !== null"
+                (clicked)="guardar(solicitud)"
+                [attr.data-testid]="'guardar-decision-' + solicitud.id"
+              >
+                Guardar decisión
+              </button>
+            </div>
+          } @else if (solicitud.decisionReason) {
+            <p class="item__detalle">Nota de la organización: {{ solicitud.decisionReason }}</p>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (totalVisible() > 0) {
+      <app-pagination
+        [totalItems]="totalVisible()"
+        [(page)]="pagina"
+        [(pageSize)]="tamano"
+        [pageSizeOptions]="[5, 10, 20]"
+        data-testid="solicitudes-paginacion"
+      />
+    }
+  </app-view-state-host>
+</app-card>

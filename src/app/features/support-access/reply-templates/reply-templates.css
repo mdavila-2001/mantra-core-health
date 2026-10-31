@@ -1,0 +1,84 @@
+:host {
+  display: block;
+}
+
+.respuestas {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.respuestas__barra {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.respuesta {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.respuesta--retirada {
+  background: var(--bg-inset);
+}
+
+.respuesta--retirada .respuesta__texto {
+  color: var(--text-secondary);
+}
+
+.respuesta__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.respuesta__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.respuesta__marcas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.respuesta__texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.respuesta__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.respuesta__version {
+  margin-inline-end: auto;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.formulario {
+  display: grid;
+  gap: var(--sp-4);
+}

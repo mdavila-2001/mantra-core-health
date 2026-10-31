@@ -19,6 +19,7 @@ import { calculateSlots } from '../agenda-create/agenda-slots';
 import { concatMap, from, toArray } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { bookingChangeDeniedText } from '../../../core/data-access/scheduling/booking-change-denied';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
   AgendaResource,
@@ -2106,7 +2107,7 @@ export class MyAgenda implements OnInit {
           this.toast.success('El paciente recibe el aviso.', 'Cita cancelada');
           this.cargarDia(dia);
         },
-        error: (error: unknown) => this.avisarFallo(error, 'cancelar la cita'),
+        error: (error: unknown) => this.avisarFallo(error, 'cancelar la cita', 'cancelar'),
       });
   }
 
@@ -2117,7 +2118,13 @@ export class MyAgenda implements OnInit {
    * la pantalla entera por un cartel de error deja al profesional sin ver a
    * quién tiene esperando. Es el mismo patrón que «Mis turnos».
    */
-  private avisarFallo(error: unknown, queSeIntentaba: string): void {
+  private avisarFallo(error: unknown, queSeIntentaba: string, accion?: 'cancelar' | 'mover'): void {
+    // La cita de un colega: la API responde 403 (SEG V-1); se dice de quién es y a quién pedirla.
+    const ajena = accion === undefined ? null : bookingChangeDeniedText(error, accion);
+    if (ajena !== null) {
+      this.toast.error(ajena, 'No se pudo');
+      return;
+    }
     // El motivo de negocio de la API (un 409, un 403) se dice tal cual; las
     // violaciones por campo se juntan en una frase; y siempre que haya, el
     // código de soporte con el que se encuentra el fallo en el servidor.

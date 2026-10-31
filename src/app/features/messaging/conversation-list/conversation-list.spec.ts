@@ -121,6 +121,17 @@ describe('ConversationList', () => {
     expect(enlace?.getAttribute('aria-current')).toBe('page');
   });
 
+  it('al doctor le marca la conversación que su equipo le derivó, y a quien no es el doctor no', () => {
+    montar({ ...fila({ id: 'm-1', senderProfileId: 'pp-2', bodyText: 'Tengo dolor de pecho' }), awaitingDoctor: true });
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="conversacion-derivada"]')?.textContent,
+    ).toContain('Derivada por su equipo');
+
+    fixture.destroy();
+    montar(fila({ id: 'm-1', senderProfileId: 'pp-2', bodyText: 'Tengo dolor de pecho' }));
+    expect(fixture.nativeElement.querySelector('[data-testid="conversacion-derivada"]')).toBeNull();
+  });
+
   describe('estados que reemplazan a la lista (ViewState del M34)', () => {
     const conEstado = (estado: EstadoDeBandeja, filas: ConversationListItem[] = []): void => {
       fixture = TestBed.createComponent(ConversationList);

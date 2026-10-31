@@ -1,0 +1,20 @@
+@if (visible()) {
+  <div class="avisos" data-testid="aviso-organizaciones-negadas">
+    <app-alert tone="warning" title="Hay organizaciones a las que no puede entrar ahora" role="status">
+      <ul class="avisos__lista" role="list">
+        @for (aviso of avisos(); track aviso.tenantId) {
+          <li [attr.data-testid]="'aviso-negada-' + aviso.tenantId" [attr.data-reason]="aviso.reason">
+            {{ aviso.mensaje }} {{ aviso.indicacion }}
+          </li>
+        }
+      </ul>
+      <p class="avisos__nota">Puede seguir trabajando en las demás: esto no cierra su sesión.</p>
+      <div class="avisos__acciones">
+        @if (pideFactor()) {
+          <a app-button variant="primary" size="sm" routerLink="/my-account/security/mfa" data-testid="aviso-negada-activar-factor">Activar la verificación en dos pasos</a>
+        }
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="entendido()" data-testid="aviso-negada-entendido">Entendido</button>
+      </div>
+    </app-alert>
+  </div>
+}

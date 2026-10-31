@@ -364,6 +364,21 @@ describe('isVisibleTo con `hiddenForTenantTypes`', () => {
  * recepción de muestras del laboratorio, cuyo personal no tiene rol propio en
  * el token: lo único que distingue su sesión es el tipo del tenant activo.
  */
+/** Las del personal de apoyo (y las dos del gobierno de accesos) que también declaran `onlyForTenantTypes`: cada una con su lista. */
+const ESTOS_DEL_PERSONAL_DE_APOYO: readonly string[] = [
+  'administration/support-requests',
+  'administration/support-team',
+  'administration/support-access-lookup',
+  'administration/support-invitations',
+  'administration/support-review',
+  'administration/support-activity',
+  'my-support',
+  'support-inbox',
+  'combined-agenda',
+  'administration/access-governance',
+  'administration/team-management',
+];
+
 describe('isVisibleTo con `onlyForTenantTypes`', () => {
   const labSection = {
     path: 'x',
@@ -409,7 +424,22 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // P34 (26/10/2026) suma «Horario y turnos» a la farmacia. Productos,
     // categorías, precios, inventario e importación son desde el 30/10/2026
     // una sola sección: «Catálogo», con pestañas.
+    // Personal de apoyo (2026-10): las cuatro del hospital como cuenta de
+    // organización y las dos de la persona de apoyo, que existen solo en las
+    // organizaciones médicas (`onlyForAccountKind` las separa por clase de cuenta).
     expect(flagged.map((s) => s.path)).toEqual([
+      'administration/support-requests',
+      'administration/support-team',
+      'administration/support-access-lookup',
+      'administration/support-invitations',
+      'administration/support-review',
+      'administration/support-activity',
+      'my-support',
+      'support-inbox',
+      'combined-agenda',
+      // Gobierno de accesos (fase 5): el tablero del administrador y la administración delegada del jefe de servicio.
+      'administration/access-governance',
+      'administration/team-management',
       'administration/medical-center-setup',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
@@ -424,7 +454,11 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {
-      const tipos = section.path.includes('pharmacy')
+      const tipos = ESTOS_DEL_PERSONAL_DE_APOYO.includes(section.path)
+        ? section.path.startsWith('administration/')
+          ? ['HOSPITAL', 'CLINIC', 'PROVIDER']
+          : ['HOSPITAL', 'CLINIC', 'PROVIDER', 'MEDICAL_OFFICE']
+        : section.path.includes('pharmacy')
         ? ['PHARMACY']
         : section.path.includes('medical-center')
           ? ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']
@@ -634,5 +668,110 @@ describe('apareceEnElMenu', () => {
     // Es la diferencia entera de `fueraDelMenuPara` frente a `roles`, y lo que
     // hace que la salida del 403 `IDENTITY_VERIFICATION_REQUIRED` siga viva.
     expect(isVisibleTo(apagada, ['PATIENT'])).toBe(true);
+  });
+});
+
+/**
+ * Personal de apoyo (2026-10): tres lados, tres juegos de secciones. Lo que fija
+ * esto es **quién las ve**, que es lo que hace que ninguna se abra a quien no
+ * debe. Nada de esto autoriza: la API decide en cada petición.
+ */
+describe('secciones del personal de apoyo', () => {
+  const visibles = (
+    roles: readonly string[],
+    tipo: string,
+    cuenta: 'ORGANIZATION' | 'PERSON',
+  ): readonly string[] =>
+    APP_SECTIONS.filter((s) => isVisibleTo(s, roles, ['t-1'], tipo, cuenta)).map((s) => s.path);
+
+  const DE_LA_ORGANIZACION = [
+    'administration/support-requests',
+    'administration/support-team',
+    'administration/support-access-lookup',
+    'administration/support-invitations',
+    'administration/support-review',
+    'administration/support-activity',
+    'administration/session-controls',
+  ];
+  /** Lo que la API exige en `/org/*`: el rol, además de ser la cuenta de la organización. */
+  const ADMIN_DE_LA_ORGANIZACION = ['USER', 'SECURITY_ADMIN'];
+  const DE_LA_PERSONA = ['my-support', 'support-inbox', 'combined-agenda'];
+
+  it('la cuenta del hospital ve las siete de la organización y ninguna de la persona', () => {
+    const lista = visibles(ADMIN_DE_LA_ORGANIZACION, 'HOSPITAL', 'ORGANIZATION');
+    expect(lista).toEqual(expect.arrayContaining(DE_LA_ORGANIZACION));
+    for (const ruta of [...DE_LA_PERSONA, 'my-team']) expect(lista).not.toContain(ruta);
+  });
+
+  it('la cuenta del hospital sin SECURITY_ADMIN no ve ninguna: la API les exige el rol, no solo la cuenta', () => {
+    const lista = visibles(['USER'], 'HOSPITAL', 'ORGANIZATION');
+    for (const ruta of DE_LA_ORGANIZACION) expect(lista).not.toContain(ruta);
+  });
+
+  it('un SECURITY_ADMIN que es una persona (no la cuenta de la organización) tampoco las ve', () => {
+    const lista = visibles(ADMIN_DE_LA_ORGANIZACION, 'HOSPITAL', 'PERSON');
+    for (const ruta of DE_LA_ORGANIZACION) expect(lista).not.toContain(ruta);
+  });
+
+  it('«Controles de sesión» es de cualquier cuenta de organización: la farmacia, el laboratorio y la aseguradora también', () => {
+    for (const tipo of ['PHARMACY', 'DIAGNOSTIC_CENTER', 'PAYER', 'HOSPITAL']) {
+      expect(visibles(ADMIN_DE_LA_ORGANIZACION, tipo, 'ORGANIZATION')).toContain('administration/session-controls');
+    }
+    // Y las de apoyo siguen siendo solo de hospital, clínica y prestador.
+    expect(visibles(ADMIN_DE_LA_ORGANIZACION, 'PHARMACY', 'ORGANIZATION')).not.toContain('administration/support-review');
+  });
+
+  it('la cuenta del hospital no ve la autoservicio del paciente: es de una persona', () => {
+    const lista = visibles(ADMIN_DE_LA_ORGANIZACION, 'HOSPITAL', 'ORGANIZATION');
+    for (const ruta of ['my-account/appointments', 'my-account/medical-record', 'my-account/dependents']) {
+      expect(lista).not.toContain(ruta);
+    }
+    // La misma sesión como persona sí la conserva.
+    expect(visibles(['USER'], 'HOSPITAL', 'PERSON')).toContain('my-account/appointments');
+  });
+
+  it('el personal de apoyo (persona, rol USER) ve «Mis accesos» y la agenda, y nada de la organización', () => {
+    const lista = visibles(['USER'], 'HOSPITAL', 'PERSON');
+    expect(lista).toEqual(expect.arrayContaining(DE_LA_PERSONA));
+    for (const ruta of DE_LA_ORGANIZACION) expect(lista).not.toContain(ruta);
+  });
+
+  it('un médico que solo tiene el rol PRACTITIONER ve «Mis accesos» (donde canjea el QR de doctores), pero no la agenda ni la bandeja de apoyo', () => {
+    const lista = visibles(['PRACTITIONER'], 'HOSPITAL', 'PERSON');
+    expect(lista).toContain('my-support');
+    for (const ruta of ['support-inbox', 'combined-agenda', ...DE_LA_ORGANIZACION]) expect(lista).not.toContain(ruta);
+    // Y en una farmacia, que no tiene personal de apoyo, no aparece.
+    expect(visibles(['PRACTITIONER'], 'PHARMACY', 'PERSON')).not.toContain('my-support');
+  });
+
+  it('Rosa, en un consultorio privado, ve lo suyo; farmacia, aseguradora y laboratorio no ven nada de esto', () => {
+    expect(visibles(['USER'], 'MEDICAL_OFFICE', 'PERSON')).toEqual(expect.arrayContaining(DE_LA_PERSONA));
+    for (const tipo of ['PHARMACY', 'PAYER', 'DIAGNOSTIC_CENTER']) {
+      const lista = visibles(['USER'], tipo, 'PERSON');
+      for (const ruta of [...DE_LA_PERSONA, ...DE_LA_ORGANIZACION]) expect(lista).not.toContain(ruta);
+    }
+  });
+
+  it('el doctor ve «Mi equipo» y no las de la organización ni las de la persona de apoyo', () => {
+    const lista = visibles(['PRACTITIONER'], 'HOSPITAL', 'PERSON');
+    expect(lista).toContain('my-team');
+    // «Mis accesos» sí: es donde un médico canjea el QR de doctores. La agenda y la bandeja de apoyo, no.
+    expect(lista).toContain('my-support');
+    for (const ruta of [...DE_LA_ORGANIZACION, ...DE_LA_PERSONA.filter((r) => r !== 'my-support')]) expect(lista).not.toContain(ruta);
+  });
+
+  it('el paciente no ve ninguna de las siete', () => {
+    const lista = visibles(['PATIENT'], 'PROVIDER', 'PERSON');
+    for (const ruta of [...DE_LA_ORGANIZACION, ...DE_LA_PERSONA, 'my-team']) expect(lista).not.toContain(ruta);
+  });
+
+  it('el comodín SUPERADMIN no abre las de la organización: la clase de cuenta no es un permiso', () => {
+    const lista = visibles(['SUPERADMIN'], 'HOSPITAL', 'PERSON');
+    for (const ruta of DE_LA_ORGANIZACION) expect(lista).not.toContain(ruta);
+  });
+
+  it('sin saber la clase de cuenta, una sección que la exige no existe', () => {
+    const solo = APP_SECTIONS.find((s) => s.path === 'administration/support-team')!;
+    expect(isVisibleTo(solo, ['USER'], ['t-1'], 'HOSPITAL')).toBe(false);
   });
 });

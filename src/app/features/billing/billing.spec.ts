@@ -4,6 +4,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { ACCESS_CHALLENGE } from '../../core/access-challenge/access-challenge';
+import { SessionStore } from '../../core/auth/session.store';
 import { API_BASE_URL } from '../../core/data-access/api';
 import type { SimulatedCharge } from '../../core/data-access/billing-simulated/billing-simulated.types';
 import type { SimulatedInvoicing } from '../../core/mock/billing-sim/simulated-invoicing';
@@ -31,6 +33,8 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '' },
+        // La organización en la que se actúa: la pregunta «¿Por qué no puedo?» la lleva.
+        { provide: SessionStore, useValue: { activeTenantId: () => 't-hp' } },
         { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => disponible },
       ],
     });
@@ -240,6 +244,65 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     expect(el('factura')?.textContent).toContain('Anulada (SIMULADO)');
     expect(el('respuesta-siat')?.textContent).toContain('905');
     expect(fixture.nativeElement.textContent).toContain('Revertir anulación (SIMULADO)');
+  });
+
+  describe('desafíos de acceso (motivo, segundo paso, aprobación)', () => {
+    function facturaEmitida() {
+      responderLectura();
+      const componente = fixture.componentInstance;
+      const pagado = cobroDe((c) => c.payment !== null && c.latestInvoice === null);
+      componente.seleccionar(pagado);
+      componente.formularioDeFactura.patchValue({ documentNumber: '1234567' });
+      componente.confirmarFacturacion(pagado);
+      const emitir = http.expectOne(`/billing/simulated/charges/${pagado.id}/invoices`);
+      const emitida = motor.issueInvoice(pagado.id, emitir.request.body, 'prueba');
+      emitir.flush(emitida.ok ? emitida.value : null);
+      responderRefresco();
+      return { componente, factura: componente.factura()!, emision: emitir.request };
+    }
+
+    it('pagar, facturar y anular piden la aprobación de **esa** acción: cada petición lleva su marca de desafío', () => {
+      montar(true);
+      const { componente, factura, emision } = facturaEmitida();
+      expect(emision.context.get(ACCESS_CHALLENGE)).toMatchObject({ reasonField: 'reasonText', approval: { atom: 'billing.receipt.issue', tenantId: 't-hp' } });
+
+      componente.formularioDeAnulacion.setValue({ reasonCode: 1 });
+      componente.anular(factura);
+      const anular = http.expectOne(`/billing/simulated/invoices/${factura.id}/annulment`);
+      expect(anular.request.context.get(ACCESS_CHALLENGE)).toMatchObject({ reasonField: 'reasonText', approval: { atom: 'billing.receipt.void', tenantId: 't-hp' } });
+      expect(anular.request.context.get(ACCESS_CHALLENGE)!.actionLabel).toContain('Anular la factura');
+      const anulada = motor.void(factura.id, 1);
+      anular.flush(anulada.ok ? anulada.value : null);
+      responderRefresco();
+    });
+
+    it('un 403 al anular lo dice en la pantalla y ofrece «¿Por qué no puedo?» sobre esa misma acción', () => {
+      montar(true);
+      const { componente, factura } = facturaEmitida();
+      expect(el('caja-rechazo')).toBeNull();
+      componente.formularioDeAnulacion.setValue({ reasonCode: 1 });
+
+      componente.anular(factura);
+      http.expectOne(`/billing/simulated/invoices/${factura.id}/annulment`).flush(
+        { statusCode: 403, code: 'FORBIDDEN', message: 'Su vínculo de apoyo no le permite esta acción.', timestamp: '', path: '/' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+      fixture.detectChanges();
+
+      expect(el('caja-rechazo')!.textContent).toContain('Su vínculo de apoyo no le permite esta acción.');
+      expect(el('caja-por-que-boton')!.textContent).toContain('¿Por qué no puedo?');
+      expect(componente.factura()!.status).not.toBe('ANNULLED');
+    });
+
+    it('un error que no es de permiso no ofrece «¿Por qué no puedo?»', () => {
+      montar(true);
+      const { componente, factura } = facturaEmitida();
+      componente.formularioDeAnulacion.setValue({ reasonCode: 1 });
+      componente.anular(factura);
+      http.expectOne(`/billing/simulated/invoices/${factura.id}/annulment`).flush({ statusCode: 500, code: 'INTERNAL', message: 'Falló', timestamp: '', path: '/' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+      expect(el('caja-rechazo')).toBeNull();
+    });
   });
 
   describe('abrir y cerrar el detalle (QA manual: «Ver» no mostraba nada a la vista)', () => {

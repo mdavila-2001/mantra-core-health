@@ -5,6 +5,8 @@ import { map, type Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
+import { newDeviceOf, type NewDeviceBody } from './iam-new-device';
+import { deniedTenantsOfBody } from './tenant-denial';
 import type {
   AccountActivation,
   ActivationResult,
@@ -39,6 +41,9 @@ interface TokenResponseBody {
   readonly accessToken: string;
   readonly refreshToken: string;
   readonly expiresAt: string;
+  readonly newDevice?: NewDeviceBody;
+  readonly mfaEnrollmentRequired?: boolean;
+  readonly deniedTenants?: readonly { readonly tenantId: string; readonly reason: string }[];
 }
 
 interface UserResponseBody {
@@ -817,6 +822,9 @@ function toSession(body: TokenResponseBody): Session {
     accessToken: body.accessToken,
     refreshToken: body.refreshToken,
     expiresAt: new Date(body.expiresAt),
+    ...newDeviceOf(body.newDevice),
+    ...(body.mfaEnrollmentRequired === true ? { mfaEnrollmentRequired: true } : {}),
+    ...(deniedTenantsOfBody(body.deniedTenants).length === 0 ? {} : { deniedTenants: deniedTenantsOfBody(body.deniedTenants) }),
   };
 }
 

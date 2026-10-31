@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 
 import { isAccessTokenExpired } from '../auth/access-token';
+import { API_BASE_URL } from '../data-access/api';
 import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { SessionStore } from '../auth/session.store';
 import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';

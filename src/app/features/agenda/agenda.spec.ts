@@ -978,6 +978,8 @@ describe('Agenda', () => {
 
     const texto = resumen(fila);
     expect(texto).toContain('Última consulta');
+    // Una cuenta de profesional solo ve su propia agenda (G1): es la última consulta CON USTED.
+    expect(texto).toContain('Última consulta con usted');
     expect(texto).toContain('Dolor de cabeza');
     expect(texto).not.toContain('no cuenta');
 

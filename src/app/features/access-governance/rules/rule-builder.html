@@ -1,0 +1,222 @@
+<form
+  class="constructor"
+  (submit)="$event.preventDefault(); enviar()"
+  novalidate
+  data-testid="regla-constructor"
+  aria-label="Nueva barandilla"
+>
+  <h3 class="constructor__titulo">Nueva barandilla</h3>
+  <p class="constructor__ayuda">
+    Arme la frase. Una barandilla solo agrega restricciones: no puede aflojar las de la plataforma.
+  </p>
+
+  <app-form-field label="Qué tipo de regla es" [required]="true">
+    <app-select
+      [options]="tipos"
+      [value]="kind()"
+      (valueChange)="cambiarTipo($event)"
+      ariaLabel="Tipo de regla"
+      data-testid="regla-tipo"
+    />
+  </app-form-field>
+
+  <app-form-field
+    [label]="kind() === 'FIELD_FLOOR' ? 'Qué dato' : 'A qué permiso se refiere'"
+    [required]="true"
+    [errorMessage]="errorDe('permiso')"
+  >
+    <app-select
+      [options]="opcionesDePermiso()"
+      [value]="permiso()"
+      (valueChange)="permisoDelSelect($event)"
+      [searchable]="true"
+      placeholder="Elija un permiso"
+      ariaLabel="Permiso al que se refiere la regla"
+      [hasError]="errorDe('permiso') !== ''"
+      data-testid="regla-permiso"
+    />
+  </app-form-field>
+
+  <app-form-field
+    [label]="kind() === 'CEILING' ? 'De qué rol' : 'Solo para el rol (opcional)'"
+    [required]="kind() === 'CEILING'"
+    [errorMessage]="errorDe('rol')"
+  >
+    <app-select
+      [options]="roles"
+      [value]="rol()"
+      (valueChange)="rolDelSelect($event)"
+      ariaLabel="Rol al que se aplica"
+      [hasError]="errorDe('rol') !== ''"
+      data-testid="regla-rol"
+    />
+  </app-form-field>
+
+  @if (kind() === 'FIELD_FLOOR') {
+    <app-form-field label="Cuánto se ve como máximo">
+      <app-select
+        [options]="visibilidades"
+        [value]="visibilidad()"
+        (valueChange)="visibilidad.set($event ?? 'PARTIAL')"
+        ariaLabel="Cuánto se ve como máximo"
+        data-testid="regla-visibilidad"
+      />
+    </app-form-field>
+  }
+
+  @if (kind() === 'REQUIRE_CONDITION') {
+    <fieldset
+      class="constructor__condiciones"
+      [class.constructor__condiciones--error]="errorDe('condicion') !== ''"
+    >
+      <legend>Solo se puede usar si…</legend>
+      <app-checkbox
+        [checked]="enRed()"
+        (checkedChange)="enRed.set($event); impacto.set(null)"
+        label="Se usa desde la red del hospital"
+        data-testid="regla-cond-red"
+      />
+      <app-checkbox
+        [checked]="equipoDeConfianza()"
+        (checkedChange)="equipoDeConfianza.set($event)"
+        label="Se usa desde un equipo de confianza"
+        data-testid="regla-cond-equipo"
+      />
+      <app-checkbox
+        [checked]="conMotivo()"
+        (checkedChange)="conMotivo.set($event)"
+        label="La persona escribe un motivo"
+        data-testid="regla-cond-motivo"
+      />
+      @if (conMotivo()) {
+        <app-form-field label="Largo mínimo del motivo (caracteres)">
+          <app-input
+            type="number"
+            [value]="minimoDelMotivo()"
+            (valueChange)="minimoDelMotivo.set('' + ($event ?? ''))"
+            ariaLabel="Largo mínimo del motivo"
+            testId="regla-cond-motivo-minimo"
+          />
+        </app-form-field>
+      }
+      <app-checkbox
+        [checked]="conPasoExtra()"
+        (checkedChange)="conPasoExtra.set($event)"
+        label="Confirma con el segundo paso (verificación en dos pasos)"
+        data-testid="regla-cond-paso"
+      />
+      <app-checkbox
+        [checked]="conAprobacion()"
+        (checkedChange)="conAprobacion.set($event)"
+        label="Otra persona lo aprueba"
+        data-testid="regla-cond-aprobacion"
+      />
+      @if (conAprobacion()) {
+        <app-form-field label="Quién aprueba">
+          <app-select
+            [options]="aprobadores"
+            [value]="aprobador()"
+            (valueChange)="aprobador.set($event ?? 'SECOND_APPROVER')"
+            ariaLabel="Quién aprueba"
+            data-testid="regla-cond-aprobador"
+          />
+        </app-form-field>
+      }
+      @if (errorDe('condicion'); as texto) {
+        <p class="constructor__error" role="alert">{{ texto }}</p>
+      }
+    </fieldset>
+  }
+
+  <app-form-field
+    label="Mensaje para quien se encuentre con la regla (opcional)"
+    hint="Se muestra cuando la regla impide algo. Por ejemplo: «Secretaría no cobra»."
+  >
+    <app-textarea
+      [value]="mensaje()"
+      (valueChange)="mensaje.set($event)"
+      [rows]="2"
+      [maxLength]="300"
+      data-testid="regla-mensaje"
+    />
+  </app-form-field>
+
+  <section
+    class="constructor__vista"
+    aria-live="polite"
+    aria-labelledby="regla-vista-titulo"
+    data-testid="regla-vista"
+  >
+    <h4 class="constructor__vista-titulo" id="regla-vista-titulo">Así quedaría</h4>
+    @if (oracion(); as texto) {
+      <p class="constructor__oracion" data-testid="regla-oracion">{{ texto }}</p>
+      <div class="constructor__impacto">
+        <button
+          app-button
+          size="sm"
+          variant="outline"
+          type="button"
+          [isLoading]="calculando()"
+          [disabled]="calculando()"
+          (clicked)="verImpacto()"
+          data-testid="regla-ver-impacto"
+        >
+          Ver a cuántas personas alcanza hoy
+        </button>
+        @if (impacto(); as i) {
+          <p class="constructor__resultado" data-testid="regla-impacto">
+            @if (i.count === 0) {
+              Hoy no alcanza a nadie: nadie tiene ese permiso{{
+                regla()?.roleTemplateCode ? ' con ese rol' : ''
+              }}.
+            } @else {
+              Hoy alcanzaría a {{ i.count }} {{ i.count === 1 ? 'persona' : 'personas' }}:
+              {{ nombresDelImpacto() }}{{ i.count > 6 ? ' y ' + (i.count - 6) + ' más' : '' }}.
+            }
+          </p>
+        }
+        @if (falloDelImpacto(); as texto) {
+          <app-alert tone="error" role="alert" data-testid="regla-impacto-error">{{
+            texto
+          }}</app-alert>
+        }
+      </div>
+    } @else {
+      <p class="constructor__ayuda">Elija el permiso para ver la regla en una frase.</p>
+    }
+  </section>
+
+  @if (intento() && problemas().length > 0) {
+    <app-alert tone="warning" title="Falta completar" role="alert" data-testid="regla-problemas">
+      <ul class="constructor__lista">
+        @for (p of problemas(); track p.campo) {
+          <li>{{ p.texto }}</li>
+        }
+      </ul>
+    </app-alert>
+  }
+  @if (failure(); as texto) {
+    <app-alert tone="error" role="alert" data-testid="regla-error">{{ texto }}</app-alert>
+  }
+
+  <div class="constructor__acciones">
+    <button
+      app-button
+      type="submit"
+      [isLoading]="busy()"
+      [disabled]="busy()"
+      data-testid="regla-guardar"
+    >
+      Guardar la barandilla
+    </button>
+    <button
+      app-button
+      variant="outline"
+      type="button"
+      (clicked)="cancelled.emit()"
+      data-testid="regla-cancelar"
+    >
+      Cancelar
+    </button>
+  </div>
+</form>

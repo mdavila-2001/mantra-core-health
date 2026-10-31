@@ -1,0 +1,57 @@
+:host {
+  display: block;
+}
+
+.preview {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.bloque {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.lista {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.impacto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.impacto div {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+.impacto dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.impacto dd {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.puntaje {
+  margin: 0;
+  color: var(--text-primary);
+}
