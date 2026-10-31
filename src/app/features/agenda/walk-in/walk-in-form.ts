@@ -308,7 +308,7 @@ export class WalkInForm {
           this.creado.emit({
             patientProfileId: creado.patientProfileId,
             bookingId: creado.bookingId,
-            encounterId: creado.encounterId,
+            encounterId: creado.encounterId ?? null,
             patientCode: creado.patientCode,
             retractedSlots: creado.retractedSlots,
             esAltaNueva: true,
