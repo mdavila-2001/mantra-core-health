@@ -53,7 +53,7 @@
           data-testid="cita-agenda"
           [options]="opcionesDeAgenda()"
           [value]="agendaElegida()"
-          (valueChange)="agendaElegida.set($event)"
+          (valueChange)="elegirAgenda($event)"
         />
       </app-form-field>
     }
@@ -282,7 +282,7 @@
         data-testid="cita-fecha"
         [minDate]="hoy"
         [value]="dia()"
-        (valueChange)="dia.set($event)"
+        (valueChange)="elegirDia($event)"
       />
     </app-form-field>
 
@@ -311,24 +311,38 @@
       </app-alert>
     }
 
-    <!-- La hora es un campo de texto, igual que en la tarjeta del día: el
-         producto no tiene todavía un selector de hora propio, y el nativo
-         traería el mismo problema que el de fecha. -->
+    <!-- La hora se elige de los cupos libres de esa agenda ese día: un campo
+         libre dejaba agendar a horas que el profesional no atiende. -->
     <app-form-field
       class="cita__hora"
       label="Hora de inicio"
-      hint="En 24 horas: 09:30"
+      [hint]="pieDeHora()"
       [required]="true"
     >
-      <app-input data-testid="cita-hora" [(value)]="hora" placeholder="09:30" />
+      @if (cuposCaidos()) {
+        <p class="cita__alta-catalogo-caido" data-testid="cita-hora-caida">
+          No pudimos traer sus horarios.
+          <button app-button type="button" variant="ghost" size="sm" (clicked)="reintentarCupos()">
+            Reintentar
+          </button>
+        </p>
+      } @else {
+        <app-select
+          data-testid="cita-hora"
+          [options]="opcionesDeHora()"
+          [placeholder]="marcadorDeHora()"
+          [disabled]="opcionesDeHora().length === 0"
+          [value]="hora() === '' ? null : hora()"
+          (valueChange)="elegirHora($event)"
+        />
+      }
     </app-form-field>
 
-    <!-- La duración se elige de una lista de atajos: no hay campo de minutos
-         libres. -->
+    <!-- Elegido el horario, sólo las duraciones que caben en sus cupos libres. -->
     <app-form-field class="cita__duracion" label="Duración" [required]="true">
       <app-select
         data-testid="cita-duracion"
-        [options]="opcionesDeDuracion"
+        [options]="opcionesDeDuracion()"
         [value]="duracion()"
         (valueChange)="duracion.set($event ?? '')"
       />

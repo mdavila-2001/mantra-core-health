@@ -65,6 +65,15 @@
     .cita--alta .cita__duracion { grid-row: 4; }
     .cita--alta .cita__motivo,
     .cita--alta.cita--sin-sede .cita__motivo { grid-column: 1; grid-row: 4; }
+
+    /* Sin consultorio que elegir, el alta abre el formulario: si no, el día
+       quedaba solo a la derecha de una fila vacía. */
+    .cita--alta.cita--sin-sede .cita__quien { grid-row: 1; }
+    .cita--alta.cita--sin-sede .cita__dia { grid-column: 1; grid-row: 2; }
+    .cita--alta.cita--sin-sede .cita__hora { grid-row: 2; }
+    .cita--alta.cita--sin-sede .cita__modalidad { grid-row: 3; }
+    .cita--alta.cita--sin-sede .cita__duracion { grid-row: 3; }
+    .cita--alta.cita--sin-sede .cita__motivo { grid-column: 1 / -1; }
 }
 
 /* La frase de «qué va a pasar» se lee como una nota del sistema, no como un

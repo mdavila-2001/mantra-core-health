@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -14,6 +15,7 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import {
   MODALIDADES,
   type AgendaResource,
+  type AgendaSlot,
   type ModalidadDeAtencion,
   type WalkInPatient,
 } from '../../../core/data-access/scheduling/scheduling.types';
@@ -45,15 +47,19 @@ import { avisoDeTeleconsulta, rechazoPorTelemedicina } from '../telemedicina';
 /**
  * Duraciones ofrecidas, en minutos.
  *
- * Son atajos, **no un tope**: el campo admite escribir cualquier número porque
- * «la cirugía de tres horas y la consulta de cuarenta y cinco conviven», y
- * acotar la duración a la del turno publicado convertiría esta pantalla en el
- * formulario del paciente, que es justo lo que no es.
+ * Con un horario elegido se ofrecen sólo las que caben en los cupos libres
+ * seguidos desde ese horario: lo que pase de ahí cae fuera de lo que el
+ * profesional atiende.
  */
 const DURACIONES = [15, 20, 30, 45, 60, 90, 120] as const;
 
 /** Duración por omisión: la consulta corriente. */
 const DURACION_POR_DEFECTO = 30;
+
+const MS_POR_MINUTO = 60_000;
+
+/** Tope de cupos de un día: de sobra para la agenda más cargada. */
+const CUPOS_POR_DIA = 200;
 
 /**
  * Con quién es la cita.
@@ -78,10 +84,10 @@ const DIGITOS_DE_CEDULA = 6;
  *
  * ## Por qué no se copió el formulario del paciente
  *
- * Porque no hacen lo mismo. `booking-new` parte de un **cupo ya publicado** y
- * lo toma en dos pasos con vencimiento (`hold` → `confirm`); esto parte de un
- * **rato cualquiera**, en una sola transacción, y **retira** los cupos libres
- * que pisa. Copiar aquella pantalla habría duplicado por tercera vez lo
+ * Porque no hacen lo mismo. `booking-new` toma un **cupo ya publicado** en dos
+ * pasos con vencimiento (`hold` → `confirm`); esto elige también entre los cupos
+ * libres del profesional, pero agenda en una sola transacción y **retira** los
+ * cupos que pisa. Copiar aquella pantalla habría duplicado por tercera vez lo
  * delicado —la revalidación del cupo y el vencimiento de la retención— para un
  * caso de uso que no lo tiene. Lo que se reusa son las **piezas**: el combobox
  * de paciente, el campo de motivo, el select de modalidad.
@@ -346,7 +352,65 @@ export class AppointmentNew {
   /** Hoy, a medianoche: no se agenda para atrás. */
   protected readonly hoy = new Date(new Date().setHours(0, 0, 0, 0));
 
+  /** La hora elegida, `HH:mm`. Sólo vale si es uno de los cupos del día. */
   protected readonly hora = signal('');
+
+  /* -- Los horarios libres del día ------------------------------------------ */
+
+  protected readonly cupos = signal<readonly AgendaSlot[]>([]);
+  protected readonly cargandoCupos = signal(false);
+  protected readonly cuposCaidos = signal(false);
+  private readonly lecturaDeCupos = signal(0);
+
+  /** Un horario por hora de inicio: dos cupos a la misma hora son una sola opción. */
+  protected readonly opcionesDeHora = computed<readonly SelectOption<string>[]>(() => {
+    const vistas = new Set<string>();
+    const opciones: SelectOption<string>[] = [];
+    for (const cupo of this.cupos()) {
+      const inicio = horaDe(cupo.startAt);
+      if (vistas.has(inicio)) continue;
+      vistas.add(inicio);
+      opciones.push({ value: inicio, label: `${inicio} a ${horaDe(cupo.endAt)}` });
+    }
+    return opciones;
+  });
+
+  private readonly cupoElegido = computed(
+    () => this.cupos().find((cupo) => horaDe(cupo.startAt) === this.hora()) ?? null,
+  );
+
+  protected readonly marcadorDeHora = computed(() => {
+    if (this.dia() === null) return 'Elija primero el día';
+    if (this.cargandoCupos()) return 'Buscando horarios…';
+    return this.opcionesDeHora().length === 0 ? 'Sin horarios libres' : 'Elija un horario';
+  });
+
+  protected readonly pieDeHora = computed(() => {
+    if (this.dia() === null || this.cargandoCupos()) return 'Sólo aparecen sus horarios libres.';
+    return this.opcionesDeHora().length === 0
+      ? 'No tiene horarios libres ese día. Elija otro o revise su horario en Mi agenda.'
+      : 'Sólo aparecen sus horarios libres.';
+  });
+
+  /**
+   * Cuántos minutos libres seguidos hay desde el horario elegido.
+   *
+   * Se cuentan cupos pegados: un hueco en la agenda o el fin de la franja
+   * cortan la cuenta, y una cita más larga caería fuera de lo que atiende.
+   */
+  private readonly minutosDisponibles = computed<number | null>(() => {
+    const elegido = this.cupoElegido();
+    if (elegido === null) return null;
+    let fin = elegido.endAt.getTime();
+    const siguientes = this.cupos()
+      .filter((cupo) => cupo.startAt.getTime() >= fin)
+      .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+    for (const cupo of siguientes) {
+      if (cupo.startAt.getTime() !== fin) break;
+      fin = cupo.endAt.getTime();
+    }
+    return (fin - elegido.startAt.getTime()) / MS_POR_MINUTO;
+  });
   protected readonly duracion = signal(String(DURACION_POR_DEFECTO));
   protected readonly motivo = signal('');
 
@@ -362,45 +426,87 @@ export class AppointmentNew {
   protected readonly opcionesDeModalidad: readonly SelectOption<ModalidadDeAtencion>[] =
     MODALIDADES.map((opcion) => ({ value: opcion.valor, label: opcion.nombre }));
 
-  protected readonly opcionesDeDuracion: readonly SelectOption<string>[] =
-    DURACIONES.map((minutos) => ({
-      value: String(minutos),
-      label: minutos < 60
-        ? `${minutos} minutos`
-        : minutos === 60
-          ? '1 hora'
-          : `${minutos / 60} horas`,
-    }));
+  protected readonly opcionesDeDuracion = computed<readonly SelectOption<string>[]>(() => {
+    const elegido = this.cupoElegido();
+    const tope = this.minutosDisponibles();
+    if (elegido === null || tope === null) return DURACIONES.map(opcionDeDuracion);
+    const propia = minutosDeCupo(elegido);
+    const caben = DURACIONES.filter((minutos) => minutos <= tope && minutos !== propia);
+    return [propia, ...caben].sort((a, b) => a - b).map(opcionDeDuracion);
+  });
 
   protected readonly guardando = signal(false);
   protected readonly error = signal<string | null>(null);
 
   constructor() {
     this.cargarAgendas();
+    effect((onCleanup) => {
+      this.lecturaDeCupos();
+      const agenda = this.agendaElegida();
+      const dia = this.dia();
+      this.cupos.set([]);
+      this.cuposCaidos.set(false);
+      if (agenda === null || dia === null) {
+        this.cargandoCupos.set(false);
+        return;
+      }
+      this.cargandoCupos.set(true);
+      const lectura = this.leerCupos(agenda, dia).subscribe({
+        next: (pagina) => {
+          this.cargandoCupos.set(false);
+          this.cupos.set(pagina.items);
+        },
+        error: () => {
+          this.cargandoCupos.set(false);
+          this.cuposCaidos.set(true);
+        },
+      });
+      onCleanup(() => lectura.unsubscribe());
+    });
   }
 
-  /**
-   * Cuándo empieza la cita, o `null` si falta o no es una fecha.
-   *
-   * La hora se valida acá y no en el campo: `09:30` es válido, `9:5` no, y un
-   * texto libre que llega mal armado produce una cita en un instante que nadie
-   * eligió.
-   */
-  protected readonly comienza = computed<Date | null>(() => {
-    const dia = this.dia();
-    const hora = this.hora().trim();
-    if (dia === null || !/^\d{1,2}:\d{2}$/.test(hora)) return null;
+  private leerCupos(resourceId: string, dia: Date) {
+    const inicio = new Date(dia);
+    inicio.setHours(0, 0, 0, 0);
+    const fin = new Date(inicio);
+    fin.setDate(fin.getDate() + 1);
+    return this.scheduling.listSlots({
+      resourceId,
+      // Nunca antes de ahora: un cupo de esta mañana ya pasó.
+      from: new Date(Math.max(inicio.getTime(), Date.now())),
+      to: fin,
+      onlyAvailable: true,
+      limit: CUPOS_POR_DIA,
+    });
+  }
 
-    const [hh, mm] = hora.split(':').map(Number);
-    if (hh > 23 || mm > 59) return null;
+  /** Cambiar el día deja sin efecto la hora: era un cupo de otro día. */
+  protected elegirDia(dia: Date | null): void {
+    this.dia.set(dia);
+    this.hora.set('');
+  }
 
-    // Se compone sobre el día elegido, en hora local. Armarlo desde una
-    // cadena ISO sin zona lo interpretaría en UTC en algunos navegadores y
-    // adelantaría la cita cuatro horas en Bolivia.
-    const cuando = new Date(dia);
-    cuando.setHours(hh, mm, 0, 0);
-    return cuando;
-  });
+  /** Cambiar la agenda también: cada sede tiene sus propios cupos. */
+  protected elegirAgenda(agenda: string | null): void {
+    this.agendaElegida.set(agenda);
+    this.hora.set('');
+  }
+
+  /** La duración arranca en la del cupo elegido, que es la que el horario declara. */
+  protected elegirHora(hora: string | null): void {
+    this.hora.set(hora ?? '');
+    const elegido = this.cupoElegido();
+    if (elegido !== null) this.duracion.set(String(minutosDeCupo(elegido)));
+  }
+
+  protected reintentarCupos(): void {
+    this.lecturaDeCupos.update((veces) => veces + 1);
+  }
+
+  /** Cuándo empieza la cita: el inicio del cupo elegido, o `null` si no hay. */
+  protected readonly comienza = computed<Date | null>(
+    () => this.cupoElegido()?.startAt ?? null,
+  );
 
   /** Los minutos que dura, o `null` si lo escrito no es un número positivo. */
   protected readonly minutos = computed<number | null>(() => {
@@ -629,11 +735,11 @@ export class AppointmentNew {
    * simulados— dejaba además una persona registrada sin cita cuando la
    * segunda llamada fallaba.
    *
-   * `POST /scheduling/appointments/walk-in` es el endpoint que P22 pedía y que
-   * el backend mergeó: recibe el bloque de filiación entero, crea persona,
-   * perfil, identificador, teléfono y tutor, reserva, **abre el encuentro** y
-   * arranca la atención en una sola transacción. La reserva nace
-   * `IN_PROGRESS`, no `CONFIRMED`: quien llegó al mostrador ya está ahí.
+   * `POST /scheduling/appointments/walk-in` recibe el bloque de filiación
+   * entero y crea persona, perfil, identificador, teléfono, tutor y reserva en
+   * una sola transacción. Esta pantalla agenda, no atiende: va con
+   * `startAttention: false` para que la cita quede confirmada para su hora, sin
+   * una atención abierta hoy. El mostrador es `walk-in-form`.
    *
    * El 409 —«ese documento ya está registrado»— se traduce, porque su salida
    * no está en el mensaje sino en la pantalla: hay que volver a buscar a esa
@@ -648,19 +754,14 @@ export class AppointmentNew {
         durationMinutes: minutos,
         ...(this.motivo().trim() === '' ? {} : { reasonText: this.motivo().trim() }),
         channel: this.modalidad(),
+        startAttention: false,
       })
       .subscribe({
-        next: (creado) => {
+        next: () => {
           this.guardando.set(false);
-          const quitados =
-            creado.retractedSlots > 0
-              ? ` Esto quitó ${creado.retractedSlots} ${
-                  creado.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
-                }.`
-              : '';
           this.toasts.success(
-            `Quedó registrado con el código ${creado.patientCode} y la atención ya está abierta.${quitados}`,
-            'Paciente registrado y atención abierta',
+            'Quedó registrado y con la cita agendada. Su ficha queda para completar.',
+            'Paciente registrado y cita agendada',
           );
           void this.router.navigate([AGENDA_ROUTE]);
         },
@@ -691,7 +792,6 @@ export class AppointmentNew {
     comienza: Date,
     minutos: number,
     resourceId: string,
-    esAltaNueva = false,
   ): void {
     this.scheduling
       .createDirectAppointment({
@@ -703,20 +803,9 @@ export class AppointmentNew {
         channel: this.modalidad(),
       })
       .subscribe({
-        next: (creada) => {
+        next: () => {
           this.guardando.set(false);
-          const quitados =
-            creada.retractedSlots > 0
-              ? ` Esto quitó ${creada.retractedSlots} ${
-                  creada.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
-                }.`
-              : '';
-          this.toasts.success(
-            esAltaNueva
-              ? `Quedó registrado y con la cita agendada.${quitados}`
-              : `Le avisamos al paciente. No tiene que confirmar nada.${quitados}`,
-            esAltaNueva ? 'Paciente registrado y cita agendada' : 'Cita agendada',
-          );
+          this.toasts.success('Le avisamos al paciente. No tiene que confirmar nada.', 'Cita agendada');
           void this.router.navigate([AGENDA_ROUTE]);
         },
         error: (error: unknown) => {
@@ -836,6 +925,23 @@ export class AppointmentNew {
       },
     });
   }
+}
+
+/** La hora local del instante, `HH:mm`. */
+function horaDe(instante: Date): string {
+  const horas = String(instante.getHours()).padStart(2, '0');
+  const minutos = String(instante.getMinutes()).padStart(2, '0');
+  return `${horas}:${minutos}`;
+}
+
+function minutosDeCupo(cupo: AgendaSlot): number {
+  return (cupo.endAt.getTime() - cupo.startAt.getTime()) / MS_POR_MINUTO;
+}
+
+function opcionDeDuracion(minutos: number): SelectOption<string> {
+  const label =
+    minutos < 60 ? `${minutos} minutos` : minutos === 60 ? '1 hora' : `${minutos / 60} horas`;
+  return { value: String(minutos), label };
 }
 
 /** Si lo tecleado se lee como una cédula y no como el principio de un nombre. */
