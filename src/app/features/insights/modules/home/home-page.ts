@@ -34,9 +34,8 @@ import type { Insight, KpiAssessment, MarketingAlert, MetricId } from '../../dom
 import { timeSeries } from '../../domain/kpi';
 import { METRIC_CATALOG } from '../../domain/metric-catalog';
 import { INSIGHTS_BASE, MODULE_BY_ID } from '../../insights-nav';
-
-/** Misma llave que usa el módulo de alertas para recordar lo atendido. */
-const ALERT_STATE_KEY = 'alovida-insights-alert-state';
+import { isOpen } from '../../domain/alert-workflow';
+import { InsightsWorkflow } from '../../insights-workflow';
 
 interface SideFigure {
   readonly label: string;
@@ -53,17 +52,6 @@ interface HomeModel {
   readonly alerts: readonly MarketingAlert[];
   readonly insights: readonly Insight[];
   readonly tiles: readonly (ModuleTile & { readonly label: string; readonly link: readonly string[] })[];
-}
-
-function handledAlerts(): Record<string, 'seen' | 'resolved'> {
-  try {
-    const raw = localStorage.getItem(ALERT_STATE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : {};
-    if (typeof parsed !== 'object' || parsed === null) return {};
-    return Object.fromEntries(Object.entries(parsed).filter((e): e is [string, 'seen' | 'resolved'] => e[1] === 'seen' || e[1] === 'resolved'));
-  } catch {
-    return {};
-  }
 }
 
 function side(a: KpiAssessment, label: string, good: 'up' | 'neutral'): SideFigure {
@@ -93,6 +81,7 @@ function side(a: KpiAssessment, label: string, good: 'up' | 'neutral'): SideFigu
 })
 export class HomePage {
   private readonly router = inject(Router);
+  private readonly wf = inject(InsightsWorkflow);
 
   protected readonly week = `${longDate(homeRange().from)} — ${longDate(homeRange().to)}`;
   protected readonly asOf = longDate(PROTOTYPE_TODAY);
@@ -103,6 +92,8 @@ export class HomePage {
   protected readonly opinionLink = [INSIGHTS_BASE, 'opinion'];
 
   protected readonly state = computed<ViewState<HomeModel>>(() => {
+    // Lo que el equipo ya cerró en Alertas (resuelta o descartada) no vuelve a aparecer aquí.
+    const handled = Object.fromEntries(Object.values(this.wf.workflow()).filter((w) => !isOpen(w.status)).map((w) => [w.fingerprint, 'resolved' as const]));
     const kpis = homeKpis();
     if (kpis.every((k) => k.assessment.kpi.value === null)) {
       return empty({ label: 'Espere a que lleguen los datos de la semana o revise las fuentes conectadas.' }, 'Todavía no hay datos de campañas en la última semana.');
@@ -133,7 +124,7 @@ export class HomePage {
         series: [{ id: 'registrations', label: 'Registros por día', values: points.map((p) => p.kpi.value), color: 1 }],
         milestones: milestonesOn(points.map((p) => p.bucket), filter30),
       },
-      alerts: topAlerts(handledAlerts()),
+      alerts: topAlerts(handled),
       insights: homeInsights(),
       tiles,
     });
