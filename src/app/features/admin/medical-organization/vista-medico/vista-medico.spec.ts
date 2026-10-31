@@ -42,17 +42,19 @@ describe('MedicalOrganization — vista del médico', () => {
       (t) => t.textContent?.trim() ?? '',
     );
 
-  function resolverVinculaciones(): void {
-    http.expectOne('/practitioners/me/role-assignments').flush([]);
-    http.expectOne('/practices').flush([]);
+  /** Responde `/practices` —la pide el panel y la pestaña— y las vinculaciones del médico. */
+  function resolver(practicas: object[] = [], estado?: { status: number; statusText: string }): void {
+    for (const pedido of http.match('/practices')) {
+      if (estado) pedido.flush({ code: 'FORBIDDEN', message: 'No administra' }, estado);
+      else pedido.flush(practicas);
+    }
+    for (const pedido of http.match('/practitioners/me/role-assignments')) pedido.flush([]);
     harness.detectChanges();
   }
 
-  it('sin organizaciones propias quita las pestañas administrativas y el recuadro de cobertura', async () => {
+  it('un médico sin organizaciones propias ve sólo «Mis organizaciones» y el buzón', async () => {
     await montar('hp-1');
-    http.expectOne('/practices').flush([]);
-    harness.detectChanges();
-    resolverVinculaciones();
+    resolver();
 
     expect(rotulos()).toEqual(['Mis organizaciones', 'Solicitudes de ingreso']);
     expect(texto()).not.toContain('Qué administra esta pantalla y qué no');
@@ -60,22 +62,16 @@ describe('MedicalOrganization — vista del médico', () => {
     expect(texto()).not.toContain('Sedes');
   });
 
-  it('un 403 al listar las prácticas también es la vista del médico', async () => {
+  it('un 403 al listar las prácticas es la misma vista del médico', async () => {
     await montar('hp-1');
-    http
-      .expectOne('/practices')
-      .flush({ code: 'FORBIDDEN', message: 'No administra' }, { status: 403, statusText: 'Forbidden' });
-    harness.detectChanges();
-    resolverVinculaciones();
+    resolver([], { status: 403, statusText: 'Forbidden' });
 
     expect(rotulos()).toEqual(['Mis organizaciones', 'Solicitudes de ingreso']);
   });
 
   it('la pestaña «Solicitudes de ingreso» abre el buzón y pide las vinculaciones', async () => {
     await montar('hp-1');
-    http.expectOne('/practices').flush([]);
-    harness.detectChanges();
-    resolverVinculaciones();
+    resolver();
 
     (harness.routeNativeElement!.querySelectorAll('[role="tab"]')[1] as HTMLElement).click();
     harness.detectChanges();
@@ -85,32 +81,26 @@ describe('MedicalOrganization — vista del médico', () => {
     expect(texto()).toContain('No tiene solicitudes ni invitaciones de ingreso');
   });
 
-  it('quien administra una organización conserva la consola completa', async () => {
+  it('un médico que además administra una organización ve su consola en una pestaña aparte', async () => {
     await montar('hp-1');
-    http.expectOne('/practices').flush([{ id: 'prac-1', code: 'HC', name: 'Hospital Central', status: 'activa' }]);
-    harness.detectChanges();
-    http.expectOne('/practices/prac-1/organization').flush({
-      organization: {
-        id: 'prac-1',
-        code: 'HC',
-        name: 'Hospital Central',
-        type: null,
-        status: null,
-        timeZone: null,
-        currency: null,
-      },
-      sites: [],
-      clinicalUnits: [],
-      careSpaces: [],
-      healthcareServices: [],
-      staff: [],
-      legalDocuments: [],
-      inventory: [],
-    });
+    resolver([{ id: 'prac-1', code: 'HC', name: 'Hospital Central', status: 'activa' }]);
+    for (const pedido of http.match('/practices/prac-1/organization')) {
+      pedido.flush({
+        organization: { id: 'prac-1', code: 'HC', name: 'Hospital Central', type: null, status: null, timeZone: null, currency: null },
+        sites: [],
+        clinicalUnits: [],
+        careSpaces: [],
+        healthcareServices: [],
+        staff: [],
+        legalDocuments: [],
+        inventory: [],
+      });
+    }
     harness.detectChanges();
 
-    expect(rotulos()).toContain('Sedes');
-    expect(texto()).toContain('Qué administra esta pantalla y qué no');
+    expect(rotulos()).toEqual(['Mis organizaciones', 'Solicitudes de ingreso', 'Administrar mi organización']);
+    expect(rotulos()).not.toContain('Sedes');
+    expect(texto()).not.toContain('Qué administra esta pantalla y qué no');
   });
 
   it('una cuenta sin perfil profesional y sin prácticas conserva el vacío con «Dar de alta»', async () => {
