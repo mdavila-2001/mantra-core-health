@@ -1,5 +1,6 @@
 :host {
   display: block;
+  margin-block-start: var(--sp-4);
 }
 
 .solicitar__titulo {

@@ -273,6 +273,11 @@ export interface PublicAffiliation {
  */
 export interface PublicProfileDetail {
   readonly kind: Exclude<PublicResultKind, 'MEDICATION'>;
+  /**
+   * La organización detrás de la ficha, cuando la API la dice (campo ADITIVO).
+   * Es lo que permite «Solicitar pertenecer» sin adivinar por el nombre.
+   */
+  readonly practiceId?: string | null;
   readonly slug: string;
   readonly displayName: string;
   readonly headline: string | null;
