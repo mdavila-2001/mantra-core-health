@@ -17,7 +17,7 @@ Hoy la granularidad no se ve ni al pedir (médico) ni al recibir (imagenología 
 | `hallazgos-api-modelo.md` | Esquema real (MikroORM 7, modelo 4.2.79), terminología, corpus LOINC versionado, DDL tentativo `v4.2.80`, endpoints C1–C6, validaciones V1–V11, seeders, autorización |
 | `hallazgos-cuerpo-3d.md` | Visor `app-anatomy-viewer`, atlas (930 mallas, 669 estructuras), diseño de `app-body-region-picker`, cambios V1–V3 al visor, script generador del mapeo |
 | `catalogo/laboratorio.json` + `laboratorio-FUENTES.md` | **532 análisis, 690 componentes, 49 muestras, 20 secciones**; LOINC 2.83 verificado uno a uno (tx.fhir.org); 47 `LAB_*` de la API enlazados en `codigo_api_existente`; prioridades bolivianas (Chagas, dengue, malaria, ETMI) |
-| `catalogo/imagenologia.json` + `imagenologia-FUENTES.md` | **14 modalidades (DICOM CID 29), 4 lateralidades, 156 regiones (Annex L + SNOMED verificado), 471 estudios** (LOINC 433, RadLex 343) con proyecciones, contraste, vía y preparación |
+| `catalogo/imagenologia.json` + `imagenologia-FUENTES.md` | **14 modalidades (DICOM CID 29), 4 lateralidades, 156 regiones (Annex L + SNOMED verificado), 475 estudios** (LOINC 437, RadLex 343; 27 `IMG_*` locales enlazados) con proyecciones, contraste, vía y preparación |
 | `catalogo/regiones-cuerpo-3d.json` | Región radiológica → mallas del atlas (izq/der/centro), capa preferida, caso sin malla. Generado por script, nunca a mano. **En realineación** a los códigos de `imagenologia.json` |
 
 ## 3. Decisiones adoptadas (para no tener dudas)
@@ -65,7 +65,7 @@ Cada una tiene un responsable de confirmación; mientras no se desdiga, **se imp
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H0.M1 | Realinear `regiones-cuerpo-3d.json` a los códigos de `imagenologia.json` | Toda región del mapeo existe en el catálogo | salida del script + conteo por tipo | EN CURSO |
-| H0.M2 | Enlazar los 27 `IMG_*` locales a estudios de `imagenologia.json` (`codigo_api_existente`) | 27/27 con enlace o `sin_equivalente` justificado | diff del JSON | TODO |
+| H0.M2 | Enlazar los 27 `IMG_*` locales a estudios de `imagenologia.json` (`codigo_api_existente`) | 27/27 con enlace o `sin_equivalente` justificado | 27/27 enlazados (16 exactos, 4 genéricos con estudio nuevo, 7 «más cercano» con nota); tabla en `imagenologia-FUENTES.md` | HECHO |
 | H0.M3 | Validador cruzado de los tres JSON (`tools/catalogs/check-study-catalogs.mjs`) | exit 0 | salida | TODO |
 | H0.M4 | Registrar pendientes clínicos en `catalogo/PENDIENTES-CLINICOS.md` con responsable (170 filas: 10 LOINC de laboratorio sin verificar, 70 perfiles `verificar_composicion`, 12 muestras sin código, 31 estudios de imagen sin código + 9 con LOINC sin verificar, 34 lateralidades por criterio, 2 LOINC desaconsejados, nombres en español) | archivo existe | generado por script | HECHO |
 

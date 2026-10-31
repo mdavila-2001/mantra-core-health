@@ -68,6 +68,7 @@ Convenciones de campos que no estaban en el formato pedido:
 - Las regiones incluyen `tipo` (`grupo`, `combinada`, `region` o `vascular`), `lateralidad_fuente` y `snomed_display`.
 - Los estudios incluyen `via_contraste`, `loinc_nombre`, `radlex_nombre`, `loinc_por_lateralidad`, `radlex_rpid_por_lateralidad`, `sinonimos` y `nota`.
 - `verificar: true` marca un estudio sin LOINC ni RPID. `verificar_loinc: true` marca un estudio que tiene RPID pero no LOINC, o cuyo LOINC está DISCOURAGED.
+- `codigo_api_existente`: el código `IMG_*` actual de la API (`clinical.concepts.ts`, conceptos `STUDY_*`), con el mismo criterio que usó el catálogo de laboratorio con los `LAB_*`. Es uno a uno: cada `IMG_*` aparece en un solo estudio.
 - Cuando un estudio exige lateralidad y `loinc_por_lateralidad` existe, conviene usar el código del lado. `loinc` queda como término genérico o bilateral.
 
 ## Fuentes (consultadas el 2026-10-31)
@@ -127,6 +128,49 @@ No se encontró una cartera boliviana publicada estudio por estudio. Las búsque
 
 **Para revisión clínica.** Las preparaciones son orientativas. El LOINC de lateralidad no cubre todos los estudios lateralizados: 24 de 119 no tienen variante por lado en el diccionario consultado.
 
+## Enlace con los códigos `IMG_*` de la API (H0.M2)
+
+La API tiene 27 códigos `IMG_*` en `mantra-core-health-api/src/modules/clinical/clinical.concepts.ts` (conceptos `STUDY_RX_*`, `STUDY_ECO_*`, `STUDY_TC_*`, `STUDY_RM_*`, `STUDY_MAMOGRAFIA` y `STUDY_DENSITOMETRIA`). El comentario del archivo dice que siguen los grupos del Arancel de Honorarios Médicos de Santa Cruz 2025 y que solo tienen `display` en inglés. Los 27 quedaron enlazados desde `codigo_api_existente`; los dos `CAR_*` (ECG y ecocardiograma) no son `IMG_*` y no entran en esta tarea, aunque el ecocardiograma ya existe aquí como ECOCARDIO_TT.
+
+Criterios:
+- **Exacto:** el código local y el estudio describen lo mismo.
+- **Genérico, estudio nuevo:** el código local es más amplio que cualquier estudio del catálogo y LOINC tiene un término genérico real para él. Se agregaron 4 estudios genéricos (RX_MIEMBRO_SUPERIOR, RX_MIEMBRO_INFERIOR, ECO_OBSTETRICA y ECO_DOPPLER_GENERICO), con LOINC verificado y una `nota` que remite a los estudios específicos. Es mejor que forzar «RX de miembro superior» sobre «RX de mano».
+- **Genérico, más cercano:** el código local no distingue segmento o contraste y no hay término genérico útil. Se enlaza al estudio de uso más frecuente y la `nota` del estudio nombra las alternativas.
+
+| Código local | Estudio del catálogo | Criterio |
+|---|---|---|
+| IMG_RX_TORAX | RX_TORAX_PA_LAT | Exacto: la radiografía de tórax estándar es PA y lateral |
+| IMG_RX_CRANEO | RX_CRANEO_AP_LAT | Exacto |
+| IMG_RX_SENOS | RX_SENOS_PARANASALES | Exacto |
+| IMG_RX_COL_CERVICAL | RX_COLUMNA_CERVICAL_AP_LAT | Exacto |
+| IMG_RX_COL_DORSAL | RX_COLUMNA_DORSAL | Exacto |
+| IMG_RX_COL_LUMBAR | RX_COLUMNA_LUMBOSACRA_AP_LAT | Exacto: en las carteras la lumbar se pide como lumbosacra |
+| IMG_RX_ABDOMEN | RX_ABDOMEN_SIMPLE | Exacto |
+| IMG_RX_PELVIS | RX_PELVIS_AP | Exacto |
+| IMG_RX_MIEMBRO_SUP | RX_MIEMBRO_SUPERIOR | Genérico, estudio nuevo (LOINC 24689-2) |
+| IMG_RX_MIEMBRO_INF | RX_MIEMBRO_INFERIOR | Genérico, estudio nuevo (LOINC 24686-8) |
+| IMG_ECO_ABDOMINAL | ECO_ABDOMEN_COMPLETO | Exacto |
+| IMG_ECO_RENAL | ECO_RENAL_VESICAL | Exacto: el display dice «renal and urinary tract» |
+| IMG_ECO_PELVICA | ECO_PELVICA_ABDOMINAL | Exacto: la transvaginal es ECO_TRANSVAGINAL |
+| IMG_ECO_OBSTETRICA | ECO_OBSTETRICA | Genérico, estudio nuevo (LOINC 11525-3) |
+| IMG_ECO_TIROIDES | ECO_TIROIDES | Exacto |
+| IMG_ECO_MAMARIA | ECO_MAMA_BILATERAL | Exacto: la unilateral es ECO_MAMA_UNILATERAL |
+| IMG_ECO_PARTES_BLANDAS | ECO_PARTES_BLANDAS | Exacto |
+| IMG_ECO_DOPPLER | ECO_DOPPLER_GENERICO | Genérico, estudio nuevo (LOINC 93241-8) |
+| IMG_TC_CRANEO | TC_CRANEO_SIN | Más cercano: el local no distingue contraste; la TC de cráneo habitual es sin contraste |
+| IMG_TC_TORAX | TC_TORAX_SIN | Más cercano: el local no distingue contraste |
+| IMG_TC_ABDOMEN | TC_ABDOMEN_PELVIS_CON | Más cercano: el display es «abdomen and pelvis»; se eligió la variante con contraste IV por ser la de uso habitual |
+| IMG_TC_COLUMNA | TC_COLUMNA_LUMBAR | Más cercano: el local no distingue segmento |
+| IMG_RM_CEREBRAL | RM_CEREBRO_SIN | Más cercano: el local no distingue contraste |
+| IMG_RM_COLUMNA | RM_COLUMNA_LUMBAR | Más cercano: el local no distingue segmento |
+| IMG_RM_ARTICULAR | RM_RODILLA | Más cercano: el local no distingue articulación; la RM de rodilla es la articular más pedida |
+| IMG_MAMOGRAFIA | MG_CRIBADO_BILATERAL | Más cercano: el local no distingue cribado de diagnóstica |
+| IMG_DENSITOMETRIA | DXA_COLUMNA_CADERA | Exacto: la densitometría estándar es columna lumbar y cadera |
+
+`sin_equivalente`: ninguno. Los 27 códigos tienen estudio.
+
+Lo que conviene decidir al adoptar el catálogo: los 11 enlaces «más cercano» y «genérico» significan que una orden guardada hoy con ese `IMG_*` es menos específica que el estudio al que apunta. Al migrar, esas órdenes deberían conservar el nombre genérico o pedir que el médico elija el segmento, el contraste o la articulación.
+
 ## Nota para el mapeo 3D
 
 `regiones-cuerpo-3d.json` (de otro agente) dice que su lista es un borrador tentativo hasta que exista este catálogo. Varios de sus códigos tienen equivalente directo aquí:
@@ -150,4 +194,4 @@ Los demás códigos coinciden. Los códigos de región de este catálogo se cons
 
 ## Reproducibilidad
 
-Los scripts de generación (`regiones.py`, `estudios.py`, `loinc_fix.py` y `gen.py`) y las descargas (CSV RadLex, Annex L, diccionario LOINC y respuestas de tx.fhir.org) quedaron en el scratchpad de la sesión. No forman parte del repositorio.
+Los scripts de generación (`regiones.py`, `estudios.py`, `loinc_fix.py`, `api_img.py` y `gen.py`) y las descargas (CSV RadLex, Annex L, diccionario LOINC y respuestas de tx.fhir.org) quedaron en el scratchpad de la sesión. No forman parte del repositorio.
