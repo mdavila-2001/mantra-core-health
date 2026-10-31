@@ -94,10 +94,17 @@ export class LabAnalysisPicker {
   /** Estado del catálogo: carga, vacío, error con reintento. */
   readonly state = input<ViewState<null>>(ready(null));
   readonly disabled = input(false);
+  /**
+   * Análisis que el servidor encontró para la búsqueda actual (ver `filterAnalyses`).
+   * `null` = sin búsqueda en el servidor: sólo cuenta el índice local.
+   */
+  readonly serverMatches = input<ReadonlySet<string> | null>(null);
 
   readonly selection = model<LabSelection>(new Map());
   /** El médico pide reintentar la carga del catálogo (S8/S9). */
   readonly retry = output<void>();
+  /** El texto de la búsqueda ya sin rebote: quien tiene el catálogo puede preguntarle al servidor. */
+  readonly queryChange = output<string>();
 
   protected readonly viewOptions = VIEW_OPTIONS;
   protected readonly view = signal<LabPickerView>(savedView() ?? 'grid');
@@ -111,7 +118,7 @@ export class LabAnalysisPicker {
   protected readonly tokens = computed(() => queryTokens(this.query()));
 
   protected readonly hits = computed<readonly LabFilterHit[]>(() =>
-    filterAnalyses(this.analyses(), this.index(), this.query(), this.section()),
+    filterAnalyses(this.analyses(), this.index(), this.query(), this.section(), this.serverMatches()),
   );
   protected readonly shown = computed(() => this.hits().slice(0, this.limit()));
   protected readonly remaining = computed(() => Math.max(0, this.hits().length - this.limit()));
@@ -199,6 +206,7 @@ export class LabAnalysisPicker {
   protected search(value: string): void {
     this.query.set(value);
     this.limit.set(LAB_PICKER_PAGE_SIZE);
+    this.queryChange.emit(value);
   }
 
   protected pickSection(code: string | null): void {

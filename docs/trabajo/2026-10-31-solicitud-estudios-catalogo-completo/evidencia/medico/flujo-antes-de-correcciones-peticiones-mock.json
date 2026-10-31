@@ -1,0 +1,250 @@
+[
+  {
+    "fase": "preparación",
+    "method": "POST",
+    "path": "/profiles/patients/search",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "q": "Elena",
+      "limit": 25
+    },
+    "status": 200,
+    "at": "2026-10-31T13:08:30.493Z"
+  },
+  {
+    "fase": "preparación",
+    "method": "POST",
+    "path": "/clinical/encounters/check-in",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "tenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+      "primaryPractitionerId": "be0f3a66-c03e-4eac-a416-c1068238d3d2"
+    },
+    "status": 201,
+    "at": "2026-10-31T13:08:34.699Z"
+  },
+  {
+    "fase": "lab-pedir",
+    "method": "POST",
+    "path": "/clinical/service-requests/duplicate-check",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28",
+      "codeConceptId": "5ca2b458-514f-4a20-a903-30c8c2e7b078",
+      "componentConceptIds": [
+        "ed8bbde1-dd10-4137-a0fc-1f769b9df288",
+        "4229b588-b1cb-47b4-a4d8-d32c10b3087c",
+        "2b1985a5-b4b7-4507-accf-14022b4fbb1c",
+        "c345d444-ab7b-44c6-a0f0-a9022681156a",
+        "681cc57f-e9c3-473d-a53f-619eee17b08c",
+        "a52b618d-45b5-418b-a5f6-b19e463f5bc8",
+        "a05e54b8-1763-40a4-a2cf-92ec2df6af9c",
+        "c41c7596-2e83-4ab2-adf5-67dcdad24b68",
+        "1243ffd0-b196-4788-a7d2-41b8dd3ebfd8",
+        "3919a7a9-8f45-48ef-a960-e666bcb8cf88",
+        "87fca434-209c-4036-a834-5282b26017ca"
+      ]
+    },
+    "status": 200,
+    "at": "2026-10-31T13:08:53.012Z"
+  },
+  {
+    "fase": "lab-pedir",
+    "method": "POST",
+    "path": "/clinical/requisitions",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28",
+      "performerSelectionConceptId": "f65da5a1-7ec8-47d5-a41f-d65461b2eac6",
+      "items": [
+        {
+          "codeConceptId": "5ca2b458-514f-4a20-a903-30c8c2e7b078",
+          "category": "LAB",
+          "specimenTypeConceptId": "901556ac-370a-44b8-a9a0-038c37c826e4",
+          "componentConceptIds": [
+            "ed8bbde1-dd10-4137-a0fc-1f769b9df288",
+            "4229b588-b1cb-47b4-a4d8-d32c10b3087c",
+            "2b1985a5-b4b7-4507-accf-14022b4fbb1c",
+            "c345d444-ab7b-44c6-a0f0-a9022681156a",
+            "681cc57f-e9c3-473d-a53f-619eee17b08c",
+            "a52b618d-45b5-418b-a5f6-b19e463f5bc8",
+            "a05e54b8-1763-40a4-a2cf-92ec2df6af9c",
+            "c41c7596-2e83-4ab2-adf5-67dcdad24b68",
+            "1243ffd0-b196-4788-a7d2-41b8dd3ebfd8",
+            "3919a7a9-8f45-48ef-a960-e666bcb8cf88",
+            "87fca434-209c-4036-a834-5282b26017ca"
+          ]
+        }
+      ]
+    },
+    "status": 201,
+    "at": "2026-10-31T13:08:53.149Z"
+  },
+  {
+    "fase": "img-pedir",
+    "method": "POST",
+    "path": "/clinical/service-requests/duplicate-check",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28",
+      "codeConceptId": "99d59289-cb85-49f1-ac61-d8881dac4b8a",
+      "bodySiteConceptId": "6d3dd933-86d6-4475-a153-81a2617754f8",
+      "lateralityConceptId": "46a15840-8900-445a-a68a-a41a5fb1923a"
+    },
+    "status": 200,
+    "at": "2026-10-31T13:09:28.158Z"
+  },
+  {
+    "fase": "img-pedir",
+    "method": "POST",
+    "path": "/clinical/requisitions",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28",
+      "performerSelectionConceptId": "f65da5a1-7ec8-47d5-a41f-d65461b2eac6",
+      "items": [
+        {
+          "codeConceptId": "99d59289-cb85-49f1-ac61-d8881dac4b8a",
+          "category": "IMAGING",
+          "imaging": {
+            "modalityConceptId": "89f7f69e-a55c-4026-aa62-fd4885161924",
+            "bodySiteConceptId": "6d3dd933-86d6-4475-a153-81a2617754f8",
+            "lateralityConceptId": "46a15840-8900-445a-a68a-a41a5fb1923a",
+            "contrastConceptId": "1e686ae5-c0d1-4277-af76-b432ec5654cc"
+          }
+        }
+      ]
+    },
+    "status": 201,
+    "at": "2026-10-31T13:09:28.323Z"
+  },
+  {
+    "fase": "otros-cancelar-duplicado",
+    "method": "POST",
+    "path": "/clinical/service-requests/duplicate-check",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "codeConceptId": "78d44993-86b1-4575-a865-ee426a95a658",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28"
+    },
+    "status": 200,
+    "at": "2026-10-31T13:09:44.678Z"
+  },
+  {
+    "fase": "otros-pedir",
+    "method": "POST",
+    "path": "/clinical/service-requests/duplicate-check",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "codeConceptId": "78d44993-86b1-4575-a865-ee426a95a658",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28"
+    },
+    "status": 200,
+    "at": "2026-10-31T13:09:49.157Z"
+  },
+  {
+    "fase": "otros-pedir",
+    "method": "POST",
+    "path": "/clinical/service-requests",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "codeConceptId": "78d44993-86b1-4575-a865-ee426a95a658",
+      "category": "OTHER",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28",
+      "previousDiagnosticReportId": "05ed3662-645c-4b76-ac16-5154b015a938",
+      "duplicateOverrideReason": "Control evolutivo; el trazado previo no refleja el estado actual."
+    },
+    "status": 201,
+    "at": "2026-10-31T13:09:52.398Z"
+  },
+  {
+    "fase": "duplicado-reutilizar",
+    "method": "POST",
+    "path": "/clinical/service-requests/duplicate-check",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "codeConceptId": "78d44993-86b1-4575-a865-ee426a95a658",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28"
+    },
+    "status": 200,
+    "at": "2026-10-31T13:10:10.470Z"
+  },
+  {
+    "fase": "duplicado-reutilizar",
+    "method": "POST",
+    "path": "/clinical/service-requests",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "codeConceptId": "78d44993-86b1-4575-a865-ee426a95a658",
+      "category": "OTHER",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28",
+      "previousDiagnosticReportId": "05ed3662-645c-4b76-ac16-5154b015a938",
+      "reusePreviousReport": true
+    },
+    "status": 201,
+    "at": "2026-10-31T13:10:12.612Z"
+  },
+  {
+    "fase": "422",
+    "method": "POST",
+    "path": "/clinical/service-requests/duplicate-check",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28",
+      "codeConceptId": "2fdddaad-7053-4ae7-ac30-85daa5619404"
+    },
+    "status": 200,
+    "at": "2026-10-31T13:10:22.446Z"
+  },
+  {
+    "fase": "422",
+    "method": "POST",
+    "path": "/clinical/requisitions",
+    "query": "",
+    "ifMatch": null,
+    "body": {
+      "custodianTenantId": "7008ddb3-957c-4095-a68f-a9425d52b798",
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "encounterId": "00779e30-1a9a-4778-a916-8f48c4b87d28",
+      "performerSelectionConceptId": "f65da5a1-7ec8-47d5-a41f-d65461b2eac6",
+      "items": [
+        {
+          "codeConceptId": "2fdddaad-7053-4ae7-ac30-85daa5619404",
+          "category": "LAB",
+          "componentConceptIds": [
+            "ed8bbde1-dd10-4137-a0fc-1f769b9df288"
+          ]
+        }
+      ]
+    },
+    "status": 422,
+    "at": "2026-10-31T13:10:22.571Z"
+  }
+]

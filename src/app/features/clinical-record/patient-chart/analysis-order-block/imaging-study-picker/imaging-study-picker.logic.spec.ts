@@ -16,6 +16,7 @@ import {
   queryTokens,
   selectionIssues,
   serializeImaging,
+  shortModalityCode,
   withContrast,
   withLaterality,
   withRegion,
@@ -301,11 +302,26 @@ describe('imaging-study-picker.logic', () => {
     it('«RX · Mano · Izquierda · sin contraste»', () => {
       expect(describeSelection(mano({ laterality: 'IZQ' }), REGIONS, CONTRAST)).toBe('RX · Mano · Izquierda · sin contraste');
     });
+    it('no deja ver el prefijo de sistema de la modalidad (`SC_MOD_RX` se lee «RX»)', () => {
+      expect(describeSelection(mano({ modalityCode: 'SC_MOD_RX', laterality: 'IZQ' }), REGIONS, CONTRAST)).toBe(
+        'RX · Mano · Izquierda · sin contraste',
+      );
+    });
     it('omite lo que no hay', () => {
       expect(describeSelection(mano({ region: null, contrastConceptId: null }), REGIONS, CONTRAST)).toBe('RX');
       expect(describeSelection(initialSelection(TC_CRANEO, CONTRAST), REGIONS, CONTRAST)).toBe(
         'TC · Cráneo · sin y con contraste',
       );
+    });
+  });
+
+  describe('shortModalityCode', () => {
+    it('quita el prefijo del sistema y deja intacto lo demás', () => {
+      // Defecto de la corrida con navegador (31/10/2026): el desplegable mostraba «SC_MOD_RX · Mano».
+      expect(shortModalityCode('SC_MOD_RX')).toBe('RX');
+      expect(shortModalityCode('SC_MOD_DXA')).toBe('DXA');
+      expect(shortModalityCode('RX')).toBe('RX');
+      expect(shortModalityCode('')).toBe('');
     });
   });
 });

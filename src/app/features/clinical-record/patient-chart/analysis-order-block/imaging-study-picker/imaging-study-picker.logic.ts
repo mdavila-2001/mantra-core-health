@@ -168,6 +168,14 @@ export function findStudy(
 
 // ---- Regiones --------------------------------------------------------------
 
+/**
+ * El código de modalidad como se lee en pantalla: el catálogo lo da con el
+ * prefijo de su sistema (`SC_MOD_RX`) y quien pide un estudio piensa en «RX».
+ */
+export function shortModalityCode(code: string): string {
+  return code.replace(/^SC_MOD_/, '');
+}
+
 /** La región del estudio y todas las que cuelgan de ella (a cualquier profundidad). */
 export function allowedRegionsOf(study: ImagingStudyOption, regions: readonly ImagingRegionOption[]): readonly string[] {
   if (study.regionesPermitidas !== undefined && study.regionesPermitidas.length > 0) {
@@ -392,7 +400,7 @@ export function describeSelection(
   regions: readonly ImagingRegionOption[],
   contrastOptions: readonly ContrastOption[],
 ): string {
-  const parts: string[] = [selection.modalityCode];
+  const parts: string[] = [shortModalityCode(selection.modalityCode)];
   const region = regions.find((r) => r.codigo === selection.region);
   if (region !== undefined) parts.push(region.nombre);
   if (selection.laterality !== null) parts.push(LATERALITY_NAME[selection.laterality]);

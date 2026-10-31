@@ -1,0 +1,33 @@
+{
+  "detalleUltimo": [
+    {
+      "id": "6c9276ce-daba-4a6c-a077-5d5ef2fd17fa",
+      "requisitionId": "3fb9ba43-3da9-4aad-a527-68ca58013fc0",
+      "family": "IMAGING",
+      "specimenTypeConceptId": null,
+      "components": [],
+      "componentsSpecified": false,
+      "imaging": {
+        "modalityConceptId": "89f7f69e-a55c-4026-aa62-fd4885161924",
+        "bodySiteConceptId": "6d3dd933-86d6-4475-a153-81a2617754f8",
+        "lateralityConceptId": "46a15840-8900-445a-a68a-a41a5fb1923a",
+        "contrastConceptId": "1e686ae5-c0d1-4277-af76-b432ec5654cc"
+      }
+    }
+  ],
+  "ordenUltima": [
+    {
+      "id": "6c9276ce-daba-4a6c-a077-5d5ef2fd17fa",
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "codeConceptId": "99d59289-cb85-49f1-ac61-d8881dac4b8a",
+      "categoryConceptId": "882463b9-9340-4455-afa9-07bc4f749d5e",
+      "priorityConceptId": "",
+      "statusConceptId": "5717330b-4136-467f-ad05-b4d4abb6217a",
+      "requesterProfileId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+      "encounterId": "a1619399-1d75-4ec7-a846-0e4e9629aed0",
+      "reasonText": "",
+      "createdAt": "2026-10-31T13:14:04.167Z",
+      "performerSelectionConceptId": "f65da5a1-7ec8-47d5-a41f-d65461b2eac6"
+    }
+  ]
+}

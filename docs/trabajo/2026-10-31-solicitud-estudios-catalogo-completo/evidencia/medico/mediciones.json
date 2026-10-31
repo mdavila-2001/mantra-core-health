@@ -1,0 +1,8564 @@
+[
+ {
+  "label": "lab tabla (sin selección) 1440-claro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 38,
+   "menoresDe44": 37,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Buscar análisis, sinónimo o componente (",
+     "w": 712,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 71,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "25-hidroxivitamina D (D2 + D3)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Ácido úrico",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amilasa",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antiestreptolisina O (ASTO)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno de superficie de hepatitis B (H",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno prostático específico total (PS",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Baciloscopía (Ziehl-Neelsen)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Bilirrubinas (total, directa e indirecta",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Calcio total",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas parasitológico directo (microméto",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas prueba rápida",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coprocultivo",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coproparasitológico simple",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Cortisol matutino (8 a.m.)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Creatinina",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Curva de tolerancia oral a la glucosa (7",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dengue antígeno NS1",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dímero D",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Electrolitos séricos (ionograma)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Examen general de orina (físico, químico",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab tabla (hemograma marcado) 1440-claro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 31,
+   "menoresDe44": 31,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Buscar análisis, sinónimo o componente (",
+     "w": 680,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 71,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Muestra para Hemograma (sin diferencial)",
+     "w": 404,
+     "h": 40,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab lista (hemograma expandido) 1440-claro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 32,
+   "menoresDe44": 31,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Buscar análisis, sinónimo o componente (",
+     "w": 679,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 70,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Muestra para Hemograma (sin diferencial)",
+     "w": 404,
+     "h": 40,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología con 3D 1440-claro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 23,
+   "menoresDe44": 23,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 111,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 125,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Radiografía simple",
+     "w": 433,
+     "h": 40,
+     "tid": "imaging-picker-modality"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Nombre, sinónimo o proyección (p. ej. TA",
+     "w": 399,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Radiografía de mano PA y oblicua",
+     "w": 904,
+     "h": 40,
+     "tid": "imaging-picker-study"
+    },
+    {
+     "tag": "button.tree-select-trigger",
+     "txt": "Mano · Miembro superior",
+     "w": 612,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 96,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 90,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 88,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 523,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 265,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 123,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 128,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 163,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología (resumen) 1440-claro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 23,
+   "menoresDe44": 23,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 111,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 125,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Radiografía simple",
+     "w": 433,
+     "h": 40,
+     "tid": "imaging-picker-modality"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Nombre, sinónimo o proyección (p. ej. TA",
+     "w": 399,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Radiografía de mano PA y oblicua",
+     "w": 904,
+     "h": 40,
+     "tid": "imaging-picker-study"
+    },
+    {
+     "tag": "button.tree-select-trigger",
+     "txt": "Metacarpo · Miembro superior",
+     "w": 612,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 97,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 90,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 88,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 523,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 265,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 123,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 128,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 163,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "historico 1440-claro",
+  "detalles": [
+   "Leucocitos (recuento), Eritrocitos (recuento), Hemoglobina, Hematocrito y 7 más · Muestra: Sangre total (EDTA, tubo lila)",
+   "Radiografía simple · Metacarpo · Izquierda · Sin contraste"
+  ],
+  "medida": {
+   "label": "historico 1440-claro",
+   "viewport": {
+    "w": 1440,
+    "h": 1250
+   },
+   "overflowX": 0,
+   "dialog": {
+    "l": 230,
+    "r": 1210,
+    "t": 16,
+    "b": 1234,
+    "w": 980,
+    "h": 1218
+   },
+   "cardInDialog": {
+    "padL": 24,
+    "padR": 24,
+    "diff": 0,
+    "ratio": 0.951,
+    "cardW": 932,
+    "bodyW": 980
+   },
+   "formInCard": {
+    "padL": 1,
+    "padR": 1,
+    "diff": 0,
+    "ratio": 0.998
+   },
+   "pickerInForm": {
+    "padL": 0,
+    "padR": 0,
+    "ratio": 1
+   },
+   "targets": {
+    "total": 40,
+    "menoresDe44": 39,
+    "lista": [
+     {
+      "tag": "button.content-dialog__cerrar",
+      "txt": "Cerrar",
+      "w": 88,
+      "h": 40,
+      "tid": "content-dialog-close"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir análisis de laboratorio con sus co",
+      "w": 112,
+      "h": 40,
+      "tid": "segmentado-LAB"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir un estudio de imagen: modalidad, r",
+      "w": 124,
+      "h": 40,
+      "tid": "segmentado-IMAGING"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Cardiología, patología y procedimientos ",
+      "w": 71,
+      "h": 40,
+      "tid": "segmentado-OTHER"
+     },
+     {
+      "tag": "input.native-input",
+      "txt": "Buscar análisis, sinónimo o componente (",
+      "w": 712,
+      "h": 40,
+      "tid": "lab-picker"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en tarjetas con sus com",
+      "w": 71,
+      "h": 32,
+      "tid": "segmentado-grid"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en una lista, una fila ",
+      "w": 66,
+      "h": 32,
+      "tid": "segmentado-list"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "25-hidroxivitamina D (D2 + D3)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Ácido úrico",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Amilasa",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antiestreptolisina O (ASTO)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno de superficie de hepatitis B (H",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno prostático específico total (PS",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Baciloscopía (Ziehl-Neelsen)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Bilirrubinas (total, directa e indirecta",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Calcio total",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas parasitológico directo (microméto",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas prueba rápida",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coprocultivo",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coproparasitológico simple",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Cortisol matutino (8 a.m.)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Creatinina",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Curva de tolerancia oral a la glucosa (7",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dengue antígeno NS1",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dímero D",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Electrolitos séricos (ionograma)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Examen general de orina (físico, químico",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "button.select-trigger",
+      "txt": "Sin especificar",
+      "w": 904,
+      "h": 40,
+      "tid": "content-dialog"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Pedir estudios",
+      "w": 137,
+      "h": 40,
+      "tid": "content-dialog"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "label": "lab tabla (sin selección) 1440-oscuro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 38,
+   "menoresDe44": 37,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Buscar análisis, sinónimo o componente (",
+     "w": 712,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 71,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "25-hidroxivitamina D (D2 + D3)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Ácido úrico",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amilasa",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antiestreptolisina O (ASTO)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno de superficie de hepatitis B (H",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno prostático específico total (PS",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Baciloscopía (Ziehl-Neelsen)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Bilirrubinas (total, directa e indirecta",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Calcio total",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas parasitológico directo (microméto",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas prueba rápida",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coprocultivo",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coproparasitológico simple",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Cortisol matutino (8 a.m.)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Creatinina",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Curva de tolerancia oral a la glucosa (7",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dengue antígeno NS1",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dímero D",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Electrolitos séricos (ionograma)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Examen general de orina (físico, químico",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab tabla (hemograma marcado) 1440-oscuro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 31,
+   "menoresDe44": 31,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Buscar análisis, sinónimo o componente (",
+     "w": 680,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 71,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Muestra para Hemograma (sin diferencial)",
+     "w": 404,
+     "h": 40,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab lista (hemograma expandido) 1440-oscuro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 32,
+   "menoresDe44": 31,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Buscar análisis, sinónimo o componente (",
+     "w": 679,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 70,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 18,
+     "h": 40,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Muestra para Hemograma (sin diferencial)",
+     "w": 404,
+     "h": 40,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología con 3D 1440-oscuro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 24,
+   "menoresDe44": 24,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 111,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 125,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Radiografía simple",
+     "w": 433,
+     "h": 40,
+     "tid": "imaging-picker-modality"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Nombre, sinónimo o proyección (p. ej. TA",
+     "w": 367,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Radiografía de mano PA y oblicua",
+     "w": 904,
+     "h": 40,
+     "tid": "imaging-picker-study"
+    },
+    {
+     "tag": "button.tree-select-trigger",
+     "txt": "Mano · Miembro superior",
+     "w": 612,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 96,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 90,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 88,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 523,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 265,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 123,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 128,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 163,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología (resumen) 1440-oscuro",
+  "viewport": {
+   "w": 1440,
+   "h": 1250
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 230,
+   "r": 1210,
+   "t": 16,
+   "b": 1234,
+   "w": 980,
+   "h": 1218
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.951,
+   "cardW": 932,
+   "bodyW": 980
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.998
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 24,
+   "menoresDe44": 24,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 111,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 125,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Radiografía simple",
+     "w": 433,
+     "h": 40,
+     "tid": "imaging-picker-modality"
+    },
+    {
+     "tag": "input.native-input",
+     "txt": "Nombre, sinónimo o proyección (p. ej. TA",
+     "w": 367,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Radiografía de mano PA y oblicua",
+     "w": 904,
+     "h": 40,
+     "tid": "imaging-picker-study"
+    },
+    {
+     "tag": "button.tree-select-trigger",
+     "txt": "Metacarpo · Miembro superior",
+     "w": 612,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 97,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 90,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 88,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 523,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 265,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 123,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 128,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 163,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.select-trigger",
+     "txt": "Sin especificar",
+     "w": 904,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Pedir estudios",
+     "w": 137,
+     "h": 40,
+     "tid": "content-dialog"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "historico 1440-oscuro",
+  "detalles": [
+   "Leucocitos (recuento), Eritrocitos (recuento), Hemoglobina, Hematocrito y 7 más · Muestra: Sangre total (EDTA, tubo lila)",
+   "Radiografía simple · Metacarpo · Izquierda · Sin contraste"
+  ],
+  "medida": {
+   "label": "historico 1440-oscuro",
+   "viewport": {
+    "w": 1440,
+    "h": 1250
+   },
+   "overflowX": 0,
+   "dialog": {
+    "l": 230,
+    "r": 1210,
+    "t": 16,
+    "b": 1234,
+    "w": 980,
+    "h": 1218
+   },
+   "cardInDialog": {
+    "padL": 24,
+    "padR": 24,
+    "diff": 0,
+    "ratio": 0.951,
+    "cardW": 932,
+    "bodyW": 980
+   },
+   "formInCard": {
+    "padL": 1,
+    "padR": 1,
+    "diff": 0,
+    "ratio": 0.998
+   },
+   "pickerInForm": {
+    "padL": 0,
+    "padR": 0,
+    "ratio": 1
+   },
+   "targets": {
+    "total": 40,
+    "menoresDe44": 39,
+    "lista": [
+     {
+      "tag": "button.content-dialog__cerrar",
+      "txt": "Cerrar",
+      "w": 88,
+      "h": 40,
+      "tid": "content-dialog-close"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir análisis de laboratorio con sus co",
+      "w": 112,
+      "h": 40,
+      "tid": "segmentado-LAB"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir un estudio de imagen: modalidad, r",
+      "w": 124,
+      "h": 40,
+      "tid": "segmentado-IMAGING"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Cardiología, patología y procedimientos ",
+      "w": 71,
+      "h": 40,
+      "tid": "segmentado-OTHER"
+     },
+     {
+      "tag": "input.native-input",
+      "txt": "Buscar análisis, sinónimo o componente (",
+      "w": 712,
+      "h": 40,
+      "tid": "lab-picker"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en tarjetas con sus com",
+      "w": 71,
+      "h": 32,
+      "tid": "segmentado-grid"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en una lista, una fila ",
+      "w": 66,
+      "h": 32,
+      "tid": "segmentado-list"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "25-hidroxivitamina D (D2 + D3)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Ácido úrico",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Amilasa",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antiestreptolisina O (ASTO)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno de superficie de hepatitis B (H",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno prostático específico total (PS",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Baciloscopía (Ziehl-Neelsen)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Bilirrubinas (total, directa e indirecta",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Calcio total",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas parasitológico directo (microméto",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas prueba rápida",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coprocultivo",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coproparasitológico simple",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Cortisol matutino (8 a.m.)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Creatinina",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Curva de tolerancia oral a la glucosa (7",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dengue antígeno NS1",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dímero D",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Electrolitos séricos (ionograma)",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Examen general de orina (físico, químico",
+      "w": 18,
+      "h": 40,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "button.select-trigger",
+      "txt": "Sin especificar",
+      "w": 904,
+      "h": 40,
+      "tid": "content-dialog"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Pedir estudios",
+      "w": 137,
+      "h": 40,
+      "tid": "content-dialog"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "label": "lab tabla (sin selección) 390-claro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 38,
+   "menoresDe44": 34,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "25-hidroxivitamina D (D2 + D3)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Ácido úrico",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amilasa",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antiestreptolisina O (ASTO)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno de superficie de hepatitis B (H",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno prostático específico total (PS",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Baciloscopía (Ziehl-Neelsen)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Bilirrubinas (total, directa e indirecta",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Calcio total",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas parasitológico directo (microméto",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas prueba rápida",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coprocultivo",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coproparasitológico simple",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Cortisol matutino (8 a.m.)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Creatinina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Curva de tolerancia oral a la glucosa (7",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dengue antígeno NS1",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dímero D",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Electrolitos séricos (ionograma)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Examen general de orina (físico, químico",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab tabla (hemograma marcado) 390-claro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 31,
+   "menoresDe44": 27,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab lista (hemograma expandido) 390-claro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 32,
+   "menoresDe44": 27,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología con 3D 390-claro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 24,
+   "menoresDe44": 18,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 304,
+     "h": 36,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 287,
+     "h": 36,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología (resumen) 390-claro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 24,
+   "menoresDe44": 18,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "imaging-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 304,
+     "h": 36,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 287,
+     "h": 36,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab tabla (sin selección) 390-oscuro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 38,
+   "menoresDe44": 34,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "25-hidroxivitamina D (D2 + D3)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Ácido úrico",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amilasa",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antiestreptolisina O (ASTO)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno de superficie de hepatitis B (H",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno prostático específico total (PS",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Baciloscopía (Ziehl-Neelsen)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Bilirrubinas (total, directa e indirecta",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Calcio total",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas parasitológico directo (microméto",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas prueba rápida",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coprocultivo",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coproparasitológico simple",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Cortisol matutino (8 a.m.)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Creatinina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Curva de tolerancia oral a la glucosa (7",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dengue antígeno NS1",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dímero D",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Electrolitos séricos (ionograma)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Examen general de orina (físico, químico",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab tabla (hemograma marcado) 390-oscuro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 31,
+   "menoresDe44": 27,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab lista (hemograma expandido) 390-oscuro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 32,
+   "menoresDe44": 27,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 52,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología con 3D 390-oscuro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 23,
+   "menoresDe44": 17,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 304,
+     "h": 36,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 287,
+     "h": 36,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab tabla (sin selección) 768-claro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 38,
+   "menoresDe44": 34,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 71,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "25-hidroxivitamina D (D2 + D3)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Ácido úrico",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amilasa",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antiestreptolisina O (ASTO)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno de superficie de hepatitis B (H",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno prostático específico total (PS",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Baciloscopía (Ziehl-Neelsen)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Bilirrubinas (total, directa e indirecta",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Calcio total",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas parasitológico directo (microméto",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas prueba rápida",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coprocultivo",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coproparasitológico simple",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Cortisol matutino (8 a.m.)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Creatinina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Curva de tolerancia oral a la glucosa (7",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dengue antígeno NS1",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dímero D",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Electrolitos séricos (ionograma)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Examen general de orina (físico, químico",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab tabla (hemograma marcado) 768-claro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 31,
+   "menoresDe44": 27,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 71,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab lista (hemograma expandido) 768-claro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 32,
+   "menoresDe44": 27,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 70,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología con 3D 768-claro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 23,
+   "menoresDe44": 17,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 111,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 125,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 96,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 90,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 88,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 523,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 265,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 123,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 128,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 163,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología (resumen) 768-claro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 23,
+   "menoresDe44": 17,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 111,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 125,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 97,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 90,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 88,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 523,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 265,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 123,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 128,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 163,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "historico 768-claro",
+  "detalles": [
+   "Leucocitos (recuento), Eritrocitos (recuento), Hemoglobina, Hematocrito y 7 más · Muestra: Sangre total (EDTA, tubo lila)",
+   "Radiografía simple · Metacarpo · Izquierda · Sin contraste"
+  ],
+  "medida": {
+   "label": "historico 768-claro",
+   "viewport": {
+    "w": 768,
+    "h": 1024
+   },
+   "overflowX": 0,
+   "dialog": {
+    "l": 62,
+    "r": 706,
+    "t": 16,
+    "b": 1008,
+    "w": 644,
+    "h": 992
+   },
+   "cardInDialog": {
+    "padL": 24,
+    "padR": 24,
+    "diff": 0,
+    "ratio": 0.925,
+    "cardW": 596,
+    "bodyW": 644
+   },
+   "formInCard": {
+    "padL": 1,
+    "padR": 1,
+    "diff": 0,
+    "ratio": 0.997
+   },
+   "pickerInForm": {
+    "padL": 0,
+    "padR": 0,
+    "ratio": 1
+   },
+   "targets": {
+    "total": 40,
+    "menoresDe44": 36,
+    "lista": [
+     {
+      "tag": "button.content-dialog__cerrar",
+      "txt": "Cerrar",
+      "w": 88,
+      "h": 40,
+      "tid": "content-dialog-close"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir análisis de laboratorio con sus co",
+      "w": 112,
+      "h": 40,
+      "tid": "segmentado-LAB"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir un estudio de imagen: modalidad, r",
+      "w": 124,
+      "h": 40,
+      "tid": "segmentado-IMAGING"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Cardiología, patología y procedimientos ",
+      "w": 71,
+      "h": 40,
+      "tid": "segmentado-OTHER"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en tarjetas con sus com",
+      "w": 71,
+      "h": 32,
+      "tid": "segmentado-grid"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en una lista, una fila ",
+      "w": 66,
+      "h": 32,
+      "tid": "segmentado-list"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "25-hidroxivitamina D (D2 + D3)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Ácido úrico",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Amilasa",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antiestreptolisina O (ASTO)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno de superficie de hepatitis B (H",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno prostático específico total (PS",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Baciloscopía (Ziehl-Neelsen)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Bilirrubinas (total, directa e indirecta",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Calcio total",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas parasitológico directo (microméto",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas prueba rápida",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coprocultivo",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coproparasitológico simple",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Cortisol matutino (8 a.m.)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Creatinina",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Curva de tolerancia oral a la glucosa (7",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dengue antígeno NS1",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dímero D",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Electrolitos séricos (ionograma)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Examen general de orina (físico, químico",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "label": "lab tabla (sin selección) 768-oscuro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 38,
+   "menoresDe44": 34,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 71,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "25-hidroxivitamina D (D2 + D3)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Ácido úrico",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amilasa",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antiestreptolisina O (ASTO)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno de superficie de hepatitis B (H",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Antígeno prostático específico total (PS",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Baciloscopía (Ziehl-Neelsen)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Bilirrubinas (total, directa e indirecta",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Calcio total",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas parasitológico directo (microméto",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Chagas prueba rápida",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coprocultivo",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Coproparasitológico simple",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Cortisol matutino (8 a.m.)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Creatinina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Curva de tolerancia oral a la glucosa (7",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dengue antígeno NS1",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Dímero D",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Electrolitos séricos (ionograma)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Examen general de orina (físico, químico",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab tabla (hemograma marcado) 768-oscuro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 31,
+   "menoresDe44": 27,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 71,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "lab lista (hemograma expandido) 768-oscuro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 32,
+   "menoresDe44": 27,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 112,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 124,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Limpiar búsqueda",
+     "w": 32,
+     "h": 40,
+     "tid": "lab-picker"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en tarjetas con sus com",
+     "w": 70,
+     "h": 32,
+     "tid": "segmentado-grid"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Ver los análisis en una lista, una fila ",
+     "w": 66,
+     "h": 32,
+     "tid": "segmentado-list"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma (sin diferencial)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Leucocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Eritrocitos (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hematocrito",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen corpuscular medio (VCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemoglobina corpuscular media (HCM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Concentración de hemoglobina corpuscular",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución eritrocitaria (",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetas (recuento)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Volumen plaquetario medio (VPM)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Amplitud de distribución plaquetaria (PD",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Plaquetocrito (PCT)",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-component"
+    },
+    {
+     "tag": "label.checkbox-container",
+     "txt": "Hemograma completo (con fórmula leucocit",
+     "w": 22,
+     "h": 44,
+     "tid": "lab-picker-parent"
+    },
+    {
+     "tag": "button.chip__remove",
+     "txt": "Quitar Hemograma (sin diferencial)",
+     "w": 24,
+     "h": 24,
+     "tid": "lab-picker-chosen"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología con 3D 768-oscuro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 23,
+   "menoresDe44": 17,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 111,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 125,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 96,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 90,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 88,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 523,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 265,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 123,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 128,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 163,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "imagenología (resumen) 768-oscuro",
+  "viewport": {
+   "w": 768,
+   "h": 1024
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 62,
+   "r": 706,
+   "t": 16,
+   "b": 1008,
+   "w": 644,
+   "h": 992
+  },
+  "cardInDialog": {
+   "padL": 24,
+   "padR": 24,
+   "diff": 0,
+   "ratio": 0.925,
+   "cardW": 596,
+   "bodyW": 644
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.997
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 23,
+   "menoresDe44": 17,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 111,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 125,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 71,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 97,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 90,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 88,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 523,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 265,
+     "h": 15,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 123,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 128,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 163,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "historico 768-oscuro",
+  "detalles": [
+   "Leucocitos (recuento), Eritrocitos (recuento), Hemoglobina, Hematocrito y 7 más · Muestra: Sangre total (EDTA, tubo lila)",
+   "Radiografía simple · Metacarpo · Izquierda · Sin contraste"
+  ],
+  "medida": {
+   "label": "historico 768-oscuro",
+   "viewport": {
+    "w": 768,
+    "h": 1024
+   },
+   "overflowX": 0,
+   "dialog": {
+    "l": 62,
+    "r": 706,
+    "t": 16,
+    "b": 1008,
+    "w": 644,
+    "h": 992
+   },
+   "cardInDialog": {
+    "padL": 24,
+    "padR": 24,
+    "diff": 0,
+    "ratio": 0.925,
+    "cardW": 596,
+    "bodyW": 644
+   },
+   "formInCard": {
+    "padL": 1,
+    "padR": 1,
+    "diff": 0,
+    "ratio": 0.997
+   },
+   "pickerInForm": {
+    "padL": 0,
+    "padR": 0,
+    "ratio": 1
+   },
+   "targets": {
+    "total": 40,
+    "menoresDe44": 36,
+    "lista": [
+     {
+      "tag": "button.content-dialog__cerrar",
+      "txt": "Cerrar",
+      "w": 88,
+      "h": 40,
+      "tid": "content-dialog-close"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir análisis de laboratorio con sus co",
+      "w": 112,
+      "h": 40,
+      "tid": "segmentado-LAB"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir un estudio de imagen: modalidad, r",
+      "w": 124,
+      "h": 40,
+      "tid": "segmentado-IMAGING"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Cardiología, patología y procedimientos ",
+      "w": 71,
+      "h": 40,
+      "tid": "segmentado-OTHER"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en tarjetas con sus com",
+      "w": 71,
+      "h": 32,
+      "tid": "segmentado-grid"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en una lista, una fila ",
+      "w": 66,
+      "h": 32,
+      "tid": "segmentado-list"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "25-hidroxivitamina D (D2 + D3)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Ácido úrico",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Amilasa",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antiestreptolisina O (ASTO)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno de superficie de hepatitis B (H",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno prostático específico total (PS",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Baciloscopía (Ziehl-Neelsen)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Bilirrubinas (total, directa e indirecta",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Calcio total",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas parasitológico directo (microméto",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas prueba rápida",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coprocultivo",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coproparasitológico simple",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Cortisol matutino (8 a.m.)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Creatinina",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Curva de tolerancia oral a la glucosa (7",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dengue antígeno NS1",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dímero D",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Electrolitos séricos (ionograma)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Examen general de orina (físico, químico",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "label": "clic 3D 390-claro",
+  "centroideManoIzq": {
+   "x": 307.9489361702128,
+   "y": 669.7948936170212,
+   "verdes": 1175
+  }
+ },
+ {
+  "label": "historico 390-claro",
+  "detalles": [
+   "Leucocitos (recuento), Eritrocitos (recuento), Hemoglobina, Hematocrito y 7 más · Muestra: Sangre total (EDTA, tubo lila)",
+   "Radiografía simple · Metacarpo · Izquierda · Sin contraste"
+  ],
+  "medida": {
+   "label": "historico 390-claro",
+   "viewport": {
+    "w": 390,
+    "h": 844
+   },
+   "overflowX": 0,
+   "dialog": {
+    "l": 16,
+    "r": 374,
+    "t": 16,
+    "b": 828,
+    "w": 358,
+    "h": 812
+   },
+   "cardInDialog": {
+    "padL": 20,
+    "padR": 20,
+    "diff": 0,
+    "ratio": 0.888,
+    "cardW": 318,
+    "bodyW": 358
+   },
+   "formInCard": {
+    "padL": 1,
+    "padR": 1,
+    "diff": 0,
+    "ratio": 0.994
+   },
+   "pickerInForm": {
+    "padL": 0,
+    "padR": 0,
+    "ratio": 1
+   },
+   "targets": {
+    "total": 40,
+    "menoresDe44": 36,
+    "lista": [
+     {
+      "tag": "button.content-dialog__cerrar",
+      "txt": "Cerrar",
+      "w": 88,
+      "h": 40,
+      "tid": "content-dialog-close"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir análisis de laboratorio con sus co",
+      "w": 101,
+      "h": 40,
+      "tid": "segmentado-LAB"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir un estudio de imagen: modalidad, r",
+      "w": 101,
+      "h": 40,
+      "tid": "segmentado-IMAGING"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Cardiología, patología y procedimientos ",
+      "w": 101,
+      "h": 40,
+      "tid": "segmentado-OTHER"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en tarjetas con sus com",
+      "w": 52,
+      "h": 32,
+      "tid": "segmentado-grid"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en una lista, una fila ",
+      "w": 52,
+      "h": 32,
+      "tid": "segmentado-list"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "25-hidroxivitamina D (D2 + D3)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Ácido úrico",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Amilasa",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antiestreptolisina O (ASTO)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno de superficie de hepatitis B (H",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno prostático específico total (PS",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Baciloscopía (Ziehl-Neelsen)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Bilirrubinas (total, directa e indirecta",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Calcio total",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas parasitológico directo (microméto",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas prueba rápida",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coprocultivo",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coproparasitológico simple",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Cortisol matutino (8 a.m.)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Creatinina",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Curva de tolerancia oral a la glucosa (7",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dengue antígeno NS1",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dímero D",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Electrolitos séricos (ionograma)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Examen general de orina (físico, químico",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "label": "clic 3D 390-oscuro",
+  "centroideManoIzq": {
+   "x": 307.9549319727891,
+   "y": 669.8248299319728,
+   "verdes": 1176
+  }
+ },
+ {
+  "label": "imagenología (resumen) 390-oscuro",
+  "viewport": {
+   "w": 390,
+   "h": 844
+  },
+  "overflowX": 0,
+  "dialog": {
+   "l": 16,
+   "r": 374,
+   "t": 16,
+   "b": 828,
+   "w": 358,
+   "h": 812
+  },
+  "cardInDialog": {
+   "padL": 20,
+   "padR": 20,
+   "diff": 0,
+   "ratio": 0.888,
+   "cardW": 318,
+   "bodyW": 358
+  },
+  "formInCard": {
+   "padL": 1,
+   "padR": 1,
+   "diff": 0,
+   "ratio": 0.994
+  },
+  "pickerInForm": {
+   "padL": 0,
+   "padR": 0,
+   "ratio": 1
+  },
+  "targets": {
+   "total": 23,
+   "menoresDe44": 17,
+   "lista": [
+    {
+     "tag": "button.content-dialog__cerrar",
+     "txt": "Cerrar",
+     "w": 88,
+     "h": 40,
+     "tid": "content-dialog-close"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir análisis de laboratorio con sus co",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-LAB"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Pedir un estudio de imagen: modalidad, r",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-IMAGING"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Cardiología, patología y procedimientos ",
+     "w": 101,
+     "h": 40,
+     "tid": "segmentado-OTHER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Izquierda",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-IZQ"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Derecha",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-DER"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Bilateral",
+     "w": 101,
+     "h": 32,
+     "tid": "segmentado-BIL"
+    },
+    {
+     "tag": "a",
+     "txt": "Modelo 3D: BodyParts3D, © The Database C",
+     "w": 304,
+     "h": 36,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "a",
+     "txt": "Ontologías UBERON y FMA, licencia CC BY ",
+     "w": 287,
+     "h": 36,
+     "tid": "body-region-atribucion"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-sin"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Con contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-con"
+    },
+    {
+     "tag": "button.segmentado__opcion",
+     "txt": "Sin y con contraste",
+     "w": 122,
+     "h": 32,
+     "tid": "segmentado-sin_y_con"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    },
+    {
+     "tag": "button.btn",
+     "txt": "Consentimiento informado",
+     "w": 183,
+     "h": 40,
+     "tid": "study-consent"
+    }
+   ]
+  }
+ },
+ {
+  "label": "historico 390-oscuro",
+  "detalles": [
+   "Leucocitos (recuento), Eritrocitos (recuento), Hemoglobina, Hematocrito y 7 más · Muestra: Sangre total (EDTA, tubo lila)",
+   "Radiografía simple · Metacarpo · Izquierda · Sin contraste"
+  ],
+  "medida": {
+   "label": "historico 390-oscuro",
+   "viewport": {
+    "w": 390,
+    "h": 844
+   },
+   "overflowX": 0,
+   "dialog": {
+    "l": 16,
+    "r": 374,
+    "t": 16,
+    "b": 828,
+    "w": 358,
+    "h": 812
+   },
+   "cardInDialog": {
+    "padL": 20,
+    "padR": 20,
+    "diff": 0,
+    "ratio": 0.888,
+    "cardW": 318,
+    "bodyW": 358
+   },
+   "formInCard": {
+    "padL": 1,
+    "padR": 1,
+    "diff": 0,
+    "ratio": 0.994
+   },
+   "pickerInForm": {
+    "padL": 0,
+    "padR": 0,
+    "ratio": 1
+   },
+   "targets": {
+    "total": 40,
+    "menoresDe44": 36,
+    "lista": [
+     {
+      "tag": "button.content-dialog__cerrar",
+      "txt": "Cerrar",
+      "w": 88,
+      "h": 40,
+      "tid": "content-dialog-close"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir análisis de laboratorio con sus co",
+      "w": 101,
+      "h": 40,
+      "tid": "segmentado-LAB"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Pedir un estudio de imagen: modalidad, r",
+      "w": 101,
+      "h": 40,
+      "tid": "segmentado-IMAGING"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Cardiología, patología y procedimientos ",
+      "w": 101,
+      "h": 40,
+      "tid": "segmentado-OTHER"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en tarjetas con sus com",
+      "w": 52,
+      "h": 32,
+      "tid": "segmentado-grid"
+     },
+     {
+      "tag": "button.segmentado__opcion",
+      "txt": "Ver los análisis en una lista, una fila ",
+      "w": 52,
+      "h": 32,
+      "tid": "segmentado-list"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "25-hidroxivitamina D (D2 + D3)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Ácido úrico",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Amilasa",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Anticuerpos contra hepatitis C (anti-VHC",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antiestreptolisina O (ASTO)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno de superficie de hepatitis B (H",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Antígeno prostático específico total (PS",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Baciloscopía (Ziehl-Neelsen)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Bilirrubinas (total, directa e indirecta",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Calcio total",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas (Trypanosoma cruzi) anticuerpos p",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas parasitológico directo (microméto",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Chagas prueba rápida",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coprocultivo",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Coproparasitológico simple",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Cortisol matutino (8 a.m.)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Creatinina",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Curva de tolerancia oral a la glucosa (7",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dengue antígeno NS1",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Dímero D",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Electrolitos séricos (ionograma)",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "label.checkbox-container",
+      "txt": "Examen general de orina (físico, químico",
+      "w": 22,
+      "h": 44,
+      "tid": "lab-picker-parent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     },
+     {
+      "tag": "button.btn",
+      "txt": "Consentimiento informado",
+      "w": 183,
+      "h": 40,
+      "tid": "study-consent"
+     }
+    ]
+   }
+  }
+ }
+]

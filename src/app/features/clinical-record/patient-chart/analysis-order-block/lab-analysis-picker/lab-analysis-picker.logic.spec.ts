@@ -90,6 +90,28 @@ describe('lab-analysis-picker.logic', () => {
       expect(ids('colesterol', 'HEMATO')).toEqual([]);
     });
 
+    it('suma los análisis que el servidor encontró aunque sus componentes aún no estén cargados', () => {
+      // Defecto de la corrida con navegador (31/10/2026): el listado no trae componentes,
+      // así que «hemoglobina» no encontraba el hemograma hasta haberlo marcado.
+      const sinComponentes: readonly LabAnalysisOption[] = CATALOG.map((a) => ({ ...a, components: [] }));
+      const indice = buildSearchIndex(sinComponentes);
+      const idsDe = (q: string, servidor?: ReadonlySet<string> | null): string[] =>
+        filterAnalyses(sinComponentes, indice, q, null, servidor).map((h) => h.analysis.conceptId);
+      expect(idsDe('hemoglobina')).toEqual([]);
+      expect(idsDe('hemoglobina', null)).toEqual([]);
+      expect(idsDe('hemoglobina', new Set(['a-cbc']))).toEqual(['a-cbc']);
+      // lo local no se pierde y el orden del catálogo se conserva
+      expect(idsDe('glucosa', new Set(['a-lip']))).toEqual(['a-glu']);
+      expect(idsDe('hemoglobina', new Set(['a-lip', 'a-cbc']))).toEqual(['a-cbc', 'a-lip']);
+    });
+
+    it('un análisis del servidor igual respeta el filtro de sección', () => {
+      const sinComponentes: readonly LabAnalysisOption[] = CATALOG.map((a) => ({ ...a, components: [] }));
+      const indice = buildSearchIndex(sinComponentes);
+      const hits = filterAnalyses(sinComponentes, indice, 'hemoglobina', 'QUIM', new Set(['a-cbc']));
+      expect(hits).toEqual([]);
+    });
+
     it('cuenta análisis por sección', () => {
       expect(Object.fromEntries(countBySection(CATALOG))).toEqual({ HEMATO: 1, QUIM: 2 });
     });

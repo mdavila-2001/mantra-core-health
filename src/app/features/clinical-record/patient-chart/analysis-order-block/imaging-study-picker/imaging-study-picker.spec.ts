@@ -157,6 +157,18 @@ describe('ImagingStudyPicker', () => {
     expect(root.querySelector('[role="radiogroup"]')).toBeNull();
   });
 
+  it('no muestra el prefijo de sistema de la modalidad en las descripciones (`SC_MOD_RX` se lee «RX»)', async () => {
+    // Defecto de la corrida con navegador (31/10/2026): el desplegable decía «SC_MOD_RF · Rodilla».
+    await mount();
+    host.modalities.set(fourteen().map((m, i) => (i === 0 ? { ...m, codigo: 'SC_MOD_RX' } : m)));
+    host.studies.set(STUDIES.map((s) => (s.modalidad === 'RX' ? { ...s, modalidad: 'SC_MOD_RX' } : s)));
+    await settle();
+    expect(modalitySelect().options()[1]!.description).toBe('RX · 3 estudios');
+    const descriptions = studySelect().options().map((o) => o.description ?? '');
+    expect(descriptions.some((d) => d.includes('SC_MOD_'))).toBe(false);
+    expect(descriptions.some((d) => d.startsWith('RX · '))).toBe(true);
+  });
+
   it('con pocas modalidades las muestra en un radiogroup con nombre', async () => {
     await mount();
     host.modalities.set(MODALITIES);

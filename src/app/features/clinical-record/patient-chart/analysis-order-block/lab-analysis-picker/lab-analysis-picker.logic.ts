@@ -179,12 +179,19 @@ const NO_MATCHES: ReadonlySet<string> = new Set();
  * Cada palabra de la búsqueda debe aparecer en el análisis **o** en alguno de
  * sus componentes (el hemograma aparece al escribir «hemoglobina»). Orden del
  * catálogo; sin búsqueda ni sección devuelve todo.
+ *
+ * `serverMatches` son los análisis que el catálogo del servidor dio por buenos
+ * para la misma búsqueda. Hacen falta porque el listado no trae los
+ * componentes (llegan con el detalle, al marcar un análisis): sin ellos, buscar
+ * «hemoglobina» no encontraba el hemograma hasta haberlo marcado. Se suman a lo
+ * que el índice local ya encuentra; nunca lo reemplazan.
  */
 export function filterAnalyses(
   analyses: readonly LabAnalysisOption[],
   index: LabSearchIndex,
   query: string,
   section: string | null,
+  serverMatches?: ReadonlySet<string> | null,
 ): readonly LabFilterHit[] {
   const tokens = queryTokens(query);
   const hits: LabFilterHit[] = [];
@@ -219,6 +226,8 @@ export function filterAnalyses(
 
     if (everyTokenFound) {
       hits.push({ analysis, matchedComponentIds: matchedComponents, matchedAnalysis: ownMatches });
+    } else if (serverMatches?.has(analysis.conceptId) === true) {
+      hits.push({ analysis, matchedComponentIds: NO_MATCHES, matchedAnalysis: false });
     }
   }
   return hits;

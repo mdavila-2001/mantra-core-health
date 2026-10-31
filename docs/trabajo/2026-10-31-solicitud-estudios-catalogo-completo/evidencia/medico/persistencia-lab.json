@@ -1,0 +1,73 @@
+{
+  "ordenes": [
+    {
+      "id": "54a98477-132b-4e4d-a3b2-98b69a8df794",
+      "patientProfileId": "90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec",
+      "codeConceptId": "5ca2b458-514f-4a20-a903-30c8c2e7b078",
+      "categoryConceptId": "595ea128-8c47-4550-aebd-6928aa24db78",
+      "priorityConceptId": "",
+      "statusConceptId": "5717330b-4136-467f-ad05-b4d4abb6217a",
+      "requesterProfileId": "be0f3a66-c03e-4eac-a416-c1068238d3d2",
+      "encounterId": "a1619399-1d75-4ec7-a846-0e4e9629aed0",
+      "reasonText": "",
+      "createdAt": "2026-10-31T13:13:29.823Z",
+      "performerSelectionConceptId": "f65da5a1-7ec8-47d5-a41f-d65461b2eac6"
+    }
+  ],
+  "detalle": [
+    {
+      "id": "54a98477-132b-4e4d-a3b2-98b69a8df794",
+      "requisitionId": "631dcc4c-3aa7-4e6e-ab43-9ba24843919a",
+      "family": "LAB",
+      "specimenTypeConceptId": "901556ac-370a-44b8-a9a0-038c37c826e4",
+      "components": [
+        {
+          "conceptId": "ed8bbde1-dd10-4137-a0fc-1f769b9df288",
+          "ordinal": 1
+        },
+        {
+          "conceptId": "4229b588-b1cb-47b4-a4d8-d32c10b3087c",
+          "ordinal": 2
+        },
+        {
+          "conceptId": "2b1985a5-b4b7-4507-accf-14022b4fbb1c",
+          "ordinal": 3
+        },
+        {
+          "conceptId": "c345d444-ab7b-44c6-a0f0-a9022681156a",
+          "ordinal": 4
+        },
+        {
+          "conceptId": "681cc57f-e9c3-473d-a53f-619eee17b08c",
+          "ordinal": 5
+        },
+        {
+          "conceptId": "a52b618d-45b5-418b-a5f6-b19e463f5bc8",
+          "ordinal": 6
+        },
+        {
+          "conceptId": "a05e54b8-1763-40a4-a2cf-92ec2df6af9c",
+          "ordinal": 7
+        },
+        {
+          "conceptId": "c41c7596-2e83-4ab2-adf5-67dcdad24b68",
+          "ordinal": 8
+        },
+        {
+          "conceptId": "1243ffd0-b196-4788-a7d2-41b8dd3ebfd8",
+          "ordinal": 9
+        },
+        {
+          "conceptId": "3919a7a9-8f45-48ef-a960-e666bcb8cf88",
+          "ordinal": 10
+        },
+        {
+          "conceptId": "87fca434-209c-4036-a834-5282b26017ca",
+          "ordinal": 11
+        }
+      ],
+      "componentsSpecified": true,
+      "imaging": null
+    }
+  ]
+}

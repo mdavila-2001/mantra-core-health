@@ -25,6 +25,7 @@ import { ViewStateHost } from '../../../../../shared/components/organisms/view-s
 import {
   allowedContrastKinds,
   allowedRegionsOf,
+  shortModalityCode,
   buildStudyIndex,
   CONTRAST_FALLBACK_LABEL,
   CONTRAST_KINDS,
@@ -157,7 +158,7 @@ export class ImagingStudyPicker {
       ...this.modalities().map((m) => ({
         value: m.codigo,
         label: m.nombre,
-        description: `${m.codigo} · ${counts.get(m.codigo) ?? 0} estudios`,
+        description: `${shortModalityCode(m.codigo)} · ${counts.get(m.codigo) ?? 0} estudios`,
       })),
     ];
   });
@@ -168,7 +169,7 @@ export class ImagingStudyPicker {
     const toOption = (s: ImagingStudyOption): SelectOption<string> => ({
       value: s.conceptId,
       label: s.nombre,
-      description: `${s.modalidad} · ${names.get(s.region) ?? s.region}`,
+      description: `${shortModalityCode(s.modalidad)} · ${names.get(s.region) ?? s.region}`,
     });
     const options = this.hits().map(toOption);
     const chosen = this.study();

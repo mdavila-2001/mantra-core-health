@@ -1,0 +1,30 @@
+[
+  {
+    "k": "console.debug",
+    "t": "---- Application did not stabilize within 9 seconds ----"
+  },
+  {
+    "k": "console.startGroup",
+    "t": "PendingTasks keeping application unstable:"
+  },
+  {
+    "k": "console.debug",
+    "t": "Error: Task stack tracking error\n    at DebugTaskTrackerImpl.add (http://localhost:4200/chunk-FB4F46CK.js:24992:32)\n    at _PendingTasksInternal.add (http://localhost:4200/chunk-FB4F46CK.js:4999:28)\n    at _PendingTasks.add (http://localhost:4200/chunk-FB4F46CK.js:5509:46)\n    at triggerResourceLoading (http://localhost:4200/chunk-FB4F46CK.js:17342:49)\n    at triggerDeferBlock (http://localhost:42"
+  },
+  {
+    "k": "console.endGroup",
+    "t": "console.groupEnd"
+  },
+  {
+    "k": "console.warning",
+    "t": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "k": "console.warning",
+    "t": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "k": "console.warning",
+    "t": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  }
+]

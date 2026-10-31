@@ -65,7 +65,9 @@
             [specimens]="catalog.specimens()"
             [state]="catalog.labState()"
             [disabled]="pidiendo() || flow.busy()"
+            [serverMatches]="catalog.labMatches()"
             [(selection)]="labSelection"
+            (queryChange)="catalog.searchLab($event)"
             (retry)="reintentarCatalogo('LAB')"
             data-testid="estudios-laboratorio"
           />

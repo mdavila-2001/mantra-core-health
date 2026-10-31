@@ -47,6 +47,14 @@ export class StudyOrderCatalog {
   /** Detalle en vuelo o fallido, por estudio. */
   readonly detailStatus = signal<ReadonlyMap<string, DetailStatus>>(new Map());
 
+  /**
+   * Análisis que el servidor da por buenos para la búsqueda en curso, o `null`
+   * sin búsqueda. El listado no trae los componentes, así que «hemoglobina»
+   * sólo se encuentra en el hemograma preguntándole al servidor.
+   */
+  readonly labMatches = signal<ReadonlySet<string> | null>(null);
+  private labSearchSeq = 0;
+
   private readonly started = new Set<string>();
 
   readonly labAnalyses = computed(() =>
@@ -92,6 +100,28 @@ export class StudyOrderCatalog {
       error: (error: unknown) => {
         this.started.delete(type);
         state.set(errorToViewState<null>(error));
+      },
+    });
+  }
+
+  /**
+   * Busca análisis en el servidor (`q`: nombre, sinónimo, código o componente).
+   * Una respuesta que llega tarde, cuando ya se escribió otra cosa, se descarta;
+   * un fallo deja la búsqueda local, que sigue funcionando sola.
+   */
+  searchLab(query: string): void {
+    const text = query.trim();
+    const seq = ++this.labSearchSeq;
+    if (text.length < 2) {
+      this.labMatches.set(null);
+      return;
+    }
+    this.client.list({ family: 'LAB', q: text, limit: PAGE }).subscribe({
+      next: (page) => {
+        if (seq === this.labSearchSeq) this.labMatches.set(new Set(page.items.map((i) => i.conceptId)));
+      },
+      error: () => {
+        if (seq === this.labSearchSeq) this.labMatches.set(null);
       },
     });
   }

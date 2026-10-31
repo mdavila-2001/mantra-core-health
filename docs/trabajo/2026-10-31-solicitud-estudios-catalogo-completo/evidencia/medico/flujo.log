@@ -1,0 +1,73 @@
+paciente (perfil) 90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec
+órdenes en el simulador antes: 0  detalles: 0
+
+=== 1. Laboratorio
+buscar «hemoglobina»: 5 análisis encontrados | ["Examen general de orina (físico, químico y sedimento)","Hemoglobina glicosilada (HbA1c)","Hemograma (sin diferencial)","Hemograma completo (con fórmula leucocitaria)","Recuento de reticulocitos"]
+buscar «hemograma»: 2 análisis encontrados | ["Hemograma (sin diferencial)","Hemograma completo (con fórmula leucocitaria)"]
+padre antes de marcar {"checked":false,"indeterminate":false,"disabled":false}
+padre tras marcar (esperado tri-estado: 11 de 13 por defecto) {"checked":true,"indeterminate":true,"disabled":false} | 1 análisis · 11 componentes
+vista Lista: padre {"checked":true,"indeterminate":true,"disabled":false} | contador del renglón 11/13 ▸
+Lista: desmarco «Hemoglobina» -> padre {"checked":true,"indeterminate":true,"disabled":false} | 1 análisis · 10 componentes
+de vuelta en Tabla: Hemoglobina marcada = false | 1 análisis · 10 componentes
+todos desmarcados: padre {"checked":false,"indeterminate":false,"disabled":false} | 0 análisis · 0 componentes
+estudios-panel-vacio visible = true Advertencia: Marque al menos un componente de: Hemograma (sin diferencial). Un panel sin componentes no se puede pedir.
+botón «Pedir estudios» deshabilitado = true
+volver a marcar: padre {"checked":true,"indeterminate":true,"disabled":false} | 1 análisis · 11 componentes | pedir deshabilitado = false
+PETICIONES: ["POST /clinical/service-requests/duplicate-check -> 200","POST /clinical/requisitions -> 201"]
+toast: ["Queda pedido y va a verlo acá abajo con su resultado."]
+cuerpo requisición: {"custodianTenantId":"7008ddb3-957c-4095-a68f-a9425d52b798","patientProfileId":"90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec","encounterId":"a1619399-1d75-4ec7-a846-0e4e9629aed0","performerSelectionConceptId":"f65da5a1-7ec8-47d5-a41f-d65461b2eac6","items":[{"codeConceptId":"5ca2b458-514f-4a20-a903-30c8c2e7b078","category":"LAB","specimenTypeConceptId":"901556ac-370a-44b8-a9a0-038c37c826e4","componentConceptIds":["ed8bbde1-dd10-4137-a0fc-1f769b9df288","4229b588-b1cb-47b4-a4d8-d32c10b3087c","2b1985a5-b4b7-4507-accf-14022b4fbb1c","c345d444-ab7b-44c6-a0f0-a9022681156a","681cc57f-e9c3-473d-a53f-619eee17b08c","a52b618d-45b5-418b-a5f6-b19e463f5bc8","a05e54b8-1763-40a4-a2cf-92ec2df6af9c","c41c7596-2e83-4ab2-adf5-67dcdad24b68","1243ffd0-b196-4788-a7d2-41b8dd3ebfd8","3919a7a9-8f45-48ef-a960-e666bcb8cf88","87fca434-209c-4036-a834-5282b26017ca"]}]}
+persistencia (sessionStorage mock.clinica.ordenes): + 1 renglón(es); detalle + 1
+tras RECARGA url: http://localhost:4200/medical-records/90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec/consultation
+histórico tras recarga (primeros 700): Estudios pedidos / Hemograma completo / Laboratorio / Sin consentimiento / Completado / Resultado listo / Consentimiento informado / Perfil lipidico / Laboratorio / Sin consentimiento / Completado / Resultado listo / Consentimiento informado / Electrocardiograma / Procedimiento / Sin consentimiento / Completado / Resultado listo / Consentimiento informado / Ecografía abdominal (incluye hígado, vía biliar, vesícula, páncreas, riñones, bazo, retroperitoneo y grandes vasos) / Imagenología / Sin consentimiento / Pendiente / Sin resultado todavía / Consentimiento informado / Hemograma (sin diferencial) / Laboratorio / Sin consentimiento / Leucocitos (recuento), Eritrocitos (recuento), Hemoglobina
+histórico contiene detalle «Leucocitos» y «Muestra» = true true
+
+=== 2. Imagenología
+modalidades (descripciones): ["Todas las modalidades66 estudios","Radiología con contraste / fluoroscopiaRF · 2 estudios","Angiografía e intervencionismo guiado por rayos XXA · 1 estudios","Densitometría ósea (DXA)DXA · 1 estudios"]
+inicio: select de región = Región del cuerpo Mano · Miembro superior | viva = Región: Mano.
+canvas {"x":256,"y":573,"width":928,"height":464} data-status = null
+CLIC REAL en canvas (1040,759) = mano izquierda del paciente -> select = Región del cuerpo Metacarpo · Miembro superior | viva = Región: Metacarpo, izquierda.
+lado (segmentado «Lado del paciente») marcado = ["Izquierda"]
+regiones permitidas en el select: ["Miembro superior11HombroPlexo braquialsin modelo 3DBrazoCodoAntebrazoMuñecaManoMetacarpoDedos de la manoArterias del miembro superiorsin modelo 3DVenas del miembro superiorsin modelo 3D","Hombro","Plexo braquialsin modelo 3D","Brazo","Codo","Antebrazo","Muñeca","Mano","Metacarpo","Dedos de la mano","Arterias del miembro superiorsin modelo 3D","Venas del miembro superiorsin modelo 3D"]
+select cambiado a «Dedos de la mano» -> select = Región del cuerpo Dedos de la mano · Miembro superior | viva = Región: Dedos de la mano, izquierda.
+canvas B vs C: bytes iguales = false | A vs B iguales = false
+lado tras tocar «Izquierda»: ["aria-checked=\"true\" tabindex=\"0\"><!--container-->"]
+contraste (RX): [{"t":"Sin contraste","dis":false,"on":"true"},{"t":"Con contraste","dis":true,"on":"false"},{"t":"Sin y con contraste","dis":true,"on":"false"}] | El contraste lo define el estudio elegido.
+resumen: Radiografía de mano PA y oblicua: RX · Dedos de la mano · Izquierda · sin contraste
+pedir deshabilitado = false
+PETICIONES: ["POST /clinical/service-requests/duplicate-check -> 200","POST /clinical/requisitions -> 201"]
+cuerpo requisición imagen: {"custodianTenantId":"7008ddb3-957c-4095-a68f-a9425d52b798","patientProfileId":"90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec","encounterId":"a1619399-1d75-4ec7-a846-0e4e9629aed0","performerSelectionConceptId":"f65da5a1-7ec8-47d5-a41f-d65461b2eac6","items":[{"codeConceptId":"99d59289-cb85-49f1-ac61-d8881dac4b8a","category":"IMAGING","imaging":{"modalityConceptId":"89f7f69e-a55c-4026-aa62-fd4885161924","bodySiteConceptId":"6d3dd933-86d6-4475-a153-81a2617754f8","lateralityConceptId":"46a15840-8900-445a-a68a-a41a5fb1923a","contrastConceptId":"1e686ae5-c0d1-4277-af76-b432ec5654cc"}}]}
+toast: ["Queda pedido y va a verlo acá abajo con su resultado."]
+histórico imagen tras recarga (entrada de la RX): Radiografía de mano PA y oblicua / Imagenología / Sin consentimiento / Radiografía simple · Dedos de la mano · Izquierda · Sin contraste / Pendiente / Sin resultado todavía / Consentimiento informado
+
+=== 3. Otros (ECG)
+opciones: ["ElectrocardiogramaEstudio cardiológico"]
+botón: Pedir estudio deshabilitado = false
+el ECG ya estaba pedido en el histórico -> aparece el aviso de duplicado: Ya hay un Electrocardiograma reciente Laboratorio Central lo informó el 25 oct 2026 (hace 6 días). Cerrar Estudio Electrocardiograma Realizado 25 oct 2026 Prestador Laboratorio Central Resultado Resultados disponibles Información: El informe está en otra organización. Si necesita leerlo, dígale a la persona paciente que lo comparta desde su portal. Es clínicamente necesario repetir el estudio hoy Cancelar Consultar y reutilizar resultados existentes Confirmar prescripción justificada
+tras «Cancelar» en el aviso: escrituras = [] | modal abierto = true
+PETICIONES: ["POST /clinical/service-requests/duplicate-check -> 200","POST /clinical/service-requests -> 201"]
+cuerpo: [{"patientProfileId":"90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec","codeConceptId":"78d44993-86b1-4575-a865-ee426a95a658","encounterId":"a1619399-1d75-4ec7-a846-0e4e9629aed0"},{"custodianTenantId":"7008ddb3-957c-4095-a68f-a9425d52b798","patientProfileId":"90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec","codeConceptId":"78d44993-86b1-4575-a865-ee426a95a658","category":"OTHER","encounterId":"a1619399-1d75-4ec7-a846-0e4e9629aed0","previousDiagnosticReportId":"05ed3662-645c-4b76-ac16-5154b015a938","duplicateOverrideReason":"Control evolutivo; el trazado previo no refleja el estado actual."}]
+toast: ["Queda pedido con su justificación; la aseguradora la va a ver."]
+
+=== 4. Cerrar con selección pendiente
+diálogos abiertos: ["Pedir un análisis Se registra en el encuentro en curso de Elena María Guzmán Arauz. Cerrar Laboratorio e imagenología Sin formulario médico en esta cita: se registra igual, sin asociarlo a ninguna respuesta. Tipo de estudio Laboratorio Imagenología Otros Buscar análisis o componente Tabla Lista Todas (52) LAB (51) BIOQ (1) 1 análisis encontrado Perfil lipídico Perfil lip ídico Colesterol total Colesterol total mg/dL Triglicéridos Triglicéridos mg/dL Colesterol HDL Colesterol HDL mg/dL Colesterol LDL (calculado) Colesterol LDL (calculado) mg/dL Colesterol VLDL (calculado) Colesterol VLDL (calculado) mg/dL Colesterol no-HDL Colesterol no-HDL mg/dL Índice colesterol total/HDL (Castelli) Índice colesterol total/HDL (Castelli) {ratio} Índice LDL/HDL Índice LDL/HDL {ratio} Lo que va a pedir 1 análisis · 6 componentes Perfil lipídico 6 de 8 componentes Suero (tubo rojo o amarillo con gel separador) Prioridad Sin especificar Opcional. Según su criterio clínico. Quién realiza el procedimiento Que elija el paciente Lo hago yo No tiene una sede activa que publique este procedimiento con precio En este centro Ningún centro publica este procedimiento con precio Es una recomendación. Su paciente puede elegir otro lugar. Advertencia: Con «Que elija el paciente» la orden no llega a ninguna bandeja de laboratorio o imagen hasta que la persona elija dónde hacerse el estudio. Elija un centro si quiere que lo reciba ya. Pedir estudios Estudios pedidos Hemograma completo Laboratorio Sin consentimiento Completado Resultado listo Consentimiento informado Perfil lipidico Laboratorio Sin consentimiento Completado Resultado listo Consentimiento informado Electrocardiograma Procedimiento Sin consentimiento Completado Resultado listo Consentimiento informado Ecografía abdominal (incluye hígado, vía biliar, vesícula, páncreas, riñones, bazo, retroperitoneo y grandes vasos) Imagenología Sin consentimiento Pendiente Sin resultado todavía Consentimiento informado Hemograma (sin diferencial) Laboratorio Sin consentimiento Leucocitos (recuento), Eritrocitos (recuento), Hemoglobina, Hematocrito y 7 más · Muestra: Sangre total (EDTA, tubo lila) Pendiente Sin resultado todavía Consentimiento informado Radiografía de mano PA y oblicua Imagenología Sin consentimiento Radiografía simple · Dedos de la mano · Izquierda · Sin contraste Pendiente Sin resultado todavía Consentimiento informado Electrocardiograma Otro Sin consentimiento Pendiente Repetida con justificación «Control evolutivo; el trazado previo no refleja el estado actual.» Consentimiento informado","¿Descartar lo escrito? Todavía no se registró. Si cierra, lo que cargó en este formulario se pierde. Seguir escribiendo Descartar"]
+«Seguir escribiendo»: el modal sigue abierto = true | marcados = 1 análisis · 6 componentes
+«Descartar»: el modal sigue abierto = false
+peticiones de escritura al descartar: 0
+al reabrir: contador = Todavía no eligió ningún análisis
+
+=== 5a. Duplicado: reutilizar resultados
+aviso de duplicado visible = true
+PETICIONES: ["POST /clinical/service-requests/duplicate-check -> 200","POST /clinical/service-requests -> 201"]
+cuerpo: [{"custodianTenantId":"7008ddb3-957c-4095-a68f-a9425d52b798","patientProfileId":"90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec","codeConceptId":"78d44993-86b1-4575-a865-ee426a95a658","category":"OTHER","encounterId":"a1619399-1d75-4ec7-a846-0e4e9629aed0","previousDiagnosticReportId":"05ed3662-645c-4b76-ac16-5154b015a938","reusePreviousReport":true}]
+toast: ["Quedó registrado como cubierto por el informe previo. No se pide un estudio nuevo."]
+
+=== 5b. 422 del servidor simulado
+window.ng disponible = function
+manipulación del estado del componente: {"ok":true,"ajeno":"ed8bbde1-dd10-4137-a0fc-1f769b9df288"}
+PETICIONES: ["POST /clinical/service-requests/duplicate-check -> 200","POST /clinical/requisitions -> 422"]
+cuerpo: [{"custodianTenantId":"7008ddb3-957c-4095-a68f-a9425d52b798","patientProfileId":"90c2c0a4-8255-4cc8-a9ea-a0a4386cd9ec","encounterId":"a1619399-1d75-4ec7-a846-0e4e9629aed0","performerSelectionConceptId":"f65da5a1-7ec8-47d5-a41f-d65461b2eac6","items":[{"codeConceptId":"2fdddaad-7053-4ae7-ac30-85daa5619404","category":"LAB","componentConceptIds":["ed8bbde1-dd10-4137-a0fc-1f769b9df288"]}]}]
+alerta por renglón visible = 1 ["Error: Perfil lipídico (componente ajeno): uno de los componentes no pertenece a este panel."] | estudios-error: []
+órdenes en el simulador antes/después del 422: 852 852
+
+órdenes en el simulador al final (nuevas respecto del inicio): 852
+consola/red (sin NG0505/modo desarrollo): ["console.warning: NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all th","console.warning: NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all th","console.warning: [.WebGL-0x26bc01611800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels","console.warning: [.WebGL-0x26bc01611800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels","console.warning: [.WebGL-0x26bc01611800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels","console.warning: [.WebGL-0x26bc01611800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)","console.warning: NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all th","console.warning: NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all th","console.warning: NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all th","console.error: [API] POST /clinical/requisitions → 422 · PRECONDITION_FAILED · «Un componente no pertenece al panel pedido» {status: 422, code: PRECONDITION_FAILED, message: U"]
