@@ -10,7 +10,6 @@ import { AlertCard } from '../../components/alert-card';
 import { InsightCard } from '../../components/insight-card';
 import { KpiCard } from '../../components/kpi-card';
 import { Panel } from '../../components/panel';
-import { StatTile } from '../../components/stat-tile';
 import { bucketLabel, milestonesOn } from '../../domain/campaign-analysis';
 import { formatChange, formatValue } from '../../domain/format';
 import {
@@ -74,7 +73,7 @@ function side(a: KpiAssessment, label: string, good: 'up' | 'neutral'): SideFigu
  */
 @Component({
   selector: 'app-insights-home',
-  imports: [ViewStateHost, Panel, KpiCard, StatTile, LineChart, AlertCard, InsightCard, RouterLink],
+  imports: [ViewStateHost, Panel, KpiCard, LineChart, AlertCard, InsightCard, RouterLink],
   templateUrl: './home-page.html',
   styleUrl: './home-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
