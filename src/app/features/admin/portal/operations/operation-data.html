@@ -1,36 +1,68 @@
 @let op = operation();
+@let s = summary();
 
-<section class="data" aria-label="Datos que toca la operación" data-testid="portal-operation-data">
-  <h3 class="data__title">Tablas</h3>
+<section class="data" aria-label="Tablas que afecta la operación" data-testid="portal-operation-data">
   @if (op.datos.length > 0) {
-    <ul class="data__tables">
-      @for (row of op.datos; track $index) {
-        <li class="data__table">
-          <span class="data__table-head">
-            <app-badge size="sm" [variant]="effect(row.operacion).tone">{{ effect(row.operacion).label }}</app-badge>
-            <a app-link class="data__name" [routerLink]="tableUrl()(row.schema, row.tabla)">
-              {{ row.schema }}.{{ row.tabla }}
-            </a>
-            <app-badge size="sm" [variant]="confidence(row.confianza).tone">
-              Confianza: {{ confidence(row.confianza).label }}
-            </app-badge>
-            @if (!row.catalogada) {
-              <app-badge size="sm" variant="warning">No está en el catálogo</app-badge>
+    <p class="data__headline" data-testid="portal-operation-tables-count">{{ headline() }}</p>
+    <p class="data__muted">
+      Cada tabla trae el camino por el que se llega (vía), dónde está el acceso (fuente) y con qué
+      confianza lo determinó el generador. Una tabla leída y escrita aparece en los dos grupos.
+    </p>
+
+    @for (group of s.groups; track group.effect) {
+      <h3 class="data__title">
+        <app-badge size="sm" [variant]="effect(group.effect).tone">{{ effect(group.effect).label }}</app-badge>
+        <span>{{ group.tables.length === 1 ? '1 tabla' : group.tables.length + ' tablas' }}</span>
+      </h3>
+      <ul class="data__tables" [attr.data-testid]="'portal-operation-tables-' + group.effect">
+        @for (t of group.tables; track t.qualified) {
+          <li class="data__table">
+            <span class="data__table-head">
+              <a app-link class="data__name" [routerLink]="tableUrl()(t.schema, t.table)">{{ t.qualified }}</a>
+              @for (c of t.confidences; track c) {
+                <app-badge size="sm" [variant]="confidence(c).tone">Confianza: {{ confidence(c).label }}</app-badge>
+              }
+              @if (!t.catalogued) {
+                <app-badge size="sm" variant="warning">No está en el catálogo</app-badge>
+              }
+            </span>
+            @if (t.details.length > 0) {
+              <span class="data__muted">{{ t.details.join(' · ') }}</span>
             }
-          </span>
-          @if (row.detalle) {
-            <span class="data__muted">{{ row.detalle }}</span>
-          }
-          @if (row.via.length > 0) {
-            <span class="data__source">Vía {{ row.via.join(' → ') }}</span>
-          }
-        </li>
-      }
-    </ul>
+            <dl class="data__facts">
+              <dt>Vía</dt>
+              <dd>
+                @if (t.paths.length > 0) {
+                  @for (path of t.paths; track $index) {
+                    <span class="data__source">{{ path.join(' → ') }}</span>
+                  }
+                } @else {
+                  <span class="data__muted">Sin dato</span>
+                }
+              </dd>
+              <dt>Fuente</dt>
+              <dd>
+                @if (t.sources.length > 0) {
+                  @for (src of t.sources; track src) {
+                    <span class="data__source">{{ src }}</span>
+                  }
+                } @else {
+                  <span class="data__muted">Sin dato</span>
+                }
+              </dd>
+            </dl>
+          </li>
+        }
+      </ul>
+    }
   } @else if (op.sinTablas) {
-    <p class="data__muted">No toca tablas: {{ op.sinTablas }}</p>
+    <p class="data__empty" data-testid="portal-operation-tables-empty">
+      <strong>No toca tablas.</strong> Motivo que anotó el inventario: {{ op.sinTablas }}
+    </p>
   } @else {
-    <p class="data__muted">El inventario no encontró tablas que toque.</p>
+    <p class="data__empty" data-testid="portal-operation-tables-empty">
+      <strong>Sin dato.</strong> La API no derivó tablas para esta operación ni anotó por qué.
+    </p>
   }
 
   <h3 class="data__title">Eventos que emite</h3>
