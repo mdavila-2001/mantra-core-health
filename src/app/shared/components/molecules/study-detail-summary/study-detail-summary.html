@@ -1,0 +1,11 @@
+@if (summary(); as line) {
+  <span class="study-summary__line" data-testid="study-summary-line">{{ line }}</span>
+}
+@if (rows().length > 0) {
+  <app-card-detail-panel
+    class="study-summary__panel"
+    [heading]="heading()"
+    [rows]="rows()"
+    [triggerLabel]="triggerLabel()"
+  />
+}

@@ -162,3 +162,10 @@ export { Toast } from './toast/toast';
 export { ToastService } from './toast/toast.service';
 export { TOAST_DEFAULT_DURATION_MS, TOAST_TYPE_LABEL } from './toast/toast.types';
 export type { ToastInput, ToastMessage, ToastType } from './toast/toast.types';
+
+export { StudyDetailSummary } from './study-detail-summary/study-detail-summary';
+export {
+  FULL_STUDY_TEXT,
+  studyDetailRows,
+} from './study-detail-summary/study-detail-summary.logic';
+export type { StudyDetailInput } from './study-detail-summary/study-detail-summary.logic';
