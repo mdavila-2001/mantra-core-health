@@ -29,8 +29,8 @@
                 <span class="ins__num">{{ m.number }}</span>
                 {{ m.label }}
               </span>
-              @if (m.id === 'alerts' && alertCount > 0) {
-                <span class="ins__badge" [attr.aria-label]="alertCount + ' alertas abiertas'">{{ alertCount }}</span>
+              @if (m.id === 'alerts' && alertCount() > 0) {
+                <span class="ins__badge" [attr.aria-label]="alertCount() + ' alertas abiertas'">{{ alertCount() }}</span>
               }
             </a>
           </li>
@@ -76,8 +76,8 @@
         <a class="ins__alerts" [routerLink]="[base, 'alerts']" [queryParams]="query()">
           <app-nav-icon name="bell" />
           <span>Alertas</span>
-          @if (alertCount > 0) {
-            <span class="ins__badge">{{ alertCount }}</span>
+          @if (alertCount() > 0) {
+            <span class="ins__badge">{{ alertCount() }}</span>
           }
         </a>
       </div>
@@ -95,7 +95,7 @@
     </main>
   </div>
 
-  <app-ins-tabbar [query]="query()" [alerts]="alertCount" (more)="drawer.set(true)" />
+  <app-ins-tabbar [query]="query()" [alerts]="alertCount()" (more)="drawer.set(true)" />
 </div>
 <app-ins-palette [open]="palette()" (closed)="palette.set(false)" />
 <app-ins-glossary [open]="glossary()" (closed)="glossary.set(false)" />

@@ -198,7 +198,7 @@ export function registrarInsightsWorkspace(router: MockRouter): void {
     const denied = guard(req);
     if (denied) return denied;
     const body = req.body as PutSavedViewBody | null;
-    if (!body?.name?.trim() || !body.url?.startsWith('/insights')) return validation('La vista necesita nombre y una dirección de Insights.', [{ field: 'name', message: 'obligatorio' }]);
+    if (!body?.name?.trim() || !(body.url === '/insights' || body.url?.startsWith('/insights/') || body.url?.startsWith('/insights?'))) return validation('La vista necesita nombre y una dirección de Insights.', [{ field: 'name', message: 'obligatorio' }]);
     const views = read<InsightsSavedView[]>(`${who(req)}:views`, []);
     const id = req.params['id'] ?? '';
     if (views.some((v) => v.id !== id && v.name.toLowerCase() === body.name.trim().toLowerCase())) return conflictName();
