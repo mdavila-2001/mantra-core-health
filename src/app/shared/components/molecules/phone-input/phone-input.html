@@ -6,6 +6,7 @@
   inputMode="numeric"
   autocomplete="tel-national"
   [value]="texto()"
+  [inputFilter]="filtro"
   (valueChange)="alEscribir($event)"
   (blurred)="alSalir()"
   [placeholder]="placeholderEfectivo()"
