@@ -21,6 +21,7 @@ import {
 } from '../mock-session';
 import { Coleccion, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { servicios, serviciosPublicadosDe } from './practice.handlers';
+import { mergeTransfer, transferProblem, type SimulatedTransfer } from './referral-transfer.rules';
 
 /* ============================================================================
     Derivaciones (`/referrals`, módulo `clinical_ext` de la API).
@@ -129,6 +130,8 @@ interface SimulatedReferral {
   readonly counterReferralText?: string | null;
   readonly counterReferralAt?: string | null;
   readonly informedConsentId?: string | null;
+  // v4274 — el traslado, anidado como viaja (`referral-transfer.rules.ts`).
+  readonly transfer?: SimulatedTransfer | null;
 }
 
 interface TargetService {
@@ -261,6 +264,13 @@ export const referralList = new Coleccion<SimulatedReferral>([
     requestedServiceText: 'Interconsulta con cardiología por dolor torácico atípico',
     diagnosisText: 'Dolor torácico no especificado (R07.4)',
     clinicalSummary: 'Dolor punzante intermitente de 2 semanas, no relacionado con esfuerzo. ECG en reposo normal.',
+    // En camino: es la que la Dra. Rojas recibe y en la que registra la llegada.
+    transfer: {
+      required: true, transportMode: 'AMBULANCE_ADVANCED', transportDetail: 'Unidad 12 · placa 3456-KTR',
+      escortProfessionalName: 'Lic. Ana Suárez', escortProfessionalRole: 'Enfermería', departureCondition: 'UNSTABLE',
+      vitals: { recordedAt: iso(-1, 8), systolicBp: 96, diastolicBp: 60, heartRate: 112, oxygenSaturation: 93 },
+      receiverContacted: true, receiverContactName: 'Guardia de cardiología', departedAt: iso(-1, 9),
+    },
   },
   {
     // Fuera de la plataforma: la contrarreferencia la transcribe quien escribe la historia.
@@ -325,6 +335,7 @@ export function view(r: SimulatedReferral) {
     status: STATUS_BY_CONCEPT[r.statusConceptId] ?? null,
     targetTenantName: tenant === null ? null : (TENANT_NAMES[tenant] ?? null),
     targetBranchName: branch?.name ?? null,
+    transfer: r.transfer ?? null,
   };
 }
 
@@ -462,6 +473,7 @@ export function registerReferrals(router: MockRouter): void {
       clinicalSummary: string;
       treatmentGivenText: string;
       informedConsentId: string;
+      transfer: SimulatedTransfer;
     }>(request);
     if (body.patientProfileId === undefined) {
       return validation('Falta el paciente.', [{ message: 'Falta el paciente.' }]);
@@ -506,6 +518,9 @@ export function registerReferrals(router: MockRouter): void {
         { message: 'El motivo admite hasta 1000 caracteres.' },
       ]);
     }
+    const transfer = body.transfer === undefined ? null : mergeTransfer(null, body.transfer);
+    const transferError = transfer === null ? null : transferProblem(transfer);
+    if (transferError !== null) return transferError;
     const branch = filled(body.targetBranchId) ? BRANCHES[body.targetBranchId] : undefined;
     if (filled(body.targetBranchId) && branch === undefined) {
       return referralError(404, 'NOT_FOUND', 'REFERRAL_TARGET_BRANCH_NOT_FOUND', 'Sede no encontrada', {
@@ -567,6 +582,7 @@ export function registerReferrals(router: MockRouter): void {
       diagnosisText: body.diagnosisText ?? null,
       clinicalSummary: body.clinicalSummary ?? null,
       treatmentGivenText: body.treatmentGivenText ?? null,
+      transfer,
     });
 
     return { status: 201, body: view(created) };

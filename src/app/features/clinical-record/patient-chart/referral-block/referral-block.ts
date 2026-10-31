@@ -23,6 +23,7 @@ import {
   ReferralsClient,
 } from '../../../../core/data-access/referrals/referrals.client';
 import { referralErrorDetail } from '../../../../core/data-access/referrals/referrals.errors';
+import { transferIssues } from '../../../../core/data-access/referrals/referral-transfer.types';
 import {
   REFERRAL_LIMITS,
   REFERRAL_TYPES_WITH_CONSENT,
@@ -51,6 +52,8 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
@@ -62,6 +65,8 @@ import { patientConsents } from '../informed-consent/patient-consents';
 import {
   buildNewReferral,
   DEFAULT_REFERRAL_TYPE,
+  isConflict,
+  referralTabLabels,
   REFERRAL_TYPE_OPTIONS,
   SERVICE_EXAMPLE,
   serviceOptions as toServiceOptions,
@@ -72,6 +77,8 @@ import {
 } from './referral-block.model';
 import { ReferralDetail } from './referral-detail';
 import { referralDetailState } from './referral-detail-state';
+import { ReferralTransferForm } from './referral-transfer-form';
+import { emptyTransferDraft, transferFromDraft, type TransferDraft } from './referral-transfer.model';
 
 /** El motivo cabe en el aviso de la persona: el servidor lo corta a este largo. */
 const REASON_MAX_LENGTH = 500;
@@ -82,15 +89,7 @@ const REASON_MAX_LENGTH = 500;
  * organización médica, por **un servicio concreto** de su catálogo («tipo
  * tratamiento», pedido del cliente, 28/10/2026).
  *
- * ```html
- * <app-referral-block
- *   [patientProfileId]="id"
- *   [encounterId]="encuentroActual()"
- *   [referrals]="referrals.state()"
- *   (cambio)="referrals.reload()"
- *   (retry)="referrals.reload()"
- * />
- * ```
+ * Uso: `<app-referral-block [patientProfileId] [encounterId] [referrals] (cambio) (retry) />`.
  *
  * ## El recorrido
  *
@@ -123,12 +122,12 @@ const REASON_MAX_LENGTH = 500;
  * rreferir y anular. Emitida una que lo pide, el detalle se abre solo con el
  * consentimiento dirigido; el vínculo lo escribe la API (`informedConsentId`).
  *
- * ## Por qué pasa de 300 líneas
+ * ## v4274: traslado
  *
- * Es un solo flujo —buscar, elegir servicio, derivar, ver lo derivado— y lo
- * traducible ya vive aparte (`referral-block.model.ts`). Partirlo en piezas
- * obligaría a pasar entre ellas el destino elegido y el estado del envío, que
- * es justamente lo que el bloque coordina. Un tercio son comentarios.
+ * UNA tarjeta con dos pestañas: «Derivación» y «Traslado»
+ * (`app-referral-transfer-form`). El borrador del traslado vive acá porque
+ * `app-tab` no dibuja el panel cerrado. Lo traducible vive aparte
+ * (`referral-block.model.ts`, `referral-transfer.model.ts`).
  */
 @Component({
   selector: 'app-referral-block',
@@ -148,7 +147,10 @@ const REASON_MAX_LENGTH = 500;
     ReferralDetail,
     SegmentedControl,
     Select,
+    ReferralTransferForm,
     StatusSeal,
+    Tab,
+    Tabs,
     Textarea,
     ViewStateHost,
   ],
@@ -271,6 +273,17 @@ export class ReferralBlock {
     () => this.referralType() !== null && this.selectedService() === null,
   );
 
+  /* -- El traslado (pestaña 2) -------------------------------------------- */
+
+  protected readonly tab = signal(0);
+  protected readonly transferDraft = signal<TransferDraft>(emptyTransferDraft());
+  protected readonly transferProblems = computed(() => transferIssues(transferFromDraft(this.transferDraft())));
+
+  /** El rótulo de cada pestaña, con «falta algo» después de intentar derivar. */
+  protected readonly tabLabels = computed(() =>
+    referralTabLabels(this.attempted(), this.issues().length === 0, this.transferProblems().length === 0),
+  );
+
   /** Se intentó enviar: desde ahí los errores se muestran junto a cada campo. */
   protected readonly attempted = signal(false);
   protected readonly issues = computed<readonly ReferralIssue[]>(() => referralIssues(this.body() ?? {}));
@@ -322,6 +335,7 @@ export class ReferralBlock {
           treatmentGiven: this.treatmentGiven(),
           reason: this.reason(),
           validUntil: this.validUntil(),
+          transfer: this.transferDraft().required ? transferFromDraft(this.transferDraft()) : null,
         });
   });
 
@@ -516,8 +530,10 @@ export class ReferralBlock {
     const body = this.body();
     if (!this.canSubmit() || body === null) return;
     this.attempted.set(true);
-    if (this.issues().length > 0) {
-      // Los errores ya están junto a cada campo; el resumen va arriba.
+    if (this.issues().length > 0 || this.transferProblems().length > 0) {
+      // Los errores ya están junto a cada campo; el resumen va arriba, y se
+      // abre la primera pestaña que tiene algo que corregir.
+      this.tab.set(this.issues().length > 0 ? 0 : 1);
       return;
     }
     const targetName =
@@ -576,15 +592,8 @@ export class ReferralBlock {
     this.clinicalSummary.set('');
     this.diagnosis.set('');
     this.treatmentGiven.set('');
+    this.transferDraft.set(emptyTransferDraft());
+    this.tab.set(0);
     this.attempted.set(false);
   }
-}
-
-function isConflict(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    (error as { status: unknown }).status === 409
-  );
 }
