@@ -1,0 +1,303 @@
+/* Selector de análisis de laboratorio. Ancho completo del contenedor; las
+   columnas se reparten por el ANCHO DEL PROPIO SELECTOR (container query), no
+   por el de la ventana: dentro de un modal o de una tarjeta la ventana miente.
+   1 columna, 2 desde 780 px, 3 desde 1120 px (composition-rules §5). */
+
+:host {
+  display: block;
+  inline-size: 100%;
+  container-type: inline-size;
+}
+
+.lab {
+  display: grid;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  margin-inline: auto;
+  min-inline-size: 0;
+}
+
+.lab__cargando {
+  padding: var(--sp-4);
+  color: var(--text-secondary);
+}
+
+.lab__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.lab__buscador {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+/* Las 20 secciones corren en una sola línea con scroll horizontal: no se comen
+   la pantalla y cada chip sigue siendo enfocable. */
+.lab__secciones {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  padding-block-end: var(--sp-1);
+  scrollbar-width: thin;
+}
+
+.lab__secciones > * {
+  flex: 0 0 auto;
+}
+
+.lab__resultados {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* ---- Vista tabla: rejilla de tarjetas -------------------------------------- */
+
+.lab__rejilla,
+.lab__lista,
+.lab__componentes,
+.lab__elegidos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lab__rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+@container (min-width: 780px) {
+  .lab__rejilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 1120px) {
+  .lab__rejilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.lab__tarjeta,
+.lab__item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-ctrl);
+  min-inline-size: 0;
+  /* Sólo se pinta lo que está a la vista: con cientos de tarjetas el costo de
+     layout deja de crecer con la lista. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 12rem;
+}
+
+.lab__tarjeta.is-elegido,
+.lab__item.is-elegido {
+  border-color: var(--brand-primary);
+  background: var(--st-primary-bg);
+}
+
+.lab__cabecera,
+.lab__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 44px;
+  padding-inline: var(--sp-3);
+}
+
+.lab__cabecera {
+  border-block-end: 1px solid var(--border-default);
+}
+
+.lab__componentes {
+  display: grid;
+  padding-block: var(--sp-1);
+}
+
+.lab__componentes--lista {
+  padding-inline-start: var(--sp-6);
+  border-block-start: 1px solid var(--border-default);
+}
+
+@container (min-width: 780px) {
+  .lab__componentes--lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.lab__texto {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.lab__texto--titulo {
+  font-weight: 600;
+}
+
+.lab__unidad,
+.lab__seccion {
+  margin-inline-start: var(--sp-2);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  white-space: nowrap;
+}
+
+.lab__seccion {
+  display: none;
+}
+
+@container (min-width: 780px) {
+  .lab__seccion {
+    display: inline;
+  }
+}
+
+.lab__mark {
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border-radius: var(--r-xs);
+  padding-inline: 1px;
+}
+
+/* ---- Vista lista ------------------------------------------------------------ */
+
+.lab__lista {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.lab__fila--padre {
+  padding-inline: var(--sp-3);
+}
+
+.lab__desplegar {
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding-inline: var(--sp-3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  cursor: pointer;
+}
+
+.lab__desplegar:hover {
+  background: var(--bg-hover);
+}
+
+.lab__desplegar:focus-visible,
+.lab__mas-boton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Ver más ---------------------------------------------------------------- */
+
+.lab__mas {
+  display: flex;
+  justify-content: center;
+}
+
+.lab__mas-boton {
+  min-block-size: 44px;
+  padding-inline: var(--sp-6);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.lab__mas-boton:hover {
+  background: var(--bg-hover);
+}
+
+/* ---- Resumen ---------------------------------------------------------------- */
+
+.lab__resumen {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface-alt);
+}
+
+.lab__resumen-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lab__contador {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.lab__elegidos {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+@container (min-width: 780px) {
+  .lab__elegidos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.lab__elegido {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface);
+  min-inline-size: 0;
+}
+
+.lab__elegido.is-incompleto {
+  border-color: var(--border-danger);
+}
+
+.lab__elegido > app-chip {
+  justify-self: start;
+  max-inline-size: 100%;
+}
+
+.lab__detalle,
+.lab__aviso {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.lab__detalle {
+  color: var(--text-secondary);
+}
+
+.lab__aviso {
+  color: var(--text-danger);
+}
+
+.lab__muestra {
+  min-inline-size: 0;
+}

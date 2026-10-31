@@ -1,0 +1,228 @@
+<!-- Texto con las coincidencias de la búsqueda resaltadas. -->
+<ng-template #hl let-text>
+  @for (seg of segments(text); track $index) {
+    @if (seg.match) {
+      <mark class="lab__mark">{{ seg.text }}</mark>
+    } @else {
+      {{ seg.text }}
+    }
+  }
+</ng-template>
+
+<app-view-state-host [state]="state()" (retry)="retry.emit()">
+  <div vsh-skeleton class="lab__cargando" role="status">Cargando el catálogo de análisis…</div>
+
+  @if (analyses().length === 0) {
+    <app-empty-state
+      title="El catálogo de análisis está vacío"
+      description="No hay análisis disponibles para pedir en este momento."
+      data-testid="lab-picker-catalog-empty"
+    />
+  } @else {
+    <div class="lab" data-testid="lab-picker">
+      <div class="lab__barra">
+        <div class="lab__buscador">
+          <app-search-field
+            [(value)]="rawQuery"
+            [debounceMs]="200"
+            [disabled]="disabled()"
+            label="Buscar análisis o componente"
+            placeholder="Buscar análisis, sinónimo o componente (p. ej. hemoglobina)"
+            (searched)="search($event)"
+          />
+        </div>
+        <app-segmented-control
+          [options]="viewOptions"
+          [value]="view()"
+          ariaLabel="Cómo ver los análisis"
+          (valueChange)="setView($event)"
+        />
+      </div>
+
+      <div class="lab__secciones" role="group" aria-label="Filtrar por sección" data-testid="lab-picker-sections">
+        <!-- Dos instancias a propósito: la activa es estática (no se «desmarca») y
+             la inactiva se destruye al pulsarla, así su estado interno no deriva. -->
+        @if (section() === null) {
+          <app-chip variant="primary" size="sm" aria-current="true">Todas ({{ analyses().length }})</app-chip>
+        } @else {
+          <app-chip [selectable]="true" [selected]="false" size="sm" (selectedChange)="pickSection(null)">
+            Todas ({{ analyses().length }})
+          </app-chip>
+        }
+        @for (s of sectionChips(); track s.code) {
+          <app-chip
+            [selectable]="true"
+            [selected]="section() === s.code"
+            size="sm"
+            (selectedChange)="pickSection($event ? s.code : null)"
+          >
+            {{ s.label }} ({{ s.count }})
+          </app-chip>
+        }
+      </div>
+
+      <p class="lab__resultados" role="status" aria-live="polite" data-testid="lab-picker-results">
+        {{ resultsLabel() }}
+      </p>
+
+      @if (hits().length === 0) {
+        <app-empty-state
+          variant="no-results"
+          title="Ningún análisis coincide"
+          description="Pruebe con otra palabra, quite el filtro de sección o busque por un componente."
+          data-testid="lab-picker-no-results"
+        />
+      } @else if (view() === 'grid') {
+        <ul class="lab__rejilla" data-testid="lab-picker-grid">
+          @for (hit of shown(); track hit.analysis.conceptId) {
+            <li class="lab__tarjeta" [class.is-elegido]="parentState(hit.analysis) !== 'none'" data-testid="lab-picker-card">
+              <div class="lab__cabecera">
+                <app-checkbox
+                  [checked]="parentState(hit.analysis) !== 'none'"
+                  [indeterminate]="parentState(hit.analysis) === 'some'"
+                  [disabled]="disabled()"
+                  [label]="hit.analysis.label"
+                  [hideLabel]="true"
+                  (checkedChange)="onParent(hit.analysis)"
+                  data-testid="lab-picker-parent"
+                />
+                <span class="lab__texto lab__texto--titulo" (click)="!disabled() && onParent(hit.analysis)">
+                  <ng-container *ngTemplateOutlet="hl; context: { $implicit: hit.analysis.label }" />
+                </span>
+              </div>
+              @if (!isSimple(hit.analysis)) {
+                <ul class="lab__componentes">
+                  @for (c of hit.analysis.components; track c.conceptId) {
+                    <li class="lab__fila">
+                      <app-checkbox
+                        [checked]="componentChecked(hit.analysis, c.conceptId)"
+                        [disabled]="disabled()"
+                        [label]="c.label"
+                        [hideLabel]="true"
+                        (checkedChange)="onComponent(hit.analysis, c.conceptId, $event)"
+                        data-testid="lab-picker-component"
+                      />
+                      <span class="lab__texto" (click)="!disabled() && onComponent(hit.analysis, c.conceptId, !componentChecked(hit.analysis, c.conceptId))">
+                        <ng-container *ngTemplateOutlet="hl; context: { $implicit: c.label }" />
+                        @if (c.unit) {
+                          <span class="lab__unidad">{{ c.unit }}</span>
+                        }
+                      </span>
+                    </li>
+                  }
+                </ul>
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <ul class="lab__lista" data-testid="lab-picker-list">
+          @for (hit of shown(); track hit.analysis.conceptId) {
+            <li class="lab__item" [class.is-elegido]="parentState(hit.analysis) !== 'none'" data-testid="lab-picker-row">
+              <div class="lab__fila lab__fila--padre">
+                <app-checkbox
+                  [checked]="parentState(hit.analysis) !== 'none'"
+                  [indeterminate]="parentState(hit.analysis) === 'some'"
+                  [disabled]="disabled()"
+                  [label]="hit.analysis.label"
+                  [hideLabel]="true"
+                  (checkedChange)="onParent(hit.analysis)"
+                  data-testid="lab-picker-parent"
+                />
+                <span class="lab__texto lab__texto--titulo" (click)="!disabled() && onParent(hit.analysis)">
+                  <ng-container *ngTemplateOutlet="hl; context: { $implicit: hit.analysis.label }" />
+                </span>
+                <span class="lab__seccion">{{ sectionLabel(hit.analysis.section) }}</span>
+                @if (!isSimple(hit.analysis)) {
+                  <button
+                    type="button"
+                    class="lab__desplegar"
+                    [attr.aria-expanded]="isExpanded(hit)"
+                    [attr.aria-label]="(isExpanded(hit) ? 'Ocultar' : 'Ver') + ' los ' + hit.analysis.components.length + ' componentes de ' + hit.analysis.label"
+                    (click)="toggleExpanded(hit.analysis.conceptId)"
+                    data-testid="lab-picker-expand"
+                  >
+                    {{ markedCount(hit.analysis) }}/{{ hit.analysis.components.length }}
+                    <span aria-hidden="true">{{ isExpanded(hit) ? '▾' : '▸' }}</span>
+                  </button>
+                }
+              </div>
+              @if (!isSimple(hit.analysis) && isExpanded(hit)) {
+                <ul class="lab__componentes lab__componentes--lista">
+                  @for (c of hit.analysis.components; track c.conceptId) {
+                    <li class="lab__fila">
+                      <app-checkbox
+                        [checked]="componentChecked(hit.analysis, c.conceptId)"
+                        [disabled]="disabled()"
+                        [label]="c.label"
+                        [hideLabel]="true"
+                        (checkedChange)="onComponent(hit.analysis, c.conceptId, $event)"
+                        data-testid="lab-picker-component"
+                      />
+                      <span class="lab__texto" (click)="!disabled() && onComponent(hit.analysis, c.conceptId, !componentChecked(hit.analysis, c.conceptId))">
+                        <ng-container *ngTemplateOutlet="hl; context: { $implicit: c.label }" />
+                        @if (c.unit) {
+                          <span class="lab__unidad">{{ c.unit }}</span>
+                        }
+                      </span>
+                    </li>
+                  }
+                </ul>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (remaining() > 0) {
+        <div class="lab__mas">
+          <button type="button" class="lab__mas-boton" (click)="showMore()" data-testid="lab-picker-more">
+            Ver más ({{ remaining() }} restantes)
+          </button>
+        </div>
+      }
+
+      <section class="lab__resumen" aria-labelledby="lab-resumen-titulo" data-testid="lab-picker-summary">
+        <h4 id="lab-resumen-titulo" class="lab__resumen-titulo">Lo que va a pedir</h4>
+        <p class="lab__contador" role="status" aria-live="polite" data-testid="lab-picker-counter">
+          {{ summary().analysisCount === 0 && incomplete().size === 0 ? 'Todavía no eligió ningún análisis' : summaryLabel() }}
+        </p>
+        @if (chosen().length > 0) {
+          <ul class="lab__elegidos">
+            @for (a of chosen(); track a.conceptId) {
+              <li class="lab__elegido" [class.is-incompleto]="incomplete().has(a.conceptId)" data-testid="lab-picker-chosen">
+                <app-chip
+                  [removable]="!disabled()"
+                  [variant]="incomplete().has(a.conceptId) ? 'warning' : 'primary'"
+                  [label]="a.label"
+                  (removed)="onRemove(a.conceptId)"
+                >
+                  {{ a.label }}
+                </app-chip>
+                @if (incomplete().has(a.conceptId)) {
+                  <p class="lab__aviso" data-testid="lab-picker-warning">
+                    Sin componentes marcados: este análisis no se pedirá. Marque al menos uno o quítelo.
+                  </p>
+                } @else {
+                  <p class="lab__detalle">
+                    {{ isSimple(a) ? 'Análisis simple' : markedCount(a) + ' de ' + a.components.length + ' componentes' }}
+                  </p>
+                }
+                <div class="lab__muestra">
+                  <app-select
+                    [value]="specimenOf(a.conceptId)"
+                    [options]="specimenOptions().get(a.conceptId) ?? []"
+                    [disabled]="disabled()"
+                    [ariaLabel]="'Muestra para ' + a.label"
+                    placeholder="Elegir muestra"
+                    (valueChange)="onSpecimen(a.conceptId, $event)"
+                  />
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</app-view-state-host>
