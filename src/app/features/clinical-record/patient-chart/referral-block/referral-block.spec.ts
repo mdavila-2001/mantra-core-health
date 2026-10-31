@@ -10,6 +10,7 @@ import { empty, loading, ready, stale } from '../../../../core/view-state/view-s
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ReferralBlock } from './referral-block';
+import { emptyTransferDraft, type TransferDraft } from './referral-transfer.model';
 
 const LUCIA = {
   kind: 'PRACTITIONER',
@@ -659,6 +660,67 @@ describe('ReferralBlock', () => {
   });
 
   /* -- La lista -------------------------------------------------------------- */
+
+  /* -- Traslado (v4274) ----------------------------------------------------- */
+
+  it('UNA tarjeta con dos pestañas: Derivación y Traslado', () => {
+    create();
+    const tabs = [...host().querySelectorAll('[role="tab"]')].map((t) => t.textContent?.trim());
+    expect(tabs).toEqual(['1 · Derivación', '2 · Traslado']);
+  });
+
+  it('crítico sin ambulancia ni personal no envía: abre la pestaña Traslado con los errores', () => {
+    create();
+    pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
+    writable<TransferDraft>('transferDraft').set({
+      ...emptyTransferDraft(),
+      required: true,
+      transportMode: 'PRIVATE_VEHICLE',
+      departureCondition: 'CRITICAL',
+    });
+    member<() => void>('submit')();
+    http.expectNone((r) => r.url === '/referrals' && r.method === 'POST');
+    fixture.detectChanges();
+    expect(writable<number>('tab')()).toBe(1);
+    const summary = host().querySelector('[data-testid="referral-issues"]')?.textContent ?? '';
+    expect(summary).toContain('Traslado: Un paciente inestable o crítico viaja en ambulancia');
+    expect(summary).toContain('personal de salud');
+    expect(summary).toContain('avise al establecimiento receptor');
+    expect(host().querySelector('[data-testid="transfer-unstable-why"]')).not.toBeNull();
+    expect(host().querySelectorAll('[role="tab"]')[1]?.textContent).toContain('falta');
+  });
+
+  it('con el traslado completo lo manda en transfer, y lo que no se trasladó no viaja', () => {
+    create();
+    pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
+    writable<TransferDraft>('transferDraft').set({
+      ...emptyTransferDraft(),
+      required: true,
+      transportMode: 'AMBULANCE_ADVANCED',
+      departureCondition: 'CRITICAL',
+      escortProfessionalName: 'Dr. Vaca',
+      receiverContacted: true,
+      receiverContactName: 'Guardia',
+      vitals: { ...emptyTransferDraft().vitals, systolicBp: '90', diastolicBp: '50', temperatureC: '38,5' },
+    });
+    member<() => void>('submit')();
+    const req = http.expectOne((r) => r.url === '/referrals' && r.method === 'POST');
+    expect(req.request.body.transfer).toEqual({
+      required: true,
+      transportMode: 'AMBULANCE_ADVANCED',
+      departureCondition: 'CRITICAL',
+      escortProfessionalName: 'Dr. Vaca',
+      vitals: { systolicBp: 90, diastolicBp: 50, temperatureC: 38.5 },
+      receiverContacted: true,
+      receiverContactName: 'Guardia',
+    });
+    req.flush(ALTA, { status: 201, statusText: 'Created' });
+    http.expectOne((r) => r.url === '/referrals/ref-1').flush({ ...ALTA, status: 'PENDING' });
+    // Emitida, el borrador del traslado vuelve a vacío.
+    expect(writable<TransferDraft>('transferDraft')().required).toBe(false);
+  });
 
   describe('la lista', () => {
     const REFERRAL: Referral = {

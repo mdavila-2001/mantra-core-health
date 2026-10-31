@@ -1,0 +1,121 @@
+<app-page-header
+  title="Revisión periódica"
+  subtitle="Cada tanto hay que confirmar que cada persona sigue ayudando a la organización. Lo que no se confirma a tiempo se suspende a los 15 días: no se pierde, pero deja de poder actuar."
+/>
+
+<app-card class="revision" padding="lg" data-testid="revision-card">
+  <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+    <app-tab label="Por revisar">
+      <div class="revision__panel">
+        <app-segmented-control
+          [options]="filtros()"
+          [value]="filtro()"
+          (valueChange)="filtro.set($event)"
+          ariaLabel="Qué vínculos ver"
+          data-testid="revision-filtro"
+        />
+
+        @if (resultado(); as r) {
+          <app-alert [tone]="r.tone" [attr.role]="r.tone === 'error' ? 'alert' : 'status'" data-testid="revision-resultado">{{ r.text }}</app-alert>
+        }
+
+        @if (cantidad() > 0) {
+          <div class="revision__lote" role="group" aria-label="Acciones sobre lo seleccionado" data-testid="revision-lote">
+            <strong data-testid="revision-seleccionados">{{ cantidad() === 1 ? '1 seleccionado' : cantidad() + ' seleccionados' }}</strong>
+            <button app-button size="sm" type="button" [disabled]="ocupada()" (clicked)="abrirConfirmarEnLote()" data-testid="revision-confirmar-lote">
+              Confirmar seleccionados
+            </button>
+            <button app-button variant="outline" size="sm" type="button" [disabled]="ocupada() || conPermisos().length === 0" (clicked)="quitarPermisosEnLote()" data-testid="revision-quitar-lote">
+              Quitar permisos a los seleccionados
+            </button>
+          </div>
+        }
+
+        @for (g of generaciones(); track g) {
+          <app-data-table
+            caption="Vínculos de apoyo por revisar"
+            [state]="visibles()"
+            [columns]="columnas()"
+            [trackBy]="rowId"
+            [rowLabel]="rowLabel"
+            [selectable]="true"
+            (selectionChanged)="cambiarSeleccion($event)"
+            (retry)="cargar()"
+            (refresh)="cargar()"
+            data-testid="revision-tabla"
+          />
+        }
+      </div>
+    </app-tab>
+
+    <app-tab label="Historial">
+      <div class="revision__panel">
+        <app-data-table
+          caption="Historial de la revisión periódica"
+          [state]="historialDePagina()"
+          [columns]="columnasDeHistorial()"
+          [trackBy]="entryId"
+          (retry)="cargarHistorial()"
+          (refresh)="cargarHistorial()"
+          data-testid="revision-historial"
+        />
+        @if (totalDeHistorial() > tamano()) {
+          <app-pagination [totalItems]="totalDeHistorial()" [(page)]="pagina" [(pageSize)]="tamano" [pageSizeOptions]="[10, 20, 50]" data-testid="revision-historial-paginacion" />
+        }
+      </div>
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+@if (confirmandoEnLote()) {
+  <app-content-dialog heading="Confirmar vínculos" [description]="cantidad() === 1 ? '1 persona seleccionada' : cantidad() + ' personas seleccionadas'" size="md" closeLabel="Cerrar" (closed)="cerrarConfirmarEnLote()">
+    <div class="revision__dialogo" data-testid="revision-dialogo-confirmar">
+      <p class="revision__texto">Las personas seguirán ayudando a la organización. A las que estén suspendidas se las reactiva con sus permisos de antes.</p>
+      <label class="revision__rotulo" for="revision-meses">Por cuánto tiempo</label>
+      <app-select [options]="opcionesDeMeses" [value]="meses()" (valueChange)="cambiarMeses($event)" ariaLabel="Por cuánto tiempo se confirman los vínculos" data-testid="revision-meses" />
+    </div>
+    <button dialog-actions app-button type="button" (clicked)="confirmarEnLote()" data-testid="revision-confirmar-lote-ok">Confirmar</button>
+  </app-content-dialog>
+}
+
+<ng-template #personaCell let-fila>
+  <span class="revision__nombre" [attr.data-testid]="'revision-persona-' + fila.engagement.id">{{ fila.engagement.personName }}</span>
+  <span class="revision__sub">{{ rol(fila) }}</span>
+</ng-template>
+
+<ng-template #vencimientoCell let-fila>
+  <app-badge [variant]="estadoTono(fila)" [attr.data-testid]="'revision-estado-' + fila.engagement.id">{{ estadoTexto(fila) }}</app-badge>
+  <span class="revision__sub" [attr.data-testid]="'revision-frase-' + fila.engagement.id">{{ frase(fila) }}</span>
+  @if (fila.engagement.lastConfirmedBy === 'PERSON' && fila.engagement.lastConfirmedAt) {
+    <span class="revision__aviso" [attr.data-testid]="'revision-declaracion-' + fila.engagement.id">Declaró el {{ dia(fila.engagement.lastConfirmedAt) }} que sigue trabajando aquí.</span>
+  }
+</ng-template>
+
+<ng-template #alcanceCell let-fila>
+  <span class="revision__sub">{{ alcance(fila) }}</span>
+</ng-template>
+
+<ng-template #accionesCell let-fila>
+  <span class="revision__acciones">
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      type="button"
+      [disabled]="ocupada()"
+      (clicked)="confirmarUno(fila)"
+      [attr.aria-label]="botonDeConfirmar(fila) + ' el vínculo de ' + fila.engagement.personName"
+      [attr.data-testid]="'revision-confirmar-' + fila.engagement.id"
+    >
+      {{ botonDeConfirmar(fila) }}
+    </button>
+    <a app-button variant="ghost" size="sm" [routerLink]="['/administration/support-team', fila.engagement.id]" [attr.aria-label]="'Permisos de ' + fila.engagement.personName">Permisos</a>
+  </span>
+</ng-template>
+
+<ng-template #cuandoCell let-entrada>{{ cuando(entrada.createdAt) }}</ng-template>
+
+<ng-template #queCell let-entrada>
+  <span class="revision__nombre">{{ accionTexto(entrada) }}</span>
+  <span class="revision__sub">{{ entrada.summary }}</span>
+</ng-template>

@@ -18,6 +18,7 @@ import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { releaseObjectUrlLater } from '../../../shared/utils/file-download/release-object-url';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
@@ -574,7 +575,7 @@ export class SurveyDetailScreen {
     enlace.href = url;
     enlace.download = `${slugify(encuesta.title)}-respuestas.csv`;
     enlace.click();
-    URL.revokeObjectURL(url);
+    releaseObjectUrlLater(url);
   }
 }
 

@@ -27,3 +27,10 @@
   color: var(--text-muted);
   font-size: var(--fs-caption);
 }
+
+.grupos__acciones {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+}

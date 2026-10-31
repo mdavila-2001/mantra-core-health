@@ -1,0 +1,644 @@
+<app-page-header
+  title="Cargas masivas"
+  subtitle="Altas de usuarios y carga especial de historias clínicas, con plantilla CSV y JSON por tipo. Primero se revisa el archivo sin escribir nada; lo que se crea de verdad lo dice el informe."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <button
+    app-button
+    page-actions
+    variant="secondary"
+    size="sm"
+    (clicked)="cargar()"
+    data-testid="bulk-refresh"
+  >
+    Actualizar
+  </button>
+</app-page-header>
+
+<div class="cargas">
+  @if (avisos().length > 0) {
+    <app-alert
+      tone="warning"
+      title="Lo que esta instalación todavía no hace"
+      data-testid="bulk-engine-alert"
+    >
+      <ul class="cargas__lista">
+        @for (aviso of avisos(); track aviso) {
+          <li>{{ aviso }}</li>
+        }
+      </ul>
+    </app-alert>
+  }
+
+  @if (falloDeDescarga(); as f) {
+    <app-alert
+      tone="error"
+      [title]="'No se pudo descargar: ' + f.titulo"
+      dismissible
+      (dismissed)="falloDeDescarga.set(null)"
+      data-testid="bulk-download-error"
+    >
+      {{ f.texto }}
+      @if (f.requestId) {
+        <span class="cargas__ayuda">Código de la petición: {{ f.requestId }}</span>
+      }
+    </app-alert>
+  }
+
+  <app-card variant="outlined" padding="md">
+    <app-tabs [(selectedIndex)]="pestana" data-testid="bulk-tabs">
+      <!-- ================= Nueva carga ================= -->
+      <app-tab label="Nueva carga">
+        <app-view-state-host [state]="catalogo()" (retry)="cargarCatalogo()">
+          @if (catalogo(); as estadoCatalogo) {
+            @if (estadoCatalogo.status === 'ready') {
+              @if (plantilla(); as p) {
+                <!-- Paso 1 · qué se carga -->
+                <section class="cargas__paso" aria-labelledby="bulk-paso-tipo">
+                  <h3 id="bulk-paso-tipo" class="cargas__titulo">1. Qué va a cargar</h3>
+                  <app-segmented-control
+                    ariaLabel="Familia de carga"
+                    size="md"
+                    [options]="opcionesDeGrupo"
+                    [value]="grupo()"
+                    (valueChange)="elegirGrupo($event)"
+                    data-testid="bulk-group"
+                  />
+                  <p class="cargas__ayuda">{{ ayudaDelGrupo() }}</p>
+
+                  <div class="cargas__rejilla">
+                    <app-form-field
+                      [label]="grupo() === 'USERS' ? 'Tipo de alta' : 'Tipo de registro'"
+                      [required]="true"
+                    >
+                      <app-select
+                        [ariaLabel]="grupo() === 'USERS' ? 'Tipo de alta' : 'Tipo de registro'"
+                        [options]="opcionesDeTipo()"
+                        [value]="p.kind"
+                        (valueChange)="elegirTipo($event)"
+                      />
+                    </app-form-field>
+                  </div>
+
+                  <p class="cargas__ayuda" data-testid="bulk-kind-description">{{ p.description }}</p>
+                  <p class="cargas__ayuda" data-testid="bulk-kind-meta">
+                    {{ p.columnCount }} columnas · versión {{ p.version }} · exige el permiso
+                    <code class="cargas__codigo">{{ p.permission }}</code>
+                  </p>
+
+                  <div class="cargas__plantilla" role="group" aria-label="Plantilla de este tipo">
+                    <p class="cargas__ayuda">
+                      Baje la plantilla, llénela con sus datos y súbala en el paso 3. Es la misma que
+                      usa la validación: la fila de ejemplo siempre pasa. Los ejemplos son sintéticos.
+                    </p>
+                    <div class="cargas__acciones">
+                      <button
+                        app-button
+                        variant="secondary"
+                        size="sm"
+                        [isLoading]="estaDescargando(claveDeDescarga(p.kind, 'csv'))"
+                        [disabled]="descargando() !== null"
+                        (clicked)="descargarPlantilla(p.kind, 'csv')"
+                        data-testid="bulk-template-csv"
+                      >
+                        Descargar plantilla CSV
+                      </button>
+                      <button
+                        app-button
+                        variant="secondary"
+                        size="sm"
+                        [isLoading]="estaDescargando(claveDeDescarga(p.kind, 'json'))"
+                        [disabled]="descargando() !== null"
+                        (clicked)="descargarPlantilla(p.kind, 'json')"
+                        data-testid="bulk-template-json"
+                      >
+                        Descargar plantilla JSON
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Paso 2 · declaración -->
+                <section class="cargas__paso" aria-labelledby="bulk-paso-declaracion">
+                  <h3 id="bulk-paso-declaracion" class="cargas__titulo">2. Declare el motivo de la carga</h3>
+                  @if (grupo() === 'USERS') {
+                    <div class="cargas__rejilla">
+                      <app-form-field
+                        class="cargas__ancho"
+                        label="Motivo del alta"
+                        hint="Queda registrado con el lote. Hasta 500 caracteres."
+                        [required]="true"
+                        [errorMessage]="errorDe('reason')"
+                      >
+                        <app-textarea
+                          [rows]="3"
+                          [maxLength]="500"
+                          [value]="motivo()"
+                          (valueChange)="escribir('reason', $event)"
+                          [hasError]="errorDe('reason') !== null"
+                          data-testid="bulk-reason"
+                        />
+                      </app-form-field>
+                    </div>
+                  } @else {
+                    <app-alert tone="info" title="Sólo se agrega, nunca se sobrescribe">
+                      Cada fila se enlaza a un paciente que ya existe por documento y fecha de
+                      nacimiento; si no hay una única coincidencia, se rechaza. La carga y cada
+                      lectura de lo cargado quedan auditadas.
+                    </app-alert>
+                    <div class="cargas__rejilla">
+                      <app-form-field
+                        label="Organización de origen"
+                        hint="De dónde vienen los datos."
+                        [required]="true"
+                        [errorMessage]="errorDe('sourceOrganization')"
+                      >
+                        <app-input
+                          type="text"
+                          [value]="origen()"
+                          (valueChange)="escribir('sourceOrganization', $event)"
+                          [hasError]="errorDe('sourceOrganization') !== null"
+                          testId="bulk-source"
+                        />
+                      </app-form-field>
+                      <app-form-field
+                        label="Fecha de la carga"
+                        hint="De hoy o anterior."
+                        [required]="true"
+                        [errorMessage]="errorDe('loadedAt')"
+                      >
+                        <app-input
+                          type="date"
+                          [value]="fechaDeCarga()"
+                          (valueChange)="escribir('loadedAt', $event)"
+                          [hasError]="errorDe('loadedAt') !== null"
+                          testId="bulk-loaded-at"
+                        />
+                      </app-form-field>
+                      <app-form-field
+                        class="cargas__ancho"
+                        label="Base legal"
+                        hint="Qué habilita esta carga. Hasta 500 caracteres."
+                        [required]="true"
+                        [errorMessage]="errorDe('legalBasis')"
+                      >
+                        <app-textarea
+                          [rows]="3"
+                          [maxLength]="500"
+                          [value]="baseLegal()"
+                          (valueChange)="escribir('legalBasis', $event)"
+                          [hasError]="errorDe('legalBasis') !== null"
+                          data-testid="bulk-legal-basis"
+                        />
+                      </app-form-field>
+                    </div>
+                  }
+                </section>
+
+                <!-- Paso 3 · archivo -->
+                <section class="cargas__paso" aria-labelledby="bulk-paso-archivo">
+                  <h3 id="bulk-paso-archivo" class="cargas__titulo">3. Suba el archivo</h3>
+                  @if (limites(); as l) {
+                    <p class="cargas__ayuda" data-testid="bulk-limits">
+                      CSV o JSON. {{ frasePorLimites(l) }} Revisarlo no escribe nada.
+                    </p>
+                  }
+                  <app-file-input
+                    label="Elegir archivo CSV o JSON"
+                    accept=".csv,.json"
+                    [maxSizeBytes]="maximoDeBytes()"
+                    [maxFiles]="1"
+                    [disabled]="revisando()"
+                    [files]="archivos()"
+                    [showList]="false"
+                    [hasError]="errorDeArchivo() !== null"
+                    (filesChange)="elegirArchivo($event)"
+                    (rejected)="rechazarArchivo($event)"
+                    testId="bulk-file"
+                  />
+                  @if (archivos()[0]; as archivo) {
+                    <p class="cargas__ayuda" data-testid="bulk-file-name">
+                      Archivo elegido: <strong>{{ archivo.name }}</strong> ({{ tamano(archivo.size) }})
+                    </p>
+                  }
+                  @if (errorDeArchivo(); as mensaje) {
+                    <app-alert tone="error" title="El archivo no sirve" data-testid="bulk-file-error">
+                      {{ mensaje }}
+                    </app-alert>
+                  }
+                  @if (falloAlRevisar(); as f) {
+                    <app-alert tone="error" [title]="f.titulo" data-testid="bulk-review-error">
+                      {{ f.texto }}
+                      @if (f.requestId) {
+                        <span class="cargas__ayuda">Código de la petición: {{ f.requestId }}</span>
+                      }
+                    </app-alert>
+                  }
+                  <div class="cargas__acciones">
+                    <button
+                      app-button
+                      [isLoading]="revisando()"
+                      [disabled]="revisando()"
+                      (clicked)="revisar()"
+                      data-testid="bulk-review"
+                    >
+                      Revisar archivo
+                    </button>
+                  </div>
+                </section>
+              } @else {
+                <app-alert tone="info" title="No hay tipos de carga disponibles" data-testid="bulk-no-kinds">
+                  La API no declara ningún tipo para esta familia. Pruebe con la otra o pida a quien
+                  opera la API que revise el catálogo de cargas.
+                </app-alert>
+              }
+
+              <!-- Lote en pantalla -->
+              @if (lote(); as l) {
+                <section class="cargas__lote" aria-labelledby="bulk-lote-titulo" data-testid="bulk-batch">
+                  <h3 id="bulk-lote-titulo" class="cargas__titulo">
+                    Lote · {{ tituloDelTipo(l.kind) }}
+                  </h3>
+                  <div class="cargas__estado">
+                    <app-badge [variant]="estadoDeLote(l.status).tone" size="lg" data-testid="bulk-status">{{
+                      estadoDeLote(l.status).label
+                    }}</app-badge>
+                    <span class="cargas__ayuda">
+                      Revisado el {{ l.createdAt | date: 'dd/MM/yyyy HH:mm' }} · archivo
+                      {{ l.source.format.toUpperCase() }} de {{ tamano(l.source.byteSize) }} · código
+                      <code class="cargas__codigo">{{ l.id.slice(0, 8) }}</code>
+                    </span>
+                  </div>
+
+                  <dl class="cargas__declaracion" aria-label="Declaración del lote">
+                    @if (l.declaration.reason) {
+                      <div>
+                        <dt>Motivo</dt>
+                        <dd>{{ l.declaration.reason }}</dd>
+                      </div>
+                    }
+                    @if (l.declaration.sourceOrganization) {
+                      <div>
+                        <dt>Origen</dt>
+                        <dd>{{ l.declaration.sourceOrganization }}</dd>
+                      </div>
+                    }
+                    @if (l.declaration.legalBasis) {
+                      <div>
+                        <dt>Base legal</dt>
+                        <dd>{{ l.declaration.legalBasis }}</dd>
+                      </div>
+                    }
+                    @if (l.declaration.loadedAt) {
+                      <div>
+                        <dt>Fecha de la carga</dt>
+                        <dd>{{ l.declaration.loadedAt }}</dd>
+                      </div>
+                    }
+                  </dl>
+
+                  <div class="cargas__conteos" data-testid="bulk-counts">
+                    <app-metric-card label="Filas leídas" [value]="l.counts.total" />
+                    <app-metric-card
+                      label="Listas para procesar"
+                      [value]="l.counts.valid"
+                      [tone]="l.counts.valid > 0 ? 'success' : 'neutral'"
+                    />
+                    <app-metric-card
+                      label="Filas con problemas"
+                      [value]="l.counts.rejected"
+                      [tone]="l.counts.rejected > 0 ? 'error' : 'neutral'"
+                    />
+                  </div>
+
+                  @if (l.fileIssues.length > 0) {
+                    <app-alert tone="error" title="El archivo no se pudo aceptar" data-testid="bulk-file-issues">
+                      <ul class="cargas__lista">
+                        @for (p of l.fileIssues; track $index) {
+                          <li>
+                            <strong>{{ p.field === '*' ? 'Archivo' : 'Columna ' + p.field }}:</strong>
+                            {{ p.message }}
+                          </li>
+                        }
+                      </ul>
+                    </app-alert>
+                  }
+
+                  @if (l.issues.total > 0 && l.fileIssues.length === 0) {
+                    <h4 class="cargas__subtitulo">Problemas por fila y columna</h4>
+                    <p class="cargas__ayuda">
+                      Se dice qué fila y qué columna fallan y qué se espera; nunca se repite el
+                      contenido de la celda.
+                    </p>
+                    <app-data-table
+                      [state]="hallazgos()"
+                      [columns]="columnasDeHallazgos"
+                      [trackBy]="porId"
+                      [rowLabel]="nombreDeHallazgo"
+                      stackedOnMobile
+                      fitContainer
+                      caption="Problemas encontrados en el archivo, por fila y columna"
+                      data-testid="bulk-issues"
+                    />
+                    @if (hallazgosSinMostrar() > 0 || l.issues.truncated) {
+                      <p class="cargas__ayuda" data-testid="bulk-issues-more">
+                        Hay {{ l.issues.total }} problemas en total y se muestran los primeros
+                        {{ filasDeVistaPrevia }}.
+                        @if (l.issues.truncated) {
+                          La API entrega como máximo los primeros {{ l.issues.items.length }}.
+                        }
+                        Corrija el archivo y vuelva a revisarlo para ver el resto.
+                      </p>
+                    }
+                  }
+
+                  <!-- ¿Y ahora? depende del estado -->
+                  @switch (l.status) {
+                    @case ('VALIDADO') {
+                      <app-alert tone="info" title="Todavía no se escribió nada" data-testid="bulk-confirm-note">
+                        Confirmar encola las {{ l.counts.valid }} filas listas para procesarlas.
+                        @if (l.counts.rejected > 0) {
+                          Las {{ l.counts.rejected }} filas con problemas no se procesan.
+                        }
+                        Qué se creó de verdad lo dice el informe, fila por fila.
+                        @if (escritorNoConectado()) {
+                          <strong>
+                            En esta instalación la escritura de este tipo de carga no está conectada:
+                            las filas van a quedar «Rechazadas» en el informe y no se va a crear nada.
+                          </strong>
+                        }
+                      </app-alert>
+                      <div class="cargas__acciones">
+                        <button
+                          app-button
+                          [isLoading]="confirmando()"
+                          [disabled]="confirmando()"
+                          (clicked)="confirmar()"
+                          data-testid="bulk-confirm"
+                        >
+                          Confirmar y procesar {{ l.counts.valid }} filas
+                        </button>
+                        <button app-button variant="ghost" [disabled]="confirmando()" (clicked)="cargarOtro()">
+                          Cargar otro archivo
+                        </button>
+                      </div>
+                    }
+                    @case ('RECHAZADO') {
+                      <app-alert tone="error" title="Este lote no se puede confirmar" data-testid="bulk-rejected-note">
+                        Ninguna fila quedó lista para procesar. Corrija el archivo según los
+                        problemas de arriba, o baje el informe para pasárselo a quien lo armó, y
+                        vuelva a subirlo.
+                      </app-alert>
+                      <div class="cargas__acciones">
+                        <button app-button (clicked)="cargarOtro()">Cargar otro archivo</button>
+                        <button
+                          app-button
+                          variant="secondary"
+                          [disabled]="descargando() !== null"
+                          (clicked)="descargarInforme('csv')"
+                          data-testid="bulk-report-csv"
+                        >
+                          Descargar informe CSV
+                        </button>
+                        <button
+                          app-button
+                          variant="secondary"
+                          [disabled]="descargando() !== null"
+                          (clicked)="descargarInforme('json')"
+                          data-testid="bulk-report-json"
+                        >
+                          Descargar informe JSON
+                        </button>
+                      </div>
+                    }
+                    @case ('EN_COLA') {
+                      <ng-container [ngTemplateOutlet]="avance" />
+                    }
+                    @case ('PROCESANDO') {
+                      <ng-container [ngTemplateOutlet]="avance" />
+                    }
+                    @default {
+                      <section aria-labelledby="bulk-informe-titulo" data-testid="bulk-report">
+                        <h4 id="bulk-informe-titulo" class="cargas__subtitulo">Informe</h4>
+                        @if (l.status === 'FALLIDO') {
+                          <app-alert tone="error" title="El lote no pudo terminar" data-testid="bulk-failed-note">
+                            El procesamiento se cortó
+                            @if (l.failureReason) {
+                              ({{ motivoLegible(l.failureReason) }})
+                            }
+                            . Las filas que no se alcanzaron figuran como «No procesadas» en el informe.
+                          </app-alert>
+                        }
+                        @if (informe(); as inf) {
+                          <app-view-state-host [state]="inf" (retry)="cargarInforme()">
+                            @if (inf.status === 'ready') {
+                              <p class="cargas__resumen" data-testid="bulk-report-summary">
+                                {{ resumenDelInforme(inf.data.totals) }}
+                              </p>
+                              <div class="cargas__conteos" data-testid="bulk-report-totals">
+                                @for (t of tarjetasDelInforme(); track t.clave) {
+                                  <app-metric-card [label]="t.etiqueta" [value]="t.valor" [tone]="t.tono" />
+                                }
+                              </div>
+                              @if (todoRechazadoPorEscritor()) {
+                                <app-alert
+                                  tone="warning"
+                                  title="No se creó nada en esta instalación"
+                                  data-testid="bulk-report-honesty"
+                                >
+                                  Las filas válidas quedaron «Rechazadas» porque la escritura (o la
+                                  consulta de pacientes) no está conectada. El lote se procesó, pero
+                                  ningún registro se creó.
+                                </app-alert>
+                              }
+                              <app-data-table
+                                [state]="filasDelInforme()"
+                                [columns]="columnasDelInforme()"
+                                [trackBy]="porId"
+                                [rowLabel]="nombreDeFilaDeInforme"
+                                stackedOnMobile
+                                fitContainer
+                                caption="Resultado de cada fila del lote"
+                                data-testid="bulk-report-table"
+                              />
+                              @if (inf.data.rows.length > filasDeInforme) {
+                                <p class="cargas__ayuda">
+                                  Se muestran las primeras {{ filasDeInforme }} de
+                                  {{ inf.data.rows.length }} filas. El informe completo se descarga.
+                                </p>
+                              }
+                              <div class="cargas__acciones">
+                                <button
+                                  app-button
+                                  variant="secondary"
+                                  size="sm"
+                                  [disabled]="descargando() !== null"
+                                  (clicked)="descargarInforme('csv')"
+                                  data-testid="bulk-report-csv"
+                                >
+                                  Descargar informe CSV
+                                </button>
+                                <button
+                                  app-button
+                                  variant="secondary"
+                                  size="sm"
+                                  [disabled]="descargando() !== null"
+                                  (clicked)="descargarInforme('json')"
+                                  data-testid="bulk-report-json"
+                                >
+                                  Descargar informe JSON
+                                </button>
+                                <button app-button variant="ghost" size="sm" (clicked)="cargarOtro()">
+                                  Hacer otra carga
+                                </button>
+                              </div>
+                            }
+                          </app-view-state-host>
+                        }
+                      </section>
+                    }
+                  }
+
+                  @if (falloDelLote(); as f) {
+                    <app-alert tone="error" [title]="f.titulo" data-testid="bulk-batch-error">
+                      {{ f.texto }}
+                      @if (f.requestId) {
+                        <span class="cargas__ayuda">Código de la petición: {{ f.requestId }}</span>
+                      }
+                    </app-alert>
+                    <div class="cargas__acciones">
+                      <button
+                        app-button
+                        variant="secondary"
+                        size="sm"
+                        (clicked)="actualizarLote()"
+                        data-testid="bulk-batch-refresh"
+                      >
+                        Actualizar estado
+                      </button>
+                    </div>
+                  }
+                </section>
+              }
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <!-- ================= Lotes ================= -->
+      <app-tab label="Lotes">
+        <div class="cargas__acciones cargas__acciones--fin">
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            (clicked)="cargarLotes()"
+            data-testid="bulk-batches-refresh"
+          >
+            Actualizar lista
+          </button>
+        </div>
+        <app-data-table
+          [state]="filasDeLotes()"
+          [columns]="columnasDeLotes()"
+          [trackBy]="porId"
+          [rowLabel]="nombreDeFilaDeLote"
+          stackedOnMobile
+          fitContainer
+          caption="Lotes de la organización activa, del más reciente al más antiguo"
+          data-testid="bulk-batches"
+          (retry)="cargarLotes()"
+        />
+      </app-tab>
+
+      <!-- ================= Plantillas ================= -->
+      <app-tab label="Plantillas">
+        <p class="cargas__ayuda">
+          Toda carga tiene su plantilla en CSV y en JSON, generada del mismo esquema que la valida. La
+          de JSON trae además el detalle de cada columna y las reglas.
+        </p>
+        <app-data-table
+          [state]="filasDePlantillas()"
+          [columns]="columnasDePlantillas()"
+          [trackBy]="porKind"
+          [rowLabel]="nombreDeFilaDePlantilla"
+          stackedOnMobile
+          fitContainer
+          caption="Plantillas de carga por tipo"
+          data-testid="bulk-templates"
+          (retry)="cargarCatalogo()"
+        />
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>
+
+<ng-template #avance>
+  <section class="cargas__avance" aria-live="polite" data-testid="bulk-progress">
+    <app-progress
+      [value]="porcentajeDeAvance()"
+      label="Avance del procesamiento del lote"
+      size="md"
+    />
+    @if (lote(); as l) {
+      <p class="cargas__ayuda">
+        {{ estadoDeLote(l.status).label }}: {{ l.progress.processed }} de {{ l.progress.total }} filas
+        válidas procesadas. La pantalla se actualiza sola; cuando termine, acá aparece el informe.
+      </p>
+    }
+    <div class="cargas__acciones">
+      <button app-button variant="secondary" size="sm" (clicked)="actualizarLote()">
+        Actualizar estado
+      </button>
+    </div>
+  </section>
+</ng-template>
+
+<ng-template #estadoLoteCell let-row>
+  <app-badge [variant]="row.estado.tone">{{ row.estado.label }}</app-badge>
+</ng-template>
+
+<ng-template #creadoCell let-row>{{ row.creado | date: 'dd/MM/yyyy HH:mm' }}</ng-template>
+
+<ng-template #accionLoteCell let-row>
+  <button
+    app-button
+    variant="secondary"
+    size="sm"
+    [attr.aria-label]="'Abrir el lote ' + row.nombre"
+    (clicked)="abrirLote(row.lote)"
+  >
+    Abrir
+  </button>
+</ng-template>
+
+<ng-template #resultadoCell let-row>
+  <app-badge [variant]="row.resultado.tone">{{ row.resultado.label }}</app-badge>
+</ng-template>
+
+<ng-template #descargasCell let-row>
+  <span class="cargas__acciones">
+    <button
+      app-button
+      variant="secondary"
+      size="sm"
+      [attr.aria-label]="'Descargar plantilla CSV de ' + row.title"
+      [isLoading]="estaDescargando(claveDeDescarga(row.kind, 'csv'))"
+      [disabled]="descargando() !== null"
+      (clicked)="descargarPlantilla(row.kind, 'csv')"
+    >
+      Descargar plantilla CSV
+    </button>
+    <button
+      app-button
+      variant="secondary"
+      size="sm"
+      [attr.aria-label]="'Descargar plantilla JSON de ' + row.title"
+      [isLoading]="estaDescargando(claveDeDescarga(row.kind, 'json'))"
+      [disabled]="descargando() !== null"
+      (clicked)="descargarPlantilla(row.kind, 'json')"
+    >
+      Descargar plantilla JSON
+    </button>
+  </span>
+</ng-template>

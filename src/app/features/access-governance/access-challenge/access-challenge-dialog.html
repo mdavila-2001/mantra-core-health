@@ -1,0 +1,78 @@
+<app-content-dialog [heading]="titulo()" [description]="bajada()" size="md" closeLabel="Cancelar" (closed)="cerrado()">
+  <div class="desafio" data-testid="desafio" [attr.data-kind]="challenge().kind">
+    @if (sinSalida(); as motivo) {
+      <app-alert tone="warning" title="No se puede continuar desde aquí" role="alert" data-testid="desafio-sin-salida">{{ motivo }}</app-alert>
+      <div class="desafio__acciones">
+        @if (challenge().kind === 'STEP_UP') {
+          <a app-button variant="primary" [routerLink]="mfaRoute" (click)="cancelar()" data-testid="desafio-activar-mfa">Activar la verificación en dos pasos</a>
+        }
+        <button app-button variant="outline" type="button" (clicked)="cancelar()" data-testid="desafio-entendido">Entendido</button>
+      </div>
+    } @else {
+      @switch (challenge().kind) {
+        @case ('REASON') {
+          <form class="desafio__form" (submit)="$event.preventDefault(); confirmarMotivo()">
+            @if (challengeAsReason()?.placeholder) {
+              <app-alert tone="warning" title="El motivo no sirve" data-testid="desafio-relleno">El texto anterior es de relleno. Escriba la razón real.</app-alert>
+            }
+            <app-form-field label="Motivo" [required]="true" [errorMessage]="intento() && motivoCorto() ? 'Escriba al menos ' + minimo() + ' caracteres.' : ''" [hint]="'Al menos ' + minimo() + ' caracteres. Queda registrado junto con la acción.'">
+              <app-textarea [value]="texto()" (valueChange)="cambiarTexto($event)" [rows]="4" [maxLength]="500" [hasError]="intento() && motivoCorto()" data-testid="desafio-motivo" />
+            </app-form-field>
+            <p class="desafio__ejemplos" data-testid="desafio-ejemplos">Por ejemplo: «La paciente llamó para cancelar por un viaje» o «El doctor pidió liberar ese horario».</p>
+            <div class="desafio__acciones">
+              <button app-button variant="primary" type="submit" data-testid="desafio-continuar">Continuar</button>
+              <button app-button variant="outline" type="button" (clicked)="cancelar()" data-testid="desafio-cancelar">Cancelar</button>
+            </div>
+          </form>
+        }
+        @case ('STEP_UP') {
+          <form class="desafio__form" (submit)="$event.preventDefault(); verificarCodigo()">
+            <p class="desafio__texto">Abra su aplicación autenticadora y escriba el código de 6 dígitos.</p>
+            <app-form-field label="Código de su aplicación" [required]="true" [errorMessage]="error() ?? (intento() && !codigoValido() ? 'El código tiene entre 6 y 8 dígitos.' : '')" hint="No lo comparta con nadie.">
+              <app-input [value]="codigo()" (valueChange)="cambiarCodigo($event)" inputMode="numeric" autocomplete="one-time-code" ariaLabel="Código de su aplicación" [hasError]="error() !== null || (intento() && !codigoValido())" testId="desafio-codigo" />
+            </app-form-field>
+            <div class="desafio__acciones">
+              <button app-button variant="primary" type="submit" [isLoading]="trabajando()" data-testid="desafio-verificar">Verificar</button>
+              <button app-button variant="outline" type="button" (clicked)="cancelar()" data-testid="desafio-cancelar">Cancelar</button>
+            </div>
+          </form>
+        }
+        @case ('APPROVAL') {
+          <div class="desafio__form">
+            @if (aprobacion(); as a) {
+              @if (estadoAprobacion(); as e) {
+                <div aria-live="polite" data-testid="desafio-estado" [attr.data-status]="a.status">
+                  <app-alert [tone]="e.tone" [title]="e.titulo">{{ e.texto }}</app-alert>
+                </div>
+              }
+              <p class="desafio__texto">{{ a.summary }}</p>
+              <div class="desafio__acciones">
+                @if (a.status === 'PENDING') {
+                  <button app-button variant="outline" type="button" (clicked)="refrescarAprobacion()" data-testid="desafio-comprobar">Comprobar ahora</button>
+                }
+                <button app-button variant="ghost" type="button" (clicked)="cancelar()" data-testid="desafio-cerrar">Cerrar</button>
+              </div>
+            } @else {
+              @if (challengeAsApproval()?.stale) {
+                <app-alert tone="warning" title="La aprobación anterior ya no sirve" data-testid="desafio-aprobacion-vieja">Era de otra acción, ya se usó o caducó. Pida una nueva.</app-alert>
+              }
+              <p class="desafio__texto">Esta acción necesita la aprobación de {{ aprobador() }}. Si la aprueba, vale {{ vigencia() }} minutos y se usa una sola vez.</p>
+              <app-form-field label="Motivo de la solicitud" [required]="true" [errorMessage]="intento() && motivoCorto() ? 'Escriba al menos ' + minimo() + ' caracteres.' : (error() ?? '')" hint="Lo lee quien decide.">
+                <app-textarea [value]="texto()" (valueChange)="cambiarTexto($event)" [rows]="3" [maxLength]="500" [hasError]="(intento() && motivoCorto()) || error() !== null" data-testid="desafio-motivo" />
+              </app-form-field>
+              <div class="desafio__acciones">
+                <button app-button variant="primary" type="button" [isLoading]="trabajando()" (clicked)="pedirAprobacion()" data-testid="desafio-pedir">Pedir aprobación a {{ aprobador() }}</button>
+                <button app-button variant="outline" type="button" (clicked)="cancelar()" data-testid="desafio-cancelar">Cancelar</button>
+              </div>
+            }
+          </div>
+        }
+        @case ('BLOCKED') {
+          <div class="desafio__acciones">
+            <button app-button variant="outline" type="button" (clicked)="cancelar()" data-testid="desafio-entendido">Entendido</button>
+          </div>
+        }
+      }
+    }
+  </div>
+</app-content-dialog>

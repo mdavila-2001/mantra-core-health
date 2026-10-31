@@ -29,6 +29,8 @@ describe('AppointmentNew', () => {
   let fixture: ComponentFixture<AppointmentNew>;
   let http: HttpTestingController;
 
+  let organizationNames: Record<string, string> = { [TENANT]: 'Clínica Norte' };
+
   function crear(): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -41,6 +43,7 @@ describe('AppointmentNew', () => {
           useValue: {
             practitionerProfileId: signal<string | null>(PERFIL),
             activeTenantId: signal<string | null>(TENANT),
+            tenantName: (id: string) => organizationNames[id] ?? id,
             roles: signal<readonly string[]>(['PRACTITIONER']),
           },
         },
@@ -59,7 +62,9 @@ describe('AppointmentNew', () => {
   afterEach(() => http?.verify());
 
   /** Responde el listado de recursos con las agendas dadas. */
-  function conAgendas(agendas: readonly { id: string; name: string }[]): void {
+  function conAgendas(
+    agendas: readonly { id: string; name: string; site?: unknown }[],
+  ): void {
     http.expectOne(RECURSOS).flush({
       items: agendas.map((a) => ({
         id: a.id,
@@ -67,6 +72,7 @@ describe('AppointmentNew', () => {
         resourceTypeConceptId: 'rt-1',
         resourceRefType: 'health_practitioner_profiles',
         resourceRefId: PERFIL,
+        site: a.site ?? null,
       })),
       count: agendas.length,
     });
@@ -122,6 +128,66 @@ describe('AppointmentNew', () => {
     ]);
 
     expect(fixture.nativeElement.querySelector('[data-testid="cita-agenda"]')).not.toBeNull();
+  });
+
+  describe('dónde queda la cita', () => {
+    const SEDE_CENTRO = { id: 's-1', name: 'Sede Centro', code: 'C', addressText: 'Av. Busch 100', timeZone: null };
+    const SEDE_NORTE = { id: 's-2', name: 'Sede Norte', code: 'N', addressText: null, timeZone: null };
+
+    function locationText(): string {
+      const nodo: HTMLElement = fixture.nativeElement.querySelector('[data-testid="cita-location"]');
+      return nodo.textContent.replace(/\s+/g, ' ').trim();
+    }
+
+    afterEach(() => {
+      organizationNames = { [TENANT]: 'Clínica Norte' };
+    });
+
+    it('con una sola agenda, dice la organización, la sede y la dirección', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Agenda', site: SEDE_CENTRO }]);
+
+      expect(locationText()).toBe('Esta cita queda en Clínica Norte · Sede Centro Av. Busch 100');
+    });
+
+    it('cambia con la agenda elegida', () => {
+      crear();
+      conAgendas([
+        { id: 'res-1', name: 'Agenda A', site: SEDE_CENTRO },
+        { id: 'res-2', name: 'Agenda B', site: SEDE_NORTE },
+      ]);
+
+      (
+        fixture.componentInstance as unknown as { agendaElegida: { set(id: string): void } }
+      ).agendaElegida.set('res-2');
+      fixture.detectChanges();
+
+      expect(locationText()).toBe('Esta cita queda en Clínica Norte · Sede Norte');
+    });
+
+    it('sin sede vigente lo dice, en vez de dejar el hueco', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Agenda' }]);
+
+      expect(locationText()).toBe('Esta cita queda en Clínica Norte · Sin consultorio registrado');
+    });
+
+    it('no repite la organización si la sede ya la nombra', () => {
+      crear();
+      conAgendas([
+        { id: 'res-1', name: 'Agenda', site: { ...SEDE_NORTE, name: 'CLÍNICA NORTE · Sede Central' } },
+      ]);
+
+      expect(locationText()).toBe('Esta cita queda en CLÍNICA NORTE · Sede Central');
+    });
+
+    it('sin nombre de organización en el token, no muestra el id', () => {
+      organizationNames = {};
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Agenda', site: SEDE_NORTE }]);
+
+      expect(locationText()).toBe('Esta cita queda en Sede Norte');
+    });
   });
 
   /** Sin ninguna agenda publicada, no hay dónde poner la cita: se dice, no se adivina. */

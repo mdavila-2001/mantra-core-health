@@ -1,3 +1,4 @@
+import type { ReferralTransferInput } from '../../../../core/data-access/referrals/referral-transfer.types';
 import type {
   NewReferral,
   Referral,
@@ -234,6 +235,8 @@ export interface ReferralFormValues {
   readonly treatmentGiven: string;
   readonly reason: string;
   readonly validUntil: Date | null;
+  /** El traslado, si el paciente se traslada; `null` lo omite. */
+  readonly transfer?: ReferralTransferInput | null;
 }
 
 /**
@@ -268,6 +271,7 @@ export function buildNewReferral(v: ReferralFormValues): NewReferral {
     ...optional('treatmentGivenText', text(v.treatmentGiven)),
     ...optional('reasonText', v.reason.trim()),
     ...(v.validUntil === null ? {} : { validUntil: v.validUntil }),
+    ...(v.transfer === null || v.transfer === undefined ? {} : { transfer: v.transfer }),
   };
 }
 
@@ -305,4 +309,16 @@ export function reasonHintFor(kind: ReferralDestinationKind): string {
   return kind === 'PRACTITIONER'
     ? 'Opcional. Se lo mostramos a la persona en su aviso.'
     : 'Opcional. La persona lo ve en su lista de derivaciones, no en el aviso.';
+}
+
+/** Los rótulos de las dos pestañas; tras intentar derivar, cuál está lista y a cuál le falta algo. */
+export function referralTabLabels(attempted: boolean, referralOk: boolean, transferOk: boolean): readonly string[] {
+  const mark = (ok: boolean): string => (attempted ? (ok ? ' · lista' : ' · falta') : '');
+  return [`1 · Derivación${mark(referralOk)}`, `2 · Traslado${mark(transferOk)}`];
+}
+
+/** Una derivación recién emitida, para el aviso de éxito: a quién y de qué clase. */
+export interface IssuedReferral {
+  readonly name: string;
+  readonly kind: ReferralDestinationKind;
 }

@@ -1,0 +1,117 @@
+<app-page-header
+  title="Gobierno de accesos"
+  subtitle="Quién tiene acceso, qué riesgo hay y qué necesita su atención hoy."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-governance-home">
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    @if (data(); as d) {
+      <div class="tablero">
+        <div class="tablero__barra">
+          <p class="tablero__fecha" data-testid="governance-generated-at">
+            Calculado el {{ generatedText(d) }}
+          </p>
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            (clicked)="load()"
+            data-testid="governance-refresh"
+          >
+            Actualizar
+          </button>
+        </div>
+
+        <section
+          class="seccion"
+          aria-labelledby="governance-attention-title"
+          data-testid="governance-attention"
+        >
+          <h2 id="governance-attention-title" class="seccion__titulo">
+            Lo que necesita su atención hoy
+          </h2>
+          @if (d.attention.length === 0) {
+            <p class="atencion__orden" data-testid="governance-attention-empty">
+              <span aria-hidden="true">✓</span> Todo en orden: hoy no hay nada pendiente.
+              <a app-link routerLink="/administration/access-governance/matrix"
+                >Ver la matriz de accesos</a
+              >
+            </p>
+          } @else {
+            <ol class="atencion">
+              @for (item of d.attention; track item.id) {
+                <li class="atencion__item" [attr.data-testid]="'governance-attention-' + item.id">
+                  <span class="atencion__texto">
+                    <app-badge [variant]="badgeOf(item.tone)"
+                      ><span aria-hidden="true">{{ glyphOf(item.tone) }}</span>
+                      {{ attentionLabel(item) }}</app-badge
+                    >
+                    {{ item.text }}
+                  </span>
+                  <a
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    [routerLink]="item.route"
+                    [queryParams]="item.query"
+                    [attr.aria-label]="item.actionLabel + ': ' + item.text"
+                    >{{ item.actionLabel }}</a
+                  >
+                </li>
+              }
+            </ol>
+          }
+        </section>
+
+        <section class="seccion" aria-labelledby="governance-tiles-title">
+          <h2 id="governance-tiles-title" class="seccion__titulo">Resumen de accesos</h2>
+          <ul class="mosaicos" data-testid="governance-tiles">
+            @for (tile of d.tiles; track tile.id) {
+              <li class="mosaicos__celda">
+                <a
+                  [class]="'mosaico mosaico--' + tile.tone"
+                  [routerLink]="tile.route"
+                  [queryParams]="tile.query"
+                  [attr.aria-label]="tileLabel(tile)"
+                  [attr.data-testid]="'governance-tile-' + tile.id"
+                >
+                  <span
+                    class="mosaico__valor"
+                    [attr.data-testid]="'governance-tile-value-' + tile.id"
+                    >{{ tile.value }}</span
+                  >
+                  <span class="mosaico__rotulo">{{ tile.label }}</span>
+                  <span
+                    class="mosaico__estado"
+                    [attr.data-testid]="'governance-tile-status-' + tile.id"
+                    ><span aria-hidden="true">{{ glyphOf(tile.tone) }}</span>
+                    {{ tile.statusText }}</span
+                  >
+                  <span class="mosaico__detalle">{{ tile.description }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="seccion" aria-labelledby="governance-tools-title">
+          <h2 id="governance-tools-title" class="seccion__titulo">Herramientas de gobierno</h2>
+          <ul class="herramientas" data-testid="governance-tools">
+            @for (tool of tools; track tool.id) {
+              <li class="herramientas__item">
+                <a
+                  app-link
+                  [routerLink]="tool.route"
+                  [attr.data-testid]="'governance-tool-' + tool.id"
+                  >{{ tool.label }}</a
+                >
+                <span class="herramientas__pista">{{ tool.hint }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+  </app-view-state-host>
+</app-card>

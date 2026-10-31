@@ -24,6 +24,7 @@ import {
   ReferralsClient,
 } from '../../../../core/data-access/referrals/referrals.client';
 import { referralErrorDetail } from '../../../../core/data-access/referrals/referrals.errors';
+import { transferIssues } from '../../../../core/data-access/referrals/referral-transfer.types';
 import {
   REFERRAL_LIMITS,
   REFERRAL_TYPES_WITH_CONSENT,
@@ -51,6 +52,8 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
@@ -63,11 +66,13 @@ import {
   buildNewReferral,
   DEFAULT_REFERRAL_TYPE,
   reasonHintFor,
+  referralTabLabels,
   REFERRAL_TYPE_OPTIONS,
   SERVICE_EXAMPLE,
   submissionMessage,
   TARGET_KIND_OPTIONS,
   toReferralRow,
+  type IssuedReferral,
   type ReferralDestinationKind,
   type ReferralRow,
 } from './referral-block.model';
@@ -75,15 +80,11 @@ import { ReferralDetail } from './referral-detail';
 import { referralDetailState } from './referral-detail-state';
 import { ReferralTargetSearch } from './referral-target-search';
 import { ReferralTargetServices } from './referral-target-services';
+import { ReferralTransferForm } from './referral-transfer-form';
+import { emptyTransferDraft, transferFromDraft, type TransferDraft } from './referral-transfer.model';
 
 /** El motivo cabe en el aviso de la persona: el servidor lo corta a este largo. */
 const REASON_MAX_LENGTH = 500;
-
-/** Una derivación recién emitida, para el aviso de éxito. */
-interface IssuedReferral {
-  readonly name: string;
-  readonly kind: ReferralDestinationKind;
-}
 
 /**
  * **Derivar** — el médico recomienda a la persona que consulte con otro
@@ -91,17 +92,8 @@ interface IssuedReferral {
  * organización médica, por **un servicio concreto** de su catálogo («tipo
  * tratamiento», pedido del cliente, 28/10/2026).
  *
- * ```html
- * <app-referral-block
- *   [patientProfileId]="id"
- *   [encounterId]="encuentroActual()"
- *   [referrals]="referrals.state()"
- *   [offersOpenEncounter]="true"
- *   (cambio)="referrals.reload()"
- *   (retry)="referrals.reload()"
- *   (openEncounter)="irAAbrirElEncuentro()"
- * />
- * ```
+ * Uso: `<app-referral-block [patientProfileId] [encounterId] [referrals]
+ * [offersOpenEncounter] (cambio) (retry) (openEncounter) />`.
  *
  * ## El recorrido
  *
@@ -128,12 +120,6 @@ interface IssuedReferral {
  * este bloque: `ConsultationReferrals` escucha `ReferralsClient.issued`, que
  * llega aunque el modal se haya cerrado con el envío en vuelo.
  *
- * ## El resultado, junto al botón
- *
- * El éxito, el 409 y el error se dicen justo encima de «Derivar y avisar a la
- * persona», y al llegar se les pasa el foco: a 390 px un aviso arriba del
- * formulario quedaba fuera de la pantalla.
- *
  * ## v4266: sede, externo, lo clínico, detalle y consentimiento
  *
  * Con una organización se ofrecen sus sedes (`targetBranchId`); «Externo» no
@@ -144,14 +130,15 @@ interface IssuedReferral {
  * rreferir y anular. Emitida una que lo pide, el detalle se abre solo con el
  * consentimiento dirigido; el vínculo lo escribe la API (`informedConsentId`).
  *
- * ## Por qué pasa de 300 líneas
+ * ## v4274: traslado
  *
- * Es un solo flujo —buscar, elegir servicio, derivar, ver lo derivado—. Lo
- * que tiene estado y regla propios ya vive aparte: la búsqueda de destinos
- * (`referral-target-search.ts`), los servicios del destino
- * (`referral-target-services.ts`) y lo traducible
- * (`referral-block.model.ts`). Lo que queda es lo que el bloque coordina: el
- * destino elegido y el estado del envío. Un tercio son comentarios.
+ * UNA tarjeta con dos pestañas: «Derivación» y «Traslado»
+ * (`app-referral-transfer-form`). El borrador del traslado vive acá porque
+ * `app-tab` no dibuja el panel cerrado. Lo traducible vive aparte
+ * (`referral-block.model.ts`, `referral-transfer.model.ts`), igual que la
+ * búsqueda de destinos (`referral-target-search.ts`) y los servicios del
+ * destino (`referral-target-services.ts`). El resultado del envío va junto
+ * al botón, con el foco: a 390 px un aviso arriba quedaba fuera de vista.
  */
 @Component({
   selector: 'app-referral-block',
@@ -171,7 +158,10 @@ interface IssuedReferral {
     ReferralDetail,
     SegmentedControl,
     Select,
+    ReferralTransferForm,
     StatusSeal,
+    Tab,
+    Tabs,
     Textarea,
     ViewStateHost,
   ],
@@ -300,6 +290,17 @@ export class ReferralBlock {
     () => this.referralType() !== null && this.selectedService() === null,
   );
 
+  /* -- El traslado (pestaña 2) -------------------------------------------- */
+
+  protected readonly tab = signal(0);
+  protected readonly transferDraft = signal<TransferDraft>(emptyTransferDraft());
+  protected readonly transferProblems = computed(() => transferIssues(transferFromDraft(this.transferDraft())));
+
+  /** El rótulo de cada pestaña, con «falta algo» después de intentar derivar. */
+  protected readonly tabLabels = computed(() =>
+    referralTabLabels(this.attempted(), this.issues().length === 0, this.transferProblems().length === 0),
+  );
+
   /** Se intentó enviar: desde ahí los errores se muestran junto a cada campo. */
   protected readonly attempted = signal(false);
   protected readonly issues = computed<readonly ReferralIssue[]>(() => referralIssues(this.body() ?? {}));
@@ -354,6 +355,7 @@ export class ReferralBlock {
           treatmentGiven: this.treatmentGiven(),
           reason: this.reason(),
           validUntil: this.validUntil(),
+          transfer: this.transferDraft().required ? transferFromDraft(this.transferDraft()) : null,
         });
   });
 
@@ -486,8 +488,10 @@ export class ReferralBlock {
     const body = this.body();
     if (!this.canSubmit() || body === null) return;
     this.attempted.set(true);
-    if (this.issues().length > 0) {
-      // Los errores ya están junto a cada campo; el resumen, junto al botón.
+    if (this.issues().length > 0 || this.transferProblems().length > 0) {
+      // Los errores ya están junto a cada campo; el resumen, junto al botón,
+      // y se abre la primera pestaña que tiene algo que corregir.
+      this.tab.set(this.issues().length > 0 ? 0 : 1);
       this.revealOutcome();
       return;
     }
@@ -587,6 +591,8 @@ export class ReferralBlock {
     this.clinicalSummary.set('');
     this.diagnosis.set('');
     this.treatmentGiven.set('');
+    this.transferDraft.set(emptyTransferDraft());
+    this.tab.set(0);
     this.attempted.set(false);
   }
 }

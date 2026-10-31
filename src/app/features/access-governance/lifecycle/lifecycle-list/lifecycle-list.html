@@ -1,0 +1,143 @@
+<app-page-header
+  title="Ciclo de vida del equipo"
+  subtitle="Ingresos, cambios, bajas y suspensiones con su lista de verificación, y las cuentas que todavía no tienen responsable."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-lifecycle-list">
+  <div class="filtros">
+    <app-segmented-control
+      [options]="statusOptions"
+      [value]="status()"
+      (valueChange)="setStatus($event)"
+      ariaLabel="Qué casos ver"
+      data-testid="case-status"
+    />
+    <app-select
+      [value]="kind()"
+      (valueChange)="setKind($event)"
+      [options]="kindOptions"
+      ariaLabel="Tipo de caso"
+      data-testid="case-kind"
+    />
+  </div>
+
+  <app-data-table
+    caption="Casos de ciclo de vida del equipo de apoyo"
+    [state]="state()"
+    [columns]="columns()"
+    [trackBy]="rowId"
+    [rowLabel]="rowLabel"
+    (retry)="load()"
+    (refresh)="load()"
+    data-testid="case-table"
+  />
+
+  <section class="huerfanas" aria-labelledby="ownerless-title">
+    <h2 id="ownerless-title" class="huerfanas__titulo">Cuentas sin dueño</h2>
+    <p class="huerfanas__ayuda">
+      Cada cuenta de apoyo necesita una persona responsable (el administrador de seguridad, un
+      doctor de la organización o un jefe de servicio).
+    </p>
+
+    <div aria-live="polite" role="status" data-testid="owner-notice">
+      @if (notice() !== '') {
+        <app-alert tone="success">{{ notice() }}</app-alert>
+      }
+    </div>
+
+    <app-view-state-host
+      [state]="ownerless()"
+      (retry)="loadOwnerless()"
+      (refresh)="loadOwnerless()"
+      data-testid="ownerless-host"
+    >
+      @if (ownerlessRows().length > 0) {
+        <ul class="huerfanas__lista" role="list" data-testid="ownerless-list">
+          @for (row of ownerlessRows(); track row.engagementId) {
+            <li class="huerfana" [attr.data-testid]="'ownerless-' + row.engagementId">
+              <div>
+                <p class="huerfana__nombre">
+                  {{ row.name }}
+                  @if (row.role !== '') {
+                    <span class="huerfana__rol"> · {{ row.role }}</span>
+                  }
+                </p>
+                <p class="huerfana__motivo">{{ row.reason }}</p>
+              </div>
+              <div class="huerfana__accion">
+                <app-select
+                  [value]="ownerOf(row)"
+                  (valueChange)="chooseOwner(row, $event)"
+                  [options]="ownerOptionsFor(row)"
+                  placeholder="Elija al dueño"
+                  [ariaLabel]="'Nuevo dueño de la cuenta de ' + row.name"
+                  [hasError]="!!ownerErrors()[row.engagementId]"
+                  [attr.data-testid]="'owner-select-' + row.engagementId"
+                />
+                <button
+                  app-button
+                  size="sm"
+                  type="button"
+                  [isLoading]="assigning() === row.engagementId"
+                  [disabled]="assigning() !== null"
+                  [attr.aria-label]="'Asignar dueño a ' + row.name"
+                  [attr.data-testid]="'owner-assign-' + row.engagementId"
+                  (clicked)="assignOwner(row)"
+                >
+                  Asignar dueño
+                </button>
+              </div>
+              @if (!!ownerErrors()[row.engagementId]) {
+                <p
+                  class="huerfana__error"
+                  role="alert"
+                  [attr.data-testid]="'owner-error-' + row.engagementId"
+                >
+                  {{ ownerErrors()[row.engagementId] }}
+                </p>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </app-view-state-host>
+  </section>
+</app-card>
+
+<ng-template #caseCell let-row>
+  <span class="caso__nombre" [attr.data-testid]="'case-person-' + row.id">{{ row.person }}</span>
+  <span class="caso__sub">Abierto el {{ day(row.openedAt) }}</span>
+</ng-template>
+
+<ng-template #kindCell let-row>
+  <app-badge [variant]="kindTone(row.kind)" [attr.data-testid]="'case-kind-' + row.id">{{
+    kindLabel(row.kind)
+  }}</app-badge>
+</ng-template>
+
+<ng-template #statusCell let-row>
+  <app-badge [variant]="statusTone(row.status)" [attr.data-testid]="'case-status-' + row.id">{{
+    statusLabel(row.status)
+  }}</app-badge>
+</ng-template>
+
+<ng-template #dueCell let-row>
+  <span [class.caso__vencido]="due(row).overdue" [attr.data-testid]="'case-due-' + row.id"
+    >{{ due(row).text }}
+    @if (due(row).overdue) {
+      (vencido)
+    }
+  </span>
+</ng-template>
+
+<ng-template #actionsCell let-row>
+  <a
+    app-button
+    variant="outline"
+    size="sm"
+    [routerLink]="['/administration/access-governance/lifecycle', row.id]"
+    [attr.aria-label]="'Abrir el caso de ' + row.person"
+    [attr.data-testid]="'case-open-' + row.id"
+    >Abrir caso</a
+  >
+</ng-template>

@@ -17,7 +17,18 @@
 }
 
 .referral__form {
+  display: grid;
+  gap: var(--sp-4);
   margin-block-end: var(--sp-2);
+}
+
+.referral__grid {
+  padding-block-start: var(--sp-4);
+}
+
+/* La acción principal al final, debajo de las pestañas. */
+.referral__form > [app-button] {
+  justify-self: end;
 }
 
 /* Las salidas del aviso «sin servicios», en una fila mientras quepan. */

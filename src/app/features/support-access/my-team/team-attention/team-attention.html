@@ -1,0 +1,89 @@
+<app-card padding="lg" class="atencion" data-testid="equipo-atencion" aria-live="polite">
+  <h2 class="titulo">Para su atención</h2>
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    @if (data(); as d) {
+      <ul class="lista" role="list">
+        <li class="fila" data-testid="atencion-aprobaciones">
+          <span class="fila__texto">
+            @if (d.approvals.length === 0) {
+              Ninguna aprobación espera su decisión.
+            } @else {
+              {{ countText(d.approvals.length, 'aprobación espera', 'aprobaciones esperan') }} su
+              decisión.
+            }
+          </span>
+          @if (d.approvals.length > 0) {
+            <a
+              app-button
+              variant="outline"
+              size="sm"
+              routerLink="/my-team/approvals"
+              aria-label="Decidir las aprobaciones pendientes"
+              >Decidir</a
+            >
+          }
+        </li>
+        @if (firstApprovals().length > 0) {
+          <li>
+            <ul class="detalle" role="list" data-testid="atencion-aprobaciones-detalle">
+              @for (a of firstApprovals(); track a.id) {
+                <li>{{ a.summary }}</li>
+              }
+            </ul>
+          </li>
+        }
+        <li class="fila" data-testid="atencion-revisiones">
+          <span class="fila__texto">
+            @if (d.panel.pendingReviews === 0) {
+              Ningún acceso de su equipo espera su revisión.
+            } @else {
+              {{
+                countText(
+                  d.panel.pendingReviews,
+                  'acceso de su equipo espera',
+                  'accesos de su equipo esperan'
+                )
+              }}
+              su revisión.
+            }
+          </span>
+          @if (d.panel.pendingReviews > 0) {
+            <a
+              app-button
+              variant="outline"
+              size="sm"
+              routerLink="/my-team/reviews"
+              aria-label="Revisar los accesos de su equipo"
+              >Revisar</a
+            >
+          }
+        </li>
+        <li class="fila" data-testid="atencion-anomalias">
+          <span class="fila__texto">
+            @if (alerts().length === 0) {
+              Sin alertas sobre la actividad de su agenda.
+            } @else {
+              {{
+                countText(
+                  alerts().length,
+                  'alerta sobre la actividad',
+                  'alertas sobre la actividad'
+                )
+              }}
+              de su agenda.
+            }
+          </span>
+        </li>
+        @if (alerts().length > 0) {
+          <li>
+            <ul class="detalle" role="list" data-testid="atencion-alertas">
+              @for (a of alerts(); track a.id) {
+                <li>{{ a.who }}: {{ a.what }} (desde el {{ a.since }}).</li>
+              }
+            </ul>
+          </li>
+        }
+      </ul>
+    }
+  </app-view-state-host>
+</app-card>

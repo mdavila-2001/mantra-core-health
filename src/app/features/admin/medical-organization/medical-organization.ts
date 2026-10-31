@@ -32,6 +32,7 @@ import { NavigationService } from '../../../core/navigation/navigation.service';
 import { EstablecimientoTab } from './establecimiento/establecimiento-tab';
 import { InfraestructuraTab, type SitioElegible } from './infraestructura/infraestructura-tab';
 import { MembershipsTab } from './memberships-tab/memberships-tab';
+import { VistaMedico } from './vista-medico/vista-medico';
 import { dataOf, empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
 import type {
   ViewState,
@@ -135,7 +136,7 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
  */
 @Component({
   selector: 'app-medical-organization',
-  imports: [
+  imports: [VistaMedico,
     Badge,
     DataTable,
     EstablecimientoTab,
@@ -354,6 +355,26 @@ export class MedicalOrganization {
    * Antes cada una de las siete tablas repetía la misma alerta de error con
    * el mismo código, y la persona veía siete veces el mismo fallo.
    */
+  /**
+   * Quien **no administra** ninguna organización: el médico. Tiene perfil
+   * profesional y la lista de prácticas que se pueden administrar vino vacía o
+   * se la negó la API. Sin perfil profesional (una cuenta de organización que
+   * todavía no dio de alta la suya) sigue viendo el vacío con su salida «Dar de
+   * alta». Una caída de red no cuenta: ahí no se sabe qué es, y la pantalla dice
+   * que falló.
+   */
+  protected readonly esMedico = computed(() => {
+    if (this.session.practitionerProfileId() === null) return false;
+    const { status } = this.practicas();
+    return status === 'empty' || status === 'forbidden' || status === 'not-found';
+  });
+
+  protected readonly subtitulo = computed(() =>
+    this.esMedico()
+      ? 'Las organizaciones a las que pertenece y sus solicitudes de ingreso.'
+      : 'Sedes, áreas, infraestructura, establecimiento, servicios, plantilla, legajo e inventario de la organización.',
+  );
+
   protected readonly hayDatos = computed(() => hasData(this.consola()));
 
   /** Documentos vencidos o por vencer dentro del mes: el aviso de la cabecera. */

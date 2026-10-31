@@ -6,6 +6,7 @@ import { TENANT_NAMES } from '../mock-session';
 import { cuerpo, nuevoId } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
 import { servicios } from './practice.handlers';
+import { mergeTransfer, transferProblem, type SimulatedTransfer } from './referral-transfer.rules';
 import {
   BRANCHES,
   filled,
@@ -54,6 +55,7 @@ export function registerReferralIssue(router: MockRouter): void {
       clinicalSummary: string;
       treatmentGivenText: string;
       informedConsentId: string;
+      transfer: SimulatedTransfer;
     }>(request);
     if (body.patientProfileId === undefined) {
       return validation('Falta el paciente.', [{ message: 'Falta el paciente.' }]);
@@ -100,6 +102,10 @@ export function registerReferralIssue(router: MockRouter): void {
         { message: 'El motivo admite hasta 1000 caracteres.' },
       ]);
     }
+    // v4274: el traslado se valida entero antes de abrir la transacción.
+    const transfer = body.transfer === undefined ? null : mergeTransfer(null, body.transfer);
+    const transferError = transfer === null ? null : transferProblem(transfer);
+    if (transferError !== null) return transferError;
     // Sin tipo y sin nada que identifique el destino: 422 con `details.reason`.
     // Un servicio del catálogo, solo, ya es destino.
     if (!hasTarget && !hasService) {
@@ -227,6 +233,7 @@ export function registerReferralIssue(router: MockRouter): void {
       diagnosisText: body.diagnosisText ?? null,
       clinicalSummary: body.clinicalSummary ?? null,
       treatmentGivenText: body.treatmentGivenText ?? null,
+      transfer,
     });
 
     notifyPatient(created, request.user?.practitionerProfileId ?? null);

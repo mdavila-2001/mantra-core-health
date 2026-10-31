@@ -20,6 +20,7 @@ import {
 } from '../mock-session';
 import { Coleccion, iso, isoDia, texto, uuid } from '../mock-store';
 import { servicios, serviciosPublicadosDe } from './practice.handlers';
+import type { SimulatedTransfer } from './referral-transfer.rules';
 
 /* ============================================================================
     Derivaciones (`/referrals`, módulo `clinical_ext` de la API).
@@ -147,6 +148,8 @@ export interface SimulatedReferral {
   readonly counterReferralText?: string | null;
   readonly counterReferralAt?: string | null;
   readonly informedConsentId?: string | null;
+  // v4274 — el traslado, anidado como viaja (`referral-transfer.rules.ts`).
+  readonly transfer?: SimulatedTransfer | null;
 }
 
 interface TargetService {
@@ -282,6 +285,13 @@ export const referralList = new Coleccion<SimulatedReferral>([
     requestedServiceText: 'Interconsulta con cardiología por dolor torácico atípico',
     diagnosisText: 'Dolor torácico no especificado (R07.4)',
     clinicalSummary: 'Dolor punzante intermitente de 2 semanas, no relacionado con esfuerzo. ECG en reposo normal.',
+    // En camino: es la que la Dra. Rojas recibe y en la que registra la llegada.
+    transfer: {
+      required: true, transportMode: 'AMBULANCE_ADVANCED', transportDetail: 'Unidad 12 · placa 3456-KTR',
+      escortProfessionalName: 'Lic. Ana Suárez', escortProfessionalRole: 'Enfermería', departureCondition: 'UNSTABLE',
+      vitals: { recordedAt: iso(-1, 8), systolicBp: 96, diastolicBp: 60, heartRate: 112, oxygenSaturation: 93 },
+      receiverContacted: true, receiverContactName: 'Guardia de cardiología', departedAt: iso(-1, 9),
+    },
   },
   {
     // Fuera de la plataforma: la contrarreferencia la transcribe quien escribe la historia.
@@ -346,6 +356,7 @@ export function view(r: SimulatedReferral) {
     status: STATUS_BY_CONCEPT[r.statusConceptId] ?? null,
     targetTenantName: tenant === null ? null : (TENANT_NAMES[tenant] ?? null),
     targetBranchName: branch?.name ?? null,
+    transfer: r.transfer ?? null,
   };
 }
 
