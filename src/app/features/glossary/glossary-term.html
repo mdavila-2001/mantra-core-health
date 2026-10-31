@@ -421,6 +421,11 @@
               </p>
             }
 
+            @if (cita(); as texto) {
+              <h2 class="termino__subtitulo">Cómo citar</h2>
+              <p class="termino__cita" data-testid="termino-cita">{{ texto }}</p>
+            }
+
             <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica
                  el término en CIE-10. La clave interna de la plataforma, no. -->
             @if (codigoPublicable(); as codigo) {
