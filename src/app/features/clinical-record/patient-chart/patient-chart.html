@@ -1,14 +1,17 @@
 <app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
   <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
-       entera: sin eso el documento se llevaría el menú lateral. -->
-  <app-pdf-export-button
-    page-actions
-    [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
-    [title]="titulo()"
-    [subtitle]="subtitulo()"
-    kind="Expediente clínico"
-    [target]="raizExportable()"
-  />
+       entera: sin eso el documento se llevaría el menú lateral. Sólo con el
+       expediente leído: sin él no hay nada que exportar. -->
+  @if (expediente().status === 'ready') {
+    <app-pdf-export-button
+      page-actions
+      [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
+      [title]="titulo()"
+      [subtitle]="subtitulo()"
+      kind="Expediente clínico"
+      [target]="raizExportable()"
+    />
+  }
 </app-page-header>
 
 <!-- El anfitrión resuelve los nueve estados del M34 sobre la lectura entera:
