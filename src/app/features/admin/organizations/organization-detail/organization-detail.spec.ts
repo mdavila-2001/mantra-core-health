@@ -545,6 +545,8 @@ describe('OrganizationDetail · invitaciones pendientes', () => {
             listBranches: () => of({ items: [], count: 0 }),
             listMemberships,
             listChildTenants: () => of({ items: [], count: 0, limit: 25, nextCursor: null }),
+            // La ficha pregunta `canAdminister` a quien no es de la plataforma.
+            listMyOrganizations: () => of([]),
           },
         },
         {
@@ -557,8 +559,15 @@ describe('OrganizationDetail · invitaciones pendientes', () => {
         { provide: DialogService, useValue: { confirm } },
         { provide: ToastService, useValue: { success: toastSuccess, error: toastError } },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
-        { provide: SessionStore, useValue: { roles: signal([]) } },
-        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ tenantId: TENANT })) } },
+        { provide: IamClient, useValue: { getUser: vi.fn() } },
+        { provide: SessionStore, useValue: { roles: signal([]), userId: signal(null), displayName: signal(null) } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of(convertToParamMap({ tenantId: TENANT })),
+            queryParamMap: of(convertToParamMap({})),
+          },
+        },
       ],
     });
     fixture = TestBed.createComponent(OrganizationDetail);
