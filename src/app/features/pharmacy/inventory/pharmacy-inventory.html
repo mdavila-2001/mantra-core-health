@@ -22,10 +22,6 @@
   @if (scope.pharmacyId() !== null) {
     <div class="inventory" data-testid="inventory-card">
       <div class="inventory__panel">
-        <p class="inventory__nota" data-testid="inventory-sync-notice">
-          Cuando exista la sincronización con su sistema, esta pantalla pasa a ser sólo de lectura.
-        </p>
-
         @if (sites.status() === 'failed') {
           <p class="inventory__nota" data-testid="inventory-sites-failed">
             No se pudieron leer las sucursales: por ahora se ve lo declarado en el catálogo.

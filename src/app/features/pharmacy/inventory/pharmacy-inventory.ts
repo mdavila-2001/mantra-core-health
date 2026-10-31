@@ -99,9 +99,6 @@ interface InventoryEdit {
  * - Guardar manda **sólo** las filas que cambiaron, en un único
  *   `PATCH /pharmacies/:id/inventory` (P47, sólo simulador): todo o nada, así la
  *   pantalla no queda a medias.
- * - Cuando exista la sincronización con el sistema de la farmacia (registro de
- *   procesos §2.1.2), esta pantalla pasa a ser sólo de lectura; el aviso fijo
- *   de arriba lo dice.
  *
  * Los retirados no aparecen: no se venden, no tienen inventario que llevar.
  *
@@ -257,6 +254,12 @@ export class PharmacyInventory {
           this.sites.load(pharmacyId);
           this.reload();
         });
+      }
+    });
+    // El aviso de «stock propio» sólo dice algo al cambiar o subir algo en «Todas»: recién ahí se leen las sedes.
+    effect(() => {
+      if (this.dirtyCount() > 0) {
+        untracked(() => this.sites.ensureModes());
       }
     });
   }
@@ -480,6 +483,7 @@ export class PharmacyInventory {
   }
 
   protected openUpload(): void {
+    this.sites.ensureModes();
     this.uploadOpen.set(true);
   }
 
