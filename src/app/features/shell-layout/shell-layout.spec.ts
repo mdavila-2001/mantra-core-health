@@ -1905,7 +1905,7 @@ describe('ShellLayout', () => {
     it('con una sola organización no se ofrece cambiarla', () => {
       abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles: [], tenants: ['t-1'] });
 
-      expect(raiz().querySelector('[data-testid="header-organizacion"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="header-organization"]')).toBeNull();
       expect(raiz().querySelector('[data-testid="header-cuenta"]')).not.toBeNull();
     });
 
@@ -1926,7 +1926,7 @@ describe('ShellLayout', () => {
     it('con varias organizaciones el selector las lista todas, con su nombre legible', () => {
       sesionConDosOrganizaciones();
 
-      expect(raiz().querySelector('[data-testid="header-organizacion"]')).not.toBeNull();
+      expect(raiz().querySelector('[data-testid="header-organization"]')).not.toBeNull();
       expect(opcionesDeOrganizacion().map((o) => o.textContent?.trim())).toEqual([
         'Clínica Norte',
         'Clínica Sur',
@@ -1968,7 +1968,7 @@ describe('ShellLayout', () => {
           ...extra,
         });
       }
-      const rotulo = (): string => raiz().querySelector('[data-testid="header-organizacion"]')?.textContent?.trim() ?? '';
+      const rotulo = (): string => raiz().querySelector('[data-testid="header-organization"]')?.textContent?.trim() ?? '';
       const opcionPlataforma = (): HTMLButtonElement | null =>
         raiz().querySelector<HTMLButtonElement>('[data-testid="header-organization-platform"]');
 
@@ -1998,7 +1998,7 @@ describe('ShellLayout', () => {
       it('también se ofrece con una sola organización, porque se puede alternar con «toda la plataforma»', () => {
         abrirSesion({ sub: 'u-1', roles: ['SUPERADMIN'], tenants: ['t-1'] });
 
-        expect(raiz().querySelector('[data-testid="header-organizacion"]')).not.toBeNull();
+        expect(raiz().querySelector('[data-testid="header-organization"]')).not.toBeNull();
       });
 
       it('NEGATIVO: quien no tiene alcance de plataforma no ve la opción', () => {

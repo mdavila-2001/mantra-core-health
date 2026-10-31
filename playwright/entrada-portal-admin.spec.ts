@@ -86,7 +86,7 @@ for (const [titulo, cuenta] of [
     }
 
     // 3. El armazón rotula «Toda la plataforma».
-    await expect(page.getByTestId('header-organizacion')).toContainText('Toda la plataforma', { timeout: 30_000 });
+    await expect(page.getByTestId('header-organization')).toContainText('Toda la plataforma', { timeout: 30_000 });
 
     // 5. El bloque «API hoy» tiene datos (ni esqueleto ni error) a los 10 s.
     await expect(page.getByTestId('centro-requests')).toBeVisible({ timeout: 10_000 });
@@ -109,14 +109,14 @@ test('SUPERADMIN: fijar una organización manda X-Tenant-Id; «Toda la plataform
   await expect(page.getByTestId('centro-requests')).toBeVisible({ timeout: 30_000 });
 
   // UI -> fijar organización -> la siguiente petición lleva la cabecera.
-  await page.getByTestId('header-organizacion').click();
+  await page.getByTestId('header-organization').click();
   const opciones = page.locator('#menu-organizaciones .app-menu-item:not([data-testid="header-organization-platform"])');
   await expect(opciones.first()).toBeVisible();
   const orgName = (await opciones.first().innerText()).trim();
   const antes = trafico.length;
   await opciones.first().click();
   await expect(page).toHaveURL(/\/dashboard/);
-  await expect(page.getByTestId('header-organizacion')).toContainText(orgName, { timeout: 15_000 });
+  await expect(page.getByTestId('header-organization')).toContainText(orgName, { timeout: 15_000 });
   // El panel ya estaba cargado: «Actualizar» fuerza la lectura siguiente, que es la que debe llevar la cabecera.
   await page.getByRole('button', { name: 'Actualizar' }).click();
   await expect.poll(() => trafico.slice(antes).find((t) => t.status !== undefined)?.tenant, { timeout: 15_000 }).toBeTruthy();
@@ -124,13 +124,13 @@ test('SUPERADMIN: fijar una organización manda X-Tenant-Id; «Toda la plataform
   // Recarga: la elección se recuerda (localStorage) y el rótulo sigue siendo la organización.
   await page.reload();
   await esperarAplicacionLista(page);
-  await expect(page.getByTestId('header-organizacion')).toContainText(orgName, { timeout: 30_000 });
+  await expect(page.getByTestId('header-organization')).toContainText(orgName, { timeout: 30_000 });
 
   // Camino inverso: «Toda la plataforma» -> la cabecera deja de viajar.
-  await page.getByTestId('header-organizacion').click();
+  await page.getByTestId('header-organization').click();
   const despues = trafico.length;
   await page.getByTestId('header-organization-platform').click();
-  await expect(page.getByTestId('header-organizacion')).toContainText('Toda la plataforma', { timeout: 15_000 });
+  await expect(page.getByTestId('header-organization')).toContainText('Toda la plataforma', { timeout: 15_000 });
   await page.getByRole('button', { name: 'Actualizar' }).click();
   await expect.poll(() => trafico.slice(despues).find((t) => t.status !== undefined)?.status, { timeout: 15_000 }).toBe(200);
   expect(trafico.slice(despues).find((t) => t.status !== undefined)?.tenant).toBeUndefined();
