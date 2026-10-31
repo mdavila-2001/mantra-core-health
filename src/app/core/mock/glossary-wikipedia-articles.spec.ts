@@ -60,7 +60,7 @@ describe('artículos importados de Wikipedia en español (semilla commiteada)', 
       const { text } = articulo.sections[0];
       expect(text.length).toBeGreaterThanOrEqual(120);
       expect(text).not.toMatch(/\{\{|\[\[|<ref|&nbsp;|^==/m);
-      expect(text).not.toMatch(/[​‌‍﻿]/);
+      expect(text).not.toMatch(/​|‌|‍|﻿/);
     }
   });
 
