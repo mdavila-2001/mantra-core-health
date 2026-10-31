@@ -29,7 +29,7 @@ describe('RegisterAccountType', () => {
       .map((el) => el.nativeElement as HTMLAnchorElement);
   }
 
-  it('ofrece las dos cuentas de persona, y ninguna organización', () => {
+  it('ofrece las tres cuentas de persona —paciente, médico y personal de apoyo—, y ninguna organización', () => {
     const titulos = tarjetas().map((card) =>
       card.querySelector('.tipos__card-title')!.textContent!.trim(),
     );
@@ -39,13 +39,17 @@ describe('RegisterAccountType', () => {
     // «Médico» y no «Doctor» (F2 del plan de UX del 22/08/2026): en toda la
     // superficie que ve un paciente o un profesional se dice «médico».
     // Las organizaciones viven en «Registrá tu organización» del acceso.
-    expect(titulos).toEqual(['Paciente', 'Médico']);
+    expect(titulos).toEqual(['Paciente', 'Médico', 'Secretaria o personal de apoyo']);
   });
 
   it('cada tarjeta lleva a su alta', () => {
     const destinos = tarjetas().map((card) => card.getAttribute('href'));
 
-    expect(destinos).toEqual(['/auth/register/patient', '/auth/register/practitioner']);
+    expect(destinos).toEqual([
+      '/auth/register/patient',
+      '/auth/register/practitioner',
+      '/auth/register/support-staff',
+    ]);
   });
 
   it('son enlaces, no botones', () => {
@@ -59,7 +63,7 @@ describe('RegisterAccountType', () => {
   it('la rejilla es una lista: el lector anuncia cuántas opciones hay antes de leerlas', () => {
     const items = fixture.debugElement.queryAll(By.css('.tipos__grid > li'));
 
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(3);
   });
 
   it('deja volver a iniciar sesión', () => {
@@ -145,10 +149,12 @@ describe('RegisterAccountType · composición de la rejilla', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  it('con dos tipos reparte de a dos: la tercera columna vacía era el hueco a la derecha', async () => {
+  it('con las tres cuentas de persona reparte de a tres: ninguna columna queda vacía', async () => {
+    // Eran dos (paciente y médico) y la regla era «de a dos, sin hueco a la
+    // derecha». Con la secretaria (31/10/2026) son tres: una fila de tres.
     const el = await render();
 
-    expect(el.querySelector('.tipos__grid')?.getAttribute('data-columns')).toBe('2');
+    expect(el.querySelector('.tipos__grid')?.getAttribute('data-columns')).toBe('3');
   });
 
   it('con cinco tipos los reparte de a tres', async () => {

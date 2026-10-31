@@ -164,6 +164,18 @@ import type { AccountIconName } from './account-icon.types';
             <path d="M12 9.5v5M9.5 12h5" />
           </g>
         }
+        @case ('support') {
+          <!-- Una tablilla con una persona: quien lleva la agenda y recibe a los
+               pacientes de otros. No es el estetoscopio —no atiende— ni la persona
+               sola del paciente, que viene a atenderse. -->
+          <rect class="mass" stroke="none" x="5" y="4.25" width="14" height="16.5" rx="2.5" />
+          <rect class="draw" pathLength="1" x="5" y="4.25" width="14" height="16.5" rx="2.5" />
+          <path d="M9.5 4.25V3.5h5v.75" />
+          <g class="person">
+            <circle cx="12" cy="10.25" r="2.25" />
+            <path d="M8.25 17.25a3.75 3.75 0 0 1 7.5 0" />
+          </g>
+        }
       }
     </svg>
   `,

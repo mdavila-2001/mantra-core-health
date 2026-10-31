@@ -561,6 +561,17 @@ las pantallas son paneles de operación con identificadores pegados.
 del actor efectivo es el PDP, y el backend lo publica junto al resto de la
 autorización.
 
+### `SupportStaffClient` — 1 operación · alta de la secretaria
+
+El alta de la secretaria (31/10/2026), contra el contrato de la rama
+`claude/secretaria-alta-dev` de la API. `SUPPORT_STAFF` es un rol global desde el
+alta; lo que ve la secretaria lo deciden sus **vínculos** con hospitales y
+doctores, que se piden y aceptan con `SupportAccessClient`.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/iam/auth/register-support-staff` | `RegisterSupportStaff` |
+
 ### `AuthProvidersClient` — 12 operaciones · sólo comando
 
 El M40 (`IDENTITY_ADMIN`): proveedores de identidad federada, sus protocolos,

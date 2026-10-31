@@ -5,6 +5,7 @@ import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registerPaymentReceipts } from './payment-receipts.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
+import { registrarPersonalDeApoyo } from './support-staff.handlers';
 import { registrarClinica } from './clinical.handlers';
 import { registerReferralIssue } from './referral-issue.handlers';
 import { registerReferralLifecycle } from './referral-lifecycle.handlers';
@@ -88,6 +89,8 @@ import { registrarApoyo } from './support-access.handlers';
 export function crearRouterSimulado(): MockRouter {
   const router = new MockRouter();
   registrarAuth(router);
+  // El alta de la secretaria (`/iam/auth/register-support-staff`).
+  registrarPersonalDeApoyo(router);
   registrarTerminologia(router);
   registrarPerfiles(router);
   registrarLibretaDeDirecciones(router);
