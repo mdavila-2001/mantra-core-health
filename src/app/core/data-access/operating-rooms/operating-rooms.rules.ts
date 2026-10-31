@@ -144,6 +144,13 @@ export const ROOM_EVENT_LABELS: Readonly<Record<RoomEventCode, string>> = {
   PATIENT_OUT_OF_ROOM: 'Salida de sala',
 };
 
+/** Los tiempos del recambio, que llegan de la orden de limpieza de F2. */
+export const TURNOVER_EVENT_LABELS: Readonly<Record<string, string>> = {
+  CLEANUP_START: 'Inicio de limpieza',
+  CLEANUP_END: 'Fin de limpieza',
+  ROOM_READY: 'Sala lista',
+};
+
 /** Qué fase del check-list exige cada evento (gates OMS de §F4.3). */
 export const REQUIRED_PHASE: Readonly<Partial<Record<RoomEventCode, ChecklistPhaseCode>>> = {
   ANESTHESIA_START: 'SIGN_IN',

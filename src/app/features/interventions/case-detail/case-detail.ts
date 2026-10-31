@@ -16,13 +16,13 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { CaseCharges } from '../case-charges/case-charges';
 import { CaseChecklist } from '../case-checklist/case-checklist';
 import { CaseRoomEvents } from '../case-room-events/case-room-events';
 import { CaseTeam } from '../case-team/case-team';
@@ -49,7 +49,7 @@ const CASE_TYPE_LABELS: Readonly<Record<string, string>> = { ELECTIVE: 'Electiva
  */
 @Component({
   selector: 'app-case-detail',
-  imports: [AppButtonLink, Badge, Card, CaseChecklist, CaseRoomEvents, CaseTeam, EmptyState, FactList, PageHeader, RouterLink, Tab, Tabs, ViewStateHost],
+  imports: [AppButtonLink, Badge, Card, CaseCharges, CaseChecklist, CaseRoomEvents, CaseTeam, FactList, PageHeader, RouterLink, Tab, Tabs, ViewStateHost],
   templateUrl: './case-detail.html',
   styleUrl: './case-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

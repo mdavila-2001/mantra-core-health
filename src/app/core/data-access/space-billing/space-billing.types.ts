@@ -66,6 +66,8 @@ export interface ChargeCapture {
   readonly status: BillingConcept;
   readonly idempotencyKey: string;
   readonly voidReason: string | null;
+  /** Quirófano por tiempo: los minutos facturados (salida − entrada a sala). */
+  readonly minutes?: number | null;
 }
 
 /** `GET /billing/encounters/:encounterId/pending-charges`. */

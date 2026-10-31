@@ -1,13 +1,14 @@
-import { bedDayKey, bedDays, validityOverlaps, validOn, type BedPeriod } from '../../data-access/space-billing/space-billing.rules';
+import { bedDayKey, bedDays, orTimeUnits, validityOverlaps, validOn, type BedPeriod } from '../../data-access/space-billing/space-billing.rules';
 import type { ChargeCapture, CreateSpaceTariffRequest, SpaceTariff } from '../../data-access/space-billing/space-billing.types';
 import { PRACTICE_SANLUCAS } from '../fixtures/agenda';
 import { conceptoDe, SITIOS_INFRA } from '../fixtures/infraestructura';
 import { PATIENTS } from '../fixtures/people';
 import type { MockRequest, MockRouter } from '../mock-router';
 import { Coleccion, fecha, isoDia, nuevoId, texto, uuid } from '../mock-store';
-import { espacios, tenantDePractica, unidades } from './infrastructure.handlers';
+import { espacios, tenantDePractica } from './infrastructure.handlers';
 import { conflictReply, forbiddenReply, hasRole, notFoundReply, preconditionReply, tenantOf } from './operating-rooms.state';
 import { servicios } from './practice.handlers';
+import { costCenterOfUnit } from './infra-accounting.handlers';
 
 /* ============================================================================
     Facturación por espacio — franja F5e (`CONTRATO-F2-F5.md` §F5e).
@@ -147,14 +148,15 @@ function tariffView(t: SimulatedTariff): SpaceTariff {
 
 function chargeView(c: SimulatedCharge): ChargeCapture {
   const { careSpaceId, bedCategoryCode, sourceKindCode, statusCode, costCenterUnitId, ...rest } = c;
-  const unit = costCenterUnitId === null ? undefined : unidades.get(costCenterUnitId);
+  // F5f: el centro de costo vigente de la unidad dueña de la cama.
+  const costCenter = costCenterOfUnit(costCenterUnitId);
   return {
     ...rest,
     careSpace: spaceRef(careSpaceId) ?? { id: careSpaceId, code: '—', name: 'Espacio' },
     bedCategory: bedCategoryCode === null ? null : conceptoDe(bedCategoryCode),
     sourceKind: { code: sourceKindCode, display: SOURCE_LABELS[sourceKindCode] },
     status: { code: statusCode, display: STATUS_LABELS[statusCode] },
-    costCenter: unit === undefined ? null : { id: `cc-${unit.id}`, name: `Centro de costo · ${unit.name}` },
+    costCenter,
   };
 }
 
@@ -170,6 +172,59 @@ function practiceVisible(request: MockRequest, practiceId: string | null): boole
 function stayVisible(request: MockRequest): SimulatedStay | null {
   const s = stays.get(request.params['encounterId']!);
   return s === undefined || !practiceVisible(request, s.practiceId) ? null : s;
+}
+
+/* ---- F4/F5e · quirófano por tiempo -------------------------------------------- */
+
+interface SurgicalEncounter {
+  readonly id: string;
+  readonly practiceId: string;
+  readonly patientName: string;
+}
+
+/** Los encuentros quirúrgicos con cargo de quirófano (los de internación están en `stays`). */
+const surgicalEncounters = new Coleccion<SurgicalEncounter>([]);
+
+/** Un encuentro con cargos, de internación o quirúrgico, si es del tenant activo. */
+function encounterVisible(request: MockRequest): { id: string; practiceId: string; patientName: string } | null {
+  const id = request.params['encounterId']!;
+  const e = stays.get(id) ?? surgicalEncounters.get(id);
+  return e === undefined || !practiceVisible(request, e.practiceId) ? null : e;
+}
+
+/**
+ * El cargo de uso de quirófano al cerrar el caso (Salida OMS hecha): minutos =
+ * salida − entrada a sala; unidades = `max(mínimo, ⌈minutos ÷ fracción⌉)`;
+ * tarifa propia de la sala o la general vigente al inicio. Idempotente por
+ * `ORTIME:<caso>`. Sin tarifa, pendiente sin precio (no se inventa).
+ */
+export function createOrTimeCharge(input: { caseId: string; encounterId: string; patientName: string; practiceId: string; operatingRoomId: string; startedAt: string; minutes: number }): void {
+  const key = `ORTIME:${input.caseId}`;
+  if (charges.todos().some((c) => c.idempotencyKey === key && c.statusCode !== 'CHG_VOIDED')) return;
+  surgicalEncounters.agregar({ id: input.encounterId, practiceId: input.practiceId, patientName: input.patientName });
+  const day = new Date(input.startedAt);
+  const serviceDate = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+  const tariff = tariffFor(input.practiceId, 'TARIFF_OR_TIME', serviceDate, input.operatingRoomId, null);
+  const units = tariff?.unitMinutes ? orTimeUnits(input.minutes, tariff.unitMinutes, tariff.minimumUnits ?? 0) : 1;
+  charges.agregar({
+    id: nuevoId('charge'),
+    encounterId: input.encounterId,
+    sourceKindCode: 'CHG_SRC_OR_TIME',
+    sourceRefId: input.caseId,
+    serviceDate,
+    careSpaceId: input.operatingRoomId,
+    bedCategoryCode: null,
+    spaceTariffId: tariff?.id ?? null,
+    serviceCatalogId: tariff?.serviceCatalogId ?? null,
+    quantity: String(units),
+    unitPrice: tariff?.unitPrice ?? null,
+    currencyCode: 'BOB',
+    costCenterUnitId: espacios.get(input.operatingRoomId)?.clinicalUnitId ?? null,
+    statusCode: 'CHG_PENDING',
+    idempotencyKey: key,
+    voidReason: null,
+    minutes: input.minutes,
+  } as SimulatedCharge);
 }
 
 /** La tarifa vigente en el día: la propia de la sala gana sobre la general. */
@@ -299,7 +354,7 @@ export function registerSpaceBilling(router: MockRouter): void {
   });
 
   router.get('/billing/encounters/:encounterId/pending-charges', (request) => {
-    const s = stayVisible(request);
+    const s = encounterVisible(request);
     if (s === null) return notFoundReply();
     if (!hasRole(request, READ_ROLES)) return forbiddenReply('Su rol no consulta cargos.', READ_ROLES);
     return {
@@ -320,7 +375,7 @@ export function registerSpaceBilling(router: MockRouter): void {
 
   router.post('/billing/charge-captures/:id/void', (request) => {
     const c = charges.get(request.params['id']!);
-    const s = c === undefined ? undefined : stays.get(c.encounterId);
+    const s = c === undefined ? undefined : (stays.get(c.encounterId) ?? surgicalEncounters.get(c.encounterId));
     if (c === undefined || s === undefined || !practiceVisible(request, s.practiceId)) return notFoundReply();
     if (!hasRole(request, BILLING_ROLES)) return forbiddenReply('Sólo Facturación anula cargos.', BILLING_ROLES);
     const reason = (request.body as { reason?: string } | null)?.reason?.trim();
@@ -333,4 +388,5 @@ export function registerSpaceBilling(router: MockRouter): void {
 
 /* Sobreviven a F5 dentro de la pestaña: la cadena UI → recarga → UI. */
 tariffs.persistirEn('mock.billing.spaceTariffs');
+surgicalEncounters.persistirEn('mock.billing.surgicalEncounters');
 charges.persistirEn('mock.billing.chargeCaptures');

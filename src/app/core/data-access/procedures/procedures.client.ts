@@ -195,6 +195,7 @@ export class ProceduresClient {
             }),
           ),
           roomEvents: body.roomEvents ?? [],
+          turnoverCleaning: body.turnoverCleaning ?? null,
         })),
       );
   }
@@ -329,9 +330,9 @@ function agendaDe(query: SurgicalAgendaQuery): HttpParams {
     ficha de paciente.
     ------------------------------------------------------------------------- */
 
-type FechasDelCaso = 'scheduledStartAt' | 'scheduledEndAt' | 'reservedStartAt' | 'reservedEndAt';
+type CaseDateField = 'scheduledStartAt' | 'scheduledEndAt' | 'reservedStartAt' | 'reservedEndAt';
 
-type WireCase = ConNulos<Omit<SurgicalCase, FechasDelCaso>> & {
+type WireCase = ConNulos<Omit<SurgicalCase, CaseDateField>> & {
   readonly scheduledStartAt?: string | null;
   readonly scheduledEndAt?: string | null;
   readonly reservedStartAt?: string | null;
@@ -373,6 +374,7 @@ interface WireCaseDetail {
   readonly findings?: readonly WireFinding[] | null;
   readonly implants?: readonly WireImplant[] | null;
   readonly roomEvents?: readonly RoomEvent[] | null;
+  readonly turnoverCleaning?: SurgicalCaseDetail['turnoverCleaning'];
   readonly operativeReports?:
     | readonly {
         readonly id: string;
@@ -401,7 +403,7 @@ type WireDentalRegistration = Omit<DentalProcedureRegistration, 'createdAt'> & {
 
 function toCase({ scheduledStartAt, scheduledEndAt, reservedStartAt, reservedEndAt, ...resto }: WireCase): SurgicalCase {
   return {
-    ...sinNulos<Omit<SurgicalCase, FechasDelCaso>>(resto),
+    ...sinNulos<Omit<SurgicalCase, CaseDateField>>(resto),
     ...opcional('scheduledStartAt', scheduledStartAt),
     ...opcional('scheduledEndAt', scheduledEndAt),
     ...opcional('reservedStartAt', reservedStartAt),

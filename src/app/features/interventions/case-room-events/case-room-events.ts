@@ -3,13 +3,16 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, si
 import {
   REQUIRED_PHASE,
   ROOM_EVENT_LABELS,
+  TURNOVER_EVENT_LABELS,
   ROOM_EVENT_ORDER,
   roomEventBlockedReason,
   type ChecklistPhaseCode,
   type RoomEventCode,
 } from '../../../core/data-access/operating-rooms/operating-rooms.rules';
+import { OperatingRoomsClient } from '../../../core/data-access/operating-rooms/operating-rooms.client';
+import type { TurnoverStep } from '../../../core/data-access/operating-rooms/operating-rooms.types';
 import { ProceduresClient } from '../../../core/data-access/procedures/procedures.client';
-import type { CaseChecklistSummary, RoomEvent } from '../../../core/data-access/procedures/procedures.types';
+import type { CaseChecklistSummary, RoomEvent, SurgicalCaseDetail } from '../../../core/data-access/procedures/procedures.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -43,11 +46,14 @@ interface EventButton {
 })
 export class CaseRoomEvents {
   private readonly procedures = inject(ProceduresClient);
+  private readonly operatingRooms = inject(OperatingRoomsClient);
 
   readonly caseId = input.required<string>();
   readonly events = input.required<readonly RoomEvent[]>();
   readonly checklist = input<CaseChecklistSummary | null>(null);
   readonly canRecord = input(false);
+  /** La orden de recambio que abrió la salida de sala (F2), si ya la hay. */
+  readonly turnover = input<SurgicalCaseDetail['turnoverCleaning']>(null);
   readonly changed = output<void>();
 
   protected readonly timeOf = timeOf;
@@ -76,10 +82,43 @@ export class CaseRoomEvents {
     const list = [...this.events()].sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
     return list.map((e, i) => ({
       ...e,
-      label: ROOM_EVENT_LABELS[e.eventCode as RoomEventCode] ?? e.eventCode,
+      label: ROOM_EVENT_LABELS[e.eventCode as RoomEventCode] ?? TURNOVER_EVENT_LABELS[e.eventCode] ?? e.eventCode,
       sincePrevious: i === 0 ? null : durationOf(Math.round((Date.parse(e.occurredAt) - Date.parse(list[i - 1]!.occurredAt)) / 60_000)),
     }));
   });
+
+  /** El próximo paso del recambio y su rótulo, o `null` si la sala ya está lista. */
+  protected readonly turnoverNext = computed<{ readonly step: TurnoverStep; readonly label: string } | null>(() => {
+    const status = this.turnover()?.status;
+    if (status === 'CLN_PENDING') return { step: 'start', label: 'Iniciar limpieza' };
+    if (status === 'CLN_IN_PROGRESS') return { step: 'finish', label: 'Terminar limpieza' };
+    if (status === 'CLN_DONE') return { step: 'inspect', label: 'Inspeccionar: sala lista' };
+    return null;
+  });
+
+  protected readonly turnoverLabel = computed(() => {
+    const labels: Readonly<Record<string, string>> = { CLN_PENDING: 'Sucia: espera limpieza', CLN_IN_PROGRESS: 'En limpieza', CLN_DONE: 'Limpia: espera inspección', CLN_INSPECTED: 'Lista para el próximo caso' };
+    const status = this.turnover()?.status;
+    return status === undefined ? '' : (labels[status] ?? status);
+  });
+
+  protected advanceTurnover(): void {
+    const t = this.turnover();
+    const next = this.turnoverNext();
+    if (t === null || next === null || this.sending() !== null) return;
+    this.sending.set('PATIENT_OUT_OF_ROOM');
+    this.failure.set(null);
+    this.operatingRooms.turnoverStep(t.id, next.step, t.rowVersion).subscribe({
+      next: () => {
+        this.sending.set(null);
+        this.changed.emit();
+      },
+      error: (error: unknown) => {
+        this.sending.set(null);
+        this.failure.set(errorToViewState<never>(error));
+      },
+    });
+  }
 
   protected record(code: RoomEventCode): void {
     if (this.sending() !== null) return;
