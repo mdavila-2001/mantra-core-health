@@ -363,10 +363,12 @@ export class MedicalOrganization {
    * alta». Una caída de red no cuenta: ahí no se sabe qué es, y la pantalla dice
    * que falló.
    */
-  protected readonly esMedico = computed(() => {
-    if (this.session.practitionerProfileId() === null) return false;
-    const { status } = this.practicas();
-    return status === 'empty' || status === 'forbidden' || status === 'not-found';
+  protected readonly esMedico = computed(() => this.session.practitionerProfileId() !== null);
+
+  /** Administra al menos una organización: la consola completa va en una pestaña de la vista del médico. */
+  protected readonly tieneConsola = computed(() => {
+    const estado = this.practicas();
+    return estado.status === 'ready' && estado.data.length > 0;
   });
 
   protected readonly subtitulo = computed(() =>

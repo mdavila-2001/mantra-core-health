@@ -12,4 +12,12 @@
       <app-solicitudes-de-ingreso (pendientes)="invitaciones.set($event)" />
     }
   </app-tab>
+
+  @if (consola(); as plantilla) {
+    <app-tab label="Administrar mi organización">
+      @if (pestana() === 2) {
+        <ng-container *ngTemplateOutlet="plantilla" />
+      }
+    </app-tab>
+  }
 </app-tabs>

@@ -10,6 +10,7 @@ import {
 import { offers } from './healthcare-services.handlers';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { cuerpo } from '../mock-store';
+import { terminarVinculacionPropia } from './practice.handlers';
 
 /* ============================================================================
     Afiliación médico-centro por procedimiento (CM-07). Ninguna fila llega a
@@ -26,6 +27,19 @@ function transition(id: string, from: StatusCode, to: StatusCode, owner?: string
     return conflict(`Solo se puede pasar a ${to} una afiliación en ${from}; esta está en ${current.statusCode}`);
   }
   return toRow(changeStatus(id, to)!);
+}
+
+/**
+ * Retirarse / salir de la fila: la lista del médico mezcla dos colecciones, así
+ * que se prueba primero la de sus vinculaciones propias y después `affiliations`.
+ */
+function terminar(request: MockRequest, desde: 'ACTIVE' | 'PENDING', desdeConcepto: StatusCode) {
+  const id = request.params['roleId']!;
+  const propia = terminarVinculacionPropia(id, desde, practitionerOf(request));
+  if (propia === 'terminada') return { id, status: 'ROLE_ASG_ENDED' };
+  if (propia === 'otra-persona') return forbidden();
+  if (propia === 'estado') return conflict(`Solo se puede terminar una vinculación en ${desde}`);
+  return transition(id, desdeConcepto, 'ROLE_ASG_ENDED', practitionerOf(request));
 }
 
 function practitionerOf(request: MockRequest): string | undefined {
@@ -65,10 +79,10 @@ export function registerRoleAssignments(router: MockRouter): void {
     transition(request.params['roleId']!, 'ROLE_ASG_INVITED', 'ROLE_ASG_REJECTED', practitionerOf(request)),
   );
   router.post('/practitioners/me/role-assignments/:roleId/withdraw', (request) =>
-    transition(request.params['roleId']!, 'ROLE_ASG_ACTIVE', 'ROLE_ASG_ENDED', practitionerOf(request)),
+    terminar(request, 'ACTIVE', 'ROLE_ASG_ACTIVE'),
   );
   router.post('/practitioners/me/role-assignments/:roleId/leave-queue', (request) =>
-    transition(request.params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ENDED', practitionerOf(request)),
+    terminar(request, 'PENDING', 'ROLE_ASG_PENDING'),
   );
   router.post('/role-assignments/:roleId/approve', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ACTIVE'));
   router.post('/role-assignments/:roleId/reject', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_REJECTED'));

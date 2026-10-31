@@ -3,16 +3,12 @@
 @let estado = consola();
 
 <app-page-header
-  [title]="ficha?.name ?? 'Mis organizaciones'"
+  [title]="esMedico() ? 'Mis organizaciones' : (ficha?.name ?? 'Mis organizaciones')"
   [subtitle]="subtitulo()"
   [breadcrumbs]="breadcrumbs()"
 />
 
-@if (esMedico()) {
-  <!-- Quien no administra ninguna organización no ve las pestañas administrativas
-       de una que no tiene: ve a cuáles pertenece y su buzón de solicitudes. -->
-  <app-vista-medico />
-} @else {
+<ng-template #consolaAdmin>
   <!-- El selector sólo aparece con más de una organización: ofrecer una lista de
        un elemento es ruido, y el caso mayoritario es tener una sola. -->
   @if (listado.status === 'ready' && listado.data.length > 1) {
@@ -234,45 +230,14 @@
       }
     </app-tab>
   </app-tabs>
+</ng-template>
 
-  <!-- Cobertura declarada, no simulada. El carril 13 abarca además contabilidad,
-       red social, foros, encuestas y notificaciones de la organización. Esos
-       dominios tienen módulo y carril propios; construir una segunda versión acá
-       sería la duplicación que el carril prohíbe, y dibujar pestañas que no
-       persisten sería peor. Se dice dónde vive cada cosa. -->
-  <section class="organizacion-medica__cobertura" aria-labelledby="cobertura-titulo">
-    <h2 id="cobertura-titulo">Qué administra esta pantalla y qué no</h2>
-    <dl>
-      <div>
-        <dt>Acá</dt>
-        <dd>
-          Sedes, áreas, infraestructura, servicios, plantilla profesional,
-          documentación legal e inventario — módulo 14 (<code>practice</code>).
-        </dd>
-      </div>
-      <div>
-        <dt>Contabilidad de la organización</dt>
-        <dd>
-          Vive en <strong>Contabilidad</strong> (módulo 16). Esta pantalla no
-          duplica sus libros.
-        </dd>
-      </div>
-      <div>
-        <dt>Publicaciones, foros y encuestas</dt>
-        <dd>
-          Dependen de los módulos de comunidad (19) y formularios (9), con sus
-          propios carriles. Todavía no tienen consola de organización.
-        </dd>
-      </div>
-      <div>
-        <dt>Notificaciones programadas</dt>
-        <dd>
-          Dependen del módulo de mensajería (25). No se declaran acá para no
-          prometer envíos que nadie despacha.
-        </dd>
-      </div>
-    </dl>
-  </section>
+@if (esMedico()) {
+  <!-- El médico ve a cuáles organizaciones pertenece y su buzón de solicitudes.
+       Si además administra una, la consola completa va en una pestaña aparte. -->
+  <app-vista-medico [consola]="tieneConsola() ? consolaAdmin : null" />
+} @else {
+  <ng-container *ngTemplateOutlet="consolaAdmin" />
 }
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
