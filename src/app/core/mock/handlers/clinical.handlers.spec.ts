@@ -249,25 +249,25 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
   });
 
   /*
-   * FAR-03: el estado sigue la máquina de la API (`MR_DRAFT` → `MR_ISSUED`).
+   * FAR-03: el estado sigue la máquina de la API (`clinical:MEDICATION_REQUEST_DRAFT` → `clinical:MEDICATION_REQUEST_ISSUED`).
    * Firmar no emite: sólo sella `signedAt`. Una receta firmada y sin emitir no
    * se puede pedir en la farmacia.
    */
-  it('firmar deja la receta en borrador; emitirla la pasa a MR_ISSUED con su issuedAt', () => {
+  it('firmar deja la receta en borrador; emitirla la pasa a clinical:MEDICATION_REQUEST_ISSUED con su issuedAt', () => {
     const creada = call<MockReply>('POST', '/clinical/medication-requests', {
       ...CUERPO_BASE,
       indicationText: 'Control de síntomas',
     });
     const id = (creada.body as { id: string }).id;
-    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_DRAFT']);
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_DRAFT']);
 
     call('POST', `/clinical/medication-requests/${id}/sign`, {});
-    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_DRAFT']);
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_DRAFT']);
     expect(prescriptionList.get(id)?.signedAt).not.toBeNull();
     expect(prescriptionList.get(id)?.issuedAt).toBeNull();
 
     call('POST', `/clinical/medication-requests/${id}/issue`, {});
-    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_ISSUED']);
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_ISSUED']);
     expect(prescriptionList.get(id)?.issuedAt).not.toBeNull();
   });
 
@@ -285,7 +285,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
     call('POST', `/clinical/medication-requests/${id}/sign`, {});
     call('POST', `/clinical/medication-requests/${id}/issue`, {});
 
-    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_ISSUED']);
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_ISSUED']);
     expect(prescriptionList.get(id)?.validTo).toBeNull();
 
     const conFin = call<MockReply>('POST', '/clinical/medication-requests', {

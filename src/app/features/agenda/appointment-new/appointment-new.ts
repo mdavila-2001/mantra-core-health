@@ -970,11 +970,6 @@ export class AppointmentNew {
   }
 }
 
-/** Si un nombre ya incluye a otro, sin distinguir mayúsculas. */
-function mentions(name: string, sought: string): boolean {
-  return name.toLocaleLowerCase('es').includes(sought.toLocaleLowerCase('es'));
-}
-
 /** La hora local del instante, `HH:mm`. */
 function horaDe(instante: Date): string {
   const horas = String(instante.getHours()).padStart(2, '0');
@@ -990,6 +985,11 @@ function opcionDeDuracion(minutos: number): SelectOption<string> {
   const label =
     minutos < 60 ? `${minutos} minutos` : minutos === 60 ? '1 hora' : `${minutos / 60} horas`;
   return { value: String(minutos), label };
+}
+
+/** Si un nombre ya incluye a otro, sin distinguir mayúsculas. */
+function mentions(name: string, sought: string): boolean {
+  return name.toLocaleLowerCase('es').includes(sought.toLocaleLowerCase('es'));
 }
 
 /** Si lo tecleado se lee como una cédula y no como el principio de un nombre. */

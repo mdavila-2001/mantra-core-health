@@ -1,5 +1,5 @@
 {
- "source": "openapi/openapi.json de mantra-core-health-api (test + claude/personal-apoyo-gobierno-accesos)",
+ "source": "openapi/openapi.json de mantra-core-health-api (dev + claude/personal-apoyo-gobierno-accesos)",
  "operations": [
   "DELETE /accounting/practitioner/simple/accounts/{id}",
   "DELETE /accounting/practitioner/simple/records/{id}",

@@ -40,7 +40,8 @@
     grid-column: 1 / 2;
   }
 
-  .receta__actions {
+  .receta__actions,
+  .receta__sin-compra {
     grid-row: 1 / 4;
     grid-column: 2 / 3;
     align-self: center;
@@ -48,11 +49,18 @@
   }
 }
 
-/* «Buscar dónde comprarla» y, si está emitida, «Compartir» (FAR-01). */
+/* «Buscar dónde comprarla» y «Compartir»: sólo en una receta vigente (FAR-01). */
 .receta__actions {
   display: grid;
   gap: var(--sp-2);
   justify-items: start;
+}
+
+.receta__sin-compra {
+  max-width: 32ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
 .receta__cabecera {
