@@ -427,7 +427,12 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // Personal de apoyo (2026-10): las cuatro del hospital como cuenta de
     // organización y las dos de la persona de apoyo, que existen solo en las
     // organizaciones médicas (`onlyForAccountKind` las separa por clase de cuenta).
+    // F2/F3 (31/10/2026): las cuatro de internación, sólo en un hospital.
     expect(flagged.map((s) => s.path)).toEqual([
+      'inpatient/bed-board',
+      'inpatient/cleaning',
+      'inpatient/census',
+      'inpatient/indicators',
       'administration/support-requests',
       'administration/support-team',
       'administration/support-access-lookup',
@@ -454,7 +459,9 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {
-      const tipos = ESTOS_DEL_PERSONAL_DE_APOYO.includes(section.path)
+      const tipos = section.path.startsWith('inpatient/')
+        ? ['HOSPITAL']
+        : ESTOS_DEL_PERSONAL_DE_APOYO.includes(section.path)
         ? section.path.startsWith('administration/')
           ? ['HOSPITAL', 'CLINIC', 'PROVIDER']
           : ['HOSPITAL', 'CLINIC', 'PROVIDER', 'MEDICAL_OFFICE']
@@ -465,6 +472,13 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
           : ['DIAGNOSTIC_CENTER'];
       expect(section.onlyForTenantTypes, section.path).toEqual(tipos);
     }
+  });
+
+  it('internación existe sólo en un hospital, para cualquier rol con organización (la API decide)', () => {
+    const tablero = APP_SECTIONS.find((s) => s.path === 'inpatient/bed-board')!;
+    expect(isVisibleTo(tablero, ['USER'], ['t-1'], 'HOSPITAL')).toBe(true);
+    expect(isVisibleTo(tablero, ['USER'], ['t-1'], 'PROVIDER')).toBe(false);
+    expect(isVisibleTo(tablero, ['USER'], [], 'HOSPITAL')).toBe(false);
   });
 
   it('las órdenes del laboratorio las ve su personal con sólo `USER`, y no el paciente ni otra organización', () => {
