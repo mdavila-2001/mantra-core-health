@@ -131,6 +131,19 @@
             data-testid="inventory-table"
           />
         } @else if (scope.pharmacyId(); as pharmacyId) {
+          <div class="inventory__csv">
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              [disabled]="!canUseCsv()"
+              (clicked)="openUpload()"
+              data-testid="inventory-site-upload"
+            >
+              Subir CSV de esta sucursal
+            </button>
+          </div>
           <app-site-stock-panel
             [pharmacyId]="pharmacyId"
             [siteId]="site()"
@@ -201,7 +214,8 @@
   <app-inventory-upload-dialog
     [pharmacyId]="pharmacyId"
     [products]="allProducts()"
-    (applied)="reload()"
+    [site]="site() === allSites ? null : { siteId: site(), siteName: sites.nameOf(site()) }"
+    (applied)="uploadApplied()"
     (closed)="closeUpload()"
   />
 }

@@ -358,6 +358,13 @@ export class PharmacyImport {
     const rows = productResultRows(this.reviewed(), rejected).filter((row) => row.outcome === 'REJECTED');
     return rows.length === 0 ? empty({ label: 'Cargar' }) : ready(rows);
   });
+  /** Cuántas filas se cargarían con un aviso (p. ej. «pide receta y no tiene medicamento»). */
+  protected readonly previewWarned = computed(() => {
+    const preview = this.serverPreview();
+    return preview.status === 'ready'
+      ? preview.results.filter((r) => r.outcome !== 'REJECTED' && r.message !== '').length
+      : 0;
+  });
 
   protected readonly steps = computed<readonly StepperStep[]>(() => {
     const current = VISIBLE_STEPS.findIndex((visible) => visible.steps.includes(this.step()));
@@ -709,7 +716,7 @@ export class PharmacyImport {
     const columns: CsvColumn<{ campos: ProductFields; problema: string }>[] = [
       ...CSV_COLUMNS.map((column) => ({
         header: column.encabezado,
-        value: (row: { campos: ProductFields }) => row.campos[column.campo],
+        value: (row: { campos: ProductFields }) => row.campos[column.campo] ?? '',
       })),
       { header: 'problema', value: (row) => row.problema },
     ];
@@ -752,6 +759,6 @@ export class PharmacyImport {
 function templateColumns(): CsvColumn<ProductFields>[] {
   return CSV_COLUMNS.map((column) => ({
     header: column.encabezado,
-    value: (row: ProductFields) => row[column.campo],
+    value: (row: ProductFields) => row[column.campo] ?? '',
   }));
 }
