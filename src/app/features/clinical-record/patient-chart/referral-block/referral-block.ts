@@ -67,7 +67,7 @@ import {
   REFERRAL_TYPE_OPTIONS,
   SERVICE_EXAMPLE,
   inFormOrder,
-  requestedServiceMessage,
+  withServiceContext,
   submissionMessage,
   submitBlocker,
   TARGET_KIND_OPTIONS,
@@ -139,8 +139,9 @@ const REASON_MAX_LENGTH = 500;
  * `app-tab` no dibuja el panel cerrado. Lo traducible vive aparte
  * (`referral-block.model.ts`, `referral-transfer.model.ts`), igual que la
  * búsqueda de destinos (`referral-target-search.ts`), los servicios y las
- * sedes del destino (`referral-target-services.ts`, `-branches.ts`). El resultado del envío va junto
- * al botón, con el foco: a 390 px un aviso arriba quedaba fuera de vista.
+ * sedes del destino (`referral-target-services.ts`, `-branches.ts`). El
+ * resultado del envío va junto al botón, con el foco (a 390 px, arriba no se
+ * veía).
  */
 @Component({
   selector: 'app-referral-block',
@@ -297,9 +298,7 @@ export class ReferralBlock {
   protected readonly tab = signal(0);
   protected readonly transferDraft = signal<TransferDraft>(emptyTransferDraft());
   /** En el orden de la pestaña, para que el resumen se lea como el formulario. */
-  protected readonly transferProblems = computed(() =>
-    inFormOrder(transferIssues(transferFromDraft(this.transferDraft()))),
-  );
+  protected readonly transferProblems = computed(() => inFormOrder(transferIssues(transferFromDraft(this.transferDraft()))));
 
   /** El rótulo de cada pestaña, con «falta algo» después de intentar derivar. */
   protected readonly tabLabels = computed(() =>
@@ -308,13 +307,9 @@ export class ReferralBlock {
 
   /** Se intentó enviar: desde ahí los errores se muestran junto a cada campo. */
   protected readonly attempted = signal(false);
+  /** Con el aviso de «Servicio pedido» según haya o no catálogo que elegir. */
   protected readonly issues = computed<readonly ReferralIssue[]>(() =>
-    // Falta el servicio pedido: el texto depende de si hay catálogo que elegir.
-    referralIssues(this.body() ?? {}).map((issue) =>
-      issue.field === 'requestedServiceText' && this.requestedService().trim() === ''
-        ? { ...issue, message: requestedServiceMessage(this.kind(), this.noServices()) }
-        : issue,
-    ),
+    withServiceContext(referralIssues(this.body() ?? {}), this.requestedService(), this.kind(), this.noServices()),
   );
   protected issueFor(field: ReferralIssue['field']): string {
     if (!this.attempted()) return '';
@@ -334,10 +329,7 @@ export class ReferralBlock {
     this.kind() === 'EXTERNAL' ? String(this.externalName() ?? '').trim() !== '' : this.target() !== null,
   );
 
-  /** Por qué el botón está apagado, junto a él; `null` si no lo está. */
-  protected readonly submitHint = computed(() =>
-    this.sending() ? null : submitBlocker(this.kind(), this.hasTarget(), this.reason().length > REASON_MAX_LENGTH),
-  );
+  protected readonly submitHint = computed(() => (this.sending() ? null : submitBlocker(this.kind(), this.hasTarget())));
 
   protected readonly canSubmit = computed(
     () =>
@@ -475,10 +467,7 @@ export class ReferralBlock {
     this.targetSearch.reset();
   }
 
-  /**
-   * Reintentar la lista. El botón que se tocó desaparece al releer: el foco va
-   * al título de la lista, dentro del diálogo, y no cae en `<body>`.
-   */
+  /** Reintentar: el botón desaparece al releer, así que el foco va al título (no a `<body>`). */
   protected retryList(): void {
     this.retry.emit();
     this.focusInside('#referral-list-title');
