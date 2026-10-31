@@ -154,6 +154,15 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: ['lab-visits', 'my-visits'],
   },
   {
+    label: 'Equipo y accesos de apoyo',
+    group: 'Atención',
+    icon: 'people',
+    // El personal de apoyo visto desde quien lo tiene (el doctor) y desde quien
+    // lo es (la persona de apoyo). Para el doctor es una sola sección y el
+    // armazón la dibuja suelta.
+    paths: ['my-team', 'my-support', 'combined-agenda', 'support-inbox', 'my-reviews', 'administration/team-management'],
+  },
+  {
     label: 'Formularios y referencia',
     group: 'Atención',
     icon: 'clipboard',
@@ -224,8 +233,25 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Quién es quién y quién entra en nombre de quién.
     paths: [
       'administration/delegated-access',
+      'administration/session-controls',
       'administration/identity-providers',
       'administration/identity-assurance',
+    ],
+  },
+  {
+    label: 'Personal de apoyo',
+    group: 'Administración',
+    icon: 'people',
+    // El hospital como cuenta y quien le ayuda a administrar: lo que piden, el
+    // equipo, quién puede actuar sobre qué, y cómo se suma gente nueva.
+    paths: [
+      'administration/support-requests',
+      'administration/support-team',
+      'administration/support-access-lookup',
+      'administration/support-invitations',
+      'administration/support-review',
+      'administration/support-activity',
+      'administration/access-governance',
     ],
   },
   {

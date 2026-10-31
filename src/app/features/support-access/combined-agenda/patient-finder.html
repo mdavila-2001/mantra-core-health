@@ -1,0 +1,91 @@
+@if (registering()) {
+  <app-patient-register [orgId]="orgId()" [orgName]="orgName()" [document]="mode() === 'DOCUMENT' ? text() : ''" (created)="registered($event)" (cancelled)="registering.set(false)" />
+} @else {
+  <form class="buscador" (submit)="$event.preventDefault(); search()" novalidate data-testid="buscador-paciente">
+    <app-segmented-control [options]="modes" [value]="mode()" (valueChange)="setMode($event)" ariaLabel="Cómo buscar al paciente" data-testid="buscador-modo" />
+    <p class="buscador__ayuda" data-testid="buscador-ayuda">{{ help() }}</p>
+
+    @if (mode() === 'NAME_BIRTH') {
+      <app-form-field label="Nombre y apellido completos">
+        <app-input [value]="fullName()" (valueChange)="fullName.set('' + ($event ?? ''))" ariaLabel="Nombre y apellido completos" placeholder="Juan Pérez Rojas" data-testid="buscador-nombre" />
+      </app-form-field>
+      <app-form-field label="Fecha de nacimiento">
+        <app-input type="date" [value]="birthDate()" (valueChange)="birthDate.set('' + ($event ?? ''))" ariaLabel="Fecha de nacimiento" data-testid="buscador-nacimiento" />
+      </app-form-field>
+    } @else {
+      <app-form-field [label]="textLabel()">
+        <app-input
+          [value]="text()"
+          (valueChange)="text.set('' + ($event ?? ''))"
+          [inputMode]="mode() === 'PHONE' ? 'tel' : 'text'"
+          [ariaLabel]="textLabel()"
+          [placeholder]="mode() === 'DOCUMENT' ? '4123456' : '71234567'"
+          data-testid="buscador-texto"
+        />
+      </app-form-field>
+    }
+
+    <button app-button type="submit" [isLoading]="searching()" [disabled]="searching()" data-testid="buscador-buscar">Buscar paciente</button>
+  </form>
+
+  <div aria-live="polite" class="buscador__resultado">
+    @if (notice(); as aviso) {
+      <app-alert tone="warning" title="Búsqueda incompleta" data-testid="buscador-aviso">
+        <span data-testid="buscador-aviso-texto">{{ aviso.message }}</span>
+        <span class="buscador__como">{{ aviso.help }}</span>
+      </app-alert>
+      @if (explain(); as pregunta) {
+        <app-access-why-not [request]="pregunta" idPrefix="buscador-por-que" />
+      }
+    }
+
+    @if (results(); as lista) {
+      @if (lista.length === 0) {
+        <app-alert tone="info" title="No encontramos a nadie con esos datos" data-testid="buscador-sin-resultados">
+          Revise que estén completos y bien escritos. Si el paciente no está registrado en {{ orgName() }}, puede registrarlo.
+        </app-alert>
+      } @else {
+        <ul class="resultados" role="list" aria-label="Pacientes encontrados">
+          @for (p of lista; track p.profileId) {
+            <li class="paciente" [attr.data-testid]="'paciente-' + p.profileId">
+              <div class="paciente__datos">
+                <strong class="paciente__nombre">{{ p.displayName }}</strong>
+                <span class="paciente__linea">{{ p.ageYears }} años · documento {{ p.documentMasked }}@if (p.phoneMasked) { · teléfono {{ p.phoneMasked }} }</span>
+                @if (p.isMinor) {
+                  <span class="paciente__menor">Menor de edad</span>
+                }
+              </div>
+
+              @if (p.isMinor) {
+                @if ((p.representatives?.length ?? 0) === 0) {
+                  <app-alert tone="warning" data-testid="menor-sin-representante">
+                    Este menor no tiene un representante legal ni un familiar autorizado registrado. Hace falta uno para agendarlo: pídale al representante que lo registre en recepción.
+                  </app-alert>
+                } @else {
+                  <fieldset class="representante">
+                    <legend>¿Quién actúa por {{ p.displayName }}?</legend>
+                    @for (r of p.representatives; track r.id) {
+                      <label class="representante__opcion">
+                        <input type="radio" [name]="'rep-' + p.profileId" [value]="r.id" [checked]="representativeOf(p)?.id === r.id" (change)="chooseRepresentative(p, r.id)" [attr.data-testid]="'representante-' + r.id" />
+                        <span>{{ r.name }} <small>({{ r.relationship }})</small></span>
+                      </label>
+                    }
+                  </fieldset>
+                }
+              }
+
+              <button app-button size="sm" type="button" [disabled]="!canPick(p)" (clicked)="pick(p)" [attr.data-testid]="'elegir-' + p.profileId">Elegir a este paciente</button>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+
+  @if (canRegister()) {
+    <div class="registro-aviso">
+      <span>¿No está registrado?</span>
+      <button app-button variant="outline" size="sm" type="button" (clicked)="startRegister()" data-testid="registrar-paciente-nuevo">Registrar paciente nuevo</button>
+    </div>
+  }
+}

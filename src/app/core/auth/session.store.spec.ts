@@ -41,6 +41,50 @@ describe('SessionStore', () => {
     expect(store.isAuthenticated()).toBe(false);
   });
 
+  describe('organizaciones que niegan ahora', () => {
+    const CON_NEGADAS = makeToken({ sub: 'u-1', roles: ['USER'], tenants: ['t-1'], deniedTenants: { 't-2': 'OUTSIDE_ALLOWED_HOURS' } });
+
+    it('las organizaciones que niegan no están en `tenants` y se listan con su motivo', () => {
+      store.start({ accessToken: CON_NEGADAS, refreshToken: 'r-1' });
+      expect(store.tenants()).toEqual(['t-1']);
+      expect(store.deniedTenants()).toEqual([{ tenantId: 't-2', reason: 'OUTSIDE_ALLOWED_HOURS' }]);
+      // Entra a las demás: no cuenta como sesión restringida.
+      expect(store.limitedToEnrollment()).toBe(false);
+      expect(store.isAuthenticated()).toBe(true);
+    });
+
+    it('sin el claim no hay ninguna', () => {
+      store.start({ accessToken: UNO, refreshToken: 'r-1' });
+      expect(store.deniedTenants()).toEqual([]);
+    });
+
+    it('un refresco que cambia la lista la actualiza sin tocar la organización elegida', () => {
+      store.start({ accessToken: VARIOS, refreshToken: 'r-1' });
+      store.selectTenant('t-2');
+      store.renew({ accessToken: CON_NEGADAS, refreshToken: 'r-2' });
+      expect(store.deniedTenants()).toHaveLength(1);
+    });
+  });
+
+  describe('token de alcance limitado', () => {
+    const LIMITADO = makeToken({ sub: 'u-1', roles: [], tenants: [], mfaEnrollment: true });
+
+    it('abre la sesión restringida y la deja así tras renovar con el mismo token', () => {
+      store.start({ accessToken: LIMITADO, refreshToken: 'r-1' });
+      expect(store.limitedToEnrollment()).toBe(true);
+      expect(store.mfaEnrollment()).toBe('required');
+      store.renew({ accessToken: LIMITADO, refreshToken: 'r-2' });
+      expect(store.mfaEnrollment()).toBe('required');
+    });
+
+    it('el refresco con el token completo levanta la restricción', () => {
+      store.start({ accessToken: LIMITADO, refreshToken: 'r-1' });
+      store.renew({ accessToken: UNO, refreshToken: 'r-2' });
+      expect(store.limitedToEnrollment()).toBe(false);
+      expect(store.mfaEnrollment()).toBe('done');
+    });
+  });
+
   describe('organización activa', () => {
     it('con un solo tenant se resuelve sola', () => {
       store.start({ accessToken: UNO, refreshToken: 'r-1' });
@@ -250,6 +294,18 @@ describe('SessionStore', () => {
       expect(store.isOrganizationAccount()).toBe(false);
     });
 
+    it('el hospital en modo organización firma ORGANIZATION para todos: quien entra como personal de apoyo o como doctor es una persona, la cuenta del hospital no', () => {
+      sesion({ accountKind: 'ORGANIZATION', roles: ['USER', 'SUPPORT_STAFF'], scopedRoles: { 't-1': ['SUPPORT_STAFF'] } });
+      expect(store.isOrganizationAccount()).toBe(false);
+
+      sesion({ accountKind: 'ORGANIZATION', roles: ['USER', 'PRACTITIONER'], hpid: 'h-1' });
+      expect(store.isOrganizationAccount()).toBe(false);
+
+      // La cuenta del hospital: solo `USER`, sin ningún rol de persona.
+      sesion({ accountKind: 'ORGANIZATION', roles: ['USER'] });
+      expect(store.isOrganizationAccount()).toBe(true);
+    });
+
     it('sin el claim, una farmacia, un laboratorio o una aseguradora sin perfil de persona lo son', () => {
       for (const tipo of ['PHARMACY', 'DIAGNOSTIC_CENTER', 'PAYER']) {
         sesion({ tenantTypes: { 't-1': tipo } });
@@ -268,6 +324,31 @@ describe('SessionStore', () => {
     it('una clínica (PROVIDER) no es una cuenta de organización: la usan personas', () => {
       sesion({ tenantTypes: { 't-1': 'PROVIDER' } });
       expect(store.isOrganizationAccount()).toBe(false);
+    });
+
+    it('un hospital es una cuenta de organización cuando el token lo declara', () => {
+      sesion({ accountKind: 'ORGANIZATION', tenantTypes: { 't-1': 'HOSPITAL' } });
+      expect(store.isOrganizationAccount()).toBe(true);
+      expect(store.activeTenantType()).toBe('HOSPITAL');
+    });
+
+    it('un hospital sin el claim sigue siendo una persona: no se deduce, se declara', () => {
+      // Pasa por un interruptor por organización (`org_account_mode`): hasta que
+      // la API lo emita, un token anterior no cambia de significado.
+      sesion({ tenantTypes: { 't-1': 'HOSPITAL' } });
+      expect(store.isOrganizationAccount()).toBe(false);
+    });
+
+    it('el personal del hospital (PERSON) no hereda la cuenta de organización', () => {
+      sesion({ accountKind: 'PERSON', tenantTypes: { 't-1': 'HOSPITAL' } });
+      expect(store.isOrganizationAccount()).toBe(false);
+    });
+
+    it('farmacia, laboratorio y aseguradora siguen siendo cuenta de organización con el claim', () => {
+      for (const tipo of ['PHARMACY', 'DIAGNOSTIC_CENTER', 'PAYER']) {
+        sesion({ accountKind: 'ORGANIZATION', tenantTypes: { 't-1': tipo } });
+        expect(store.isOrganizationAccount()).toBe(true);
+      }
     });
   });
 });

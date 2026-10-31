@@ -1,0 +1,283 @@
+<app-page-header
+  [title]="esDelDoctor ? 'Aprobaciones de mi equipo' : 'Aprobaciones de cuatro ojos'"
+  subtitle="Algunas acciones las decide otra persona. Aquí ve lo que espera su decisión y lo que usted pidió."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-approvals">
+  <p class="anuncio" role="status" aria-live="polite" data-testid="approvals-anuncio">
+    {{ anuncio() }}
+  </p>
+
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (datos(); as d) {
+      <app-tabs [(selectedIndex)]="pestana" data-testid="approvals-pestanas">
+        <!-- ===================== Pendientes de mi decisión ===================== -->
+        <app-tab [label]="'Pendientes de mi decisión (' + d.pending.length + ')'">
+          <section
+            class="panel"
+            aria-labelledby="approvals-pendientes-titulo"
+            data-testid="approvals-pendientes"
+          >
+            <h2 class="panel__titulo" id="approvals-pendientes-titulo">Esperan su decisión</h2>
+            <ul class="lista" role="list">
+              @for (a of d.pending; track a.id) {
+                <li class="tarjeta" [attr.data-testid]="'aprobacion-' + a.id">
+                  <div class="tarjeta__cabeza">
+                    <h3 class="tarjeta__titulo">{{ tipo(a.kind) }}</h3>
+                    <span class="tarjeta__marcas">
+                      <app-badge variant="info" size="sm">{{ estado(a) }}</app-badge>
+                      <app-badge
+                        [variant]="vencida(a) ? 'error' : 'warning'"
+                        size="sm"
+                        [attr.data-testid]="'aprobacion-vence-' + a.id"
+                        >{{ vence(a) }}</app-badge
+                      >
+                    </span>
+                  </div>
+                  <p class="tarjeta__frase" data-testid="aprobacion-resumen">{{ a.summary }}</p>
+                  @if (a.reasonText) {
+                    <p class="tarjeta__motivo">
+                      <strong>Por qué lo pide:</strong> «{{ a.reasonText }}»
+                    </p>
+                  }
+                  @if (a.details; as d) {
+                    <section
+                      class="detalle"
+                      [attr.aria-labelledby]="'aprobacion-detalle-titulo-' + a.id"
+                      [attr.data-testid]="'aprobacion-detalle-' + a.id"
+                    >
+                      <h4 class="detalle__titulo" [id]="'aprobacion-detalle-titulo-' + a.id">
+                        {{ d.op === 'ADD' ? 'El permiso que se daría' : 'El cambio de un permiso' }}
+                      </h4>
+                      @if (motivosDelCambio(d).length > 0) {
+                        <p class="tarjeta__nota" [attr.data-testid]="'aprobacion-por-que-' + a.id">
+                          <strong>Por qué pide aprobación:</strong>
+                          {{ motivosDelCambio(d).join(' ') }}
+                        </p>
+                      }
+                      @if (d.op === 'UPDATE' && queCambia(d) !== '') {
+                        <p class="tarjeta__nota" [attr.data-testid]="'aprobacion-cambia-' + a.id">
+                          <strong>Cambia:</strong> {{ queCambia(d) }}.
+                        </p>
+                      }
+                      <p class="tarjeta__nota" [attr.data-testid]="'aprobacion-objetivo-' + a.id">
+                        <strong>Para:</strong> {{ objetivoDelCambio(d) }}
+                      </p>
+                      <p class="tarjeta__nota" [attr.data-testid]="'aprobacion-vigencia-' + a.id">
+                        <strong>Cuánto dura:</strong> {{ vigenciaDelCambio(d) }}
+                      </p>
+                      <p class="tarjeta__nota"><strong>Qué podría hacer:</strong></p>
+                      <ul class="detalle__lista">
+                        @for (atomo of d.atoms; track atomo.code) {
+                          <li [attr.data-testid]="'aprobacion-atomo-' + atomo.code">
+                            {{ atomo.name }}
+                            @if (atomo.critical) {
+                              <app-badge variant="warning" size="sm">Crítico</app-badge>
+                            }
+                          </li>
+                        }
+                      </ul>
+                      <div [attr.data-testid]="'aprobacion-condiciones-' + a.id">
+                        <p class="tarjeta__nota">
+                          <strong>Condiciones:</strong>
+                          @if (d.conditions.length === 0) {
+                            Sin condiciones.
+                          }
+                        </p>
+                        @if (d.conditions.length > 0) {
+                          <ul class="detalle__lista">
+                            @for (condicion of d.conditions; track condicion) {
+                              <li>{{ condicion }}</li>
+                            }
+                          </ul>
+                        }
+                      </div>
+                    </section>
+                  }
+                  <p class="tarjeta__nota">
+                    <strong>Qué pasa si la aprueba:</strong>
+                    {{ consecuencia(a).replace('Si la aprueba, ', '') }}
+                  </p>
+                  @if (pideSegundoPaso(a)) {
+                    <p class="tarjeta__nota" data-testid="aprobacion-segundo-paso">
+                      Es un permiso crítico: al aprobar, le pediremos su segundo paso.
+                    </p>
+                  }
+
+                  @if (falloDe(a.id); as texto) {
+                    <app-alert
+                      tone="warning"
+                      role="alert"
+                      [attr.data-testid]="'aprobacion-error-' + a.id"
+                      >{{ texto }}</app-alert
+                    >
+                  }
+
+                  @if (rechazando() === a.id) {
+                    <form
+                      class="rechazo"
+                      (submit)="$event.preventDefault(); rechazar(a)"
+                      novalidate
+                      [attr.data-testid]="'aprobacion-rechazo-' + a.id"
+                    >
+                      <app-form-field
+                        label="Por qué la rechaza"
+                        [required]="true"
+                        hint="Quien la pidió lo verá."
+                        [errorMessage]="
+                          intentoDeRechazo() && motivoCorto()
+                            ? 'Escriba al menos 5 caracteres.'
+                            : ''
+                        "
+                      >
+                        <app-textarea
+                          [value]="motivo()"
+                          (valueChange)="motivo.set($event)"
+                          [rows]="2"
+                          [maxLength]="300"
+                          [hasError]="intentoDeRechazo() && motivoCorto()"
+                          [attr.data-testid]="'aprobacion-motivo-' + a.id"
+                        />
+                      </app-form-field>
+                      <div class="tarjeta__acciones">
+                        <button
+                          app-button
+                          size="sm"
+                          variant="danger"
+                          type="submit"
+                          [isLoading]="trabajando() === a.id"
+                          [disabled]="trabajando() !== null"
+                          [attr.data-testid]="'aprobacion-confirmar-rechazo-' + a.id"
+                        >
+                          Rechazar
+                        </button>
+                        <button
+                          app-button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          (clicked)="cancelarRechazo()"
+                          [attr.data-testid]="'aprobacion-cancelar-rechazo-' + a.id"
+                        >
+                          No rechazar
+                        </button>
+                      </div>
+                    </form>
+                  } @else if (!vencida(a)) {
+                    <div class="tarjeta__acciones">
+                      <button
+                        app-button
+                        size="sm"
+                        type="button"
+                        [isLoading]="trabajando() === a.id"
+                        [disabled]="trabajando() !== null"
+                        (clicked)="aprobar(a)"
+                        [attr.aria-label]="'Aprobar: ' + a.summary"
+                        [attr.data-testid]="'aprobacion-aprobar-' + a.id"
+                      >
+                        Aprobar
+                      </button>
+                      <button
+                        app-button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        [disabled]="trabajando() !== null"
+                        (clicked)="empezarRechazo(a)"
+                        [attr.aria-label]="'Rechazar: ' + a.summary"
+                        [attr.data-testid]="'aprobacion-rechazar-' + a.id"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  } @else {
+                    <p class="tarjeta__nota" [attr.data-testid]="'aprobacion-vencida-' + a.id">
+                      Esta solicitud venció: ya no se puede decidir. Quien la pidió tendrá que pedir
+                      una nueva.
+                    </p>
+                  }
+                </li>
+              } @empty {
+                <li class="vacio" data-testid="approvals-sin-pendientes">
+                  Nada espera su decisión por ahora. Cuando alguien necesite su aprobación,
+                  aparecerá aquí.
+                </li>
+              }
+            </ul>
+          </section>
+        </app-tab>
+
+        <!-- ========================== Mis solicitudes ========================== -->
+        <app-tab [label]="'Mis solicitudes (' + d.mine.length + ')'">
+          <section
+            class="panel"
+            aria-labelledby="approvals-mias-titulo"
+            data-testid="approvals-mias"
+          >
+            <h2 class="panel__titulo" id="approvals-mias-titulo">Lo que usted pidió</h2>
+            <ul class="lista" role="list">
+              @for (a of d.mine; track a.id) {
+                <li class="tarjeta" [attr.data-testid]="'solicitud-' + a.id">
+                  <div class="tarjeta__cabeza">
+                    <h3 class="tarjeta__titulo">{{ tipo(a.kind) }}</h3>
+                    <app-badge
+                      [variant]="tono(a)"
+                      size="sm"
+                      [attr.data-testid]="'solicitud-estado-' + a.id"
+                      >{{ estado(a) }}</app-badge
+                    >
+                  </div>
+                  <p class="tarjeta__frase">{{ a.summary }}</p>
+                  <p class="tarjeta__nota">Decide {{ quienDecide(a.approverKind) }}.</p>
+                  @if (pendiente(a)) {
+                    <p class="tarjeta__nota">{{ vence(a) }}.</p>
+                  }
+                  @if (vigencia(a); as texto) {
+                    <p class="tarjeta__nota" [attr.data-testid]="'solicitud-vigencia-' + a.id">
+                      {{ texto }}
+                    </p>
+                  }
+                  @if (a.status === 'REJECTED' && a.decisionComment) {
+                    <p class="tarjeta__motivo" [attr.data-testid]="'solicitud-rechazo-' + a.id">
+                      <strong>Rechazada:</strong> «{{ a.decisionComment }}»
+                    </p>
+                  }
+                  @if (falloDe(a.id); as texto) {
+                    <app-alert
+                      tone="warning"
+                      role="alert"
+                      [attr.data-testid]="'solicitud-error-' + a.id"
+                      >{{ texto }}</app-alert
+                    >
+                  }
+                  @if (pendiente(a)) {
+                    <div class="tarjeta__acciones">
+                      <button
+                        app-button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        [isLoading]="trabajando() === a.id"
+                        [disabled]="trabajando() !== null"
+                        (clicked)="cancelar(a)"
+                        [attr.aria-label]="'Cancelar mi solicitud: ' + a.summary"
+                        [attr.data-testid]="'solicitud-cancelar-' + a.id"
+                      >
+                        Cancelar la solicitud
+                      </button>
+                    </div>
+                  }
+                </li>
+              } @empty {
+                <li class="vacio" data-testid="approvals-sin-solicitudes">
+                  Usted no pidió nada que necesite aprobación. Si una acción la necesita, la
+                  pantalla se lo avisará y podrá seguirla desde aquí.
+                </li>
+              }
+            </ul>
+          </section>
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>

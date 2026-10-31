@@ -3,8 +3,10 @@
  * cliente. Que la API devuelva una fecha como texto ISO es asunto del
  * transporte, no de la pantalla.
  */
+import type { DeniedTenant } from './tenant-denial';
 
 import type { NewOwnSite } from '../practice-sites/practice-sites.types';
+import type { NewDeviceNotice } from './iam-new-device';
 
 /**
  * Credenciales de inicio de sesión.
@@ -36,6 +38,14 @@ export interface Session {
   /** Se entrega una sola vez: si se pierde, hay que volver a iniciar sesión. */
   readonly refreshToken: string;
   readonly expiresAt: Date;
+  readonly newDevice?: NewDeviceNotice;
+  /** Solo en el login: la organización exige el segundo paso y no hay factor. Entra igual; el cliente restringe (ADR-0020). */
+  readonly mfaEnrollmentRequired?: boolean;
+  /**
+   * Organizaciones a las que la persona pertenece pero en las que **no puede actuar ahora** (franja horaria, red, segundo
+   * factor, inactividad), cada una con su motivo. No están en `tenants` del token. En el login y en el refresco.
+   */
+  readonly deniedTenants?: readonly DeniedTenant[];
 }
 
 /** Una sesión abierta de la propia cuenta (`GET /iam/me/sessions`). */

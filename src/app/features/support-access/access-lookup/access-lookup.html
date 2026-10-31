@@ -1,0 +1,45 @@
+<app-page-header
+  title="Quién tiene acceso"
+  subtitle="Elija un doctor, un servicio o un piso y vea quién del personal de apoyo puede actuar sobre él, y qué puede hacer."
+/>
+
+<app-card padding="lg" data-testid="lookup-card">
+  <div class="lookup__filtros">
+    <app-segmented-control
+      [options]="tipos"
+      [value]="tipo()"
+      (valueChange)="cambiarTipo($event)"
+      ariaLabel="Qué quiere consultar"
+      data-testid="lookup-tipo"
+    />
+    <app-form-field [label]="rotulo()">
+      <app-select
+        [options]="opciones()"
+        [value]="elegido()"
+        (valueChange)="elegir($event)"
+        [placeholder]="'Elija ' + rotulo().toLocaleLowerCase('es')"
+        [ariaLabel]="rotulo()"
+        data-testid="lookup-objetivo"
+      />
+    </app-form-field>
+  </div>
+
+  @if (errorDeCatalogo(); as mensaje) {
+    <p class="lookup__error" role="alert">{{ mensaje }}</p>
+  }
+
+  <app-view-state-host [state]="resultado()">
+    <ul class="lookup__lista" role="list" data-testid="lookup-resultado" aria-live="polite">
+      @for (fila of filas(); track fila.engagementId) {
+        <li class="lookup__fila" [attr.data-testid]="'lookup-' + fila.engagementId">
+          <div>
+            <p class="lookup__nombre">{{ fila.personName }}</p>
+            <p class="lookup__detalle">{{ rol(fila) }}</p>
+          </div>
+          <p class="lookup__acciones">Puede {{ acciones(fila) }}.</p>
+          <app-badge variant="info" size="sm">{{ fila.actions.length }} acciones</app-badge>
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+</app-card>

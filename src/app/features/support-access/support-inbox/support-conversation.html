@@ -1,0 +1,140 @@
+<p class="sr-only" role="status" aria-live="polite" data-testid="conversacion-anuncio">{{ announcement() }}</p>
+
+<app-view-state-host [state]="state()" (retry)="load(false)" (refresh)="load(false)">
+  <div vsh-skeleton class="esqueleto" aria-hidden="true">
+    <div class="esqueleto__linea esqueleto__linea--titulo"></div>
+    <div class="esqueleto__linea"></div>
+    <div class="esqueleto__linea esqueleto__linea--alta"></div>
+  </div>
+
+  @if (conversation(); as c) {
+    <article class="conv" data-testid="conversacion" [attr.data-estado]="c.status">
+      <app-card padding="lg">
+        <header class="conv__cabeza">
+          <button app-button class="conv__volver" variant="ghost" size="sm" type="button" (clicked)="closed.emit()" data-testid="conversacion-volver">
+            ‹ Volver a la bandeja
+          </button>
+          <div class="conv__titulo">
+            <h2 #titulo class="conv__paciente" tabindex="-1" data-testid="conversacion-paciente">{{ c.patientLabel }}</h2>
+            <p class="conv__doctor">
+              Conversación con <strong>{{ c.practitionerName }}</strong> · {{ c.practitionerSpecialty }} · {{ c.organizationName }}
+            </p>
+          </div>
+          <div class="conv__marcas">
+            <app-badge variant="info" data-testid="conversacion-estado">{{ status(c.status) }}</app-badge>
+            @if (c.isClinical) {
+              <app-badge variant="error" data-testid="conversacion-clinica">Clínico</app-badge>
+            }
+            @if (sla(); as plazo) {
+              @if (plazo.kind !== 'none') {
+                <span class="plazo" [class]="'plazo plazo--' + plazo.kind" data-testid="conversacion-plazo" [attr.data-plazo]="plazo.kind">{{ plazo.label }}</span>
+              }
+            }
+          </div>
+        </header>
+
+        <p class="conv__dueno" data-testid="conversacion-dueno">{{ owner(c) }}</p>
+
+        @if (actions(); as acc) {
+          <div class="acciones" role="group" aria-label="Acciones de la conversación">
+            @if (acc.take) {
+              <button app-button type="button" [isLoading]="busy() === 'take'" [disabled]="busy() !== null" data-testid="conv-tomar" (clicked)="take(c)">Tomar</button>
+            }
+            @if (acc.derive && !needsDerivation()) {
+              <button app-button variant="outline" type="button" [isLoading]="busy() === 'derive'" [disabled]="busy() !== null" data-testid="conv-derivar" (clicked)="derive(c)">
+                Derivar al doctor
+              </button>
+            }
+            <a app-button variant="outline" routerLink="/combined-agenda" data-testid="conv-reprogramar">Reprogramar cita</a>
+            @if (acc.resolve) {
+              <button app-button variant="outline" type="button" [isLoading]="busy() === 'resolve'" [disabled]="busy() !== null" data-testid="conv-resolver" (clicked)="resolve(c)">Resolver</button>
+            }
+            @if (acc.reopen) {
+              <button app-button variant="outline" type="button" [isLoading]="busy() === 'reopen'" [disabled]="busy() !== null" data-testid="conv-reabrir" (clicked)="reopen(c)">Reabrir</button>
+            }
+            @if (acc.release) {
+              <button app-button variant="ghost" type="button" [isLoading]="busy() === 'release'" [disabled]="busy() !== null" data-testid="conv-liberar" (clicked)="release(c)">Liberar</button>
+            }
+          </div>
+
+          @if (acc.assign) {
+            <div class="asignar" data-testid="conv-asignar">
+              <app-form-field label="Asignar a">
+                <app-select [options]="assignOptions()" [value]="assignTo()" (valueChange)="assignTo.set($event)" [searchable]="false" placeholder="Elija a quién" ariaLabel="Asignar a" data-testid="conv-asignar-select" />
+              </app-form-field>
+              <button app-button variant="outline" type="button" [isLoading]="busy() === 'assign'" [disabled]="busy() !== null || assignTo() === null" data-testid="conv-asignar-aplicar" (clicked)="assign(c)">
+                Asignar
+              </button>
+            </div>
+          }
+        }
+
+        @if (actionFailure(); as fallo) {
+          <app-alert tone="error" role="alert" data-testid="conversacion-error">{{ fallo }}</app-alert>
+        }
+      </app-card>
+
+      <app-card padding="lg">
+        <section aria-labelledby="contexto-titulo" class="contexto" id="contexto-paciente" data-testid="contexto-paciente">
+          <h3 class="seccion__titulo" id="contexto-titulo">Lo que puede ver del paciente</h3>
+          <p class="contexto__motivo" data-testid="contexto-motivo">
+            <strong>Motivo de consulta:</strong> {{ c.patientContext.reasonLabel ?? 'Sin motivo registrado.' }}
+          </p>
+          <p class="contexto__nota">Por defecto, solo el motivo de consulta. Más que eso lo autoriza el doctor, por paciente y por un tiempo.</p>
+          @switch (c.patientContext.clinicalAccess) {
+            @case ('PENDING') {
+              <app-alert tone="info" data-testid="acceso-pendiente">{{ c.practitionerName }} todavía no decidió el pedido de acceso a la historia clínica.</app-alert>
+            }
+            @case ('APPROVED') {
+              <app-alert tone="success" data-testid="acceso-aprobado">{{ c.practitionerName }} autorizó un acceso clínico temporal para este paciente.</app-alert>
+            }
+            @default {
+              @if (c.patientContext.patientProfileId === undefined) {
+                <app-alert tone="info" data-testid="acceso-sin-paciente">Este paciente todavía no tiene ficha en la organización, así que no hay una historia clínica a la que pedir acceso.</app-alert>
+              } @else if (!askingAccess()) {
+                <button app-button variant="outline" size="sm" type="button" data-testid="acceso-pedir" (clicked)="askingAccess.set(true)">Pedir acceso a la historia clínica</button>
+              } @else {
+                <form class="acceso" (submit)="$event.preventDefault(); requestAccess(c)" novalidate>
+                  <app-form-field label="¿Para qué lo necesita?" hint="El doctor ve este motivo y decide.">
+                    <app-textarea [value]="accessReason()" (valueChange)="accessReason.set($event)" [rows]="2" data-testid="acceso-motivo" />
+                  </app-form-field>
+                  <div class="acciones">
+                    <button app-button size="sm" type="submit" [isLoading]="busy() === 'access'" [disabled]="busy() !== null || accessReason().trim().length < 5" data-testid="acceso-enviar">
+                      Pedir al doctor
+                    </button>
+                    <button app-button variant="ghost" size="sm" type="button" (clicked)="askingAccess.set(false)">Cancelar</button>
+                  </div>
+                </form>
+              }
+            }
+          }
+        </section>
+      </app-card>
+
+      <app-card padding="lg">
+        <app-conversation-timeline
+          [messages]="c.messages"
+          [notes]="c.notes"
+          [doctorName]="c.practitionerName"
+          [patientLabel]="c.patientLabel"
+          [clinicalAccess]="c.patientContext.clinicalAccess"
+          [canRequestAccess]="c.patientContext.patientProfileId !== undefined"
+          (askAccess)="askingAccess.set(true)"
+        />
+      </app-card>
+
+      <app-card padding="lg">
+        <app-reply-composer
+          [conversation]="c"
+          [templates]="templates()"
+          [busy]="busy() === 'send' || busy() === 'note' || busy() === 'derive'"
+          [failure]="composerFailure()"
+          (send)="reply(c, $event)"
+          (sendWithEmail)="reply(c, $event, true)"
+          (derive)="derive(c)"
+          (note)="addNote(c, $event)"
+        />
+      </app-card>
+    </article>
+  }
+</app-view-state-host>

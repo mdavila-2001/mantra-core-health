@@ -7,6 +7,13 @@
       </p>
     </div>
 
+    @if (pendingInvitations() > 0) {
+      <p class="tenant__aviso" role="status" data-testid="tenant-invitaciones">
+        Tiene {{ pendingInvitations() === 1 ? 'una invitación' : pendingInvitations() + ' invitaciones' }} de organizaciones sin responder.
+        <a app-link routerLink="/my-account/security/organization-invitations" data-testid="tenant-invitaciones-enlace">Verlas y responder</a>
+      </p>
+    }
+
     <ul class="tenant__list">
       @for (tenantId of tenants(); track tenantId) {
         <li>
@@ -31,6 +38,14 @@
           <p class="tenant__pie">
             <a app-link routerLink="/auth">Volver a iniciar sesión</a>
           </p>
+        </li>
+      }
+      @for (negada of denied(); track negada.tenantId) {
+        <li>
+          <button type="button" class="tenant__option tenant__option--negada" disabled [attr.aria-describedby]="'negada-' + negada.tenantId" data-testid="tenant-opcion-negada" [attr.data-tenant]="negada.tenantId" [attr.data-reason]="negada.reason">
+            {{ deniedName(negada.tenantId) }}
+          </button>
+          <p class="tenant__motivo" [id]="'negada-' + negada.tenantId" data-testid="tenant-motivo-negada">{{ motivo(negada.reason) }}</p>
         </li>
       }
     </ul>
