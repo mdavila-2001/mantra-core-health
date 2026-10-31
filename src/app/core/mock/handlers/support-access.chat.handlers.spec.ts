@@ -362,8 +362,10 @@ describe('bandeja de chat compartida en el simulador', () => {
         paciente,
         'GET',
         '/community/conversations',
-        { query: { profileId: showcaseOf(patientList.todos()[1]!.id)!.id } },
+        // Su propia bandeja: la de otro perfil es 403 `NOT_OWN_PROFILE`, como en la API.
+        { query: { profileId: showcaseOf(paciente.patientProfileId!)!.id } },
       ).body.items;
+      expect(delPaciente.length).toBeGreaterThan(0);
       expect(delPaciente.every((c) => c.awaitingDoctor === undefined)).toBe(true);
     });
 

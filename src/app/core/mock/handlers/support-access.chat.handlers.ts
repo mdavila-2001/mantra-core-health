@@ -29,6 +29,7 @@ import {
 import { conflict, forbidden, isMockReply, notFound, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_NAMES, usuarioPorId, type MockUser } from '../mock-session';
 import { ahora, cuerpo, nuevoId } from '../mock-store';
+import { autorizadaEnNombreDe } from './community.handlers';
 import { desafioDePacienteReservado } from './support-access.challenges';
 import { esPacienteReservado } from './support-access.reserved';
 import { conMotivo } from './support-access.errors';
@@ -501,7 +502,10 @@ export function registrarApoyoChat(router: MockRouter): void {
       return conMotivo(422, 'Una respuesta del equipo no puede dar contenido clínico: derívela al doctor.', 'SUPPORT_CLINICAL_CONTENT');
     }
 
-    const enviado = siguiente({ ...request, body: { ...datos, senderProfileId: perfilDeChatDe(doctor) } });
+    const remitente = perfilDeChatDe(doctor);
+    const enviado = siguiente(
+      autorizadaEnNombreDe({ ...request, body: { ...datos, senderProfileId: remitente } }, remitente),
+    );
     const resultado = (isMockReply(enviado) ? enviado.body : enviado) as { id?: string } | null;
     if (resultado?.id !== undefined && (!isMockReply(enviado) || enviado.status < 300)) {
       autorias.agregar({ id: resultado.id, authorUserId: user.id, onBehalfOfProfileId: doctor.practitionerProfileId, disclosureShown: delegado.replyDisclosure === 'SHOW' });
