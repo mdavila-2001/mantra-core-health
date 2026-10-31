@@ -1999,6 +1999,10 @@ export const routes: Routes = [
       pantallaDeOperacion('administration/medical-laboratory', 'equipment/:id', 'Ficha del equipo', () =>
         import('./features/admin/medical-laboratory/equipment-detail/equipment-detail').then((m) => m.EquipmentDetail),
       ),
+      // F5f · activos de infraestructura por espacio y centros de costo por unidad.
+      pantallaDeOperacion('administration/accounting', 'infrastructure', 'Activos y centros de costo', () =>
+        import('./features/accounting/infrastructure/infrastructure-accounting').then((m) => m.InfrastructureAccounting),
+      ),
       pantallaDeOperacion('administration/services-catalog', 'bed-day-charges', 'Cargos de día-cama', () =>
         import('./features/admin/services-catalog/bed-day-charges/bed-day-charges').then((m) => m.BedDayCharges),
       ),
