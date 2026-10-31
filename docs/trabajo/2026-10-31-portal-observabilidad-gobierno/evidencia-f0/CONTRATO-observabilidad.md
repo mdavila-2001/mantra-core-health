@@ -2,6 +2,10 @@
 
 Fuente: respuestas reales de la API local (Postgres 5544, `OBSERVABILITY_ENABLED=true`, 31/10/2026). Los ejemplos están recortados; los nombres y tipos son los de la API. Detalle de autoría: `src/modules/observability/README.md` del API.
 
+## Estado (cierre del carril)
+
+Rebanadas 2, 3, 4 y 5: completas y verificadas contra Postgres real (ver `F2-sistema.md`). No existen aún: `/modules/heatmap`, `/workers`, `/dependencies`, `/slo`. El 422 de `from` inválido está corregido en el commit `3a30108ce` pero sin re-probar en vivo (la API local puede seguir con el build anterior, que responde 400 del pipe). `moduleCode` es `UNKNOWN` hasta que se importe el catálogo de operaciones.
+
 ## Reglas comunes
 
 - **Autorización.** Las 13 lecturas exigen `Authorization: Bearer` con rol `PLATFORM_ADMIN | SRE | SECURITY_ADMIN | RELEASE_MANAGER | GOVERNANCE_ADMIN` (o `SUPERADMIN`). **Sin `X-Tenant-Id`** responden con alcance plataforma (`plataforma@alovida.test` → 200). Sin token 401; usuario sin rol de plataforma (`medico2org@alovida.test`) 403; con `X-Tenant-Id` de una organización ajena 403.
