@@ -1,9 +1,11 @@
 /**
- * El documento de identidad en su forma canónica, la misma con que la API lo guarda y lo
- * compara (`normalizeNationalId`): mayúsculas, sin espacios, puntos ni guiones y sin ceros
- * de relleno a la izquierda. «01.234-567» y «1234567» son el mismo documento.
+ * El documento de identidad en una forma comparable: mayúsculas, sin espacios, puntos ni guiones y sin ceros de
+ * relleno a la izquierda. «01.234-567» y «1234567» dan lo mismo.
  *
- * Una cadena sin contenido —«000000», «.-.-»— queda en `'0'` o vacía: la API la rechaza (400).
+ * Es una normalización **de esta pantalla** (detectar un documento sin contenido, comparar dos escritos distintos).
+ * No se verificó que la API la aplique al buscar: la búsqueda de una secretaria por documento
+ * (`POST /me/practitioner/support-invitations`) compara el texto tal cual se envía. Una cadena sin contenido
+ * —«000000», «.-.-»— queda en `'0'` o vacía.
  */
 export function canonicalNationalId(raw: string): string {
   const compact = raw.toUpperCase().replace(/[\s.-]+/g, '');
