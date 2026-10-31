@@ -241,7 +241,8 @@ describe('PharmacyImport', () => {
       mount();
 
       expect(root().querySelector('.import__pharmacy')).toBeNull();
-      expect(root().querySelectorAll('app-card')).toHaveLength(1);
+      expect(root().querySelectorAll('app-card')).toHaveLength(0);
+      expect(byId('import-card')).not.toBeNull();
       expect(root().querySelector('h1')?.textContent).toContain('Importación masiva');
       for (const label of ['Subir archivo', 'Asignar columnas', 'Revisar datos', 'Resultado']) {
         expect(text()).toContain(label);

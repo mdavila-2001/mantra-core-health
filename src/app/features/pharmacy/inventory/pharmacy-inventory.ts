@@ -19,7 +19,6 @@ import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
@@ -116,7 +115,6 @@ interface InventoryEdit {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     FormField,
     Input,

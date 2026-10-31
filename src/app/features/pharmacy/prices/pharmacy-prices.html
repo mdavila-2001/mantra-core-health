@@ -20,7 +20,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="prices" padding="lg" data-testid="prices-card">
+    <div class="prices" data-testid="prices-card">
       <div class="prices__panel">
         @if (errors().length > 0) {
           <app-alert tone="error" title="Falta resolver esto" data-testid="prices-errors">
@@ -87,7 +87,7 @@
           data-testid="prices-table"
         />
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

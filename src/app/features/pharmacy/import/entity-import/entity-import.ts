@@ -23,7 +23,6 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../../shared/components/molecules/card/card';
 import { FileInput, type RejectedFile } from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
@@ -106,7 +105,7 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
  */
 @Component({
   selector: 'app-entity-import',
-  imports: [Alert, AppButton, Badge, Card, DataTable, FileInput, FormField, Select, ViewStateHost],
+  imports: [Alert, AppButton, Badge, DataTable, FileInput, FormField, Select, ViewStateHost],
   providers: [PharmacyScope],
   templateUrl: './entity-import.html',
   styleUrl: './entity-import.css',

@@ -22,7 +22,6 @@ import { Progress } from '../../../shared/components/atoms/progress/progress';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import {
   FileInput,
   type RejectedFile,
@@ -153,7 +152,6 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     DecimalPipe,
     FileInput,

@@ -20,7 +20,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="inventory" padding="lg" data-testid="inventory-card">
+    <div class="inventory" data-testid="inventory-card">
       <div class="inventory__panel">
         <p class="inventory__nota" data-testid="inventory-sync-notice">
           Cuando exista la sincronización con su sistema, esta pantalla pasa a ser sólo de lectura.
@@ -154,7 +154,7 @@
           />
         }
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

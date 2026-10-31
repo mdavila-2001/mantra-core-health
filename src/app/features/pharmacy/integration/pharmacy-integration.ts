@@ -14,7 +14,6 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -61,7 +60,6 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
   imports: [
     Alert,
     AppButton,
-    Card,
     FactList,
     FormField,
     IntegrationMappings,

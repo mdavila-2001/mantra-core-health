@@ -24,7 +24,6 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -71,7 +70,6 @@ interface PriceRejection {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     FormField,
     Input,

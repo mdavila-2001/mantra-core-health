@@ -17,7 +17,6 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
@@ -63,7 +62,6 @@ const ROW_ACTIONS: readonly RowAction[] = [
   imports: [
     Alert,
     AppButton,
-    Card,
     ContentDialog,
     DataTable,
     FormField,

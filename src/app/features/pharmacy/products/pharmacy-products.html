@@ -20,7 +20,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="products" padding="lg" data-testid="products-card">
+    <div class="products" data-testid="products-card">
       <div class="products__panel">
         <app-filter-bar
           [filters]="filterDefs()"
@@ -90,7 +90,7 @@
           data-testid="products-table"
         />
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

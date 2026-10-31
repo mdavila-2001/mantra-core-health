@@ -20,7 +20,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="categories" padding="lg" data-testid="categories-card">
+    <div class="categories" data-testid="categories-card">
       <div class="categories__panel">
         <div class="categories__bar">
           <button app-button type="button" (clicked)="openNew()" data-testid="categories-new">
@@ -45,7 +45,7 @@
           data-testid="categories-table"
         />
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

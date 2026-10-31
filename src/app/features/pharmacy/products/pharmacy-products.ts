@@ -24,7 +24,6 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
@@ -139,7 +138,6 @@ function rowActionsOf(product: PharmacyProduct): readonly RowAction[] {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     DecimalPipe,
     FilterBar,
