@@ -139,7 +139,9 @@ export class InsightsContext {
 
   /** Mezcla cambios en la URL conservando el resto del contexto. */
   update(patch: Partial<Record<'c' | 'p' | 'from' | 'to' | 'g' | 'ch' | 'm' | 'cmp' | 'dr', string | null>>): void {
-    void this.router.navigate([], { queryParams: patch, queryParamsHandling: 'merge', replaceUrl: true });
+    // Un drill fija canal o campaña: si la persona cambia esos filtros, el drill ya no aplica.
+    const next = ('c' in patch || 'ch' in patch) && !('dr' in patch) ? { ...patch, dr: null } : patch;
+    void this.router.navigate([], { queryParams: next, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
   /** Baja o sube en el drill-down: deja exactamente estos pasos. */

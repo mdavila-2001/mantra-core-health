@@ -1,4 +1,4 @@
-<div class="ins" [class.ins--collapsed]="collapsed()">
+<div class="ins" [class.ins--collapsed]="collapsed()" [attr.data-density]="prefs.density()">
   <aside class="ins__side" [class.ins__side--open]="drawer()" aria-label="Módulos de AloVida Insights">
     <div class="ins__brand">
       <span class="ins__mark" aria-hidden="true">
@@ -29,8 +29,8 @@
                 <span class="ins__num">{{ m.number }}</span>
                 {{ m.label }}
               </span>
-              @if (m.id === 'alerts' && alertCount > 0) {
-                <span class="ins__badge" [attr.aria-label]="alertCount + ' alertas abiertas'">{{ alertCount }}</span>
+              @if (m.id === 'alerts' && alertCount() > 0) {
+                <span class="ins__badge" [attr.aria-label]="alertCount() + ' alertas abiertas'">{{ alertCount() }}</span>
               }
             </a>
           </li>
@@ -69,12 +69,15 @@
             <span>Cambiar de portal</span>
           </a>
         }
+        <button type="button" class="ins__alerts" (click)="palette.set(true)" aria-keyshortcuts="Control+K Meta+K"><span>Buscar</span><kbd class="ins__kbd">Ctrl K</kbd></button>
+        <button type="button" class="ins__alerts" (click)="glossary.set(true)"><span>Glosario</span></button>
+        <button type="button" class="ins__alerts" (click)="settings.set(true)"><span>Ajustes</span></button>
         <app-ins-saved-views />
         <a class="ins__alerts" [routerLink]="[base, 'alerts']" [queryParams]="query()">
           <app-nav-icon name="bell" />
           <span>Alertas</span>
-          @if (alertCount > 0) {
-            <span class="ins__badge">{{ alertCount }}</span>
+          @if (alertCount() > 0) {
+            <span class="ins__badge">{{ alertCount() }}</span>
           }
         </a>
       </div>
@@ -91,4 +94,9 @@
       </app-view-state-host>
     </main>
   </div>
+
+  <app-ins-tabbar [query]="query()" [alerts]="alertCount()" (more)="drawer.set(true)" />
 </div>
+<app-ins-palette [open]="palette()" (closed)="palette.set(false)" />
+<app-ins-glossary [open]="glossary()" (closed)="glossary.set(false)" />
+<app-ins-settings [open]="settings()" (closed)="settings.set(false)" />

@@ -1,0 +1,12 @@
+{
+  "console": [],
+  "page": [],
+  "failed": [],
+  "landed": "http://127.0.0.1:4200/insights/home",
+  "overflow light/390/embudo": 0,
+  "overflow light/768/embudo": 0,
+  "overflow light/1440/embudo": 0,
+  "overflow dark/390/embudo": 0,
+  "overflow dark/768/embudo": 0,
+  "overflow dark/1440/embudo": 0
+}

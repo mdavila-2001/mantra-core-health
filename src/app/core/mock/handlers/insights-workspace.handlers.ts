@@ -101,13 +101,12 @@ function versionMismatch() {
 }
 
 export function registrarInsightsWorkspace(router: MockRouter): void {
-  const base = '/marketing/insights';
   const guard = (req: MockRequest) => (allowed(req) ? null : forbidden('Su rol no puede ver AloVida Insights.'));
 
   /* ----------------------------------------------------------- alertas */
-  router.get(`${base}/alert-workflow`, (req) => guard(req) ?? ok(Object.values(read<Record<string, InsightsAlertWorkflow>>('workflow', {}))));
+  router.get('/marketing/insights/alert-workflow', (req) => guard(req) ?? ok(Object.values(read<Record<string, InsightsAlertWorkflow>>('workflow', {}))));
 
-  router.put(`${base}/alert-workflow/:fingerprint`, (req) => {
+  router.put('/marketing/insights/alert-workflow/:fingerprint', (req) => {
     const denied = guard(req);
     if (denied) return denied;
     const fp = decodeURIComponent(req.params['fingerprint'] ?? '');
@@ -142,9 +141,9 @@ export function registrarInsightsWorkspace(router: MockRouter): void {
   });
 
   /* ------------------------------------------------------------- reglas */
-  router.get(`${base}/alert-rules`, (req) => guard(req) ?? ok(read<InsightsAlertRule[]>('rules', [...DEFAULT_RULES])));
+  router.get('/marketing/insights/alert-rules', (req) => guard(req) ?? ok(read<InsightsAlertRule[]>('rules', [...DEFAULT_RULES])));
 
-  router.patch(`${base}/alert-rules/:code`, (req) => {
+  router.patch('/marketing/insights/alert-rules/:code', (req) => {
     const denied = guard(req);
     if (denied) return denied;
     const rules = read<InsightsAlertRule[]>('rules', [...DEFAULT_RULES]);
@@ -162,8 +161,8 @@ export function registrarInsightsWorkspace(router: MockRouter): void {
   });
 
   /* ------------------------------------------------- preferencias (usuario) */
-  router.get(`${base}/notification-preferences`, (req) => guard(req) ?? ok(read(`${who(req)}:notif`, DEFAULT_NOTIFICATIONS)));
-  router.put(`${base}/notification-preferences`, (req) => {
+  router.get('/marketing/insights/notification-preferences', (req) => guard(req) ?? ok(read(`${who(req)}:notif`, DEFAULT_NOTIFICATIONS)));
+  router.put('/marketing/insights/notification-preferences', (req) => {
     const denied = guard(req);
     if (denied) return denied;
     const body = req.body as PutNotificationPreferencesBody | null;
@@ -176,8 +175,8 @@ export function registrarInsightsWorkspace(router: MockRouter): void {
     return ok(next);
   });
 
-  router.get(`${base}/user-preferences`, (req) => guard(req) ?? ok(read(`${who(req)}:prefs`, DEFAULT_USER_PREFS)));
-  router.put(`${base}/user-preferences`, (req) => {
+  router.get('/marketing/insights/user-preferences', (req) => guard(req) ?? ok(read(`${who(req)}:prefs`, DEFAULT_USER_PREFS)));
+  router.put('/marketing/insights/user-preferences', (req) => {
     const denied = guard(req);
     if (denied) return denied;
     const body = req.body as PutUserPreferencesBody | null;
@@ -193,12 +192,12 @@ export function registrarInsightsWorkspace(router: MockRouter): void {
   });
 
   /* ---------------------------------------------------- vistas guardadas */
-  router.get(`${base}/saved-views`, (req) => guard(req) ?? ok(read<InsightsSavedView[]>(`${who(req)}:views`, [])));
-  router.put(`${base}/saved-views/:id`, (req) => {
+  router.get('/marketing/insights/saved-views', (req) => guard(req) ?? ok(read<InsightsSavedView[]>(`${who(req)}:views`, [])));
+  router.put('/marketing/insights/saved-views/:id', (req) => {
     const denied = guard(req);
     if (denied) return denied;
     const body = req.body as PutSavedViewBody | null;
-    if (!body?.name?.trim() || !body.url?.startsWith('/insights')) return validation('La vista necesita nombre y una dirección de Insights.', [{ field: 'name', message: 'obligatorio' }]);
+    if (!body?.name?.trim() || !(body.url === '/insights' || body.url?.startsWith('/insights/') || body.url?.startsWith('/insights?'))) return validation('La vista necesita nombre y una dirección de Insights.', [{ field: 'name', message: 'obligatorio' }]);
     const views = read<InsightsSavedView[]>(`${who(req)}:views`, []);
     const id = req.params['id'] ?? '';
     if (views.some((v) => v.id !== id && v.name.toLowerCase() === body.name.trim().toLowerCase())) return conflictName();
@@ -209,7 +208,7 @@ export function registrarInsightsWorkspace(router: MockRouter): void {
     write(`${who(req)}:views`, views);
     return ok(next);
   });
-  router.delete(`${base}/saved-views/:id`, (req) => {
+  router.delete('/marketing/insights/saved-views/:id', (req) => {
     const denied = guard(req);
     if (denied) return denied;
     write(`${who(req)}:views`, read<InsightsSavedView[]>(`${who(req)}:views`, []).filter((v) => v.id !== req.params['id']));
@@ -217,8 +216,8 @@ export function registrarInsightsWorkspace(router: MockRouter): void {
   });
 
   /* ------------------------------------------------------------ informes */
-  router.get(`${base}/reports`, (req) => guard(req) ?? ok(read<InsightsReportRecord[]>(`${who(req)}:reports`, [])));
-  router.put(`${base}/reports/:id`, (req) => {
+  router.get('/marketing/insights/reports', (req) => guard(req) ?? ok(read<InsightsReportRecord[]>(`${who(req)}:reports`, [])));
+  router.put('/marketing/insights/reports/:id', (req) => {
     const denied = guard(req);
     if (denied) return denied;
     const body = req.body as PutReportBody | null;
@@ -232,7 +231,7 @@ export function registrarInsightsWorkspace(router: MockRouter): void {
     write(`${who(req)}:reports`, list.slice(0, MAX_REPORTS));
     return ok(record);
   });
-  router.delete(`${base}/reports/:id`, (req) => {
+  router.delete('/marketing/insights/reports/:id', (req) => {
     const denied = guard(req);
     if (denied) return denied;
     write(`${who(req)}:reports`, read<InsightsReportRecord[]>(`${who(req)}:reports`, []).filter((r) => r.id !== req.params['id']));
