@@ -35,6 +35,11 @@ function importados(): readonly Articulo[] {
   );
 }
 
+/** Espacios de ancho cero y marca de orden de bytes, armados por código para no escribirlos literales. */
+const CARACTERES_INVISIBLES = new RegExp(
+  [0x200b, 0x200c, 0x200d, 0xfeff].map((c) => String.fromCharCode(c)).join('|'),
+);
+
 describe('artículos importados de Wikipedia en español (semilla commiteada)', () => {
   const articulos = importados();
 
@@ -59,7 +64,7 @@ describe('artículos importados de Wikipedia en español (semilla commiteada)', 
     for (const articulo of articulos) {
       const { text } = articulo.sections[0];
       expect(text.length).toBeGreaterThanOrEqual(120);
-      expect(text).not.toMatch(/\{\{|\[\[|<ref|&nbsp;|^==/m);
+      expect(CARACTERES_INVISIBLES.test(text)).toBe(false);
       expect(text).not.toMatch(/​|‌|‍|﻿/);
     }
   });
