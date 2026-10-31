@@ -64,6 +64,12 @@ export function registerRoleAssignments(router: MockRouter): void {
   router.post('/practitioners/me/role-assignments/:roleId/decline', (request) =>
     transition(request.params['roleId']!, 'ROLE_ASG_INVITED', 'ROLE_ASG_REJECTED', practitionerOf(request)),
   );
+  router.post('/practitioners/me/role-assignments/:roleId/withdraw', (request) =>
+    transition(request.params['roleId']!, 'ROLE_ASG_ACTIVE', 'ROLE_ASG_ENDED', practitionerOf(request)),
+  );
+  router.post('/practitioners/me/role-assignments/:roleId/leave-queue', (request) =>
+    transition(request.params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ENDED', practitionerOf(request)),
+  );
   router.post('/role-assignments/:roleId/approve', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ACTIVE'));
   router.post('/role-assignments/:roleId/reject', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_REJECTED'));
 }
