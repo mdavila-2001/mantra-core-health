@@ -173,6 +173,22 @@ describe('ReferralTransferPanel', () => {
     expect(byTestId('referral-arrival-start')).toBeNull();
   });
 
+  it('avisa cuando abre y cierra el formulario, para que el detalle esconda las otras acciones', () => {
+    create(BASE, { issuedByMe: true });
+    const editing: boolean[] = [];
+    fixture.componentInstance.editing.subscribe((value) => editing.push(value));
+    click('referral-transfer-complete');
+    click('referral-transfer-back');
+    expect(editing).toEqual([true, false]);
+
+    create(BASE);
+    const arrival: boolean[] = [];
+    fixture.componentInstance.editing.subscribe((value) => arrival.push(value));
+    click('referral-arrival-start');
+    click('referral-arrival-back');
+    expect(arrival).toEqual([true, false]);
+  });
+
   it('completar el traslado valida antes de mandar y manda PATCH …/transfer', () => {
     create({ ...BASE, transfer: { ...BASE.transfer, escortProfessionalName: undefined } }, { issuedByMe: true });
     click('referral-transfer-complete');
