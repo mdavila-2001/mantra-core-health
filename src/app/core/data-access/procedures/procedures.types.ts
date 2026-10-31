@@ -243,6 +243,8 @@ export interface SurgicalCaseDetail {
    * declara el `POST`; la ficha necesita leerlos para pintar la línea de tiempo.
    */
   readonly roomEvents: readonly RoomEvent[];
+  /** La orden de recambio de la sala tras la salida (desvío anotado: lectura en el detalle). */
+  readonly turnoverCleaning: { readonly id: string; readonly status: string; readonly rowVersion: number } | null;
 }
 
 /** Una página de la agenda quirúrgica, con su total sin paginar. */

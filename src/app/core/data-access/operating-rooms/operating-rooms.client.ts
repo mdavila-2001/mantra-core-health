@@ -11,6 +11,8 @@ import type {
   OrBlockQuery,
   OrUtilization,
   OrUtilizationQuery,
+  TurnoverCleaning,
+  TurnoverStep,
 } from './operating-rooms.types';
 
 /**
@@ -68,6 +70,15 @@ export class OperatingRoomsClient {
     return this.http.get<OrUtilization>(this.url(`/sites/${enc(siteId)}/or-utilization`), {
       params: paramsOf(query),
     });
+  }
+
+  /**
+   * `POST /cleaning-orders/:id/{start|finish|inspect}` — el recambio de la sala
+   * (contrato de F2), con `If-Match` de la orden. Inspeccionar va con `PASS`:
+   * el rechazo con motivo vive en la cola de limpieza de F2.
+   */
+  turnoverStep(id: string, step: TurnoverStep, rowVersion: number): Observable<TurnoverCleaning> {
+    return this.http.post<TurnoverCleaning>(this.url(`/cleaning-orders/${enc(id)}/${step}`), step === 'inspect' ? { result: 'PASS' } : {}, { headers: ifMatch(rowVersion) });
   }
 
   private url(path: string): string {

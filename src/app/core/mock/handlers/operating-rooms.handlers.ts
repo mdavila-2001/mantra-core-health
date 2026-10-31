@@ -28,6 +28,7 @@ import {
   releaseTick,
   roomOf,
   touchMinutes,
+  turnoverOfCase,
   versionMismatch,
   visibleSite,
   windowOfCase,
@@ -325,7 +326,14 @@ export function registerOperatingRooms(router: MockRouter): void {
         encounterId: c.encounterId ?? null,
       };
     },
-    detail: (c) => ({ roomEvents: eventsOfCase(c.id).map(({ id, eventCode, occurredAt, recordedAt }) => ({ id, eventCode, occurredAt, recordedAt })) }),
+    detail: (c) => {
+      const t = turnoverOfCase(c.id);
+      return {
+        roomEvents: eventsOfCase(c.id).map(({ id, eventCode, occurredAt, recordedAt }) => ({ id, eventCode, occurredAt, recordedAt })),
+        // Desvío anotado: la orden de recambio de la sala, para operar la limpieza desde la ficha.
+        turnoverCleaning: t === undefined ? null : { id: t.id, status: t.status, rowVersion: t.rowVersion },
+      };
+    },
   });
 
   router.get('/sites/:siteId/operating-rooms', (request) => {

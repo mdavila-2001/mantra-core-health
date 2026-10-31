@@ -184,3 +184,16 @@ export interface OrUtilizationQuery {
   readonly operatingRoomId?: string;
   readonly groupBy?: OrUtilizationGroupBy;
 }
+
+/** Estado de la orden de recambio del quirófano (orden de limpieza de F2). */
+export type TurnoverCleaningStatus = 'CLN_PENDING' | 'CLN_IN_PROGRESS' | 'CLN_DONE' | 'CLN_INSPECTED';
+
+/** La orden de limpieza que abre la salida de sala. */
+export interface TurnoverCleaning {
+  readonly id: string;
+  readonly status: TurnoverCleaningStatus;
+  readonly rowVersion: number;
+}
+
+/** Los pasos de la orden que se operan desde la ficha (F2: `/cleaning-orders/:id/…`). */
+export type TurnoverStep = 'start' | 'finish' | 'inspect';
