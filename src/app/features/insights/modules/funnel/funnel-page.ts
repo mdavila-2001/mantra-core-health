@@ -22,6 +22,7 @@ import type { Insight } from '../../domain/insights.types';
 import { selectFacts } from '../../domain/kpi';
 import { confidenceFor } from '../../domain/campaign-insights';
 import { campaignName } from '../../domain/campaigns.data';
+import { SegmentConversion } from './segment-conversion';
 import { InsightsContext } from '../../insights-context';
 import { MODULE_BY_ID, INSIGHTS_BASE } from '../../insights-nav';
 
@@ -34,7 +35,7 @@ import { MODULE_BY_ID, INSIGHTS_BASE } from '../../insights-nav';
  */
 @Component({
   selector: 'app-insights-funnel',
-  imports: [ViewStateHost, FilterBar, Panel, FunnelChart, HeatmapChart, StatTile, InsightCard, Tabs, Tab, Select, RouterLink],
+  imports: [ViewStateHost, FilterBar, Panel, FunnelChart, HeatmapChart, StatTile, InsightCard, Tabs, Tab, Select, RouterLink, SegmentConversion],
   templateUrl: './funnel-page.html',
   styleUrl: './funnel-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

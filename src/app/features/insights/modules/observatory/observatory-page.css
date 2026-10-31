@@ -207,3 +207,9 @@ app-segmented-control {
   min-inline-size: 0;
   max-inline-size: 100%;
 }
+.ob__search { display: grid; gap: var(--sp-1); }
+.ob__search input { font: inherit; padding: var(--sp-2) var(--sp-3); color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-sm); }
+.ob__search input:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ob__trends { padding: var(--sp-4); border: 1px solid var(--border-default); border-radius: var(--r-md); }
+.ob__h { margin: 0 0 var(--sp-2); font-size: var(--fs-body); }
+.ob__expo { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); margin: var(--sp-3) 0 0; padding: 0; list-style: none; font-size: var(--fs-caption); color: var(--text-secondary); }
