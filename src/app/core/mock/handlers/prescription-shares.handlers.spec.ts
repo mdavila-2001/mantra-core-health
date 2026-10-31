@@ -24,10 +24,10 @@ describe('enlace de receta compartida en el mock', () => {
   const otherPatient: MockUser = { ...patient, id: 'u-otro-paciente', patientProfileId: 'pp-otro-paciente' };
 
   const own = prescriptionList.filtrar((item) => item.patientProfileId === PACIENTE.id);
-  const issued = own.filter((item) => item.statusConceptId === PRESCRIPTION_STATUS['MR_ISSUED']);
+  const issued = own.filter((item) => item.statusConceptId === PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_ISSUED']);
   const fromEncounter = issued.find((item) => item.encounterId !== undefined)!;
   const standalone = issued.find((item) => item.encounterId === undefined && item.prescriberProfileId !== MEDICAL.id)!;
-  const notActive = own.find((item) => item.statusConceptId !== PRESCRIPTION_STATUS['MR_ISSUED'])!;
+  const notActive = own.find((item) => item.statusConceptId !== PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_ISSUED'])!;
 
   function send(method: MockMethod, path: string, body: unknown = null, user: MockUser | null = patient): MockReply {
     const url = new URL(path, 'http://localhost');

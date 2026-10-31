@@ -2,13 +2,21 @@ import { HttpHeaders } from '@angular/common/http';
 
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
-import { prescriptionList, type SimulatedPrescription } from '../../../../core/mock/fixtures/clinic';
+import {
+  prescriptionList,
+  type SimulatedPrescription,
+} from '../../../../core/mock/fixtures/clinic';
 import { record } from '../../../../core/mock/fixtures/concepts';
 import { PACIENTE } from '../../../../core/mock/fixtures/people';
 import { registrarClinica } from '../../../../core/mock/handlers/clinical.handlers';
 import { MockRouter, type MockMethod, type MockReply } from '../../../../core/mock/mock-router';
 import { buscarUsuario, type MockUser } from '../../../../core/mock/mock-session';
-import { isOrderableRow, orderablePrescriptionOf } from './orderable-prescription';
+import {
+  isOrderableRow,
+  orderablePrescriptionOf,
+  prescriptionStandingOf,
+  prescriptionStateOf,
+} from './orderable-prescription';
 
 /** Una fila del resumen clínico de la receta `enc-a`, con lo mínimo que se mira. */
 function row(id: string): MedicationRequest {
@@ -23,15 +31,15 @@ function row(id: string): MedicationRequest {
 
 const NOW = new Date('2026-10-30T12:00:00.000Z');
 
-/** Los estados de un ítem de receta, con los códigos del catálogo de la API. */
+/** Los estados de un ítem de receta, con los códigos del catálogo persistido de la API. */
 const STATUS_LABELS: ConceptLabels = new Map(
   (
     [
-      ['st-emitida', 'MR_ISSUED'],
-      ['st-borrador', 'MR_DRAFT'],
-      ['st-anulada', 'MR_INVALIDATED'],
-      ['st-reemplazada', 'MR_REPLACED'],
-      ['st-completada', 'MR_COMPLETED'],
+      ['st-emitida', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['st-borrador', 'clinical:MEDICATION_REQUEST_DRAFT'],
+      ['st-anulada', 'clinical:MEDICATION_REQUEST_INVALIDATED'],
+      ['st-reemplazada', 'clinical:MEDICATION_REQUEST_REPLACED'],
+      ['st-completada', 'clinical:MEDICATION_REQUEST_COMPLETED'],
     ] as const
   ).map(([conceptId, code]) => [
     conceptId,
@@ -49,12 +57,114 @@ function rowIn(id: string, status: string, validTo?: Date): MedicationRequest {
   };
 }
 
+/**
+ * El cuerpo literal de `GET /terminology/concepts?ids=…&lang=ES` que sirvió la
+ * API real para los estados de un ítem de receta. No se arma desde las
+ * constantes del front: fue suponer el código lo que escondió que ninguna
+ * receta se podía pedir.
+ */
+const REAL_CATALOG_RESPONSE = JSON.parse(`{"items": [
+  {"conceptId": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "code": "clinical:MEDICATION_REQUEST_DRAFT",
+   "display": "Medication request draft", "definition": null, "selectable": true,
+   "codeSystemVersionId": "ffda3cef-e77a-5002-8709-e79f32e62fb4", "translated": false},
+  {"conceptId": "cce628c0-3334-50cb-9176-652c14f6f10c", "code": "clinical:MEDICATION_REQUEST_ISSUED",
+   "display": "Medication request issued", "definition": null, "selectable": true,
+   "codeSystemVersionId": "ffda3cef-e77a-5002-8709-e79f32e62fb4", "translated": false}
+], "count": 2, "limit": 50}`) as {
+  items: { conceptId: string; code: string; display: string; codeSystemVersionId: string }[];
+};
+
+describe('los estados con el catálogo que sirve la API', () => {
+  const labels: ConceptLabels = new Map(
+    REAL_CATALOG_RESPONSE.items.map((item) => [item.conceptId, item]),
+  );
+  const ISSUED_ID = 'cce628c0-3334-50cb-9176-652c14f6f10c';
+  const DRAFT_ID = 'e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c';
+
+  it('una receta emitida y vigente se puede pedir', () => {
+    const issued = { ...rowIn('rx', ISSUED_ID), statusConceptId: ISSUED_ID };
+    expect(isOrderableRow(issued, labels, NOW)).toBe(true);
+    expect(prescriptionStandingOf([issued], labels, NOW)).toBe('orderable');
+  });
+
+  it('un borrador no, aunque traiga fecha de emisión', () => {
+    const draft = {
+      ...row('rx'),
+      statusConceptId: DRAFT_ID,
+      issuedAt: new Date('2026-03-01T11:00:00.000Z'),
+    };
+    expect(isOrderableRow(draft, labels, NOW)).toBe(false);
+    expect(prescriptionStandingOf([draft], labels, NOW)).toBe('draft');
+  });
+});
+
+describe('prescriptionStateOf', () => {
+  it.each([
+    ['clinical:MEDICATION_REQUEST_DRAFT', 'draft'],
+    ['clinical:MEDICATION_REQUEST_ISSUED', 'issued'],
+    ['clinical:MEDICATION_REQUEST_INVALIDATED', 'invalidated'],
+    ['clinical:MEDICATION_REQUEST_REPLACED', 'replaced'],
+    ['clinical:MEDICATION_REQUEST_RENEWED', 'renewed'],
+    ['clinical:MEDICATION_REQUEST_ACTIVE', 'active'],
+    ['clinical:MEDICATION_REQUEST_COMPLETED', 'completed'],
+  ] as const)('%s es %s', (code, state) => {
+    expect(prescriptionStateOf(code)).toBe(state);
+  });
+
+  it('el código corto del archivo de conceptos no es lo que sirve la API', () => {
+    expect(prescriptionStateOf('MR_ISSUED')).toBeUndefined();
+    expect(prescriptionStateOf('clinical:MEDICATION_REQUEST_OTRO')).toBeUndefined();
+    expect(prescriptionStateOf('clinical:MEDICATION_INTENT_ORDER')).toBeUndefined();
+  });
+});
+
+describe('prescriptionStandingOf (Mis recetas)', () => {
+  const PAST = new Date('2026-10-01T00:00:00.000Z');
+
+  it('basta una fila pedible para que la receta se pueda pedir', () => {
+    expect(
+      prescriptionStandingOf(
+        [rowIn('a', 'st-anulada'), rowIn('b', 'st-emitida')],
+        STATUS_LABELS,
+        NOW,
+      ),
+    ).toBe('orderable');
+  });
+
+  it.each([
+    ['st-borrador', 'draft'],
+    ['st-anulada', 'invalidated'],
+    ['st-reemplazada', 'replaced'],
+    ['st-completada', 'completed'],
+  ] as const)('sin filas pedibles, %s se nombra %s', (status, standing) => {
+    expect(prescriptionStandingOf([rowIn('a', status)], STATUS_LABELS, NOW)).toBe(standing);
+  });
+
+  it('una emitida que venció es «vencida», aunque la acompañe un borrador', () => {
+    expect(
+      prescriptionStandingOf(
+        [rowIn('a', 'st-emitida', PAST), rowIn('b', 'st-borrador')],
+        STATUS_LABELS,
+        NOW,
+      ),
+    ).toBe('expired');
+  });
+
+  it('sin catálogo, una fila sin emitir es un borrador', () => {
+    expect(prescriptionStandingOf([rowIn('a', 'st-borrador')], new Map(), NOW)).toBe('draft');
+  });
+});
+
 /** Lo mismo que aplica la API al crear el pedido (FAR-03): emitida y sin vencer. */
 describe('isOrderableRow (FAR-03)', () => {
   it('emitida y sin vencer, o sin vencimiento: se puede pedir', () => {
     expect(isOrderableRow(rowIn('rx', 'st-emitida'), STATUS_LABELS, NOW)).toBe(true);
     expect(
-      isOrderableRow(rowIn('rx', 'st-emitida', new Date('2026-11-30T00:00:00.000Z')), STATUS_LABELS, NOW),
+      isOrderableRow(
+        rowIn('rx', 'st-emitida', new Date('2026-11-30T00:00:00.000Z')),
+        STATUS_LABELS,
+        NOW,
+      ),
     ).toBe(true);
   });
 
@@ -67,7 +177,11 @@ describe('isOrderableRow (FAR-03)', () => {
 
   it('vencida no se puede pedir, y el instante exacto de `validTo` ya cuenta como vencida', () => {
     expect(
-      isOrderableRow(rowIn('rx', 'st-emitida', new Date('2026-10-01T00:00:00.000Z')), STATUS_LABELS, NOW),
+      isOrderableRow(
+        rowIn('rx', 'st-emitida', new Date('2026-10-01T00:00:00.000Z')),
+        STATUS_LABELS,
+        NOW,
+      ),
     ).toBe(false);
     expect(isOrderableRow(rowIn('rx', 'st-emitida', NOW), STATUS_LABELS, NOW)).toBe(false);
   });
@@ -77,7 +191,10 @@ describe('isOrderableRow (FAR-03)', () => {
     expect(isOrderableRow(rowIn('rx', 'st-emitida'), noLabels, NOW)).toBe(true);
     expect(isOrderableRow(rowIn('rx', 'st-borrador'), noLabels, NOW)).toBe(false);
     // La API manda `issuedAt: null` en el borrador; el doble lo fuerza.
-    const wireDraft = { ...rowIn('rx', 'st-borrador'), issuedAt: null } as unknown as MedicationRequest;
+    const wireDraft = {
+      ...rowIn('rx', 'st-borrador'),
+      issuedAt: null,
+    } as unknown as MedicationRequest;
     expect(isOrderableRow(wireDraft, noLabels, NOW)).toBe(false);
   });
 });
@@ -98,8 +215,12 @@ describe('orderablePrescriptionOf (FAR-03)', () => {
   });
 
   it('la elegida es el borrador o la anulada: viaja la primera fila vigente de la receta', () => {
-    expect(orderablePrescriptionOf(rows, 'rx-renovacion', STATUS_LABELS, NOW).requestId).toBe('rx-emitida');
-    expect(orderablePrescriptionOf(rows, 'rx-anulada', STATUS_LABELS, NOW).requestId).toBe('rx-emitida');
+    expect(orderablePrescriptionOf(rows, 'rx-renovacion', STATUS_LABELS, NOW).requestId).toBe(
+      'rx-emitida',
+    );
+    expect(orderablePrescriptionOf(rows, 'rx-anulada', STATUS_LABELS, NOW).requestId).toBe(
+      'rx-emitida',
+    );
   });
 
   it('ninguna fila vigente: nada que pedir', () => {
@@ -120,7 +241,12 @@ describe('el simulador usa los códigos de estado de la API (FAR-03)', () => {
   const mockLabels: ConceptLabels = new Map(
     [...record.values()].map((concept) => [
       concept.id,
-      { conceptId: concept.id, code: concept.code, display: concept.display, codeSystemVersionId: 'v1' },
+      {
+        conceptId: concept.id,
+        code: concept.code,
+        display: concept.display,
+        codeSystemVersionId: 'v1',
+      },
     ]),
   );
 
@@ -138,7 +264,9 @@ describe('el simulador usa los códigos de estado de la API (FAR-03)', () => {
   }
 
   const seededWithStatus = (display: string) =>
-    prescriptionList.todos().filter((rx) => mockLabels.get(rx.statusConceptId)?.display === display);
+    prescriptionList
+      .todos()
+      .filter((rx) => mockLabels.get(rx.statusConceptId)?.display === display);
 
   it('una receta «Vigente» sembrada pasa la regla; una «Completada» no', () => {
     const now = new Date();
@@ -192,6 +320,6 @@ describe('el simulador usa los códigos de estado de la API (FAR-03)', () => {
     for (const code of ['RX-ACTIVE', 'RX-DRAFT', 'RX-COMPLETED', 'RX-CANCELLED']) {
       expect(record.has(code)).toBe(false);
     }
-    expect(record.get('MR_ISSUED')?.display).toBe('Vigente');
+    expect(record.get('clinical:MEDICATION_REQUEST_ISSUED')?.display).toBe('Vigente');
   });
 });

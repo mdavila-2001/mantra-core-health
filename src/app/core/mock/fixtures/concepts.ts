@@ -1001,12 +1001,12 @@ export const ENCOUNTER_STATUS = define('VS_ENCOUNTER_STATUS', [
   ['ENCST-CANCELLED', 'Cancelado'],
 ]);
 
-conjunto('VS_MEDICATION_REQUEST_STATUS', 'Estado de la receta', 'Estado de una prescripción.'); // códigos de la API (FAR-03)
+conjunto('VS_MEDICATION_REQUEST_STATUS', 'Estado de la receta', 'Estado de una prescripción.'); // el código persistido de la API (`clinical:<clave>`), no el `MR_*` de `clinical.concepts.ts`
 export const PRESCRIPTION_STATUS = define('VS_MEDICATION_REQUEST_STATUS', [
-  ['MR_ISSUED', 'Vigente'],
-  ['MR_COMPLETED', 'Completada'],
-  ['MR_INVALIDATED', 'Cancelada'],
-  ['MR_DRAFT', 'Borrador'],
+  ['clinical:MEDICATION_REQUEST_ISSUED', 'Vigente'],
+  ['clinical:MEDICATION_REQUEST_COMPLETED', 'Completada'],
+  ['clinical:MEDICATION_REQUEST_INVALIDATED', 'Cancelada'],
+  ['clinical:MEDICATION_REQUEST_DRAFT', 'Borrador'],
 ]);
 
 conjunto('VS_OBSERVATION_CODE', 'Signos vitales y mediciones', 'Códigos de observación.');
