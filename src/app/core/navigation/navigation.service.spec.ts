@@ -343,6 +343,9 @@ describe('NavigationService', () => {
         // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
         // por el propietario en el PR.
         'Grupos médicos',
+        // «Facturación» entra el 31/10/2026: el médico cobra y factura SUS
+        // consultas (la API acota el alcance en `billing-simulated.access.ts`).
+        'Facturación',
         'Contabilidad',
       ]);
     });
