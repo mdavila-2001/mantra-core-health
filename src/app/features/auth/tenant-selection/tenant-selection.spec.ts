@@ -1,12 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { TenantSelection } from './tenant-selection';
+import { setReportingMock } from '../../reporting/reporting-mock-flag.testing';
 
 function token(claims: Record<string, unknown>): string {
   const codificar = (valor: object): string => btoa(JSON.stringify(valor)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -16,8 +17,11 @@ function token(claims: Record<string, unknown>): string {
 describe('TenantSelection', () => {
   let component: TenantSelection;
   let fixture: ComponentFixture<TenantSelection>;
+  let restaurarMaqueta: () => void;
 
   beforeEach(async () => {
+    // Los destinos por rol de abajo (selector de portales, /reports) existen sólo con la maqueta encendida.
+    restaurarMaqueta = setReportingMock(true);
     await TestBed.configureTestingModule({
       imports: [TenantSelection],
       // La pantalla ya tenía un `Router` inyectado para navegar tras elegir; el
@@ -30,6 +34,8 @@ describe('TenantSelection', () => {
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
+
+  afterEach(() => restaurarMaqueta());
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -79,6 +85,55 @@ describe('TenantSelection', () => {
     component.choose('tenant-1');
 
     expect(navegar).toHaveBeenCalledWith(destino);
+  });
+
+  describe('destino tras elegir (H1/H4)', () => {
+    function chooseWithQuery(returnUrl: string | null, roles: readonly string[] = ['PLATFORM_ADMIN']) {
+      const auth = TestBed.inject(AuthService);
+      vi.spyOn(auth, 'selectTenant').mockImplementation(() => undefined);
+      vi.spyOn(auth, 'roles').mockReturnValue(roles);
+      const route = TestBed.inject(ActivatedRoute);
+      vi.spyOn(route.snapshot, 'queryParamMap', 'get').mockReturnValue(
+        convertToParamMap(returnUrl === null ? {} : { returnUrl }),
+      );
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+      component.choose('tenant-1');
+      return navegar;
+    }
+
+    it('un returnUrl interno gana: vuelve a la pantalla que pidió organización', () => {
+      expect(chooseWithQuery('/superadmin/web-analytics')).toHaveBeenCalledWith('/superadmin/web-analytics');
+    });
+
+    it.each(['/auth/organization', '/auth/organization?returnUrl=/dashboard', '/auth/organization/', '/portal-selector', '/portal-selector?x=1#y'])(
+      'NEGATIVO: un returnUrl que apunta a una pantalla de elección (%s) cae al destino de siempre',
+      (pantalla) => {
+        expect(chooseWithQuery(pantalla)).toHaveBeenCalledWith('/portal-selector');
+      },
+    );
+
+    it.each(['/auth/organization-x', '/dashboard/auth/organization', '/portal-selectors'])(
+      'límite: %s NO es una pantalla de elección y se respeta',
+      (valida) => {
+        expect(chooseWithQuery(valida)).toHaveBeenCalledWith(valida);
+      },
+    );
+
+    it.each(['https://otro.sitio', '//evil.com', '/\\evil.com', 'dashboard'])(
+      'NEGATIVO: un returnUrl externo o inválido (%s) se ignora y va al destino de siempre',
+      (malo) => {
+        expect(chooseWithQuery(malo)).toHaveBeenCalledWith('/portal-selector');
+      },
+    );
+
+    it('sin returnUrl, con la maqueta APAGADA, cualquier rol de gestión va a «/»', () => {
+      const restaurar = setReportingMock(false);
+      try {
+        expect(chooseWithQuery(null, ['PLATFORM_ADMIN'])).toHaveBeenCalledWith('/');
+      } finally {
+        restaurar();
+      }
+    });
   });
 
   describe('con un enlace pedido antes del login', () => {

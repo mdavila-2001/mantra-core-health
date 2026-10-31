@@ -43,11 +43,9 @@ import {
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
-import {
-  ROLES_ADMINISTRACION,
-  ROLES_REPORTERIA,
-} from './features/reporting/reporting-access';
+import { mockRoutes } from './features/reporting/reporting-mock.routes';
 import { RUTAS_DE_GOBIERNO } from './app.routes.governance';
+import { cargarSistema } from './features/observability/observability.routes';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
@@ -233,8 +231,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
   // vivían bajo `administration/*`; esas direcciones redirigen (ver
   // `SECCIONES_REDIRIGIDAS`).
-  'superadmin/observability': () =>
-    import('./features/admin/observability/observability').then((m) => m.Observability),
+  'superadmin/observability': cargarSistema,
   'superadmin/measurement': () =>
     import('./features/admin/measurement/measurement').then((m) => m.Measurement),
   'superadmin/data-catalog': () =>
@@ -1811,39 +1808,9 @@ export const routes: Routes = [
   // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
   // es de otra clase en vez de redirigir.
   ...rutasDeFichasPublicas(),
-  // Los dos portales a los que entra quien administra y consulta reportes
-  // (30/10/2026). Van **fuera** del armazón de administración, cada uno con su
-  // propio marco, y delante del comodín: ninguno cuelga de una sección del
-  // registro, así que no hay menú que los filtre.
-  //
-  // Los dos llevan `authGuard` y `seccionRolesGuard` con los roles escritos en
-  // `data`: ocultar una tarjeta del selector no es seguridad, y quien escriba la
-  // dirección a mano se topa con este guard primero y con la API después. El
-  // guard mira `ROLES_ROUTE_DATA` antes que cualquier sección, con la misma
-  // regla del comodín `SUPERADMIN`.
-  {
-    path: 'portal-selector',
-    title: `${APP_TITLE} - Elegir portal`,
-    canActivate: [authGuard, seccionRolesGuard],
-    // La unión de los dos: el selector decide por sí mismo si hay algo que
-    // elegir, y a quien solo tiene un acceso lo redirige directo.
-    data: { [ROLES_ROUTE_DATA]: [...ROLES_ADMINISTRACION, ...ROLES_REPORTERIA] },
-    loadComponent: () =>
-      import('./features/portal-selector/portal-selector')
-        .then((m) => m.PortalSelector)
-        .catch(() => chunkFallido()),
-  },
-  {
-    path: 'reports',
-    canActivate: [authGuard, seccionRolesGuard],
-    data: { [ROLES_ROUTE_DATA]: ROLES_REPORTERIA },
-    loadChildren: () =>
-      import('./features/reporting/reporting.routes')
-        .then((m) => m.REPORTING_ROUTES)
-        // Un fragmento que ya no existe tras un despliegue: la misma pantalla de
-        // recuperación que el resto, en vez de una navegación muerta.
-        .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
-  },
+  // La maqueta de reportería (`/portal-selector`, `/reports`) detrás de `environment.reportingMockEnabled`: apagada,
+  // redirige al panel de observabilidad y a la raíz (ver `reporting-mock.routes.ts`).
+  ...mockRoutes(chunkFallido, environment.reportingMockEnabled),
   insightsPortalRoute(chunkFallido),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
   // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos

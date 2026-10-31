@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal, type OnInit } from 
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { safeReturnUrl } from '../../../core/auth/return-url';
 import { SessionStore } from '../../../core/auth/session.store';
 import { RouterLink } from '@angular/router';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
@@ -11,9 +12,17 @@ import { tenantDenialHint, tenantDenialText } from '../../../core/data-access/ia
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { entryDestination } from '../../reporting/reporting-access';
-import { safeReturnUrl } from '../../account/mfa-enrollment/mfa-code';
 import { markPageAsNoIndex } from '../../prescription-share/no-index';
 import { isShareTokenRoute } from '../../prescription-share/share-return-url';
+
+/**
+ * Las pantallas de elección: volver a ellas tras elegir dejaría a la persona donde empezó.
+ * Se compara el camino (sin `?` ni `#`), por segmento completo.
+ */
+function isSelectionRoute(url: string): boolean {
+  const path = (url.split(/[?#]/, 1)[0] ?? '').replace(/\/+$/, '');
+  return ['/auth/organization', '/portal-selector'].some((r) => path === r || path.startsWith(`${r}/`));
+}
 
 /**
  * Selector de organización.
@@ -38,6 +47,7 @@ export class TenantSelection implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly invitations = inject(MembershipInvitationsClient);
   private readonly directory = inject(DirectoryClient);
   /** El enlace que se pidió antes del login (`login.ts`), ya validado como ruta interna. */
@@ -90,8 +100,9 @@ export class TenantSelection implements OnInit {
 
   choose(tenantId: string): void {
     this.auth.selectTenant(tenantId);
-    // Tras elegir organización, el mismo destino que el login (`login.ts`): el
-    // enlace pedido si lo hay, como la receta que abre una farmacia.
-    void this.router.navigateByUrl(this.returnUrl ?? entryDestination(this.auth.roles()));
+    // Si venía de una pantalla que pidió organización o de un enlace pedido antes del login
+    // (`returnUrl`, validado; p. ej. la receta compartida), vuelve a ella; si no, el destino del login.
+    const back = safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    void this.router.navigateByUrl(back !== null && !isSelectionRoute(back) ? back : entryDestination(this.auth.roles()));
   }
 }

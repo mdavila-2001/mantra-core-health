@@ -56,6 +56,14 @@ interface Hallazgo {
 }
 const hallazgos: Hallazgo[] = [];
 
+// La maqueta de reportería está apagada por defecto (`environment.reportingMockEnabled=false`): `/reports` y
+// `/portal-selector` redirigen. Estas capturas son del simulador con la bandera encendida (`PUBLIC_REPORTING_MOCK=true`
+// al generar el entorno) y `PW_REPORTING_MOCK=1`. Se saltan con motivo explícito, no se borran ni se relajan.
+test.skip(
+  process.env['PW_REPORTING_MOCK'] !== '1',
+  'Maqueta de reportería apagada: correr con PW_REPORTING_MOCK=1 y la app construida con PUBLIC_REPORTING_MOCK=true.',
+);
+
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(240_000);
 

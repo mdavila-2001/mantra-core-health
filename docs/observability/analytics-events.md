@@ -38,8 +38,35 @@ Todas llevan además `ancho_vp`, `alto_vp`, `alto_doc_px` y `tamano_pantalla`
   mismo control entre tamaños de pantalla. Ver `ux-element.ts`.
 - **`es_clic_repetido`.** Tercer clic en 700 ms a menos de 30 px: control que no
   responde o que parece un botón y no lo es.
-- **Identidad.** `userId` y `tenantId` de la sesión; `sessionId` es un uuid por
-  pestaña en `sessionStorage`. `routeTemplate` sale de `routeTemplate()`.
+- **Identidad.** El cuerpo **no** lleva `userId`, `sessionId` ni `tenantId`: la
+  API los toma del token y del contexto de tenant, y responde 400 al lote que los
+  mande. El uuid de la pestaña (`sessionStorage`) viaja como la propiedad
+  declarada `pestana`. `routeTemplate` sale de `routeTemplate()`. Contrato:
+  `docs/trabajo/2026-10-31-portal-observabilidad-gobierno/evidencia-f0/CONTRATO-ingesta-ux.md`.
+
+### Consentimiento y señales de privacidad
+
+Código en `src/app/core/observability/consent/`. `UxConsent` decide qué puede
+emitir el SDK; la API sigue siendo la autoridad (verifica el consentimiento en
+cada evento).
+
+| Situación | Qué emite |
+|---|---|
+| DNT («No rastrear») o Global Privacy Control activos | **Nada**: el SDK no arranca (ni oyentes ni vistas anónimas) y deja un `console.info` |
+| Decisión ausente (`NONE`), o no se pudo consultar | Solo `pagina_vista`, contra el esquema `pagina_vista_anonima` (propósito agregado): sin identidad, sin sesión, sin propiedades. **Nunca clics, foco ni abandono** |
+| Consentimiento otorgado (`GRANTED`) | Todos los eventos contra `ux_interaccion` v2, con `pestana` |
+| Consentimiento retirado (`WITHDRAWN`) | Nada; lo que había en cola se descarta |
+
+- Aviso de una sola vez (`app-ux-consent-notice`, montado en `app.html`): `app-alert`
+  con «Aceptar» y «Ahora no»; no vuelve en ese navegador para esa persona
+  (`localStorage` `mch.ux.aviso.<userId>`, solo comodidad: la decisión vive en la API).
+- Cambiar de opinión: **Mi cuenta › Mi privacidad › Mis consentimientos**
+  (`app-ux-consent-panel`, `features/ux-consent/`), para cualquier cuenta.
+- API: `GET /telemetry/tracking-consents/me?purposeDefinitionId=…`,
+  `POST /telemetry/tracking-consents` y `POST /telemetry/tracking-consents/:id/withdraw`.
+- Cliente HTTP: `TelemetryConsentClient` (`core/data-access/telemetry/telemetry-consent.client.ts`).
+  Tres llamadas (`getMine`, `grant`, `withdraw`), siempre del usuario autenticado: el cuerpo
+  no nombra a nadie y la API rechaza una clave `userId`. Solo lo usa `UxConsent`.
 
 ### Lo que nunca sale
 
@@ -58,39 +85,56 @@ reutilización del refresh token.
 
 - Red caída, 429 o 5xx: se reencola (tope 500) con las mismas claves de
   idempotencia, con espera creciente de 10 s a 5 min.
-- 400, 403 o 404: se deja de capturar en esa pestaña. Ningún lote más iba a entrar.
+- 400, 403, 404 o 412 (esquema `DEPRECATED`, sesión no registrada): se deja de
+  capturar en esa pestaña. Ningún lote más iba a entrar. **No en silencio:** el
+  estado y la `reason`/`message` de la API quedan en `console.warn` y en
+  `UxAnalytics.motivoDeApagado`.
+- 422 (propiedad o ruta que la API no admite): ese lote se descarta y se
+  registra; la captura sigue.
 - Cambio de persona en la pestaña: se descarta lo pendiente y se renueva el
-  `sessionId`, porque la API agrupa el recorrido por él. Solo sale un evento
-  cuyo `userId` es el de la sesión actual, y un lote fallido de la persona
-  anterior no se reencola.
+  uuid de la pestaña. Solo sale un evento capturado para la persona y la
+  organización actuales (se guardan **en memoria**, no en el cuerpo), y un lote
+  fallido de la persona anterior no se reencola.
 - Volver con «atrás» desde la caché del navegador (bfcache) reabre la página.
 - Una URL que ninguna ruta reconoce viaja con sus segmentos limpios
   (`/legado/8437` → `/legado/:id`).
 
 ### Cómo se enciende
 
-1. Con rol `SECURITY_ADMIN`, registrar el propósito y el esquema en la API:
+Apagado por defecto (`enabled: false`). Para encenderlo en un entorno:
 
-   ```http
-   POST /telemetry/tracking-purposes
-   { "purposeCode": "UX_HEATMAP", "name": "Mapas de calor del portal",
-     "requiresConsent": true, "defaultRetentionDays": 90 }
+1. **Esquemas y propósitos.** Los siembra la API con ids deterministas (iguales
+   en todos los entornos; `CONTRATO-ingesta-ux.md` §2). No hace falta registrarlos
+   a mano:
 
-   POST /telemetry/event-schemas
-   { "eventName": "ux_interaccion", "purposeDefinitionId": "<id del propósito>" }
+   | Qué | Id |
+   |---|---|
+   | Esquema `ux_interaccion` v2 (`PORTAL_UX_HEATMAP`, exige consentimiento) | `5c1d901c-94da-5c97-b115-e89e303c2c20` |
+   | Esquema `pagina_vista_anonima` v1 (`PLATFORM_USAGE_AGGREGATE`) | `df630ae0-3bf4-567d-97f3-5b75ea77bc94` (constante en `ux-analytics.config.ts`) |
+   | Propósito `PORTAL_UX_HEATMAP` | `9889b3b6-4293-5266-bba2-b27fa26bec2e` (constante en `ux-analytics.config.ts`) |
+
+   En un entorno sin esa siembra, un `SECURITY_ADMIN` los registra con
+   `POST /telemetry/tracking-purposes` y `POST /telemetry/event-schemas`.
+2. **Variables del front** (`.env`; `.env.example` las documenta; `scripts/generate-env.mjs`
+   las valida al construir):
+
+   ```bash
+   PUBLIC_UX_ANALYTICS_ENABLED=true
+   PUBLIC_UX_ANALYTICS_EVENT_SCHEMA_ID=5c1d901c-94da-5c97-b115-e89e303c2c20
+   PUBLIC_UX_ANALYTICS_SAMPLE_RATIO=1   # fracción de SESIONES (por pestaña); en producción, p. ej. 0.25
    ```
 
-2. En el entorno del despliegue:
-   `PUBLIC_UX_ANALYTICS_ENABLED=true`,
-   `PUBLIC_UX_ANALYTICS_EVENT_SCHEMA_ID=<id del esquema>` y, si hace falta,
-   `PUBLIC_UX_ANALYTICS_SAMPLE_RATIO` (fracción de sesiones).
+   Sin el id del esquema no se enciende (`active = enabled && id !== ''`).
 3. `/telemetry` ya está en `proxy.conf.json`, `proxy.conf.docker.json` y
    `deploy/api-locations.conf`.
-
-**Consentimiento.** La API descarta (`skipped`) todo evento cuyo `userId` no
-tenga un `POST /telemetry/tracking-consents` con decisión `GRANTED` para ese
-propósito. El portal todavía no tiene la pantalla donde la persona lo otorga:
-hasta que exista, solo llegan los eventos de quien lo otorgó por API.
+4. Reconstruir/reiniciar el front: son variables de compilación, no de ejecución.
+5. **Comprobar:** iniciar sesión con una cuenta sin decisión → aparece el aviso;
+   «Aceptar» → `POST /telemetry/tracking-consents` 201 y fila `GRANTED` en
+   `telemetry.tracking_consents`; navegar y hacer clic → en ≤ 10 s,
+   `POST /telemetry/activity-events` 201 con `inserted > 0`, y filas en
+   `telemetry.user_activity_events` con `user_id` y `session_id` puestos por la API
+   (no por el navegador). Con DNT activo en el navegador no debe salir ninguna
+   petición a `/telemetry/*`.
 
 ### Consulta del mapa de calor
 

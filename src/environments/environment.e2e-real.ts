@@ -10,5 +10,6 @@ export const environment: Environment = {
   campaignsDemo: false,
   billingSiatDemo: false,
   designMockups: false,
+  reportingMockEnabled: false,
   mockBackend: false,
 };

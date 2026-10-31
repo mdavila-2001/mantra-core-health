@@ -11,7 +11,7 @@ import {
 import { NgxEchartsDirective } from 'ngx-echarts';
 
 import { formatearValor } from '@core/data-access/reporting/reporting-format';
-import type { KpiSpec, UnidadValor } from '@core/data-access/reporting/reporting.types';
+import type { EstadoKpi, KpiSpec, UnidadValor } from '@core/data-access/reporting/reporting.types';
 import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
@@ -22,6 +22,14 @@ import { readDelta, type DeltaDirection } from './kpi-delta';
 import { buildSparkline, describeTrend, hasTrend } from './sparkline';
 
 const ARROWS: Readonly<Record<DeltaDirection, string>> = { up: '▲', down: '▼', flat: '■', none: '' };
+
+/** El veredicto de un indicador se dice con icono Y palabra; el color sólo refuerza. */
+const ESTADOS: Readonly<Record<EstadoKpi, { readonly glifo: string; readonly palabra: string; readonly token: 'success' | 'warning' | 'error' }>> = {
+  bueno: { glifo: '✔', palabra: 'Bien', token: 'success' },
+  aviso: { glifo: '▲', palabra: 'Atención', token: 'warning' },
+  serio: { glifo: '◆', palabra: 'Serio', token: 'error' },
+  critico: { glifo: '✖', palabra: 'Crítico', token: 'error' },
+};
 
 /** Cuando el servidor no explica la ausencia, la tarjeta lo dice con honestidad en vez de callar. */
 const DEFAULT_NO_DATA_REASON = 'Aún no hay datos para este periodo.';
@@ -53,6 +61,8 @@ export class KpiTile {
   readonly kpi = input.required<KpiSpec>();
   /** Con qué se compara la variación, p. ej. «frente al periodo anterior». `null` si no se compara. */
   readonly comparison = input<string | null>(null);
+  /** Dentro de la única tarjeta con pestañas: superficie tonal, sin borde ni sombra propios. */
+  readonly plano = input(false);
 
   protected readonly ids = nextControlId('kpi');
   protected readonly infoOpen = signal(false);
@@ -61,7 +71,15 @@ export class KpiTile {
     const value = this.kpi().valor;
     return value === null || Number.isNaN(value);
   });
-  protected readonly valueText = computed(() => formatearValor(this.kpi().valor, this.kpi().unidad));
+  protected readonly estado = computed(() => {
+    const e = this.kpi().estado;
+    return e === undefined ? null : { clave: e, ...ESTADOS[e] };
+  });
+  protected readonly hero = computed(() => this.kpi().variante === 'hero');
+  protected readonly valueText = computed(() => {
+    const texto = formatearValor(this.kpi().valor, this.kpi().unidad);
+    return this.noData() ? texto : `${this.kpi().prefijo ?? ''}${texto}`;
+  });
   protected readonly reason = computed(() => this.kpi().motivoSinDato?.trim() || DEFAULT_NO_DATA_REASON);
   protected readonly delta = computed(() => readDelta(this.kpi().variacionPct, this.kpi().subirEsMalo === true));
   protected readonly arrow = computed(() => ARROWS[this.delta().direction]);

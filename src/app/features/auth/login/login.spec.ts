@@ -9,6 +9,7 @@ import { SessionStore } from '../../../core/auth/session.store';
 import { Login } from './login';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
+import { setReportingMock } from '../../reporting/reporting-mock-flag.testing';
 
 function makeToken(claims: Record<string, unknown>): string {
   const encode = (value: object): string => {
@@ -186,7 +187,13 @@ describe('Login', () => {
       expect(navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
     });
 
-    describe('elegir portal (administración y reportería)', () => {
+    describe('elegir portal (administración y reportería) · maqueta ENCENDIDA', () => {
+      let restaurar: () => void;
+      beforeEach(() => {
+        restaurar = setReportingMock(true);
+      });
+      afterEach(() => restaurar());
+
       function loginWith(token: string): void {
         completar('admin@mantra.test');
         component.submit();
@@ -255,6 +262,85 @@ describe('Login', () => {
 
         expect(navegaciones).toEqual([`${TENANT_SELECTION_ROUTE}?returnUrl=%2Frx%2Ftoken-de-prueba`]);
       });
+    });
+  });
+
+  describe('entrada con la maqueta APAGADA (por defecto) y alcance de plataforma (H1/H4)', () => {
+    function loginWith(token: string): void {
+      completar('admin@mantra.test');
+      component.submit();
+      http.expectOne('/iam/auth/login').flush(tokens(token));
+    }
+
+    it.each(['SUPERADMIN', 'PLATFORM_ADMIN', 'DATA_PLATFORM_ADMIN', 'GOVERNANCE_ADMIN'])(
+      '%s con 2 organizaciones entra al Centro (/) sin pasar por /auth/organization ni /portal-selector',
+      (rol) => {
+        loginWith(sessionWithRoles([rol], ['t-1', 't-2']));
+
+        expect(navegaciones).toEqual(['/']);
+      },
+    );
+
+    it('alcance de plataforma con 3 organizaciones: tampoco elige organización', () => {
+      loginWith(sessionWithRoles(['PLATFORM_ADMIN', 'REPORTING_ADMIN'], ['t-1', 't-2', 't-3']));
+
+      expect(navegaciones).toEqual(['/']);
+    });
+
+    it('un returnUrl interno manda también para el alcance de plataforma', async () => {
+      await realNavigate('/auth?returnUrl=%2Fsuperadmin%2Fobservability');
+      loginWith(sessionWithRoles(['PLATFORM_ADMIN'], ['t-1', 't-2']));
+
+      expect(navegaciones).toEqual(['/superadmin/observability']);
+    });
+
+    it('un returnUrl externo se ignora: va al Centro', async () => {
+      await realNavigate('/auth?returnUrl=%2F%2Fotro-sitio.example');
+      loginWith(sessionWithRoles(['PLATFORM_ADMIN'], ['t-1', 't-2']));
+
+      expect(navegaciones).toEqual(['/']);
+    });
+
+    it('NEGATIVO: una médica con 3 organizaciones sigue yendo a /auth/organization', () => {
+      loginWith(sessionWithRoles(['PRACTITIONER'], ['t-1', 't-2', 't-3']));
+
+      expect(navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
+    });
+
+    it('NEGATIVO: SECURITY_ADMIN con 2 organizaciones sigue eligiendo', () => {
+      loginWith(sessionWithRoles(['SECURITY_ADMIN'], ['t-1', 't-2']));
+
+      expect(navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
+    });
+
+    it('NEGATIVO: PLATFORM_ADMIN con ámbito de organización y 2 organizaciones sigue eligiendo', () => {
+      loginWith(
+        makeToken({ sub: 'u-1', sid: 's-1', roles: ['PLATFORM_ADMIN'], tenants: ['t-1', 't-2'], scopedRoles: { 't-1': ['PLATFORM_ADMIN'] } }),
+      );
+
+      expect(navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
+    });
+
+    it('cualquier rol de gestión con una organización va a /, nunca al selector de portales', () => {
+      loginWith(sessionWithRoles(['SECURITY_ADMIN', 'REPORTING_ADMIN']));
+
+      expect(navegaciones).toEqual(['/']);
+    });
+
+    it('límite: PLATFORM_ADMIN sin ninguna organización entra al Centro (opera sin ella); SECURITY_ADMIN va a «Mis organizaciones»', () => {
+      loginWith(sessionWithRoles(['PLATFORM_ADMIN'], []));
+      expect(navegaciones).toEqual(['/']);
+    });
+
+    it('NEGATIVO: sin alcance de plataforma y sin organizaciones sigue yendo a «Mis organizaciones»', () => {
+      loginWith(sessionWithRoles(['SECURITY_ADMIN'], []));
+      expect(navegaciones).toEqual(['/administration/medical-organization?tab=memberships']);
+    });
+
+    it('marketing puro conserva su portal (Insights)', () => {
+      loginWith(sessionWithRoles(['MARKETING_MANAGER']));
+
+      expect(navegaciones).toEqual(['/insights']);
     });
   });
 

@@ -1,0 +1,102 @@
+{
+  "run": "rmvwfnlim",
+  "api": "http://127.0.0.1:3010",
+  "conteos": {
+    "delta": {
+      "UNMATCHED": {
+        "requests": 12,
+        "failed4xx": 12,
+        "failed5xx": 0
+      },
+      "summary": {
+        "requests": 14,
+        "failed4xx": 14,
+        "failed5xx": 0
+      },
+      "coverage": {
+        "requests": 30,
+        "failed4xx": 0,
+        "failed5xx": 0
+      }
+    }
+  },
+  "verificaciones": [
+    {
+      "requestIds500": [
+        "4f3cca6a-6cd5-4027-9151-7128c79623b1",
+        "b0799c3a-d6a0-45a6-a1a8-6b655f9737c7",
+        "663a4b5b-9882-423f-ac03-ea8801f8e997",
+        "a43adc5e-1de8-4133-ab9e-ae391f9e2371"
+      ]
+    },
+    {
+      "psql.grupo500": {
+        "id": "3f31fcae-604d-484a-9420-795cabcd77a5",
+        "occurrencesTotal": 33,
+        "rowVersion": 4,
+        "requestIds": [
+          "4f3cca6a-6cd5-4027-9151-7128c79623b1",
+          "663a4b5b-9882-423f-ac03-ea8801f8e997",
+          "a43adc5e-1de8-4133-ab9e-ae391f9e2371",
+          "b0799c3a-d6a0-45a6-a1a8-6b655f9737c7"
+        ]
+      }
+    },
+    {
+      "psql.unmatchedTotalHoy": 107
+    },
+    {
+      "composicion": [
+        {
+          "viewport": "390",
+          "tarjetas": 1,
+          "izq": 12,
+          "der": 12,
+          "ancho": 0.9384615384615385,
+          "sobra": 0
+        },
+        {
+          "viewport": "768",
+          "tarjetas": 1,
+          "izq": 20,
+          "der": 20,
+          "ancho": 0.9479166666666666,
+          "sobra": 0
+        },
+        {
+          "viewport": "1440",
+          "tarjetas": 1,
+          "izq": 40,
+          "der": 40,
+          "ancho": 0.9333333333333333,
+          "sobra": 0
+        }
+      ]
+    },
+    {
+      "resumen": {
+        "ui": "1.877",
+        "api": 1877,
+        "psql": 1877,
+        "psql5xx": 6,
+        "tasa5xx": 0.003197
+      }
+    },
+    {
+      "errores.detalle": {
+        "ocurrenciasUi": 33,
+        "ocurrenciasPsql": 33,
+        "requestIdsEnUi": 33
+      }
+    },
+    {
+      "patch": {
+        "status": 200,
+        "requestId": "6ca3bcd1-cc9f-4ae3-b666-a5f4526aa23b"
+      }
+    },
+    {
+      "recarga": "el estado Resuelto se ve tras page.reload()"
+    }
+  ]
+}

@@ -1,0 +1,423 @@
+{
+  "consola": [
+    {
+      "tipo": "warning",
+      "texto": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505",
+      "url": "http://localhost:4200/auth"
+    },
+    {
+      "tipo": "error",
+      "texto": "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "url": "http://localhost:4200/dashboard"
+    },
+    {
+      "tipo": "error",
+      "texto": "[API] GET /admin/qa/runs → 422 · PRECONDITION_FAILED · «La operación requiere un tenant: indique X-Tenant-Id.» · correlationId=94ad5f9b-fbdc-4893-963d-7bd938b69812 {status: 422, code: PRECONDITION_FAILED, message: La operación requiere un tenant: indique X-Tenant-Id., correlationId: 94ad5f9b-fbdc-4893-963d-7bd938b69812, details: Object}",
+      "url": "http://localhost:4200/dashboard"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability"
+    },
+    {
+      "tipo": "warning",
+      "texto": "NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505",
+      "url": "http://localhost:4200/superadmin/observability?pestana=errores&grupo=3f31fcae-604d-484a-9420-795cabcd77a5&req=no-existe-este-id"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability?pestana=errores&grupo=3f31fcae-604d-484a-9420-795cabcd77a5&req=no-existe-este-id"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability?pestana=errores&grupo=3f31fcae-604d-484a-9420-795cabcd77a5&req=no-existe-este-id"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability?pestana=errores&grupo=3f31fcae-604d-484a-9420-795cabcd77a5&req=no-existe-este-id"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability?pestana=errores&grupo=3f31fcae-604d-484a-9420-795cabcd77a5&req=no-existe-este-id"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability?pestana=errores&grupo=3f31fcae-604d-484a-9420-795cabcd77a5&req=no-existe-este-id"
+    },
+    {
+      "tipo": "warning",
+      "texto": "[ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.",
+      "url": "http://localhost:4200/superadmin/observability?pestana=errores&grupo=3f31fcae-604d-484a-9420-795cabcd77a5&req=no-existe-este-id"
+    }
+  ],
+  "red": [
+    {
+      "url": "/iam/auth/login",
+      "status": 200,
+      "requestId": "ed98dc8b-8ae4-452b-8976-2785f6cb52e5",
+      "ms": 0
+    },
+    {
+      "url": "/admin/ops/deployments",
+      "status": 200,
+      "requestId": "15308376-9684-4b86-934a-f9b3d51389c4",
+      "ms": 0
+    },
+    {
+      "url": "/admin/ops/tools",
+      "status": 200,
+      "requestId": "d1b7a8d9-3af0-4f78-8e42-df25fa3970e8",
+      "ms": 0
+    },
+    {
+      "url": "/admin/ops/instances/liveness",
+      "status": 200,
+      "requestId": "7eade780-00a7-4df3-a1bc-a7693ec716ae",
+      "ms": 0
+    },
+    {
+      "url": "/admin/ops/incidents?open=true",
+      "status": 200,
+      "requestId": "48d904b5-33a4-4e54-8e0c-681b5823b73b",
+      "ms": 0
+    },
+    {
+      "url": "/admin/ops/readiness",
+      "status": 200,
+      "requestId": "4e50df29-bba1-4cd5-9f8b-fae08964a77b",
+      "ms": 0
+    },
+    {
+      "url": "/admin/ops/traffic?to=2026-10-31T13:24:51.217Z&interval=hour",
+      "status": 200,
+      "requestId": "f7e22ab3-1580-424b-8a63-52e044585c4f",
+      "ms": 0
+    },
+    {
+      "url": "/admin/ops/backups",
+      "status": 200,
+      "requestId": "03615135-754d-4a17-a0c0-09f23867e47d",
+      "ms": 0
+    },
+    {
+      "url": "/admin/qa/runs",
+      "status": 422,
+      "requestId": "94ad5f9b-fbdc-4893-963d-7bd938b69812",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&interval=hour&metric=requests&groupBy=status_class",
+      "status": 200,
+      "requestId": "8fff8a8c-0c01-4588-876e-59aa3cef3a2b",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/summary?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "c92dd708-d3ee-4ad8-b0a7-b9ba4a81cae3",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&interval=hour&metric=latency_p95",
+      "status": 200,
+      "requestId": "988a947f-2976-4551-9d55-b9d47b5bcdf2",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&interval=hour&metric=latency_p99",
+      "status": 200,
+      "requestId": "80052991-832f-4233-b854-ceed57f7028a",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/errors/groups?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&limit=50",
+      "status": 200,
+      "requestId": "067b85ca-6c79-455b-bfd7-30262184217a",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/endpoints?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&sort=p95&limit=10",
+      "status": 200,
+      "requestId": "7c2d8ebd-395f-4958-b131-20c4ab99380c",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/sql/slow?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&limit=10",
+      "status": 200,
+      "requestId": "5ac73da0-c500-457f-8982-59366310af44",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/endpoints?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&sort=requests&limit=50",
+      "status": 200,
+      "requestId": "b14eb5fd-4389-4b22-ac95-a669e05333ed",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/sql/statements?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&sort=total_ms&limit=50",
+      "status": 200,
+      "requestId": "d096fce9-33bc-49a1-8793-ec15ed37f7d5",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz&interval=hour&metric=sql_ms",
+      "status": 200,
+      "requestId": "522b6033-15fb-4b9e-af78-f5c0d45f40db",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/coverage?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "4c5a5b09-d98a-4000-84b1-79f5dc7fbe60",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/modules?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "415d779c-ef38-4d82-afc4-3ec1f74100ba",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/summary?to=2026-10-31T13:24:52.009Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "69609b24-7bc3-4bf7-9795-3edc12bded2a",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/summary?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "9f049f0c-37b6-4fe7-a547-5d3a3e785dd4",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&interval=hour&metric=requests&groupBy=status_class",
+      "status": 200,
+      "requestId": "68d370ce-8539-4dae-acf5-48cad21511a1",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&interval=hour&metric=latency_p99",
+      "status": 200,
+      "requestId": "7f60e757-8c94-45e6-88e1-ef94b361ac99",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&interval=hour&metric=latency_p95",
+      "status": 200,
+      "requestId": "60a24cd5-9369-4046-a010-bcf670032f2e",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/errors/groups?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&limit=50",
+      "status": 200,
+      "requestId": "cda0bcec-e126-483f-b696-d64cb989c983",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/endpoints?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&sort=p95&limit=10",
+      "status": 200,
+      "requestId": "5cc2b793-516e-485f-a909-c2f371c1be2f",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/sql/slow?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&limit=10",
+      "status": 200,
+      "requestId": "1d7ac3c1-8764-42cf-a639-f4390ac6f2cd",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/sql/statements?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&sort=total_ms&limit=50",
+      "status": 200,
+      "requestId": "29eaed43-99ff-44f9-b4a6-88c4cc256c60",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&interval=hour&metric=sql_ms",
+      "status": 200,
+      "requestId": "fb3ad1ba-12de-46bc-bd6c-62124d0eaf81",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/endpoints?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&sort=requests&limit=50",
+      "status": 200,
+      "requestId": "0f536e2e-3d69-4611-b286-7f99a6f1d874",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/coverage?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "f7494067-7f6b-40cb-9820-3cd9dd134be5",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/modules?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "8d11553c-a644-4349-be91-91d000d6472a",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/summary?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "0f827e3b-e08a-46c7-8fb0-eed480c93f82",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/errors/groups/3f31fcae-604d-484a-9420-795cabcd77a5?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&interval=hour",
+      "status": 200,
+      "requestId": "108d15a0-8955-42f0-8521-f4ec740909df",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/requests/4f3cca6a-6cd5-4027-9151-7128c79623b1",
+      "status": 200,
+      "requestId": "d4fd692e-8a9e-4786-b849-6dd72910cfbc",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/requests/no-existe-este-id",
+      "status": 200,
+      "requestId": "afbeecf5-9379-4e94-bb59-e1478ab37877",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/errors/groups/3f31fcae-604d-484a-9420-795cabcd77a5",
+      "status": 200,
+      "requestId": "6ca3bcd1-cc9f-4ae3-b666-a5f4526aa23b",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/errors/groups/3f31fcae-604d-484a-9420-795cabcd77a5?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&interval=hour",
+      "status": 200,
+      "requestId": "b639acce-a5d3-463d-87eb-23d0a47677ff",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/errors/groups?to=2026-10-31T13:24:54.681Z&tz=America/La_Paz&limit=50",
+      "status": 200,
+      "requestId": "03d581c8-4bc9-410e-ba81-1ec56f942c92",
+      "ms": 0
+    },
+    {
+      "url": "/iam/auth/token/refresh",
+      "status": 200,
+      "requestId": "32a5c086-0ea5-461f-a53b-253404f2b641",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&interval=hour&metric=requests&groupBy=status_class",
+      "status": 200,
+      "requestId": "1e2e5f06-2f2b-4339-b017-f9d790c5d496",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/requests/no-existe-este-id",
+      "status": 200,
+      "requestId": "7ac61e16-57c0-46b9-af7c-acc7864a9803",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/summary?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "d0510f94-932c-4e07-b3bb-3f64cc50ae18",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&interval=hour&metric=latency_p95",
+      "status": 200,
+      "requestId": "37bf5dae-5622-4d7e-8392-8a1da73956bc",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/errors/groups?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&limit=50",
+      "status": 200,
+      "requestId": "550654d4-5c0f-461a-a320-3de4e846aaa4",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&interval=hour&metric=latency_p99",
+      "status": 200,
+      "requestId": "7fd8b925-35c8-4b72-89e4-473e1b7945f2",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/errors/groups/3f31fcae-604d-484a-9420-795cabcd77a5?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&interval=hour",
+      "status": 200,
+      "requestId": "9c72933d-69e4-4e52-b254-653fdaa970ac",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/sql/slow?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&limit=10",
+      "status": 200,
+      "requestId": "44713a34-bd27-4ecd-90b7-12e56a8e27ef",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/endpoints?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&sort=p95&limit=10",
+      "status": 200,
+      "requestId": "a01f3dd4-be2f-4d52-bcce-a4a82e15dc49",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/sql/statements?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&sort=total_ms&limit=50",
+      "status": 200,
+      "requestId": "d3140bae-dd64-42ae-92e0-c18840633b72",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/timeseries?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&interval=hour&metric=sql_ms",
+      "status": 200,
+      "requestId": "7410f32f-b5e1-4de1-857f-a2a8db770d6b",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/endpoints?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz&sort=requests&limit=50",
+      "status": 200,
+      "requestId": "65ee255d-bf04-4159-864f-80be1b1823b4",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/modules?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "6317a327-47f6-4d35-a531-cbc6b3f2a4c0",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/coverage?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "02ce5799-d74c-42eb-9d1f-ca871463d096",
+      "ms": 0
+    },
+    {
+      "url": "/admin/observability/summary?to=2026-10-31T13:25:36.216Z&tz=America/La_Paz",
+      "status": 200,
+      "requestId": "8bb411d9-e240-4311-bced-a7a39c1ffe85",
+      "ms": 0
+    }
+  ]
+}

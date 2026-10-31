@@ -84,18 +84,18 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
   },
   /* -- Superadministración (17/10/2026) ----------------------------------- */
   {
-    // La portada del dominio: lo que la API sirvió hoy. Lee `GET /admin/ops/traffic*`
-    // (`ops_console`), y por eso los roles son los de esa lectura —`OPS_READ_ROLES`
-    // en la API—: la guarda evita llegar a una pantalla que sólo devolvería 403;
-    // la autoridad sigue siendo la API.
+    // La portada del dominio: la salud del sistema (31/10/2026). Lee
+    // `GET /admin/observability/*` (módulo 70), y por eso los roles son los de esa lectura
+    // —`OPS_READ_ROLES` en la API—: la guarda evita llegar a una pantalla que sólo
+    // devolvería 403; la autoridad sigue siendo la API.
     path: 'superadmin/observability',
     label: 'Observabilidad',
     group: 'Superadministración',
     icon: 'chart',
     roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
     availability: 'disponible',
-    summary: 'Cuántas solicitudes recibió la API hoy, cuántas fallaron, qué tan rápido respondió y quién la usa.',
-    module: 'M58 time_series · M46 platform_ops',
+    summary: 'Cómo está la API: tráfico, errores agrupados con su requestId, latencia, consultas SQL y lo que no se mide.',
+    module: 'M70 observability · M58 time_series',
   },
   {
     // Medición por funcionalidad (30/10/2026): uso, errores y latencia agrupados
