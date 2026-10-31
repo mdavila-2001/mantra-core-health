@@ -39,12 +39,26 @@ interface ArchivoSimulado {
    */
   readonly bytes?: Blob;
   /**
-   * La imagen subida como `data:`, cuando ya terminó de leerse (ver
-   * {@link urlDeArchivoSimulado}). Asíncrona: `FileReader` no tiene versión
-   * síncrona, y la subida simulada responde sin esperarla.
+   * Los bytes subidos como `data:`, cuando ya terminó de leerse. Asíncrona:
+   * `FileReader` no tiene versión síncrona, y la subida simulada responde sin
+   * esperarla. Sirve para dos cosas:
+   *
+   * - que lo subido **sobreviva a F5**: `bytes` es un `Blob`, y al guardarse la
+   *   colección en `sessionStorage` se serializa como `{}`; después de recargar
+   *   —o de cerrar sesión y entrar con otra cuenta en la misma pestaña— la foto
+   *   de un chat volvía como un documento de 2 bytes. {@link fileContent} la
+   *   rearma desde acá;
+   * - pintar una imagen chica directo en un `<img>` (ver
+   *   {@link urlDeArchivoSimulado}).
    */
   readonly dataUrlReal?: string;
 }
+
+/**
+ * Hasta qué tamaño se copian los bytes subidos como `data:` para que
+ * sobrevivan a F5. `sessionStorage` tiene pocos megas en total.
+ */
+const TOPE_PERSISTIBLE = 1_500_000;
 
 /** La cuenta del laboratorio que sube los PDF de resultados del simulador. */
 const LABORATORIO_UPLOADER = uuid('user-laboratorio-central');
@@ -58,7 +72,7 @@ function puedeLeerPorAutoria(archivo: ArchivoSimulado, user: { readonly id: stri
 
 /** Un archivo subido hace menos de 5 s sigue «en análisis» (`SCAN_PENDING`). */
 function escaneoPendiente(archivo: ArchivoSimulado): boolean {
-  return archivo.bytes !== undefined && Date.now() - Date.parse(archivo.createdAt) < 5000;
+  return archivo.bytes instanceof Blob && Date.now() - Date.parse(archivo.createdAt) < 5000;
 }
 
 /**
@@ -210,7 +224,19 @@ export function fileContent(fileId: string): unknown {
   const a = archivos.get(fileId);
   if (a === undefined) return undefined;
   // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
-  if (a.bytes !== undefined) return a.bytes;
+  //
+  // `instanceof` y no `!== undefined`: la colección se guarda en
+  // `sessionStorage` como JSON, y un `Blob` no sobrevive a eso — tras recargar
+  // vuelve como `{}`. Ahí queda la copia `data:` de la imagen, que sí se guarda.
+  if (typeof Blob !== 'undefined' && a.bytes instanceof Blob) return a.bytes;
+  if (a.dataUrlReal !== undefined) {
+    return {
+      body: a.dataUrlReal,
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+      },
+    };
+  }
   // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
   // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
   // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
@@ -282,8 +308,18 @@ const urlsDeArchivos = new Map<string, string>();
 export function urlDeArchivoSimulado(fileId: string): string | null {
   const archivo = archivos.get(fileId);
   if (archivo === undefined) return null;
-  if (archivo.dataUrlReal !== undefined) return archivo.dataUrlReal;
-  if (archivo.bytes === undefined || typeof URL.createObjectURL !== 'function') return archivo.dataUrl;
+  // Como `data:` sólo una imagen chica: se guarda dentro de la publicación.
+  // La copia de lo más grande existe para sobrevivir a F5, no para esto.
+  if (
+    archivo.dataUrlReal !== undefined &&
+    archivo.category === 'IMAGE' &&
+    archivo.dataUrlReal.length * 0.75 <= MAX_BYTES_EN_DATA_URL
+  ) {
+    return archivo.dataUrlReal;
+  }
+  if (!(archivo.bytes instanceof Blob) || typeof URL.createObjectURL !== 'function') {
+    return archivo.dataUrl;
+  }
   let url = urlsDeArchivos.get(fileId);
   if (url === undefined) {
     url = URL.createObjectURL(archivo.bytes);
@@ -346,9 +382,13 @@ export function registrarArchivos(router: MockRouter): void {
       ...(subido === null ? {} : { bytes: subido }),
       ...(request.user === null ? {} : { uploaderUserId: request.user.id }),
     });
-    if (subido !== null && categoria === 'IMAGE' && subido.size <= MAX_BYTES_EN_DATA_URL && typeof FileReader !== 'undefined') {
+    if (subido !== null && subido.size <= TOPE_PERSISTIBLE && typeof FileReader !== 'undefined') {
       const lector = new FileReader();
-      lector.onload = () => archivos.actualizar(nuevo.id, { dataUrlReal: String(lector.result) });
+      lector.onload = () => {
+        if (typeof lector.result === 'string' && archivos.get(nuevo.id) !== undefined) {
+          archivos.actualizar(nuevo.id, { dataUrlReal: lector.result });
+        }
+      };
       lector.readAsDataURL(subido);
     }
     const tipo = subido?.type ?? (categoria === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');

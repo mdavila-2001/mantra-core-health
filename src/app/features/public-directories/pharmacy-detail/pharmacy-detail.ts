@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { Observable } from 'rxjs';
 
 import { PublicCatalogClient } from '@core/data-access/public-catalog/public-catalog.client';
@@ -25,15 +25,19 @@ import type { ViewState } from '@core/view-state/view-state.types';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
+import { Link } from '@shared/components/atoms/link/link';
 import { ServiceIcon } from '@shared/components/atoms/service-icon/service-icon';
 import { Skeleton } from '@shared/components/atoms/skeleton/skeleton';
 import { Card } from '@shared/components/molecules/card/card';
+import { EmptyState } from '@shared/components/molecules/empty-state/empty-state';
 import { FactList } from '@shared/components/molecules/fact-list/fact-list';
 import { SearchField } from '@shared/components/molecules/search-field/search-field';
 import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '@shared/components/molecules/section-heading/section-heading';
+import { Tab } from '@shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '@shared/components/molecules/tabs/tabs';
 import { distanciaEnLineaRectaKm } from '@shared/components/organisms/map/geo';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
@@ -63,6 +67,22 @@ const MINIMO_PARA_BUSCAR = 7;
  */
 const TOPE_DE_RESULTADOS = 8;
 
+/**
+ * Las pestañas de la ficha, en el orden en que se dibujan.
+ *
+ * La clave es la que viaja en `?tab=`: un enlace guardado abre la pestaña por
+ * su nombre y no por su posición. Sin valor, o con uno que esta ficha no tiene,
+ * abre la primera: Medicamentos es la pregunta que trae a alguien acá y donde
+ * cae el ancla `#medicamentos` de «Ver medicamentos y precios».
+ */
+const PESTANAS = ['medicamentos', 'sucursales'] as const;
+
+/** El índice de la pestaña que pide `?tab=`; desconocida o ausente, la primera. */
+function indiceDePestana(pedida: string | null): number {
+  const indice = PESTANAS.findIndex((clave) => clave === pedida);
+  return indice < 0 ? 0 : indice;
+}
+
 /** Cuánto se espera a que alguien conteste el cartel de ubicación. */
 const ESPERA_DE_UBICACION_MS = 10_000;
 
@@ -90,6 +110,18 @@ function normalizar(texto: string): string {
  * falta antes de mandar a alguien con una receta. Sin edición de precio: el
  * catálogo es de la farmacia.
  *
+ * ## Una tarjeta con pestañas
+ *
+ * La ficha es UNA `app-card`, centrada y a lo ancho (`composition-rules.md`
+ * §5): arriba el resumen de la farmacia, que la reconoce y siempre se ve, y
+ * debajo dos pestañas —**Medicamentos** y **Sucursales y receta**—. Antes eran
+ * tres bloques apilados. Lo que cambió es dónde vive cada uno, no lo que dice.
+ *
+ * La pestaña abierta vive en `?tab=` en las dos direcciones. El estado de cada
+ * pestaña (lo tecleado en el buscador, los filtros, la receta, la ubicación)
+ * vive en señales de este componente y no en los controles: `app-tab` no dibuja
+ * el panel cerrado, y volver a una pestaña no puede perder lo que se escribió.
+ *
  * ## Sin mapa
  *
  * Tuvo un mapa de Leaflet con las sucursales hasta el 23/10/2026: el
@@ -113,8 +145,10 @@ function normalizar(texto: string): string {
     Badge,
     Card,
     Chip,
+    EmptyState,
     FactList,
     FormField,
+    Link,
     NavIcon,
     PageHeader,
     RouterLink,
@@ -122,6 +156,8 @@ function normalizar(texto: string): string {
     SectionHeading,
     ServiceIcon,
     Skeleton,
+    Tab,
+    Tabs,
     Textarea,
     ViewStateHost,
   ],
@@ -130,6 +166,7 @@ function normalizar(texto: string): string {
     '../../../shared/styles/card-grid.css',
     '../../../shared/styles/public-sheet.css',
     '../../../shared/styles/enlace-chip.css',
+    './pharmacy-detail.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -142,6 +179,18 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
 
   /** El umbral, para la plantilla. */
   protected readonly MINIMO_PARA_BUSCAR = MINIMO_PARA_BUSCAR;
+
+  private readonly rutaActiva = inject(ActivatedRoute);
+  private readonly enrutador = inject(Router);
+
+  /** El índice de la pestaña abierta. */
+  protected readonly pestana = signal(0);
+
+  /** «Medicamentos (7)»: la cuenta llega con los datos; antes, el rótulo solo. */
+  protected readonly rotuloDeMedicamentos = computed(() => {
+    const cuantos = this.items().length;
+    return cuantos > 0 ? `Medicamentos (${cuantos})` : 'Medicamentos';
+  });
 
   /** Lo tecleado en el buscador de medicamentos. */
   protected readonly termino = signal('');
@@ -540,6 +589,28 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
     });
   }
 
+  constructor() {
+    super();
+    // `queryParamMap` y no la foto inicial: un enlace a la misma ficha con otro
+    // `?tab=` cambia de pestaña sin recrear la pantalla.
+    this.rutaActiva.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.pestana.set(indiceDePestana(params.get('tab')));
+    });
+  }
+
+  /**
+   * Cambia de pestaña y lo deja escrito en la URL: sólo `tab`, y con
+   * `replaceUrl` para no llenar el historial —volver atrás sale de la ficha—.
+   */
+  protected seleccionar(indice: number): void {
+    this.pestana.set(indice);
+    void this.enrutador.navigate([], {
+      relativeTo: this.rutaActiva,
+      queryParams: { tab: PESTANAS[indice] ?? PESTANAS[0] },
+      replaceUrl: true,
+    });
+  }
+
   protected override cargar(): void {
     super.cargar();
     this.cargarSucursales();
@@ -557,6 +628,26 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
     return [producto.brandName, producto.presentation]
       .filter((parte): parte is string => parte !== null && parte !== '')
       .join(' · ');
+  }
+
+  /** «Chatear con la farmacia», desde el encabezado de la ficha. */
+  protected chatearConLaFarmacia(): void {
+    const ficha = this.ficha();
+    if (ficha === null) return;
+    const detalle = [ficha.address, ficha.city].filter((p): p is string => !!p).join(', ');
+    this.chatear({ tipo: 'farmacia', titulo: ficha.displayName, ...(detalle ? { detalle } : {}) });
+  }
+
+  /**
+   * «Consultar por chat» sobre un medicamento: nombre en negrita, y debajo la
+   * marca, la presentación y el precio que publicó esta farmacia.
+   */
+  protected consultarProducto(producto: PublicPharmacyProduct): void {
+    const precio = this.importe(producto.price, producto.currency);
+    const detalle = [producto.brandName, producto.presentation, precio, this.ficha()?.displayName]
+      .filter((parte): parte is string => !!parte)
+      .join(' · ');
+    this.chatear({ tipo: 'producto', titulo: producto.genericName, ...(detalle ? { detalle } : {}) });
   }
 
   protected leerCatalogo(slug: string): Observable<PublicPage<PublicPharmacyProduct>> {

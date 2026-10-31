@@ -15,6 +15,7 @@ import { errorToViewState } from '../../core/http/error-to-view-state';
 import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Alert } from '../../shared/components/molecules/alert/alert';
@@ -79,6 +80,7 @@ const CAMPOS_DEL_FORMULARIO: ReadonlySet<string> = new Set([
 @Component({
   selector: 'app-organization-panel',
   imports: [
+    AppButtonLink,
     Alert,
     AppButton,
     Badge,

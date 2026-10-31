@@ -1,0 +1,146 @@
+<div class="detail" data-testid="referral-detail">
+  <div class="detail__header">
+    <app-status-seal [variant]="status().variant" [label]="status().label" data-testid="referral-detail-status" />
+    @if (expired()) {
+      <app-status-seal variant="expired" label="Vencida" />
+    }
+  </div>
+
+  @if (actionError(); as message) {
+    <app-alert tone="error" data-testid="referral-action-error">{{ message }}</app-alert>
+  }
+
+  <dl class="detail__data">
+    <div class="detail__row"><dt>Tipo</dt><dd>{{ type() }}</dd></div>
+    <div class="detail__row"><dt>Destino</dt><dd>{{ destination() }}</dd></div>
+    @if (referral().targetExternalContact) {
+      <div class="detail__row"><dt>Contacto</dt><dd>{{ referral().targetExternalContact }}</dd></div>
+    }
+    <div class="detail__row">
+      <dt>Servicio pedido</dt>
+      <dd>{{ referral().targetServiceName ?? referral().requestedServiceText ?? 'Sin un servicio en particular' }}</dd>
+    </div>
+    @if (referral().targetServiceName && referral().requestedServiceText) {
+      <div class="detail__row"><dt>Detalle del servicio</dt><dd>{{ referral().requestedServiceText }}</dd></div>
+    }
+    @if (referral().diagnosisText) {
+      <div class="detail__row"><dt>Diagnóstico</dt><dd>{{ referral().diagnosisText }}</dd></div>
+    }
+    @if (referral().clinicalSummary) {
+      <div class="detail__row"><dt>Resumen clínico</dt><dd>{{ referral().clinicalSummary }}</dd></div>
+    }
+    @if (referral().treatmentGivenText) {
+      <div class="detail__row"><dt>Tratamiento realizado</dt><dd>{{ referral().treatmentGivenText }}</dd></div>
+    }
+    @if (referral().reasonText) {
+      <div class="detail__row"><dt>Motivo</dt><dd>{{ referral().reasonText }}</dd></div>
+    }
+    <div class="detail__row">
+      <dt>Emitida</dt>
+      <dd>{{ referral().createdAt | date: 'd MMM y, HH:mm' }}</dd>
+    </div>
+    <div class="detail__row">
+      <dt>Vigente hasta</dt>
+      <dd>{{ referral().validUntil ? (referral().validUntil | date: 'd MMM y') : 'Sin fecha de vencimiento' }}</dd>
+    </div>
+    @if (offersConsent()) {
+      <div class="detail__row">
+        <dt>Consentimiento</dt>
+        <dd data-testid="referral-detail-consent">
+          {{ referral().informedConsentId ? 'Aceptado y vinculado a esta derivación' : 'Sin consentimiento aceptado vinculado' }}
+        </dd>
+      </div>
+    }
+    @if (referral().rejectReason) {
+      <div class="detail__row"><dt>Motivo del rechazo</dt><dd>{{ referral().rejectReason }}</dd></div>
+    }
+    @if (referral().counterReferralText) {
+      <div class="detail__row">
+        <dt>Contrarreferencia</dt>
+        <dd>
+          {{ referral().counterReferralText }}
+          @if (referral().counterReferralAt) {
+            <span class="detail__secondary">— {{ referral().counterReferralAt | date: 'd MMM y' }}</span>
+          }
+        </dd>
+      </div>
+    }
+  </dl>
+
+  @if (canRespond() || canCounterRefer() || canCancel()) {
+    <div class="detail__actions">
+      @if (canCancel()) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="referral-cancel"
+          [disabled]="working()"
+          (clicked)="cancel()"
+        >
+          Anular derivación
+        </button>
+      }
+      @if (canRespond()) {
+        <!-- Aceptar y rechazar con el mismo peso visual: es la decisión del
+             destino, y ninguna de las dos es «la buena». -->
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="referral-reject"
+          [disabled]="working()"
+          (clicked)="reject()"
+        >
+          Rechazar derivación
+        </button>
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="referral-accept"
+          [disabled]="working()"
+          (clicked)="accept()"
+        >
+          Aceptar derivación
+        </button>
+      }
+      @if (canCounterRefer()) {
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          data-testid="referral-counter"
+          [isLoading]="working()"
+          (clicked)="counterRefer()"
+        >
+          Registrar contrarreferencia
+        </button>
+      }
+    </div>
+  }
+
+  @if (offersConsent()) {
+    <section class="detail__consent" aria-labelledby="referral-consent-title">
+      <h3 id="referral-consent-title" class="detail__subtitle">Consentimiento informado de esta derivación</h3>
+      @if (justIssued()) {
+        <app-alert tone="info" data-testid="referral-next-step">
+          Derivación emitida. Próximo paso: registre el consentimiento de la persona antes de enviarla.
+        </app-alert>
+      }
+      <app-informed-consent-panel
+        [patientProfileId]="patientProfileId()"
+        [encounterId]="consentEncounterId()"
+        targetType="REFERRAL"
+        [targetId]="referral().id"
+        [targetLabel]="consentLabel()"
+        [defaults]="consentDefaults()"
+        (consentChanged)="consentChanged.emit($event)"
+      />
+    </section>
+  }
+</div>

@@ -1,7 +1,7 @@
 import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/medication-catalog.generated';
 import { CORPUS_PHARMACIES } from '../fixtures/bolivia-central-axis';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
-import { showcases } from '../fixtures/community';
+import { CONCEPT, conversationList, showcaseOf, showcases } from '../fixtures/community';
 import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
 import { prescriptionList } from '../fixtures/clinic';
 import { PACIENTE, patientById, professionalById } from '../fixtures/people';
@@ -13,7 +13,7 @@ import {
   ID_ORDER_WITH_INSURANCE,
 } from '../fixtures/pharmacy-orders';
 import { horarioDeFarmacias } from './pharmacy-opening-hours.handlers';
-import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, precondition, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_TYPES } from '../mock-session';
 import { haversineKm, withStockUpdatedAt } from './pharmacy-availability.mock';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
@@ -32,7 +32,10 @@ const BOB = c('BOB', 'Boliviano');
 
 interface FarmaciaSimulada {
   readonly id: string;
-  /** Slug de la ficha pública (`/pharmacies-directory/:slug`). */
+  /**
+   * Slug de la ficha pública (`/pharmacies-directory/:slug`) y de su vitrina:
+   * con quién se abre el chat de un pedido.
+   */
   readonly slug: string;
   readonly code: string;
   readonly name: string;
@@ -416,7 +419,7 @@ function nombreDeCategoriaInvalido() {
  */
 const STOCK_SIN_CONTEO = null;
 
-const productos = new Coleccion<ProductoSimulado>(
+export const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
     Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
       const display = displayOf(conceptId);
@@ -713,6 +716,11 @@ function settlementForOrder(order: PedidoSimulado) {
   return { insuranceSettlement: null, insuranceSettlementAvailability: order.estado === 'ENVIADO' ? 'PENDING_PUBLICATION' : 'NOT_AVAILABLE' };
 }
 
+/** La vitrina pública de una farmacia del mostrador, si la tiene. */
+function vitrinaDeFarmacia(farmacia: FarmaciaSimulada) {
+  return showcases.todos().find((v) => v.kind === 'PHARMACY' && v.slug === farmacia.slug);
+}
+
 /** Un renglón con precio, como lo necesita la facturación SIMULADA. */
 export interface RenglonDePedidoSimulado {
   readonly productCode: string;
@@ -800,6 +808,9 @@ function dto(p: PedidoSimulado, owner = false) {
     ...sedeDelPedido(p, farmacia),
     pharmacyId: farmacia.id,
     pharmacyName: farmacia.name,
+    // La vitrina pública de la farmacia (contrato nuevo de la API, nullable).
+    pharmacyPublicProfileId: vitrinaDeFarmacia(farmacia)?.id ?? null,
+    pharmacyPublicSlug: vitrinaDeFarmacia(farmacia)?.slug ?? null,
     medicationRequestId: p.medicationRequestId,
     prescriber: prescriberOf(p),
     patientName: p.patientName,
@@ -1449,14 +1460,19 @@ export function registrarFarmacia(router: MockRouter): void {
     return { items, count: items.length };
   });
 
-  router.get('/pharmacy/orders', ({ query }) => {
+  router.get('/pharmacy/orders', ({ query, user }) => {
     const status = texto(query, 'status');
+    // El mostrador ve sólo los pedidos de su farmacia, como la API (que acota
+    // por el tenant de la petición). La plataforma sigue viéndolos todos.
+    const soloSuFarmacia =
+      user !== null && user.roles.includes('PHARMACY_STAFF') && !user.roles.includes('SECURITY_ADMIN');
     const siteId = texto(query, 'siteId');
     const desde = texto(query, 'from');
     const hasta = texto(query, 'to');
     const tope = Number(texto(query, 'limit') ?? 100);
     const items = pedidos
       .todos()
+      .filter((p) => !soloSuFarmacia || user.tenants.includes(p.pharmacyId))
       .filter((p) => status === null || p.estado === status || `PINV_ORDER_${p.estado}` === status)
       .filter((p) => siteId === null || dto(p).siteId === siteId)
       // Como la API: `from` inclusive y `to` exclusivo, sobre la creación.
@@ -1496,6 +1512,48 @@ export function registrarFarmacia(router: MockRouter): void {
   router.get('/pharmacy/orders/:id', (request) => {
     const p = pedidos.get(request.params['id']!);
     return p === undefined ? notFound('Pedido no encontrado') : dto(p, p.patientProfileId === request.user?.patientProfileId);
+  });
+
+  /**
+   * El chat del pedido: paciente ↔ vitrina de la farmacia. Idempotente.
+   *
+   * Lo pueden abrir el paciente dueño o el personal de la farmacia
+   * (`PHARMACY_STAFF` con el tenant del pedido); cualquier otro recibe 403. Es
+   * la regla del contrato nuevo de la API, y la maqueta la aplica para que la
+   * pantalla no pueda apoyarse en otra. Sin vitrina de un lado o del otro
+   * responde los mismos 422 con `reason` que la API.
+   */
+  router.post('/pharmacy/orders/:id/conversation', (request) => {
+    const p = pedidos.get(request.params['id']!);
+    if (p === undefined) return notFound('Pedido no encontrado');
+    const user = request.user;
+    const esDueno = user !== null && p.patientProfileId === user.patientProfileId;
+    const esPersonal =
+      user !== null && user.tenants.includes(p.pharmacyId) && user.roles.includes('PHARMACY_STAFF');
+    if (!esDueno && !esPersonal) return forbidden();
+    const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
+    const deLaFarmacia = vitrinaDeFarmacia(farmacia);
+    const delPaciente = showcaseOf(p.patientProfileId);
+    if (deLaFarmacia === undefined) {
+      return precondition('La farmacia no tiene una vitrina activa con la que conversar', 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE');
+    }
+    if (delPaciente === undefined) {
+      return precondition('El paciente todavía no tiene un perfil con el que conversar', 'PATIENT_CHAT_PROFILE_MISSING');
+    }
+    const participantes = [delPaciente.id, deLaFarmacia.id];
+    const existente = conversationList.filtrar(
+      (c) => c.participantes.length === 2 && participantes.every((id) => c.participantes.includes(id)),
+    )[0];
+    const conversacion =
+      existente ??
+      conversationList.agregar({
+        id: nuevoId('conv'),
+        conversationTypeConceptId: CONCEPT.conversationDirect,
+        groupId: null,
+        participantes,
+        noLeidosPor: {},
+      });
+    return { status: 201, body: { conversationId: conversacion.id, pharmacyProfileId: deLaFarmacia.id } };
   });
 
   router.post('/pharmacy/orders/:id/review', ({ params }) => cambiar(params['id']!, 'EN_REVISION'));

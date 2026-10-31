@@ -1,0 +1,211 @@
+:host {
+  display: block;
+}
+
+.fn,
+.fn__stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+.fn > *,
+.fn__stack > * {
+  min-inline-size: 0;
+}
+
+.fn__tiles,
+.fn__csat {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--sp-3);
+}
+
+.fn__csat {
+  margin-bottom: var(--sp-4);
+}
+
+.fn__note {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.fn__note a {
+  color: var(--brand-primary);
+}
+
+.fn__scope {
+  margin: var(--sp-3) 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  border: 1px solid var(--st-info-bd);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+}
+
+.fn__seg {
+  min-inline-size: 240px;
+}
+
+.fn__wrap {
+  overflow-x: auto;
+  padding-top: var(--sp-3);
+}
+
+.fn__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+
+.fn__table th,
+.fn__table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-default);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.fn__table thead th {
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.fn__table .fn__n {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.fn__bar-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 170px;
+}
+
+.fn__bar {
+  flex: 1;
+  block-size: 8px;
+  background: var(--bg-inset);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.fn__bar span {
+  display: block;
+  block-size: 100%;
+  background: var(--brand-primary);
+}
+
+.fn__journey {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-2);
+}
+
+.fn__stage {
+  display: grid;
+  gap: 2px;
+  inline-size: 100%;
+  padding: var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.fn__stage:hover {
+  background: var(--bg-hover);
+}
+
+.fn__stage:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.fn__stage--on {
+  border-color: var(--brand-primary);
+  background: var(--bg-active);
+}
+
+.fn__stage--high {
+  border-inline-start: 4px solid var(--st-error-fg);
+}
+
+.fn__stage-name {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.fn__stage-n {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-variant-numeric: tabular-nums;
+}
+
+.fn__stage-meta {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.fn__fr {
+  inline-size: fit-content;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-default);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+}
+
+.fn__fr--high {
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+  border-color: var(--st-error-bd);
+}
+
+.fn__fr--medium {
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border-color: var(--st-warning-bd);
+}
+
+.fn__fr--low {
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+  border-color: var(--st-success-bd);
+}
+
+.fn__detail {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-body);
+}
+
+.fn__detail p {
+  margin: 0 0 var(--sp-1);
+}
+
+.fn__detail ul {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.fn__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

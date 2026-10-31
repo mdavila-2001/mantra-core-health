@@ -1,447 +1,317 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { DevicesBreakdown } from '../../../core/data-access/admin-portal/analytics-devices.types';
-import type {
-  InstancesLiveness,
-  LivenessInstance,
-} from '../../../core/data-access/admin-portal/ops-liveness.types';
-import type { OpsToolsOverview } from '../../../core/data-access/admin-portal/ops-tools.types';
-import { herramientasSimuladas } from '../../../core/mock/handlers/ops-tools.handlers';
-import { vidaSimulada } from '../../../core/mock/handlers/ops-liveness.handlers';
-import { Instances } from './instances';
+import type { Instance, InstanceLiveness } from '../../../core/data-access/admin-portal/ops-liveness.types';
+import type { OpsTools, Tool } from '../../../core/data-access/admin-portal/ops-tools.types';
+import { Instances, INTERVALO_DE_REFRESCO_MS } from './instances';
+import { estadoVivo, haceCuanto, queDice } from './instances-labels';
 
-/* Los datos de estas pruebas son los del simulador (sintéticos y declarados) o
-   están armados a mano para un caso límite. Ninguno es una medición. */
+const AHORA = new Date('2026-10-31T12:00:00.000Z');
 
-const AHORA = new Date('2026-10-30T12:00:00.000Z');
-const VENTANA = {
-  from: '2026-10-23T12:00:00.000Z',
-  to: '2026-10-30T12:00:00.000Z',
-  interval: 'day' as const,
-  timezone: 'UTC' as const,
-  portal: null,
-};
-
-function dispositivos(sobrescribir: Partial<DevicesBreakdown> = {}): DevicesBreakdown {
+function instancia(sobrescribir: Partial<Instance> = {}): Instance {
   return {
-    window: VENTANA,
-    totals: { contexts: 200, bots: 12 },
-    byDeviceType: [
-      { code: 'DESKTOP', label: 'Escritorio', contexts: 120 },
-      { code: 'MOBILE', label: 'Móvil', contexts: 70 },
-      { code: 'UNSPECIFIED', label: 'UNSPECIFIED', contexts: 10 },
-    ],
-    byOsFamily: [{ code: 'WINDOWS', label: 'Windows', contexts: 150 }],
-    byBrowserFamily: [{ code: 'CHROME', label: 'Chrome', contexts: 180 }],
-    byAppVersion: [{ code: '2.4.1', label: '2.4.1', contexts: 50 }],
-    lastContextAt: '2026-10-30T11:58:00.000Z',
-    notMeasured: [{ metric: 'botsExcluded', reason: 'Los bots se cuentan aparte.' }],
-    ...sobrescribir,
-  };
-}
-
-function vida(
-  instances: readonly LivenessInstance[],
-  overall: InstancesLiveness['overall'],
-): InstancesLiveness {
-  return { ...vidaSimulada(AHORA), overall, instances, notMeasured: [] };
-}
-
-function instancia(
-  sobrescribir: Partial<LivenessInstance> & Pick<LivenessInstance, 'id' | 'state'>,
-): LivenessInstance {
-  return {
-    type: 'worker',
+    id: 'worker-messaging',
+    label: 'Mensajería',
+    type: 'WORKER',
     required: true,
-    lastHeartbeatAt: null,
-    ageSeconds: null,
+    state: 'VIVA',
+    lastHeartbeatAt: '2026-10-31T11:59:55.000Z',
+    ageSeconds: 5,
     thresholdSeconds: 60,
-    cause: null,
-    evidence: 'SIMULADO · prueba',
+    cause: 'OK',
+    causeDetail: 'Último latido hace 5 s.',
+    evidence: { source: 'heartbeat', reportedStatus: 'running', startedAt: '2026-10-31T08:00:00.000Z', latencyMs: null },
     ...sobrescribir,
   };
 }
 
-describe('Instances (Instancias y herramientas)', () => {
+function sonda(sobrescribir: Partial<InstanceLiveness> = {}): InstanceLiveness {
+  const instances = sobrescribir.instances ?? [
+    instancia(),
+    instancia({ id: 'worker-billing', label: 'Facturación', state: 'DEGRADADA', ageSeconds: 42, cause: 'HEARTBEAT_LATE', causeDetail: 'Llegó tarde.' }),
+    instancia({ id: 'worker-notifications', label: 'Notificaciones', state: 'CAIDA', ageSeconds: 1380, cause: 'HEARTBEAT_EXPIRED', causeDetail: 'Venció hace 23 min.' }),
+    instancia({ id: 'clamav', label: 'ClamAV', type: 'SERVICE', required: false, state: 'SIN_DATO', lastHeartbeatAt: null, ageSeconds: null, thresholdSeconds: null, cause: 'NOT_PROBED', causeDetail: 'No se sondea.', evidence: { source: 'none', reportedStatus: null, startedAt: null, latencyMs: null } }),
+  ];
+  return {
+    modelVersion: 'instance-liveness/v1',
+    evaluatedAt: AHORA.toISOString(),
+    overall: 'CRITICO',
+    summary: { VIVA: 1, DEGRADADA: 1, CAIDA: 1, SIN_DATO: 1, total: 4 },
+    heartbeatStore: { status: 'up', reason: null },
+    thresholds: { workerHeartbeatIntervalSeconds: 15, degradedAfterSeconds: 30, downAfterSeconds: 60, dependencyLatencyDegradedMs: 1000, dependencyProbeTimeoutMs: 3000, clockToleranceSeconds: 5 },
+    notMeasured: ['replicasOfApi', 'processInternals'],
+    ...sobrescribir,
+    instances,
+  };
+}
+
+function herramienta(sobrescribir: Partial<Tool> = {}): Tool {
+  return {
+    code: 'postgresql',
+    name: 'PostgreSQL',
+    kind: 'DATABASE',
+    provider: 'PostgreSQL 16',
+    purpose: 'Base principal.',
+    isCritical: true,
+    status: 'ACTIVE',
+    binding: 'real',
+    isConfigured: true,
+    missingEnvVars: [],
+    requiredEnvVars: ['DATABASE_URL'],
+    checkType: 'LIVE',
+    isHealthy: true,
+    healthMessage: 'SELECT 1 respondió en 4 ms.',
+    latencyMs: 4,
+    checkedAt: AHORA.toISOString(),
+    ownerTeam: 'plataforma',
+    failureImpact: 'Nada funciona.',
+    fallback: 'Ninguno.',
+    ...sobrescribir,
+  };
+}
+
+function herramientas(tools: readonly Tool[] = [
+  herramienta(),
+  herramienta({ code: 'smtp', name: 'Correo saliente', kind: 'MAIL', isHealthy: false, healthMessage: 'Conexión rechazada.', failureImpact: 'Nadie recibe correos.' }),
+  herramienta({ code: 'opensearch', name: 'OpenSearch', kind: 'SEARCH', isCritical: false, isHealthy: false, healthMessage: 'Devolvió 503.', fallback: 'SQL.' }),
+  herramienta({ code: 'openai', name: 'OpenAI', kind: 'AI', isCritical: false, checkType: 'CONFIGURATION', isHealthy: null, isConfigured: false, missingEnvVars: ['OPENAI_API_KEY'], healthMessage: 'Falta la clave.', binding: 'mock' }),
+  herramienta({ code: 'ga4', name: 'Google Analytics 4', kind: 'ANALYTICS', isCritical: false, status: 'PLANNED', checkType: 'NOT_APPLICABLE', isHealthy: null, healthMessage: 'Planeada.', binding: 'none' }),
+]): OpsTools {
+  return {
+    modelVersion: 'ops-tools/v1',
+    evaluatedAt: AHORA.toISOString(),
+    summary: {
+      total: tools.length,
+      healthy: tools.filter((t) => t.isHealthy === true).length,
+      down: tools.filter((t) => t.isHealthy === false).length,
+      noProbe: tools.filter((t) => t.isHealthy === null && t.checkType !== 'NOT_APPLICABLE').length,
+      notApplicable: tools.filter((t) => t.isHealthy === null && t.checkType === 'NOT_APPLICABLE').length,
+      critical: tools.filter((t) => t.isCritical).length,
+    },
+    tools,
+  };
+}
+
+describe('etiquetas de instancias y herramientas (funciones puras)', () => {
+  it('el estado vivo sale sólo de isHealthy y checkType, nunca de status', () => {
+    expect(estadoVivo({ isHealthy: true, checkType: 'LIVE' })).toBe('UP');
+    expect(estadoVivo({ isHealthy: false, checkType: 'LIVE' })).toBe('DOWN');
+    expect(estadoVivo({ isHealthy: null, checkType: 'NOT_APPLICABLE' })).toBe('NOT_APPLICABLE');
+    expect(estadoVivo({ isHealthy: null, checkType: 'CONFIGURATION' })).toBe('NO_PROBE');
+    expect(estadoVivo({ isHealthy: null, checkType: 'LIVE' })).toBe('NO_PROBE');
+  });
+
+  it('«Qué dice» agrega las variables que faltan al mensaje íntegro', () => {
+    expect(queDice({ healthMessage: 'Falta la clave.', missingEnvVars: ['A', 'B'] })).toBe('Falta la clave. Faltan: A, B.');
+    expect(queDice({ healthMessage: 'Todo bien.', missingEnvVars: [] })).toBe('Todo bien.');
+  });
+
+  it('la antigüedad se dice en palabras', () => {
+    expect(haceCuanto(null)).toBe('nunca');
+    expect(haceCuanto(5)).toBe('hace 5 s');
+    expect(haceCuanto(1380)).toBe('hace 23 min');
+    expect(haceCuanto(7300)).toBe('hace 2 h');
+  });
+});
+
+describe('Instances', () => {
   let fixture: ComponentFixture<Instances>;
   let http: HttpTestingController;
 
-  const esVida = (r: { url: string }) => r.url === '/admin/ops/instances/liveness';
-  const esHerramientas = (r: { url: string }) => r.url === '/admin/ops/tools';
-  const esDispositivos = (r: { url: string }) => r.url === '/admin/analytics/devices';
+  const liveness = (r: { url: string }) => r.url === '/admin/ops/instances/liveness';
+  const tools = (r: { url: string }) => r.url === '/admin/ops/tools';
   const texto = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
-  const q = <T extends Element>(selector: string) =>
-    (fixture.nativeElement as HTMLElement).querySelector<T>(selector);
-  const yo = () =>
-    fixture.componentInstance as unknown as Record<string, { set(v: unknown): void }> & {
-      cambiarPortal(p: string | null): void;
-      cambiarRango(r: string): void;
+  const q = <T extends Element>(selector: string) => (fixture.nativeElement as HTMLElement).querySelector<T>(selector);
+  const qa = (selector: string) => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll(selector));
+  const componente = () =>
+    fixture.componentInstance as unknown as {
+      pestana: { set(i: number): void };
+      criticidad: { set(v: string): void };
+      filtroVivo: { set(v: string): void };
     };
 
-  async function crear(pestana?: string): Promise<void> {
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(AHORA);
     await TestBed.configureTestingModule({
       imports: [Instances],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        provideRouter([]),
-        ...(pestana
-          ? [
-              {
-                provide: ActivatedRoute,
-                useValue: { snapshot: { queryParamMap: convertToParamMap({ pestana }) } },
-              },
-            ]
-          : []),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(Instances);
     fixture.detectChanges();
-  }
+  });
 
-  function responder(
-    v: InstancesLiveness = vidaSimulada(AHORA),
-    h: OpsToolsOverview = herramientasSimuladas(AHORA),
-    d: DevicesBreakdown = dispositivos(),
-  ): void {
-    http.expectOne(esVida).flush(v);
-    http.expectOne(esHerramientas).flush(h);
-    http.expectOne(esDispositivos).flush(d);
+  afterEach(() => {
+    http.verify({ ignoreCancelled: true });
+    vi.useRealTimers();
+  });
+
+  function responder(s: InstanceLiveness = sonda(), h: OpsTools = herramientas()): void {
+    http.expectOne(liveness).flush(s);
+    http.expectOne(tools).flush(h);
     fixture.detectChanges();
   }
 
   function abrirPestana(indice: number): void {
-    yo()['pestana']!.set(indice);
+    componente().pestana.set(indice);
     fixture.detectChanges();
   }
 
-  afterEach(() => http.verify({ ignoreCancelled: true }));
-
-  describe('pedidos', () => {
-    beforeEach(() => crear());
-
-    it('pide las tres lecturas por su cuenta; dispositivos con los últimos 7 días y sin portal', () => {
-      const d = http.expectOne(esDispositivos);
-      expect(d.request.params.get('portal')).toBeNull();
-      const desde = new Date(d.request.params.get('from')!).getTime();
-      const hasta = new Date(d.request.params.get('to')!).getTime();
-      expect(Math.round((hasta - desde) / 3_600_000)).toBe(7 * 24);
-      http.expectOne(esVida).flush(vidaSimulada(AHORA));
-      http.expectOne(esHerramientas).flush(herramientasSimuladas(AHORA));
-      d.flush(dispositivos());
-    });
-
-    it('«Actualizar» vuelve a pedir las tres', () => {
-      responder();
-      (q('[data-testid="instances-refresh"]') as HTMLButtonElement).click();
-      http.expectOne(esVida).flush(vidaSimulada(AHORA));
-      http.expectOne(esHerramientas).flush(herramientasSimuladas(AHORA));
-      http.expectOne(esDispositivos).flush(dispositivos());
-    });
-
-    it('un 403 en una lectura no apaga a las otras dos', () => {
-      http.expectOne(esVida).flush(vidaSimulada(AHORA));
-      http.expectOne(esHerramientas).flush(herramientasSimuladas(AHORA));
-      http
-        .expectOne(esDispositivos)
-        .flush(
-          { statusCode: 403, code: 'FORBIDDEN', message: 'x' },
-          { status: 403, statusText: 'Forbidden' },
-        );
-      fixture.detectChanges();
-      expect(q('[data-testid="instances-overall"]')).not.toBeNull();
-      abrirPestana(2);
-      expect(q('[data-testid="devices-totals"]')).toBeNull();
-      expect(texto()).not.toContain('Contextos de cliente');
-    });
-
-    it('un error en la sonda no deja un estado general a la vista', () => {
-      http
-        .expectOne(esVida)
-        .flush(
-          { statusCode: 500, code: 'INTERNAL', message: 'x' },
-          { status: 500, statusText: 'Internal Server Error' },
-        );
-      http.expectOne(esHerramientas).flush(herramientasSimuladas(AHORA));
-      http.expectOne(esDispositivos).flush(dispositivos());
-      fixture.detectChanges();
-      expect(q('[data-testid="instances-overall"]')).toBeNull();
-      expect(q('[data-testid="instances-table"]')).toBeNull();
-      expect(texto()).not.toMatch(/Todas las instancias requeridas/);
-    });
+  it('pide la sonda y las herramientas al abrir, con GET y sin parámetros', () => {
+    const s = http.expectOne(liveness);
+    expect(s.request.method).toBe('GET');
+    const h = http.expectOne(tools);
+    expect(h.request.method).toBe('GET');
+    s.flush(sonda());
+    h.flush(herramientas());
   });
 
-  describe('pestaña Instancias', () => {
-    beforeEach(() => crear());
-
-    it('muestra los cuatro estados con su palabra, lo más grave primero', () => {
-      responder();
-      const tabla = q('[data-testid="instances-table"]')!.textContent!;
-      for (const palabra of ['Caída', 'Degradada', 'Sin dato', 'Viva'])
-        expect(tabla).toContain(palabra);
-      expect(tabla.indexOf('worker-workflow')).toBeLessThan(tabla.indexOf('worker-scheduling'));
-      expect(tabla.indexOf('worker-scheduling')).toBeLessThan(tabla.indexOf('worker-messaging'));
-      // El sin dato cuenta como «Nunca», no como una edad.
-      expect(tabla).toContain('Nunca');
-      expect(tabla).toContain('hace 3 min 34 s');
-      expect(tabla).toContain('Latido vencido');
-      expect(tabla).toContain('Opcional');
-    });
-
-    it('con una requerida caída el aviso es de error y nombra el significado de «caída»', () => {
-      responder();
-      expect(q('[data-testid="instances-overall"]')!.getAttribute('data-estado')).toBe('CAIDA');
-      expect(q('[data-testid="instances-overall"]')!.textContent).toContain('Caída');
-      const aviso = q('[data-testid="instances-overall-alert"]')!.textContent!;
-      expect(aviso).toContain('Hay instancias requeridas caídas');
-      expect(aviso).toContain('no que se haya observado el proceso detenido');
-    });
-
-    it('sin evidencia dice «sin dato» y jamás «todo bien» ni «viva»', () => {
-      responder(
-        vida(
-          [
-            instancia({ id: 'worker-a', state: 'SIN_DATO', cause: 'NEVER_SEEN' }),
-            instancia({ id: 'worker-b', state: 'SIN_DATO', cause: 'STORE_UNAVAILABLE' }),
-          ],
-          'SIN_DATO',
-        ),
-      );
-      expect(q('[data-testid="instances-overall"]')!.textContent).toContain('Sin dato');
-      expect(q('[data-testid="instances-overall-alert"]')!.textContent).toContain(
-        'Sin datos: no se sabe si las instancias viven',
-      );
-      expect(texto()).not.toContain('Todas las instancias requeridas');
-      const conteos = q('[data-testid="instances-counts"]')!.textContent!;
-      expect(conteos).toMatch(/Vivas\s*0/);
-      expect(q('[data-testid="instances-table"]')!.textContent).toContain(
-        'No se pudo leer el registro de latidos',
-      );
-    });
-
-    it('«viva» sólo cuando todas las requeridas lo están, y aun así aclara qué significa', () => {
-      responder(
-        vida(
-          [
-            instancia({
-              id: 'worker-a',
-              state: 'VIVA',
-              ageSeconds: 4,
-              lastHeartbeatAt: AHORA.toISOString(),
-            }),
-            instancia({
-              id: 'worker-opcional',
-              state: 'SIN_DATO',
-              required: false,
-              cause: 'NEVER_SEEN',
-            }),
-          ],
-          'VIVA',
-        ),
-      );
-      const aviso = q('[data-testid="instances-overall-alert"]')!.textContent!;
-      expect(aviso).toContain('Todas las instancias requeridas tienen evidencia fresca');
-      expect(aviso).toContain('No garantiza que todo funcione');
-    });
-
-    it('declara los umbrales que usa el servidor y lo que no se mide', () => {
-      responder();
-      const umbrales = q('[data-testid="instances-thresholds"]')!.textContent!;
-      expect(umbrales).toContain('cada 15 s');
-      expect(umbrales).toContain('30 s');
-      expect(umbrales).toContain('60 s');
-      expect(q('[data-testid="instances-not-measured"]')!.textContent).toContain('minio');
-      expect(q('[data-testid="instances-evaluated"]')!.textContent).toContain('reloj de la API');
-    });
-
-    it('un código de causa que la pantalla no conoce se muestra tal cual', () => {
-      responder(
-        vida(
-          [
-            instancia({
-              id: 'worker-a',
-              state: 'DEGRADADA',
-              cause: 'CAUSA_NUEVA_DEL_SERVIDOR',
-              ageSeconds: 40,
-            }),
-          ],
-          'DEGRADADA',
-        ),
-      );
-      expect(q('[data-testid="instances-table"]')!.textContent).toContain(
-        'CAUSA_NUEVA_DEL_SERVIDOR',
-      );
-    });
-
-    it('filtra por estado y por tipo; sin coincidencias lo dice y ofrece quitar los filtros', () => {
-      responder();
-      yo()['estado']!.set('CAIDA');
-      fixture.detectChanges();
-      const tabla = q('[data-testid="instances-table"]')!.textContent!;
-      expect(tabla).toContain('worker-workflow');
-      expect(tabla).not.toContain('worker-messaging');
-
-      yo()['tipo']!.set('database');
-      fixture.detectChanges();
-      expect(texto()).toContain('Ninguna instancia coincide con los filtros elegidos.');
-      expect(texto()).toContain('Quitar filtros');
-
-      yo()['estado']!.set(null);
-      fixture.detectChanges();
-      const bases = q('[data-testid="instances-table"]')!.textContent!;
-      expect(bases).toContain('postgresql');
-      expect(bases).not.toContain('worker-messaging');
-    });
-
-    it('sin ninguna instancia declarada no pinta ceros contentos: dice que no hay nada que evaluar', () => {
-      responder(vida([], 'SIN_DATO'));
-      expect(texto()).toContain('no hay nada que evaluar, y eso no significa que todo esté bien');
-    });
-  });
-
-  describe('pestaña Herramientas', () => {
-    beforeEach(async () => {
-      await crear();
-      responder();
-      abrirPestana(1);
-    });
-
-    const tabla = () => q('[data-testid="tools-table"]')!.textContent!;
-
-    it('las críticas van primero y cada salud dice cómo se comprobó', () => {
-      const t = tabla();
-      // Crítica que no responde ... antes que una no crítica.
-      expect(t.indexOf('SIAT')).toBeLessThan(t.indexOf('OpenSearch'));
-      expect(t.indexOf('PostgreSQL')).toBeLessThan(t.indexOf('OpenSearch'));
-      expect(t).toContain('Responde');
-      expect(t).toContain('No responde');
-      expect(t).toContain('Sonda en vivo');
-      expect(t).toContain('Sólo revisa la configuración');
-    });
-
-    it('«Configurada» no se confunde con «Responde»: sólo la sonda en vivo gana el verde', () => {
-      const t = tabla();
-      expect(t).toContain('Configurada (no probada)');
-      expect(t).toContain('Configuración incompleta');
-      expect(t).toContain('Sin sondear');
-      // Correo de Google: OK por configuración → no figura como «Responde».
-      const fila = t.split('▼').find((f) => f.includes('Correo de Google'))!;
-      expect(fila).toContain('Configurada (no probada)');
-      expect(fila).not.toContain('Responde');
-    });
-
-    it('muestra las variables que faltan por NOMBRE, nunca un valor', () => {
-      const t = tabla();
-      expect(t).toContain('SIAT_NIT');
-      expect(t).toContain('VAPID_PRIVATE_KEY');
-      expect(t).not.toMatch(/=|https?:\/\//);
-    });
-
-    it('avisa que no todas las críticas están comprobadas, y cuenta lo que no se sondeó', () => {
-      const aviso = q('[data-testid="tools-critical-alert"]')!.textContent!;
-      expect(aviso).toContain('Sólo');
-      expect(aviso).toContain('sonda en vivo');
-      expect(q('[data-testid="tools-counts"]')!.textContent).toContain('Sin sondear');
-    });
-
-    it('filtra por criticidad y por salud', () => {
-      yo()['criticidad']!.set('no-criticas');
-      fixture.detectChanges();
-      expect(tabla()).toContain('OpenSearch');
-      expect(tabla()).not.toContain('PostgreSQL');
-
-      yo()['criticidad']!.set('todas');
-      yo()['salud']!.set('Configuración incompleta');
-      fixture.detectChanges();
-      expect(tabla()).toContain('SIAT');
-      expect(tabla()).not.toContain('PostgreSQL');
-
-      yo()['salud']!.set('Responde');
-      yo()['criticidad']!.set('no-criticas');
-      fixture.detectChanges();
-      expect(texto()).toContain('Ninguna herramienta coincide con los filtros elegidos.');
-    });
-
-    it('declara lo que no mide', () => {
-      expect(q('[data-testid="tools-not-measured"]')!.textContent).toContain(
-        'no se envió ningún correo de prueba',
-      );
-    });
-  });
-
-  describe('pestaña Dispositivos', () => {
-    beforeEach(async () => {
-      await crear();
-      responder();
-      abrirPestana(2);
-    });
-
-    it('muestra la cifra escrita en cada barra, su parte del total y «Sin informar»', () => {
-      const tipo = q('[data-testid="devices-tipo"]')!.textContent!;
-      expect(tipo).toContain('Escritorio');
-      expect(tipo).toContain('120 · 60 %');
-      expect(tipo).toContain('Sin informar');
-      expect(tipo).not.toContain('UNSPECIFIED');
-      for (const id of ['so', 'navegador', 'version'])
-        expect(q(`[data-testid="devices-${id}"]`)).not.toBeNull();
-      expect(q('[data-testid="devices-version"]')!.textContent).toContain('2.4.1');
-    });
-
-    it('los bots van aparte y no entran en los desgloses', () => {
-      expect(q('[data-testid="devices-totals"]')!.textContent).toMatch(/Bots \(aparte\)\s*12/);
-      expect(q('[data-testid="devices-tipo"]')!.textContent).not.toMatch(/[Bb]ot/);
-    });
-
-    it('cambiar de portal o de ventana vuelve a pedir con ese parámetro', () => {
-      yo().cambiarPortal('MOBILE');
-      const m = http.expectOne(esDispositivos);
-      expect(m.request.params.get('portal')).toBe('MOBILE');
-      m.flush(dispositivos({ window: { ...VENTANA, portal: 'MOBILE' } }));
-
-      yo().cambiarRango('30d');
-      const r = http.expectOne(esDispositivos);
-      const dias =
-        (new Date(r.request.params.get('to')!).getTime() -
-          new Date(r.request.params.get('from')!).getTime()) /
-        86_400_000;
-      expect(Math.round(dias)).toBe(30);
-      expect(r.request.params.get('portal')).toBe('MOBILE');
-      r.flush(dispositivos());
-    });
-
-    it('sin contextos en la ventana lo dice y no dibuja barras', () => {
-      yo().cambiarRango('24h');
-      http
-        .expectOne(esDispositivos)
-        .flush(
-          dispositivos({
-            totals: { contexts: 0, bots: 0 },
-            byDeviceType: [],
-            byOsFamily: [],
-            byBrowserFamily: [],
-            byAppVersion: [],
-            lastContextAt: null,
-          }),
-        );
-      fixture.detectChanges();
-      expect(texto()).toContain('Todavía no hay contextos de cliente medidos en esta ventana.');
-      expect(q('[data-testid="devices-tipo"]')).toBeNull();
-    });
-  });
-
-  it('`?pestana=1` abre directamente «Herramientas» (el enlace de la portada)', async () => {
-    await crear('1');
+  it('muestra el veredicto general, los contadores y la antigüedad del dato', () => {
     responder();
-    expect(q('[data-testid="tools-table"]')).not.toBeNull();
+    expect(q('[data-testid="instances-overall"]')!.textContent).toContain('Crítico');
+    expect(q('[data-testid="instances-count-viva"]')!.textContent).toContain('1 vivas');
+    expect(q('[data-testid="instances-count-caida"]')!.textContent).toContain('1 caídas');
+    expect(q('[data-testid="instances-count-sin-dato"]')!.textContent).toContain('1 sin dato');
+    expect(q('[data-testid="instances-evaluated"]')!.textContent).toContain('hace 0 s');
   });
 
-  it('un `?pestana` inválido cae en la primera pestaña', async () => {
-    await crear('9');
+  it('con veredicto CRÍTICO muestra el banner con las caídas y su causa', () => {
     responder();
-    expect(q('[data-testid="instances-table"]')).not.toBeNull();
+    const banner = q('[data-testid="instances-banner-critico"]')!.textContent!;
+    expect(banner).toContain('Notificaciones');
+    expect(banner).toContain('Venció hace 23 min.');
+  });
+
+  it('sin veredicto CRÍTICO no hay banner', () => {
+    responder(sonda({ overall: 'ATENCION', instances: [instancia()] }));
+    expect(q('[data-testid="instances-banner-critico"]')).toBeNull();
+  });
+
+  it('cada estado es un chip con texto, y la causa va en lenguaje llano', () => {
+    responder();
+    const tabla = q('[data-testid="instances-table"]')!.textContent!;
+    for (const chip of ['Viva', 'Degradada', 'Caída', 'Sin dato']) expect(tabla).toContain(chip);
+    expect(tabla).toContain('Hace demasiado que no late');
+    expect(tabla).toContain('No se la sondea desde la API.');
+    expect(tabla).toContain('sin latido');
+  });
+
+  it('con el almacén de latidos caído lo explica: «sin dato» no es «caída»', () => {
+    responder(sonda({ heartbeatStore: { status: 'down', reason: 'STORE_UNAVAILABLE' } }));
+    const aviso = q('[data-testid="instances-store-caido"]')!.textContent!;
+    expect(aviso).toContain('Redis');
+    expect(aviso).toContain('STORE_UNAVAILABLE');
+  });
+
+  it('lista lo que la sonda no mide, con nombre legible', () => {
+    responder();
+    const lista = q('[data-testid="instances-not-measured"]')!.textContent!;
+    expect(lista).toContain('Réplicas de la API');
+    expect(lista).toContain('Memoria, CPU y colas internas');
+  });
+
+  it('sin instancias registradas dice por qué, no pinta una tabla vacía', () => {
+    responder(sonda({ instances: [] }));
+    expect(q('[data-testid="instances-overall"]')).toBeNull();
+    expect(texto()).toContain('La sonda no tiene instancias registradas que vigilar.');
+  });
+
+  it('un dato más viejo que dos refrescos se declara atrasado (S7) con su fecha', () => {
+    responder(sonda({ evaluatedAt: new Date(AHORA.getTime() - 5 * 60_000).toISOString() }));
+    expect(texto()).toContain('Está viendo datos que pueden estar atrasados');
+    expect(q('[data-testid="instances-evaluated"]')!.textContent).toContain('hace 5 min');
+  });
+
+  it('un error de la API muestra el error con reintento y no deja números', () => {
+    http.expectOne(liveness).flush({ statusCode: 500, code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Internal Server Error' });
+    http.expectOne(tools).flush(herramientas());
+    fixture.detectChanges();
+    expect(q('[data-testid="instances-overall"]')).toBeNull();
+    expect(q('[data-testid="instances-table"]')).toBeNull();
+  });
+
+  it('la pestaña de herramientas trae los contadores al estilo Atlas y el banner de caídas críticas', () => {
+    responder();
+    abrirPestana(1);
+    expect(q('[data-testid="tools-count-up"]')!.textContent).toContain('1 operativas');
+    expect(q('[data-testid="tools-count-down"]')!.textContent).toContain('2 caídas');
+    expect(q('[data-testid="tools-count-no-probe"]')!.textContent).toContain('1 sin chequeo en vivo');
+    expect(q('[data-testid="tools-count-na"]')!.textContent).toContain('1 no aplican');
+    const critico = q('[data-testid="tools-banner-critico"]')!.textContent!;
+    expect(critico).toContain('Correo saliente');
+    expect(critico).not.toContain('OpenSearch');
+    expect(q('[data-testid="tools-banner-no-critico"]')!.textContent).toContain('OpenSearch');
+  });
+
+  it('el estado en vivo sale sólo de isHealthy: lo no chequeado nunca se pinta como caído', () => {
+    responder();
+    abrirPestana(1);
+    const tabla = q('[data-testid="tools-table"]')!.textContent!;
+    expect(tabla).toContain('Operativa');
+    expect(tabla).toContain('Sin chequeo en vivo');
+    expect(tabla).toContain('No aplica');
+    expect(tabla).toContain('Faltan: OPENAI_API_KEY');
+    expect(tabla).toContain('Planeada');
+    expect(qa('[data-testid="tools-table"] app-badge').filter((b) => b.textContent?.trim() === 'Caída')).toHaveLength(2);
+  });
+
+  it('filtra por criticidad y por estado vivo, y sin coincidencias dice cómo salir', () => {
+    responder();
+    abrirPestana(1);
+    componente().criticidad.set('criticas');
+    fixture.detectChanges();
+    let tabla = q('[data-testid="tools-table"]')!.textContent!;
+    expect(tabla).toContain('postgresql');
+    expect(tabla).not.toContain('opensearch');
+    componente().filtroVivo.set('NOT_APPLICABLE');
+    fixture.detectChanges();
+    expect(texto()).toContain('Ninguna herramienta coincide con los filtros.');
+    componente().criticidad.set('no-criticas');
+    fixture.detectChanges();
+    tabla = q('[data-testid="tools-table"]')!.textContent!;
+    expect(tabla).toContain('ga4');
+    expect(tabla).not.toContain('postgresql');
+  });
+
+  it('se vuelve a pedir solo cada 30 s y «Actualizar» pide de inmediato', () => {
+    responder();
+    vi.advanceTimersByTime(INTERVALO_DE_REFRESCO_MS);
+    responder();
+    (q('[data-testid="instances-refresh"]') as HTMLButtonElement).click();
+    responder();
+    fixture.destroy();
+    vi.advanceTimersByTime(INTERVALO_DE_REFRESCO_MS * 2);
+    http.expectNone(liveness);
+    http.expectNone(tools);
+  });
+});
+
+describe('Instances con movimiento reducido', () => {
+  it('no se refresca sola: queda el botón «Actualizar»', async () => {
+    vi.useFakeTimers();
+    const original = window.matchMedia;
+    window.matchMedia = ((consulta: string) =>
+      ({ matches: consulta.includes('prefers-reduced-motion'), media: consulta, addEventListener: () => undefined, removeEventListener: () => undefined }) as unknown as MediaQueryList) as typeof window.matchMedia;
+    try {
+      await TestBed.configureTestingModule({
+        imports: [Instances],
+        providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      }).compileComponents();
+      const http = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(Instances);
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/admin/ops/instances/liveness').flush(sonda());
+      http.expectOne((r) => r.url === '/admin/ops/tools').flush(herramientas());
+      vi.advanceTimersByTime(INTERVALO_DE_REFRESCO_MS * 3);
+      http.expectNone((r) => r.url === '/admin/ops/instances/liveness');
+      http.verify();
+    } finally {
+      window.matchMedia = original;
+      vi.useRealTimers();
+    }
   });
 });

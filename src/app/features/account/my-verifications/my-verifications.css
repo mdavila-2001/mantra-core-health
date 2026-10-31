@@ -1,0 +1,163 @@
+/* Sin tope de ancho propio: lo pone `.app-main__inner` y nadie más
+   (`docs/components/composition-rules.md` §5). */
+.verif__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.verif__esqueleto {
+  display: grid;
+  gap: var(--e3);
+}
+
+.verif__esqueleto span {
+  display: block;
+  block-size: var(--e8);
+  border-radius: var(--r-ctrl);
+  background: var(--filete-2);
+}
+
+/* ─── Hoja de ruta ──────────────────────────────────────────────────────── */
+
+.verif__resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0 0 var(--e4);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+.verif__resumen-texto {
+  margin: 0;
+}
+
+.verif__ruta {
+  display: grid;
+  gap: 0;
+  margin: var(--e5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada tramo cuelga de una línea vertical continua: es lo que convierte una
+   lista de estados en un recorrido. La marca es el ícono del tramo. */
+.verif__tramo {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--e9) minmax(0, 1fr);
+  gap: var(--e3);
+  padding-block-end: var(--e5);
+}
+
+.verif__tramo::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--e9) 0;
+  inset-inline-start: calc(var(--e9) / 2 - 1px);
+  inline-size: 2px;
+  background: var(--filete);
+}
+
+.verif__tramo:last-child::before {
+  display: none;
+}
+
+.verif__marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--e9);
+  block-size: var(--e9);
+  border: 2px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-3);
+}
+
+.verif__tramo--approved .verif__marca {
+  border-color: var(--ok-tinta);
+  background: var(--ok-bg);
+  color: var(--ok-tinta);
+}
+
+.verif__tramo--approved::before {
+  background: var(--ok-tinta);
+}
+
+.verif__tramo--pending .verif__marca,
+.verif__tramo--in-review .verif__marca {
+  border-color: var(--aviso-tinta);
+  background: var(--aviso-bg);
+  color: var(--aviso-tinta);
+}
+
+.verif__tramo--rejected .verif__marca,
+.verif__tramo--expired .verif__marca {
+  border-color: var(--error-tinta);
+  background: var(--error-bg);
+  color: var(--error-tinta);
+}
+
+.verif__tramo--not-started .verif__marca {
+  border-style: dashed;
+}
+
+.verif__tramo-cuerpo {
+  display: grid;
+  gap: var(--e2);
+  justify-items: start;
+  min-inline-size: 0;
+  padding-block-start: var(--e2);
+}
+
+.verif__tramo-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2) var(--e3);
+}
+
+.verif__tramo-titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--text-primary);
+}
+
+.verif__opcional {
+  margin-inline-start: var(--e2);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.verif__tramo-detalle {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+/* ─── Solicitudes enviadas ──────────────────────────────────────────────── */
+
+.verif__nueva {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e3);
+}
+
+.verif__nueva-ayuda {
+  margin-block: var(--e2) var(--e5);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.verif__nueva-campo {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}

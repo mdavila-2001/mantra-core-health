@@ -188,6 +188,52 @@ describe('Dashboard', () => {
     });
   });
 
+  /* -- Puertas a bandejas fuera de los menús cerrados (28/10/2026) ---------- */
+
+  describe('franjas de «Mis verificaciones» y de la aseguradora', () => {
+    const franja = (id: string) => raiz().querySelector(`[data-testid="${id}"]`);
+
+    it('quien atiende ve «Mis verificaciones» debajo del saludo, no encima', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' });
+      const enlace = franja('panel-mis-verificaciones');
+      const titulo = raiz().querySelector('h1');
+
+      expect(enlace?.querySelector('a')?.getAttribute('href')).toBe('/my-account/verifications');
+      expect(
+        titulo!.compareDocumentPosition(enlace!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(franja('panel-profesionales-que-piden')).toBeNull();
+    });
+
+    it('con perfil profesional pero sin rol de quien atiende, no se ofrece una puerta que la ruta cierra', () => {
+      crear({ sub: 'u-1', roles: ['INSURANCE_ANALYST'], tenants: ['t-1'], hpid: 'hp-1' });
+      expect(franja('panel-mis-verificaciones')).toBeNull();
+    });
+
+    it('la aseguradora activa ve la puerta a los profesionales que piden sumarse', () => {
+      crear({
+        sub: 'u-1',
+        roles: ['INSURANCE_ANALYST'],
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'PAYER' },
+      });
+      expect(
+        franja('panel-profesionales-que-piden')?.querySelector('a')?.getAttribute('href'),
+      ).toBe('/administration/insurer-practitioner-requests');
+      expect(franja('panel-mis-verificaciones')).toBeNull();
+    });
+
+    it('una clínica no la ve: el mismo filtro por tipo de organización que el menú', () => {
+      crear({
+        sub: 'u-1',
+        roles: ['INSURANCE_ANALYST'],
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'HOSPITAL' },
+      });
+      expect(franja('panel-profesionales-que-piden')).toBeNull();
+    });
+  });
+
   /* -- 3 y 4 · los pacientes de la organización ----------------------------- */
 
   it('sin rol de administración NO pide el listado de pacientes', () => {

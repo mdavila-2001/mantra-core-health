@@ -31,6 +31,11 @@ export const ROLES_DE_GESTION: readonly string[] = [
   'QA_ADMIN',
   'QA_ENGINEER',
   'MARKETING_MANAGER',
+  // Quien administra la reportería (portal de reportería, 30/10/2026) mide la
+  // plataforma: es gestión. Sin esta línea la cuenta de pruebas `superadmin`
+  // —que lo lleva junto a SUPERADMIN— dejaba de aterrizar en el Centro de la
+  // plataforma y caía en el panel clínico (visto el 31/10/2026).
+  'REPORTING_ADMIN',
 ];
 
 /**

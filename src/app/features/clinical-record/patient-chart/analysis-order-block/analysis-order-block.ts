@@ -40,6 +40,10 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { writeFailureMessage } from '../../write-message';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { consentTargetState } from '../informed-consent/consent-target';
+import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import {
@@ -132,6 +136,7 @@ const TOPE = 25;
   imports: [
     FormResponsePicker,
     Alert,
+    AppButton,
     Card,
     ConceptSelect,
     DatePipe,
@@ -139,6 +144,8 @@ const TOPE = 25;
     FormActions,
     FormField,
     PerformerSelector,
+    InformedConsentBadge,
+    InformedConsentDialog,
   ],
   templateUrl: './analysis-order-block.html',
   styleUrl: './analysis-order-block.css',
@@ -171,6 +178,9 @@ export class AnalysisOrderBlock {
    */
   readonly exigeRespuesta = input(false);
 
+  /** Ofrece la respuesta sin exigirla (30/10/2026): se emite sin formulario, no sin encuentro. */
+  readonly ofreceRespuesta = input(false);
+
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
@@ -186,9 +196,18 @@ export class AnalysisOrderBlock {
 
   protected readonly faltaRespuesta = computed(
     () =>
-      this.exigeRespuesta() &&
-      this.respuestaDelFormulario() === null &&
-      this.notaDelFormularioLibre() === null,
+      (this.exigeRespuesta() &&
+        this.respuestaDelFormulario() === null &&
+        this.notaDelFormularioLibre() === null) ||
+      // Sin formulario se pide, pero el encuentro abierto sigue siendo necesario.
+      (this.ofreceRespuesta() && this.encounterId() === null),
+  );
+
+  /* -- Consentimiento informado dirigido a cada orden (CPE art. 44) ------- */
+
+  protected readonly consent = consentTargetState<EstudioEnFicha>(
+    () => this.patientProfileId(),
+    (study) => [study?.encounterId, this.encounterId()],
   );
 
   protected readonly targetEstudio = TARGET_ESTUDIO;
@@ -625,6 +644,7 @@ export class AnalysisOrderBlock {
           ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
           : null,
       justificacion: orden.duplicateOverrideReason ?? null,
+      ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
     };
   }
 

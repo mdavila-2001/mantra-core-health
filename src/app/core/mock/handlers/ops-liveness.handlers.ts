@@ -1,185 +1,110 @@
 import type { MockRouter } from '../mock-router';
 import type {
-  InstancesLiveness,
-  LivenessInstance,
-  LivenessState,
+  Instance,
+  InstanceLiveness,
+  InstanceState,
 } from '../../data-access/admin-portal/ops-liveness.types';
 
 /* ============================================================================
-    Backend simulado de la sonda de vida (`GET /admin/ops/instances/liveness`).
+    Backend SIMULADO de la sonda de vida (`GET /admin/ops/instances/liveness`).
 
-    **DATOS SINTÉTICOS.** Nada de acá se midió: es un conjunto fijo y declarado
-    como simulado —cada `evidence` empieza con «SIMULADO»— que cubre los cuatro
-    estados (VIVA, DEGRADADA, CAIDA, SIN_DATO) para ver la pantalla en `mockup`.
-    No sustituye a la sonda real: lo que falta verificar contra la API es el
-    contrato publicado y la medición de verdad.
+    Devuelve el contrato exacto de la API (doc 04-sonda-de-vida §2.4) con
+    datos sintéticos y fijos: dos corridas dan lo mismo salvo las fechas, que se
+    calculan contra el reloj para que la antigüedad se vea verosímil. Cubre los
+    cuatro estados (VIVA, DEGRADADA, CAÍDA, SIN DATO), las cuatro fuentes de
+    evidencia y un `overall` CRÍTICO, para que la pantalla muestre su banner.
 
-    Reproduce las reglas del servidor:
-    - La edad es `evaluatedAt − lastHeartbeatAt` y cae en el estado que dicen
-      los umbrales (≤ live → VIVA; ≤ degraded → DEGRADADA; más → CAIDA).
-    - Sin latido nunca es VIVA ni CAIDA: es SIN_DATO (`NEVER_SEEN`).
-    - `overall` sale de las instancias **requeridas** y VIVA sólo si todas lo
-      están (ver {@link estadoGeneral}).
+    Cada `causeDetail` empieza por «Simulado:» para que nadie confunda esto con
+    una medición real.
     ========================================================================== */
 
-const UMBRALES = { heartbeatIntervalSeconds: 15, liveSeconds: 30, degradedSeconds: 60 } as const;
+const UMBRALES = {
+  workerHeartbeatIntervalSeconds: 15,
+  degradedAfterSeconds: 30,
+  downAfterSeconds: 60,
+  dependencyLatencyDegradedMs: 1000,
+  dependencyProbeTimeoutMs: 3000,
+  clockToleranceSeconds: 5,
+} as const;
 
-/** Instancias fijas: `ageSeconds` es relativo al instante de la consulta. */
-const BASE: readonly Omit<LivenessInstance, 'lastHeartbeatAt'>[] = [
-  {
-    id: 'api',
-    type: 'api',
-    required: true,
-    state: 'VIVA',
-    ageSeconds: 0,
-    thresholdSeconds: 60,
-    cause: null,
-    evidence:
-      'SIMULADO · Es la instancia que respondió esta consulta: prueba que esa réplica atiende, no que haya otras.',
-  },
-  {
-    id: 'postgresql',
-    type: 'database',
-    required: true,
-    state: 'VIVA',
-    ageSeconds: 1,
-    thresholdSeconds: 3,
-    cause: null,
-    evidence: 'SIMULADO · Sonda en la petición: respondió en 12 ms.',
-  },
-  {
-    id: 'mongodb',
-    type: 'database',
-    required: true,
-    state: 'VIVA',
-    ageSeconds: 1,
-    thresholdSeconds: 3,
-    cause: null,
-    evidence: 'SIMULADO · Sonda en la petición: respondió en 18 ms.',
-  },
-  {
-    id: 'redis',
-    type: 'database',
-    required: true,
-    state: 'VIVA',
-    ageSeconds: 1,
-    thresholdSeconds: 3,
-    cause: null,
-    evidence: 'SIMULADO · Sonda en la petición: respondió en 4 ms.',
-  },
-  {
-    id: 'opensearch',
-    type: 'database',
-    required: true,
-    state: 'DEGRADADA',
-    ageSeconds: 2,
-    thresholdSeconds: 3,
-    cause: 'PROBE_SLOW',
-    evidence: 'SIMULADO · Respondió, pero en 1 450 ms (el límite para darla por sana es 1 000 ms).',
-  },
-  {
-    id: 'worker-messaging',
-    type: 'worker',
-    required: true,
-    state: 'VIVA',
-    ageSeconds: 8,
-    thresholdSeconds: 60,
-    cause: null,
-    evidence: 'SIMULADO · Último latido hace 8 s, dentro del límite de 30 s.',
-  },
-  {
-    id: 'worker-scheduling',
-    type: 'worker',
-    required: true,
-    state: 'DEGRADADA',
-    ageSeconds: 41,
-    thresholdSeconds: 60,
-    cause: 'HEARTBEAT_LATE',
-    evidence: 'SIMULADO · Último latido hace 41 s: pasó el límite de 30 s pero no el de 60 s.',
-  },
-  {
-    id: 'worker-workflow',
-    type: 'worker',
-    required: true,
-    state: 'CAIDA',
-    ageSeconds: 214,
-    thresholdSeconds: 60,
-    cause: 'HEARTBEAT_EXPIRED',
-    evidence:
-      'SIMULADO · Sin latido desde hace 214 s. Significa que no llegó latido, no que el proceso haya muerto.',
-  },
-  {
-    id: 'worker-read-models',
-    type: 'worker',
-    required: true,
-    state: 'SIN_DATO',
-    ageSeconds: null,
-    thresholdSeconds: 60,
-    cause: 'NEVER_SEEN',
-    evidence:
-      'SIMULADO · Nunca se recibió un latido de esta instancia: no se sabe si vive. No se da por caída.',
-  },
-  {
-    id: 'worker-files',
-    type: 'worker',
-    required: false,
-    state: 'SIN_DATO',
-    ageSeconds: null,
-    thresholdSeconds: 60,
-    cause: 'NEVER_SEEN',
-    evidence:
-      'SIMULADO · Worker opcional (se enciende a pedido): sin latido y sin efecto sobre el estado general.',
-  },
-];
-
-const NO_MEDIDO = [
-  {
-    id: 'minio',
-    reason:
-      'SIMULADO · El almacenamiento de objetos no se sondea todavía: no hay evidencia ni a favor ni en contra.',
-  },
-  { id: 'clamav', reason: 'SIMULADO · El antivirus no se sondea todavía.' },
-  {
-    id: 'replicasOfApi',
-    reason: 'SIMULADO · Sólo se ve la réplica que contestó; no se cuentan las demás.',
-  },
-];
-
-/**
- * El estado general que declara la API. Es función pura y se prueba sola:
- * - alguna requerida CAIDA → CAIDA;
- * - si no, alguna requerida DEGRADADA → DEGRADADA;
- * - ninguna requerida con evidencia (o ninguna requerida) → SIN_DATO;
- * - VIVA mezclada con SIN_DATO → DEGRADADA;
- * - VIVA sólo si **todas** las requeridas están VIVA.
- */
-export function estadoGeneral(
-  instancias: readonly Pick<LivenessInstance, 'required' | 'state'>[],
-): LivenessState {
-  const requeridas = instancias.filter((i) => i.required);
-  if (requeridas.some((i) => i.state === 'CAIDA')) return 'CAIDA';
-  if (requeridas.some((i) => i.state === 'DEGRADADA')) return 'DEGRADADA';
-  if (requeridas.every((i) => i.state === 'SIN_DATO')) return 'SIN_DATO';
-  if (requeridas.some((i) => i.state === 'SIN_DATO')) return 'DEGRADADA';
-  return 'VIVA';
+interface Semilla {
+  readonly id: string;
+  readonly label: string;
+  readonly type: Instance['type'];
+  readonly required: boolean;
+  readonly state: InstanceState;
+  /** `null` = nunca latió. */
+  readonly ageSeconds: number | null;
+  readonly thresholdSeconds: number | null;
+  readonly cause: Instance['cause'];
+  readonly causeDetail: string;
+  readonly source: Instance['evidence']['source'];
+  readonly reportedStatus: Instance['evidence']['reportedStatus'];
+  readonly startedHoursAgo: number | null;
+  readonly latencyMs: number | null;
 }
 
-/** La respuesta de la sonda simulada para el instante `ahora`. */
-export function vidaSimulada(ahora: Date): InstancesLiveness {
-  const instances = BASE.map((i) => ({
-    ...i,
-    lastHeartbeatAt:
-      i.ageSeconds === null ? null : new Date(ahora.getTime() - i.ageSeconds * 1000).toISOString(),
+const SEMILLAS: readonly Semilla[] = [
+  { id: 'api', label: 'API', type: 'API', required: true, state: 'VIVA', ageSeconds: 0, thresholdSeconds: 60, cause: 'OK', causeDetail: 'Simulado: la API es quien evalúa; está respondiendo.', source: 'self', reportedStatus: 'running', startedHoursAgo: 31, latencyMs: null },
+  { id: 'postgresql', label: 'PostgreSQL', type: 'DATABASE', required: true, state: 'VIVA', ageSeconds: 0, thresholdSeconds: null, cause: 'OK', causeDetail: 'Simulado: SELECT 1 respondió en 4 ms.', source: 'probe', reportedStatus: null, startedHoursAgo: null, latencyMs: 4 },
+  { id: 'mongodb', label: 'MongoDB', type: 'DATABASE', required: true, state: 'VIVA', ageSeconds: 0, thresholdSeconds: null, cause: 'OK', causeDetail: 'Simulado: ping respondió en 6 ms.', source: 'probe', reportedStatus: null, startedHoursAgo: null, latencyMs: 6 },
+  { id: 'redis', label: 'Redis', type: 'DATABASE', required: true, state: 'VIVA', ageSeconds: 0, thresholdSeconds: null, cause: 'OK', causeDetail: 'Simulado: PING respondió en 1 ms.', source: 'probe', reportedStatus: null, startedHoursAgo: null, latencyMs: 1 },
+  { id: 'opensearch', label: 'OpenSearch', type: 'SERVICE', required: true, state: 'DEGRADADA', ageSeconds: 0, thresholdSeconds: null, cause: 'PROBE_SLOW', causeDetail: 'Simulado: el clúster respondió en 1 850 ms; el umbral es 1 000 ms.', source: 'probe', reportedStatus: null, startedHoursAgo: null, latencyMs: 1850 },
+  { id: 'minio', label: 'MinIO (archivos)', type: 'SERVICE', required: true, state: 'VIVA', ageSeconds: 0, thresholdSeconds: null, cause: 'OK', causeDetail: 'Simulado: /minio/health/live respondió en 12 ms.', source: 'probe', reportedStatus: null, startedHoursAgo: null, latencyMs: 12 },
+  { id: 'clamav', label: 'ClamAV (antivirus)', type: 'SERVICE', required: false, state: 'SIN_DATO', ageSeconds: null, thresholdSeconds: null, cause: 'NOT_PROBED', causeDetail: 'Simulado: el antivirus no se sondea desde la API en este entorno.', source: 'none', reportedStatus: null, startedHoursAgo: null, latencyMs: null },
+  { id: 'mock-provider-server', label: 'Emulador de proveedores', type: 'SERVICE', required: false, state: 'SIN_DATO', ageSeconds: null, thresholdSeconds: null, cause: 'NOT_PROBED', causeDetail: 'Simulado: sólo existe en desarrollo; no se vigila.', source: 'none', reportedStatus: null, startedHoursAgo: null, latencyMs: null },
+  { id: 'worker-messaging', label: 'Mensajería', type: 'WORKER', required: true, state: 'VIVA', ageSeconds: 5, thresholdSeconds: 60, cause: 'OK', causeDetail: 'Simulado: último latido hace 5 s.', source: 'heartbeat', reportedStatus: 'running', startedHoursAgo: 31, latencyMs: null },
+  { id: 'worker-scheduling', label: 'Agenda', type: 'WORKER', required: true, state: 'VIVA', ageSeconds: 9, thresholdSeconds: 60, cause: 'OK', causeDetail: 'Simulado: último latido hace 9 s.', source: 'heartbeat', reportedStatus: 'running', startedHoursAgo: 31, latencyMs: null },
+  { id: 'worker-billing', label: 'Facturación', type: 'WORKER', required: true, state: 'DEGRADADA', ageSeconds: 42, thresholdSeconds: 60, cause: 'HEARTBEAT_LATE', causeDetail: 'Simulado: el latido llegó hace 42 s; se esperaba cada 15 s.', source: 'heartbeat', reportedStatus: 'running', startedHoursAgo: 2, latencyMs: null },
+  { id: 'worker-notifications', label: 'Notificaciones', type: 'WORKER', required: true, state: 'CAIDA', ageSeconds: 1380, thresholdSeconds: 60, cause: 'HEARTBEAT_EXPIRED', causeDetail: 'Simulado: el último latido llegó hace 23 min; el umbral es 60 s.', source: 'heartbeat', reportedStatus: 'running', startedHoursAgo: 31, latencyMs: null },
+  { id: 'worker-reporting', label: 'Reportería', type: 'WORKER', required: true, state: 'VIVA', ageSeconds: 3, thresholdSeconds: 60, cause: 'OK', causeDetail: 'Simulado: último latido hace 3 s.', source: 'heartbeat', reportedStatus: 'running', startedHoursAgo: 31, latencyMs: null },
+  { id: 'worker-insurance', label: 'Seguros', type: 'WORKER', required: true, state: 'DEGRADADA', ageSeconds: 7, thresholdSeconds: 60, cause: 'CIRCUIT_OPEN', causeDetail: 'Simulado: late, pero cortó el trabajo tras 5 fallas seguidas contra la aseguradora.', source: 'heartbeat', reportedStatus: 'running', startedHoursAgo: 31, latencyMs: null },
+  { id: 'worker-files', label: 'Archivos (opcional)', type: 'WORKER', required: false, state: 'SIN_DATO', ageSeconds: null, thresholdSeconds: null, cause: 'NEVER_SEEN', causeDetail: 'Simulado: worker opcional; nunca envió un latido en este entorno.', source: 'none', reportedStatus: null, startedHoursAgo: null, latencyMs: null },
+  { id: 'worker-analytics', label: 'Analítica', type: 'WORKER', required: true, state: 'VIVA', ageSeconds: 11, thresholdSeconds: 60, cause: 'DRAINING', causeDetail: 'Simulado: está terminando lo pendiente antes de reiniciarse.', source: 'heartbeat', reportedStatus: 'draining', startedHoursAgo: 0, latencyMs: null },
+];
+
+const NO_MEDIDO = ['replicasOfApi', 'storageObjectStore', 'malwareScanner', 'providerEmulator', 'processInternals'] as const;
+
+function iso(ms: number): string {
+  return new Date(ms).toISOString();
+}
+
+/** La respuesta entera, evaluada «ahora»: las fechas se mueven, los estados no. */
+export function sondaDeVidaSimulada(ahora = Date.now()): InstanceLiveness {
+  const instances: Instance[] = SEMILLAS.map((s) => ({
+    id: s.id,
+    label: s.label,
+    type: s.type,
+    required: s.required,
+    state: s.state,
+    lastHeartbeatAt: s.ageSeconds === null ? null : iso(ahora - s.ageSeconds * 1000),
+    ageSeconds: s.ageSeconds,
+    thresholdSeconds: s.thresholdSeconds,
+    cause: s.cause,
+    causeDetail: s.causeDetail,
+    evidence: {
+      source: s.source,
+      reportedStatus: s.reportedStatus,
+      startedAt: s.startedHoursAgo === null ? null : iso(ahora - s.startedHoursAgo * 3_600_000 - 17 * 60_000),
+      latencyMs: s.latencyMs,
+    },
   }));
+  const contar = (estado: InstanceState) => instances.filter((i) => i.state === estado).length;
+  const summary = { VIVA: contar('VIVA'), DEGRADADA: contar('DEGRADADA'), CAIDA: contar('CAIDA'), SIN_DATO: contar('SIN_DATO'), total: instances.length };
+  const caidaObligatoria = instances.some((i) => i.required && i.state === 'CAIDA');
+  const degradada = instances.some((i) => i.state === 'DEGRADADA');
   return {
-    evaluatedAt: ahora.toISOString(),
+    modelVersion: 'instance-liveness/v1',
+    evaluatedAt: iso(ahora),
+    overall: caidaObligatoria ? 'CRITICO' : degradada ? 'ATENCION' : 'OK',
+    summary,
+    heartbeatStore: { status: 'up', reason: null },
     thresholds: UMBRALES,
-    overall: estadoGeneral(instances),
     instances,
-    notMeasured: NO_MEDIDO,
+    notMeasured: [...NO_MEDIDO],
   };
 }
 
-export function registrarVidaDeInstancias(router: MockRouter): void {
-  router.get('/admin/ops/instances/liveness', () => vidaSimulada(new Date()));
+export function registrarSondaDeVida(router: MockRouter): void {
+  router.get('/admin/ops/instances/liveness', () => sondaDeVidaSimulada());
 }

@@ -1152,6 +1152,25 @@ paciente cruza esta ruta.
 |---|---|---|
 | `GET` | `/insurance/analytics/loss-ratio` | `InsuranceAnalytics` |
 
+### `PractitionerInsurerRequestsClient` — 6 operaciones · v4.2.64
+
+El médico pide trabajar con una aseguradora y ella lo aprueba o lo rechaza con
+un motivo opcional (M26, `insurance.practitioner_insurer_requests`). Una sola
+solicitud viva —pendiente o aprobada— por médico y aseguradora; volver a pedir
+tras un rechazo o un retiro crea otra y la anterior queda como historia. La
+aseguradora sale del tenant activo (`InsurerContextService`): no hay `@Roles`,
+la barrera es la membresía. Las solicitudes también nacen con el alta
+(`POST /iam/auth/register-practitioner`, `insurerCarrierIds`).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practitioners/me/insurer-requests` | `MyVerifications` |
+| `POST` | `/practitioners/me/insurer-requests` | `MyVerifications` |
+| `POST` | `/practitioners/me/insurer-requests/:id/withdraw` | `MyVerifications` |
+| `GET` | `/insurance/practitioner-requests` | `InsurerPractitionerRequests` |
+| `POST` | `/insurance/practitioner-requests/:id/approve` | `InsurerPractitionerRequests` |
+| `POST` | `/insurance/practitioner-requests/:id/reject` | `InsurerPractitionerRequests` |
+
 ### `InsurancePortabilityClient` — 4 operaciones · subtarea 3.3, v4.2.19
 
 Portabilidad de póliza e historial de siniestralidad a 1 clic: el titular
@@ -1465,6 +1484,14 @@ alcanzable desde este repositorio.
 | `GET` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 | `PUT` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 
+### `PharmacyBulkClient` — 1 operación
+
+Carga masiva del catálogo, con vista previa (`dryRun`); `:entity` es `categories`, `products`, `prices` o `sites`. El cliente parte las filas en lotes de 250 y los manda en serie.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/pharmacies/:pharmacyId/:entity/bulk` | `PharmacyImport`, `EntityImport` | No |
+
 ### `PharmacyClient` — 5 operaciones
 
 | Método | Ruta | Consumidor | Pública |
@@ -1475,6 +1502,20 @@ alcanzable desde este repositorio.
 | `GET` | `/pharmacy/products` | `InboxOrder` y 3 pantallas más | No |
 | `POST` | `/pharmacies/:pharmacyId/products` | `PharmacyCatalog` | No |
 
+### `PharmacyIntegrationClient` — 7 operaciones
+
+La pestaña Integración del catálogo: la conexión con el sistema de la farmacia, sus vínculos de productos y «Sincronizar ahora». `422 PHARMACY_INTEGRATION_NOT_CONFIGURED` y `502 PHARMACY_INTEGRATION_UNAVAILABLE` se dicen en pantalla por su `reason`.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/pharmacies/:pharmacyId/integration-connections` | `PharmacyIntegration` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections` | `PharmacyIntegration` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/product-mappings` | `IntegrationMappings` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/product-mappings` | `IntegrationMappings` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-products` | `IntegrationMappings` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync-batches` | `IntegrationSync` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync` | `IntegrationSync` | No |
+
 ### `PharmacyOrdersClient` — 4 operaciones
 
 | Método | Ruta | Consumidor | Pública |
@@ -1483,6 +1524,15 @@ alcanzable desde este repositorio.
 | `GET` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
 | `POST` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
 | `GET` | `/pharmacy/orders/me` | `InboxOrder` y 6 pantallas más | No |
+
+### `PharmacySiteStockClient` — 2 operaciones
+
+Stock por sucursal en la pestaña Inventario: «Lo tengo / No lo tengo» por sede y la relectura de sus posiciones.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `PUT` | `/pharmacies/:pharmacyId/sites/:siteId/products/:productId/availability` | `SiteStockPanel` | No |
+| `GET` | `/pharmacy-inventory/sites/:siteId/stock` | `SiteStockPanel` | No |
 
 ### `PracticeSitesClient` — 4 operaciones
 
@@ -1713,9 +1763,14 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `POST` | `/insurance/received-claims/:claimId/decision` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/insurance/received-claims/:claimId/invoice` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/insurance/received-claims/:claimId/invoice/annulment` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance/practitioner-requests` | [`PractitionerInsurerRequestsClient`](../../src/app/core/data-access/insurance/practitioner-insurer-requests.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/practitioner-requests/:id/approve` | [`PractitionerInsurerRequestsClient`](../../src/app/core/data-access/insurance/practitioner-insurer-requests.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/practitioner-requests/:id/reject` | [`PractitionerInsurerRequestsClient`](../../src/app/core/data-access/insurance/practitioner-insurer-requests.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/loyalty/me` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/loyalty/me/points` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/loyalty/me/points/redeem` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/marketing/insights/campaign-facts` | [`InsightsClient`](../../src/app/core/data-access/insights/insights.client.ts) | Fuente frontend; no certifica API real. Hechos diarios de campañas por canal (ventana ≤ 92 días). |
+| `GET` | `/marketing/insights/catalog` | [`InsightsClient`](../../src/app/core/data-access/insights/insights.client.ts) | Fuente frontend; no certifica API real. Campañas, canales e hitos. |
 | `GET` | `/patient-spending/me` | [`PatientSpendingClient`](../../src/app/core/data-access/patient-spending/patient-spending.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/patients/me/reviews` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/pharmacies/:pharmacyId/inventory` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |

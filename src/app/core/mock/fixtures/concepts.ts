@@ -999,12 +999,12 @@ export const ENCOUNTER_STATUS = define('VS_ENCOUNTER_STATUS', [
   ['ENCST-CANCELLED', 'Cancelado'],
 ]);
 
-conjunto('VS_MEDICATION_REQUEST_STATUS', 'Estado de la receta', 'Estado de una prescripción.');
+conjunto('VS_MEDICATION_REQUEST_STATUS', 'Estado de la receta', 'Estado de una prescripción.'); // códigos de la API (FAR-03)
 export const PRESCRIPTION_STATUS = define('VS_MEDICATION_REQUEST_STATUS', [
-  ['RX-ACTIVE', 'Vigente'],
-  ['RX-COMPLETED', 'Completada'],
-  ['RX-CANCELLED', 'Cancelada'],
-  ['RX-DRAFT', 'Borrador'],
+  ['MR_ISSUED', 'Vigente'],
+  ['MR_COMPLETED', 'Completada'],
+  ['MR_INVALIDATED', 'Cancelada'],
+  ['MR_DRAFT', 'Borrador'],
 ]);
 
 conjunto('VS_OBSERVATION_CODE', 'Signos vitales y mediciones', 'Códigos de observación.');

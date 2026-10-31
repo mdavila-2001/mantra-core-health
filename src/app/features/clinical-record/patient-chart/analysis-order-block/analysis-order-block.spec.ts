@@ -196,6 +196,11 @@ describe('AnalysisOrderBlock', () => {
     // Los selectores que se montaron al final de la prueba dejan su pedido de
     // catálogo abierto; drenarlos deja que `verify()` hable de lo que importa.
     responderCatalogos();
+    // El estado del consentimiento dirigido de cada ítem se lee aparte: se
+    // responde vacío para que `verify()` siga hablando de lo que esta prueba mira.
+    for (const consent of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
+      consent.flush({ items: [] });
+    }
     http.verify();
   });
 
@@ -439,6 +444,58 @@ describe('AnalysisOrderBlock', () => {
    * carrera entre el chequeo y el alta reabre el diálogo con lo que vino en
    * el propio 422.
    */
+  it('cada orden ofrece su consentimiento informado, atado a su consulta (CPE art. 44)', () => {
+    fixture.detectChanges();
+    responderCatalogos();
+    responderCircuito({ ...CIRCUITO_VACIO, orders: [ORDEN] });
+    const reading = http.expectOne((r) => r.url === '/consent/treatment-informed-consents');
+    expect(reading.request.params.get('patientProfileId')).toBe('p-1');
+    reading.flush({ items: [] });
+    fixture.detectChanges();
+
+    const screen = fixture.nativeElement as HTMLElement;
+    expect(screen.querySelector('[data-estado="NONE"]')).not.toBeNull();
+    expect(screen.querySelector('[data-testid="study-consent"]')).not.toBeNull();
+
+    const study = componente['estudios']()[0]!;
+    componente['consent'].target.set(study);
+    // El encuentro de la orden manda sobre el del contexto.
+    expect(componente['consent'].encounterId()).toBe('enc-1');
+    fixture.detectChanges();
+    const history = http
+      .match((r) => r.url === '/consent/treatment-informed-consents')
+      .find((r) => r.request.params.get('targetId') === 'sr-1');
+    expect(history?.request.params.get('targetType')).toBe('SERVICE_REQUEST');
+    history?.flush({ items: [] });
+  });
+
+  /**
+   * Cambio de requisito (30/10/2026): en la consulta la respuesta del formulario
+   * médico se **ofrece** y ya no se exige. Ofrecerla no bloquea el botón; exigirla
+   * (como antes) sí, mientras no haya una elegida.
+   */
+  describe('la respuesta del formulario médico, ofrecida y exigida', () => {
+    it('ofrecerla no bloquea la emisión; exigirla sí, hasta que se elige una', () => {
+      const falta = () => (componente as unknown as { faltaRespuesta(): boolean }).faltaRespuesta();
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      expect(falta()).toBe(false);
+
+      fixture.componentRef.setInput('exigeRespuesta', true);
+      expect(falta()).toBe(true);
+    });
+
+    /** Decisión del cliente: sólo el formulario deja de ser obligatorio; el encuentro sigue siéndolo. */
+    it('ofrecerla NO exime del encuentro abierto: sin él no se pide', () => {
+      const falta = () => (componente as unknown as { faltaRespuesta(): boolean }).faltaRespuesta();
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      fixture.componentRef.setInput('encounterId', null);
+      expect(falta()).toBe(true);
+
+      fixture.componentRef.setInput('encounterId', 'enc-1');
+      expect(falta()).toBe(false);
+    });
+  });
+
   describe('antiduplicación de estudios', () => {
     beforeEach(() => {
       fixture.detectChanges();

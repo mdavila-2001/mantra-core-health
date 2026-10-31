@@ -48,37 +48,41 @@
     </app-form-field>
 
     @if (confirma()) {
-      <app-form-field
-        label="Desde cuándo"
-        hint="El inicio de la condición. Precargado con lo que el presuntivo declaraba."
-        [required]="true"
-        [errorMessage]="errorDeInicio()"
-      >
-        <app-date-picker
-          data-testid="verificar-inicio"
-          [value]="inicio()"
-          (valueChange)="elegirInicio($event)"
-          [hasError]="errorDeInicio() !== ''"
-        />
-      </app-form-field>
-
-      <!-- Con curso crónico no se pregunta: una condición de seguimiento
-           continuo no resuelve, y dejar el campo invita a inventar una fecha. -->
-      @if (!cronica()) {
+      <!-- Desde y Hasta en la misma fila: son un solo período. Con curso
+           crónico queda sólo Desde, a lo ancho. -->
+      <div class="verificar__periodo">
         <app-form-field
-          label="Hasta cuándo se espera"
-          hint="La fecha esperada de resolución, salvo que sea crónica."
+          label="Desde cuándo"
+          hint="El inicio de la condición. Precargado con lo que el presuntivo declaraba."
           [required]="true"
-          [errorMessage]="errorDeFin()"
+          [errorMessage]="errorDeInicio()"
         >
           <app-date-picker
-            data-testid="verificar-fin"
-            [value]="fin()"
-            (valueChange)="fin.set($event)"
-            [hasError]="errorDeFin() !== ''"
+            data-testid="verificar-inicio"
+            [value]="inicio()"
+            (valueChange)="elegirInicio($event)"
+            [hasError]="errorDeInicio() !== ''"
           />
         </app-form-field>
-      }
+
+        <!-- Con curso crónico no se pregunta: una condición de seguimiento
+             continuo no resuelve, y dejar el campo invita a inventar una fecha. -->
+        @if (!cronica()) {
+          <app-form-field
+            label="Hasta cuándo se espera"
+            hint="La fecha esperada de resolución, salvo que sea crónica."
+            [required]="true"
+            [errorMessage]="errorDeFin()"
+          >
+            <app-date-picker
+              data-testid="verificar-fin"
+              [value]="fin()"
+              (valueChange)="fin.set($event)"
+              [hasError]="errorDeFin() !== ''"
+            />
+          </app-form-field>
+        }
+      </div>
 
       <app-form-field
         [hint]="

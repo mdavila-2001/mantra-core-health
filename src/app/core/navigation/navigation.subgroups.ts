@@ -203,10 +203,19 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/brokers',
       'administration/insurance-claims',
       'administration/received-claims',
+      // Quién pide sumarse como prestador, y qué se le respondió.
+      'administration/insurer-practitioner-requests',
       'administration/insurance-patients',
       'administration/insurance-analytics',
       'administration/insurance-campaigns',
     ],
+  },
+  {
+    label: 'Marketing',
+    group: 'Administración',
+    icon: 'megaphone',
+    // Medir, comparar, entender y decidir: la inteligencia de marketing de AloVida.
+    paths: ['administration/marketing-insights'],
   },
   {
     label: 'Identidad y accesos',
@@ -321,9 +330,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'flask',
     paths: [
       'administration/laboratory',
-      'laboratory/reception',
-      'laboratory/queue',
-      'administration/laboratory-results',
+      'administration/laboratory-orders',
       'administration/laboratory-prices',
       'administration/laboratory-branches',
     ],
@@ -349,6 +356,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: [
       'my-account',
       'my-account/identity',
+      // Qué me confirmaron AloVida, las instituciones y las aseguradoras.
+      'my-account/verifications',
       'my-account/dependents',
       'my-account/security',
       // Quién ve mi historia y qué consentí: también es «quién soy» para la plataforma.

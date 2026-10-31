@@ -1,0 +1,70 @@
+:host {
+  display: block;
+}
+
+.ma__def {
+  max-inline-size: 420px;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.ma__ctx {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  margin-block: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+  min-block-size: 44px;
+}
+
+.ma__ctx-tag {
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ma__rel {
+  min-inline-size: 260px;
+}
+
+.ma__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.ma__check input {
+  inline-size: 18px;
+  block-size: 18px;
+  accent-color: var(--brand-primary);
+}
+
+.ma__check input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.ma__body {
+  min-block-size: 280px;
+}
+
+.ma__note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* Con muchas opciones el control no cabe en pantallas estrechas: se desplaza en vez de recortarse. */
+app-segmented-control {
+  display: block;
+  max-inline-size: 100%;
+  overflow-x: auto;
+}

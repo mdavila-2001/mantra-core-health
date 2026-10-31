@@ -4,7 +4,7 @@
 
 <app-page-header
   [title]="ficha?.name ?? 'Mis organizaciones'"
-  subtitle="Sedes, áreas, infraestructura, servicios, plantilla, legajo e inventario de la organización."
+  subtitle="Sedes, áreas, infraestructura, establecimiento, servicios, plantilla, legajo e inventario de la organización."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -26,179 +26,191 @@
 }
 
 <!-- Ficha de ámbito: la práctica es el asunto de la pantalla, no un filtro. Va
-     arriba una sola vez y no se repite como columna en ninguna tabla. -->
-@switch (estado.status) {
-  @case ('ready') {
-    @if (ficha) {
-      <section class="organizacion-medica__ambito" aria-label="Organización">
-        <dl class="organizacion-medica__datos">
-          <div>
-            <dt>Código</dt>
-            <dd class="organizacion-medica__codigo">{{ ficha.code }}</dd>
-          </div>
-          <div>
-            <dt>Tipo</dt>
-            <dd>{{ etiquetaDe(ficha.type) }}</dd>
-          </div>
-          <div>
-            <dt>Estado</dt>
-            <dd>
-              <app-badge [variant]="varianteDe(ficha.status)">
-                {{ etiquetaDe(ficha.status) }}
-              </app-badge>
-            </dd>
-          </div>
-          @if (ficha.timeZone) {
-            <div>
-              <dt>Zona horaria</dt>
-              <dd>{{ ficha.timeZone }}</dd>
-            </div>
-          }
-          @if (ficha.currency) {
-            <div>
-              <dt>Moneda</dt>
-              <dd>{{ etiquetaDe(ficha.currency) }}</dd>
-            </div>
-          }
-        </dl>
-      </section>
-    }
+     arriba una sola vez y no se repite como columna en ninguna tabla.
 
-    <!-- Avisos que la especificación pide explícitos: documentación por vencer
-         e insumos en el punto de reposición. Salen de datos ya calculados por
-         el servidor, no de una cuenta hecha acá. -->
-    @if (documentosPorVencer().length > 0 || insumosEnFalta().length > 0) {
-      <section class="organizacion-medica__avisos" role="status">
-        @if (documentosPorVencer().length > 0) {
-          <p>
-            <strong>{{ documentosPorVencer().length }}</strong> documento(s) del legajo
-            vencidos o por vencer dentro del mes.
-          </p>
+     **Los nueve estados se dibujan acá, una sola vez**, con `app-view-state-host`:
+     S9 lleva su código de petición, S7 su antigüedad, S3 su salida, y S1/S4
+     dejaron de caer en «Cargando…». Las pestañas de datos no repiten el estado:
+     sin consola, dicen que el detalle está arriba. -->
+<app-view-state-host
+  class="organizacion-medica__estado"
+  data-testid="organizacion-estado"
+  [state]="estado"
+  (retry)="recargar()"
+  (refresh)="recargar()"
+>
+  @if (ficha) {
+    <section class="organizacion-medica__ambito" aria-label="Organización">
+      <dl class="organizacion-medica__datos">
+        <div>
+          <dt>Código</dt>
+          <dd class="organizacion-medica__codigo">{{ ficha.code }}</dd>
+        </div>
+        <div>
+          <dt>Tipo</dt>
+          <dd>{{ etiquetaDe(ficha.type) }}</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>
+            <app-badge [variant]="varianteDe(ficha.status)">
+              {{ etiquetaDe(ficha.status) }}
+            </app-badge>
+          </dd>
+        </div>
+        @if (ficha.timeZone) {
+          <div>
+            <dt>Zona horaria</dt>
+            <dd>{{ ficha.timeZone }}</dd>
+          </div>
         }
-        @if (insumosEnFalta().length > 0) {
-          <p>
-            <strong>{{ insumosEnFalta().length }}</strong> insumo(s) en el punto de
-            reposición o por debajo.
-          </p>
+        @if (ficha.currency) {
+          <div>
+            <dt>Moneda</dt>
+            <dd>{{ etiquetaDe(ficha.currency) }}</dd>
+          </div>
         }
-      </section>
-    }
-  }
-  @case ('empty') {
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--vacio">
-      <p>{{ estado.message ?? 'No hay ninguna organización que administrar.' }}</p>
+      </dl>
     </section>
   }
-  @case ('error') {
-    <!-- Un 403 acá significa «no administrás esta organización» y un 404, «no
-         existe». El backend los distingue a propósito para que el código de
-         error no sirva de sonda; la pantalla los muestra tal cual llegan. -->
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>{{ estado.message ?? 'No se pudo cargar la organización.' }}</p>
-      <button app-button variant="secondary" type="button" (click)="recargar()">
-        Reintentar
-      </button>
-    </section>
-  }
-  @case ('forbidden') {
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>{{ estado.message ?? 'No administra esta organización.' }}</p>
-    </section>
-  }
-  @case ('not-found') {
-    <!-- Mismo texto tanto si no existe como si existe y está oculta: cualquier
-         diferencia confirmaría que el identificador es real. -->
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>No encontramos esa organización.</p>
-    </section>
-  }
-  @case ('offline') {
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>No pudimos comunicarnos con el servidor.</p>
-      <button app-button variant="secondary" type="button" (click)="recargar()">
-        Reintentar
-      </button>
-    </section>
-  }
-  @default {
-    <section class="organizacion-medica__ambito" aria-busy="true">
-      <app-loading-state
-        class="organizacion-medica__cargando"
-        message="Cargando la organización…"
-      />
-    </section>
-  }
-}
 
-<app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+  <!-- Avisos que la especificación pide explícitos: documentación por vencer
+       e insumos en el punto de reposición. Salen de datos ya calculados por
+       el servidor, no de una cuenta hecha acá. -->
+  @if (documentosPorVencer().length > 0 || insumosEnFalta().length > 0) {
+    <section class="organizacion-medica__avisos" role="status">
+      @if (documentosPorVencer().length > 0) {
+        <p>
+          <strong>{{ documentosPorVencer().length }}</strong> documento(s) del legajo
+          vencidos o por vencer dentro del mes.
+        </p>
+      }
+      @if (insumosEnFalta().length > 0) {
+        <p>
+          <strong>{{ insumosEnFalta().length }}</strong> insumo(s) en el punto de
+          reposición o por debajo.
+        </p>
+      }
+    </section>
+  }
+</app-view-state-host>
+
+<ng-template #sinConsola>
+  <p class="organizacion-medica__sin-consola">
+    Esta pestaña depende de la organización, que no se pudo mostrar: el detalle está arriba.
+  </p>
+</ng-template>
+
+<app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="cambiarPestana($event)">
   <app-tab label="Sedes">
-    <app-data-table
-      [state]="sedes()"
-      [columns]="columnasDeSede()"
-      [trackBy]="porId"
-      caption="Sedes de la organización"
-      (retry)="recargar()"
-    />
+    @if (hayDatos()) {
+      <app-data-table
+        [state]="sedes()"
+        [columns]="columnasDeSede()"
+        [trackBy]="porId"
+        caption="Sedes de la organización"
+        (retry)="recargar()"
+      />
+    } @else {
+      <ng-container *ngTemplateOutlet="sinConsola" />
+    }
   </app-tab>
 
   <app-tab label="Áreas">
-    <app-data-table
-      [state]="areas()"
-      [columns]="columnasDeArea()"
-      [trackBy]="porId"
-      caption="Áreas y departamentos de la organización"
-      (retry)="recargar()"
-    />
+    @if (hayDatos()) {
+      <app-data-table
+        [state]="areas()"
+        [columns]="columnasDeArea()"
+        [trackBy]="porId"
+        caption="Áreas y departamentos de la organización"
+        (retry)="recargar()"
+      />
+    } @else {
+      <ng-container *ngTemplateOutlet="sinConsola" />
+    }
   </app-tab>
 
+  <!-- F1: el árbol de N niveles reemplaza a la tabla plana de espacios. Sólo
+       se instancia con la pestaña abierta: si no, pediría la estructura del
+       establecimiento aunque nadie la mire. -->
   <app-tab label="Infraestructura">
-    <app-data-table
-      [state]="espacios()"
-      [columns]="columnasDeEspacio()"
-      [trackBy]="porId"
-      caption="Quirófanos, consultorios y demás espacios"
-      (retry)="recargar()"
-    />
+    @if (pestana() === pestanaDeInfraestructura) {
+      @if (hayDatos()) {
+        <app-infraestructura-tab [sitios]="sitiosElegibles()" [puedeEscribir]="puedeEscribir()" />
+      } @else {
+        <ng-container *ngTemplateOutlet="sinConsola" />
+      }
+    }
+  </app-tab>
+
+  <app-tab label="Establecimiento">
+    @if (pestana() === pestanaDeEstablecimiento) {
+      @if (hayDatos()) {
+        <app-establecimiento-tab
+          [sitios]="sitiosElegibles()"
+          [sitioId]="sitioDeLaUrl()"
+          [puedeEscribir]="puedeEscribir()"
+        />
+      } @else {
+        <ng-container *ngTemplateOutlet="sinConsola" />
+      }
+    }
   </app-tab>
 
   <app-tab label="Servicios">
-    <app-data-table
-      [state]="servicios()"
-      [columns]="columnasDeServicio()"
-      [trackBy]="porId"
-      caption="Servicios de salud de la organización"
-      (retry)="recargar()"
-    />
+    @if (hayDatos()) {
+      <app-data-table
+        [state]="servicios()"
+        [columns]="columnasDeServicio()"
+        [trackBy]="porId"
+        caption="Servicios de salud de la organización"
+        (retry)="recargar()"
+      />
+    } @else {
+      <ng-container *ngTemplateOutlet="sinConsola" />
+    }
   </app-tab>
 
   <app-tab label="Plantilla">
-    <app-data-table
-      [state]="plantilla()"
-      [columns]="columnasDePlantilla()"
-      [trackBy]="porId"
-      caption="Profesionales vinculados a la organización"
-      (retry)="recargar()"
-    />
+    @if (hayDatos()) {
+      <app-data-table
+        [state]="plantilla()"
+        [columns]="columnasDePlantilla()"
+        [trackBy]="porId"
+        caption="Profesionales vinculados a la organización"
+        (retry)="recargar()"
+      />
+    } @else {
+      <ng-container *ngTemplateOutlet="sinConsola" />
+    }
   </app-tab>
 
   <app-tab label="Legajo">
-    <app-data-table
-      [state]="legajo()"
-      [columns]="columnasDeLegajo()"
-      [trackBy]="porId"
-      caption="Documentación legal y acreditaciones"
-      (retry)="recargar()"
-    />
+    @if (hayDatos()) {
+      <app-data-table
+        [state]="legajo()"
+        [columns]="columnasDeLegajo()"
+        [trackBy]="porId"
+        caption="Documentación legal y acreditaciones"
+        (retry)="recargar()"
+      />
+    } @else {
+      <ng-container *ngTemplateOutlet="sinConsola" />
+    }
   </app-tab>
 
   <app-tab label="Inventario">
-    <app-data-table
-      [state]="inventario()"
-      [columns]="columnasDeInventario()"
-      [trackBy]="porId"
-      caption="Insumos y equipamiento"
-      (retry)="recargar()"
-    />
+    @if (hayDatos()) {
+      <app-data-table
+        [state]="inventario()"
+        [columns]="columnasDeInventario()"
+        [trackBy]="porId"
+        caption="Insumos y equipamiento"
+        (retry)="recargar()"
+      />
+    } @else {
+      <ng-container *ngTemplateOutlet="sinConsola" />
+    }
   </app-tab>
   <!-- **«Mis vinculaciones» absorbió a «Mis organizaciones»** (propietario,
        2026-09-10). Era una pantalla propia que preguntaba y respondía lo mismo
@@ -294,35 +306,6 @@
 
 <ng-template #celdaEstadoArea let-area>
   <app-badge [variant]="varianteDe(area.status)">{{ etiquetaDe(area.status) }}</app-badge>
-</ng-template>
-
-<ng-template #celdaEspacio let-espacio>
-  <span class="organizacion-medica__nombre">{{ espacio.name }}</span>
-  <span class="organizacion-medica__secundario">
-    {{ etiquetaDe(espacio.type) }}
-    @if (espacio.capacity !== null) {
-      · capacidad {{ espacio.capacity }}
-    }
-  </span>
-</ng-template>
-
-<ng-template #celdaUbicacionEspacio let-espacio>
-  {{ sedeDe(espacio.siteId) ?? 'sede no encontrada' }}
-  @if (areaDe(espacio.clinicalUnitId); as area) {
-    <span class="organizacion-medica__secundario">{{ area }}</span>
-  }
-</ng-template>
-
-<ng-template #celdaDisponibilidadEspacio let-espacio>
-  @if (espacio.operationalStatus) {
-    <app-badge [variant]="varianteDe(espacio.operationalStatus)">
-      {{ etiquetaDe(espacio.operationalStatus) }}
-    </app-badge>
-  } @else {
-    <app-badge [variant]="varianteDe(espacio.status)">
-      {{ etiquetaDe(espacio.status) }}
-    </app-badge>
-  }
 </ng-template>
 
 <ng-template #celdaServicio let-servicio>

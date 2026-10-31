@@ -14,6 +14,7 @@ import {
 import { TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, nuevoId, texto, uuid } from '../mock-store';
 import { labInboxOrders } from './diagnostics.handlers';
+import { ordenProcesada } from './lab-orders.handlers';
 import { pdfMinimo } from './files.handlers';
 import { emitirNotificacion } from './notifications.handlers';
 import type {
@@ -42,7 +43,7 @@ import type {
 /* ---- quién pregunta ------------------------------------------------------ */
 
 /** El laboratorio del contexto, o `null` si quien pregunta no es personal de uno. */
-function laboratorioDe(request: MockRequest): string | null {
+export function laboratorioDe(request: MockRequest): string | null {
   const tenantId = request.headers.get('X-Tenant-Id') ?? request.user?.tenants[0] ?? null;
   if (tenantId === null || request.user === null) return null;
   if (!request.user.tenants.includes(tenantId) && !request.user.roles.includes('SUPERADMIN')) {
@@ -449,7 +450,7 @@ const subidas = new Map<string, SubidaAbierta>();
 /** El tamaño de cada parte. 8 MiB: bajo el `client_max_body_size` de nginx (12M). */
 export const TAMANO_DE_PARTE = 8 * 1024 * 1024;
 
-function destinoDeOrden(orderId: string) {
+export function destinoDeOrden(orderId: string) {
   const orden = labInboxOrders.get(orderId);
   if (orden === undefined) return undefined;
   const paciente = patientById(orden.patientProfileId);
@@ -844,6 +845,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
       if (orden === undefined || orden.performerTenantId !== tenantId) {
         return validation('La orden elegida no es de este laboratorio.');
       }
+      if (!ordenProcesada(orderId)) return conflict('Marque la orden como procesada antes de subir sus resultados.');
     }
     const uploadId = nuevoId('lab-upload');
     const totalParts = Math.max(1, Math.ceil(size / TAMANO_DE_PARTE));

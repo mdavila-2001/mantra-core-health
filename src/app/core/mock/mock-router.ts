@@ -76,6 +76,21 @@ export function preconditionFailed(message: string, details: unknown = {}): Mock
   });
 }
 
+/**
+ * 422 de precondición con su `reason`, como `PreconditionFailedException` de
+ * la API: el cliente ramifica sobre `reason`, nunca sobre el texto.
+ */
+export function precondition(message: string, reason: string, details: unknown = {}): MockReply {
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message,
+    reason,
+    error: 'Unprocessable Entity',
+    details,
+  });
+}
+
 export function forbidden(message = 'No tiene permiso para esta operación'): MockReply {
   return reply(403, { statusCode: 403, code: 'FORBIDDEN', message, error: 'Forbidden' });
 }
@@ -86,6 +101,23 @@ export function unauthorized(message = 'Credenciales inválidas'): MockReply {
     code: 'UNAUTHENTICATED',
     message,
     error: 'Unauthorized',
+  });
+}
+
+/**
+ * El rechazo del `ValidationPipe` de la API: una query o un cuerpo que no pasa
+ * `class-validator` vuelve con **400**, no con 422 (TAREA-41 §5, medido contra
+ * la API real el 2026-10-25). El 422 de `validation()` es el de las reglas de
+ * negocio que la API valida a mano.
+ */
+export function validationPipeRejected(message: string): MockReply {
+  return reply(400, {
+    statusCode: 400,
+    code: 'VALIDATION_FAILED',
+    message,
+    error: 'Bad Request',
+    reason: 'VALIDATION_PIPE_REJECTED',
+    details: { violations: [message] },
   });
 }
 

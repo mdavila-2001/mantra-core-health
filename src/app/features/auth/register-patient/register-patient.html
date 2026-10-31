@@ -100,6 +100,7 @@
                 >
                   <app-input
                     testId="registro-nombre"
+                    [inputFilter]="soloLetras"
                     autocomplete="given-name"
                     placeholder="Lucía"
                     [value]="valorDeNombre('name')"
@@ -120,6 +121,7 @@
                     testId="registro-segundo-nombre"
                     autocomplete="additional-name"
                     placeholder="Andrea"
+                    [inputFilter]="soloLetras"
                     [value]="valorDeNombre('middleName')"
                     (valueChange)="escribirNombre('middleName', $event)"
                   >
@@ -135,6 +137,7 @@
                   <app-input
                     testId="registro-tercer-nombre"
                     placeholder="María"
+                    [inputFilter]="soloLetras"
                     [value]="valorDeNombre('thirdName')"
                     (valueChange)="escribirNombre('thirdName', $event)"
                   >
@@ -154,6 +157,7 @@
                       <app-input
                         [testId]="'registro-nombre-extra-' + $index"
                         placeholder="Otro nombre"
+                        [inputFilter]="soloLetras"
                         [value]="extra"
                         (valueChange)="escribirNombreExtra($index, $event)"
                       >
@@ -284,6 +288,7 @@
                     >
                       <app-input
                         [formControl]="contacto.controls.name"
+                        [inputFilter]="soloLetras"
                         [hasError]="enRojo(contacto.controls.name, contactosExtra)"
                         [testId]="'registro-contacto-extra-nombre-' + $index"
                         placeholder="Luis Paz"

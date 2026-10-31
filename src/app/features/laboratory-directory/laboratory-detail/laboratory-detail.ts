@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { DiagnosticUnitsClient } from '../../../core/data-access/diagnostic-units/diagnostic-units.client';
 import type {
@@ -29,6 +29,8 @@ import { FactList } from '../../../shared/components/molecules/fact-list/fact-li
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { categoryName } from '../laboratory-directory';
@@ -55,6 +57,17 @@ const TARIFA_FONASA = 'REFERENCIA_FONASA_2026_BOB';
  * no ahorra nada — peor, sugiere que hay algo escondido.
  */
 const MINIMO_PARA_BUSCAR = 7;
+
+/**
+ * Las pestañas de la ficha, en el orden en que se dibujan.
+ *
+ * La clave es la que viaja en `?tab=`: un enlace guardado abre la pestaña por su
+ * nombre y no por su posición, así que reordenarlas no rompe ninguno. Estudios
+ * siempre existe; las otras tres sólo si el centro tiene algo que mostrar en
+ * ellas (ver `pestanas`).
+ */
+const PESTANAS_DE_LA_FICHA = ['estudios', 'equipos', 'sedes', 'acreditaciones'] as const;
+type PestanaDeLaFicha = (typeof PESTANAS_DE_LA_FICHA)[number];
 
 /** Baja a minúsculas y quita tildes, para que «Análisis» case con «analisis». */
 function normalizar(texto: string): string {
@@ -93,6 +106,15 @@ function normalizar(texto: string): string {
  * distintivos, no una faceta escondida detrás de un control— y el paginador
  * mostraba seis de ocho equipos, que es esconder dos de cada tres para ahorrar
  * un renglón.
+ *
+ * ## UNA tarjeta con pestañas (09/09/2026)
+ *
+ * La ficha es una sola `app-card`, centrada y sin tope de ancho propio (lo pone
+ * `.app-main__inner`), con el resumen del centro arriba y una pestaña por
+ * colección: Estudios, Equipos, Sedes y Acreditaciones. Equipos, Sedes y
+ * Acreditaciones aparecen sólo si el centro tiene algo en ellas, igual que antes
+ * la sección se omitía. La pestaña abierta vive en `?tab=` con `replaceUrl`, como
+ * el catálogo de la farmacia.
  */
 @Component({
   selector: 'app-laboratory-detail',
@@ -105,17 +127,21 @@ function normalizar(texto: string): string {
     SearchField,
     SectionHeading,
     ServiceIcon,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './laboratory-detail.html',
   styleUrls: [
     '../../../shared/styles/card-grid.css',
     '../../../shared/styles/public-sheet.css',
+    './laboratory-detail.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDetail {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly units = inject(DiagnosticUnitsClient);
 
   protected readonly state = signal<ViewState<DiagnosticUnitDetail>>(loading());
@@ -137,6 +163,45 @@ export class LaboratoryDetail {
   protected readonly iconoDelCentro = computed<NavIconName>(() =>
     this.detail()?.type.code === 'DU_TYPE_IMAGING' ? 'scan' : 'flask',
   );
+
+  /** La pestaña que pide `?tab=`, o `null` si no pide ninguna. */
+  private readonly pestanaPedida = signal<string | null>(null);
+
+  /**
+   * Las pestañas que esta ficha dibuja, en orden. Estudios siempre; las otras
+   * tres sólo con contenido, para no ofrecer una pestaña que abre un vacío.
+   */
+  private readonly pestanas = computed<readonly PestanaDeLaFicha[]>(() => {
+    const unit = this.detail();
+    if (unit === null) return ['estudios'];
+    return PESTANAS_DE_LA_FICHA.filter(
+      (pestana) =>
+        pestana === 'estudios' ||
+        (pestana === 'equipos' && unit.equipment.length > 0) ||
+        (pestana === 'sedes' && unit.sites.length > 0) ||
+        (pestana === 'acreditaciones' && unit.accreditations.length > 0),
+    );
+  });
+
+  /** El índice de la pestaña abierta. Sin `?tab=` o con uno desconocido, Estudios. */
+  protected readonly seleccionada = computed(() => {
+    const indice = this.pestanas().findIndex((pestana) => pestana === this.pestanaPedida());
+    return indice < 0 ? 0 : indice;
+  });
+
+  /**
+   * Los rótulos, con la cuenta de cada colección («Estudios (106)»): quien llega
+   * a un centro con 106 estudios y dos equipos lo sabe sin abrir nada.
+   */
+  protected readonly rotulos = computed(() => {
+    const unit = this.detail();
+    return {
+      estudios: `Estudios (${unit?.studies.length ?? 0})`,
+      equipos: `Equipos (${unit?.equipment.length ?? 0})`,
+      sedes: `Sedes (${unit?.sites.length ?? 0})`,
+      acreditaciones: `Acreditaciones (${unit?.accreditations.length ?? 0})`,
+    };
+  });
 
   /** Lo tecleado en el buscador de estudios. */
   protected readonly terminoDeEstudio = signal('');
@@ -182,6 +247,12 @@ export class LaboratoryDetail {
       this.load();
     });
 
+    // `queryParamMap` y no la foto inicial: un enlace a la misma ficha con otro
+    // `?tab=` cambia de pestaña sin recrear la pantalla.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.pestanaPedida.set(params.get('tab'));
+    });
+
     // «Ver estudios y precios» llega con `#estudios`, pero la sección vive
     // dentro del estado de carga: cuando el router busca el ancla todavía no
     // existe. Se baja a mano en cuanto la ficha está pintada.
@@ -196,6 +267,21 @@ export class LaboratoryDetail {
 
   protected retry(): void {
     this.load();
+  }
+
+  /**
+   * Cambia de pestaña y lo deja escrito en la URL: sólo `tab`, y con
+   * `replaceUrl` para no llenar el historial —volver atrás sale de la ficha—.
+   * No se arrastra el ancla: `#estudios` sólo tenía sentido al llegar.
+   */
+  protected seleccionar(indice: number): void {
+    const pestana = this.pestanas()[indice] ?? 'estudios';
+    this.pestanaPedida.set(pestana);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: pestana },
+      replaceUrl: true,
+    });
   }
 
   protected siteName(siteId: string | null): string | null {

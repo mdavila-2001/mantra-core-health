@@ -20,7 +20,7 @@
           <ul class="portada__operaciones">
             @for (destino of area.destinos; track destino.route) {
               <li>
-                <a app-link [routerLink]="destino.route" [queryParams]="destino.queryParams">{{ destino.label }}</a>
+                <a app-link [routerLink]="destino.route">{{ destino.label }}</a>
               </li>
             }
           </ul>
@@ -56,83 +56,39 @@
     </app-view-state-host>
   </app-card>
 
-  <!-- Instancias: sin evidencia se dice «sin dato», nunca «todo bien». -->
+  <!-- Instancias y herramientas: si cada proceso tiene vida y qué herramientas cayeron. -->
   <app-card variant="outlined" padding="md">
-    <h3 class="centro__titulo">Instancias</h3>
-    <app-view-state-host [state]="instancias()" (retry)="cargar()">
-      @if (instancias(); as i) {
-        @if (i.status === 'ready') {
-          <p class="centro__estado-global" data-testid="centro-instancias" [attr.data-estado]="i.data.overall">
-            <app-badge [variant]="estadoDeVida(i.data.overall).tone" size="lg">{{ estadoDeVida(i.data.overall).label }}</app-badge>
+    <h3 class="centro__titulo">Instancias y herramientas</h3>
+    <app-view-state-host [state]="sonda()" (retry)="cargar()">
+      @if (sonda(); as s) {
+        @if (s.status === 'ready') {
+          <p class="centro__estado-global" [attr.data-estado]="s.data.overall" data-testid="centro-instancias-overall">
+            {{ etiquetaSonda(s.data.overall) }}
           </p>
-          <p class="centro__nota" data-testid="centro-instancias-lectura">{{ lecturaDeInstancias(i.data) }}</p>
-          <dl class="centro__cifras" data-testid="centro-instancias-conteo">
-            @for (c of conteoDeInstancias(i.data); track c.estado) {
-              <div><dt>{{ conteoDeVida[c.estado] }}</dt><dd>{{ entero(c.cantidad) }}</dd></div>
-            }
+          <dl class="centro__cifras">
+            <div><dt>Vivas</dt><dd data-testid="centro-instancias-vivas">{{ entero(s.data.summary.VIVA) }}</dd></div>
+            <div><dt>Degradadas</dt><dd>{{ entero(s.data.summary.DEGRADADA) }}</dd></div>
+            <div><dt>Caídas</dt><dd data-testid="centro-instancias-caidas">{{ entero(s.data.summary.CAIDA) }}</dd></div>
+            <div><dt>Sin dato</dt><dd>{{ entero(s.data.summary.SIN_DATO) }}</dd></div>
           </dl>
-          <p class="centro__nota">
-            Evaluado el {{ i.data.evaluatedAt | date: 'dd/MM HH:mm:ss' }}. Ver <a app-link routerLink="/superadmin/instances">Instancias y herramientas</a>.
-          </p>
+          @if (s.data.heartbeatStore.status === 'down') {
+            <p class="centro__nota">No se pudo leer el almacén de latidos: «sin dato» no es «caída».</p>
+          }
         }
       }
     </app-view-state-host>
-  </app-card>
-
-  <!-- Herramientas críticas: «responde» sólo con sonda en vivo. -->
-  <app-card variant="outlined" padding="md">
-    <h3 class="centro__titulo">Herramientas críticas</h3>
     <app-view-state-host [state]="herramientas()" (retry)="cargar()">
       @if (herramientas(); as h) {
         @if (h.status === 'ready') {
-          @let c = criticas(h.data);
-          @if (c.total === 0) {
-            <p class="centro__vacio" data-testid="centro-herramientas-vacio">
-              El catálogo no declara herramientas críticas: no hay nada que evaluar, y eso no significa que todo esté bien.
-            </p>
-          } @else {
-            <dl class="centro__cifras" data-testid="centro-herramientas">
-              <div><dt>Críticas</dt><dd>{{ entero(c.total) }}</dd></div>
-              <div><dt>Responden</dt><dd>{{ entero(c.responden) }}</dd></div>
-              <div><dt>No responden</dt><dd>{{ entero(c.noResponden) }}</dd></div>
-              <div><dt>Configuración incompleta</dt><dd>{{ entero(c.configuracionIncompleta) }}</dd></div>
-              <div><dt>Sin sondear</dt><dd>{{ entero(c.sinSondear + c.soloConfiguradas) }}</dd></div>
-            </dl>
-            @if (c.responden < c.total) {
-              <p class="centro__nota" data-testid="centro-herramientas-nota">
-                Sólo {{ c.responden }} de {{ c.total }} críticas respondieron a una sonda en vivo; el resto no está comprobado.
-              </p>
-            }
-          }
-          <p class="centro__nota">Ver <a app-link routerLink="/superadmin/instances" [queryParams]="{ pestana: 1 }">Herramientas</a>.</p>
+          <dl class="centro__cifras">
+            <div><dt>Herramientas caídas</dt><dd data-testid="centro-herramientas-caidas">{{ entero(h.data.summary.down) }}</dd></div>
+            <div><dt>Críticas</dt><dd>{{ entero(h.data.summary.critical) }} de {{ entero(h.data.summary.total) }}</dd></div>
+            <div><dt>Sin chequeo en vivo</dt><dd>{{ entero(h.data.summary.noProbe) }}</dd></div>
+          </dl>
         }
       }
     </app-view-state-host>
-  </app-card>
-
-  <!-- Dispositivos: lo que se midió en los últimos 7 días, sin bots. -->
-  <app-card variant="outlined" padding="md">
-    <h3 class="centro__titulo">Dispositivos (7 días)</h3>
-    <app-view-state-host [state]="dispositivos()" (retry)="cargar()">
-      @if (dispositivos(); as d) {
-        @if (d.status === 'ready') {
-          @if (d.data.totals.contexts === 0) {
-            <p class="centro__vacio" data-testid="centro-dispositivos-vacio">Todavía no hay contextos de cliente medidos en los últimos 7 días.</p>
-          } @else {
-            <dl class="centro__cifras" data-testid="centro-dispositivos">
-              <div><dt>Contextos</dt><dd>{{ entero(d.data.totals.contexts) }}</dd></div>
-              <div><dt>Bots (aparte)</dt><dd>{{ entero(d.data.totals.bots) }}</dd></div>
-            </dl>
-            <ul class="centro__lista">
-              @for (p of principalesDispositivos(d.data); track p.clave) {
-                <li>{{ p.etiqueta }} <span class="centro__nota">{{ p.parte }}</span></li>
-              }
-            </ul>
-          }
-          <p class="centro__nota">Ver <a app-link routerLink="/superadmin/instances" [queryParams]="{ pestana: 2 }">Dispositivos</a>.</p>
-        }
-      }
-    </app-view-state-host>
+    <p class="centro__nota">Ver <a app-link routerLink="/superadmin/instances">Instancias y herramientas</a>.</p>
   </app-card>
 
   <!-- Preparación para producción: lo que bloquea la salida. -->

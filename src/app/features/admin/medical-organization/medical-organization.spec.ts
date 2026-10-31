@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { MedicalOrganization } from './medical-organization';
@@ -308,5 +308,55 @@ describe('MedicalOrganization', () => {
     // dos veces en cada visita al panel.
     http.expectOne('/practices').flush([PRACTICA]);
     http.expectOne('/practitioners/me/role-assignments').flush([]);
+  });
+
+  it('S9 se dice UNA vez, arriba, con su código de petición (no en cada pestaña)', () => {
+    http.expectOne('/practices').flush([PRACTICA]);
+    harness.detectChanges();
+    http
+      .expectOne('/practices/prac-1/organization')
+      .flush({ code: 'INTERNAL', message: 'Falló', correlationId: 'req-consola-9' }, { status: 500, statusText: 'Error' });
+    harness.detectChanges();
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    expect(texto.split('req-consola-9').length - 1).toBe(1);
+    expect(texto).toContain('el detalle está arriba');
+  });
+
+  it('S4/S1 no caen en «Cargando…»: el host pinta el estado que corresponde', () => {
+    http.expectOne('/practices').flush([PRACTICA]);
+    harness.detectChanges();
+    http
+      .expectOne('/practices/prac-1/organization')
+      .flush({ code: 'CONFLICT', message: 'Conflicto de prueba' }, { status: 409, statusText: 'Conflict' });
+    harness.detectChanges();
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    expect(texto).toContain('Conflicto de prueba');
+    expect(texto).not.toContain('Cargando la organización');
+  });
+
+  it('el vacío sin organizaciones ofrece una salida con ruta', () => {
+    http.expectOne('/practices').flush([]);
+    harness.detectChanges();
+    const enlace = Array.from(harness.routeNativeElement!.querySelectorAll('a')).find((a) =>
+      a.textContent?.includes('Dar de alta la organización'),
+    );
+    expect(enlace?.getAttribute('href')).toBe('/administration/organizations/new');
+  });
+
+  it('elegir una pestaña la escribe en la URL', async () => {
+    cargar();
+    componente['cambiarPestana'](3);
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toContain('tab=establishment');
+    http.match(() => true).forEach((r) => r.flush({}));
+  });
+
+  it('?tab=infrastructure abre la pestaña Infraestructura', async () => {
+    cargar();
+    await harness.navigateByUrl(`${RUTA}?tab=infrastructure`);
+    harness.detectChanges();
+    const activa = harness.routeNativeElement!.querySelector('[role="tab"][aria-selected="true"]');
+    expect(activa?.textContent?.trim()).toBe('Infraestructura');
+    http.match(() => true).forEach((r) => r.flush({}));
   });
 });

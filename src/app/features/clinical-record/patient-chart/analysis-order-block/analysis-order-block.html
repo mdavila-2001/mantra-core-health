@@ -31,8 +31,9 @@
     <form class="estudios__formulario app-form-grid" (submit)="$event.preventDefault()">
       <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
            cargada; con una sola respuesta el selector queda deshabilitado. -->
-      @if (exigeRespuesta()) {
+      @if (exigeRespuesta() || ofreceRespuesta()) {
         <app-form-response-picker
+          [opcional]="!exigeRespuesta()"
           class="app-form-grid__ancho"
           [encounterId]="encounterId()"
           [patientProfileId]="patientProfileId()"
@@ -133,6 +134,7 @@
             <div class="estudios__principal">
               <span class="estudios__nombre">{{ estudio.estudio }}</span>
               <span class="estudios__categoria">{{ estudio.categoria }}</span>
+              <app-informed-consent-badge [consent]="consent.consents.of('SERVICE_REQUEST', estudio.id)" />
             </div>
             <div class="estudios__meta">
               <span class="estudios__estado">{{ estudio.estado }}</span>
@@ -160,6 +162,16 @@
               } @else {
                 <span class="estudios__resultado">Sin resultado todavía</span>
               }
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="study-consent"
+                (clicked)="consent.target.set(estudio)"
+              >
+                Consentimiento informado
+              </button>
             </div>
           </li>
         }
@@ -190,3 +202,17 @@
     }
   </section>
 </app-card>
+
+<!-- El consentimiento DIRIGIDO a la orden elegida (CPE art. 44). -->
+@if (consent.target(); as estudio) {
+  <app-informed-consent-dialog
+    [patientProfileId]="patientProfileId()"
+    [encounterId]="consent.encounterId()"
+    targetType="SERVICE_REQUEST"
+    [targetId]="estudio.id"
+    [targetLabel]="estudio.estudio + ' · ' + estudio.categoria"
+    [defaults]="{ purposeText: estudio.categoria + ': ' + estudio.estudio + ', para orientar el diagnóstico o el tratamiento.' }"
+    (consentChanged)="consent.consents.upsert($event)"
+    (closed)="consent.target.set(null)"
+  />
+}

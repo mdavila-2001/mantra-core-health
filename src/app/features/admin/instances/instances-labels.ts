@@ -1,257 +1,152 @@
-import type { DeviceBreakdownItem } from '../../../core/data-access/admin-portal/analytics-devices.types';
 import type {
+  InstanceCause,
+  InstanceOverall,
+  InstanceState,
   InstanceType,
-  LivenessInstance,
-  LivenessState,
 } from '../../../core/data-access/admin-portal/ops-liveness.types';
 import type {
-  OpsTool,
+  Tool,
+  ToolBinding,
+  ToolCatalogStatus,
   ToolCheckType,
-  ToolHealthState,
   ToolKind,
-  ToolStatus,
 } from '../../../core/data-access/admin-portal/ops-tools.types';
 import type { Tone } from '../../../shared/components/tone/tone.types';
 
 /* ============================================================================
-    Rótulos, tonos y orden de «Instancias y herramientas».
+    Cómo se dice en pantalla cada valor del contrato. Funciones puras, sin
+    Angular: la pantalla las usa y las pruebas las ejercitan directo.
 
-    Traducen los códigos del servidor a texto y a tono. No deciden nada: un
-    código que no está acá se muestra tal cual con tono neutro, en vez de
-    inventarle un significado.
-
-    Regla de honestidad: **el verde sólo se gana con evidencia**. `SIN_DATO`,
-    «sin sondear» y «sólo configuración» nunca son verdes, y todo estado lleva
-    su palabra: el color acompaña, no informa solo.
+    Un estado nunca se comunica sólo con color: cada chip lleva su texto y el
+    tono acompaña (regla 95.4.6).
     ========================================================================== */
 
-export interface Rotulo {
-  readonly label: string;
-  readonly tone: Tone;
+/** Un chip: el texto que se lee y el tono que lo acompaña. */
+export interface Chip {
+  readonly texto: string;
+  readonly tono: Tone;
 }
 
-/* -- Instancias ---------------------------------------------------------- */
-
-export const ESTADOS_DE_VIDA: readonly LivenessState[] = ['CAIDA', 'DEGRADADA', 'SIN_DATO', 'VIVA'];
-
-const VIDA: Readonly<Record<LivenessState, Rotulo>> = {
-  VIVA: { label: 'Viva', tone: 'success' },
-  DEGRADADA: { label: 'Degradada', tone: 'warning' },
-  CAIDA: { label: 'Caída', tone: 'error' },
-  SIN_DATO: { label: 'Sin dato', tone: 'secondary' },
+export const ESTADOS_DE_INSTANCIA: Readonly<Record<InstanceState, Chip>> = {
+  VIVA: { texto: 'Viva', tono: 'success' },
+  DEGRADADA: { texto: 'Degradada', tono: 'warning' },
+  CAIDA: { texto: 'Caída', tono: 'error' },
+  SIN_DATO: { texto: 'Sin dato', tono: 'info' },
 };
 
-export function estadoDeVida(estado: string | null | undefined): Rotulo {
-  const conocido = estado ? VIDA[estado as LivenessState] : undefined;
-  return conocido ?? { label: estado ?? 'Sin dato', tone: 'secondary' };
-}
-
-/** Plural para los conteos del resumen («Vivas», «Sin dato»…). */
-export const CONTEO_DE_VIDA: Readonly<Record<LivenessState, string>> = {
-  VIVA: 'Vivas',
-  DEGRADADA: 'Degradadas',
-  CAIDA: 'Caídas',
-  SIN_DATO: 'Sin dato',
+export const ESTADO_GENERAL: Readonly<Record<InstanceOverall, Chip>> = {
+  OK: { texto: 'Todo en pie', tono: 'success' },
+  ATENCION: { texto: 'Requiere atención', tono: 'warning' },
+  CRITICO: { texto: 'Crítico', tono: 'error' },
+  SIN_DATO: { texto: 'Sin dato', tono: 'info' },
 };
 
-export const TIPOS_DE_INSTANCIA: readonly {
-  readonly value: InstanceType;
-  readonly label: string;
-}[] = [
-  { value: 'api', label: 'API' },
-  { value: 'worker', label: 'Worker' },
-  { value: 'database', label: 'Base de datos' },
-  { value: 'service', label: 'Servicio' },
-];
-
-export function tipoDeInstancia(tipo: string): string {
-  return TIPOS_DE_INSTANCIA.find((t) => t.value === tipo)?.label ?? tipo;
-}
-
-const CAUSAS: Readonly<Record<string, string>> = {
-  HEARTBEAT_LATE: 'Latido tardío',
-  HEARTBEAT_EXPIRED: 'Latido vencido',
-  NEVER_SEEN: 'Nunca se recibió un latido',
-  STORE_UNAVAILABLE: 'No se pudo leer el registro de latidos',
-  CLOCK_INCONSISTENT: 'Reloj inconsistente',
-  RECORD_CORRUPT: 'Registro ilegible',
-  PROBE_FAILED: 'La sonda falló',
-  PROBE_TIMEOUT: 'La sonda no contestó a tiempo',
-  PROBE_SLOW: 'Responde lento',
-  PROBE_UNAVAILABLE: 'No se pudo sondear',
+export const TIPOS_DE_INSTANCIA: Readonly<Record<InstanceType, string>> = {
+  API: 'API',
+  WORKER: 'Worker',
+  DATABASE: 'Base de datos',
+  SERVICE: 'Servicio',
 };
 
-/** `null` es «sin causa» (la instancia está viva): no se inventa una. */
-export function causaDeVida(causa: string | null): string {
-  return causa === null ? '—' : (CAUSAS[causa] ?? causa);
+/** La causa en lenguaje llano; el detalle del servidor va aparte, íntegro. */
+export const CAUSAS: Readonly<Record<InstanceCause, string>> = {
+  OK: 'Responde dentro del umbral.',
+  HEARTBEAT_LATE: 'El último latido llegó tarde, pero todavía no venció.',
+  HEARTBEAT_EXPIRED: 'Hace demasiado que no late: se la considera caída.',
+  NEVER_SEEN: 'Nunca envió un latido desde que se guarda el registro.',
+  STORE_UNAVAILABLE: 'No se pudo leer el almacén de latidos (Redis): no se sabe si vive.',
+  CLOCK_INCONSISTENT: 'El reloj de la instancia y el de la API no coinciden: la edad no es confiable.',
+  RECORD_CORRUPT: 'El registro del latido llegó roto y no se pudo leer.',
+  TICK_STUCK: 'El proceso late pero su ciclo de trabajo está trabado.',
+  CIRCUIT_OPEN: 'El proceso cortó el trabajo a propósito (circuito abierto) por fallas seguidas.',
+  DRAINING: 'Está terminando lo que tenía y no acepta trabajo nuevo.',
+  PROBE_FAILED: 'La sonda la consultó y no respondió bien.',
+  PROBE_TIMEOUT: 'La sonda la consultó y no respondió a tiempo.',
+  PROBE_SLOW: 'Respondió, pero más lento que el umbral.',
+  NOT_PROBED: 'No se la sondea desde la API.',
+};
+
+/** Lo que la sonda declara no medir, con nombre legible. */
+export const NO_MEDIDO: Readonly<Record<string, string>> = {
+  replicasOfApi: 'Réplicas de la API (sólo se ve la que responde)',
+  storageObjectStore: 'Contenido del almacén de objetos (sólo que responda)',
+  malwareScanner: 'Resultado del antivirus (sólo que responda)',
+  providerEmulator: 'Emulador de proveedores externos',
+  processInternals: 'Memoria, CPU y colas internas de cada proceso',
+};
+
+/** Estado vivo de una herramienta. Sale SOLO de `isHealthy` y `checkType`, nunca de `status`. */
+export type EstadoVivo = 'UP' | 'DOWN' | 'NO_PROBE' | 'NOT_APPLICABLE';
+
+export function estadoVivo(tool: Pick<Tool, 'isHealthy' | 'checkType'>): EstadoVivo {
+  if (tool.isHealthy === true) return 'UP';
+  if (tool.isHealthy === false) return 'DOWN';
+  return tool.checkType === 'NOT_APPLICABLE' ? 'NOT_APPLICABLE' : 'NO_PROBE';
 }
 
-/**
- * «hace 8 s», «hace 3 min 34 s», «hace 1 h 5 min». `null` es «nunca»: no hay
- * edad que mostrar, y un 0 pasaría por «recién».
- */
-export function antiguedad(segundos: number | null): string {
-  if (segundos === null) return 'Nunca';
-  if (segundos < 1) return 'ahora mismo';
-  if (segundos < 60) return `hace ${segundos} s`;
-  const minutos = Math.floor(segundos / 60);
-  if (minutos < 60) {
-    const resto = segundos % 60;
-    return resto === 0 ? `hace ${minutos} min` : `hace ${minutos} min ${resto} s`;
-  }
-  const horas = Math.floor(minutos / 60);
-  const m = minutos % 60;
-  return m === 0 ? `hace ${horas} h` : `hace ${horas} h ${m} min`;
-}
+/** `CONFIGURATION` y `NOT_APPLICABLE` nunca van en rojo. */
+export const ESTADOS_VIVOS: Readonly<Record<EstadoVivo, Chip>> = {
+  UP: { texto: 'Operativa', tono: 'success' },
+  DOWN: { texto: 'Caída', tono: 'error' },
+  NO_PROBE: { texto: 'Sin chequeo en vivo', tono: 'info' },
+  NOT_APPLICABLE: { texto: 'No aplica', tono: 'secondary' },
+};
 
-/** Lo más grave primero; a igual estado, las requeridas antes; después, por nombre. */
-export function ordenarInstancias(
-  instancias: readonly LivenessInstance[],
-): readonly LivenessInstance[] {
-  const peso = (e: string): number => {
-    const i = ESTADOS_DE_VIDA.indexOf(e as LivenessState);
-    return i === -1 ? ESTADOS_DE_VIDA.length : i;
-  };
-  return [...instancias].sort(
-    (a, b) =>
-      peso(a.state) - peso(b.state) ||
-      Number(b.required) - Number(a.required) ||
-      a.id.localeCompare(b.id),
-  );
-}
+export const ESTADOS_DE_CATALOGO: Readonly<Record<ToolCatalogStatus, string>> = {
+  ACTIVE: 'Activa',
+  PLANNED: 'Planeada',
+  DEPRECATED: 'En retiro',
+  DISABLED: 'Apagada',
+};
 
-/* -- Herramientas -------------------------------------------------------- */
+export const VINCULOS: Readonly<Record<ToolBinding, string>> = {
+  real: 'Proveedor real',
+  mock: 'Mock',
+  none: 'Sin vínculo',
+  simulated: 'Simulada en la API',
+};
 
-const TIPOS_DE_HERRAMIENTA: Readonly<Record<ToolKind, string>> = {
+export const CHEQUEOS: Readonly<Record<ToolCheckType, string>> = {
+  LIVE: 'En vivo',
+  CONFIGURATION: 'Sólo configuración',
+  NOT_APPLICABLE: 'No aplica',
+};
+
+export const TIPOS_DE_HERRAMIENTA: Readonly<Record<ToolKind, string>> = {
   DATABASE: 'Base de datos',
   CACHE: 'Caché',
   SEARCH: 'Búsqueda',
-  STORAGE: 'Almacenamiento',
-  MESSAGING: 'Mensajería',
-  PAYMENTS: 'Pagos y facturación',
-  AI: 'Inteligencia artificial',
-  MAPS: 'Mapas',
+  OBJECT_STORAGE: 'Archivos',
+  MAIL: 'Correo',
+  IDENTITY: 'Identidad',
+  AI: 'IA',
+  FISCAL: 'Fiscal',
   ANALYTICS: 'Analítica',
-  SECURITY: 'Seguridad',
+  MAPS: 'Mapas',
   OBSERVABILITY: 'Observabilidad',
-  OTHER: 'Otra',
+  SECURITY: 'Seguridad',
+  EMULATOR: 'Emulador',
 };
 
-export function tipoDeHerramienta(tipo: string): string {
-  return TIPOS_DE_HERRAMIENTA[tipo as ToolKind] ?? tipo;
+/** «Qué dice»: el mensaje íntegro y, si faltan variables, cuáles. */
+export function queDice(tool: Pick<Tool, 'healthMessage' | 'missingEnvVars'>): string {
+  const faltan = tool.missingEnvVars.length > 0 ? ` Faltan: ${tool.missingEnvVars.join(', ')}.` : '';
+  return `${tool.healthMessage}${faltan}`.trim();
 }
 
-const REGISTRO: Readonly<Record<ToolStatus, Rotulo>> = {
-  ACTIVE: { label: 'Activa', tone: 'primary' },
-  PLANNED: { label: 'Planeada', tone: 'secondary' },
-  DEPRECATED: { label: 'En retiro', tone: 'warning' },
-  DISABLED: { label: 'Apagada', tone: 'secondary' },
-};
-
-export function estadoDeRegistro(estado: string): Rotulo {
-  return REGISTRO[estado as ToolStatus] ?? { label: estado, tone: 'secondary' };
+/** Antigüedad en palabras: «hace 5 s», «hace 3 min», «hace 2 h». */
+export function haceCuanto(segundos: number | null): string {
+  if (segundos === null) return 'nunca';
+  if (segundos < 0) return 'en el futuro (reloj inconsistente)';
+  if (segundos < 60) return `hace ${segundos} s`;
+  if (segundos < 3600) return `hace ${Math.floor(segundos / 60)} min`;
+  if (segundos < 86_400) return `hace ${Math.floor(segundos / 3600)} h`;
+  return `hace ${Math.floor(segundos / 86_400)} d`;
 }
 
-/**
- * La salud, dicha según CÓMO se comprobó. `OK` sólo es «Responde» si hubo una
- * sonda en vivo; con la configuración es «Configurada (no probada)». Una
- * comprobación de configuración que falla es una advertencia, no una caída; y
- * lo que no se sondeó nunca es verde ni rojo.
- */
-export function saludDeHerramienta(
-  estado: ToolHealthState | string,
-  comprobacion: ToolCheckType | string,
-): Rotulo {
-  if (estado === 'NOT_PROBED' || comprobacion === 'NOT_APPLICABLE')
-    return { label: 'Sin sondear', tone: 'secondary' };
-  if (comprobacion === 'LIVE') {
-    if (estado === 'OK') return { label: 'Responde', tone: 'success' };
-    if (estado === 'FAIL') return { label: 'No responde', tone: 'error' };
-  }
-  if (comprobacion === 'CONFIGURATION') {
-    if (estado === 'OK') return { label: 'Configurada (no probada)', tone: 'info' };
-    if (estado === 'FAIL') return { label: 'Configuración incompleta', tone: 'warning' };
-  }
-  return { label: 'Sin sondear', tone: 'secondary' };
-}
-
-const COMPROBACION: Readonly<Record<ToolCheckType, string>> = {
-  LIVE: 'Sonda en vivo',
-  CONFIGURATION: 'Sólo revisa la configuración',
-  NOT_APPLICABLE: 'No se comprueba',
-};
-
-export function tipoDeComprobacion(tipo: string): string {
-  return COMPROBACION[tipo as ToolCheckType] ?? tipo;
-}
-
-/** Opciones del filtro de salud: se filtra por lo que se VE, no por el código crudo. */
-export const FILTROS_DE_SALUD = [
-  { value: 'Responde', label: 'Responde' },
-  { value: 'No responde', label: 'No responde' },
-  { value: 'Configuración incompleta', label: 'Configuración incompleta' },
-  { value: 'Configurada (no probada)', label: 'Configurada (no probada)' },
-  { value: 'Sin sondear', label: 'Sin sondear' },
-] as const;
-
-/** Críticas primero; después lo más grave; después, por nombre. */
-export function ordenarHerramientas(herramientas: readonly OpsTool[]): readonly OpsTool[] {
-  const peso = (t: OpsTool): number => {
-    switch (saludDeHerramienta(t.health.state, t.health.checkType).label) {
-      case 'No responde':
-        return 0;
-      case 'Configuración incompleta':
-        return 1;
-      case 'Sin sondear':
-        return 2;
-      case 'Configurada (no probada)':
-        return 3;
-      default:
-        return 4;
-    }
-  };
-  return [...herramientas].sort(
-    (a, b) =>
-      Number(b.isCritical) - Number(a.isCritical) ||
-      peso(a) - peso(b) ||
-      a.name.localeCompare(b.name),
-  );
-}
-
-/** El conteo de las herramientas críticas, honesto sobre lo que no se sondeó. */
-export interface ResumenCriticas {
-  readonly total: number;
-  /** Con sonda en vivo que falló. */
-  readonly noResponden: number;
-  /** Con sonda en vivo que respondió. */
-  readonly responden: number;
-  /** Sólo se revisó la configuración, y está completa: no prueba que funcione. */
-  readonly soloConfiguradas: number;
-  /** Faltan variables. */
-  readonly configuracionIncompleta: number;
-  /** Nadie las sondeó. */
-  readonly sinSondear: number;
-}
-
-export function resumirCriticas(items: readonly OpsTool[]): ResumenCriticas {
-  const criticas = items.filter((t) => t.isCritical);
-  const por = (etiqueta: string): number =>
-    criticas.filter(
-      (t) => saludDeHerramienta(t.health.state, t.health.checkType).label === etiqueta,
-    ).length;
-  return {
-    total: criticas.length,
-    noResponden: por('No responde'),
-    responden: por('Responde'),
-    soloConfiguradas: por('Configurada (no probada)'),
-    configuracionIncompleta: por('Configuración incompleta'),
-    sinSondear: por('Sin sondear'),
-  };
-}
-
-/* -- Dispositivos -------------------------------------------------------- */
-
-/** `UNSPECIFIED` es un contexto que no informó la dimensión: se dice, no se oculta. */
-export function etiquetaDeDispositivo(item: DeviceBreakdownItem): string {
-  return item.code === 'UNSPECIFIED' ? 'Sin informar' : item.label;
+/** Segundos enteros entre dos instantes; `null` si alguno no es fecha. */
+export function segundosEntre(desde: string | null, hasta: number): number | null {
+  if (desde === null) return null;
+  const t = new Date(desde).getTime();
+  return Number.isNaN(t) ? null : Math.max(0, Math.round((hasta - t) / 1000));
 }

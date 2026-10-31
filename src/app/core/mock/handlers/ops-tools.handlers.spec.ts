@@ -2,65 +2,53 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, isMockReply, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
-import { registrarHerramientas } from './ops-tools.handlers';
-import type { OpsToolsOverview } from '../../data-access/admin-portal/ops-tools.types';
+import { herramientasSimuladas, registrarHerramientas } from './ops-tools.handlers';
+import type { OpsTools } from '../../data-access/admin-portal/ops-tools.types';
 
-describe('herramientas demo: mismo contrato que /admin/ops/tools', () => {
+describe('herramientas simuladas: mismo contrato que /admin/ops/tools', () => {
   const router = new MockRouter();
   registrarHerramientas(router);
   const admin = buscarUsuario('superadmin')!;
 
-  function pedir(): OpsToolsOverview {
-    const match = router.match('GET', '/admin/ops/tools');
-    if (match === null) throw new Error('No existe GET /admin/ops/tools');
-    const r = match.handler({
-      method: 'GET',
-      path: '/admin/ops/tools',
-      params: match.params,
-      query: new URLSearchParams(),
-      body: null,
-      headers: new HttpHeaders(),
-      user: admin,
-    } satisfies MockRequest);
-    return (isMockReply(r) ? r.body : r) as OpsToolsOverview;
+  function pedir(): OpsTools {
+    const path = '/admin/ops/tools';
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    const r = match.handler({ method: 'GET', path, params: match.params, query: new URLSearchParams(), body: null, headers: new HttpHeaders(), user: admin } satisfies MockRequest);
+    expect(isMockReply(r)).toBe(false);
+    return r as OpsTools;
   }
 
-  it('trae críticas y no críticas, y los tres estados de salud con su tipo de comprobación', () => {
-    const { items } = pedir();
-    expect(items.some((t) => t.isCritical)).toBe(true);
-    expect(items.some((t) => !t.isCritical)).toBe(true);
-    expect(new Set(items.map((t) => t.health.state))).toEqual(
-      new Set(['OK', 'FAIL', 'NOT_PROBED']),
-    );
-    expect(new Set(items.map((t) => t.health.checkType))).toEqual(
-      new Set(['LIVE', 'CONFIGURATION', 'NOT_APPLICABLE']),
-    );
-    expect(new Set(items.map((t) => t.status))).toEqual(
-      new Set(['ACTIVE', 'PLANNED', 'DEPRECATED', 'DISABLED']),
-    );
+  it('responde el contrato v1 y el resumen cierra con la lista', () => {
+    const r = pedir();
+    expect(r.modelVersion).toBe('ops-tools/v1');
+    const { total, healthy, down, noProbe, notApplicable, critical } = r.summary;
+    expect(total).toBe(r.tools.length);
+    expect(healthy + down + noProbe + notApplicable).toBe(total);
+    expect(healthy).toBe(r.tools.filter((t) => t.isHealthy === true).length);
+    expect(down).toBe(r.tools.filter((t) => t.isHealthy === false).length);
+    expect(notApplicable).toBe(r.tools.filter((t) => t.isHealthy === null && t.checkType === 'NOT_APPLICABLE').length);
+    expect(critical).toBe(r.tools.filter((t) => t.isCritical).length);
   });
 
-  it('una herramienta sin sondear no trae fecha de observación y una sondeada sí', () => {
-    for (const t of pedir().items) {
-      expect(t.health.observedAt === null).toBe(t.health.state === 'NOT_PROBED');
+  it('cubre los tres tipos de chequeo, caídas críticas, una lenta pero viva y variables faltantes', () => {
+    const r = pedir();
+    for (const tipo of ['LIVE', 'CONFIGURATION', 'NOT_APPLICABLE'] as const) {
+      expect(r.tools.some((t) => t.checkType === tipo)).toBe(true);
     }
+    expect(r.tools.some((t) => t.isHealthy === false && t.isCritical)).toBe(true);
+    // Lenta no es caída: OpenSearch responde por encima del umbral y sigue operativa.
+    expect(r.tools.some((t) => t.isHealthy === true && (t.latencyMs ?? 0) > 1000 && !t.isCritical)).toBe(true);
+    expect(r.tools.some((t) => t.missingEnvVars.length > 0 && !t.isConfigured)).toBe(true);
+    // Lo que no se chequea en vivo nunca lleva veredicto: ni verde ni rojo.
+    expect(r.tools.filter((t) => t.checkType !== 'LIVE').every((t) => t.isHealthy === null)).toBe(true);
   });
 
-  it('faltan variables sólo cuando falla, y siempre son nombres declarados como requeridos', () => {
-    for (const t of pedir().items) {
-      if (t.health.missingEnvVars.length > 0) {
-        expect(t.health.state).toBe('FAIL');
-        expect(t.health.missingEnvVars.every((v) => t.requiredEnvVars.includes(v))).toBe(true);
-      }
-    }
-  });
-
-  it('nunca trae un valor de variable: sólo nombres en MAYÚSCULAS', () => {
-    const nombres = pedir().items.flatMap((t) => [
-      ...t.requiredEnvVars,
-      ...t.health.missingEnvVars,
-    ]);
-    expect(nombres.length).toBeGreaterThan(0);
-    expect(nombres.every((n) => /^[A-Z][A-Z0-9_]*$/.test(n))).toBe(true);
+  it('las fechas salen del reloj y está marcado como simulado', () => {
+    const ahora = Date.UTC(2026, 9, 31, 12, 0, 0);
+    const r = herramientasSimuladas(ahora);
+    expect(r.evaluatedAt).toBe('2026-10-31T12:00:00.000Z');
+    expect(r.tools.every((t) => t.healthMessage.startsWith('Simulado:'))).toBe(true);
+    expect(r.tools.filter((t) => t.checkType === 'LIVE').every((t) => t.checkedAt !== null)).toBe(true);
   });
 });

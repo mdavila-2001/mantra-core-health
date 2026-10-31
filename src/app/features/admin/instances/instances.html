@@ -1,90 +1,59 @@
 <app-page-header
   title="Instancias y herramientas"
-  subtitle="Qué procesos y servicios están vivos, qué herramientas usa la plataforma y desde qué dispositivos se usa. «Viva» y «responde» sólo se dicen con evidencia; sin ella la pantalla dice «sin dato»."
+  subtitle="Qué procesos tiene la plataforma y si cada uno tiene vida; qué herramientas usa la API, si están configuradas y si respondieron. Lo decide el servidor; acá se muestra con su antigüedad."
   [breadcrumbs]="breadcrumbs()"
 >
-  <button
-    app-button
-    page-actions
-    variant="secondary"
-    size="sm"
-    (clicked)="cargar()"
-    data-testid="instances-refresh"
-  >
-    Actualizar
-  </button>
+  <button app-button page-actions variant="secondary" size="sm" (clicked)="cargar()" data-testid="instances-refresh">Actualizar</button>
 </app-page-header>
 
 <div class="instancias">
   <app-card variant="outlined" padding="md">
     <app-tabs [(selectedIndex)]="pestana" data-testid="instances-tabs">
-      <!-- ================= Instancias ================= -->
+      <!-- ============================ Instancias ============================ -->
       <app-tab label="Instancias">
-        <app-view-state-host [state]="vida()" (retry)="cargarVida()">
-          @if (vida(); as estadoVida) {
-            @if (estadoVida.status === 'ready') {
-              @let v = estadoVida.data;
-              @let aviso = avisoGeneral(v);
-              <div
-                class="instancias__general"
-                data-testid="instances-overall"
-                [attr.data-estado]="v.overall"
-              >
-                <span class="instancias__general-rotulo">Estado general</span>
-                <app-badge [variant]="estadoDeVida(v.overall).tone" size="lg">{{
-                  estadoDeVida(v.overall).label
-                }}</app-badge>
-                <span class="instancias__ayuda" data-testid="instances-evaluated">
-                  Evaluado el {{ v.evaluatedAt | date: 'dd/MM/yyyy HH:mm:ss' }} (reloj de la API).
-                  Los datos pueden haber cambiado desde entonces.
-                </span>
+        <app-view-state-host [state]="estadoSonda()" (retry)="cargar()" (refresh)="cargar()">
+          @if (estadoSonda(); as estado) {
+            @if (estado.status === 'ready' || estado.status === 'stale') {
+              @let s = estado.data;
+              @let general = chipGeneral(s);
+
+              @if (s.overall === 'CRITICO') {
+                <app-alert tone="error" title="Hay instancias obligatorias caídas" data-testid="instances-banner-critico">
+                  @if (instanciasCaidas().length > 0) {
+                    <ul class="instancias__lista">
+                      @for (i of instanciasCaidas(); track i.id) {
+                        <li><strong>{{ i.label }}</strong> ({{ i.id }}): {{ i.causeDetail }}</li>
+                      }
+                    </ul>
+                  } @else {
+                    La sonda declara estado crítico; revise el detalle de cada instancia.
+                  }
+                </app-alert>
+              }
+
+              @if (s.heartbeatStore.status === 'down') {
+                <app-alert tone="warning" title="No se pudo leer el almacén de latidos" data-testid="instances-store-caido">
+                  La API respondió, pero Redis —donde los workers dejan su latido— no contestó. Las instancias que
+                  dependen del latido figuran como «Sin dato»: no se sabe si viven, y eso no es lo mismo que estar
+                  caídas. Razón del servidor: {{ s.heartbeatStore.reason ?? 'no indicada' }}.
+                </app-alert>
+              }
+
+              <div class="instancias__cabecera" data-testid="instances-overall">
+                <app-badge [variant]="general.tono" size="lg">{{ general.texto }}</app-badge>
+                <p class="instancias__contadores">
+                  <span data-testid="instances-count-viva">{{ entero(s.summary.VIVA) }} vivas</span> ·
+                  <span data-testid="instances-count-degradada">{{ entero(s.summary.DEGRADADA) }} degradadas</span> ·
+                  <span data-testid="instances-count-caida">{{ entero(s.summary.CAIDA) }} caídas</span> ·
+                  <span data-testid="instances-count-sin-dato">{{ entero(s.summary.SIN_DATO) }} sin dato</span> ·
+                  {{ entero(s.summary.total) }} en total
+                </p>
+                <p class="instancias__ayuda" data-testid="instances-evaluated">
+                  Evaluado por la API el {{ s.evaluatedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ({{ antiguedadDe(s.evaluatedAt) }}).
+                  Un latido es fresco hasta {{ s.thresholds.degradedAfterSeconds }} s; pasados {{ s.thresholds.downAfterSeconds }} s la instancia se da por caída.
+                  Se vuelve a pedir cada 30 s.
+                </p>
               </div>
-
-              <app-alert
-                [tone]="aviso.tone"
-                [title]="aviso.titulo"
-                data-testid="instances-overall-alert"
-                >{{ aviso.texto }}</app-alert
-              >
-
-              <div class="instancias__conteos" data-testid="instances-counts">
-                @for (c of conteoPorEstado(v); track c.estado) {
-                  <app-metric-card
-                    [label]="conteoDeVida[c.estado]"
-                    [value]="c.cantidad"
-                    [tone]="tonoDeConteo(c.estado, c.cantidad)"
-                  />
-                }
-              </div>
-
-              <p class="instancias__ayuda" data-testid="instances-thresholds">
-                Un worker manda un latido cada {{ v.thresholds.heartbeatIntervalSeconds }} s. Con el
-                último latido de hace {{ v.thresholds.liveSeconds }} s o menos se da por
-                <strong>viva</strong>; hasta {{ v.thresholds.degradedSeconds }} s,
-                <strong>degradada</strong>; más allá, <strong>caída</strong>. Sin ningún latido es
-                <strong>sin dato</strong>: no se sabe, y no se da por caída. Las instancias
-                opcionales no cuentan para el estado general.
-              </p>
-
-              <section class="instancias__filtros" aria-label="Filtros de las instancias">
-                <app-select
-                  ariaLabel="Tipo de instancia"
-                  [options]="opcionesTipo"
-                  [value]="tipo()"
-                  (valueChange)="tipo.set($event)"
-                />
-                <app-select
-                  ariaLabel="Estado de la instancia"
-                  [options]="opcionesEstado"
-                  [value]="estado()"
-                  (valueChange)="estado.set($event)"
-                />
-                @if (hayFiltrosDeInstancias()) {
-                  <button app-button variant="ghost" size="sm" (clicked)="limpiarInstancias()">
-                    Quitar filtros
-                  </button>
-                }
-              </section>
 
               <app-data-table
                 [state]="filasInstancias()"
@@ -93,102 +62,71 @@
                 [rowLabel]="nombreDeInstancia"
                 stackedOnMobile
                 fitContainer
-                caption="Instancias evaluadas, de la más grave a la menos grave"
+                caption="Instancias de la plataforma y su estado según la sonda de vida"
                 data-testid="instances-table"
-                (retry)="cargarVida()"
+                (retry)="cargar()"
               />
+            }
+          }
+        </app-view-state-host>
 
-              @if (v.notMeasured.length > 0) {
-                <app-alert tone="info" title="Esto no está medido (no es «viva»)">
-                  <ul class="instancias__lista" data-testid="instances-not-measured">
-                    @for (n of v.notMeasured; track n.id) {
-                      <li>
-                        <strong>{{ n.id }}:</strong> {{ n.reason }}
-                      </li>
+
+        @if (sonda(); as estado) {
+          @if (estado.status === 'ready' && estado.data.notMeasured.length > 0) {
+            <app-alert tone="info" title="Esto no está medido (no es que esté vivo)">
+              <ul class="instancias__lista" data-testid="instances-not-measured">
+                @for (n of estado.data.notMeasured; track n) {
+                  <li>{{ noMedido(n) }}</li>
+                }
+              </ul>
+            </app-alert>
+          }
+        }
+      </app-tab>
+
+      <!-- ============================ Herramientas ============================ -->
+      <app-tab label="Herramientas">
+        <app-view-state-host [state]="estadoHerramientas()" (retry)="cargar()" (refresh)="cargar()">
+          @if (estadoHerramientas(); as estado) {
+            @if (estado.status === 'ready' || estado.status === 'stale') {
+              @let h = estado.data;
+
+              @if (caidasCriticas().length > 0) {
+                <app-alert tone="error" title="Herramientas críticas caídas" data-testid="tools-banner-critico">
+                  <ul class="instancias__lista">
+                    @for (t of caidasCriticas(); track t.code) {
+                      <li><strong>{{ t.name }}</strong> ({{ t.code }}): {{ t.healthMessage }} Impacto: {{ t.failureImpact }}</li>
                     }
                   </ul>
                 </app-alert>
               }
-            }
-          }
-        </app-view-state-host>
-      </app-tab>
-
-      <!-- ================= Herramientas ================= -->
-      <app-tab label="Herramientas">
-        <app-view-state-host [state]="herramientas()" (retry)="cargarHerramientas()">
-          @if (herramientas(); as estadoHerramientas) {
-            @if (estadoHerramientas.status === 'ready') {
-              @let h = estadoHerramientas.data;
-              @let c = resumenDeCriticas(h);
-              <p class="instancias__ayuda" data-testid="tools-evaluated">
-                Evaluado el {{ h.evaluatedAt | date: 'dd/MM/yyyy HH:mm:ss' }} (reloj de la API).
-              </p>
-              @if (c.noResponden > 0) {
-                <app-alert
-                  tone="error"
-                  title="Hay herramientas críticas que no responden"
-                  data-testid="tools-critical-alert"
-                >
-                  {{ c.noResponden }} de {{ c.total }} herramientas críticas fallaron su sonda en
-                  vivo.
-                </app-alert>
-              } @else if (c.total > 0 && c.responden < c.total) {
-                <app-alert
-                  tone="warning"
-                  title="No todas las herramientas críticas están comprobadas"
-                  data-testid="tools-critical-alert"
-                >
-                  Sólo {{ c.responden }} de {{ c.total }} herramientas críticas respondieron a una
-                  sonda en vivo. El resto está sin sondear o sólo tiene su configuración revisada,
-                  que no prueba que funcione.
+              @if (caidasNoCriticas().length > 0) {
+                <app-alert tone="warning" title="Herramientas no críticas caídas" data-testid="tools-banner-no-critico">
+                  <ul class="instancias__lista">
+                    @for (t of caidasNoCriticas(); track t.code) {
+                      <li><strong>{{ t.name }}</strong> ({{ t.code }}): {{ t.healthMessage }} Alternativa: {{ t.fallback }}</li>
+                    }
+                  </ul>
                 </app-alert>
               }
-              <div class="instancias__conteos" data-testid="tools-counts">
-                <app-metric-card label="Críticas" [value]="c.total" />
-                <app-metric-card
-                  label="Responden"
-                  [value]="c.responden"
-                  hint="Con sonda en vivo"
-                  [tone]="c.responden > 0 ? 'success' : 'neutral'"
-                />
-                <app-metric-card
-                  label="No responden"
-                  [value]="c.noResponden"
-                  hint="Sonda en vivo fallida"
-                  [tone]="c.noResponden > 0 ? 'error' : 'neutral'"
-                />
-                <app-metric-card
-                  label="Configuración incompleta"
-                  [value]="c.configuracionIncompleta"
-                  hint="Faltan variables"
-                  [tone]="c.configuracionIncompleta > 0 ? 'warning' : 'neutral'"
-                />
-                <app-metric-card
-                  label="Sin sondear"
-                  [value]="c.sinSondear + c.soloConfiguradas"
-                  hint="Sin sonda en vivo"
-                />
+
+              <div class="instancias__cabecera" data-testid="tools-summary">
+                <p class="instancias__contadores">
+                  <span data-testid="tools-count-up">{{ entero(h.summary.healthy) }} operativas</span> ·
+                  <span data-testid="tools-count-down">{{ entero(h.summary.down) }} caídas</span> ·
+                  <span data-testid="tools-count-no-probe">{{ entero(h.summary.noProbe) }} sin chequeo en vivo</span> ·
+                  <span data-testid="tools-count-na">{{ entero(h.summary.notApplicable) }} no aplican</span> ·
+                  {{ entero(h.summary.critical) }} críticas de {{ entero(h.summary.total) }}
+                </p>
+                <p class="instancias__ayuda" data-testid="tools-evaluated">
+                  Evaluado por la API el {{ h.evaluatedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ({{ antiguedadDe(h.evaluatedAt) }}).
+                  El estado en vivo sale sólo del chequeo; «Sin chequeo en vivo» y «No aplica» no son caídas.
+                </p>
               </div>
 
-              <section class="instancias__filtros" aria-label="Filtros de las herramientas">
-                <app-segmented-control
-                  ariaLabel="Criticidad"
-                  [options]="opcionesCriticidad"
-                  [value]="criticidad()"
-                  (valueChange)="criticidad.set($event)"
-                />
-                <app-select
-                  ariaLabel="Salud de la herramienta"
-                  [options]="opcionesSalud"
-                  [value]="salud()"
-                  (valueChange)="salud.set($event)"
-                />
-                @if (hayFiltrosDeHerramientas()) {
-                  <button app-button variant="ghost" size="sm" (clicked)="limpiarHerramientas()">
-                    Quitar filtros
-                  </button>
-                }
+              <section class="instancias__filtros" aria-label="Filtros de herramientas">
+                <app-segmented-control ariaLabel="Criticidad" [options]="opcionesCriticidad" [value]="criticidad()" (valueChange)="criticidad.set($event)" />
+                <app-segmented-control ariaLabel="Estado en vivo" [options]="opcionesVivo" [value]="filtroVivo()" (valueChange)="filtroVivo.set($event)" wrap />
               </section>
 
               <app-data-table
@@ -198,194 +136,66 @@
                 [rowLabel]="nombreDeHerramienta"
                 stackedOnMobile
                 fitContainer
-                caption="Herramientas de la plataforma: las críticas primero y, dentro de cada grupo, las que peor están"
+                wrapHeaders
+                caption="Herramientas de la plataforma, su estado en vivo y qué responde cada una"
                 data-testid="tools-table"
-                (retry)="cargarHerramientas()"
+                (retry)="cargar()"
               />
-
-              <p class="instancias__ayuda">
-                «Responde» exige una sonda en vivo. «Configurada (no probada)» sólo dice que las
-                variables están puestas. De cada variable se muestra el nombre, nunca su valor.
-              </p>
-              @if (h.notMeasured.length > 0) {
-                <app-alert tone="info" title="Esto no está medido">
-                  <ul class="instancias__lista" data-testid="tools-not-measured">
-                    @for (n of h.notMeasured; track n.code) {
-                      <li>
-                        <strong>{{ n.code }}:</strong> {{ n.reason }}
-                      </li>
-                    }
-                  </ul>
-                </app-alert>
-              }
             }
           }
         </app-view-state-host>
-      </app-tab>
 
-      <!-- ================= Dispositivos ================= -->
-      <app-tab label="Dispositivos">
-        <section class="instancias__filtros" aria-label="Ventana y portal de los dispositivos">
-          <app-segmented-control
-            ariaLabel="Ventana de tiempo"
-            [options]="opcionesRango"
-            [value]="rango()"
-            (valueChange)="cambiarRango($event)"
-          />
-          <app-select
-            ariaLabel="Portal"
-            [options]="opcionesPortal"
-            [value]="portal()"
-            (valueChange)="cambiarPortal($event)"
-          />
-        </section>
-
-        <app-view-state-host [state]="estadoDispositivos()" (retry)="cargarDispositivos()">
-          @if (estadoDispositivos(); as estadoDisp) {
-            @if (estadoDisp.status === 'ready') {
-              @let d = estadoDisp.data;
-              <div class="instancias__conteos" data-testid="devices-totals">
-                <app-metric-card
-                  label="Contextos de cliente"
-                  [value]="d.totals.contexts"
-                  hint="Personas reales o apps; sin bots"
-                />
-                <app-metric-card
-                  label="Bots (aparte)"
-                  [value]="d.totals.bots"
-                  hint="No entran en ningún desglose"
-                />
-              </div>
-              <p class="instancias__ayuda" data-testid="devices-window">
-                Ventana {{ d.window.from | date: 'dd/MM HH:mm' : 'UTC' }} –
-                {{ d.window.to | date: 'dd/MM HH:mm' : 'UTC' }} UTC.
-                @if (d.lastContextAt) {
-                  Último contexto recibido el
-                  {{ d.lastContextAt | date: 'dd/MM HH:mm' : 'UTC' }} UTC.
-                } @else {
-                  Ningún contexto recibido en la ventana.
-                }
-              </p>
-
-              <div class="instancias__grupos">
-                @for (g of gruposDeDispositivos(); track g.id) {
-                  <section
-                    class="instancias__grupo"
-                    [attr.aria-labelledby]="'dispositivos-' + g.id"
-                    [attr.data-testid]="'devices-' + g.id"
-                  >
-                    <h3 class="instancias__grupo-titulo" [id]="'dispositivos-' + g.id">
-                      {{ g.titulo }}
-                    </h3>
-                    <p class="instancias__ayuda">{{ g.ayuda }}</p>
-                    @if (g.filas.length === 0) {
-                      <p class="instancias__ayuda">Sin datos en este desglose.</p>
-                    } @else {
-                      <ul class="instancias__barras">
-                        @for (f of g.filas; track f.clave) {
-                          <li class="instancias__barra">
-                            <span class="instancias__barra-texto">
-                              <span>{{ f.etiqueta }}</span>
-                              <span class="instancias__barra-valor"
-                                >{{ f.contextos }} · {{ f.parte }}</span
-                              >
-                            </span>
-                            <span class="instancias__barra-pista" aria-hidden="true">
-                              <span
-                                class="instancias__barra-relleno"
-                                [style.inline-size]="f.ancho"
-                              ></span>
-                            </span>
-                          </li>
-                        }
-                      </ul>
-                    }
-                  </section>
-                }
-              </div>
-
-              @if (d.notMeasured.length > 0) {
-                <app-alert tone="info" title="Esto no está medido">
-                  <ul class="instancias__lista" data-testid="devices-not-measured">
-                    @for (n of d.notMeasured; track n.metric) {
-                      <li>
-                        <strong>{{ n.metric }}:</strong> {{ n.reason }}
-                      </li>
-                    }
-                  </ul>
-                </app-alert>
-              }
-            }
-          }
-        </app-view-state-host>
       </app-tab>
     </app-tabs>
   </app-card>
 </div>
 
-<ng-template #instanciaCell let-row>
-  <span class="instancias__celda">
-    <strong>{{ row.id }}</strong>
-    <span class="instancias__ayuda">{{ row.required ? 'Requerida' : 'Opcional' }}</span>
-  </span>
+<!-- Celdas de la tabla de instancias. -->
+<ng-template #instanciaCell let-fila>
+  <div class="instancias__celda">
+    <span class="instancias__nombre">{{ fila.label }}</span>
+    <span class="instancias__codigo">{{ fila.id }} · {{ fila.requerida }}</span>
+  </div>
 </ng-template>
-
-<ng-template #estadoVidaCell let-row>
-  <app-badge [variant]="row.estado.tone">{{ row.estado.label }}</app-badge>
+<ng-template #estadoInstanciaCell let-fila>
+  <app-badge [variant]="fila.estado.tono">{{ fila.estado.texto }}</app-badge>
 </ng-template>
-
-<ng-template #causaCell let-row>
-  <span class="instancias__celda">
-    <span>
-      {{ row.causa }}
-      @if (row.codigoCausa) {
-        <code class="instancias__codigo">{{ row.codigoCausa }}</code>
-      }
-    </span>
-    <span class="instancias__ayuda">{{ row.evidence }}</span>
-  </span>
-</ng-template>
-
-<ng-template #herramientaCell let-row>
-  <span class="instancias__celda">
-    <strong>{{ row.name }}</strong>
-    <code class="instancias__codigo">{{ row.code }}</code>
-  </span>
-</ng-template>
-
-<ng-template #criticaCell let-row>
-  <app-badge [variant]="row.isCritical ? 'primary' : 'secondary'">{{
-    row.isCritical ? 'Crítica' : 'No crítica'
-  }}</app-badge>
-</ng-template>
-
-<ng-template #registroCell let-row>
-  <app-badge [variant]="row.registro.tone">{{ row.registro.label }}</app-badge>
-</ng-template>
-
-<ng-template #saludCell let-row>
-  <span class="instancias__celda">
-    <app-badge [variant]="row.salud.tone">{{ row.salud.label }}</app-badge>
-    <span class="instancias__ayuda">
-      @if (row.observedAt) {
-        Observada el {{ row.observedAt | date: 'dd/MM HH:mm:ss' }}
-      } @else {
-        Nunca se comprobó
-      }
-    </span>
-  </span>
-</ng-template>
-
-<ng-template #faltanCell let-row>
-  @if (row.faltan.length === 0) {
-    <span class="instancias__ayuda">Ninguna</span>
+<ng-template #latidoCell let-fila>
+  @if (fila.ultimoLatido) {
+    {{ fila.ultimoLatido | date: 'dd/MM HH:mm:ss' }}
   } @else {
-    <ul class="instancias__variables">
-      @for (v of row.faltan; track v) {
-        <li>
-          <code class="instancias__codigo">{{ v }}</code>
-        </li>
-      }
-    </ul>
+    <span class="instancias__codigo">sin latido</span>
+  }
+</ng-template>
+<ng-template #causaCell let-fila>
+  <div class="instancias__celda">
+    <span class="instancias__causa">{{ fila.causa }}</span>
+    @if (fila.detalle) {
+      <span class="instancias__codigo">{{ fila.detalle }}</span>
+    }
+    <span class="instancias__codigo">Evidencia: {{ fila.fuente }}.</span>
+  </div>
+</ng-template>
+
+<!-- Celdas de la tabla de herramientas. -->
+<ng-template #herramientaCell let-fila>
+  <div class="instancias__celda">
+    <span class="instancias__nombre">{{ fila.name }}</span>
+    <span class="instancias__codigo">{{ fila.code }} · {{ fila.tipo }}</span>
+  </div>
+</ng-template>
+<ng-template #vivoCell let-fila>
+  <div class="instancias__celda">
+    <app-badge [variant]="fila.estadoVivo.tono">{{ fila.estadoVivo.texto }}</app-badge>
+    @if (fila.latencia) {
+      <span class="instancias__codigo">{{ fila.latencia }}</span>
+    }
+  </div>
+</ng-template>
+<ng-template #criticaCell let-fila>
+  @if (fila.critica) {
+    <app-badge variant="warning">Crítica</app-badge>
+  } @else {
+    <span class="instancias__codigo">No</span>
   }
 </ng-template>

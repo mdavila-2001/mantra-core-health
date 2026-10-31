@@ -1,6 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { crearRouterSimulado } from './index';
+import { estadosDeOrden } from './lab-orders.handlers';
 import { TAMANO_DE_PARTE, tipoDeResultado } from './lab-portal.handlers';
 import { buscarUsuario, TENANT_LABORATORIO } from '../mock-session';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
@@ -53,8 +54,9 @@ describe('handlers del portal de laboratorio', () => {
   });
 
   it('sube un archivo de más de una parte, sin tope, y lo devuelve entero', async () => {
-    const targets = cuerpo<{ items: { orderId: string }[] }>(pedir('GET', '/diagnostics/lab/result-targets'));
-    const orderId = targets.items[0]!.orderId;
+    // Los resultados sólo se suben a una orden ya procesada (31/10/2026).
+    const ordenes = cuerpo<{ items: { orderId: string; status: string }[] }>(pedir('GET', '/diagnostics/lab/orders'));
+    const orderId = ordenes.items.find((o) => o.status === 'UPLOADED')!.orderId;
     const size = TAMANO_DE_PARTE * 2 + 1234;
     const datos = new Uint8Array(size).map((_, i) => i % 251);
     const archivo = new Blob([datos], { type: 'video/mp4' });
@@ -267,6 +269,99 @@ describe('handlers del portal de laboratorio', () => {
     );
     expect(restored.updated).toBe(1);
     expect(cuerpo<{ items: { id: string }[] }>(pedir('GET', path)).items.some((item) => item.id === created.id)).toBe(true);
+  });
+
+  describe('órdenes: Borrador → Recibida → Procesada → Subidos', () => {
+    interface Orden {
+      orderId: string;
+      status: string;
+      reason: string | null;
+      files: { id: string; fileName: string }[];
+    }
+    const listar = () => cuerpo<{ items: Orden[]; count: number }>(pedir('GET', '/diagnostics/lab/orders'));
+    const paso = (orderId: string, action: string, reason?: string, user = laboratorio) =>
+      pedir('POST', `/diagnostics/lab/orders/${orderId}/transitions`, { action, reason }, user);
+    const estadoDe = (orderId: string) => listar().items.find((o) => o.orderId === orderId)!.status;
+
+    /** Una orden sin archivos, puesta en el estado que la prueba necesita: cada prueba arma el suyo. */
+    function ordenEn(status: 'DRAFT' | 'RECEIVED' | 'PROCESSED' | 'CANCELLED', indice: number): string {
+      const libres = listar().items.filter((o) => o.files.length === 0 || o.status !== 'UPLOADED');
+      const orden = libres[indice]!;
+      estadosDeOrden.agregar({ id: orden.orderId, status, reason: null });
+      return orden.orderId;
+    }
+
+    it('lista las órdenes con su estado, y la procesada con archivos figura como subida', () => {
+      const { items, count } = listar();
+      expect(count).toBe(items.length);
+      expect(items.some((o) => o.status === 'UPLOADED')).toBe(true);
+      for (const orden of items.filter((o) => o.status === 'UPLOADED')) {
+        expect(orden.files.length).toBeGreaterThan(0);
+      }
+      for (const orden of items.filter((o) => o.status !== 'UPLOADED')) {
+        expect(orden.files).toEqual([]);
+      }
+    });
+
+    it('recibe y procesa una orden, y los dos pasos quedan al releer la lista', () => {
+      const id = ordenEn('DRAFT', 0);
+
+      expect(cuerpo<Orden>(paso(id, 'RECEIVE')).status).toBe('RECEIVED');
+      expect(estadoDe(id)).toBe('RECEIVED');
+
+      expect(cuerpo<Orden>(paso(id, 'PROCESS')).status).toBe('PROCESSED');
+      expect(estadoDe(id)).toBe('PROCESSED');
+    });
+
+    it('un paso fuera de orden responde 409 y no cambia el estado', () => {
+      const borrador = ordenEn('DRAFT', 0);
+      const cancelada = ordenEn('CANCELLED', 1);
+
+      expect(estado(paso(borrador, 'PROCESS'))).toBe(409);
+      expect(estado(paso(cancelada, 'RECEIVE'))).toBe(409);
+      expect(estado(paso(borrador, 'REJECT'))).toBe(409);
+      expect(estadoDe(borrador)).toBe('DRAFT');
+      expect(estadoDe(cancelada)).toBe('CANCELLED');
+    });
+
+    it('una orden sin procesar no admite resultados (409), y una procesada sí', () => {
+      const subir = (orderId: string) =>
+        pedir('POST', '/diagnostics/lab/result-uploads', {
+          fileName: 'informe.pdf',
+          contentType: 'application/pdf',
+          sizeBytes: 3,
+          orderId,
+        });
+      const id = ordenEn('RECEIVED', 0);
+      expect(estado(subir(id))).toBe(409);
+
+      expect(cuerpo<Orden>(paso(id, 'PROCESS')).status).toBe('PROCESSED');
+      const sesion = cuerpo<{ uploadId: string }>(subir(id));
+      expect(estado(pedir('PUT', `/diagnostics/lab/result-uploads/${sesion.uploadId}/parts/0`, new Blob(['abc'])))).toBe(204);
+      expect(estado(pedir('POST', `/diagnostics/lab/result-uploads/${sesion.uploadId}/complete`))).toBe(201);
+      expect(estadoDe(id)).toBe('UPLOADED');
+    });
+
+    it('cancelar guarda el motivo; rechazar sólo se puede con la orden recibida', () => {
+      const borrador = ordenEn('DRAFT', 0);
+      const cancelada = cuerpo<Orden>(paso(borrador, 'CANCEL', 'Pedida por error'));
+      expect(cancelada.status).toBe('CANCELLED');
+      expect(cancelada.reason).toBe('Pedida por error');
+
+      const recibida = ordenEn('RECEIVED', 1);
+      const rechazada = cuerpo<Orden>(paso(recibida, 'REJECT', 'Muestra insuficiente'));
+      expect(rechazada.status).toBe('REJECTED');
+      expect(rechazada.reason).toBe('Muestra insuficiente');
+    });
+
+    it('rechaza un paso inventado y una cuenta ajena al laboratorio', () => {
+      const id = ordenEn('DRAFT', 0);
+      expect(estado(paso(id, 'ARCHIVE'))).toBe(400);
+      expect(estado(pedir('GET', '/diagnostics/lab/orders', {}, farmacia))).toBe(403);
+      expect(estado(paso(id, 'RECEIVE', undefined, farmacia))).toBe(403);
+      expect(estado(paso('no-existe', 'RECEIVE'))).toBe(404);
+      expect(estadoDe(id)).toBe('DRAFT');
+    });
   });
 
   it('decide cómo mirar un archivo por extensión y, si no, por tipo', () => {

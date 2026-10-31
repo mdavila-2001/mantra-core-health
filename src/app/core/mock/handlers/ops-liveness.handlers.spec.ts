@@ -2,88 +2,57 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, isMockReply, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
-import { estadoGeneral, registrarVidaDeInstancias, vidaSimulada } from './ops-liveness.handlers';
-import type {
-  InstancesLiveness,
-  LivenessState,
-} from '../../data-access/admin-portal/ops-liveness.types';
+import { registrarSondaDeVida, sondaDeVidaSimulada } from './ops-liveness.handlers';
+import type { InstanceLiveness } from '../../data-access/admin-portal/ops-liveness.types';
 
-describe('sonda de vida demo: mismas reglas que /admin/ops/instances/liveness', () => {
+describe('sonda de vida simulada: mismo contrato que /admin/ops/instances/liveness', () => {
   const router = new MockRouter();
-  registrarVidaDeInstancias(router);
+  registrarSondaDeVida(router);
   const admin = buscarUsuario('superadmin')!;
 
-  function pedir(): InstancesLiveness {
-    const match = router.match('GET', '/admin/ops/instances/liveness');
-    if (match === null) throw new Error('No existe GET /admin/ops/instances/liveness');
-    const r = match.handler({
-      method: 'GET',
-      path: '/admin/ops/instances/liveness',
-      params: match.params,
-      query: new URLSearchParams(),
-      body: null,
-      headers: new HttpHeaders(),
-      user: admin,
-    } satisfies MockRequest);
-    return (isMockReply(r) ? r.body : r) as InstancesLiveness;
+  function pedir(): InstanceLiveness {
+    const path = '/admin/ops/instances/liveness';
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    const r = match.handler({ method: 'GET', path, params: match.params, query: new URLSearchParams(), body: null, headers: new HttpHeaders(), user: admin } satisfies MockRequest);
+    expect(isMockReply(r)).toBe(false);
+    return r as InstanceLiveness;
   }
 
-  it('cubre los cuatro estados y cada dato sintético se declara como simulado', () => {
-    const vida = pedir();
-    const estados = new Set(vida.instances.map((i) => i.state));
-    expect([...estados].sort()).toEqual(['CAIDA', 'DEGRADADA', 'SIN_DATO', 'VIVA']);
-    expect(vida.instances.every((i) => i.evidence.startsWith('SIMULADO'))).toBe(true);
-    expect(vida.notMeasured.length).toBeGreaterThan(0);
+  it('responde el contrato v1 con los cuatro estados y el total que cierra', () => {
+    const r = pedir();
+    expect(r.modelVersion).toBe('instance-liveness/v1');
+    expect(r.heartbeatStore).toEqual({ status: 'up', reason: null });
+    const { VIVA, DEGRADADA, CAIDA, SIN_DATO, total } = r.summary;
+    expect(VIVA + DEGRADADA + CAIDA + SIN_DATO).toBe(total);
+    expect(total).toBe(r.instances.length);
+    for (const estado of ['VIVA', 'DEGRADADA', 'CAIDA', 'SIN_DATO'] as const) {
+      expect(r.instances.some((i) => i.state === estado)).toBe(true);
+    }
   });
 
-  it('el estado de un worker sale de su edad y de los umbrales declarados', () => {
-    const vida = vidaSimulada(new Date('2026-10-30T12:00:00.000Z'));
-    const { liveSeconds, degradedSeconds } = vida.thresholds;
-    for (const i of vida.instances.filter((x) => x.type === 'worker')) {
+  it('con una obligatoria caída el veredicto es CRÍTICO', () => {
+    const r = pedir();
+    expect(r.instances.some((i) => i.required && i.state === 'CAIDA')).toBe(true);
+    expect(r.overall).toBe('CRITICO');
+  });
+
+  it('las fechas salen del reloj y la edad coincide con el último latido', () => {
+    const ahora = Date.UTC(2026, 9, 31, 12, 0, 0);
+    const r = sondaDeVidaSimulada(ahora);
+    expect(r.evaluatedAt).toBe('2026-10-31T12:00:00.000Z');
+    for (const i of r.instances) {
       if (i.ageSeconds === null) {
-        // Sin latido: nunca VIVA ni CAIDA.
-        expect(i.state).toBe('SIN_DATO');
         expect(i.lastHeartbeatAt).toBeNull();
-        expect(i.cause).toBe('NEVER_SEEN');
       } else {
-        expect(i.state).toBe(
-          i.ageSeconds <= liveSeconds
-            ? 'VIVA'
-            : i.ageSeconds <= degradedSeconds
-              ? 'DEGRADADA'
-              : 'CAIDA',
-        );
-        expect(new Date(vida.evaluatedAt).getTime() - new Date(i.lastHeartbeatAt!).getTime()).toBe(
-          i.ageSeconds * 1000,
-        );
+        expect(new Date(i.lastHeartbeatAt!).getTime()).toBe(ahora - i.ageSeconds * 1000);
       }
     }
   });
 
-  it('el estado general sale de las requeridas: con una caída es CAIDA y la opcional sin dato no pesa', () => {
-    const vida = pedir();
-    expect(vida.overall).toBe('CAIDA');
-    expect(vida.overall).toBe(estadoGeneral(vida.instances));
-    const opcional = vida.instances.find((i) => !i.required)!;
-    expect(opcional.state).toBe('SIN_DATO');
-    expect(estadoGeneral(vida.instances.filter((i) => i.state === 'VIVA' || !i.required))).toBe(
-      'VIVA',
-    );
-  });
-
-  describe('estadoGeneral (nunca VIVA sin evidencia)', () => {
-    const req = (state: LivenessState) => ({ required: true, state });
-    it.each([
-      [[req('VIVA'), req('VIVA')], 'VIVA'],
-      [[req('VIVA'), req('DEGRADADA')], 'DEGRADADA'],
-      [[req('VIVA'), req('CAIDA'), req('DEGRADADA')], 'CAIDA'],
-      [[req('SIN_DATO'), req('SIN_DATO')], 'SIN_DATO'],
-      [[req('VIVA'), req('SIN_DATO')], 'DEGRADADA'],
-      // Límite: ninguna requerida (o lista vacía) no es VIVA, es no saber.
-      [[], 'SIN_DATO'],
-      [[{ required: false, state: 'VIVA' as LivenessState }], 'SIN_DATO'],
-    ] as const)('%j → %s', (instancias, esperado) => {
-      expect(estadoGeneral(instancias)).toBe(esperado);
-    });
+  it('está marcado como simulado y declara lo que no mide', () => {
+    const r = pedir();
+    expect(r.instances.every((i) => i.causeDetail.startsWith('Simulado:'))).toBe(true);
+    expect(r.notMeasured).toContain('replicasOfApi');
   });
 });

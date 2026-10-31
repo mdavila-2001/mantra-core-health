@@ -278,6 +278,14 @@ export class IamClient {
       // El consultorio propio. Va acá por lo mismo que los tres de arriba: lo
       // que el contrato declara y esta lista no repita se descarta en silencio.
       ...(registration.ownSite === undefined ? {} : { ownSite: registration.ownSite }),
+      // Dónde dice trabajar: instituciones (slugs públicos) y aseguradoras.
+      // Mismo motivo que el consultorio: sin este renglón no viajarían.
+      ...(registration.institutionSlugs === undefined
+        ? {}
+        : { institutionSlugs: registration.institutionSlugs }),
+      ...(registration.insurerCarrierIds === undefined
+        ? {}
+        : { insurerCarrierIds: registration.insurerCarrierIds }),
       licenseNumber: registration.licenseNumber,
       sedesLicenseNumber: registration.sedesLicenseNumber,
       ...(registration.regulatoryAuthority === undefined
@@ -753,6 +761,21 @@ export class IamClient {
         items: body.items.map(toUserListItem),
       })),
     );
+  }
+
+  /**
+   * `GET /iam/users/:id` — la ficha de una cuenta, reducida a lo que la vista
+   * usa (la misma forma que una fila del listado).
+   *
+   * Es lo que deja mostrar **a quién** corresponde un `userId` crudo, como el
+   * que devuelve la plantilla de una organización. Exige `SECURITY_ADMIN`:
+   * quien no lo tiene recibe `403`, y la pantalla tiene que degradar a «nombre
+   * no disponible», nunca al uuid.
+   */
+  getUser(userId: string): Observable<UserListItem> {
+    return this.http
+      .get<ConNulos<WireUserListItem>>(this.url(`/iam/users/${encodeURIComponent(userId)}`))
+      .pipe(map(toUserListItem));
   }
 
   private url(path: string): string {

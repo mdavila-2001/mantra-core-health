@@ -72,6 +72,8 @@ describe('ShellLayout', () => {
           // N-01: los dos destinos que se mudaron a la cabecera.
           { path: 'tutorials', children: [] },
           { path: 'messaging', children: [] },
+          // Un hilo abierto: en angosto, la flecha del armazón se esconde.
+          { path: 'messaging/:conversationId', children: [] },
           // Atajos de la cabecera que cuelgan de `/my-account` (27/10/2026), y
           // el carrito, que cuelga de «Farmacia».
           { path: 'my-account/spending', children: [] },
@@ -1062,6 +1064,29 @@ describe('ShellLayout', () => {
         await ir('/dashboard');
         expect(flecha()).toBeNull();
       });
+
+      /**
+       * En un hilo de chat, en angosto, el hilo trae su «‹» a la bandeja justo
+       * debajo: la del armazón lleva la marca con la que la hoja la esconde en
+       * angosto. Sólo en el hilo: la bandeja y el resto de las pantallas la
+       * siguen mostrando sin condiciones.
+       */
+      it('en un hilo de chat se marca para esconderse en angosto, y sólo ahí', async () => {
+        await ir('/messaging/c-1');
+        expect(flecha()?.classList.contains('app-header__volver--hilo')).toBe(true);
+
+        await ir('/messaging');
+        expect(flecha()?.classList.contains('app-header__volver--hilo')).toBe(false);
+
+        await ir('/my-account');
+        expect(flecha()?.classList.contains('app-header__volver--hilo')).toBe(false);
+      });
+
+      it('la hoja la esconde sólo por debajo del corte en que el hilo ocupa la pantalla', () => {
+        raiz();
+        const hoja = [...document.querySelectorAll('style')].map((estilo) => estilo.textContent ?? '').join('\n');
+        expect(hoja).toMatch(/@media[^{]*max-width:\s*60rem[^{]*\{\s*\.app-header__volver--hilo[^{]*\{\s*display:\s*none/u);
+      });
     });
 
     /**
@@ -1678,6 +1703,52 @@ describe('ShellLayout', () => {
         a.getAttribute('data-route'),
       );
       expect(rutas).not.toContain('/my-account/invoices');
+    });
+
+    /**
+     * «Mis solicitudes» (propietario, 01/10/2026) es para paciente, médico,
+     * laboratorio e imagenología. La farmacia no presenta solicitudes de
+     * seguro: desde el 30/10/2026 no ve el paraguas, y sí conserva «Mis
+     * facturas», que el pedido del 30/09 incluye a toda organización.
+     */
+    it.each([
+      ['la farmacia', ['USER'], { 't-1': 'PHARMACY' }, false],
+      ['el paciente', ['PATIENT'], undefined, true],
+      ['el médico de una clínica', ['PRACTITIONER'], { 't-1': 'CLINIC' }, true],
+      ['el laboratorio', ['USER'], { 't-1': 'DIAGNOSTIC_CENTER' }, true],
+    ])(
+      '«Mis solicitudes» en la cabecera para %s: ¿se ofrece? %s',
+      (_quien, roles, tipos, ofrecida) => {
+        abrirSesion({
+          sub: 'u-1',
+          roles,
+          tenants: ['t-1'],
+          ...(tipos === undefined ? {} : { tenantTypes: tipos }),
+        });
+        fixture.detectChanges();
+
+        const enlace = raiz().querySelector<HTMLAnchorElement>(
+          '[data-testid="header-solicitudes"]',
+        );
+        expect(enlace !== null).toBe(ofrecida);
+        if (enlace !== null) {
+          expect(enlace.getAttribute('href')).toBe('/my-account/requests');
+        }
+      },
+    );
+
+    it('la farmacia conserva «Mis facturas» aunque pierda «Mis solicitudes»', () => {
+      abrirSesion({
+        sub: 'u-1',
+        roles: ['USER'],
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'PHARMACY' },
+      });
+      fixture.detectChanges();
+
+      expect(raiz().querySelector('[data-testid="header-facturas"]')?.getAttribute('href')).toBe(
+        '/my-account/invoices',
+      );
     });
 
     it('al paciente «Mis facturas» le llega dentro de «Mis gastos», no como otro atajo (27/10/2026)', () => {

@@ -84,6 +84,15 @@
   color: var(--text-success, var(--text-primary));
 }
 
-.centro__estado-global[data-estado='NOT_READY'] {
+.centro__estado-global[data-estado='NOT_READY'],
+.centro__estado-global[data-estado='CRITICO'] {
   color: var(--text-danger, var(--text-primary));
+}
+
+.centro__estado-global[data-estado='OK'] {
+  color: var(--st-success-fg);
+}
+
+.centro__estado-global[data-estado='ATENCION'] {
+  color: var(--st-warning-fg);
 }

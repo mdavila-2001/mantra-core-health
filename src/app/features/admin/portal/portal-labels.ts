@@ -92,6 +92,35 @@ export const accionSobreTabla = tabla({
   BORRA: { label: 'Borra', tone: 'error' },
 });
 
+/** Si una etapa del ciclo de la petición alcanza a una operación concreta. */
+export const cycleApplicability = tabla({
+  APLICA: { label: 'Aplica', tone: 'success' },
+  NO_APLICA: { label: 'No aplica', tone: 'secondary' },
+  NO_DETERMINABLE: { label: 'No determinable desde el inventario', tone: 'warning' },
+});
+
+/** Qué clase de operación es; derivado de `datos[].operacion`, no es un campo de la API. */
+export const operationKindLabel = tabla({
+  SOLO_LECTURA: { label: 'Sólo lectura', tone: 'info' },
+  ESCRITURA: { label: 'Escribe en la base', tone: 'warning' },
+  DESTRUCTIVA: { label: 'Destructiva (borra)', tone: 'error' },
+  SIN_DATO: { label: 'Sin dato: no se derivaron tablas', tone: 'secondary' },
+});
+
+/** Los tipos de requerimiento que el generador declara antes de atender. */
+export const requirementKind = tabla({
+  AUTENTICACION: { label: 'Autenticación', tone: 'info' },
+  ROL: { label: 'Rol', tone: 'info' },
+  TENANT: { label: 'Tenant', tone: 'info' },
+  IDENTIDAD_VERIFICADA: { label: 'Identidad verificada', tone: 'warning' },
+  CABECERA: { label: 'Cabecera', tone: 'secondary' },
+  PARAMETRO_QUERY: { label: 'Parámetro de consulta', tone: 'secondary' },
+  PARAMETRO_RUTA: { label: 'Parámetro de ruta', tone: 'secondary' },
+  CUERPO: { label: 'Cuerpo', tone: 'secondary' },
+  VALIDACION: { label: 'Validación', tone: 'secondary' },
+  RATE_LIMIT: { label: 'Límite de tasa', tone: 'warning' },
+});
+
 export const estadoOrm = tabla({
   COINCIDE: { label: 'Coincide', tone: 'success' },
   DIVERGE: { label: 'Diverge', tone: 'warning' },

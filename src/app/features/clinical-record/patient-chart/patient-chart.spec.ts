@@ -243,6 +243,16 @@ describe('PatientChart', () => {
     responderPlantillasDeEspecialidad();
     responderPerfilProfesional();
     responderFavoritosDeReceta();
+    // El estado del consentimiento dirigido de cada ítem se lee aparte: se
+    // responde vacío para que `verify()` siga hablando de lo que esta prueba mira.
+    // Si la persona cambió en medio, la lectura vieja quedó cancelada.
+    for (const consent of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
+      if (!consent.cancelled) consent.flush({ items: [] });
+    }
+    // La pestaña «Derivaciones» trae su propia lista (`GET /referrals`).
+    for (const referrals of http.match((r) => r.url === '/referrals')) {
+      if (!referrals.cancelled) referrals.flush([]);
+    }
     http.verify();
   });
 
@@ -375,8 +385,28 @@ describe('PatientChart', () => {
       harness.detectChanges();
 
       const rotulos = tabs().map((tab) => tab.textContent?.trim().split(' (')[0]);
-      expect(rotulos).toHaveLength(9);
+      // Ocho bloques, «Derivaciones» (v4266) y, al final, «Servicios recibidos».
+      expect(rotulos).toHaveLength(10);
+      expect(rotulos.at(-2)).toBe('Derivaciones');
       expect(rotulos.at(-1)).toBe('Servicios recibidos');
+    });
+
+    it('tampoco lee las derivaciones al abrir la ficha: sólo al abrir su pestaña', async () => {
+      abrirSesion();
+      responderNombre();
+      responderExpediente();
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      http.expectNone((r) => r.url === '/referrals');
+
+      tabs().at(-2)!.click();
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      const lectura = http.expectOne((r) => r.url === '/referrals');
+      expect(lectura.request.params.get('patientProfileId')).toBe('p-1');
+      lectura.flush([]);
+      harness.detectChanges();
+      expect(harness.routeNativeElement?.querySelector('[data-testid="expediente-derivaciones"]')).not.toBeNull();
     });
 
     it('no los lee al abrir la ficha: el contenido proyectado se crea aun cerrado', () => {
@@ -2248,6 +2278,58 @@ describe('PatientChart', () => {
           req.flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
         }
       }
+    });
+  });
+
+  /**
+   * El formulario de receta sólo ofrece diagnósticos confirmados, y el
+   * expediente no le decía cuáles lo estaban: quedaba siempre en «Otro
+   * motivo». Y la lista de recetas no mostraba para qué era cada una.
+   */
+  describe('lo que el expediente le pasa al formulario de receta', () => {
+    const CONCEPTOS_CON_CERTEZA = {
+      ...CONCEPTOS,
+      items: [
+        ...CONCEPTOS.items,
+        { conceptId: 'v-confirmado', code: 'COND_CONFIRMED', display: 'Confirmado', codeSystemVersionId: 'v1' },
+        { conceptId: 'v-provisional', code: 'COND_PROVISIONAL', display: 'Provisional', codeSystemVersionId: 'v1' },
+        { conceptId: 'med-x', code: 'MED-X', display: 'Metformina 850 mg', codeSystemVersionId: 'v1' },
+      ],
+    };
+
+    function pintar(): void {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          conditions: [
+            { ...RESUMEN.conditions[0], verificationStatusConceptId: 'v-confirmado' },
+            { id: 'c-2', codeConceptId: 'obs-peso', verificationStatusConceptId: 'v-provisional', createdAt: '2026-01-04T00:00:00.000Z' },
+          ],
+          medicationRequests: [
+            { id: 'm-1', medicationConceptId: 'med-x', statusConceptId: 'st-activa', indicationConditionId: 'c-1', createdAt: '2026-01-05T00:00:00.000Z' },
+          ],
+        },
+        conceptos: CONCEPTOS_CON_CERTEZA,
+      });
+      harness.fixture.detectChanges();
+    }
+
+    it('marca confirmados los diagnósticos que lo están, y sólo esos', () => {
+      pintar();
+      const opciones = interno<() => readonly { id: string; confirmado?: boolean }[]>('diagnosticosParaReceta')();
+      expect(opciones.map((o) => [o.id, o.confirmado])).toEqual([
+        ['c-1', true],
+        ['c-2', false],
+      ]);
+    });
+
+    it('cada receta dice para qué diagnóstico es', () => {
+      pintar();
+      const [receta] = interno<() => readonly { vinculo?: string | null; vinculoEsDiagnostico?: boolean }[]>(
+        'recetasEnFicha',
+      )();
+      expect(receta.vinculo).toBe('Diabetes tipo 2');
+      expect(receta.vinculoEsDiagnostico).toBe(true);
     });
   });
 });

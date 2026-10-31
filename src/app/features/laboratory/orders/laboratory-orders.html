@@ -1,0 +1,187 @@
+<app-page-header
+  title="Órdenes"
+  subtitle="Reciba cada orden, márquela como procesada, suba sus resultados y descárguelos."
+/>
+
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
+     (`docs/components/composition-rules.md` §5). Cada pestaña es un estado. -->
+<app-card padding="lg" class="orders__card" data-testid="lab-orders-card">
+  <app-tabs
+    appearance="browser"
+    [selectedIndex]="selected()"
+    (selectedIndexChange)="select($event)"
+    data-testid="lab-orders-tabs"
+  >
+    @for (tab of tabs; track tab; let i = $index) {
+      <app-tab [label]="labels[tab] + ' (' + counts()[i] + ')'">
+        @if (selected() === i) {
+          <ng-container [ngTemplateOutlet]="board" />
+        }
+      </app-tab>
+    }
+  </app-tabs>
+</app-card>
+
+<ng-template #board>
+  <div class="orders">
+    <div class="orders__search">
+      <app-search-field
+        label="Buscar por paciente o estudio"
+        placeholder="Paciente o estudio"
+        data-testid="lab-orders-search"
+        (searched)="search.set($event)"
+      />
+    </div>
+
+    @if (actionError(); as message) {
+      <app-alert
+        tone="error"
+        dismissible
+        data-testid="lab-orders-error"
+        (dismissed)="actionError.set(null)"
+      >
+        {{ message }}
+      </app-alert>
+    }
+
+    @if (queue.items().length > 0) {
+      <section
+        class="orders__uploads"
+        aria-label="Subida de resultados"
+        data-testid="lab-orders-uploads"
+      >
+        <h2 class="orders__uploads-title">
+          @if (queue.active()) {
+            Subiendo resultados · {{ queue.totals().done }} de {{ queue.totals().files }}
+          } @else {
+            Resultados subidos · {{ queue.totals().done }} de {{ queue.totals().files }}
+          }
+        </h2>
+        <ul class="orders__uploads-list">
+          @for (item of queue.items(); track item.localId) {
+            <li class="orders__upload" [attr.data-status]="item.status">
+              <span class="orders__upload-name">{{ item.displayName }}</span>
+              <span class="orders__upload-meta">
+                @if (uploadTargetLabel(item.target.orderId); as target) {
+                  {{ target }} ·
+                }
+                {{ formatBytes(item.file.size) }} ·
+                @switch (item.status) {
+                  @case ('done') {
+                    Subido
+                  }
+                  @case ('error') {
+                    No se pudo subir{{ item.error ? ': ' + item.error : '' }}
+                  }
+                  @case ('canceled') {
+                    Cancelado
+                  }
+                  @case ('paused') {
+                    En pausa
+                  }
+                  @default {
+                    {{ formatBytes(item.sentBytes) }} enviados
+                  }
+                }
+              </span>
+              @if (item.status === 'uploading' || item.status === 'queued') {
+                <progress
+                  class="orders__upload-bar"
+                  max="100"
+                  [value]="percentOf(item)"
+                  [attr.aria-label]="'Avance de ' + item.displayName"
+                ></progress>
+                <button
+                  type="button"
+                  class="orders__upload-btn"
+                  (click)="queue.cancel(item.localId)"
+                >
+                  Cancelar<span class="sr-only"> la subida de {{ item.displayName }}</span>
+                </button>
+              }
+              @if (item.status === 'error' || item.status === 'paused') {
+                <button
+                  type="button"
+                  class="orders__upload-btn"
+                  (click)="queue.resume(item.localId)"
+                >
+                  Reintentar<span class="sr-only"> la subida de {{ item.displayName }}</span>
+                </button>
+              }
+            </li>
+          }
+        </ul>
+        @if (!queue.active()) {
+          <button type="button" class="orders__upload-btn" (click)="queue.clearFinished()">
+            Limpiar la lista
+          </button>
+        }
+      </section>
+    }
+
+    <app-data-table
+      [state]="table()"
+      [columns]="columns()"
+      [trackBy]="trackByOrder"
+      [rowLabel]="rowName"
+      caption="Órdenes del laboratorio"
+      stackedOnMobile
+      (retry)="reload()"
+      (refresh)="reload()"
+    />
+  </div>
+</ng-template>
+
+<!-- Un solo selector de archivos para toda la pantalla: «Subir resultados» de
+     cualquier fila lo abre. Sin tope de tamaño; la cola los manda por partes. -->
+<input
+  #fileInput
+  type="file"
+  multiple
+  class="sr-only"
+  tabindex="-1"
+  aria-hidden="true"
+  data-testid="lab-orders-file-input"
+  (change)="onFilesChosen($event)"
+/>
+
+<ng-template #patientCell let-order>
+  <strong class="orders__patient">{{ order.patientName }}</strong>
+  <span class="orders__secondary">Pidió {{ order.requesterName }}</span>
+</ng-template>
+
+<ng-template #studyCell let-order>{{ order.studyName }}</ng-template>
+
+<ng-template #requestedCell let-order>
+  <time [attr.datetime]="order.requestedAt">{{
+    order.requestedAt | date: 'dd/MM/yyyy HH:mm'
+  }}</time>
+</ng-template>
+
+<ng-template #statusCell let-order>
+  <app-badge
+    size="sm"
+    [variant]="statusBadge(order).variant"
+    [value]="statusBadge(order).label"
+    data-testid="lab-order-status"
+  />
+  @if (order.reason) {
+    <span class="orders__secondary">{{ order.reason }}</span>
+  } @else if (order.files.length > 0) {
+    <span class="orders__secondary">
+      {{ order.files.length === 1 ? '1 archivo' : order.files.length + ' archivos' }}
+    </span>
+  }
+</ng-template>
+
+<ng-template #actionsCell let-order>
+  @if (actionsOf(order); as acciones) {
+    @if (acciones.length > 0) {
+      <app-row-actions
+        [actions]="busyOrderId() === order.orderId ? disabledAll(acciones) : acciones"
+        [fila]="rowName(order)"
+        (actionSelected)="run($event, order)"
+      />
+    }
+  }
+</ng-template>

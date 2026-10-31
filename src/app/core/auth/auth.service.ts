@@ -170,7 +170,11 @@ export class AuthService {
   discardLocalSession(): void {
     this.session.clear();
     this.storage.clear();
-    // Un limpiador roto no puede impedir cerrar sesión ni frenar a los demás.
+    this.runCleaners();
+  }
+
+  /** Un limpiador roto no puede impedir cerrar sesión ni frenar a los demás. */
+  private runCleaners(): void {
     this.cleaners.forEach((cleaner) => {
       try {
         cleaner();
@@ -210,7 +214,12 @@ export class AuthService {
    * No llama a la API: la otra pestaña ya lo hizo. Solo limpia lo local.
    */
   watchSessionClosedElsewhere(): () => void {
-    return this.storage.onClearedInAnotherTab(() => this.session.clear());
+    return this.storage.onClearedInAnotherTab(() => {
+      this.session.clear();
+      // El almacenamiento compartido ya lo vació la otra pestaña, pero lo que cada pestaña guarda en memoria
+      // (filtros, alcance y favoritos de reportería, plantillas) es suyo y sobreviviría a la sesión cerrada.
+      this.runCleaners();
+    });
   }
 
   /**

@@ -1,0 +1,143 @@
+:host {
+  display: block;
+}
+
+.importar {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.importar__fallo {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.importar__entrada {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .importar__entrada {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+}
+
+.importar__titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.importar__ayuda p {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+}
+
+.importar__botones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.importar__archivo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 40px;
+  padding-inline: var(--sp-4);
+  border: 1.5px solid var(--brand-primary);
+  border-radius: var(--r-ctrl);
+  color: var(--brand-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.importar__archivo input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.importar__archivo:focus-within {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.importar__texto {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.importar__texto textarea {
+  inline-size: 100%;
+  min-block-size: 12rem;
+  padding: var(--sp-3);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  resize: vertical;
+}
+
+.importar__texto textarea:focus-visible {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.importar__paso {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-5);
+  overflow-x: auto;
+}
+
+.importar__secundario {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.importar__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+}
+
+.importar__tabla caption {
+  text-align: start;
+  padding-block-end: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+.importar__tabla th,
+.importar__tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+  vertical-align: top;
+}
+
+.importar__fila-error td {
+  background: var(--st-error-bg);
+}
+
+.importar__error {
+  display: block;
+  color: var(--st-error-fg);
+}
+
+.importar__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-5);
+}

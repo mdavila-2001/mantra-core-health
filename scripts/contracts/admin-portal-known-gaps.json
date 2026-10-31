@@ -11,11 +11,11 @@
   },
   {
    "call": "GET /admin/ops/instances/liveness",
-   "reason": "Sonda de vida de instancias (franja 2026-10-30, perfil admin medición y gobierno): el controlador ops-instances.controller.ts se está implementando en la API y todavía no está en el openapi de dev. El front la consume con un simulador que cumple el contrato acordado; se borra de acá al ejecutar yarn contract:refresh con la API publicada."
+   "reason": "Sonda de vida de instancias (doc 04-sonda-de-vida §2.4): la API la implementa en paralelo (31/10/2026) y el OpenAPI de dev todavia no la publica."
   },
   {
    "call": "GET /admin/ops/tools",
-   "reason": "Catálogo de herramientas con su salud (misma franja): endpoint en implementación en la API, aún sin openapi en dev. Simulador alineado al contrato acordado; se borra de acá al refrescar el contrato."
+   "reason": "Herramientas de la plataforma (doc 03-herramientas-e-instancias §4.2): la API la implementa en paralelo (31/10/2026) y el OpenAPI de dev todavia no la publica."
   },
   {
    "call": "GET /admin/analytics/devices",

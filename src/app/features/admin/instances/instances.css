@@ -6,30 +6,24 @@
   margin-inline: auto;
 }
 
-.instancias__general {
+.instancias__cabecera {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--e3);
-  margin-block-end: var(--e3);
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-block: var(--e3) var(--e4);
 }
 
-.instancias__general-rotulo {
-  font-weight: 600;
+.instancias__contadores {
+  margin: 0;
   color: var(--text-primary);
+  font-weight: 600;
 }
 
 .instancias__ayuda {
+  margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
-}
-
-.instancias__conteos {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: var(--e3);
-  margin-block: var(--e3) var(--e4);
 }
 
 .instancias__filtros {
@@ -37,36 +31,14 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--e3);
-  margin-block: var(--e3);
+  margin-block-end: var(--e3);
 }
 
-/* En teléfono el selector ocupa su propia fila: compartiéndola con otro control
-   cada opción se angosta hasta cortar su rótulo. */
+/* En teléfono cada selector ocupa su fila; compartiéndola, las opciones se
+   angostan hasta cortar su rótulo. */
 .instancias__filtros app-segmented-control {
-  flex: 1 1 20rem;
-  max-inline-size: 26rem;
-}
-
-.instancias__celda {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-1);
-}
-
-.instancias__codigo {
-  font-family: var(--font-mono, monospace);
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
-.instancias__variables {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  flex: 1 1 18rem;
+  max-inline-size: 36rem;
 }
 
 .instancias__lista {
@@ -74,63 +46,32 @@
   padding-inline-start: var(--e4);
 }
 
-.instancias__grupos {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-  gap: var(--e4);
-  margin-block: var(--e4);
-}
-
-.instancias__grupo {
-  padding: var(--e3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface-alt);
-}
-
-.instancias__grupo-titulo {
-  margin: 0 0 var(--sp-1);
-  font-size: var(--fs-body);
-  font-weight: 600;
-}
-
-.instancias__barras {
-  display: grid;
-  gap: var(--sp-3);
-  margin: var(--sp-3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.instancias__barra {
-  display: grid;
-  gap: var(--sp-1);
-}
-
-.instancias__barra-texto {
+/* Dos renglones en una celda: el nombre y, debajo, el código o el detalle.
+   El contenedor en columna sobrevive a la tabla apilada de teléfono, donde la
+   celda es un flex en fila y los renglones sueltos quedarían uno al lado del otro. */
+.instancias__celda {
   display: flex;
-  justify-content: space-between;
-  gap: var(--sp-3);
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.instancias__nombre,
+.instancias__causa {
+  display: block;
   color: var(--text-primary);
 }
 
-/* La cifra va siempre escrita: la barra es una ayuda, no la información. */
-.instancias__barra-valor {
-  font-variant-numeric: tabular-nums;
+.instancias__codigo {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   color: var(--text-secondary);
+  overflow-wrap: anywhere;
 }
 
-.instancias__barra-pista {
-  display: block;
-  block-size: var(--sp-2);
-  overflow: hidden;
-  border-radius: var(--r-xs);
-  background: var(--border-subtle);
-}
-
-.instancias__barra-relleno {
-  display: block;
-  block-size: 100%;
-  min-inline-size: 2px;
-  background: var(--brand-primary);
+app-alert + app-alert,
+app-alert + .instancias__cabecera,
+app-data-table + app-alert {
+  margin-block-start: var(--e3);
 }

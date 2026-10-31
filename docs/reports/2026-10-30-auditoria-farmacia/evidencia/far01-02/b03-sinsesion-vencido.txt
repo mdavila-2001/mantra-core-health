@@ -1,0 +1,23 @@
+{
+ "tag": "b03-sinsesion-vencido",
+ "state": "none",
+ "requested": "/rx/2eHR61jEkAm5RUGBAvCzRyPX41S7eiKHWyJn8RFZ0Yo",
+ "finalUrl": "http://localhost:4000/rx/<tok43>",
+ "httpStatus": 200,
+ "title": "AloVida - Receta compartida",
+ "robots": [
+  "noindex, nofollow"
+ ],
+ "h": [
+  "Receta compartida"
+ ],
+ "apiCalls": [
+  "GET /public/prescription-shares/<tok43> → 200"
+ ],
+ "externalLinks": []
+}
+---- texto visible ----
+Receta compartida
+Advertencia:
+Esta receta venció
+Ir a AloVida

@@ -1,47 +1,27 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   inject,
   signal,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 
-import { AnalyticsDevicesClient } from '../../../core/data-access/admin-portal/analytics-devices.client';
-import type {
-  DeviceBreakdownItem,
-  DevicesBreakdown,
-  DevicesPortal,
-  DevicesQuery,
-} from '../../../core/data-access/admin-portal/analytics-devices.types';
 import { OpsLivenessClient } from '../../../core/data-access/admin-portal/ops-liveness.client';
-import type {
-  InstanceType,
-  InstancesLiveness,
-  LivenessInstance,
-  LivenessState,
-} from '../../../core/data-access/admin-portal/ops-liveness.types';
+import type { Instance, InstanceLiveness } from '../../../core/data-access/admin-portal/ops-liveness.types';
 import { OpsToolsClient } from '../../../core/data-access/admin-portal/ops-tools.client';
-import type {
-  OpsTool,
-  OpsToolsOverview,
-} from '../../../core/data-access/admin-portal/ops-tools.types';
+import type { OpsTools, Tool } from '../../../core/data-access/admin-portal/ops-tools.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { empty, loading, ready } from '../../../core/view-state/view-state';
+import { empty, loading, ready, stale } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
-import { Select } from '../../../shared/components/atoms/select/select';
-import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
-import type { AlertTone } from '../../../shared/components/molecules/alert/alert.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { MetricCard } from '../../../shared/components/molecules/metric-card/metric-card';
-import type { MetricTone } from '../../../shared/components/molecules/metric-card/metric-card.types';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
@@ -49,103 +29,78 @@ import { DataTable } from '../../../shared/components/organisms/data-table/data-
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { entero, porcentaje } from '../platform/platform-labels';
+import { entero } from '../platform/platform-labels';
 import {
-  CONTEO_DE_VIDA,
-  ESTADOS_DE_VIDA,
-  FILTROS_DE_SALUD,
+  CAUSAS,
+  CHEQUEOS,
+  ESTADO_GENERAL,
+  ESTADOS_DE_CATALOGO,
+  ESTADOS_DE_INSTANCIA,
+  ESTADOS_VIVOS,
+  NO_MEDIDO,
+  TIPOS_DE_HERRAMIENTA,
   TIPOS_DE_INSTANCIA,
-  antiguedad,
-  causaDeVida,
-  estadoDeRegistro,
-  estadoDeVida,
-  etiquetaDeDispositivo,
-  ordenarHerramientas,
-  ordenarInstancias,
-  resumirCriticas,
-  saludDeHerramienta,
-  tipoDeComprobacion,
-  tipoDeHerramienta,
-  tipoDeInstancia,
-  type ResumenCriticas,
-  type Rotulo,
+  VINCULOS,
+  estadoVivo,
+  haceCuanto,
+  queDice,
+  segundosEntre,
+  type Chip,
+  type EstadoVivo,
 } from './instances-labels';
 
-type Rango = '24h' | '7d' | '30d';
-type Criticidad = 'todas' | 'criticas' | 'no-criticas';
+/** Cada cuánto se vuelve a pedir, salvo que la persona prefiera movimiento reducido. */
+export const INTERVALO_DE_REFRESCO_MS = 30_000;
 
-/** Una fila de la tabla de instancias, ya formateada: la tabla sólo la pinta. */
-interface FilaInstancia {
+/** Pasado esto desde `evaluatedAt`, el dato se declara atrasado (S7) y no fresco. */
+const ATRASADO_TRAS_MS = 2 * INTERVALO_DE_REFRESCO_MS;
+
+type Criticidad = 'todas' | 'criticas' | 'no-criticas';
+type FiltroVivo = 'todos' | EstadoVivo;
+
+/** Una fila de la tabla de instancias, ya en palabras: la tabla sólo la pinta. */
+export interface FilaInstancia {
   readonly id: string;
-  readonly required: boolean;
-  readonly type: string;
-  readonly estado: Rotulo;
-  readonly edad: string;
-  readonly momento: string | null;
-  readonly umbral: string;
+  readonly label: string;
+  readonly tipo: string;
+  readonly requerida: string;
+  readonly estado: Chip;
+  readonly ultimoLatido: string | null;
+  readonly antiguedad: string;
   readonly causa: string;
-  readonly codigoCausa: string | null;
-  readonly evidence: string;
+  readonly detalle: string;
+  readonly fuente: string;
 }
 
-/** Una fila de la tabla de herramientas. */
-interface FilaHerramienta {
+/** Una fila de la tabla de herramientas, al estilo Atlas. */
+export interface FilaHerramienta {
   readonly code: string;
   readonly name: string;
-  readonly kind: string;
-  readonly isCritical: boolean;
-  readonly registro: Rotulo;
-  readonly salud: Rotulo;
-  readonly comprobacion: string;
-  readonly observedAt: string | null;
-  readonly faltan: readonly string[];
+  readonly tipo: string;
+  readonly vivo: EstadoVivo;
+  readonly estadoVivo: Chip;
+  readonly catalogo: string;
+  readonly critica: boolean;
+  readonly vinculo: string;
+  readonly chequeo: string;
+  readonly queDice: string;
+  readonly latencia: string;
 }
 
-/** Un desglose de dispositivos listo para pintar: título, filas con su parte del total. */
-interface GrupoDeDispositivos {
-  readonly id: string;
-  readonly titulo: string;
-  readonly ayuda: string;
-  readonly filas: readonly {
-    readonly clave: string;
-    readonly etiqueta: string;
-    readonly contextos: string;
-    readonly parte: string;
-    readonly ancho: string;
-  }[];
-}
-
-const RANGO_DIAS: Readonly<Record<Rango, number>> = { '24h': 1, '7d': 7, '30d': 30 };
-
-const FILTRO_TODOS = null;
+type CeldaInstancia = TemplateRef<{ $implicit: FilaInstancia }>;
+type CeldaHerramienta = TemplateRef<{ $implicit: FilaHerramienta }>;
 
 /**
- * Instancias y herramientas: qué procesos y servicios están vivos (con su
- * antigüedad y su causa), qué herramientas usa la plataforma y cuáles son
- * críticas, y desde qué dispositivos se usa. Cada bloque se pide por su cuenta:
- * que uno falle o no tenga permiso no apaga a los demás.
- *
- * Regla de honestidad: «viva» es lo que el servidor puede probar con evidencia
- * fresca; sin evidencia la pantalla dice «sin dato», nunca «todo bien». El
- * estado nunca se comunica sólo con color.
+ * Instancias y herramientas de la plataforma, como en el portal de Atlas:
+ * qué procesos hay (API, workers, bases, servicios) y si cada uno tiene vida
+ * según la sonda; y qué herramientas externas usa la API, si están
+ * configuradas y si respondieron. Los dos juicios los hace el servidor; acá se
+ * muestran con su antigüedad, y lo que la sonda no cubre se declara como «no
+ * medido», nunca como vivo.
  */
 @Component({
   selector: 'app-instances',
-  imports: [
-    DatePipe,
-    AppButton,
-    Badge,
-    Alert,
-    Card,
-    MetricCard,
-    SegmentedControl,
-    Select,
-    Tab,
-    Tabs,
-    DataTable,
-    PageHeader,
-    ViewStateHost,
-  ],
+  imports: [DatePipe, AppButton, Badge, Alert, Card, SegmentedControl, Tabs, Tab, DataTable, PageHeader, ViewStateHost],
   templateUrl: './instances.html',
   styleUrl: './instances.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -153,379 +108,223 @@ const FILTRO_TODOS = null;
 export class Instances {
   private readonly livenessClient = inject(OpsLivenessClient);
   private readonly toolsClient = inject(OpsToolsClient);
-  private readonly devicesClient = inject(AnalyticsDevicesClient);
-  private readonly route = inject(ActivatedRoute);
+  private readonly documento = inject(DOCUMENT);
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly entero = entero;
-  protected readonly porcentaje = porcentaje;
-  protected readonly antiguedad = antiguedad;
-  protected readonly estadoDeVida = estadoDeVida;
-  protected readonly conteoDeVida = CONTEO_DE_VIDA;
-  protected readonly estadosDeVida = ESTADOS_DE_VIDA;
+  protected readonly noMedido = (clave: string): string => NO_MEDIDO[clave] ?? clave;
 
   protected readonly pestana = signal(0);
-
-  protected readonly vida = signal<ViewState<InstancesLiveness>>(loading());
-  protected readonly herramientas = signal<ViewState<OpsToolsOverview>>(loading());
-  protected readonly dispositivos = signal<ViewState<DevicesBreakdown>>(loading());
-
-  /* -- Filtros ----------------------------------------------------------- */
-  protected readonly tipo = signal<InstanceType | null>(FILTRO_TODOS);
-  protected readonly estado = signal<LivenessState | null>(FILTRO_TODOS);
   protected readonly criticidad = signal<Criticidad>('todas');
-  protected readonly salud = signal<string | null>(FILTRO_TODOS);
-  protected readonly rango = signal<Rango>('7d');
-  protected readonly portal = signal<DevicesPortal | null>(FILTRO_TODOS);
-
-  protected readonly opcionesTipo: readonly SelectOption<InstanceType | null>[] = [
-    { value: null, label: 'Todos los tipos' },
-    ...TIPOS_DE_INSTANCIA,
-  ];
-  protected readonly opcionesEstado: readonly SelectOption<LivenessState | null>[] = [
-    { value: null, label: 'Todos los estados' },
-    ...ESTADOS_DE_VIDA.map((e) => ({ value: e, label: estadoDeVida(e).label })),
-  ];
+  protected readonly filtroVivo = signal<FiltroVivo>('todos');
   protected readonly opcionesCriticidad = [
     { value: 'todas' as const, label: 'Todas' },
     { value: 'criticas' as const, label: 'Críticas' },
     { value: 'no-criticas' as const, label: 'No críticas' },
   ];
-  protected readonly opcionesSalud: readonly SelectOption<string | null>[] = [
-    { value: null, label: 'Toda la salud' },
-    ...FILTROS_DE_SALUD,
-  ];
-  protected readonly opcionesRango = [
-    { value: '24h' as const, label: '24 h' },
-    { value: '7d' as const, label: '7 días' },
-    { value: '30d' as const, label: '30 días' },
-  ];
-  protected readonly opcionesPortal: readonly SelectOption<DevicesPortal | null>[] = [
-    { value: null, label: 'Web y móvil' },
-    { value: 'WEB', label: 'Sólo web' },
-    { value: 'MOBILE', label: 'Sólo móvil' },
+  protected readonly opcionesVivo = [
+    { value: 'todos' as const, label: 'Todos' },
+    { value: 'UP' as const, label: 'Operativas' },
+    { value: 'DOWN' as const, label: 'Caídas' },
+    { value: 'NO_PROBE' as const, label: 'Sin chequeo' },
+    { value: 'NOT_APPLICABLE' as const, label: 'No aplican' },
   ];
 
-  /* -- Instancias -------------------------------------------------------- */
-  private readonly celdaInstancia =
-    viewChild<TemplateRef<{ $implicit: FilaInstancia }>>('instanciaCell');
-  private readonly celdaEstadoVida =
-    viewChild<TemplateRef<{ $implicit: FilaInstancia }>>('estadoVidaCell');
-  private readonly celdaCausa = viewChild<TemplateRef<{ $implicit: FilaInstancia }>>('causaCell');
+  /** Reloj de la última carga: contra él se mide la antigüedad de cada dato. */
+  protected readonly ahora = signal(Date.now());
+  protected readonly sonda = signal<ViewState<InstanceLiveness>>(loading());
+  protected readonly herramientas = signal<ViewState<OpsTools>>(loading());
 
-  protected readonly hayFiltrosDeInstancias = computed(
-    () => this.tipo() !== null || this.estado() !== null,
-  );
-
-  protected readonly filasInstancias = computed<ViewState<readonly FilaInstancia[]>>(() => {
-    const e = this.vida();
-    if (e.status !== 'ready') return e as ViewState<readonly FilaInstancia[]>;
-    if (e.data.instances.length === 0) {
+  /** Si el dato tiene más de dos refrescos de edad, se dice (S7); sin instancias, se dice por qué (S3). */
+  protected readonly estadoSonda = computed<ViewState<InstanceLiveness>>(() => {
+    const estado = this.sonda();
+    if (estado.status !== 'ready') return estado;
+    if (estado.data.instances.length === 0) {
       return empty(
-        { label: 'Pida a quien opera la API que revise el registro de instancias esperadas.' },
-        'La API no declara ninguna instancia esperada: no hay nada que evaluar, y eso no significa que todo esté bien.',
+        { label: 'Pida a quien opera la API que registre las instancias esperadas.' },
+        'La sonda no tiene instancias registradas que vigilar.',
       );
     }
-    const visibles = ordenarInstancias(e.data.instances).filter(
-      (i) =>
-        (this.tipo() === null || i.type === this.tipo()) &&
-        (this.estado() === null || i.state === this.estado()),
-    );
-    if (visibles.length === 0) {
-      return empty(
-        { label: 'Quite o cambie los filtros de arriba.' },
-        'Ninguna instancia coincide con los filtros elegidos.',
-      );
-    }
-    return ready(visibles.map((i) => this.filaInstancia(i)));
+    return this.conAntiguedad(estado.data, estado.data.evaluatedAt);
   });
 
-  protected readonly columnasInstancias = computed<readonly ColumnDef<FilaInstancia>[]>(() => [
-    { key: 'id', header: 'Instancia', priority: 1, cell: this.celdaInstancia() },
-    { key: 'type', header: 'Tipo', priority: 3 },
-    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstadoVida() },
-    { key: 'edad', header: 'Último latido o sonda', priority: 2 },
-    { key: 'umbral', header: 'Se da por caída después de', priority: 3, align: 'end' },
-    { key: 'causa', header: 'Causa y evidencia', priority: 2, cell: this.celdaCausa() },
-  ]);
-  protected readonly porIdInstancia = (fila: FilaInstancia): string => fila.id;
-  protected readonly porCodigo = (fila: FilaHerramienta): string => fila.code;
-  protected readonly nombreDeInstancia = (fila: FilaInstancia): string =>
-    `${fila.id}: ${fila.estado.label}`;
+  /** Siempre `ready` o un estado sin datos: la antigüedad (S7) la anuncia el anfitrión, una sola vez. */
+  protected readonly filasInstancias = computed<ViewState<readonly FilaInstancia[]>>(() => {
+    const estado = this.estadoSonda();
+    if (estado.status !== 'ready' && estado.status !== 'stale') return estado;
+    return ready(estado.data.instances.map((i) => this.filaInstancia(i, estado.data)));
+  });
 
-  /** Cuántas instancias hay en cada estado (todas, requeridas o no: es un conteo). */
-  protected conteoPorEstado(
-    vida: InstancesLiveness,
-  ): readonly { readonly estado: LivenessState; readonly cantidad: number }[] {
-    return ESTADOS_DE_VIDA.map((estado) => ({
-      estado,
-      cantidad: vida.instances.filter((i) => i.state === estado).length,
-    }));
-  }
-
-  protected tonoDeConteo(estado: LivenessState, cantidad: number): MetricTone {
-    if (cantidad === 0) return 'neutral';
-    const tono = estadoDeVida(estado).tone;
-    return tono === 'secondary' ? 'neutral' : (tono as MetricTone);
-  }
-
-  /** El aviso general: lo que `overall` quiere decir, sin pintar verde lo que no tiene evidencia. */
-  protected avisoGeneral(vida: InstancesLiveness): {
-    readonly tone: AlertTone;
-    readonly titulo: string;
-    readonly texto: string;
-  } {
-    switch (vida.overall) {
-      case 'VIVA':
-        return {
-          tone: 'success',
-          titulo: 'Todas las instancias requeridas tienen evidencia fresca',
-          texto: `«Viva» quiere decir que llegó un latido (o la sonda respondió) dentro de ${vida.thresholds.liveSeconds} s según el reloj de la API. No garantiza que todo funcione.`,
-        };
-      case 'DEGRADADA':
-        return {
-          tone: 'warning',
-          titulo: 'Hay instancias requeridas degradadas o sin evidencia',
-          texto:
-            'Al menos una instancia requerida responde tarde, o no se sabe si vive. Revise las filas marcadas abajo.',
-        };
-      case 'CAIDA':
-        return {
-          tone: 'error',
-          titulo: 'Hay instancias requeridas caídas',
-          texto:
-            'No llegó latido de al menos una instancia requerida dentro del límite. «Caída» quiere decir sin latido recibido, no que se haya observado el proceso detenido.',
-        };
-      default:
-        return {
-          tone: 'warning',
-          titulo: 'Sin datos: no se sabe si las instancias viven',
-          texto:
-            'No hay evidencia de ninguna instancia requerida. Eso no es una buena noticia ni una mala: es que no se midió.',
-        };
-    }
-  }
-
-  /* -- Herramientas ------------------------------------------------------ */
-  private readonly celdaHerramienta =
-    viewChild<TemplateRef<{ $implicit: FilaHerramienta }>>('herramientaCell');
-  private readonly celdaCritica =
-    viewChild<TemplateRef<{ $implicit: FilaHerramienta }>>('criticaCell');
-  private readonly celdaRegistro =
-    viewChild<TemplateRef<{ $implicit: FilaHerramienta }>>('registroCell');
-  private readonly celdaSalud = viewChild<TemplateRef<{ $implicit: FilaHerramienta }>>('saludCell');
-  private readonly celdaFaltan =
-    viewChild<TemplateRef<{ $implicit: FilaHerramienta }>>('faltanCell');
-
-  protected readonly hayFiltrosDeHerramientas = computed(
-    () => this.criticidad() !== 'todas' || this.salud() !== null,
-  );
-
-  protected readonly filasHerramientas = computed<ViewState<readonly FilaHerramienta[]>>(() => {
-    const e = this.herramientas();
-    if (e.status !== 'ready') return e as ViewState<readonly FilaHerramienta[]>;
-    if (e.data.items.length === 0) {
+  protected readonly estadoHerramientas = computed<ViewState<OpsTools>>(() => {
+    const estado = this.herramientas();
+    if (estado.status !== 'ready') return estado;
+    if (estado.data.tools.length === 0) {
       return empty(
         { label: 'Pida a quien opera la API que cargue el catálogo de herramientas.' },
-        'El catálogo de herramientas está vacío: no hay nada que evaluar, y eso no significa que todo esté bien.',
+        'El catálogo de herramientas está vacío.',
       );
     }
-    const visibles = ordenarHerramientas(e.data.items).filter((t) => {
-      if (this.criticidad() === 'criticas' && !t.isCritical) return false;
-      if (this.criticidad() === 'no-criticas' && t.isCritical) return false;
-      const s = this.salud();
-      return s === null || saludDeHerramienta(t.health.state, t.health.checkType).label === s;
-    });
-    if (visibles.length === 0) {
-      return empty(
-        { label: 'Quite o cambie los filtros de arriba.' },
-        'Ninguna herramienta coincide con los filtros elegidos.',
-      );
-    }
-    return ready(visibles.map((t) => this.filaHerramienta(t)));
+    return this.conAntiguedad(estado.data, estado.data.evaluatedAt);
   });
+
+  /** Las filas que pasan los dos filtros; sin ninguna, un vacío que dice cómo salir. */
+  protected readonly filasHerramientas = computed<ViewState<readonly FilaHerramienta[]>>(() => {
+    const estado = this.estadoHerramientas();
+    if (estado.status !== 'ready' && estado.status !== 'stale') return estado;
+    const criticidad = this.criticidad();
+    const vivo = this.filtroVivo();
+    const filas = estado.data.tools
+      .filter((t) => criticidad === 'todas' || (criticidad === 'criticas') === t.isCritical)
+      .filter((t) => vivo === 'todos' || estadoVivo(t) === vivo)
+      .map((t) => this.filaHerramienta(t));
+    if (filas.length === 0) {
+      return empty({ label: 'Elija «Todas» y «Todos» para ver la lista completa.' }, 'Ninguna herramienta coincide con los filtros.');
+    }
+    return ready(filas);
+  });
+
+  /** Herramientas caídas, separadas por criticidad: las críticas van al banner rojo. */
+  protected readonly caidasCriticas = computed<readonly Tool[]>(() => this.caidas().filter((t) => t.isCritical));
+  protected readonly caidasNoCriticas = computed<readonly Tool[]>(() => this.caidas().filter((t) => !t.isCritical));
+
+  /** Instancias caídas que son obligatorias: el detalle del banner de la sonda. */
+  protected readonly instanciasCaidas = computed<readonly Instance[]>(() => {
+    const s = this.sonda();
+    return s.status === 'ready' ? s.data.instances.filter((i) => i.state === 'CAIDA') : [];
+  });
+
+  private readonly estadoInstanciaCell = viewChild<CeldaInstancia>('estadoInstanciaCell');
+  private readonly instanciaCell = viewChild<CeldaInstancia>('instanciaCell');
+  private readonly latidoCell = viewChild<CeldaInstancia>('latidoCell');
+  private readonly causaCell = viewChild<CeldaInstancia>('causaCell');
+  private readonly herramientaCell = viewChild<CeldaHerramienta>('herramientaCell');
+  private readonly vivoCell = viewChild<CeldaHerramienta>('vivoCell');
+  private readonly criticaCell = viewChild<CeldaHerramienta>('criticaCell');
+
+  protected readonly columnasInstancias = computed<readonly ColumnDef<FilaInstancia>[]>(() => [
+    { key: 'label', header: 'Instancia', priority: 1, cell: this.instanciaCell() },
+    { key: 'tipo', header: 'Tipo', priority: 2 },
+    { key: 'estado', header: 'Estado', priority: 1, cell: this.estadoInstanciaCell() },
+    { key: 'ultimoLatido', header: 'Último latido', priority: 2, cell: this.latidoCell() },
+    { key: 'antiguedad', header: 'Antigüedad', priority: 2 },
+    { key: 'causa', header: 'Causa', priority: 1, cell: this.causaCell() },
+  ]);
 
   protected readonly columnasHerramientas = computed<readonly ColumnDef<FilaHerramienta>[]>(() => [
-    { key: 'name', header: 'Herramienta', priority: 1, cell: this.celdaHerramienta() },
-    { key: 'isCritical', header: 'Criticidad', priority: 1, cell: this.celdaCritica() },
-    { key: 'salud', header: 'Salud', priority: 1, cell: this.celdaSalud() },
-    { key: 'comprobacion', header: 'Cómo se comprobó', priority: 2 },
-    { key: 'registro', header: 'En el catálogo', priority: 3, cell: this.celdaRegistro() },
-    { key: 'kind', header: 'Tipo', priority: 3 },
-    { key: 'faltan', header: 'Variables que faltan', priority: 2, cell: this.celdaFaltan() },
+    { key: 'name', header: 'Herramienta', priority: 1, cell: this.herramientaCell() },
+    { key: 'estadoVivo', header: 'Estado en vivo', priority: 1, cell: this.vivoCell() },
+    { key: 'catalogo', header: 'Catálogo', priority: 3 },
+    { key: 'critica', header: 'Crítica', priority: 2, cell: this.criticaCell() },
+    { key: 'vinculo', header: 'Vínculo', priority: 3 },
+    { key: 'chequeo', header: 'Chequeo', priority: 3 },
+    { key: 'queDice', header: 'Qué dice', priority: 1 },
   ]);
-  protected readonly nombreDeHerramienta = (fila: FilaHerramienta): string =>
-    `${fila.name}: ${fila.salud.label}`;
 
-  /** Resumen de las críticas, tal como lo cuenta la portada. */
-  protected resumenDeCriticas(herramientas: OpsToolsOverview): ResumenCriticas {
-    return resumirCriticas(herramientas.items);
-  }
-
-  /* -- Dispositivos ------------------------------------------------------ */
-  protected readonly gruposDeDispositivos = computed<readonly GrupoDeDispositivos[]>(() => {
-    const e = this.dispositivos();
-    if (e.status !== 'ready') return [];
-    const d = e.data;
-    return [
-      this.grupo(
-        'tipo',
-        'Tipo de dispositivo',
-        'Escritorio, móvil o tableta.',
-        d.byDeviceType,
-        d.totals.contexts,
-      ),
-      this.grupo(
-        'so',
-        'Sistema operativo',
-        'Familia del sistema operativo.',
-        d.byOsFamily,
-        d.totals.contexts,
-      ),
-      this.grupo(
-        'navegador',
-        'Navegador',
-        'Familia del navegador (no aplica a la app móvil).',
-        d.byBrowserFamily,
-        d.totals.contexts,
-      ),
-      this.grupo(
-        'version',
-        'Versión de la app',
-        'Sólo la app móvil informa su versión.',
-        d.byAppVersion,
-        d.totals.contexts,
-      ),
-    ];
-  });
-
-  /** Sin contextos, la pestaña lo dice con la ventana; los bots solos no la llenan. */
-  protected readonly estadoDispositivos = computed<ViewState<DevicesBreakdown>>(() => {
-    const e = this.dispositivos();
-    if (e.status === 'ready' && e.data.totals.contexts === 0 && e.data.totals.bots === 0) {
-      return empty(
-        { label: 'Pruebe con una ventana más amplia.' },
-        'Todavía no hay contextos de cliente medidos en esta ventana.',
-      );
-    }
-    return e;
-  });
+  protected readonly porIdInstancia = (f: FilaInstancia): string => f.id;
+  protected readonly porCodigo = (f: FilaHerramienta): string => f.code;
+  protected readonly nombreDeInstancia = (f: FilaInstancia): string => f.label;
+  protected readonly nombreDeHerramienta = (f: FilaHerramienta): string => f.name;
 
   constructor() {
-    // La portada enlaza a una pestaña concreta: `?pestana=1` abre «Herramientas».
-    const pedida = Number(this.route.snapshot.queryParamMap.get('pestana'));
-    if (Number.isInteger(pedida) && pedida >= 0 && pedida <= 2) this.pestana.set(pedida);
     this.cargar();
+    this.programarRefresco();
   }
 
   protected cargar(): void {
-    this.cargarVida();
-    this.cargarHerramientas();
-    this.cargarDispositivos();
-  }
-
-  protected cargarVida(): void {
-    this.vida.set(loading());
-    this.livenessClient.liveness().subscribe({
-      next: (r) => this.vida.set(ready(r)),
-      error: (e: unknown) => this.vida.set(errorToViewState<InstancesLiveness>(e)),
-    });
-  }
-
-  protected cargarHerramientas(): void {
+    this.ahora.set(Date.now());
+    this.sonda.set(loading());
     this.herramientas.set(loading());
+    this.livenessClient.liveness().subscribe({
+      next: (r) => {
+        this.ahora.set(Date.now());
+        this.sonda.set(ready(r));
+      },
+      error: (e: unknown) => this.sonda.set(errorToViewState<InstanceLiveness>(e)),
+    });
     this.toolsClient.tools().subscribe({
-      next: (r) => this.herramientas.set(ready(r)),
-      error: (e: unknown) => this.herramientas.set(errorToViewState<OpsToolsOverview>(e)),
+      next: (r) => {
+        this.ahora.set(Date.now());
+        this.herramientas.set(ready(r));
+      },
+      error: (e: unknown) => this.herramientas.set(errorToViewState<OpsTools>(e)),
     });
   }
 
-  protected cargarDispositivos(): void {
-    this.dispositivos.set(loading());
-    this.devicesClient.devices(this.ventanaDeDispositivos()).subscribe({
-      next: (r) => this.dispositivos.set(ready(r)),
-      error: (e: unknown) => this.dispositivos.set(errorToViewState<DevicesBreakdown>(e)),
-    });
+  /** Antigüedad del dato en palabras, contra el reloj de la última carga. */
+  protected antiguedadDe(evaluatedAt: string): string {
+    return haceCuanto(segundosEntre(evaluatedAt, this.ahora()));
   }
 
-  protected cambiarRango(r: Rango): void {
-    this.rango.set(r);
-    this.cargarDispositivos();
+  protected chipGeneral(data: InstanceLiveness): Chip {
+    return ESTADO_GENERAL[data.overall];
   }
 
-  protected cambiarPortal(p: DevicesPortal | null): void {
-    this.portal.set(p);
-    this.cargarDispositivos();
+  /**
+   * Refresco periódico: 30 s, como el monitor de Atlas. Con `prefers-reduced-motion`
+   * la pantalla no cambia sola —la persona pidió quietud— y queda el botón
+   * «Actualizar». El temporizador muere con el componente. En el servidor
+   * (SSR) no hay ventana ni sentido en programarlo.
+   */
+  private programarRefresco(): void {
+    const ventana = this.documento.defaultView;
+    if (!ventana || typeof ventana.setInterval !== 'function') return;
+    if (ventana.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const id = ventana.setInterval(() => this.cargar(), INTERVALO_DE_REFRESCO_MS);
+    inject(DestroyRef).onDestroy(() => ventana.clearInterval(id));
   }
 
-  protected limpiarInstancias(): void {
-    this.tipo.set(FILTRO_TODOS);
-    this.estado.set(FILTRO_TODOS);
+  /** `ready` si el dato es reciente; `stale` con `asOf` = `evaluatedAt` si envejeció más de dos refrescos. */
+  private conAntiguedad<T>(data: T, evaluatedAt: string): ViewState<T> {
+    const t = new Date(evaluatedAt).getTime();
+    if (!Number.isNaN(t) && this.ahora() - t > ATRASADO_TRAS_MS) return stale(data, new Date(t));
+    return ready(data);
   }
 
-  protected limpiarHerramientas(): void {
-    this.criticidad.set('todas');
-    this.salud.set(FILTRO_TODOS);
+  private caidas(): readonly Tool[] {
+    const h = this.herramientas();
+    return h.status === 'ready' ? h.data.tools.filter((t) => estadoVivo(t) === 'DOWN') : [];
   }
 
-  private ventanaDeDispositivos(): DevicesQuery {
-    const to = new Date();
-    const from = new Date(to.getTime() - RANGO_DIAS[this.rango()] * 24 * 3_600_000);
-    return {
-      from: from.toISOString(),
-      to: to.toISOString(),
-      ...(this.portal() ? { portal: this.portal()! } : {}),
-    };
-  }
-
-  private filaInstancia(i: LivenessInstance): FilaInstancia {
+  private filaInstancia(i: Instance, s: InstanceLiveness): FilaInstancia {
+    const fuente =
+      i.evidence.source === 'heartbeat'
+        ? 'latido del proceso'
+        : i.evidence.source === 'probe'
+          ? 'sonda desde la API'
+          : i.evidence.source === 'self'
+            ? 'la propia API'
+            : 'sin evidencia';
+    const umbral = i.thresholdSeconds === null ? '' : ` · umbral ${i.thresholdSeconds} s`;
     return {
       id: i.id,
-      required: i.required,
-      type: tipoDeInstancia(i.type),
-      estado: estadoDeVida(i.state),
-      edad: i.lastHeartbeatAt === null ? 'Nunca' : antiguedad(i.ageSeconds),
-      momento: i.lastHeartbeatAt,
-      umbral: `${i.thresholdSeconds} s`,
-      causa: causaDeVida(i.cause),
-      codigoCausa: i.cause,
-      evidence: i.evidence,
+      label: i.label,
+      tipo: TIPOS_DE_INSTANCIA[i.type],
+      requerida: i.required ? 'obligatoria' : 'opcional',
+      estado: ESTADOS_DE_INSTANCIA[i.state],
+      ultimoLatido: i.lastHeartbeatAt,
+      antiguedad: i.ageSeconds === null ? 'sin latido' : `${haceCuanto(i.ageSeconds)}${umbral}`,
+      causa: CAUSAS[i.cause] ?? i.cause,
+      detalle: i.causeDetail,
+      fuente: `${fuente}${i.evidence.reportedStatus ? ` · informa «${i.evidence.reportedStatus}»` : ''}${
+        s.heartbeatStore.status === 'down' && i.evidence.source === 'heartbeat' ? ' · almacén de latidos caído' : ''
+      }`,
     };
   }
 
-  private filaHerramienta(t: OpsTool): FilaHerramienta {
+  private filaHerramienta(t: Tool): FilaHerramienta {
+    const vivo = estadoVivo(t);
     return {
       code: t.code,
       name: t.name,
-      kind: tipoDeHerramienta(t.kind),
-      isCritical: t.isCritical,
-      registro: estadoDeRegistro(t.status),
-      salud: saludDeHerramienta(t.health.state, t.health.checkType),
-      comprobacion: tipoDeComprobacion(t.health.checkType),
-      observedAt: t.health.observedAt,
-      faltan: t.health.missingEnvVars,
-    };
-  }
-
-  private grupo(
-    id: string,
-    titulo: string,
-    ayuda: string,
-    items: readonly DeviceBreakdownItem[],
-    total: number,
-  ): GrupoDeDispositivos {
-    const maximo = Math.max(1, ...items.map((i) => i.contexts));
-    return {
-      id,
-      titulo,
-      ayuda,
-      filas: items.map((i) => ({
-        clave: i.code,
-        etiqueta: etiquetaDeDispositivo(i),
-        contextos: entero(i.contexts),
-        parte: total === 0 ? '—' : porcentaje(i.contexts / total),
-        ancho: `${Math.round((i.contexts / maximo) * 100)}%`,
-      })),
+      tipo: `${TIPOS_DE_HERRAMIENTA[t.kind]} · ${t.provider}`,
+      vivo,
+      estadoVivo: ESTADOS_VIVOS[vivo],
+      catalogo: ESTADOS_DE_CATALOGO[t.status],
+      critica: t.isCritical,
+      vinculo: VINCULOS[t.binding],
+      chequeo: CHEQUEOS[t.checkType],
+      queDice: queDice(t),
+      latencia: t.latencyMs === null ? '' : `${entero(t.latencyMs)} ms`,
     };
   }
 }

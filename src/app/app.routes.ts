@@ -23,6 +23,9 @@ import {
   loadAdmissionDetail,
 } from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
+import { insightsPortalRoute } from './features/insights/insights-portal.route';
+import { publicPrescriptionShareRoutes } from './features/prescription-share/prescription-share.routes';
+import { prescriptionDispenseRoutes } from './features/prescription-dispense/prescription-dispense.routes';
 import {
   designMockupRoutes,
   legacyMockupRedirects,
@@ -37,6 +40,11 @@ import {
   rutasHeredadasConParametro,
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
+import {
+  ROLES_ADMINISTRACION,
+  ROLES_REPORTERIA,
+} from './features/reporting/reporting-access';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
@@ -45,6 +53,13 @@ import {
   titleOf,
   type AppSection,
 } from './core/navigation/navigation.types';
+
+/**
+ * Secciones de «Mi cuenta» que sólo tienen sentido para quien atiende. El
+ * registro las declara `ANY_ROLE` —«Mi cuenta» es autoservicio y no admite
+ * roles de gestión—, así que la restricción va en la ruta, como `my-account/edit`.
+ */
+const SECCIONES_DE_QUIEN_ATIENDE: ReadonlySet<string> = new Set(['my-account/verifications']);
 
 /** La declaración que cierra una hija de «Mi perfil» a quien atiende. */
 function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
@@ -132,14 +147,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // y le costaba la descarga a todo el mundo, paciente incluido—.
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
-  // La recepción de muestras del laboratorio. Diferida: sólo la alcanza el
-  // personal de un centro de diagnóstico.
-  'laboratory/reception': () =>
-    import('./features/lab-reception/lab-reception').then((m) => m.LabReception),
-  // La cola de trabajo del laboratorio para su propio personal: la misma
-  // pantalla que «Laboratorio e imagen», bajo la sección que ve un centro de
-  // diagnóstico (ver `navigation.map.ts`).
-  'laboratory/queue': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>
@@ -191,6 +198,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/received-claims': () =>
     import('./features/insurance/received-claims/received-claims').then((m) => m.ReceivedClaims),
+  // La bandeja de la aseguradora: profesionales que piden trabajar con ella
+  // (28/10/2026). Es la otra cara de «Mis verificaciones» del médico.
+  'administration/insurer-practitioner-requests': () =>
+    import('./features/insurance/practitioner-requests/practitioner-requests').then(
+      (m) => m.InsurerPractitionerRequests,
+    ),
   'administration/insurance-patients': () =>
     import('./features/insurance/insurance-patients/insurance-patients').then(
       (m) => m.InsurancePatients,
@@ -296,6 +309,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // vez de pagarla **toda** primera visita a la aplicación.
   'my-account/identity': () =>
     import('./features/identity-verification/identity-hub/identity-hub').then((m) => m.IdentityHub),
+  // «Mis verificaciones» del profesional (28/10/2026): hoja de ruta y bandeja
+  // de solicitudes. Diferida: arrastra el stepper, el sello y el chat.
+  'my-account/verifications': () =>
+    import('./features/account/my-verifications/my-verifications').then((m) => m.MyVerifications),
   'administration/my-practice': () =>
     import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
   'administration/pharmacy-campaigns': () =>
@@ -322,8 +339,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // farmacia, para quien vende servicios. Todo en `features/laboratory/`.
   'administration/laboratory': () =>
     import('./features/laboratory/summary/laboratory-summary').then((m) => m.LaboratorySummaryPage),
-  'administration/laboratory-results': () =>
-    import('./features/laboratory/results/laboratory-results').then((m) => m.LaboratoryResults),
+  // Recepción, cola y resultados son UNA pantalla desde el 31/10/2026: «Órdenes».
+  'administration/laboratory-orders': () =>
+    import('./features/laboratory/orders/laboratory-orders').then((m) => m.LaboratoryOrders),
   'administration/laboratory-prices': () =>
     import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
   'administration/laboratory-branches': () =>
@@ -530,11 +548,9 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Elegir cuál de mis recetas comprar (carril 43, H4). Hija de «Farmacia»:
-    // la tienda la enlaza con «Buscar toda una receta», y cada tarjeta lleva a
-    // `medical-record/where-to-buy/:requestId`, que ya existe. Con
-    // `seccionRolesGuard` por la misma razón que `pharmacy-orders/new`: su
-    // sección declara roles y `app.routes.spec.ts` exige cumplirlos en la hija.
+    // Mis recetas (carril 43, H4; «Compartir», FAR-01). Hija de «Farmacia», con
+    // `seccionRolesGuard` como `pharmacy-orders/new`: su sección declara roles
+    // y `app.routes.spec.ts` exige cumplirlos en la hija.
     path: 'my-account/pharmacy/prescriptions',
     title: `${APP_TITLE} - Mis recetas`,
     canActivate: [seccionRolesGuard],
@@ -617,10 +633,9 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.OrderInvoice)
         .catch(() => chunkFallido()),
   },
+  ...prescriptionDispenseRoutes(chunkFallido),
   {
-    // El mismo pedido, visto desde el mostrador (carril FAR-I3): la
-    // «recepción por un link» del registro del cliente. Hija de la bandeja;
-    // hereda por prefijo su regla de acceso por membresía.
+    // El pedido visto desde el mostrador (FAR-I3); hereda por prefijo el acceso de la bandeja.
     path: 'administration/pharmacy-orders/:orderId',
     title: `${APP_TITLE} - Pedido en el mostrador`,
     canActivate: [seccionRolesGuard],
@@ -763,6 +778,15 @@ const PANTALLAS_HIJAS: Routes = [
     pathMatch: 'full',
     redirectTo: redireccionConQuery({ ruta: '/my-account/identity', query: { tab: 'cases' } }),
   },
+  // Recepción de muestras, cola de trabajo y resultados del laboratorio son una sola pantalla,
+  // «Órdenes» (31/10/2026). Estuvieron en el menú, así que están en favoritos.
+  ...(['laboratory/reception', 'laboratory/queue', 'administration/laboratory-results'] as const).map(
+    (vieja) => ({
+      path: vieja,
+      pathMatch: 'full' as const,
+      redirectTo: redireccionConQuery({ ruta: '/administration/laboratory-orders' }),
+    }),
+  ),
   // Las pantallas sueltas del catálogo de la farmacia son pestañas de `pharmacy-catalog`.
   ...(['categories', 'prices', 'inventory', 'import'] as const).map((tab) => ({
     path: `administration/pharmacy-${tab}`,
@@ -1019,18 +1043,23 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Guard propio y no el de sección (que pide SECURITY_ADMIN): la API abre
+    // esta alta al OWNER/ADMIN de la organización además de a la plataforma
+    // (`assertCanAdminister`), y el guard no niega lo que la API permite.
     path: 'administration/organizations/:tenantId/branches/new',
     title: `${APP_TITLE} - Nueva sucursal`,
-    canActivate: [seccionRolesGuard],
+    canActivate: [organizacionAdministrableGuard],
     loadComponent: () =>
       import('./features/admin/organizations/branch-new/branch-new')
         .then((m) => m.BranchNew)
         .catch(() => chunkFallido()),
   },
   {
+    // Mismo criterio que el alta de sucursal: `POST /tenants/{id}/memberships`
+    // también pasa por `assertCanAdminister`.
     path: 'administration/organizations/:tenantId/memberships/new',
     title: `${APP_TITLE} - Sumar a la organización`,
-    canActivate: [seccionRolesGuard],
+    canActivate: [organizacionAdministrableGuard],
     loadComponent: () =>
       import('./features/admin/organizations/membership-new/membership-new')
         .then((m) => m.MembershipNew)
@@ -1264,7 +1293,12 @@ function rutasDeSecciones(): Routes {
         : {}),
       // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
       // saber cuál de todas es.
-      data: { [SECTION_ROUTE_DATA]: section },
+      data: {
+        [SECTION_ROUTE_DATA]: section,
+        ...(SECCIONES_DE_QUIEN_ATIENDE.has(section.path)
+          ? { [ROLES_ROUTE_DATA]: ROLES_DE_QUIEN_ATIENDE }
+          : {}),
+      },
       ...componenteDe(section),
     };
     if (section.path !== 'my-account') {
@@ -1312,6 +1346,8 @@ export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> 
   'administration/web-analytics': { ruta: '/superadmin/web-analytics' },
   'administration/qa-lab': { ruta: '/superadmin/qa-lab' },
   'administration/operations': { ruta: '/superadmin/operations' },
+  // Insights dejó de ser una sección del admin: es el portal de marketing (30/10/2026).
+  'administration/marketing-insights': { ruta: '/insights' },
 };
 
 /** A dónde manda una sección redirigida: la ruta y el query que le suma. */
@@ -1420,8 +1456,8 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   'administration/accounting/libros': '/administration/accounting/books',
   // TAREA-29: las dos pantallas del personal de laboratorio y las cotizaciones
   // del paciente, que salían en el menú, así que están en favoritos.
-  'laboratorio/recepcion': '/laboratory/reception',
-  'laboratorio/cola': '/laboratory/queue',
+  'laboratorio/recepcion': '/administration/laboratory-orders',
+  'laboratorio/cola': '/administration/laboratory-orders',
   'my-account/cotizaciones': '/my-account/quotations',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
@@ -1734,6 +1770,40 @@ export const routes: Routes = [
   // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
   // es de otra clase en vez de redirigir.
   ...rutasDeFichasPublicas(),
+  // Los dos portales a los que entra quien administra y consulta reportes
+  // (30/10/2026). Van **fuera** del armazón de administración, cada uno con su
+  // propio marco, y delante del comodín: ninguno cuelga de una sección del
+  // registro, así que no hay menú que los filtre.
+  //
+  // Los dos llevan `authGuard` y `seccionRolesGuard` con los roles escritos en
+  // `data`: ocultar una tarjeta del selector no es seguridad, y quien escriba la
+  // dirección a mano se topa con este guard primero y con la API después. El
+  // guard mira `ROLES_ROUTE_DATA` antes que cualquier sección, con la misma
+  // regla del comodín `SUPERADMIN`.
+  {
+    path: 'portal-selector',
+    title: `${APP_TITLE} - Elegir portal`,
+    canActivate: [authGuard, seccionRolesGuard],
+    // La unión de los dos: el selector decide por sí mismo si hay algo que
+    // elegir, y a quien solo tiene un acceso lo redirige directo.
+    data: { [ROLES_ROUTE_DATA]: [...ROLES_ADMINISTRACION, ...ROLES_REPORTERIA] },
+    loadComponent: () =>
+      import('./features/portal-selector/portal-selector')
+        .then((m) => m.PortalSelector)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'reports',
+    canActivate: [authGuard, seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ROLES_REPORTERIA },
+    loadChildren: () =>
+      import('./features/reporting/reporting.routes')
+        .then((m) => m.REPORTING_ROUTES)
+        // Un fragmento que ya no existe tras un despliegue: la misma pantalla de
+        // recuperación que el resto, en vez de una navegación muerta.
+        .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
+  },
+  insightsPortalRoute(chunkFallido),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
   // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos
   // salen del propio `homeGuard` (un `UrlTree`, nunca `true`) porque Angular no
@@ -1826,6 +1896,24 @@ export const routes: Routes = [
         import('./features/admin/services-catalog/procedure-import/procedure-import').then(
           (m) => m.ProcedureImport,
         ),
+      ),
+      // Infraestructura hospitalaria (F1): la ficha de un espacio y sus
+      // formularios cuelgan de la consola de la organización médica. Las
+      // literales van antes que `spaces/:id` para que «new» no se lea como id.
+      pantallaDeOperacion('administration/medical-organization', 'spaces/new', 'Registrar un espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-form').then((m) => m.SpaceForm),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/bulk', 'Alta masiva de espacios', () =>
+        import('./features/admin/medical-organization/espacio/space-bulk').then((m) => m.SpaceBulk),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/import', 'Importar espacios', () =>
+        import('./features/admin/medical-organization/espacio/space-import').then((m) => m.SpaceImport),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/:id/edit', 'Editar un espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-form').then((m) => m.SpaceForm),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/:id', 'Ficha del espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-detail').then((m) => m.SpaceDetail),
       ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
         import('./features/agenda/appointment-new/appointment-new').then((m) => m.AppointmentNew),
@@ -2213,6 +2301,7 @@ export const routes: Routes = [
       ),
     title: 'AloVida - Verificar certificado',
   },
+  ...publicPrescriptionShareRoutes(chunkFallido),
   {
     path: 'auth',
     component: Login,

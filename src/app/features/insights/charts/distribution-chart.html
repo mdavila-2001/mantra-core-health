@@ -1,0 +1,46 @@
+@if (mode() === 'histogram') {
+  <svg class="dc__svg" [attr.viewBox]="'0 0 ' + width() + ' ' + height()" [attr.width]="width()" [attr.height]="height()" role="img" [attr.aria-label]="ariaLabel()">
+    @for (t of hyTicks(); track t) {
+      <line class="dc__grid" [attr.x1]="m.left" [attr.x2]="width() - m.right" [attr.y1]="hy()(t)" [attr.y2]="hy()(t)" />
+      <text class="dc__tick" [attr.x]="m.left - 8" [attr.y]="hy()(t)" text-anchor="end" dominant-baseline="middle">{{ t }}</text>
+    }
+    @for (b of bins(); track $index) {
+      <rect class="dc__bin" [attr.x]="hx()(b.from) + 1" [attr.y]="hy()(b.count)" [attr.width]="Math.max(1, hx()(b.to) - hx()(b.from) - 2)" [attr.height]="hy()(0) - hy()(b.count)" rx="2" tabindex="0" role="img" [attr.aria-label]="binTip(b.from, b.to, b.count)">
+        <title>{{ binTip(b.from, b.to, b.count) }}</title>
+      </rect>
+    }
+    @for (t of hxTicks(); track t) {
+      <text class="dc__tick" [attr.x]="hx()(t)" [attr.y]="height() - 14" text-anchor="middle">{{ axis(t) }}</text>
+    }
+    @if (stats(); as s) {
+      <line class="dc__mean" [attr.x1]="hx()(s.mean)" [attr.x2]="hx()(s.mean)" [attr.y1]="m.top" [attr.y2]="height() - m.bottom" />
+      <text class="dc__lab" [attr.x]="hx()(s.mean) + 4" [attr.y]="m.top + 10">Promedio {{ fmt(s.mean) }}</text>
+      <line class="dc__median" [attr.x1]="hx()(s.median)" [attr.x2]="hx()(s.median)" [attr.y1]="m.top" [attr.y2]="height() - m.bottom" />
+      <text class="dc__lab dc__lab--med" [attr.x]="hx()(s.median) - 4" [attr.y]="m.top + 24" text-anchor="end">Mediana {{ fmt(s.median) }}</text>
+    }
+  </svg>
+  <p class="dc__note">Eje vertical: número de días. {{ stats()?.n ?? 0 }} días en total; si promedio y mediana se separan, la distribución es asimétrica.</p>
+} @else {
+  <svg class="dc__svg" [attr.viewBox]="'0 0 ' + width() + ' ' + boxHeight()" [attr.width]="width()" [attr.height]="boxHeight()" role="img" [attr.aria-label]="ariaLabel()">
+    @for (t of bxTicks(); track t) {
+      <line class="dc__grid" [attr.x1]="bx()(t)" [attr.x2]="bx()(t)" y1="6" [attr.y2]="boxHeight() - 24" />
+      <text class="dc__tick" [attr.x]="bx()(t)" [attr.y]="boxHeight() - 8" text-anchor="middle">{{ axis(t) }}</text>
+    }
+    @for (b of boxes(); track b.group.id; let i = $index) {
+      <g tabindex="0" role="img" [attr.aria-label]="b.box ? b.group.label + ': mediana ' + fmt(b.box.median) + ', de ' + fmt(b.box.q1) + ' a ' + fmt(b.box.q3) + ', ' + b.box.outliers.length + ' atípicos' : b.group.label + ': datos insuficientes'">
+        <text class="dc__cat" x="88" [attr.y]="12 + i * rowH() + rowH() / 2" text-anchor="end" dominant-baseline="middle">{{ b.group.label }}</text>
+        @if (b.box; as bx2) {
+          <line class="dc__whisker" [attr.x1]="bx()(bx2.min)" [attr.x2]="bx()(bx2.max)" [attr.y1]="12 + i * rowH() + rowH() / 2" [attr.y2]="12 + i * rowH() + rowH() / 2" />
+          <rect class="dc__box" [attr.x]="bx()(bx2.q1)" [attr.y]="12 + i * rowH() + 6" [attr.width]="Math.max(1, bx()(bx2.q3) - bx()(bx2.q1))" [attr.height]="rowH() - 12" rx="3" />
+          <line class="dc__med" [attr.x1]="bx()(bx2.median)" [attr.x2]="bx()(bx2.median)" [attr.y1]="12 + i * rowH() + 6" [attr.y2]="12 + i * rowH() + rowH() - 6" />
+          @for (o of bx2.outliers; track $index) {
+            <circle class="dc__out" [attr.cx]="bx()(o)" [attr.cy]="12 + i * rowH() + rowH() / 2" r="3.5"><title>Atípico: {{ fmt(o) }}</title></circle>
+          }
+        } @else {
+          <text class="dc__lab" x="100" [attr.y]="12 + i * rowH() + rowH() / 2" dominant-baseline="middle">Datos insuficientes (menos de 4 observaciones)</text>
+        }
+      </g>
+    }
+  </svg>
+  <p class="dc__note">Caja: de cuartil 1 a cuartil 3; línea interna: mediana; bigotes hasta 1,5 × RIC; puntos: valores atípicos.</p>
+}

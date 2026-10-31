@@ -1,95 +1,67 @@
 @let op = operation();
-@let g = groups();
+@let s = summary();
 
-<section class="data" aria-label="Datos que toca la operación" data-testid="portal-operation-data">
-  <h3 class="data__title">Tablas afectadas</h3>
+<section class="data" aria-label="Tablas que afecta la operación" data-testid="portal-operation-data">
   @if (op.datos.length > 0) {
-    <dl class="data__summary" data-testid="portal-tables-summary">
-      <div class="data__count">
-        <dt>Tablas distintas</dt>
-        <dd data-testid="portal-tables-distinct">{{ g.resumen.distintas }}</dd>
-      </div>
-      <div class="data__count">
-        <dt>Escribe</dt>
-        <dd data-testid="portal-tables-writes">{{ g.resumen.escribe }}</dd>
-      </div>
-      <div class="data__count">
-        <dt>Lee</dt>
-        <dd data-testid="portal-tables-reads">{{ g.resumen.lee }}</dd>
-      </div>
-      <div class="data__count">
-        <dt>Sólo lee</dt>
-        <dd data-testid="portal-tables-read-only">{{ g.resumen.soloLee }}</dd>
-      </div>
-      <div class="data__count">
-        <dt>Accesos detectados</dt>
-        <dd data-testid="portal-tables-accesses">{{ g.resumen.accesos }}</dd>
-      </div>
-    </dl>
+    <p class="data__headline" data-testid="portal-operation-tables-count">{{ headline() }}</p>
     <p class="data__muted">
-      Cada tabla cuenta una vez aunque la operación la toque varias veces; «accesos detectados» cuenta cada vez, como el número de
-      «tablas» de la lista de operaciones.
-      @if (g.resumen.leeYEscribe > 0) {
-        {{ g.resumen.leeYEscribe === 1 ? '1 tabla se lee y se escribe.' : g.resumen.leeYEscribe + ' tablas se leen y se escriben.' }}
-      }
+      Cada tabla trae el camino por el que se llega (vía), dónde está el acceso (fuente) y con qué
+      confianza lo determinó el generador. Una tabla leída y escrita aparece en los dos grupos.
     </p>
 
-    @for (section of sections(); track section.key) {
-      @if (section.tables.length > 0 || section.emptyText) {
-        <h4 class="data__group">{{ section.heading }} ({{ section.tables.length }})</h4>
-      }
-      @if (section.tables.length > 0) {
-        <ul class="data__tables" [attr.data-testid]="'portal-tables-' + section.key + '-list'">
-          @for (table of section.tables; track table.clave) {
-            <li class="data__table">
-              <span class="data__table-head">
-                <a app-link class="data__name" [routerLink]="tableUrl()(table.schema, table.tabla)">
-                  {{ table.schema }}.{{ table.tabla }}
-                </a>
-                @if (!table.catalogada) {
-                  <app-badge size="sm" variant="warning">No está en el catálogo</app-badge>
+    @for (group of s.groups; track group.effect) {
+      <h3 class="data__title">
+        <app-badge size="sm" [variant]="effect(group.effect).tone">{{ effect(group.effect).label }}</app-badge>
+        <span>{{ group.tables.length === 1 ? '1 tabla' : group.tables.length + ' tablas' }}</span>
+      </h3>
+      <ul class="data__tables" [attr.data-testid]="'portal-operation-tables-' + group.effect">
+        @for (t of group.tables; track t.qualified) {
+          <li class="data__table">
+            <span class="data__table-head">
+              <a app-link class="data__name" [routerLink]="tableUrl()(t.schema, t.table)">{{ t.qualified }}</a>
+              @for (c of t.confidences; track c) {
+                <app-badge size="sm" [variant]="confidence(c).tone">Confianza: {{ confidence(c).label }}</app-badge>
+              }
+              @if (!t.catalogued) {
+                <app-badge size="sm" variant="warning">No está en el catálogo</app-badge>
+              }
+            </span>
+            @if (t.details.length > 0) {
+              <span class="data__muted">{{ t.details.join(' · ') }}</span>
+            }
+            <dl class="data__facts">
+              <dt>Vía</dt>
+              <dd>
+                @if (t.paths.length > 0) {
+                  @for (path of t.paths; track $index) {
+                    <span class="data__source">{{ path.join(' → ') }}</span>
+                  }
+                } @else {
+                  <span class="data__muted">Sin dato</span>
                 }
-              </span>
-              <ul class="data__accesses">
-                @for (access of table.accesos; track $index) {
-                  <li class="data__access">
-                    <span class="data__table-head">
-                      <app-badge size="sm" [variant]="effect(access.operacion).tone">{{ effect(access.operacion).label }}</app-badge>
-                      @if (access.detalle && access.detalle !== access.operacion) {
-                        <app-badge size="sm" [variant]="action(access.detalle).tone">{{ action(access.detalle).label }}</app-badge>
-                      }
-                      <app-badge size="sm" [variant]="confidence(access.confianza).tone">
-                        Confianza: {{ confidence(access.confianza).label }}
-                      </app-badge>
-                    </span>
-                    @if (access.via.length > 0) {
-                      <ol class="data__chain" aria-label="Cadena de llamadas hasta la tabla">
-                        @for (step of access.via; track $index) {
-                          <li>{{ step }}</li>
-                        }
-                      </ol>
-                    } @else {
-                      <span class="data__muted">El generador no anotó el camino de llamadas.</span>
-                    }
-                    @if (access.fuente) {
-                      <span class="data__source">Acceso en {{ access.fuente }}</span>
-                    }
-                  </li>
+              </dd>
+              <dt>Fuente</dt>
+              <dd>
+                @if (t.sources.length > 0) {
+                  @for (src of t.sources; track src) {
+                    <span class="data__source">{{ src }}</span>
+                  }
+                } @else {
+                  <span class="data__muted">Sin dato</span>
                 }
-              </ul>
-            </li>
-          }
-        </ul>
-      } @else if (section.emptyText) {
-        <p class="data__muted" [attr.data-testid]="'portal-tables-' + section.key + '-empty'">{{ section.emptyText }}</p>
-      }
+              </dd>
+            </dl>
+          </li>
+        }
+      </ul>
     }
   } @else if (op.sinTablas) {
-    <p class="data__muted">No toca tablas: {{ op.sinTablas }}</p>
+    <p class="data__empty" data-testid="portal-operation-tables-empty">
+      <strong>No toca tablas.</strong> Motivo que anotó el inventario: {{ op.sinTablas }}
+    </p>
   } @else {
-    <p class="data__muted">
-      El inventario no encontró tablas que toque. Si esperabas alguna, mirá el árbol de decisión de la operación: ahí se ve qué
-      llama.
+    <p class="data__empty" data-testid="portal-operation-tables-empty">
+      <strong>Sin dato.</strong> La API no derivó tablas para esta operación ni anotó por qué.
     </p>
   }
 

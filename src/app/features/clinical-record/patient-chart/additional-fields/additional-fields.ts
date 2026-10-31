@@ -93,6 +93,26 @@ export interface FilaAdicional {
   readonly rotulo: string;
   readonly valor: string;
   readonly archivos: readonly File[];
+  /**
+   * De dónde vino la fila cuando no la escribió quien atiende (p. ej. el
+   * formulario médico ya llenado). Sirve para reemplazarlas todas juntas si se
+   * elige otra fuente, sin tocar las que se escribieron a mano.
+   */
+  readonly origen?: string;
+}
+
+/**
+ * Lo que la API rechaza como «no texto plano» (`@IsPlainText`, `notes.dto.ts`): una etiqueta de
+ * marcado o un carácter de control. `<140` o `PA < 140 y > 90` **sí** valen: exige una letra,
+ * `/`, `!` o `?` justo después del `<`. Se espeja acá para marcar la fila en vez de dejar que el
+ * 400 llegue como un aviso general que no dice cuál fila.
+ */
+const ETIQUETA_DE_MARCADO = /<[/!?]?[a-z][^>]*>|<!--/iu;
+// eslint-disable-next-line no-control-regex
+const CARACTER_DE_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/u;
+
+function esTextoPlano(texto: string): boolean {
+  return !ETIQUETA_DE_MARCADO.test(texto) && !CARACTER_DE_CONTROL.test(texto);
 }
 
 /** «Presión Arterial» y «presion arterial» son el mismo campo. */
@@ -169,6 +189,27 @@ export class AdditionalFields {
   /** Bloquea la edición mientras el formulario se envía. */
   readonly disabled = input(false);
 
+  /** El título de la sección. Quien la reutiliza lo cambia por el suyo. */
+  readonly titulo = input('Campos adicionales del doctor');
+
+  /** La bajada. Vacía: la de siempre, la que habla de archivos. */
+  readonly ayuda = input('');
+
+  /** Con `false` las filas son sólo «campo: valor», sin selector de archivos. */
+  readonly conArchivos = input(true);
+
+  /** Con `true` el título es un `h4`: la sección vive dentro de otra que ya tiene su `h3`. */
+  readonly subseccion = input(false);
+
+  /** Con `false` no se ofrece el texto libre: quien la reutiliza ya tiene el suyo. */
+  readonly conTextoLibre = input(true);
+
+  /**
+   * Una línea que abre el texto de la nota («Motivos del diagnóstico
+   * presuntivo …»). Sola no crea nota: hace falta que haya filas o texto.
+   */
+  readonly encabezadoDeLaNota = input('');
+
   protected readonly tope = TOPE_DE_FILAS_ADICIONALES;
   protected readonly topeDeArchivos = TOPE_DE_ARCHIVOS_POR_FILA;
   protected readonly formatosAceptados = UPLOAD_ACCEPT;
@@ -212,6 +253,8 @@ export class AdditionalFields {
         problema = 'Escriba un valor o adjunte un archivo.';
       } else if (fila.valor.trim().length > TOPE_DEL_VALOR) {
         problema = `El valor admite hasta ${TOPE_DEL_VALOR} caracteres.`;
+      } else if (!esTextoPlano(rotulo) || !esTextoPlano(fila.valor)) {
+        problema = 'Sólo admite texto plano: sin etiquetas HTML ni caracteres de control.';
       }
       if (clave !== '') {
         vistos.add(clave);
@@ -306,6 +349,32 @@ export class AdditionalFields {
     this.descartados.set([]);
   }
 
+  /**
+   * Trae filas «campo: valor» de otra fuente —el formulario médico ya
+   * llenado— como filas **editables**. Reemplaza las que ya había traído la
+   * misma `origen` y conserva las que se escribieron a mano.
+   *
+   * @returns Cuántas entradas quedaron fuera por el tope de filas.
+   */
+  cargar(entradas: readonly EntradaAdicional[], origen: string): number {
+    const propias = this.filas().filter((fila) => fila.origen !== origen);
+    const lugar = Math.max(TOPE_DE_FILAS_ADICIONALES - propias.length, 0);
+    const nuevas = entradas.slice(0, lugar).map<FilaAdicional>((entrada) => ({
+      clave: this.proximaClave++,
+      rotulo: entrada.label,
+      valor: entrada.value,
+      archivos: [],
+      origen,
+    }));
+    this.filas.set([...propias, ...nuevas]);
+    return entradas.length - nuevas.length;
+  }
+
+  /** Saca las filas que trajo `cargar` con esa `origen`; las escritas a mano quedan. */
+  quitarOrigen(origen: string): void {
+    this.filas.update((filas) => filas.filter((fila) => fila.origen !== origen));
+  }
+
   /* -- Registro ------------------------------------------------------------- */
 
   /**
@@ -315,13 +384,16 @@ export class AdditionalFields {
    * resto de su cierre, así que un fallo acá se cuenta igual que uno del
    * diagnóstico o de la orden y no deshace la respuesta ya guardada.
    */
-  pasos(encounterId: string): readonly PasoDeRegistro[] {
+  pasos(encounterId: string | null): readonly PasoDeRegistro[] {
     if (!this.tieneContenido() || this.hayProblemas()) {
       return [];
     }
     const filas = this.filasConContenido();
     const entradas = this.entradas();
-    const texto = this.textoLibre().trim();
+    const texto = [this.encabezadoDeLaNota().trim(), this.textoLibre().trim()]
+      .filter((parte) => parte !== '')
+      .join('\n');
+    const conEncuentro = encounterId === null ? {} : { encounterId };
     const patientProfileId = this.patientProfileId();
     // Los dos faltantes se validan antes (ver `impedimento`): acá sólo se leen.
     const autor = this.auth.practitionerProfileId() ?? '';
@@ -335,7 +407,7 @@ export class AdditionalFields {
         this.notes.createNote({
           patientProfileId,
           authorProfileId: autor,
-          encounterId,
+          ...conEncuentro,
           ...(entradas.length === 0 ? {} : { entries: entradas }),
           ...(texto === '' ? {} : { subjectiveText: texto }),
         }),
@@ -357,7 +429,7 @@ export class AdditionalFields {
                   patientProfileId,
                   tenantId,
                   title: rotulo,
-                  encounterId,
+                  ...conEncuentro,
                   files,
                 }),
               ),

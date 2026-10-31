@@ -51,9 +51,14 @@ async function entrar(page, cuenta) {
   await page.getByTestId('login-identifier').fill(cuenta.id);
   await page.getByTestId('login-password').fill(cuenta.clave);
   await page.getByTestId('login-submit').click();
-  await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  // El administrador con los dos accesos pasa por el selector de portal: tres destinos legítimos.
+  await page.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/, { timeout: 60_000 });
   if (page.url().includes('/auth/organization')) {
     await page.getByTestId('tenant-opcion').first().click();
+    await page.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 60_000 });
+  }
+  if (page.url().includes('/portal-selector')) {
+    await page.getByRole('link', { name: /Portal de administración/ }).click();
     await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
 }
