@@ -1,156 +1,59 @@
 <app-page-header
   title="Intervenciones"
-  subtitle="Lo que hay programado y lo que le toca confirmar."
+  subtitle="Lo que hay programado, en qué quirófano, y lo que le toca confirmar."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <div page-actions class="intervenciones__accesos">
+    <a app-button variant="ghost" size="sm" [routerLink]="roomsRoute" data-testid="interventions-rooms-link">Agenda de quirófanos</a>
+    @if (canManage()) {
+      <a app-button variant="ghost" size="sm" [routerLink]="blocksRoute">Bloques</a>
+    }
+    @if (canMeasure()) {
+      <a app-button variant="ghost" size="sm" [routerLink]="utilizationRoute">Utilización</a>
+    }
+    @if (canSchedule()) {
+      <a app-button size="sm" [routerLink]="scheduleRoute" data-testid="interventions-schedule-link">Programar</a>
+    }
+  </div>
+</app-page-header>
 
 <div class="intervenciones">
+  @if (hasRoomFilter()) {
+    <div class="intervenciones__filtro">
+      <app-select
+        [options]="roomOptions()"
+        [value]="roomFilter()"
+        ariaLabel="Filtrar por quirófano"
+        data-testid="interventions-room-filter"
+        (valueChange)="chooseRoom($event)"
+      />
+    </div>
+  }
+
   <app-data-table
     [state]="agenda()"
     [columns]="columnas()"
     [trackBy]="porCaso"
     [rowLabel]="nombreDeCaso"
     caption="Intervenciones programadas"
+    data-testid="interventions-table"
     (retry)="recargar()"
   />
 
-  <!-- ─── El equipo del caso abierto ──────────────────────────────────────
-       Cuelga de la tabla y no de una ruta propia porque no es otra pantalla:
-       es el mismo acto —mirar la agenda y contestar lo propio— y mandarlo a
-       una ruta hija obligaría a volver atrás después de cada respuesta. -->
+  <!-- El equipo del caso abierto: cuelga de la tabla porque es el mismo acto
+       —mirar la agenda y contestar lo propio—. Es el mismo componente que
+       monta la pestaña «Equipo» de la ficha del caso. -->
   @if (casoAbierto(); as caso) {
     <app-card variant="outlined" padding="lg" class="intervenciones__equipo">
       <div class="intervenciones__equipo-encabezado">
-        <h2 class="intervenciones__equipo-titulo">
-          Equipo de {{ caso.caseNumber }}
-        </h2>
+        <h2 class="intervenciones__equipo-titulo">Equipo de {{ caso.caseNumber }}</h2>
         <button app-button variant="ghost" size="sm" (clicked)="cerrar()">Cerrar</button>
       </div>
-
-      @if (problema(); as aviso) {
-        <app-alert tone="error" title="No se registró la respuesta">{{ aviso }}</app-alert>
-      }
-
-      <!-- El estado se ata a una variable antes del `@switch`: sobre la llamada
-           al signal el compilador no estrecha la unión, y `estado.data` no
-           existiría en la rama `ready`. -->
-      @let estadoEquipo = equipo();
-      @switch (estadoEquipo.status) {
-        @case ('ready') {
-          <ul class="intervenciones__integrantes">
-            @for (integrante of estadoEquipo.data; track porIntegrante(integrante)) {
-              <li class="intervenciones__integrante">
-                <div class="intervenciones__integrante-datos">
-                  <span class="intervenciones__rol">
-                    {{ etiquetaDe(integrante.teamRoleConceptId) }}
-                  </span>
-                  <span class="intervenciones__estado">
-                    {{ etiquetaDe(integrante.statusConceptId) }}
-                  </span>
-                  @if (esMio(integrante)) {
-                    <span class="intervenciones__marca">Es usted</span>
-                  }
-                </div>
-
-                <!-- Las acciones sólo en la fila propia: el backend rechaza
-                     responder por otro (spec 168), y ofrecer un botón que va a
-                     fallar es prometer algo que no se puede hacer. -->
-                @if (esMio(integrante)) {
-                  <div class="intervenciones__acciones">
-                    <button
-                      app-button
-                      variant="primary"
-                      size="sm"
-                      [disabled]="enviando()"
-                      (clicked)="aceptar(integrante)"
-                    >
-                      Aceptar
-                    </button>
-                    <button
-                      app-button
-                      variant="secondary"
-                      size="sm"
-                      [disabled]="enviando()"
-                      (clicked)="empezarRespuesta(integrante)"
-                    >
-                      No puedo participar
-                    </button>
-                  </div>
-                }
-              </li>
-            }
-          </ul>
-        }
-        @case ('loading') {
-          <app-loading-state class="intervenciones__cargando" message="Cargando el equipo…" />
-        }
-        @case ('empty') {
-          <app-alert tone="warning" title="Sin integrantes">
-            {{ estadoEquipo.message }}
-          </app-alert>
-        }
-        @default {
-          <app-alert tone="error" title="No pudimos leer el equipo">
-            Vuelva a abrir la intervención para reintentar.
-          </app-alert>
-        }
-      }
-
-      <!-- ─── La respuesta negativa, con su motivo obligatorio ─────────────
-           El motivo no es una cortesía: es lo que viaja en la notificación al
-           médico responsable y lo único que le permite decidir si negocia,
-           reemplaza o reprograma. Por eso el envío está bloqueado sin él. -->
-      @if (respondiendo(); as integrante) {
-        <div class="intervenciones__respuesta">
-          <h3 class="intervenciones__respuesta-titulo">
-            Su respuesta como {{ etiquetaDe(integrante.teamRoleConceptId) }}
-          </h3>
-
-          <app-select
-            [options]="respuestas"
-            [value]="respuestaElegida()"
-            ariaLabel="Qué responde"
-            (valueChange)="elegirRespuesta($event)"
-          />
-
-          <app-textarea
-            [value]="motivo()"
-            [rows]="3"
-            [maxLength]="2000"
-            placeholder="Motivo (obligatorio): lo lee el médico responsable"
-            (valueChange)="escribirMotivo($event)"
-          />
-
-          <div class="intervenciones__acciones">
-            <button
-              app-button
-              variant="primary"
-              size="sm"
-              [disabled]="!motivoValido() || enviando()"
-              [isLoading]="enviando()"
-              (clicked)="enviarRespuesta()"
-            >
-              Enviar respuesta
-            </button>
-            <button
-              app-button
-              variant="ghost"
-              size="sm"
-              [disabled]="enviando()"
-              (clicked)="cancelarRespuesta()"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      }
+      <app-case-team [caseId]="caso.id" />
     </app-card>
   }
 
-  <!-- ─── Por qué la aceptación importa ────────────────────────────────────
-       Sin ella no hay confirmación posible: es la precondición que bloquea el
-       caso, no un trámite. Decirlo evita que alguien busque por qué una
-       intervención con todo en regla sigue sin confirmarse. -->
+  <!-- Por qué la aceptación importa: sin ella no hay confirmación posible. -->
   <app-card variant="outlined" padding="lg" class="intervenciones__nota">
     <h2 class="intervenciones__nota-titulo">La confirmación espera al equipo</h2>
     <p class="intervenciones__nota-texto">
@@ -167,15 +70,7 @@
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaCaso let-caso>
-  <button
-    app-button
-    variant="ghost"
-    size="sm"
-    class="intervenciones__abrir"
-    (clicked)="abrir(caso)"
-  >
-    {{ caso.caseNumber }}
-  </button>
+  <a class="intervenciones__abrir" [routerLink]="caseRoute(caso.id)" data-testid="interventions-case-link">{{ caso.caseNumber }}</a>
 </ng-template>
 
 <ng-template #celdaEstado let-caso>
@@ -188,4 +83,37 @@
   } @else {
     <span class="intervenciones__sin-fecha">Sin programar</span>
   }
+</ng-template>
+
+<ng-template #roomCell let-caso>
+  @if (caso.operatingRoom; as room) {
+    <span class="intervenciones__sala" [appTooltip]="room.path || room.name" tabindex="0" data-testid="interventions-room">
+      {{ room.code }} · {{ room.name }}
+    </span>
+    @if (caso.block; as block) {
+      <app-badge variant="info" size="sm">Bloque {{ block.owner }}</app-badge>
+    }
+  } @else {
+    <span class="intervenciones__sin-fecha">Sin quirófano</span>
+  }
+</ng-template>
+
+<ng-template #windowCell let-caso>
+  @if (caso.reservedStartAt && caso.reservedEndAt) {
+    <span class="intervenciones__ventana">{{ timeOf(caso.reservedStartAt) }}–{{ timeOf(caso.reservedEndAt) }}</span>
+    <span class="intervenciones__chips">
+      @if (caso.prepMinutes) {
+        <app-badge variant="secondary" size="sm">+{{ caso.prepMinutes }} prep</app-badge>
+      }
+      @if (caso.cleanupMinutes) {
+        <app-badge variant="secondary" size="sm">+{{ caso.cleanupMinutes }} limpieza</app-badge>
+      }
+    </span>
+  } @else {
+    <span class="intervenciones__sin-fecha">—</span>
+  }
+</ng-template>
+
+<ng-template #teamCell let-caso>
+  <button app-button variant="ghost" size="sm" (clicked)="abrir(caso)" [attr.aria-label]="'Ver el equipo de ' + caso.caseNumber">Equipo</button>
 </ng-template>

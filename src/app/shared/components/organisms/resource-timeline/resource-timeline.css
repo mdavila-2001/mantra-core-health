@@ -1,0 +1,179 @@
+/* Línea de tiempo por recurso. Las posiciones son % del día visible; la
+   columna de nombres tiene ancho fijo para que todas las filas compartan eje. */
+
+:host {
+  display: block;
+  --timeline-name-width: 11rem;
+  --timeline-row-height: 3.25rem;
+}
+
+.resource-timeline {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.resource-timeline__axis,
+.resource-timeline__row {
+  display: grid;
+  grid-template-columns: var(--timeline-name-width) 1fr;
+  align-items: stretch;
+  gap: var(--sp-3);
+}
+
+.resource-timeline__ticks {
+  position: relative;
+  block-size: 1.5rem;
+}
+
+.resource-timeline__tick {
+  position: absolute;
+  transform: translateX(-50%);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.resource-timeline__resource {
+  display: grid;
+  align-content: center;
+  min-inline-size: 0;
+}
+
+.resource-timeline__resource-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-timeline__resource-desc {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.resource-timeline__lane {
+  position: relative;
+  min-block-size: var(--timeline-row-height);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+  overflow: hidden;
+}
+
+.resource-timeline__gridline {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 1px;
+  background: var(--border-subtle);
+}
+
+.resource-timeline__segment {
+  position: absolute;
+  inset-block: var(--sp-1);
+  min-inline-size: 2px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+
+/* El bloque: tiempo asignado, de fondo y a toda la altura. */
+.resource-timeline__segment--band {
+  inset-block: 0;
+  border-radius: 0;
+  background: var(--st-info-bg);
+  border-inline: 2px solid var(--st-info-bd);
+}
+
+.resource-timeline__segment--released {
+  inset-block: 0;
+  border-radius: 0;
+  background: repeating-linear-gradient(135deg, var(--bg-inset) 0 6px, var(--bg-surface-alt) 6px 12px);
+  border-inline: 2px dashed var(--border-default);
+}
+
+/* El caso: el contenedor es la ventana reservada (sombreada); el núcleo, el caso. */
+.resource-timeline__segment--item {
+  z-index: 1;
+  background: repeating-linear-gradient(135deg, var(--st-warning-bg) 0 4px, var(--bg-surface) 4px 8px);
+  border: 1px solid var(--st-warning-bd);
+}
+
+.resource-timeline__segment--item.resource-timeline__segment--success .resource-timeline__core {
+  background: var(--st-success-bg);
+  border-color: var(--st-success-bd);
+}
+
+.resource-timeline__segment--item.resource-timeline__segment--error .resource-timeline__core {
+  background: var(--st-error-bg);
+  border-color: var(--st-error-bd);
+}
+
+.resource-timeline__core {
+  position: absolute;
+  inset-block: 0;
+  background: var(--st-primary-bg);
+  border-inline: 1px solid var(--st-primary-bd);
+}
+
+.resource-timeline__label {
+  position: relative;
+  display: block;
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+}
+
+a.resource-timeline__label:hover {
+  text-decoration: underline;
+}
+
+a.resource-timeline__label:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.resource-timeline__segment--band .resource-timeline__label,
+.resource-timeline__segment--released .resource-timeline__label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.resource-timeline__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.resource-timeline__list {
+  display: none;
+}
+
+/* Corte principal del sistema (780 px, `--bp-md`). */
+@media (max-width: 779.98px) {
+  .resource-timeline {
+    display: none;
+  }
+
+  .resource-timeline__list {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a.resource-timeline__label {
+    transition: color var(--dur-fast) var(--ease-standard);
+  }
+}

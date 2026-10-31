@@ -1954,6 +1954,30 @@ export const routes: Routes = [
       pantallaDeOperacion('administration/medical-organization', 'spaces/:id', 'Ficha del espacio', () =>
         import('./features/admin/medical-organization/espacio/space-detail').then((m) => m.SpaceDetail),
       ),
+      // Infraestructura hospitalaria F4 (quirófanos): las pantallas de la sala
+      // cuelgan de Intervenciones. Las literales van antes que `:caseId`.
+      pantallaDeOperacion('interventions', 'new', 'Programar una intervención', () =>
+        import('./features/interventions/schedule-case/schedule-case').then((m) => m.ScheduleCase),
+      ),
+      pantallaDeOperacion('interventions', 'operating-rooms', 'Agenda de quirófanos', () =>
+        import('./features/interventions/or-agenda/or-agenda').then((m) => m.OrAgenda),
+      ),
+      pantallaDeOperacion('interventions', 'blocks', 'Bloques de quirófano', () =>
+        import('./features/interventions/or-blocks/or-blocks').then((m) => m.OrBlocks),
+      ),
+      pantallaDeOperacion('interventions', 'utilization', 'Utilización de quirófanos', () =>
+        import('./features/interventions/or-utilization/or-utilization').then((m) => m.OrUtilizationPage),
+      ),
+      pantallaDeOperacion('interventions', ':caseId', 'Ficha de la intervención', () =>
+        import('./features/interventions/case-detail/case-detail').then((m) => m.CaseDetail),
+      ),
+      // F5a · la ficha de un equipo (sala y DICOM) y F5e · cargos de día-cama.
+      pantallaDeOperacion('administration/medical-laboratory', 'equipment/:id', 'Ficha del equipo', () =>
+        import('./features/admin/medical-laboratory/equipment-detail/equipment-detail').then((m) => m.EquipmentDetail),
+      ),
+      pantallaDeOperacion('administration/services-catalog', 'bed-day-charges', 'Cargos de día-cama', () =>
+        import('./features/admin/services-catalog/bed-day-charges/bed-day-charges').then((m) => m.BedDayCharges),
+      ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
         import('./features/agenda/appointment-new/appointment-new').then((m) => m.AppointmentNew),
       ),

@@ -1,0 +1,81 @@
+<app-page-header [title]="equipment()?.type?.display ?? 'Equipo'" [subtitle]="equipment()?.careSpace?.path ?? 'Ficha del equipo'" [breadcrumbs]="breadcrumbs()">
+  <span page-meta>
+    @if (equipment(); as e) {
+      <app-badge [variant]="e.operationalStatus.code === 'DU_EQ_OPERATIONAL' ? 'success' : 'warning'">{{ e.operationalStatus.display }}</app-badge>
+    }
+  </span>
+  <div page-actions>
+    @if (equipment()?.careSpace; as room) {
+      <a app-button variant="ghost" size="sm" [routerLink]="['/administration/medical-organization/spaces', room.id]" [queryParams]="{ tab: 'equipment' }">Ver la sala</a>
+    }
+  </div>
+</app-page-header>
+
+<app-view-state-host [state]="state()" (retry)="reload()">
+  @if (equipment(); as e) {
+    <app-card class="equipment-detail" padding="lg" data-testid="equipment-detail">
+      <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="changeTab($event)">
+        <app-tab label="General">
+          <div class="equipment-detail__panel">
+            <app-fact-list [hechos]="facts()" etiqueta="Datos del equipo" />
+          </div>
+        </app-tab>
+
+        <app-tab label="Ubicación y DICOM">
+          <div class="equipment-detail__panel">
+            @if (!canWrite()) {
+              <app-alert tone="info" title="Sólo lectura">La ubicación y el AE Title los cambia la administración de la organización.</app-alert>
+            }
+            <div class="equipment-detail__grid">
+              <app-form-field label="Sala" hint="Espacios activos de la misma sede que pueden alojar este equipo.">
+                <app-select [options]="roomOptions()" [value]="roomChoice()" [disabled]="!canWrite()" ariaLabel="Sala" data-testid="equipment-room" (valueChange)="roomChoice.set($event ?? '')" />
+              </app-form-field>
+              <app-form-field label="AE Title" hint="DICOM: hasta 16 caracteres, sin barra invertida." [errorMessage]="aeProblem() ?? ''">
+                <app-input [value]="aeTitle()" [disabled]="!canWrite()" [hasError]="aeProblem() !== null" testId="equipment-ae-title" (valueChange)="aeTitle.set($any($event) ?? '')" />
+              </app-form-field>
+              <app-form-field label="Nombre de estación" hint="(0040,0010) de la Worklist.">
+                <app-input [value]="stationName()" [disabled]="!canWrite()" testId="equipment-station" (valueChange)="stationName.set($any($event) ?? '')" />
+              </app-form-field>
+            </div>
+            @if (failure(); as f) {
+              <app-view-state-host [state]="f" data-testid="equipment-failure" />
+            }
+            @if (saved()) {
+              <app-alert tone="success" title="Guardado" data-testid="equipment-saved">La API registró la ubicación. Recargue para comprobarlo.</app-alert>
+            }
+            @if (canWrite()) {
+              <div class="equipment-detail__actions">
+                <button app-button [disabled]="aeProblem() !== null || saving()" [isLoading]="saving()" (clicked)="save()" data-testid="equipment-save">Guardar ubicación</button>
+              </div>
+            }
+            @if (mwl(); as m) {
+              <div class="equipment-detail__mwl" data-testid="equipment-mwl">
+                <h3 class="equipment-detail__subtitle">Lo que lee la Worklist (MWL)</h3>
+                <dl>
+                  <dt>Scheduled Station AE Title (0040,0001)</dt><dd>{{ m.scheduledStationAETitle ?? '—' }}</dd>
+                  <dt>Scheduled Station Name (0040,0010)</dt><dd>{{ m.scheduledStationName ?? '—' }}</dd>
+                  <dt>SPS Location (0040,0011)</dt><dd>{{ m.spsLocation ?? '—' }}</dd>
+                </dl>
+              </div>
+            }
+          </div>
+        </app-tab>
+
+        <app-tab label="Agenda">
+          <div class="equipment-detail__panel">
+            @if (e.schedulableResourceId) {
+              <app-alert tone="success" title="El equipo es agendable">Los estudios reservan un cupo de este equipo y la cita lleva la sala donde está.</app-alert>
+            } @else {
+              <app-alert tone="warning" title="Todavía no se puede agendar">Sin recurso agendable, no se reservan estudios con este equipo.</app-alert>
+              @if (canWrite()) {
+                <div class="equipment-detail__actions">
+                  <button app-button variant="outline" [isLoading]="saving()" (clicked)="createResource()" data-testid="equipment-create-resource">Crear recurso agendable</button>
+                </div>
+              }
+            }
+          </div>
+        </app-tab>
+      </app-tabs>
+    </app-card>
+  }
+</app-view-state-host>

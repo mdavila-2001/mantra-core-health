@@ -65,6 +65,11 @@ import {
 } from '../infraestructura/infraestructura.presentacion';
 import { PESTANAS_DE_LA_FICHA, TEXTO_DE_ACCION, type PestanaDeLaFicha } from './ciclo-de-vida';
 import { MoverDialog } from './mover-dialog';
+import { SpaceEquipmentTab } from './space-equipment-tab/space-equipment-tab';
+import { SpaceStockTab } from './space-stock-tab/space-stock-tab';
+
+/** Las pestañas que agrega F5, con su clave de `?tab=`. */
+type F5Tab = 'equipment' | 'stock';
 import { VincularUnidadDialog } from './vincular-unidad-dialog';
 
 /**
@@ -95,6 +100,8 @@ import { VincularUnidadDialog } from './vincular-unidad-dialog';
   selector: 'app-space-detail',
   imports: [
     Alert,
+    SpaceEquipmentTab,
+    SpaceStockTab,
     AppButton,
     AppButtonLink,
     Link,
@@ -137,8 +144,12 @@ export class SpaceDetail {
   private readonly id = computed(() => this.parametros().get('id') ?? '');
 
   protected readonly pestana = linkedSignal<number>(() => {
-    const i = PESTANAS_DE_LA_FICHA.indexOf(this.query().get('tab') as PestanaDeLaFicha);
-    return i === -1 ? 0 : i;
+    const clave = this.query().get('tab');
+    const i = PESTANAS_DE_LA_FICHA.indexOf(clave as PestanaDeLaFicha);
+    if (i !== -1) return i;
+    // F5: las pestañas «Equipos» y «Stock» van después de las cinco de F1.
+    const extra = this.f5Tabs().indexOf(clave as F5Tab);
+    return extra === -1 ? 0 : PESTANAS_DE_LA_FICHA.length + extra;
   });
 
   /** S1 hasta que se sabe a quién se le piden los datos (el guard ya corrió). */
@@ -239,6 +250,21 @@ export class SpaceDetail {
     return banderas.filter(([activa]) => activa).map(([, texto]) => texto);
   });
 
+  /**
+   * F5a/F5c (`CONTRATO-F2-F5.md`): la ficha suma «Equipos» si la función aloja
+   * equipos y «Stock» si es punto de stock. Componentes propios, una línea acá.
+   */
+  protected readonly f5Tabs = computed<readonly F5Tab[]>(() => {
+    const p = this.perfil();
+    return [...(p?.hostsEquipment ? (['equipment'] as const) : []), ...(p?.stockPoint ? (['stock'] as const) : [])];
+  });
+
+  /** Farmacia (o quien administra) escribe el stock; la API decide. */
+  protected readonly canWriteStock = computed(() => {
+    const roles = this.session.roles();
+    return roles.includes('PHARMACY_STAFF') || roles.includes('SECURITY_ADMIN');
+  });
+
   /** Plan §2.3: un local de aislamiento sin validación de climatización no es apto. */
   protected readonly aislamientoSinValidar = computed(
     () => this.perfil()?.isolationCapable === true && !this.espacio()?.hvacValidatedOn,
@@ -308,7 +334,7 @@ export class SpaceDetail {
     this.pestana.set(indice);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab: PESTANAS_DE_LA_FICHA[indice] ?? null },
+      queryParams: { tab: PESTANAS_DE_LA_FICHA[indice] ?? this.f5Tabs()[indice - PESTANAS_DE_LA_FICHA.length] ?? null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
