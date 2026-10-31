@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild, type TemplateRef } from '@angular/core';
+import { map } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthzGovernanceClient } from '../../../../../core/data-access/authz-governance/authz-governance.client';
 import type { AccessReviewDue } from '../../../../../core/data-access/authz-governance/authz-governance.types';
-import { errorToViewState } from '../../../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../../../core/view-state/view-state';
-import type { ViewState } from '../../../../../core/view-state/view-state.types';
+import { empty } from '../../../../../core/view-state/view-state';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Input } from '../../../../../shared/components/atoms/input/input';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
@@ -13,6 +12,8 @@ import { FormField } from '../../../../../shared/components/molecules/form-field
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { dateOnly } from '../../governance/governance-labels';
+import { pagedList } from '../../support/paged-list';
+import { accountStatusLabel } from '../permissions-labels';
 import { portalUrl } from '../../portal-nav';
 import { patchQuery, queryFilters, queryParamsSignal } from '../../support/route-query';
 import { ReviewDrawer } from './review-drawer';
@@ -20,10 +21,11 @@ import { ReviewDrawer } from './review-drawer';
 const URL_KEYS = ['review'] as const;
 
 /**
- * La cola de revisión periódica: quiénes tienen accesos activos y cuándo se
- * revisaron por última vez. El plazo lo elige quien gobierna («sin revisar hace
- * más de N días»); la pantalla no inventa una cadencia. Sin plazo, se listan
- * todos, los nunca revisados primero.
+ * La cola de revisión periódica: las cuentas con acceso administrativo y cuándo
+ * se revisaron por última vez. El plazo lo elige quien gobierna («sin revisar
+ * hace más de N días»); sin plazo, la API usa 90 días y lo dice en la respuesta
+ * (`olderThanDays`), que es lo que la pantalla muestra. Los nunca revisados
+ * entran siempre. Paginada por cursor.
  */
 @Component({
   selector: 'app-portal-reviews-panel',
@@ -34,12 +36,12 @@ const URL_KEYS = ['review'] as const;
         <app-alert tone="success" dismissible (dismissed)="notice.set(null)">{{ message }}</app-alert>
       }
       <p class="panel__note">
-        Revisar es certificar que los accesos activos de una persona siguen siendo los que debe tener, o dejar asentado
-        que hay que cambiarlos. Nadie revisa sus propios accesos.
+        Revisar es dejar asentado que alguien miró los accesos de una cuenta: quién, a quién y cuándo. Registrar la
+        revisión no cambia ningún permiso; quitar un rol se hace en «Usuarios y roles». Nadie revisa sus propios accesos.
       </p>
       <app-form-field
         label="Sin revisar hace más de (días)"
-        hint="Déjelo vacío para ver a todas las personas con accesos activos."
+        [hint]="'Déjelo vacío para usar el plazo por omisión de la API (90 días).'"
         [errorMessage]="daysProblem()"
       >
         <app-input type="number" ariaLabel="Días sin revisar" data-testid="portal-reviews-days" [(value)]="daysText" />
@@ -47,22 +49,24 @@ const URL_KEYS = ['review'] as const;
       <app-data-table
         data-testid="portal-reviews-table"
         caption="Personas con accesos por revisar"
-        [state]="due()"
+        [state]="due.state()"
         [columns]="columns()"
         [trackBy]="byId"
         [rowLabel]="rowName"
+        [cursor]="due.cursor()"
         rowNavigable
         stackedOnMobile
         fitContainer
         (rowActivated)="open($event)"
-        (retry)="reload()"
+        (cursorChanged)="due.move($event)"
+        (retry)="due.reload()"
       />
     </div>
     <ng-template #nameCell let-row>
       <span class="panel__name">{{ row.displayName }}</span>
     </ng-template>
-    <ng-template #countCell let-row>
-      <app-badge size="sm" variant="secondary">{{ row.activeAssignments }}</app-badge>
+    <ng-template #statusCell let-row>
+      <app-badge size="sm" [variant]="status(row.accountStatus).tone">{{ status(row.accountStatus).label }}</app-badge>
     </ng-template>
     <ng-template #lastCell let-row>
       @if (row.lastReviewedAt) {
@@ -83,9 +87,9 @@ export class ReviewsPanel {
 
   protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
   protected readonly daysText = signal<string | number | null>('');
-  protected readonly due = signal<ViewState<readonly AccessReviewDue[]>>(loading());
   protected readonly notice = signal<string | null>(null);
   protected readonly day = dateOnly;
+  protected readonly status = accountStatusLabel;
 
   /** Los días que valen: entero entre 1 y 3650 (lo que acepta la API) o ninguno. */
   private readonly days = computed<number | null | 'invalid'>(() => {
@@ -97,45 +101,40 @@ export class ReviewsPanel {
   protected readonly daysProblem = computed(() => (this.days() === 'invalid' ? 'Escriba un número entero de 1 a 3650.' : ''));
 
   private readonly nameCell = viewChild.required<TemplateRef<{ $implicit: AccessReviewDue }>>('nameCell');
-  private readonly countCell = viewChild.required<TemplateRef<{ $implicit: AccessReviewDue }>>('countCell');
+  private readonly statusCell = viewChild.required<TemplateRef<{ $implicit: AccessReviewDue }>>('statusCell');
   private readonly lastCell = viewChild.required<TemplateRef<{ $implicit: AccessReviewDue }>>('lastCell');
 
   protected readonly columns = computed<readonly ColumnDef<AccessReviewDue>[]>(() => [
     { key: 'displayName', header: 'Persona', priority: 1, cell: this.nameCell() },
-    { key: 'activeAssignments', header: 'Roles activos', priority: 2, cell: this.countCell() },
+    { key: 'accountStatus', header: 'Estado de la cuenta', priority: 2, cell: this.statusCell() },
     { key: 'lastReviewedAt', header: 'Última revisión', priority: 1, cell: this.lastCell() },
   ]);
   protected readonly byId = (row: AccessReviewDue): string => row.userId;
   protected readonly rowName = (row: AccessReviewDue): string => row.displayName;
 
-  private pending: { unsubscribe(): void } | null = null;
-
+  protected readonly due = pagedList<AccessReviewDue>(
+    (cursor) =>
+      this.governance
+        .accessReviewsDue({
+          ...(this.days() !== 'invalid' && this.days() !== null ? { olderThanDays: this.days() as number } : {}),
+          ...(cursor ? { cursor } : {}),
+        })
+        .pipe(map((page) => ({ items: page.items, nextCursor: page.nextCursor }))),
+    () =>
+      empty(
+        { label: 'Ver usuarios y roles', route: portalUrl('governance/users') },
+        this.days() === null || this.days() === 'invalid'
+          ? 'Todas las cuentas con acceso administrativo se revisaron en los últimos 90 días.'
+          : `Todas las cuentas con acceso administrativo se revisaron en los últimos ${this.days()} días.`,
+      ),
+  );
 
   constructor() {
     effect(() => {
-      this.days();
-      untracked(() => this.reload());
-    });
-  }
-
-  protected reload(): void {
-    const days = this.days();
-    if (days === 'invalid') return;
-    this.pending?.unsubscribe();
-    this.due.set(loading());
-    this.pending = this.governance.accessReviewsDue(days ?? undefined).subscribe({
-      next: ({ items }) =>
-        this.due.set(
-          items.length === 0
-            ? empty(
-                { label: 'Ver usuarios y roles', route: portalUrl('governance/users') },
-                days === null
-                  ? 'Nadie tiene accesos activos que revisar.'
-                  : `Todas las personas con accesos se revisaron en los últimos ${days} días.`,
-              )
-            : ready(items),
-        ),
-      error: (e: unknown) => this.due.set(errorToViewState<readonly AccessReviewDue[]>(e)),
+      const days = this.days();
+      untracked(() => {
+        if (days !== 'invalid') this.due.restart();
+      });
     });
   }
 
@@ -149,6 +148,6 @@ export class ReviewsPanel {
 
   protected changed(message: string): void {
     this.notice.set(message);
-    this.reload();
+    this.due.reload();
   }
 }

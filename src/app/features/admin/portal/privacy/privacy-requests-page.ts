@@ -5,16 +5,13 @@ import {
   computed,
   effect,
   inject,
-  signal,
   untracked,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { tap } from 'rxjs';
-
 import { PrivacyRequestsClient } from '../../../../core/data-access/admin-portal/privacy-requests.client';
-import type { PrivacyRequest, PrivacyRequestsResult } from '../../../../core/data-access/admin-portal/privacy-requests.types';
+import type { PrivacyRequest } from '../../../../core/data-access/admin-portal/privacy-requests.types';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { empty } from '../../../../core/view-state/view-state';
 import type { EmptyViewState } from '../../../../core/view-state/view-state.types';
@@ -32,7 +29,6 @@ import { portalUrl } from '../portal-nav';
 import { pagedList } from '../support/paged-list';
 import { patchQuery, queryFilters, queryParamsSignal } from '../support/route-query';
 import {
-  JURISDICTION_OPTIONS,
   TYPE_OPTIONS,
   daysSince,
   jurisdictionLabel,
@@ -51,9 +47,9 @@ const PAGE_SIZE = 25;
 const SCREEN = portalUrl('governance/privacy-requests');
 
 /**
- * Solicitudes de privacidad (acceso, supresión, rectificación, portabilidad, oposición). Las
- * más antiguas primero: una solicitud sin atender no queda enterrada bajo las nuevas. El
- * conteo por estado lo calcula la API sobre todas las solicitudes, no sobre la página.
+ * Solicitudes de privacidad (acceso, supresión, rectificación, portabilidad, oposición), de
+ * `GET /privacy/dsar`: las más recientes primero, y las que pasaron su plazo se marcan
+ * «vencida». Esa lectura no entrega conteos por estado, así que las pestañas no los inventan.
  */
 @Component({
   selector: 'app-portal-privacy-requests-page',
@@ -77,19 +73,12 @@ export class PrivacyRequestsPage {
   protected readonly when = dateTime;
   protected readonly waiting = (row: PrivacyRequest): number => daysSince(row.requestedAt);
 
-  /** Conteo por estado sobre todas las solicitudes; `null` hasta que llega la primera página. */
-  protected readonly counts = signal<PrivacyRequestsResult['statusCounts'] | null>(null);
-
   protected readonly fields = computed<readonly FilterField[]>(() => [
     { key: 'type', label: 'Tipo de solicitud', kind: 'select', options: TYPE_OPTIONS },
-    { key: 'jurisdiction', label: 'Jurisdicción', kind: 'select', options: JURISDICTION_OPTIONS },
   ]);
 
   protected readonly list = pagedList<PrivacyRequest>(
-    (cursor) =>
-      this.client
-        .list({ ...privacyQuery(this.values()), limit: PAGE_SIZE, ...(cursor ? { cursor } : {}) })
-        .pipe(tap((page) => this.counts.set(page.statusCounts))),
+    (cursor) => this.client.list({ ...privacyQuery(this.values()), limit: PAGE_SIZE, ...(cursor ? { cursor } : {}) }),
     () => this.whenEmpty(),
   );
 
@@ -103,17 +92,13 @@ export class PrivacyRequestsPage {
     { key: 'requestedAt', header: 'Recibida', priority: 2, cell: this.whenCell() },
   ]);
 
-  protected readonly tabLabels = computed(() => {
-    const c = this.counts();
-    const suffix = (n: number | undefined): string => (n === undefined ? '' : ` (${n})`);
-    return {
-      all: 'Todas',
-      received: `Recibidas${suffix(c?.RECEIVED)}`,
-      inProgress: `En curso${suffix(c?.IN_PROGRESS)}`,
-      completed: `Completadas${suffix(c?.COMPLETED)}`,
-      rejected: `Rechazadas${suffix(c?.REJECTED)}`,
-    };
-  });
+  protected readonly tabLabels = {
+    all: 'Todas',
+    received: 'Recibidas',
+    inProgress: 'En curso',
+    completed: 'Completadas',
+    rejected: 'Rechazadas',
+  } as const;
 
   protected readonly byId = (row: PrivacyRequest): string => row.id;
   protected readonly rowName = (row: PrivacyRequest): string =>
@@ -136,7 +121,7 @@ export class PrivacyRequestsPage {
   }
 
   protected clear(): void {
-    void patchQuery(this.router, this.route, { type: null, jurisdiction: null });
+    void patchQuery(this.router, this.route, { type: null });
   }
 
   private whenEmpty(): EmptyViewState {

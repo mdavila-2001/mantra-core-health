@@ -3,10 +3,7 @@ import type {
   PrivacyStatus,
   PrivacyType,
 } from '../../../../core/data-access/admin-portal/privacy-requests.types';
-import {
-  PRIVACY_JURISDICTIONS,
-  PRIVACY_TYPES,
-} from '../../../../core/data-access/admin-portal/privacy-requests.types';
+import { PRIVACY_TYPES } from '../../../../core/data-access/admin-portal/privacy-requests.types';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import type { Rotulo } from '../../platform/platform-labels';
 
@@ -51,11 +48,6 @@ export function jurisdictionLabel(code: PrivacyJurisdiction | null): string {
 export const TYPE_OPTIONS: readonly SelectOption<string>[] = [
   { value: '', label: 'Cualquier tipo' },
   ...PRIVACY_TYPES.map((code) => ({ value: code, label: TYPE[code] })),
-];
-
-export const JURISDICTION_OPTIONS: readonly SelectOption<string>[] = [
-  { value: '', label: 'Cualquier jurisdicción' },
-  ...PRIVACY_JURISDICTIONS.map((code) => ({ value: code, label: JURISDICTION[code] })),
 ];
 
 /** El verbo del botón que mueve la solicitud a ese estado. */

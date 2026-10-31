@@ -14,7 +14,11 @@ import {
 import { AuthzAdminClient } from '../../../../../core/data-access/authz-admin/authz-admin.client';
 import type { PermissionSummary } from '../../../../../core/data-access/authz-admin/authz-admin.types';
 import { AuthzGovernanceClient } from '../../../../../core/data-access/authz-governance/authz-governance.client';
-import type { ResourceScopeGrant } from '../../../../../core/data-access/authz-governance/authz-governance.types';
+import {
+  GOVERNANCE_REASON_MAX,
+  GOVERNANCE_REASON_MIN,
+  type ResourceScopeGrant,
+} from '../../../../../core/data-access/authz-governance/authz-governance.types';
 import { empty } from '../../../../../core/view-state/view-state';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
@@ -244,17 +248,33 @@ export class ScopeGrantsPanel {
   }
 
   protected async end(grant: ResourceScopeGrant): Promise<void> {
-    const ok = await this.dialogs.confirm({
+    const options = {
       title: 'Terminar la vigencia',
       message: `El permiso por alcance sobre ${this.kind(grant.resourceType).label.toLowerCase()} ${this.short(grant.resourceId)} deja de valer desde ahora. La fila queda como historia y queda en la bitácora.`,
       confirmLabel: 'Terminar vigencia',
       cancelLabel: 'Volver',
       destructive: true,
-    });
-    if (!ok) return;
+    };
+    // Levantar una negación abre un acceso: la API exige el motivo (422) y la pantalla lo pide antes de enviar.
+    let reason: string | undefined;
+    if (grant.effect === 'DENY') {
+      const typed = await this.dialogs.confirmWithReason(
+        { ...options, message: `${options.message} Este permiso NIEGA: terminarlo abre un acceso, por eso exige un motivo.` },
+        {
+          label: 'Motivo',
+          hint: 'Por qué se levanta la negación. Mínimo 10 caracteres.',
+          minLength: GOVERNANCE_REASON_MIN,
+          maxLength: GOVERNANCE_REASON_MAX,
+        },
+      );
+      if (typed === null) return;
+      reason = typed;
+    } else if (!(await this.dialogs.confirm(options))) {
+      return;
+    }
     this.ending.set(grant.id);
     this.error.set(null);
-    this.governance.endResourceScopeGrant(grant.id).subscribe({
+    this.governance.endResourceScopeGrant(grant.id, reason).subscribe({
       next: () => {
         this.ending.set(null);
         this.notice.set('Terminó la vigencia del permiso por alcance.');

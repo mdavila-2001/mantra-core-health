@@ -331,7 +331,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'superadmin/operations',
       'superadmin/instances',
       'superadmin/bulk-imports',
-      'superadmin/clinical-imports',
       'superadmin/catalog-editor',
     ],
   },

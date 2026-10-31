@@ -1,0 +1,103 @@
+<div class="vis__panel">
+  @if (notice(); as message) {
+    <app-alert tone="success" data-testid="ui-rules-notice">{{ message }}</app-alert>
+  }
+  @if (done(); as message) {
+    <app-alert tone="success" data-testid="ui-rules-done">{{ message }}</app-alert>
+  }
+  @if (failure(); as message) {
+    <app-alert tone="error" data-testid="ui-rules-failure">{{ message }}</app-alert>
+  }
+
+  <app-governance-filter-form [fields]="fields()" [values]="values()" (applied)="apply($event)" (cleared)="clear()" />
+
+  <app-data-table
+    data-testid="ui-rules-table"
+    caption="Reglas de visibilidad de la interfaz"
+    [state]="list.state()"
+    [columns]="columns()"
+    [trackBy]="byId"
+    [rowLabel]="rowName"
+    [cursor]="list.cursor()"
+    stackedOnMobile
+    fitContainer
+    (cursorChanged)="list.move($event)"
+    (retry)="list.reload()"
+  />
+</div>
+
+@if (editing(); as rule) {
+  <app-visibility-rule-edit-dialog
+    [rule]="rule"
+    [elementLabel]="pathOf(rule.elementKey)"
+    (saved)="saved($event)"
+    (closed)="editing.set(null)"
+  />
+}
+
+<ng-template #ruleCell let-row>
+  <div class="vis__cell">
+    <span class="vis__badges">
+      <app-badge size="sm" [variant]="effect(row.effect).tone">{{ effect(row.effect).label }}</app-badge>
+    </span>
+    <span class="vis__name">{{ pathOf(row.elementKey) }}</span>
+    <span class="vis__code">{{ row.elementKey }}</span>
+  </div>
+</ng-template>
+
+<ng-template #subjectCell let-row>
+  <div class="vis__cell">
+    <span class="vis__name">{{ row.subjectLabel ?? row.subjectId ?? 'Todos' }}</span>
+    <span class="vis__secondary">{{ subjectType(row.subjectType).label }}</span>
+  </div>
+</ng-template>
+
+<ng-template #validityCell let-row>
+  <div class="vis__cell">
+    <span class="vis__badges">
+      <app-badge size="sm" [variant]="stateOf(row).tone">{{ stateOf(row).label }}</app-badge>
+    </span>
+    <span class="vis__secondary">{{ validity(row) }}</span>
+  </div>
+</ng-template>
+
+<ng-template #reasonCell let-row>
+  <div class="vis__cell">
+    <span class="vis__name">{{ row.reason }}</span>
+    <span class="vis__secondary">
+      Versión {{ row.version }}{{ row.createdByLabel ? ' · ' + row.createdByLabel : '' }}
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #actionsCell let-row>
+  @if (canChange(row)) {
+    <span class="vis__actions">
+      <button
+        app-button
+        size="sm"
+        variant="secondary"
+        data-testid="ui-rule-edit"
+        [attr.aria-label]="'Editar la regla sobre ' + pathOf(row.elementKey)"
+        [disabled]="working() === row.id"
+        (clicked)="edit(row)"
+      >
+        Editar
+      </button>
+      <button
+        app-button
+        size="sm"
+        variant="ghost"
+        data-testid="ui-rule-end"
+        [attr.aria-label]="'Terminar la regla sobre ' + pathOf(row.elementKey)"
+        [isLoading]="working() === row.id"
+        [disabled]="working() === row.id"
+        (clicked)="end(row)"
+      >
+        Terminar
+      </button>
+    </span>
+  } @else {
+    <span class="vis__secondary">Sin acciones</span>
+  }
+</ng-template>

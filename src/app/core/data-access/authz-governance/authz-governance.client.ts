@@ -6,43 +6,57 @@ import { queryParams, withDates, type Wire } from '../admin-portal/admin-portal.
 import { API_BASE_URL, apiUrl } from '../api';
 import type { AdminPage } from '../authz-admin/authz-admin.types';
 import type {
+  AccessMap,
+  AccessMapAssignment,
   AccessReview,
   AccessReviewDue,
   AccessReviewDuePage,
+  AccessReviewDueQuery,
+  AccessReviewsQuery,
   DecisionRequest,
-  DecisionResult,
   EndedResourceScopeGrant,
   FieldPermissionInput,
+  HoldersQuery,
   LifecycleAction,
   LifecycleEvent,
   LifecycleResult,
-  RecordAccessReviewInput,
+  PermissionHoldersPage,
   ResourceScopeGrant,
   ResourceScopeGrantInput,
   ResourceScopeGrantsQuery,
   RoleFieldPermissions,
   RoleSaved,
   SetRolePermissionsInput,
-  UserAccessReviews,
+  SimulationResult,
   UserLifecycle,
+  UserLifecycleQuery,
 } from './authz-governance.types';
 
 type GrantBody = Wire<ResourceScopeGrant, 'validFrom' | 'validTo' | 'createdAt'>;
 type EventBody = Wire<LifecycleEvent, 'recordedAt'>;
 type ReviewBody = Wire<AccessReview, 'reviewedAt'>;
 type DueBody = Wire<AccessReviewDue, 'lastReviewedAt'>;
+type MapAssignmentBody = Wire<AccessMapAssignment, 'validFrom' | 'validTo'>;
 
 const toGrant = (b: GrantBody): ResourceScopeGrant =>
   withDates<ResourceScopeGrant, 'validFrom' | 'validTo' | 'createdAt'>(b, ['validFrom', 'validTo', 'createdAt']);
 const toEvent = (b: EventBody): LifecycleEvent => withDates<LifecycleEvent, 'recordedAt'>(b, ['recordedAt']);
 const toReview = (b: ReviewBody): AccessReview => withDates<AccessReview, 'reviewedAt'>(b, ['reviewedAt']);
+const toMapAssignment = (b: MapAssignmentBody): AccessMapAssignment =>
+  withDates<AccessMapAssignment, 'validFrom' | 'validTo'>(b, ['validFrom', 'validTo']);
 const toDue = (b: DueBody): AccessReviewDue => withDates<AccessReviewDue, 'lastReviewedAt'>(b, ['lastReviewedAt']);
 
 /**
  * Cliente del gobierno de acceso: edición de permisos, permisos por campo y por
- * alcance de recurso, simulación del PDP, ciclo de vida de cuentas internas y
- * revisión de accesos. Las lecturas de roles, permisos y asignaciones siguen en
- * `AuthzAdminClient`; aquí sólo lo que ese cliente no tenía.
+ * alcance de recurso, «quién puede qué», simulación del PDP, ciclo de vida de
+ * cuentas internas y revisión de accesos. Las lecturas de roles, permisos y
+ * asignaciones siguen en `AuthzAdminClient`; aquí sólo lo que ese cliente no
+ * tenía.
+ *
+ * El ciclo de vida es de `iam` (`/iam/users/:id/...`); lo demás, de `authz`.
+ * Todo lo que mira usuarios de TODA la plataforma (ciclo de vida, «quién puede
+ * qué», revisiones, simulador) lo exige la API a un administrador de plataforma:
+ * quien tiene alcance de una organización recibe 403 `ROLE_INSUFFICIENT`.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthzGovernanceClient {
@@ -87,66 +101,106 @@ export class AuthzGovernanceClient {
     return this.http.post<{ readonly id: string }>(this.url('/authz/resource-scope-grants'), input);
   }
 
-  /** `DELETE /authz/resource-scope-grants/:id` — termina la vigencia; 409 si ya había terminado. */
-  endResourceScopeGrant(grantId: string): Observable<EndedResourceScopeGrant> {
+  /**
+   * `DELETE /authz/resource-scope-grants/:id` — termina la vigencia (no borra la fila); 409 si ya había
+   * terminado. Un permiso de efecto DENY exige `reason` (422 `RESOURCE_SCOPE_GRANT_DENY_REASON_REQUIRED`):
+   * levantar una denegación abre un acceso.
+   */
+  endResourceScopeGrant(grantId: string, reason?: string): Observable<EndedResourceScopeGrant> {
     return this.http
-      .delete<Wire<EndedResourceScopeGrant, 'validTo'> & { readonly validTo: string }>(
+      .request<Wire<EndedResourceScopeGrant, 'validTo'> & { readonly validTo: string }>(
+        'DELETE',
         this.url(`/authz/resource-scope-grants/${encodeURIComponent(grantId)}`),
+        { body: reason === undefined || reason.trim() === '' ? {} : { reason: reason.trim() } },
       )
       .pipe(map((b) => ({ id: b.id, validTo: new Date(b.validTo) })));
   }
 
   /* ---- PDP ---------------------------------------------------------------- */
 
-  /** `POST /authz/decisions/evaluate` — la decisión efectiva del PDP real (queda auditada). */
-  evaluate(request: DecisionRequest): Observable<DecisionResult> {
-    return this.http.post<DecisionResult>(this.url('/authz/decisions/evaluate'), request);
+  /**
+   * `POST /authz/simulations` — la decisión del PDP real para una solicitud hipotética. Nada se concede ni
+   * se cambia; queda en la bitácora (`ACCESS_DECISION_SIMULATED`).
+   */
+  simulate(request: DecisionRequest): Observable<SimulationResult> {
+    return this.http.post<SimulationResult>(this.url('/authz/simulations'), request);
   }
 
-  /* ---- ciclo de vida ------------------------------------------------------ */
+  /* ---- «quién puede qué» -------------------------------------------------- */
 
-  /** `GET /authz/users/:id/lifecycle`. */
-  lifecycleOf(userId: string): Observable<UserLifecycle> {
+  /** `GET /authz/users/:id/access-map` — roles, conteos de concesiones y última revisión. */
+  accessMap(userId: string): Observable<AccessMap> {
     return this.http
-      .get<Omit<UserLifecycle, 'history'> & { readonly history: readonly EventBody[] }>(
-        this.url(`/authz/users/${encodeURIComponent(userId)}/lifecycle`),
-      )
-      .pipe(map((b) => ({ ...b, history: b.history.map(toEvent) })));
+      .get<
+        Omit<AccessMap, 'lastReview' | 'assignments'> & {
+          readonly lastReview: ReviewBody | null;
+          readonly assignments: readonly MapAssignmentBody[];
+        }
+      >(this.url(`/authz/users/${encodeURIComponent(userId)}/access-map`))
+      .pipe(
+        map((b) => ({
+          ...b,
+          assignments: b.assignments.map(toMapAssignment),
+          lastReview: b.lastReview ? toReview(b.lastReview) : null,
+        })),
+      );
   }
 
-  /** Suspender, reactivar o dar de baja, siempre con motivo. 409/422 traen su `reason`. */
-  lifecycleAction(userId: string, action: LifecycleAction, reason: string): Observable<LifecycleResult> {
-    return this.http.post<LifecycleResult>(
-      this.url(`/authz/users/${encodeURIComponent(userId)}/lifecycle/${action}`),
-      { reason },
+  /** `GET /authz/permissions/:id/holders` — quiénes tienen un permiso y por qué camino; una fila por persona. */
+  permissionHolders(permissionId: string, query: HoldersQuery = {}): Observable<PermissionHoldersPage> {
+    return this.http.get<PermissionHoldersPage>(
+      this.url(`/authz/permissions/${encodeURIComponent(permissionId)}/holders`),
+      { params: queryParams({ ...query }) },
     );
+  }
+
+  /* ---- ciclo de vida (iam) ------------------------------------------------ */
+
+  /** `GET /iam/users/:id/lifecycle` — estado de la cuenta e historia paginada, de la más reciente a la más antigua. */
+  lifecycleOf(userId: string, query: UserLifecycleQuery = {}): Observable<UserLifecycle> {
+    return this.http
+      .get<Omit<UserLifecycle, 'items'> & { readonly items: readonly EventBody[] }>(
+        this.url(`/iam/users/${encodeURIComponent(userId)}/lifecycle`),
+        { params: queryParams({ ...query }) },
+      )
+      .pipe(map((b) => ({ ...b, items: b.items.map(toEvent) })));
+  }
+
+  /**
+   * `POST /iam/users/:id/{suspend,reactivate,deactivate}` — siempre con motivo. Idempotente: repetir sobre una
+   * cuenta que ya está en ese estado responde 200 con `changed: false`. 409 `USER_LIFECYCLE_TRANSITION_INVALID`,
+   * 422 `USER_SELF_LIFECYCLE_FORBIDDEN` / `USER_LAST_SECURITY_ADMIN`.
+   */
+  lifecycleAction(userId: string, action: LifecycleAction, reason: string): Observable<LifecycleResult> {
+    return this.http.post<LifecycleResult>(this.url(`/iam/users/${encodeURIComponent(userId)}/${action}`), { reason });
   }
 
   /* ---- revisión de accesos ------------------------------------------------ */
 
-  /** `GET /authz/access-reviews/due` — con `olderThanDays`, sólo lo no revisado en ese plazo. */
-  accessReviewsDue(olderThanDays?: number): Observable<AccessReviewDuePage> {
+  /** `GET /authz/access-reviews/due` — cuentas con acceso administrativo sin revisión en `olderThanDays` (90 por defecto). */
+  accessReviewsDue(query: AccessReviewDueQuery = {}): Observable<AccessReviewDuePage> {
     return this.http
       .get<Omit<AccessReviewDuePage, 'items'> & { readonly items: readonly DueBody[] }>(
         this.url('/authz/access-reviews/due'),
-        { params: queryParams({ olderThanDays }) },
+        { params: queryParams({ ...query }) },
       )
       .pipe(map((b) => ({ ...b, items: b.items.map(toDue) })));
   }
 
-  /** `GET /authz/users/:id/access-reviews` — el historial de revisiones. */
-  accessReviewsOf(userId: string): Observable<UserAccessReviews> {
+  /** `GET /authz/access-reviews` — la historia de revisiones, filtrable por cuenta revisada y por revisor. */
+  accessReviews(query: AccessReviewsQuery = {}): Observable<AdminPage<AccessReview>> {
     return this.http
-      .get<Omit<UserAccessReviews, 'items'> & { readonly items: readonly ReviewBody[] }>(
-        this.url(`/authz/users/${encodeURIComponent(userId)}/access-reviews`),
-      )
-      .pipe(map((b) => ({ ...b, items: b.items.map(toReview) })));
+      .get<AdminPage<ReviewBody>>(this.url('/authz/access-reviews'), { params: queryParams({ ...query }) })
+      .pipe(map((page) => ({ ...page, items: page.items.map(toReview) })));
   }
 
-  /** `POST /authz/users/:id/access-reviews`. */
-  recordAccessReview(userId: string, input: RecordAccessReviewInput): Observable<AccessReview> {
+  /**
+   * `POST /authz/users/:id/access-reviews` — registra que revisaste los accesos de la cuenta. No lleva cuerpo y
+   * no cambia ningún permiso. 422 `ACCESS_REVIEW_SELF_REVIEW_FORBIDDEN` si es la propia cuenta.
+   */
+  recordAccessReview(userId: string): Observable<AccessReview> {
     return this.http
-      .post<ReviewBody>(this.url(`/authz/users/${encodeURIComponent(userId)}/access-reviews`), input)
+      .post<ReviewBody>(this.url(`/authz/users/${encodeURIComponent(userId)}/access-reviews`), {})
       .pipe(map(toReview));
   }
 

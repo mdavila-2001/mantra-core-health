@@ -6,13 +6,16 @@ import type {
   QualityRuleDetail,
   QualitySeverity,
 } from '../../data-access/admin-portal/data-quality.types';
-import type {
-  PrivacyRequest,
-  PrivacyStatus,
+import {
+  allowedTransitions,
+  type PrivacyJurisdiction,
+  type PrivacyStatus,
+  type PrivacyType,
 } from '../../data-access/admin-portal/privacy-requests.types';
 
 /* ============================================================================
-    Backend simulado de calidad de datos y solicitudes de privacidad.
+    Backend simulado de calidad de datos clínicos (`health_data`) y de solicitudes de
+    privacidad (`GET/PATCH /privacy/dsar`, módulo `audit`).
 
     **DATOS SINTÉTICOS**, fijos: dos corridas dan lo mismo. Ningún nombre, ni
     documento ni cifra es de una persona real; los textos lo dicen («SIMULADO»).
@@ -22,8 +25,9 @@ import type {
       ya cerrada, 409. El motivo mide entre 10 y 2000 caracteres.
     - Un listado pagina por cursor y su `total` cuenta lo que cumple los filtros.
     - Una solicitud de privacidad en estado terminal no admite más transiciones
-      (`PATCH /privacy/dsar/:id` → 422) y cada solicitud publica las transiciones
-      que admite.
+      (`PATCH /privacy/dsar/:id` → 422). La lectura va de la más reciente a la más
+      antigua, trae `dueAt` (solicitud + 30 días) y `overdue`, y no trae conteos por
+      estado ni las transiciones que admite.
     ========================================================================== */
 
 const SIM = 'SIMULADO · ';
@@ -97,32 +101,50 @@ const ISSUE_SEEDS: readonly IssueSeed[] = [
   },
 ];
 
+/** Una solicitud como la sirve `GET /privacy/dsar` (fechas ISO; jurisdicción con el prefijo del concepto). */
+interface DsarWire {
+  readonly id: string;
+  readonly subjectUserId: string;
+  readonly type: PrivacyType;
+  readonly status: PrivacyStatus;
+  readonly jurisdiction: `JURISDICTION_${PrivacyJurisdiction}` | null;
+  readonly requestedAt: string;
+  readonly completedAt: string | null;
+  readonly dueAt: string;
+  readonly overdue: boolean;
+  readonly hasResultFile: boolean;
+  readonly version: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 const DSAR_SEEDS: readonly {
-  type: NonNullable<PrivacyRequest['type']>;
+  type: PrivacyType;
   status: PrivacyStatus;
-  jurisdiction: PrivacyRequest['jurisdiction'];
+  jurisdiction: DsarWire['jurisdiction'];
   requestedAt: string;
   completedAt?: string;
 }[] = [
-  { type: 'ACCESS', status: 'RECEIVED', jurisdiction: 'PE', requestedAt: '2026-10-05T10:00:00.000Z' },
+  { type: 'ACCESS', status: 'RECEIVED', jurisdiction: 'JURISDICTION_PE', requestedAt: '2026-09-20T10:00:00.000Z' },
   { type: 'ERASURE', status: 'IN_PROGRESS', jurisdiction: null, requestedAt: '2026-10-12T15:00:00.000Z' },
-  { type: 'PORTABILITY', status: 'RECEIVED', jurisdiction: 'EU', requestedAt: '2026-10-20T09:00:00.000Z' },
+  { type: 'PORTABILITY', status: 'RECEIVED', jurisdiction: 'JURISDICTION_EU', requestedAt: '2026-10-20T09:00:00.000Z' },
   {
     type: 'RECTIFICATION',
     status: 'COMPLETED',
-    jurisdiction: 'PE',
+    jurisdiction: 'JURISDICTION_PE',
     requestedAt: '2026-09-15T09:00:00.000Z',
     completedAt: '2026-09-22T09:00:00.000Z',
   },
-  { type: 'OBJECTION', status: 'REJECTED', jurisdiction: 'US', requestedAt: '2026-09-01T09:00:00.000Z' },
+  { type: 'OBJECTION', status: 'REJECTED', jurisdiction: 'JURISDICTION_US', requestedAt: '2026-09-01T09:00:00.000Z' },
 ];
 
-const TRANSITIONS: Readonly<Record<PrivacyStatus, readonly PrivacyStatus[]>> = {
-  RECEIVED: ['IN_PROGRESS', 'COMPLETED', 'REJECTED'],
-  IN_PROGRESS: ['COMPLETED', 'REJECTED'],
-  COMPLETED: [],
-  REJECTED: [],
-};
+/** Plazo fijo de la API para `dueAt` y el «ahora» fijo con el que el simulador decide `overdue`. */
+const DSAR_DUE_DAYS = 30;
+const DSAR_REFERENCE_NOW = new Date('2026-10-31T12:00:00.000Z');
+
+function dueAt(requestedAt: string): string {
+  return new Date(new Date(requestedAt).getTime() + DSAR_DUE_DAYS * 86_400_000).toISOString();
+}
 
 const MAX_LIMIT = 100;
 
@@ -180,19 +202,25 @@ export function registrarCalidadYPrivacidad(router: MockRouter): void {
     ...(s.resolvedAt ? { resolvedAt: new Date(s.resolvedAt) } : {}),
     resolutionText: s.text ?? null,
   }));
-  const requests: PrivacyRequest[] = DSAR_SEEDS.map((s, i) => ({
-    id: uuid(400 + i),
-    subjectUserId: uuid(500 + i),
-    type: s.type,
-    status: s.status,
-    jurisdiction: s.jurisdiction,
-    requestedAt: new Date(s.requestedAt),
-    ...(s.completedAt ? { completedAt: new Date(s.completedAt) } : {}),
-    resultFileId: null,
-    updatedAt: new Date(s.completedAt ?? s.requestedAt),
-    rowVersion: 1,
-    allowedTransitions: [...TRANSITIONS[s.status]],
-  }));
+  const requests: DsarWire[] = DSAR_SEEDS.map((x, i) => {
+    const open = x.status === 'RECEIVED' || x.status === 'IN_PROGRESS';
+    const due = dueAt(x.requestedAt);
+    return {
+      id: uuid(400 + i),
+      subjectUserId: uuid(500 + i),
+      type: x.type,
+      status: x.status,
+      jurisdiction: x.jurisdiction,
+      requestedAt: x.requestedAt,
+      completedAt: x.completedAt ?? null,
+      dueAt: due,
+      overdue: open && DSAR_REFERENCE_NOW > new Date(due),
+      hasResultFile: false,
+      version: 1,
+      createdAt: x.requestedAt,
+      updatedAt: x.completedAt ?? x.requestedAt,
+    };
+  });
 
   const withCounts = (r: QualityRule): QualityRule => ({
     ...r,
@@ -290,31 +318,35 @@ export function registrarCalidadYPrivacidad(router: MockRouter): void {
     return detail;
   });
 
-  // ---- solicitudes de privacidad ----
-  router.get('/admin/governance/privacy-requests', (req) => {
+  // ---- solicitudes de privacidad (`audit`) ----
+  router.get('/privacy/dsar', (req) => {
     const status = req.query.get('status');
     const type = req.query.get('type');
-    const jurisdiction = req.query.get('jurisdiction');
     const rows = requests
       .filter((r) => !status || r.status === status)
       .filter((r) => !type || r.type === type)
-      .filter((r) => !jurisdiction || r.jurisdiction === jurisdiction)
-      .sort((a, b) => a.requestedAt.getTime() - b.requestedAt.getTime() || a.id.localeCompare(b.id));
-    const count = (s: PrivacyStatus): number => requests.filter((r) => r.status === s).length;
+      .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt) || b.id.localeCompare(a.id));
+    const { items, nextCursor, limit } = pageOf(req, rows);
     return {
-      ...pageOf(req, rows),
-      statusCounts: {
-        RECEIVED: count('RECEIVED'),
-        IN_PROGRESS: count('IN_PROGRESS'),
-        COMPLETED: count('COMPLETED'),
-        REJECTED: count('REJECTED'),
-        other: 0,
-      },
+      items,
+      nextCursor,
+      limit,
+      order: 'requested_at desc, id desc',
+      notMeasured: [
+        {
+          field: 'resultFile',
+          reason: 'SIMULADO · El paquete resultante no se expone desde esta lectura: sólo se indica si existe (hasResultFile)',
+        },
+        {
+          field: 'slaPolicy',
+          reason: `SIMULADO · dueAt usa un plazo fijo de ${DSAR_DUE_DAYS} días desde la solicitud; no hay plazo por jurisdicción`,
+        },
+      ],
     };
   });
 
-  router.get('/admin/governance/privacy-requests/:id', (req) => {
-    return requests.find((r) => r.id === req.params['id']) ?? notFound('Solicitud no encontrada');
+  router.get('/privacy/dsar/:id', (req) => {
+    return requests.find((r) => r.id === req.params['id']) ?? notFound('Solicitud DSAR no encontrada');
   });
 
   router.patch('/privacy/dsar/:id', (req) => {
@@ -324,18 +356,18 @@ export function registrarCalidadYPrivacidad(router: MockRouter): void {
     const target = (req.body as { status?: string } | null)?.status as PrivacyStatus | undefined;
     if (target !== 'IN_PROGRESS' && target !== 'COMPLETED' && target !== 'REJECTED')
       return badRequest('status debe ser IN_PROGRESS, COMPLETED o REJECTED');
-    if (current.status === 'COMPLETED' || current.status === 'REJECTED') {
+    if (allowedTransitions(current.status).length === 0) {
       return precondition('La solicitud DSAR ya está en estado terminal', 'DSAR_TERMINAL', { id: current.id });
     }
-    const now = new Date();
+    const now = new Date().toISOString();
     requests[index] = {
       ...current,
       status: target,
       ...(target === 'COMPLETED' ? { completedAt: now } : {}),
+      overdue: target === 'IN_PROGRESS' ? current.overdue : false,
       updatedAt: now,
-      rowVersion: current.rowVersion + 1,
-      allowedTransitions: [...TRANSITIONS[target]],
+      version: current.version + 1,
     };
-    return { id: current.id, userId: current.subjectUserId, rowVersion: current.rowVersion + 1 };
+    return { id: current.id, userId: current.subjectUserId, rowVersion: current.version + 1 };
   });
 }

@@ -37,18 +37,6 @@
   color: var(--text-secondary);
 }
 
-.policy-sheet__config {
-  margin: 0;
-  padding: var(--sp-3);
-  overflow: auto;
-  max-block-size: 24rem;
-  font-family: var(--font-mono);
-  font-size: var(--fs-data);
-  background: var(--surface-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
 .policy-sheet__list,
 .policy-sheet__timeline {
   display: flex;

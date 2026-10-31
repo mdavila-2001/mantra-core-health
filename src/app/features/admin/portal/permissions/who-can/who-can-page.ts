@@ -13,7 +13,7 @@ import { WhoCanPanel } from './who-can-panel';
 
 const VIEWS = ['simulator', 'who-can', 'audit'] as const;
 const URL_KEYS = ['view', 'permission'] as const;
-const AUDIT_ACTIONS = ['ACCESS_DECISION_EVALUATED'] as const;
+const AUDIT_ACTIONS = ['ACCESS_DECISION_SIMULATED'] as const;
 
 /**
  * Quién puede qué. Una tarjeta con tres pestañas: el simulador (la decisión

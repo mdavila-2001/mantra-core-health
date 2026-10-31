@@ -1,0 +1,98 @@
+<div class="vis__panel">
+  <form class="vis__form" novalidate [attr.data-testid]="'preview-form-' + mode()" (submit)="$event.preventDefault(); run()">
+    <app-form-field [label]="copy().label" [required]="true" [hint]="copy().hint" [errorMessage]="problem()">
+      @if (mode() === 'ROLE' && roles(); as options) {
+        <app-select [ariaLabel]="copy().label" [options]="options" [value]="target() === '' ? null : target()" (valueChange)="setTarget($event ?? '')" />
+      } @else {
+        <app-input
+          [ariaLabel]="copy().label"
+          [testId]="'preview-target-' + mode()"
+          [value]="target()"
+          (valueChange)="setTarget('' + ($event ?? ''))"
+        />
+      }
+    </app-form-field>
+    <div class="vis__actions">
+      <button app-button variant="primary" type="submit" [attr.data-testid]="'preview-run-' + mode()">
+        {{ copy().action }}
+      </button>
+    </div>
+  </form>
+
+  @if (summary(); as s) {
+    <section class="preview__metrics" aria-label="Resumen de lo que ve" data-testid="preview-summary">
+      <app-metric-card label="Mirando como" [value]="s.label" />
+      <app-metric-card label="Ocultos" [value]="s.hidden" [tone]="s.hidden > 0 ? 'warning' : 'success'" hint="Elementos que no se le presentan" />
+      <app-metric-card label="Por cascada" [value]="s.byCascade" hint="Ocultos porque un elemento superior lo está" />
+    </section>
+    <p class="vis__hint">
+      Es una vista previa del servidor: no cambia nada. Los permisos de la persona no cambian por esto; un elemento
+      oculto sigue funcionando si alguien llama a su dirección de la API.
+    </p>
+    @if (hasShownByRule()) {
+      <app-switch label="Mostrar también los elementos que una regla deja visibles" [(checked)]="includeVisible" />
+    }
+  }
+
+  @if (tableState(); as table) {
+    <app-data-table
+      [attr.data-testid]="'preview-table-' + mode()"
+      caption="Elementos que se le ocultan, con la regla que lo decide"
+      [state]="table"
+      [columns]="columns()"
+      [trackBy]="byKey"
+      [rowLabel]="rowName"
+      stackedOnMobile
+      fitContainer
+      (retry)="run()"
+    />
+  }
+</div>
+
+<ng-template #elementCell let-row>
+  <div class="vis__cell">
+    <span class="vis__name">{{ pathOf(row.entry.elementKey) }}</span>
+    <span class="vis__code">{{ row.entry.elementKey }}</span>
+  </div>
+</ng-template>
+
+<ng-template #whyCell let-row>
+  <div class="vis__cell">
+    <span class="vis__badges">
+      @if (row.entry.hidden) {
+        <app-badge size="sm" variant="warning">Oculto</app-badge>
+      } @else {
+        <app-badge size="sm" variant="success">Visible</app-badge>
+      }
+      @if (row.entry.reason === 'ANCESTOR_HIDDEN') {
+        <app-badge size="sm" variant="info">Cascada</app-badge>
+      }
+    </span>
+    <span data-testid="preview-reason">{{ reasonText(row.entry) }}</span>
+    @if (row.entry.reason === 'ANCESTOR_HIDDEN' && row.entry.ancestorKey) {
+      <a class="vis__path" [routerLink]="rulesUrl" [queryParams]="ancestorQuery(row)">Ver las reglas del elemento superior</a>
+    }
+  </div>
+</ng-template>
+
+<ng-template #ruleCell let-row>
+  <div class="vis__cell">
+    @if (row.rule; as rule) {
+      <span class="vis__badges">
+        <app-badge size="sm" [variant]="effect(rule.effect).tone">{{ effect(rule.effect).label }}</app-badge>
+      </span>
+      <span class="vis__name">
+        {{ subjectType(rule.subjectType).label }}: {{ rule.subjectLabel ?? rule.subjectId ?? 'todos' }}
+      </span>
+      <span class="vis__secondary">{{ validity(rule) }} · «{{ rule.reason }}»</span>
+      <a class="vis__path" [routerLink]="rulesUrl" [queryParams]="ruleQuery(row)">Ver la regla</a>
+    } @else if (row.entry.winningRuleId) {
+      <span class="vis__code">Regla {{ row.entry.winningRuleId }}</span>
+      <a class="vis__path" [routerLink]="rulesUrl" [queryParams]="ruleQuery(row)">Ver las reglas del elemento</a>
+    } @else if (row.entry.reason === 'ANCESTOR_HIDDEN') {
+      <span class="vis__secondary">Ninguna: lo decide el elemento superior.</span>
+    } @else {
+      <span class="vis__secondary">Ninguna: manda el valor por omisión del elemento.</span>
+    }
+  </div>
+</ng-template>

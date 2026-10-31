@@ -13,7 +13,7 @@ import { ReviewsPanel } from './reviews-panel';
 
 const VIEWS = ['lifecycle', 'reviews', 'audit'] as const;
 const URL_KEYS = ['view'] as const;
-const AUDIT_ACTIONS = ['USER_SUSPENDED', 'USER_REACTIVATED', 'USER_OFFBOARDED', 'ACCESS_REVIEW_RECORDED'] as const;
+const AUDIT_ACTIONS = ['USER_SUSPENDED', 'USER_REACTIVATED', 'USER_DEACTIVATED', 'ACCESS_REVIEWED'] as const;
 
 /**
  * Ciclo de vida de las cuentas y revisión periódica de accesos. Una tarjeta con

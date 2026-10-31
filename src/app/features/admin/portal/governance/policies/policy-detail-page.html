@@ -2,7 +2,7 @@
 
 <app-page-header
   [title]="title()"
-  subtitle="Lo que esta política controla, a qué se aplica y cómo ha cambiado. Lo que nadie declaró se dice «sin declarar»."
+  subtitle="Lo que esta política controla, a qué se aplica y cómo ha cambiado. Lo que nadie declaró se dice «sin declarar». De una regla de anonimización sólo se ven los nombres de sus parámetros, nunca sus valores."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -20,33 +20,29 @@
           <app-tab label="Resumen">
             <section class="policy-sheet__section" aria-label="Resumen de la política">
               <p class="policy-sheet__badges">
-                <app-badge size="sm" [variant]="type(p.type).tone">{{
-                  type(p.type).label
+                <app-badge size="sm" [variant]="type(p.policyType).tone">{{
+                  type(p.policyType).label
                 }}</app-badge>
-                <app-badge size="sm" [variant]="state(p).tone">{{ state(p).label }}</app-badge>
+                <app-badge size="sm" [variant]="state(p.state).tone">{{
+                  state(p.state).label
+                }}</app-badge>
+                <app-badge size="sm" variant="secondary">Versión {{ p.version }}</app-badge>
               </p>
               @if (p.name) {
                 <h3 class="policy-sheet__subtitle">{{ p.name }}</h3>
               }
-              <p data-testid="portal-policy-control">{{ control(p) }}</p>
-              <app-fact-list [hechos]="facts()" etiqueta="Atributos de la política" />
+              <p data-testid="portal-policy-control">{{ control(p.policyType, p.settings) }}</p>
+              <app-fact-list [hechos]="facts()" etiqueta="Ajustes de la política" />
               <p class="policy-sheet__muted">
                 {{
                   p.updatedAt
                     ? 'Último cambio: ' + when(p.updatedAt)
                     : 'La API no registra fecha de cambio para esta política.'
                 }}
+                @if (p.createdAt) {
+                  · Creada: {{ when(p.createdAt) }}
+                }
               </p>
-              @if (configText(p.configuration); as text) {
-                <h3 class="policy-sheet__subtitle">Configuración</h3>
-                <p class="policy-sheet__muted">
-                  Los valores que parecen secretos (sales, claves, tokens) se ocultan en el
-                  servidor.
-                </p>
-                <pre class="policy-sheet__config" data-testid="portal-policy-config" tabindex="0">{{
-                  text
-                }}</pre>
-              }
             </section>
           </app-tab>
 
@@ -56,33 +52,28 @@
               aria-label="A qué se aplica"
               data-testid="portal-policy-applies"
             >
-              @for (group of p.appliesTo; track group.kind) {
-                <h3 class="policy-sheet__subtitle">
-                  {{ appliesLabel[group.kind] }} ({{ group.total }})
-                </h3>
-                @if (group.total === 0) {
-                  <p class="policy-sheet__muted">
+              @if (p.appliedTo.total === 0) {
+                <p class="policy-sheet__muted">
+                  @if (p.policyType === 'RESIDENCY') {
+                    La API no lista a qué organizaciones se aplica una política de residencia.
+                  } @else {
                     Ninguno: esta política todavía no se aplica a nada.
-                  </p>
-                } @else if (group.items.length === 0) {
-                  <p class="policy-sheet__muted">
-                    La API sólo informa cuántos son; no lista cuáles por no exponer a qué
-                    organizaciones se aplica.
-                  </p>
-                } @else {
-                  <ul class="policy-sheet__list">
-                    @for (item of group.items; track item) {
-                      <li>{{ item }}</li>
-                    }
-                  </ul>
-                  @if (group.truncated) {
-                    <p class="policy-sheet__muted">
-                      Se muestran {{ group.items.length }} de {{ group.total }}.
-                    </p>
                   }
+                </p>
+              } @else {
+                <h3 class="policy-sheet__subtitle">
+                  {{ appliedKind(p.appliedTo.items) }} ({{ p.appliedTo.total }})
+                </h3>
+                <ul class="policy-sheet__list">
+                  @for (item of p.appliedTo.items; track appliedName(item)) {
+                    <li>{{ appliedName(item) }}</li>
+                  }
+                </ul>
+                @if (p.appliedTo.truncated) {
+                  <p class="policy-sheet__muted">
+                    Se muestran {{ p.appliedTo.items.length }} de {{ p.appliedTo.total }}.
+                  </p>
                 }
-              } @empty {
-                <p class="policy-sheet__muted">Este tipo de política no declara a qué se aplica.</p>
               }
             </section>
           </app-tab>
@@ -93,26 +84,32 @@
               aria-label="Historial de cambios"
               data-testid="portal-policy-history"
             >
-              @if (p.history.length === 0) {
-                <p class="policy-sheet__muted">
-                  La bitácora de gobierno no registra cambios sobre esta política.
-                </p>
-              } @else {
-                <ol class="policy-sheet__timeline">
-                  @for (change of p.history; track change.id) {
-                    <li>
-                      <strong>{{ change.action ?? 'Cambio' }}</strong>
-                      <span class="policy-sheet__muted">{{ when(change.recordedAt) }}</span>
-                      <span class="policy-sheet__muted">
-                        {{ change.reason ? 'Motivo: ' + change.reason : 'Sin motivo registrado' }}
-                      </span>
-                    </li>
+              <app-view-state-host [state]="history()" (retry)="reloadHistory()">
+                @if (history(); as h) {
+                  @if (h.status === 'ready') {
+                    <ol class="policy-sheet__timeline">
+                      @for (change of h.data; track change.id) {
+                        <li>
+                          <strong>{{ action(change.action) }}</strong>
+                          <span class="policy-sheet__muted">{{ when(change.recordedAt) }}</span>
+                          <span class="policy-sheet__muted">
+                            {{
+                              change.reason ? 'Motivo: ' + change.reason : 'Sin motivo registrado'
+                            }}
+                          </span>
+                        </li>
+                      }
+                    </ol>
+                    <p class="policy-sheet__muted">
+                      Del más reciente al más antiguo.
+                      @if (historyIsPartial()) {
+                        La política no declara fecha de alta: la bitácora sólo mira los últimos 30
+                        días.
+                      }
+                    </p>
                   }
-                </ol>
-                <p class="policy-sheet__muted">
-                  Se muestran los últimos cambios, del más reciente al más antiguo.
-                </p>
-              }
+                }
+              </app-view-state-host>
             </section>
           </app-tab>
         </app-tabs>

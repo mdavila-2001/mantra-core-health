@@ -12,64 +12,65 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { catchError, forkJoin, from, map, mergeMap, of, toArray, type Subscription } from 'rxjs';
+import { map, of, type Subscription } from 'rxjs';
 
 import { AuthzAdminClient } from '../../../../../core/data-access/authz-admin/authz-admin.client';
-import type {
-  AssignableRole,
-  InternalUser,
-  PermissionSummary,
-} from '../../../../../core/data-access/authz-admin/authz-admin.types';
-import { errorToViewState } from '../../../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../../../core/view-state/view-state';
-import type { ViewState } from '../../../../../core/view-state/view-state.types';
+import type { PermissionSummary } from '../../../../../core/data-access/authz-admin/authz-admin.types';
+import { AuthzGovernanceClient } from '../../../../../core/data-access/authz-governance/authz-governance.client';
+import {
+  HOLDER_SOURCES,
+  type HolderSource,
+  type HolderSourceKind,
+  type PermissionHolder,
+} from '../../../../../core/data-access/authz-governance/authz-governance.types';
+import { empty } from '../../../../../core/view-state/view-state';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Select } from '../../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
+import { SearchField } from '../../../../../shared/components/molecules/search-field/search-field';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { portalUrl } from '../../portal-nav';
-import { byName, effectLabel, scopeLabel } from '../permissions-labels';
+import { pagedList } from '../../support/paged-list';
 import { readWholeCatalog } from '../common/permission-catalog-source';
+import { accountStatusLabel, effectLabel, holderSourceLabel } from '../permissions-labels';
 
-const READ_CONCURRENCY = 4;
-const PEOPLE_SHOWN = 5;
-
-/** Un rol que toca el permiso elegido, y quiénes lo tienen. */
-export interface WhoCanRow {
-  readonly roleId: string;
-  readonly roleCode: string;
-  readonly roleName: string;
-  readonly effect: string;
-  readonly scope: string | null;
-  /** `null`: la lista de personas de este rol no se pudo leer. */
-  readonly people: readonly string[] | null;
-}
+const PAGE_SIZE = 50;
+const ALL = '';
+const SOURCE_OPTIONS: readonly SelectOption<string>[] = [
+  { value: ALL, label: 'Todos los caminos' },
+  ...HOLDER_SOURCES.map((code) => ({ value: code, label: holderSourceLabel(code).label })),
+];
 
 /**
- * «Quién puede qué»: elegido un permiso, qué roles lo permiten o lo niegan y
- * qué personas internas tienen esos roles. Sale de leer los permisos de cada
- * rol y los usuarios por rol; no es una decisión (para eso está el simulador).
+ * «Quién puede qué»: elegido un permiso, las PERSONAS que lo tienen y el camino
+ * por el que lo tienen (un rol propio o heredado, una excepción a la persona o
+ * un permiso sobre un recurso), con su efecto. Sale de
+ * `GET /authz/permissions/:id/holders`, una fila por persona, sólo lo vigente.
+ *
+ * Es una vista ORIENTATIVA: no reproduce toda la evaluación del PDP (propósito
+ * de uso, alcance clínico por paciente, políticas). La decisión real la da el
+ * simulador. Sólo la ve una persona administradora de plataforma: la API
+ * responde 403 a una administración acotada a una organización.
  */
 @Component({
   selector: 'app-portal-who-can-panel',
-  imports: [Badge, Select, Alert, FormField, DataTable],
+  imports: [Badge, Select, Alert, FormField, SearchField, DataTable],
   template: `
     <div class="panel" data-testid="portal-who-can">
       <p class="panel__note">
-        Elija un permiso para ver qué roles lo permiten o lo niegan y quiénes los tienen. Sólo aparecen las cuentas
-        internas (con un rol de plataforma o de ámbito global); las excepciones por persona y los permisos por alcance
-        de recurso no se listan acá.
+        Elija un permiso para ver qué personas lo tienen y por qué camino. La vista es orientativa: no considera el
+        propósito de uso ni el alcance clínico por paciente. Para saber qué haría el motor ante un caso concreto, use el
+        simulador.
       </p>
-      @if (partial() > 0) {
-        <app-alert tone="warning" data-testid="portal-who-can-partial">
-          No se pudieron leer los permisos de {{ partial() }} {{ partial() === 1 ? 'rol' : 'roles' }}: la lista puede estar
-          incompleta.
+      @if (catalogUnavailable()) {
+        <app-alert tone="warning" data-testid="portal-who-can-catalog-error">
+          No llegó el catálogo de permisos: no se puede elegir uno desde acá.
         </app-alert>
       }
-      <app-form-field label="Permiso" [hint]="catalogUnavailable() ? 'No llegó el catálogo de permisos.' : 'El código o el nombre del permiso.'">
+      <app-form-field label="Permiso" hint="El código o el nombre del permiso.">
         <app-select
           ariaLabel="Permiso"
           placeholder="Elegir un permiso"
@@ -80,36 +81,54 @@ export interface WhoCanRow {
           (valueChange)="permissionChanged.emit($event ?? '')"
         />
       </app-form-field>
+      @if (permissionId() !== '') {
+        <div class="panel__toolbar">
+          <app-form-field label="Camino">
+            <app-select
+              ariaLabel="Camino por el que tiene el permiso"
+              data-testid="portal-who-can-source"
+              [options]="sourceOptions"
+              [value]="source()"
+              (valueChange)="source.set($event ?? '')"
+            />
+          </app-form-field>
+          <app-search-field
+            label="Buscar personas"
+            placeholder="Nombre visible"
+            [value]="query()"
+            (searched)="query.set($event)"
+            [loading]="holders.state().status === 'loading'"
+          />
+        </div>
+      }
       <app-data-table
         data-testid="portal-who-can-table"
-        caption="Roles y personas con el permiso elegido"
-        [state]="rows()"
+        caption="Personas con el permiso elegido"
+        [state]="holders.state()"
         [columns]="columns()"
         [trackBy]="byId"
         [rowLabel]="rowName"
+        [cursor]="holders.cursor()"
         stackedOnMobile
         fitContainer
-        (retry)="reload()"
+        (cursorChanged)="holders.move($event)"
+        (retry)="holders.reload()"
       />
     </div>
-    <ng-template #roleCell let-row>
-      <span class="panel__name">{{ row.roleName }}</span>
-      <code class="panel__code">{{ row.roleCode }}</code>
+    <ng-template #personCell let-row>
+      <span class="panel__name">{{ row.displayName }}</span>
+      <app-badge size="sm" [variant]="status(row.accountStatus).tone">{{ status(row.accountStatus).label }}</app-badge>
     </ng-template>
-    <ng-template #effectCell let-row>
-      <app-badge size="sm" [variant]="effect(row.effect).tone">{{ effect(row.effect).label }}</app-badge>
-      @if (row.scope) {
-        <app-badge size="sm" [variant]="scope(row.scope).tone">{{ scope(row.scope).label }}</app-badge>
-      }
-    </ng-template>
-    <ng-template #peopleCell let-row>
-      @if (row.people === null) {
-        <span class="panel__secondary">No se pudo leer quiénes tienen este rol.</span>
-      } @else if (row.people.length === 0) {
-        <span class="panel__secondary">Nadie lo tiene hoy entre las cuentas internas.</span>
-      } @else {
-        <span class="panel__name">{{ preview(row.people) }}</span>
-      }
+    <ng-template #pathCell let-row>
+      <ul class="panel__list" [attr.aria-label]="'Caminos de ' + row.displayName">
+        @for (s of row.sources; track $index) {
+          <li class="panel__badges" data-testid="portal-who-can-source-row">
+            <app-badge size="sm" [variant]="effect(s.effect).tone">{{ effect(s.effect).label }}</app-badge>
+            <app-badge size="sm" [variant]="path(s.source).tone">{{ path(s.source).label }}</app-badge>
+            <span class="panel__secondary">{{ detail(s) }}</span>
+          </li>
+        }
+      </ul>
     </ng-template>
   `,
   styleUrl: '../permissions-panel.css',
@@ -117,137 +136,84 @@ export interface WhoCanRow {
 })
 export class WhoCanPanel {
   private readonly authz = inject(AuthzAdminClient);
+  private readonly governance = inject(AuthzGovernanceClient);
 
   readonly permissionId = input.required<string>();
   readonly permissionChanged = output<string>();
 
-  protected readonly rows = signal<ViewState<readonly WhoCanRow[]>>(loading());
-  protected readonly partial = signal(0);
+  protected readonly sourceOptions = SOURCE_OPTIONS;
+  protected readonly source = signal<string>(ALL);
+  protected readonly query = signal('');
   protected readonly catalogUnavailable = signal(false);
   protected readonly effect = effectLabel;
-  protected readonly scope = scopeLabel;
+  protected readonly status = accountStatusLabel;
+  protected readonly path = holderSourceLabel;
   private readonly catalog = signal<readonly PermissionSummary[]>([]);
-  private readonly roles = signal<readonly AssignableRole[]>([]);
 
   protected readonly permissionOptions = computed<readonly SelectOption<string>[]>(() =>
     this.catalog().map((p) => ({ value: p.id, label: `${p.name} · ${p.code}` })),
   );
 
-  private readonly roleCell = viewChild.required<TemplateRef<{ $implicit: WhoCanRow }>>('roleCell');
-  private readonly effectCell = viewChild.required<TemplateRef<{ $implicit: WhoCanRow }>>('effectCell');
-  private readonly peopleCell = viewChild.required<TemplateRef<{ $implicit: WhoCanRow }>>('peopleCell');
+  protected readonly holders = pagedList<PermissionHolder>(
+    (cursor) =>
+      this.permissionId() === ''
+        ? of({ items: [] as readonly PermissionHolder[], nextCursor: null })
+        : this.governance
+        .permissionHolders(this.permissionId(), {
+          limit: PAGE_SIZE,
+          ...(this.source() !== ALL ? { source: this.source() as HolderSourceKind } : {}),
+          ...(this.query().trim() ? { q: this.query().trim() } : {}),
+          ...(cursor ? { cursor } : {}),
+        })
+        .pipe(map((page) => ({ items: page.items, nextCursor: page.nextCursor }))),
+    () =>
+      this.permissionId() === ''
+        ? empty(
+            { label: 'Simular una decisión', route: portalUrl('governance/who-can') },
+            'Elija un permiso para ver qué personas lo tienen y por qué camino.',
+          )
+        : empty(
+            { label: 'Editar los roles y permisos', route: portalUrl('governance/roles') },
+            this.source() !== ALL || this.query().trim() !== ''
+              ? 'Nadie coincide con ese filtro.'
+              : 'Nadie lo tiene hoy, ni por un rol, ni por una excepción, ni sobre un recurso. Se concede desde «Roles y permisos».',
+          ),
+  );
 
-  protected readonly columns = computed<readonly ColumnDef<WhoCanRow>[]>(() => [
-    { key: 'role', header: 'Rol', priority: 1, cell: this.roleCell() },
-    { key: 'effect', header: 'Efecto y ámbito', priority: 1, cell: this.effectCell() },
-    { key: 'people', header: 'Personas internas con el rol', priority: 1, cell: this.peopleCell() },
+  private readonly personCell = viewChild.required<TemplateRef<{ $implicit: PermissionHolder }>>('personCell');
+  private readonly pathCell = viewChild.required<TemplateRef<{ $implicit: PermissionHolder }>>('pathCell');
+
+  protected readonly columns = computed<readonly ColumnDef<PermissionHolder>[]>(() => [
+    { key: 'person', header: 'Persona', priority: 1, cell: this.personCell() },
+    { key: 'paths', header: 'Cómo lo tiene', priority: 1, cell: this.pathCell() },
   ]);
-  protected readonly byId = (row: WhoCanRow): string => row.roleId;
-  protected readonly rowName = (row: WhoCanRow): string => row.roleName;
+  protected readonly byId = (row: PermissionHolder): string => row.userId;
+  protected readonly rowName = (row: PermissionHolder): string => row.displayName;
 
-  private readonly subscriptions: Subscription[] = [];
-  private reading: Subscription | null = null;
+  private subscription: Subscription | null = null;
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => {
-      this.subscriptions.forEach((s) => s.unsubscribe());
-      this.reading?.unsubscribe();
+    inject(DestroyRef).onDestroy(() => this.subscription?.unsubscribe());
+    this.subscription = readWholeCatalog(this.authz).subscribe({
+      next: (read) => this.catalog.set([...read.items].sort((a, b) => a.code.localeCompare(b.code))),
+      error: () => this.catalogUnavailable.set(true),
     });
-    this.subscriptions.push(
-      readWholeCatalog(this.authz).subscribe({
-        next: (read) => this.catalog.set([...read.items].sort((a, b) => a.code.localeCompare(b.code))),
-        error: () => this.catalogUnavailable.set(true),
-      }),
-      this.authz.assignableRoles().subscribe({
-        next: (roles) => {
-          this.roles.set([...roles].sort(byName));
-          this.reload();
-        },
-        error: (e: unknown) => this.rows.set(errorToViewState<readonly WhoCanRow[]>(e)),
-      }),
-    );
+    // Otro permiso, otro camino u otro texto: otra consulta, desde la primera página.
     effect(() => {
       this.permissionId();
-      untracked(() => this.reload());
+      this.source();
+      this.query();
+      untracked(() => this.holders.restart());
     });
   }
 
-  protected preview(people: readonly string[]): string {
-    const shown = people.slice(0, PEOPLE_SHOWN).join(', ');
-    return people.length > PEOPLE_SHOWN ? `${shown} y ${people.length - PEOPLE_SHOWN} más` : shown;
-  }
-
-  protected reload(): void {
-    this.reading?.unsubscribe();
-    const permissionId = this.permissionId();
-    const roles = this.roles();
-    this.partial.set(0);
-    if (permissionId === '') {
-      this.rows.set(
-        empty(
-          { label: 'Simular una decisión', route: portalUrl('governance/who-can') },
-          'Elija un permiso para ver qué roles lo tienen y quiénes los tienen.',
-        ),
-      );
-      return;
+  /** Dónde se nota el camino: el rol (y el que lo hereda) o el recurso. */
+  protected detail(s: HolderSource): string {
+    if (s.source === 'ROLE') {
+      if (s.roleCode && s.viaRoleCode && s.roleCode !== s.viaRoleCode) return `${s.roleCode}, heredado de ${s.viaRoleCode}`;
+      return s.roleCode ?? 'Rol sin código';
     }
-    if (roles.length === 0) {
-      this.rows.set(loading());
-      return;
-    }
-    this.rows.set(loading());
-    this.reading = from(roles)
-      .pipe(
-        mergeMap(
-          (role) =>
-            this.authz.rolePermissions(role.id).pipe(
-              map((body) => ({ role, hit: body.items.find((i) => i.permissionId === permissionId) ?? null, failed: false })),
-              catchError(() => of({ role, hit: null, failed: true })),
-            ),
-          READ_CONCURRENCY,
-        ),
-        toArray(),
-      )
-      .subscribe({
-        next: (reads) => {
-          this.partial.set(reads.filter((r) => r.failed).length);
-          const hits = reads.filter((r) => r.hit !== null).sort((a, b) => byName(a.role, b.role));
-          if (hits.length === 0) {
-            this.rows.set(
-              empty(
-                { label: 'Editar los roles y permisos', route: portalUrl('governance/roles') },
-                'Ningún rol permite ni niega este permiso. Se concede desde «Roles y permisos».',
-              ),
-            );
-            return;
-          }
-          this.readPeople(hits.map((h) => ({ role: h.role, effect: h.hit!.effect, scope: h.hit!.scope })));
-        },
-        error: (e: unknown) => this.rows.set(errorToViewState<readonly WhoCanRow[]>(e)),
-      });
-  }
-
-  private readPeople(hits: readonly { role: AssignableRole; effect: string; scope: string | null }[]): void {
-    this.reading = forkJoin(
-      hits.map((h) =>
-        this.authz.internalUsers({ roleCode: h.role.code, limit: 200 }).pipe(
-          map((page): readonly string[] | null => page.items.map((u: InternalUser) => u.displayName)),
-          catchError(() => of(null)),
-        ),
-      ),
-    ).subscribe((people) =>
-      this.rows.set(
-        ready(
-          hits.map((h, i) => ({
-            roleId: h.role.id,
-            roleCode: h.role.code,
-            roleName: h.role.name,
-            effect: h.effect,
-            scope: h.scope,
-            people: people[i] ?? null,
-          })),
-        ),
-      ),
-    );
+    if (s.source === 'RESOURCE') return s.resourceId ? `Recurso ${s.resourceId.slice(0, 8)}…` : 'Recurso sin identificar';
+    return 'Sobre la persona';
   }
 }

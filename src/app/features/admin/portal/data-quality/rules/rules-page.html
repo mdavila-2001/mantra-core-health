@@ -1,6 +1,6 @@
 <app-page-header
-  title="Calidad de datos · Reglas"
-  subtitle="Qué comprueba el análisis de calidad, con qué severidad y cuántas incidencias abiertas tiene cada regla."
+  title="Calidad de datos clínicos · Reglas"
+  subtitle="Qué comprueba el análisis de calidad de los datos clínicos (health_data), con qué severidad y cuántas incidencias abiertas tiene cada regla."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -14,7 +14,7 @@
     }
     <app-data-table
       data-testid="portal-quality-rules-table"
-      caption="Reglas de calidad de datos"
+      caption="Reglas de calidad de datos clínicos"
       [state]="list.state()"
       [columns]="columns()"
       [trackBy]="byId"

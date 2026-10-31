@@ -50,7 +50,7 @@ const PURPOSE_OPTIONS: readonly SelectOption<string>[] = [
 
 /**
  * Simula una decisión del PDP: «¿esta persona puede hacer esto sobre aquello?».
- * No calcula nada en el navegador: llama a `POST /authz/decisions/evaluate` y
+ * No calcula nada en el navegador: llama a `POST /authz/simulations` (la decisión real del PDP, sin conceder nada) y
  * enseña tal cual lo que la API decidió, con los roles que pesaron y los
  * campos que se enmascaran. Cada simulación queda en la bitácora.
  */
@@ -324,10 +324,10 @@ export class DecisionSimulator {
     this.running.set(true);
     this.error.set(null);
     this.subscriptions.push(
-      this.governance.evaluate(request).subscribe({
-        next: (result) => {
+      this.governance.simulate(request).subscribe({
+        next: ({ decision }) => {
           this.running.set(false);
-          this.result.set(result);
+          this.result.set(decision);
         },
         // Un resultado viejo junto a un error nuevo se leería como la respuesta a esta pregunta.
         error: (e: unknown) => {

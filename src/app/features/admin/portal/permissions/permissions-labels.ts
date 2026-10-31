@@ -66,21 +66,30 @@ export const purposeLabel = table({
 export const lifecycleState = table({
   ACTIVE: { label: 'Activa', tone: 'success' },
   SUSPENDED: { label: 'Suspendida', tone: 'warning' },
-  OFFBOARDED: { label: 'Dada de baja', tone: 'error' },
-  LOCKED_OTHER: { label: 'Bloqueada por otra causa', tone: 'warning' },
+  DEACTIVATED: { label: 'Dada de baja', tone: 'error' },
+  ANONYMIZED: { label: 'Anonimizada', tone: 'secondary' },
+});
+
+/** El evento de la historia (`action` de `GET /iam/users/:id/lifecycle`). */
+export const lifecycleEvent = table({
+  SUSPEND: { label: 'Suspensión', tone: 'warning' },
+  REACTIVATE: { label: 'Reactivación', tone: 'success' },
+  DEACTIVATE: { label: 'Baja', tone: 'error' },
+});
+
+/** Estado de la cuenta en las vistas de gobierno (`accountStatus`). */
+export const accountStatusLabel = table({
+  ACTIVE: { label: 'Activa', tone: 'success' },
+  LOCKED: { label: 'Bloqueada', tone: 'warning' },
   ANONYMIZED: { label: 'Anonimizada', tone: 'secondary' },
   OTHER: { label: 'Otro estado', tone: 'secondary' },
 });
 
-export const lifecycleEvent = table({
-  SUSPENDED: { label: 'Suspensión', tone: 'warning' },
-  REACTIVATED: { label: 'Reactivación', tone: 'success' },
-  OFFBOARDED: { label: 'Baja', tone: 'error' },
-});
-
-export const reviewDecision = table({
-  CERTIFIED: { label: 'Certificó los accesos', tone: 'success' },
-  CHANGES_REQUIRED: { label: 'Pidió cambios', tone: 'warning' },
+/** El camino por el que alguien tiene un permiso (`sources[].source`). */
+export const holderSourceLabel = table({
+  ROLE: { label: 'Por un rol', tone: 'info' },
+  USER: { label: 'Excepción a la persona', tone: 'warning' },
+  RESOURCE: { label: 'Sobre un recurso', tone: 'primary' },
 });
 
 export const LIFECYCLE_ACTIONS: Readonly<
@@ -89,20 +98,20 @@ export const LIFECYCLE_ACTIONS: Readonly<
   suspend: {
     title: 'Suspender la cuenta',
     verb: 'Suspender',
-    effect: 'Se cortan sus sesiones abiertas y no podrá ingresar hasta que se reactive. Sus roles se conservan.',
+    effect: 'Se bloquea la cuenta y se cortan sus sesiones abiertas. Sus roles se conservan. Se puede deshacer.',
     destructive: false,
   },
   reactivate: {
     title: 'Reactivar la cuenta',
     verb: 'Reactivar',
-    effect: 'Podrá volver a ingresar. Sus roles no cambian.',
+    effect: 'Se desbloquea la cuenta: podrá volver a ingresar. Sus roles no cambian.',
     destructive: false,
   },
-  offboard: {
+  deactivate: {
     title: 'Dar de baja la cuenta',
     verb: 'Dar de baja',
     effect:
-      'Se bloquea la cuenta, se cortan sus sesiones y se revocan todos sus roles. Reactivar después no devuelve los roles ni deshace la baja.',
+      'Se bloquea la cuenta, se cortan sus sesiones y se revocan sus credenciales y sus roles globales. La baja no se reactiva: volver atrás es un alta nueva.',
     destructive: true,
   },
 };
@@ -111,31 +120,31 @@ export const LIFECYCLE_ACTIONS: Readonly<
 export function actionsFor(state: string): readonly LifecycleAction[] {
   switch (state) {
     case 'ACTIVE':
-      return ['suspend', 'offboard'];
+      return ['suspend', 'deactivate'];
     case 'SUSPENDED':
-      return ['reactivate', 'offboard'];
-    case 'LOCKED_OTHER':
-      return ['offboard'];
+      return ['reactivate', 'deactivate'];
     default:
       return [];
   }
 }
 
 const REASON_MESSAGES: Readonly<Record<string, string>> = {
-  USER_LIFECYCLE_USER_NOT_FOUND: 'Esa persona ya no existe.',
-  USER_LIFECYCLE_NOT_ACTIVE: 'La cuenta ya no estaba activa. El estado se actualizó.',
-  USER_LIFECYCLE_NOT_SUSPENDED: 'La cuenta no está suspendida, así que no se reactiva desde aquí. El estado se actualizó.',
-  USER_LIFECYCLE_ANONYMIZED: 'La cuenta está anonimizada y ya no admite ninguna transición.',
-  USER_LIFECYCLE_ALREADY_OFFBOARDED: 'La cuenta ya se dio de baja. No se reactiva: hay que darla de alta y asignar los roles de nuevo.',
-  USER_LIFECYCLE_SELF_ACTION: 'Nadie puede suspenderse ni darse de baja a sí mismo. Lo hace otra persona administradora.',
-  ACCESS_REVIEW_USER_NOT_FOUND: 'Esa persona ya no existe.',
-  ACCESS_REVIEW_SELF_REVIEW: 'Nadie revisa sus propios accesos. Lo revisa otra persona administradora.',
-  ACCESS_REVIEW_ASSIGNMENT_MISMATCH: 'Alguna asignación ya no es de esa persona o dejó de estar activa. Se actualizó la lista: revise de nuevo.',
+  USER_NOT_FOUND: 'Esa persona ya no existe.',
+  USER_LIFECYCLE_TRANSITION_INVALID:
+    'La cuenta no puede pasar a ese estado desde el que tiene (otra persona se adelantó o la cuenta ya se dio de baja). El estado se actualizó.',
+  USER_SELF_LIFECYCLE_FORBIDDEN: 'Nadie puede suspenderse ni darse de baja a sí mismo. Lo hace otra persona administradora.',
+  USER_LAST_SECURITY_ADMIN: 'Es la última cuenta que administra accesos. Conceda ese rol a otra persona antes.',
+  GOVERNANCE_USER_NOT_FOUND: 'Esa persona ya no existe.',
+  GOVERNANCE_PERMISSION_NOT_FOUND: 'Ese permiso ya no existe en el catálogo. Recargue la pantalla.',
+  ACCESS_REVIEW_SELF_REVIEW_FORBIDDEN: 'Nadie revisa sus propios accesos. Lo revisa otra persona administradora.',
   RESOURCE_SCOPE_GRANT_NOT_FOUND: 'Ese permiso por alcance ya no existe. La lista se actualizó.',
   RESOURCE_SCOPE_GRANT_ALREADY_ENDED: 'Ese permiso por alcance ya había terminado su vigencia. La lista se actualizó.',
+  RESOURCE_SCOPE_GRANT_DENY_REASON_REQUIRED: 'Terminar un permiso que niega exige un motivo: levantar una negación abre un acceso.',
   ROLE_NOT_FOUND: 'El rol ya no existe. Elija otro.',
   ROLE_PERMISSION_NOT_FOUND: 'Alguno de los permisos ya no existe en el catálogo. Recargue la pantalla.',
   ROLE_FIELD_PERMISSION_WRITE_REQUIRES_READ: 'Un campo que se puede escribir tiene que poder leerse.',
+  ROLE_INSUFFICIENT:
+    'Esta operación la hace una persona administradora de plataforma. Una administración acotada a una organización no puede mirar ni cambiar cuentas de toda la plataforma.',
 };
 
 /** El texto de un rechazo, leído por su motivo estable. */
@@ -150,10 +159,7 @@ export function staleAfter(error: unknown): boolean {
   return (
     reason !== null &&
     [
-      'USER_LIFECYCLE_NOT_ACTIVE',
-      'USER_LIFECYCLE_NOT_SUSPENDED',
-      'USER_LIFECYCLE_ALREADY_OFFBOARDED',
-      'ACCESS_REVIEW_ASSIGNMENT_MISMATCH',
+      'USER_LIFECYCLE_TRANSITION_INVALID',
       'RESOURCE_SCOPE_GRANT_NOT_FOUND',
       'RESOURCE_SCOPE_GRANT_ALREADY_ENDED',
     ].includes(reason)

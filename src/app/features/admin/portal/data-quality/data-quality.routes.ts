@@ -10,17 +10,17 @@ import { APP_TITLE } from '../../../../core/navigation/navigation.types';
 export const PORTAL_DATA_QUALITY_ROUTES: Routes = [
   {
     path: 'data-quality/issues',
-    title: `${APP_TITLE} - Incidencias de calidad de datos`,
+    title: `${APP_TITLE} - Incidencias de calidad de datos clínicos`,
     loadComponent: () => import('./issues/issues-page').then((m) => m.IssuesPage),
   },
   {
     path: 'data-quality/rules',
-    title: `${APP_TITLE} - Reglas de calidad de datos`,
+    title: `${APP_TITLE} - Reglas de calidad de datos clínicos`,
     loadComponent: () => import('./rules/rules-page').then((m) => m.RulesPage),
   },
   {
     path: 'data-quality/rules/:ruleId',
-    title: `${APP_TITLE} - Regla de calidad de datos`,
+    title: `${APP_TITLE} - Regla de calidad de datos clínicos`,
     loadComponent: () => import('./rules/rule-detail-page').then((m) => m.RuleDetailPage),
   },
   {

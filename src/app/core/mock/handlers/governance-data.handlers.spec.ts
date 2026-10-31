@@ -88,20 +88,36 @@ describe('calidad de datos y privacidad demo: mismas reglas que la API', () => {
     expect(detail.recentRuns.some((r) => r.recordsEvaluated === null)).toBe(true);
   });
 
-  it('una solicitud terminal no admite transiciones y las que admite las publica', () => {
+  it('la lectura de solicitudes va de la más reciente a la más antigua y marca las vencidas, sin conteos inventados', () => {
     const list = body<{
-      items: { id: string; status: string; allowedTransitions: string[] }[];
-      statusCounts: Record<string, number>;
-    }>(call('GET', '/admin/governance/privacy-requests'));
+      items: { id: string; status: string; requestedAt: string; overdue: boolean; dueAt: string }[];
+      order: string;
+    }>(call('GET', '/privacy/dsar'));
+    const times = list.items.map((r) => r.requestedAt);
+    expect(times).toEqual([...times].sort().reverse());
+    expect(list.order).toBe('requested_at desc, id desc');
+    expect(list.items.some((r) => r.overdue)).toBe(true);
+    // una cerrada nunca está vencida, aunque haya pasado su plazo
+    expect(list.items.filter((r) => r.status === 'COMPLETED' || r.status === 'REJECTED').every((r) => !r.overdue)).toBe(true);
+    expect('statusCounts' in list).toBe(false);
+  });
+
+  it('una solicitud terminal no admite transiciones (422) y una abierta sí, subiendo la versión', () => {
+    const list = body<{ items: { id: string; status: string }[] }>(call('GET', '/privacy/dsar'));
     const done = list.items.find((r) => r.status === 'COMPLETED')!;
-    expect(done.allowedTransitions).toEqual([]);
     expect(status(call('PATCH', `/privacy/dsar/${done.id}`, {}, { status: 'IN_PROGRESS' }))).toBe(422);
     const received = list.items.find((r) => r.status === 'RECEIVED')!;
-    expect(received.allowedTransitions).toContain('IN_PROGRESS');
+    expect(status(call('PATCH', `/privacy/dsar/${received.id}`, {}, { status: 'EN_CURSO' }))).toBe(400);
     call('PATCH', `/privacy/dsar/${received.id}`, {}, { status: 'IN_PROGRESS' });
-    const after = body<{ status: string; rowVersion: number }>(call('GET', `/admin/governance/privacy-requests/${received.id}`));
+    const after = body<{ status: string; version: number }>(call('GET', `/privacy/dsar/${received.id}`));
     expect(after.status).toBe('IN_PROGRESS');
-    expect(after.rowVersion).toBe(2);
-    expect(list.statusCounts['RECEIVED']).toBe(2);
+    expect(after.version).toBe(2);
+  });
+
+  it('el filtro por estado y la solicitud inexistente (404)', () => {
+    const list = body<{ items: { status: string }[] }>(call('GET', '/privacy/dsar', { status: 'REJECTED' }));
+    expect(list.items.length).toBeGreaterThan(0);
+    expect(list.items.every((r) => r.status === 'REJECTED')).toBe(true);
+    expect(status(call('GET', '/privacy/dsar/00000000-0000-4000-8000-00000000ffff'))).toBe(404);
   });
 });

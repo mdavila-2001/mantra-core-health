@@ -22,3 +22,9 @@
   color: var(--text-secondary);
   font-size: var(--fs-data);
 }
+
+.privacy__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}

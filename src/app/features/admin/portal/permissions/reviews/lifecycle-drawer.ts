@@ -4,9 +4,9 @@ import type { Subscription } from 'rxjs';
 import { AuthzAdminClient } from '../../../../../core/data-access/authz-admin/authz-admin.client';
 import { AuthzGovernanceClient } from '../../../../../core/data-access/authz-governance/authz-governance.client';
 import {
-  GOVERNANCE_REASON_MAX,
-  GOVERNANCE_REASON_MIN,
+  LIFECYCLE_REASON_MAX,
   type LifecycleAction,
+  type LifecycleEvent,
   type UserLifecycle,
 } from '../../../../../core/data-access/authz-governance/authz-governance.types';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
@@ -33,6 +33,10 @@ import {
  * hacer desde ese estado y el historial con motivo, autor y fecha. Cada acción
  * pide el motivo y se confirma; la API valida la transición y, si ya no vale
  * (otra persona se adelantó), lo explica y el cajón se relee.
+ *
+ * Las rutas son las de `iam` (`/iam/users/:id/...`): suspender, reactivar y
+ * dar de baja. La historia viene paginada: se muestra la primera página y
+ * «Ver más antiguos» pide la siguiente.
  */
 @Component({
   selector: 'app-portal-lifecycle-drawer',
@@ -79,23 +83,38 @@ import {
                 </div>
               }
               <h3 class="panel__name">Historial</h3>
-              @if (state.data.history.length === 0) {
+              @if (events().length === 0) {
                 <p class="panel__note">Esta cuenta nunca se suspendió ni se dio de baja desde la consola.</p>
               } @else {
                 <ul class="panel__list" aria-label="Historial del ciclo de vida">
-                  @for (e of state.data.history; track e.id) {
+                  @for (e of events(); track e.id) {
                     <li class="panel__item" data-testid="portal-lifecycle-event">
                       <div class="panel__badges">
-                        <app-badge size="sm" [variant]="eventLabel(e.kind).tone">{{ eventLabel(e.kind).label }}</app-badge>
+                        <app-badge size="sm" [variant]="eventLabel(e.action).tone">{{ eventLabel(e.action).label }}</app-badge>
                         <span class="panel__secondary">{{ when(e.recordedAt) }}</span>
                       </div>
-                      <p class="panel__note">{{ e.reason }}</p>
-                      @if (e.actorUserId) {
-                        <span class="panel__secondary">Por <code class="panel__code" [title]="e.actorUserId">{{ e.actorUserId.slice(0, 8) }}…</code></span>
+                      @if (e.reason) {
+                        <p class="panel__note">{{ e.reason }}</p>
+                      }
+                      @if (e.recordedByUserId) {
+                        <span class="panel__secondary">Por <code class="panel__code" [title]="e.recordedByUserId">{{ e.recordedByUserId.slice(0, 8) }}…</code></span>
                       }
                     </li>
                   }
                 </ul>
+                @if (nextCursor() !== null) {
+                  <div class="panel__actions">
+                    <button
+                      app-button
+                      variant="outline"
+                      data-testid="portal-lifecycle-more"
+                      [isLoading]="loadingMore()"
+                      (clicked)="more()"
+                    >
+                      Ver más antiguos
+                    </button>
+                  </div>
+                }
               }
             }
           }
@@ -119,6 +138,10 @@ export class LifecycleDrawer {
 
   protected readonly catalog = LIFECYCLE_ACTIONS;
   protected readonly lifecycle = signal<ViewState<UserLifecycle>>(loading());
+  /** La historia acumulada (primera página + las que se pidieron después). */
+  protected readonly events = signal<readonly LifecycleEvent[]>([]);
+  protected readonly nextCursor = signal<string | null>(null);
+  protected readonly loadingMore = signal(false);
   protected readonly name = signal('');
   protected readonly running = signal<LifecycleAction | null>(null);
   protected readonly notice = signal<string | null>(null);
@@ -131,12 +154,14 @@ export class LifecycleDrawer {
   private reading: Subscription | null = null;
   private naming: Subscription | null = null;
   private mutation: Subscription | null = null;
+  private paging: Subscription | null = null;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
       this.reading?.unsubscribe();
       this.naming?.unsubscribe();
       this.mutation?.unsubscribe();
+      this.paging?.unsubscribe();
     });
     effect(() => {
       const id = this.userId();
@@ -171,8 +196,8 @@ export class LifecycleDrawer {
       {
         label: 'Motivo',
         hint: 'Queda en el historial de la cuenta.',
-        minLength: GOVERNANCE_REASON_MIN,
-        maxLength: GOVERNANCE_REASON_MAX,
+        minLength: 1,
+        maxLength: LIFECYCLE_REASON_MAX,
       },
     );
     if (reason === null) return;
@@ -182,8 +207,10 @@ export class LifecycleDrawer {
     this.mutation = this.governance.lifecycleAction(this.userId(), action, reason).subscribe({
       next: (result) => {
         this.running.set(null);
-        const revoked = result.revokedAssignments > 0 ? ` Se revocaron ${result.revokedAssignments} roles.` : '';
-        const message = `${spec.title.replace(' la cuenta', '')}: ${who}.${revoked}`;
+        // Idempotente: si otra persona ya la había dejado así, la API no escribe y lo dice.
+        const message = result.changed
+          ? `${spec.title.replace(' la cuenta', '')}: ${who}.${result.revokedSessions > 0 ? ` Se cortaron ${result.revokedSessions} sesiones.` : ''}`
+          : `${who} ya estaba así: no se cambió nada.`;
         this.notice.set(message);
         this.changed.emit(message);
         this.reload();
@@ -196,11 +223,37 @@ export class LifecycleDrawer {
     });
   }
 
+  /** Pide la página siguiente de la historia y la suma a lo que ya se ve. */
+  protected more(): void {
+    const cursor = this.nextCursor();
+    if (cursor === null) return;
+    this.paging?.unsubscribe();
+    this.loadingMore.set(true);
+    this.paging = this.governance.lifecycleOf(this.userId(), { cursor }).subscribe({
+      next: (page) => {
+        this.loadingMore.set(false);
+        this.events.update((all) => [...all, ...page.items]);
+        this.nextCursor.set(page.nextCursor);
+      },
+      error: (e: unknown) => {
+        this.loadingMore.set(false);
+        this.error.set(governanceFailure(e, 'No se pudo leer el resto del historial. Intente de nuevo.'));
+      },
+    });
+  }
+
   private load(id: string): void {
     this.reading?.unsubscribe();
+    this.paging?.unsubscribe();
     this.lifecycle.set(loading());
+    this.events.set([]);
+    this.nextCursor.set(null);
     this.reading = this.governance.lifecycleOf(id).subscribe({
-      next: (body) => this.lifecycle.set(ready(body)),
+      next: (body) => {
+        this.events.set(body.items);
+        this.nextCursor.set(body.nextCursor);
+        this.lifecycle.set(ready(body));
+      },
       error: (e: unknown) => this.lifecycle.set(errorToViewState<UserLifecycle>(e)),
     });
   }

@@ -15,8 +15,17 @@ import {
 
 /* ============================================================================
     Backend simulado del gobierno de permisos (H5): edición de permisos por
-    rol, permisos por campo y por alcance de recurso, simulación del PDP, ciclo
-    de vida de las cuentas internas y revisión de accesos.
+    rol, permisos por campo y por alcance de recurso, «quién puede qué»,
+    simulación del PDP, ciclo de vida de las cuentas internas (rutas de `iam`) y
+    revisión de accesos.
+
+    Reproduce el contrato REAL de la API: el ciclo de vida vive en
+    `/iam/users/:id/{suspend,reactivate,deactivate}` y `GET …/lifecycle`; la
+    revisión de accesos es un hecho sin cuerpo (`POST /authz/users/:id/access-reviews`);
+    el simulador es `POST /authz/simulations`. Simplificación declarada: no
+    distingue al administrador de plataforma del que tiene alcance de una
+    organización, así que el 403 `ROLE_INSUFFICIENT` que la API da al segundo no
+    se simula.
 
     Reproduce las REGLAS de la API —precondición en la escritura, 409/422 con
     `reason` estable, el motivo obligatorio— y se apoya en los roles, permisos,
@@ -34,6 +43,8 @@ import {
 const DAY_MS = 86_400_000;
 const REASON_MIN = 10;
 const REASON_MAX = 500;
+/** Tope del motivo de una acción de ciclo de vida de `iam` (no tiene mínimo: sólo no vacío). */
+const LIFECYCLE_REASON_MAX = 500;
 const ACTIONS = new Set(['READ', 'WRITE', 'CREATE', 'DELETE', 'EXECUTE', 'APPROVE']);
 const SCOPES = new Set(['SELF', 'BRANCH', 'TENANT', 'GLOBAL']);
 const EFFECTS = new Set(['ALLOW', 'DENY']);
@@ -73,18 +84,17 @@ interface ScopeGrant {
 }
 interface LifecycleEvent {
   readonly id: string;
-  readonly kind: 'SUSPENDED' | 'REACTIVATED' | 'OFFBOARDED';
+  readonly action: 'SUSPEND' | 'REACTIVATE' | 'DEACTIVATE';
   readonly reason: string;
-  readonly actorUserId: string | null;
+  readonly recordedByUserId: string | null;
   readonly recordedAt: string;
 }
 interface Review {
   readonly id: string;
   readonly userId: string;
-  readonly decision: string;
-  readonly reason: string;
-  readonly assignmentIds: readonly string[];
-  readonly reviewerUserId: string | null;
+  readonly userDisplayName: string | null;
+  readonly reviewerUserId: string;
+  readonly reviewerDisplayName: string | null;
   readonly reviewedAt: string;
 }
 
@@ -100,12 +110,20 @@ const rejectWith = (base: MockReply, reason: string): MockReply =>
 const bodyOf = (req: MockRequest): Record<string, unknown> =>
   typeof req.body === 'object' && req.body !== null ? (req.body as Record<string, unknown>) : {};
 
-function textReason(req: MockRequest): string | MockReply {
+/** Motivo de terminar un permiso DENY: mínimo 10, como `EndResourceScopeGrantDto`. */
+function denyReason(req: MockRequest): string | MockReply {
   const reason = bodyOf(req)['reason'];
   if (typeof reason !== 'string' || reason.trim().length < REASON_MIN || reason.length > REASON_MAX) {
-    return validation('Error de validación', [
-      { field: 'reason', message: `must be longer than or equal to ${REASON_MIN} characters` },
-    ]);
+    return precondition('Terminar un permiso de efecto DENY exige un motivo', 'RESOURCE_SCOPE_GRANT_DENY_REASON_REQUIRED');
+  }
+  return reason.trim();
+}
+
+/** Motivo de una acción de ciclo de vida (`UserLifecycleReasonDto`): texto no vacío de hasta 500. */
+function lifecycleReason(req: MockRequest): string | MockReply {
+  const reason = bodyOf(req)['reason'];
+  if (typeof reason !== 'string' || reason.trim() === '' || reason.length > LIFECYCLE_REASON_MAX) {
+    return validation('Error de validación', [{ field: 'reason', message: 'reason should not be empty' }]);
   }
   return reason.trim();
 }
@@ -345,6 +363,10 @@ export function registerPermissionsAdmin(router: MockRouter): void {
   router.delete('/authz/resource-scope-grants/:grantId', (req) => {
     const grant = grants.find((g) => g.id === req.params['grantId']);
     if (!grant) return rejectWith(notFound('Permiso por alcance no encontrado'), 'RESOURCE_SCOPE_GRANT_NOT_FOUND');
+    if (grant.effect === 'DENY') {
+      const reason = denyReason(req);
+      if (typeof reason !== 'string') return reason;
+    }
     if (grant.validTo !== null && Date.parse(grant.validTo) <= now()) {
       return rejectWith(conflict('El permiso por alcance ya terminó su vigencia'), 'RESOURCE_SCOPE_GRANT_ALREADY_ENDED');
     }
@@ -352,9 +374,50 @@ export function registerPermissionsAdmin(router: MockRouter): void {
     return { id: grant.id, validTo: grant.validTo };
   });
 
+
+  /* ---- personas: existencia, nombre y estado ------------------------------ */
+
+  const history = new Map<string, LifecycleEvent[]>();
+  const lifecycleStateOf = (userId: string): 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED' => {
+    const last = history.get(userId)?.[0]?.action;
+    return last === 'SUSPEND' ? 'SUSPENDED' : last === 'DEACTIVATE' ? 'DEACTIVATED' : 'ACTIVE';
+  };
+  const accountStatusOf = (userId: string): string => (lifecycleStateOf(userId) === 'ACTIVE' ? 'ACTIVE' : 'LOCKED');
+  const userExists = (userId: string): boolean => (ask('GET', `/iam/users/${userId}`)?.status ?? 404) === 200;
+
+  interface InternalUserRow {
+    id: string;
+    displayName: string;
+    globalRoles: string[];
+    assignments: unknown[];
+  }
+  const internalUsers = (): readonly InternalUserRow[] =>
+    ask<Page<InternalUserRow>>('GET', '/authz/internal-users', 'limit=200')?.body.items ?? [];
+  const nameOf = (userId: string): string | null =>
+    internalUsers().find((u) => u.id === userId)?.displayName ??
+    ask<{ displayName?: string }>('GET', `/iam/users/${userId}`)?.body.displayName ??
+    null;
+
+  const missingUser = (): MockReply => rejectWith(notFound('Usuario no encontrado'), 'GOVERNANCE_USER_NOT_FOUND');
+
+  /** Página por cursor opaco (el índice de la primera fila), con el límite validado como la API. */
+  function pageOf<T>(req: MockRequest, rows: readonly T[], max: number, byDefault: number): MockReply | Page<T> {
+    const raw = req.query.get('limit');
+    const limit = raw === null || raw === '' ? byDefault : Number(raw);
+    if (!Number.isInteger(limit) || limit < 1 || limit > max) {
+      return validation('Error de validación', [{ field: 'limit', message: `must not be greater than ${max}` }]);
+    }
+    const start = Number(req.query.get('cursor') ?? '0') || 0;
+    return {
+      items: rows.slice(start, start + limit),
+      nextCursor: start + limit < rows.length ? String(start + limit) : null,
+      limit,
+    };
+  }
+
   /* ---- simulación del PDP ---------------------------------------------- */
 
-  router.post('/authz/decisions/evaluate', (req) => {
+  router.post('/authz/simulations', (req) => {
     const b = bodyOf(req);
     const issues: { field: string; message: string }[] = [];
     if (typeof b['userId'] !== 'string' || !UUID.test(b['userId'])) issues.push({ field: 'userId', message: 'must be a UUID' });
@@ -365,6 +428,8 @@ export function registerPermissionsAdmin(router: MockRouter): void {
     if (issues.length > 0) return validation('Error de validación', issues);
 
     const userId = b['userId'] as string;
+    // Un usuario inexistente daría un DENY engañoso: la API lo rechaza antes de consultar al PDP.
+    if (!userExists(userId)) return missingUser();
     const resource = b['resource'] as string;
     const action = b['action'] as string;
     const assignments = ask<{ items: { roleId: string; isEffective: boolean }[] }>('GET', `/authz/users/${userId}/role-assignments`);
@@ -399,138 +464,209 @@ export function registerPermissionsAdmin(router: MockRouter): void {
           )
         : [];
     return {
-      decision,
-      reason: `${why} (decisión simulada por la maqueta, no del PDP real)`,
-      effectiveRoleIds,
-      maskedFields,
-      ...(typeof b['purposeOfUse'] === 'string' ? { purposeOfUse: b['purposeOfUse'] } : {}),
-      cacheKey: `simulada:${userId}:${action}:${resource}`,
-      ttlSeconds: 30,
+      simulated: true,
+      decision: {
+        decision,
+        reason: `${why} (decisión simulada por la maqueta, no del PDP real)`,
+        effectiveRoleIds,
+        maskedFields,
+        ...(typeof b['purposeOfUse'] === 'string' ? { purposeOfUse: b['purposeOfUse'] } : {}),
+        cacheKey: `simulada:${userId}:${action}:${resource}`,
+        ttlSeconds: 30,
+      },
     };
   });
 
-  /* ---- ciclo de vida ---------------------------------------------------- */
+  /* ---- revisión de accesos (se declara antes: el mapa de accesos lee la última) --- */
 
-  const history = new Map<string, LifecycleEvent[]>();
-  const stateOf = (userId: string): string => {
-    const last = history.get(userId)?.[0]?.kind;
-    return last === 'SUSPENDED' ? 'SUSPENDED' : last === 'OFFBOARDED' ? 'OFFBOARDED' : 'ACTIVE';
-  };
-  const userExists = (userId: string): boolean => (ask('GET', `/iam/users/${userId}`)?.status ?? 404) === 200;
-  const userMissing = (): MockReply => rejectWith(notFound('Usuario no encontrado'), 'USER_LIFECYCLE_USER_NOT_FOUND');
+  const reviews: Review[] = [];
+  const lastReviewOf = (userId: string): Review | null =>
+    reviews.filter((r) => r.userId === userId).sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt))[0] ?? null;
 
-  router.get('/authz/users/:userId/lifecycle', (req) => {
+  /* ---- «quién puede qué» -------------------------------------------------- */
+
+  router.get('/authz/users/:userId/access-map', (req) => {
     const userId = req.params['userId']!;
-    if (!userExists(userId)) return userMissing();
-    return { userId, state: stateOf(userId), history: history.get(userId) ?? [] };
+    if (!userExists(userId)) return missingUser();
+    const list = ask<{ items: { roleId: string; isEffective: boolean }[] }>('GET', `/authz/users/${userId}/role-assignments`);
+    const assignments = list?.body.items ?? [];
+    const roleIds = [...new Set(assignments.filter((a) => a.isEffective).map((a) => a.roleId))];
+    return {
+      user: { id: userId, displayName: nameOf(userId) ?? 'Sin nombre', accountStatus: accountStatusOf(userId) },
+      globalRoles: [...(internalUsers().find((u) => u.id === userId)?.globalRoles ?? [])].sort(),
+      assignments,
+      counts: {
+        directGrants: 0,
+        resourceScopeGrants: grants.filter((g) => g.subjectType === 'USER' && g.subjectId === userId && grantView(g).isEffective).length,
+        restrictedFields: roleIds.reduce(
+          (sum, roleId) => sum + fieldsOf(roleId).filter((f) => !f.canRead || !f.canWrite || f.maskStrategy !== null).length,
+          0,
+        ),
+      },
+      lastReview: lastReviewOf(userId),
+    };
   });
+
+  router.get('/authz/permissions/:permissionId/holders', (req) => {
+    const permissionId = req.params['permissionId']!;
+    if (!catalog().some((p) => p.id === permissionId)) {
+      return rejectWith(notFound('Permiso no encontrado'), 'GOVERNANCE_PERMISSION_NOT_FOUND');
+    }
+    const source = req.query.get('source');
+    if (source !== null && source !== '' && !['ROLE', 'USER', 'RESOURCE'].includes(source)) {
+      return validation('Error de validación', [{ field: 'source', message: 'must be one of the following values: ROLE, USER, RESOURCE' }]);
+    }
+    const text = (req.query.get('q') ?? '').trim().toLowerCase();
+    const rows = internalUsers()
+      .map((u) => {
+        const list = ask<{ items: { roleId: string; roleCode: string; isEffective: boolean; tenantId: string | null }[] }>(
+          'GET',
+          `/authz/users/${u.id}/role-assignments`,
+        );
+        const byRole = (list?.body.items ?? [])
+          .filter((a) => a.isEffective)
+          .flatMap((a) => {
+            const perms = ask<{ items: { permissionId: string; effect: string }[] }>('GET', `/authz/roles/${a.roleId}/permissions`);
+            const hit = perms?.body.items.find((p) => p.permissionId === permissionId);
+            return hit
+              ? [{ source: 'ROLE', effect: hit.effect, roleCode: a.roleCode, viaRoleCode: a.roleCode, resourceId: null, tenantId: a.tenantId }]
+              : [];
+          });
+        const byResource = grants
+          .filter((g) => g.subjectType === 'USER' && g.subjectId === u.id && g.permissionId === permissionId && grantView(g).isEffective)
+          .map((g) => ({ source: 'RESOURCE', effect: g.effect, roleCode: null, viaRoleCode: null, resourceId: g.resourceId, tenantId: g.tenantId }));
+        return {
+          userId: u.id,
+          displayName: u.displayName,
+          accountStatus: accountStatusOf(u.id),
+          sources: [...byRole, ...byResource].filter((s) => !source || s.source === source),
+        };
+      })
+      .filter((h) => h.sources.length > 0 && (text === '' || h.displayName.toLowerCase().includes(text)))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName, 'es'));
+    const page = pageOf(req, rows, 200, 50);
+    return isMockReply(page) ? page : { permissionId, ...page };
+  });
+
+  /* ---- ciclo de vida (iam) ---------------------------------------------- */
+
+  router.get('/iam/users/:id/lifecycle', (req) => {
+    const userId = req.params['id']!;
+    if (!userExists(userId)) return rejectWith(notFound('Usuario no encontrado'), 'USER_NOT_FOUND');
+    const page = pageOf(req, history.get(userId) ?? [], 100, 20);
+    return isMockReply(page) ? page : { userId, state: lifecycleStateOf(userId), ...page };
+  });
+
+  const LIFECYCLE = {
+    suspend: { event: 'SUSPEND', from: ['ACTIVE'], to: 'SUSPENDED' },
+    reactivate: { event: 'REACTIVATE', from: ['SUSPENDED'], to: 'ACTIVE' },
+    deactivate: { event: 'DEACTIVATE', from: ['ACTIVE', 'SUSPENDED'], to: 'DEACTIVATED' },
+  } as const;
 
   const act =
-    (action: 'suspend' | 'reactivate' | 'offboard'): MockHandler =>
+    (action: keyof typeof LIFECYCLE): MockHandler =>
     (req) => {
-      const userId = req.params['userId']!;
-      const reason = textReason(req);
+      const userId = req.params['id']!;
+      const rule = LIFECYCLE[action];
+      const reason = lifecycleReason(req);
       if (typeof reason !== 'string') return reason;
       if (action !== 'reactivate' && req.user?.id === userId) {
-        return precondition('Nadie puede suspenderse ni darse de baja a sí mismo', 'USER_LIFECYCLE_SELF_ACTION');
+        return precondition('Un administrador no puede suspender ni dar de baja su propia cuenta', 'USER_SELF_LIFECYCLE_FORBIDDEN');
       }
-      if (!userExists(userId)) return userMissing();
-      const state = stateOf(userId);
-      if (action === 'suspend' && state !== 'ACTIVE') {
-        return rejectWith(conflict('La cuenta no está activa', { userId, state }), 'USER_LIFECYCLE_NOT_ACTIVE');
+      if (!userExists(userId)) return rejectWith(notFound('Usuario no encontrado'), 'USER_NOT_FOUND');
+      const from = lifecycleStateOf(userId);
+      // Idempotente: la cuenta ya está donde la acción la dejaría y no se escribe nada.
+      if (from === rule.to) return { id: userId, state: from, changed: false, revokedSessions: 0 };
+      if (!(rule.from as readonly string[]).includes(from)) {
+        return rejectWith(
+          conflict('La cuenta no puede pasar a ese estado desde el que tiene', { userId, action, state: from }),
+          'USER_LIFECYCLE_TRANSITION_INVALID',
+        );
       }
-      if (action === 'reactivate' && state === 'OFFBOARDED') {
-        return rejectWith(conflict('La cuenta se dio de baja: no se reactiva', { userId, state }), 'USER_LIFECYCLE_ALREADY_OFFBOARDED');
-      }
-      if (action === 'reactivate' && state !== 'SUSPENDED') {
-        return rejectWith(conflict('La cuenta no está suspendida', { userId, state }), 'USER_LIFECYCLE_NOT_SUSPENDED');
-      }
-      if (action === 'offboard' && state === 'OFFBOARDED') {
-        return rejectWith(conflict('La cuenta ya se dio de baja', { userId, state }), 'USER_LIFECYCLE_ALREADY_OFFBOARDED');
-      }
-      let revoked = 0;
-      if (action === 'offboard') {
-        const list = ask<{ items: { id: string; status: string }[] }>('GET', `/authz/users/${userId}/role-assignments`);
-        for (const a of (list?.body.items ?? []).filter((x) => x.status === 'ACTIVE')) {
-          if (ask('DELETE', `/authz/users/${userId}/role-assignments/${a.id}`)?.status === 200) revoked += 1;
+      if (action !== 'reactivate') {
+        const target = internalUsers().find((u) => u.id === userId);
+        const holdsAccess = target?.globalRoles.some((r) => r === 'SECURITY_ADMIN' || r === 'SUPERADMIN') ?? false;
+        const others = internalUsers().filter(
+          (u) => u.id !== userId && lifecycleStateOf(u.id) === 'ACTIVE' && u.globalRoles.some((r) => r === 'SECURITY_ADMIN' || r === 'SUPERADMIN'),
+        );
+        if (holdsAccess && others.length === 0) {
+          return precondition('Es la última cuenta que administra accesos: conceda ese rol a otra antes', 'USER_LAST_SECURITY_ADMIN');
         }
       }
-      const kind = action === 'suspend' ? 'SUSPENDED' : action === 'reactivate' ? 'REACTIVATED' : 'OFFBOARDED';
+      // La baja real revoca credenciales, roles GLOBALES de `iam` y sesiones; las asignaciones de `authz`
+      // no se tocan (la cuenta ya no puede ingresar). La maqueta tampoco las toca.
       history.set(userId, [
-        { id: nextId(), kind, reason, actorUserId: req.user?.id ?? null, recordedAt: iso(now()) },
+        { id: nextId(), action: rule.event, reason, recordedByUserId: req.user?.id ?? null, recordedAt: iso(now()) },
         ...(history.get(userId) ?? []),
       ]);
-      return {
-        userId,
-        state: stateOf(userId),
-        revokedAssignments: revoked,
-        note:
-          action === 'offboard'
-            ? 'Las sesiones abiertas se cortaron y los roles de authz se revocaron.'
-            : action === 'suspend'
-              ? 'Las sesiones abiertas se cortaron. Los roles se conservan.'
-              : 'La cuenta puede volver a ingresar. Sus roles no cambiaron.',
-      };
+      return { id: userId, state: rule.to, changed: true, revokedSessions: action === 'reactivate' ? 0 : 1 };
     };
 
-  router.post('/authz/users/:userId/lifecycle/suspend', act('suspend'));
-  router.post('/authz/users/:userId/lifecycle/reactivate', act('reactivate'));
-  router.post('/authz/users/:userId/lifecycle/offboard', act('offboard'));
+  router.post('/iam/users/:id/suspend', act('suspend'));
+  router.post('/iam/users/:id/reactivate', act('reactivate'));
+  router.post('/iam/users/:id/deactivate', act('deactivate'));
 
   /* ---- revisión de accesos ---------------------------------------------- */
 
-  const reviews: Review[] = [];
+  const DUE_LOOKBACK_DAYS = 730;
+  const isAccessAdmin = (u: InternalUserRow): boolean =>
+    u.globalRoles.some((r) => r === 'SECURITY_ADMIN' || r === 'SUPERADMIN') || u.assignments.length > 0;
 
   router.get('/authz/access-reviews/due', (req) => {
     const raw = req.query.get('olderThanDays');
-    const days = raw === null || raw === '' ? null : Number(raw);
-    if (days !== null && (!Number.isInteger(days) || days < 1 || days > 3650)) {
+    const days = raw === null || raw === '' ? 90 : Number(raw);
+    if (!Number.isInteger(days) || days < 1 || days > 3650) {
       return validation('Error de validación', [{ field: 'olderThanDays', message: 'must not be greater than 3650' }]);
     }
-    const users = ask<Page<{ id: string; displayName: string; assignments: unknown[] }>>('GET', '/authz/internal-users', 'limit=200')?.body.items ?? [];
-    const items = users
-      .filter((u) => u.assignments.length > 0)
+    const rows = internalUsers()
+      .filter(isAccessAdmin)
       .map((u) => {
-        const last = reviews.filter((r) => r.userId === u.id).sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt))[0];
-        return { userId: u.id, displayName: u.displayName, activeAssignments: u.assignments.length, lastReviewedAt: last?.reviewedAt ?? null };
+        const last = lastReviewOf(u.id);
+        return {
+          userId: u.id,
+          displayName: u.displayName,
+          accountStatus: accountStatusOf(u.id),
+          lastReviewedAt: last?.reviewedAt ?? null,
+          lastReviewerUserId: last?.reviewerUserId ?? null,
+        };
       })
-      .filter((i) => days === null || i.lastReviewedAt === null || Date.parse(i.lastReviewedAt) < now() - days * DAY_MS)
-      .sort((a, b) => (a.lastReviewedAt ?? '').localeCompare(b.lastReviewedAt ?? ''));
-    return { items, olderThanDays: days };
+      .filter((i) => i.lastReviewedAt === null || Date.parse(i.lastReviewedAt) < now() - days * DAY_MS)
+      .sort((a, b) => a.displayName.localeCompare(b.displayName, 'es'));
+    const page = pageOf(req, rows, 200, 50);
+    return isMockReply(page) ? page : { ...page, olderThanDays: days, lookbackDays: DUE_LOOKBACK_DAYS };
   });
 
-  router.get('/authz/users/:userId/access-reviews', (req) => {
-    const userId = req.params['userId']!;
-    if (!userExists(userId)) return rejectWith(notFound('Usuario no encontrado'), 'ACCESS_REVIEW_USER_NOT_FOUND');
-    return { userId, items: reviews.filter((r) => r.userId === userId).sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt)) };
+  router.get('/authz/access-reviews', (req) => {
+    for (const key of ['userId', 'reviewerId']) {
+      const value = req.query.get(key);
+      if (value !== null && value !== '' && !UUID.test(value)) {
+        return validation('Error de validación', [{ field: key, message: 'must be a UUID' }]);
+      }
+    }
+    const rows = reviews
+      .filter(
+        (r) =>
+          (!req.query.get('userId') || r.userId === req.query.get('userId')) &&
+          (!req.query.get('reviewerId') || r.reviewerUserId === req.query.get('reviewerId')),
+      )
+      .slice()
+      .sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt));
+    return pageOf(req, rows, 200, 50);
   });
 
   router.post('/authz/users/:userId/access-reviews', (req) => {
     const userId = req.params['userId']!;
-    const b = bodyOf(req);
-    const reason = textReason(req);
-    if (typeof reason !== 'string') return reason;
-    if (b['decision'] !== 'CERTIFIED' && b['decision'] !== 'CHANGES_REQUIRED') {
-      return validation('Error de validación', [{ field: 'decision', message: 'must be one of the following values: CERTIFIED, CHANGES_REQUIRED' }]);
+    const reviewerId = req.user?.id ?? null;
+    if (reviewerId === userId) {
+      return precondition('Los accesos propios los revisa otra persona', 'ACCESS_REVIEW_SELF_REVIEW_FORBIDDEN');
     }
-    if (!Array.isArray(b['assignmentIds'])) {
-      return validation('Error de validación', [{ field: 'assignmentIds', message: 'must be an array' }]);
-    }
-    if (req.user?.id === userId) return precondition('Nadie revisa sus propios accesos', 'ACCESS_REVIEW_SELF_REVIEW');
-    if (!userExists(userId)) return rejectWith(notFound('Usuario no encontrado'), 'ACCESS_REVIEW_USER_NOT_FOUND');
-    const ids = [...new Set(b['assignmentIds'] as string[])];
-    const list = ask<{ items: { id: string; status: string }[] }>('GET', `/authz/users/${userId}/role-assignments`);
-    const active = new Set((list?.body.items ?? []).filter((a) => a.status === 'ACTIVE').map((a) => a.id));
-    if (ids.some((id) => !active.has(id))) {
-      return precondition('Alguna asignación citada no es de esa persona o ya no está activa', 'ACCESS_REVIEW_ASSIGNMENT_MISMATCH');
-    }
+    if (!userExists(userId)) return missingUser();
     const review: Review = {
       id: nextId(),
       userId,
-      decision: b['decision'] as string,
-      reason,
-      assignmentIds: ids,
-      reviewerUserId: req.user?.id ?? null,
+      userDisplayName: nameOf(userId),
+      reviewerUserId: reviewerId ?? '00000000-0000-4000-8000-00000000c001',
+      reviewerDisplayName: reviewerId ? nameOf(reviewerId) : null,
       reviewedAt: iso(now()),
     };
     reviews.unshift(review);

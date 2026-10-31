@@ -51,9 +51,10 @@ const LIST_URL = portalUrl('governance/privacy-requests');
 const VIEWS = ['resumen', 'tramitar'] as const;
 
 /**
- * La ficha de una solicitud de privacidad: qué se pidió, desde cuándo espera y a qué estados
- * se puede mover. Las transiciones que se ofrecen las publica la API en la propia solicitud;
- * la pantalla no reconstruye la máquina de estados. Una sola tarjeta con pestañas.
+ * La ficha de una solicitud de privacidad (`GET /privacy/dsar/:id`): qué se pidió, desde cuándo
+ * espera, cuándo vence y a qué estados se puede mover. La lectura no publica las transiciones:
+ * se ofrecen las de `allowedTransitions` (copia de lo que admite `PATCH /privacy/dsar/:id`) y la
+ * API decide: un estado terminal responde 422 y la ficha lo dice. Una sola tarjeta con pestañas.
  */
 @Component({
   selector: 'app-portal-privacy-request-detail-page',
@@ -106,7 +107,7 @@ export class PrivacyRequestDetailPage {
     void patchQuery(this.router, this.route, { vista: index === 0 ? null : VIEWS[index]! });
   }
 
-  /** Sólo las transiciones que la API publicó para esta solicitud y que esta pantalla sabe pedir. */
+  /** Sólo las transiciones que admite el estado actual y que esta pantalla sabe pedir. */
   protected transitions(request: PrivacyRequest): readonly PrivacyTransition[] {
     return request.allowedTransitions.filter((s): s is PrivacyTransition => s in TRANSITION_ACTIONS);
   }
@@ -120,6 +121,10 @@ export class PrivacyRequestDetailPage {
       { etiqueta: 'Tipo', valor: privacyTypeLabel(r.type) },
       { etiqueta: 'Jurisdicción', valor: jurisdictionLabel(r.jurisdiction) },
       { etiqueta: 'Recibida', valor: dateTime(r.requestedAt) },
+      {
+        etiqueta: 'Vence',
+        valor: `${dateTime(r.dueAt)}${r.overdue ? ' (vencida)' : ''}`,
+      },
       this.isOpen(r.status)
         ? { etiqueta: 'Sin cerrar desde hace', valor: `${daysSince(r.requestedAt)} días` }
         : { etiqueta: 'Cerrada', valor: r.completedAt ? dateTime(r.completedAt) : null },
@@ -127,7 +132,7 @@ export class PrivacyRequestDetailPage {
       { etiqueta: 'Titular (identificador)', valor: r.subjectUserId },
       {
         etiqueta: 'Paquete de datos entregado',
-        valor: r.type === 'ACCESS' || r.type === 'PORTABILITY' ? (r.resultFileId ? 'Sí, adjunto' : 'Todavía sin adjuntar') : null,
+        valor: r.type === 'ACCESS' || r.type === 'PORTABILITY' ? (r.hasResultFile ? 'Sí, adjunto' : 'Todavía sin adjuntar') : null,
       },
     ];
   }

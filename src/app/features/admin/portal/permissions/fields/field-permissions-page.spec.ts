@@ -37,15 +37,28 @@ describe('FieldPermissionsPage', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let confirmed: boolean;
+  let reasonAnswer: string | null;
+  let reasonAsked: { config: { destructive?: boolean; message: string }; reason: { minLength?: number; maxLength?: number } } | undefined;
 
   async function open(url = SCREEN): Promise<void> {
     confirmed = true;
+    reasonAnswer = 'Se cargó por error, sí debe acceder';
+    reasonAsked = undefined;
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'superadmin/portal/governance/field-permissions', component: FieldPermissionsPage }]),
-        { provide: DialogService, useValue: { confirm: () => Promise.resolve(confirmed) } },
+        {
+          provide: DialogService,
+          useValue: {
+            confirm: () => Promise.resolve(confirmed),
+            confirmWithReason: (config: never, reason: never) => {
+              reasonAsked = { config, reason };
+              return Promise.resolve(reasonAnswer);
+            },
+          },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -193,22 +206,54 @@ describe('FieldPermissionsPage', () => {
       expect(text()).toContain('dirección IP y por horario');
     });
 
-    it('terminar la vigencia pide confirmación, llama a DELETE y relee la lista', async () => {
+    it('terminar un permiso que PERMITE pide confirmación, llama a DELETE sin motivo y relee la lista', async () => {
       await openScope();
-      await panel().end(grant());
-      http.expectOne((r) => r.method === 'DELETE' && r.url === '/authz/resource-scope-grants/g1').flush({ id: 'g1', validTo: '2026-10-31T10:00:00.000Z' });
-      http.expectOne((r) => r.url === '/authz/resource-scope-grants').flush({ items: [grant({ validTo: '2026-10-31T10:00:00.000Z', isEffective: false })], nextCursor: null, limit: 50 });
+      await panel().end(grant({ effect: 'ALLOW' }));
+      expect(reasonAsked).toBeUndefined();
+      const del = http.expectOne((r) => r.method === 'DELETE' && r.url === '/authz/resource-scope-grants/g1');
+      expect(del.request.body).toEqual({});
+      del.flush({ id: 'g1', validTo: '2026-10-31T10:00:00.000Z' });
+      http.expectOne((r) => r.url === '/authz/resource-scope-grants').flush({ items: [grant({ effect: 'ALLOW', validTo: '2026-10-31T10:00:00.000Z', isEffective: false })], nextCursor: null, limit: 50 });
       harness.detectChanges();
       expect(text()).toContain('Terminó la vigencia');
+    });
+
+    it('terminar un permiso que NIEGA exige motivo (mínimo 10), lo manda en el cuerpo y relee la lista', async () => {
+      await openScope();
+      await panel().end(grant({ effect: 'DENY' }));
+      expect(reasonAsked!.reason).toEqual(expect.objectContaining({ minLength: 10, maxLength: 500 }));
+      expect(reasonAsked!.config.destructive).toBe(true);
+      expect(reasonAsked!.config.message).toContain('abre un acceso');
+      const del = http.expectOne((r) => r.method === 'DELETE' && r.url === '/authz/resource-scope-grants/g1');
+      expect(del.request.body).toEqual({ reason: 'Se cargó por error, sí debe acceder' });
+      del.flush({ id: 'g1', validTo: '2026-10-31T10:00:00.000Z' });
+      http.expectOne((r) => r.url === '/authz/resource-scope-grants').flush({ items: [], nextCursor: null, limit: 50 });
+    });
+
+    it('si se arrepiente al pedir el motivo de un DENY no manda nada', async () => {
+      await openScope();
+      reasonAnswer = null;
+      await panel().end(grant({ effect: 'DENY' }));
+      http.expectNone((r) => r.method === 'DELETE');
+    });
+
+    it('si la API rechaza un DENY sin motivo (422) se explica y no se relee', async () => {
+      await openScope();
+      await panel().end(grant({ effect: 'DENY' }));
+      http
+        .expectOne((r) => r.method === 'DELETE')
+        .flush({ statusCode: 422, code: 'PRECONDITION_FAILED', message: 'x', reason: 'RESOURCE_SCOPE_GRANT_DENY_REASON_REQUIRED' }, { status: 422, statusText: 'Unprocessable Entity' });
+      harness.detectChanges();
+      expect(text()).toContain('exige un motivo');
     });
 
     it('si no se confirma no se borra nada; si otro ya la terminó, se explica y se relee', async () => {
       await openScope();
       confirmed = false;
-      await panel().end(grant());
+      await panel().end(grant({ effect: 'ALLOW' }));
       http.expectNone((r) => r.method === 'DELETE');
       confirmed = true;
-      await panel().end(grant());
+      await panel().end(grant({ effect: 'ALLOW' }));
       http
         .expectOne((r) => r.method === 'DELETE')
         .flush({ statusCode: 409, code: 'CONFLICT', message: 'x', reason: 'RESOURCE_SCOPE_GRANT_ALREADY_ENDED' }, { status: 409, statusText: 'Conflict' });

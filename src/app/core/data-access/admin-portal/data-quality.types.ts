@@ -1,5 +1,5 @@
 /* ============================================================================
-    Calidad de datos (`/admin/governance/data-quality/*`).
+    Calidad de datos clínicos, esquema `health_data` (`/admin/governance/data-quality/*`).
 
     Lo que decide la API —qué estados existen, quién puede cerrar una incidencia,
     qué pasa si dos personas la cierran a la vez— no se reproduce aquí. Un código

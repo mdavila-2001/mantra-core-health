@@ -1,6 +1,6 @@
 <app-page-header
-  title="Calidad de datos · Incidencias"
-  subtitle="Lo que el análisis de calidad detectó en los datos de salud. Cada incidencia se resuelve o se descarta una sola vez, con su motivo."
+  title="Calidad de datos clínicos · Incidencias"
+  subtitle="Lo que el análisis de calidad detectó en los datos clínicos (esquema health_data); no es la calidad del catálogo de datos de la plataforma. Cada incidencia se resuelve o se descarta una sola vez, con su motivo."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -49,7 +49,7 @@
     }
     <app-data-table
       data-testid="portal-quality-issues-table"
-      caption="Incidencias de calidad de datos"
+      caption="Incidencias de calidad de datos clínicos"
       [state]="list.state()"
       [columns]="columns()"
       [trackBy]="byId"

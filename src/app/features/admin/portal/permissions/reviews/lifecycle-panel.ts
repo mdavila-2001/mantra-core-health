@@ -33,8 +33,8 @@ const URL_KEYS = ['user'] as const;
         <app-alert tone="success" dismissible (dismissed)="notice.set(null)">{{ message }}</app-alert>
       }
       <p class="panel__note">
-        Suspender corta las sesiones y se puede deshacer. La baja bloquea la cuenta y revoca todos sus roles. Elija una
-        persona para ver su estado, su historial y lo que se puede hacer.
+        Suspender bloquea la cuenta, corta las sesiones y se puede deshacer. La baja además revoca sus credenciales y sus
+        roles globales, y no se reactiva. Elija una persona para ver su estado, su historial y lo que se puede hacer.
       </p>
       <app-search-field label="Buscar personas" placeholder="Nombre visible" [value]="query()" (searched)="query.set($event)" [loading]="users.state().status === 'loading'" />
       <app-data-table

@@ -1,5 +1,4 @@
 import {
-  PRIVACY_JURISDICTIONS,
   PRIVACY_STATUSES,
   PRIVACY_TYPES,
   type PrivacyRequestsQuery,
@@ -9,10 +8,10 @@ import {
 /* ============================================================================
     La consulta de solicitudes de privacidad, leída de la URL. Lo que la API
     rechazaría con 400 se descarta aquí. La pestaña es el estado (`status`);
-    sin parámetro se ven todas.
+    sin parámetro se ven todas. `GET /privacy/dsar` no filtra por jurisdicción.
     ========================================================================== */
 
-export const PRIVACY_URL_KEYS = ['status', 'type', 'jurisdiction'] as const;
+export const PRIVACY_URL_KEYS = ['status', 'type'] as const;
 export type PrivacyUrlValues = Readonly<Record<(typeof PRIVACY_URL_KEYS)[number], string>>;
 
 /** Las pestañas: todas, y una por estado. */
@@ -34,14 +33,11 @@ export function privacyQuery(values: PrivacyUrlValues): PrivacyRequestsQuery {
     ...((PRIVACY_TYPES as readonly string[]).includes(values.type)
       ? { type: values.type as (typeof PRIVACY_TYPES)[number] }
       : {}),
-    ...((PRIVACY_JURISDICTIONS as readonly string[]).includes(values.jurisdiction)
-      ? { jurisdiction: values.jurisdiction as (typeof PRIVACY_JURISDICTIONS)[number] }
-      : {}),
   };
 }
 
 export function hasPrivacyFilters(values: PrivacyUrlValues): boolean {
-  return values.type !== '' || values.jurisdiction !== '';
+  return values.type !== '';
 }
 
 /** El texto que se le dice a la persona cuando tramitar falla. */

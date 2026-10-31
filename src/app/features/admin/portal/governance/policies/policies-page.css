@@ -10,12 +10,6 @@
   margin-inline: auto;
 }
 
-.policies__metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
-  gap: var(--sp-3);
-}
-
 .policies__card {
   display: block;
   inline-size: 100%;
@@ -49,10 +43,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
-}
-
-.policies__control {
-  overflow-wrap: break-word;
 }
 
 .policies__secondary {

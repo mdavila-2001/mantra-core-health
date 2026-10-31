@@ -228,18 +228,6 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Servicios, glosarios y reporte contable por tipo de usuario, con auditoría y versión.',
-    module: 'admin_catalogs',
-  },
-  {
-    // Carga masiva de historias clínicas (H7): plantilla CSV y JSON, vista previa,
-    // confirmación e informe. Sólo agrega, nunca sobrescribe. La autoridad es la API.
-    path: 'superadmin/clinical-imports',
-    label: 'Historias clínicas masivas',
-    group: 'Superadministración',
-    icon: 'package',
-    roles: ['SECURITY_ADMIN'],
-    availability: 'disponible',
-    summary: 'Carga de historias clínicas a pacientes existentes, con base legal declarada y auditoría.',
-    module: 'clinical_import',
+    module: 'billing · terminology',
   },
 ];

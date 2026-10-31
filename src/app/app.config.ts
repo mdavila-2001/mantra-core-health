@@ -25,6 +25,7 @@ import { AuthService } from './core/auth/auth.service';
 import { SESSION_CLEANERS } from './core/auth/session-cleanup';
 import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
+import { UiVisibilityService } from './core/visibility/ui-visibility.service';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
@@ -211,6 +212,12 @@ export const appConfig: ApplicationConfig = {
     // pantalla quedaba en pie sin token y ninguna acción funcionaba.
     provideAppInitializer(() => {
       inject(SessionEndedRedirect);
+    }),
+    // Las reglas de visibilidad de la interfaz (`GET /me/ui-visibility`) siguen a la sesión: se piden al abrirla y se
+    // vuelven a pedir si cambia la persona o la organización. Presentación, no seguridad: la API autoriza igual. No
+    // bloquea el arranque —es un seguimiento reactivo— y, si el pedido falla, no se oculta nada.
+    provideAppInitializer(() => {
+      inject(UiVisibilityService).start();
     }),
   ],
 };

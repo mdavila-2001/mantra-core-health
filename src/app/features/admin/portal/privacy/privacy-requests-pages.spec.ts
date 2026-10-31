@@ -9,22 +9,23 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { PrivacyRequestDetailPage } from './privacy-request-detail-page';
 import { PrivacyRequestsPage } from './privacy-requests-page';
 
-const LIST = '/admin/governance/privacy-requests';
+const LIST = '/privacy/dsar';
 const ID = '00000000-0000-4000-8000-0000000000d1';
-const COUNTS = { RECEIVED: 2, IN_PROGRESS: 1, COMPLETED: 0, REJECTED: 0, other: 0 };
 
 const request = (over: Record<string, unknown> = {}) => ({
   id: ID,
   subjectUserId: '00000000-0000-4000-8000-0000000000e1',
   type: 'ACCESS',
   status: 'RECEIVED',
-  jurisdiction: 'PE',
+  jurisdiction: 'JURISDICTION_PE',
   requestedAt: '2026-10-05T10:00:00.000Z',
   completedAt: null,
-  resultFileId: null,
+  dueAt: '2026-11-04T10:00:00.000Z',
+  overdue: false,
+  hasResultFile: false,
+  version: 1,
+  createdAt: '2026-10-05T10:00:00.000Z',
   updatedAt: '2026-10-05T10:00:00.000Z',
-  rowVersion: 1,
-  allowedTransitions: ['IN_PROGRESS', 'COMPLETED', 'REJECTED'],
   ...over,
 });
 
@@ -57,34 +58,48 @@ describe('Solicitudes de privacidad', () => {
     http.verify();
   });
 
-  it('la lista pone los conteos de la API en las pestañas y dibuja tipo, jurisdicción y espera', async () => {
+  it('la lista pide GET /privacy/dsar con los filtros válidos y dibuja tipo, jurisdicción, espera y vencimiento', async () => {
     await open('/superadmin/portal/governance/privacy-requests?status=RECEIVED&type=NADA', PrivacyRequestsPage);
     const req = http.expectOne((r) => r.url === LIST);
     expect(req.request.params.get('status')).toBe('RECEIVED');
     // un tipo que la API rechazaría no se manda
     expect(req.request.params.has('type')).toBe(false);
-    req.flush({ items: [request()], nextCursor: null, limit: 25, total: 1, statusCounts: COUNTS });
+    // la lectura no manda jurisdicción como filtro: la API de dev no lo admite
+    expect(req.request.params.has('jurisdiction')).toBe(false);
+    req.flush({ items: [request()], nextCursor: null, limit: 25, notMeasured: [] });
     harness.detectChanges();
-    expect(text()).toContain('Recibidas (2)');
-    expect(text()).toContain('En curso (1)');
+    // sin conteos por estado en la lectura, las pestañas no inventan números
+    expect(text()).toContain('Recibidas');
+    expect(text()).not.toMatch(/Recibidas \(\d+\)/);
     const table = el().querySelector('[data-testid="portal-privacy-requests-table"]')!;
     expect(table.textContent).toContain('Acceso a sus datos');
     expect(table.textContent).toContain('Perú');
     expect(table.textContent).toContain('Sin cerrar hace');
+    expect(table.textContent).toContain('vence el');
+    expect(el().querySelector('[data-testid="portal-privacy-overdue"]')).toBeNull();
+  });
+
+  it('una solicitud que la API marca vencida lo dice con texto, no sólo con color', async () => {
+    await open('/superadmin/portal/governance/privacy-requests', PrivacyRequestsPage);
+    http
+      .expectOne((r) => r.url === LIST)
+      .flush({ items: [request({ overdue: true })], nextCursor: null, limit: 25, notMeasured: [] });
+    harness.detectChanges();
+    expect(el().querySelector('[data-testid="portal-privacy-overdue"]')?.textContent).toContain('Vencida');
   });
 
   it('sin solicitudes el vacío lo dice, no queda en blanco', async () => {
     await open('/superadmin/portal/governance/privacy-requests', PrivacyRequestsPage);
     http
       .expectOne((r) => r.url === LIST)
-      .flush({ items: [], nextCursor: null, limit: 25, total: 0, statusCounts: { ...COUNTS, RECEIVED: 0, IN_PROGRESS: 0 } });
+      .flush({ items: [], nextCursor: null, limit: 25, notMeasured: [] });
     harness.detectChanges();
     expect(text()).toContain('Todavía no se recibió ninguna solicitud de privacidad');
   });
 
-  it('la ficha ofrece sólo las transiciones que la API publicó', async () => {
+  it('la ficha ofrece sólo las transiciones que admite el estado (en curso no vuelve a «en curso»)', async () => {
     await open(`/superadmin/portal/governance/privacy-requests/${ID}?vista=tramitar`, PrivacyRequestDetailPage);
-    http.expectOne((r) => r.url === `${LIST}/${ID}`).flush(request({ allowedTransitions: ['COMPLETED', 'REJECTED'], status: 'IN_PROGRESS' }));
+    http.expectOne((r) => r.url === `${LIST}/${ID}`).flush(request({ status: 'IN_PROGRESS' }));
     harness.detectChanges();
     expect(el().querySelector('[data-testid="portal-privacy-move-IN_PROGRESS"]')).toBeNull();
     expect(el().querySelector('[data-testid="portal-privacy-move-COMPLETED"]')).not.toBeNull();
@@ -95,7 +110,7 @@ describe('Solicitudes de privacidad', () => {
     await open(`/superadmin/portal/governance/privacy-requests/${ID}?vista=tramitar`, PrivacyRequestDetailPage);
     http
       .expectOne((r) => r.url === `${LIST}/${ID}`)
-      .flush(request({ status: 'COMPLETED', allowedTransitions: [], completedAt: '2026-10-10T10:00:00.000Z' }));
+      .flush(request({ status: 'COMPLETED', completedAt: '2026-10-10T10:00:00.000Z' }));
     harness.detectChanges();
     expect(el().querySelector('[data-testid="portal-privacy-closed"]')?.textContent).toContain('no admite más cambios');
     expect(el().querySelector('[data-testid="portal-privacy-actions"]')).toBeNull();
@@ -111,10 +126,19 @@ describe('Solicitudes de privacidad', () => {
     expect(patch.request.method).toBe('PATCH');
     expect(patch.request.body).toEqual({ status: 'IN_PROGRESS' });
     patch.flush({ id: ID });
-    http.expectOne((r) => r.url === `${LIST}/${ID}`).flush(request({ status: 'IN_PROGRESS', allowedTransitions: ['COMPLETED', 'REJECTED'] }));
+    http.expectOne((r) => r.url === `${LIST}/${ID}`).flush(request({ status: 'IN_PROGRESS' }));
     harness.detectChanges();
     expect(el().querySelector('[data-testid="portal-privacy-notice"]')?.textContent).toContain('en curso');
     expect(el().querySelector('[data-testid="portal-privacy-request-status"]')?.textContent).toContain('En curso');
+  });
+
+  it('la ficha muestra el vencimiento y avisa si la solicitud está vencida', async () => {
+    await open(`/superadmin/portal/governance/privacy-requests/${ID}`, PrivacyRequestDetailPage);
+    http.expectOne((r) => r.url === `${LIST}/${ID}`).flush(request({ overdue: true }));
+    harness.detectChanges();
+    expect(el().querySelector('[data-testid="portal-privacy-request-overdue"]')?.textContent).toContain('Vencida');
+    expect(text()).toContain('Vence');
+    expect(text()).toContain('plazo fijo de 30 días');
   });
 
   it('si la persona no confirma no se manda nada', async () => {

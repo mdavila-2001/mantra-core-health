@@ -4,7 +4,12 @@ import { Router, type Route, type Routes } from '@angular/router';
 import { APP_TITLE } from '../../../core/navigation/navigation.types';
 import { PORTAL_DATA_QUALITY_ROUTES } from './data-quality/data-quality.routes';
 import { PORTAL_GOVERNANCE_ROUTES } from './governance/governance.routes';
+import { PORTAL_RBAC_MATRIX_ROUTES } from './rbac-matrix/rbac-matrix.routes';
 import { PORTAL_PERMISSIONS_ROUTES } from './permissions/permissions.routes';
+import { PORTAL_VISIBILITY_ROUTES } from './visibility/visibility.routes';
+import { PORTAL_MUTABILITY_ROUTES } from './mutability/mutability.routes';
+import { PORTAL_CATALOG_FIT_ROUTES } from './probes/catalog-fit/catalog-fit.routes';
+import { PORTAL_RUNTIME_PIECES_ROUTES } from './probes/runtime-pieces/runtime-pieces.routes';
 import { PORTAL_POLICIES_ROUTES } from './governance/policies/policies.routes';
 import { portalUrl } from './portal-nav';
 
@@ -134,7 +139,12 @@ export const PORTAL_RUTAS: Routes = [
   },
   ...PORTAL_GOVERNANCE_ROUTES,
   ...PORTAL_POLICIES_ROUTES,
+  ...PORTAL_RUNTIME_PIECES_ROUTES,
+  ...PORTAL_MUTABILITY_ROUTES,
+  ...PORTAL_VISIBILITY_ROUTES,
   ...PORTAL_PERMISSIONS_ROUTES,
+  ...PORTAL_RBAC_MATRIX_ROUTES,
   ...PORTAL_DATA_QUALITY_ROUTES,
+  ...PORTAL_CATALOG_FIT_ROUTES,
   ...Object.entries(LEGACY_PORTAL_PATHS).map(legacyPortalRedirect),
 ];

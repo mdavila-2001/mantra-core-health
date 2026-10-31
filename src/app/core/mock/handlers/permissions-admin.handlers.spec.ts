@@ -90,12 +90,24 @@ describe('gobierno de permisos simulado: mismas reglas que la API', () => {
       const id = data<{ id: string }>(created).id;
       const listed = data<{ items: { id: string; isEffective: boolean }[] }>(call('GET', '/authz/resource-scope-grants', null, { resourceId: RESOURCE }));
       expect(listed.items).toEqual([expect.objectContaining({ id, isEffective: true })]);
-      const ended = call('DELETE', `/authz/resource-scope-grants/${id}`);
+      const ended = call('DELETE', `/authz/resource-scope-grants/${id}`, { reason: 'Se cargó por error, sí debe acceder' });
       expect(status(ended)).toBe(200);
-      const again = call('DELETE', `/authz/resource-scope-grants/${id}`);
+      const again = call('DELETE', `/authz/resource-scope-grants/${id}`, { reason: 'Se cargó por error, sí debe acceder' });
       expect(status(again)).toBe(409);
       expect(reasonOf(again)).toBe('RESOURCE_SCOPE_GRANT_ALREADY_ENDED');
       expect(data<{ items: { isEffective: boolean }[] }>(call('GET', '/authz/resource-scope-grants', null, { resourceId: RESOURCE })).items[0]!.isEffective).toBe(false);
+    });
+
+    it('terminar un permiso DENY exige motivo (422) y no lo termina; un ALLOW no lo exige', () => {
+      const deny = data<{ id: string }>(call('POST', '/authz/resource-scope-grants', body)).id;
+      for (const motivo of [undefined, '', '   ', 'corto']) {
+        const sinMotivo = call('DELETE', `/authz/resource-scope-grants/${deny}`, motivo === undefined ? null : { reason: motivo });
+        expect(status(sinMotivo)).toBe(422);
+        expect(reasonOf(sinMotivo)).toBe('RESOURCE_SCOPE_GRANT_DENY_REASON_REQUIRED');
+      }
+      expect(data<{ items: { isEffective: boolean }[] }>(call('GET', '/authz/resource-scope-grants', null, { resourceId: RESOURCE })).items[0]!.isEffective).toBe(true);
+      const allow = data<{ id: string }>(call('POST', '/authz/resource-scope-grants', { ...body, resourceId: RESOURCE.replace('d777', 'd779'), effect: 'ALLOW' })).id;
+      expect(status(call('DELETE', `/authz/resource-scope-grants/${allow}`))).toBe(200);
     });
 
     it('rechaza duplicados vigentes, ventanas invertidas, ids que no son UUID y grants inexistentes', () => {
@@ -108,10 +120,17 @@ describe('gobierno de permisos simulado: mismas reglas que la API', () => {
   });
 
   describe('simulación del PDP', () => {
-    const ask = (userId: string, action: string, resource: string) =>
-      data<{ decision: string; effectiveRoleIds: string[]; reason: string; maskedFields: unknown[] }>(
-        call('POST', '/authz/decisions/evaluate', { userId, tenantId: TENANT, action, resource }),
+    const simulate = (userId: string, action: string, resource: string) =>
+      data<{ simulated: boolean; decision: { decision: string; effectiveRoleIds: string[]; reason: string; maskedFields: unknown[] } }>(
+        call('POST', '/authz/simulations', { userId, tenantId: TENANT, action, resource }),
       );
+    const ask = (userId: string, action: string, resource: string) => simulate(userId, action, resource).decision;
+
+    it('devuelve la decisión envuelta y marcada como simulada', () => {
+      const out = simulate(DPO, 'READ', 'audit');
+      expect(out.simulated).toBe(true);
+      expect(out.decision.decision).toBe('PERMIT');
+    });
 
     it('permite lo que un rol efectivo concede y dice cuál rol decidió', () => {
       const result = ask(DPO, 'READ', 'audit');
@@ -131,102 +150,193 @@ describe('gobierno de permisos simulado: mismas reglas que la API', () => {
       expect(ask(DPO, 'READ', 'audit').decision).toBe('DENY');
     });
 
-    it('una persona sin roles efectivos recibe DENY, y los campos restringidos viajan como enmascarados', () => {
-      expect(ask('00000000-0000-4000-8000-00000000ffff', 'READ', 'audit').decision).toBe('DENY');
+    it('los campos restringidos viajan como enmascarados', () => {
       call('PUT', '/authz/roles/role-dpo/permissions', { permissions: [{ permissionId: 'perm-audit-read', effect: 'ALLOW' }] });
       call('PUT', '/authz/roles/role-dpo/field-permissions', { fields: [{ entity: 'audit', columnName: 'ip', canRead: true, canWrite: false, maskStrategy: 'HASH' }] });
       expect(ask(DPO, 'READ', 'audit').maskedFields).toEqual([{ entity: 'audit', columnName: 'ip', strategy: 'HASH' }]);
     });
 
+    it('un usuario inexistente es 404 y NO una decisión DENY engañosa', () => {
+      const r = call('POST', '/authz/simulations', { userId: '00000000-0000-4000-8000-00000000ffff', tenantId: TENANT, action: 'READ', resource: 'audit' });
+      expect(status(r)).toBe(404);
+      expect(reasonOf(r)).toBe('GOVERNANCE_USER_NOT_FOUND');
+    });
+
     it('valida la entrada como el ValidationPipe', () => {
-      expect(status(call('POST', '/authz/decisions/evaluate', { userId: 'x', tenantId: TENANT, action: 'FLY', resource: '' }))).toBe(400);
+      expect(status(call('POST', '/authz/simulations', { userId: 'x', tenantId: TENANT, action: 'FLY', resource: '' }))).toBe(400);
     });
   });
 
-  describe('ciclo de vida', () => {
-    const lifecycle = (id: string) => data<{ state: string; history: { kind: string; reason: string }[] }>(call('GET', `/authz/users/${id}/lifecycle`));
-    const act = (id: string, action: string, reason = 'Motivo suficiente') => call('POST', `/authz/users/${id}/lifecycle/${action}`, { reason });
+  describe('«quién puede qué»', () => {
+    const holders = (permissionId: string, query: Record<string, string> = {}) =>
+      data<{ permissionId: string; items: { userId: string; displayName: string; sources: { source: string; effect: string; roleCode: string | null }[] }[]; nextCursor: string | null }>(
+        call('GET', `/authz/permissions/${permissionId}/holders`, null, query),
+      );
 
-    it('suspender y reactivar dejan el historial con motivo', () => {
+    it('lista a las personas con el permiso y el camino por el que lo tienen', () => {
+      const out = holders('perm-audit-read');
+      expect(out.permissionId).toBe('perm-audit-read');
+      const dpo = out.items.find((h) => h.userId === DPO)!;
+      expect(dpo.sources).toEqual([expect.objectContaining({ source: 'ROLE', effect: 'ALLOW', roleCode: 'DPO' })]);
+    });
+
+    it('un permiso inexistente es 404 con su motivo y un filtro de camino desconocido es 400', () => {
+      const missing = call('GET', '/authz/permissions/nope/holders');
+      expect(status(missing)).toBe(404);
+      expect(reasonOf(missing)).toBe('GOVERNANCE_PERMISSION_NOT_FOUND');
+      expect(status(call('GET', '/authz/permissions/perm-audit-read/holders', null, { source: 'MAGIA' }))).toBe(400);
+    });
+
+    it('un grant por recurso aparece como camino RESOURCE y el filtro de camino lo respeta', () => {
+      call('POST', '/authz/resource-scope-grants', { subjectType: 'USER', subjectId: DPO, permissionId: 'perm-catalog-read', resourceType: 'PATIENT', resourceId: RESOURCE, effect: 'ALLOW' });
+      const viaResource = holders('perm-catalog-read', { source: 'RESOURCE' });
+      expect(viaResource.items.map((h) => h.userId)).toEqual([DPO]);
+      expect(viaResource.items[0]!.sources.every((s) => s.source === 'RESOURCE')).toBe(true);
+    });
+
+    it('pagina por cursor y valida el límite', () => {
+      for (const subjectId of [DPO, STEWARD]) {
+        call('POST', '/authz/resource-scope-grants', { subjectType: 'USER', subjectId, permissionId: 'perm-catalog-read', resourceType: 'PATIENT', resourceId: RESOURCE, effect: 'ALLOW' });
+      }
+      const first = holders('perm-catalog-read', { source: 'RESOURCE', limit: '1' });
+      expect(first.items).toHaveLength(1);
+      expect(first.nextCursor).not.toBeNull();
+      const second = holders('perm-catalog-read', { source: 'RESOURCE', limit: '1', cursor: first.nextCursor! });
+      expect(second.items).toHaveLength(1);
+      expect(second.items[0]!.userId).not.toBe(first.items[0]!.userId);
+      expect(second.nextCursor).toBeNull();
+      expect(status(call('GET', '/authz/permissions/perm-audit-read/holders', null, { limit: '500' }))).toBe(400);
+    });
+
+    it('el mapa de accesos de una persona trae roles, conteos y su última revisión', () => {
+      const map = () =>
+        data<{ user: { displayName: string }; globalRoles: string[]; assignments: unknown[]; counts: { resourceScopeGrants: number }; lastReview: { reviewerUserId: string } | null }>(
+          call('GET', `/authz/users/${DPO}/access-map`),
+        );
+      expect(map().user.displayName).toBeTruthy();
+      expect(map().assignments.length).toBeGreaterThan(0);
+      expect(map().lastReview).toBeNull();
+      call('POST', `/authz/users/${DPO}/access-reviews`);
+      expect(map().lastReview!.reviewerUserId).toBe(admin.id);
+      const missing = call('GET', '/authz/users/00000000-0000-4000-8000-00000000ffff/access-map');
+      expect(status(missing)).toBe(404);
+      expect(reasonOf(missing)).toBe('GOVERNANCE_USER_NOT_FOUND');
+    });
+  });
+
+  describe('ciclo de vida (iam)', () => {
+    const lifecycle = (id: string, query: Record<string, string> = {}) =>
+      data<{ state: string; items: { action: string; reason: string }[]; nextCursor: string | null }>(call('GET', `/iam/users/${id}/lifecycle`, null, query));
+    const act = (id: string, action: string, reason = 'Motivo suficiente') => call('POST', `/iam/users/${id}/${action}`, { reason });
+
+    it('suspender y reactivar dejan el historial con motivo, de la más reciente a la más antigua', () => {
       expect(lifecycle(DPO).state).toBe('ACTIVE');
-      expect(status(act(DPO, 'suspend', 'Licencia por maternidad'))).toBe(200);
-      expect(lifecycle(DPO)).toEqual(expect.objectContaining({ state: 'SUSPENDED' }));
-      expect(status(act(DPO, 'reactivate', 'Volvió de su licencia'))).toBe(200);
+      const suspended = act(DPO, 'suspend', 'Licencia por maternidad');
+      expect(data<{ changed: boolean; state: string; revokedSessions: number }>(suspended)).toEqual({ id: DPO, state: 'SUSPENDED', changed: true, revokedSessions: 1 });
+      expect(lifecycle(DPO).state).toBe('SUSPENDED');
+      expect(data<{ state: string }>(act(DPO, 'reactivate', 'Volvió de su licencia')).state).toBe('ACTIVE');
       const l = lifecycle(DPO);
       expect(l.state).toBe('ACTIVE');
-      expect(l.history.map((e) => e.kind)).toEqual(['REACTIVATED', 'SUSPENDED']);
-      expect(l.history[1]!.reason).toBe('Licencia por maternidad');
+      expect(l.items.map((e) => e.action)).toEqual(['REACTIVATE', 'SUSPEND']);
+      expect(l.items[1]!.reason).toBe('Licencia por maternidad');
     });
 
-    it('una transición inválida es 409 con su reason, y no escribe en el historial', () => {
-      const notSuspended = act(DPO, 'reactivate');
-      expect(status(notSuspended)).toBe(409);
-      expect(reasonOf(notSuspended)).toBe('USER_LIFECYCLE_NOT_SUSPENDED');
+    it('es idempotente: repetir la acción responde 200 con changed:false y no escribe en el historial', () => {
       act(DPO, 'suspend');
-      const twice = act(DPO, 'suspend');
-      expect(status(twice)).toBe(409);
-      expect(reasonOf(twice)).toBe('USER_LIFECYCLE_NOT_ACTIVE');
-      expect(lifecycle(DPO).history).toHaveLength(1);
+      const again = data<{ changed: boolean; revokedSessions: number }>(act(DPO, 'suspend'));
+      expect(again).toEqual(expect.objectContaining({ changed: false, revokedSessions: 0 }));
+      expect(lifecycle(DPO).items).toHaveLength(1);
+      expect(data<{ changed: boolean }>(act(STEWARD, 'reactivate')).changed).toBe(false);
     });
 
-    it('exige motivo, usuario existente y que nadie se suspenda a sí mismo', () => {
-      expect(status(act(DPO, 'suspend', 'corto'))).toBe(400);
-      expect(reasonOf(act('00000000-0000-4000-8000-00000000ffff', 'suspend'))).toBe('USER_LIFECYCLE_USER_NOT_FOUND');
-      const self = call('POST', `/authz/users/${DPO}/lifecycle/suspend`, { reason: 'Me suspendo yo mismo' }, {}, { ...admin, id: DPO });
+    it('una transición inválida es 409 con su reason y no escribe: reactivar tras la baja, suspender tras la baja', () => {
+      act(DPO, 'deactivate');
+      for (const action of ['reactivate', 'suspend']) {
+        const r = act(DPO, action);
+        expect(status(r)).toBe(409);
+        expect(reasonOf(r)).toBe('USER_LIFECYCLE_TRANSITION_INVALID');
+      }
+      expect(lifecycle(DPO)).toEqual(expect.objectContaining({ state: 'DEACTIVATED' }));
+      expect(lifecycle(DPO).items).toHaveLength(1);
+    });
+
+    it('exige motivo no vacío, usuario existente y que nadie se suspenda a sí mismo', () => {
+      expect(status(act(DPO, 'suspend', ''))).toBe(400);
+      expect(status(act(DPO, 'suspend', '   '))).toBe(400);
+      expect(status(act(DPO, 'suspend', 'x'.repeat(501)))).toBe(400);
+      expect(reasonOf(act('00000000-0000-4000-8000-00000000ffff', 'suspend'))).toBe('USER_NOT_FOUND');
+      const self = call('POST', `/iam/users/${DPO}/suspend`, { reason: 'Me suspendo yo mismo' }, {}, { ...admin, id: DPO });
       expect(status(self)).toBe(422);
-      expect(reasonOf(self)).toBe('USER_LIFECYCLE_SELF_ACTION');
+      expect(reasonOf(self)).toBe('USER_SELF_LIFECYCLE_FORBIDDEN');
+    });
+
+    it('un motivo corto vale: la API no fija un mínimo en el ciclo de vida', () => {
+      expect(status(act(DPO, 'suspend', 'baja'))).toBe(200);
+    });
+
+    it('pagina la historia con cursor', () => {
+      act(DPO, 'suspend');
+      act(DPO, 'reactivate');
+      const first = lifecycle(DPO, { limit: '1' });
+      expect(first.items).toHaveLength(1);
+      expect(first.nextCursor).not.toBeNull();
+      expect(status(call('GET', `/iam/users/${DPO}/lifecycle`, null, { limit: '101' }))).toBe(400);
     });
   });
 
   describe('revisión de accesos', () => {
-    const activeIds = (id: string) =>
-      data<{ items: { id: string; status: string }[] }>(call('GET', `/authz/users/${id}/role-assignments`)).items.filter((a) => a.status === 'ACTIVE').map((a) => a.id);
-    const record = (id: string, body: unknown) => call('POST', `/authz/users/${id}/access-reviews`, body);
+    const due = (query: Record<string, string> = {}) =>
+      data<{ items: { userId: string; lastReviewedAt: string | null }[]; olderThanDays: number; lookbackDays: number }>(call('GET', '/authz/access-reviews/due', null, query));
+    const record = (id: string, user = admin) => call('POST', `/authz/users/${id}/access-reviews`, null, {}, user);
 
-    it('registra quién, cuándo y qué asignaciones, y la cola cambia de fecha de última revisión', () => {
-      const due = () => data<{ items: { userId: string; lastReviewedAt: string | null }[] }>(call('GET', '/authz/access-reviews/due'));
+    it('registra quién y cuándo sin cuerpo, y la persona sale de la cola', () => {
       expect(due().items.find((i) => i.userId === DPO)!.lastReviewedAt).toBeNull();
-      const ids = activeIds(DPO);
-      const created = record(DPO, { decision: 'CERTIFIED', reason: 'Sus roles siguen vigentes', assignmentIds: ids });
+      const created = record(DPO);
       expect(status(created)).toBe(201);
-      expect(data<{ reviewerUserId: string }>(created).reviewerUserId).toBe(admin.id);
-      expect(due().items.find((i) => i.userId === DPO)!.lastReviewedAt).not.toBeNull();
-      const history = data<{ items: { decision: string; assignmentIds: string[] }[] }>(call('GET', `/authz/users/${DPO}/access-reviews`));
-      expect(history.items).toEqual([expect.objectContaining({ decision: 'CERTIFIED', assignmentIds: ids })]);
+      expect(data<{ reviewerUserId: string; userId: string }>(created)).toEqual(expect.objectContaining({ reviewerUserId: admin.id, userId: DPO }));
+      expect(due().items.map((i) => i.userId)).not.toContain(DPO);
+      const history = data<{ items: { userId: string }[] }>(call('GET', '/authz/access-reviews', null, { userId: DPO }));
+      expect(history.items).toEqual([expect.objectContaining({ userId: DPO })]);
+    });
+
+    it('la cola trae el plazo efectivo (90 por defecto) y el horizonte de búsqueda', () => {
+      expect(due()).toEqual(expect.objectContaining({ olderThanDays: 90, lookbackDays: 730 }));
+      expect(due({ olderThanDays: '30' }).olderThanDays).toBe(30);
     });
 
     it('con un plazo, lo revisado hace un momento sale de la cola y lo nunca revisado sigue', () => {
-      record(DPO, { decision: 'CERTIFIED', reason: 'Sus roles siguen vigentes', assignmentIds: activeIds(DPO) });
-      const items = data<{ items: { userId: string }[] }>(call('GET', '/authz/access-reviews/due', null, { olderThanDays: '30' })).items;
-      expect(items.map((i) => i.userId)).not.toContain(DPO);
-      expect(items.map((i) => i.userId)).toContain(STEWARD);
+      record(DPO);
+      const ids = due({ olderThanDays: '30' }).items.map((i) => i.userId);
+      expect(ids).not.toContain(DPO);
+      expect(ids).toContain(STEWARD);
       expect(status(call('GET', '/authz/access-reviews/due', null, { olderThanDays: '0' }))).toBe(400);
+      expect(status(call('GET', '/authz/access-reviews/due', null, { olderThanDays: '3651' }))).toBe(400);
     });
 
-    it('rechaza una asignación ajena, la propia revisión, un motivo corto y una decisión desconocida', () => {
-      const foreign = record(DPO, { decision: 'CERTIFIED', reason: 'Citó una asignación ajena', assignmentIds: activeIds(STEWARD) });
-      expect(status(foreign)).toBe(422);
-      expect(reasonOf(foreign)).toBe('ACCESS_REVIEW_ASSIGNMENT_MISMATCH');
-      const self = call('POST', `/authz/users/${DPO}/access-reviews`, { decision: 'CERTIFIED', reason: 'Me apruebo a mí mismo', assignmentIds: [] }, {}, { ...admin, id: DPO });
-      expect(reasonOf(self)).toBe('ACCESS_REVIEW_SELF_REVIEW');
-      expect(status(record(DPO, { decision: 'CERTIFIED', reason: 'corto', assignmentIds: [] }))).toBe(400);
-      expect(status(record(DPO, { decision: 'TAL_VEZ', reason: 'Una decisión inventada', assignmentIds: [] }))).toBe(400);
+    it('rechaza la propia revisión (422) y un usuario inexistente (404), sin sellar nada', () => {
+      const self = record(DPO, { ...admin, id: DPO });
+      expect(status(self)).toBe(422);
+      expect(reasonOf(self)).toBe('ACCESS_REVIEW_SELF_REVIEW_FORBIDDEN');
+      const missing = record('00000000-0000-4000-8000-00000000ffff');
+      expect(status(missing)).toBe(404);
+      expect(reasonOf(missing)).toBe('GOVERNANCE_USER_NOT_FOUND');
+      expect(data<{ items: unknown[] }>(call('GET', '/authz/access-reviews')).items).toHaveLength(0);
+    });
+
+    it('valida los filtros de la historia como UUID', () => {
+      expect(status(call('GET', '/authz/access-reviews', null, { userId: 'no-es-uuid' }))).toBe(400);
     });
   });
 
   // Va al final a propósito: `governance.handlers.ts` guarda las asignaciones en el módulo, así que
-  // la baja de esta persona se vería desde cualquier prueba que corriera después.
+  // cualquier cambio de esta persona se vería desde una prueba que corriera después.
   describe('baja de una cuenta', () => {
-    const act = (id: string, action: string) => call('POST', `/authz/users/${id}/lifecycle/${action}`, { reason: 'Motivo suficiente' });
+    const act = (id: string, action: string) => call('POST', `/iam/users/${id}/${action}`, { reason: 'Motivo suficiente' });
 
-    it('la baja revoca los roles activos, no se repite y no se reactiva', () => {
-      const result = data<{ revokedAssignments: number; state: string }>(act(STEWARD, 'offboard'));
-      expect(result).toEqual(expect.objectContaining({ state: 'OFFBOARDED', revokedAssignments: 2 }));
-      const assignments = data<{ items: { status: string }[] }>(call('GET', `/authz/users/${STEWARD}/role-assignments`));
-      expect(assignments.items.every((a) => a.status !== 'ACTIVE')).toBe(true);
-      expect(reasonOf(act(STEWARD, 'offboard'))).toBe('USER_LIFECYCLE_ALREADY_OFFBOARDED');
-      expect(reasonOf(act(STEWARD, 'reactivate'))).toBe('USER_LIFECYCLE_ALREADY_OFFBOARDED');
+    it('la baja deja la cuenta DEACTIVATED, no se repite como cambio y no se reactiva', () => {
+      expect(data<{ state: string; changed: boolean }>(act(STEWARD, 'deactivate'))).toEqual(expect.objectContaining({ state: 'DEACTIVATED', changed: true }));
+      expect(data<{ changed: boolean }>(act(STEWARD, 'deactivate')).changed).toBe(false);
+      expect(reasonOf(act(STEWARD, 'reactivate'))).toBe('USER_LIFECYCLE_TRANSITION_INVALID');
     });
-
   });
 });

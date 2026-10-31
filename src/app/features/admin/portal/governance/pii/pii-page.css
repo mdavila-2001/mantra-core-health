@@ -16,6 +16,35 @@
   gap: var(--sp-3);
 }
 
+.pii__subtitle {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+.pii__caption {
+  padding-block-end: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  text-align: start;
+}
+
+.pii__levels {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.pii__levels th,
+.pii__levels td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.pii__levels thead th {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
 .pii__card {
   display: block;
   inline-size: 100%;

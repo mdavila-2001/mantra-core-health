@@ -3,7 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { GovernancePoliciesClient } from './governance-policies.client';
-import type { PolicyDetail, PolicyPage } from './governance-policies.types';
+import type {
+  ChangeLogPage,
+  PiiColumnsPage,
+  PolicyDetail,
+  PolicyPage,
+} from './governance-policies.types';
 
 describe('GovernancePoliciesClient', () => {
   let http: HttpTestingController;
@@ -20,14 +25,18 @@ describe('GovernancePoliciesClient', () => {
   afterEach(() => http.verify());
 
   it('lista políticas con sólo los filtros que tienen valor (la API rechaza las claves vacías)', () => {
-    client.listPolicies({ type: 'WRITE', q: '', limit: 50 }).subscribe();
+    client
+      .listPolicies({ type: 'WRITE', q: '', limit: 50, sort: 'updatedAt', order: 'desc' })
+      .subscribe();
     const req = http.expectOne((r) => r.url === '/admin/governance/policies');
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('type')).toBe('WRITE');
     expect(req.request.params.get('limit')).toBe('50');
+    expect(req.request.params.get('sort')).toBe('updatedAt');
+    expect(req.request.params.get('order')).toBe('desc');
     expect(req.request.params.has('q')).toBe(false);
     expect(req.request.params.has('cursor')).toBe(false);
-    req.flush({ items: [], nextCursor: null, limit: 50, total: 0, byType: [] });
+    req.flush({ items: [], nextCursor: null, limit: 50, sort: 'updatedAt', order: 'desc' });
   });
 
   it('convierte updatedAt a Date y conserva null como ausencia, no como 1970', () => {
@@ -38,92 +47,146 @@ describe('GovernancePoliciesClient', () => {
       .flush({
         items: [
           {
+            policyType: 'WRITE',
             id: 'a',
-            type: 'WRITE',
             code: 'A',
             name: null,
-            stateCode: null,
-            stateLabel: null,
-            attributes: {},
+            state: 'ACTIVE',
+            version: 3,
             updatedAt: '2026-10-01T10:00:00.000Z',
           },
           {
+            policyType: 'RETENTION',
             id: 'b',
-            type: 'RETENTION',
             code: 'B',
             name: null,
-            stateCode: null,
-            stateLabel: null,
-            attributes: {},
+            state: null,
+            version: 1,
             updatedAt: null,
           },
         ],
         nextCursor: 'c1',
         limit: 50,
-        total: 2,
-        byType: [{ type: 'WRITE', total: 1 }],
+        sort: 'code',
+        order: 'asc',
       });
     expect(page!.items[0]!.updatedAt).toEqual(new Date('2026-10-01T10:00:00.000Z'));
     expect('updatedAt' in page!.items[1]!).toBe(false);
+    expect(page!.items[0]!.version).toBe(3);
     expect(page!.nextCursor).toBe('c1');
-    expect(page!.byType).toEqual([{ type: 'WRITE', total: 1 }]);
   });
 
-  it('pide el detalle por id escapado y convierte las fechas del historial', () => {
+  it('pide el detalle por tipo e id escapados y convierte las fechas', () => {
     let detail: PolicyDetail | undefined;
-    client.getPolicy('a/b').subscribe((d) => (detail = d));
-    http.expectOne('/admin/governance/policies/a%2Fb').flush({
+    client.getPolicy('ANONYMIZATION', 'a/b').subscribe((d) => (detail = d));
+    http.expectOne('/admin/governance/policies/ANONYMIZATION/a%2Fb').flush({
+      policyType: 'ANONYMIZATION',
       id: 'a/b',
-      type: 'ANONYMIZATION',
       code: 'ANON',
       name: null,
-      stateCode: null,
-      stateLabel: null,
-      attributes: { technique: 'Hash' },
+      state: null,
+      version: 2,
+      createdAt: '2026-09-01T00:00:00.000Z',
       updatedAt: null,
-      configuration: { salt: '[oculto]' },
-      appliesTo: [{ kind: 'FIELD', total: 1, items: ['a.b.c'], truncated: false }],
-      history: [
+      createdByUserId: 'u1',
+      updatedByUserId: null,
+      settings: { technique: 'HASH', parameterKeys: ['salt'] },
+      appliedTo: {
+        total: 1,
+        items: [{ schemaName: 'a', tableName: 'b', columnName: 'c' }],
+        truncated: false,
+      },
+    });
+    expect(detail!.createdAt).toEqual(new Date('2026-09-01T00:00:00.000Z'));
+    expect('updatedAt' in detail!).toBe(false);
+    expect(detail!.settings).toEqual({ technique: 'HASH', parameterKeys: ['salt'] });
+    expect(detail!.appliedTo.items[0]!.columnName).toBe('c');
+  });
+
+  it('la bitácora manda los filtros y convierte recordedAt a Date', () => {
+    let page: ChangeLogPage | undefined;
+    client
+      .listChangeLog({ targetId: 'p1', from: '2026-01-01T00:00:00.000Z', limit: 20 })
+      .subscribe((p) => (page = p));
+    const req = http.expectOne((r) => r.url === '/admin/governance/change-log');
+    expect(req.request.params.get('targetId')).toBe('p1');
+    expect(req.request.params.get('from')).toBe('2026-01-01T00:00:00.000Z');
+    expect(req.request.params.get('limit')).toBe('20');
+    req.flush({
+      items: [
         {
           id: 'h',
-          action: 'Alta',
+          targetType: 'write_policies',
+          targetId: 'p1',
+          action: 'CREATED',
           changedByUserId: 'u',
           reason: null,
           recordedAt: '2026-10-02T00:00:00.000Z',
         },
       ],
+      nextCursor: null,
+      limit: 20,
+      order: 'recorded_at desc, id desc',
     });
-    expect(detail!.history[0]!.recordedAt).toEqual(new Date('2026-10-02T00:00:00.000Z'));
-    expect(detail!.configuration).toEqual({ salt: '[oculto]' });
-    expect(detail!.appliesTo[0]!.items).toEqual(['a.b.c']);
-    expect(detail!.attributes).toEqual({ technique: 'Hash' });
+    expect(page!.items[0]!.recordedAt).toEqual(new Date('2026-10-02T00:00:00.000Z'));
+    expect(page!.items[0]!.reason).toBeNull();
   });
 
-  it('el inventario de campos manda los filtros y entrega el cuerpo tal cual', () => {
+  it('las columnas personales salen del catálogo de datos, con los filtros que tienen valor', () => {
+    let page: PiiColumnsPage | undefined;
+    client
+      .listPiiColumns({
+        minSensitivity: 'PHI_IDENTIFIER',
+        schema: 'iam',
+        q: '',
+        sort: 'sensitivity',
+      })
+      .subscribe((p) => (page = p));
+    const req = http.expectOne((r) => r.url === '/admin/catalog/pii/columns');
+    expect(req.request.params.get('minSensitivity')).toBe('PHI_IDENTIFIER');
+    expect(req.request.params.get('schema')).toBe('iam');
+    expect(req.request.params.get('sort')).toBe('sensitivity');
+    expect(req.request.params.has('q')).toBe(false);
+    req.flush({ items: [], nextCursor: null, limit: 50, sort: 'sensitivity' });
+    expect(page!.sort).toBe('sensitivity');
+  });
+
+  it('el resumen y la conciliación entregan el cuerpo tal cual', () => {
+    let personal = -1;
+    client.piiSummary().subscribe((s) => (personal = s.personalColumns));
+    http.expectOne('/admin/catalog/pii/summary').flush({
+      source: 'catalog_annotations',
+      observedColumns: 10,
+      classifiedColumns: 4,
+      personalColumns: 3,
+      objectsWithPersonalColumns: 2,
+      bySensitivity: [],
+      declaredRegistry: { entities: 0, entitiesPersonal: 0, fields: 0, fieldsPersonal: 0 },
+      notMeasured: [],
+    });
+    expect(personal).toBe(3);
+
     let total = -1;
     client
-      .listPiiFields({ sensitivity: 'PERSONAL', schema: 'iam', source: 'BOTH', q: 'doc' })
-      .subscribe((p) => (total = p.total));
-    const req = http.expectOne((r) => r.url === '/admin/governance/pii-fields');
-    expect(req.request.params.get('sensitivity')).toBe('PERSONAL');
+      .piiReconciliation({ kind: 'MISSING_IN_REGISTRY', schema: 'iam' })
+      .subscribe((p) => (total = p.summary.total));
+    const req = http.expectOne((r) => r.url === '/admin/catalog/pii/reconciliation');
+    expect(req.request.params.get('kind')).toBe('MISSING_IN_REGISTRY');
     expect(req.request.params.get('schema')).toBe('iam');
-    expect(req.request.params.get('source')).toBe('BOTH');
-    expect(req.request.params.get('q')).toBe('doc');
     req.flush({
+      summary: {
+        approvedPersonalColumns: 3,
+        declaredFields: 0,
+        registryEmpty: true,
+        byKind: { MISSING_IN_REGISTRY: 3, REGISTRY_DISAGREES: 0, ORPHAN_IN_REGISTRY: 0 },
+        total: 3,
+      },
       items: [],
       nextCursor: null,
       limit: 50,
-      total: 0,
-      summary: {
-        fields: 0,
-        tables: 0,
-        approved: 0,
-        withoutProtection: 0,
-        bySensitivity: {},
-        bySource: {},
-      },
-      sources: { catalogColumns: 0, registryFields: 0 },
+      order: 'schema_name, object_name, column_name, kind',
+      notMeasured: [],
     });
-    expect(total).toBe(0);
+    expect(total).toBe(3);
   });
 });

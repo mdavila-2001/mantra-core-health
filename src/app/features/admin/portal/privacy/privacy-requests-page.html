@@ -1,32 +1,32 @@
 <app-page-header
   title="Solicitudes de privacidad"
-  subtitle="Pedidos de las personas sobre sus datos: acceso, supresión, rectificación, portabilidad y oposición. Las más antiguas primero."
+  subtitle="Pedidos de las personas sobre sus datos: acceso, supresión, rectificación, portabilidad y oposición. Las más recientes primero; las que pasaron su plazo se marcan vencidas."
   [breadcrumbs]="breadcrumbs()"
 />
 
 <app-card class="privacy" variant="outlined" padding="md" data-testid="portal-privacy-requests">
   <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
-    <app-tab [label]="tabLabels().all">
+    <app-tab [label]="tabLabels.all">
       @if (tabIndex() === 0) {
         <ng-container [ngTemplateOutlet]="body" />
       }
     </app-tab>
-    <app-tab [label]="tabLabels().received">
+    <app-tab [label]="tabLabels.received">
       @if (tabIndex() === 1) {
         <ng-container [ngTemplateOutlet]="body" />
       }
     </app-tab>
-    <app-tab [label]="tabLabels().inProgress">
+    <app-tab [label]="tabLabels.inProgress">
       @if (tabIndex() === 2) {
         <ng-container [ngTemplateOutlet]="body" />
       }
     </app-tab>
-    <app-tab [label]="tabLabels().completed">
+    <app-tab [label]="tabLabels.completed">
       @if (tabIndex() === 3) {
         <ng-container [ngTemplateOutlet]="body" />
       }
     </app-tab>
-    <app-tab [label]="tabLabels().rejected">
+    <app-tab [label]="tabLabels.rejected">
       @if (tabIndex() === 4) {
         <ng-container [ngTemplateOutlet]="body" />
       }
@@ -61,14 +61,21 @@
 </ng-template>
 
 <ng-template #stateCell let-row>
-  <app-badge size="sm" [variant]="status(row.status).tone">{{ status(row.status).label }}</app-badge>
+  <div class="privacy__badges">
+    <app-badge size="sm" [variant]="status(row.status).tone">{{ status(row.status).label }}</app-badge>
+    @if (row.overdue) {
+      <app-badge size="sm" variant="error" data-testid="portal-privacy-overdue">Vencida</app-badge>
+    }
+  </div>
 </ng-template>
 
 <ng-template #whenCell let-row>
   <div class="privacy__cell">
     <span>{{ when(row.requestedAt) }}</span>
     @if (row.status === 'RECEIVED' || row.status === 'IN_PROGRESS') {
-      <span class="privacy__secondary">Sin cerrar hace {{ waiting(row) }} {{ waiting(row) === 1 ? 'día' : 'días' }}</span>
+      <span class="privacy__secondary"
+        >Sin cerrar hace {{ waiting(row) }} {{ waiting(row) === 1 ? 'día' : 'días' }} · vence el {{ when(row.dueAt) }}</span
+      >
     } @else if (row.completedAt) {
       <span class="privacy__secondary">Cerrada el {{ when(row.completedAt) }}</span>
     }

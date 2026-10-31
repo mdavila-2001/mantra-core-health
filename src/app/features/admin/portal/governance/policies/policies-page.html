@@ -1,27 +1,10 @@
 <app-page-header
   title="Políticas de gobierno"
-  subtitle="Escritura, retención, anonimización, clasificación y residencia de los datos, en una sola lista. Cada código abre su ficha con lo que controla, a qué se aplica y cómo cambió."
+  subtitle="Escritura, retención, anonimización y residencia de los datos, en una sola lista. Cada código abre su ficha con lo que controla, a qué se aplica y cómo cambió."
   [breadcrumbs]="breadcrumbs()"
 />
 
 <div class="policies">
-  @if (countsKnown()) {
-    <section
-      class="policies__metrics"
-      aria-label="Políticas por tipo"
-      data-testid="portal-policies-metrics"
-    >
-      <app-metric-card
-        label="Políticas"
-        [value]="totalOfSearch()"
-        hint="Las que coinciden con la búsqueda"
-      />
-      @for (m of metrics(); track m.type) {
-        <app-metric-card [label]="m.label" [value]="m.total" [hint]="m.hint" />
-      }
-    </section>
-  }
-
   <app-card class="policies__card" variant="outlined" padding="md" data-testid="portal-policies">
     <div class="policies__section">
       <app-governance-filter-form
@@ -53,6 +36,7 @@
       app-link
       class="policies__code"
       [routerLink]="detailUrl(row)"
+      [queryParams]="detailQuery(row)"
       data-testid="portal-policy-link"
       >{{ row.code }}</a
     >
@@ -60,19 +44,18 @@
       <span class="policies__name">{{ row.name }}</span>
     }
     <span class="policies__badges">
-      <app-badge size="sm" [variant]="type(row.type).tone">{{ type(row.type).label }}</app-badge>
+      <app-badge size="sm" [variant]="type(row.policyType).tone">{{
+        type(row.policyType).label
+      }}</app-badge>
     </span>
   </div>
 </ng-template>
 
-<ng-template #controlCell let-row>
-  <span class="policies__control">{{ control(row) }}</span>
-</ng-template>
-
 <ng-template #stateCell let-row>
   <div class="policies__cell">
-    <app-badge size="sm" [variant]="state(row).tone">{{ state(row).label }}</app-badge>
+    <app-badge size="sm" [variant]="state(row.state).tone">{{ state(row.state).label }}</app-badge>
     <span class="policies__secondary">
+      Versión {{ row.version }} ·
       {{ row.updatedAt ? 'Cambió ' + when(row.updatedAt) : 'Sin fecha de cambio' }}
     </span>
   </div>
