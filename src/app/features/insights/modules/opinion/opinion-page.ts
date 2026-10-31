@@ -82,7 +82,7 @@ export class OpinionPage {
   protected readonly insights = computed(() => opinionInsights(this.filter()));
 
   protected readonly weekly = computed(() => daysBetween(this.ctx.range().from, this.ctx.range().to) > 45);
-  protected readonly segments: readonly StackSegment[] = [{ id: 'positive', label: 'Positivo', color: 1 }, { id: 'neutral', label: 'Neutral', color: 6 }, { id: 'negative', label: 'Negativo', color: 3 }];
+  protected readonly segments: readonly StackSegment[] = [{ id: 'positive', label: 'Positivo', color: 1 }, { id: 'neutral', label: 'Neutral', color: 6 }, { id: 'negative', label: 'Negativo', color: 2 }];
   protected readonly stackRows = computed<StackRow[]>(() =>
     sentimentSeries(this.filter(), this.weekly()).flatMap((p) => (p.positive === null ? [] : [{ id: p.label, label: shortDate(p.label), values: { positive: p.positive, neutral: p.neutral ?? 0, negative: p.negative ?? 0 } }])),
   );
