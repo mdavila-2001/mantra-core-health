@@ -253,6 +253,20 @@ describe('NewOrder', () => {
     http.expectNone('/pharmacy/orders');
   });
 
+  it('lo que la sede elegida no tiene se muestra, pero no bloquea: la línea no viaja', () => {
+    configurar([{ provide: RUTA_DEL_CHECKOUT, useValue: RUTA_DE_PRUEBA }]);
+    client.prepararBorrador({
+      ...BORRADOR,
+      lineas: [BORRADOR.lineas[0], { ...BORRADOR.lineas[1], missingAtSite: true }],
+    });
+    montar();
+
+    expect(texto()).toContain('Paracetamol');
+    expect(texto()).not.toContain('No hay un producto publicado');
+    expect(uno('pedido-continuar')?.getAttribute('aria-disabled')).not.toBe('true');
+    http.expectNone('/pharmacy/orders');
+  });
+
   /* ── Desde E no se crea ningún pedido (D-FARMOCK-T-E1-01) ──────────────── */
 
   describe('ninguna acción de la pantalla crea el pedido', () => {

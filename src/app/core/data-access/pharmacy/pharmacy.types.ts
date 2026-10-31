@@ -462,6 +462,10 @@ export type {
   AvailabilityQuery,
   AvailabilityResult,
   AvailabilitySite,
+  MedicationAvailabilityProduct,
+  MedicationAvailabilityQuery,
+  MedicationAvailabilityResult,
+  MedicationAvailabilitySite,
 } from './pharmacy-availability.types';
 
 /**

@@ -126,7 +126,10 @@ export function createOrderRequest(
   if (order.modalidad !== 'RETIRO') {
     throw new Error('La integración real solo admite retiro en farmacia.');
   }
-  if (order.borrador.lineas.some((line) => line.productId === null)) {
+  // Lo que la sede elegida no tiene se mostró, pero no viaja: no hay un
+  // producto suyo que mandar.
+  const sentLines = order.borrador.lineas.filter((line) => line.missingAtSite !== true);
+  if (sentLines.some((line) => line.productId === null)) {
     throw new UnsupportedPharmacyOrderLineError();
   }
   return {
@@ -134,7 +137,7 @@ export function createOrderRequest(
     ...(order.borrador.requestId === '' ? {} : { medicationRequestId: order.borrador.requestId }),
     deliveryMode: 'RETIRO',
     idempotencyKey,
-    lines: order.borrador.lineas.map((line) => {
+    lines: sentLines.map((line) => {
       if (line.productId === null) throw new UnsupportedPharmacyOrderLineError();
       return { productId: line.productId, quantity: line.cantidad };
     }),

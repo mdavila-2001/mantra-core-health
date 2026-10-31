@@ -88,3 +88,43 @@ export interface AvailabilityQuery {
   readonly origin?: GeoPoint;
   readonly limit?: number;
 }
+
+/**
+ * El producto con que una sede surte un medicamento de la receta
+ * (`GET /pharmacy-inventory/availability/medications`): es el que un pedido a
+ * esa sede tiene que llevar, porque un producto de otra farmacia no se puede
+ * pedir ahí.
+ */
+export interface MedicationAvailabilityProduct extends AvailabilityProduct {
+  readonly medicationConceptId: string;
+}
+
+/**
+ * Una sede de cualquier farmacia de la red, evaluada por medicamento: un
+ * producto por medicamento que tiene, y los medicamentos que le faltan.
+ * `complete` y `availableCount` hablan de medicamentos, no de productos.
+ */
+export interface MedicationAvailabilitySite extends Omit<
+  AvailabilitySite,
+  'missingProductIds' | 'products'
+> {
+  readonly missingMedicationConceptIds: readonly string[];
+  readonly products: readonly MedicationAvailabilityProduct[];
+}
+
+/** La disponibilidad por medicamento: sedes de toda la red, ya ordenadas. */
+export interface MedicationAvailabilityResult {
+  readonly requestedMedicationConceptIds: readonly string[];
+  /** Los pedidos para los que ninguna farmacia publica un producto vendible. */
+  readonly unpublishedMedicationConceptIds: readonly string[];
+  readonly items: readonly MedicationAvailabilitySite[];
+  readonly count: number;
+}
+
+/** La consulta por medicamento: una sola por receta, no una por producto. */
+export interface MedicationAvailabilityQuery {
+  readonly medicationConceptIds: readonly string[];
+  /** `lat` y `lng` van juntos o no van: sin origen no hay distancias. */
+  readonly origin?: GeoPoint;
+  readonly limit?: number;
+}

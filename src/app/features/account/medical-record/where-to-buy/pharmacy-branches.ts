@@ -8,8 +8,10 @@
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import type {
   AvailabilityProduct,
-  AvailabilityResult,
   AvailabilitySite,
+  MedicationAvailabilityProduct,
+  MedicationAvailabilityResult,
+  MedicationAvailabilitySite,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import { aCentavos, aTexto } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import type { CartLine, CartSite } from '../../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
@@ -58,14 +60,6 @@ export interface PrescriptionItem {
   readonly medication: string;
   readonly instructions: string;
   readonly issued: boolean;
-  /**
-   * El producto publicado que responde a ese medicamento, o `null` si el
-   * directorio no publica ninguno. Hoy es **un representante por
-   * medicamento** (el primero publicado): si una sede tiene otra marca del
-   * mismo genérico, esta consulta no la ve: el catálogo no agrupa productos
-   * por concepto.
-   */
-  readonly productId: string | null;
   /** La cantidad que declara la receta, o `null` si no declara (FAR-03, B3). */
   readonly declaredQuantity?: number | null;
 }
@@ -140,12 +134,19 @@ export interface BranchResult {
   readonly branches: readonly VisibleBranch[];
   /** Medicamentos incluidos sin producto publicado: nadie puede confirmarlos. */
   readonly withoutProduct: readonly string[];
+  /** Los mismos, por concepto: la llave para marcarlos en la lista. */
+  readonly withoutProductConceptIds: readonly string[];
   /** Renglones incluidos que aprueba el seguro; `0` vacía la variante con seguro. */
   readonly includedApprovedCount: number;
 }
 
 /** Sin sucursales que mostrar: la pantalla no llegó a consultar. */
-export const NO_BRANCHES: BranchResult = { branches: [], withoutProduct: [], includedApprovedCount: 0 };
+export const NO_BRANCHES: BranchResult = {
+  branches: [],
+  withoutProduct: [],
+  withoutProductConceptIds: [],
+  includedApprovedCount: 0,
+};
 
 /**
  * Las filas de la receta elegida: las del mismo encuentro que la fila con ese
@@ -186,18 +187,16 @@ export function uniqueByMedication(prescriptions: readonly MedicationRequest[]):
   return [...byConcept.values()];
 }
 
-/** El renglón ya traducido y con su producto representante. */
-export function prescriptionItemOf(
-  row: MedicationRequest,
-  labels: ConceptLabels,
-  products: ReadonlyMap<string, string | null>,
-): PrescriptionItem {
+/**
+ * El renglón ya traducido. No lleva producto: cada sede surte el medicamento
+ * con un producto suyo, y eso lo dice la disponibilidad por medicamento.
+ */
+export function prescriptionItemOf(row: MedicationRequest, labels: ConceptLabels): PrescriptionItem {
   return {
     conceptId: row.medicationConceptId,
     medication: labels.get(row.medicationConceptId)?.display ?? NOT_RECORDED,
     instructions: [row.doseText, row.frequencyText].filter(Boolean).join(' · '),
     issued: row.issuedAt !== undefined,
-    productId: products.get(row.medicationConceptId) ?? null,
     declaredQuantity:
       typeof row.quantityDecimal === 'number' && row.quantityDecimal > 0 ? row.quantityDecimal : null,
   };
@@ -282,34 +281,46 @@ function validSortKey(value: number | null | undefined): number | null {
  * El borrador del pedido (FAR-I2): los renglones incluidos, evaluados contra
  * la sede elegida, con el precio que la sede publica.
  *
+ * Cada medicamento sale con **el producto de esa sede**: un producto de otra
+ * farmacia no se puede pedir ahí, y la API lo rechaza con un 404. Lo que la
+ * sede no tiene viaja sin producto y marcado `missingAtSite`: se muestra por
+ * su nombre, pero no se envía.
+ *
  * Exportada a propósito: es pura y el spec la ejercita directo — el clic que
  * la dispara sólo existe con la demostración encendida.
  */
 export function orderDraftOf(
   requestId: string,
-  site: AvailabilitySite,
-  queryable: readonly (PrescriptionItem & { productId: string })[],
+  site: MedicationAvailabilitySite,
+  queryable: readonly PrescriptionItem[],
   withoutProduct: readonly string[],
 ): BorradorDePedido {
-  const byProduct = new Map(site.products.map((product) => [product.productId, product]));
   const lines: readonly LineaDePedido[] = [
     ...queryable.map((item): LineaDePedido => {
-      const product = byProduct.get(item.productId);
-      const available =
-        product !== undefined && !site.missingProductIds.includes(item.productId);
-      const price = product?.price?.patientAmount ?? product?.price?.unitAmount ?? null;
+      const product = siteProductOf(site, item.conceptId);
+      if (product === undefined) {
+        return {
+          productId: null,
+          medicamento: item.medication,
+          presentacion: null,
+          cantidad: UNITS_PER_LINE,
+          ...(typeof item.declaredQuantity === 'number' ? { cantidadDeclarada: item.declaredQuantity } : {}),
+          precio: null,
+          moneda: null,
+          disponible: false,
+          missingAtSite: true,
+        };
+      }
+      const price = product.price?.patientAmount ?? product.price?.unitAmount ?? null;
       return {
-        productId: item.productId,
+        productId: product.productId,
         medicamento: item.medication,
         presentacion: presentationOf(product),
         cantidad: UNITS_PER_LINE,
         ...(typeof item.declaredQuantity === 'number' ? { cantidadDeclarada: item.declaredQuantity } : {}),
-        precio: available ? price : null,
-        moneda:
-          available && price !== null
-            ? (product?.price?.currency?.code ?? site.currency?.code ?? null)
-            : null,
-        disponible: available,
+        precio: price,
+        moneda: price !== null ? (product.price?.currency?.code ?? site.currency?.code ?? null) : null,
+        disponible: true,
       };
     }),
     // Sin producto publicado nadie puede confirmarlo: viaja igual en el
@@ -389,8 +400,21 @@ export function cartLinesFromDraft(orderDraft: BorradorDePedido): {
   return { lines, omitted };
 }
 
+/** El producto suyo con que la sede surte ese medicamento, o `undefined` si no lo tiene. */
+export function siteProductOf(
+  site: MedicationAvailabilitySite,
+  conceptId: string,
+): MedicationAvailabilityProduct | undefined {
+  if (site.missingMedicationConceptIds.includes(conceptId)) {
+    return undefined;
+  }
+  return site.products.find((product) => product.medicationConceptId === conceptId);
+}
+
 /** La sede del carrito, tal como la publica la disponibilidad. */
-export function cartSiteOf(site: AvailabilitySite): CartSite {
+export function cartSiteOf(
+  site: Pick<AvailabilitySite, 'pharmacyId' | 'pharmacyName' | 'siteId' | 'siteName' | 'addressText'>,
+): CartSite {
   return {
     pharmacyId: site.pharmacyId,
     pharmacyName: site.pharmacyName,
@@ -411,30 +435,29 @@ export function presentationOf(product: AvailabilityProduct | undefined): string
 /**
  * Las sedes del backend, evaluadas contra la receta.
  *
- * La «completa» del backend habla de los productos consultados; acá se exige
- * además que ningún medicamento incluido haya quedado afuera por no tener
- * producto publicado — una sede no puede declararse completa sobre una
- * consulta que no pudo incluirlo todo. El orden del backend se conserva.
+ * El backend evalúa por medicamento en toda la red. Acá se exige además que
+ * ningún medicamento incluido haya quedado afuera por no tener producto
+ * publicado en ninguna farmacia — una sede no puede declararse completa sobre
+ * una consulta que no pudo incluirlo todo. El orden del backend se conserva.
  *
  * Las coordenadas viajan crudas: la cartografía es del organismo de mapa
  * (FAR-I1), no de esta pantalla. `now` es el reloj contra el que se mide la
  * antigüedad de las existencias de cada sede.
  */
 export function evaluateBranches(
-  response: AvailabilityResult,
-  queryable: readonly (PrescriptionItem & { productId: string })[],
-  withoutProduct: readonly string[],
-  withoutProductItems: readonly PrescriptionItem[],
+  response: MedicationAvailabilityResult,
+  included: readonly PrescriptionItem[],
   approved: ReadonlySet<string>,
   now: Date = new Date(),
 ): BranchResult {
-  const nameByProduct = new Map(queryable.map((item) => [item.productId, item.medication]));
+  const { queryable, withoutProductItems } = splitByPublication(response, included);
+  const withoutProduct = withoutProductItems.map((item) => item.medication);
 
   const branches = response.items.map((branch, index): VisibleBranch => {
     const missing = [
-      ...branch.missingProductIds.map(
-        (productId) => nameByProduct.get(productId) ?? 'Un medicamento de su receta',
-      ),
+      ...queryable
+        .filter((item) => siteProductOf(branch, item.conceptId) === undefined)
+        .map((item) => item.medication),
       ...withoutProduct,
     ];
     return {
@@ -450,7 +473,7 @@ export function evaluateBranches(
       missing,
       covers: new Set(
         queryable
-          .filter((item) => !branch.missingProductIds.includes(item.productId))
+          .filter((item) => siteProductOf(branch, item.conceptId) !== undefined)
           .map((item) => item.conceptId),
       ),
       directions: directionsUrl(branch.latitude, branch.longitude),
@@ -472,7 +495,24 @@ export function evaluateBranches(
     queryable.filter((item) => approved.has(item.conceptId)).length +
     withoutProductItems.filter((item) => approved.has(item.conceptId)).length;
 
-  return { branches, withoutProduct, includedApprovedCount: includedApproved };
+  return {
+    branches,
+    withoutProduct,
+    withoutProductConceptIds: withoutProductItems.map((item) => item.conceptId),
+    includedApprovedCount: includedApproved,
+  };
+}
+
+/** Los renglones que alguna farmacia de la red publica (`queryable`) y los que ninguna. */
+export function splitByPublication(
+  response: Pick<MedicationAvailabilityResult, 'unpublishedMedicationConceptIds'>,
+  included: readonly PrescriptionItem[],
+): { queryable: readonly PrescriptionItem[]; withoutProductItems: readonly PrescriptionItem[] } {
+  const unpublished = new Set(response.unpublishedMedicationConceptIds);
+  return {
+    queryable: included.filter((item) => !unpublished.has(item.conceptId)),
+    withoutProductItems: included.filter((item) => unpublished.has(item.conceptId)),
+  };
 }
 
 /**
@@ -489,14 +529,12 @@ export function evaluateBranches(
  * Exportada a propósito: es pura y el spec la ejercita directo.
  */
 export function insuredCoverageOf(
-  branch: AvailabilitySite,
-  queryable: readonly (PrescriptionItem & { productId: string })[],
+  branch: MedicationAvailabilitySite,
+  queryable: readonly PrescriptionItem[],
   withoutProductItems: readonly PrescriptionItem[],
   approved: ReadonlySet<string>,
 ): InsuredCoverage {
-  const byProduct = new Map(branch.products.map((product) => [product.productId, product]));
-  const available = (item: PrescriptionItem & { productId: string }) =>
-    byProduct.has(item.productId) && !branch.missingProductIds.includes(item.productId);
+  const available = (item: PrescriptionItem) => siteProductOf(branch, item.conceptId) !== undefined;
 
   const approvedWithProduct = queryable.filter((item) => approved.has(item.conceptId));
   const approvedWithoutProduct = withoutProductItems.filter((item) =>
@@ -508,9 +546,9 @@ export function insuredCoverageOf(
   ];
   const approvedCount = approvedWithProduct.length + approvedWithoutProduct.length;
 
-  const amountOf = (items: readonly (PrescriptionItem & { productId: string })[]) =>
+  const amountOf = (items: readonly PrescriptionItem[]) =>
     productsAmount(
-      items.filter(available).map((item) => byProduct.get(item.productId)),
+      items.filter(available).map((item) => siteProductOf(branch, item.conceptId)),
       branch.currency?.code ?? null,
     );
 
