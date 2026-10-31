@@ -347,6 +347,11 @@ export interface PharmacyProductDraft {
   readonly strengthText?: string;
   readonly packageSizeText?: string;
   readonly requiresPrescription?: boolean;
+  /**
+   * Sólo en la carga masiva: el medicamento por su nombre en el catálogo con
+   * que se receta. Lo resuelve el servidor; el alta suelta no lo manda.
+   */
+  readonly medicationName?: string;
   readonly coldChainRequired?: boolean;
   readonly identifiers?: readonly PharmacyProductIdentifier[];
   /*
@@ -378,6 +383,11 @@ export interface PharmacyProductChanges {
   readonly strengthText?: string | null;
   readonly packageSizeText?: string | null;
   readonly requiresPrescription?: boolean | null;
+  /**
+   * El medicamento elegido del catálogo con que se receta: es lo que cruza el
+   * producto con una receta compartida. `null` lo desvincula.
+   */
+  readonly medicationConceptId?: string | null;
   /* Lo que administra la farmacia (P47 §3-5). */
   readonly unitPrice?: number | null;
   readonly category?: string | null;

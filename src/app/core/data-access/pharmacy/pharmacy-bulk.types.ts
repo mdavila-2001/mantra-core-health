@@ -11,6 +11,13 @@
 export type BulkEntity = 'categories' | 'products' | 'prices' | 'sites';
 
 /**
+ * Dónde se carga: una tabla del catálogo, o el stock de **una** sucursal
+ * (`POST /pharmacies/:pharmacyId/sites/:siteId/availability/bulk`), con el mismo
+ * `{ mode, dryRun, rows }`.
+ */
+export type BulkTarget = BulkEntity | { readonly siteAvailability: string };
+
+/**
  * `CREATE` rechaza una clave que ya existe; `UPDATE`, una que no existe;
  * `UPSERT` acepta las dos.
  */
@@ -36,6 +43,11 @@ export interface BulkRowResult {
   readonly id?: string;
   /** Sólo con `REJECTED`. */
   readonly errors?: readonly BulkRowError[];
+  /**
+   * Avisos de una fila que se carga igual, p. ej. `MEDICATION_NOT_LINKED`: pide
+   * receta y no tiene medicamento vinculado, así que ninguna receta lo encuentra.
+   */
+  readonly warnings?: readonly BulkRowError[];
 }
 
 export interface BulkRequest<Row extends object = object> {
@@ -82,6 +94,16 @@ export interface BulkSiteRow {
   readonly longitude?: number;
   readonly pickupAvailable?: boolean;
   readonly homeDeliveryAvailable?: boolean;
+}
+
+/**
+ * Fila del stock de una sucursal: un producto por su código, «lo tengo / no lo
+ * tengo» y, si se sabe, cuántas unidades. Escribe la posición de esa sede.
+ */
+export interface BulkSiteAvailabilityRow {
+  readonly productCode: string;
+  readonly available: boolean;
+  readonly quantity?: number;
 }
 
 /** Fila de productos: los campos del alta (o del cambio) con su `productCode`. */
