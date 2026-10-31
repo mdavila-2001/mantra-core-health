@@ -1,0 +1,247 @@
+{
+ "PLATFORM_ADMIN": {
+  "pinned": [
+   "Mi perfil",
+   "Notificaciones"
+  ],
+  "menu": [
+   {
+    "g": "General",
+    "items": [
+     "Directorios -> /directories"
+    ]
+   },
+   {
+    "g": "Administración",
+    "items": [
+     "Mis productos -> /administration/insurance",
+     "Solicitudes de seguro -> /administration/insurance-claims",
+     "Siniestralidad y analítica -> /administration/insurance-analytics",
+     "Solicitudes recibidas -> /administration/received-claims",
+     "Pacientes de la aseguradora -> /administration/insurance-patients",
+     "Campañas preventivas -> /administration/insurance-campaigns",
+     "Contexto sanitario -> /administration/health-context",
+     "Laboratorio farmacéutico -> /administration/pharma-lab",
+     "Mi organización -> /administration/my-organization"
+    ]
+   },
+   {
+    "g": "Superadministración",
+    "items": [
+     "Observabilidad -> /superadmin/observability",
+     "Catálogo de datos -> /superadmin/data-catalog",
+     "Portal de inventario -> /superadmin/portal",
+     "Catálogo de flujos -> /superadmin/flows",
+     "Orquestación de pruebas -> /superadmin/qa-lab",
+     "Analítica web -> /superadmin/web-analytics",
+     "Operación -> /superadmin/operations"
+    ]
+   },
+   {
+    "g": "Mi cuenta",
+    "items": [
+     "Dependientes -> /my-account/dependents",
+     "Mis citas -> /my-account/appointments",
+     "Mi historia clínica -> /my-account/medical-record",
+     "Mis resultados -> /my-account/diagnostic-results",
+     "Mis órdenes -> /my-account/diagnostic-orders",
+     "Cotizaciones -> /my-account/quotations"
+    ]
+   }
+  ]
+ },
+ "SUPERADMIN": {
+  "pinned": [
+   "Mi perfil",
+   "Notificaciones"
+  ],
+  "menu": [
+   {
+    "g": "General",
+    "items": [
+     "Directorios -> /directories",
+     "Grupos y foros -> /groups"
+    ]
+   },
+   {
+    "g": "Atención",
+    "items": [
+     "Consultas médicas -> /schedule",
+     "Archivo clínico -> /medical-records",
+     "Mis pacientes de cabecera -> /my-primary-patients",
+     "Laboratorio e imagen -> /diagnostics",
+     "Intervenciones -> /interventions",
+     "Visitas de laboratorio -> /lab-visits",
+     "Mis visitas médicas -> /my-visits",
+     "Glosario -> /glossary",
+     "Mis servicios -> /my-services",
+     "Cotizaciones -> /my-quotations",
+     "Grupos médicos -> /my-medical-groups",
+     "Encuestas -> /questionnaires"
+    ]
+   },
+   {
+    "g": "Administración",
+    "items": [
+     "Pacientes -> /administration/patients",
+     "Admisiones -> /administration/admissions",
+     "Usuarios -> /administration/users",
+     "Organizaciones -> /administration/organizations",
+     "Mis productos -> /administration/insurance",
+     "Brokers -> /administration/brokers",
+     "Solicitudes de seguro -> /administration/insurance-claims",
+     "Siniestralidad y analítica -> /administration/insurance-analytics",
+     "Solicitudes recibidas -> /administration/received-claims",
+     "Pacientes de la aseguradora -> /administration/insurance-patients",
+     "Campañas preventivas -> /administration/insurance-campaigns",
+     "Acceso delegado -> /administration/delegated-access",
+     "Proveedores de identidad -> /administration/identity-providers",
+     "Verificación de identidad -> /administration/identity-assurance",
+     "Terminología -> /administration/terminology",
+     "Paquetes de contenido -> /administration/content-packs",
+     "Moderación -> /administration/moderation",
+     "Contexto sanitario -> /administration/health-context",
+     "Geolocalización -> /administration/geolocation",
+     "Catálogo de servicios -> /administration/services-catalog",
+     "Laboratorio médico -> /administration/medical-laboratory",
+     "Formularios clínicos -> /administration/clinical-forms",
+     "Laboratorio farmacéutico -> /administration/pharma-lab",
+     "Mi consultorio propio -> /administration/my-practice",
+     "Mi organización -> /administration/my-organization"
+    ]
+   },
+   {
+    "g": "Facturación",
+    "items": [
+     "Facturación -> /billing",
+     "Contabilidad -> /administration/accounting"
+    ]
+   },
+   {
+    "g": "Superadministración",
+    "items": [
+     "Observabilidad -> /superadmin/observability",
+     "Catálogo de datos -> /superadmin/data-catalog",
+     "Portal de inventario -> /superadmin/portal",
+     "Catálogo de flujos -> /superadmin/flows",
+     "Orquestación de pruebas -> /superadmin/qa-lab",
+     "Analítica web -> /superadmin/web-analytics",
+     "Operación -> /superadmin/operations"
+    ]
+   },
+   {
+    "g": "Mi cuenta",
+    "items": [
+     "Dependientes -> /my-account/dependents",
+     "Mi privacidad -> /my-account/privacy",
+     "Mis citas -> /my-account/appointments",
+     "Mi historia clínica -> /my-account/medical-record",
+     "Mis resultados -> /my-account/diagnostic-results",
+     "Mis órdenes -> /my-account/diagnostic-orders",
+     "Cotizaciones -> /my-account/quotations",
+     "Farmacia -> /my-account/pharmacy"
+    ]
+   }
+  ]
+ },
+ "SECURITY_ADMIN": {
+  "pinned": [
+   "Mi perfil",
+   "Notificaciones"
+  ],
+  "menu": [
+   {
+    "g": "General",
+    "items": [
+     "Directorios -> /directories",
+     "Grupos y foros -> /groups"
+    ]
+   },
+   {
+    "g": "Atención",
+    "items": [
+     "Glosario -> /glossary"
+    ]
+   },
+   {
+    "g": "Administración",
+    "items": [
+     "Pacientes -> /administration/patients",
+     "Admisiones -> /administration/admissions",
+     "Usuarios -> /administration/users",
+     "Organizaciones -> /administration/organizations",
+     "Mis productos -> /administration/insurance",
+     "Brokers -> /administration/brokers",
+     "Solicitudes de seguro -> /administration/insurance-claims",
+     "Siniestralidad y analítica -> /administration/insurance-analytics",
+     "Solicitudes recibidas -> /administration/received-claims",
+     "Pacientes de la aseguradora -> /administration/insurance-patients",
+     "Campañas preventivas -> /administration/insurance-campaigns",
+     "Acceso delegado -> /administration/delegated-access",
+     "Verificación de identidad -> /administration/identity-assurance",
+     "Terminología -> /administration/terminology",
+     "Moderación -> /administration/moderation",
+     "Geolocalización -> /administration/geolocation",
+     "Catálogo de servicios -> /administration/services-catalog",
+     "Laboratorio médico -> /administration/medical-laboratory",
+     "Formularios clínicos -> /administration/clinical-forms",
+     "Mi organización -> /administration/my-organization"
+    ]
+   },
+   {
+    "g": "Facturación",
+    "items": [
+     "Contabilidad -> /administration/accounting"
+    ]
+   },
+   {
+    "g": "Superadministración",
+    "items": [
+     "Observabilidad -> /superadmin/observability",
+     "Catálogo de datos -> /superadmin/data-catalog",
+     "Portal de inventario -> /superadmin/portal",
+     "Analítica web -> /superadmin/web-analytics",
+     "Operación -> /superadmin/operations"
+    ]
+   },
+   {
+    "g": "Mi cuenta",
+    "items": [
+     "Dependientes -> /my-account/dependents",
+     "Mis citas -> /my-account/appointments",
+     "Mi historia clínica -> /my-account/medical-record",
+     "Mis resultados -> /my-account/diagnostic-results",
+     "Mis órdenes -> /my-account/diagnostic-orders",
+     "Cotizaciones -> /my-account/quotations"
+    ]
+   }
+  ]
+ },
+ "PATIENT": {
+  "pinned": [
+   "Mi perfil",
+   "Notificaciones"
+  ],
+  "menu": [
+   {
+    "g": "General",
+    "items": [
+     "Directorios -> /directories"
+    ]
+   },
+   {
+    "g": "Mi cuenta",
+    "items": [
+     "Dependientes -> /my-account/dependents",
+     "Mi privacidad -> /my-account/privacy",
+     "Mis citas -> /my-account/appointments",
+     "Mi historia clínica -> /my-account/medical-record",
+     "Mis resultados -> /my-account/diagnostic-results",
+     "Mis órdenes -> /my-account/diagnostic-orders",
+     "Cotizaciones -> /my-account/quotations",
+     "Farmacia -> /my-account/pharmacy"
+    ]
+   }
+  ]
+ }
+}
