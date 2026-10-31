@@ -155,7 +155,10 @@ test.describe('Gobierno de accesos: aprobaciones, barandillas y separación de f
       'Nadie con el rol «Recepción» puede tener «Cobrar la atención».',
     );
     expect(await hubo(admin, 'POST', '/org/governance/rules', 403)).toBe(true);
-    expect(await hubo(admin, 'POST', '/org/governance/rules', 201)).toBe(true);
+    // El diálogo se cierra al verificar y la misma petición se repite justo después: se espera su respuesta.
+    await expect
+      .poll(() => hubo(admin, 'POST', '/org/governance/rules', 201), { timeout: 15_000 })
+      .toBe(true);
 
     await irA(admin, '/administration/access-governance/sod', 'pantalla-sod');
     await admin.getByRole('tab', { name: /Excepciones/ }).click();

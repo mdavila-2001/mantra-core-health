@@ -249,10 +249,22 @@ test('5 · cerrar la campaña quita lo que nadie decidió y el seguimiento lo cu
   );
   await expect(page.getByTestId('campana-cerrar')).toHaveCount(0);
 
-  const descarga = page.waitForEvent('download');
+  // Exportar pide el motivo como código (por omisión «AUDIT_REVIEW») y el paso extra: la API contesta 403 y el diálogo de desafío
+  // pide el código; con él la misma petición se repite y entonces sí sale el archivo.
   await page.getByTestId('campana-exportar-csv').click();
+  await expect(page.getByTestId('desafio')).toHaveAttribute('data-kind', 'STEP_UP', {
+    timeout: 15_000,
+  });
+  await page.getByTestId('desafio-codigo').fill('123456');
+  const descarga = page.waitForEvent('download');
+  await page.getByTestId('desafio-verificar').click();
   expect((await descarga).suggestedFilename()).toMatch(
     /^certificacion-q1-2027-\d{4}-\d{2}-\d{2}\.csv$/,
   );
   await expect(page.getByTestId('campana-exportado')).toContainText('Huella SHA-256');
+  const exportaciones = (await peticiones()).filter(
+    (p) => p.url.includes('/access-reviews/campaigns/') && p.url.includes('/export?'),
+  );
+  expect(exportaciones.map((p) => p.status)).toEqual([403, 200]);
+  expect(exportaciones.every((p) => p.url.includes('reasonCode=AUDIT_REVIEW'))).toBe(true);
 });

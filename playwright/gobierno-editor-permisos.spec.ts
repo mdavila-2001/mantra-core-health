@@ -94,8 +94,12 @@ test('editor de permisos: Básico por omisión, condiciones con frases, vista pr
   await expect(page.getByTestId('legacy-notice')).toContainText('se normalizarán');
   await expect(page.getByTestId('atom-category-SUPPORT_AGENDA')).toBeVisible();
 
-  // 2 · Sin cambios no hay nada que guardar; con un horario hay que esperar la vista previa.
+  // 2 · Un permiso con nombres antiguos no admite condiciones (la API da 422 `CONDITION_NOT_APPLICABLE_TO_ATOM`): antes de condicionarlo se
+  //     lo ve como permisos precisos. Eso solo cambia el borrador: sin cambios todavía no hay nada que guardar.
+  await page.getByTestId('legacy-expand').click();
+  await expect(page.getByTestId('legacy-notice')).toHaveCount(0);
   expect(await apagado('editor-guardar')).toBe(true);
+  // Con un horario hay que esperar la vista previa.
   await page.getByTestId('cond-toggle-when').click();
   await page.getByTestId('cond-time-add').click();
   await expect(page.getByTestId('cond-toggle-when')).toContainText('1 condición');
@@ -117,6 +121,16 @@ test('editor de permisos: Básico por omisión, condiciones con frases, vista pr
   await expect(page.getByTestId('editor-guardar')).toBeEnabled();
   await page.getByTestId('editor-guardar').click();
   await expect(page.getByTestId('editor-guardar')).toBeDisabled();
+  // Guardar de un permiso con nombres antiguos pasa a permisos precisos: puede ser más de una petición. Se espera a que termine.
+  await expect
+    .poll(async () =>
+      (await peticiones()).some(
+        (p) =>
+          p.url.includes('/grants') && (p.method === 'PATCH' || p.method === 'POST') && p.status < 300,
+      ),
+    )
+    .toBe(true);
+  await expect(page.getByTestId('conditions-count')).toContainText('1');
 
   const todas = await peticiones();
   const simulaciones = todas.filter(
