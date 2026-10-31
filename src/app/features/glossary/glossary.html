@@ -59,74 +59,76 @@
     </nav>
   </app-filter-bar>
 
-  <!-- ── Rejilla de categorías ────────────────────────────────────────────
-       Arriba de todo y siempre visible, también con un filtro puesto: es el
-       mapa de la enciclopedia. Conteos y chips salen de las facetas, una
-       consulta agregada del servidor: la rejilla no trae un solo término. -->
-  <section class="glosario__categorias" aria-labelledby="glosario-categorias-titulo">
-    <h2 class="glosario__titulo" id="glosario-categorias-titulo">Categorías</h2>
+  @if (mostrarCategorias()) {
+    <!-- ── Rejilla de categorías ────────────────────────────────────────────
+         Arriba de todo, salvo mientras se busca por texto: es el mapa de la
+         enciclopedia. Conteos y chips salen de las facetas, una
+         consulta agregada del servidor: la rejilla no trae un solo término. -->
+    <section class="glosario__categorias" aria-labelledby="glosario-categorias-titulo">
+      <h2 class="glosario__titulo" id="glosario-categorias-titulo">Categorías</h2>
 
-    <app-view-state-host [state]="facetas()" (retry)="recargarFacetas()">
-      @if (tarjetas().length === 0) {
-        <p class="glosario__aviso" role="status">
-          El glosario todavía no tiene categorías con términos cargados.
-        </p>
-      } @else {
-        <ul class="glosario__rejilla">
-          @for (tarjeta of tarjetas(); track tarjeta.id) {
-            <li class="glosario__celda">
-              <a
-                class="glosario__tarjeta"
-                [class.glosario__tarjeta--activa]="tarjeta.internalCode === categoriaCodigo()"
-                [attr.aria-current]="tarjeta.internalCode === categoriaCodigo() ? 'true' : null"
-                [routerLink]="['/glossary']"
-                [queryParams]="{ category: tarjeta.internalCode, tag: null }"
-                queryParamsHandling="merge"
-                (click)="desplazarACuerpo()"
-                [attr.title]="tarjeta.description ?? null"
-              >
-                <span class="glosario__tarjeta-cabeza">
-                  <span class="glosario__insignia">
-                    <app-glossary-category-icon
-                      class="glosario__icono"
-                      [category]="tarjeta.internalCode"
-                    />
-                  </span>
-                  <span class="glosario__tarjeta-texto">
-                    <span class="glosario__nombre">{{ tarjeta.name }}</span>
-                    <span class="glosario__dato">
-                      {{ tarjeta.cantidad.toLocaleString('es') }}
-                      {{ tarjeta.cantidad === 1 ? 'término' : 'términos' }}
-                      <!-- Si hay términos que sólo tienen su nombre en inglés, el
-                           total solo engaña: «Enfermedades» suma las categorías
-                           ICD-10-CM sin traducir. -->
-                      @if (tarjeta.enCastellano !== undefined && tarjeta.enCastellano < tarjeta.cantidad) {
-                        · {{ tarjeta.enCastellano.toLocaleString('es') }} en castellano
-                      }
+      <app-view-state-host [state]="facetas()" (retry)="recargarFacetas()">
+        @if (tarjetas().length === 0) {
+          <p class="glosario__aviso" role="status">
+            El glosario todavía no tiene categorías con términos cargados.
+          </p>
+        } @else {
+          <ul class="glosario__rejilla">
+            @for (tarjeta of tarjetas(); track tarjeta.id) {
+              <li class="glosario__celda">
+                <a
+                  class="glosario__tarjeta"
+                  [class.glosario__tarjeta--activa]="tarjeta.internalCode === categoriaCodigo()"
+                  [attr.aria-current]="tarjeta.internalCode === categoriaCodigo() ? 'true' : null"
+                  [routerLink]="['/glossary']"
+                  [queryParams]="{ category: tarjeta.internalCode, tag: null }"
+                  queryParamsHandling="merge"
+                  (click)="desplazarACuerpo()"
+                  [attr.title]="tarjeta.description ?? null"
+                >
+                  <span class="glosario__tarjeta-cabeza">
+                    <span class="glosario__insignia">
+                      <app-glossary-category-icon
+                        class="glosario__icono"
+                        [category]="tarjeta.internalCode"
+                      />
+                    </span>
+                    <span class="glosario__tarjeta-texto">
+                      <span class="glosario__nombre">{{ tarjeta.name }}</span>
+                      <span class="glosario__dato">
+                        {{ tarjeta.cantidad.toLocaleString('es') }}
+                        {{ tarjeta.cantidad === 1 ? 'término' : 'términos' }}
+                        <!-- Si hay términos que sólo tienen su nombre en inglés, el
+                             total solo engaña: «Enfermedades» suma las categorías
+                             ICD-10-CM sin traducir. -->
+                        @if (tarjeta.enCastellano !== undefined && tarjeta.enCastellano < tarjeta.cantidad) {
+                          · {{ tarjeta.enCastellano.toLocaleString('es') }} en castellano
+                        }
+                      </span>
                     </span>
                   </span>
-                </span>
 
-                <!-- Los chips no son decoración: son las etiquetas que de
-                     verdad llevan los términos de esta categoría, las más
-                     frecuentes primero, contadas por el servidor. -->
-                @if (tarjeta.etiquetas.length > 0) {
-                  <span class="glosario__chips">
-                    @for (etiqueta of tarjeta.etiquetas; track etiqueta) {
-                      <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
-                    }
-                    @if (tarjeta.etiquetasDeMas > 0) {
-                      <span class="glosario__chips-mas">+{{ tarjeta.etiquetasDeMas }}</span>
-                    }
-                  </span>
-                }
-              </a>
-            </li>
-          }
-        </ul>
-      }
-    </app-view-state-host>
-  </section>
+                  <!-- Los chips no son decoración: son las etiquetas que de
+                       verdad llevan los términos de esta categoría, las más
+                       frecuentes primero, contadas por el servidor. -->
+                  @if (tarjeta.etiquetas.length > 0) {
+                    <span class="glosario__chips">
+                      @for (etiqueta of tarjeta.etiquetas; track etiqueta) {
+                        <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
+                      }
+                      @if (tarjeta.etiquetasDeMas > 0) {
+                        <span class="glosario__chips-mas">+{{ tarjeta.etiquetasDeMas }}</span>
+                      }
+                    </span>
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </app-view-state-host>
+    </section>
+  }
 
   <!-- ── Cuerpo: las definiciones, una página del servidor ──────────────── -->
   <section class="glosario__cuerpo" aria-labelledby="glosario-cuerpo-titulo">
