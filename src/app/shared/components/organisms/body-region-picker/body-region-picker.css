@@ -1,0 +1,77 @@
+:host {
+  display: block;
+  inline-size: 100%;
+}
+
+.body-region-picker {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.body-region-picker__visor {
+  min-block-size: 22rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--bg-inset);
+}
+
+.body-region-picker__reserva {
+  min-block-size: 22rem;
+}
+
+.body-region-picker__controles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+@media (min-width: 48rem) {
+  .body-region-picker__controles {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.body-region-picker__lado {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.body-region-picker__rotulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.body-region-picker__nota {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-inline-start: 3px solid var(--c-amber-600);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* La región viva se oye pero no ocupa lugar: el texto visible es el del select. */
+.body-region-picker__viva {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.body-region-picker__atribucion {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.body-region-picker__atribucion a {
+  color: inherit;
+  text-decoration: underline;
+}

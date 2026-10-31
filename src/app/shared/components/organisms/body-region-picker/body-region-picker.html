@@ -1,0 +1,62 @@
+<div class="body-region-picker">
+  <div class="body-region-picker__visor" data-testid="body-region-visor">
+    @defer (on viewport) {
+      <app-view-state-host [state]="atlasState()" (retry)="load()">
+        @if (parts().length > 0) {
+          <app-anatomy-viewer
+            [parts]="parts()"
+            [modelUrls]="modelUrls"
+            [layers]="layers()"
+            [selected]="selected()"
+            [related]="related()"
+            [focus]="focus()"
+            [hoverLabel]="hoverLabel()"
+            [label]="viewerLabel()"
+            (pickedAt)="onPicked($event)"
+          />
+        }
+      </app-view-state-host>
+    } @placeholder {
+      <div class="body-region-picker__reserva" aria-hidden="true"></div>
+    }
+  </div>
+
+  <div class="body-region-picker__controles">
+    <app-form-field class="body-region-picker__region" label="Región del cuerpo">
+      <app-tree-select
+        [groups]="groups()"
+        [value]="regionCode()"
+        [disabled]="disabled()"
+        placeholder="Elegir región"
+        dialogTitle="Región del cuerpo"
+        searchPlaceholder="Buscar región…"
+        (valueChange)="onRegion($event)"
+      />
+    </app-form-field>
+
+    @if (lateral()) {
+      <div class="body-region-picker__lado" role="group" aria-labelledby="body-region-lado">
+        <span id="body-region-lado" class="body-region-picker__rotulo">Lado del paciente</span>
+        <app-segmented-control
+          [options]="lateralityOptions"
+          [value]="lateralityValue()"
+          ariaLabel="Lado del paciente"
+          (valueChange)="onLaterality($event)"
+        />
+      </div>
+    }
+  </div>
+
+  @if (note(); as nota) {
+    <p class="body-region-picker__nota" data-testid="body-region-nota">{{ nota }}</p>
+  }
+
+  <!-- Región viva: siempre en el DOM, para que el lector anuncie lo que llega desde el 3D. -->
+  <p class="body-region-picker__viva" role="status" data-testid="body-region-viva">{{ announcement() }}</p>
+
+  <p class="body-region-picker__atribucion" data-testid="body-region-atribucion">
+    @for (fuente of attribution; track fuente.url; let ultimo = $last) {
+      <a [href]="fuente.url" target="_blank" rel="noopener noreferrer">{{ fuente.text }}</a>{{ ultimo ? '.' : ' · ' }}
+    }
+  </p>
+</div>
