@@ -382,7 +382,10 @@ export interface PatientDiagnosticResults {
  * `hasReleasedResult` lo decide el servidor y no se recalcula acá: que exista un
  * informe no quiere decir que haya un resultado que esta persona pueda leer.
  */
-export interface PatientOrder extends PatientSettlementFields, ServiceRequestPerformerFields {
+export interface PatientOrder
+  extends PatientSettlementFields,
+    ServiceRequestPerformerFields,
+    ServiceRequestDetailFields {
   readonly id: string;
   readonly encounterId?: string;
   readonly codeConceptId: string;
@@ -399,6 +402,11 @@ export interface PatientOrder extends PatientSettlementFields, ServiceRequestPer
   readonly preparationInstructions?: string;
   readonly hasReleasedResult: boolean;
   readonly reportId?: string;
+  /**
+   * Una línea con lo pedido («Hemograma · 4 componentes», «Rayos X · Mano ·
+   * Izquierda»). Ausente = la API no extendida: la fila muestra sólo el nombre.
+   */
+  readonly summary?: string;
 }
 
 /** Página de órdenes propias. */

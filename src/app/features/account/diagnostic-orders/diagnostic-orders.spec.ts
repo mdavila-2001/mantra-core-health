@@ -56,6 +56,11 @@ interface OrdenDeApi {
   readonly performerPractitionerProfileId?: string;
   readonly suggestedPracticeSiteId?: string;
   readonly suggestedPracticeSiteName?: string | null;
+  readonly summary?: string;
+  readonly specimenTypeDisplay?: string | null;
+  readonly components?: readonly { conceptId: string; display: string; ordinal: number }[];
+  readonly componentsSpecified?: boolean;
+  readonly imaging?: Record<string, string | null> | null;
 }
 
 /**
@@ -549,6 +554,87 @@ describe('DiagnosticOrders', () => {
     expect(texto()).not.toContain('Sede sugerida');
     expect(texto()).not.toContain(sede);
     expect(texto()).not.toContain(practitioner);
+  });
+
+  /* ---- Detalle de lo pedido (H5.M3) ------------------------------------------ */
+
+  it('muestra el resumen y, en el detalle, la muestra y los componentes pedidos', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-lab',
+          codeConceptId: 'c-hemo',
+          summary: 'Hemograma · 2 componentes',
+          specimenTypeDisplay: 'Sangre venosa',
+          componentsSpecified: true,
+          components: [
+            { conceptId: 'k2', display: 'Plaquetas', ordinal: 2 },
+            { conceptId: 'k1', display: 'Hemoglobina', ordinal: 1 },
+          ],
+          imaging: null,
+        }),
+      ],
+      [...CATEGORIAS, concepto('c-hemo', 'STUDY-HEMO', 'Hemograma')],
+    );
+
+    const el = harness.routeNativeElement!;
+    expect(el.querySelector('[data-testid="study-summary-line"]')?.textContent).toContain('Hemograma · 2 componentes');
+    const panel = el.querySelector('[data-testid="mis-ordenes-detalle"]')?.textContent ?? '';
+    expect(panel).toContain('Sangre venosa');
+    expect(panel.indexOf('Hemoglobina')).toBeGreaterThan(-1);
+    expect(panel.indexOf('Hemoglobina')).toBeLessThan(panel.indexOf('Plaquetas'));
+  });
+
+  it('sin componentes especificados dice «estudio completo, sin detalle»', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [orden({ categoryConceptId: 'cat-lab', summary: 'Glucosa', componentsSpecified: false, components: [], imaging: null })],
+      CATEGORIAS,
+    );
+
+    expect(harness.routeNativeElement!.querySelector('[data-testid="mis-ordenes-detalle"]')?.textContent).toContain(
+      'Estudio completo, sin detalle',
+    );
+  });
+
+  it('una imagen muestra modalidad · región · lateralidad · contraste', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-img',
+          summary: 'Radiografía de mano · Mano · Izquierda',
+          componentsSpecified: false,
+          components: [],
+          imaging: {
+            modalityConceptId: 'm',
+            modalityDisplay: 'Radiografía',
+            bodySiteConceptId: 'b',
+            bodySiteDisplay: 'Mano',
+            lateralityConceptId: 'l',
+            lateralityDisplay: 'Izquierda',
+            contrastConceptId: 'c',
+            contrastDisplay: 'Sin contraste',
+          },
+        }),
+      ],
+      CATEGORIAS,
+    );
+
+    const panel = harness.routeNativeElement!.querySelector('[data-testid="mis-ordenes-detalle"]')?.textContent ?? '';
+    for (const parte of ['Radiografía', 'Mano', 'Izquierda', 'Sin contraste']) expect(panel).toContain(parte);
+  });
+
+  it('una API sin los campos de detalle deja la fila como antes: sin resumen ni desplegable', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder([orden({ categoryConceptId: 'cat-lab' })], CATEGORIAS);
+
+    expect(harness.routeNativeElement!.querySelector('[data-testid="mis-ordenes-detalle"]')).toBeNull();
   });
 
   /* ---- Sin uuids en pantalla -------------------------------------------------- */

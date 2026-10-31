@@ -1,4 +1,9 @@
 import type { PerformerSelectionCode } from '../../../core/data-access/diagnostics/service-request-performer.types';
+import type {
+  PatientOrder,
+  ServiceRequestComponent,
+  ServiceRequestImaging,
+} from '../../../core/data-access/diagnostics/diagnostics.types';
 import type { PatientSettlementFields } from '../../../core/data-access/insurance/patient-insurance-settlement.types';
 
 /**
@@ -93,6 +98,20 @@ export function etiquetaDeCategoria(categoria: AnalysisCategory): string {
 }
 
 /**
+ * Lo pedido en una orden, tal como lo manda la API, para el componente
+ * compartido `app-study-detail-summary` (el mismo del centro y del histórico).
+ */
+export interface PatientOrderDetail {
+  /** Resumen de una línea («Hemograma · 4 componentes»). */
+  readonly summary: string | null;
+  readonly specimen: string | null;
+  readonly components: readonly ServiceRequestComponent[];
+  /** `false` = «estudio completo, sin detalle», no «ningún componente». */
+  readonly componentsSpecified: boolean;
+  readonly imaging: ServiceRequestImaging | null;
+}
+
+/**
  * Una orden, ya en palabras para la tabla — ni un uuid llega a la fila (regla
  * de C0/C9): `id` es el único identificador, y sólo viaja para `trackBy` y
  * para armar rutas/fragmentos, nunca se pinta.
@@ -119,4 +138,26 @@ export interface PatientOrderRow extends PatientSettlementFields {
   readonly performerMode: PerformerSelectionCode | null;
   /** El nombre de la sede que sugirió el médico; nunca su uuid. `null` = sin sede. */
   readonly suggestedSiteName: string | null;
+  /** Lo pedido (muestra, componentes, región). `null` = la API no lo mandó: la fila queda como antes. */
+  readonly detail: PatientOrderDetail | null;
+}
+
+/**
+ * Toma el detalle de la orden. Si la API no manda ninguno de los campos
+ * (versión anterior) devuelve `null` y la fila se comporta como siempre.
+ */
+export function detalleDeOrden(item: PatientOrder): PatientOrderDetail | null {
+  const sinDetalle =
+    item.summary === undefined &&
+    item.components === undefined &&
+    item.imaging === undefined &&
+    item.specimenTypeDisplay == null;
+  if (sinDetalle) return null;
+  return {
+    summary: item.summary ?? null,
+    specimen: item.specimenTypeDisplay ?? null,
+    components: item.components ?? [],
+    componentsSpecified: item.componentsSpecified ?? false,
+    imaging: item.imaging ?? null,
+  };
 }

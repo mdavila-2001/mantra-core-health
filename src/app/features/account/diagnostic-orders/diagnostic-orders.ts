@@ -41,6 +41,7 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
+import { StudyDetailSummary } from '../../../shared/components/molecules/study-detail-summary/study-detail-summary';
 import { PatientInsuranceSettlement } from '../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
 import { OrderPerformerSummary } from './order-performer-summary/order-performer-summary';
 import {
@@ -48,6 +49,7 @@ import {
   tipoDeOrden,
   etiquetaDeCategoria,
   type AnalysisCategory,
+  detalleDeOrden,
   type PatientOrderRow,
 } from './diagnostic-orders.types';
 
@@ -97,6 +99,7 @@ const PERIODOS: readonly { readonly value: string; readonly label: string; reado
     RowActions,
     Skeleton,
     StatusSeal,
+    StudyDetailSummary,
     Tab,
     Tabs,
     ViewStateHost,
@@ -265,6 +268,7 @@ export class DiagnosticOrders {
           ? null
           : performerSelectionCodeOf(etiquetas.get(item.performerSelectionConceptId)?.code),
       suggestedSiteName: item.suggestedPracticeSiteName ?? null,
+      detail: detalleDeOrden(item),
     };
   }
 
@@ -358,7 +362,7 @@ export class DiagnosticOrders {
         if (diasTranscurridos > corteDeDias) return false;
       }
       if (termino === '') return true;
-      const campos = [fila.studyLabel, fila.stateLabel, fila.consultationLabel, fila.preparation ?? ''];
+      const campos = [fila.studyLabel, fila.detail?.summary ?? '', fila.stateLabel, fila.consultationLabel, fila.preparation ?? ''];
       return campos.some((campo) => normalizarTexto(campo).includes(termino));
     });
   });

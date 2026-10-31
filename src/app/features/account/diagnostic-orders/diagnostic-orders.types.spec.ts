@@ -1,7 +1,9 @@
+import type { PatientOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
 import {
   ANALYSIS_CATEGORIES,
   PROCEDURE_CATEGORY_CODES,
   categoriaDeAnalisis,
+  detalleDeOrden,
   tipoDeOrden,
   etiquetaDeCategoria,
 } from './diagnostic-orders.types';
@@ -53,5 +55,42 @@ describe('diagnostic-orders.types', () => {
       expect(tipoDeOrden(undefined, 'SRQ-LAB')).toBe('OTHER');
       expect(tipoDeOrden(undefined, undefined)).toBe('OTHER');
     });
+  });
+});
+
+describe('detalleDeOrden', () => {
+  const base = {
+    id: 'o',
+    codeConceptId: 'c',
+    statusConceptId: 's',
+    createdAt: new Date(),
+    hasReleasedResult: false,
+  } as PatientOrder;
+
+  it('sin ningún campo de detalle (API anterior) no hay detalle', () => {
+    expect(detalleDeOrden(base)).toBeNull();
+  });
+
+  it('con los campos de la API conserva resumen, muestra, componentes e imagen', () => {
+    const detalle = detalleDeOrden({
+      ...base,
+      summary: 'Hemograma · 1 componente',
+      specimenTypeDisplay: 'Sangre venosa',
+      components: [{ conceptId: 'k', display: 'Plaquetas', ordinal: 1 }],
+      componentsSpecified: true,
+      imaging: null,
+    });
+
+    expect(detalle).toEqual({
+      summary: 'Hemograma · 1 componente',
+      specimen: 'Sangre venosa',
+      components: [{ conceptId: 'k', display: 'Plaquetas', ordinal: 1 }],
+      componentsSpecified: true,
+      imaging: null,
+    });
+  });
+
+  it('un estudio sin componentes declarados es «completo»: componentsSpecified false', () => {
+    expect(detalleDeOrden({ ...base, summary: 'Glucosa', components: [] })?.componentsSpecified).toBe(false);
   });
 });

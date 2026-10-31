@@ -42,9 +42,9 @@ import {
   rechazoDeOrden,
   repiteElDetalle,
   validarItemDeOrden,
-  type ClaveDeDetalle,
-  type CuerpoDeAlta,
+  type ClaveDeDetalle, type CuerpoDeAlta,
 } from './service-request-detail.mock';
+import { detalleDeOrdenPropia } from './patient-order-detail.mock';
 
 /* ============================================================================
     Diagnóstico: órdenes e informes del circuito clínico, la cola de trabajo
@@ -1479,7 +1479,7 @@ export function registrarDiagnostico(router: MockRouter): void {
         preparationInstructions: preparacionDelEstudio(o.codeConceptId),
         hasReleasedResult: informe !== undefined && esVisibleParaPaciente(informe),
         reportId: informe !== undefined && esVisibleParaPaciente(informe) ? informe.id : undefined,
-        ...performerFieldsOfOrder(o),
+        ...performerFieldsOfOrder(o), ...detalleDeOrdenPropia(o),
       };
     });
     return { patientProfileId: id, items, limit: 50, truncated: false };
