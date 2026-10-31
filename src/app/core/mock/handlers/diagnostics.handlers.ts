@@ -33,6 +33,7 @@ import { conflict, forbidden, notFound, preconditionFailed, reply, validation, t
 import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
+import { collectionPointRef, resolveSuggestedPoint, workOrderCollectionPoint } from './sample-collection.handlers';
 import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } from './service-request-performer.mock';
 import { categoriaDeLaOrden, esRechazo, resolverCategoria, validarNotas, type RechazoDeOrden } from './service-request-category.mock';
 
@@ -1033,8 +1034,14 @@ export function registrarDiagnostico(router: MockRouter): void {
       }
     }
 
+    // F5b: el punto de toma sugerido (o el primero disponible de la sede).
+    const sugerida = (datos as { suggestedPracticeSiteId?: string; suggestedCareSpaceId?: string });
+    const punto = resolveSuggestedPoint(request, sugerida.suggestedCareSpaceId !== undefined || categoria.conceptId === ORDER_CATEGORY['SRQ-LAB'] ? sugerida.suggestedPracticeSiteId : undefined, sugerida.suggestedCareSpaceId);
+    if (!('careSpaceId' in punto)) return punto;
+
     const reutilizada = conDecision && datos.reusePreviousReport === true;
     const nueva = orderList.agregar({
+      ...(punto.careSpaceId === null ? {} : { suggestedCareSpaceId: punto.careSpaceId }),
       id: nuevoId('order'),
       patientProfileId,
       codeConceptId,
@@ -1115,7 +1122,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       patientProfileId: id,
       orders: orderList
         .filtrar((o) => o.patientProfileId === id)
-        .map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id, ...ordenDeAnalisis(o) })),
+        .map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id, ...ordenDeAnalisis(o), suggestedCareSpace: collectionPointRef((o as { suggestedCareSpaceId?: string }).suggestedCareSpaceId) })),
       reports: informes.filtrar((r) => r.patientProfileId === id).map((r) => ({ id: r.id, patientProfileId: r.patientProfileId, serviceRequestId: r.serviceRequestId, codeConceptId: r.codeConceptId, categoryConceptId: r.categoryConceptId, lifecycleStatusConceptId: r.lifecycleStatusConceptId, currentVersionId: r.currentVersionId, currentReleasedVersionId: r.released ? r.currentVersionId : null, resultReleaseStatusConceptId: r.released ? STATUS['ST-PUBLISHED']! : STATUS['ST-PENDING']!, createdAt: r.createdAt })),
       limit,
       truncated: [],
@@ -1150,10 +1157,15 @@ export function registrarDiagnostico(router: MockRouter): void {
     }
     const status = texto(query, 'statusConceptId');
     const assigned = texto(query, 'assignedProfileId');
+    // F5b: el punto de toma de cada orden (y su filtro), del tenant activo.
+    const point = texto(query, 'collectionCareSpaceId');
+    const ids = ordenesDeTrabajo.todos().map((w) => w.id);
     return ordenesDeTrabajo
       .todos()
+      .map((w) => ({ ...w, collectionPoint: workOrderCollectionPoint(w.id, ids, headers.get('X-Tenant-Id')) }))
       .filter((w) => status === null || w.statusConceptId === status)
       .filter((w) => assigned === null || w.assignedProfileId === assigned)
+      .filter((w) => point === null || w.collectionPoint?.careSpaceId === point)
       .slice(Number(query.get('offset') ?? 0), Number(query.get('offset') ?? 0) + (Number(query.get('limit') ?? 50) || 50));
   });
 
