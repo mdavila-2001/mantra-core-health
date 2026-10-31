@@ -146,6 +146,13 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: ['diagnostics', 'interventions'],
   },
   {
+    label: 'Internación',
+    group: 'Atención',
+    icon: 'hospital',
+    // F2/F3 (31/10/2026): las camas, su limpieza, el censo y sus indicadores.
+    paths: ['inpatient/bed-board', 'inpatient/cleaning', 'inpatient/census', 'inpatient/indicators'],
+  },
+  {
     label: 'Visitas',
     group: 'Atención',
     icon: 'route',
