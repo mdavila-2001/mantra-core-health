@@ -1,0 +1,131 @@
+:host {
+  display: block;
+}
+
+.cond {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.cond__resumen {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.cond__issue {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+}
+
+.sec {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.sec[data-invalid='true'] {
+  border-color: var(--st-error-bd);
+}
+
+.sec__cabeza {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+.sec__boton {
+  display: flex;
+  inline-size: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sec__boton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.sec__issues {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--sp-3) var(--sp-2);
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+}
+
+.sec__issue--aviso {
+  color: var(--st-warning-fg);
+}
+
+.sec__cuerpo {
+  display: grid;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-3) var(--sp-3);
+}
+
+.sec__acciones {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.sec__ayuda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.bloque {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.frase {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-body);
+}
+
+.frase app-input {
+  inline-size: 9rem;
+}
+
+.frase app-select {
+  min-inline-size: 11rem;
+}
+
+.dias,
+.grupo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.grupo legend {
+  padding: 0;
+  margin-block-end: var(--sp-1);
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.ejemplo {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

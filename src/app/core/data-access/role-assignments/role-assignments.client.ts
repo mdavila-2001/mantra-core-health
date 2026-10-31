@@ -20,6 +20,8 @@ function toRow(wire: WireRow): RoleAssignmentRow {
   // la ausencia del procedimiento ES el dato, así que el `null` se conserva.
   return {
     ...sinNulos(wire),
+    // Un doctor que canjeó un QR multiuso llega sin sede (`practiceSiteId: null`): el `null` es el dato, no se descarta.
+    practiceSiteId: wire.practiceSiteId ?? null,
     healthcareServiceId: wire.healthcareServiceId ?? null,
     serviceConceptId: wire.serviceConceptId ?? null,
     serviceDisplay: wire.serviceDisplay ?? null,

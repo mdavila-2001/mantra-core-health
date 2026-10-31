@@ -1,0 +1,47 @@
+@if (summary().origin !== null) {
+  <ul
+    class="insignias"
+    role="list"
+    [attr.aria-label]="'Resumen de los permisos de ' + personName()"
+  >
+    @if (summary().allow > 0) {
+      <li>
+        <app-badge variant="success" size="sm" data-testid="insignia-permitir"
+          >Permite {{ summary().allow }}</app-badge
+        >
+      </li>
+    }
+    @if (summary().deny > 0) {
+      <li>
+        <app-badge variant="error" size="sm" data-testid="insignia-denegar"
+          >Deniega {{ summary().deny }}</app-badge
+        >
+      </li>
+    }
+    @if (summary().conditioned > 0) {
+      <li>
+        <app-badge variant="info" size="sm" data-testid="insignia-condiciones"
+          >Con condiciones ({{ summary().conditioned }})</app-badge
+        >
+      </li>
+    }
+    <li>
+      <app-badge variant="secondary" size="sm" data-testid="insignia-origen">{{
+        originLabel()
+      }}</app-badge>
+    </li>
+    @if (sensitivity(); as s) {
+      <li>
+        <app-badge [variant]="s.tone" size="sm" data-testid="insignia-sensibilidad"
+          ><span aria-hidden="true">{{ s.icon }} </span>Sensibilidad máxima:
+          {{ s.label }}</app-badge
+        >
+      </li>
+    }
+  </ul>
+  @if (summary().conditionTexts.length > 0) {
+    <p class="condiciones" data-testid="insignia-condiciones-texto">
+      {{ summary().conditionTexts.join(' ') }}
+    </p>
+  }
+}

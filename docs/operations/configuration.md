@@ -181,3 +181,21 @@ peticiones salen relativas, no hace falta CORS y la CSP se queda en
 artefacto y hacía que el servidor devolviera **400 ante cualquier dominio real**.
 Se quitó, y la validación vive en nginx, donde es configuración en caliente. Ver
 [despliegue](deployment.md#validación-del-host).
+
+### El backend simulado no viaja en los builds reales
+
+Los builds `production`, `production-api`, `real-api` y `e2e-real` **no llevan el simulador**: `angular.json` sustituye
+`src/app/core/mock/mock-backend.interceptor.ts` por `mock-backend.interceptor.disabled.ts` (`fileReplacements`), un
+interceptor que deja pasar todo a la red. Con eso salen del paquete el chunk de ~4,6 MB con los manejadores y las
+cuentas y códigos de prueba (`123456`, `12345678`, el secreto TOTP de ejemplo), que antes solo apagaba el flag
+`environment.mockBackend` en tiempo de ejecución (esbuild no puede eliminar la rama porque el flag es una propiedad de
+un objeto y no una constante). Lo fija `mock-backend.interceptor.disabled.spec.ts`.
+
+Los builds `demo` y `development,demo` (`yarn start:demo`, los e2e con simulador) **no sustituyen nada** y siguen con
+el simulador completo. El `Dockerfile` construye `production` por omisión (`--build-arg BUILD_CONFIGURATION=production-api`
+para el otro): ninguno de los dos lleva el simulador.
+
+Residuo conocido: la pantalla de stock de componentes (`design-system/stock`, `canMatch: [() => environment.mockBackend]`)
+sigue siendo un chunk perezoso que importa `core/mock/mock-session` (la lista de cuentas ficticias `*.mock`, sin
+contraseñas). No es alcanzable (la ruta no existe sin `mockBackend`) y pesa unos 9 kB; quitarlo pide otra sustitución de
+archivo y no se hizo en esta ronda.

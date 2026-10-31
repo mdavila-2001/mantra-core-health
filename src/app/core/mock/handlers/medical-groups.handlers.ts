@@ -1,9 +1,12 @@
 import {
+  conflict,
   forbidden,
+  noContent,
   notFound,
   preconditionFailed,
   reply,
   validation,
+  type MockReply,
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
@@ -40,9 +43,9 @@ interface SimMember {
   readonly id: string;
   readonly practitionerProfileId: string;
   readonly practitionerName: string | null;
-  readonly roleTitle: string;
-  readonly agreedPaymentAmount: string;
-  readonly additionalTermsText?: string;
+  roleTitle: string;
+  agreedPaymentAmount: string;
+  additionalTermsText?: string;
   readonly isCreator: boolean;
   invitationStatus: 'PENDING' | Decision;
   respondedAt?: string;
@@ -57,8 +60,8 @@ interface SimGroup {
   readonly patientName: string | null;
   readonly conditionId?: string;
   scheduledAt: string;
-  readonly locationText: string;
-  readonly notesText?: string;
+  locationText: string;
+  notesText?: string;
   readonly termsText: string;
   status: 'PENDING_TEAM' | 'SCHEDULED' | 'RESCHEDULE_PENDING' | 'CLOSED';
   exerciseNotesText?: string;
@@ -143,9 +146,15 @@ function seedGroups(): SimGroup[] {
     mk('realizado', MEDICAL, -2, 'Gabinete de cardiología', 'SCHEDULED', [
       [COLLEAGUE, 'Técnico de ecografía', '200.00', 'ACCEPTED'],
     ]),
-    mk('cerrado', COLLEAGUE, -30, 'Consultorio Dra. Rojas', 'CLOSED', [
-      [MEDICAL, 'Cardiólogo', '350.00', 'ACCEPTED'],
-    ], { exerciseNotesText: 'Control realizado y registrado.', exerciseNotesUpdatedAt: iso(-29) }),
+    mk(
+      'cerrado',
+      COLLEAGUE,
+      -30,
+      'Consultorio Dra. Rojas',
+      'CLOSED',
+      [[MEDICAL, 'Cardiólogo', '350.00', 'ACCEPTED']],
+      { exerciseNotesText: 'Control realizado y registrado.', exerciseNotesUpdatedAt: iso(-29) },
+    ),
   ];
 }
 
@@ -243,6 +252,41 @@ function findVisible(request: MockRequest): SimGroup | null {
   const group = groups.get(request.params['id'] ?? '');
   return group === undefined || me === null || !sees(group, me) ? null : group;
 }
+
+/**
+ * Lo que la API exige para editar o eliminar: ser el creador y que el grupo no
+ * se haya realizado ni cerrado. Un tercero recibe 404; un integrante que no lo
+ * creó, 403 (nunca 401: cerraría la sesión).
+ */
+function editable(request: MockRequest): { group: SimGroup; me: string } | MockReply {
+  const group = findVisible(request);
+  const me = practitionerOf(request);
+  if (group === null || me === null) return notFound('Grupo médico no encontrado');
+  if (group.requestingPractitionerId !== me) {
+    return forbidden('Sólo quien creó el grupo puede modificarlo o eliminarlo');
+  }
+  if (isClosed(group)) return preconditionFailed('El expediente ya está cerrado y es inmutable');
+  if (isRealized(group)) {
+    return preconditionFailed('El grupo ya se realizó: sólo admite las notas del procedimiento');
+  }
+  return { group, me };
+}
+
+function isEditable(
+  result: { group: SimGroup; me: string } | MockReply,
+): result is { group: SimGroup; me: string } {
+  return 'group' in result;
+}
+
+/** Con cargos sin responder el grupo espera al equipo; sin ninguno, está programado. */
+function syncTeamStatus(group: SimGroup): void {
+  if (group.status !== 'PENDING_TEAM' && group.status !== 'SCHEDULED') return;
+  group.status = group.members.some((m) => !m.isCreator && m.invitationStatus === 'PENDING')
+    ? 'PENDING_TEAM'
+    : 'SCHEDULED';
+}
+
+const COLLEAGUES = [COLLEAGUE, OTHER_COLLEAGUE];
 
 export function registerMedicalGroups(router: MockRouter): void {
   router.get('/medical-groups', (request) => {
@@ -357,6 +401,117 @@ export function registerMedicalGroups(router: MockRouter): void {
     groups.set(id, group);
     persistGroups();
     return reply(201, toDto(group, me));
+  });
+
+  router.patch('/medical-groups/:id', (request) => {
+    const found = editable(request);
+    if (!isEditable(found)) return found;
+    const { group, me } = found;
+    const body = cuerpo<{ locationText?: string; notesText?: string }>(request);
+    if (body.locationText !== undefined) {
+      if (body.locationText.trim() === '') {
+        return preconditionFailed('El lugar de realización no puede quedar vacío');
+      }
+      group.locationText = body.locationText.trim();
+    }
+    if (body.notesText !== undefined) {
+      const notes = body.notesText.trim();
+      if (notes === '') delete group.notesText;
+      else group.notesText = notes;
+    }
+    return saved(group, me);
+  });
+
+  router.delete('/medical-groups/:id', (request) => {
+    const found = editable(request);
+    if (!isEditable(found)) return found;
+    groups.delete(found.group.id);
+    persistGroups();
+    return noContent();
+  });
+
+  router.post('/medical-groups/:id/members', (request) => {
+    const found = editable(request);
+    if (!isEditable(found)) return found;
+    const { group, me } = found;
+    const body = cuerpo<{
+      practitionerProfileId?: string;
+      roleTitle?: string;
+      agreedPaymentAmount?: string;
+      additionalTermsText?: string;
+    }>(request);
+    const colleague = COLLEAGUES.find((p) => p.id === body.practitionerProfileId);
+    if (colleague === undefined) {
+      return notFound('Profesional no encontrado');
+    }
+    if (group.members.some((m) => m.practitionerProfileId === colleague.id)) {
+      return conflict('Un mismo profesional no puede repetirse (ni ser también el creador)');
+    }
+    if ((body.roleTitle ?? '').trim() === '') return validation('Escriba el cargo o función.');
+    if (!AMOUNT.test(body.agreedPaymentAmount ?? '')) {
+      return validation('El pago acordado debe ser un número positivo con hasta dos decimales');
+    }
+    group.members.push({
+      id: nuevoId('miembro'),
+      practitionerProfileId: colleague.id,
+      practitionerName: colleague.displayName ?? null,
+      roleTitle: body.roleTitle!.trim(),
+      agreedPaymentAmount: body.agreedPaymentAmount!,
+      ...(body.additionalTermsText ? { additionalTermsText: body.additionalTermsText } : {}),
+      isCreator: false,
+      invitationStatus: 'PENDING',
+    });
+    syncTeamStatus(group);
+    return reply(201, saved(group, me));
+  });
+
+  router.patch('/medical-groups/:id/members/:memberId', (request) => {
+    const found = editable(request);
+    if (!isEditable(found)) return found;
+    const { group, me } = found;
+    const member = group.members.find((m) => m.id === request.params['memberId']);
+    if (member === undefined) return notFound('Integrante no encontrado');
+    if (member.isCreator) {
+      return preconditionFailed('El cargo de quien creó el grupo no se modifica');
+    }
+    const body = cuerpo<{
+      roleTitle?: string;
+      agreedPaymentAmount?: string;
+      additionalTermsText?: string;
+    }>(request);
+    if (body.agreedPaymentAmount !== undefined && !AMOUNT.test(body.agreedPaymentAmount)) {
+      return validation('El pago acordado debe ser un número positivo con hasta dos decimales');
+    }
+    if (body.roleTitle !== undefined) {
+      if (body.roleTitle.trim() === '') return validation('Escriba el cargo o función.');
+      member.roleTitle = body.roleTitle.trim();
+    }
+    if (body.agreedPaymentAmount !== undefined)
+      member.agreedPaymentAmount = body.agreedPaymentAmount;
+    if (body.additionalTermsText !== undefined) {
+      const terms = body.additionalTermsText.trim();
+      if (terms === '') delete member.additionalTermsText;
+      else member.additionalTermsText = terms;
+    }
+    // Cambiar lo que la persona aceptó es volver a pedirle respuesta.
+    member.invitationStatus = 'PENDING';
+    delete member.respondedAt;
+    syncTeamStatus(group);
+    return saved(group, me);
+  });
+
+  router.delete('/medical-groups/:id/members/:memberId', (request) => {
+    const found = editable(request);
+    if (!isEditable(found)) return found;
+    const { group, me } = found;
+    const member = group.members.find((m) => m.id === request.params['memberId']);
+    if (member === undefined) return notFound('Integrante no encontrado');
+    if (member.isCreator) {
+      return preconditionFailed('Quien creó el grupo no se puede quitar del equipo');
+    }
+    group.members.splice(group.members.indexOf(member), 1);
+    syncTeamStatus(group);
+    return saved(group, me);
   });
 
   router.post('/medical-groups/:id/members/:memberId/respond', (request) => {
