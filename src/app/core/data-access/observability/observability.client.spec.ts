@@ -32,6 +32,21 @@ describe('ObservabilityClient', () => {
     expect(recibido?.kpis.requests).toEqual({ value: null, reason: 'NO_INSTANCE_REPORTED_IN_WINDOW' });
   });
 
+  it('quita `interval` donde la API no lo conoce (si no, 400 «property interval should not exist»)', () => {
+    client.summary({ from: '2026-10-31T00:00:00.000Z', interval: 'hour' }).subscribe();
+    const s = http.expectOne((r) => r.url.endsWith('/admin/observability/summary'));
+    expect(s.request.params.has('interval')).toBe(false);
+    s.flush({});
+    client.endpoints({ interval: 'day', sort: 'p95' }).subscribe();
+    const e = http.expectOne((r) => r.url.endsWith('/admin/observability/endpoints'));
+    expect(e.request.params.has('interval')).toBe(false);
+    e.flush({ items: [] });
+    client.timeseries({ metric: 'requests', interval: 'day' }).subscribe();
+    const t = http.expectOne((r) => r.url.endsWith('/admin/observability/timeseries'));
+    expect(t.request.params.get('interval')).toBe('day');
+    t.flush({ series: [] });
+  });
+
   it('serie: envía métrica y agrupación', () => {
     client.timeseries({ metric: 'requests', groupBy: 'status_class', interval: 'hour' }).subscribe();
     const req = http.expectOne((r) => r.url.endsWith('/admin/observability/timeseries'));

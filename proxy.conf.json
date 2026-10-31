@@ -74,6 +74,7 @@
       "/admin/analytics",
       "/admin/qa",
       "/admin/ops",
+      "/admin/observability",
       "/tenants",
       "/practices",
       "/practice/infrastructure-catalog",
