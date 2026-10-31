@@ -148,6 +148,19 @@ export const appConfig: ApplicationConfig = {
             .catch(() => undefined);
       },
     },
+    // Las sedes y el personal que leyeron las pantallas de quirófano y
+    // facturación de espacios (F4/F5) no pasan a la cuenta siguiente.
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () =>
+          void import('./core/data-access/operating-rooms/site-context.store')
+            .then((m) => injector.get(m.SiteContextStore).clear())
+            .catch(() => undefined);
+      },
+    },
     // Los avisos push de la cuenta que se va no deben seguir llegando a este
     // navegador (dispositivo compartido). Import dinámico por el presupuesto del
     // paquete inicial, igual que el limpiador de arriba.

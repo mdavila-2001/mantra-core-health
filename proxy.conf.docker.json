@@ -32,6 +32,7 @@
       "/tenants",
       "/practices",
       "/practice/infrastructure-catalog",
+      "/practice/infrastructure-access",
       "/sites",
       "/care-spaces",
       "/clinical-units",
