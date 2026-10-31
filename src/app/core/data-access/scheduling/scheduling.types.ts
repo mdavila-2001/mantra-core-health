@@ -1196,6 +1196,11 @@ export interface NewWalkInAppointment {
    * y eso lo pone la API, no este cuerpo.
    */
   readonly channel?: ModalidadDeAtencion;
+  /**
+   * Si la atención arranca ya; ausente = sí. Con `false` la cita queda
+   * confirmada para su hora y sin encuentro abierto.
+   */
+  readonly startAttention?: boolean;
 }
 
 /**
@@ -1214,8 +1219,8 @@ export interface WalkInAppointmentCreated {
   readonly bookingId: string;
   readonly bookableSlotId: string;
   readonly appointmentId: string;
-  /** El encuentro abierto, listo para registrar la atención. */
-  readonly encounterId: string;
+  /** El encuentro abierto; ausente si la cita se agendó con `startAttention: false`. */
+  readonly encounterId?: string;
   readonly statusConceptId: string;
   /** Cupos ofrecidos que este turno retiró. Se informa, no se pregunta. */
   readonly retractedSlots: number;
