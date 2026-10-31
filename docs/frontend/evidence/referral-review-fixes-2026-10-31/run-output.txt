@@ -4,6 +4,7 @@ OK    L: ninguna fila se titula «Sin tipo»
 OK    M: «Ir a abrir el encuentro» cierra el modal y enfoca «Abrir encuentro» consulta-abrir-encuentro
 OK    «Abrir encuentro» queda a la vista 
 OK    M: sin destino, el campo «Servicio» ya está, apagado 
+OK    8: el botón apagado dice qué falta (aria-describedby) Para derivar, elija el destino.
 OK    4: rótulos del selector enteros a 390 [{"text":"Profesional","fits":true,"sw":76,"cw":76},{"text":"Organización","fits":true,"sw":89,"cw":89},{"text":"Externo","fits":true,"sw":52,"cw":52}]
 OK    sin desborde horizontal a 390 (formulario) 
 OK    4: rótulos del selector enteros a 360 [{"text":"Profesional","fits":true,"sw":76,"cw":76},{"text":"Organización","fits":true,"sw":89,"cw":89},{"text":"Externo","fits":true,"sw":52,"cw":52}]
@@ -13,9 +14,9 @@ OK    M: el aviso es más bajo que el S3 de página (< 290 px a 390) 222 px
 OK    M: no es el S3 genérico 
 OK    M: ofrece las dos salidas 
 OK    «Buscar otro destino» vuelve al buscador referral-organization
-OK    HIGH: el éxito se ve a 390 tras enviar {"top":475,"bottom":593,"vh":844,"inside":true}
+OK    HIGH: el éxito se ve a 390 tras enviar {"top":452,"bottom":616,"vh":844,"inside":true}
 OK    HIGH: el foco va al resultado referral-outcome
-OK    1b: el éxito de organización no promete el aviso Éxito: Derivación registrada a Hospital San Lucas. Si la persona tiene cuenta en el portal, le llega un aviso y la ve en su lista de derivaciones.
+OK    1b: el éxito de organización no promete el aviso Éxito: Derivación registrada Quedó registrada la derivación a Hospital San Lucas. Si la persona tiene cuenta en el portal, puede recibir un aviso; la ve en su lista de derivaciones.
 OK    1a: el botón dice «Derivar» 
 OK    M: al releer la lista no vuelve a «Buscando…» 
 OK    HIGH: el 409 se ve a 390 tras enviar {"top":473,"bottom":595,"vh":844,"inside":true}
@@ -28,26 +29,27 @@ No se pudo derivar
 El encuentro, el destino o el servicio ya no están disponibles. Vuelva a buscar el destino.
 OK    sin desborde horizontal a 390 (modal) 
 OK    1c: pista del motivo para un profesional 
-OK    1b: el éxito de profesional no promete el aviso Éxito: Derivación registrada a Giovanna Valeria Daza Kucharsky. Si la persona tiene cuenta en el portal, le llega un aviso para ver la ficha y reservar.
+OK    1b: el éxito de profesional no promete el aviso Éxito: Derivación registrada Quedó registrada la derivación a Giovanna Valeria Daza Kucharsky. Si la persona tiene cuenta en el portal, puede recibir un aviso para ver la ficha y reservar.
 OK    HIGH: el éxito de profesional se ve a 390 
 OK    1a: el botón de externo dice «Registrar la derivación» 
 OK    1c: pista del motivo para un externo 
 OK    1b: el éxito de externo dice que no hay aviso Éxito: Derivación registrada Quedó registrada la derivación a Centro de Hemodiálisis Norte. Es un destino fuera de la plataforma y no recibe aviso: entréguele la derivación a la persona.
-OK    L-2: S7 «Actualizando · lista de las HH:MM» al releer Actualizando · lista de las 07:39
+OK    L-2: S7 «Actualizando · lista de las HH:MM» al releer Actualizando · lista de las 09:11
 OK    L-2: la lista sigue a la vista durante la relectura 
 OK    L-4: la relectura fallida no borra la lista 
-OK    L-4: la casilla conserva su cifra Derivar A otro profesional u organización médica, por un servicio concreto. 8 derivaciones
+OK    L-4 / 3: la casilla conserva la cifra y avisa que puede faltar una («al menos N») Derivar A otro profesional u organización médica, por un servicio concreto. al menos 8 derivaciones
+OK    2: tras «Reintentar» el foco queda en el título de la lista, dentro del diálogo {"id":"referral-list-title","inDialog":true}
 OK    persistencia: tras F5 la casilla cuenta 5 más 4 → 9
 OK    persistencia: tras F5 la fila nueva sigue en la lista 9 filas
 OK    sin desborde horizontal a 768 
-OK    L: «Vigencia» alineada con «Tipo» a 768 560 vs 560
+OK    L: «Vigencia» alineada con «Tipo» a 768 543 vs 543
 OK    sin desborde horizontal a 1440 
 OK    L: «Vigencia» alineada con «Tipo» a 1440 535 vs 535
 OK    sin desborde horizontal a 1920 
 OK    L: «Vigencia» alineada con «Tipo» a 1920 535 vs 535
-OK    L-3: el aviso de la organización llega con el texto de la API Su médico le derivó a Hospital San Lucas Su médico le derivó a Hospital San Lucas para Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros). Puede ver su ficha y reservar una cita desde su portal. 31/10/26, 7:39 a. m.
+OK    L-3: el aviso de la organización llega con el texto de la API Su médico le derivó a Hospital San Lucas Su médico le derivó a Hospital San Lucas para Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros). Puede ver su ficha y reservar una cita desde su portal. 31/10/26, 9:11 a. m.
 OK    L-3: el aviso es un enlace (botón que navega) 
 OK    L-3: abre la ficha pública /o/hospital-san-lucas http://localhost:4321/o/hospital-san-lucas
 OK    13: sin NG0955 (claves de @for duplicadas) en la consola 
 OK    13: sin el 403 de las sedes de una organización ajena 
-48/48 aserciones; 0 pageerror
+50/50 aserciones; 0 pageerror

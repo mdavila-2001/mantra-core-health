@@ -326,6 +326,7 @@
               <app-textarea
                 data-testid="referral-reason"
                 [rows]="3"
+                [autoResize]="true"
                 [maxLength]="reasonMaxLength"
                 [(value)]="reason"
               />
@@ -375,15 +376,15 @@
             <!-- La API no dice si el aviso salió (cuenta de portal, destino
                  activo, avisos agrupados): el texto no lo promete. -->
             @case ('ORGANIZATION') {
-              <app-alert tone="success" data-testid="referral-success">
-                Derivación registrada a {{ done.name }}. Si la persona tiene cuenta en el portal, le
-                llega un aviso y la ve en su lista de derivaciones.
+              <app-alert tone="success" title="Derivación registrada" data-testid="referral-success">
+                Quedó registrada la derivación a {{ done.name }}. Si la persona tiene cuenta en el
+                portal, puede recibir un aviso; la ve en su lista de derivaciones.
               </app-alert>
             }
             @default {
-              <app-alert tone="success" data-testid="referral-success">
-                Derivación registrada a {{ done.name }}. Si la persona tiene cuenta en el portal, le
-                llega un aviso para ver la ficha y reservar.
+              <app-alert tone="success" title="Derivación registrada" data-testid="referral-success">
+                Quedó registrada la derivación a {{ done.name }}. Si la persona tiene cuenta en el
+                portal, puede recibir un aviso para ver la ficha y reservar.
               </app-alert>
             }
           }
@@ -412,10 +413,17 @@
         data-testid="referral-submit"
         [isLoading]="sending()"
         [disabled]="!canSubmit()"
+        [attr.aria-describedby]="submitHint() ? 'referral-submit-hint' : null"
         (clicked)="submit()"
       >
         {{ kind() === 'EXTERNAL' ? 'Registrar la derivación' : 'Derivar' }}
       </button>
+      @if (submitHint(); as hint) {
+        <!-- Un botón apagado sin explicación es un muro: se dice qué falta. -->
+        <p id="referral-submit-hint" class="referral__secondary referral__submit-hint" data-testid="referral-submit-hint">
+          {{ hint }}
+        </p>
+      }
     </form>
   }
 
@@ -424,7 +432,7 @@
 
     <section class="referral__list" aria-labelledby="referral-list-title">
       <div class="referral__list-head">
-        <h3 id="referral-list-title" class="referral__title">Derivaciones de esta persona</h3>
+        <h3 id="referral-list-title" class="referral__title" tabindex="-1">Derivaciones de esta persona</h3>
         @if (state.status === 'stale' && !refreshError()) {
           <!-- S7 al releer: la lista sigue a la vista y la antigüedad se dice en
                la misma línea del título, para que el modal no salte. -->
@@ -445,14 +453,14 @@
         >
           Se muestra la de las {{ state.asOf | date: 'HH:mm' }}. {{ failure }}
           <div alert-actions>
-            <button app-button size="sm" variant="secondary" type="button" (clicked)="retry.emit()">
+            <button app-button size="sm" variant="secondary" type="button" (clicked)="retryList()">
               Reintentar
             </button>
           </div>
         </app-alert>
       }
 
-      <app-view-state-host [state]="state" (retry)="retry.emit()">
+      <app-view-state-host [state]="state" (retry)="retryList()">
         <!-- El aviso de S7 va junto al título, no como banner encima de la lista. -->
         <ng-container ngProjectAs="[vsh-stale]" />
         <p vsh-skeleton class="referral__secondary">Buscando las derivaciones…</p>

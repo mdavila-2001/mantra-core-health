@@ -282,22 +282,36 @@ export function buildNewReferral(v: ReferralFormValues): NewReferral {
 export const GENERIC_NOT_FOUND =
   'El encuentro, el destino o el servicio ya no están disponibles. Vuelva a buscar el destino.';
 
+/** Lo que se dice tras un envío fallido y, aparte, el código de soporte (S9). */
+export interface SubmissionFailure {
+  readonly text: string;
+  /** El identificador de petición de S9, para pintarlo entero; `null` si no es S9. */
+  readonly code: string | null;
+}
+
 /**
  * Lo que se dice tras un envío fallido, o `null` si no falló. Manda el
  * sub-código de la API ya en palabras (400, 404, 422); sin él, la validación
- * tal cual, y para el resto el texto de escritura de siempre.
+ * tal cual, y para el resto el texto de escritura de siempre. El código de
+ * soporte sale del **estado** (`requestId` de S9), no de leer el texto.
  */
-export function submissionMessage(state: ViewState<null>, serverReason: string | null): string | null {
+export function submissionMessage(state: ViewState<null>, serverReason: string | null): SubmissionFailure | null {
   if (state.status === 'ready' || state.status === 'loading') return null;
-  if (serverReason !== null) return serverReason;
+  if (serverReason !== null) return { text: serverReason, code: null };
   if (state.status === 'validation') {
-    return state.issues.map((issue) => issue.message).join(' ') || null;
+    const text = state.issues.map((issue) => issue.message).join(' ');
+    return text === '' ? null : { text, code: null };
   }
-  return writeFailureMessage(state, {
+  if (state.status === 'error') {
+    // `writeFailureMessage` le agrega «(requestId)» al final: acá va aparte.
+    return { text: state.message || 'Ocurrió un error inesperado.', code: state.requestId };
+  }
+  const text = writeFailureMessage(state, {
     accion: 'derivar',
     sinPermiso: 'Sólo puede derivar a quien atiende desde su propia organización.',
     yaNoExiste: GENERIC_NOT_FOUND,
   });
+  return text === null ? null : { text, code: null };
 }
 
 /**
@@ -317,12 +331,61 @@ export function reasonHintFor(kind: ReferralDestinationKind): string {
 }
 
 /**
- * El mensaje y, aparte, el código de soporte del final («… (req-123)»), para
- * pintarlo sin cortes: es lo que se dicta o se copia al pedir ayuda.
+ * Qué decir cuando falta el servicio pedido, según el contexto: un externo no
+ * tiene catálogo; un destino sin servicios publicados, tampoco; con catálogo,
+ * se puede elegir de la lista o escribirlo.
  */
-export function splitSupportCode(message: string): { readonly text: string; readonly code: string | null } {
-  const match = /^(.*\S)\s+\(([^()\s]+)\)$/s.exec(message);
-  return match === null ? { text: message, code: null } : { text: match[1]!, code: match[2]! };
+export function requestedServiceMessage(kind: ReferralDestinationKind, withoutCatalog: boolean): string {
+  if (kind === 'EXTERNAL') {
+    return 'Escriba qué se le pide al destino externo, por ejemplo «Hemodiálisis tres veces por semana».';
+  }
+  if (withoutCatalog) {
+    return 'Este destino no publica servicios: escriba qué se le pide, por ejemplo «Fisioterapia de rodilla, 10 sesiones».';
+  }
+  return 'Elija un servicio de la lista del destino o escriba qué se le pide.';
+}
+
+/** El orden de los campos en la pestaña «Traslado», para que el resumen lo siga. */
+const TRANSFER_FIELD_ORDER: readonly string[] = [
+  'departureCondition',
+  'transportMode',
+  'transportDetail',
+  'escortProfessionalName',
+  'escortProfessionalRole',
+  'companionName',
+  'companionRelationship',
+  'companionPhone',
+  'systolicBp',
+  'diastolicBp',
+  'heartRate',
+  'respiratoryRate',
+  'temperatureC',
+  'oxygenSaturation',
+  'glasgow',
+  'receiverContacted',
+  'receiverContactName',
+];
+
+/** Los problemas del traslado en el orden del formulario (estable para el mismo campo). */
+export function inFormOrder<T extends { readonly field: string }>(issues: readonly T[]): readonly T[] {
+  const rank = (field: string): number => {
+    const i = TRANSFER_FIELD_ORDER.indexOf(field);
+    return i === -1 ? TRANSFER_FIELD_ORDER.length : i;
+  };
+  return [...issues].sort((a, b) => rank(a.field) - rank(b.field));
+}
+
+/**
+ * Por qué «Derivar» está apagado, para decirlo junto al botón (y anunciarlo
+ * con `aria-describedby`), o `null` si se puede enviar o si envía ahora.
+ */
+export function submitBlocker(kind: ReferralDestinationKind, hasTarget: boolean, reasonTooLong: boolean): string | null {
+  if (!hasTarget) {
+    return kind === 'EXTERNAL'
+      ? 'Para registrarla, escriba el nombre del destino.'
+      : 'Para derivar, elija el destino.';
+  }
+  return reasonTooLong ? 'El motivo es demasiado largo: acórtelo para derivar.' : null;
 }
 
 /** Los rótulos de las dos pestañas; tras intentar derivar, cuál está lista y a cuál le falta algo. */
