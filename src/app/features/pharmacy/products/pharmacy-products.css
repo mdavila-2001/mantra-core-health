@@ -41,6 +41,7 @@
 
 .products__presentation {
   margin-inline-start: var(--sp-2);
+  white-space: nowrap;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);

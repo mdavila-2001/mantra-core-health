@@ -76,12 +76,45 @@
             </div>
           </div>
 
-          <app-search-field
-            label="Buscar en el inventario"
-            placeholder="Marca, genérico o código"
-            [value]="term()"
-            (searched)="search($event)"
-          />
+          <!-- Buscar, filtrar y guardar en un renglón desde 780 px: la tabla sube. -->
+          <div class="inventory__tools">
+            <app-search-field
+              label="Buscar en el inventario"
+              placeholder="Marca, genérico o código"
+              [value]="term()"
+              (searched)="search($event)"
+            />
+
+            <div class="inventory__bar">
+              <app-switch
+                [label]="alertsLabel()"
+                [ariaLabel]="alertsLabel()"
+                [checked]="onlyAlerts()"
+                (checkedChange)="toggleAlerts($event)"
+                data-testid="inventory-only-alerts"
+              />
+              <div class="inventory__save">
+                @if (dirtyCount() > 0) {
+                  <span class="inventory__dirty" role="status">
+                    {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
+                  </span>
+                  <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
+                    Descartar
+                  </button>
+                }
+                <button
+                  app-button
+                  type="button"
+                  [isLoading]="saving()"
+                  [disabled]="saving() || dirtyCount() === 0"
+                  (clicked)="save()"
+                  data-testid="inventory-save"
+                >
+                  Guardar cambios
+                </button>
+              </div>
+            </div>
+          </div>
 
           @if (truncated()) {
             <app-alert tone="warning" title="Se muestran los primeros 500" data-testid="inventory-truncated">
@@ -90,36 +123,6 @@
               para llegar a los demás.
             </app-alert>
           }
-
-          <div class="inventory__bar">
-            <app-switch
-              [label]="alertsLabel()"
-              [ariaLabel]="alertsLabel()"
-              [checked]="onlyAlerts()"
-              (checkedChange)="toggleAlerts($event)"
-              data-testid="inventory-only-alerts"
-            />
-            <div class="inventory__save">
-              @if (dirtyCount() > 0) {
-                <span class="inventory__dirty" role="status">
-                  {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
-                </span>
-                <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
-                  Descartar
-                </button>
-              }
-              <button
-                app-button
-                type="button"
-                [isLoading]="saving()"
-                [disabled]="saving() || dirtyCount() === 0"
-                (clicked)="save()"
-                data-testid="inventory-save"
-              >
-                Guardar cambios
-              </button>
-            </div>
-          </div>
 
           <app-data-table
             caption="Inventario de su farmacia"

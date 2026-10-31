@@ -316,7 +316,8 @@ thead .data-table__cell {
 
 /* `dense` (opt-in): la mitad del relleno vertical en cada celda. Va después
    del `@media` de 780 px para ganarle con la misma especificidad. */
-:host(.data-table--dense) .data-table__cell {
+:host(.data-table--dense) .data-table__cell,
+:host(.data-table--dense) .data-table__select-cell {
     padding-block: var(--sp-1);
 }
 

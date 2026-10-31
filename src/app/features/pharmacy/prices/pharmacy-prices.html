@@ -42,12 +42,42 @@
           </app-alert>
         }
 
-        <app-search-field
-          label="Buscar un producto"
-          placeholder="Marca, genérico o código"
-          [value]="term()"
-          (searched)="search($event)"
-        />
+        <!-- Buscar y guardar en un renglón desde 780 px: la tabla sube. -->
+        <div class="prices__tools">
+          <app-search-field
+            label="Buscar un producto"
+            placeholder="Marca, genérico o código"
+            [value]="term()"
+            (searched)="search($event)"
+          />
+
+          <div class="prices__bar">
+            <p class="prices__hint">Deje el precio vacío si todavía no quiere mostrarlo.</p>
+            <div class="prices__save">
+              @if (dirtyCount() > 0) {
+                <span class="prices__dirty" role="status">
+                  {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
+                </span>
+                <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
+                  Descartar
+                </button>
+              }
+              <button app-button variant="outline" type="button" (clicked)="exportCsv()" data-testid="prices-export">
+                Exportar CSV
+              </button>
+              <button
+                app-button
+                type="button"
+                [isLoading]="saving()"
+                [disabled]="saving() || dirtyCount() === 0"
+                (clicked)="save()"
+                data-testid="prices-save"
+              >
+                Guardar cambios
+              </button>
+            </div>
+          </div>
+        </div>
 
         @if (truncated()) {
           <app-alert tone="warning" title="Se muestran los primeros 500" data-testid="prices-truncated">
@@ -55,33 +85,6 @@
             están sólo los primeros 500. Busque por marca, genérico o código para llegar a los demás.
           </app-alert>
         }
-
-        <div class="prices__bar">
-          <p class="prices__hint">Deje el precio vacío si todavía no quiere mostrarlo.</p>
-          <div class="prices__save">
-            @if (dirtyCount() > 0) {
-              <span class="prices__dirty" role="status">
-                {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
-              </span>
-              <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
-                Descartar
-              </button>
-            }
-            <button app-button variant="outline" type="button" (clicked)="exportCsv()" data-testid="prices-export">
-              Exportar CSV
-            </button>
-            <button
-              app-button
-              type="button"
-              [isLoading]="saving()"
-              [disabled]="saving() || dirtyCount() === 0"
-              (clicked)="save()"
-              data-testid="prices-save"
-            >
-              Guardar cambios
-            </button>
-          </div>
-        </div>
 
         <app-data-table
           caption="Precios de los productos de su farmacia"

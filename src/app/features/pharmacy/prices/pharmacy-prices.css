@@ -16,6 +16,20 @@
   padding-left: var(--sp-5);
 }
 
+/* Buscar y la barra de guardar comparten renglón desde 780 px. */
+.prices__tools {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 780px) {
+  .prices__tools {
+    grid-template-columns: minmax(16rem, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+}
+
 .prices__bar {
   display: flex;
   flex-wrap: wrap;
