@@ -32,34 +32,36 @@ describe('handlers de farmacia: el pedido entrante y las sedes cargadas', () => 
       headers: new HttpHeaders(),
       user,
     } satisfies MockRequest);
-    return (isMockReply(r) ? r.body : r) as { items: readonly { patientName?: string; status?: string; name?: string }[] };
+    return (isMockReply(r) ? r.body : r) as { items: readonly { id?: string; patientName?: string; status?: string; name?: string }[] };
   }
 
-  const nombres = (user: MockUser, query: string) =>
-    pedir('GET', '/pharmacy/orders', user, query).items.map((p) => p.patientName);
+  const ENTRANTE = uuid('pharmacy-order-entrante');
+  const entrantes = (user: MockUser, query: string) =>
+    pedir('GET', '/pharmacy/orders', user, query).items.filter((p) => p.id === ENTRANTE);
 
   beforeEach(() => vi.useFakeTimers({ toFake: ['Date'] }));
   afterEach(() => vi.useRealTimers());
 
   it('mirar la bandeja de otra cuenta no siembra el pedido de Farmacia Vida', () => {
-    nombres(paciente, '');
+    // Por id y no por nombre: «Carla Montaño Rivero» también es una paciente
+    // de los pedidos de ejemplo, y el nombre solo hacía depender la prueba de
+    // la hora del día.
+    const ids = () => pedir('GET', '/pharmacy/orders', paciente).items.map((p) => p.id);
+    ids();
     vi.advanceTimersByTime(60_000);
-    expect(nombres(paciente, '')).not.toContain('Carla Montaño Rivero');
+    expect(ids()).not.toContain(ENTRANTE);
   });
 
   it('para Farmacia Vida llega después de abrir la bandeja, una sola vez, en «Nuevos»', () => {
     const consulta = `siteId=${SEDE_CENTRAL}&limit=500`;
-    expect(nombres(farmacia, consulta)).not.toContain('Carla Montaño Rivero');
+    expect(entrantes(farmacia, consulta)).toHaveLength(0);
 
     vi.advanceTimersByTime(16_000);
-    const despues = pedir('GET', '/pharmacy/orders', farmacia, consulta).items.filter(
-      (p) => p.patientName === 'Carla Montaño Rivero',
-    );
-    expect(despues).toHaveLength(1);
+    expect(entrantes(farmacia, consulta)).toHaveLength(1);
 
     // Volver a mirar no siembra otro.
     vi.advanceTimersByTime(60_000);
-    expect(nombres(farmacia, consulta).filter((n) => n === 'Carla Montaño Rivero')).toHaveLength(1);
+    expect(entrantes(farmacia, consulta)).toHaveLength(1);
   });
 
   it('una sucursal cargada en «Sucursales» es una sede más del mostrador, sin duplicar las sembradas', () => {
