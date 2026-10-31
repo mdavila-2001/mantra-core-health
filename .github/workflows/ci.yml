@@ -120,6 +120,10 @@ jobs:
       - name: Build de producción
         run: yarn build
 
+      # H-5: el paquete de producción no lleva la API simulada. Revisa `dist/`
+      # recién construido; si aparece código de `core/mock`, falla.
+      - name: Sin simulador en el paquete de producción
+        run: node scripts/check-no-mock-in-dist.mjs
 
       # Falla solo por encima del umbral de ERROR. El aviso de presupuesto no
       # bloquea: es deuda conocida y gobernada, no una regresión nueva.
