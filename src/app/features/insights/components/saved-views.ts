@@ -1,39 +1,14 @@
 import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { InsightsWorkspaceClient } from '../../../core/data-access/insights/insights-workspace.client';
+import type { InsightsSavedView } from '../../../core/data-access/insights/insights.types';
 import { INSIGHTS_BASE } from '../insights-nav';
 
-const KEY = 'insights.views';
-
-interface SavedView {
-  readonly name: string;
-  readonly url: string;
-}
-
-function read(): SavedView[] {
-  try {
-    const raw = localStorage.getItem(KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((v): v is SavedView => typeof v?.name === 'string' && typeof v?.url === 'string' && v.url.startsWith(INSIGHTS_BASE))
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function write(views: readonly SavedView[]): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(views));
-  } catch {
-    /* sin almacenamiento disponible: la vista guardada es una conveniencia */
-  }
-}
-
 /**
- * Vistas guardadas: recuerdan módulo + filtros (que viven en la URL). Se guardan
- * en este navegador; no son un permiso ni un dato compartido. Solo se aceptan
- * direcciones de AloVida Insights, para que un valor manipulado no redirija fuera.
+ * Vistas guardadas: recuerdan módulo + filtros (que viven en la URL). Se guardan en el API,
+ * por usuario, y no son un permiso. Solo se aceptan direcciones de AloVida Insights, para que
+ * un valor manipulado no redirija fuera.
  */
 @Component({
   selector: 'app-ins-saved-views',
@@ -44,30 +19,48 @@ function write(views: readonly SavedView[]): void {
 })
 export class SavedViews {
   private readonly router = inject(Router);
+  private readonly client = inject(InsightsWorkspaceClient);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly open = signal(false);
-  protected readonly views = signal<readonly SavedView[]>(read());
+  protected readonly views = signal<readonly InsightsSavedView[]>([]);
   protected readonly draft = signal('');
+  protected readonly error = signal<string | null>(null);
+  private loaded = false;
+
+  protected toggle(): void {
+    this.open.set(!this.open());
+    if (this.open() && !this.loaded) this.load();
+  }
+
+  private load(): void {
+    this.client.listSavedViews().subscribe({
+      next: (r) => { this.loaded = true; this.views.set(r.data.filter((v) => v.url.startsWith(INSIGHTS_BASE))); },
+      error: () => this.error.set('No se pudieron leer las vistas guardadas.'),
+    });
+  }
 
   protected save(): void {
     const name = this.draft().trim().slice(0, 60);
     if (!name) return;
-    const next = [...this.views().filter((v) => v.name !== name), { name, url: this.router.url }];
-    this.views.set(next);
-    write(next);
-    this.draft.set('');
+    const id = crypto.randomUUID();
+    this.error.set(null);
+    this.client.putSavedView(id, { name, url: this.router.url }).subscribe({
+      next: (r) => { this.views.set([...this.views().filter((v) => v.id !== r.data.id), r.data]); this.draft.set(''); },
+      error: (e: { status?: number }) => this.error.set(e.status === 409 ? 'Ya tiene una vista con ese nombre.' : 'No se pudo guardar la vista.'),
+    });
   }
 
-  protected go(view: SavedView): void {
+  protected go(view: InsightsSavedView): void {
     this.open.set(false);
     void this.router.navigateByUrl(view.url);
   }
 
-  protected remove(name: string): void {
-    const next = this.views().filter((v) => v.name !== name);
-    this.views.set(next);
-    write(next);
+  protected remove(view: InsightsSavedView): void {
+    this.client.deleteSavedView(view.id).subscribe({
+      next: () => this.views.set(this.views().filter((v) => v.id !== view.id)),
+      error: () => this.error.set('No se pudo eliminar la vista.'),
+    });
   }
 
   protected type(event: Event): void {

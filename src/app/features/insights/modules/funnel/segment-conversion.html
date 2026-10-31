@@ -19,7 +19,8 @@
   @if (rows().length === 0) {
     <p class="sg__muted">No hay datos para esta selección.</p>
   } @else {
-    <app-ins-heatmap-chart [rows]="heat().rows" [cols]="heat().cols" [cells]="heat().cells" unit="percent" valueName="Tasa" [minCell]="52" [ariaLabel]="'Tasas de conversión por ' + labels[dimension()].toLowerCase()" />
+    <p class="sg__muted">Cada celda compara el segmento con el promedio de su columna (1,00 = igual al promedio); las cifras exactas están en la tabla.</p>
+    <app-ins-heatmap-chart [rows]="heat().rows" [cols]="heat().cols" [cells]="heat().cells" unit="ratio" valueName="Índice (1 = promedio de la columna)" [minCell]="52" [ariaLabel]="'Tasas de conversión por ' + labels[dimension()].toLowerCase()" />
 
     <h3 class="sg__h">Clic a conversión, de mayor a menor</h3>
     <ul class="sg__bars">

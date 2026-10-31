@@ -11,10 +11,15 @@ import { SYNTHETIC_NOTICE } from './domain/campaigns.data';
 import { longDate, PROTOTYPE_TODAY } from './domain/dates';
 import { InsightsContext } from './insights-context';
 import { InsightsData } from './insights-data';
+import { InsightsPreferences } from './insights-preferences';
 import { InsightsWorkflow } from './insights-workflow';
 import { INSIGHTS_BASE, INSIGHTS_MODULES } from './insights-nav';
 import { openAlertCount } from './insights-summary';
 import { SavedViews } from './components/saved-views';
+import { CommandPalette } from './components/command-palette';
+import { GlossaryDrawer } from './components/glossary-drawer';
+import { MobileTabbar } from './components/mobile-tabbar';
+import { SettingsDrawer } from './components/settings-drawer';
 
 const KEY_COLLAPSED = 'insights.nav.collapsed';
 
@@ -36,8 +41,9 @@ function readCollapsed(): boolean {
  */
 @Component({
   selector: 'app-insights-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIcon, SavedViews, ViewStateHost],
-  providers: [InsightsContext, InsightsData, InsightsWorkflow],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIcon, SavedViews, ViewStateHost, CommandPalette, GlossaryDrawer, SettingsDrawer, MobileTabbar],
+  providers: [InsightsContext, InsightsData, InsightsWorkflow, InsightsPreferences],
+  host: { '(document:keydown)': 'shortcut($event)' },
   templateUrl: './insights-shell.html',
   styleUrl: './insights-shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,6 +53,10 @@ export class InsightsShell {
   private readonly auth = inject(AuthService);
   protected readonly ctx = inject(InsightsContext);
   protected readonly data = inject(InsightsData);
+  protected readonly prefs = inject(InsightsPreferences);
+  protected readonly palette = signal(false);
+  protected readonly glossary = signal(false);
+  protected readonly settings = signal(false);
 
   protected readonly selectorRoute = PORTAL_SELECTOR_ROUTE;
   /** «Cambiar de portal» solo se ofrece a quien tiene otro acceso además de Insights. */
@@ -61,6 +71,17 @@ export class InsightsShell {
   protected readonly alertCount = openAlertCount();
 
   protected readonly collapsed = signal(readCollapsed());
+
+  constructor() {
+    this.prefs.load();
+  }
+
+  protected shortcut(e: KeyboardEvent): void {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      this.palette.set(true);
+    }
+  }
   protected readonly drawer = signal(false);
 
   private readonly url = toSignal(

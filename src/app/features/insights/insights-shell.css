@@ -379,3 +379,22 @@
   padding: var(--sp-6);
   color: var(--text-secondary);
 }
+
+.ins__kbd {
+  padding: 0 var(--sp-1);
+  font-family: inherit;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+}
+
+@media (max-width: 649px) {
+  .ins__main {
+    padding-block-end: 72px;
+  }
+}
+
+.ins[data-density='compact'] .ins__content {
+  padding: var(--sp-3) var(--sp-4) var(--sp-5);
+}

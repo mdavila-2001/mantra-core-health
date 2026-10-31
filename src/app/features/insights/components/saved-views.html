@@ -1,4 +1,4 @@
-<button type="button" class="sv__btn" aria-haspopup="true" [attr.aria-expanded]="open()" (click)="open.set(!open())">
+<button type="button" class="sv__btn" aria-haspopup="true" [attr.aria-expanded]="open()" (click)="toggle()">
   Vistas guardadas
   @if (views().length) {
     <span class="sv__n">{{ views().length }}</span>
@@ -13,12 +13,13 @@
         <button type="submit" class="sv__save" [disabled]="!draft().trim()">Guardar</button>
       </div>
     </form>
+    @if (error(); as e) { <p class="sv__empty" role="alert">{{ e }}</p> }
     @if (views().length) {
       <ul class="sv__list">
-        @for (v of views(); track v.name) {
+        @for (v of views(); track v.id) {
           <li class="sv__item">
             <button type="button" class="sv__go" (click)="go(v)">{{ v.name }}</button>
-            <button type="button" class="sv__del" [attr.aria-label]="'Eliminar la vista ' + v.name" (click)="remove(v.name)">×</button>
+            <button type="button" class="sv__del" [attr.aria-label]="'Eliminar la vista ' + v.name" (click)="remove(v)">×</button>
           </li>
         }
       </ul>
