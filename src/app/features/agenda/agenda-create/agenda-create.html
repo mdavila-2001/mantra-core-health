@@ -163,7 +163,7 @@
           />
         </app-form-field>
       </section>
-    } @else if (practicasFallaron() && resourceId() === null && !practicaDelDestino()) {
+    } @else if (sinPracticaPorFallo()) {
       <p class="agenda-create__nota" data-testid="agenda-create-sin-practica">
         No pudimos leer las prácticas de esta organización: la agenda se va a publicar sin
         práctica asignada.

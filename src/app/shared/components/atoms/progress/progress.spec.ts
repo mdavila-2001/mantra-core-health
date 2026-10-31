@@ -187,6 +187,67 @@ describe('Progress', () => {
     });
   });
 
+  describe('el latido (wave)', () => {
+    function trazoAvance(): HTMLElement | null {
+      return host().querySelector<HTMLElement>('.progress__wave-fill');
+    }
+
+    it('apagado por defecto: sigue siendo un riel liso con su relleno', async () => {
+      await setInputs({ value: 40 });
+
+      expect(host().querySelector('.progress__wave')).toBeNull();
+      expect(host().querySelector('.progress__fill')).not.toBeNull();
+      expect(host().classList).not.toContain('progress--wave');
+    });
+
+    it('con wave dibuja el riel y el avance sobre la MISMA curva, y quita el relleno liso', async () => {
+      await setInputs({ value: 40, wave: true });
+
+      const trazos = Array.from(host().querySelectorAll('.progress__wave path'));
+      expect(trazos).toHaveLength(2);
+      expect(new Set(trazos.map((t) => t.getAttribute('d'))).size).toBe(1);
+      expect(host().querySelector('.progress__fill')).toBeNull();
+      expect(host().classList).toContain('progress--wave');
+    });
+
+    it('el avance se recorta por ANCHO: 40 por ciento deja 60 por ciento fuera por la derecha', async () => {
+      await setInputs({ value: 40, wave: true });
+      expect(trazoAvance()?.style.clipPath).toMatch(/^inset\(-6px 60% -6px 0(px)?\)$/);
+
+      await setInputs({ value: 100, wave: true });
+      expect(trazoAvance()?.style.clipPath).toMatch(/^inset\(-6px 0% -6px 0(px)?\)$/);
+    });
+
+    it('no toca lo que se anuncia: role y aria-value* son los de siempre', async () => {
+      await setInputs({ value: 40, wave: true });
+
+      expect(host().getAttribute('role')).toBe('progressbar');
+      expect(host().getAttribute('aria-valuenow')).toBe('40');
+      expect(host().querySelector('.progress__wave')?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('en indeterminada se ignora: no hay posición que dibujar', async () => {
+      await setInputs({ value: null, wave: true });
+
+      expect(host().querySelector('.progress__wave')).toBeNull();
+      expect(host().classList).toContain('progress--indeterminate');
+    });
+
+    it('con la punta, ésta sigue a la posición del avance', async () => {
+      await setInputs({ value: 60, wave: true, showMarker: true });
+
+      expect(host().querySelector<HTMLElement>('.progress__marker')?.style.left).toBe('60%');
+    });
+
+    it('cada clase que dibuja el latido tiene su regla en la hoja', () => {
+      const css = readFileSync(PROGRESS_CSS, 'utf8');
+
+      for (const clase of ['progress--wave', 'progress__wave', 'progress__wave-track', 'progress__wave-fill']) {
+        expect(css, `falta una regla para .${clase}`).toMatch(new RegExp(`\\.${clase}(?![\\w-])`));
+      }
+    });
+  });
+
   describe('prefers-reduced-motion', () => {
     it('la animación indeterminada se ralentiza: una barra quieta se lee colgada', () => {
       const css = readFileSync(PROGRESS_CSS, 'utf8');

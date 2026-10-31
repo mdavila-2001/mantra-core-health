@@ -2303,6 +2303,7 @@ describe('AgendaCreate', () => {
     fixture.detectChanges();
     expect(row.getAttribute('aria-expanded')).toBe('false');
   });
+
   /**
    * `practiceId` viajaba siempre vacío: el control existía y nada lo llenaba.
    * Sale de `GET /practices` de la organización activa.

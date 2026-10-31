@@ -40,13 +40,13 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { Card } from '../../../../shared/components/molecules/card/card';
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { BranchBulkImport } from '../../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
 import type { BranchDraft } from '../../../../shared/utils/branch-import/branch-import';
 import { createBranchesInSeries } from '../../../organization/organization-branches/create-branches-in-series';
-import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { historialDeCursor } from '../../../../shared/components/organisms/data-table/cursor-history';
@@ -368,9 +368,10 @@ export class OrganizationDetail {
     return estado === 'ready' || estado === 'empty';
   });
 
-  protected readonly nombresDeSucursales = computed(() =>
-    this.sucursalesCargadas().map((sucursal) => sucursal.name),
-  );
+  protected readonly nombresDeSucursales = computed(() => {
+    const estado = this.sucursales();
+    return estado.status === 'ready' ? estado.data.map((sucursal) => sucursal.name) : [];
+  });
 
   protected abrirCargaEnLote(): void {
     this.rechazosDelLote.set([]);
@@ -390,7 +391,8 @@ export class OrganizationDetail {
     if (tenantId === '' || this.creandoLote() || lote.length === 0) {
       return;
     }
-    const codigosTomados = this.sucursalesCargadas().map((sucursal) => sucursal.code);
+    const estado = this.sucursales();
+    const codigosTomados = estado.status === 'ready' ? estado.data.map((sucursal) => sucursal.code) : [];
 
     this.creandoLote.set(true);
     this.rechazosDelLote.set([]);
@@ -658,7 +660,6 @@ export class OrganizationDetail {
     }
     return estado;
   }
-
 }
 
 /** Una rama del `forkJoin` que se resolvió con fallo en vez de con datos. */

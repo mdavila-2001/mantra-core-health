@@ -35,12 +35,12 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import { crearBuscadorDePersonas } from '../people-search';
 import { errorMessageOf } from '../../../../shared/forms/form-support';
 
 /** S6 del envío: la organización de la ruta no está (o no se puede ver). */
 const ORGANIZACION_NO_ENCONTRADA =
   'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
-import { crearBuscadorDePersonas } from '../people-search';
 
 /** Cuántos candidatos trae cada búsqueda del combobox de persona. */
 const CANDIDATOS_POR_BUSQUEDA = 10;

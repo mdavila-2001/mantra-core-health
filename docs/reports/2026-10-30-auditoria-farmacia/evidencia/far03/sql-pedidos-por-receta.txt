@@ -1,0 +1,13 @@
+         receta         |               estado               | pedidos | pedido_envases 
+------------------------+------------------------------------+---------+----------------
+ far3-enc-A-amox2       | pharmacy_inventory:ORDER_ENVIADO   |       1 |              1
+ far3-enc-B-para2-draft | pharmacy_inventory:ORDER_ENVIADO   |       1 |              1
+ far3-expired-soon      | pharmacy_inventory:ORDER_ENVIADO   |       2 |              2
+ far3-idem-bottle1      | pharmacy_inventory:ORDER_ENVIADO   |       1 |              1
+ far3-ok-bottle3        | pharmacy_inventory:ORDER_CANCELADO |       1 |              2
+ far3-ok-bottle3        | pharmacy_inventory:ORDER_ENVIADO   |       2 |              3
+ far3-race-bottle3      | pharmacy_inventory:ORDER_ENVIADO   |       3 |              3
+ far3-replaced-orig     | pharmacy_inventory:ORDER_ENVIADO   |       1 |              1
+ far3-tablet21          | pharmacy_inventory:ORDER_ENVIADO   |       1 |              5
+(9 rows)
+

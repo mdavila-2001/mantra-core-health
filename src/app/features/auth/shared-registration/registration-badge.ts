@@ -168,9 +168,9 @@ const SPARKS: readonly Spark[] = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
       block-size: 0.5rem;
       margin: -0.25rem 0 0 -0.25rem;
       border-radius: var(--r-full);
-      background: var(--c);
+      background: var(--c, currentColor);
       opacity: 0;
-      animation: badge-spark 900ms var(--ease-out) calc(300ms + var(--n) * 40ms) both;
+      animation: badge-spark 900ms var(--ease-out) calc(300ms + var(--n, 0) * 40ms) both;
     }
 
     @keyframes badge-spark {
@@ -183,7 +183,7 @@ const SPARKS: readonly Spark[] = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
       }
       100% {
         opacity: 0;
-        transform: translate(var(--x), var(--y)) scale(1);
+        transform: translate(var(--x, 0px), var(--y, 0px)) scale(1);
       }
     }
 

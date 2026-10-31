@@ -1,0 +1,140 @@
+<section class="infra" aria-labelledby="infra-titulo">
+  <h2 id="infra-titulo" class="sr-only">Infraestructura del establecimiento</h2>
+
+  <div class="infra__barra">
+    @if (sitios().length > 1) {
+      <label class="infra__sitio">
+        <span>Establecimiento</span>
+        <select
+          data-testid="infra-sitio"
+          [value]="sitioId()"
+          (change)="elegirSitio($any($event.target).value)"
+        >
+          @for (sitio of sitios(); track sitio.id) {
+            <option [value]="sitio.id" [selected]="sitio.id === sitioId()">{{ sitio.name }}</option>
+          }
+        </select>
+      </label>
+    }
+    <app-segmented-control
+      [options]="vistas"
+      [value]="vista()"
+      ariaLabel="Qué árbol mirar"
+      (valueChange)="elegirVista($event)"
+    />
+    @if (puedeEscribir()) {
+      <div class="infra__acciones">
+        <a app-button size="sm" [routerLink]="rutaDeAlta" [queryParams]="parametrosDeAlta(null)" data-testid="infra-nuevo">
+          Nuevo espacio
+        </a>
+        <a app-button size="sm" variant="outline" [routerLink]="rutaDeAltaMasiva" [queryParams]="parametrosDeAlta(espacio())" data-testid="infra-masiva">
+          Alta masiva
+        </a>
+        <a app-button size="sm" variant="outline" [routerLink]="rutaDeImportacion" [queryParams]="parametrosDeAlta(null)" data-testid="infra-importar">
+          Importar CSV
+        </a>
+      </div>
+    }
+  </div>
+
+  @if (!puedeEscribir()) {
+    <!-- Un reflejo, no una autorización: la API decide y responde 403 a quien
+         no administra. Se dice para que nadie busque botones que no van a estar. -->
+    <p class="infra__nota" data-testid="infra-solo-lectura">
+      Estás viendo la estructura en modo lectura: cambiarla es tarea de quien administra la organización o la sucursal.
+    </p>
+  }
+
+  <app-view-state-host [state]="estado()" (retry)="recargar()" (refresh)="recargar()">
+    @if (datos(); as d) {
+      @if (resumen(); as r) {
+        <p class="infra__resumen" data-testid="infra-resumen">
+          <strong>{{ r.espacios }}</strong> espacios · <strong>{{ r.camas }}</strong> camas y puestos activos ·
+          <strong>{{ r.unidades }}</strong> unidades · actualizado {{ r.actualizado }}
+          <button type="button" class="infra__refrescar" (click)="recargar()">Actualizar</button>
+        </p>
+      }
+
+      <div class="infra__cuerpo">
+        @if (vista() === 'fisica') {
+          <div class="infra__arbol">
+            <app-tree
+              data-testid="infra-arbol"
+              [label]="'Espacios de ' + d.site.name"
+              [items]="arbol()"
+              [selectedId]="elegido()"
+              (selectedIdChange)="elegirEspacio($event)"
+              [(expandedIds)]="abiertos"
+            />
+          </div>
+
+          <aside class="infra__panel" aria-label="Espacio elegido" data-testid="infra-panel">
+            @if (espacio(); as e) {
+              <header class="infra__panel-cabecera">
+                <h3 class="infra__panel-titulo">{{ e.name }}</h3>
+                <app-badge [variant]="varianteDe(e.status)">{{ e.status.display }}</app-badge>
+                @if (e.operationalStatus; as op) {
+                  <app-badge [variant]="varianteDe(op)">{{ op.display }}</app-badge>
+                }
+              </header>
+              <app-fact-list [hechos]="hechosDelEspacio()" etiqueta="Datos del espacio" />
+              <div class="infra__panel-acciones">
+                <a app-button size="sm" [routerLink]="rutaDeEspacio(e.id)" data-testid="infra-abrir-ficha">Abrir la ficha</a>
+                @if (puedeEscribir() && admiteHijos() && e.status.code !== 'SPACE_RETIRED') {
+                  <a app-button size="sm" variant="outline" [routerLink]="rutaDeAlta" [queryParams]="parametrosDeAlta(e)">
+                    Agregar un espacio adentro
+                  </a>
+                  <a app-button size="sm" variant="outline" [routerLink]="rutaDeAltaMasiva" [queryParams]="parametrosDeAlta(e)">
+                    Alta masiva adentro
+                  </a>
+                }
+              </div>
+            } @else {
+              <p class="infra__panel-vacio">
+                Elegí un espacio del árbol para ver sus datos. Con el teclado: flechas para recorrer,
+                derecha para abrir, Enter para elegir, y una letra para saltar.
+              </p>
+            }
+          </aside>
+        } @else {
+          <div class="infra__arbol">
+            <app-tree
+              data-testid="infra-arbol-unidades"
+              [label]="'Unidades de ' + d.site.name"
+              [items]="arbolOrganizativo()"
+              [selectedId]="unidadElegida()"
+              (selectedIdChange)="elegirUnidad($event)"
+              [(expandedIds)]="unidadesAbiertas"
+            />
+          </div>
+          <aside class="infra__panel" aria-label="Unidad elegida">
+            @if (unidad(); as u) {
+              <header class="infra__panel-cabecera">
+                <h3 class="infra__panel-titulo">{{ u.name }}</h3>
+                <app-badge [variant]="varianteDe(u.status)">{{ u.status.display }}</app-badge>
+              </header>
+              <p class="infra__panel-dato">{{ u.code }} · {{ u.type.display }}</p>
+              <h4 class="infra__panel-subtitulo">Espacios vinculados</h4>
+              @if (espaciosDeLaUnidad().length > 0) {
+                <ul class="infra__lista">
+                  @for (fila of espaciosDeLaUnidad(); track fila.asignacion.id) {
+                    <li>
+                      <a [routerLink]="rutaDeEspacio(fila.espacio.id)">{{ fila.espacio.name }}</a>
+                      <span class="infra__secundario">{{ fila.espacio.code }} · {{ fila.asignacion.role.display }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="infra__panel-vacio">
+                  Ningún espacio está vinculado a esta unidad. Se vincula desde la pestaña «Unidades» de la ficha de cada espacio.
+                </p>
+              }
+            } @else {
+              <p class="infra__panel-vacio">Elegí una unidad para ver qué espacios ocupa.</p>
+            }
+          </aside>
+        }
+      </div>
+    }
+  </app-view-state-host>
+</section>

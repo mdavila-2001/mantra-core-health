@@ -142,6 +142,15 @@ describe('PharmaciesDirectory · la ficha vive dentro del panel', () => {
     }
   });
 
+  it('embebido en otro contenedor no repite «Abiertas ahora»: queda sólo el directorio', () => {
+    fixture.componentRef.setInput('embebido', true);
+    fixture.detectChanges();
+
+    const pantalla = fixture.nativeElement as HTMLElement;
+    expect(pantalla.querySelector('[data-testid="abiertas-ahora"]')).toBeNull();
+    expect(pantalla.querySelectorAll('[app-result-card]').length).toBe(FICHAS.length);
+  });
+
   it('P34 · «Abiertas ahora» va arriba, con la hora de Bolivia y la ficha de la farmacia', () => {
     const pantalla = fixture.nativeElement as HTMLElement;
     const seccion = pantalla.querySelector('[data-testid="abiertas-ahora"]');

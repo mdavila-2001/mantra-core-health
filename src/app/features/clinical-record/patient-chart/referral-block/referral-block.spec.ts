@@ -105,6 +105,15 @@ describe('ReferralBlock', () => {
     for (const r of http.match((req) => req.url === '/terminology/concepts')) {
       r.flush({ items: [], count: 0, limit: 200 });
     }
+    // El estado del consentimiento de cada fila y las sedes de una organización
+    // se leen aparte: se responden vacíos para que `verify()` hable de lo que
+    // cada prueba mira.
+    for (const r of http.match((req) => req.url === '/consent/treatment-informed-consents')) {
+      r.flush({ items: [] });
+    }
+    for (const r of http.match((req) => /^\/tenants\/[^/]+\/branches$/.test(req.url))) {
+      r.flush({ items: [], count: 0 });
+    }
     http.verify();
   });
 
@@ -201,7 +210,7 @@ describe('ReferralBlock', () => {
 
   /* -- Tipo y envío ---------------------------------------------------------- */
 
-  it('el tipo viene en Tratamiento y las cinco opciones están en castellano', () => {
+  it('el tipo viene en Tratamiento y las ocho opciones de la API están en castellano', () => {
     create();
     expect(writable<string | null>('referralType')()).toBe('TREATMENT');
     expect(member<readonly { label: string }[]>('typeOptions').map((o) => o.label)).toEqual([
@@ -210,6 +219,9 @@ describe('ReferralBlock', () => {
       'Estudio diagnóstico',
       'Procedimiento',
       'Segunda opinión',
+      'Terapia',
+      'Internación',
+      'Otro',
     ]);
   });
 
@@ -241,7 +253,13 @@ describe('ReferralBlock', () => {
     });
     expect(req.request.body.referringProfileId).toBeUndefined();
     req.flush(ALTA, { status: 201, statusText: 'Created' });
+    // Tratamiento ofrece consentimiento: el detalle se abre solo, leído del servidor.
+    http
+      .expectOne((r) => r.url === '/referrals/ref-1' && r.method === 'GET')
+      .flush({ ...ALTA, status: 'PENDING', referralType: 'TREATMENT', targetProfileId: 'hp-1' });
     fixture.detectChanges();
+    expect(member<{ opened: () => Referral | null }>('detail').opened()?.id).toBe('ref-1');
+    expect(member<{ justIssued: () => boolean }>('detail').justIssued()).toBe(true);
 
     expect(changes).toBe(1);
     expect(member<() => string | null>('referredTo')()).toContain('Lucía Mendoza');
@@ -257,6 +275,10 @@ describe('ReferralBlock', () => {
     pickTarget([HOSPITAL]);
     writable<string | null>('referralType').set('SECOND_OPINION');
     writable<Date | null>('validUntil').set(new Date(2026, 11, 31));
+    // Sin un servicio del catálogo, la API v4266 exige el servicio en texto y
+    // el resumen clínico: se cargan acá (antes, el cuerpo sin ellos era válido).
+    writable<string>('requestedService').set(' Segunda opinión quirúrgica ');
+    writable<string>('clinicalSummary').set('Hernia inguinal derecha.');
 
     member<() => void>('submit')();
 
@@ -266,6 +288,8 @@ describe('ReferralBlock', () => {
       sourceEncounterId: 'enc-1',
       targetTenantId: 't-hospital',
       referralType: 'SECOND_OPINION',
+      requestedServiceText: 'Segunda opinión quirúrgica',
+      clinicalSummary: 'Hernia inguinal derecha.',
       validUntil: '2026-12-31',
     });
     req.flush(ALTA);
@@ -285,6 +309,7 @@ describe('ReferralBlock', () => {
   it('un 409 es un aviso («ya la derivó»), no un error', () => {
     create();
     pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
     member<() => void>('submit')();
     http
       .expectOne((r) => r.url === '/referrals' && r.method === 'POST')
@@ -304,6 +329,7 @@ describe('ReferralBlock', () => {
     let changes = 0;
     fixture.componentInstance.cambio.subscribe(() => (changes += 1));
     pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
     member<() => void>('submit')();
     http
       .expectOne((r) => r.url === '/referrals' && r.method === 'POST')
@@ -323,6 +349,7 @@ describe('ReferralBlock', () => {
   it('una validación del servidor se muestra con su mensaje', () => {
     create();
     pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
     member<() => void>('submit')();
     http.expectOne((r) => r.url === '/referrals' && r.method === 'POST').flush(
       {
@@ -351,6 +378,81 @@ describe('ReferralBlock', () => {
     member<() => void>('loadServices')();
     http.expectOne((r) => r.url === '/referrals/target-services').flush({ items: [FISIO] });
     expect(member<() => ViewState<unknown>>('services')().status).toBe('ready');
+  });
+
+  /* -- v4266: externo, sede, lo clínico ----------------------------------- */
+
+  it('sin servicio del catálogo no envía: dice junto al campo que faltan el servicio y el resumen', () => {
+    create();
+    pickTarget([LUCIA]);
+    member<() => void>('submit')();
+    http.expectNone((r) => r.url === '/referrals' && r.method === 'POST');
+    fixture.detectChanges();
+    expect(host().querySelector('[data-testid="referral-issues"]')).not.toBeNull();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('servicio');
+    expect(member<(f: string) => string>('issueFor')('clinicalSummary')).toContain('resumen clínico');
+  });
+
+  it('a un destino externo: no busca, manda nombre, contacto y lo clínico', () => {
+    create();
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    fixture.detectChanges();
+    expect(host().querySelector('[data-testid="referral-services"]')).toBeNull();
+    expect(member<() => boolean>('canSubmit')()).toBe(false);
+    writable<string>('externalName').set('Centro de Hemodiálisis Norte');
+    writable<string>('externalContact').set('3 333 4444');
+    writable<string | null>('referralType').set('THERAPY');
+    writable<string>('requestedService').set('Hemodiálisis');
+    writable<string>('clinicalSummary').set('ERC estadio 5.');
+    writable<string>('diagnosis').set('N18.5');
+    writable<string>('treatmentGiven').set('Dieta hipoproteica.');
+    expect(member<() => boolean>('canSubmit')()).toBe(true);
+
+    member<() => void>('submit')();
+    const req = http.expectOne((r) => r.url === '/referrals' && r.method === 'POST');
+    expect(req.request.body).toEqual({
+      patientProfileId: 'pat-1',
+      sourceEncounterId: 'enc-1',
+      targetExternalName: 'Centro de Hemodiálisis Norte',
+      targetExternalContact: '3 333 4444',
+      referralType: 'THERAPY',
+      requestedServiceText: 'Hemodiálisis',
+      clinicalSummary: 'ERC estadio 5.',
+      diagnosisText: 'N18.5',
+      treatmentGivenText: 'Dieta hipoproteica.',
+    });
+    req.flush(ALTA);
+    http.expectOne((r) => r.url === '/referrals/ref-1').flush({ ...ALTA, status: 'PENDING', referralType: 'THERAPY' });
+  });
+
+  it('a una organización ofrece sus sedes y manda la elegida', () => {
+    create();
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
+    member<(q: string) => void>('search')('san');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({ items: [HOSPITAL] });
+    member<(o: ReferenceOption) => void>('choose')(member<() => readonly ReferenceOption[]>('targetOptions')()[0]!);
+    http.expectOne((r) => r.url === '/referrals/target-services').flush({ items: [FISIO] });
+    http
+      .expectOne((r) => r.url === '/tenants/t-hospital/branches')
+      .flush({ count: 1, items: [{ id: 'b-norte', tenantId: 't-hospital', code: 'N', name: 'Anexo Norte' }] });
+    fixture.detectChanges();
+    expect(host().querySelector('[data-testid="referral-branch"]')).not.toBeNull();
+
+    writable<string | null>('selectedBranch').set('b-norte');
+    writable<string | null>('selectedService').set('s-fisio');
+    writable<string | null>('referralType').set('CONSULTATION');
+    member<() => void>('submit')();
+    const req = http.expectOne((r) => r.url === '/referrals' && r.method === 'POST');
+    expect(req.request.body).toMatchObject({ targetTenantId: 't-hospital', targetBranchId: 'b-norte' });
+    req.flush(ALTA);
+  });
+
+  it('sin escritura sobre la historia no ofrece el formulario, pero sí la lista', () => {
+    create();
+    fixture.componentRef.setInput('canWrite', false);
+    fixture.detectChanges();
+    expect(host().querySelector('[data-testid="referral-read-only"]')).not.toBeNull();
+    expect(host().querySelector('[data-testid="referral-submit"]')).toBeNull();
   });
 
   /* -- La lista -------------------------------------------------------------- */
@@ -400,6 +502,54 @@ describe('ReferralBlock', () => {
       // El código manda: el rótulo del catálogo en inglés no llega a la pantalla.
       expect(rows[0]?.textContent).toContain('Aceptada');
       expect(rows[0]?.textContent).not.toContain('Referral accepted');
+    });
+
+    it('con el estado legible de la API no depende del catálogo; dice sede, consentimiento y abre el detalle', () => {
+      create();
+      fixture.componentRef.setInput(
+        'referrals',
+        ready([
+          {
+            ...REFERRAL,
+            status: 'COMPLETED',
+            targetTenantName: 'Hospital San Lucas',
+            targetBranchName: 'Anexo Norte',
+            informedConsentId: 'c-1',
+          } satisfies Referral,
+        ]),
+      );
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
+      fixture.detectChanges();
+      const row = host().querySelector('[data-testid="referral-row"]')!;
+      expect(row.textContent).toContain('Hospital San Lucas · Anexo Norte');
+      expect(row.textContent).toContain('Con contrarreferencia');
+      expect(row.querySelector('[data-testid="referral-consent-linked"]')).not.toBeNull();
+
+      row.querySelector<HTMLElement>('[data-testid="referral-open"] button, [data-testid="referral-open"]')!.click();
+      http.expectOne((r) => r.url === '/referrals/r-1').flush({
+        id: 'r-1',
+        patientProfileId: 'pat-1',
+        statusConceptId: 'st-aceptada',
+        createdAt: '2026-10-20T12:00:00.000Z',
+        status: 'COMPLETED',
+        referralType: 'TREATMENT',
+        informedConsentId: 'c-1',
+      });
+      fixture.detectChanges();
+      expect(member<{ opened: () => Referral | null }>('detail').opened()?.status).toBe('COMPLETED');
+    });
+
+    it('si la derivación ya no se puede abrir (404), lo dice en palabras', () => {
+      create();
+      member<{ open: (id: string) => void }>('detail').open('r-x');
+      http
+        .expectOne((r) => r.url === '/referrals/r-x')
+        .flush(
+          { code: 'NOT_FOUND', reason: 'REFERRAL_NOT_FOUND', message: 'x' },
+          { status: 404, statusText: 'Not Found' },
+        );
+      expect(member<{ openingError: () => string | null }>('detail').openingError()).toContain('No encontramos esta derivación');
     });
 
     it('se sigue viendo sin encuentro abierto', () => {

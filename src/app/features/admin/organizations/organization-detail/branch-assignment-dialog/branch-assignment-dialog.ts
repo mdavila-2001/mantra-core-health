@@ -88,7 +88,7 @@ export class BranchAssignmentDialog {
     errorMessageOf(
       this.envio(),
       'Sólo quien administra la organización puede asignar sedes.',
-      'No encontramos a esta persona en la plantilla: puede que ya no forme parte. Cierre y recargue la ficha.',
+      'No encontramos a esta persona en la plantilla: puede que ya no forme parte. Cerrá y recargá la ficha.',
     ),
   );
 

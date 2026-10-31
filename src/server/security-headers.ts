@@ -43,6 +43,8 @@ export interface SecurityHeadersOptions {
    * otro, y viene de `PUBLIC_API_BASE_URL`.
    */
   readonly apiBaseUrl?: string;
+  /** Raíz del servicio de IA cuando vive en otro dominio. */
+  readonly aiBaseUrl?: string;
   /**
    * Hashes `sha256-…` de los scripts en línea que hay que autorizar.
    *
@@ -218,6 +220,10 @@ export const NOMINATIM_ORIGIN = 'https://nominatim.openstreetmap.org';
  */
 export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): string {
   const apiOrigin = originOf(options.apiBaseUrl);
+  const aiOrigin = originOf(options.aiBaseUrl);
+  const connectOrigins = [apiOrigin, aiOrigin].filter(
+    (origin, index, origins): origin is string => origin !== null && origins.indexOf(origin) === index,
+  );
   const scriptHashes = options.inlineScriptHashes ?? [];
   const upgrade = options.upgradeInsecureRequests ?? true;
 
@@ -252,7 +258,7 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // `nominatim.openstreetmap.org` (28/10/2026): el respaldo de la calle del
     // mapa cuando la API no alcanza al geocodificador
     // (`reverse-geocoding.client.ts`). Un host exacto, sólo para conexiones.
-    `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`} ${NOMINATIM_ORIGIN}`,
+    `connect-src 'self'${connectOrigins.length === 0 ? '' : ` ${connectOrigins.join(' ')}`} ${NOMINATIM_ORIGIN}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     // El visor de resultados usa blob: y la ayuda psicológica incrusta videos

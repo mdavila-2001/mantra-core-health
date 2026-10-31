@@ -246,3 +246,50 @@ export interface LabResultTargetPage {
   readonly items: readonly LabResultTarget[];
   readonly count: number;
 }
+
+/* ---- órdenes (31/10/2026) ------------------------------------------------ */
+
+/**
+ * En qué punto está una orden que le derivaron al laboratorio o al centro de
+ * imagenología. El camino es `DRAFT → RECEIVED → PROCESSED → UPLOADED`;
+ * `CANCELLED` y `REJECTED` son las salidas de una orden ya recibida.
+ *
+ * `UPLOADED` no se guarda: lo decide el servidor cuando una orden procesada
+ * tiene al menos un resultado subido y disponible. Es el único estado desde el
+ * que se descarga.
+ */
+export type LabOrderStatus =
+  | 'DRAFT'
+  | 'RECEIVED'
+  | 'PROCESSED'
+  | 'UPLOADED'
+  | 'CANCELLED'
+  | 'REJECTED';
+
+/** Lo que el personal le hace a una orden desde su fila. */
+export type LabOrderAction = 'RECEIVE' | 'PROCESS' | 'CANCEL' | 'REJECT';
+
+/** Un resultado ya subido, lo justo para descargarlo. */
+export interface LabOrderFile {
+  readonly id: string;
+  readonly fileName: string;
+  readonly sizeBytes: number;
+}
+
+/** Una orden de la bandeja, con su estado y los archivos que ya tiene. */
+export interface LabOrder {
+  readonly orderId: string;
+  readonly studyName: string;
+  readonly patientName: string;
+  readonly requesterName: string;
+  readonly requestedAt: string;
+  readonly status: LabOrderStatus;
+  /** El motivo de una orden cancelada o rechazada, si se dio. */
+  readonly reason: string | null;
+  readonly files: readonly LabOrderFile[];
+}
+
+export interface LabOrderPage {
+  readonly items: readonly LabOrder[];
+  readonly count: number;
+}

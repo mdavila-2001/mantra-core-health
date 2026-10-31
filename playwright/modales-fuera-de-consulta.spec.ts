@@ -211,11 +211,8 @@ const CASOS: Readonly<Record<string, readonly Caso[]>> = {
     },
   ],
   laboratorio: [
-    {
-      nombre: 'laboratorio-recibir-muestra',
-      ruta: '/laboratory/reception',
-      abrir: (p) => p.getByTestId('lab-reception-receive').first().click(),
-    },
+    // «Recibir muestra» salió del flujo el 31/10/2026: recibir es una acción de «Órdenes»
+    // (`/administration/laboratory-orders`) y ya no abre un modal.
     {
       nombre: 'laboratorio-sucursal',
       ruta: '/administration/laboratory-branches',

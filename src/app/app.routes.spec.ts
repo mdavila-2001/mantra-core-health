@@ -344,24 +344,6 @@ describe('rutas del armazón', () => {
     }
   });
 
-  it('«my-organizations» abre «Organización médica» en la pestaña «Mis vinculaciones»', async () => {
-    const vieja = [...hijas, ...routes].find((r) => r.path === 'my-organizations');
-    expect(vieja?.redirectTo).toBeDefined();
-
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter([
-          { path: 'my-organizations', pathMatch: 'full', redirectTo: vieja!.redirectTo! },
-          { path: 'administration/medical-organization', children: [] },
-        ]),
-      ],
-    });
-    const router = TestBed.inject(Router);
-    await router.navigateByUrl('/my-organizations');
-
-    expect(router.url).toBe('/administration/medical-organization?tab=memberships');
-  });
-
   /**
    * Y no pueden tapar a ninguna pantalla.
    *
@@ -838,6 +820,57 @@ describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
   it('Cotizaciones sigue resolviendo en su propia ruta', async () => {
     expect(await terminaEn('/my-account/quotations')).toEqual({
       ruta: '/my-account/quotations',
+      query: {},
+    });
+  });
+});
+
+/**
+ * Dos direcciones viejas que abren una pestaña concreta de la pantalla que las
+ * absorbió: «Mis organizaciones» (ahora «Mis vinculaciones») y el seguimiento de
+ * trámites de identidad (ahora «Mis trámites»). Un `redirectTo` de texto no
+ * conserva el query, así que son funciones; acá se fija adónde terminan.
+ */
+describe('las direcciones viejas que abren una pestaña', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  async function terminaEn(url: string): Promise<{ ruta: string; query: Record<string, unknown> }> {
+    const ok = await router.navigateByUrl(url);
+    expect(ok, url).not.toBe(false);
+    return {
+      ruta: location.path().split('?')[0] ?? '',
+      query: { ...router.parseUrl(location.path()).queryParams },
+    };
+  }
+
+  it('`/my-organizations` termina en la pestaña «Mis vinculaciones»', async () => {
+    expect(await terminaEn('/my-organizations')).toEqual({
+      ruta: '/administration/medical-organization',
+      query: { tab: 'memberships' },
+    });
+  });
+
+  it('`/my-account/identity/cases` termina en la pestaña «Mis trámites» y conserva el query', async () => {
+    expect(await terminaEn('/my-account/identity/cases')).toEqual({
+      ruta: '/my-account/identity',
+      query: { tab: 'cases' },
+    });
+    expect(await terminaEn('/my-account/identity/cases?foo=bar')).toEqual({
+      ruta: '/my-account/identity',
+      query: { tab: 'cases', foo: 'bar' },
+    });
+  });
+
+  it('`/my-account/identity/verify` sigue abriendo la pestaña de verificar', async () => {
+    expect(await terminaEn('/my-account/identity/verify')).toEqual({
+      ruta: '/my-account/identity',
       query: {},
     });
   });

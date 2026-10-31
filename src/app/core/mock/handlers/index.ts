@@ -6,6 +6,7 @@ import { registerPaymentReceipts } from './payment-receipts.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registerReferralLifecycle } from './referral-lifecycle.handlers';
 import { registerReferrals } from './referrals.handlers';
 import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
@@ -22,8 +23,15 @@ import { registrarFinanzas } from './finance.handlers';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
 import { registrarContabilidadSimple } from './simple-accounting.handlers';
 import { registrarIdentidad } from './identity.handlers';
+import { registrarInfraestructura } from './infrastructure.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
-import { registrarPortalDeLaboratorio } from './lab-portal.handlers';
+import { registrarOrdenesDeLaboratorio } from './lab-orders.handlers';
+import {
+  destinoDeOrden,
+  laboratorioDe,
+  registrarPortalDeLaboratorio,
+  resultadosDeLaboratorio,
+} from './lab-portal.handlers';
 import { registerLoyalty } from './loyalty.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
 import { registrarNotificaciones } from './notifications.handlers';
@@ -33,14 +41,15 @@ import { registrarLibretaDeDirecciones } from './address-book.handlers';
 import { registerPrimaryPractitioner } from './primary-practitioner.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
+import { registerTreatmentInformedConsents } from './treatment-informed-consents.handlers';
 import { registrarPublico } from './public.handlers';
 import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
 import { registerInsuranceCampaigns } from './insurance-campaigns.handlers';
 import { registerInsurancePortability } from './insurance-portability.handlers';
 import { registerInsurerReceivedClaims } from './insurer-received-claims.handlers';
 import { registrarSeguros } from './insurance.handlers';
-import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
 import { registerPractitionerInsurerRequests } from './practitioner-insurer-requests.handlers';
+import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
@@ -86,11 +95,13 @@ export function crearRouterSimulado(): MockRouter {
   registerHealthcareServices(router);
   registerRoleAssignments(router);
   registrarPracticas(router);
+  registrarInfraestructura(router);
   registrarClinica(router);
   // FAR-01 · el enlace para compartir una receta (`/clinical/prescription-shares`, `/public/prescription-shares`).
   registerPrescriptionShares(router);
   registerPharmacyPrescriptionShares(router);
   registerReferrals(router);
+  registerReferralLifecycle(router);
   registerReceivedServices(router);
   registerProcedureCenters(router);
   registerMedicalNotes(router);
@@ -117,8 +128,14 @@ export function crearRouterSimulado(): MockRouter {
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
   registrarDiagnostico(router);
+  registrarOrdenesDeLaboratorio(router, {
+    laboratorioDe,
+    destinoDeOrden,
+    archivos: resultadosDeLaboratorio,
+  });
   registrarPortalDeLaboratorio(router);
   registrarProcedimientos(router);
+  registerTreatmentInformedConsents(router);
   registrarLaboratorioFarmaceutico(router);
   registerLoyalty(router);
   registrarVarios(router);

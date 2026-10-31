@@ -83,7 +83,7 @@ function mensajeDeFallo(fallo: unknown): string {
     case 'offline':
       return 'No pudimos buscar personas: revise su conexión e intente de nuevo.';
     case 'forbidden':
-      return `No pudimos buscar personas: ${estado.message || 'su cuenta no tiene permiso para hacerlo.'}`;
+      return `No pudimos buscar personas: ${estado.message ?? 'su cuenta no tiene permiso para hacerlo.'}`;
     case 'error':
       return `No pudimos buscar personas. Intente de nuevo; si sigue, repórtelo con el código ${estado.requestId}.`;
     case 'validation':

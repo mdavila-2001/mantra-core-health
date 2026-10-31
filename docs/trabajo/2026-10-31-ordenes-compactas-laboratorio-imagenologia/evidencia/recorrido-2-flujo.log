@@ -1,0 +1,20 @@
+[390] inicio: Borrador
+[390] menú de la fila: ["Recibir","Marcar como procesada","Subir resultados","Descargar"]
+[390] deshabilitados: [false,"true","true","true"]
+[390] tras Recibir: Recibida
+[390] tras Marcar como procesada: Procesada
+[390] tras Subir resultados: Subidos · 1 archivo
+[390] descarga: hemograma-sintetico-390.pdf bytes=23 iguales=true
+[390] tras recargar: Subidos
+[390] pedidos: []
+[390] errores de consola/red: ninguno
+[1440] inicio: Borrador
+[1440] menú de la fila: ["Recibir","Marcar como procesada","Subir resultados","Descargar"]
+[1440] deshabilitados: [false,"true","true","true"]
+[1440] tras Recibir: Recibida
+[1440] tras Marcar como procesada: Procesada
+[1440] tras Subir resultados: Subidos · 1 archivo
+[1440] descarga: hemograma-sintetico-1440.pdf bytes=24 iguales=true
+[1440] tras recargar: Subidos
+[1440] pedidos: []
+[1440] errores de consola/red: ninguno
