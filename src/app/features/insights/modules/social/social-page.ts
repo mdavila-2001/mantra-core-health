@@ -16,6 +16,7 @@ import { shortDate, daysBetween, addDays } from '../../domain/dates';
 import { formatChange, formatValue } from '../../domain/format';
 import { PLATFORM_METRICS, PLATFORM_NAMES, PLATFORMS, SOCIAL_METRICS, followersIndex, socialKpi, socialSeries, topPosts, type Platform, type SocialKpi } from '../../domain/social';
 import { InsightsContext } from '../../insights-context';
+import { PostsAnalysis } from './posts-analysis';
 
 /**
  * Módulo 04 · ¿Qué está pasando objetivamente en nuestras redes?
@@ -26,7 +27,7 @@ import { InsightsContext } from '../../insights-context';
  */
 @Component({
   selector: 'app-insights-social',
-  imports: [ViewStateHost, FilterBar, Panel, SegmentedControl, Select, LineChart, BarChart, StatusPill],
+  imports: [ViewStateHost, FilterBar, Panel, SegmentedControl, Select, LineChart, BarChart, StatusPill, PostsAnalysis],
   templateUrl: './social-page.html',
   styleUrl: './social-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
