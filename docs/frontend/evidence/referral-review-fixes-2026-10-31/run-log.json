@@ -132,7 +132,7 @@
     {
       "name": "L: «Vigencia» alineada con «Tipo» a 768",
       "ok": true,
-      "detail": "480 vs 480"
+      "detail": "560 vs 560"
     },
     {
       "name": "sin desborde horizontal a 1440",
@@ -142,7 +142,7 @@
     {
       "name": "L: «Vigencia» alineada con «Tipo» a 1440",
       "ok": true,
-      "detail": "455 vs 455"
+      "detail": "535 vs 535"
     },
     {
       "name": "sin desborde horizontal a 1920",
@@ -152,7 +152,7 @@
     {
       "name": "L: «Vigencia» alineada con «Tipo» a 1920",
       "ok": true,
-      "detail": "455 vs 455"
+      "detail": "535 vs 535"
     }
   ],
   "measures": {
@@ -160,31 +160,31 @@
     "rowsAfterSubmit": 5,
     "typeVsValidUntil768": {
       "type": {
-        "y": 480,
+        "y": 560,
         "height": 96
       },
       "validUntil": {
-        "y": 480,
+        "y": 560,
         "height": 94
       }
     },
     "typeVsValidUntil1440": {
       "type": {
-        "y": 455,
+        "y": 535,
         "height": 92
       },
       "validUntil": {
-        "y": 455,
+        "y": 535,
         "height": 90
       }
     },
     "typeVsValidUntil1920": {
       "type": {
-        "y": 455,
+        "y": 535,
         "height": 92
       },
       "validUntil": {
-        "y": 455,
+        "y": 535,
         "height": 90
       }
     }

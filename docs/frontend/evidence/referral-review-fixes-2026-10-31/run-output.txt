@@ -22,9 +22,9 @@ OK    sin desborde horizontal a 390 (modal)
 OK    persistencia: tras F5 la casilla cuenta una más 4 → 5
 OK    persistencia: tras F5 la fila nueva sigue en la lista 5 filas
 OK    sin desborde horizontal a 768 
-OK    L: «Vigencia» alineada con «Tipo» a 768 480 vs 480
+OK    L: «Vigencia» alineada con «Tipo» a 768 560 vs 560
 OK    sin desborde horizontal a 1440 
-OK    L: «Vigencia» alineada con «Tipo» a 1440 455 vs 455
+OK    L: «Vigencia» alineada con «Tipo» a 1440 535 vs 535
 OK    sin desborde horizontal a 1920 
-OK    L: «Vigencia» alineada con «Tipo» a 1920 455 vs 455
+OK    L: «Vigencia» alineada con «Tipo» a 1920 535 vs 535
 28/28 aserciones; 0 pageerror
