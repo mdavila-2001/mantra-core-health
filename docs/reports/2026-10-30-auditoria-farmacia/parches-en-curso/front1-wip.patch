@@ -1,0 +1,215 @@
+diff --git a/src/app/features/account/medical-record/where-to-buy/orderable-prescription.spec.ts b/src/app/features/account/medical-record/where-to-buy/orderable-prescription.spec.ts
+index fe99bee7..331f1589 100644
+--- a/src/app/features/account/medical-record/where-to-buy/orderable-prescription.spec.ts
++++ b/src/app/features/account/medical-record/where-to-buy/orderable-prescription.spec.ts
+@@ -8,7 +8,12 @@ import { PACIENTE } from '../../../../core/mock/fixtures/people';
+ import { registrarClinica } from '../../../../core/mock/handlers/clinical.handlers';
+ import { MockRouter, type MockMethod, type MockReply } from '../../../../core/mock/mock-router';
+ import { buscarUsuario, type MockUser } from '../../../../core/mock/mock-session';
+-import { isOrderableRow, orderablePrescriptionOf } from './orderable-prescription';
++import {
++  ISSUED_STATUS_CODE,
++  isOrderableRow,
++  orderablePrescriptionOf,
++  prescriptionStateOf,
++} from './orderable-prescription';
+ 
+ /** Una fila del resumen clínico de la receta `enc-a`, con lo mínimo que se mira. */
+ function row(id: string): MedicationRequest {
+@@ -23,15 +28,18 @@ function row(id: string): MedicationRequest {
+ 
+ const NOW = new Date('2026-10-30T12:00:00.000Z');
+ 
+-/** Los estados de un ítem de receta, con los códigos del catálogo de la API. */
++/**
++ * Los estados de un ítem de receta, con los códigos que devuelve la API real en
++ * `GET /terminology/concepts` (`<módulo>:<clave>`; auditoría FAR-03, H3-01).
++ */
+ const STATUS_LABELS: ConceptLabels = new Map(
+   (
+     [
+-      ['st-emitida', 'MR_ISSUED'],
+-      ['st-borrador', 'MR_DRAFT'],
+-      ['st-anulada', 'MR_INVALIDATED'],
+-      ['st-reemplazada', 'MR_REPLACED'],
+-      ['st-completada', 'MR_COMPLETED'],
++      ['st-emitida', 'clinical:MEDICATION_REQUEST_ISSUED'],
++      ['st-borrador', 'clinical:MEDICATION_REQUEST_DRAFT'],
++      ['st-anulada', 'clinical:MEDICATION_REQUEST_INVALIDATED'],
++      ['st-reemplazada', 'clinical:MEDICATION_REQUEST_REPLACED'],
++      ['st-completada', 'clinical:MEDICATION_REQUEST_COMPLETED'],
+     ] as const
+   ).map(([conceptId, code]) => [
+     conceptId,
+@@ -51,6 +59,27 @@ function rowIn(id: string, status: string, validTo?: Date): MedicationRequest {
+ 
+ /** Lo mismo que aplica la API al crear el pedido (FAR-03): emitida y sin vencer. */
+ describe('isOrderableRow (FAR-03)', () => {
++  it('el código de «emitida» es el que sirve la API, con módulo (H3-01)', () => {
++    expect(ISSUED_STATUS_CODE).toBe('clinical:MEDICATION_REQUEST_ISSUED');
++    expect(STATUS_LABELS.get('st-emitida')?.code).toBe(ISSUED_STATUS_CODE);
++  });
++
++  it('el código sin módulo del simulador también cuenta como emitida', () => {
++    const simulator: ConceptLabels = new Map([
++      ['st-emitida', { conceptId: 'st-emitida', code: 'MR_ISSUED', display: 'Vigente', codeSystemVersionId: 'v1' }],
++      ['st-completada', { conceptId: 'st-completada', code: 'MR_COMPLETED', display: 'Completada', codeSystemVersionId: 'v1' }],
++    ]);
++    expect(isOrderableRow(rowIn('rx', 'st-emitida'), simulator, NOW)).toBe(true);
++    expect(isOrderableRow(rowIn('rx', 'st-completada'), simulator, NOW)).toBe(false);
++  });
++
++  it('un código que no es de receta no es «emitida»', () => {
++    const other: ConceptLabels = new Map([
++      ['st-emitida', { conceptId: 'st-emitida', code: 'clinical:ENCOUNTER_STATUS_ISSUED', display: 'x', codeSystemVersionId: 'v1' }],
++    ]);
++    expect(isOrderableRow(rowIn('rx', 'st-emitida'), other, NOW)).toBe(false);
++  });
++
+   it('emitida y sin vencer, o sin vencimiento: se puede pedir', () => {
+     expect(isOrderableRow(rowIn('rx', 'st-emitida'), STATUS_LABELS, NOW)).toBe(true);
+     expect(
+@@ -82,6 +111,28 @@ describe('isOrderableRow (FAR-03)', () => {
+   });
+ });
+ 
++describe('prescriptionStateOf', () => {
++  it.each([
++    ['clinical:MEDICATION_REQUEST_DRAFT', 'draft'],
++    ['clinical:MEDICATION_REQUEST_ISSUED', 'issued'],
++    ['clinical:MEDICATION_REQUEST_INVALIDATED', 'invalidated'],
++    ['clinical:MEDICATION_REQUEST_REPLACED', 'replaced'],
++    ['clinical:MEDICATION_REQUEST_RENEWED', 'renewed'],
++    ['clinical:MEDICATION_REQUEST_ACTIVE', 'active'],
++    ['clinical:MEDICATION_REQUEST_COMPLETED', 'completed'],
++    ['MR_ISSUED', 'issued'],
++    ['MR_INVALIDATED', 'invalidated'],
++  ] as const)('%s es %s', (code, state) => {
++    expect(prescriptionStateOf(code)).toBe(state);
++  });
++
++  it('lo que no es un estado de receta no se clasifica', () => {
++    expect(prescriptionStateOf('J01CA04')).toBeUndefined();
++    expect(prescriptionStateOf('clinical:MEDICATION_REQUEST_OTRO')).toBeUndefined();
++    expect(prescriptionStateOf('MR_ORDER')).toBeUndefined();
++  });
++});
++
+ describe('orderablePrescriptionOf (FAR-03)', () => {
+   const rows = [
+     rowIn('rx-renovacion', 'st-borrador'),
+diff --git a/src/app/features/account/medical-record/where-to-buy/orderable-prescription.ts b/src/app/features/account/medical-record/where-to-buy/orderable-prescription.ts
+index 9b011767..98077731 100644
+--- a/src/app/features/account/medical-record/where-to-buy/orderable-prescription.ts
++++ b/src/app/features/account/medical-record/where-to-buy/orderable-prescription.ts
+@@ -8,11 +8,60 @@ import type { MedicationRequest } from '../../../../core/data-access/clinical/cl
+ import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+ 
+ /**
+- * El código del estado «emitida» de un ítem de receta en el catálogo de la API
+- * (`clinical.concepts.ts`, `MEDICATION_REQUEST_ISSUED`). Es el único estado que
+- * se puede pedir: borrador, invalidada, reemplazada y completada no.
++ * El estado de un ítem de receta, tal como lo distingue la API
++ * (`clinical.concepts.ts`, `MEDICATION_REQUEST_*`).
+  */
+-export const ISSUED_STATUS_CODE = 'MR_ISSUED';
++export type PrescriptionState =
++  | 'draft'
++  | 'issued'
++  | 'invalidated'
++  | 'replaced'
++  | 'renewed'
++  | 'active'
++  | 'completed';
++
++/**
++ * El código del estado «emitida» de un ítem de receta **en el catálogo
++ * persistido de la API**: `<módulo>:<clave>`, como el resto de los conceptos
++ * (`clinical:SERVICE_REQUEST_CATEGORY_LAB`). Es el único estado que se puede
++ * pedir: borrador, invalidada, reemplazada y completada no.
++ *
++ * El `code` que declara `clinical.concepts.ts` (`MR_ISSUED`) es el literal del
++ * código fuente; lo que llega por `GET /terminology/concepts` es el de acá.
++ */
++export const ISSUED_STATUS_CODE = 'clinical:MEDICATION_REQUEST_ISSUED';
++
++const API_PREFIX = 'clinical:MEDICATION_REQUEST_';
++
++/**
++ * El prefijo con que el backend simulado (`core/mock/fixtures/concepts.ts`)
++ * nombra los mismos estados, sin módulo: `MR_ISSUED`. Se acepta para que el
++ * modo demo siga funcionando; la API real nunca lo manda.
++ */
++const SIMULATOR_PREFIX = 'MR_';
++
++const STATE_BY_KEY: Readonly<Record<string, PrescriptionState>> = {
++  DRAFT: 'draft',
++  ISSUED: 'issued',
++  INVALIDATED: 'invalidated',
++  REPLACED: 'replaced',
++  RENEWED: 'renewed',
++  ACTIVE: 'active',
++  COMPLETED: 'completed',
++};
++
++/**
++ * El estado que dice el código de un concepto, o `undefined` si no es uno de
++ * los de la receta. Reconoce el código de la API y el del simulador.
++ */
++export function prescriptionStateOf(code: string): PrescriptionState | undefined {
++  const key = code.startsWith(API_PREFIX)
++    ? code.slice(API_PREFIX.length)
++    : code.startsWith(SIMULATOR_PREFIX)
++      ? code.slice(SIMULATOR_PREFIX.length)
++      : undefined;
++  return key === undefined ? undefined : STATE_BY_KEY[key];
++}
+ 
+ /**
+  * Si la fila se puede pedir hoy, con la misma regla que aplica la API al crear
+@@ -26,7 +75,9 @@ export const ISSUED_STATUS_CODE = 'MR_ISSUED';
+ export function isOrderableRow(row: MedicationRequest, labels: ConceptLabels, now: Date): boolean {
+   const statusCode = labels.get(row.statusConceptId)?.code;
+   const issued =
+-    statusCode === undefined ? row.issuedAt instanceof Date : statusCode === ISSUED_STATUS_CODE;
++    statusCode === undefined
++      ? row.issuedAt instanceof Date
++      : prescriptionStateOf(statusCode) === 'issued';
+   return issued && (row.validTo === undefined || row.validTo.getTime() > now.getTime());
+ }
+ 
+diff --git a/src/app/features/account/medical-record/where-to-buy/where-to-buy.spec.ts b/src/app/features/account/medical-record/where-to-buy/where-to-buy.spec.ts
+index 610f9bee..624df674 100644
+--- a/src/app/features/account/medical-record/where-to-buy/where-to-buy.spec.ts
++++ b/src/app/features/account/medical-record/where-to-buy/where-to-buy.spec.ts
+@@ -125,10 +125,26 @@ const CONCEPTS = {
+       codeSystemVersionId: 'v1',
+     },
+     // Los estados de un ítem de receta, con los códigos del catálogo de la API
+-    // (`clinical.concepts.ts`): sólo `MR_ISSUED` se puede pedir (FAR-03).
+-    { conceptId: 'st-activa', code: 'MR_ISSUED', display: 'Emitida', codeSystemVersionId: 'v1' },
+-    { conceptId: 'st-borrador', code: 'MR_DRAFT', display: 'Borrador', codeSystemVersionId: 'v1' },
+-    { conceptId: 'st-anulada', code: 'MR_INVALIDATED', display: 'Anulada', codeSystemVersionId: 'v1' },
++    // que sirve `GET /terminology/concepts` (`clinical:<clave>`): sólo
++    // `MEDICATION_REQUEST_ISSUED` se puede pedir (FAR-03, H3-01).
++    {
++      conceptId: 'st-activa',
++      code: 'clinical:MEDICATION_REQUEST_ISSUED',
++      display: 'Emitida',
++      codeSystemVersionId: 'v1',
++    },
++    {
++      conceptId: 'st-borrador',
++      code: 'clinical:MEDICATION_REQUEST_DRAFT',
++      display: 'Borrador',
++      codeSystemVersionId: 'v1',
++    },
++    {
++      conceptId: 'st-anulada',
++      code: 'clinical:MEDICATION_REQUEST_INVALIDATED',
++      display: 'Anulada',
++      codeSystemVersionId: 'v1',
++    },
+   ],
+   count: 5,
+   limit: 200,

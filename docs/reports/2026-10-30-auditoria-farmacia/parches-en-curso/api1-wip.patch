@@ -1,0 +1,299 @@
+diff --git a/src/logging/pino-options.spec.ts b/src/logging/pino-options.spec.ts
+index 19d17c640..e588d9271 100644
+--- a/src/logging/pino-options.spec.ts
++++ b/src/logging/pino-options.spec.ts
+@@ -136,6 +136,69 @@ describe('redacción del token del enlace compartido de receta', () => {
+       expect(headers.referer).toContain(TOKEN);
+     });
+ 
++    it.each([
++      ['public', ['public', 'prescription-shares', TOKEN]],
++      ['pharmacy', ['pharmacy', 'prescription-shares', TOKEN]],
++      ['clinical', ['clinical', 'prescription-shares', 'by-token', TOKEN]],
++    ])(
++      'saca el token de params.path (comodín de nestjs-pino) en la ruta %s',
++      (_name, path) => {
++        const params = { path };
++        const serialized = serializeRequest({
++          method: 'GET',
++          url: `/${path.join('/')}`,
++          params,
++        });
++        expect(JSON.stringify(serialized)).not.toContain(TOKEN);
++        expect((serialized.params as { path: string[] }).path).toEqual([
++          ...path.slice(0, -1),
++          REDACTED_SHARE_TOKEN,
++        ]);
++        // El original no se toca: lo siguen leyendo los handlers.
++        expect(params.path[path.length - 1]).toBe(TOKEN);
++      },
++    );
++
++    it('saca el token aunque la url ya llegue redactada o venga en otro campo', () => {
++      const serialized = serializeRequest({
++        method: 'GET',
++        url: `/public/prescription-shares/${REDACTED_SHARE_TOKEN}`,
++        params: { path: ['public', 'prescription-shares', TOKEN] },
++        query: { next: `/public/prescription-shares/${TOKEN}` },
++        originalUrl: `/public/prescription-shares/${TOKEN}`,
++        path: `/public/prescription-shares/${TOKEN}`,
++        remoteAddress: '127.0.0.1',
++      });
++      expect(JSON.stringify(serialized)).not.toContain(TOKEN);
++      expect(serialized.remoteAddress).toBe('127.0.0.1');
++    });
++
++    it('saca el token codificado (%XX) de params.path sin tocar otros campos', () => {
++      const encoded = TOKEN.replace('Q2', 'Q%32');
++      const serialized = serializeRequest({
++        method: 'GET',
++        url: `/public/prescription-shares/${encoded}`,
++        params: { path: ['public', 'prescription-shares', TOKEN] },
++        headers: { 'user-agent': 'x', host: 'api.alovida.test' },
++      });
++      expect(JSON.stringify(serialized)).not.toContain(TOKEN);
++      expect(JSON.stringify(serialized)).not.toContain(encoded);
++      expect(serialized.headers).toEqual({
++        'user-agent': 'x',
++        host: 'api.alovida.test',
++      });
++    });
++
++    it('un tramo corto no mutila el resto de la petición', () => {
++      const serialized = serializeRequest({
++        method: 'GET',
++        url: '/public/prescription-shares/x',
++        headers: { 'user-agent': 'axios x y' },
++      });
++      expect(serialized.url).toBe('/public/prescription-shares/[token]');
++      expect(serialized.headers).toEqual({ 'user-agent': 'axios x y' });
++    });
++
+     it('deja igual una petición de otra ruta', () => {
+       const req = { method: 'GET', url: '/health', params: { token: 'x' } };
+       expect(serializeRequest(req)).toEqual({
+@@ -217,6 +280,49 @@ describe('redacción del token del enlace compartido de receta', () => {
+       },
+     );
+ 
++    it.each([
++      ['public', ['public', 'prescription-shares', TOKEN]],
++      ['pharmacy', ['pharmacy', 'prescription-shares', TOKEN]],
++      ['clinical', ['clinical', 'prescription-shares', 'by-token', TOKEN]],
++    ])(
++      'con params.path en la línea (%s) el token no está en ningún campo del log',
++      async (_name, path) => {
++        // Lo que Express deja en `req.params` con el comodín de nestjs-pino.
++        const wildcard = createServer((req, res) => {
++          (req as unknown as { params: unknown }).params = { path };
++          wildcardLogger(req, res);
++          res.statusCode = 200;
++          res.end('{}');
++        });
++        const { pinoHttp: options } = buildPinoOptions() as {
++          pinoHttp: Record<string, unknown>;
++        };
++        const wildcardLogger = pinoHttp(
++          { ...options, level: 'info', transport: undefined } as never,
++          new Writable({
++            write(chunk: Buffer, _encoding, done) {
++              lines.push(chunk.toString('utf8'));
++              done();
++            },
++          }),
++        );
++        await new Promise<void>((resolve) =>
++          wildcard.listen(0, '127.0.0.1', resolve),
++        );
++        try {
++          const { port } = wildcard.address() as AddressInfo;
++          await fetch(`http://127.0.0.1:${port}/${path.join('/')}`);
++          await new Promise((resolve) => setImmediate(resolve));
++        } finally {
++          await new Promise<void>((resolve) => wildcard.close(() => resolve()));
++        }
++        const log = lines.join('');
++        expect(log).toContain('"params"');
++        expect(log).toContain('[token]');
++        expect(log).not.toContain(TOKEN);
++      },
++    );
++
+     it('la línea de la petición lleva [token] y no el token', async () => {
+       const { port } = server.address() as AddressInfo;
+       await fetch(
+diff --git a/src/logging/pino-options.ts b/src/logging/pino-options.ts
+index 9d4a7525b..29f2bd853 100644
+--- a/src/logging/pino-options.ts
++++ b/src/logging/pino-options.ts
+@@ -3,9 +3,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
+ import type { Params } from 'nestjs-pino';
+ import { loadLoggingEnv } from './logging.env';
+ import {
+-  REDACTED_SHARE_TOKEN,
+   redactShareTokenInReferer,
+-  redactShareTokenInUrl,
++  redactShareTokensDeep,
++  shareTokenSegmentsOf,
+ } from './share-token-redaction';
+ import { currentTraceContext } from '../observability/trace-context.service';
+ 
+@@ -57,39 +57,54 @@ interface SerializedRequest {
+ 
+ /**
+  * Serializador de `req` de pino-http: recibe la petición ya serializada por
+- * `pino-std-serializers` y le saca el token del enlace compartido de `url`,
+- * de `params.token` y del `Referer`.
++ * `pino-std-serializers` y le saca el token del enlace compartido de CUALQUIER
++ * campo: `url`, `params.token`, `params.path` (el array de segmentos que deja el
++ * comodín con el que `nestjs-pino` monta su middleware), `query`, y cualquier
++ * otro que lo repita.
+  *
+- * El `Referer` se redacta en vez de quitarse: en el resto de las páginas sigue
+- * diciendo desde dónde vino la petición, que es lo que se busca en el log, y
+- * solo cambia el segmento del token. `params` y `headers` se copian: los
++ * Los tramos que la redacción cambia en la ruta (`url`, y `params.path` unido)
++ * se toman como el token y se quitan de toda la petición, aunque la `url` ya
++ * viniera redactada. El `Referer` se redacta en vez de quitarse: en el resto de
++ * las páginas sigue diciendo desde dónde vino la petición, que es lo que se
++ * busca en el log, y solo cambia el segmento del token. Todo se copia: los
+  * objetos originales son los de Express y los siguen leyendo los handlers.
+  *
+  * @param req - Petición serializada.
+  * @returns La misma petición, sin el token en claro.
+  */
+ export function serializeRequest(req: SerializedRequest): SerializedRequest {
++  const tokens = new Set<string>();
+   if (typeof req.url === 'string') {
+-    const url = redactShareTokenInUrl(req.url);
+-    if (url !== req.url) {
+-      req.url = url;
+-      const params = req.params;
+-      if (params && typeof params === 'object' && 'token' in params) {
+-        req.params = { ...params, token: REDACTED_SHARE_TOKEN };
+-      }
++    for (const segment of shareTokenSegmentsOf(req.url)) tokens.add(segment);
++  }
++  const params = req.params;
++  if (params && typeof params === 'object') {
++    const path = (params as { path?: unknown }).path;
++    const joined = Array.isArray(path)
++      ? `/${path.filter((part) => typeof part === 'string').join('/')}`
++      : typeof path === 'string'
++        ? path
++        : undefined;
++    if (joined !== undefined) {
++      for (const segment of shareTokenSegmentsOf(joined)) tokens.add(segment);
+     }
+   }
+-  const headers = req.headers;
++  const known = [...tokens];
++  const safe: SerializedRequest = {};
++  for (const [key, value] of Object.entries(req)) {
++    safe[key] = redactShareTokensDeep(value, known);
++  }
++  const headers = safe.headers;
+   if (headers && typeof headers === 'object') {
+     const referer = (headers as { referer?: unknown }).referer;
+     if (typeof referer === 'string') {
+       const redacted = redactShareTokenInReferer(referer);
+       if (redacted !== referer) {
+-        req.headers = { ...headers, referer: redacted };
++        safe.headers = { ...headers, referer: redacted };
+       }
+     }
+   }
+-  return req;
++  return safe;
+ }
+ 
+ /**
+diff --git a/src/logging/share-token-redaction.ts b/src/logging/share-token-redaction.ts
+index 9b9ef8756..21708e264 100644
+--- a/src/logging/share-token-redaction.ts
++++ b/src/logging/share-token-redaction.ts
+@@ -157,3 +157,84 @@ export function redactShareTokenInReferer(referer: string): string {
+     WEB_PREFIX_EXCLUDED_AFTER,
+   );
+ }
++
++/**
++ * Los tramos de una ruta que la redacción reemplazó por `[token]`, tal como
++ * llegaron (con sus códigos `%XX`) y decodificados. Sirven para buscar el mismo
++ * token en OTROS campos de la petición que lo repiten con otra forma, como
++ * `req.params.path` (el array de segmentos que Express arma para el comodín de
++ * `nestjs-pino`), `req.path` o `req.originalUrl`.
++ *
++ * @param url - Ruta o URL de la petición (con o sin query).
++ * @returns Los tramos sustituidos; vacío si la ruta no lleva ningún token.
++ */
++export function shareTokenSegmentsOf(url: string): string[] {
++  const cut = url.search(/[?#]/);
++  const path = cut === -1 ? url : url.slice(0, cut);
++  const redacted = redactShareTokenInUrl(path);
++  if (redacted === path) return [];
++  const before = path.split(SEGMENT_SEPARATOR);
++  const after = redacted.split(SEGMENT_SEPARATOR);
++  const found = new Set<string>();
++  for (let index = 0; index < before.length; index += 2) {
++    const segment = before[index];
++    if (segment === '' || segment === after[index]) continue;
++    found.add(segment);
++    found.add(normalizedSegment(segment));
++  }
++  return [...found].filter((segment) => segment !== '');
++}
++
++/**
++ * Desde este largo un tramo se busca también DENTRO de otras cadenas. Más corto
++ * (un «token» mal formado que no abre nada) solo se cambia si la cadena es
++ * exactamente ese tramo, para no mutilar el resto del log con una `x`.
++ */
++const SUBSTRING_MIN_LENGTH = 16;
++
++/**
++ * Copia de `value` sin ningún token de enlace compartido: cada cadena pasa por
++ * `redactShareTokenInUrl` y se le quitan los `tokens` conocidos de la petición,
++ * en cualquier campo y a cualquier profundidad (objetos y arrays). No muta el
++ * original (los handlers de Express lo siguen leyendo) y devuelve la misma
++ * referencia si nada cambió.
++ *
++ * @param value - Lo serializado de la petición.
++ * @param tokens - Tramos sustituidos, de `shareTokenSegmentsOf`.
++ * @param depth - Profundidad restante; protege de estructuras cíclicas.
++ * @returns El valor sin token en claro.
++ */
++export function redactShareTokensDeep<T>(
++  value: T,
++  tokens: readonly string[],
++  depth = 6,
++): T {
++  if (typeof value === 'string') {
++    let text: string = redactShareTokenInUrl(value);
++    for (const token of tokens) {
++      if (text === token) {
++        text = REDACTED_SHARE_TOKEN;
++      } else if (token.length >= SUBSTRING_MIN_LENGTH && text.includes(token)) {
++        text = text.split(token).join(REDACTED_SHARE_TOKEN);
++      }
++    }
++    return (text === value ? value : text) as T;
++  }
++  if (value === null || typeof value !== 'object' || depth <= 0) return value;
++  if (Array.isArray(value)) {
++    const list: unknown[] = value;
++    const items = list.map((item) =>
++      redactShareTokensDeep(item, tokens, depth - 1),
++    );
++    return (items.some((item, i) => item !== list[i]) ? items : value) as T;
++  }
++  const source = value as Record<string, unknown>;
++  const copy: Record<string, unknown> = {};
++  let changed = false;
++  for (const [key, entry] of Object.entries(source)) {
++    const redacted = redactShareTokensDeep(entry, tokens, depth - 1);
++    if (redacted !== entry) changed = true;
++    copy[key] = redacted;
++  }
++  return (changed ? copy : value) as T;
++}

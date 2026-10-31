@@ -1,0 +1,851 @@
+diff --git a/src/app/features/pharmacy/catalog/pharmacy-catalog-hub.html b/src/app/features/pharmacy/catalog/pharmacy-catalog-hub.html
+index 5ec0671c..1275da0d 100644
+--- a/src/app/features/pharmacy/catalog/pharmacy-catalog-hub.html
++++ b/src/app/features/pharmacy/catalog/pharmacy-catalog-hub.html
+@@ -40,7 +40,7 @@
+     </app-tab>
+     <app-tab [label]="labels[tabs[5]]">
+       @if (selected() === 5) {
+-        <app-pharmacy-integration />
++        <app-pharmacy-integration [embedded]="true" />
+       }
+     </app-tab>
+   </app-tabs>
+diff --git a/src/app/features/pharmacy/catalog/pharmacy-catalog-hub.spec.ts b/src/app/features/pharmacy/catalog/pharmacy-catalog-hub.spec.ts
+index 02045417..4d9b0657 100644
+--- a/src/app/features/pharmacy/catalog/pharmacy-catalog-hub.spec.ts
++++ b/src/app/features/pharmacy/catalog/pharmacy-catalog-hub.spec.ts
+@@ -1,5 +1,5 @@
+ import { provideHttpClient } from '@angular/common/http';
+-import { provideHttpClientTesting } from '@angular/common/http/testing';
++import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+ import { TestBed } from '@angular/core/testing';
+ import { By } from '@angular/platform-browser';
+ import { provideRouter, Router } from '@angular/router';
+@@ -75,6 +75,26 @@ describe('PharmacyCatalogHub', () => {
+     ]);
+   });
+ 
++  it.each(['products', 'categories', 'prices', 'inventory', 'import', 'integration'])(
++    'la pestaña %s, con su farmacia cargada, tiene UNA sola tarjeta en toda la pantalla (sin tarjeta dentro de tarjeta)',
++    async (tab) => {
++      const http = TestBed.inject(HttpTestingController);
++      await open(`${ROUTE}?tab=${tab}`);
++      const directory = {
++        items: [{ id: '7f1c9a52-6d3e-4b18-9c47-2a5e8f0b1d63', name: 'Farmacia del Centro', code: 'FC-01', siteCount: 1, productCount: 1 }],
++        count: 1,
++      };
++      for (const request of http.match((r) => r.url.endsWith('/pharmacy/pharmacies'))) {
++        request.flush(directory);
++      }
++      harness.detectChanges();
++
++      expect(root().querySelectorAll('app-card')).toHaveLength(1);
++      expect(root().querySelector('[data-testid="pharmacy-catalog-card"]')?.tagName).toBe('APP-CARD');
++      expect(root().querySelector(`[data-testid="${tab}-card"]`)?.tagName).toBe('DIV');
++    },
++  );
++
+   it('sin `tab` abre Productos y monta sólo esa pantalla', async () => {
+     await open(ROUTE);
+ 
+diff --git a/src/app/features/pharmacy/categories/pharmacy-categories.html b/src/app/features/pharmacy/categories/pharmacy-categories.html
+index 1d9fd946..0f96ecff 100644
+--- a/src/app/features/pharmacy/categories/pharmacy-categories.html
++++ b/src/app/features/pharmacy/categories/pharmacy-categories.html
+@@ -20,7 +20,16 @@
+   }
+ 
+   @if (scope.pharmacyId() !== null) {
+-    <app-card class="categories" padding="lg" data-testid="categories-card">
++    @if (embedded()) {
++      <div class="categories" data-testid="categories-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </div>
++    } @else {
++      <app-card class="categories" padding="lg" data-testid="categories-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </ng-template>
++    }
++    <ng-template #panel>
+       <div class="categories__panel">
+         <div class="categories__bar">
+           <button app-button type="button" (clicked)="openNew()" data-testid="categories-new">
+@@ -45,7 +54,7 @@
+           data-testid="categories-table"
+         />
+       </div>
+-    </app-card>
++    </ng-template>
+   }
+ </app-view-state-host>
+ 
+diff --git a/src/app/features/pharmacy/categories/pharmacy-categories.spec.ts b/src/app/features/pharmacy/categories/pharmacy-categories.spec.ts
+index 84ba2af3..4aec30e5 100644
+--- a/src/app/features/pharmacy/categories/pharmacy-categories.spec.ts
++++ b/src/app/features/pharmacy/categories/pharmacy-categories.spec.ts
+@@ -81,6 +81,22 @@ describe('PharmacyCategories', () => {
+     expect(host.querySelector('app-page-header')).toBeNull();
+   });
+ 
++  it('montada como pestaña (`embedded`) no dibuja su propia tarjeta y no pierde contenido: la del hub es la única', () => {
++    mount();
++    const host = fixture.nativeElement as HTMLElement;
++    const card = (): HTMLElement | null => host.querySelector('[data-testid="categories-card"]');
++    expect(host.querySelectorAll('app-card')).toHaveLength(1);
++    expect(card()?.tagName).toBe('APP-CARD');
++    const antes = card()?.textContent ?? '';
++
++    fixture.componentRef.setInput('embedded', true);
++    fixture.detectChanges();
++
++    expect(host.querySelectorAll('app-card')).toHaveLength(0);
++    expect(card()?.tagName).toBe('DIV');
++    expect(card()?.textContent).toBe(antes);
++  });
++
+   it('lista las categorías con cuántos productos usa cada una', () => {
+     mount();
+ 
+diff --git a/src/app/features/pharmacy/categories/pharmacy-categories.ts b/src/app/features/pharmacy/categories/pharmacy-categories.ts
+index 7f704fe3..36dbd5b6 100644
+--- a/src/app/features/pharmacy/categories/pharmacy-categories.ts
++++ b/src/app/features/pharmacy/categories/pharmacy-categories.ts
+@@ -11,6 +11,7 @@ import {
+   viewChild,
+   type TemplateRef,
+ } from '@angular/core';
++import { NgTemplateOutlet } from '@angular/common';
+ import { RouterLink } from '@angular/router';
+ 
+ import { AppButton } from '../../../shared/components/atoms/button/button';
+@@ -68,6 +69,7 @@ const ROW_ACTIONS: readonly RowAction[] = [
+     DataTable,
+     FormField,
+     Input,
++    NgTemplateOutlet,
+     PageHeader,
+     RouterLink,
+     RowActions,
+diff --git a/src/app/features/pharmacy/import/entity-import/entity-csv.spec.ts b/src/app/features/pharmacy/import/entity-import/entity-csv.spec.ts
+index 5d736af1..c443e92a 100644
+--- a/src/app/features/pharmacy/import/entity-import/entity-csv.spec.ts
++++ b/src/app/features/pharmacy/import/entity-import/entity-csv.spec.ts
+@@ -1,5 +1,6 @@
++import type { BulkPriceRow } from '../../../../core/data-access/pharmacy/pharmacy-bulk.types';
+ import { ArchivoInvalido } from '../../catalog-rules/catalog.rules';
+-import { ENTITY_COLUMNS, ENTITY_TEMPLATE_ROWS, readEntityCsv } from './entity-csv';
++import { ENTITY_COLUMNS, ENTITY_TEMPLATE_ROWS, readEntityCsv, upsertKeyOf } from './entity-csv';
+ 
+ describe('entity-csv', () => {
+   it('los encabezados de cada plantilla van en castellano', () => {
+@@ -83,4 +84,67 @@ describe('entity-csv', () => {
+     expect(readEntityCsv('categories', ['nombre', ...rows].join('\n')).rows).toHaveLength(1000);
+     expect(() => readEntityCsv('categories', ['nombre', ...rows, 'otra'].join('\n'))).toThrow(ArchivoInvalido);
+   });
++
++  describe('clave repetida en el archivo (entre lotes de 250 también)', () => {
++    it('categorías: la 2ª fila con el mismo nombre —otra grafía, tildes o espacios— no se envía y dice cuál la precede', () => {
++      const names = Array.from({ length: 600 }, (_, i) => `far45-cx-${String(i + 1).padStart(4, '0')}`);
++      names[5] = 'far45-cx-0005'; // línea 7 del archivo
++      names[400] = 'FAR45-CX-0005'; // línea 402: cae en el 2º lote de 250
++      const reading = readEntityCsv('categories', ['nombre', ...names].join('\n'));
++
++      const repeated = reading.rows.filter((row) => row.duplicateOfLine !== undefined);
++      expect(repeated.map((row) => row.line)).toEqual([402]);
++      expect(repeated[0]).toMatchObject({
++        payload: null,
++        duplicateOfLine: 7,
++        errors: ['Repite la clave de la línea 7: sólo cuenta la primera fila, esta no se envía.'],
++      });
++      // La primera sí viaja, y el resto del archivo también: 600 - 1.
++      expect(reading.rows.filter((row) => row.payload !== null)).toHaveLength(599);
++      expect(reading.rows[5]!.payload).toEqual({ name: 'far45-cx-0005' });
++    });
++
++    it('categorías: se comparan sin mayúsculas, tildes ni espacios de más', () => {
++      const reading = readEntityCsv('categories', 'nombre\nAnalgésicos\n  analgesicos \nANALGÉSICOS\nAnalgesicos  extra\nAnalgesicos extra\n');
++
++      expect(reading.rows.map((row) => row.duplicateOfLine)).toEqual([undefined, 2, 2, undefined, 5]);
++      expect(reading.rows.map((row) => row.payload === null)).toEqual([false, true, true, false, true]);
++    });
++
++    it('categorías: dos nombres vacíos o de más de 60 caracteres no son «repetidos»: los rechaza el servidor', () => {
++      const long = 'x'.repeat(61);
++      const reading = readEntityCsv('categories', `nombre\n\n\n${long}\n${long}\n`);
++
++      expect(reading.rows.every((row) => row.payload !== null && row.duplicateOfLine === undefined)).toBe(true);
++    });
++
++    it('precios: el mismo código dos veces; el código distingue mayúsculas, como el servidor', () => {
++      const reading = readEntityCsv('prices', 'codigo,precio\nP-1,10\np-1,11\n P-1 ,12\nP-2,3\nP-1,13\n');
++
++      expect(reading.rows.map((row) => row.duplicateOfLine)).toEqual([undefined, undefined, 2, undefined, 2]);
++      expect(reading.rows.map((row) => (row.payload as BulkPriceRow | null)?.unitPrice ?? null)).toEqual([10, 11, null, 3, null]);
++    });
++
++    it('sucursales: el mismo código dos veces', () => {
++      const reading = readEntityCsv('sites', 'codigo;nombre\nSUR;Sur\nNORTE;Norte\nSUR;Sur renombrada\n');
++
++      expect(reading.rows.map((row) => row.duplicateOfLine)).toEqual([undefined, undefined, 2]);
++      expect(reading.rows[2]!.payload).toBeNull();
++    });
++
++    it('una primera fila que no sale (precio ilegible) no reserva la clave: la siguiente sí se envía', () => {
++      const reading = readEntityCsv('prices', 'codigo,precio\nP-1,doce\nP-1,12\n');
++
++      expect(reading.rows[0]!.payload).toBeNull();
++      expect(reading.rows[0]!.duplicateOfLine).toBeUndefined();
++      expect(reading.rows[1]!.payload).toEqual({ productCode: 'P-1', unitPrice: 12 });
++    });
++
++    it('la clave de cada tipo es la que usa el servidor', () => {
++      expect(upsertKeyOf('categories', { name: ' Niños   y Niñas ' })).toBe('ninos y ninas');
++      expect(upsertKeyOf('prices', { productCode: ' AB-1 ', unitPrice: 1 })).toBe('AB-1');
++      expect(upsertKeyOf('sites', { code: 'Sur', name: 'x' })).toBe('Sur');
++      expect(upsertKeyOf('sites', { code: '  ', name: 'x' })).toBeNull();
++    });
++  });
+ });
+diff --git a/src/app/features/pharmacy/import/entity-import/entity-csv.ts b/src/app/features/pharmacy/import/entity-import/entity-csv.ts
+index dbbb34f8..3f3a0ce4 100644
+--- a/src/app/features/pharmacy/import/entity-import/entity-csv.ts
++++ b/src/app/features/pharmacy/import/entity-import/entity-csv.ts
+@@ -5,7 +5,7 @@ import type {
+   BulkSiteRow,
+ } from '../../../../core/data-access/pharmacy/pharmacy-bulk.types';
+ import { BULK_MAX_ROWS } from '../../../../core/data-access/pharmacy/pharmacy-bulk.types';
+-import { ArchivoInvalido, leerTablaCsv, parsePrice } from '../../catalog-rules/catalog.rules';
++import { ArchivoInvalido, leerTablaCsv, parsePrice, withoutAccents } from '../../catalog-rules/catalog.rules';
+ 
+ /* ============================================================================
+     Los CSV de categorías, precios y sucursales de la pestaña «Importación».
+@@ -20,9 +20,15 @@ import { ArchivoInvalido, leerTablaCsv, parsePrice } from '../../catalog-rules/c
+     Esta capa sólo lleva cada renglón a la fila que espera la API: un número
+     con coma decimal, un `si`/`no`. Qué fila vale lo decide el servidor en la
+     vista previa (`dryRun`): un nombre vacío, un código que no existe o una
+-    latitud sin longitud vuelven rechazados con su motivo. Lo único que se frena
++    latitud sin longitud vuelven rechazados con su motivo. Lo que se frena
+     acá es lo que no se puede ni mandar (un precio o una latitud que no son un
+-    número), con su línea.
++    número) y la **clave repetida en el archivo**, con su línea.
++
++    La clave repetida se detecta acá porque el servidor sólo la ve dentro de un
++    pedido y el front parte el archivo en lotes de 250: una clave que cae en
++    dos lotes se aplicaba dos veces (la segunda pisaba a la primera) mientras la
++    vista previa la daba por buena. Cuenta la primera fila; las siguientes con
++    la misma clave no se envían.
+     ========================================================================== */
+ 
+ /** Lo que importa el componente genérico; los productos tienen su propio asistente. */
+@@ -86,6 +92,11 @@ export interface EntityCsvRow {
+   readonly payload: EntityRowPayload | null;
+   /** Por qué no se puede mandar; vacío si se manda. */
+   readonly errors: readonly string[];
++  /**
++   * Sólo si la fila repite la clave de una anterior del archivo: la línea de
++   * esa primera fila. Estas filas no se mandan (`payload` es `null`).
++   */
++  readonly duplicateOfLine?: number;
+ }
+ 
+ export interface EntityCsvReading {
+@@ -116,7 +127,56 @@ export function readEntityCsv(entity: ImportEntity, content: string): EntityCsvR
+     };
+     return { line: linea, ...ROW_READERS[entity](cell) };
+   });
+-  return { rows, ignored: table.encabezados.filter((header) => !known.has(header)) };
++  return { rows: markRepeatedKeys(entity, rows), ignored: table.encabezados.filter((header) => !known.has(header)) };
++}
++
++/** Largo máximo de un nombre de categoría; más largo no tiene clave (lo rechaza el servidor). */
++const CATEGORY_NAME_MAX = 60;
++
++/**
++ * La clave de upsert de una fila, la misma que usa el servidor para
++ * `DUPLICATE_IN_FILE` (`keyOf` de cada manejador de `pharmacy/services/bulk`):
++ *
++ * - categorías: el nombre sin espacios de más, mayúsculas ni tildes;
++ * - precios: el código del producto, tal cual (distingue mayúsculas);
++ * - sucursales: el código de la sede, tal cual.
++ *
++ * `null` si la fila no tiene clave: la vacía o la de un nombre demasiado largo
++ * se mandan igual y las rechaza el servidor con su motivo.
++ */
++export function upsertKeyOf(entity: ImportEntity, payload: EntityRowPayload): string | null {
++  if (entity === 'categories') {
++    const name = (payload as BulkCategoryRow).name.trim().replace(/\s+/g, ' ');
++    return name.length >= 1 && name.length <= CATEGORY_NAME_MAX ? withoutAccents(name) : null;
++  }
++  const code = entity === 'prices' ? (payload as BulkPriceRow).productCode : (payload as BulkSiteRow).code;
++  return code.trim() === '' ? null : code.trim();
++}
++
++/**
++ * Frena las filas que repiten la clave de una anterior **del archivo entero**.
++ * Sólo cuentan las filas que se mandarían: una primera fila que no sale (un
++ * precio ilegible) no reserva la clave, porque el servidor nunca la vio.
++ */
++function markRepeatedKeys(entity: ImportEntity, rows: readonly EntityCsvRow[]): EntityCsvRow[] {
++  const firstLineOf = new Map<string, number>();
++  return rows.map((row) => {
++    const key = row.payload === null ? null : upsertKeyOf(entity, row.payload);
++    if (key === null) {
++      return row;
++    }
++    const first = firstLineOf.get(key);
++    if (first === undefined) {
++      firstLineOf.set(key, row.line);
++      return row;
++    }
++    return {
++      ...row,
++      payload: null,
++      errors: [`Repite la clave de la línea ${first}: sólo cuenta la primera fila, esta no se envía.`],
++      duplicateOfLine: first,
++    };
++  });
+ }
+ 
+ type RowReader = (cell: (header: string) => string) => Omit<EntityCsvRow, 'line'>;
+diff --git a/src/app/features/pharmacy/import/entity-import/entity-import.html b/src/app/features/pharmacy/import/entity-import/entity-import.html
+index 70be2e92..0f102b0e 100644
+--- a/src/app/features/pharmacy/import/entity-import/entity-import.html
++++ b/src/app/features/pharmacy/import/entity-import/entity-import.html
+@@ -14,7 +14,16 @@
+   }
+ 
+   @if (scope.pharmacyId() !== null) {
+-    <app-card class="entity-import" padding="lg" [attr.data-testid]="'entity-import-' + entity()">
++    @if (embedded()) {
++      <div class="entity-import" [attr.data-testid]="'entity-import-' + entity()">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </div>
++    } @else {
++      <app-card class="entity-import" padding="lg" [attr.data-testid]="'entity-import-' + entity()">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </ng-template>
++    }
++    <ng-template #panel>
+       <div class="entity-import__panel">
+         <div class="entity-import__upload">
+           <div class="entity-import__main">
+@@ -159,7 +168,7 @@
+           </section>
+         }
+       </div>
+-    </app-card>
++    </ng-template>
+   }
+ </app-view-state-host>
+ 
+diff --git a/src/app/features/pharmacy/import/entity-import/entity-import.spec.ts b/src/app/features/pharmacy/import/entity-import/entity-import.spec.ts
+index 7446131d..06d0cbfa 100644
+--- a/src/app/features/pharmacy/import/entity-import/entity-import.spec.ts
++++ b/src/app/features/pharmacy/import/entity-import/entity-import.spec.ts
+@@ -77,6 +77,24 @@ describe('EntityImport', () => {
+ 
+   afterEach(() => http.verify());
+ 
++  it.each(['categories', 'prices', 'sites'] as const)(
++    '%s: montada como pestaña (`embedded`) no dibuja su propia tarjeta y no pierde contenido',
++    (entity) => {
++      mount(entity);
++      const card = (): HTMLElement | null => byId(`entity-import-${entity}`);
++      expect(root().querySelectorAll('app-card')).toHaveLength(1);
++      expect(card()?.tagName).toBe('APP-CARD');
++      const antes = card()?.textContent ?? '';
++
++      fixture.componentRef.setInput('embedded', true);
++      fixture.detectChanges();
++
++      expect(root().querySelectorAll('app-card')).toHaveLength(0);
++      expect(card()?.tagName).toBe('DIV');
++      expect(card()?.textContent).toBe(antes);
++    },
++  );
++
+   it('«Descargar plantilla» baja el CSV de la entidad con sus encabezados en castellano', () => {
+     mount('sites');
+ 
+diff --git a/src/app/features/pharmacy/import/entity-import/entity-import.ts b/src/app/features/pharmacy/import/entity-import/entity-import.ts
+index 7b7673c7..b0abd058 100644
+--- a/src/app/features/pharmacy/import/entity-import/entity-import.ts
++++ b/src/app/features/pharmacy/import/entity-import/entity-import.ts
+@@ -1,4 +1,5 @@
+ import {
++  booleanAttribute,
+   ChangeDetectionStrategy,
+   Component,
+   DestroyRef,
+@@ -11,6 +12,7 @@ import {
+   viewChild,
+   type TemplateRef,
+ } from '@angular/core';
++import { NgTemplateOutlet } from '@angular/common';
+ import { Router } from '@angular/router';
+ import type { Subscription } from 'rxjs';
+ 
+@@ -106,7 +108,18 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
+  */
+ @Component({
+   selector: 'app-entity-import',
+-  imports: [Alert, AppButton, Badge, Card, DataTable, FileInput, FormField, Select, ViewStateHost],
++  imports: [
++    Alert,
++    AppButton,
++    Badge,
++    Card,
++    DataTable,
++    FileInput,
++    FormField,
++    NgTemplateOutlet,
++    Select,
++    ViewStateHost,
++  ],
+   providers: [PharmacyScope],
+   templateUrl: './entity-import.html',
+   styleUrl: './entity-import.css',
+@@ -114,6 +127,8 @@ const COPY: Readonly<Record<ImportEntity, EntityCopy>> = {
+ })
+ export class EntityImport {
+   readonly entity = input.required<ImportEntity>();
++  /** Dentro de la pestaña del catálogo la tarjeta es la del hub (§5, UNA tarjeta). */
++  readonly embedded = input(false, { transform: booleanAttribute });
+ 
+   protected readonly scope = inject(PharmacyScope);
+   private readonly bulk = inject(PharmacyBulkClient);
+diff --git a/src/app/features/pharmacy/import/import-target/import-target.html b/src/app/features/pharmacy/import/import-target/import-target.html
+index dc6dee9c..0f705fe4 100644
+--- a/src/app/features/pharmacy/import/import-target/import-target.html
++++ b/src/app/features/pharmacy/import/import-target/import-target.html
+@@ -16,12 +16,12 @@
+     <app-pharmacy-import [embedded]="true" />
+   }
+   @case ('categories') {
+-    <app-entity-import entity="categories" />
++    <app-entity-import entity="categories" [embedded]="true" />
+   }
+   @case ('prices') {
+-    <app-entity-import entity="prices" />
++    <app-entity-import entity="prices" [embedded]="true" />
+   }
+   @case ('sites') {
+-    <app-entity-import entity="sites" />
++    <app-entity-import entity="sites" [embedded]="true" />
+   }
+ }
+diff --git a/src/app/features/pharmacy/import/pharmacy-import.html b/src/app/features/pharmacy/import/pharmacy-import.html
+index 34fa6dff..2a6038ed 100644
+--- a/src/app/features/pharmacy/import/pharmacy-import.html
++++ b/src/app/features/pharmacy/import/pharmacy-import.html
+@@ -21,7 +21,16 @@
+   }
+ 
+   @if (scope.pharmacyId() !== null) {
+-    <app-card class="import" padding="lg" data-testid="import-card">
++    @if (embedded()) {
++      <div class="import" data-testid="import-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </div>
++    } @else {
++      <app-card class="import" padding="lg" data-testid="import-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </ng-template>
++    }
++    <ng-template #panel>
+       <div class="import__panel">
+         <app-stepper [steps]="steps()" label="Pasos de la importación" />
+ 
+@@ -461,7 +470,7 @@
+           }
+         }
+       </div>
+-    </app-card>
++    </ng-template>
+   }
+ </app-view-state-host>
+ 
+diff --git a/src/app/features/pharmacy/import/pharmacy-import.spec.ts b/src/app/features/pharmacy/import/pharmacy-import.spec.ts
+index 2112c683..cbe1933b 100644
+--- a/src/app/features/pharmacy/import/pharmacy-import.spec.ts
++++ b/src/app/features/pharmacy/import/pharmacy-import.spec.ts
+@@ -237,6 +237,20 @@ describe('PharmacyImport', () => {
+       expect(host.querySelector('app-page-header')).toBeNull();
+     });
+ 
++    it('montada como pestaña (`embedded`) no dibuja su propia tarjeta y no pierde contenido', () => {
++      mount();
++      const card = (): HTMLElement | null => byId('import-card');
++      expect(card()?.tagName).toBe('APP-CARD');
++      const antes = card()?.textContent ?? '';
++
++      fixture.componentRef.setInput('embedded', true);
++      fixture.detectChanges();
++
++      expect(root().querySelectorAll('app-card')).toHaveLength(0);
++      expect(card()?.tagName).toBe('DIV');
++      expect(card()?.textContent).toBe(antes);
++    });
++
+     it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos en una sola tarjeta', () => {
+       mount();
+ 
+diff --git a/src/app/features/pharmacy/import/pharmacy-import.ts b/src/app/features/pharmacy/import/pharmacy-import.ts
+index ccc73609..5dcd018a 100644
+--- a/src/app/features/pharmacy/import/pharmacy-import.ts
++++ b/src/app/features/pharmacy/import/pharmacy-import.ts
+@@ -12,7 +12,7 @@ import {
+   viewChild,
+   type TemplateRef,
+ } from '@angular/core';
+-import { DecimalPipe } from '@angular/common';
++import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+ import { Router } from '@angular/router';
+ import { catchError, map, of, type Subscription } from 'rxjs';
+ 
+@@ -158,6 +158,7 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
+     DecimalPipe,
+     FileInput,
+     FormField,
++    NgTemplateOutlet,
+     PageHeader,
+     Progress,
+     Select,
+diff --git a/src/app/features/pharmacy/integration/pharmacy-integration.html b/src/app/features/pharmacy/integration/pharmacy-integration.html
+index 4d0fb988..cba36abe 100644
+--- a/src/app/features/pharmacy/integration/pharmacy-integration.html
++++ b/src/app/features/pharmacy/integration/pharmacy-integration.html
+@@ -13,7 +13,16 @@
+   }
+ 
+   @if (scope.pharmacyId(); as pharmacyId) {
+-    <app-card class="integration" padding="lg" data-testid="integration-card">
++    @if (embedded()) {
++      <div class="integration" data-testid="integration-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </div>
++    } @else {
++      <app-card class="integration" padding="lg" data-testid="integration-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </ng-template>
++    }
++    <ng-template #panel>
+       <app-view-state-host [state]="connections()" (retry)="reload()" (refresh)="reload()">
+         <!-- S2 · sin conexión: la próxima acción es conectarla, acá mismo. -->
+         <section vsh-empty class="integration__connect" data-testid="integration-connect" aria-labelledby="integration-connect-title">
+@@ -85,6 +94,6 @@
+           </div>
+         }
+       </app-view-state-host>
+-    </app-card>
++    </ng-template>
+   }
+ </app-view-state-host>
+diff --git a/src/app/features/pharmacy/integration/pharmacy-integration.spec.ts b/src/app/features/pharmacy/integration/pharmacy-integration.spec.ts
+index 70d3f208..92546009 100644
+--- a/src/app/features/pharmacy/integration/pharmacy-integration.spec.ts
++++ b/src/app/features/pharmacy/integration/pharmacy-integration.spec.ts
+@@ -140,6 +140,22 @@ describe('PharmacyIntegration', () => {
+ 
+   afterEach(() => http.verify());
+ 
++  it('montada como pestaña (`embedded`) no dibuja su propia tarjeta y no pierde contenido', () => {
++    mount([]);
++    const host = fixture.nativeElement as HTMLElement;
++    const card = (): HTMLElement | null => host.querySelector('[data-testid="integration-card"]');
++    expect(host.querySelectorAll('app-card')).toHaveLength(1);
++    expect(card()?.tagName).toBe('APP-CARD');
++    const antes = card()?.textContent ?? '';
++
++    fixture.componentRef.setInput('embedded', true);
++    fixture.detectChanges();
++
++    expect(host.querySelectorAll('app-card')).toHaveLength(0);
++    expect(card()?.tagName).toBe('DIV');
++    expect(card()?.textContent).toBe(antes);
++  });
++
+   describe('sin conexión', () => {
+     it('ofrece «Conectar el sistema de la farmacia» y no pide nada de una conexión', () => {
+       mount([]);
+diff --git a/src/app/features/pharmacy/integration/pharmacy-integration.ts b/src/app/features/pharmacy/integration/pharmacy-integration.ts
+index c2725247..05c65068 100644
+--- a/src/app/features/pharmacy/integration/pharmacy-integration.ts
++++ b/src/app/features/pharmacy/integration/pharmacy-integration.ts
+@@ -1,14 +1,16 @@
+ import {
++  booleanAttribute,
+   ChangeDetectionStrategy,
+   Component,
+   computed,
+   effect,
+   inject,
++  input,
+   LOCALE_ID,
+   signal,
+   untracked,
+ } from '@angular/core';
+-import { formatDate } from '@angular/common';
++import { formatDate, NgTemplateOutlet } from '@angular/common';
+ 
+ import { AppButton } from '../../../shared/components/atoms/button/button';
+ import { Select } from '../../../shared/components/atoms/select/select';
+@@ -66,6 +68,7 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
+     FormField,
+     IntegrationMappings,
+     IntegrationSync,
++    NgTemplateOutlet,
+     Select,
+     ViewStateHost,
+   ],
+@@ -75,6 +78,12 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
+   changeDetection: ChangeDetectionStrategy.OnPush,
+ })
+ export class PharmacyIntegration {
++  /**
++   * Dentro de la pestaña del catálogo (`PharmacyCatalogHub`) la tarjeta es la del
++   * hub: la pantalla no dibuja otra (composition-rules §5, UNA tarjeta).
++   */
++  readonly embedded = input(false, { transform: booleanAttribute });
++
+   protected readonly scope = inject(PharmacyScope);
+   private readonly integration = inject(PharmacyIntegrationClient);
+   private readonly pharmacy = inject(PharmacyClient);
+diff --git a/src/app/features/pharmacy/inventory/pharmacy-inventory.html b/src/app/features/pharmacy/inventory/pharmacy-inventory.html
+index efc1ad43..a01e2322 100644
+--- a/src/app/features/pharmacy/inventory/pharmacy-inventory.html
++++ b/src/app/features/pharmacy/inventory/pharmacy-inventory.html
+@@ -20,7 +20,16 @@
+   }
+ 
+   @if (scope.pharmacyId() !== null) {
+-    <app-card class="inventory" padding="lg" data-testid="inventory-card">
++    @if (embedded()) {
++      <div class="inventory" data-testid="inventory-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </div>
++    } @else {
++      <app-card class="inventory" padding="lg" data-testid="inventory-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </ng-template>
++    }
++    <ng-template #panel>
+       <div class="inventory__panel">
+         <p class="inventory__nota" data-testid="inventory-sync-notice">
+           Cuando exista la sincronización con su sistema, esta pantalla pasa a ser sólo de lectura.
+@@ -141,7 +150,7 @@
+           />
+         }
+       </div>
+-    </app-card>
++    </ng-template>
+   }
+ </app-view-state-host>
+ 
+diff --git a/src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts b/src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts
+index d198f30c..f799dc9e 100644
+--- a/src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts
++++ b/src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts
+@@ -110,6 +110,22 @@ describe('PharmacyInventory', () => {
+     expect(host.querySelector('app-page-header')).toBeNull();
+   });
+ 
++  it('montada como pestaña (`embedded`) no dibuja su propia tarjeta y no pierde contenido: la del hub es la única', () => {
++    mount([]);
++    const host = fixture.nativeElement as HTMLElement;
++    const card = (): HTMLElement | null => host.querySelector('[data-testid="inventory-card"]');
++    expect(host.querySelectorAll('app-card')).toHaveLength(1);
++    expect(card()?.tagName).toBe('APP-CARD');
++    const antes = card()?.textContent ?? '';
++
++    fixture.componentRef.setInput('embedded', true);
++    fixture.detectChanges();
++
++    expect(host.querySelectorAll('app-card')).toHaveLength(0);
++    expect(card()?.tagName).toBe('DIV');
++    expect(card()?.textContent).toBe(antes);
++  });
++
+   it('avisa que con la sincronización pasará a sólo lectura', () => {
+     mount([product({})]);
+ 
+diff --git a/src/app/features/pharmacy/inventory/pharmacy-inventory.ts b/src/app/features/pharmacy/inventory/pharmacy-inventory.ts
+index f28064ab..07fbc4e6 100644
+--- a/src/app/features/pharmacy/inventory/pharmacy-inventory.ts
++++ b/src/app/features/pharmacy/inventory/pharmacy-inventory.ts
+@@ -11,6 +11,7 @@ import {
+   viewChild,
+   type TemplateRef,
+ } from '@angular/core';
++import { NgTemplateOutlet } from '@angular/common';
+ import { ActivatedRoute } from '@angular/router';
+ 
+ import { AppButton } from '../../../shared/components/atoms/button/button';
+@@ -120,8 +121,9 @@ interface InventoryEdit {
+     DataTable,
+     FormField,
+     Input,
+-    PageHeader,
+     InventoryUploadDialog,
++    NgTemplateOutlet,
++    PageHeader,
+     SearchField,
+     SegmentedControl,
+     Select,
+diff --git a/src/app/features/pharmacy/prices/pharmacy-prices.html b/src/app/features/pharmacy/prices/pharmacy-prices.html
+index 6765745e..5eead33e 100644
+--- a/src/app/features/pharmacy/prices/pharmacy-prices.html
++++ b/src/app/features/pharmacy/prices/pharmacy-prices.html
+@@ -20,7 +20,16 @@
+   }
+ 
+   @if (scope.pharmacyId() !== null) {
+-    <app-card class="prices" padding="lg" data-testid="prices-card">
++    @if (embedded()) {
++      <div class="prices" data-testid="prices-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </div>
++    } @else {
++      <app-card class="prices" padding="lg" data-testid="prices-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </ng-template>
++    }
++    <ng-template #panel>
+       <div class="prices__panel">
+         @if (errors().length > 0) {
+           <app-alert tone="error" title="Falta resolver esto" data-testid="prices-errors">
+@@ -87,7 +96,7 @@
+           data-testid="prices-table"
+         />
+       </div>
+-    </app-card>
++    </ng-template>
+   }
+ </app-view-state-host>
+ 
+diff --git a/src/app/features/pharmacy/prices/pharmacy-prices.spec.ts b/src/app/features/pharmacy/prices/pharmacy-prices.spec.ts
+index fe09f392..ecd9bb6c 100644
+--- a/src/app/features/pharmacy/prices/pharmacy-prices.spec.ts
++++ b/src/app/features/pharmacy/prices/pharmacy-prices.spec.ts
+@@ -101,6 +101,21 @@ describe('PharmacyPrices', () => {
+     expect(host.querySelector('app-page-header')).toBeNull();
+   });
+ 
++  it('montada como pestaña (`embedded`) no dibuja su propia tarjeta y no pierde contenido: la del hub es la única', () => {
++    const host = fixture.nativeElement as HTMLElement;
++    const card = (): HTMLElement | null => host.querySelector('[data-testid="prices-card"]');
++    expect(host.querySelectorAll('app-card')).toHaveLength(1);
++    expect(card()?.tagName).toBe('APP-CARD');
++    const antes = card()?.textContent ?? '';
++
++    fixture.componentRef.setInput('embedded', true);
++    fixture.detectChanges();
++
++    expect(host.querySelectorAll('app-card')).toHaveLength(0);
++    expect(card()?.tagName).toBe('DIV');
++    expect(card()?.textContent).toBe(antes);
++  });
++
+   it('lista los productos vivos con su precio publicado, sin los retirados', () => {
+     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+     expect(text).toContain('Paracetamol');
+diff --git a/src/app/features/pharmacy/prices/pharmacy-prices.ts b/src/app/features/pharmacy/prices/pharmacy-prices.ts
+index 5c0e4568..22ae3b57 100644
+--- a/src/app/features/pharmacy/prices/pharmacy-prices.ts
++++ b/src/app/features/pharmacy/prices/pharmacy-prices.ts
+@@ -11,6 +11,7 @@ import {
+   viewChild,
+   type TemplateRef,
+ } from '@angular/core';
++import { NgTemplateOutlet } from '@angular/common';
+ import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
+ 
+ import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
+@@ -75,6 +76,7 @@ interface PriceRejection {
+     DataTable,
+     FormField,
+     Input,
++    NgTemplateOutlet,
+     PageHeader,
+     SearchField,
+     Select,
+diff --git a/src/app/features/pharmacy/products/pharmacy-products.html b/src/app/features/pharmacy/products/pharmacy-products.html
+index b8e3fed9..5b00232c 100644
+--- a/src/app/features/pharmacy/products/pharmacy-products.html
++++ b/src/app/features/pharmacy/products/pharmacy-products.html
+@@ -20,7 +20,16 @@
+   }
+ 
+   @if (scope.pharmacyId() !== null) {
+-    <app-card class="products" padding="lg" data-testid="products-card">
++    @if (embedded()) {
++      <div class="products" data-testid="products-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </div>
++    } @else {
++      <app-card class="products" padding="lg" data-testid="products-card">
++        <ng-container [ngTemplateOutlet]="panel" />
++      </ng-template>
++    }
++    <ng-template #panel>
+       <div class="products__panel">
+         <app-filter-bar
+           [filters]="filterDefs()"
+@@ -90,7 +99,7 @@
+           data-testid="products-table"
+         />
+       </div>
+-    </app-card>
++    </ng-template>
+   }
+ </app-view-state-host>
+ 
+diff --git a/src/app/features/pharmacy/products/pharmacy-products.spec.ts b/src/app/features/pharmacy/products/pharmacy-products.spec.ts
+index 4da807c0..ab789c41 100644
+--- a/src/app/features/pharmacy/products/pharmacy-products.spec.ts
++++ b/src/app/features/pharmacy/products/pharmacy-products.spec.ts
+@@ -138,6 +138,22 @@ describe('PharmacyProducts', () => {
+     expect(host.querySelector('app-page-header')).toBeNull();
+   });
+ 
++  it('montada como pestaña (`embedded`) no dibuja su propia tarjeta y no pierde contenido: la del hub es la única', () => {
++    mount();
++    const host = fixture.nativeElement as HTMLElement;
++    const card = (): HTMLElement | null => host.querySelector('[data-testid="products-card"]');
++    expect(host.querySelectorAll('app-card')).toHaveLength(1);
++    expect(card()?.tagName).toBe('APP-CARD');
++    const antes = card()?.textContent ?? '';
++
++    fixture.componentRef.setInput('embedded', true);
++    fixture.detectChanges();
++
++    expect(host.querySelectorAll('app-card')).toHaveLength(0);
++    expect(card()?.tagName).toBe('DIV');
++    expect(card()?.textContent).toBe(antes);
++  });
++
+   it('con una sola farmacia no pregunta cuál y lista todo su catálogo, borradores y retirados incluidos', () => {
+     mount([
+       product({}),
+diff --git a/src/app/features/pharmacy/products/pharmacy-products.ts b/src/app/features/pharmacy/products/pharmacy-products.ts
+index d28d9893..253e76ed 100644
+--- a/src/app/features/pharmacy/products/pharmacy-products.ts
++++ b/src/app/features/pharmacy/products/pharmacy-products.ts
+@@ -14,7 +14,7 @@ import {
+   type TemplateRef,
+   type WritableSignal,
+ } from '@angular/core';
+-import { DecimalPipe } from '@angular/common';
++import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+ import { ActivatedRoute, Router } from '@angular/router';
+ import { concatMap, from, toArray, type Observable, type Subscription } from 'rxjs';
+@@ -144,6 +144,7 @@ function rowActionsOf(product: PharmacyProduct): readonly RowAction[] {
+     DecimalPipe,
+     FilterBar,
+     FormField,
++    NgTemplateOutlet,
+     PageHeader,
+     ProductDialog,
+     RowActions,

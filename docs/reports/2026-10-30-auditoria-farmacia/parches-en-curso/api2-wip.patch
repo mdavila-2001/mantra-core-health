@@ -1,0 +1,166 @@
+diff --git a/src/modules/pharmacy_inventory/application/pharmacy-orders/pharmacy-orders.use-cases.ts b/src/modules/pharmacy_inventory/application/pharmacy-orders/pharmacy-orders.use-cases.ts
+index 2c43d5db3..a4b11eb76 100644
+--- a/src/modules/pharmacy_inventory/application/pharmacy-orders/pharmacy-orders.use-cases.ts
++++ b/src/modules/pharmacy_inventory/application/pharmacy-orders/pharmacy-orders.use-cases.ts
+@@ -578,12 +578,27 @@ export class PharmacyOrdersUseCases {
+     id: string,
+     actor: AuthenticatedUser,
+   ): Promise<PharmacyOrderDto> {
+-    const tenantId = requireTenantId();
++    // Quien no tiene perfil de paciente no puede ser titular: exige tenant
++    // desde el inicio. El titular puede llegar sin él: sus pedidos viajan entre
++    // organizaciones (la farmacia es de otro tenant que el suyo).
++    const requestTenantId =
++      actor.patientProfileId === undefined
++        ? requireTenantId()
++        : getCurrentTenantId();
+ 
+     let em = this.em.fork();
+     let order = await this.ordersRepo.findOrderById(em, id, ORDER_STATUS_IDS);
+     if (!order) throw orderNotFound(id);
+ 
++    const isOwner =
++      actor.patientProfileId !== undefined &&
++      order.patientProfileId === actor.patientProfileId;
++    // Al titular lo acota `patient_profile_id`, no el tenant; al resto sí: la
++    // farmacia ha de ser del tenant activo.
++    const tenantId = isOwner
++      ? undefined
++      : (requestTenantId ?? requireTenantId());
++
+     // El aislamiento precede tanto a la composición como a la expiración perezosa.
+     const [pharmacy] = await this.ordersRepo.findPharmaciesByIdsInTenant(
+       em,
+@@ -592,9 +607,6 @@ export class PharmacyOrdersUseCases {
+     );
+     if (!pharmacy) throw orderNotFound(id);
+ 
+-    const isOwner =
+-      actor.patientProfileId !== undefined &&
+-      order.patientProfileId === actor.patientProfileId;
+     const isStaff = actor.roles.some((role) => STAFF_READ_ROLES.includes(role));
+     if (
+       !isOwner &&
+@@ -619,7 +631,7 @@ export class PharmacyOrdersUseCases {
+     // el pedido cae en el mismo 404 que uno inexistente.
+     const [dto] = await this.composeOrders(
+       em,
+-      isOwner ? undefined : tenantId,
++      tenantId,
+       [order],
+       isOwner ? 'owner' : 'staff',
+     );
+diff --git a/src/modules/pharmacy_inventory/services/pharmacy-orders.service.spec.ts b/src/modules/pharmacy_inventory/services/pharmacy-orders.service.spec.ts
+index e9315b4ed..600ebf7ef 100644
+--- a/src/modules/pharmacy_inventory/services/pharmacy-orders.service.spec.ts
++++ b/src/modules/pharmacy_inventory/services/pharmacy-orders.service.spec.ts
+@@ -1178,6 +1178,109 @@ describe('PharmacyOrdersService', () => {
+       );
+     });
+ 
++    describe('cross-tenant pharmacy (H3-02)', () => {
++      /** Farmacia del tenant `tenant-a`; el filtro de tenant se aplica de verdad. */
++      function withTenantScopedPharmacies(d: ReturnType<typeof build>) {
++        d.ordersRepo.findPharmaciesByIdsInTenant.mockImplementation(
++          async (_em: unknown, tenantId: string | undefined) =>
++            tenantId === undefined || tenantId === PHARMACY.tenantId
++              ? [PHARMACY]
++              : [],
++        );
++      }
++
++      it('the owner patient reads the order although the pharmacy belongs to another tenant', async () => {
++        const d = build();
++        withReading(d, order(), []);
++        withTenantScopedPharmacies(d);
++
++        const res = await runWithTenant('tenant-patient', () =>
++          d.service.getOrder('order-1', patient),
++        );
++
++        expect(res.id).toBe('order-1');
++        // La vista del titular no acota la farmacia por el tenant del request.
++        expect(
++          d.ordersRepo.findPharmaciesByIdsInTenant,
++        ).toHaveBeenNthCalledWith(1, d.fork, undefined, ['ph-1']);
++        expect(d.settlements.forOrders).toHaveBeenCalledWith(
++          d.fork,
++          patient.id,
++          ['order-1'],
++        );
++        expect(d.tenantAdministration.canAdminister).not.toHaveBeenCalled();
++      });
++
++      it('the owner patient reads the order even without an active tenant', async () => {
++        const d = build();
++        withReading(d, order(), []);
++        withTenantScopedPharmacies(d);
++
++        const res = await d.service.getOrder('order-1', patient);
++
++        expect(res.id).toBe('order-1');
++      });
++
++      it('the pharmacy staff of the owning tenant still reads it', async () => {
++        const d = build();
++        withReading(d, order(), []);
++        withTenantScopedPharmacies(d);
++        const pharmacyStaff = {
++          id: 'user-ph',
++          roles: ['PHARMACY_STAFF'],
++        } as any;
++
++        const res = await runWithTenant('tenant-a', () =>
++          d.service.getOrder('order-1', pharmacyStaff),
++        );
++
++        expect(res.id).toBe('order-1');
++        expect(
++          d.ordersRepo.findPharmaciesByIdsInTenant,
++        ).toHaveBeenNthCalledWith(1, d.fork, 'tenant-a', ['ph-1']);
++        expect(d.settlements.forOrders).not.toHaveBeenCalled();
++      });
++
++      it('another patient gets 404 even with the pharmacy in the same tenant', async () => {
++        const d = build();
++        withReading(d, order({ patientProfileId: 'pat-2' }), []);
++        withTenantScopedPharmacies(d);
++        d.tenantAdministration.canAdminister.mockResolvedValue(false);
++
++        await expect(
++          runWithTenant('tenant-a', () =>
++            d.service.getOrder('order-1', patient),
++          ),
++        ).rejects.toBeInstanceOf(ResourceNotFoundException);
++        await expect(
++          runWithTenant('tenant-b', () =>
++            d.service.getOrder('order-1', patient),
++          ),
++        ).rejects.toBeInstanceOf(ResourceNotFoundException);
++        // El tercero sí queda acotado al tenant del request.
++        expect(d.ordersRepo.findPharmaciesByIdsInTenant).toHaveBeenCalledWith(
++          d.fork,
++          'tenant-b',
++          ['ph-1'],
++        );
++        expect(d.settlements.forOrders).not.toHaveBeenCalled();
++      });
++
++      it('a third party without the owner claim gets 404 from another tenant', async () => {
++        const d = build();
++        withReading(d, order(), []);
++        withTenantScopedPharmacies(d);
++        const thirdParty = { id: 'user-x', roles: ['PHARMACY_STAFF'] } as any;
++
++        await expect(
++          runWithTenant('tenant-b', () =>
++            d.service.getOrder('order-1', thirdParty),
++          ),
++        ).rejects.toBeInstanceOf(ResourceNotFoundException);
++        expect(d.settlements.forOrders).not.toHaveBeenCalled();
++      });
++    });
++
+     it('lazily expires an overdue order before serving it', async () => {
+       const d = build();
+       const overdue = order({ expiresAt: new Date(Date.now() - 1_000) });

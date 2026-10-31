@@ -1,6 +1,6 @@
 # Auditoría funcional de farmacia — traspaso
 
-> Estado al 2026-10-31 · sesión en la nube, VM propia, datos simulados · **trabajo en curso: lo continúa otro agente**
+> Estado al 2026-10-31 · sesión en la nube, VM propia, datos simulados · **trabajo en curso: lo continúa otro agente** (ver «Cómo continuar»)
 
 ## Qué es esto
 
@@ -10,15 +10,16 @@ contra lo que la app hace, en el navegador y por la API. Código auditado: API `
 front `origin/dev` `2e4ae4191`, modelo `origin/dev` `8a3f361fa`.
 
 **Este PR no cambia código de producto.** Solo documenta, con evidencia, lo que se ejecutó, y deja el
-entorno reproducible. Ninguna corrección está hecha.
+entorno reproducible. **Ninguna corrección está integrada**: las de la fase 2 están como parches sin
+commitear en `parches-en-curso/` (ver «Cómo continuar»).
 
 ## Qué está hecho
 
 - **Preflight Q1–Q11:** hecho y respondido en la conversación. Resumen en «Preflight» abajo.
 - **`informes/promos-servicios.md`:** terminado (Promociones, Servicios, importación masiva general).
-- **Los otros cuatro informes** (`far01-02.md`, `far03.md`, `far04-05.md`, `far06-07.md`): los escribían
-  agentes en paralelo al abrir este PR. **Si no están en `informes/`, no terminaron: hay que rehacerlos.**
-  Cada uno debe traer tabla `REQ → PASS/FAIL/BLOQUEADO → evidencia en una línea` y hallazgos con `ruta:línea`.
+- **Los cuatro informes de carriles FAR** están terminados en `informes/`: `far01-02.md` (36 PASS, 1 FAIL, 1 bloqueado),
+  `far03.md` (14 PASS, 1 FAIL, 1 bloqueado), `far04-05.md` (26 PASS, 3 FAIL, 4 bloqueados) y `far06-07.md`
+  (33 PASS, 5 FAIL). Hallazgos con `ruta:línea` y corrección mínima propuesta en cada uno.
 - **Evidencia:** `evidencia/<carril>/*.jpg` (capturas con Playwright + Chromium sin ventana, comprimidas a
   JPEG; el original era PNG). `entorno/q6-calls.log` tiene las 62 llamadas de la carga de datos.
 
@@ -48,7 +49,7 @@ Hallazgos del preflight (rotos al pasar):
 
 ## Lo que falta (en este orden)
 
-1. Terminar o rehacer los cuatro informes de carriles FAR (alcance en la tabla de arriba).
+1. ~~Informes de carriles FAR~~: hechos (ver arriba). Los hallazgos nuevos están en cada informe (H12-NN, H3-NN, H45-NN, H67-NN, HP-NN); los más graves están abajo en «Cómo continuar».
 2. Consolidar hallazgos por severidad y repartir correcciones, **una por franja y en orden de dependencias**
    (`NO_BIG_BANG_REWRITE`). Cada corrección con prueba `UI → request → response → persistencia → recarga → UI`.
 3. Dos PRs por cambio terminado, uno hacia `dev` y otro hacia `test` (CLAUDE.md, «Git»).
@@ -90,3 +91,47 @@ Lo aprendido en esta VM; los scripts están en `entorno/`.
 
 Notas de prueba: nunca esperar `networkidle` en Playwright; el modo oscuro solo se ve con
 `localStorage['mantra-core-health.theme']='dark'` (`src/index.html:16`).
+
+## Cómo continuar (instrucciones para el siguiente agente)
+
+La fase 2 (correcciones) se lanzó con seis agentes en paralelo y se cortó al subir este PR: **ninguno había
+commiteado**. Sus cambios sin commitear están como parches en `parches-en-curso/<id>-wip.patch`, hechos con
+`git diff --cached HEAD --binary` (incluyen archivos nuevos). **Son trabajo a medio hacer, sin revisar y sin
+probar de punta a punta**: tratalos como borrador, no como corrección. Reglas de la fase en
+`informes/REGLAS-CORRECCION.md` (worktrees aislados, un commit por hallazgo, serializar builds y navegador,
+no aflojar pruebas ni techos).
+
+| Id | Repo y base del parche | Hallazgos que ataca | Archivos del parche |
+|---|---|---|---|
+| `api1` | API, `5f76e5bf9` | H12-01 token en logs (`pino-options.ts:76-79`), H12-02 aperturas públicas contadas como de farmacia (`prescription-shares.service.ts:369-376`, además partir el archivo de 630 líneas), H67-03 `"false"` → true (`validation-pipe.ts:119`, `site-availability.dto.ts:13`) | 3 |
+| `api2` | API, `5f76e5bf9` | H3-02 404 al titular en el detalle de sus pedidos (`pharmacy-orders.use-cases.ts:588`), H3-04 pedido aceptado con la sede en «No lo tengo», H67-01 producto invisible con conteo de catálogo 0 (`read-pharmacy-inventory.use-case.ts:192`, `pharmacy-catalog-rules.ts:142-145`), H3-09 receta con `validTo` pasado | 2 |
+| `api3` | API, `5f76e5bf9` | `dryRun` no booleano escribe, H45-02 `medicationConceptId` en `products/bulk`, motivo `REQUIRED` en nombres largos | 4 |
+| `api4` | API, `e1805fa83` | HP-01 `POST /promotions` → 422 FK, HP-02 activar/editar/listar/borrar, HP-03 farmacia y visibilidad al paciente | 2 |
+| `front1` | Front, `2e4ae419` | H3-01 `ISSUED_STATUS_CODE='MR_ISSUED'` vs `clinical:MEDICATION_REQUEST_ISSUED` (`orderable-prescription.ts:15`), H3-03 estados de «Mis recetas» y «Compartir», H3-05 error genérico en «Enviar pedido» | 3 |
+| `front2` | Front, `80ad44ea` | H45-03 tarjeta dentro de tarjeta, H45-01 claves repetidas entre lotes en la vista previa, REQ-FAR-04-011 techos de `navigation.map.ts`/`app.routes.ts` (bajarlos, nunca subirlos) | 26 |
+
+Cómo aplicarlos: `git worktree add <dir> -b fix/<id> <base>` y `git apply --index parches-en-curso/<id>-wip.patch`.
+`origin/dev` avanzó mientras tanto (las bases no coinciden entre agentes): rebasar y volver a probar.
+Los parches `api*` son de la **API** (`mantra-core-health-api`), no de este repo; viven aquí solo para el traspaso.
+
+### Orden sugerido
+
+1. Reconstruir el entorno («Cómo reconstruir», abajo) y aplicar un parche por vez.
+2. Primero lo que bloquea el pedido: **H3-01** (front1) y **H3-02** (api2): sin ellos el paciente no puede pedir con receta ni abrir su pedido.
+3. Seguridad: **H12-01** (api1, token en claro en logs; incumple S-6 del contrato).
+4. Promociones: **HP-01** (api4) es un bug crítico; el resto de HP exige decisiones de producto.
+5. Cada corrección con prueba `UI → request → response → persistencia → recarga → UI` y un revisor distinto de quien implementa.
+6. Dos PRs por cambio terminado (`dev` y `test`, CLAUDE.md «Git»); el de `test` desde una rama creada desde `test` con cherry-pick.
+
+### Decisiones pendientes para Itzan (no son bugs, no se tocaron)
+
+- Marketplace de promociones estilo Facebook: el modelo no tiene tipo de partner, imagen, precio ni ubicación (HP-04, HP-08): exige cambio de modelo y de diseño.
+- Importación masiva con UPSERT y vista previa en precios de laboratorio, catálogo de aseguradora, promociones, «Mis servicios», procedimientos por sede y sucursales (H45-10); la API de servicios no tiene `@Delete` ni UPSERT.
+- Si el QR del PDF debe apuntar a `/rx/<token>` (hoy `/verify/rx/<id>`, `prescription-pdf.service.ts:534`) y si el enlace debe atarse a una farmacia (H12-03, H12-04).
+- Actualizar CONTRATO §4: la regla de disponibilidad pasó a «por producto» (commit `3686ec2d`, `site-product-availability.ts:19-22`); el contrato y los REQ de FAR-06 quedaron desfasados (H67-02).
+
+### Avisos
+
+- El entorno de la VM se corta con los reinicios del contenedor; la base y los archivos sobreviven, los procesos no.
+- El disco de la sesión es el límite real (≈40 GB): no instalar dependencias de nuevo, enlazar `node_modules`.
+- Lo que se creó con prefijos `far12-`, `far3-`, `far45-`, `far67-` y `promo-` quedó en la base local, no en dev.

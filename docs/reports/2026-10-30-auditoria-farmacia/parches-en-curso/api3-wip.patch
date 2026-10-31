@@ -1,0 +1,115 @@
+diff --git a/src/modules/pharmacy/controllers/pharmacy-bulk.controller.spec.ts b/src/modules/pharmacy/controllers/pharmacy-bulk.controller.spec.ts
+index 60ea099e1..95f26f90b 100644
+--- a/src/modules/pharmacy/controllers/pharmacy-bulk.controller.spec.ts
++++ b/src/modules/pharmacy/controllers/pharmacy-bulk.controller.spec.ts
+@@ -115,6 +115,28 @@ describe('PharmacyBulkController', () => {
+     ).toHaveLength(0);
+   });
+ 
++  it('dryRun is a strict boolean or absent: 0, 1, null and strings are a 400 through the global pipe', async () => {
++    const pipe = createGlobalValidationPipe();
++    const send = (extra: Record<string, unknown>) =>
++      pipe.transform(
++        { mode: 'UPSERT', rows: [{ name: 'x' }], ...extra },
++        { type: 'body', metatype: BulkRequestDto },
++      ) as Promise<BulkRequestDto>;
++    for (const bad of [0, 1, null, 'true', 'false', '0', '1', '', [], {}]) {
++      await expect(send({ dryRun: bad })).rejects.toMatchObject({
++        status: 400,
++      });
++    }
++    await expect(send({ dryRun: true })).resolves.toMatchObject({
++      dryRun: true,
++    });
++    await expect(send({ dryRun: false })).resolves.toMatchObject({
++      dryRun: false,
++    });
++    const absent = await send({});
++    expect(absent.dryRun).toBeUndefined();
++  });
++
+   it('the global validation pipe lets the rows through as plain objects', async () => {
+     const pipe = createGlobalValidationPipe();
+     const body = (await pipe.transform(
+diff --git a/src/modules/pharmacy/dto/bulk.dto.ts b/src/modules/pharmacy/dto/bulk.dto.ts
+index dbc0a26f0..008b01b49 100644
+--- a/src/modules/pharmacy/dto/bulk.dto.ts
++++ b/src/modules/pharmacy/dto/bulk.dto.ts
+@@ -1,5 +1,5 @@
+ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+-import { Type } from 'class-transformer';
++import { Transform, Type } from 'class-transformer';
+ import {
+   ArrayMaxSize,
+   ArrayMinSize,
+@@ -14,6 +14,7 @@ import {
+   Max,
+   MaxLength,
+   Min,
++  ValidateIf,
+ } from 'class-validator';
+ import { CATEGORY_NAME_MAX } from '../services/pharmacy-catalog-rules';
+ import { IsCatalogMoney } from './catalog-fields.dto';
+@@ -52,9 +53,15 @@ export class BulkRequestDto {
+ 
+   /**
+    * Con `true` no escribe nada y responde lo que habría pasado con cada fila.
+-   */
+-  @ApiPropertyOptional({ default: false })
+-  @IsOptional()
++   * Booleano estricto o ausente: `0`, `1`, `null`, `"true"` o `"false"` son 400
++   * (una vista previa mal tipada no puede escribir de verdad).
++   */
++  @ApiPropertyOptional({ type: Boolean, default: false })
++  // `enableImplicitConversion` (pipe global) convertiría `0` en `false` y
++  // `"false"` en `true` (Boolean("false")): se lee el valor crudo. Y no se usa
++  // `@IsOptional`, que dejaría pasar `null`: sólo `undefined` omite la regla.
++  @Transform(({ obj }: { obj: { dryRun?: unknown } }) => obj.dryRun)
++  @ValidateIf((_row: unknown, value: unknown) => value !== undefined)
+   @IsBoolean()
+   dryRun?: boolean;
+ 
+diff --git a/src/modules/pharmacy/services/pharmacy-bulk.service.spec.ts b/src/modules/pharmacy/services/pharmacy-bulk.service.spec.ts
+index 8dece56d9..48335e9ad 100644
+--- a/src/modules/pharmacy/services/pharmacy-bulk.service.spec.ts
++++ b/src/modules/pharmacy/services/pharmacy-bulk.service.spec.ts
+@@ -190,6 +190,17 @@ describe('PharmacyBulkService', () => {
+     }
+   });
+ 
++  it('a dryRun that is not a boolean never writes: 400 before any row runs', async () => {
++    for (const bad of [0, null, 'false', 1]) {
++      const d = build();
++      await expect(
++        run(d, 'UPSERT', [{ code: 'A' }], bad as unknown as boolean),
++      ).rejects.toMatchObject({ status: 400 });
++      expect(d.em.transactional).not.toHaveBeenCalled();
++      expect(d.handler.create).not.toHaveBeenCalled();
++    }
++  });
++
+   it('translates a domain exception of the usual services into the row reason', async () => {
+     const d = build();
+     const response = await run(d, 'UPSERT', [
+diff --git a/src/modules/pharmacy/services/pharmacy-bulk.service.ts b/src/modules/pharmacy/services/pharmacy-bulk.service.ts
+index 4a2f808ec..2bcd9f814 100644
+--- a/src/modules/pharmacy/services/pharmacy-bulk.service.ts
++++ b/src/modules/pharmacy/services/pharmacy-bulk.service.ts
+@@ -1,4 +1,4 @@
+-import { HttpException, Injectable } from '@nestjs/common';
++import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
+ import { EntityManager } from '@mikro-orm/postgresql';
+ import { plainToInstance } from 'class-transformer';
+ import { validate, type ValidationError } from 'class-validator';
+@@ -61,6 +61,11 @@ export class PharmacyBulkService {
+     handler: BulkHandler<Existing, CreateRow, UpdateRow>,
+     actor: AuthenticatedUser,
+   ): Promise<BulkResponseDto> {
++    // Defensa en profundidad: el DTO ya rechaza un `dryRun` que no sea booleano,
++    // pero si algo llega sin pasar por el pipe, nunca se escribe por error.
++    if (body.dryRun !== undefined && typeof body.dryRun !== 'boolean') {
++      throw new BadRequestException('dryRun debe ser true o false');
++    }
+     const dryRun = body.dryRun === true;
+     this.logger.info(
+       {

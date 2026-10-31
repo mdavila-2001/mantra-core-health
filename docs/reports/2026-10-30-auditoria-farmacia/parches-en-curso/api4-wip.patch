@@ -1,0 +1,50 @@
+diff --git a/src/modules/promotions/services/promotions-discounts.service.spec.ts b/src/modules/promotions/services/promotions-discounts.service.spec.ts
+index 39695452d..7bc9974db 100644
+--- a/src/modules/promotions/services/promotions-discounts.service.spec.ts
++++ b/src/modules/promotions/services/promotions-discounts.service.spec.ts
+@@ -190,6 +190,29 @@ describe('PromotionsDiscountsService', () => {
+       expect(res.ruleIds).toEqual(['rule-1']);
+     });
+ 
++    it('flushes the promotion before creating its rules (FK order)', async () => {
++      // `DiscountRules.promotionId` es un uuid escalar: sin este volcado el
++      // Unit of Work puede insertar las reglas antes que la promoción y la base
++      // responde 422 `fk_discount_rules_promotion_id`.
++      const d = build();
++      d.discountsRepo.findPromotionByCode.mockResolvedValue(null);
++      d.discountsRepo.createPromotion.mockClear();
++      d.discountsRepo.createDiscountRule.mockClear();
++      d.tx.flush.mockClear();
++      d.discountsRepo.createPromotion.mockReturnValue({ id: PROMOTION });
++      d.discountsRepo.createDiscountRule.mockReturnValue({ id: 'rule-1' });
++
++      await d.service.createPromotion(dto, actor as any);
++
++      const [promotionOrder] =
++        d.discountsRepo.createPromotion.mock.invocationCallOrder;
++      const [flushOrder] = d.tx.flush.mock.invocationCallOrder;
++      const [ruleOrder] =
++        d.discountsRepo.createDiscountRule.mock.invocationCallOrder;
++      expect(promotionOrder).toBeLessThan(flushOrder);
++      expect(flushOrder).toBeLessThan(ruleOrder);
++    });
++
+     it('rejects a duplicate code in the tenant', async () => {
+       const d = build();
+       d.discountsRepo.findPromotionByCode.mockResolvedValue({ id: 'other' });
+diff --git a/src/modules/promotions/services/promotions-discounts.service.ts b/src/modules/promotions/services/promotions-discounts.service.ts
+index 918b10a61..862f19c95 100644
+--- a/src/modules/promotions/services/promotions-discounts.service.ts
++++ b/src/modules/promotions/services/promotions-discounts.service.ts
+@@ -183,6 +183,11 @@ export class PromotionsDiscountsService {
+         statusConceptId: CONCEPTS.PROMOTION_DRAFT,
+         actorUserId: actor.id,
+       });
++      // `DiscountRules.promotionId` es un uuid escalar, sin relación mapeada: el
++      // Unit of Work no sabe que `promotions` va antes que `discount_rules` y
++      // podía insertarlas al revés (FK `fk_discount_rules_promotion_id`, 422).
++      // Volcar la promoción primero fija el orden.
++      await tx.flush();
+ 
+       const ruleIds = dto.rules.map(
+         (rule) =>
