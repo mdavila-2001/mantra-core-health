@@ -117,6 +117,48 @@ describe('PharmacyInventory', () => {
     expect(root().textContent).not.toContain('Cuando exista la sincronización');
   });
 
+  it('con el listado cortado en 500 lo dice: la tabla, las alertas y el CSV ven sólo esos', () => {
+    fixture = TestBed.createComponent(PharmacyInventory);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.endsWith('/pharmacy/pharmacies'))
+      .flush({ items: [{ ...PHARMACY, code: 'FC', siteCount: 1, productCount: 1 }], count: 1 });
+    fixture.detectChanges();
+    flushSites([]);
+    http.expectOne((r) => r.url.endsWith('/pharmacy/products')).flush({ items: [product({})], limit: 500, truncated: true });
+    fixture.detectChanges();
+
+    expect(root().querySelector('[data-testid="inventory-truncated"]')?.textContent).toContain(
+      'Se muestran los primeros 500',
+    );
+  });
+
+  it('sin corte no hay aviso, la tabla es compacta y avisa al catálogo de lo escrito sin guardar', () => {
+    mount([product({})]);
+    const inventory = fixture.componentInstance;
+
+    expect(root().querySelector('[data-testid="inventory-truncated"]')).toBeNull();
+    expect(root().querySelector('[data-testid="inventory-table"]')?.classList).toContain('data-table--dense');
+    expect(inventory.hasUnsavedChanges()).toBe(false);
+    internal().setStock(product({}), '3');
+    expect(inventory.hasUnsavedChanges()).toBe(true);
+  });
+
+  it('ordena por existencias desde el encabezado', async () => {
+    mount([
+      product({ id: 'p-1', productCode: 'A', brandName: 'Alfa', stock: 9 }),
+      product({ id: 'p-2', productCode: 'B', brandName: 'Beta', stock: 1 }),
+    ]);
+    const names = (): (string | undefined)[] =>
+      [...root().querySelectorAll('.inventory__main')].map((name) => name.textContent?.trim());
+    expect(names()).toEqual(['Alfa', 'Beta']);
+
+    (root().querySelector('[data-testid="tabla-ordenar"][data-columna="stock"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(names()).toEqual(['Beta', 'Alfa']);
+  });
+
   it('no lista los retirados: no tienen inventario que llevar', () => {
     mount([product({}), product({ id: 'p-2', productCode: 'OLD', brandName: 'Retirado ya', status: 'WITHDRAWN' })]);
 

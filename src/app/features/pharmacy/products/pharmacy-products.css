@@ -35,8 +35,19 @@
 }
 
 .products__main {
-  display: block;
   font-weight: 600;
+  color: var(--text-primary);
+}
+
+.products__presentation {
+  margin-inline-start: var(--sp-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.products__number {
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
 }
 

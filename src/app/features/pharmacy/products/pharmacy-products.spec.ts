@@ -645,4 +645,66 @@ describe('PharmacyProducts', () => {
       expectListing([drafts[0]!]);
     });
   });
+
+  describe('tabla de trabajo: compacta, con existencias y receta, y ordenable', () => {
+    const cells = (column: number): string[] =>
+      [...root().querySelectorAll('[data-testid="products-table"] tbody tr.data-table__row')].map(
+        (row) => row.querySelectorAll('td')[column]?.textContent?.trim() ?? '',
+      );
+    const headers = (): string[] =>
+      [...root().querySelectorAll('[data-testid="products-table"] thead th')].map(
+        (th) => th.textContent?.replace(/[▲▼↕]/g, '').trim() ?? '',
+      );
+
+    it('es una tabla compacta con «Existencias» y «Receta» en columna', () => {
+      mount([
+        product({}),
+        product({ id: 'p-2', productCode: 'AMX', brandName: 'Amoxil', stock: null, requiresPrescription: true }),
+      ]);
+
+      expect(root().querySelector('app-data-table')?.classList).toContain('data-table--dense');
+      const all = headers();
+      const stock = all.indexOf('Existencias');
+      const prescription = all.indexOf('Receta');
+      expect(stock).toBeGreaterThan(0);
+      expect(prescription).toBeGreaterThan(0);
+      expect(cells(stock)).toEqual(['20', 'Sin conteo']);
+      expect(cells(prescription)).toEqual(['Venta libre', 'Bajo receta']);
+    });
+
+    it('ordena por existencias al tocar el encabezado, y la segunda vez al revés', async () => {
+      mount([
+        product({ id: 'p-1', productCode: 'A', brandName: 'Alfa', stock: 7 }),
+        product({ id: 'p-2', productCode: 'B', brandName: 'Beta', stock: 30 }),
+        product({ id: 'p-3', productCode: 'C', brandName: 'Gama', stock: 2 }),
+      ]);
+      const sortButton = (): HTMLButtonElement =>
+        root().querySelector('[data-testid="tabla-ordenar"][data-columna="stock"]') as HTMLButtonElement;
+      const names = (): string[] =>
+        [...root().querySelectorAll('[data-testid="products-table"] .products__main')].map(
+          (name) => name.textContent?.trim() ?? '',
+        );
+
+      expect(names()).toEqual(['Alfa', 'Beta', 'Gama']);
+      sortButton().click();
+      await fixture.whenStable();
+      expect(names()).toEqual(['Gama', 'Alfa', 'Beta']);
+      sortButton().click();
+      await fixture.whenStable();
+      expect(names()).toEqual(['Beta', 'Alfa', 'Gama']);
+    });
+
+    it('declara ordenables las columnas de datos y no las de acción', () => {
+      mount();
+      const sortable = [...root().querySelectorAll('[data-testid="tabla-ordenar"]')].map((button) =>
+        button.getAttribute('data-columna'),
+      );
+      expect(sortable).toEqual(['name', 'code', 'category', 'price', 'stock', 'prescription', 'status']);
+    });
+
+    it('los filtros se pliegan en teléfono detrás de «Filtros»', () => {
+      mount();
+      expect(root().querySelector('app-filter-bar')?.classList).toContain('filter-bar--folded');
+    });
+  });
 });

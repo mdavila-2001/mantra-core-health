@@ -31,19 +31,23 @@ import { DataTable } from '../../../shared/components/organisms/data-table/data-
 import type {
   ColumnDef,
   CursorState,
+  SortState,
 } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 
 import { MAX_PRICE, parsePrice } from '../catalog-rules/catalog.rules';
+import { sortRows } from '../catalog/catalog-sort';
+import { ENTITY_COLUMNS } from '../import/entity-import/entity-csv';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
-import { productName, productStatus } from '../products/product-view';
+import { PRODUCT_SORT_ACCESSORS, productName, productStatus } from '../products/product-view';
 
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
 const LIST_LIMIT = 500;
-/** Filas por página. */
-const PAGE_SIZE = 10;
+/** Filas por página: con filas compactas, las que entran en una pantalla. */
+const PAGE_SIZE = 25;
 
 /** Un producto que no se pudo guardar, con su motivo. */
 interface PriceRejection {
@@ -90,8 +94,12 @@ export class PharmacyPrices {
   protected readonly scope = inject(PharmacyScope);
   private readonly pharmacy = inject(PharmacyClient);
   private readonly toasts = inject(ToastService);
+  private readonly csv = inject(CsvExportService);
 
   protected readonly products = signal<ViewState<readonly PharmacyProduct[]>>(loading());
+  /** La API cortó el listado en 500: lo que no entró no se ve ni se exporta. */
+  protected readonly truncated = signal(false);
+  protected readonly sort = signal<SortState | null>(null);
   /** Lo escrito y sin guardar, por producto. */
   protected readonly edits = signal<Readonly<Record<string, string>>>({});
   protected readonly term = signal('');
@@ -119,7 +127,7 @@ export class PharmacyPrices {
         ),
     );
     return list.length > 0
-      ? ready(list)
+      ? ready(sortRows(list, this.sort(), PRODUCT_SORT_ACCESSORS))
       : empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${this.term().trim()}».`);
   });
 
@@ -143,10 +151,10 @@ export class PharmacyPrices {
     viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('statusCell');
 
   protected readonly columns = computed<readonly ColumnDef<PharmacyProduct>[]>(() => [
-    { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
-    { key: 'current', header: 'Precio publicado', priority: 2, cell: this.currentCell() },
+    { key: 'name', header: 'Producto', priority: 1, sortable: true, cell: this.nameCell() },
+    { key: 'current', header: 'Precio publicado', priority: 2, sortable: true, cell: this.currentCell() },
     { key: 'price', header: 'Nuevo precio (Bs)', priority: 1, cell: this.priceCell() },
-    { key: 'status', header: 'En la vitrina', priority: 3, cell: this.statusCell() },
+    { key: 'status', header: 'En la vitrina', priority: 3, sortable: true, cell: this.statusCell() },
   ]);
 
   protected readonly rowId = (product: PharmacyProduct): string => product.id;
@@ -171,9 +179,11 @@ export class PharmacyPrices {
       return;
     }
     this.products.set(loading());
+    this.truncated.set(false);
     this.offset.set(0);
     this.pharmacy.searchProducts({ pharmacyId, managed: true, limit: LIST_LIMIT }).subscribe({
       next: (page) => {
+        this.truncated.set(page.truncated);
         const alive = page.items.filter((product) => productStatus(product) !== 'WITHDRAWN');
         this.products.set(
           alive.length > 0
@@ -196,6 +206,25 @@ export class PharmacyPrices {
   protected search(term: string): void {
     this.term.set(term);
     this.offset.set(0);
+  }
+
+  protected sortBy(sort: SortState): void {
+    this.sort.set(sort);
+    this.offset.set(0);
+  }
+
+  /**
+   * Descarga los precios publicados de lo que la búsqueda deja a la vista, con
+   * los encabezados de la importación de precios: se corrige en una planilla y
+   * se vuelve a subir desde «Importación». Lo escrito sin guardar no viaja.
+   */
+  protected exportCsv(): void {
+    const [code, price] = ENTITY_COLUMNS.prices;
+    const columns: CsvColumn<PharmacyProduct>[] = [
+      { header: code!.header, value: (product) => product.productCode },
+      { header: price!.header, value: (product) => product.unitPrice ?? '' },
+    ];
+    this.csv.download(dataOf(this.visible()) ?? [], columns, 'precios-de-la-farmacia.csv');
   }
 
   /* ─── Lo escrito ──────────────────────────────────────────────────────── */

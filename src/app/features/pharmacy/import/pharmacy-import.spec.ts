@@ -237,7 +237,7 @@ describe('PharmacyImport', () => {
       expect(host.querySelector('app-page-header')).toBeNull();
     });
 
-    it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos en una sola tarjeta', () => {
+    it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos sin tarjeta propia (la pone el catálogo)', () => {
       mount();
 
       expect(root().querySelector('.import__pharmacy')).toBeNull();

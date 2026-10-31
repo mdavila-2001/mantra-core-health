@@ -43,7 +43,7 @@
 }
 
 .prices__main {
-  display: block;
+  margin-inline-end: var(--sp-2);
   font-weight: 600;
   color: var(--text-primary);
 }

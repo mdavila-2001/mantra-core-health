@@ -27,6 +27,7 @@
           searchLabel="Buscar en el catálogo"
           searchPlaceholder="Marca, genérico o código"
           [wrap]="true"
+          collapsible
         >
           <div filter-bar-action class="products__actions">
             <button app-button variant="outline" type="button" (clicked)="exportCsv()" data-testid="products-export">
@@ -82,6 +83,9 @@
           [trackBy]="rowId"
           [rowLabel]="rowLabel"
           [selectable]="true"
+          dense
+          [sort]="sort()"
+          (sortChanged)="sort.set($event)"
           [cursor]="cursor()"
           (cursorChanged)="goToCursor($event)"
           (selectionChanged)="selection.set($event)"
@@ -104,9 +108,12 @@
   />
 }
 
+<!-- Nombre y presentación en un renglón: la fila compacta mide una línea. -->
 <ng-template #nameCell let-product>
   <span class="products__main">{{ name(product) }}</span>
-  <span class="products__secondary">{{ presentation(product) }}</span>
+  @if (presentation(product) !== '—') {
+    <span class="products__presentation">{{ presentation(product) }}</span>
+  }
 </ng-template>
 
 <ng-template #codeCell let-product>
@@ -126,6 +133,24 @@
     <span class="products__price">Bs {{ product.unitPrice | number: '1.2-2' }}</span>
   } @else {
     <span class="products__secondary">Sin precio</span>
+  }
+</ng-template>
+
+<ng-template #stockCell let-product>
+  @if (product.stock === null || product.stock === undefined) {
+    <span class="products__secondary">Sin conteo</span>
+  } @else {
+    <span class="products__number">{{ product.stock }}</span>
+  }
+</ng-template>
+
+<ng-template #prescriptionCell let-product>
+  @if (product.requiresPrescription === true) {
+    <app-badge variant="primary">Bajo receta</app-badge>
+  } @else if (product.requiresPrescription === false) {
+    <span class="products__secondary">Venta libre</span>
+  } @else {
+    <span class="products__secondary">—</span>
   }
 </ng-template>
 

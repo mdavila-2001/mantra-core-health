@@ -83,6 +83,14 @@
             (searched)="search($event)"
           />
 
+          @if (truncated()) {
+            <app-alert tone="warning" title="Se muestran los primeros 500" data-testid="inventory-truncated">
+              Su catálogo tiene más productos de los que entran en un listado: la tabla, «Sólo con
+              alertas» y «Exportar CSV» ven sólo los primeros 500. Busque por marca, genérico o código
+              para llegar a los demás.
+            </app-alert>
+          }
+
           <div class="inventory__bar">
             <app-switch
               [label]="alertsLabel()"
@@ -120,6 +128,9 @@
             [trackBy]="rowId"
             [rowLabel]="rowLabel"
             stackedOnMobile
+            dense
+            [sort]="sort()"
+            (sortChanged)="sortBy($event)"
             [cursor]="cursor()"
             (cursorChanged)="goToCursor($event)"
             (retry)="reload()"

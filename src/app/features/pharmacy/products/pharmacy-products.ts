@@ -30,7 +30,11 @@ import { RowActions } from '../../../shared/components/molecules/row-actions/row
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
-import type { ColumnDef, CursorState } from '../../../shared/components/organisms/data-table/data-table.types';
+import type {
+  ColumnDef,
+  CursorState,
+  SortState,
+} from '../../../shared/components/organisms/data-table/data-table.types';
 import { FilterBar, type FilterDef } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -46,10 +50,12 @@ import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
 import { CSV_COLUMNS } from '../catalog-rules/catalog.rules';
+import { sortRows } from '../catalog/catalog-sort';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { ProductDialog } from './product-dialog/product-dialog';
 import {
+  PRODUCT_SORT_ACCESSORS,
   PRODUCT_STATUS_LABEL,
   isLowStock,
   productName,
@@ -59,8 +65,8 @@ import {
 
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
 const LIST_LIMIT = 500;
-/** Filas por página. */
-const PAGE_SIZE = 10;
+/** Filas por página: con filas compactas, las que entran en una pantalla. */
+const PAGE_SIZE = 25;
 
 /** Los filtros del listado, tal como viajan en la URL. */
 interface ProductFilters {
@@ -210,7 +216,7 @@ export class PharmacyProducts {
     const term = filters.q.trim().toLocaleLowerCase('es');
     const list = state.data.filter((product) => matches(product, filters, term));
     if (list.length > 0 || state.data.length === 0) {
-      return ready(list);
+      return ready(sortRows(list, this.sort(), PRODUCT_SORT_ACCESSORS));
     }
     return empty(
       { label: 'Quite algún filtro', route: this.router.url.split('?')[0] },
@@ -220,9 +226,12 @@ export class PharmacyProducts {
 
   protected readonly totalFiltered = computed(() => dataOf(this.filtered())?.length ?? 0);
 
-  /** La posición de la página visible en la lista filtrada; vuelve a 0 al cambiar un filtro. */
+  /** El orden pedido desde un encabezado; sin él, el de la API. */
+  protected readonly sort = signal<SortState | null>(null);
+
+  /** La posición de la página visible en la lista filtrada; vuelve a 0 al cambiar un filtro o el orden. */
   protected readonly offset: WritableSignal<number> = linkedSignal({
-    source: this.filters,
+    source: () => [this.filters(), this.sort()],
     computation: () => 0,
   });
 
@@ -250,14 +259,18 @@ export class PharmacyProducts {
   private readonly priceCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('priceCell');
   private readonly statusCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('statusCell');
   private readonly availabilityCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('availabilityCell');
+  private readonly stockCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('stockCell');
+  private readonly prescriptionCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('prescriptionCell');
   private readonly actionsCell = viewChild.required<TemplateRef<{ $implicit: PharmacyProduct }>>('actionsCell');
 
   protected readonly columns = computed<readonly ColumnDef<PharmacyProduct>[]>(() => [
-    { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
-    { key: 'code', header: 'Código', priority: 2, cell: this.codeCell() },
-    { key: 'category', header: 'Categoría', priority: 3, cell: this.categoryCell() },
-    { key: 'price', header: 'Precio', priority: 2, align: 'end', cell: this.priceCell() },
-    { key: 'status', header: 'Estado', priority: 1, cell: this.statusCell() },
+    { key: 'name', header: 'Producto', priority: 1, sortable: true, cell: this.nameCell() },
+    { key: 'code', header: 'Código', priority: 2, sortable: true, cell: this.codeCell() },
+    { key: 'category', header: 'Categoría', priority: 3, sortable: true, cell: this.categoryCell() },
+    { key: 'price', header: 'Precio', priority: 2, align: 'end', sortable: true, cell: this.priceCell() },
+    { key: 'stock', header: 'Existencias', priority: 2, align: 'end', sortable: true, cell: this.stockCell() },
+    { key: 'prescription', header: 'Receta', priority: 3, sortable: true, cell: this.prescriptionCell() },
+    { key: 'status', header: 'Estado', priority: 1, sortable: true, cell: this.statusCell() },
     { key: 'availability', header: 'Disponibilidad', priority: 2, cell: this.availabilityCell() },
     { key: 'actions', header: 'Acciones', priority: 1, align: 'end', sticky: 'end', cell: this.actionsCell() },
   ]);
