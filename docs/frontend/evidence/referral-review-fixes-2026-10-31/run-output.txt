@@ -1,0 +1,30 @@
+OK    L: la casilla nombra lo que cuenta («N derivaciones») Derivar A otro profesional u organización médica, por un servicio concreto. 4 derivaciones
+OK    arranca sin encuentro abierto 
+OK    L: ninguna fila se titula «Sin tipo» 
+OK    M: «Ir a abrir el encuentro» cierra el modal y enfoca «Abrir encuentro» consulta-abrir-encuentro
+OK    «Abrir encuentro» queda a la vista 
+OK    M: sin destino, el campo «Servicio» ya está, apagado 
+OK    M: sin servicios es un aviso en línea con título específico 
+OK    M: el aviso es más bajo que el S3 de página (< 290 px a 390) 222 px
+OK    M: no es el S3 genérico 
+OK    M: ofrece las dos salidas 
+OK    «Buscar otro destino» vuelve al buscador referral-organization
+OK    HIGH: el éxito se ve a 390 tras enviar {"top":473,"bottom":595,"vh":844,"inside":true}
+OK    HIGH: el foco va al resultado referral-outcome
+OK    H1: el texto de organización dice que se le avisó Éxito: Derivación enviada Le avisamos a la persona que la derivó a Hospital San Lucas. Va a ver la derivación en su portal.
+OK    M: al releer la lista no vuelve a «Buscando…» 
+OK    HIGH: el 409 se ve a 390 tras enviar {"top":473,"bottom":595,"vh":844,"inside":true}
+OK    HIGH: el foco va al resultado (409) referral-outcome
+OK    HIGH: el error se ve a 390 tras enviar {"top":486,"bottom":583,"vh":844,"inside":true}
+OK    M5: un 404 sin sub-código no culpa al encuentro Error:
+El encuentro, el destino o el servicio ya no están disponibles. Vuelva a buscar el destino.
+OK    sin desborde horizontal a 390 (modal) 
+OK    persistencia: tras F5 la casilla cuenta una más 4 → 5
+OK    persistencia: tras F5 la fila nueva sigue en la lista 5 filas
+OK    sin desborde horizontal a 768 
+OK    L: «Vigencia» alineada con «Tipo» a 768 480 vs 480
+OK    sin desborde horizontal a 1440 
+OK    L: «Vigencia» alineada con «Tipo» a 1440 455 vs 455
+OK    sin desborde horizontal a 1920 
+OK    L: «Vigencia» alineada con «Tipo» a 1920 455 vs 455
+28/28 aserciones; 0 pageerror

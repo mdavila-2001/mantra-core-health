@@ -1,0 +1,193 @@
+{
+  "console": [
+    "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers i",
+    "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers i",
+    "warning: NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" an",
+    "error: [API] GET /tenants/73d8690a-a29e-4890-a9d2-d0c640580a9a/branches → 403 · FORBIDDEN · «Se requiere pertenecer a la organización, o ser administrador de la plataforma» {status: 403, code: FORBIDDEN, message: Se requiere pertenecer a la organi",
+    "error: [API] POST /referrals → 409 · CONFLICT · «Ya existe una referencia equivalente» {status: 409, code: CONFLICT, message: Ya existe una referencia equivalente, details: Object}",
+    "error: [API] POST /referrals → 404 · NOT_FOUND · correlationId=mock-fallo {status: 404, code: NOT_FOUND, message: , correlationId: mock-fallo}",
+    "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers i",
+    "error: [API] GET /tenants/73d8690a-a29e-4890-a9d2-d0c640580a9a/branches → 403 · FORBIDDEN · «Se requiere pertenecer a la organización, o ser administrador de la plataforma» {status: 403, code: FORBIDDEN, message: Se requiere pertenecer a la organi",
+    "error: [API] GET /tenants/73d8690a-a29e-4890-a9d2-d0c640580a9a/branches → 403 · FORBIDDEN · «Se requiere pertenecer a la organización, o ser administrador de la plataforma» {status: 403, code: FORBIDDEN, message: Se requiere pertenecer a la organi",
+    "error: [API] GET /tenants/73d8690a-a29e-4890-a9d2-d0c640580a9a/branches → 403 · FORBIDDEN · «Se requiere pertenecer a la organización, o ser administrador de la plataforma» {status: 403, code: FORBIDDEN, message: Se requiere pertenecer a la organi"
+  ],
+  "pageErrors": [],
+  "requests": [],
+  "assertions": [
+    {
+      "name": "L: la casilla nombra lo que cuenta («N derivaciones»)",
+      "ok": true,
+      "detail": "Derivar A otro profesional u organización médica, por un servicio concreto. 4 derivaciones"
+    },
+    {
+      "name": "arranca sin encuentro abierto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "L: ninguna fila se titula «Sin tipo»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "M: «Ir a abrir el encuentro» cierra el modal y enfoca «Abrir encuentro»",
+      "ok": true,
+      "detail": "consulta-abrir-encuentro"
+    },
+    {
+      "name": "«Abrir encuentro» queda a la vista",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "M: sin destino, el campo «Servicio» ya está, apagado",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "M: sin servicios es un aviso en línea con título específico",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "M: el aviso es más bajo que el S3 de página (< 290 px a 390)",
+      "ok": true,
+      "detail": "222 px"
+    },
+    {
+      "name": "M: no es el S3 genérico",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "M: ofrece las dos salidas",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "«Buscar otro destino» vuelve al buscador",
+      "ok": true,
+      "detail": "referral-organization"
+    },
+    {
+      "name": "HIGH: el éxito se ve a 390 tras enviar",
+      "ok": true,
+      "detail": "{\"top\":473,\"bottom\":595,\"vh\":844,\"inside\":true}"
+    },
+    {
+      "name": "HIGH: el foco va al resultado",
+      "ok": true,
+      "detail": "referral-outcome"
+    },
+    {
+      "name": "H1: el texto de organización dice que se le avisó",
+      "ok": true,
+      "detail": "Éxito: Derivación enviada Le avisamos a la persona que la derivó a Hospital San Lucas. Va a ver la derivación en su portal."
+    },
+    {
+      "name": "M: al releer la lista no vuelve a «Buscando…»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "HIGH: el 409 se ve a 390 tras enviar",
+      "ok": true,
+      "detail": "{\"top\":473,\"bottom\":595,\"vh\":844,\"inside\":true}"
+    },
+    {
+      "name": "HIGH: el foco va al resultado (409)",
+      "ok": true,
+      "detail": "referral-outcome"
+    },
+    {
+      "name": "HIGH: el error se ve a 390 tras enviar",
+      "ok": true,
+      "detail": "{\"top\":486,\"bottom\":583,\"vh\":844,\"inside\":true}"
+    },
+    {
+      "name": "M5: un 404 sin sub-código no culpa al encuentro",
+      "ok": true,
+      "detail": "Error:\nEl encuentro, el destino o el servicio ya no están disponibles. Vuelva a buscar el destino."
+    },
+    {
+      "name": "sin desborde horizontal a 390 (modal)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "persistencia: tras F5 la casilla cuenta una más",
+      "ok": true,
+      "detail": "4 → 5"
+    },
+    {
+      "name": "persistencia: tras F5 la fila nueva sigue en la lista",
+      "ok": true,
+      "detail": "5 filas"
+    },
+    {
+      "name": "sin desborde horizontal a 768",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "L: «Vigencia» alineada con «Tipo» a 768",
+      "ok": true,
+      "detail": "480 vs 480"
+    },
+    {
+      "name": "sin desborde horizontal a 1440",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "L: «Vigencia» alineada con «Tipo» a 1440",
+      "ok": true,
+      "detail": "455 vs 455"
+    },
+    {
+      "name": "sin desborde horizontal a 1920",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "L: «Vigencia» alineada con «Tipo» a 1920",
+      "ok": true,
+      "detail": "455 vs 455"
+    }
+  ],
+  "measures": {
+    "noServicesHeight390": 222,
+    "rowsAfterSubmit": 5,
+    "typeVsValidUntil768": {
+      "type": {
+        "y": 480,
+        "height": 96
+      },
+      "validUntil": {
+        "y": 480,
+        "height": 94
+      }
+    },
+    "typeVsValidUntil1440": {
+      "type": {
+        "y": 455,
+        "height": 92
+      },
+      "validUntil": {
+        "y": 455,
+        "height": 90
+      }
+    },
+    "typeVsValidUntil1920": {
+      "type": {
+        "y": 455,
+        "height": 92
+      },
+      "validUntil": {
+        "y": 455,
+        "height": 90
+      }
+    }
+  },
+  "pageErrorsCount": 0
+}
