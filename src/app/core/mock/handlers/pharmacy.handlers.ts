@@ -761,9 +761,14 @@ function sembrarPedidoEntrante(): void {
   });
 }
 
-/** Lo que ya existe: un pedido con la creación en el futuro todavía no llegó. */
+/**
+ * Lo que ya existe: el pedido entrante sembrado con la creación en el futuro
+ * todavía no llegó. Los demás pedidos de ejemplo llevan horas del día fijas
+ * (`iso(0, 11, 40)`): a primera hora quedarían «en el futuro» y desaparecerían
+ * de la bandeja, así que el filtro mira sólo al entrante.
+ */
 function yaLlego(p: PedidoSimulado): boolean {
-  return Date.parse(p.createdAt) <= Date.parse(ahora());
+  return p.id !== ID_PEDIDO_ENTRANTE || Date.parse(p.createdAt) <= Date.parse(ahora());
 }
 
 function settlementForOrder(order: PedidoSimulado) {

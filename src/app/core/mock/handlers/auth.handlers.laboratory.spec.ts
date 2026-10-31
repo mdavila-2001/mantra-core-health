@@ -3,7 +3,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { registrarAuth } from './auth.handlers';
 import { registrarDirectorio } from './directory.handlers';
-import { TENANT_LABORATORIO, usuarioDeAccessToken } from '../mock-session';
+import { TENANT_LABORATORIO, buscarUsuario, usuarioDeAccessToken, type MockUser } from '../mock-session';
 import { conceptByCode } from '../fixtures/concepts';
 
 /**
@@ -30,7 +30,7 @@ describe('alta pública de laboratorio en el simulador', () => {
     return { ...(body as object), owner: { ...owner, email: `legal+${altas}@labsur.test` } };
   }
 
-  function call(method: MockMethod, path: string, body: unknown = null) {
+  function call(method: MockMethod, path: string, body: unknown = null, user: MockUser | null = null) {
     if (path === '/iam/auth/register-organization') body = conCorreoPropio(body);
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
@@ -41,8 +41,8 @@ describe('alta pública de laboratorio en el simulador', () => {
       query: new URLSearchParams(),
       body,
       headers: new HttpHeaders(),
-      // El alta es anónima: nadie inició sesión todavía.
-      user: null,
+      // El alta es anónima (nadie inició sesión todavía); la lectura de sucursales pide pertenecer a la organización.
+      user,
     });
     return isMockReply(result) ? result : { status: 200, body: result };
   }
@@ -290,7 +290,7 @@ describe('alta pública de laboratorio en el simulador', () => {
     });
     expect(call('POST', '/iam/auth/register-organization', cuerpo).status).toBe(200);
 
-    const { body } = call('GET', `/tenants/${TENANT_LABORATORIO}/branches`);
+    const { body } = call('GET', `/tenants/${TENANT_LABORATORIO}/branches`, null, buscarUsuario('laboratorio')!);
     const sucursales = (body as { items: readonly { name: string; description?: string }[] }).items;
     expect(sucursales.map((b) => b.name)).toEqual(expect.arrayContaining(['Sede principal', 'Toma de muestras Equipetrol']));
     expect(sucursales.find((b) => b.name === 'Toma de muestras Equipetrol')?.description).toBe('Av. San Martín 456');

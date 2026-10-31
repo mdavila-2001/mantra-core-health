@@ -82,7 +82,7 @@ describe('respuesta automática con IA (maqueta)', () => {
     messageList.filtrar((m) => m.conversationId === conversacion && m.senderProfileId === MEDICAL_SHOWCASE.id);
 
   it('la configuración de la médica dice que responde con IA, sin un horario que no declaró', () => {
-    const config = call<{ replyMode: string; isActive: boolean }>('GET', `/community/profiles/${MEDICAL_SHOWCASE.id}/auto-reply`);
+    const config = call<{ replyMode: string; isActive: boolean }>('GET', `/community/profiles/${MEDICAL_SHOWCASE.id}/auto-reply`, { user: medica });
     expect(config.body).toMatchObject({ replyMode: 'AI', isActive: true });
   });
 
@@ -181,7 +181,7 @@ describe('respuesta automática con IA (maqueta)', () => {
   it('guardar el modo lo conserva', () => {
     const guardada = configurar({ replyMode: 'FIXED' }) as { body: { replyMode: string } };
     expect(guardada.body.replyMode).toBe('FIXED');
-    expect(call<{ replyMode: string }>('GET', `/community/profiles/${MEDICAL_SHOWCASE.id}/auto-reply`).body.replyMode).toBe('FIXED');
+    expect(call<{ replyMode: string }>('GET', `/community/profiles/${MEDICAL_SHOWCASE.id}/auto-reply`, { user: medica }).body.replyMode).toBe('FIXED');
 
     // Con texto fijo, el simulador ya no contesta con IA.
     const antes = respuestasDeLaMedica().length;

@@ -3,7 +3,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { registrarAuth } from './auth.handlers';
 import { registrarDirectorio } from './directory.handlers';
-import { TENANT_FARMACIA, usuarioDeAccessToken } from '../mock-session';
+import { TENANT_FARMACIA, buscarUsuario, usuarioDeAccessToken, type MockUser } from '../mock-session';
 
 /**
  * El alta pública de farmacia contra el simulador (carril de farmacia,
@@ -30,7 +30,7 @@ describe('alta pública de farmacia en el simulador', () => {
     return { ...(body as object), owner: { ...owner, email: `legal+${altas}@farmacia.test` } };
   }
 
-  function call(method: MockMethod, path: string, body: unknown = null) {
+  function call(method: MockMethod, path: string, body: unknown = null, user: MockUser | null = null) {
     if (path === '/iam/auth/register-organization') body = conCorreoPropio(body);
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
@@ -41,8 +41,8 @@ describe('alta pública de farmacia en el simulador', () => {
       query: new URLSearchParams(),
       body,
       headers: new HttpHeaders(),
-      // El alta es anónima: nadie inició sesión todavía.
-      user: null,
+      // El alta es anónima (nadie inició sesión todavía); la lectura de sucursales pide pertenecer a la organización.
+      user,
     });
     return isMockReply(result) ? result : { status: 200, body: result };
   }
@@ -252,7 +252,7 @@ describe('alta pública de farmacia en el simulador', () => {
     };
     expect(call('POST', '/iam/auth/register-organization', cuerpo).status).toBe(200);
 
-    const { body } = call('GET', `/tenants/${TENANT_FARMACIA}/branches`);
+    const { body } = call('GET', `/tenants/${TENANT_FARMACIA}/branches`, null, buscarUsuario('farmacia')!);
     const nombres = (body as { items: readonly { name: string }[] }).items.map((b) => b.name);
     expect(nombres).toContain('Sucursal Urubó');
     expect(nombres.filter((n) => n === 'Sucursal Urubó')).toHaveLength(1);
