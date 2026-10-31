@@ -169,13 +169,13 @@ export interface JourneyModel {
   readonly registered: number;
 }
 
-const PATIENT_CAMPAIGNS = ['esp-sep', 'tel-oct'] as const;
+const PATIENT_CAMPAIGNS = ['c2', 'c3', 'c4'] as const;
 
 /** El recorrido del paciente se mide sobre campañas de pacientes; si la selección no tiene, se avisa. */
 export function patientJourney(filter: InsightsFilter, segmentMultiplier = 1): JourneyModel {
   const ids = filter.campaignIds.filter((id) => (PATIENT_CAMPAIGNS as readonly string[]).includes(id));
   const usedIds = ids.length ? ids : [...PATIENT_CAMPAIGNS];
-  const range = ids.length ? filter.range : { from: '2026-09-01', to: '2026-10-30' };
+  const range = ids.length ? filter.range : { from: '2026-09-01', to: '2026-10-29' };
   const scope = buildScope(selectFacts({ ...filter, campaignIds: usedIds, range }));
   const registered = scope.all.registrations;
   const activationRate = registered > 0 ? scope.all.activations / registered : 0;
@@ -190,7 +190,7 @@ export function patientJourney(filter: InsightsFilter, segmentMultiplier = 1): J
     stages,
     csat: 4.3 * noise(`csat|${usedIds.join()}`, 0.03),
     nps: Math.round(41 * noise(`nps|${usedIds.join()}`, 0.1)),
-    scopeNote: ids.length ? null : 'La selección no incluye campañas de pacientes: el recorrido se mide sobre las de Búsqueda de Especialistas y Telemedicina.',
+    scopeNote: ids.length ? null : 'La selección no incluye campañas de pacientes: el recorrido se mide sobre las de Abran paso, Ahorro en medicamentos e Historial de salud.',
     registered,
   };
 }

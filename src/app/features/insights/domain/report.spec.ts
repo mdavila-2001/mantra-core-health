@@ -5,7 +5,7 @@ import { buildReport, defaultSections, REPORT_AUDIENCES } from './report';
 import type { InsightsFilter } from './insights.types';
 import { CHANNELS } from './insights.types';
 
-const FILTER: InsightsFilter = { campaignIds: ['reg-oct'], range: { from: '2026-10-01', to: '2026-10-29' }, grain: 'day', channels: CHANNELS, metric: 'ctr' };
+const FILTER: InsightsFilter = { campaignIds: ['c1'], range: { from: '2026-10-01', to: '2026-10-29' }, grain: 'day', channels: CHANNELS, metric: 'ctr' };
 
 describe('informes y alertas combinadas', () => {
   it('siempre incluye resumen, método y limitaciones, aunque no se elija nada', () => {
