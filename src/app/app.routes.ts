@@ -230,6 +230,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // `SECCIONES_REDIRIGIDAS`).
   'superadmin/observability': () =>
     import('./features/admin/observability/observability').then((m) => m.Observability),
+  'superadmin/measurement': () =>
+    import('./features/admin/measurement/measurement').then((m) => m.Measurement),
   'superadmin/data-catalog': () =>
     import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
   // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
@@ -243,6 +245,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   'superadmin/instances': () =>
     import('./features/admin/instances/instances').then((m) => m.Instances),
+  'superadmin/bulk-imports': () =>
+    import('./features/admin/bulk-imports/bulk-imports').then((m) => m.BulkImports),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
   'my-account/dependents': () =>
