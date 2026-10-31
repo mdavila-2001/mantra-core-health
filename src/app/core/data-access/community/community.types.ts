@@ -733,6 +733,12 @@ export interface ConversationListItem {
    * bandeja.
    */
   readonly peers: readonly ConversationPeer[];
+  /**
+   * Solo para el doctor: su equipo derivó esta conversación porque el mensaje
+   * del paciente es clínico y solo él puede responderlo. **Propuesta**: lo
+   * deriva la API desde `community.conversation_assignments` (`WAITING_DOCTOR`).
+   */
+  readonly awaitingDoctor?: boolean;
 }
 
 /**
@@ -821,6 +827,10 @@ export interface DirectMessage {
    * expone.
    */
   readonly receipts?: readonly MessageReceipt[];
+  /** Lo respondió el equipo en nombre del doctor y él decidió que se sepa (`disclosure_shown`). **Propuesta** de forma. */
+  readonly repliedByTeam?: boolean;
+  /** La autora real, solo para el doctor dueño del perfil: nunca para el paciente. **Propuesta** de forma. */
+  readonly teamAuthorName?: string;
 }
 
 /** Quiénes reaccionaron con un emoji a un mensaje. */
@@ -877,6 +887,24 @@ export interface NewDirectMessage {
   /** `MEDIA` con adjunto; `STICKER` si es uno propio (ver `DirectMessage`). */
   readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
   readonly attachmentFileId?: string;
+  /**
+   * Personal de apoyo que responde **en nombre de un doctor**: el perfil
+   * profesional del doctor. El paciente ve al doctor; la API guarda la autora
+   * real y comprueba la delegación (`may_reply_on_behalf`) — acá solo se manda.
+   * El contrato lo declara; el `openapi.json` todavía no lo trae, y la maqueta
+   * lo acepta por `SIMULATOR_EXTENSIONS` hasta que se regenere.
+   *
+   * **Es el perfil público (de chat) del doctor** —`doctorPublicProfileId` de la
+   * bandeja—, no su perfil profesional: igual que `senderProfileId`, que en ese caso es el
+   * mismo. Con el profesional el envío falla porque el remitente no es participante.
+   */
+  readonly onBehalfOfProfileId?: string;
+  /**
+   * Por dónde sale: `CHAT` (siempre) y `EMAIL`, que **solo** se acepta con
+   * `onBehalfOfProfileId` (sin él, 422 `EMAIL_CHANNEL_REQUIRES_ON_BEHALF`): el paciente
+   * recibe el correo a nombre del doctor.
+   */
+  readonly channels?: readonly ('CHAT' | 'EMAIL')[];
 }
 
 /**
@@ -940,6 +968,8 @@ export interface SentMessage {
   readonly id: string;
   readonly conversationId: string;
   readonly sentAt?: Date;
+  /** Solo si se pidió `EMAIL`: si quedó encolado o por qué se omitió. */
+  readonly email?: { readonly queued: boolean; readonly requestId?: string; readonly skippedReason?: string };
 }
 
 /** Hasta dónde se marcó leída una conversación. */
@@ -1399,3 +1429,6 @@ export interface ReviewableCare {
 export interface NewReviewResponse {
   readonly responseText: string;
 }
+
+/** Las claves de {@link NewDirectMessage} que el `openapi.json` aún no declara. */
+export const DIRECT_MESSAGE_CONTRACT_PENDING_KEYS: readonly string[] = ['onBehalfOfProfileId', 'channels'];

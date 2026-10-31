@@ -1,0 +1,63 @@
+<form class="registro" (submit)="$event.preventDefault(); submit()" novalidate data-testid="registro-paciente">
+  <h3 class="registro__titulo">Registrar paciente nuevo</h3>
+  <p class="registro__nota">Se registra en <strong>{{ orgName() }}</strong>. Pedimos solo lo necesario; el resto lo completa el paciente.</p>
+
+  @if (duplicates(); as parecidos) {
+    <app-alert tone="warning" title="Puede que ya esté registrado" data-testid="registro-duplicados">
+      Encontramos {{ parecidos.length === 1 ? 'a una persona parecida' : parecidos.length + ' personas parecidas' }}. Revise antes de crear una ficha repetida.
+    </app-alert>
+    <ul class="parecidos" role="list">
+      @for (p of parecidos; track $index) {
+        <li class="parecido" [attr.data-testid]="'parecido-' + $index">
+          @if (p.linkedToOrganization && p.profileId) {
+            <span><strong>{{ p.displayName }}</strong> · {{ p.ageYears }} años · documento {{ p.documentMasked }}</span>
+            <button app-button size="sm" type="button" (clicked)="useExisting(p)" [attr.data-testid]="'usar-existente-' + p.profileId">Es esta persona</button>
+          } @else {
+            <!-- De otra organización: la API no da perfil, nombre ni edad del registro ajeno, así que no hay a quién usar. -->
+            <span data-testid="parecido-ajeno">Hay una persona registrada en otra organización que coincide en {{ coincide(p) }}. Por su privacidad no podemos mostrar sus datos ni usar esa ficha.</span>
+          }
+        </li>
+      }
+    </ul>
+    <button app-button variant="outline" type="button" [isLoading]="saving()" [disabled]="saving()" (clicked)="submit(true)" data-testid="registro-seguir">No es la misma persona: registrar de todos modos</button>
+  }
+
+  <div class="registro__campos">
+    <app-form-field label="Nombre(s)" [required]="true"><app-input [value]="name()" (valueChange)="set(name, $event)" ariaLabel="Nombre(s)" autocomplete="off" data-testid="registro-nombre" /></app-form-field>
+    <app-form-field label="Apellido paterno" [required]="true"><app-input [value]="lastName()" (valueChange)="set(lastName, $event)" ariaLabel="Apellido paterno" data-testid="registro-apellido" /></app-form-field>
+    <app-form-field label="Apellido materno"><app-input [value]="motherLastName()" (valueChange)="set(motherLastName, $event)" ariaLabel="Apellido materno" /></app-form-field>
+    <app-form-field label="Documento de identidad" [required]="true"><app-input [value]="documentValue()" (valueChange)="set(documentValue, $event)" ariaLabel="Documento de identidad" data-testid="registro-documento" /></app-form-field>
+    <app-form-field label="Fecha de nacimiento" [required]="true"><app-input type="date" [value]="birthDate()" (valueChange)="set(birthDate, $event)" ariaLabel="Fecha de nacimiento" data-testid="registro-nacimiento" /></app-form-field>
+    <app-form-field label="Teléfono" [required]="true" hint="Con sus 8 dígitos."><app-input [value]="phone()" (valueChange)="set(phone, $event)" inputMode="tel" ariaLabel="Teléfono" data-testid="registro-telefono" /></app-form-field>
+  </div>
+
+  @if (minor()) {
+    <fieldset class="representante" data-testid="registro-representante">
+      <legend>Es menor de edad: ¿quién actúa por él?</legend>
+      <p class="registro__nota">Un menor se registra con su representante legal o un familiar autorizado. En el mostrador queda anotado como <strong>contacto pendiente de verificación</strong>: la representación legal la establece la organización con un documento, no este registro.</p>
+      <div class="registro__campos">
+        <app-form-field label="Nombre del representante" [required]="true"><app-input [value]="guardianName()" (valueChange)="set(guardianName, $event)" ariaLabel="Nombre del representante" data-testid="registro-rep-nombre" /></app-form-field>
+        <app-form-field label="Documento del representante" [required]="true"><app-input [value]="guardianDocument()" (valueChange)="set(guardianDocument, $event)" ariaLabel="Documento del representante" data-testid="registro-rep-documento" /></app-form-field>
+        <app-form-field label="Parentesco" [required]="true" hint="Madre, padre, tutor legal, familiar autorizado…"><app-input [value]="guardianRelationship()" (valueChange)="set(guardianRelationship, $event)" ariaLabel="Parentesco" data-testid="registro-rep-parentesco" /></app-form-field>
+        <app-form-field label="Teléfono del representante" [required]="true"><app-input [value]="guardianPhone()" (valueChange)="set(guardianPhone, $event)" inputMode="tel" ariaLabel="Teléfono del representante" data-testid="registro-rep-telefono" /></app-form-field>
+      </div>
+    </fieldset>
+  }
+
+  <label class="invitar">
+    <input type="checkbox" [checked]="invite()" (change)="invite.set($any($event.target).checked)" data-testid="registro-invitar" />
+    <span>Invitarlo a activar su cuenta de paciente <small>(la invitación queda pedida; no se sabe si llegó)</small></span>
+  </label>
+
+  @if (touched() && missing().length > 0) {
+    <app-alert tone="warning" data-testid="registro-faltan">Falta {{ missing().join(', ') }}.</app-alert>
+  }
+  @if (failure(); as mensaje) {
+    <app-alert tone="error" role="alert" data-testid="registro-error">{{ mensaje }}</app-alert>
+  }
+
+  <div class="registro__acciones">
+    <button app-button type="submit" [isLoading]="saving()" [disabled]="saving()" data-testid="registro-guardar">Registrar paciente</button>
+    <button app-button variant="ghost" type="button" (clicked)="cancelled.emit()">Volver a buscar</button>
+  </div>
+</form>

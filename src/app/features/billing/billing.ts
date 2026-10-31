@@ -17,7 +17,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, type Observable } from 'rxjs';
 
+import { AccessChallengeCancelledError, withAccessChallenge, type ChallengeRequestOptions } from '../../core/access-challenge/access-challenge';
+import { SessionStore } from '../../core/auth/session.store';
 import { BillingSimulatedClient } from '../../core/data-access/billing-simulated/billing-simulated.client';
+import { accessFailureOf } from '../../core/data-access/access-governance/access-errors';
+import type { ExplainMyAccessRequest } from '../../core/data-access/access-governance/access-explain.types';
+import type { SupportActionInput } from '../../core/data-access/support-access/support-atom-grants.types';
 import type {
   InvoiceEventKind,
   IssueInvoiceInput,
@@ -39,7 +44,9 @@ import { Select } from '../../shared/components/atoms/select/select';
 import { Card } from '../../shared/components/molecules/card/card';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
+import { Alert } from '../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { AccessWhyNot } from '../access-governance/why-not/why-not';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import {
   estadoDeCobro,
@@ -93,7 +100,7 @@ function centavos(importe: string): number {
  */
 @Component({
   selector: 'app-billing',
-  imports: [PaginatedForm, CustomField, ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PaymentsPlan, Select, ViewStateHost],
+  imports: [AccessWhyNot, Alert, PaginatedForm, CustomField, ReactiveFormsModule, AppButton, Card, Chip, FormField, Input, PageHeader, PaymentsPlan, Select, ViewStateHost],
   templateUrl: './billing.html',
   styleUrl: './billing.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -109,6 +116,10 @@ export class Billing {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly document = inject(DOCUMENT);
+  private readonly session = inject(SessionStore);
+
+  /** Si la API rechazó una operación por falta de permiso: lo que dijo y qué preguntarle a «¿Por qué no puedo?». */
+  readonly rechazo = signal<{ readonly mensaje: string; readonly pregunta: ExplainMyAccessRequest | null } | null>(null);
 
   /** El cobro cuyo «Ver» abrió el detalle: al cerrar, el foco vuelve a esa fila. */
   private abiertoDesde: string | null = null;
@@ -268,10 +279,15 @@ export class Billing {
       this.formularioDePago.markAllAsTouched();
       return;
     }
-    this.ejecutar('pago', this.client.registerPayment(cobro.id, Number(metodo)), (actualizado) => {
-      this.reemplazarCobro(actualizado);
-      this.toast.success('Pago registrado en el simulador. No se movió dinero real.', 'Pago (SIMULADO)');
-    });
+    this.ejecutar(
+      'pago',
+      this.client.registerPayment(cobro.id, Number(metodo), this.desafio('billing.payment.collect', 'Registrar el pago de un cobro')),
+      (actualizado) => {
+        this.reemplazarCobro(actualizado);
+        this.toast.success('Pago registrado en el simulador. No se movió dinero real.', 'Pago (SIMULADO)');
+      },
+      'billing.payment.collect',
+    );
   }
 
   confirmarFacturacion(cobro: SimulatedCharge): void {
@@ -292,15 +308,20 @@ export class Billing {
       additionalDiscount: v.additionalDiscount.trim() === '' ? null : v.additionalDiscount.trim(),
       ...(forzar > 0 ? { simulation: { forceMessageCode: forzar } } : {}),
     };
-    this.ejecutar('factura', this.client.issueInvoice(cobro.id, entrada), (factura) => {
-      this.factura.set(factura);
-      this.refrescarCobros();
-      if (factura.status === 'REJECTED') {
-        this.toast.warning(`El SIAT simulado rechazó la factura (${factura.siatResponse.codigoEstado}).`, 'Factura rechazada (SIMULADO)');
-      } else {
-        this.toast.success(`Factura N.º ${factura.invoiceNumber}: ${factura.siatResponse.codigoDescripcion}.`, 'Factura (SIMULADO)');
-      }
-    });
+    this.ejecutar(
+      'factura',
+      this.client.issueInvoice(cobro.id, entrada, this.desafio('billing.receipt.issue', 'Emitir la factura de un cobro')),
+      (factura) => {
+        this.factura.set(factura);
+        this.refrescarCobros();
+        if (factura.status === 'REJECTED') {
+          this.toast.warning(`El SIAT simulado rechazó la factura (${factura.siatResponse.codigoEstado}).`, 'Factura rechazada (SIMULADO)');
+        } else {
+          this.toast.success(`Factura N.º ${factura.invoiceNumber}: ${factura.siatResponse.codigoDescripcion}.`, 'Factura (SIMULADO)');
+        }
+      },
+      'billing.receipt.issue',
+    );
   }
 
   anular(factura: SimulatedInvoice): void {
@@ -309,10 +330,16 @@ export class Billing {
       this.formularioDeAnulacion.markAllAsTouched();
       return;
     }
-    this.ejecutar('anulacion', this.client.annul(factura.id, { reasonCode: Number(motivo) }), (actualizada) => {
-      this.factura.set(actualizada);
-      this.refrescarCobros();
-    });
+    // Anular es crítico: la API puede pedir el motivo escrito, el segundo paso y la aprobación de otra persona.
+    this.ejecutar(
+      'anulacion',
+      this.client.annul(factura.id, { reasonCode: Number(motivo) }, this.desafio('billing.receipt.void', `Anular la factura N.º ${factura.invoiceNumber}`)),
+      (actualizada) => {
+        this.factura.set(actualizada);
+        this.refrescarCobros();
+      },
+      'billing.receipt.void',
+    );
   }
 
   revertirAnulacion(factura: SimulatedInvoice): void {
@@ -378,8 +405,14 @@ export class Billing {
     boton.focus({ preventScroll: true });
   }
 
-  private ejecutar<T>(operacion: Operacion, peticion: Observable<T>, alTerminar: (valor: T) => void): void {
+  /** Lo que la API pueda pedir antes de dejar hacer algo se resuelve en un diálogo y se reintenta la misma petición. */
+  private desafio(atom: string, actionLabel: string): ChallengeRequestOptions {
+    return { context: withAccessChallenge({ actionLabel, approval: { atom, ...(this.session.activeTenantId() === null ? {} : { tenantId: this.session.activeTenantId()! }) } }) };
+  }
+
+  private ejecutar<T>(operacion: Operacion, peticion: Observable<T>, alTerminar: (valor: T) => void, atom?: string): void {
     this.operando.set(operacion);
+    this.rechazo.set(null);
     peticion.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (valor) => {
         this.operando.set(null);
@@ -387,7 +420,16 @@ export class Billing {
       },
       error: (error: unknown) => {
         this.operando.set(null);
+        // Cerrar el diálogo de desafío es una decisión de la persona: no se hizo ningún cambio.
+        if (error instanceof AccessChallengeCancelledError) {
+          this.toast.info('No se hizo ningún cambio: usted canceló el paso adicional que se pedía.', 'Facturación (SIMULADO)');
+          return;
+        }
         this.avisarError(error);
+        const tenantId = this.session.activeTenantId();
+        if (atom !== undefined && tenantId !== null && error instanceof HttpErrorResponse && error.status === 403) {
+          this.rechazo.set({ mensaje: accessFailureOf(error)?.message ?? 'Su permiso no incluye esta operación.', pregunta: { tenantId, action: atom as SupportActionInput } });
+        }
       },
     });
   }

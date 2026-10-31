@@ -371,3 +371,35 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* «Respondido por su equipo»: lo que el paciente ve si el doctor lo decidió, y,
+   para el doctor, quién de su equipo escribió de verdad. Va bajo el texto, con la
+   voz de un dato y no de un aviso. */
+.hilo__equipo {
+  margin: var(--e1) 0 0;
+  font-size: var(--fs-caption);
+  font-style: italic;
+  color: var(--tinta-2);
+}
+
+.hilo__equipo-enlace {
+  color: inherit;
+  font-style: normal;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.hilo__equipo-enlace:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Solo el doctor: su equipo le derivó una conversación clínica. */
+.hilo__derivada {
+  margin: 0;
+  padding: var(--e2) var(--e3);
+  border-block-end: 1px solid var(--st-warning-bd);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+}

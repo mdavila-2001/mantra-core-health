@@ -283,3 +283,15 @@
   inline-size: 15px;
   block-size: 15px;
 }
+
+/* Solo el doctor: su equipo le derivó una conversación clínica y espera su respuesta. */
+.conversaciones__derivada {
+  padding: 1px var(--e2);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-pill);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}

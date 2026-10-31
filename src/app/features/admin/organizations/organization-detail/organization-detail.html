@@ -183,9 +183,31 @@
 </ng-template>
 
 <ng-template #celdaEstadoMembresia let-membresia>
-  <app-badge [variant]="varianteDe(membresia.statusConceptId)">
-    {{ etiquetaDe(membresia.statusConceptId)?.display ?? '—' }}
+  <app-badge [variant]="varianteDe(membresia.statusConceptId)" [attr.data-testid]="'membresia-estado-' + membresia.id">
+    @if (esInvitacionPendiente(membresia)) {
+      Invitación enviada, pendiente de aceptación
+    } @else {
+      {{ etiquetaDe(membresia.statusConceptId)?.display ?? '—' }}
+    }
   </app-badge>
+</ng-template>
+
+<ng-template #celdaAccionesMembresia let-membresia>
+  @if (esInvitacionPendiente(membresia)) {
+    <button
+      app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      [disabled]="retirando() !== null"
+      (clicked)="retirarInvitacion(membresia)"
+      [attr.data-testid]="'membresia-retirar-' + membresia.id"
+    >
+      Retirar invitación
+    </button>
+  } @else {
+    —
+  }
 </ng-template>
 
 <!-- El contrato devuelve `primaryBranchId` crudo; el nombre legible lo resuelve

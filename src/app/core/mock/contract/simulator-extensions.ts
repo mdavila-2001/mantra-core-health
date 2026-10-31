@@ -7,6 +7,7 @@ import {
   PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/profiles/profiles.types';
+import { DIRECT_MESSAGE_CONTRACT_PENDING_KEYS } from '../../data-access/community/community.types';
 import { REFERRAL_CONTRACT_PENDING_KEYS } from '../../data-access/referrals/referrals.types';
 
 /* ============================================================================
@@ -39,4 +40,8 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // A diferencia del resto, el cliente SÍ las manda a la API real — ver
   // `REFERRAL_CONTRACT_PENDING_KEYS` —; se borra al regenerar el contrato.
   'POST /referrals': REFERRAL_CONTRACT_PENDING_KEYS,
+  // Personal de apoyo que responde en nombre del doctor (ronda «personal de
+  // apoyo»): la API lo acepta, el `openapi.json` aún no lo trae. El cliente SÍ
+  // lo manda a la API real; se borra al regenerar el contrato.
+  'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,
 };

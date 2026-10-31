@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
+import { NewDeviceAlert } from '../../../core/auth/new-device-alert';
+import { SessionStore } from '../../../core/auth/session.store';
 import { Login } from './login';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
@@ -250,5 +252,92 @@ describe('Login', () => {
     const req = http.expectOne('/iam/auth/login');
     expect(req.request.body.mfaCode).toBe('123456');
     req.flush(tokens(UN_TENANT));
+  });
+
+  describe('la política de sesión de la organización', () => {
+    const rechazar = (reason: string, status = 401): void => {
+      completar('ana@alovida.mock');
+      component.submit();
+      http.expectOne('/iam/auth/login').flush(
+        { statusCode: status, code: 'UNAUTHENTICATED', message: 'x', details: { reason }, timestamp: '', path: '/iam/auth/login' },
+        { status, statusText: 'x' },
+      );
+    };
+
+    it('MFA_REQUIRED pide el código y MFA_INVALID dice que no valida', () => {
+      rechazar('MFA_REQUIRED');
+      expect(component.mfaRequired()).toBe(true);
+      expect(component.errorMessage()).toContain('Ingrese el código de verificación');
+      rechazar('MFA_INVALID');
+      expect(component.errorMessage()).toContain('no es válido');
+    });
+
+    it('MFA_ENROLLMENT_REQUIRED ya no es un rechazo: la API deja entrar, así que como motivo no existe', () => {
+      rechazar('MFA_ENROLLMENT_REQUIRED');
+      expect(component.mfaRequired()).toBe(false);
+      expect(component.errorMessage()).toBe('Las credenciales no son válidas.');
+    });
+
+    it('con el token de alcance limitado (mfaEnrollment) el login entra y lleva a dar de alta el segundo paso, con el destino para después', () => {
+      completar('marcos@alovida.mock');
+      component.submit();
+      http.expectOne('/iam/auth/login').flush({ ...tokens(makeToken({ sub: 'u-1', sid: 's-1', roles: [], tenants: [], mfaEnrollment: true })), mfaEnrollmentRequired: true });
+      expect(component.errorMessage()).toBeNull();
+      expect(navegaciones).toEqual([`/my-account/security/mfa?returnUrl=${encodeURIComponent('/')}`]);
+      expect(TestBed.inject(SessionStore).mfaEnrollment()).toBe('required');
+    });
+
+    it('con un token completo entra normal y la sesión no queda restringida', () => {
+      completar('ana@alovida.mock');
+      component.submit();
+      http.expectOne('/iam/auth/login').flush(tokens(UN_TENANT));
+      expect(navegaciones).toEqual(['/']);
+      expect(TestBed.inject(SessionStore).mfaEnrollment()).not.toBe('required');
+    });
+
+    it('OUTSIDE_ALLOWED_HOURS dice que está fuera del horario laboral', () => {
+      rechazar('OUTSIDE_ALLOWED_HOURS');
+      expect(component.errorMessage()).toContain('horario laboral');
+      expect(component.mfaRequired()).toBe(false);
+    });
+
+    it('OUTSIDE_ALLOWED_NETWORK, con el 401 que responde la API, manda a la red de la organización', () => {
+      rechazar('OUTSIDE_ALLOWED_NETWORK');
+      expect(component.errorMessage()).toContain('propia red');
+      expect(component.mfaRequired()).toBe(false);
+    });
+
+    it('NETWORK_NOT_ALLOWED, el nombre que el front ya manejaba, dice lo mismo (también con 403)', () => {
+      rechazar('NETWORK_NOT_ALLOWED', 403);
+      expect(component.errorMessage()).toContain('propia red');
+    });
+
+    it('un bloqueo después de haber pedido el código vuelve a esconder el campo del código', () => {
+      rechazar('MFA_REQUIRED');
+      expect(component.mfaRequired()).toBe(true);
+      rechazar('OUTSIDE_ALLOWED_HOURS');
+      expect(component.mfaRequired()).toBe(false);
+    });
+
+    it('una contraseña equivocada sigue siendo «credenciales no válidas»', () => {
+      completar('ana@alovida.mock');
+      component.submit();
+      http.expectOne('/iam/auth/login').flush({ statusCode: 401, code: 'UNAUTHENTICATED', message: 'x', timestamp: '', path: '' }, { status: 401, statusText: 'x' });
+      expect(component.errorMessage()).toBe('Las credenciales no son válidas.');
+    });
+
+    it('un login con dispositivo nuevo enciende el aviso del armazón', () => {
+      completar('lucia@alovida.mock');
+      component.submit();
+      http.expectOne('/iam/auth/login').flush({ ...tokens(UN_TENANT), newDevice: { deviceId: 'd-1', label: 'Chrome en Windows', occurredAt: '2026-10-30T13:00:00Z' } });
+      expect(TestBed.inject(NewDeviceAlert).notice()).toMatchObject({ deviceId: 'd-1', label: 'Chrome en Windows' });
+    });
+
+    it('un login normal no lo enciende', () => {
+      completar('ana@alovida.mock');
+      component.submit();
+      http.expectOne('/iam/auth/login').flush(tokens(UN_TENANT));
+      expect(TestBed.inject(NewDeviceAlert).notice()).toBeNull();
+    });
   });
 });

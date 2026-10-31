@@ -26,6 +26,7 @@ import {
   conversationLabel as conQuienDe,
 } from '../../../core/messaging/conversation-label';
 import { dayLabel, clockTime } from '../../../shared/date/chat-time';
+import { releaseObjectUrlLater } from '../../../shared/utils/file-download/release-object-url';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
@@ -940,14 +941,12 @@ export class Thread {
       if (json === null) {
         return;
       }
-      const url = URL.createObjectURL(
-        new Blob([json], { type: 'application/json' }),
-      );
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
       const enlace = document.createElement('a');
       enlace.href = url;
       enlace.download = nombreDeArchivo(this.conQuien());
       enlace.click();
-      URL.revokeObjectURL(url);
+      releaseObjectUrlLater(url);
     });
   }
 

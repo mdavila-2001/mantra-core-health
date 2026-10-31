@@ -1,0 +1,47 @@
+:host {
+  display: block;
+}
+
+.ajustes {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.ajustes__estado,
+.ajustes__anuncio {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+.ajustes__anuncio:empty {
+  display: none;
+}
+
+.ajustes__grupo {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  min-inline-size: 0;
+}
+
+.ajustes__grupo legend {
+  padding-inline: var(--sp-1);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ajustes__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.ajustes__cuenta {
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}

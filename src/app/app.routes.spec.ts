@@ -154,7 +154,10 @@ describe('rutas del armazón', () => {
     expect(alias?.canActivate).toEqual(canonica?.canActivate);
     expect(await alias?.loadComponent?.()).toBe(MyAccount);
     expect(APP_SECTIONS.some((section) => section.path === 'account/profile')).toBe(false);
-  });
+    // El `import()` de arriba y el del cargador resuelven el árbol completo de
+    // «Mi perfil»: con la corrida completa en paralelo pasa de los 5 s por defecto
+    // (medido: ~14 s el archivo entero bajo carga). Es coste de transformación, no un fallo.
+  }, 30_000);
 
   /**
    * El rol de la sección se hace cumplir también en sus hijas.

@@ -58,12 +58,25 @@ export class NavigationService {
     { initialValue: this.router.url },
   );
 
+  /**
+   * La clase de cuenta de la sesión, para las secciones que existen solo para
+   * una organización o solo para una persona (`AppSection.onlyForAccountKind`).
+   * Es presentación: el claim `accountKind` o, sin él, la deducción de
+   * `SessionStore.isOrganizationAccount`.
+   */
+  private readonly accountKind = computed<'ORGANIZATION' | 'PERSON'>(() =>
+    this.auth.isOrganizationAccount() ? 'ORGANIZATION' : 'PERSON',
+  );
+
   /** Las secciones que esta sesión puede ver, sin agrupar. */
   readonly visibleSections = computed<readonly AppSection[]>(() => {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
-    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles, tenants, activeTenantType));
+    const accountKind = this.accountKind();
+    return APP_SECTIONS.filter((section) =>
+      isVisibleTo(section, roles, tenants, activeTenantType, accountKind),
+    );
   });
 
   /**
@@ -86,12 +99,14 @@ export class NavigationService {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
+    const accountKind = this.accountKind();
     // Las fijas salen **antes** de repartir, no después: si se descontaran al
     // final, `items` y la suma de los `blocks` dejarían de coincidir, que es
     // justo el invariante que fija la prueba de este servicio.
     const enElMenu = APP_SECTIONS.filter(
       (section) =>
-        apareceEnElMenu(section, roles, tenants, activeTenantType) && section.pinnedTop !== true,
+        apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind) &&
+        section.pinnedTop !== true,
     );
 
     return NAV_GROUPS.map((group) => {
@@ -124,9 +139,11 @@ export class NavigationService {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
+    const accountKind = this.accountKind();
     return APP_SECTIONS.filter(
       (section) =>
-        section.pinnedTop === true && apareceEnElMenu(section, roles, tenants, activeTenantType),
+        section.pinnedTop === true &&
+        apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind),
     ).map(menuItemOf);
   });
 

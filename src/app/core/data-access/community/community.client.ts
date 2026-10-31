@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, switchMap, type Observable } from 'rxjs';
 
+import type { ChallengeRequestOptions } from '../../access-challenge/access-challenge';
 import { API_BASE_URL, apiUrl } from '../api';
 import { simulatorOnly } from '../simulator-only';
 import { maybeDate, sinNulos } from '../wire';
@@ -1230,19 +1231,31 @@ export class CommunityClient {
   sendMessage(
     conversationId: string,
     datos: NewDirectMessage,
+    options?: ChallengeRequestOptions,
   ): Observable<SentMessage> {
     return this.http
-      .post<ConNulos<{ id: string; conversationId: string; sentAt: string }>>(
+      .post<ConNulos<{ id: string; conversationId: string; sentAt: string; email: { queued: boolean; requestId: string; skippedReason: string } }>>(
         this.url(
           `/community/conversations/${encodeURIComponent(conversationId)}/messages`,
         ),
         datos,
+        options,
       )
       .pipe(
         map((body) => ({
           id: body.id ?? '',
           conversationId: body.conversationId ?? conversationId,
           ...fecha('sentAt', body.sentAt),
+          // Solo llega si se pidió el correo (`channels: ['CHAT', 'EMAIL']`).
+          ...(body.email === undefined || body.email === null
+            ? {}
+            : {
+                email: {
+                  queued: body.email.queued === true,
+                  ...(body.email.requestId === undefined || body.email.requestId === null ? {} : { requestId: body.email.requestId }),
+                  ...(body.email.skippedReason === undefined || body.email.skippedReason === null ? {} : { skippedReason: body.email.skippedReason }),
+                },
+              }),
         })),
       );
   }

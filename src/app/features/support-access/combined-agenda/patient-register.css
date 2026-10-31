@@ -1,0 +1,88 @@
+:host {
+  display: block;
+}
+
+.registro {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.registro__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.registro__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.registro__campos {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.parecidos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.parecido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+}
+
+.representante {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+}
+
+.representante legend {
+  padding-inline: var(--sp-1);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.invitar {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.invitar input {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin-block-start: 2px;
+  accent-color: var(--brand-primary);
+}
+
+.invitar small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.registro__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

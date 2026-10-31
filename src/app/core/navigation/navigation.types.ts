@@ -462,6 +462,37 @@ export interface AppSection {
    */
   readonly representaEnElMenu?: readonly string[];
 
+  /**
+   * La sección existe **solo** para esa clase de cuenta: una cuenta de
+   * organización (`'ORGANIZATION'`: el hospital como cuenta) o una persona
+   * (`'PERSON'`).
+   *
+   * Nació con el personal de apoyo: «Equipo de apoyo» y «Solicitudes» son del
+   * hospital **como cuenta**, no de la persona que entra por su cuenta, y «Mis
+   * accesos» es de la persona, no de la organización. Ningún rol lo distingue —el
+   * token de una cuenta de organización trae `USER`, igual que el de su
+   * personal—, y el tipo de organización tampoco: el hospital y su secretaria
+   * comparten tipo. Lo único que los separa es el claim `accountKind`.
+   *
+   * Mismo contrato que {@link hiddenFor}: ni menú, ni puerta, y el comodín
+   * `SUPERADMIN` no la salva. Es presentación; la API autoriza cada petición.
+   */
+  readonly onlyForAccountKind?: 'ORGANIZATION' | 'PERSON';
+
+  /**
+   * La contracara de {@link onlyForAccountKind}: la sección **no existe** para esa
+   * clase de cuenta.
+   *
+   * Es lo que le faltaba a una cuenta de organización que no es farmacia,
+   * laboratorio ni aseguradora —el hospital, desde que su token declara
+   * `accountKind: 'ORGANIZATION'—: la autoservicio del paciente («Mis citas»,
+   * «Mi historia clínica»…) es de una **persona**, y el hospital como cuenta no
+   * tiene una. Las tres cuentas anteriores ya lo resolvían por tipo de
+   * organización (`hiddenForTenantTypes`); esto lo dice por clase de cuenta, que
+   * es lo que de verdad cambia. Mismo contrato que {@link hiddenFor}.
+   */
+  readonly hiddenForAccountKind?: 'ORGANIZATION' | 'PERSON';
+
   readonly availability: SectionAvailability;
 
   /**
@@ -568,8 +599,18 @@ export function isVisibleTo(
   roles: readonly string[],
   tenants: readonly string[] = [],
   activeTenantType: string | null = null,
+  accountKind: 'ORGANIZATION' | 'PERSON' | null = null,
 ): boolean {
   const required = section.roles;
+  // La clase de cuenta se pregunta primero y sin excepciones: ni el acceso
+  // global ni el comodín cambian de qué clase de cuenta es esta sesión. Sin
+  // `accountKind` conocido, una sección que lo exige no existe.
+  if (section.onlyForAccountKind !== undefined && section.onlyForAccountKind !== accountKind) {
+    return false;
+  }
+  if (section.hiddenForAccountKind !== undefined && section.hiddenForAccountKind === accountKind) {
+    return false;
+  }
   if (section.platformAccessRoles?.some((role) => roles.includes(role))) return true;
 
   // Fuera del acceso global explícito, una sección oculta no existe para este
@@ -633,8 +674,9 @@ export function apareceEnElMenu(
   roles: readonly string[],
   tenants: readonly string[] = [],
   activeTenantType: string | null = null,
+  accountKind: 'ORGANIZATION' | 'PERSON' | null = null,
 ): boolean {
-  if (!isVisibleTo(section, roles, tenants, activeTenantType)) {
+  if (!isVisibleTo(section, roles, tenants, activeTenantType, accountKind)) {
     return false;
   }
   const fuera = section.fueraDelMenuPara;

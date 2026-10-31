@@ -106,6 +106,14 @@
   </div>
 }
 
+<!-- Solo el doctor: su equipo le derivó esta conversación porque el mensaje del
+     paciente es clínico y únicamente él puede responderlo. -->
+@if (store.conversacionActiva()?.awaitingDoctor) {
+  <p class="hilo__derivada" role="status" data-testid="hilo-derivada">
+    Su equipo le derivó esta conversación: el mensaje del paciente es clínico y solo usted puede responderlo.
+  </p>
+}
+
 <!-- ── Mensajes ───────────────────────────────────────────────────────── -->
 <div class="hilo__mensajes-marco" #marco (scroll)="alScrollear($event)">
   @if (store.cargandoHilo() && !store.hiloCargado()) {
@@ -245,6 +253,18 @@
                      coincidencias se marcan. Todo en una línea de plantilla
                      para no meterle espacios a un `pre-wrap`. -->
                 <p class="hilo__texto">@for (trozo of segmentos(texto); track $index) {@switch (trozo.tipo) {@case ('enlace') {<a class="hilo__enlace" [href]="trozo.valor" target="_blank" rel="noopener noreferrer">{{ trozo.valor }}</a>}@case ('marca') {<mark class="hilo__marca">{{ trozo.valor }}</mark>}@default {<ng-container>{{ trozo.valor }}</ng-container>}}}</p>
+              }
+
+              <!-- Personal de apoyo que respondió en nombre del doctor. El paciente
+                   solo ve la leyenda, y solo si el doctor lo decidió; la autora real
+                   la ve únicamente el doctor, con el camino a «Mi equipo» para retirarla. -->
+              @if (linea.mensaje.teamAuthorName; as autora) {
+                <p class="hilo__equipo" data-testid="hilo-equipo-autora">
+                  Respondió {{ autora }} en su nombre ·
+                  <a class="hilo__equipo-enlace" routerLink="/my-team" data-testid="hilo-equipo-enlace">Mi equipo</a>
+                </p>
+              } @else if (linea.mensaje.repliedByTeam) {
+                <p class="hilo__equipo" data-testid="hilo-respondido-por-equipo">Respondido por su equipo</p>
               }
 
               <!-- La hora flota a la derecha de la última línea: es lo que hace

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DOCUMENT, inject, Injectable } from '@angular/core';
+import { computed, DOCUMENT, inject, Injectable } from '@angular/core';
 import { catchError, map, of, retry, tap, throwError, timer, type Observable } from 'rxjs';
 
 import { REFRESH_COOKIE_MODE } from '../data-access/api';
@@ -13,6 +13,7 @@ import type {
 import { authMethodOf, loginFailureCategory } from '../observability/business/auth-tracing';
 import { isTransientFailure } from '../http/transient-failure';
 import { TracingService } from '../observability/tracing/tracing.service';
+import { NewDeviceAlert } from './new-device-alert';
 import { RefreshTokenStorage } from './refresh-token.storage';
 import { SESSION_CLEANERS } from './session-cleanup';
 import { SessionStore } from './session.store';
@@ -49,6 +50,7 @@ export class AuthService {
   private readonly cookieMode = inject(REFRESH_COOKIE_MODE);
   private readonly cleaners = inject(SESSION_CLEANERS, { optional: true }) ?? [];
   private readonly document = inject(DOCUMENT);
+  private readonly newDeviceAlert = inject(NewDeviceAlert);
 
   /** Lo que la interfaz necesita saber de quién está adentro. */
   readonly isAuthenticated = this.session.isAuthenticated;
@@ -61,6 +63,13 @@ export class AuthService {
   readonly needsTenantSelection = this.session.needsTenantSelection;
   /** Si la cuenta es la de una organización y no la de una persona; ver `SessionStore.isOrganizationAccount`. */
   readonly isOrganizationAccount = this.session.isOrganizationAccount;
+
+  /**
+   * Si la persona entró con el token de alcance limitado (`mfaEnrollment`) porque debe dar de alta el
+   * segundo paso antes de seguir. La API lo impone (403 `MFA_ENROLLMENT_REQUIRED` en todo salvo `/iam/me/mfa*`,
+   * el cierre de sesión y el refresco); el cliente lo refleja llevando a la pantalla de alta.
+   */
+  readonly mfaEnrollmentRequired = computed(() => this.session.mfaEnrollment() === 'required');
 
   /** Nombre para mostrar y nombre de la organización, ambos del token. */
   readonly displayName = this.session.displayName;
@@ -104,6 +113,11 @@ export class AuthService {
           tap({
             next: (session) => {
               this.open(session);
+              // Si falta dar de alta el segundo paso, el token es el de alcance limitado (`mfaEnrollment`) y
+              // `SessionStore.start` ya lo dejó en `required`. Con un token completo —la persona entra a otras
+              // organizaciones— no hay nada que restringir: las que niegan van en `deniedTenants`.
+              // La API avisa cuando el dispositivo es nuevo.
+              if (session.newDevice !== undefined) this.newDeviceAlert.show(session.newDevice);
               span.setAttribute('auth.result', 'success');
             },
             error: (error: unknown) => {
@@ -168,6 +182,7 @@ export class AuthService {
    * ya revocó todo (`AccountSecurityClient.logoutAll`).
    */
   discardLocalSession(): void {
+    this.newDeviceAlert.dismiss();
     this.session.clear();
     this.storage.clear();
     // Un limpiador roto no puede impedir cerrar sesión ni frenar a los demás.

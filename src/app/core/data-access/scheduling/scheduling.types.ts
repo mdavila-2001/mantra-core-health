@@ -16,6 +16,8 @@
     derivado (`remainingCapacity`, `available`).
     ========================================================================== */
 
+import type { DirectAppointmentSupportFields, WaitlistSupportFields } from './scheduling-support.types';
+
 /**
  * **Dónde** se atiende con un recurso — la mitad que le faltaba a la agenda.
  *
@@ -857,7 +859,7 @@ export interface AvailabilityExceptionCreated {
    ========================================================================== */
 
 /** Alta en la lista de espera (`POST /scheduling/waitlist`, UC-41-11). */
-export interface NewWaitlistEntry {
+export interface NewWaitlistEntry extends WaitlistSupportFields {
   readonly tenantId: string;
   readonly patientProfileId: string;
   /** Agenda en la que se espera. Opcional: se puede esperar «con cualquiera». */
@@ -1079,7 +1081,7 @@ export interface AvailabilityExceptionPage {
  * «Volvé el jueves a las 10»: nace confirmada, el paciente se entera por la
  * campana con la salida de «pedir cambio». No hay paso de aceptación.
  */
-export interface NewDirectAppointment {
+export interface NewDirectAppointment extends DirectAppointmentSupportFields {
   readonly patientProfileId: string;
   /** La agenda del doctor donde ocurre; elegirla ES elegir la sede. */
   readonly resourceId: string;

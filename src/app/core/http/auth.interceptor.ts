@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 
 import { isAccessTokenExpired } from '../auth/access-token';
+import { API_BASE_URL, isApiUrl } from '../data-access/api';
 import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { SessionStore } from '../auth/session.store';
 import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
@@ -92,6 +93,12 @@ const OPTIONAL_AUTH_PREFIXES: readonly string[] = ['/terminology/value-sets'];
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (isPublic(request.url)) {
+    return next(request);
+  }
+
+  // Defensa en profundidad (F9): ni la credencial ni la organización activa salen hacia una URL que no sea de la API
+  // configurada (una URL prefirmada de S3, un CDN…), y el 401 de un tercero no dice nada de la sesión.
+  if (!isApiUrl(request.url, inject(API_BASE_URL))) {
     return next(request);
   }
 

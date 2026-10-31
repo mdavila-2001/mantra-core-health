@@ -315,24 +315,22 @@ describe('Agenda', () => {
     extra: Record<string, unknown> = {},
   ): Promise<void> {
     await responderRecursos();
-    http
-      .expectOne((r) => r.url === '/scheduling/bookings')
-      .flush({
-        items: [{ ...CITA, statusConceptId: 'c-estado', ...extra }],
-        count: 1,
-        limit: 100,
-        truncated: false,
-      });
-    http
-      .expectOne((r) => r.url === '/scheduling/slots')
-      .flush({ items: [], count: 0, limit: 100, truncated: false });
-    http
-      .expectOne((r) => r.url === '/terminology/concepts')
-      .flush({
-        items: [{ conceptId: 'c-estado', code, display, codeSystemVersionId: 'csv-1' }],
-        count: 1,
-        limit: 200,
-      });
+    // `primeraPeticion` y no `expectOne`: con el calendario abierto (quien atiende, `PRACTITIONER`) hay dos lecturas vivas de
+    // cada endpoint, las dos legítimas; la de la pantalla la responde el caso y la del calendario la vacía `drenarCalendario()`.
+    // Con `expectOne` los diez casos de «iniciar la consulta» caían con «found 2 requests» (rojos ya en HEAD, no por el orden de
+    // los archivos: el ayudante se quedó con la forma de antes de C-07).
+    primeraPeticion('/scheduling/bookings').flush({
+      items: [{ ...CITA, statusConceptId: 'c-estado', ...extra }],
+      count: 1,
+      limit: 100,
+      truncated: false,
+    });
+    primeraPeticion('/scheduling/slots').flush({ items: [], count: 0, limit: 100, truncated: false });
+    primeraPeticion('/terminology/concepts').flush({
+      items: [{ conceptId: 'c-estado', code, display, codeSystemVersionId: 'csv-1' }],
+      count: 1,
+      limit: 200,
+    });
     harness.detectChanges();
   }
 
@@ -976,6 +974,8 @@ describe('Agenda', () => {
 
     const texto = resumen(fila);
     expect(texto).toContain('Última consulta');
+    // Una cuenta de profesional solo ve su propia agenda (G1): es la última consulta CON USTED.
+    expect(texto).toContain('Última consulta con usted');
     expect(texto).toContain('Dolor de cabeza');
     expect(texto).not.toContain('no cuenta');
 

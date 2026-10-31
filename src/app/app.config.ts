@@ -16,6 +16,8 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { ThemeService } from './core/tokens/theme.service';
+import { ACCESS_CHALLENGE_RESOLVER } from './core/access-challenge/access-challenge';
+import { accessChallengeInterceptor } from './core/http/access-challenge.interceptor';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { apiFailureLogInterceptor } from './core/http/api-failure-log.interceptor';
@@ -26,6 +28,7 @@ import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
+import { AccessChallengeService } from './features/access-governance/access-challenge/access-challenge.service';
 import { provideDependentLinkNotificationActions } from './features/account/dependents/dependent-link-notification-actions';
 import { provideUxAnalytics } from './core/observability/ux/ux-analytics.providers';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
@@ -120,6 +123,10 @@ export const appConfig: ApplicationConfig = {
         tracingInterceptor,
         timeoutInterceptor,
         authInterceptor,
+        // Resuelve los desafíos de acceso (motivo, segundo paso, aprobación) de las peticiones que lo piden con
+        // `withAccessChallenge()`. Va **dentro** de `authInterceptor` (el reintento ya lleva la sesión) y **fuera** del
+        // simulado, para que vea también los 403/422 del mock.
+        accessChallengeInterceptor,
         ...(environment.mockBackend ? [mockBackendInterceptor] : []),
       ]),
     ),
@@ -127,6 +134,8 @@ export const appConfig: ApplicationConfig = {
     // arranque y, con la telemetría apagada, no engancha nada.
     provideObservability(),
     // Qué hacen los botones de las notificaciones (`core/notifications/notification-actions.ts`).
+    // Quién abre el diálogo de desafío de acceso cuando la API pide motivo, segundo paso o aprobación (`core/access-challenge`).
+    { provide: ACCESS_CHALLENGE_RESOLVER, useExisting: AccessChallengeService },
     provideDependentLinkNotificationActions(),
     // Interacciones para los mapas de calor (`POST /telemetry/activity-events`).
     // Independiente de las trazas: se enciende con `PUBLIC_UX_ANALYTICS_*`.

@@ -14,6 +14,7 @@ import { environment } from '../../../environments/environment';
 import { failureBody, failureFor, type SimulatedFailure } from './simulated-failures';
 import { forcedRealApi } from './api-mode';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
+import { bloqueoDelToken } from './mock-token-guard';
 import { usuarioDeAccessToken } from './mock-session';
 
 /* ============================================================================
@@ -93,6 +94,13 @@ function atender(
   const fallo = failureFor(method, path);
   if (fallo !== null) {
     return timer(latencia(path)).pipe(mergeMap(() => emitirFallo(request, path, fallo)));
+  }
+
+  // Lo que la API hace cumplir con el token antes de cualquier ruta: el alcance limitado del segundo factor
+  // (403 `MFA_ENROLLMENT_REQUIRED`) y la organización que niega ahora a la persona (403 con su motivo).
+  const cerrado = bloqueoDelToken(request, method, path);
+  if (cerrado !== null) {
+    return timer(latencia(path)).pipe(mergeMap(() => emitir(request, cerrado)));
   }
 
   // `forbidNonWhitelisted`, como la API: una clave que el DTO no declara es
@@ -188,7 +196,19 @@ export interface PeticionAtendida {
   readonly status: number;
   /** El cuerpo JSON enviado, o `null` si no lo había o no era JSON. */
   readonly body: unknown;
+  /**
+   * Lo que contestó el simulador, **solo** para el inicio de sesión y su renovación
+   * (es lo único que una prueba no puede leer de otra forma: el token vive en memoria y
+   * lo que demuestra qué claims llegan —el plazo de inactividad de la política de
+   * sesión—) y para las rutas chicas de seguridad y de vínculos cuya **forma** es el
+   * contrato con la API (dispositivos, segundo paso, redes y los vínculos de la persona).
+   * El resto no se guarda: serían trescientas copias de fixtures grandes.
+   */
+  readonly response?: unknown;
 }
+
+/** Las rutas de las que `window.__mockRequests` guarda también lo que contestó el simulador. */
+const RESPUESTAS_RECORDADAS = /\/iam\/auth\/(login|token\/refresh)|\/org\/access\/simulate|\/iam\/me\/(devices|mfa)|\/org\/ip-access-rules|\/me\/support-engagements|\/me\/support-patients|\/me\/support-agenda|\/affiliation-invitations\/redeem/;
 
 /** Cuántas peticiones recuerda `window.__mockRequests`: las últimas. */
 const PETICIONES_RECORDADAS = 300;
@@ -212,19 +232,20 @@ function cuerpoComoJson(cuerpo: unknown): unknown {
   }
 }
 
-function anotarPeticion(request: HttpRequest<unknown>, status: number): void {
+function anotarPeticion(request: HttpRequest<unknown>, status: number, respuesta?: unknown): void {
   if (typeof window === 'undefined') return;
   const global = window as unknown as { __mockRequests?: PeticionAtendida[] };
   const registro = (global.__mockRequests ??= []);
   const body = cuerpoComoJson(request.body);
   const base = environment.apiBaseUrl.replace(/\/$/, '');
   const url = base !== '' && request.urlWithParams.startsWith(base) ? request.urlWithParams.slice(base.length) : request.urlWithParams;
-  registro.push({ method: request.method.toUpperCase(), url, status, body });
+  const conRespuesta = RESPUESTAS_RECORDADAS.test(url) && status < 400 ? { response: cuerpoComoJson(respuesta) } : {};
+  registro.push({ method: request.method.toUpperCase(), url, status, body, ...conRespuesta });
   if (registro.length > PETICIONES_RECORDADAS) registro.shift();
 }
 
 function emitir(request: HttpRequest<unknown>, respuesta: MockReply): Observable<HttpEvent<unknown>> {
-  anotarPeticion(request, respuesta.status);
+  anotarPeticion(request, respuesta.status, respuesta.body);
   const headers = new HttpHeaders({ 'x-mock-backend': '1', ...(respuesta.headers ?? {}) });
   if (respuesta.status >= 400) {
     return throwError(

@@ -93,6 +93,15 @@ nav:
       - Reglas de negocio: business/business-rules.md
       - Glosario: business/glossary.md
 
+  - Personal de apoyo:
+      - Administración y seguridad: support-access/index.md
+      - Rutas: support-access/rutas.md
+      - Contrato propuesto: support-access/contrato-propuesto.md
+      - Cuentas demo: support-access/cuentas-demo.md
+      - Gobierno de accesos (base): support-access/gobierno-de-accesos.md
+      - ADR-0017 · «Mi equipo» y el personal de apoyo: adr/ADR-0017-mi-equipo-y-personal-de-apoyo.md
+      - ADR-0018 · El segundo paso lo hace cumplir el cliente: adr/ADR-0018-segundo-paso-lo-hace-cumplir-el-cliente.md
+
   - Arquitectura:
       - Visión general: architecture/overview.md
       - Contexto del sistema: architecture/system-context.md
