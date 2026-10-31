@@ -18,7 +18,7 @@ import type { CampanaDeFarmacia } from '../../../../core/data-access/pharmacy-ca
 import { CartStore } from '../../../../core/data-access/pharmacy-cart/cart.store';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/simulator/sample-data';
 import { NO_SAVED_PLACES, savedPlacesOf, type SavedPlaces } from '../../../../core/data-access/profiles/saved-places';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
@@ -252,7 +252,7 @@ export class WhereToBuy {
    * demostración sobre un dato que ningún contrato publica —qué renglón
    * aprueba el seguro antes de que exista el pedido—, así que contra la API
    * real no se ofrece: `withInsurance` queda apagado y la lista es la de la
-   * consulta, sin más. Ver `core/mock/sample-data.ts`.
+   * consulta, sin más. Ver `core/simulator/sample-data.ts`.
    */
   protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 

@@ -1,4 +1,4 @@
-import type { CatalogService, LocationNode, SupportActionCode } from './support-access.types';
+import type { CatalogService, LocationNode, SupportActionCode } from './support-access-base.types';
 
 /* ---- agenda combinada -------------------------------------------------------- */
 

@@ -1,4 +1,4 @@
-import type { LegalEntityTypeEntry } from './legal-entity-types.dictionary';
+import type { LegalEntityTypeEntry } from './legal-entity-types.model';
 
 /* ============================================================================
     Las formas jurídicas bolivianas no societarias y del sector público que la

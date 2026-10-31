@@ -94,7 +94,7 @@ import { addressFromPoint, pointLabel } from '../shared-registration/address-fro
 /**
  * Los ocho tipos societarios que el punto 1.1.1 del registro de procesos
  * pide elegir de una lista cerrada, restringidos a los ocho de Bolivia del
- * diccionario `VS_LEGAL_ENTITY_TYPE` (`core/mock/fixtures/concepts.ts`) —
+ * diccionario `VS_LEGAL_ENTITY_TYPE` (`mock/fixtures/concepts.ts` del simulador) —
  * el registro de procesos de farmacia no contempla otro país. Se duplican
  * acá y no se importan de `RegisterLaboratory`: el carril de farmacia no
  * toca el laboratorio más allá de lo que ya vive en `shared-registration/`

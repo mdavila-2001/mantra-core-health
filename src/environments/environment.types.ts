@@ -299,7 +299,7 @@ export interface Environment {
   /**
    * Rama `mockup`: la aplicación no habla con ninguna API. Un interceptor
    * responde cada petición desde datos de prueba en memoria, con todas las
-   * pantallas pobladas. Ver `src/app/core/mock/`.
+   * pantallas pobladas. Ver el simulador, en la carpeta `mock/` de `src/app/core/`.
    */
   readonly mockBackend: boolean;
 }

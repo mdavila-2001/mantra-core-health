@@ -6,7 +6,7 @@ import type { CompatibilityRule } from './adt.types';
 
     La regla la evalúa la API (`clinical/domain/inpatient/bed-compatibility.ts`);
     la copia que usa la maqueta para responder como ella vive en
-    `core/mock/rules/bed-compatibility.ts` (M6: sólo la usa la maqueta).
+    `mock/rules/bed-compatibility.ts` del simulador (M6: sólo la usa la maqueta).
     ========================================================================== */
 
 export const RULE_LABEL: Readonly<Record<CompatibilityRule, string>> = {

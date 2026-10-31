@@ -17,6 +17,10 @@
 import type { ActionConditions, SupportCondition } from '../access-governance/conditions.types';
 import type { SupportAtom } from './support-atoms';
 import type { GrantEffect, GrantOrigin } from './support-decision.types';
+import type { CatalogService, LocationNode, SupportActionCode } from './support-access-base.types';
+
+export { SUPPORT_ACTION_CODES } from './support-access-base.types';
+export type { CatalogService, LocationKind, LocationNode, SupportActionCode } from './support-access-base.types';
 
 /* ---- plantillas y acciones -------------------------------------------------- */
 
@@ -31,26 +35,6 @@ export const SUPPORT_ROLE_TEMPLATE_CODES = [
   'ORG_MANAGEMENT',
 ] as const;
 export type SupportRoleTemplateCode = (typeof SUPPORT_ROLE_TEMPLATE_CODES)[number];
-
-/** Las 15 acciones otorgables (13 de agenda y cobro, más 2 de paciente y mensajes). */
-export const SUPPORT_ACTION_CODES = [
-  'schedule.view',
-  'schedule.create',
-  'schedule.reschedule',
-  'schedule.cancel',
-  'schedule.confirm',
-  'schedule.check_in',
-  'schedule.walk_in',
-  'schedule.waitlist',
-  'schedule.send_reminders',
-  'schedule.block_time',
-  'schedule.edit_hours',
-  'billing.collect',
-  'billing.issue_receipt',
-  'patient.register',
-  'messages.reply_on_behalf',
-] as const;
-export type SupportActionCode = (typeof SUPPORT_ACTION_CODES)[number];
 
 /** Rótulos de las plantillas, en lenguaje de quien las elige. */
 export const SUPPORT_ROLE_TEMPLATE_LABELS: Readonly<Record<SupportRoleTemplateCode, string>> = {
@@ -412,17 +396,7 @@ export interface InvitationRedeemResult {
 
 /* ---- catálogo de la organización y consulta de acceso ----------------------- */
 
-export type LocationKind = 'SITE' | 'BUILDING' | 'LEVEL' | 'WING' | 'CONSULTING_ROOM' | 'OPERATING_ROOM' | 'PROCEDURE_ROOM' | 'BED';
-
-/** Un nodo de la jerarquía de ubicaciones. `path` es la ruta materializada (`/sede/edificio/piso/`). */
-export interface LocationNode {
-  /** `practice_site_id` si es una sede, `care_space_id` en cualquier otro caso. */
-  readonly id: string;
-  readonly kind: LocationKind;
-  readonly name: string;
-  readonly parentId: string | null;
-  readonly path: string;
-}
+/* `LocationKind`, `LocationNode` y `CatalogService` viven en `support-access-base.types.ts`. */
 
 /** Dónde atiende un doctor y qué hace ahí: un espacio y el servicio que presta en él. */
 export interface DoctorPlacement {
@@ -437,11 +411,6 @@ export interface CatalogDoctor {
   readonly specialty: string;
   /** Sus lugares de atención, cada uno con su servicio (`practitioner_location_assignments`). */
   readonly placements: readonly DoctorPlacement[];
-}
-
-export interface CatalogService {
-  readonly id: string;
-  readonly name: string;
 }
 
 /** Lo que el editor de permisos necesita para ofrecer opciones y calcular la vista previa. */
@@ -511,7 +480,6 @@ export interface SupportActivityPage {
   /** Cursor opaco de la página siguiente, o `null` en la última. */
   readonly nextCursor: string | null;
 }
-
 
 /* ---- el equipo del doctor ---------------------------------------------------- */
 
