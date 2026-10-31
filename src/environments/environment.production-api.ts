@@ -13,6 +13,7 @@ export const environment: Environment = {
   billingSiatDemo: false,
   billingSimulatedApi: true,
   designMockups: false,
+  reportingMockEnabled: false,
   mockBackend: false,
   telemetry: {
     enabled: envFromProcess.telemetry?.enabled ?? false,

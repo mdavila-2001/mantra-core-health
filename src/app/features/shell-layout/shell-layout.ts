@@ -58,6 +58,7 @@ import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
 import { MIS_CUESTIONARIOS_ROUTE } from '../account/questionnaires/questionnaires.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 import { DeniedTenantsBanner } from './denied-tenants-banner/denied-tenants-banner';
+import { TenantMenu } from './tenant-menu/tenant-menu';
 import { NewDeviceBanner } from './new-device-banner/new-device-banner';
 
 /**
@@ -144,6 +145,7 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     NavIcon,
     NewDeviceBanner,
     DeniedTenantsBanner,
+    TenantMenu,
     Tooltip,
   ],
   templateUrl: './shell-layout.html',
@@ -654,9 +656,7 @@ export class ShellLayout {
   });
 
   /** Las organizaciones de la sesión, ya con su nombre legible (claim `tenantNames`). */
-  protected readonly tenants = computed<readonly TenantOption[]>(() =>
-    this.auth.tenants().map((id) => ({ id, name: this.auth.tenantName(id) })),
-  );
+  protected readonly tenants = computed<readonly TenantOption[]>(() => this.auth.tenants().map((id) => ({ id, name: this.auth.tenantName(id) })));
 
   /**
    * El menú del área autenticada, más la vitrina.
@@ -730,7 +730,7 @@ export class ShellLayout {
   /** Nombre de la organización activa, para el rótulo del selector. */
   protected readonly organizacionActiva = computed(() => {
     const id = this.activeTenantId();
-    return id ? this.auth.tenantName(id) : 'Sin organización';
+    return id ? this.auth.tenantName(id) : this.auth.platformWide() ? 'Toda la plataforma' : 'Sin organización';
   });
 
   /** Iniciales para el avatar: dos, que es lo que entra en el círculo. */
@@ -787,8 +787,8 @@ export class ShellLayout {
    * corresponde a la anterior. Se vuelve al panel en vez de recargar la vista actual, que podría
    * ser el detalle de un recurso que en esta organización no existe.
    */
-  protected changeTenant(tenantId: string): void {
-    this.auth.selectTenant(tenantId);
+  protected changeTenant(tenantId: string | null): void {
+    if (tenantId === null) this.auth.clearSelectedTenant(); else this.auth.selectTenant(tenantId);
     void this.router.navigateByUrl('/dashboard');
   }
 

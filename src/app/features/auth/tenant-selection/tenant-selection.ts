@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal, type OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { safeReturnUrl } from '../../../core/auth/return-url';
 import { SessionStore } from '../../../core/auth/session.store';
 import { RouterLink } from '@angular/router';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
@@ -35,6 +36,7 @@ export class TenantSelection implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly invitations = inject(MembershipInvitationsClient);
   private readonly directory = inject(DirectoryClient);
 
@@ -78,7 +80,8 @@ export class TenantSelection implements OnInit {
 
   choose(tenantId: string): void {
     this.auth.selectTenant(tenantId);
-    // Tras elegir organización, el mismo destino que el login (`login.ts`).
-    void this.router.navigateByUrl(entryDestination(this.auth.roles()));
+    // Si venía de una pantalla que pidió organización (`returnUrl`, validado), vuelve a ella; si no, el destino del login.
+    const volver = safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    void this.router.navigateByUrl(volver ?? entryDestination(this.auth.roles()));
   }
 }

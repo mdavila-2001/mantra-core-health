@@ -12,6 +12,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
+import { safeReturnUrl } from '../../../core/auth/return-url';
 import { MFA_ENROLLMENT_ROUTE } from '../../../core/auth/mfa-enrollment-route';
 import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
 import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
@@ -221,9 +222,11 @@ export class Login {
       return TENANT_SELECTION_ROUTE;
     }
     if (this.auth.tenants().length === 0) {
-      return rolesAlcanzan(['SUPERADMIN'], this.auth.roles())
-        ? GETTING_STARTED_ROUTE
-        : MY_ORGANIZATIONS_ROUTE;
+      if (rolesAlcanzan(['SUPERADMIN'], this.auth.roles())) {
+        return GETTING_STARTED_ROUTE;
+      }
+      // Alcance de plataforma sin ninguna organización: opera sin ella, entra al Centro de la plataforma.
+      return this.auth.hasPlatformScope() ? '/' : MY_ORGANIZATIONS_ROUTE;
     }
     // Un enlace pedido a mano manda sobre la pantalla de elección: quien venía
     // a una página concreta no tiene que elegir portal para llegar a ella.
@@ -231,8 +234,8 @@ export class Login {
     if (requested !== null) {
       return requested;
     }
-    // Con acceso a los dos portales hay que elegir; con uno solo se entra derecho a ese
-    // (ver `entryDestination`). Quien no tiene ninguno de los dos entra como siempre.
+    // El alcance de plataforma no pasa por la elección de organización (arriba, `needsTenantSelection`). Ver
+    // `entryDestination`: sin la maqueta de reportería todos entran a `/` (el Centro de la plataforma), salvo marketing puro.
     return entryDestination(this.auth.roles());
   }
 
@@ -260,11 +263,7 @@ export class Login {
    */
   private retornoPedido(): string | null {
     const pedido = this.route.snapshot.queryParamMap.get('returnUrl');
-    if (pedido === null || pedido === '') {
-      return null;
-    }
-    const externo = !pedido.startsWith('/') || /^\/[/\\]/.test(pedido);
-    return externo ? null : pedido;
+    return safeReturnUrl(pedido);
   }
 
   /**

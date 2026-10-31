@@ -11,8 +11,17 @@ import {
   ROLES_INSIGHTS,
   ROLES_REPORTERIA,
 } from './reporting-access';
+import { setReportingMock } from './reporting-mock-flag.testing';
 
-describe('acceso a los portales (administración y reportería)', () => {
+describe('acceso a los portales (administración y reportería) · maqueta ENCENDIDA', () => {
+  // Estas pruebas fijan el comportamiento con la bandera encendida (el de antes de H4); con ella apagada, ver el
+  // bloque «maqueta APAGADA» al final.
+  let restaurar: () => void;
+  beforeEach(() => {
+    restaurar = setReportingMock(true);
+  });
+  afterEach(() => restaurar());
+
   describe('puedeVerReporteria', () => {
     it.each(ROLES_REPORTERIA.filter((rol) => rol !== 'SUPERADMIN'))('%s abre reportería', (rol) => {
       expect(puedeVerReporteria([rol])).toBe(true);
@@ -240,5 +249,59 @@ describe('puedeVerPlataforma', () => {
       expect(puedeVerPlataforma([rol])).toBe(false);
     }
     expect(puedeVerPlataforma([])).toBe(false);
+  });
+});
+
+describe('acceso a los portales · maqueta APAGADA (por defecto)', () => {
+  it('la bandera viene apagada en el entorno de pruebas', () => {
+    expect(accesoAPortales(['REPORT_VIEWER']).reporteria).toBe(false);
+  });
+
+  it.each([
+    ['SUPERADMIN', ['SUPERADMIN']],
+    ['PLATFORM_ADMIN', ['PLATFORM_ADMIN']],
+    ['reportería real', ['REPORTING_ADMIN']],
+    ['REPORT_VIEWER', ['REPORT_VIEWER']],
+    ['BUSINESS_ADMIN', ['BUSINESS_ADMIN']],
+  ])('NEGATIVO: %s no tiene acceso al portal de reportería', (_n, roles) => {
+    expect(accesoAPortales(roles).reporteria).toBe(false);
+    expect(accesoAPortales(roles, false).reporteria).toBe(false);
+  });
+
+  it('el rol sigue siendo condición con la bandera encendida (bandera && rol)', () => {
+    expect(accesoAPortales(['REPORT_VIEWER'], true).reporteria).toBe(true);
+    expect(accesoAPortales(['PATIENT'], true).reporteria).toBe(false);
+  });
+
+  it('administración e Insights no dependen de la bandera', () => {
+    expect(accesoAPortales(['PLATFORM_ADMIN'], false)).toEqual({ administracion: true, reporteria: false, insights: true });
+  });
+
+  it.each([
+    ['PLATFORM_ADMIN'],
+    ['SUPERADMIN'],
+    ['DATA_PLATFORM_ADMIN'],
+    ['SECURITY_ADMIN'],
+    ['REPORT_VIEWER'],
+    ['PATIENT'],
+  ])('%s entra a «/» (nunca al selector de portales ni a /reports)', (rol) => {
+    expect(entryDestination([rol])).toBe('/');
+    expect(entryDestination([rol], false)).toBe('/');
+  });
+
+  it('sin roles entra a «/»', () => {
+    expect(entryDestination([])).toBe('/');
+  });
+
+  it('marketing puro conserva Insights; con un rol de administración encima entra a «/»', () => {
+    expect(entryDestination(['MARKETING_MANAGER'], false)).toBe('/insights');
+    expect(entryDestination(['MARKETING_MANAGER', 'SECURITY_ADMIN'], false)).toBe('/');
+  });
+
+  it('con la bandera encendida conserva la lógica anterior (selector, /reports, /insights)', () => {
+    expect(entryDestination(['PLATFORM_ADMIN'], true)).toBe('/portal-selector');
+    expect(entryDestination(['REPORT_VIEWER'], true)).toBe('/reports');
+    expect(entryDestination(['MARKETING_MANAGER'], true)).toBe('/insights');
+    expect(entryDestination(['PATIENT'], true)).toBe('/');
   });
 });

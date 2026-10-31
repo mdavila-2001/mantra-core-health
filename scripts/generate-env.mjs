@@ -214,6 +214,15 @@ const MANIFEST = [
     validate: validateBoolean,
   },
 
+  // Maqueta comercial de reportería (datos de ejemplo). Apagada por defecto: sólo para las
+  // capturas del simulador (`PW_REPORTING_MOCK=1`). Ver `features/reporting/reporting-access.ts`.
+  {
+    key: 'PUBLIC_REPORTING_MOCK',
+    field: 'reportingMockEnabled',
+    literal: true,
+    validate: validateBoolean,
+  },
+
   // Cómo se pide el refresco de sesión: con la cookie `httpOnly` de la API
   // (`true`) o con el token en el cuerpo (`false`, por defecto). Es un booleano
   // de despliegue, no un secreto: el nombre lleva «COOKIE» y por eso figura en

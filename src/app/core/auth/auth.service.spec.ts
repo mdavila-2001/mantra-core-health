@@ -63,6 +63,10 @@ class AlmacenFalso {
     this.tenant = tenantId;
   }
 
+  clearSelectedTenant(): void {
+    this.tenant = null;
+  }
+
   /** El aviso que el servicio registró: la prueba lo dispara como si otra pestaña hubiera cerrado sesión. */
   avisoOtraPestana: (() => void) | null = null;
 
@@ -315,6 +319,46 @@ describe('AuthService', () => {
 
       expect(auth.activeTenantId()).toBe('t-2');
       expect(auth.needsTenantSelection()).toBe(false);
+    });
+
+    describe('alcance de plataforma (H1/H3)', () => {
+      const PLATAFORMA = makeToken({ sub: 'u-1', sid: 's-1', roles: ['PLATFORM_ADMIN'], tenants: ['t-1', 't-2'] });
+
+      function entrar(accessToken: string): void {
+        auth.login({ kind: 'email', email: 'a@b.test', password: 'p' }).subscribe();
+        http.expectOne('/iam/auth/login').flush({ ...RESPUESTA_TOKENS, accessToken });
+      }
+
+      it('con alcance de plataforma y 2 organizaciones no exige elegir y queda «en toda la plataforma»', () => {
+        entrar(PLATAFORMA);
+
+        expect(auth.needsTenantSelection()).toBe(false);
+        expect(auth.hasPlatformScope()).toBe(true);
+        expect(auth.platformWide()).toBe(true);
+        expect(auth.activeTenantId()).toBeNull();
+      });
+
+      it('clearSelectedTenant suelta la organización y borra la recordada', () => {
+        entrar(PLATAFORMA);
+        auth.selectTenant('t-2');
+        expect(almacen.tenant).toBe('t-2');
+
+        auth.clearSelectedTenant();
+
+        expect(auth.activeTenantId()).toBeNull();
+        expect(auth.platformWide()).toBe(true);
+        expect(almacen.tenant).toBeNull();
+      });
+
+      it('NEGATIVO: sin alcance de plataforma clearSelectedTenant no hace nada (hay que seguir con una organización)', () => {
+        entrar(TOKEN_DOS_TENANTS);
+        auth.selectTenant('t-2');
+
+        auth.clearSelectedTenant();
+
+        expect(auth.activeTenantId()).toBe('t-2');
+        expect(almacen.tenant).toBe('t-2');
+      });
     });
   });
 });

@@ -61,6 +61,8 @@ export class AuthService {
   /** El tipo (`TenantTypeCode`) de la organización activa; ver `SessionStore.activeTenantType`. */
   readonly activeTenantType = this.session.activeTenantType;
   readonly needsTenantSelection = this.session.needsTenantSelection;
+  readonly hasPlatformScope = this.session.hasPlatformScope;
+  readonly platformWide = this.session.platformWide;
   /** Si la cuenta es la de una organización y no la de una persona; ver `SessionStore.isOrganizationAccount`. */
   readonly isOrganizationAccount = this.session.isOrganizationAccount;
 
@@ -217,6 +219,18 @@ export class AuthService {
     if (this.session.activeTenantId() === tenantId) {
       this.storage.writeSelectedTenant(tenantId, this.session.userId());
     }
+  }
+
+  /**
+   * Vuelve a «toda la plataforma»: suelta la organización activa y borra la recordada, para que no se restaure al
+   * recargar. Sólo tiene sentido con alcance de plataforma; sin él no hace nada (quien no lo tiene debe elegir).
+   */
+  clearSelectedTenant(): void {
+    if (!this.session.hasPlatformScope()) {
+      return;
+    }
+    this.session.clearTenant();
+    this.storage.clearSelectedTenant();
   }
 
   /**

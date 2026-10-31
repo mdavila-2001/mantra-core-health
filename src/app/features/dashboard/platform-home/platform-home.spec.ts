@@ -94,6 +94,28 @@ describe('PlatformHome', () => {
     expect(texto()).toContain('6 de 15');
   });
 
+  it('si la API responde las herramientas sin `summary` lo dice y el resto de la portada sigue (no se rompe ni inventa 0)', () => {
+    http.expectOne((r) => r.url === '/admin/ops/instances/liveness').flush(SONDA);
+    http.expectOne((r) => r.url === '/admin/ops/tools').flush({ evaluatedAt: '2026-10-31T12:00:00.000Z', items: [] });
+    responderResto();
+    fixture.detectChanges();
+    expect(q('[data-testid="centro-herramientas-sin-resumen"]')).not.toBeNull();
+    expect(q('[data-testid="centro-herramientas-caidas"]')).toBeNull();
+    expect(q('[data-testid="centro-instancias-overall"]')!.textContent).toContain('Crítico');
+  });
+
+  it('la segunda puerta se llama «Observabilidad y gobierno» y lleva a /superadmin/observability; ya no hay «Portal de reportería»', () => {
+    http.expectOne((r) => r.url === '/admin/ops/instances/liveness').flush(SONDA);
+    http.expectOne((r) => r.url === '/admin/ops/tools').flush(HERRAMIENTAS);
+    responderResto();
+    fixture.detectChanges();
+    const puerta = q<HTMLAnchorElement>('[data-testid="portal-observabilidad"]');
+    expect(puerta?.textContent?.trim()).toBe('Observabilidad y gobierno');
+    expect(puerta?.getAttribute('href')).toBe('/superadmin/observability');
+    expect(q('[data-testid="platform-home-portales"]')!.textContent).not.toContain('reportería');
+    expect(texto()).not.toContain('Portal de reportería');
+  });
+
   it('la tarjeta enlaza a la pantalla completa y el portal de reportería la lista como destino', () => {
     http.expectOne((r) => r.url === '/admin/ops/instances/liveness').flush(SONDA);
     http.expectOne((r) => r.url === '/admin/ops/tools').flush(HERRAMIENTAS);

@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { rolesAlcanzan } from '../../core/navigation/navigation.types';
 
 /**
@@ -96,11 +97,18 @@ export function puedeVerPlataforma(roles: readonly string[]): boolean {
   return rolesAlcanzan(ROLES_PLATAFORMA, roles);
 }
 
-/** Los tres accesos de una sesión, juntos. */
-export function accesoAPortales(roles: readonly string[]): AccesoAPortales {
+/**
+ * Los tres accesos de una sesión, juntos. El de reportería exige además la bandera
+ * `environment.reportingMockEnabled` (apagada por defecto): sin ella la maqueta no se ofrece a nadie.
+ * `mockEnabled` existe para probar las dos ramas; en la aplicación se lee del entorno.
+ */
+export function accesoAPortales(
+  roles: readonly string[],
+  mockEnabled: boolean = environment.reportingMockEnabled,
+): AccesoAPortales {
   return {
     administracion: puedeVerAdministracion(roles),
-    reporteria: puedeVerReporteria(roles),
+    reporteria: mockEnabled && puedeVerReporteria(roles),
     insights: puedeVerInsights(roles),
   };
 }
@@ -116,8 +124,16 @@ export function cantidadDePortales(acceso: AccesoAPortales): number {
  * Insights entra a Insights y todos los demás, a la aplicación de siempre. Que una tarjeta exista
  * o no no autoriza nada: cada portal vuelve a validar el rol en su ruta y la API en cada petición.
  */
-export function entryDestination(roles: readonly string[]): string {
-  const acceso = accesoAPortales(roles);
+export function entryDestination(
+  roles: readonly string[],
+  mockEnabled: boolean = environment.reportingMockEnabled,
+): string {
+  const acceso = accesoAPortales(roles, mockEnabled);
+  // Sin la maqueta no hay selector de portales: se entra a `/` (el Centro de la plataforma o el inicio de siempre).
+  // Marketing puro conserva su portal (Insights) como hoy.
+  if (!mockEnabled) {
+    return acceso.insights && !acceso.administracion ? PORTAL_INSIGHTS_ROUTE : PORTAL_ADMINISTRACION_ROUTE;
+  }
   if (cantidadDePortales(acceso) >= 2) {
     return PORTAL_SELECTOR_ROUTE;
   }
