@@ -186,7 +186,10 @@
 
               <section class="consulta__bloque" aria-labelledby="consulta-cambio-titulo">
                 <h3 id="consulta-cambio-titulo" class="consulta__subtitulo">Cambios</h3>
-                @if (group.status === 'RESCHEDULE_PENDING' && group.proposedRescheduleAt; as proposed) {
+                @if (
+                  group.status === 'RESCHEDULE_PENDING' && group.proposedRescheduleAt;
+                  as proposed
+                ) {
                   <p class="consulta__texto" data-testid="medical-group-proposed">
                     Hay un cambio propuesto para el <strong>{{ format(proposed) }}</strong
                     >{{ proposerName() === null ? '' : ', propuesto por ' + proposerName() }}.
@@ -460,8 +463,8 @@
 
 <ng-template #invitationCell let-member>
   <app-badge
-    [variant]="invitationLabel[member.invitationStatus].variant"
-    [value]="member.isCreator ? 'Creó el grupo' : invitationLabel[member.invitationStatus].label"
+    [variant]="invitationOf(member).variant"
+    [value]="member.isCreator ? 'Creó el grupo' : invitationOf(member).label"
   />
 </ng-template>
 

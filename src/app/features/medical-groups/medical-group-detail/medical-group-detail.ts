@@ -16,6 +16,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { MedicalGroupsClient } from '../../../core/data-access/medical-groups/medical-groups.client';
 import type {
   MedicalGroup,
+  InvitationStatus,
   MedicalGroupDecision,
   MedicalGroupMember,
   NewMedicalGroupMember,
@@ -270,6 +271,13 @@ export class MedicalGroupDetail {
         ]
       : []),
   ]);
+
+  /** El estado de la invitación, dicho en pantalla; el contexto de `ng-template` llega sin tipo. */
+  protected invitationOf(
+    member: MedicalGroupMember,
+  ): (typeof INVITATION_STATUS_LABEL)[InvitationStatus] {
+    return INVITATION_STATUS_LABEL[member.invitationStatus];
+  }
 
   protected readonly memberId = (member: MedicalGroupMember): string => member.id;
   protected readonly memberLabel = (member: MedicalGroupMember): string =>
