@@ -2329,7 +2329,8 @@
    "sinonimos": [
     "Rx de tórax 2 proyecciones",
     "Telerradiografía de tórax"
-   ]
+   ],
+   "codigo_api_existente": "IMG_RX_TORAX"
   },
   {
    "codigo": "RX_TORAX_AP_PORTATIL",
@@ -2533,7 +2534,8 @@
    "sinonimos": [
     "Rx de abdomen simple",
     "Placa simple de abdomen"
-   ]
+   ],
+   "codigo_api_existente": "IMG_RX_ABDOMEN"
   },
   {
    "codigo": "RX_ABDOMEN_PIE_DECUBITO",
@@ -2594,7 +2596,8 @@
    "loinc_nombre": "XR Skull AP and Lateral",
    "radlex_rpid": "RPID6053",
    "radlex_nombre": "XR Skull 1-3 Views Anteroposterior and Lateral",
-   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_RX_CRANEO"
   },
   {
    "codigo": "RX_CRANEO_COMPLETO",
@@ -2635,7 +2638,8 @@
    "loinc_nombre": "XR Sinuses Views",
    "radlex_rpid": "RPID4788",
    "radlex_nombre": "XR Paranasal Sinuses 1-2 Views",
-   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_RX_SENOS"
   },
   {
    "codigo": "RX_ORBITAS",
@@ -2874,7 +2878,8 @@
    "loinc_nombre": "XR Cervical spine AP and Lateral",
    "radlex_rpid": "RPID2510",
    "radlex_nombre": "XR Cervical Spine 2-3 Views",
-   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_RX_COL_CERVICAL"
   },
   {
    "codigo": "RX_COLUMNA_CERVICAL_OBLICUAS",
@@ -2953,7 +2958,8 @@
    "loinc_nombre": "XR Thoracic spine AP and Lateral",
    "radlex_rpid": "RPID2666",
    "radlex_nombre": "XR Thoracic Spine 2 Views",
-   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_RX_COL_DORSAL"
   },
   {
    "codigo": "RX_COLUMNA_DORSOLUMBAR",
@@ -2991,7 +2997,8 @@
    "loinc_nombre": "XR Lumbar spine AP and Lateral",
    "radlex_rpid": "RPID2652",
    "radlex_nombre": "XR Lumbar Spine Anteroposterior and Lateral",
-   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_RX_COL_LUMBAR"
   },
   {
    "codigo": "RX_COLUMNA_LUMBOSACRA_OBLICUAS",
@@ -3131,7 +3138,8 @@
    "loinc_nombre": "XR Pelvis AP",
    "radlex_rpid": "RPID2657",
    "radlex_nombre": "XR Pelvis 1 View Anteroposterior",
-   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_RX_PELVIS"
   },
   {
    "codigo": "RX_PELVIS_INLET_OUTLET",
@@ -5011,7 +5019,9 @@
    "sinonimos": [
     "Mamografía de tamizaje",
     "Mamografía bilateral"
-   ]
+   ],
+   "codigo_api_existente": "IMG_MAMOGRAFIA",
+   "nota": "El código local IMG_MAMOGRAFIA no distingue cribado de diagnóstica; la diagnóstica es MG_DIAGNOSTICA_BILATERAL."
   },
   {
    "codigo": "MG_DIAGNOSTICA_BILATERAL",
@@ -5290,7 +5300,9 @@
    "sinonimos": [
     "TAC de cerebro simple",
     "TC encefálica"
-   ]
+   ],
+   "codigo_api_existente": "IMG_TC_CRANEO",
+   "nota": "El código local IMG_TC_CRANEO no distingue contraste; las variantes con contraste son TC_CRANEO_CON y TC_CRANEO_SIN_CON."
   },
   {
    "codigo": "TC_CRANEO_CON",
@@ -5615,7 +5627,9 @@
    "loinc_nombre": "CT Lumbar spine WO contrast",
    "radlex_rpid": "RPID31",
    "radlex_nombre": "CT Lumbar Spine wo IV Contrast",
-   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_TC_COLUMNA",
+   "nota": "El código local IMG_TC_COLUMNA de la API es genérico y se enlaza a este estudio como el más cercano. Los otros segmentos son TC_COLUMNA_CERVICAL y TC_COLUMNA_DORSAL."
   },
   {
    "codigo": "TC_MIELOGRAFIA",
@@ -5663,7 +5677,9 @@
    "loinc_nombre": "CT Chest WO contrast",
    "radlex_rpid": "RPID16",
    "radlex_nombre": "CT Chest wo IV Contrast",
-   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_TC_TORAX",
+   "nota": "El código local IMG_TC_TORAX no distingue contraste; la variante con contraste es TC_TORAX_CON."
   },
   {
    "codigo": "TC_TORAX_CON",
@@ -5903,7 +5919,9 @@
    "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
    "sinonimos": [
     "TAC abdomino-pélvica con contraste"
-   ]
+   ],
+   "codigo_api_existente": "IMG_TC_ABDOMEN",
+   "nota": "El código local IMG_TC_ABDOMEN (Abdomen and pelvis CT) no distingue contraste; se enlaza a la variante con contraste IV por ser la de uso habitual; la variante sin contraste es TC_ABDOMEN_PELVIS_SIN."
   },
   {
    "codigo": "TC_ABDOMEN_PELVIS_ORAL_IV",
@@ -6571,7 +6589,9 @@
    "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
    "sinonimos": [
     "RMN de encéfalo simple"
-   ]
+   ],
+   "codigo_api_existente": "IMG_RM_CEREBRAL",
+   "nota": "El código local IMG_RM_CEREBRAL no distingue contraste; la variante con gadolinio es RM_CEREBRO_SIN_CON."
   },
   {
    "codigo": "RM_CEREBRO_SIN_CON",
@@ -6908,7 +6928,9 @@
    "loinc_nombre": "MR Lumbar spine WO contrast",
    "radlex_rpid": "RPID541",
    "radlex_nombre": "MR Lumbar Spine wo IV Contrast",
-   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_RM_COLUMNA",
+   "nota": "El código local IMG_RM_COLUMNA de la API es genérico y se enlaza a este estudio como el más cercano. Los otros segmentos son RM_COLUMNA_CERVICAL, RM_COLUMNA_DORSAL y RM_COLUMNA_COMPLETA."
   },
   {
    "codigo": "RM_COLUMNA_LUMBAR_CON",
@@ -7703,7 +7725,9 @@
    },
    "radlex_rpid": "RPID522",
    "radlex_nombre": "MR Knee wo IV Contrast",
-   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_RM_ARTICULAR",
+   "nota": "El código local IMG_RM_ARTICULAR de la API es genérico y se enlaza a este estudio como el más cercano. La RM de rodilla es la articular más pedida; las demás articulaciones tienen su propio estudio (RM_HOMBRO, RM_CADERA, RM_TOBILLO, RM_MUNECA, RM_CODO)."
   },
   {
    "codigo": "RM_PIERNA",
@@ -7859,7 +7883,8 @@
    "loinc_nombre": "US Abdomen",
    "radlex_rpid": "RPID1929",
    "radlex_nombre": "US Abdomen",
-   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_ECO_ABDOMINAL"
   },
   {
    "codigo": "ECO_ABDOMEN_SUPERIOR",
@@ -7924,7 +7949,8 @@
    "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir",
    "sinonimos": [
     "Ecografía de aparato urinario"
-   ]
+   ],
+   "codigo_api_existente": "IMG_ECO_RENAL"
   },
   {
    "codigo": "ECO_RENAL",
@@ -8006,7 +8032,8 @@
    "loinc_nombre": "US Pelvis",
    "radlex_rpid": "RPID1951",
    "radlex_nombre": "US Pelvis",
-   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_ECO_PELVICA"
   },
   {
    "codigo": "ECO_TRANSVAGINAL",
@@ -8275,7 +8302,8 @@
    "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
    "sinonimos": [
     "Ecografía tiroidea"
-   ]
+   ],
+   "codigo_api_existente": "IMG_ECO_TIROIDES"
   },
   {
    "codigo": "ECO_CUELLO",
@@ -8344,7 +8372,8 @@
     "DER": "RPID1981"
    },
    "radlex_nombre": "US Breast Bilateral",
-   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook"
+   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir;radlex-playbook",
+   "codigo_api_existente": "IMG_ECO_MAMARIA"
   },
   {
    "codigo": "ECO_MAMA_UNILATERAL",
@@ -8417,6 +8446,7 @@
    "loinc_nombre": "US Unspecified body region",
    "radlex_rpid": null,
    "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir",
+   "codigo_api_existente": "IMG_ECO_PARTES_BLANDAS",
    "nota": "Indicar localización."
   },
   {
@@ -9301,6 +9331,7 @@
     "Densitometría axial",
     "DEXA"
    ],
+   "codigo_api_existente": "IMG_DENSITOMETRIA",
    "verificar_loinc": true
   },
   {
@@ -10875,6 +10906,93 @@
    "loinc_nombre": "CT Larynx W contrast IV",
    "radlex_rpid": null,
    "fuente": "sas-hvv-radiodiagnostico;loinc-nlm-clinicaltables;loinc-tx-fhir"
+  },
+  {
+   "codigo": "RX_MIEMBRO_SUPERIOR",
+   "nombre": "Radiografía de miembro superior (segmento a indicar)",
+   "modalidad": "RX",
+   "region": "MIEMBRO_SUPERIOR",
+   "proyecciones": [
+    "AP",
+    "Lateral"
+   ],
+   "contraste": "sin",
+   "via_contraste": null,
+   "requiere_lateralidad": true,
+   "preparacion": null,
+   "loinc": "24689-2",
+   "loinc_nombre": "XR Upper extremity Views",
+   "loinc_por_lateralidad": {
+    "IZQ": "26116-4",
+    "DER": "26117-2",
+    "BIL": "26115-6"
+   },
+   "radlex_rpid": null,
+   "fuente": "costanera-cl-arancel-imagenologia-2023;bupa-mx-estudios-gabinete-2026;loinc-nlm-clinicaltables;loinc-tx-fhir",
+   "codigo_api_existente": "IMG_RX_MIEMBRO_SUP",
+   "nota": "Pedido genérico; preferir el estudio del segmento (hombro, húmero, codo, antebrazo, muñeca, mano, dedos)."
+  },
+  {
+   "codigo": "RX_MIEMBRO_INFERIOR",
+   "nombre": "Radiografía de miembro inferior (segmento a indicar)",
+   "modalidad": "RX",
+   "region": "MIEMBRO_INFERIOR",
+   "proyecciones": [
+    "AP",
+    "Lateral"
+   ],
+   "contraste": "sin",
+   "via_contraste": null,
+   "requiere_lateralidad": true,
+   "preparacion": null,
+   "loinc": "24686-8",
+   "loinc_nombre": "XR Lower extremity Views",
+   "loinc_por_lateralidad": {
+    "IZQ": "26113-1",
+    "DER": "26114-9",
+    "BIL": "26112-3"
+   },
+   "radlex_rpid": null,
+   "fuente": "costanera-cl-arancel-imagenologia-2023;bupa-mx-estudios-gabinete-2026;loinc-nlm-clinicaltables;loinc-tx-fhir",
+   "codigo_api_existente": "IMG_RX_MIEMBRO_INF",
+   "nota": "Pedido genérico; preferir el estudio del segmento (cadera, fémur, rodilla, pierna, tobillo, pie, dedos)."
+  },
+  {
+   "codigo": "ECO_OBSTETRICA",
+   "nombre": "Ecografía obstétrica (trimestre a indicar)",
+   "modalidad": "US",
+   "region": "UTERO",
+   "proyecciones": null,
+   "contraste": "sin",
+   "via_contraste": null,
+   "requiere_lateralidad": false,
+   "preparacion": null,
+   "loinc": "11525-3",
+   "loinc_nombre": "US for pregnancy",
+   "radlex_rpid": null,
+   "fuente": "sas-hvv-radiodiagnostico;bupa-mx-estudios-gabinete-2026;loinc-nlm-clinicaltables;loinc-tx-fhir",
+   "codigo_api_existente": "IMG_ECO_OBSTETRICA",
+   "nota": "Pedido genérico; preferir el estudio por trimestre o el morfológico."
+  },
+  {
+   "codigo": "ECO_DOPPLER_GENERICO",
+   "nombre": "Eco-Doppler color (territorio a indicar)",
+   "modalidad": "US",
+   "region": "CUERPO_ENTERO",
+   "proyecciones": null,
+   "contraste": "sin",
+   "via_contraste": null,
+   "requiere_lateralidad": false,
+   "preparacion": null,
+   "loinc": "93241-8",
+   "loinc_nombre": "US.doppler Unspecified body region",
+   "radlex_rpid": null,
+   "fuente": "sas-hvv-radiodiagnostico;costanera-cl-arancel-imagenologia-2023;loinc-nlm-clinicaltables;loinc-tx-fhir",
+   "sinonimos": [
+    "Ecografía Doppler color"
+   ],
+   "codigo_api_existente": "IMG_ECO_DOPPLER",
+   "nota": "Pedido genérico; preferir el Doppler del territorio (TSA, MMII venoso/arterial, renal, hepático, testicular)."
   }
  ]
 }

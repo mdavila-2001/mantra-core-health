@@ -67,7 +67,7 @@ Cada una tiene un responsable de confirmación; mientras no se desdiga, **se imp
 | H0.M1 | Realinear `regiones-cuerpo-3d.json` a los códigos de `imagenologia.json` | Toda región del mapeo existe en el catálogo | salida del script + conteo por tipo | EN CURSO |
 | H0.M2 | Enlazar los 27 `IMG_*` locales a estudios de `imagenologia.json` (`codigo_api_existente`) | 27/27 con enlace o `sin_equivalente` justificado | diff del JSON | TODO |
 | H0.M3 | Validador cruzado de los tres JSON (`tools/catalogs/check-study-catalogs.mjs`) | exit 0 | salida | TODO |
-| H0.M4 | Registrar pendientes clínicos (10 LOINC sin verificar, 70 perfiles `verificar_composicion`, 34 lateralidades por criterio, 31 estudios sin código) en `catalogo/PENDIENTES-CLINICOS.md` con responsable | archivo existe | — | TODO |
+| H0.M4 | Registrar pendientes clínicos en `catalogo/PENDIENTES-CLINICOS.md` con responsable (170 filas: 10 LOINC de laboratorio sin verificar, 70 perfiles `verificar_composicion`, 12 muestras sin código, 31 estudios de imagen sin código + 9 con LOINC sin verificar, 34 lateralidades por criterio, 2 LOINC desaconsejados, nombres en español) | archivo existe | generado por script | HECHO |
 
 ### H1 — Modelo (`mantra-core-health-model`)
 **CA:** Dado el parche `v4.2.80` aplicado en una base de prueba, cuando se consulta `\d clinical.service_requests` y `\d clinical.service_request_components`, entonces existen las 6 columnas, la tabla, los 3 CHECK, los índices y la política RLS; segunda aplicación = 0 cambios.

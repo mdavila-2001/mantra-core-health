@@ -12,22 +12,23 @@ Archivo de datos: `imagenologia.json` (versión `2026-10-31`). Este documento ex
 | Regiones | 156: 9 grupos raíz, 7 combinadas, 121 anatómicas y 19 vasculares |
 | Regiones que admiten lateralidad | 71 |
 | Regiones con Body Part Examined DICOM | 132 |
-| Estudios | 471 |
-| Estudios que exigen lateralidad | 119 |
-| Estudios con código LOINC (genérico o por lado) | 433 |
+| Estudios | 475 |
+| Estudios que exigen lateralidad | 121 |
+| Estudios con código LOINC (genérico o por lado) | 437 |
 | Estudios con RPID de RadLex (genérico o por lado) | 343 |
 | Estudios sin LOINC ni RPID (`verificar: true`) | 31 |
+| Códigos `IMG_*` de la API enlazados (`codigo_api_existente`) | 27 de 27 |
 
 ### Estudios por modalidad
 
 | Modalidad | DICOM | Estudios | Con LOINC | Con RPID | `verificar` |
 |---|---|---|---|---|---|
-| RX (radiografía simple) | DX (alt. CR, RG) | 90 | 87 | 76 | 1 |
+| RX (radiografía simple) | DX (alt. CR, RG) | 92 | 89 | 76 | 1 |
 | RF (contrastados / fluoroscopia) | RF | 36 | 36 | 34 | 0 |
 | MG (mamografía, tomosíntesis) | MG | 13 | 11 | 10 | 1 |
 | TC (incl. angio-TC, uro-TC, cardio-TC) | CT | 76 | 72 | 45 | 3 |
 | RM (incl. angio-RM, colangio-RM, entero-RM, cardio-RM, funcional/difusión) | MR | 74 | 66 | 51 | 6 |
-| US (ecografía, Doppler, obstétrica, ecocardiograma) | US | 84 | 74 | 55 | 10 |
+| US (ecografía, Doppler, obstétrica, ecocardiograma) | US | 86 | 76 | 55 | 10 |
 | DXA (densitometría) | BMD | 6 | 4 | 3 | 1 |
 | BDUS (densitometría por ultrasonido) | BDUS | 1 | 0 | 0 | 1 |
 | NM (gammagrafía / SPECT) | NM | 42 | 39 | 36 | 3 |
@@ -55,7 +56,7 @@ Los estudios guiados por imagen (biopsias, PAAF, drenajes, nefrostomía, TIPS, f
    - **Nombres en español.** Cada nombre está respaldado por al menos una cartera o arancel de España, Chile o México. Los identificadores de esas carteras van en `fuente`.
    - **RadLex.** Se descargó el **CSV oficial del RadLex Playbook** (994 orderables) y se comprobó que cada RPID exista. Cuando RadLex solo tiene variantes Left, Right, Bilateral o Unilateral, se publican en `radlex_rpid_por_lateralidad` y `radlex_rpid` queda en null.
    - **LOINC.** Se construyó un diccionario de 6.964 términos radiológicos LOINC desde la API de NLM Clinical Tables. Cada código se eligió por **nombre largo exacto**: por resolución automática o por elección manual entre candidatos reales. No se escribió ningún código de memoria.
-   - **Verificación LOINC.** Los 682 códigos (genéricos y por lado) se revisaron uno a uno en **tx.fhir.org (LOINC 2.83)**. Todos existen: 680 están ACTIVE y 2 están DISCOURAGED, marcados con `loinc_estado`.
+   - **Verificación LOINC.** Los 692 códigos (genéricos y por lado) se revisaron uno a uno en **tx.fhir.org (LOINC 2.83)**. Todos existen: 690 están ACTIVE y 2 están DISCOURAGED, marcados con `loinc_estado`.
    - **LOINC por lado.** `loinc_por_lateralidad` (IZQ, DER, BIL) se generó buscando el término exacto `"<región> - left|right|bilateral"` en el diccionario.
    - **Contraste.** `contraste` toma los valores `sin`, `con` o `sin_y_con`. `via_contraste` sigue el eje *Rad.Pharmaceutical.Route* del Playbook LOINC/RSNA: IV, oral, rectal, intraarticular, intratecal, IA, etc.
    - **Proyecciones.** `proyecciones` se llenó solo en RX, MG y algunas series dentales.
