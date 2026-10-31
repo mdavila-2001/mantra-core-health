@@ -1710,6 +1710,11 @@ describe('SpecialtyFormBlock', () => {
           (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'COND_PROVISIONAL',
         )
         .flush({ items: [], count: 0, limit: 50 });
+      http
+        .expectOne(
+          (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'CONDITION_PROVISIONAL',
+        )
+        .flush({ items: [], count: 0, limit: 50 });
       // Ni el diagnóstico (que nacería firme) ni la orden que depende de él.
       http.expectNone('/clinical/conditions');
       http.expectNone('/clinical/service-requests');
