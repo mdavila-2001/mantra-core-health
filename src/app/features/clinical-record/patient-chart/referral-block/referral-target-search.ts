@@ -1,4 +1,4 @@
-import { computed, inject, signal, untracked } from '@angular/core';
+import { computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of, Subject } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -15,9 +15,8 @@ import type { ReferralDestinationKind } from './referral-block.model';
 /** Una búsqueda de destinos, o `null`: olvidar la que esté en vuelo. */
 type TargetQuery = { readonly q: string; readonly kind: ReferralTargetKind } | null;
 
-/** Lo que vuelve de una búsqueda; `kind` es `null` en el reinicio. */
+/** Lo que vuelve de una búsqueda (vacío en el reinicio). */
 interface TargetQueryResult {
-  readonly kind: ReferralTargetKind | null;
   readonly items: readonly ReferralTarget[];
   readonly failure: string | null;
 }
@@ -28,8 +27,10 @@ interface TargetQueryResult {
  * Aparte del bloque porque es un estado propio —resultados, «buscando», el
  * error— con una regla que no es del formulario: **una respuesta vieja nunca
  * repuebla las opciones**. `switchMap` cancela la búsqueda anterior; un
- * `reset()` la cancela sin empezar otra (cambiar de clase de destino, olvidar
- * el elegido), y una respuesta de otra clase que la actual se descarta igual.
+ * `reset()` la cancela sin empezar otra: al cambiar de clase de destino, al
+ * olvidar el elegido y al borrar lo escrito (`queryCleared` del combobox).
+ * Como toda vía que cambia la clase pasa por `reset()`, no hace falta mirar
+ * la clase de la respuesta.
  *
  * Se crea en el contexto de inyección del bloque (un campo).
  */
@@ -56,19 +57,15 @@ export class ReferralTargetSearch {
       .pipe(
         switchMap((query) =>
           query === null
-            ? of<TargetQueryResult>({ kind: null, items: [], failure: null })
+            ? of<TargetQueryResult>({ items: [], failure: null })
             : this.referrals.searchTargets(query.q, query.kind).pipe(
-                map((items): TargetQueryResult => ({ kind: query.kind, items, failure: null })),
-                catchError((error: unknown) =>
-                  of<TargetQueryResult>({ kind: query.kind, items: [], failure: failureOf(error) }),
-                ),
+                map((items): TargetQueryResult => ({ items, failure: null })),
+                catchError((error: unknown) => of<TargetQueryResult>({ items: [], failure: failureOf(error) })),
               ),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe(({ kind, items, failure }) => {
-        // Una respuesta de otra clase de destino no es de esta búsqueda.
-        if (kind !== null && kind !== untracked(() => this.currentKind())) return;
+      .subscribe(({ items, failure }) => {
         // Quien deriva no se ofrece a sí mismo, aunque la API lo devuelva.
         const self = this.auth.practitionerProfileId();
         this.searching.set(false);

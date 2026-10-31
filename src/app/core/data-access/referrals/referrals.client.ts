@@ -45,10 +45,10 @@ type WireReferral = wire.ConNulos<
  * profesional, o la deriva a una organización médica, por un servicio
  * concreto de su catálogo.
  *
- * La derivación **no reserva nada**: con un encuentro, la API le avisa a la
- * persona en su campana —a un profesional o a una organización de la
- * plataforma; a un destino externo no— y ahí reserva con la reserva de
- * siempre. Elegir otro profesional de la misma especialidad sigue siendo
+ * La derivación **no reserva nada**: con un encuentro, la API puede avisarle
+ * a la persona en su campana —por un profesional o una organización de la
+ * plataforma, si tiene cuenta de portal; la respuesta no dice si el aviso
+ * salió— y ahí reserva con la reserva de siempre. Elegir otro profesional de la misma especialidad sigue siendo
  * posible.
  *
  * Quién puede recibir una derivación y qué servicios ofrece lo resuelve la API

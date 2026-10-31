@@ -8,6 +8,7 @@ import type { Referral } from '../../../core/data-access/referrals/referrals.typ
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, ready, stale } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { writeFailureMessage } from '../write-message';
 
 /**
  * Las derivaciones de la persona que se atiende, leídas **una vez** para dos
@@ -41,6 +42,13 @@ export class ConsultationReferrals {
   private readonly referrals = inject(ReferralsClient);
 
   readonly state = signal<ViewState<readonly Referral[]>>(loading());
+
+  /**
+   * Una relectura de la misma persona falló con la lista ya a la vista: la
+   * lista sigue como S7 (con la hora de la última buena) y esto dice qué
+   * pasó, para mostrarlo en línea. `null` mientras no haya fallo.
+   */
+  readonly refreshError = signal<string | null>(null);
 
   /** Cada pedido de lectura, con la persona que hay que leer. */
   private readonly reads = new Subject<string>();
@@ -97,18 +105,42 @@ export class ConsultationReferrals {
       this.lastRead = null;
       return of(loading());
     }
-    return defer(() =>
-      concat(
+    return defer(() => {
+      // Reintentar: mientras viaja, «Actualizando», no el fallo anterior.
+      this.refreshError.set(null);
+      return concat(
         of(this.whileReading(id)),
         this.referrals.listByPatient(id).pipe(
           map((rows) => {
             this.lastRead = { profileId: id, at: new Date() };
             return ready(rows) as ViewState<readonly Referral[]>;
           }),
-          catchError((error: unknown) => of(errorToViewState<readonly Referral[]>(error))),
+          catchError((error: unknown) => of(this.afterFailure(id, error))),
         ),
-      ),
+      );
+    });
+  }
+
+  /**
+   * Con datos de esta persona, el fallo no los borra (ni la cifra de la
+   * casilla): quedan como S7 y el fallo va aparte, en `refreshError`. Sin
+   * datos, el fallo es el estado.
+   */
+  private afterFailure(id: string, error: unknown): ViewState<readonly Referral[]> {
+    const failure = errorToViewState<readonly Referral[]>(error);
+    const previous = dataOf(untracked(() => this.state()));
+    if (previous === null || this.lastRead?.profileId !== id) {
+      this.refreshError.set(null);
+      return failure;
+    }
+    this.refreshError.set(
+      writeFailureMessage(errorToViewState<null>(error), {
+        accion: 'actualizar la lista',
+        yaNoExiste: 'No pudimos actualizar la lista.',
+      }) ??
+        'No pudimos actualizar la lista.',
     );
+    return stale(previous, this.lastRead.at);
   }
 
   /** Lo que se ve mientras viaja la lectura: lo anterior como S7, o S2. */

@@ -168,7 +168,7 @@
               } @else if (casilla.lecturaDeCantidad === 'failed') {
                 <!-- Sin lectura no hay cifra; un cero sería falso. -->
                 <span
-                  class="consulta__casilla-cantidad consulta__casilla-cantidad--pendiente"
+                  class="consulta__casilla-cantidad consulta__casilla-cantidad--fallida"
                   [attr.data-testid]="casilla.testId + '-sin-cifra'"
                 >
                   No se pudo contar
@@ -284,6 +284,7 @@
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
           [referrals]="referrals.state()"
+          [refreshError]="referrals.refreshError()"
           [offersOpenEncounter]="true"
           (cambio)="referrals.reload()"
           (retry)="referrals.reload()"
