@@ -21,6 +21,10 @@ import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
+import {
+  prescriptionStandingOf,
+  type PrescriptionStanding,
+} from '../../medical-record/where-to-buy/orderable-prescription';
 import { PRESCRIPTION_SHARE_TESTIDS } from '../../../prescription-share/prescription-share.testids';
 import { PHARMACY_TESTIDS } from '../pharmacy.testids';
 import { ShareDialog } from './share-dialog/share-dialog';
@@ -42,6 +46,33 @@ interface MedicamentoVisible {
   readonly indicacion: string;
 }
 
+/** Lo que dice la insignia de cada estado, y su tono. */
+export const STANDING_BADGE: Readonly<
+  Record<
+    PrescriptionStanding,
+    { readonly label: string; readonly variant: 'success' | 'warning' | 'secondary' }
+  >
+> = {
+  orderable: { label: 'Vigente', variant: 'success' },
+  expired: { label: 'Vencida', variant: 'warning' },
+  draft: { label: 'Sin emitir', variant: 'warning' },
+  invalidated: { label: 'Anulada', variant: 'secondary' },
+  replaced: { label: 'Reemplazada', variant: 'secondary' },
+  completed: { label: 'Completada', variant: 'secondary' },
+  unknown: { label: 'No se puede pedir', variant: 'secondary' },
+};
+
+/** Por qué una receta que no está vigente no se puede pedir ni compartir. */
+export const NOT_ORDERABLE_REASON: Readonly<Record<PrescriptionStanding, string>> = {
+  orderable: '',
+  expired: 'Esta receta venció. Pida a su médico una nueva para comprarla.',
+  draft: 'Su médico todavía no la emitió: cuando lo haga, podrá comprarla.',
+  invalidated: 'Su médico anuló esta receta: ya no sirve para comprar.',
+  replaced: 'Esta receta se reemplazó por otra: compre con la nueva.',
+  completed: 'Esta receta ya se completó.',
+  unknown: 'No pudimos confirmar el estado de esta receta. Intente de nuevo más tarde.',
+};
+
 /** Una receta, agrupada por la consulta en la que se prescribió. */
 interface RecetaVisible {
   /** El `medicationRequests.id` con el que se abre «Dónde comprar». */
@@ -49,7 +80,8 @@ interface RecetaVisible {
   /** La consulta de la receta; `null` si es un fármaco suelto (FAR-01, S-2). */
   readonly encounterId: string | null;
   readonly cuando: Date;
-  readonly emitida: boolean;
+  /** Si se puede pedir hoy y, si no, por qué (la misma regla que la API). */
+  readonly estado: PrescriptionStanding;
   readonly medicamentos: readonly MedicamentoVisible[];
 }
 
@@ -75,10 +107,10 @@ interface RecetaVisible {
  * ## Qué significa «vigente» acá
  *
  * El mismo criterio que la historia clínica (`medical-record.ts`): se lista lo
- * que el resumen devuelve, sin filtrar por `validTo`. Decidir por cuenta propia
- * que una receta venció sería una regla clínica que el modelo no declara
- * (ambigüedad Q-J4, registrada en el plan). Lo que sí se dice es si está
- * **emitida**: una receta sin emitir todavía no se puede ir a comprar.
+ * que el resumen devuelve, sin filtrar por `validTo`. Cada receta dice su
+ * estado con la misma regla con que la API acepta un pedido o un enlace
+ * (`prescriptionStandingOf`: emitida y sin vencer). Sólo esas ofrecen
+ * «Buscar dónde comprarla» y «Compartir»; las demás dicen por qué no.
  *
  * ## Los nombres vienen de terminología, nunca el uuid
  *
@@ -88,7 +120,7 @@ interface RecetaVisible {
  *
  * ## Compartir (FAR-01)
  *
- * Cada receta emitida ofrece «Compartir» (`ShareDialog`), que crea el enlace de
+ * Cada receta vigente ofrece «Compartir» (`ShareDialog`), que crea el enlace de
  * la consulta entera o del fármaco suelto (`shareTargetOf`). La pestaña
  * «Enlaces compartidos» (`ShareLinks`) los lista y los revoca; `?share=` la
  * abre con el enlace marcado, que es a donde llega el dueño desde `/rx/:token`.
@@ -117,6 +149,7 @@ export class PrescriptionsPage {
   private readonly auth = inject(AuthService);
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
+  private readonly now: () => Date = () => new Date();
 
   private readonly perfil = this.auth.patientProfileId();
 
@@ -140,9 +173,7 @@ export class PrescriptionsPage {
   protected readonly estado = this.recetas.asReadonly();
 
   /** Las filas ya listas: una plantilla no estrecha la unión por `status`. */
-  protected readonly filas = computed<readonly RecetaVisible[]>(
-    () => dataOf(this.recetas()) ?? [],
-  );
+  protected readonly filas = computed<readonly RecetaVisible[]>(() => dataOf(this.recetas()) ?? []);
 
   constructor() {
     if (this.perfil === null) {
@@ -169,16 +200,20 @@ export class PrescriptionsPage {
             filas: of(resumen.medicationRequests),
             // Sin etiquetas la pantalla no puede nombrar nada, pero perderlas
             // tampoco justifica perder la lista: los renglones salen como
-            // «Sin registrar».
+            // «Sin registrar». Se piden también las del estado: su código es
+            // lo que dice si la receta se puede pedir.
             etiquetas: this.terminology
               .readConceptLabels(
-                resumen.medicationRequests.map((fila) => fila.medicationConceptId),
+                resumen.medicationRequests.flatMap((fila) => [
+                  fila.medicationConceptId,
+                  fila.statusConceptId,
+                ]),
               )
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
           }),
         ),
         map((carga) => {
-          const recetas = agrupar(carga.filas, carga.etiquetas);
+          const recetas = agrupar(carga.filas, carga.etiquetas, this.now());
           return recetas.length === 0
             ? empty(
                 { label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE },
@@ -202,6 +237,9 @@ export class PrescriptionsPage {
   protected readonly prescriptionDates = computed<ReadonlyMap<string, Date>>(
     () => new Map(this.filas().map((receta) => [shareTargetId(receta), receta.cuando])),
   );
+
+  protected readonly insignia = STANDING_BADGE;
+  protected readonly motivoSinCompra = NOT_ORDERABLE_REASON;
 
   protected openShare(receta: RecetaVisible): void {
     this.sharing.set(shareTargetOf(receta));
@@ -233,6 +271,7 @@ function shareTargetId(receta: RecetaVisible): string {
 export function agrupar(
   filas: readonly MedicationRequest[],
   etiquetas: ConceptLabels,
+  ahora: Date,
 ): readonly RecetaVisible[] {
   const porConsulta = new Map<string, MedicationRequest[]>();
   for (const fila of filas) {
@@ -248,13 +287,14 @@ export function agrupar(
   }
 
   return [...porConsulta.values()]
-    .map((grupo) => recetaDe(grupo, etiquetas))
+    .map((grupo) => recetaDe(grupo, etiquetas, ahora))
     .sort(masRecienteAntes);
 }
 
 function recetaDe(
   grupo: readonly MedicationRequest[],
   etiquetas: ConceptLabels,
+  ahora: Date,
 ): RecetaVisible {
   // El id de la receta que abre «Dónde comprar» es el de una fila emitida si
   // hay alguna: es la que efectivamente se puede ir a comprar.
@@ -263,7 +303,7 @@ function recetaDe(
     requestId: representante.id,
     encounterId: representante.encounterId ?? null,
     cuando: representante.createdAt,
-    emitida: grupo.some((fila) => fila.issuedAt !== undefined),
+    estado: prescriptionStandingOf(grupo, etiquetas, ahora),
     medicamentos: grupo.map((fila) => ({
       conceptId: fila.medicationConceptId,
       nombre: etiquetas.get(fila.medicationConceptId)?.display ?? SIN_DATO,
