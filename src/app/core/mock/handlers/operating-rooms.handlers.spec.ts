@@ -96,11 +96,11 @@ describe('handlers de quirófanos (F4)', () => {
 
     it('la agenda trae la sala resuelta y la ventana reservada; otro tenant no ve los casos', () => {
       const page = call('GET', '/procedure-cases').body as { items: (SurgicalCasePage['items'][number] & { reservedStartAt: string })[] };
-      const conSala = page.items.find((c) => c.operatingRoomId === QUIROFANO_1)!;
-      expect(conSala.operatingRoom?.code).toBe('QX-01');
-      expect(Date.parse(conSala.reservedStartAt)).toBe(Date.parse(String(conSala.scheduledStartAt)) - 20 * 60_000);
+      const withRoom = page.items.find((c) => c.operatingRoomId === QUIROFANO_1)!;
+      expect(withRoom.operatingRoom?.code).toBe('QX-01');
+      expect(Date.parse(withRoom.reservedStartAt)).toBe(Date.parse(String(withRoom.scheduledStartAt)) - 20 * 60_000);
       expect((call('GET', '/procedure-cases', { tenant: TENANT_CLINICA }).body as { total: number }).total).toBe(0);
-      expect(call('GET', `/procedure-cases/${conSala.id}`, { tenant: TENANT_CLINICA }).status).toBe(404);
+      expect(call('GET', `/procedure-cases/${withRoom.id}`, { tenant: TENANT_CLINICA }).status).toBe(404);
     });
   });
 
