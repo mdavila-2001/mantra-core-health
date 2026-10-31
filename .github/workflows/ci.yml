@@ -153,6 +153,23 @@ jobs:
       - name: Clientes del portal contra el contrato
         run: yarn check:admin-portal-contract
 
+      # O2-5: la maqueta emula `forbidNonWhitelisted` con un catálogo generado
+      # del `openapi.json` de la API (`src/app/core/mock/contract/
+      # api-contract.generated.ts`). Si quedó viejo respecto de `dev` de la API,
+      # la maqueta acepta cuerpos que la API real rechaza con 400: se falla acá.
+      # Se lee la punta de `dev` y no el snapshot fijo de arriba porque la
+      # deriva contra la API vigente es justamente lo que se quiere ver.
+      - name: Contrato de escritura de la API (dev)
+        uses: actions/checkout@v4
+        with:
+          repository: mdavila-2001/mantra-core-health-api
+          ref: dev
+          path: api-contract
+          sparse-checkout: openapi
+          fetch-depth: 1
+
+      - name: Catálogo de la maqueta contra el contrato
+        run: node scripts/gen-mock-contract.mjs --check api-contract/openapi/openapi.json
 
       # Un formulario de este sistema se sirve de a una página, con un tope de
       # cuatro campos. La regla vive en `MAX_CAMPOS_POR_PAGINA` y la hace cumplir
