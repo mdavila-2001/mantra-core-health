@@ -10,6 +10,21 @@
     />
   }
 
+  @if (collapsible() && selectFilters().length > 0) {
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      type="button"
+      class="filter-bar__toggle"
+      [attr.aria-expanded]="expanded()"
+      data-testid="filter-bar-toggle"
+      (clicked)="toggleExpanded()"
+    >
+      {{ expanded() ? 'Ocultar filtros' : 'Filtros' }}{{ activeFilters().length > 0 ? ' (' + activeFilters().length + ')' : '' }}
+    </button>
+  }
+
   @for (filter of selectFilters(); track filter.key) {
     <div class="filter-bar__filter">
       @if (isAvailable(filter)) {
