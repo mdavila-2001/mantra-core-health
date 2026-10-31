@@ -301,14 +301,28 @@ export function submissionMessage(state: ViewState<null>, serverReason: string |
 }
 
 /**
- * Dónde ve la persona el motivo. El aviso a un profesional lo lleva; el de
- * una organización no (la API lo deja fuera) y a un externo no hay aviso: en
- * esos dos casos lo ve en su lista de derivaciones.
+ * Dónde ve la persona el motivo. El aviso a un profesional lo lleva (si sale:
+ * la API no lo garantiza); el de una organización no, y a un externo no hay
+ * aviso.
  */
 export function reasonHintFor(kind: ReferralDestinationKind): string {
-  return kind === 'PRACTITIONER'
-    ? 'Opcional. Se lo mostramos a la persona en su aviso.'
-    : 'Opcional. La persona lo ve en su lista de derivaciones, no en el aviso.';
+  switch (kind) {
+    case 'PRACTITIONER':
+      return 'Opcional. Puede aparecer en el aviso a la persona.';
+    case 'ORGANIZATION':
+      return 'Opcional. La persona lo ve en su lista de derivaciones.';
+    default:
+      return 'Opcional. Queda en el registro; entréguele la derivación a la persona.';
+  }
+}
+
+/**
+ * El mensaje y, aparte, el código de soporte del final («… (req-123)»), para
+ * pintarlo sin cortes: es lo que se dicta o se copia al pedir ayuda.
+ */
+export function splitSupportCode(message: string): { readonly text: string; readonly code: string | null } {
+  const match = /^(.*\S)\s+\(([^()\s]+)\)$/s.exec(message);
+  return match === null ? { text: message, code: null } : { text: match[1]!, code: match[2]! };
 }
 
 /** Los rótulos de las dos pestañas; tras intentar derivar, cuál está lista y a cuál le falta algo. */

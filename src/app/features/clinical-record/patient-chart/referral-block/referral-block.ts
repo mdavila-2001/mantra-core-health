@@ -17,8 +17,6 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
-import type { BranchListItem } from '../../../../core/data-access/directory/directory.types';
 import {
   REFERRAL_TARGET_MIN_QUERY,
   ReferralsClient,
@@ -44,7 +42,6 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Divider } from '../../../../shared/components/atoms/divider/divider';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
-import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -69,6 +66,7 @@ import {
   referralTabLabels,
   REFERRAL_TYPE_OPTIONS,
   SERVICE_EXAMPLE,
+  splitSupportCode,
   submissionMessage,
   TARGET_KIND_OPTIONS,
   toReferralRow,
@@ -78,6 +76,7 @@ import {
 } from './referral-block.model';
 import { ReferralDetail } from './referral-detail';
 import { referralDetailState } from './referral-detail-state';
+import { ReferralTargetBranches } from './referral-target-branches';
 import { ReferralTargetSearch } from './referral-target-search';
 import { ReferralTargetServices } from './referral-target-services';
 import { ReferralTransferForm } from './referral-transfer-form';
@@ -100,7 +99,8 @@ const REASON_MAX_LENGTH = 500;
  * Profesional u organización → buscar por nombre en la API → (opcional) uno
  * de sus servicios, con el arancel a la vista → tipo (Tratamiento por defecto)
  * → motivo y vigencia. Con un profesional o una organización de la plataforma
- * la API le avisa a la persona en su campana; a un destino externo no. **No
+ * la API puede avisarle a la persona (si tiene cuenta de portal; la respuesta
+ * no dice si salió, y los textos no lo prometen); a un externo no. **No
  * reserva nada**.
  *
  * ## Sin encuentro no hay derivación con aviso
@@ -136,8 +136,8 @@ const REASON_MAX_LENGTH = 500;
  * (`app-referral-transfer-form`). El borrador del traslado vive acá porque
  * `app-tab` no dibuja el panel cerrado. Lo traducible vive aparte
  * (`referral-block.model.ts`, `referral-transfer.model.ts`), igual que la
- * búsqueda de destinos (`referral-target-search.ts`) y los servicios del
- * destino (`referral-target-services.ts`). El resultado del envío va junto
+ * búsqueda de destinos (`referral-target-search.ts`), los servicios y las
+ * sedes del destino (`referral-target-services.ts`, `-branches.ts`). El resultado del envío va junto
  * al botón, con el foco: a 390 px un aviso arriba quedaba fuera de vista.
  */
 @Component({
@@ -172,7 +172,6 @@ const REASON_MAX_LENGTH = 500;
 export class ReferralBlock {
   private readonly referralsClient = inject(ReferralsClient);
   private readonly terminology = inject(TerminologyClient);
-  private readonly directory = inject(DirectoryClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -198,6 +197,9 @@ export class ReferralBlock {
 
   /** La persona pidió ir a abrir el encuentro. */
   readonly openEncounter = output<void>();
+
+  /** Falló una relectura con la lista ya a la vista (`ConsultationReferrals.refreshError`). */
+  readonly refreshError = input<string | null>(null);
 
   /** La lista falló y la persona pidió reintentar. */
   readonly retry = output<void>();
@@ -240,14 +242,11 @@ export class ReferralBlock {
 
   /* -- La sede (organización) o el destino externo ----------------------- */
 
-  /** Las sedes de la organización elegida; vacía si no tiene o no se pudieron leer. */
-  private readonly branches = signal<readonly BranchListItem[]>([]);
-  protected readonly selectedBranch = signal<string | null>(null);
-  protected readonly branchOptions = computed<readonly SelectOption<string | null>[]>(() => [
-    { value: null, label: 'Cualquier sede (la organización decide)' },
-    ...this.branches().map((b) => ({ value: b.id, label: b.name })),
-  ]);
-  protected readonly hasBranches = computed(() => this.branches().length > 0);
+  /** Las sedes de la organización elegida (sólo si pertenece a ella). */
+  private readonly targetBranches = new ReferralTargetBranches(() => this.target());
+  protected readonly selectedBranch = this.targetBranches.selected;
+  protected readonly branchOptions = this.targetBranches.options;
+  protected readonly hasBranches = this.targetBranches.any;
 
   protected readonly externalName = signal<string | number | null>('');
   protected readonly externalContact = signal<string | number | null>('');
@@ -265,6 +264,7 @@ export class ReferralBlock {
   protected readonly noServices = this.targetServices.none;
   protected readonly serviceOptions = this.targetServices.options;
   protected readonly serviceHint = this.targetServices.hint;
+  protected readonly serviceFailure = this.targetServices.failure;
 
   /* -- El resto del formulario -------------------------------------------- */
 
@@ -359,9 +359,10 @@ export class ReferralBlock {
         });
   });
 
-  protected readonly submissionError = computed(() =>
-    submissionMessage(this.submission(), this.serverReason()),
-  );
+  protected readonly submissionError = computed(() => {
+    const message = submissionMessage(this.submission(), this.serverReason());
+    return message === null ? null : splitSupportCode(message);
+  });
 
   /** El `reason` del último 400/404/422 de la API, ya en palabras. */
   private readonly serverReason = signal<string | null>(null);
@@ -454,6 +455,11 @@ export class ReferralBlock {
     this.targetSearch.search(text);
   }
 
+  /** Se borró lo escrito: la búsqueda en vuelo ya no es de nadie. */
+  protected clearSearch(): void {
+    this.targetSearch.reset();
+  }
+
   protected choose(option: ReferenceOption | null): void {
     this.issued.set(null);
     this.duplicate.set(false);
@@ -464,20 +470,7 @@ export class ReferralBlock {
     }
     this.target.set(target);
     this.loadServices();
-    this.loadBranches(target);
-  }
-
-  /** Las sedes de una organización. Si no se pueden leer, se deriva a «cualquier sede». */
-  private loadBranches(target: ReferralTarget): void {
-    this.selectedBranch.set(null);
-    this.branches.set([]);
-    if (target.kind !== 'ORGANIZATION') return;
-    this.directory
-      .listBranches(target.id)
-      .pipe(catchError(() => of({ items: [] as readonly BranchListItem[], count: 0 })))
-      .subscribe((list) => {
-        if (this.target()?.id === target.id) this.branches.set(list.items);
-      });
+    this.targetBranches.load(target);
   }
 
   protected loadServices(): void {
@@ -575,8 +568,7 @@ export class ReferralBlock {
     this.targetSearch.reset();
     this.target.set(null);
     this.targetServices.reset();
-    this.branches.set([]);
-    this.selectedBranch.set(null);
+    this.targetBranches.reset();
   }
 
   private reset(): void {

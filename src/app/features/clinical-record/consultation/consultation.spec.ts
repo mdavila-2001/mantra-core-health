@@ -190,11 +190,12 @@ describe('Consultation', () => {
     expect(interno<() => string>('tituloDelModal')()).toBe(
       'Derivar a otro profesional u organización',
     );
-    // El aviso vale para profesionales y organizaciones de la plataforma; a un
-    // destino externo no se le avisa, y la bajada no lo promete.
+    // La API no dice si el aviso salió (cuenta de portal, destino activo): la
+    // bajada no lo promete.
     expect(interno<() => string>('descripcionDelModal')()).toContain(
-      'Si el destino está en la plataforma, le avisamos en su campana',
+      'Si tiene cuenta en el portal, puede recibir un aviso',
     );
+    expect(interno<() => string>('descripcionDelModal')()).not.toContain('le avisamos');
     expect(interno<() => string>('descripcionDelModal')()).toContain('organización médica');
     expect(harness.routeNativeElement!.querySelector('app-referral-block')).not.toBeNull();
     // El bloque recibe la misma lectura que cuenta la casilla.
@@ -721,9 +722,12 @@ describe('Consultation', () => {
     await flushChartReadsOnly();
     harness.detectChanges();
     expect(casillaDeDerivar().lecturaDeCantidad).toBe('failed');
-    expect(
-      harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-derivacion-sin-cifra"]'),
-    ).not.toBeNull();
+    const sinCifra = harness.routeNativeElement!.querySelector(
+      '[data-testid="consulta-casilla-derivacion-sin-cifra"]',
+    );
+    expect(sinCifra).not.toBeNull();
+    // Con tono de aviso, no el gris de «Contando…».
+    expect(sinCifra?.classList.contains('consulta__casilla-cantidad--fallida')).toBe(true);
   });
 
   it('cerrar el modal con la derivación en vuelo igual relee la lista y la cifra', async () => {

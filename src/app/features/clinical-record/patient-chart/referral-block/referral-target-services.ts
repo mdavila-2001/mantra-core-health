@@ -2,6 +2,7 @@ import { computed, inject, signal } from '@angular/core';
 
 import { ReferralsClient } from '../../../../core/data-access/referrals/referrals.client';
 import type { ReferralTarget, ReferralTargetService } from '../../../../core/data-access/referrals/referrals.types';
+import { referralErrorDetail } from '../../../../core/data-access/referrals/referrals.errors';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -22,6 +23,13 @@ export class ReferralTargetServices {
 
   readonly state = signal<ViewState<readonly ReferralTargetService[]>>(loading());
   readonly selected = signal<string | null>(null);
+
+  /**
+   * Un fallo con sub-código de la API ya en palabras (404
+   * `REFERRAL_TARGET_NOT_FOUND`: el destino ya no está). Se dice en línea con
+   * su salida, no con el S6 genérico. `null` sin fallo o sin sub-código.
+   */
+  readonly failure = signal<string | null>(null);
 
   /** El destino no publica servicios. */
   readonly none = computed(() => {
@@ -48,6 +56,7 @@ export class ReferralTargetServices {
     const target = this.currentTarget();
     if (target === null) return;
     this.selected.set(null);
+    this.failure.set(null);
     this.state.set(loading());
     this.referrals
       .listTargetServices(
@@ -58,13 +67,16 @@ export class ReferralTargetServices {
           if (this.currentTarget()?.id === target.id) this.state.set(ready(items));
         },
         error: (error: unknown) => {
-          if (this.currentTarget()?.id === target.id) this.state.set(errorToViewState(error));
+          if (this.currentTarget()?.id !== target.id) return;
+          this.failure.set(referralErrorDetail(error)?.message ?? null);
+          this.state.set(errorToViewState(error));
         },
       });
   }
 
   reset(): void {
     this.selected.set(null);
+    this.failure.set(null);
     this.state.set(loading());
   }
 }

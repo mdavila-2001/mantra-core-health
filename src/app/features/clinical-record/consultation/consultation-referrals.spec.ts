@@ -83,6 +83,27 @@ describe('ConsultationReferrals', () => {
     expect(referrals.count()).toBe(2);
   });
 
+  it('si falla la relectura de la misma persona, la lista sigue (S7) con su cifra y el fallo va aparte', () => {
+    http.expectOne(forPatient('p-1')).flush([ROW]);
+    referrals.reload();
+    http
+      .expectOne(forPatient('p-1'))
+      .flush({ code: 'INTERNAL', message: 'Falló.', correlationId: 'req-9' }, { status: 500, statusText: 'Server Error' });
+
+    const state = referrals.state();
+    expect(state.status).toBe('stale');
+    expect(referrals.count()).toBe(1);
+    expect(referrals.missingCount()).toBeNull();
+    expect(referrals.refreshError()).toContain('req-9');
+
+    // Reintentar: mientras viaja, sin el fallo anterior; al volver bien, limpio.
+    referrals.reload();
+    expect(referrals.refreshError()).toBeNull();
+    http.expectOne(forPatient('p-1')).flush([ROW]);
+    expect(referrals.state().status).toBe('ready');
+    expect(referrals.refreshError()).toBeNull();
+  });
+
   it('un fallo de la lectura es su estado, sin inventar un cero', () => {
     http
       .expectOne(forPatient('p-1'))
