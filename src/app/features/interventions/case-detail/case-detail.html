@@ -39,19 +39,13 @@
 
         <app-tab label="Eventos de sala">
           <div class="case-detail__panel">
-            <app-case-room-events [caseId]="d.case.id" [events]="d.roomEvents" [checklist]="d.case.checklist ?? null" [canRecord]="canRecord()" (changed)="reload()" />
+            <app-case-room-events [caseId]="d.case.id" [events]="d.roomEvents" [checklist]="d.case.checklist ?? null" [canRecord]="canRecord()" [turnover]="d.turnoverCleaning" (changed)="reload()" />
           </div>
         </app-tab>
 
         <app-tab label="Cargos">
           <div class="case-detail__panel">
-            <app-empty-state
-              variant="empty"
-              title="El cargo de quirófano todavía no se generó"
-              description="Se devenga solo al cerrar el caso con la fase «Salida» completa: minutos de salida menos entrada a sala, por la tarifa de quirófano vigente al inicio."
-            >
-              <a empty-actions app-button variant="ghost" size="sm" routerLink="/administration/services-catalog" [queryParams]="{ tab: 'space-tariffs' }">Ver las tarifas de espacios</a>
-            </app-empty-state>
+            <app-case-charges [caseId]="d.case.id" [encounterId]="d.case.encounterId ?? null" />
           </div>
         </app-tab>
       </app-tabs>

@@ -353,3 +353,28 @@ export function blockView(b: SimulatedBlock): OrBlock {
 blocks.persistirEn('mock.periop.blocks');
 roomEvents.persistirEn('mock.periop.roomEvents');
 checklists.persistirEn('mock.periop.checklists');
+
+/* ---- recambio: la orden de limpieza OR_TURNOVER de cada salida de sala -------- */
+
+export type TurnoverStatus = 'CLN_PENDING' | 'CLN_IN_PROGRESS' | 'CLN_DONE' | 'CLN_INSPECTED';
+
+export interface SimulatedTurnover {
+  readonly id: string;
+  readonly caseId: string;
+  readonly operatingRoomId: string;
+  readonly status: TurnoverStatus;
+  readonly rowVersion: number;
+}
+
+/**
+ * La orden de limpieza de quirófano que F2 abre con `markDirtyFromSource
+ * (OR_TURNOVER)` al registrar la salida de sala. La maqueta de esta franja
+ * sólo lleva las de quirófano; la cola general de limpieza es de F2.
+ */
+export const turnovers = new Coleccion<SimulatedTurnover>([]);
+
+export function turnoverOfCase(caseId: string): SimulatedTurnover | undefined {
+  return turnovers.todos().find((t) => t.caseId === caseId);
+}
+
+turnovers.persistirEn('mock.periop.turnovers');

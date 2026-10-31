@@ -16,7 +16,7 @@ import {
 import type { ChecklistPhaseSubmission, ScheduleCaseRequest } from '../../data-access/procedures/procedures.types';
 import { SPECIALTY } from '../fixtures/concepts';
 import type { MockRequest, MockRouter } from '../mock-router';
-import { cuerpo, nuevoId } from '../mock-store';
+import { cuerpo, nuevoId, uuid } from '../mock-store';
 import {
   blocks,
   CHECKLIST_ITEMS,
@@ -36,8 +36,14 @@ import {
   roomOf,
   tenantOf,
   windowOfCase,
+  failure,
+  turnoverOfCase,
+  turnovers,
   type SimulatedChecklist,
 } from './operating-rooms.state';
+import { createOrTimeCharge } from './space-billing.handlers';
+import { SITIOS_INFRA } from '../fixtures/infraestructura';
+import { PATIENTS } from '../fixtures/people';
 import { CASE_STATUS, MEMBER_STATUS, periopCases, TEAM_ROLE, type SimulatedCase } from './procedures.handlers';
 
 /* ============================================================================
@@ -255,10 +261,75 @@ function recordRoomEvent(request: MockRequest) {
   }
   const created = roomEvents.agregar({ id: nuevoId('room-event'), caseId: c.id, eventCode: code, occurredAt: new Date(occurredAt).toISOString(), recordedAt: new Date().toISOString() });
   if (code === 'PATIENT_IN_ROOM') periopCases.actualizar(c.id, { statusConceptId: CASE_STATUS.EN_CURSO });
+  if (code === 'PATIENT_OUT_OF_ROOM') closeRoom(c, created.occurredAt);
   return { status: 201, body: { utilizationEventId: created.id, milestoneId: nuevoId('milestone') } };
 }
 
+/* ---- salida de sala: recambio (F2) y cierre con cargo de quirófano (F5e) ------- */
+
+/**
+ * Lo que pasa al salir de sala: la sala queda sucia con una orden OR_TURNOVER
+ * (F2, `markDirtyFromSource`) y, con la Salida OMS hecha, el caso se cierra y
+ * se devenga el uso de quirófano por tiempo.
+ *
+ * Desvío de la maqueta: la API cierra el caso al firmar el informe
+ * operatorio (`signReport`); la web no tiene firma de informe todavía, así que
+ * la maqueta cierra al registrar la salida de sala con la Salida OMS completa.
+ */
+function closeRoom(c: SimulatedCase, outAt: string): void {
+  if (turnoverOfCase(c.id) === undefined) {
+    turnovers.agregar({ id: nuevoId('cleaning-order'), caseId: c.id, operatingRoomId: c.operatingRoomId, status: 'CLN_PENDING', rowVersion: 1 });
+  }
+  if (checklistOfCase(c.id)?.completedAt.SIGN_OUT == null) return;
+  const inRoom = eventsOfCase(c.id).find((e) => e.eventCode === 'PATIENT_IN_ROOM');
+  const encounterId = c.encounterId ?? uuid(`encounter-surgical-${c.id}`);
+  periopCases.actualizar(c.id, { statusConceptId: CASE_STATUS.COMPLETADO, encounterId });
+  const room = roomOf(c.operatingRoomId);
+  const practiceId = SITIOS_INFRA.find((s) => s.id === room?.siteId)?.practiceId;
+  if (inRoom === undefined || practiceId === undefined) return;
+  createOrTimeCharge({
+    caseId: c.id,
+    encounterId,
+    patientName: PATIENTS.find((p) => p.id === c.patientProfileId)?.displayName ?? 'Paciente',
+    practiceId,
+    operatingRoomId: c.operatingRoomId,
+    startedAt: inRoom.occurredAt,
+    minutes: Math.max(1, Math.round((Date.parse(outAt) - Date.parse(inRoom.occurredAt)) / 60_000)),
+  });
+}
+
+const TURNOVER_STEPS = {
+  start: { from: 'CLN_PENDING', to: 'CLN_IN_PROGRESS', event: 'CLEANUP_START' },
+  finish: { from: 'CLN_IN_PROGRESS', to: 'CLN_DONE', event: 'CLEANUP_END' },
+  inspect: { from: 'CLN_DONE', to: 'CLN_INSPECTED', event: 'ROOM_READY' },
+} as const;
+
+/** `POST /cleaning-orders/:id/{start|finish|inspect}` para las órdenes de recambio de quirófano. */
+function turnoverStep(request: MockRequest, step: keyof typeof TURNOVER_STEPS) {
+  const t = turnovers.get(request.params['id']!);
+  const room = roomOf(t?.operatingRoomId);
+  const tenant = tenantOf(request);
+  if (t === undefined || room === undefined || (tenant !== null && tenant !== room.tenantId)) return notFoundReply();
+  if (!hasRole(request, ROOM_ROLES)) return forbiddenReply('Su rol no opera la limpieza del quirófano.', ROOM_ROLES);
+  const sent = request.headers.get('If-Match');
+  if (sent !== null && Number(sent.replace(/"/g, '')) !== t.rowVersion) {
+    return failure(412, 'CONCURRENCY_CONFLICT', 'ROW_VERSION_MISMATCH', 'Otra persona movió la orden de limpieza. Recargue.', { currentRowVersion: t.rowVersion });
+  }
+  const rule = TURNOVER_STEPS[step];
+  if (t.status !== rule.from) return conflictReply('CLEANING_ORDER_INVALID_TRANSITION', 'La orden de limpieza no está en el paso que corresponde.', { from: t.status, to: rule.to });
+  if (step === 'inspect' && (request.body as { result?: string } | null)?.result !== 'PASS') {
+    return preconditionReply('INSPECTION_REASON_REQUIRED', 'Una inspección rechazada exige el motivo.');
+  }
+  const updated = turnovers.actualizar(t.id, { status: rule.to, rowVersion: t.rowVersion + 1 })!;
+  const now = new Date().toISOString();
+  roomEvents.agregar({ id: nuevoId('room-event'), caseId: t.caseId, eventCode: rule.event, occurredAt: now, recordedAt: now });
+  return { id: updated.id, status: updated.status, rowVersion: updated.rowVersion };
+}
+
 export function registerCaseFlow(router: MockRouter): void {
+  router.post('/cleaning-orders/:id/start', (request) => turnoverStep(request, 'start'));
+  router.post('/cleaning-orders/:id/finish', (request) => turnoverStep(request, 'finish'));
+  router.post('/cleaning-orders/:id/inspect', (request) => turnoverStep(request, 'inspect'));
   router.post('/procedure-cases', scheduleCase);
   router.post('/procedure-cases/:id/safety-checklists', createChecklist);
   router.get('/procedure-cases/:id/safety-checklists/:checklistId', (request) => {

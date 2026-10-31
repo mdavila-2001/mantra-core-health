@@ -28,6 +28,17 @@
   <app-alert tone="info" title="Sólo lectura">Los tiempos de sala los registra enfermería quirúrgica o el equipo del caso.</app-alert>
 }
 
+<!-- Recambio: la orden de limpieza que abrió la salida de sala (F2). -->
+@if (turnover(); as t) {
+  <section class="room-events__turnover" data-testid="room-events-turnover" aria-label="Recambio de la sala">
+    <h3 class="room-events__subtitle">Recambio de la sala</h3>
+    <p class="room-events__muted" data-testid="room-events-turnover-status">{{ turnoverLabel() }}</p>
+    @if (canRecord() && turnoverNext(); as next) {
+      <button app-button size="sm" variant="outline" [disabled]="sending() !== null" (clicked)="advanceTurnover()" data-testid="room-events-turnover-next">{{ next.label }}</button>
+    }
+  </section>
+}
+
 @if (timeline().length === 0) {
   <p class="room-events__muted" data-testid="room-events-empty">Todavía no se registró ningún tiempo de sala.</p>
 } @else {
