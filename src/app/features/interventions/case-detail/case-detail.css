@@ -1,0 +1,22 @@
+:host {
+  display: block;
+}
+
+/* Regla 6: centrada y a lo ancho del área de contenido. */
+.case-detail {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.case-detail__panel {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+.case-detail__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

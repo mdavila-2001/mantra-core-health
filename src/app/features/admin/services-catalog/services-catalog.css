@@ -20,3 +20,10 @@
 .catalogo__precio {
   font-variant-numeric: tabular-nums;
 }
+
+/* F5e: la tarjeta con pestañas, centrada y a lo ancho (regla 6). */
+.catalogo-tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}

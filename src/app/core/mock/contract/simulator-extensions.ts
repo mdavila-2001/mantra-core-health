@@ -16,6 +16,8 @@ import {
   CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
   DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,
 } from '../../data-access/community/community.types';
+import { EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostic-units/equipment-location.types';
+import { INVENTORY_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/pharmacy/inventory-locations.types';
 
 /* ============================================================================
     Claves que la maqueta acepta aunque el DTO de la API no las declare.
@@ -56,4 +58,8 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // apoyo»): la API lo acepta, el `openapi.json` aún no lo trae. El cliente SÍ
   // lo manda a la API real; se borra al regenerar el contrato.
   'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,
+  // Infraestructura hospitalaria F5a/F5c (`CONTRATO-F2-F5.md`): sala, AE Title
+  // y botiquín por unidad. El cliente SÍ las manda; se borran al regenerar.
+  'PATCH /diagnostic-equipment/:id': EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS,
+  'POST /pharmacy/:siteId/inventory-locations': INVENTORY_LOCATION_CONTRACT_PENDING_KEYS,
 };

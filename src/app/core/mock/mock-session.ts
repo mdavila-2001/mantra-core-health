@@ -185,6 +185,15 @@ export const IDS = {
     personId: uuid('person-martin-suarez'),
     practitionerProfileId: uuid('hpid-martin-suarez'),
   },
+  orManager: {
+    userId: uuid('user-jefe-quirofano'),
+    personId: uuid('person-jefe-quirofano'),
+    practitionerProfileId: uuid('hpid-jefe-quirofano'),
+  },
+  billingClerk: {
+    userId: uuid('user-facturacion-hospital'),
+    personId: uuid('person-facturacion-hospital'),
+  },
 } as const;
 
 export const MOCK_USERS: readonly MockUser[] = [
@@ -560,6 +569,35 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenantNames: TENANT_NAMES,
     practitionerProfileId: IDS.suarez.practitionerProfileId,
     personId: IDS.suarez.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Infraestructura hospitalaria F4: la jefatura del bloque quirúrgico de San
+    // Lucas. Asigna y libera bloques, programa y registra el día del caso.
+    key: 'quirofano',
+    id: IDS.orManager.userId,
+    email: 'quirofano@alovida.mock',
+    nationalId: '7004001',
+    displayName: 'Lic. Patricia Vargas · Jefatura de quirófano',
+    roles: ['PERIOP_ADMIN', 'SURGERY_SCHEDULER', 'PERIOP_NURSE'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.orManager.practitionerProfileId,
+    personId: IDS.orManager.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Infraestructura hospitalaria F5e: facturación de San Lucas (tarifas de
+    // espacios y cargos de día-cama). Ve la utilización, no opera la sala.
+    key: 'facturacion',
+    id: IDS.billingClerk.userId,
+    email: 'facturacion@alovida.mock',
+    nationalId: '7004002',
+    displayName: 'Rodrigo Suárez · Facturación',
+    roles: ['BILLING'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.billingClerk.personId,
     accountKind: 'PERSON',
   },
 ];

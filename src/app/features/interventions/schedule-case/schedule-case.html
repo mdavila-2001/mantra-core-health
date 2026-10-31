@@ -1,0 +1,77 @@
+<app-page-header title="Programar una intervención" subtitle="La sala se reserva con su preparación y su limpieza." [breadcrumbs]="breadcrumbs()" />
+
+<app-view-state-host [state]="page()">
+  <app-card class="schedule-case" padding="lg" data-testid="schedule-case">
+    <form class="schedule-case__form" (submit)="$event.preventDefault(); submit()" novalidate>
+      <div class="schedule-case__grid">
+        <app-form-field label="Quirófano" [required]="true" hint="Sólo los espacios con función quirófano de la sede.">
+          <app-select [options]="roomOptions()" [value]="roomId()" placeholder="Elija un quirófano" ariaLabel="Quirófano" data-testid="schedule-room" (valueChange)="roomId.set($event)" />
+        </app-form-field>
+
+        <app-form-field label="Paciente" [required]="true" hint="Busque por nombre o por código.">
+          <app-reference-combobox
+            [selected]="patient()"
+            [options]="patientOptions()"
+            [loading]="searchingPatients()"
+            placeholder="Nombre o código"
+            label="Buscar paciente"
+            emptyMessage="Ningún paciente coincide"
+            data-testid="schedule-patient"
+            (searched)="searchPatients($event)"
+            (selectionChange)="patient.set($event)"
+          />
+        </app-form-field>
+
+        <app-form-field label="Cirujano principal" [required]="true">
+          <app-select [options]="surgeonOptions()" [value]="surgeonId()" placeholder="Elija al cirujano" ariaLabel="Cirujano principal" [searchable]="true" data-testid="schedule-surgeon" (valueChange)="surgeonId.set($event)" />
+        </app-form-field>
+
+        <app-form-field label="Especialidad" hint="Define si el caso entra en el bloque de un servicio.">
+          <app-select [options]="specialties()" [value]="specialtyId()" placeholder="Sin especialidad" ariaLabel="Especialidad" [searchable]="true" data-testid="schedule-specialty" (valueChange)="specialtyId.set($event)" />
+        </app-form-field>
+
+        <app-form-field label="Día" [required]="true">
+          <app-input type="date" [value]="day()" testId="schedule-day" (valueChange)="day.set($any($event) ?? '')" />
+        </app-form-field>
+
+        <app-form-field label="Hora de inicio" [required]="true">
+          <app-input type="time" [value]="startTime()" testId="schedule-time" (valueChange)="startTime.set($any($event) ?? '')" />
+        </app-form-field>
+
+        <app-form-field label="Duración estimada (minutos)" [required]="true">
+          <app-input type="number" [step]="5" [value]="durationMinutes()" testId="schedule-duration" (valueChange)="durationMinutes.set(+($event ?? 0))" />
+        </app-form-field>
+
+        <app-form-field label="Tipo de caso" [required]="true" hint="Una urgencia puede entrar en el bloque de otro servicio, con justificación.">
+          <app-segmented-control [options]="caseTypes" [value]="caseType()" ariaLabel="Tipo de caso" [wrap]="true" (valueChange)="caseType.set($event)" />
+        </app-form-field>
+      </div>
+
+      @if (caseType() !== 'ELECTIVE') {
+        <app-form-field label="Justificación de la urgencia" [required]="true" [errorMessage]="urgencyReason().trim() ? '' : 'Es obligatoria para un caso no electivo.'">
+          <app-textarea [value]="urgencyReason()" [rows]="2" [maxLength]="1000" (valueChange)="urgencyReason.set($event)" />
+        </app-form-field>
+      }
+
+      @if (preview(); as p) {
+        <app-alert tone="info" title="Ventana reservada" data-testid="schedule-preview">
+          La sala queda tomada de {{ timeOf(p.reservedStartAt) }} a {{ timeOf(p.reservedEndAt) }}: el caso de {{ timeOf(p.start) }} a {{ timeOf(p.end) }}, más {{ p.prep }} min de preparación y {{ p.cleanup }} min de limpieza.
+        </app-alert>
+      }
+
+      @if (failure(); as f) {
+        <app-view-state-host [state]="f" data-testid="schedule-failure" />
+        @if (nextFree(); as next) {
+          <button app-button variant="secondary" size="sm" type="button" (clicked)="useNextFree()" data-testid="schedule-next-free">
+            Usar la próxima ventana libre ({{ timeOf(next) }})
+          </button>
+        }
+      }
+
+      <div class="schedule-case__actions">
+        <button app-button variant="ghost" type="button" [disabled]="sending()" (clicked)="cancel()">Cancelar</button>
+        <button app-button type="submit" [disabled]="!valid() || sending()" [isLoading]="sending()" data-testid="schedule-submit">Programar</button>
+      </div>
+    </form>
+  </app-card>
+</app-view-state-host>

@@ -43,6 +43,9 @@ import { registrarLibretaDeDirecciones } from './address-book.handlers';
 import { registerPrimaryPractitioner } from './primary-practitioner.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
+import { registerOperatingRooms } from './operating-rooms.handlers';
+import { registerSpaceBilling } from './space-billing.handlers';
+import { registerInfraF5Ops } from './infra-f5-ops.handlers';
 import { registerTreatmentInformedConsents } from './treatment-informed-consents.handlers';
 import { registrarPublico } from './public.handlers';
 import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
@@ -150,6 +153,12 @@ export function crearRouterSimulado(): MockRouter {
   registrarCentros(router);
   registrarPortalDeLaboratorio(router);
   registrarProcedimientos(router);
+  // F4 · quirófanos: salas, bloques, utilización y el día del caso.
+  registerOperatingRooms(router);
+  // F5e · tarifas de espacios y cargos de día-cama.
+  registerSpaceBilling(router);
+  // F5a/F5c · equipos en sala y botiquín por unidad.
+  registerInfraF5Ops(router);
   registerTreatmentInformedConsents(router);
   registrarLaboratorioFarmaceutico(router);
   registerLoyalty(router);
