@@ -6,7 +6,8 @@ import { redesDeLaOrganizacion } from './iam-security.handlers';
 import { CODIGO_DE_DISPOSITIVO } from './support-access.session.handlers';
 import { isMockReply, type MockMethod, type MockRouter } from '../mock-router';
 import { buscarUsuario, TENANT_CESPEDES, TENANT_HOSPITAL_PILOTO, type MockUser } from '../mock-session';
-import { reiniciarLaSesionDelSimulador } from './mock-reset';
+import { reiniciarLaBandejaDeApoyo } from '../fixtures/support-hospital-inbox';
+import { reiniciarElGobiernoDeAccesos, reiniciarLaSesionDelSimulador } from './mock-reset';
 
 /**
  * La política de sesión por **organización** en el simulador, con lo que hace la API: la que niega ahora sale de la sesión y
@@ -74,6 +75,12 @@ function franjaQueNoIncluyeAhora(): Franja {
 
 beforeAll(() => {
   reiniciarLaSesionDelSimulador();
+  // Las reglas alcanzan a Ana, Elena y Mariela como **personal** solo con su vínculo vivo (`audienciaDe`). El corredor no aísla
+  // los módulos entre archivos (`isolate: false`) y otro archivo del mismo worker pudo terminarle el vínculo a Ana (el caso 12
+  // de support-access.handlers.spec.ts): entonces la regla del personal no la alcanzaba y entraba sin código. Se parte de los
+  // vínculos de fábrica, con Mariela, que la suma la bandeja al cargarse y el reinicio se lleva (sin ella entraba con 200).
+  reiniciarElGobiernoDeAccesos();
+  reiniciarLaBandejaDeApoyo();
   router = crearRouterSimulado();
 });
 

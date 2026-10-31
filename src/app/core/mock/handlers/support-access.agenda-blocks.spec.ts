@@ -4,11 +4,12 @@ import type { SupportEngagementPage } from '../../data-access/support-access/sup
 import type { WireSupportAgenda, WireSupportFreeSlots } from '../../data-access/support-access/support-agenda.wire';
 import { agendaVista } from './support-access.agenda-view';
 import { PEREZ, permisos, VINCULO_ANA, vinculos } from '../fixtures/support-hospital';
+import { reiniciarLaBandejaDeApoyo } from '../fixtures/support-hospital-inbox';
 import { VINCULOS_PARA_REVISION } from '../fixtures/support-hospital-review';
 import { isMockReply, type MockMethod, type MockRouter } from '../mock-router';
 import { buscarUsuario, TENANT_HOSPITAL_PILOTO, type MockUser } from '../mock-session';
 import { crearRouterSimulado } from './index';
-import { reiniciarLaSesionDelSimulador } from './mock-reset';
+import { reiniciarElGobiernoDeAccesos, reiniciarLaSesionDelSimulador } from './mock-reset';
 
 /**
  * La agenda de apoyo como la deja la API: `bookingId` y `healthcareServiceId` salen **solo** con `schedule.view`; una cita sin
@@ -53,7 +54,13 @@ const agendaDeLaPantalla = (user: MockUser) =>
 let respaldo: { readonly permisos: ReturnType<typeof permisos.todos>; readonly vinculos: ReturnType<typeof vinculos.todos> };
 
 beforeAll(() => {
+  // Parte del piloto de fábrica: el corredor no aísla los módulos entre archivos (`isolate: false`) y otro archivo del mismo
+  // worker puede dejar reglas de gobierno, aprobaciones o vínculos movidos (con eso el permiso nuevo no regía y la agenda salía vacía).
   reiniciarLaSesionDelSimulador();
+  reiniciarElGobiernoDeAccesos();
+  // Mariela no nace en el constructor de `vinculos`: la suma la bandeja al cargarse, así que el reinicio de arriba se la lleva
+  // (y la agenda contestaba 403 «sin vínculo vigente»). La bandeja de fábrica la vuelve a registrar.
+  reiniciarLaBandejaDeApoyo();
   router = crearRouterSimulado();
   respaldo = { permisos: permisos.todos(), vinculos: vinculos.todos() };
 });

@@ -5,8 +5,9 @@ import type { ConversationAssignment, InternalNote, ReplyTemplate, ReplyTemplate
 import { showcaseOf } from '../fixtures/community';
 import { patientList } from '../fixtures/people';
 import { ROJAS, PEREZ, CESPEDES } from '../fixtures/support-hospital';
-import { conversacionId, esMensajeClinico, perfilDeChatDe } from '../fixtures/support-hospital-inbox';
+import { conversacionId, esMensajeClinico, perfilDeChatDe, reiniciarLaBandejaDeApoyo } from '../fixtures/support-hospital-inbox';
 import { crearRouterSimulado } from './index';
+import { reiniciarElGobiernoDeAccesos, reiniciarLaSesionDelSimulador } from './mock-reset';
 import { isMockReply, type MockMethod, type MockRouter } from '../mock-router';
 import { buscarUsuario, TENANT_CESPEDES, TENANT_HOSPITAL_PILOTO, type MockUser } from '../mock-session';
 
@@ -60,9 +61,24 @@ const responder = (user: MockUser, clave: string, doctor: Parameters<typeof perf
 /** El motivo de negocio de un rechazo: la API lo manda arriba y en `details.reason`. */
 const motivo = (respuesta: Respuesta): unknown => (respuesta.body as { reason?: string; details?: { reason?: string } }).details?.reason;
 
+/**
+ * Las pruebas parten de la maqueta de fábrica. El corredor no aísla los módulos entre archivos de un mismo worker
+ * (`isolate: false`), y otros archivos dejan cambiadas tablas que esta bandeja lee: el contrato (caso 12) le termina el vínculo
+ * a Ana y le revoca la aceptación de Pérez, el gobierno de accesos vuelve los vínculos a los del constructor (y se lleva a
+ * Mariela), y los desafíos responden en una conversación de Pérez. Al terminar se devuelve igual para el archivo siguiente.
+ */
+function deFabrica(): void {
+  reiniciarLaSesionDelSimulador();
+  reiniciarElGobiernoDeAccesos();
+  reiniciarLaBandejaDeApoyo();
+}
+
 beforeAll(() => {
   router = crearRouterSimulado();
+  deFabrica();
 });
+
+afterAll(deFabrica);
 
 describe('bandeja de chat compartida en el simulador', () => {
   describe('aislamiento por organización', () => {

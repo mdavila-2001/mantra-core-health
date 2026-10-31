@@ -1,4 +1,4 @@
-import { ajustesDeAgenda, permisos, vinculos } from '../fixtures/support-hospital';
+import { ajustesDeAgenda, delegados, permisos, vinculos } from '../fixtures/support-hospital';
 import { reiniciarGobierno } from '../fixtures/support-hospital-governance';
 import { factores } from './iam-mfa.store';
 import { redesDeLaOrganizacion } from './iam-security.handlers';
@@ -36,13 +36,16 @@ export function reiniciarLaSesionDelSimulador(): void {
 
 /**
  * Deja el **gobierno de accesos** como lo trae de fábrica: reglas, ajustes, SoD, banderas, aprobaciones, campañas, anomalías,
- * casos de ciclo de vida, pasos extra y simulaciones, **y** los vínculos y permisos del piloto (que el gobierno cambia al
+ * casos de ciclo de vida, pasos extra y simulaciones, **y** los vínculos, permisos y aceptaciones de los doctores del piloto (que el gobierno cambia al
  * dar de baja, suspender o mover). Solo lo usan las pruebas, por lo mismo que la función de arriba.
  */
 export function reiniciarElGobiernoDeAccesos(): void {
   reiniciarGobierno();
   vinculos.reiniciar();
   permisos.reiniciar();
+  // Terminar un vínculo revoca la aceptación de cada doctor (caso 12): volver el vínculo sin ella dejaba a Ana activa pero sin
+  // poder responder por Pérez, un estado que la API no produce.
+  delegados.reiniciar();
   olvidarPasosExtra();
   olvidarSimulaciones();
   olvidarLotesDeNormalizacion();
