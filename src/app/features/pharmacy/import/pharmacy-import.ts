@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { catchError, map, of, type Subscription } from 'rxjs';
+import { catchError, map, of, takeLast, type Subscription } from 'rxjs';
 
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -624,6 +624,10 @@ export class PharmacyImport {
   /**
    * Pide al servidor qué pasaría con cada fila lista (`dryRun`: no escribe
    * nada). Se repite al cambiar el modo; una vista previa vieja se descarta.
+   *
+   * Va en lotes, y la vista previa queda lista sólo con **todos** los lotes
+   * contestados y una respuesta por fila: con el primero de tres, «Cargar»
+   * publicaría filas que el servidor todavía no revisó.
    */
   protected requestPreview(): void {
     const pharmacyId = this.scope.pharmacyId();
@@ -635,8 +639,14 @@ export class PharmacyImport {
     }
     this.serverPreview.set({ status: 'loading' });
     this.previewRequest = sendProducts(this.bulk, pharmacyId, this.mode(), rows, { dryRun: true })
+      .pipe(takeLast(1))
       .subscribe({
-        next: (results) => this.serverPreview.set({ status: 'ready', results }),
+        next: (results) =>
+          this.serverPreview.set(
+            results.length === rows.length
+              ? { status: 'ready', results }
+              : { status: 'failed', message: 'La revisión del servidor llegó incompleta. Pruebe de nuevo.' },
+          ),
         error: (error: unknown) =>
           this.serverPreview.set({ status: 'failed', message: bulkFailureMessage(error) }),
       });

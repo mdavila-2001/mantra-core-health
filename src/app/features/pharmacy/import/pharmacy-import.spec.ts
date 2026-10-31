@@ -737,6 +737,34 @@ describe('PharmacyImport', () => {
       expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
     });
 
+    it('con la vista previa a medias (un lote contestado de dos) tampoco deja cargar', async () => {
+      mount();
+      const lines = Array.from({ length: 251 }, (_, index) => `P-${index + 1};Producto ${index + 1}`);
+      await upload(`codigo;marca\n${lines.join('\n')}\n`, []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      const [first] = http.match(bulkUrl(PHARMACY.id));
+      bulkAnswer(first!);
+      fixture.detectChanges();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+
+      answerPreview();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).not.toBe('true');
+    });
+
+    it('si el servidor contesta menos filas de las mandadas, la vista previa no vale y no deja cargar', async () => {
+      mount();
+      await upload('codigo;marca\nA-1;Uno\nB-2;Dos\n', []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      http.expectOne(bulkUrl(PHARMACY.id)).flush({ dryRun: true, results: [{ row: 1, outcome: 'CREATED' }] });
+      fixture.detectChanges();
+
+      expect(textOf('import-preview-error')).toContain('llegó incompleta');
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+    });
+
     it('la columna «medicamento» viaja como medicationName y un recetable sin medicamento se avisa antes de cargar', async () => {
       mount();
       await upload('codigo;generico;receta;medicamento\nA-1;Amoxicilina;sí;Amoxicilina\nA-2;Otro;sí;\n', []);
