@@ -5,3 +5,11 @@
   display: block;
   margin-block-end: var(--sp-4);
 }
+
+/* La tarjeta ocupa todo el ancho del área de contenido y va centrada; el tope
+   lo pone `.app-main__inner` y nadie más. */
+.ficha__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}

@@ -39,6 +39,10 @@
   </app-alert>
 }
 
+<!-- UNA tarjeta con pestañas, centrada y a lo ancho del área de contenido
+     (docs/components/composition-rules.md §5, pedido del cliente del 09/09/2026):
+     la ficha no se dibuja como pestañas sueltas sobre el fondo. -->
+<app-card class="ficha__tarjeta" variant="elevated" padding="lg" data-testid="ficha-tarjeta">
 <app-tabs [(selectedIndex)]="pestana">
   <app-tab label="Empresa">
     <app-company-data [state]="empresa()" [sampleData]="sampleData" (retry)="recargar()" />
@@ -68,3 +72,4 @@
     />
   </app-tab>
 </app-tabs>
+</app-card>
