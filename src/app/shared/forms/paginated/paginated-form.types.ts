@@ -199,6 +199,14 @@ export interface CampoDeFormulario {
   readonly soloAlfanumerico?: boolean;
 
   /**
+   * Sólo para `text`: se llama con el valor del campo cada vez que la persona
+   * **sale** de él (`blur`). Sirve para verificaciones que no caben en un
+   * validador síncrono —por ejemplo, preguntarle a la API si el documento ya
+   * tiene cuenta—. El motor no espera el resultado ni lo interpreta.
+   */
+  readonly alSalir?: (valor: string) => void;
+
+  /**
    * El glifo que va **dentro** del campo, del set cerrado del nav.
    *
    * Opcional y sin defecto: un ícono por campo, puesto por costumbre, es ruido
