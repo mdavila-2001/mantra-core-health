@@ -393,4 +393,119 @@ describe('DiagnosticsClient', () => {
       expect(resultado?.practitionerName).toBe('Marta Rivas');
     });
   });
+
+  describe('detalle de la orden (v4.2.80)', () => {
+    const base = { custodianTenantId: 't-1', patientProfileId: 'p-1', codeConceptId: 'code-1' };
+
+    it('manda muestra, componentes e imagen solo cuando hay valor', () => {
+      client
+        .requestStudy({
+          ...base,
+          specimenTypeConceptId: 'sp-1',
+          componentConceptIds: ['c-1', 'c-2'],
+          imaging: { bodySiteConceptId: 'b-1', lateralityConceptId: undefined },
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(req.request.body.specimenTypeConceptId).toBe('sp-1');
+      expect(req.request.body.componentConceptIds).toEqual(['c-1', 'c-2']);
+      expect(req.request.body.imaging).toEqual({ bodySiteConceptId: 'b-1' });
+      expect('lateralityConceptId' in req.request.body.imaging).toBe(false);
+      req.flush(ORDEN_CREADA);
+    });
+
+    it('omite `imaging` si no trae ningun valor, y el cuerpo basico queda exacto', () => {
+      client.requestStudy({ ...base, imaging: {} }).subscribe();
+
+      const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(req.request.body).toEqual(base);
+      req.flush(ORDEN_CREADA);
+    });
+
+    it('el chequeo de duplicado manda region, lateralidad y componentes', () => {
+      client
+        .checkDuplicateStudy({
+          patientProfileId: 'p-1',
+          encounterId: 'e-1',
+          codeConceptId: 'code-1',
+          bodySiteConceptId: 'b-1',
+          lateralityConceptId: 'l-1',
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url === '/clinical/service-requests/duplicate-check');
+      expect(req.request.body.bodySiteConceptId).toBe('b-1');
+      expect('componentConceptIds' in req.request.body).toBe(false);
+      req.flush({
+        isDuplicate: false,
+        previousStudy: null,
+        warningMessage: null,
+        requiresJustification: false,
+        pendingReport: false,
+        windowDays: 30,
+      });
+    });
+
+    it('createRequisition: POST con Idempotency-Key, items sin ausentes y fechas convertidas', () => {
+      let creada;
+      client
+        .createRequisition({
+          custodianTenantId: 't-1',
+          patientProfileId: 'p-1',
+          items: [
+            { codeConceptId: 'code-1', componentConceptIds: ['c-1'], specimenTypeConceptId: undefined },
+            { codeConceptId: 'code-2', category: 'IMAGING', imaging: { bodySiteConceptId: 'b-1' } },
+          ],
+        })
+        .subscribe((c) => (creada = c));
+
+      const req = http.expectOne((r) => r.url === '/clinical/requisitions');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.get('Idempotency-Key')).toBeTruthy();
+      expect('specimenTypeConceptId' in req.request.body.items[0]).toBe(false);
+      expect(req.request.body.items[1].imaging).toEqual({ bodySiteConceptId: 'b-1' });
+      req.flush({
+        requisitionId: 'rq-1',
+        replayed: false,
+        items: [{ ...ORDEN_CREADA, basedOnNoteIds: [], requisitionId: 'rq-1' }],
+      });
+
+      expect(creada).toBeDefined();
+      const { requisitionId, replayed, items } = creada as unknown as {
+        requisitionId: string;
+        replayed: boolean;
+        items: { createdAt: Date }[];
+      };
+      expect(requisitionId).toBe('rq-1');
+      expect(replayed).toBe(false);
+      expect(items[0]!.createdAt).toBeInstanceOf(Date);
+    });
+
+    it('createRequisition: un 422 llega con details.reason y details.itemIndex', () => {
+      let error: { error?: { details?: { reason?: string; itemIndex?: number } } } | undefined;
+      client
+        .createRequisition({ custodianTenantId: 't-1', patientProfileId: 'p-1', items: [{ codeConceptId: 'x' }] })
+        .subscribe({ error: (e) => (error = e) });
+
+      http.expectOne((r) => r.url === '/clinical/requisitions').flush(
+        { code: 'PRECONDITION_FAILED', details: { reason: 'COMPONENTS_EMPTY', field: 'componentConceptIds', itemIndex: 0 } },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+      expect(error?.error?.details?.reason).toBe('COMPONENTS_EMPTY');
+      expect(error?.error?.details?.itemIndex).toBe(0);
+    });
+
+    it('getServiceRequest: GET por id y fecha convertida', () => {
+      let orden;
+      client.getServiceRequest('sr 1').subscribe((o) => (orden = o));
+
+      const req = http.expectOne('/clinical/service-requests/sr%201');
+      expect(req.request.method).toBe('GET');
+      req.flush({ ...ORDEN_CREADA, basedOnNoteIds: [], componentsSpecified: true, components: [] });
+
+      expect((orden as unknown as { createdAt: Date }).createdAt).toBeInstanceOf(Date);
+    });
+  });
 });

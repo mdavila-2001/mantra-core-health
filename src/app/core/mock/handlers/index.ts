@@ -27,6 +27,8 @@ import { registrarIdentidad } from './identity.handlers';
 import { registrarInfraestructura } from './infrastructure.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
 import { registrarOrdenesDeLaboratorio } from './lab-orders.handlers';
+import { registrarCatalogoDeEstudios } from './study-catalog.handlers';
+import { registrarRequisiciones } from './requisitions.handlers';
 import {
   destinoDeOrden,
   laboratorioDe,
@@ -134,6 +136,8 @@ export function crearRouterSimulado(): MockRouter {
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
   registrarDiagnostico(router);
+  registrarCatalogoDeEstudios(router);
+  registrarRequisiciones(router);
   registrarOrdenesDeLaboratorio(router, {
     laboratorioDe,
     destinoDeOrden,

@@ -34,7 +34,17 @@ import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENA
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
 import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } from './service-request-performer.mock';
-import { categoriaDeLaOrden, esRechazo, resolverCategoria, validarNotas, type RechazoDeOrden } from './service-request-category.mock';
+import { categoriaDeLaOrden, esRechazo, validarNotas } from './service-request-category.mock';
+import {
+  camposDeDetalle,
+  claveDeItem,
+  guardarDetalleDeOrden,
+  rechazoDeOrden,
+  repiteElDetalle,
+  validarItemDeOrden,
+  type ClaveDeDetalle,
+  type CuerpoDeAlta,
+} from './service-request-detail.mock';
 
 /* ============================================================================
     Diagnóstico: órdenes e informes del circuito clínico, la cola de trabajo
@@ -46,19 +56,6 @@ function c(code: string, display: string) {
   return { code, display };
 }
 
-/** P40: el 422 o el 400 del alta, con `reason` como lo devuelve la API. */
-function rechazoDeOrden(rechazo: RechazoDeOrden) {
-  if (rechazo.status === 400) return validation(rechazo.message);
-  return reply(422, {
-    statusCode: 422,
-    code: 'PRECONDITION_FAILED',
-    message: rechazo.message,
-    error: 'Unprocessable Entity',
-    reason: rechazo.reason,
-    details: { reason: rechazo.reason },
-  });
-}
-
 /** P40: `category` sólo si la orden la declara — ausente no es `null`. */
 function categoriaPresente(categoryConceptId: string | undefined) {
   const category = categoriaDeLaOrden(categoryConceptId);
@@ -66,8 +63,8 @@ function categoriaPresente(categoryConceptId: string | undefined) {
 }
 
 /** P40: lo que la ficha del personal lee de una orden de análisis. */
-function ordenDeAnalisis(o: { readonly categoryConceptId: string; readonly basedOnNoteIds?: readonly string[] }) {
-  return { ...categoriaPresente(o.categoryConceptId), basedOnNoteIds: [...(o.basedOnNoteIds ?? [])] };
+function ordenDeAnalisis(o: { readonly id: string; readonly codeConceptId: string; readonly categoryConceptId: string; readonly basedOnNoteIds?: readonly string[] }) {
+  return { ...categoriaPresente(o.categoryConceptId), basedOnNoteIds: [...(o.basedOnNoteIds ?? [])], ...camposDeDetalle(o.id, o.codeConceptId) };
 }
 
 const ROL_CONTENIDO = uuid('concept-result-content-role-report');
@@ -854,9 +851,11 @@ export function estudioDuplicado(
   patientProfileId: string,
   codeConceptId: string,
   windowDays: number,
+  clave: ClaveDeDetalle = {},
 ): { readonly informe: InformeSimulado; readonly performedAt: string } | null {
   const candidatos = informes
     .filtrar((r) => r.patientProfileId === patientProfileId && r.codeConceptId === codeConceptId && r.released)
+    .filter((r) => repiteElDetalle(r.serviceRequestId, clave))
     .map((r) => ({ informe: r, performedAt: r.releasedAt ?? r.issuedAt }))
     .filter(({ performedAt }) => diasDesde(performedAt) <= windowDays)
     .sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt));
@@ -990,22 +989,7 @@ export function registrarDiagnostico(router: MockRouter): void {
   }
 
   router.post('/clinical/service-requests', (request) => {
-    const datos = cuerpo<{
-      patientProfileId: string;
-      codeConceptId: string;
-      categoryConceptId?: string;
-      // P40 (C2): la categoría en texto y las notas que motivan la orden.
-      category?: unknown;
-      basedOnNoteIds?: unknown;
-      priorityConceptId?: string;
-      reasonText?: string;
-      encounterId?: string;
-      formInstanceId?: string;
-      // Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2).
-      previousDiagnosticReportId?: string;
-      reusePreviousReport?: boolean;
-      duplicateOverrideReason?: string;
-    }>(request);
+    const datos = cuerpo<CuerpoDeAlta>(request);
 
     const patientProfileId = datos.patientProfileId ?? '';
     const codeConceptId = datos.codeConceptId ?? '';
@@ -1013,8 +997,8 @@ export function registrarDiagnostico(router: MockRouter): void {
 
     // P40: el mismo orden que la API — la categoría antes de abrir la
     // transacción, las notas antes de escribir nada.
-    const categoria = resolverCategoria(datos.category, datos.categoryConceptId);
-    if (esRechazo(categoria)) return rechazoDeOrden(categoria);
+    const item = validarItemDeOrden(datos);
+    if ('rechazo' in item) return item.rechazo;
     const notas = validarNotas(datos.basedOnNoteIds, patientProfileId, datos.encounterId);
     if (esRechazo(notas)) return rechazoDeOrden(notas);
 
@@ -1023,7 +1007,7 @@ export function registrarDiagnostico(router: MockRouter): void {
     // diálogo ya mostró — el mock no reproduce la carrera check→alta del
     // servidor (`DUPLICATE_STUDY_MISMATCH`).
     if (!conDecision) {
-      const duplicado = estudioDuplicado(patientProfileId, codeConceptId, DUPLICATE_STUDY_WINDOW_DAYS);
+      const duplicado = estudioDuplicado(patientProfileId, codeConceptId, DUPLICATE_STUDY_WINDOW_DAYS, claveDeItem(datos));
       if (duplicado !== null) {
         const previousStudy = estudioPrevio(duplicado.informe, duplicado.performedAt, request.user);
         return preconditionFailed('Ya existe un estudio igual reciente.', {
@@ -1038,7 +1022,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       id: nuevoId('order'),
       patientProfileId,
       codeConceptId,
-      categoryConceptId: categoria.conceptId ?? '',
+      categoryConceptId: item.valido.categoryConceptId ?? '',
       ...(notas.noteIds.length === 0 ? {} : { basedOnNoteIds: notas.noteIds }),
       priorityConceptId: datos.priorityConceptId ?? '',
       statusConceptId: reutilizada ? STATUS['ST-SATISFIED-BY-PRIOR']! : STATUS['ST-PENDING']!,
@@ -1054,6 +1038,12 @@ export function registrarDiagnostico(router: MockRouter): void {
       ...(datos.duplicateOverrideReason === undefined
         ? {}
         : { duplicateOverrideReason: datos.duplicateOverrideReason }),
+    });
+    guardarDetalleDeOrden(nueva, item.valido, {
+      requisitionId: null,
+      performerTenantId: datos.performerTenantId,
+      requestingTenantId: request.headers.get('X-Tenant-Id') ?? request.user?.tenants[0] ?? TENANT_CLINICA,
+      agregarABandeja: (fila) => labInboxOrders.agregar(fila),
     });
     return {
       status: 201,
@@ -1079,12 +1069,15 @@ export function registrarDiagnostico(router: MockRouter): void {
       patientProfileId?: string;
       codeConceptId?: string;
       windowDays?: number;
+      bodySiteConceptId?: string;
+      lateralityConceptId?: string;
+      componentConceptIds?: string[];
     }>(request);
     const patientProfileId = datos.patientProfileId ?? '';
     const codeConceptId = datos.codeConceptId ?? '';
     const windowDays = datos.windowDays ?? DUPLICATE_STUDY_WINDOW_DAYS;
     const pendingReport = hayInformePendiente(patientProfileId, codeConceptId);
-    const encontrado = estudioDuplicado(patientProfileId, codeConceptId, windowDays);
+    const encontrado = estudioDuplicado(patientProfileId, codeConceptId, windowDays, datos);
 
     if (encontrado === null) {
       return {

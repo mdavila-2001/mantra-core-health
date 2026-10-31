@@ -1,3 +1,5 @@
+import type { ServiceRequestComponent, ServiceRequestImaging } from '../diagnostics/diagnostics.types';
+
 /* ============================================================================
     El portal de la cuenta de laboratorio (30/09/2026).
 
@@ -276,8 +278,33 @@ export interface LabOrderFile {
   readonly sizeBytes: number;
 }
 
-/** Una orden de la bandeja, con su estado y los archivos que ya tiene. */
+/** Qué bandeja: laboratorio o imagenología (`scope` de la bandeja del ejecutor, C6). */
+export type LabOrderScope = 'LAB' | 'IMAGING';
+
+/**
+ * El detalle que el médico pidió, ya resuelto por el servidor (nombres, no
+ * uuid). `componentsSpecified:false` = «estudio completo, sin detalle».
+ */
+export interface LabOrderDetail {
+  readonly requisitionId: string | null;
+  readonly specimenTypeDisplay: string | null;
+  readonly components: readonly ServiceRequestComponent[];
+  readonly componentsSpecified: boolean;
+  readonly imaging: ServiceRequestImaging | null;
+}
+
+/**
+ * Una orden de la bandeja, con su estado y los archivos que ya tiene.
+ *
+ * `scope`, `summary` y `detail` los llena siempre {@link LabPortalClient.listOrders};
+ * son opcionales sólo para no obligar a quien arma una orden a mano (pruebas).
+ */
 export interface LabOrder {
+  /** Laboratorio o imagenología; sale de la bandeja pedida, no del prefijo del código. */
+  readonly scope?: LabOrderScope;
+  /** Texto listo para la celda «Estudio»: «Hemograma · 3 componentes», «Rayos X · Mano · Izquierda». */
+  readonly summary?: string;
+  readonly detail?: LabOrderDetail;
   readonly orderId: string;
   readonly studyName: string;
   readonly patientName: string;

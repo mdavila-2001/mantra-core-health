@@ -11,6 +11,43 @@ import type {
  */
 export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
 
+/** Un componente marcado de un panel de laboratorio, tal como vuelve de la API. */
+export interface ServiceRequestComponent {
+  readonly conceptId: string;
+  /** Nombre legible (castellano si existe). */
+  readonly display: string;
+  /** Posición, desde 1, en el orden en que se marcó. */
+  readonly ordinal: number;
+}
+
+/** El detalle de imagen de una orden: ids y nombre legible; cada par puede ser `null`. */
+export interface ServiceRequestImaging {
+  readonly modalityConceptId: string | null;
+  readonly modalityDisplay: string | null;
+  readonly bodySiteConceptId: string | null;
+  readonly bodySiteDisplay: string | null;
+  readonly lateralityConceptId: string | null;
+  readonly lateralityDisplay: string | null;
+  readonly contrastConceptId: string | null;
+  readonly contrastDisplay: string | null;
+}
+
+/**
+ * El detalle que la orden guarda desde v4.2.80 (muestra, componentes, imagen).
+ * Todo opcional: una orden anterior no lo tiene, y `componentsSpecified:false`
+ * significa «estudio completo, sin detalle», no «ningún componente».
+ */
+export interface ServiceRequestDetailFields {
+  /** Agrupa lo pedido junto en una sola requisición. */
+  readonly requisitionId?: string | null;
+  readonly codeDisplay?: string;
+  readonly specimenTypeConceptId?: string | null;
+  readonly specimenTypeDisplay?: string | null;
+  readonly components?: readonly ServiceRequestComponent[];
+  readonly componentsSpecified?: boolean;
+  readonly imaging?: ServiceRequestImaging | null;
+}
+
 /* ============================================================================
     Tipos de la vista para el circuito diagnóstico: `diagnostics` (M20) y la
     orden de servicio de `clinical` (M08).
@@ -41,7 +78,7 @@ export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
  * contrato: una orden vieja puede no tenerla. Quien la muestre trata la
  * ausencia como «sin clasificar», nunca la adivina por el código.
  */
-export interface DiagnosticOrder {
+export interface DiagnosticOrder extends ServiceRequestDetailFields {
   readonly id: string;
   readonly patientProfileId: string;
   readonly encounterId?: string;
@@ -145,6 +182,12 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly performerTenantId?: string;
+  /** Muestra pedida (`specimen-type`); sólo laboratorio o anatomía patológica. */
+  readonly specimenTypeConceptId?: string;
+  /** Componentes MARCADOS del panel; obligatorio y no vacío si el estudio es un panel desplegable. */
+  readonly componentConceptIds?: readonly string[];
+  /** Detalle de imagen; sólo en estudios de imagen. */
+  readonly imaging?: NewImagingDetail;
   /**
    * Antiduplicación de estudios (v4.2.17). Presente sólo cuando el chequeo
    * previo detectó un duplicado y el médico decidió: junto con
@@ -154,6 +197,14 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly previousDiagnosticReportId?: string;
   readonly reusePreviousReport?: boolean;
   readonly duplicateOverrideReason?: string;
+}
+
+/** Modalidad, región, lateralidad y contraste de un estudio de imagen; cada uno se omite si no hay valor. */
+export interface NewImagingDetail {
+  readonly modalityConceptId?: string;
+  readonly bodySiteConceptId?: string;
+  readonly lateralityConceptId?: string;
+  readonly contrastConceptId?: string;
 }
 
 /**
@@ -186,6 +237,11 @@ export interface DuplicateStudyCheck {
   readonly diagnosticStudyOfferingId?: string;
   readonly encounterId: string;
   readonly windowDays?: number;
+  /** V10: con región y lateralidad, «mano izquierda» no duplica «mano derecha». */
+  readonly bodySiteConceptId?: string;
+  readonly lateralityConceptId?: string;
+  /** V10: los componentes que el informe previo no cubre no son duplicado. */
+  readonly componentConceptIds?: readonly string[];
 }
 
 /** El estudio previo que satisface (o casi satisface) el pedido nuevo. */
@@ -390,4 +446,61 @@ export interface NewDiagnosticResultShare {
   readonly practitionerProfileId: string;
   /** Obligatorio: no existe compartir sin plazo. */
   readonly validUntil: Date;
+}
+
+/* ============================================================================
+    Requisición (`POST /clinical/requisitions`): varios estudios pedidos juntos.
+    La API crea un renglón de `service_requests` por estudio, atómicos, y los
+    agrupa con `requisitionId`.
+    ========================================================================== */
+
+/** La decisión del médico ante un duplicado, por renglón. */
+export interface RequisitionDuplicateDecision {
+  readonly previousDiagnosticReportId: string;
+  readonly reusePreviousReport?: boolean;
+  readonly duplicateOverrideReason?: string;
+}
+
+/** Un estudio de la requisición. */
+export interface RequisitionItem {
+  readonly codeConceptId: string;
+  readonly category?: AnalysisCategory;
+  readonly categoryConceptId?: string;
+  readonly specimenTypeConceptId?: string;
+  readonly componentConceptIds?: readonly string[];
+  readonly imaging?: NewImagingDetail;
+  readonly duplicateDecision?: RequisitionDuplicateDecision;
+}
+
+/** Lo que hace falta para pedir 1 a 30 estudios juntos. */
+export interface NewRequisition extends ServiceRequestPerformerInput {
+  readonly custodianTenantId: string;
+  readonly patientProfileId: string;
+  readonly encounterId?: string;
+  readonly formInstanceId?: string;
+  readonly requesterProfileId?: string;
+  readonly priorityConceptId?: string;
+  readonly basedOnNoteIds?: readonly string[];
+  readonly performerTenantId?: string;
+  /** De 1 a 30. */
+  readonly items: readonly RequisitionItem[];
+}
+
+/** Un renglón creado: la forma de `GET /clinical/service-requests/:id`. */
+export interface ServiceRequestRecord extends ServiceRequestDetailFields {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly formInstanceId?: string | null;
+  readonly category?: AnalysisCategory;
+  readonly basedOnNoteIds: readonly string[];
+  readonly status: string;
+  readonly intent: string;
+  readonly createdAt: Date;
+}
+
+/** La requisición creada. `replayed` es `true` si la respuesta repite un envío anterior con la misma clave. */
+export interface RequisitionCreated {
+  readonly requisitionId: string;
+  readonly replayed: boolean;
+  readonly items: readonly ServiceRequestRecord[];
 }

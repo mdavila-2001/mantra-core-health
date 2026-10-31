@@ -8,7 +8,13 @@ import {
 } from '../mock-router';
 import { TENANT_LABORATORIO } from '../mock-session';
 import { Coleccion, cuerpo } from '../mock-store';
-import { labInboxOrders } from './diagnostics.handlers';
+import { STATUS, ORDER_CATEGORY } from '../fixtures/concepts';
+import { patientById } from '../fixtures/people';
+import { familiaDeEstudio } from '../fixtures/study-catalog';
+import { TENANT_NAMES } from '../mock-session';
+import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
+import { labInboxOrders, type LabInboxOrderRecord } from './diagnostics.handlers';
+import { camposDeDetalle, resumenDeOrden } from './service-request-detail.mock';
 import type {
   LabOrder,
   LabOrderAction,
@@ -132,10 +138,155 @@ export function ordenProcesada(orderId: string): boolean {
   return estadosDeOrden.get(orderId)?.status === 'PROCESSED';
 }
 
+/* ---- la bandeja del ejecutor (C6) ------------------------------------------
+
+   `POST /diagnostics/service-requests/worklist` y `GET
+   /diagnostics/service-requests/:id`: lo mismo que `/diagnostics/lab/orders`
+   pero con la forma de la API real. Las órdenes que el médico dirige a este
+   centro (`performerTenantId`) entran a `labInboxOrders` al pedirlas (puente
+   B2), así que aparecen acá con su detalle y las transiciones de arriba
+   (recibir, procesar, subir resultados) siguen funcionando sobre ellas.
+
+   El `state` se deriva del camino de la orden: Borrador → `PENDING`,
+   Recibida → `RECEIVED`, Procesada → `IN_PROCESS`, Subidos → `REPORTED`,
+   Cancelada/Rechazada o satisfecha por un informe previo → `CANCELLED`.
+
+   Extensión del simulador, que la API real no manda en la bandeja: `files`
+   (resultados subidos) y `reason` (motivo de una cancelación). */
+
+type EstadoDeBandeja = 'PENDING' | 'RECEIVED' | 'IN_PROCESS' | 'REPORTED' | 'CANCELLED';
+const ESTADOS_DE_BANDEJA: readonly EstadoDeBandeja[] = ['PENDING', 'RECEIVED', 'IN_PROCESS', 'REPORTED', 'CANCELLED'];
+
+function estadoDeBandeja(orden: LabInboxOrderRecord, visible: LabOrder): EstadoDeBandeja {
+  if (orden.statusConceptId === STATUS['ST-SATISFIED-BY-PRIOR']) return 'CANCELLED';
+  switch (visible.status) {
+    case 'DRAFT':
+      return 'PENDING';
+    case 'RECEIVED':
+      return 'RECEIVED';
+    case 'PROCESSED':
+      return 'IN_PROCESS';
+    case 'UPLOADED':
+      return 'REPORTED';
+    default:
+      return 'CANCELLED';
+  }
+}
+
+/** Laboratorio o imagen: por la familia explícita del estudio y, si no la tiene, por la categoría. */
+function alcanceDe(orden: LabInboxOrderRecord): 'LAB' | 'IMAGING' {
+  const familia = familiaDeEstudio(orden.codeConceptId);
+  if (familia === 'LAB' || familia === 'IMAGING') return familia;
+  return orden.categoryConceptId === ORDER_CATEGORY['SRQ-IMAGING'] ? 'IMAGING' : 'LAB';
+}
+
+function plegado(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function itemDeBandeja(orden: LabInboxOrderRecord, deps: DependenciasDeOrdenes) {
+  const visible = ordenDeRespuesta(orden.id, deps)!;
+  const paciente = patientById(orden.patientProfileId);
+  const detalle = camposDeDetalle(orden.id, orden.codeConceptId);
+  return {
+    serviceRequestId: orden.id,
+    patientProfileId: orden.patientProfileId,
+    patientDisplayName: paciente?.displayName ?? null,
+    patientCode: paciente?.patientCode ?? null,
+    codeConceptId: orden.codeConceptId,
+    codeDisplay: detalle.codeDisplay || null,
+    categoryConceptId: orden.categoryConceptId,
+    priorityConceptId: orden.priorityConceptId,
+    statusConceptId: orden.statusConceptId,
+    requesterProfileId: orden.requesterProfileId,
+    requestingTenantId: orden.requestingTenantId,
+    requestingTenantName: TENANT_NAMES[orden.requestingTenantId] ?? null,
+    requestedAt: orden.requestedAt,
+    requisitionId: detalle.requisitionId,
+    specimenTypeConceptId: detalle.specimenTypeConceptId,
+    specimenTypeDisplay: detalle.specimenTypeDisplay,
+    components: detalle.components,
+    componentsSpecified: detalle.componentsSpecified,
+    imaging: detalle.imaging,
+    summary: resumenDeOrden(orden.id, orden.codeConceptId),
+    specimens: [],
+    state: estadoDeBandeja(orden, visible),
+    scope: alcanceDe(orden),
+    files: visible.files,
+    reason: visible.reason,
+  };
+}
+
+function registrarBandejaDelEjecutor(router: MockRouter, deps: DependenciasDeOrdenes): void {
+  router.post('/diagnostics/service-requests/worklist', (request) => {
+    const tenantId = deps.laboratorioDe(request);
+    if (tenantId === null) return forbidden('Sólo el personal del centro ve su bandeja.');
+    const datos = cuerpo<{ scope: unknown; states: unknown; cursor: unknown; limit: unknown; patientQuery: unknown }>(request);
+    if (datos.scope !== 'LAB' && datos.scope !== 'IMAGING') {
+      return validation('scope debe ser LAB o IMAGING', [{ field: 'scope', message: 'scope must be one of the following values: LAB, IMAGING' }]);
+    }
+    const limit = datos.limit === undefined ? 25 : datos.limit;
+    if (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+      return validation('El tope de la bandeja no es válido', [{ field: 'limit', message: 'must not be greater than 100' }]);
+    }
+    const estados = datos.states;
+    if (
+      estados !== undefined &&
+      (!Array.isArray(estados) || estados.some((e) => !ESTADOS_DE_BANDEJA.includes(e as EstadoDeBandeja)))
+    ) {
+      return validation('states: valores permitidos PENDING, RECEIVED, IN_PROCESS, REPORTED, CANCELLED');
+    }
+    const consulta = typeof datos.patientQuery === 'string' ? datos.patientQuery.trim() : datos.patientQuery;
+    if (consulta !== undefined && (typeof consulta !== 'string' || consulta.length < 2 || consulta.length > 80)) {
+      return validation('La búsqueda por paciente no es válida', [{ field: 'patientQuery', message: 'must be longer than or equal to 2 characters' }]);
+    }
+    let despues: { requestedAt: string; id: string } | null = null;
+    if (datos.cursor !== undefined) {
+      despues = typeof datos.cursor === 'string' ? decodeInboxCursor(datos.cursor) : null;
+      if (despues === null) return validation('El cursor de paginación no es válido');
+    }
+    const aguja = typeof consulta === 'string' ? plegado(consulta) : null;
+    const todos = labInboxOrders
+      .filtrar((o) => o.performerTenantId === tenantId && alcanceDe(o) === datos.scope)
+      .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt) || b.id.localeCompare(a.id))
+      .filter((o) => despues === null || o.requestedAt < despues.requestedAt || (o.requestedAt === despues.requestedAt && o.id < despues.id))
+      .map((o) => itemDeBandeja(o, deps))
+      .filter((i) => estados === undefined || (estados as string[]).includes(i.state))
+      .filter(
+        (i) =>
+          aguja === null ||
+          [i.patientDisplayName, i.patientCode].some((v) => v !== null && plegado(v).includes(aguja)),
+      );
+    const pagina = todos.slice(0, limit);
+    const ultimo = pagina.at(-1);
+    return {
+      items: pagina,
+      count: pagina.length,
+      limit,
+      nextCursor:
+        todos.length > limit && ultimo !== undefined
+          ? encodeInboxCursor({ requestedAt: ultimo.requestedAt, id: ultimo.serviceRequestId })
+          : null,
+    };
+  });
+
+  router.get('/diagnostics/service-requests/:id', (request) => {
+    const tenantId = deps.laboratorioDe(request);
+    if (tenantId === null) return forbidden('Sólo el personal del centro ve su bandeja.');
+    const orden = labInboxOrders.get(request.params['id']!);
+    if (orden === undefined || orden.performerTenantId !== tenantId) {
+      return notFound('La orden no existe o no es de este centro.');
+    }
+    return itemDeBandeja(orden, deps);
+  });
+}
+
 export function registrarOrdenesDeLaboratorio(
   router: MockRouter,
   deps: DependenciasDeOrdenes,
 ): void {
+  registrarBandejaDelEjecutor(router, deps);
+
   router.get('/diagnostics/lab/orders', (request) => {
     const tenantId = deps.laboratorioDe(request);
     if (tenantId === null) return forbidden('Sólo el personal del laboratorio ve sus órdenes.');

@@ -27,6 +27,10 @@ import type {
   PatientOrder,
   PatientOwnOrders,
   PreviousStudy,
+  RequisitionCreated,
+  ServiceRequestRecord,
+  NewRequisition,
+  NewImagingDetail,
 } from './diagnostics.types';
 
 /**
@@ -158,10 +162,46 @@ export class DiagnosticsClient {
   requestStudy(orden: NewDiagnosticOrder): Observable<DiagnosticOrderCreated> {
     // Sin las claves ausentes: el backend valida con `forbidNonWhitelisted`
     // y un opcional en `undefined` viaja como clave declarada.
-    const body = sinAusentes(orden);
+    const body = cuerpoSinAusentes(orden);
     return sendIdempotent(this.submissionKeys, 'service-request', body, (headers) =>
       this.http.post<WireOrderCreated>(this.url('/clinical/service-requests'), body, { headers }),
     ).pipe(map(toOrderCreated));
+  }
+
+  /**
+   * `POST /clinical/requisitions` — pide de 1 a 30 estudios juntos. La API crea
+   * un renglón por estudio, todos o ninguno, y los agrupa con `requisitionId`.
+   *
+   * Viaja con `Idempotency-Key` (obligatoria en la API): reintentar el mismo
+   * envío devuelve la misma requisición con `replayed: true`; la misma clave
+   * con otro cuerpo es 409 `REQUISITION_IDEMPOTENCY_KEY_CONFLICT`.
+   *
+   * Un 422 `PRECONDITION_FAILED` trae `details.reason`, `details.field` y
+   * `details.itemIndex` (base 0): el renglón que falla y por qué.
+   */
+  createRequisition(requisicion: NewRequisition): Observable<RequisitionCreated> {
+    const body = {
+      ...sinAusentes(requisicion),
+      items: requisicion.items.map((item) => cuerpoSinAusentes(item)),
+    };
+    return sendIdempotent(this.submissionKeys, 'requisition', body, (headers) =>
+      this.http.post<WireRequisitionCreated>(this.url('/clinical/requisitions'), body, { headers }),
+    ).pipe(
+      map(({ items, ...resto }) => ({ ...resto, items: items.map(toServiceRequestRecord) })),
+    );
+  }
+
+  /**
+   * `GET /clinical/service-requests/:id` — una orden con su detalle (muestra,
+   * componentes, imagen). 404 `SERVICE_REQUEST_NOT_FOUND` si no existe o no es
+   * de un paciente con relación asistencial.
+   */
+  getServiceRequest(id: string): Observable<ServiceRequestRecord> {
+    return this.http
+      .get<WireServiceRequestRecord>(
+        this.url(`/clinical/service-requests/${encodeURIComponent(id)}`),
+      )
+      .pipe(map(toServiceRequestRecord));
   }
 
   /**
@@ -353,6 +393,22 @@ function sinAusentes<T extends object>(valor: T): Partial<T> {
   ) as Partial<T>;
 }
 
+/**
+ * Como {@link sinAusentes}, y también el `imaging` de adentro: un opcional en
+ * `undefined` dentro del detalle de imagen viajaría como clave declarada. Un
+ * `imaging` que queda vacío se omite entero.
+ */
+function cuerpoSinAusentes<T extends object & { readonly imaging?: NewImagingDetail }>(
+  valor: T,
+): Partial<T> {
+  const { imaging, ...resto } = valor;
+  const imagen = imaging === undefined ? {} : sinAusentes(imaging);
+  return {
+    ...sinAusentes(resto),
+    ...(Object.keys(imagen).length === 0 ? {} : { imaging: imagen }),
+  } as Partial<T>;
+}
+
 /** El tope como parámetro, o ninguno: la API tiene su propio valor por omisión. */
 function topeDe(limit: number | undefined): HttpParams {
   return limit === undefined ? new HttpParams() : new HttpParams().set('limit', String(limit));
@@ -433,6 +489,21 @@ function toOrder({
     ...(duplicateOverrideReason == null ? {} : { duplicateOverrideReason }),
     ...(previousServiceRequestId == null ? {} : { previousServiceRequestId }),
   };
+}
+
+type WireServiceRequestRecord = Omit<ServiceRequestRecord, 'createdAt'> & {
+  readonly createdAt: string;
+};
+
+type WireRequisitionCreated = Omit<RequisitionCreated, 'items'> & {
+  readonly items: readonly WireServiceRequestRecord[];
+};
+
+function toServiceRequestRecord({
+  createdAt,
+  ...resto
+}: WireServiceRequestRecord): ServiceRequestRecord {
+  return { ...resto, createdAt: new Date(createdAt) };
 }
 
 function toReport({ createdAt, ...resto }: WireReport): DiagnosticReport {

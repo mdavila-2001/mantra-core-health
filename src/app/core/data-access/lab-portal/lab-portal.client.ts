@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { type Observable } from 'rxjs';
+import { EMPTY, expand, forkJoin, map, type Observable, reduce } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { simulatorOnly } from '../simulator-only';
@@ -13,6 +13,8 @@ import type {
   LabOrder,
   LabOrderAction,
   LabOrderPage,
+  LabOrderScope,
+  LabOrderStatus,
   LabResultFile,
   LabResultFilePage,
   LabResultFileQuery,
@@ -26,6 +28,7 @@ import type {
   LabServiceQuery,
   LabSummary,
 } from './lab-portal.types';
+import type { ServiceRequestComponent, ServiceRequestImaging } from '../diagnostics/diagnostics.types';
 
 /**
  * El cliente del portal de la cuenta de laboratorio: su catálogo de servicios,
@@ -124,10 +127,51 @@ export class LabPortalClient {
 
   /* ---- órdenes ---------------------------------------------------------- */
 
-  /** Todas las órdenes del laboratorio con su estado; las pestañas filtran en pantalla. */
-  listOrders(): Observable<LabOrderPage> {
-    return this.simulated('Ver las órdenes del laboratorio', () =>
-      this.http.get<LabOrderPage>(this.url('/diagnostics/lab/orders')),
+  /**
+   * La bandeja del ejecutor: `POST /diagnostics/service-requests/worklist`
+   * (C6, API real). Sin `scope` pide laboratorio e imagenología y junta las dos;
+   * las pestañas filtran en pantalla. Sigue la paginación por cursor hasta
+   * {@link TOPE_DE_PAGINAS} páginas de 100.
+   *
+   * El estado de la API (`PENDING | RECEIVED | IN_PROCESS | REPORTED |
+   * CANCELLED`) se traduce al de la pantalla: `PENDING→DRAFT`,
+   * `RECEIVED→RECEIVED`, `IN_PROCESS→PROCESSED`, `REPORTED→UPLOADED`,
+   * `CANCELLED→CANCELLED` (la API no distingue «rechazada»).
+   */
+  listOrders(scope?: LabOrderScope): Observable<LabOrderPage> {
+    const scopes: readonly LabOrderScope[] = scope === undefined ? ['LAB', 'IMAGING'] : [scope];
+    return forkJoin(scopes.map((s) => this.worklist(s))).pipe(
+      map((paginas) => {
+        const items = paginas
+          .flat()
+          .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt) || a.orderId.localeCompare(b.orderId));
+        return { items, count: items.length };
+      }),
+    );
+  }
+
+  /** `GET /diagnostics/service-requests/:id` — una orden de la bandeja con su detalle. */
+  getOrder(orderId: string): Observable<LabOrder> {
+    return this.http
+      .get<WireWorklistItem>(
+        this.url(`/diagnostics/service-requests/${encodeURIComponent(orderId)}`),
+      )
+      .pipe(map(toLabOrder));
+  }
+
+  /** Todas las páginas de una bandeja, de a 100. */
+  private worklist(scope: LabOrderScope): Observable<LabOrder[]> {
+    const pedir = (cursor: string | null): Observable<WireWorklistPage> =>
+      this.http.post<WireWorklistPage>(this.url('/diagnostics/service-requests/worklist'), {
+        scope,
+        limit: 100,
+        ...(cursor === null ? {} : { cursor }),
+      });
+    return pedir(null).pipe(
+      expand((pagina, indice) =>
+        pagina.nextCursor !== null && indice + 1 < TOPE_DE_PAGINAS ? pedir(pagina.nextCursor) : EMPTY,
+      ),
+      reduce((acc: LabOrder[], pagina) => [...acc, ...pagina.items.map(toLabOrder)], []),
     );
   }
 
@@ -245,4 +289,63 @@ function parametros(query: object): HttpParams {
     params = params.set(clave, String(valor));
   }
   return params;
+}
+
+/** Páginas de la bandeja que se siguen antes de parar (100 órdenes cada una). */
+const TOPE_DE_PAGINAS = 10;
+
+/** Un renglón de `POST /diagnostics/service-requests/worklist`. Lo que la API no manda va opcional. */
+interface WireWorklistItem {
+  readonly serviceRequestId: string;
+  readonly patientDisplayName: string | null;
+  readonly codeDisplay: string | null;
+  readonly requestingTenantName: string | null;
+  readonly requestedAt: string;
+  readonly state: 'PENDING' | 'RECEIVED' | 'IN_PROCESS' | 'REPORTED' | 'CANCELLED';
+  readonly scope: LabOrderScope;
+  readonly summary?: string;
+  readonly requisitionId?: string | null;
+  readonly specimenTypeDisplay?: string | null;
+  readonly components?: readonly ServiceRequestComponent[];
+  readonly componentsSpecified?: boolean;
+  readonly imaging?: ServiceRequestImaging | null;
+  /** Sólo el simulador: la API real no manda ni archivos ni motivo en la bandeja. */
+  readonly files?: LabOrder['files'];
+  readonly reason?: string | null;
+}
+
+interface WireWorklistPage {
+  readonly items: readonly WireWorklistItem[];
+  readonly nextCursor: string | null;
+}
+
+const ESTADO_DE_PANTALLA: Readonly<Record<WireWorklistItem['state'], LabOrderStatus>> = {
+  PENDING: 'DRAFT',
+  RECEIVED: 'RECEIVED',
+  IN_PROCESS: 'PROCESSED',
+  REPORTED: 'UPLOADED',
+  CANCELLED: 'CANCELLED',
+};
+
+function toLabOrder(item: WireWorklistItem): LabOrder {
+  return {
+    orderId: item.serviceRequestId,
+    studyName: item.codeDisplay ?? 'Estudio',
+    patientName: item.patientDisplayName ?? 'Paciente',
+    // La bandeja trae el nombre de la organización que pide, no el del médico.
+    requesterName: item.requestingTenantName ?? '',
+    requestedAt: item.requestedAt,
+    status: ESTADO_DE_PANTALLA[item.state],
+    reason: item.reason ?? null,
+    files: item.files ?? [],
+    scope: item.scope,
+    summary: item.summary ?? item.codeDisplay ?? 'Estudio',
+    detail: {
+      requisitionId: item.requisitionId ?? null,
+      specimenTypeDisplay: item.specimenTypeDisplay ?? null,
+      components: item.components ?? [],
+      componentsSpecified: item.componentsSpecified ?? false,
+      imaging: item.imaging ?? null,
+    },
+  };
 }
