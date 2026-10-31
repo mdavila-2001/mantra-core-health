@@ -69,14 +69,14 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   PRACTITIONER_PROFILE: (id) => `/directory/${id}`,
   // ORGANIZATION_PROFILE (derivación a una organización, 31/10/2026) no está
   // acá: su ruta no se arma con el id (el tenant) sino que la manda la API en
-  // `payloadJson.route` — ver `rutaDeOrganizacion`.
+  // `payloadJson.route` — ver `organizationRoute`.
 };
 
 /**
  * La única forma de ruta que se acepta del aviso de una organización: su ficha
  * pública por slug (`/o/:slug`, `rutasDeFichasPublicas` en `app.routes.ts`).
  */
-const RUTA_DE_ORGANIZACION = /^\/o\/[a-z0-9-]+$/;
+const ORGANIZATION_ROUTE = /^\/o\/[a-z0-9-]+$/;
 
 /**
  * La ficha pública de la organización a la que derivaron a la persona.
@@ -86,10 +86,10 @@ const RUTA_DE_ORGANIZACION = /^\/o\/[a-z0-9-]+$/;
  * un `route` arbitrario en el payload no puede convertir la campana en un
  * redirector a cualquier lado.
  */
-function rutaDeOrganizacion(payloadJson: unknown): string | null {
+function organizationRoute(payloadJson: unknown): string | null {
   if (typeof payloadJson !== 'object' || payloadJson === null) return null;
   const route = (payloadJson as Record<string, unknown>)['route'];
-  return typeof route === 'string' && RUTA_DE_ORGANIZACION.test(route) ? route : null;
+  return typeof route === 'string' && ORGANIZATION_ROUTE.test(route) ? route : null;
 }
 
 /**
@@ -113,7 +113,7 @@ export function rutaDeNotificacion(
     return null;
   }
   if (destination.type === 'ORGANIZATION_PROFILE') {
-    return rutaDeOrganizacion(payloadJson);
+    return organizationRoute(payloadJson);
   }
   const constructor = RUTAS[destination.type];
   return constructor ? constructor(destination.id) : null;

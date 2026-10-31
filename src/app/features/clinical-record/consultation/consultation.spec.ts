@@ -691,21 +691,21 @@ describe('Consultation', () => {
 
   /* ---- Derivar: casilla, cierre con el envío en vuelo y salida al encuentro */
 
-  interface CasillaDePrueba {
+  interface TileUnderTest {
     clave: string;
     cantidad: number | null;
     rotuloDeCantidad: string;
     lecturaDeCantidad: string | null;
   }
-  const casillaDeDerivar = (): CasillaDePrueba =>
-    interno<() => readonly CasillaDePrueba[]>('casillas')().find((c) => c.clave === 'derivacion')!;
+  const referralTile = (): TileUnderTest =>
+    interno<() => readonly TileUnderTest[]>('casillas')().find((c) => c.clave === 'derivacion')!;
 
   it('la casilla «Derivar» nombra lo que cuenta: derivaciones, no «en la historia»', async () => {
     await responderLectura({}, {}, [], [REFERRAL, { ...REFERRAL, id: 'ref-2' }]);
     harness.detectChanges();
-    expect(casillaDeDerivar().rotuloDeCantidad).toBe('derivaciones');
+    expect(referralTile().rotuloDeCantidad).toBe('derivaciones');
     expect(
-      interno<() => readonly CasillaDePrueba[]>('casillas')().find((c) => c.clave === 'diagnosticos')
+      interno<() => readonly TileUnderTest[]>('casillas')().find((c) => c.clave === 'diagnosticos')
         ?.rotuloDeCantidad,
     ).toBe('en la historia');
     expect(
@@ -715,19 +715,19 @@ describe('Consultation', () => {
 
   it('la casilla «Derivar» distingue «leyendo» de «no se pudo leer»', async () => {
     // Antes de responder: se está leyendo.
-    expect(casillaDeDerivar().lecturaDeCantidad).toBe('loading');
+    expect(referralTile().lecturaDeCantidad).toBe('loading');
     http
       .expectOne((r) => r.url === '/referrals')
       .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
     await flushChartReadsOnly();
     harness.detectChanges();
-    expect(casillaDeDerivar().lecturaDeCantidad).toBe('failed');
-    const sinCifra = harness.routeNativeElement!.querySelector(
-      '[data-testid="consulta-casilla-derivacion-sin-cifra"]',
+    expect(referralTile().lecturaDeCantidad).toBe('failed');
+    const uncounted = harness.routeNativeElement!.querySelector(
+      '[data-testid="consulta-casilla-derivacion-uncounted"]',
     );
-    expect(sinCifra).not.toBeNull();
+    expect(uncounted).not.toBeNull();
     // Con tono de aviso, no el gris de «Contando…».
-    expect(sinCifra?.classList.contains('consulta__casilla-cantidad--fallida')).toBe(true);
+    expect(uncounted?.classList.contains('consulta__casilla-cantidad--fallida')).toBe(true);
   });
 
   it('cerrar el modal con la derivación en vuelo igual relee la lista y la cifra', async () => {
@@ -757,7 +757,7 @@ describe('Consultation', () => {
 
     post.flush({ id: 'ref-9', patientProfileId: 'p-1', statusConceptId: 'st', createdAt: '2026-10-31T10:00:00Z' });
     http.expectOne((r) => r.url === '/referrals' && r.method === 'GET').flush([REFERRAL]);
-    expect(casillaDeDerivar().cantidad).toBe(1);
+    expect(referralTile().cantidad).toBe(1);
   });
 
   it('sin encuentro, «Ir a abrir el encuentro» cierra el modal y deja el foco en el encuentro', async () => {
