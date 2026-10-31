@@ -8,33 +8,48 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
-<div class="solicitar-acceso">
-  @if (error()) {
-    <app-alert tone="error" title="No se pudo enviar">{{ error() }}</app-alert>
-  }
+<!-- Una tarjeta centrada y a lo ancho (composition-rules §5): con un tope de
+     48rem y sin centrar quedaba pegada a la izquierda con media pantalla vacía. -->
+<app-card variant="elevated" padding="lg" class="solicitar-acceso">
+  <div class="solicitar-acceso__cuerpo">
+    @if (error()) {
+      <app-alert tone="error" title="No se pudo enviar">{{ error() }}</app-alert>
+    }
 
-  @if (sinOrganizacion()) {
-    <app-alert tone="warning" title="Elija una organización">
-      El pedido se hace a nombre de la organización con la que está trabajando.
-      Elija una desde su cuenta y vuelva a intentar.
+    @if (sinOrganizacion()) {
+      <app-alert tone="warning" title="Elija una organización">
+        El pedido se hace a nombre de la organización con la que está trabajando.
+        Elija una desde su cuenta y vuelva a intentar.
+      </app-alert>
+    }
+
+    <app-alert tone="info">
+      Pedir NO le da acceso todavía: el paciente recibe un aviso y elige qué
+      especialidades autorizarle. Puede seguir buscando mientras espera su
+      decisión.
     </app-alert>
-  }
 
-  <app-alert tone="info">
-    Pedir NO le da acceso todavía: el paciente recibe un aviso y elige qué
-    especialidades autorizarle. Puede seguir buscando mientras espera su
-    decisión.
-  </app-alert>
+    <app-form-field icon="note" label="Motivo (opcional)" hint="El paciente va a ver este texto en el aviso.">
+      <app-textarea
+        placeholder="Ej: seguimiento de una derivación"
+        [value]="motivo()"
+        (valueChange)="motivo.set($event)"
+      />
+    </app-form-field>
+  </div>
 
-  <app-form-field icon="note" label="Motivo (opcional)" hint="El paciente va a ver este texto en el aviso.">
-    <app-textarea
-      placeholder="Ej: seguimiento de una derivación"
-      [value]="motivo()"
-      (valueChange)="motivo.set($event)"
-    />
-  </app-form-field>
-
-  <button app-button type="button" [disabled]="!puedeEnviar()" (click)="enviar()">
-    Pedir vinculación
-  </button>
-</div>
+  <!-- Contra el final, como la acción de cualquier formulario: a todo el ancho
+       de la tarjeta el botón dejaba de leerse como botón. -->
+  <div card-footer class="solicitar-acceso__acciones">
+    <button
+      app-button
+      type="button"
+      data-testid="solicitar-acceso-enviar"
+      [disabled]="!puedeEnviar()"
+      [isLoading]="enviando()"
+      (click)="enviar()"
+    >
+      Pedir vinculación
+    </button>
+  </div>
+</app-card>

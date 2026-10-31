@@ -13,6 +13,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../shared/components/molecules/card/card';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
@@ -29,7 +30,7 @@ import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
  */
 @Component({
   selector: 'app-request-access',
-  imports: [Alert, AppButton, FormField, PageHeader, Textarea],
+  imports: [Alert, AppButton, Card, FormField, PageHeader, Textarea],
   templateUrl: './request-access.html',
   styleUrl: './request-access.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
