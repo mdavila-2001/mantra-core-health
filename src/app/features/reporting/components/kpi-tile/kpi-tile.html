@@ -1,7 +1,14 @@
-<article class="kpi" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'kpi-' + kpi().id">
+<article class="kpi" [class.kpi--plano]="plano()" [class.kpi--hero]="hero()" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'kpi-' + kpi().id">
   <h3 class="kpi__title" [id]="ids + '-t'">{{ kpi().titulo }}</h3>
 
   <p class="kpi__value" [class.kpi__value--empty]="noData()" data-testid="kpi-value">{{ valueText() }}</p>
+
+  @if (estado(); as e) {
+    <p class="kpi__estado" [attr.data-estado]="e.token" data-testid="kpi-estado">
+      <span class="kpi__estado-glifo" aria-hidden="true">{{ e.glifo }}</span>
+      <span>{{ e.palabra }}</span>
+    </p>
+  }
 
   @if (noData()) {
     <!-- Sin dato: el motivo va siempre, y no hay variación ni tendencia que inventar. -->

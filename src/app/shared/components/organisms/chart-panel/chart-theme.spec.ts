@@ -57,4 +57,23 @@ describe('chart-theme · CSS ↔ TS', () => {
     expect(tema.ordinal?.every((c) => c === 'currentColor' || c !== '')).toBe(true);
     expect(tema.ordinal).toHaveLength(4);
   });
+
+  it('lee los colores de estado y la tinta atenuada para series que significan bueno/aviso/error', () => {
+    const raiz = document.documentElement;
+    const pares: readonly [string, string][] = [
+      ['--st-success-fg', '#010101'],
+      ['--st-warning-fg', '#020202'],
+      ['--st-error-fg', '#030303'],
+      ['--text-muted', '#040404'],
+    ];
+    try {
+      for (const [t, v] of pares) raiz.style.setProperty(t, v);
+      const tema = leerTemaGraficos();
+      expect(tema.estado).toEqual({ exito: '#010101', aviso: '#020202', error: '#030303' });
+      expect(tema.aviso).toBe('#020202');
+      expect(tema.atenuado).toBe('#040404');
+    } finally {
+      for (const [t] of pares) raiz.style.removeProperty(t);
+    }
+  });
 });

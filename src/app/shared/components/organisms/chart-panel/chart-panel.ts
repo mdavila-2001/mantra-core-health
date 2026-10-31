@@ -69,6 +69,13 @@ export class ChartPanel {
   readonly seleccion = input<string | null>(null);
   /** Dentro del diálogo «Ver en grande»: sin menú, más alto. */
   readonly grande = input(false);
+  /**
+   * Sin borde, sombra ni radio propios: para vivir DENTRO de la única tarjeta con pestañas de la pantalla
+   * (`composition-rules.md` §5; `tokens.md` §Radios: una sola superficie elevada por pantalla).
+   */
+  readonly plano = input(false);
+  /** Mientras llegan datos nuevos se conserva el dibujo anterior, atenuado: sin esqueleto ni salto. */
+  readonly refrescando = input(false);
 
   /** El gráfico NO decide si el filtro se activa o se quita: lo decide quien lo guarda. */
   readonly filtroCambia = output<FiltroActivo>();
@@ -107,7 +114,7 @@ export class ChartPanel {
   protected readonly alto = computed(() => (this.grande() ? 520 : (this.spec().alto ?? 300)));
   protected readonly etiquetaFiltro = computed(() => {
     const f = this.spec().filtro;
-    return f === null ? null : ETIQUETA_DIMENSION[f.dimension];
+    return f === null ? null : (ETIQUETA_DIMENSION[f.dimension] ?? f.dimension);
   });
   /** Elementos que se pueden filtrar, para el camino de teclado. */
   protected readonly elementosFiltrables = computed<readonly string[]>(() => {
@@ -126,6 +133,7 @@ export class ChartPanel {
       case 'mapa-calor':
         return d.filas;
       case 'medidor':
+      case 'histograma':
         return [];
     }
   });

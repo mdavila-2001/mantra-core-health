@@ -15,6 +15,12 @@ export interface ChartTheme {
   readonly bordeTooltip: string;
   readonly bueno: string;
   readonly malo: string;
+  /** Aviso (`--st-warning-fg`): línea de objetivo y 4xx. Opcional para no romper a quien arma el tema a mano. */
+  readonly aviso?: string;
+  /** Rellenos de estado para series que SIGNIFICAN bueno/aviso/error (`--st-*-fg`: contraste ≥ 3:1 con la superficie en ambos temas). */
+  readonly estado?: { readonly exito: string; readonly aviso: string; readonly error: string };
+  /** Tinta de lo que se atenúa (`--text-muted`): lo que no es el énfasis. */
+  readonly atenuado?: string;
   readonly superficie: string;
   readonly rampa: readonly string[];
   /**
@@ -82,6 +88,13 @@ export function leerTemaGraficos(): ChartTheme {
     bordeTooltip: leer(estilo, '--border-strong', 'currentColor'),
     bueno: leer(estilo, '--st-success-fg', 'currentColor'),
     malo: leer(estilo, '--st-error-fg', 'currentColor'),
+    aviso: leer(estilo, '--st-warning-fg', 'currentColor'),
+    estado: {
+      exito: leer(estilo, '--st-success-fg', 'currentColor'),
+      aviso: leer(estilo, '--st-warning-fg', 'currentColor'),
+      error: leer(estilo, '--st-error-fg', 'currentColor'),
+    },
+    atenuado: leer(estilo, '--text-muted', 'currentColor'),
     superficie: leer(estilo, '--bg-surface', 'Canvas'),
     rampa: RAMPA_TOKENS.map((t) => leer(estilo, t, 'currentColor')),
     ordinal: ORDINAL_TOKENS.map((t) => leer(estilo, t, 'currentColor')),
