@@ -253,10 +253,10 @@ modalidad diga otra cosa.
 
 | Modalidad | Capa base | Notas |
 |---|---|---|
-| RX, TC de hueso, densitometría | `skeleton` | caso dominante (36 de 48 regiones tienen `capa_preferida: skeleton`) |
+| RX, TC de hueso, densitometría | `skeleton` | caso dominante (54 de 96 regiones con malla propia tienen `capa_preferida: skeleton`) |
 | ECO abdominal / renal / vesical / prostática / testicular, TC abdomen-pelvis | `organs` | |
 | TC/RM de encéfalo | `nervous` + `skeleton` (cráneo atenuado) | `ENCEFALO` usa 96 mallas de `nervous` |
-| Angio-TC, Doppler | `vessels` | hoy no hay regiones vasculares en la lista tentativa |
+| Angio-TC, Doppler | `vessels` | las 19 regiones `vascular` del catálogo: 11 con malla propia (aorta, carótidas, coronarias, ilíacas, renales, mesentéricas, cava, yugular, pulmonar, porta), 5 por referencia, 3 sin nada |
 | RM musculoesquelética, ECO de partes blandas | `skeleton` + `muscles` | `muscles.glb` pesa 2,3 MB: encenderla sólo en estas |
 | Mamografía, ECO mamaria | `muscles` (referencia) | `MAMA` no tiene malla |
 
@@ -293,105 +293,259 @@ sin `networkidle`.
 
 ## 5. El mapeo: `catalogo/regiones-cuerpo-3d.json`
 
-Generado por `gen_regiones_cuerpo_3d.py` (§9) leyendo `parts.json`, `index.json` y los cinco GLB.
-Validado con `python3 -I -m json.tool` (OK) y con una comprobación aparte: **0** ids de malla que no
-existan en `parts.json`, **0** mallas en un balde de lado que no coincida con su `side`, y `structureIds`
-idéntico al conjunto derivado de las mallas en las 48 regiones. El script terminó con **0 avisos**
-(ninguna regla vacía, ningún encuadre vacío).
+Generado por `gen_regiones_cuerpo_3d.py` (§9) leyendo `catalogo/imagenologia.json` (versión
+`2026-10-31`, 156 regiones), `parts.json`, `index.json` y los cinco GLB.
+Las claves `region` son **exactamente** los códigos del catálogo: el script falla si usa uno que no existe y
+rellena como `ninguna` cualquier región del catálogo sin regla (`sin_regla_por_tipo`, hoy vacío).
+
+Validado con `python3 -I -m json.tool` (OK) y con una comprobación aparte: 156/156 códigos del catálogo
+presentes una vez, **0** ids de malla inexistentes en `parts.json`, **0** mallas en un balde de lado que no
+coincida con su `side`, y `structureIds` idéntico al conjunto derivado de las mallas en las 156 regiones.
+El script terminó con **1 aviso**: `OJO` admite lateralidad en el catálogo pero el atlas tiene un solo
+`eyeball` central (`FMA12513`, `side: null`), así que al tocarlo la lateralidad se pide a mano.
+
+Equivalencias aplicadas desde `imagenologia-FUENTES.md` § «Nota para el mapeo 3D»: MACIZO_FACIAL→CARA (+
+HUESOS_FACIALES), PIEZAS_DENTARIAS→DIENTES, OIDO_PENASCO→PENASCO (y OIDO como contenedora),
+SILLA_TURCA_HIPOFISIS→SILLA_TURCA, SACRO_COXIS→SACRO + COCCIX (cóccix sin malla, referencia al sacro),
+COLUMNA_TOTAL→COLUMNA, PARRILLA_COSTAL→COSTILLAS, RENAL→RINON, VESICAL→VEJIGA, TESTICULAR→TESTICULO (+
+ESCROTO como referencia), UTERO_ANEXOS→UTERO/UTERO_TROMPAS/ANEXOS_UTERINOS/OVARIO (sin malla),
+SACROILIACA→SACROILIACAS.
 
 Forma de cada región (además de lo pedido: `region`, `capa_preferida`, `mallas{izquierda,derecha,centro}`,
 `structureIds`, `criterio`, `sin_malla`):
 
-- `nombre`, `lateral`, `capas_con_mallas`, `tipo_malla`, `al_tocar`, `uberon_region` (concepto UBERON de la
-  región, buscado por nombre inglés exacto en `index.json`; `null` si no hay), `solo_cuerpo_masculino`,
-  `encuadre` (`modo`, `grupos` por lado y `caja_cm_verificada`).
-- A nivel raíz: `toque_malla_a_region` (malla → región por defecto al tocar: primero regiones `malla`,
-  después `punto`, después agregadas; dentro del nivel, la de menos mallas), `convenio_lado`, `avisos`.
+- `nombre`, `padre`, `tipo_catalogo` y `lateral` **copiados del catálogo** (no se redefinen acá);
+  `capas_con_mallas`, `tipo_malla`, `al_tocar`, `uberon_region` (concepto UBERON de la región, buscado por
+  nombre inglés exacto en `index.json`; `null` si no hay), `solo_cuerpo_masculino`, `encuadre` (`modo`,
+  `grupos` por lado y `caja_cm_verificada`).
+- Las regiones compuestas (grupos, combinadas, COLUMNA_CERVICODORSAL, ABDOMEN_SUPERIOR, MEDIASTINO…) se
+  definen por referencia a otras (`"@CODIGO"` en el script) y heredan sus mallas; `criterio` lo dice
+  («mallas de X»).
+- A nivel raíz: `cobertura_por_tipo_catalogo`, `sin_regla_por_tipo`, `toque_malla_a_region` (malla →
+  región por defecto al tocar: primero regiones `malla`, después agregadas/grupos, al final articulaciones;
+  dentro del nivel, la de menos mallas), `convenio_lado`, `avisos`.
 
 `sin_malla` es `true` para todo lo que no es `propia` (las `contenedora/referencia` traen mallas, pero no
 son de la región).
 
-### 5.1 Cobertura (48 regiones tentativas)
+### 5.1 Cobertura: 156 regiones del catálogo, 156 con entrada
 
-| Región | tipo | al tocar | capa | mallas izq/der/centro | UBERON región |
+Por tipo del catálogo → tipo de malla:
+
+| tipo catálogo | total | propia | contenedora | referencia | ninguna |
 |---|---|---|---|---|---|
-| CRANEO | propia | malla | skeleton | 2 / 2 / 4 | UBERON:0003129 |
-| SENOS_PARANASALES | **contenedora** | solo_select | skeleton | 1 / 1 / 3 | UBERON:0001825 |
-| ORBITA | **contenedora** | solo_select | skeleton | 2 / 2 / 1 | UBERON:0004088 |
-| MACIZO_FACIAL | propia | malla | skeleton | 6 / 6 / 1 | UBERON:0001456 |
-| HUESOS_PROPIOS_NARIZ | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001681 |
-| MANDIBULA | propia | malla | skeleton | 0 / 0 / 1 | UBERON:0001684 |
-| PIEZAS_DENTARIAS | propia | malla | organs | 14 / 14 / 2 | UBERON:0003672 |
-| ATM | propia | punto | skeleton | 1 / 1 / 1 | UBERON:0003700 |
-| OIDO_PENASCO | **contenedora** | solo_select | skeleton | 1 / 1 / 1 | UBERON:0001690 |
-| SILLA_TURCA_HIPOFISIS | propia | malla | organs | 0 / 0 / 2 | UBERON:0000007 |
-| ENCEFALO | propia | malla | nervous | 36 / 36 / 24 | UBERON:0000955 |
-| CUELLO | propia | malla | organs | 2 / 2 / 3 | UBERON:0000974 |
-| TIROIDES | **referencia** | solo_select | organs | 0 / 0 / 2 | UBERON:0002046 |
-| COLUMNA_CERVICAL | propia | malla | skeleton | 0 / 0 / 13 | UBERON:0006072 |
-| COLUMNA_DORSAL | propia | malla | skeleton | 0 / 0 / 24 | UBERON:0006073 |
-| COLUMNA_LUMBAR | propia | malla | skeleton | 0 / 0 / 10 | UBERON:0006074 |
-| COLUMNA_LUMBOSACRA | propia | solo_select | skeleton | 0 / 0 / 11 | — |
-| SACRO_COXIS | propia (sin cóccix) | malla | skeleton | 0 / 0 / 1 | UBERON:0003690 |
-| COLUMNA_TOTAL | propia | solo_select | skeleton | 0 / 0 / 48 | UBERON:0001130 |
-| TORAX | propia | malla | skeleton | 22 / 22 / 6 | UBERON:0001443 |
-| PARRILLA_COSTAL | propia | malla | skeleton | 20 / 20 / 0 | UBERON:0003252 |
-| ESTERNON | propia | malla | skeleton | 0 / 0 / 3 | UBERON:0000975 |
-| CLAVICULA | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001105 |
-| MAMA | **referencia** | solo_select | muscles | 3 / 3 / 0 | UBERON:0000310 |
-| CORAZON | propia | malla | vessels | 0 / 0 / 4 | UBERON:0000948 |
-| ABDOMEN | propia | malla | organs | 2 / 2 / 15 | UBERON:0000916 |
-| ABDOMEN_SUPERIOR | propia | solo_select | organs | 0 / 0 / 5 | — |
-| RENAL | propia | malla | organs | 1 / 1 / 0 | — |
-| VIAS_URINARIAS | propia | solo_select | organs | 2 / 2 / 2 | UBERON:0001008 |
-| VESICAL | propia | malla | organs | 0 / 0 / 1 | UBERON:0001255 |
-| PROSTATA | propia (sólo masculino) | malla | organs | 0 / 0 / 1 | UBERON:0002367 |
-| TESTICULAR | propia (sólo masculino) | malla | organs | 2 / 2 / 0 | UBERON:0000473 |
-| UTERO_ANEXOS | **ninguna** | solo_select | organs | 0 / 0 / 0 | UBERON:0000995 |
-| PELVIS | propia | malla | skeleton | 1 / 1 / 3 | UBERON:0002355 |
-| SACROILIACA | propia | punto | skeleton | 1 / 1 / 1 | — |
-| HOMBRO | propia | punto | skeleton | 3 / 3 / 0 | UBERON:0001467 |
-| HUMERO | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0000976 |
-| CODO | propia | punto | skeleton | 3 / 3 / 0 | UBERON:0001461 |
-| ANTEBRAZO | propia | malla | skeleton | 3 / 3 / 0 | UBERON:0002386 |
-| MUNECA | propia | malla | skeleton | 10 / 10 / 0 | UBERON:0004452 |
-| MANO | propia | malla | skeleton | 27 / 27 / 0 | UBERON:0002398 |
-| CADERA | propia | punto | skeleton | 2 / 2 / 0 | UBERON:0001464 |
-| FEMUR | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0000981 |
-| RODILLA | propia | punto | skeleton | 4 / 4 / 0 | UBERON:0001465 |
-| PIERNA | propia | malla | skeleton | 3 / 3 / 0 | UBERON:0003823 |
-| TOBILLO | propia | punto | skeleton | 3 / 3 / 0 | UBERON:0001488 |
-| PIE | propia | malla | skeleton | 28 / 28 / 0 | UBERON:0002387 |
-| CALCANEO | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001450 |
+| region | 121 | 96 | 5 | 15 | 5 |
+| vascular | 19 | 11 | 0 | 5 | 3 |
+| grupo | 9 | 9 | 0 | 0 | 0 |
+| combinada | 7 | 7 | 0 | 0 | 0 |
+| **total** | **156** | **123** | **5** | **20** | **8** |
 
-Resumen: **41 con malla propia**, 3 contenedoras (senos, órbita, oído), 2 referencias (mama, tiroides),
-1 sin nada (útero y anexos). 7 articulaciones se resuelven por punto. De 930 mallas, **419** proponen
-una región al tocarlas; las demás (437 músculos, 57 vasos, 3 nerviosas, 2 óseas: hioides y globo ocular;
-y las 10 genitales/glándulas sin región: pene, conductos deferentes, vesículas seminales, timo, labio,
-cartílagos nasales, oreja) no proponen nada y el toque se ignora con un aviso.
+Modo de llegada desde el 3D: `malla` 83, `punto` 9 (articulaciones), `solo_select` 64
+(grupos, combinadas, agregadas y todo lo que no tiene malla propia). De 930 mallas, **570** proponen una
+región al tocarlas; no proponen nada 336 músculos (sólo los de pared abdominal, suelo pélvico, brazo/muslo/pierna
+e inguinal entran en regiones), 15 vasos (venas cardíacas, ilíacas, renales, subclavias), 7 órganos
+(oreja, epidídimos, conductos deferentes, labio, cartílagos nasales) y 2 nervios ópticos.
 
-Ejemplo real (MANO): 27 mallas por lado = 8 carpianos + 5 metacarpianos + 14 falanges (pulgar sin falange
-media), todas con `side` coherente; p. ej. `FMA24436` «left scaphoid», `FMA24465` «left first metacarpal
-bone», `FMA65470` «proximal phalanx of left thumb».
+Capa preferida de las regiones `region` con malla propia: skeleton 54, organs 32, muscles 5, nervous 3, vessels 2.
 
-### 5.2 Encuadre de articulaciones (verificado con las cajas del GLB)
+**Sin malla propia (33):**
 
-Intersección de las cajas de los huesos que forman la articulación (tamaño x/y/z en cm, lado izquierdo):
+- contenedoras (5): SENOS_PARANASALES, ORBITA, OIDO, CONDUCTO_AUDITIVO_INTERNO, MASTOIDES — se encuadra el hueso que las contiene (temporal, maxilar/frontal/etmoides/esfenoides, lagrimal/cigomático/globo).
+- referencias (20): GLANDULAS_SALIVALES, PAROTIDA, SUBMANDIBULAR, TIROIDES, PARATIROIDES, FARINGE, CAVUM, GANGLIOS_CERVICALES, COCCIX, MAMA, AXILA, VIAS_BILIARES, VIA_BILIOPANCREATICA, ESCROTO, PLEXO_BRAQUIAL, ARTERIAS_MIEMBRO_SUPERIOR, VENAS_MIEMBRO_SUPERIOR, ARTERIAS_MIEMBRO_INFERIOR, VENAS_MIEMBRO_INFERIOR, ARTERIA_FEMORAL — se señala una vecina (pectoral mayor para la mama, cartílago tiroides/tráquea para tiroides y paratiroides, masetero/milohioideo para las salivales, sacro para el cóccix, subclavia/ilíaca externa para los vasos de los miembros, testículos para el escroto…).
+- ninguna (8): ARTERIAS_INTRACRANEALES, SENOS_VENOSOS_DURALES, ARTERIAS_VERTEBRALES, UTERO, UTERO_TROMPAS, ANEXOS_UTERINOS, OVARIO, PLACENTA — el cuerpo de referencia es masculino y no hay vasos intracraneales ni vertebrales.
 
-| Región | grupos | caja |
+Decisiones de prioridad al tocar que conviene revisar con la clínica (P10):
+
+- `temporal bone` → PENASCO (gana a CRANEO por ser más específico); `descending aorta` → AORTA_ABDOMINAL
+  (una sola malla cubre toda la aorta descendente; también está en AORTA_TORACICA); `talus/calcaneus` → RETROPIE;
+  `scaphoid` → ESCAFOIDES (no CARPO ni MUNECA); `tibia` → TIBIA_PERONE; `hip bone` → PELVIS (grupo);
+  `patella` → ROTULA; `maxilla` → MAXILAR.
+- CORAZON y ARTERIAS_CORONARIAS traen mallas con lado (músculos papilares, ramas coronarias) aunque el catálogo
+  no admite lateralidad: el picker ignora el lado de la malla cuando `lateral` es `false`.
+- `middle lobe of lung` (`FMA7383`) viene con `side: null` en el atlas aunque es derecho: PULMONES lo lista en
+  `centro`.
+
+### 5.2 Tabla completa
+
+| Región (código del catálogo) | tipo catálogo | tipo malla | al tocar | capa | mallas izq/der/centro | UBERON región |
+|---|---|---|---|---|---|---|
+| CRANEO | region | propia | malla | skeleton | 2 / 2 / 4 | UBERON:0003129 |
+| ENCEFALO | region | propia | malla | nervous | 36 / 36 / 24 | UBERON:0000955 |
+| FOSA_POSTERIOR | region | propia | malla | nervous | 0 / 0 / 6 | UBERON:0002028 |
+| SILLA_TURCA | region | propia | malla | organs | 0 / 0 / 2 | UBERON:0000007 |
+| CARA | region | propia | solo_select | skeleton | 6 / 6 / 3 | UBERON:0001456 |
+| HUESOS_FACIALES | region | propia | malla | skeleton | 6 / 6 / 2 | UBERON:0011156 |
+| SENOS_PARANASALES | region | **contenedora** | solo_select | skeleton | 1 / 1 / 3 | UBERON:0001825 |
+| ORBITA | region | **contenedora** | solo_select | skeleton | 2 / 2 / 1 | UBERON:0004088 |
+| OJO | region | propia | malla | skeleton | 0 / 0 / 1 | UBERON:0010230 |
+| HUESOS_PROPIOS_NARIZ | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001681 |
+| MAXILAR | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0002397 |
+| MANDIBULA | region | propia | malla | skeleton | 0 / 0 / 1 | UBERON:0001684 |
+| CIGOMA | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001683 |
+| ATM | region | propia | punto | skeleton | 1 / 1 / 1 | UBERON:0003700 |
+| MAXILARES | region | propia | solo_select | skeleton | 1 / 1 / 1 | UBERON:0001708 |
+| DIENTES | region | propia | malla | organs | 14 / 14 / 2 | UBERON:0003672 |
+| ARCADA_DENTARIA_SUPERIOR | region | propia | malla | organs | 1 / 1 / 1 | UBERON:0001709 |
+| ARCADA_DENTARIA_INFERIOR | region | propia | malla | organs | 1 / 1 / 1 | UBERON:0001710 |
+| OIDO | region | **contenedora** | solo_select | skeleton | 1 / 1 / 1 | UBERON:0001690 |
+| PENASCO | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001678 |
+| CONDUCTO_AUDITIVO_INTERNO | region | **contenedora** | solo_select | skeleton | 1 / 1 / 0 | UBERON:0011859 |
+| MASTOIDES | region | **contenedora** | solo_select | skeleton | 1 / 1 / 0 | — |
+| GLANDULAS_SALIVALES | region | **referencia** | solo_select | muscles | 4 / 4 / 0 | UBERON:0001044 |
+| PAROTIDA | region | **referencia** | solo_select | muscles | 2 / 2 / 0 | UBERON:0001831 |
+| SUBMANDIBULAR | region | **referencia** | solo_select | muscles | 2 / 2 / 0 | UBERON:0001736 |
+| ARTERIAS_INTRACRANEALES | vascular | **ninguna** | solo_select | nervous | 0 / 0 / 0 | — |
+| SENOS_VENOSOS_DURALES | vascular | **ninguna** | solo_select | nervous | 0 / 0 / 0 | — |
+| TIROIDES | region | **referencia** | solo_select | organs | 0 / 0 / 2 | UBERON:0002046 |
+| PARATIROIDES | region | **referencia** | solo_select | organs | 0 / 0 / 2 | UBERON:0001132 |
+| LARINGE | region | propia | malla | organs | 0 / 0 / 2 | UBERON:0001737 |
+| FARINGE | region | **referencia** | solo_select | organs | 0 / 0 / 2 | — |
+| CAVUM | region | **referencia** | solo_select | skeleton | 0 / 0 / 2 | UBERON:0001728 |
+| TRAQUEA | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0003126 |
+| CAROTIDAS | vascular | propia | malla | vessels | 2 / 2 / 1 | UBERON:0001530 |
+| ARTERIAS_VERTEBRALES | vascular | **ninguna** | solo_select | vessels | 0 / 0 / 0 | — |
+| VENA_YUGULAR | vascular | propia | malla | vessels | 1 / 1 / 0 | UBERON:0001586 |
+| GANGLIOS_CERVICALES | region | **referencia** | solo_select | muscles | 1 / 1 / 0 | UBERON:0002429 |
+| COLUMNA_CERVICAL | region | propia | malla | skeleton | 0 / 0 / 13 | UBERON:0006072 |
+| COLUMNA_DORSAL | region | propia | malla | skeleton | 0 / 0 / 24 | UBERON:0006073 |
+| COLUMNA_LUMBAR | region | propia | malla | skeleton | 0 / 0 / 10 | UBERON:0006074 |
+| SACRO | region | propia | malla | skeleton | 0 / 0 / 1 | UBERON:0003690 |
+| COCCIX | region | **referencia** | solo_select | skeleton | 0 / 0 / 1 | UBERON:0001350 |
+| COLUMNA_CERVICODORSAL | region | propia | solo_select | skeleton | 0 / 0 / 37 | — |
+| COLUMNA_DORSOLUMBAR | region | propia | solo_select | skeleton | 0 / 0 / 34 | — |
+| COLUMNA_LUMBOSACRA | region | propia | solo_select | skeleton | 0 / 0 / 11 | — |
+| SACROILIACAS | region | propia | punto | skeleton | 1 / 1 / 1 | — |
+| MEDULA_ESPINAL | region | propia | malla | nervous | 0 / 0 / 1 | UBERON:0002240 |
+| PULMONES | region | propia | malla | organs | 2 / 2 / 2 | UBERON:0000170 |
+| CORAZON | region | propia | malla | vessels | 2 / 3 / 4 | UBERON:0000948 |
+| ARTERIAS_CORONARIAS | vascular | propia | malla | vessels | 4 / 5 / 0 | UBERON:0001621 |
+| AORTA_TORACICA | vascular | propia | malla | vessels | 0 / 0 / 3 | UBERON:0001515 |
+| ARTERIAS_PULMONARES | vascular | propia | malla | vessels | 0 / 0 / 1 | UBERON:0002012 |
+| MEDIASTINO | region | propia | solo_select | vessels | 4 / 5 / 14 | UBERON:0003728 |
+| COSTILLAS | region | propia | malla | skeleton | 20 / 20 / 0 | UBERON:0003252 |
+| ESTERNON | region | propia | malla | skeleton | 0 / 0 / 3 | UBERON:0000975 |
+| ESTERNOCLAVICULAR | region | propia | punto | skeleton | 1 / 1 / 1 | UBERON:0001469 |
+| MAMA | region | **referencia** | solo_select | muscles | 3 / 3 / 0 | UBERON:0000310 |
+| AXILA | region | **referencia** | solo_select | muscles | 4 / 4 / 0 | UBERON:0009472 |
+| ESOFAGO | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0001043 |
+| HIGADO | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0002107 |
+| VESICULA_BILIAR | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0002110 |
+| VIAS_BILIARES | region | **referencia** | solo_select | organs | 0 / 0 / 2 | UBERON:0001173 |
+| PANCREAS | region | propia | malla | organs | 0 / 0 / 2 | UBERON:0001264 |
+| VIA_BILIOPANCREATICA | region | **referencia** | solo_select | organs | 0 / 0 / 2 | — |
+| BAZO | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0002106 |
+| RINON | region | propia | malla | organs | 1 / 1 / 0 | — |
+| SUPRARRENAL | region | propia | malla | organs | 1 / 1 / 0 | UBERON:0002369 |
+| URETER | region | propia | malla | organs | 1 / 1 / 0 | UBERON:0000056 |
+| ESTOMAGO | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0000945 |
+| DUODENO | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0002114 |
+| INTESTINO_DELGADO | region | propia | solo_select | organs | 0 / 0 / 3 | UBERON:0002108 |
+| COLON | region | propia | malla | organs | 0 / 0 / 4 | UBERON:0001155 |
+| APENDICE | region | propia | malla | organs | 0 / 0 / 1 | — |
+| TRACTO_DIGESTIVO_SUPERIOR | region | propia | solo_select | organs | 0 / 0 / 3 | — |
+| ABDOMEN_SUPERIOR | region | propia | solo_select | organs | 2 / 2 / 7 | — |
+| VIAS_URINARIAS | region | propia | solo_select | organs | 2 / 2 / 2 | UBERON:0001008 |
+| AORTA_ABDOMINAL | vascular | propia | malla | vessels | 0 / 0 / 1 | UBERON:0001516 |
+| ARTERIAS_RENALES | vascular | propia | malla | vessels | 1 / 1 / 0 | UBERON:0001184 |
+| ARTERIAS_MESENTERICAS | vascular | propia | malla | vessels | 1 / 0 / 5 | — |
+| VENA_PORTA | vascular | propia | malla | vessels | 0 / 0 / 2 | UBERON:0001639 |
+| VENA_CAVA_INFERIOR | vascular | propia | malla | vessels | 0 / 0 / 1 | UBERON:0001072 |
+| RETROPERITONEO | region | propia | solo_select | organs | 5 / 5 / 5 | UBERON:0003693 |
+| PARED_ABDOMINAL | region | propia | malla | muscles | 5 / 5 / 1 | UBERON:0003697 |
+| VEJIGA | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0001255 |
+| URETRA | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0000057 |
+| VEJIGA_URETRA | region | propia | solo_select | organs | 0 / 0 / 2 | — |
+| PROSTATA | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0002367 |
+| VESICULAS_SEMINALES | region | propia | malla | organs | 1 / 1 / 0 | UBERON:0000998 |
+| TESTICULO | region | propia | malla | organs | 1 / 1 / 0 | UBERON:0000473 |
+| ESCROTO | region | **referencia** | solo_select | organs | 2 / 2 / 0 | UBERON:0001300 |
+| PENE | region | propia | malla | organs | 0 / 0 / 3 | UBERON:0000989 |
+| UTERO | region | **ninguna** | solo_select | organs | 0 / 0 / 0 | UBERON:0000995 |
+| UTERO_TROMPAS | region | **ninguna** | solo_select | organs | 0 / 0 / 0 | — |
+| ANEXOS_UTERINOS | region | **ninguna** | solo_select | organs | 0 / 0 / 0 | — |
+| OVARIO | region | **ninguna** | solo_select | organs | 0 / 0 / 0 | UBERON:0000992 |
+| PLACENTA | region | **ninguna** | solo_select | organs | 0 / 0 / 0 | UBERON:0001987 |
+| RECTO | region | propia | malla | organs | 0 / 0 / 1 | UBERON:0001052 |
+| CANAL_ANAL | region | propia | malla | muscles | 0 / 0 / 1 | UBERON:0000159 |
+| SUELO_PELVICO | region | propia | malla | muscles | 4 / 4 / 2 | — |
+| REGION_INGUINAL | region | propia | malla | muscles | 1 / 1 / 0 | — |
+| ARTERIAS_ILIACAS | vascular | propia | malla | vessels | 3 / 3 / 0 | UBERON:0001191 |
+| HOMBRO | region | propia | punto | skeleton | 3 / 3 / 0 | UBERON:0001467 |
+| CLAVICULA | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001105 |
+| ESCAPULA | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0006849 |
+| ACROMIOCLAVICULAR | region | propia | punto | skeleton | 2 / 2 / 0 | UBERON:0003692 |
+| PLEXO_BRAQUIAL | region | **referencia** | solo_select | muscles | 3 / 3 / 0 | UBERON:0001814 |
+| HUMERO | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0000976 |
+| BRAZO | region | propia | solo_select | skeleton | 8 / 8 / 0 | UBERON:0003822 |
+| CODO | region | propia | punto | skeleton | 3 / 3 / 0 | UBERON:0001461 |
+| RADIO_CUBITO | region | propia | malla | skeleton | 2 / 2 / 0 | UBERON:0010703 |
+| ANTEBRAZO | region | propia | malla | skeleton | 3 / 3 / 0 | UBERON:0002386 |
+| CARPO | region | propia | malla | skeleton | 8 / 8 / 0 | UBERON:0009880 |
+| ESCAFOIDES | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001427 |
+| MUNECA | region | propia | malla | skeleton | 10 / 10 / 0 | UBERON:0004452 |
+| METACARPO | region | propia | malla | skeleton | 5 / 5 / 0 | — |
+| DEDOS_MANO | region | propia | malla | skeleton | 14 / 14 / 0 | UBERON:0002389 |
+| PULGAR | region | propia | malla | skeleton | 3 / 3 / 0 | UBERON:0001463 |
+| MANO | region | propia | malla | skeleton | 27 / 27 / 0 | UBERON:0002398 |
+| ARTERIAS_MIEMBRO_SUPERIOR | vascular | **referencia** | solo_select | vessels | 1 / 1 / 0 | — |
+| VENAS_MIEMBRO_SUPERIOR | vascular | **referencia** | solo_select | vessels | 1 / 1 / 0 | — |
+| CADERA | region | propia | punto | skeleton | 2 / 2 / 0 | UBERON:0001464 |
+| FEMUR | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0000981 |
+| MUSLO | region | propia | solo_select | skeleton | 16 / 16 / 0 | UBERON:0000376 |
+| ROTULA | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0002446 |
+| RODILLA | region | propia | punto | skeleton | 4 / 4 / 0 | UBERON:0001465 |
+| TIBIA_PERONE | region | propia | malla | skeleton | 2 / 2 / 0 | — |
+| PIERNA | region | propia | solo_select | skeleton | 17 / 17 / 0 | UBERON:0003823 |
+| TENDON_AQUILES | region | propia | malla | muscles | 1 / 1 / 0 | UBERON:0003701 |
+| TOBILLO | region | propia | punto | skeleton | 3 / 3 / 0 | UBERON:0001488 |
+| CALCANEO | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0001450 |
+| TARSO | region | propia | malla | skeleton | 7 / 7 / 0 | UBERON:0009879 |
+| RETROPIE | region | propia | malla | skeleton | 2 / 2 / 0 | — |
+| METATARSO | region | propia | malla | skeleton | 5 / 5 / 0 | — |
+| DEDOS_PIE | region | propia | malla | skeleton | 14 / 14 / 0 | UBERON:0001466 |
+| SESAMOIDEOS_PIE | region | propia | malla | skeleton | 1 / 1 / 0 | UBERON:0008000 |
+| ANTEPIE | region | propia | malla | skeleton | 20 / 20 / 0 | — |
+| PIE | region | propia | malla | skeleton | 28 / 28 / 0 | UBERON:0002387 |
+| ARTERIAS_MIEMBRO_INFERIOR | vascular | **referencia** | solo_select | vessels | 1 / 1 / 0 | — |
+| VENAS_MIEMBRO_INFERIOR | vascular | **referencia** | solo_select | vessels | 1 / 1 / 0 | — |
+| ARTERIA_FEMORAL | vascular | **referencia** | solo_select | vessels | 1 / 1 / 0 | UBERON:0002060 |
+| CABEZA | grupo | propia | solo_select | skeleton | 44 / 44 / 31 | UBERON:0000033 |
+| CUELLO | grupo | propia | solo_select | skeleton | 3 / 3 / 18 | UBERON:0000974 |
+| COLUMNA | grupo | propia | solo_select | skeleton | 0 / 0 / 48 | UBERON:0001130 |
+| TORAX | grupo | propia | solo_select | skeleton | 26 / 27 / 42 | UBERON:0001443 |
+| ABDOMEN | grupo | propia | solo_select | organs | 8 / 8 / 17 | UBERON:0000916 |
+| PELVIS | grupo | propia | solo_select | skeleton | 4 / 4 / 4 | UBERON:0002355 |
+| MIEMBRO_SUPERIOR | grupo | propia | solo_select | skeleton | 32 / 32 / 0 | UBERON:0002102 |
+| MIEMBRO_INFERIOR | grupo | propia | solo_select | skeleton | 32 / 32 / 0 | UBERON:0002103 |
+| CUERPO_ENTERO | grupo | propia | solo_select | skeleton | 95 / 95 / 61 | UBERON:0013702 |
+| CABEZA_CUELLO | combinada | propia | solo_select | skeleton | 47 / 47 / 49 | — |
+| CUELLO_TORAX | combinada | propia | solo_select | skeleton | 29 / 30 / 57 | — |
+| TORAX_ABDOMEN | combinada | propia | solo_select | skeleton | 34 / 35 / 58 | — |
+| ABDOMEN_PELVIS | combinada | propia | solo_select | skeleton | 12 / 12 / 21 | — |
+| TORAX_ABDOMEN_PELVIS | combinada | propia | solo_select | skeleton | 38 / 39 / 62 | — |
+| CUELLO_TORAX_ABDOMEN_PELVIS | combinada | propia | solo_select | skeleton | 41 / 42 / 77 | — |
+| PELVIS_MIEMBROS_INFERIORES | combinada | propia | solo_select | skeleton | 36 / 36 / 4 | — |
+
+### 5.3 Encuadre de articulaciones (verificado con las cajas del GLB)
+
+Intersección de las cajas de los huesos que forman la articulación (tamaño x × y × z en cm, lado izquierdo):
+
+| Región | grupos (mallas izquierdas) | caja |
 |---|---|---|
-| ATM | temporal ∩ mandíbula | 3,9 × 2,9 × 4,1 |
-| HOMBRO | escápula ∩ húmero | 2,8 × 14,5 × 5,0 |
-| CODO | húmero ∩ cúbito | 4,4 × 2,4 × 5,0 |
-| CADERA | coxal ∩ fémur | 10,0 × 8,3 × 7,4 |
-| SACROILIACA | coxal ∩ sacro | 5,8 × 14,5 × 8,1 |
-| RODILLA | fémur ∩ tibia | 7,6 × **0,4** × 6,2 |
-| TOBILLO | tibia ∩ astrágalo | 4,1 × 1,0 × 5,3 |
-| MUNECA | unión de los carpianos | 5,0 × 3,1 × 2,8 |
+| ATM | FMA52739 ∩ FMA52748 | 3,9 × 2,9 × 4,1 |
+| SACROILIACAS | FMA16587 ∩ FMA16202 | 5,8 × 14,5 × 8,1 |
+| ESTERNOCLAVICULAR | FMA13323 ∩ FMA7486 | 1,7 × 1,5 × 1,8 |
+| HOMBRO | FMA13396 ∩ FMA23131 | 2,8 × 14,5 × 5,0 |
+| ACROMIOCLAVICULAR | FMA13396 ∩ FMA13323 | 9,1 × 2,8 × 5,2 |
+| CODO | FMA23131 ∩ FMA23468 | 4,4 × 2,4 × 5,0 |
+| CADERA | FMA16587 ∩ FMA24475 | 10,0 × 8,3 × 7,4 |
+| RODILLA | FMA24475 ∩ FMA24478 | 7,6 × 0,4 × 6,2 |
+| TOBILLO | FMA24478 ∩ FMA24483 | 4,1 × 1,0 × 5,3 |
+| MUNECA (unión) | 8 carpianos | 5,0 × 3,1 × 2,8 |
 
-Ninguna vacía, pero rodilla y tobillo son láminas finas: V1 debe agrandar la caja a un mínimo. La del
-hombro es alta porque la caja de la escápula lo es; se ve bien igual, pero es una aproximación por cajas
-alineadas a los ejes, no geometría real.
+Ninguna vacía, pero rodilla, tobillo y esternoclavicular son láminas finas: V1 debe agrandar la caja a un
+mínimo. Hombro y acromioclavicular salen anchas porque la caja de la escápula lo es; son aproximaciones por
+cajas alineadas a los ejes, no geometría real.
 
 ---
 
@@ -427,12 +581,12 @@ alineadas a los ejes, no geometría real.
    RODILLA tocando (sólo por select). Con V2, depende de la caja de la articulación.
 4. **Aproximaciones clínicas** (senos, órbita, oído, mama, tiroides): mostrar algo vecino puede leerse como
    «la región es eso». Requiere texto explícito y aprobación clínica.
-5. **Cuerpo único masculino**: PROSTATA/TESTICULAR desaparecen del modelo con `sex='female'`
-   (`anatomy-viewer.ts:374`); UTERO_ANEXOS no existe. Hay que decidir qué hace el select según el sexo del
+5. **Cuerpo único masculino**: PROSTATA, VESICULAS_SEMINALES, TESTICULO, ESCROTO y PENE desaparecen del modelo con `sex='female'`
+   (`anatomy-viewer.ts:374`); UTERO, UTERO_TROMPAS, ANEXOS_UTERINOS, OVARIO y PLACENTA no existen. Hay que decidir qué hace el select según el sexo del
    paciente (P6).
-6. **Códigos tentativos**: los 48 códigos son de este informe. Cuando exista
-   `catalogo/imagenologia.json` hay que alinear códigos y nombres y volver a correr el script; una región
-   del catálogo que no esté en el mapeo debe salir como `ninguna`, no fallar.
+6. **Códigos del catálogo**: las claves son los 156 códigos de `imagenologia.json`, que
+   `imagenologia-FUENTES.md` declara estables. Si el catálogo cambia, el script falla ante un código
+   desconocido y rellena como `ninguna` cualquier región nueva sin regla; hay que volver a correrlo.
 7. **Licencia CC BY-SA**: la ficha clínica mostrará las mallas; el glosario muestra las fuentes. Confirmar
    que el picker también lleve la atribución (P7).
 8. **Persistencia**: guardar `meshId` sería atar la orden a una versión del atlas. Se guarda región +
@@ -453,8 +607,10 @@ alineadas a los ejes, no geometría real.
   trae una sola región, el picker la muestra elegida y bloqueada y sólo pide lateralidad; si trae varias
   (`allowed`), limita el select; si no trae ninguna, todas.
 - **P4.** ¿Regiones por punto (articulaciones) o sólo por select en la primera versión?
+- **P10.** ¿Valida la clínica las prioridades de toque y las referencias del §5.1 (temporal→PENASCO, aorta
+  descendente→AORTA_ABDOMINAL, salivales→masetero, etc.)?
 - **P5.** ¿Aprueba la clínica mostrar aproximaciones (contenedoras/referencias), o esas regiones van sin 3D?
-- **P6.** Paciente de sexo femenino: ¿se ocultan PROSTATA/TESTICULAR del select? ¿Se muestra UTERO_ANEXOS sin 3D?
+- **P6.** Paciente de sexo femenino: ¿se ocultan PROSTATA, TESTICULO, ESCROTO y PENE del select? ¿Se muestran UTERO, OVARIO y ANEXOS_UTERINOS sin 3D?
 - **P7.** ¿Cómo se muestra la atribución CC BY-SA en la ficha clínica?
 - **P8.** ¿Un estudio puede llevar varias regiones (p. ej. «manos y pies»)? El valor propuesto es una sola
   región; múltiple cambiaría el contrato a una lista.
@@ -471,25 +627,31 @@ Se ejecutó así:
 ```bash
 python3 -I gen_regiones_cuerpo_3d.py /home/user/mantra-core-health \
   /home/user/mantra-core-health/docs/trabajo/2026-10-31-solicitud-estudios-catalogo-completo/catalogo/regiones-cuerpo-3d.json
-# regiones=48 mallas_con_region=419 de 930 avisos=0
+# regiones=156 de 156 del catálogo; mallas_con_region=570 de 930; avisos=1
+# cobertura {"region": {"propia": 96, "contenedora": 5, "referencia": 15, "ninguna": 5}, "vascular": {"ninguna": 3, "propia": 11, "referencia": 5}, "grupo": {"propia": 9}, "combinada": {"propia": 7}}
+# sin regla {}
+# AVISO OJO: admite lateralidad pero todas sus mallas son centrales
 python3 -I -m json.tool .../catalogo/regiones-cuerpo-3d.json > /dev/null   # JSON_OK
 ```
 
-Como no hay ids escritos a mano, un cambio en el atlas (otra versión de BodyParts3D) se absorbe volviendo a
-correrlo; si una regla deja de encontrar mallas o un encuadre queda vacío, sale en `avisos`.
+Como no hay ids escritos a mano, un cambio en el atlas (otra versión de BodyParts3D) o en el catálogo se
+absorbe volviendo a correrlo; si una regla deja de encontrar mallas, un encuadre queda vacío o un código
+no existe, sale en `avisos` o el script falla.
 
 ```python
 #!/usr/bin/env python3
-"""Genera regiones-cuerpo-3d.json: región radiológica -> mallas del atlas 3D.
+"""Genera regiones-cuerpo-3d.json: región del catálogo de imagenología -> mallas del atlas 3D.
 
-Lee SOLO los archivos reales del atlas (nada de ids escritos a mano):
-  public/anatomy-atlas-3d/catalog/parts.json   (meshId, layer, side, structureId, labelEn, sex)
-  public/anatomy-atlas-3d/catalog/index.json   (para el structureId UBERON del concepto de región)
-  public/anatomy-atlas-3d/models/*.glb         (caja de cada malla: translation ± scale, KHR_mesh_quantization)
+Lee SOLO archivos reales (nada de ids escritos a mano):
+  docs/.../catalogo/imagenologia.json              (regiones[]: codigo, nombre, padre, tipo, admite_lateralidad)
+  public/anatomy-atlas-3d/catalog/parts.json       (meshId, layer, side, structureId, labelEn, sex)
+  public/anatomy-atlas-3d/catalog/index.json       (structureId UBERON del concepto de región)
+  public/anatomy-atlas-3d/models/*.glb             (caja de cada malla: translation ± scale, KHR_mesh_quantization)
 
-Cada región se define por reglas (capa + regex sobre labelEn, con exclusiones). Las cajas
-se usan para comprobar que el encuadre de cada articulación (intersección de los huesos
-que la forman) no queda vacío.
+Cada región se define por reglas (capa + regex sobre labelEn, con exclusiones) o por referencia
+a otras regiones ya definidas ("@CODIGO"). Las claves `region` son EXACTAMENTE códigos del
+catálogo: el script falla si una no existe, y toda región del catálogo sin regla sale como
+`tipo_malla: "ninguna"` y se lista en `sin_regla_por_tipo`.
 
 Uso: python3 -I gen_regiones_cuerpo_3d.py <raiz-del-repo> <salida.json>
 """
@@ -503,10 +665,13 @@ RAIZ = Path(sys.argv[1])
 SALIDA = Path(sys.argv[2])
 CAT = RAIZ / "public/anatomy-atlas-3d/catalog"
 MOD = RAIZ / "public/anatomy-atlas-3d/models"
+CATALOGO = RAIZ / "docs/trabajo/2026-10-31-solicitud-estudios-catalogo-completo/catalogo/imagenologia.json"
 
 partes = json.loads((CAT / "parts.json").read_text())
 indice = json.loads((CAT / "index.json").read_text())
+catalogo = json.loads(CATALOGO.read_text())
 uberon_por_nombre_en = {e[2].lower(): e[0] for e in indice["entries"]}
+region_catalogo = {r["codigo"]: r for r in catalogo["regiones"]}
 
 # ---- cajas de las mallas, leídas del GLB --------------------------------------------
 cajas = {}
@@ -548,6 +713,7 @@ def interseccion(a, b):
 # tipo_malla: "propia" (las mallas SON la región), "contenedora" (la región no tiene malla
 # pero vive dentro de estas: los senos dentro de sus huesos), "referencia" (no tiene malla
 # ni está dentro; se señala una vecina para orientar), "ninguna".
+# Una regla es (capa, incluir, excluir) o "@CODIGO" (todas las mallas de esa región).
 S, M, O, V, N = "skeleton", "muscles", "organs", "vessels", "nervous"
 VERT_C = r"^(atlas|axis|(third|fourth|fifth|sixth|seventh) cervical vertebra)$"
 DISCO_C = r"^intervertebral disk of (axis|\w+ cervical vertebra)$"
@@ -556,116 +722,290 @@ DISCO_T = r"^intervertebral disk of \w+ thoracic vertebra$"
 VERT_L = r"^\w+ lumbar vertebra$"
 DISCO_L = r"^intervertebral disk of \w+ lumbar vertebra$"
 CARPO = r"(scaphoid|lunate|triquetral|pisiform|trapezium|trapezoid|capitate|hamate)$"
-MANO = r"(metacarpal bone|phalanx of (left|right) (thumb|index finger|middle finger|ring finger|little finger))$"
+METACARPO = r"metacarpal bone$"
+FALANGES_MANO = r"phalanx of (left|right) (thumb|index finger|middle finger|ring finger|little finger)$"
 TARSO = r"(talus|calcaneus|cuboid bone|cuneiform bone|navicular bone of (left|right) foot)$"
-PIE = r"(metatarsal bone|phalanx of (left|right) (big|second|third|fourth|little) toe|sesamoid bone of (left|right) foot|long plantar ligament)$"
+METATARSO = r"metatarsal bone$"
+FALANGES_PIE = r"phalanx of (left|right) (big|second|third|fourth|little) toe$"
+SESAMOIDEO_PIE = r"^sesamoid bone of (left|right) foot$"
 COSTILLA = r"(\w+ rib|costal cartilage)$"
 ESTERNON = r"^(manubrium|body of sternum|xiphoid process)$"
 NEURO = r"(frontal bone|parietal bone|occipital bone|temporal bone|sphenoid bone|ethmoid)$"
 FACIAL = r"(maxilla|zygomatic bone|nasal bone|lacrimal bone|palatine bone|vomer|inferior nasal concha|mandible)$"
+DIENTES = r"secondary (\w+ )?(incisor|canine|premolar|molar) tooth$"
+PULMON = r"lobe of (left |right )?lung$"
+MUSC_BRAZO = r"(biceps brachii|triceps brachii|brachialis|coracobrachialis)$"
+MUSC_MUSLO = r"(rectus femoris|vastus \w+|biceps femoris|semitendinosus|semimembranosus|adductor (longus|brevis|magnus|minimus)|gracilis|sartorius|pectineus)$"
+MUSC_PIERNA = r"(gastrocnemius|soleus|plantaris|tibialis (anterior|posterior)|fibularis \w+|extensor digitorum longus|extensor hallucis longus|flexor digitorum longus|flexor hallucis longus|popliteus)$"
+SUELO_PELVICO = r"^(left |right )?(coccygeus|iliococcygeus|pubococcygeus|puborectalis|external anal sphincter|tendinous arch of levator ani)$"
+PARED_ABD = r"^(left |right )?(rectus abdominis|external oblique|internal oblique|transversus abdominis|pyramidalis|linea alba)$"
 
+# (codigo_del_catalogo, capa_preferida, tipo_malla, reglas, encuadre)
 REGIONES = [
-    # código, nombre, lateral, capa_preferida, tipo, reglas[(capa, incluir, excluir)], encuadre
-    ("CRANEO", "Cráneo", False, S, "propia", [(S, NEURO, None)], None),
-    ("SENOS_PARANASALES", "Senos paranasales", False, S, "contenedora",
+    # ---- CABEZA ----
+    ("CRANEO", S, "propia", [(S, NEURO, None)], None),
+    ("ENCEFALO", N, "propia", [(N, r".", r"spinal cord|optic nerve")], None),
+    ("FOSA_POSTERIOR", N, "propia",
+     [(N, r"^(cerebellum|pons|medulla oblongata|fourth ventricle|midbrain, nsn|peduncle of midbrain)$", None)], None),
+    ("SILLA_TURCA", O, "propia", [(O, r"^pituitary gland$", None), (S, r"^sphenoid bone$", None)], None),
+    ("CARA", S, "propia", [(S, FACIAL, None), (S, r"^eyeball$", None)], None),
+    ("HUESOS_FACIALES", S, "propia", [(S, FACIAL, None)], None),
+    ("SENOS_PARANASALES", S, "contenedora",
      [(S, r"^(frontal bone|ethmoid|sphenoid bone|(left|right) maxilla)$", None)], None),
-    ("ORBITA", "Órbita", True, S, "contenedora",
-     [(S, r"^(eyeball|(left|right) (lacrimal bone|zygomatic bone))$", None)], None),
-    ("MACIZO_FACIAL", "Macizo facial", False, S, "propia", [(S, FACIAL, r"^mandible$")], None),
-    ("HUESOS_PROPIOS_NARIZ", "Huesos propios de la nariz", False, S, "propia", [(S, r"nasal bone$", None)], None),
-    ("MANDIBULA", "Mandíbula", False, S, "propia", [(S, r"^mandible$", None)], None),
-    ("PIEZAS_DENTARIAS", "Piezas dentarias (panorámica)", False, O, "propia",
-     [(O, r"secondary \w+ tooth$|secondary (\w+ )?(incisor|canine|premolar|molar) tooth$", None),
-      (S, r"^gingiva of (upper|lower) jaw$", None)], None),
-    ("ATM", "Articulación temporomandibular", True, S, "propia",
-     [(S, r"temporal bone$|^mandible$", None)],
+    ("ORBITA", S, "contenedora", [(S, r"^(eyeball|(left|right) (lacrimal bone|zygomatic bone))$", None)], None),
+    ("OJO", S, "propia", [(S, r"^eyeball$", None)], None),
+    ("HUESOS_PROPIOS_NARIZ", S, "propia", [(S, r"nasal bone$", None)], None),
+    ("MAXILAR", S, "propia", [(S, r"maxilla$", None)], None),
+    ("MANDIBULA", S, "propia", [(S, r"^mandible$", None)], None),
+    ("CIGOMA", S, "propia", [(S, r"zygomatic bone$", None)], None),
+    ("ATM", S, "propia", [(S, r"temporal bone$|^mandible$", None)],
      ("interseccion", [r"temporal bone$", r"^mandible$"])),
-    ("OIDO_PENASCO", "Oído / peñasco del temporal", True, S, "contenedora",
-     [(S, r"temporal bone$", None), (O, r"^ear$", None)], None),
-    ("SILLA_TURCA_HIPOFISIS", "Silla turca / hipófisis", False, O, "propia",
-     [(O, r"^pituitary gland$", None), (S, r"^sphenoid bone$", None)], None),
-    ("ENCEFALO", "Encéfalo", False, N, "propia", [(N, r".", r"spinal cord|optic nerve")], None),
-    ("CUELLO", "Cuello (partes blandas)", False, O, "propia",
-     [(O, r"^(thyroid cartilage|trachea|esophagus)$", None),
-      (V, r"(common carotid artery|internal jugular vein)$", None)], None),
-    ("TIROIDES", "Tiroides", False, O, "referencia", [(O, r"^(thyroid cartilage|trachea)$", None)], None),
-    ("COLUMNA_CERVICAL", "Columna cervical", False, S, "propia", [(S, VERT_C, None), (S, DISCO_C, None)], None),
-    ("COLUMNA_DORSAL", "Columna dorsal", False, S, "propia", [(S, VERT_T, None), (S, DISCO_T, None)], None),
-    ("COLUMNA_LUMBAR", "Columna lumbar", False, S, "propia", [(S, VERT_L, None), (S, DISCO_L, None)], None),
-    ("COLUMNA_LUMBOSACRA", "Columna lumbosacra", False, S, "propia",
-     [(S, VERT_L, None), (S, DISCO_L, None), (S, r"^sacrum$", None)], None),
-    ("SACRO_COXIS", "Sacro y cóccix", False, S, "propia", [(S, r"^sacrum$", None)], None),
-    ("COLUMNA_TOTAL", "Columna total", False, S, "propia",
-     [(S, VERT_C, None), (S, DISCO_C, None), (S, VERT_T, None), (S, DISCO_T, None),
-      (S, VERT_L, None), (S, DISCO_L, None), (S, r"^sacrum$", None)], None),
-    ("TORAX", "Tórax", False, S, "propia",
-     [(S, COSTILLA, None), (S, ESTERNON, None),
-      (O, r"lobe of (left |right )?lung$|^(trachea|bronchus)$", None)], None),
-    ("PARRILLA_COSTAL", "Parrilla costal", True, S, "propia", [(S, COSTILLA, None)], None),
-    ("ESTERNON", "Esternón", False, S, "propia", [(S, ESTERNON, None)], None),
-    ("CLAVICULA", "Clavícula", True, S, "propia", [(S, r"clavicle$", None)], None),
-    ("MAMA", "Mama", True, M, "referencia", [(M, r"part of (left|right) pectoralis major$", None)], None),
-    ("CORAZON", "Corazón", False, V, "propia",
-     [(V, r"^(wall of heart|mitral valve|tricuspid valve|pulmonary valve)$", None)], None),
-    ("ABDOMEN", "Abdomen", False, O, "propia",
-     [(O, r"^(liver|gallbladder|spleen|stomach|duodenum|jejunum|ileum|appendix|colon, nsn|pancreas, nsn|pancreatic duct|rectum|(free|mesocolic|omental) taenia)$", None),
-      (O, r"(kidney|adrenal gland)$", None)], None),
-    ("ABDOMEN_SUPERIOR", "Abdomen superior (hígado, vía biliar, páncreas, bazo)", False, O, "propia",
-     [(O, r"^(liver|gallbladder|spleen|pancreas, nsn|pancreatic duct)$", None)], None),
-    ("RENAL", "Riñón", True, O, "propia", [(O, r"kidney$", None)], None),
-    ("VIAS_URINARIAS", "Vías urinarias (riñones, uréteres, vejiga)", False, O, "propia",
-     [(O, r"(kidney|ureter)$|^urinary bladder$|^urethra$", None)], None),
-    ("VESICAL", "Vejiga", False, O, "propia", [(O, r"^urinary bladder$", None)], None),
-    ("PROSTATA", "Próstata", False, O, "propia", [(O, r"^prostate$", None)], None),
-    ("TESTICULAR", "Testículo / escroto", True, O, "propia", [(O, r"(testis|epididymis)$", None)], None),
-    ("UTERO_ANEXOS", "Útero y anexos", False, O, "ninguna", [], None),
-    ("PELVIS", "Pelvis", False, S, "propia",
-     [(S, r"hip bone$|^sacrum$", None), (O, r"^(urinary bladder|rectum)$", None)], None),
-    ("SACROILIACA", "Articulación sacroilíaca", True, S, "propia",
-     [(S, r"hip bone$|^sacrum$", None)], ("interseccion", [r"hip bone$", r"^sacrum$"])),
-    ("HOMBRO", "Hombro", True, S, "propia",
-     [(S, r"(scapula|clavicle|humerus)$", None)], ("interseccion", [r"scapula$", r"humerus$"])),
-    ("HUMERO", "Húmero / brazo", True, S, "propia", [(S, r"humerus$", None)], None),
-    ("CODO", "Codo", True, S, "propia",
-     [(S, r"(humerus|radius|ulna)$", None)], ("interseccion", [r"humerus$", r"ulna$"])),
-    ("ANTEBRAZO", "Antebrazo", True, S, "propia",
-     [(S, r"(radius|ulna)$|interosseous membrane of (left|right) forearm$", None)], None),
-    ("MUNECA", "Muñeca", True, S, "propia",
-     [(S, CARPO, None), (S, r"(radius|ulna)$", None)], ("union", [CARPO])),
-    ("MANO", "Mano", True, S, "propia", [(S, CARPO, None), (S, MANO, None)], None),
-    ("CADERA", "Cadera", True, S, "propia",
-     [(S, r"(hip bone|femur)$", None)], ("interseccion", [r"hip bone$", r"femur$"])),
-    ("FEMUR", "Fémur / muslo", True, S, "propia", [(S, r"femur$", None)], None),
-    ("RODILLA", "Rodilla", True, S, "propia",
-     [(S, r"(femur|tibia|fibula|patella)$", None)], ("interseccion", [r"femur$", r"tibia$"])),
-    ("PIERNA", "Pierna", True, S, "propia",
-     [(S, r"(tibia|fibula)$|interosseous membrane of (left|right) leg$", None)], None),
-    ("TOBILLO", "Tobillo", True, S, "propia",
-     [(S, r"(tibia|fibula|talus)$", None)], ("interseccion", [r"tibia$", r"talus$"])),
-    ("PIE", "Pie", True, S, "propia", [(S, TARSO, None), (S, PIE, None)], None),
-    ("CALCANEO", "Calcáneo", True, S, "propia", [(S, r"calcaneus$", None)], None),
+    ("MAXILARES", S, "propia", [(S, r"maxilla$|^mandible$", None)], None),
+    ("DIENTES", O, "propia", [(O, DIENTES, None), (S, r"^gingiva of (upper|lower) jaw$", None)], None),
+    ("ARCADA_DENTARIA_SUPERIOR", O, "propia",
+     [(O, r"upper " + DIENTES[:-1] + "$", None), (S, r"^gingiva of upper jaw$", None)], None),
+    ("ARCADA_DENTARIA_INFERIOR", O, "propia",
+     [(O, r"lower " + DIENTES[:-1] + "$", None), (S, r"^gingiva of lower jaw$", None)], None),
+    ("OIDO", S, "contenedora", [(S, r"temporal bone$", None), (O, r"^ear$", None)], None),
+    ("PENASCO", S, "propia", [(S, r"temporal bone$", None)], None),
+    ("CONDUCTO_AUDITIVO_INTERNO", S, "contenedora", [(S, r"temporal bone$", None)], None),
+    ("MASTOIDES", S, "contenedora", [(S, r"temporal bone$", None)], None),
+    ("GLANDULAS_SALIVALES", M, "referencia",
+     [(M, r"part of (left|right) masseter$|^(left|right) mylohyoid$|^anterior belly of (left|right) digastric$", None)], None),
+    ("PAROTIDA", M, "referencia", [(M, r"part of (left|right) masseter$", None)], None),
+    ("SUBMANDIBULAR", M, "referencia", [(M, r"^(left|right) mylohyoid$|^anterior belly of (left|right) digastric$", None)], None),
+    ("ARTERIAS_INTRACRANEALES", N, "ninguna", [], None),
+    ("SENOS_VENOSOS_DURALES", N, "ninguna", [], None),
+    # ---- CUELLO ----
+    ("TIROIDES", O, "referencia", [(O, r"^(thyroid cartilage|trachea)$", None)], None),
+    ("PARATIROIDES", O, "referencia", [(O, r"^(thyroid cartilage|trachea)$", None)], None),
+    ("LARINGE", O, "propia", [(O, r"^thyroid cartilage$", None), (S, r"^hyoid bone$", None)], None),
+    ("FARINGE", O, "referencia", [(S, r"^hyoid bone$", None), (O, r"^esophagus$", None)], None),
+    ("CAVUM", S, "referencia", [(S, r"^(sphenoid bone|vomer)$", None)], None),
+    ("TRAQUEA", O, "propia", [(O, r"^trachea$", None)], None),
+    ("CAROTIDAS", V, "propia",
+     [(V, r"common carotid artery$|^brachiocephalic artery, nsn$|subclavian artery$", None)], None),
+    ("ARTERIAS_VERTEBRALES", V, "ninguna", [], None),
+    ("VENA_YUGULAR", V, "propia", [(V, r"internal jugular vein$", None)], None),
+    ("GANGLIOS_CERVICALES", M, "referencia", [(M, r"^(left|right) sternocleidomastoid$", None)], None),
+    # ---- COLUMNA ----
+    ("COLUMNA_CERVICAL", S, "propia", [(S, VERT_C, None), (S, DISCO_C, None)], None),
+    ("COLUMNA_DORSAL", S, "propia", [(S, VERT_T, None), (S, DISCO_T, None)], None),
+    ("COLUMNA_LUMBAR", S, "propia", [(S, VERT_L, None), (S, DISCO_L, None)], None),
+    ("SACRO", S, "propia", [(S, r"^sacrum$", None)], None),
+    ("COCCIX", S, "referencia", [(S, r"^sacrum$", None)], None),
+    ("COLUMNA_CERVICODORSAL", S, "propia", ["@COLUMNA_CERVICAL", "@COLUMNA_DORSAL"], None),
+    ("COLUMNA_DORSOLUMBAR", S, "propia", ["@COLUMNA_DORSAL", "@COLUMNA_LUMBAR"], None),
+    ("COLUMNA_LUMBOSACRA", S, "propia", ["@COLUMNA_LUMBAR", "@SACRO"], None),
+    ("SACROILIACAS", S, "propia", [(S, r"hip bone$|^sacrum$", None)],
+     ("interseccion", [r"hip bone$", r"^sacrum$"])),
+    ("MEDULA_ESPINAL", N, "propia", [(N, r"^central canal of spinal cord$", None)], None),
+    # ---- TORAX ----
+    ("PULMONES", O, "propia", [(O, PULMON, None), (O, r"^bronchus$", None)], None),
+    ("CORAZON", V, "propia",
+     [(V, r"^(wall of heart|mitral valve|tricuspid valve|pulmonary valve)$|papillary muscle of (left|right) ventricle", None)], None),
+    ("ARTERIAS_CORONARIAS", V, "propia", [(V, r"coronary artery", None)], None),
+    ("AORTA_TORACICA", V, "propia", [(V, r"^(ascending aorta|arch of aorta|descending aorta)$", None)], None),
+    ("ARTERIAS_PULMONARES", V, "propia", [(V, r"^pulmonary artery$", None)], None),
+    ("MEDIASTINO", V, "propia",
+     ["@CORAZON", "@AORTA_TORACICA", "@ARTERIAS_PULMONARES",
+      (V, r"^(superior vena cava|pulmonary vein)$|brachiocephalic vein$|^brachiocephalic artery, nsn$", None),
+      (O, r"^(trachea|esophagus|bronchus)$|lobe of thymus$", None)], None),
+    ("COSTILLAS", S, "propia", [(S, COSTILLA, None)], None),
+    ("ESTERNON", S, "propia", [(S, ESTERNON, None)], None),
+    ("ESTERNOCLAVICULAR", S, "propia", [(S, r"clavicle$|^manubrium$", None)],
+     ("interseccion", [r"clavicle$", r"^manubrium$"])),
+    ("MAMA", M, "referencia", [(M, r"part of (left|right) pectoralis major$", None)], None),
+    ("AXILA", M, "referencia",
+     [(M, r"^(left|right) (pectoralis minor|subscapularis|teres major|latissimus dorsi)$", None)], None),
+    ("ESOFAGO", O, "propia", [(O, r"^esophagus$", None)], None),
+    # ---- ABDOMEN ----
+    ("HIGADO", O, "propia", [(O, r"^liver$", None)], None),
+    ("VESICULA_BILIAR", O, "propia", [(O, r"^gallbladder$", None)], None),
+    ("VIAS_BILIARES", O, "referencia", [(O, r"^(gallbladder|liver)$", None)], None),
+    ("PANCREAS", O, "propia", [(O, r"^(pancreas, nsn|pancreatic duct)$", None)], None),
+    ("VIA_BILIOPANCREATICA", O, "referencia", [(O, r"^(gallbladder|pancreatic duct)$", None)], None),
+    ("BAZO", O, "propia", [(O, r"^spleen$", None)], None),
+    ("RINON", O, "propia", [(O, r"kidney$", None)], None),
+    ("SUPRARRENAL", O, "propia", [(O, r"adrenal gland$", None)], None),
+    ("URETER", O, "propia", [(O, r"ureter$", None)], None),
+    ("ESTOMAGO", O, "propia", [(O, r"^stomach$", None)], None),
+    ("DUODENO", O, "propia", [(O, r"^duodenum$", None)], None),
+    ("INTESTINO_DELGADO", O, "propia", [(O, r"^(duodenum|jejunum|ileum)$", None)], None),
+    ("COLON", O, "propia", [(O, r"^colon, nsn$|taenia$", None)], None),
+    ("APENDICE", O, "propia", [(O, r"^appendix$", None)], None),
+    ("TRACTO_DIGESTIVO_SUPERIOR", O, "propia", [(O, r"^(esophagus|stomach|duodenum)$", None)], None),
+    ("ABDOMEN_SUPERIOR", O, "propia",
+     ["@HIGADO", "@VESICULA_BILIAR", "@PANCREAS", "@BAZO", "@ESTOMAGO", "@DUODENO", "@RINON", "@SUPRARRENAL"], None),
+    ("VIAS_URINARIAS", O, "propia", ["@RINON", "@URETER", (O, r"^(urinary bladder|urethra)$", None)], None),
+    ("AORTA_ABDOMINAL", V, "propia", [(V, r"^descending aorta$", None)], None),
+    ("ARTERIAS_RENALES", V, "propia", [(V, r"renal artery$", None)], None),
+    ("ARTERIAS_MESENTERICAS", V, "propia",
+     [(V, r"^(celiac artery|superior mesenteric artery|inferior mesenteric artery|common hepatic artery|splenic artery|left gastric artery)$", None)], None),
+    ("VENA_PORTA", V, "propia", [(V, r"^(splenic vein|superior mesenteric vein)$", None)], None),
+    ("VENA_CAVA_INFERIOR", V, "propia", [(V, r"^inferior vena cava$", None)], None),
+    ("RETROPERITONEO", O, "propia",
+     ["@RINON", "@SUPRARRENAL", "@URETER", "@PANCREAS", "@DUODENO", "@AORTA_ABDOMINAL", "@VENA_CAVA_INFERIOR",
+      (M, r"^(left|right) (psoas major|quadratus lumborum)$", None)], None),
+    ("PARED_ABDOMINAL", M, "propia", [(M, PARED_ABD, None)], None),
+    # ---- PELVIS ----
+    ("VEJIGA", O, "propia", [(O, r"^urinary bladder$", None)], None),
+    ("URETRA", O, "propia", [(O, r"^urethra$", None)], None),
+    ("VEJIGA_URETRA", O, "propia", ["@VEJIGA", "@URETRA"], None),
+    ("PROSTATA", O, "propia", [(O, r"^prostate$", None)], None),
+    ("VESICULAS_SEMINALES", O, "propia", [(O, r"seminal vesicle$", None)], None),
+    ("TESTICULO", O, "propia", [(O, r"testis$", None)], None),
+    ("ESCROTO", O, "referencia", [(O, r"(testis|epididymis)$", None)], None),
+    ("PENE", O, "propia", [(O, r"^(corpus cavernosum of penis|corpus spongiosum of penis, nsn|glans penis)$", None)], None),
+    ("UTERO", O, "ninguna", [], None),
+    ("UTERO_TROMPAS", O, "ninguna", [], None),
+    ("ANEXOS_UTERINOS", O, "ninguna", [], None),
+    ("OVARIO", O, "ninguna", [], None),
+    ("PLACENTA", O, "ninguna", [], None),
+    ("RECTO", O, "propia", [(O, r"^rectum$", None)], None),
+    ("CANAL_ANAL", M, "propia", [(M, r"^external anal sphincter$", None)], None),
+    ("SUELO_PELVICO", M, "propia", [(M, SUELO_PELVICO, None)], None),
+    ("REGION_INGUINAL", M, "propia", [(M, r"inguinal ligament$", None)], None),
+    ("ARTERIAS_ILIACAS", V, "propia", [(V, r"iliac artery$", None)], None),
+    # ---- MIEMBRO SUPERIOR ----
+    ("HOMBRO", S, "propia", [(S, r"(scapula|clavicle|humerus)$", None)],
+     ("interseccion", [r"scapula$", r"humerus$"])),
+    ("CLAVICULA", S, "propia", [(S, r"clavicle$", None)], None),
+    ("ESCAPULA", S, "propia", [(S, r"scapula$", None)], None),
+    ("ACROMIOCLAVICULAR", S, "propia", [(S, r"(scapula|clavicle)$", None)],
+     ("interseccion", [r"scapula$", r"clavicle$"])),
+    ("PLEXO_BRAQUIAL", M, "referencia",
+     [(M, r"^(left|right) scalenus (anterior|medius)$", None), (S, r"clavicle$", None)], None),
+    ("HUMERO", S, "propia", [(S, r"humerus$", None)], None),
+    ("BRAZO", S, "propia", [(S, r"humerus$", None), (M, MUSC_BRAZO, None)], None),
+    ("CODO", S, "propia", [(S, r"(humerus|radius|ulna)$", None)],
+     ("interseccion", [r"humerus$", r"ulna$"])),
+    ("RADIO_CUBITO", S, "propia", [(S, r"(radius|ulna)$", None)], None),
+    ("ANTEBRAZO", S, "propia", [(S, r"(radius|ulna)$|interosseous membrane of (left|right) forearm$", None)], None),
+    ("CARPO", S, "propia", [(S, CARPO, None)], None),
+    ("ESCAFOIDES", S, "propia", [(S, r"scaphoid$", None)], None),
+    ("MUNECA", S, "propia", [(S, CARPO, None), (S, r"(radius|ulna)$", None)], ("union", [CARPO])),
+    ("METACARPO", S, "propia", [(S, METACARPO, None)], None),
+    ("DEDOS_MANO", S, "propia", [(S, FALANGES_MANO, None)], None),
+    ("PULGAR", S, "propia", [(S, r"phalanx of (left|right) thumb$|first metacarpal bone$", None)], None),
+    ("MANO", S, "propia", [(S, CARPO, None), (S, METACARPO, None), (S, FALANGES_MANO, None)], None),
+    ("ARTERIAS_MIEMBRO_SUPERIOR", V, "referencia", [(V, r"subclavian artery$", None)], None),
+    ("VENAS_MIEMBRO_SUPERIOR", V, "referencia", [(V, r"subclavian vein$", None)], None),
+    # ---- MIEMBRO INFERIOR ----
+    ("CADERA", S, "propia", [(S, r"(hip bone|femur)$", None)], ("interseccion", [r"hip bone$", r"femur$"])),
+    ("FEMUR", S, "propia", [(S, r"femur$", None)], None),
+    ("MUSLO", S, "propia", [(S, r"femur$", None), (M, MUSC_MUSLO, None)], None),
+    ("ROTULA", S, "propia", [(S, r"patella$", None)], None),
+    ("RODILLA", S, "propia", [(S, r"(femur|tibia|fibula|patella)$", None)],
+     ("interseccion", [r"femur$", r"tibia$"])),
+    ("TIBIA_PERONE", S, "propia", [(S, r"(tibia|fibula)$", None)], None),
+    ("PIERNA", S, "propia",
+     [(S, r"(tibia|fibula)$|interosseous membrane of (left|right) leg$", None), (M, MUSC_PIERNA, None)], None),
+    ("TENDON_AQUILES", M, "propia", [(M, r"calcaneal tendon$", None)], None),
+    ("TOBILLO", S, "propia", [(S, r"(tibia|fibula|talus)$", None)], ("interseccion", [r"tibia$", r"talus$"])),
+    ("CALCANEO", S, "propia", [(S, r"calcaneus$", None)], None),
+    ("TARSO", S, "propia", [(S, TARSO, None)], None),
+    ("RETROPIE", S, "propia", [(S, r"(talus|calcaneus)$", None)], None),
+    ("METATARSO", S, "propia", [(S, METATARSO, None)], None),
+    ("DEDOS_PIE", S, "propia", [(S, FALANGES_PIE, None)], None),
+    ("SESAMOIDEOS_PIE", S, "propia", [(S, SESAMOIDEO_PIE, None)], None),
+    ("ANTEPIE", S, "propia", [(S, METATARSO, None), (S, FALANGES_PIE, None), (S, SESAMOIDEO_PIE, None)], None),
+    ("PIE", S, "propia",
+     [(S, TARSO, None), (S, METATARSO, None), (S, FALANGES_PIE, None), (S, SESAMOIDEO_PIE, None),
+      (S, r"long plantar ligament$", None)], None),
+    ("ARTERIAS_MIEMBRO_INFERIOR", V, "referencia", [(V, r"external iliac artery$", None)], None),
+    ("VENAS_MIEMBRO_INFERIOR", V, "referencia", [(V, r"external iliac vein$", None)], None),
+    ("ARTERIA_FEMORAL", V, "referencia", [(V, r"external iliac artery$", None)], None),
+    # ---- GRUPOS (sólo select) ----
+    ("CABEZA", S, "propia", ["@CRANEO", "@HUESOS_FACIALES", "@ENCEFALO", "@OJO"], None),
+    ("CUELLO", S, "propia", ["@COLUMNA_CERVICAL", "@LARINGE", "@TRAQUEA", "@ESOFAGO", "@CAROTIDAS", "@VENA_YUGULAR"], None),
+    ("COLUMNA", S, "propia", ["@COLUMNA_CERVICAL", "@COLUMNA_DORSAL", "@COLUMNA_LUMBAR", "@SACRO"], None),
+    ("TORAX", S, "propia", ["@COSTILLAS", "@ESTERNON", "@COLUMNA_DORSAL", "@PULMONES", "@MEDIASTINO"], None),
+    ("ABDOMEN", O, "propia",
+     ["@ABDOMEN_SUPERIOR", "@INTESTINO_DELGADO", "@COLON", "@APENDICE", "@URETER", "@AORTA_ABDOMINAL",
+      "@VENA_CAVA_INFERIOR", "@PARED_ABDOMINAL"], None),
+    ("PELVIS", S, "propia",
+     [(S, r"hip bone$|^sacrum$", None), "@VEJIGA", "@RECTO", "@PROSTATA", "@ARTERIAS_ILIACAS"], None),
+    ("MIEMBRO_SUPERIOR", S, "propia",
+     ["@CLAVICULA", "@ESCAPULA", "@HUMERO", "@RADIO_CUBITO", "@MANO"], None),
+    ("MIEMBRO_INFERIOR", S, "propia", ["@FEMUR", "@ROTULA", "@TIBIA_PERONE", "@PIE"], None),
+    ("CUERPO_ENTERO", S, "propia", [(S, r".", None)], None),
+    # ---- COMBINADAS (sólo select) ----
+    ("CABEZA_CUELLO", S, "propia", ["@CABEZA", "@CUELLO"], None),
+    ("CUELLO_TORAX", S, "propia", ["@CUELLO", "@TORAX"], None),
+    ("TORAX_ABDOMEN", S, "propia", ["@TORAX", "@ABDOMEN"], None),
+    ("ABDOMEN_PELVIS", S, "propia", ["@ABDOMEN", "@PELVIS"], None),
+    ("TORAX_ABDOMEN_PELVIS", S, "propia", ["@TORAX", "@ABDOMEN", "@PELVIS"], None),
+    ("CUELLO_TORAX_ABDOMEN_PELVIS", S, "propia", ["@CUELLO", "@TORAX", "@ABDOMEN", "@PELVIS"], None),
+    ("PELVIS_MIEMBROS_INFERIORES", S, "propia", ["@PELVIS", "@MIEMBRO_INFERIOR"], None),
 ]
 
 # El concepto UBERON de la región, buscado por su nombre inglés exacto en index.json.
 NOMBRE_UBERON = {
-    "CRANEO": "skull", "SENOS_PARANASALES": "paranasal sinus", "ORBITA": "orbital region",
-    "MACIZO_FACIAL": "face", "MANDIBULA": "mandible", "ATM": "temporomandibular joint",
-    "ENCEFALO": "brain", "CUELLO": "neck", "TIROIDES": "thyroid gland",
-    "COLUMNA_CERVICAL": "cervical region of vertebral column",
-    "COLUMNA_DORSAL": "thoracic region of vertebral column",
-    "COLUMNA_LUMBAR": "lumbar region of vertebral column", "COLUMNA_TOTAL": "vertebral column",
-    "SACRO_COXIS": "fused sacrum", "TORAX": "chest", "PARRILLA_COSTAL": "thoracic rib cage",
-    "ESTERNON": "sternum", "CLAVICULA": "clavicle bone", "MAMA": "breast", "CORAZON": "heart",
-    "ABDOMEN": "abdomen", "RENAL": "kidney", "VESICAL": "urinary bladder", "PROSTATA": "prostate gland",
-    "TESTICULAR": "testis", "UTERO_ANEXOS": "uterus", "PELVIS": "pelvic region of trunk", "VIAS_URINARIAS": "renal system", "SACROILIACA": "sacroiliac joint",
-    "HOMBRO": "shoulder", "HUMERO": "humerus", "CODO": "elbow", "ANTEBRAZO": "forelimb zeugopod",
-    "MUNECA": "carpal region", "MANO": "manus", "CADERA": "hip", "FEMUR": "femur", "RODILLA": "knee",
-    "PIERNA": "hindlimb zeugopod", "TOBILLO": "ankle joint", "PIE": "pes", "CALCANEO": "calcaneus",
-    "SILLA_TURCA_HIPOFISIS": "pituitary gland", "OIDO_PENASCO": "ear",
-    "HUESOS_PROPIOS_NARIZ": "nasal bone", "PIEZAS_DENTARIAS": "dentition",
+    "CRANEO": "skull", "ENCEFALO": "brain", "FOSA_POSTERIOR": "hindbrain", "SILLA_TURCA": "pituitary gland",
+    "CARA": "face", "HUESOS_FACIALES": "facial skeleton", "SENOS_PARANASALES": "paranasal sinus",
+    "ORBITA": "orbital region", "OJO": "eyeball of camera-type eye", "HUESOS_PROPIOS_NARIZ": "nasal bone",
+    "MAXILAR": "maxilla", "MANDIBULA": "mandible", "CIGOMA": "jugal bone", "ATM": "temporomandibular joint",
+    "MAXILARES": "jaw skeleton", "DIENTES": "dentition", "ARCADA_DENTARIA_SUPERIOR": "upper jaw region",
+    "ARCADA_DENTARIA_INFERIOR": "lower jaw region", "OIDO": "ear", "PENASCO": "temporal bone",
+    "CONDUCTO_AUDITIVO_INTERNO": "internal acoustic meatus", "MASTOIDES": "mastoid process",
+    "GLANDULAS_SALIVALES": "saliva-secreting gland", "PAROTIDA": "parotid gland",
+    "SUBMANDIBULAR": "submandibular gland", "TIROIDES": "thyroid gland", "PARATIROIDES": "parathyroid gland",
+    "LARINGE": "larynx", "FARINGE": "pharynx", "CAVUM": "nasopharynx", "TRAQUEA": "trachea",
+    "CAROTIDAS": "common carotid artery plus branches", "VENA_YUGULAR": "internal jugular vein",
+    "GANGLIOS_CERVICALES": "cervical lymph node", "COLUMNA_CERVICAL": "cervical region of vertebral column",
+    "COLUMNA_DORSAL": "thoracic region of vertebral column", "COLUMNA_LUMBAR": "lumbar region of vertebral column",
+    "SACRO": "fused sacrum", "COCCIX": "coccyx", "SACROILIACAS": "sacroiliac joint", "MEDULA_ESPINAL": "spinal cord",
+    "COLUMNA": "vertebral column", "PULMONES": "pair of lungs", "MEDIASTINO": "mediastinum", "CORAZON": "heart",
+    "ARTERIAS_CORONARIAS": "coronary artery", "AORTA_TORACICA": "thoracic aorta",
+    "ARTERIAS_PULMONARES": "pulmonary artery", "COSTILLAS": "thoracic rib cage", "ESTERNON": "sternum",
+    "ESTERNOCLAVICULAR": "sternoclavicular joint", "MAMA": "breast", "AXILA": "axilla", "ESOFAGO": "esophagus",
+    "HIGADO": "liver", "VESICULA_BILIAR": "gallbladder", "VIAS_BILIARES": "biliary tree", "PANCREAS": "pancreas",
+    "BAZO": "spleen", "RINON": "kidney", "SUPRARRENAL": "adrenal gland", "URETER": "ureter",
+    "VIAS_URINARIAS": "renal system", "ESTOMAGO": "stomach", "DUODENO": "duodenum",
+    "INTESTINO_DELGADO": "small intestine", "COLON": "colon", "APENDICE": "appendix",
+    "RETROPERITONEO": "retroperitoneal space", "PARED_ABDOMINAL": "abdominal wall",
+    "AORTA_ABDOMINAL": "abdominal aorta", "ARTERIAS_RENALES": "renal artery",
+    "VENA_PORTA": "hepatic portal vein", "VENA_CAVA_INFERIOR": "inferior vena cava", "VEJIGA": "urinary bladder",
+    "URETRA": "urethra", "PROSTATA": "prostate gland", "VESICULAS_SEMINALES": "seminal vesicle", "UTERO": "uterus",
+    "ANEXOS_UTERINOS": "uterine adnexa", "OVARIO": "ovary", "ESCROTO": "scrotum", "TESTICULO": "testis",
+    "PENE": "penis", "RECTO": "rectum", "CANAL_ANAL": "anal canal", "SUELO_PELVICO": "pelvic floor",
+    "REGION_INGUINAL": "inguinal region", "ARTERIAS_ILIACAS": "common iliac artery", "PLACENTA": "placenta",
+    "HOMBRO": "shoulder", "CLAVICULA": "clavicle bone", "ESCAPULA": "scapula",
+    "ACROMIOCLAVICULAR": "acromioclavicular joint", "PLEXO_BRAQUIAL": "brachial nerve plexus",
+    "BRAZO": "forelimb stylopod", "HUMERO": "humerus", "CODO": "elbow", "ANTEBRAZO": "forelimb zeugopod",
+    "RADIO_CUBITO": "forelimb zeugopod skeleton", "MUNECA": "carpal region", "CARPO": "carpal skeleton",
+    "ESCAFOIDES": "radiale", "MANO": "manus", "METACARPO": "metacarpus", "DEDOS_MANO": "manual digit",
+    "PULGAR": "manual digit 1", "CADERA": "hip", "MUSLO": "hindlimb stylopod", "FEMUR": "femur",
+    "RODILLA": "knee", "ROTULA": "patella", "PIERNA": "hindlimb zeugopod", "TIBIA_PERONE": "hindlimb zeugopod skeleton",
+    "TENDON_AQUILES": "calcaneal tendon", "TOBILLO": "ankle joint", "PIE": "pes", "CALCANEO": "calcaneus",
+    "TARSO": "tarsal skeleton", "METATARSO": "metatarsus", "DEDOS_PIE": "pedal digit",
+    "SESAMOIDEOS_PIE": "sesamoid bone of pes", "ARTERIA_FEMORAL": "femoral artery",
+    "CABEZA": "head", "CUELLO": "neck", "TORAX": "chest", "ABDOMEN": "abdomen", "PELVIS": "pelvic region of trunk",
+    "MIEMBRO_SUPERIOR": "forelimb", "MIEMBRO_INFERIOR": "hindlimb", "CUERPO_ENTERO": "body proper",
 }
 
 LADO = {"left": "izquierda", "right": "derecha", None: "centro"}
+
+# Cómo se llega a la región desde el modelo:
+#   "malla": tocar una de sus mallas la propone (si la malla está en varias, gana la región
+#            con menos mallas: la más específica);
+#   "punto": articulaciones; se proponen si el punto tocado cae en su caja de encuadre
+#            (necesita que el visor emita el punto, ver hallazgos §4);
+#   "solo_select": grupos, combinadas, agregadas o sin malla propia; sólo desde el select.
+AGREGADAS = {
+    "COLUMNA_CERVICODORSAL", "COLUMNA_DORSOLUMBAR", "COLUMNA_LUMBOSACRA", "MEDIASTINO", "ABDOMEN_SUPERIOR",
+    "VIAS_URINARIAS", "TRACTO_DIGESTIVO_SUPERIOR", "RETROPERITONEO", "VEJIGA_URETRA", "MAXILARES",
+    "INTESTINO_DELGADO", "CARA", "MUSLO", "BRAZO", "PIERNA",
+}
+
+
+def modo_de_toque(codigo, tipo, encuadre):
+    if tipo != "propia" or codigo in AGREGADAS or region_catalogo[codigo]["tipo"] in ("grupo", "combinada"):
+        return "solo_select"
+    if encuadre is not None and encuadre[0] == "interseccion":
+        return "punto"
+    return "malla"
 
 
 def elegir(capa, incluir, excluir):
@@ -674,68 +1014,86 @@ def elegir(capa, incluir, excluir):
             and not (rx_no and rx_no.search(p["labelEn"]))]
 
 
-salida, avisos, malla_a_regiones = [], [], {}
-# Cómo se llega a la región desde el modelo:
-#   "malla": tocar una de sus mallas la propone (si la malla está en varias, gana la región
-#            con menos mallas: la más específica);
-#   "punto": articulaciones; se proponen si el punto tocado cae en su caja de encuadre
-#            (necesita que el visor emita el punto, ver hallazgos §4);
-#   "solo_select": agregadas o sin malla propia; sólo desde el select.
-AGREGADAS = {"COLUMNA_LUMBOSACRA", "COLUMNA_TOTAL", "ABDOMEN_SUPERIOR", "VIAS_URINARIAS"}
+# ---- validación contra el catálogo --------------------------------------------------
+codigos_regla = [r[0] for r in REGIONES]
+assert len(codigos_regla) == len(set(codigos_regla)), "código repetido en REGIONES"
+desconocidos = [c for c in codigos_regla if c not in region_catalogo]
+assert not desconocidos, f"códigos que no están en imagenologia.json: {desconocidos}"
+for c in NOMBRE_UBERON:
+    assert c in region_catalogo, c
 
+con_regla = set(codigos_regla)
+sin_regla_por_tipo = {}
+for r in catalogo["regiones"]:
+    if r["codigo"] not in con_regla:
+        sin_regla_por_tipo.setdefault(r["tipo"], []).append(r["codigo"])
+        REGIONES.append((r["codigo"], S, "ninguna", [], None))
 
-def modo_de_toque(codigo, tipo, encuadre):
-    if tipo != "propia" or codigo in AGREGADAS:
-        return "solo_select"
-    if encuadre is not None and encuadre[0] == "interseccion":
-        return "punto"
-    return "malla"
-
-
-for codigo, nombre, lateral, capa, tipo, reglas, encuadre in REGIONES:
+# ---- generación -----------------------------------------------------------------------
+salida, avisos, malla_a_regiones, elegidas_por_codigo = [], [], {}, {}
+for codigo, capa, tipo, reglas, encuadre in REGIONES:
+    cat = region_catalogo[codigo]
     al_tocar = modo_de_toque(codigo, tipo, encuadre)
     elegidas = {}
-    for capa_r, inc, exc in reglas:
-        encontradas = elegir(capa_r, inc, exc)
-        if not encontradas:
-            avisos.append(f"{codigo}: la regla {capa_r} /{inc}/ no encontró mallas")
+    for regla in reglas:
+        if isinstance(regla, str) and regla.startswith("@"):
+            ref = regla[1:]
+            assert ref in elegidas_por_codigo, f"{codigo}: {ref} tiene que definirse antes"
+            encontradas = list(elegidas_por_codigo[ref].values())
+        else:
+            capa_r, inc, exc = regla
+            encontradas = elegir(capa_r, inc, exc)
+            if not encontradas:
+                avisos.append(f"{codigo}: la regla {capa_r} /{inc}/ no encontró mallas")
         for p in encontradas:
             elegidas[p["meshId"]] = p
+    elegidas_por_codigo[codigo] = elegidas
+    if tipo != "ninguna" and not elegidas:
+        avisos.append(f"{codigo}: tipo {tipo} sin mallas")
+
     mallas = {"izquierda": [], "derecha": [], "centro": []}
     for p in sorted(elegidas.values(), key=lambda p: p["meshId"]):
         mallas[LADO[p["side"]]].append(p["meshId"])
         if tipo == "propia":
-            nivel = {"malla": 0, "punto": 1, "solo_select": 2}[al_tocar]
+            # Al tocar, una articulación ("punto") sólo gana por el punto tocado (visor V2);
+            # como región por defecto de la malla va detrás de las agregadas: tocar el coxal
+            # propone PELVIS, no SACROILIACAS.
+            nivel = {"malla": 0, "solo_select": 1, "punto": 2}[al_tocar]
             malla_a_regiones.setdefault(p["meshId"], []).append((nivel, len(elegidas), codigo))
     capas = sorted({p["layer"] for p in elegidas.values()})
     solo_masculino = sorted(p["meshId"] for p in elegidas.values() if p["sex"] == "male")
+    if cat["admite_lateralidad"] and elegidas and not mallas["izquierda"] and not mallas["derecha"]:
+        avisos.append(f"{codigo}: admite lateralidad pero todas sus mallas son centrales")
 
     enc = None
     if encuadre is not None:
         modo, grupos_rx = encuadre
-        enc = {"modo": modo, "grupos": {}}
+        enc = {"modo": modo, "grupos": {}, "caja_cm_verificada": {}}
         for lado_en, lado_es in (("left", "izquierda"), ("right", "derecha")):
             grupos = []
             for rx in grupos_rx:
                 r = re.compile(rx, re.I)
-                ids = sorted(p["meshId"] for p in elegidas.values()
-                             if r.search(p["labelEn"]) and p["side"] in (lado_en, None))
-                grupos.append(ids)
+                grupos.append(sorted(p["meshId"] for p in elegidas.values()
+                                     if r.search(p["labelEn"]) and p["side"] in (lado_en, None)))
             caja = union(grupos[0])
             for g in grupos[1:]:
                 caja = interseccion(caja, union(g)) if modo == "interseccion" else caja
             if caja is None:
                 avisos.append(f"{codigo} {lado_es}: el encuadre por {modo} quedó vacío")
             enc["grupos"][lado_es] = grupos
-            enc.setdefault("caja_cm_verificada", {})[lado_es] = (
+            enc["caja_cm_verificada"][lado_es] = (
                 None if caja is None else [round((caja[1][k] - caja[0][k]) * 100, 1) for k in range(3)])
 
     uberon = uberon_por_nombre_en.get(NOMBRE_UBERON.get(codigo, "").lower())
-    criterio = "; ".join(f"capa={c} labelEn~/{i}/" + (f" excepto /{e}/" if e else "") for c, i, e in reglas)
+    criterio = "; ".join(
+        f"mallas de {r[1:]}" if isinstance(r, str) else
+        f"capa={r[0]} labelEn~/{r[1]}/" + (f" excepto /{r[2]}/" if r[2] else "") for r in reglas)
     salida.append({
         "region": codigo,
-        "nombre": nombre,
-        "lateral": lateral,
+        "nombre": cat["nombre"],
+        "padre": cat["padre"],
+        "tipo_catalogo": cat["tipo"],
+        "lateral": cat["admite_lateralidad"],
         "capa_preferida": capa,
         "capas_con_mallas": capas,
         "tipo_malla": tipo,
@@ -749,8 +1107,8 @@ for codigo, nombre, lateral, capa, tipo, reglas, encuadre in REGIONES:
         "criterio": criterio or "sin regla: el atlas no tiene ninguna malla de esta región",
     })
 
-# Malla -> región por defecto al tocar: primero las regiones "malla", después las "punto",
-# después las agregadas; dentro del mismo nivel, la más específica (menos mallas).
+# Malla -> región por defecto al tocar: primero las regiones "malla", después las agregadas
+# y los grupos, al final las articulaciones; dentro del mismo nivel, la de menos mallas.
 toque = {m: min(rs)[2] for m, rs in sorted(malla_a_regiones.items())}
 
 # Comprobación del convenio de lado: la izquierda del paciente debería estar en +x.
@@ -758,26 +1116,38 @@ xs = {s: [sum(cajas[p["meshId"]][k][0] for k in (0, 1)) / 2 for p in partes if p
       for s in ("left", "right")}
 convenio = {s: round(sum(v) / len(v), 4) for s, v in xs.items()}
 
+por_tipo_malla = {}
+for r in salida:
+    por_tipo_malla.setdefault(r["tipo_catalogo"], {}).setdefault(r["tipo_malla"], 0)
+    por_tipo_malla[r["tipo_catalogo"]][r["tipo_malla"]] += 1
+
 doc = {
-    "generado_por": "gen_regiones_cuerpo_3d.py (ver hallazgos-cuerpo-3d.md)",
+    "generado_por": "gen_regiones_cuerpo_3d.py (ver hallazgos-cuerpo-3d.md §9)",
+    "catalogo": {"archivo": "catalogo/imagenologia.json", "version": catalogo.get("version"),
+                 "regiones": len(catalogo["regiones"])},
     "fuentes": ["public/anatomy-atlas-3d/catalog/parts.json", "public/anatomy-atlas-3d/catalog/index.json",
                 "public/anatomy-atlas-3d/models/*.glb"],
-    "estado": "BORRADOR: lista de regiones tentativa hasta que exista catalogo/imagenologia.json",
     "convenio_lado": {"x_media_left_m": convenio["left"], "x_media_right_m": convenio["right"],
                       "nota": "side del atlas = lado del paciente; left está en +x del modelo"},
+    "cobertura_por_tipo_catalogo": por_tipo_malla,
+    "sin_regla_por_tipo": sin_regla_por_tipo,
     "regiones": salida,
     "toque_malla_a_region": toque,
     "avisos": avisos,
 }
 SALIDA.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n")
 
-print(f"regiones={len(salida)} mallas_con_region={len(toque)} de {len(partes)} avisos={len(avisos)}")
+print(f"regiones={len(salida)} de {len(catalogo['regiones'])} del catálogo; "
+      f"mallas_con_region={len(toque)} de {len(partes)}; avisos={len(avisos)}")
+print("cobertura", json.dumps(por_tipo_malla, ensure_ascii=False))
+print("sin regla", json.dumps(sin_regla_por_tipo, ensure_ascii=False))
 for a in avisos:
     print("AVISO", a)
 for r in salida:
     n = sum(len(v) for v in r["mallas"].values())
     caja = r["encuadre"]["caja_cm_verificada"] if r["encuadre"] else ""
-    print(f"{r['region']:22} {r['tipo_malla']:11} n={n:3} izq={len(r['mallas']['izquierda']):2} "
-          f"der={len(r['mallas']['derecha']):2} cen={len(r['mallas']['centro']):2} uberon={r['uberon_region']} {caja}")
+    print(f"{r['region']:28} {r['tipo_catalogo']:9} {r['tipo_malla']:11} {r['al_tocar']:11} n={n:3} "
+          f"izq={len(r['mallas']['izquierda']):2} der={len(r['mallas']['derecha']):2} "
+          f"cen={len(r['mallas']['centro']):2} uberon={r['uberon_region']} {caja}")
 print("convenio", convenio)
 ```

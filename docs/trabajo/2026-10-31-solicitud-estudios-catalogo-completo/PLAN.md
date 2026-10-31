@@ -64,7 +64,7 @@ Cada una tiene un responsable de confirmación; mientras no se desdiga, **se imp
 
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H0.M1 | Realinear `regiones-cuerpo-3d.json` a los códigos de `imagenologia.json` | Toda región del mapeo existe en el catálogo | salida del script + conteo por tipo | EN CURSO |
+| H0.M1 | Realinear `regiones-cuerpo-3d.json` a los códigos de `imagenologia.json` | Toda región del mapeo existe en el catálogo | 156/156 regiones; 123 con malla propia, 5 contenedoras, 20 referencia, 8 sin malla; 0 ids inexistentes | HECHO |
 | H0.M2 | Enlazar los 27 `IMG_*` locales a estudios de `imagenologia.json` (`codigo_api_existente`) | 27/27 con enlace o `sin_equivalente` justificado | 27/27 enlazados (16 exactos, 4 genéricos con estudio nuevo, 7 «más cercano» con nota); tabla en `imagenologia-FUENTES.md` | HECHO |
 | H0.M3 | Validador cruzado de los tres JSON (`tools/catalogs/check-study-catalogs.mjs`) | exit 0 | salida | TODO |
 | H0.M4 | Registrar pendientes clínicos en `catalogo/PENDIENTES-CLINICOS.md` con responsable (170 filas: 10 LOINC de laboratorio sin verificar, 70 perfiles `verificar_composicion`, 12 muestras sin código, 31 estudios de imagen sin código + 9 con LOINC sin verificar, 34 lateralidades por criterio, 2 LOINC desaconsejados, nombres en español) | archivo existe | generado por script | HECHO |
