@@ -99,7 +99,7 @@ describe('PlatformHome', () => {
     http.expectOne((r) => r.url === '/admin/ops/tools').flush({ evaluatedAt: '2026-10-31T12:00:00.000Z', items: [] });
     responderResto();
     fixture.detectChanges();
-    expect(q('[data-testid="centro-herramientas-sin-resumen"]')).not.toBeNull();
+    expect(q('[data-testid="center-tools-no-summary"]')).not.toBeNull();
     expect(q('[data-testid="centro-herramientas-caidas"]')).toBeNull();
     expect(q('[data-testid="centro-instancias-overall"]')!.textContent).toContain('Crítico');
   });

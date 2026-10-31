@@ -18,9 +18,9 @@ import {
  * existe y sólo se acepta el panel.
  */
 async function esperarPanel(page: Page): Promise<void> {
-  const conMaqueta = process.env['PW_REPORTING_MOCK'] === '1';
-  await page.waitForURL(conMaqueta ? /\/(dashboard|portal-selector)/ : /\/dashboard/, { timeout: 15000 });
-  if (conMaqueta && page.url().includes('/portal-selector')) {
+  const withMock = process.env['PW_REPORTING_MOCK'] === '1';
+  await page.waitForURL(withMock ? /\/(dashboard|portal-selector)/ : /\/dashboard/, { timeout: 15000 });
+  if (withMock && page.url().includes('/portal-selector')) {
     await page.getByRole('link', { name: /Portal de administración/ }).click();
     await page.waitForURL(/\/dashboard/, { timeout: 15000 });
   }

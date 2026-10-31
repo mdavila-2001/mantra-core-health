@@ -88,7 +88,7 @@ describe('TenantSelection', () => {
   });
 
   describe('destino tras elegir (H1/H4)', () => {
-    function elegirConQuery(returnUrl: string | null, roles: readonly string[] = ['PLATFORM_ADMIN']) {
+    function chooseWithQuery(returnUrl: string | null, roles: readonly string[] = ['PLATFORM_ADMIN']) {
       const auth = TestBed.inject(AuthService);
       vi.spyOn(auth, 'selectTenant').mockImplementation(() => undefined);
       vi.spyOn(auth, 'roles').mockReturnValue(roles);
@@ -102,20 +102,34 @@ describe('TenantSelection', () => {
     }
 
     it('un returnUrl interno gana: vuelve a la pantalla que pidió organización', () => {
-      expect(elegirConQuery('/superadmin/web-analytics')).toHaveBeenCalledWith('/superadmin/web-analytics');
+      expect(chooseWithQuery('/superadmin/web-analytics')).toHaveBeenCalledWith('/superadmin/web-analytics');
     });
+
+    it.each(['/auth/organization', '/auth/organization?returnUrl=/dashboard', '/auth/organization/', '/portal-selector', '/portal-selector?x=1#y'])(
+      'NEGATIVO: un returnUrl que apunta a una pantalla de elección (%s) cae al destino de siempre',
+      (pantalla) => {
+        expect(chooseWithQuery(pantalla)).toHaveBeenCalledWith('/portal-selector');
+      },
+    );
+
+    it.each(['/auth/organization-x', '/dashboard/auth/organization', '/portal-selectors'])(
+      'límite: %s NO es una pantalla de elección y se respeta',
+      (valida) => {
+        expect(chooseWithQuery(valida)).toHaveBeenCalledWith(valida);
+      },
+    );
 
     it.each(['https://otro.sitio', '//evil.com', '/\\evil.com', 'dashboard'])(
       'NEGATIVO: un returnUrl externo o inválido (%s) se ignora y va al destino de siempre',
       (malo) => {
-        expect(elegirConQuery(malo)).toHaveBeenCalledWith('/portal-selector');
+        expect(chooseWithQuery(malo)).toHaveBeenCalledWith('/portal-selector');
       },
     );
 
     it('sin returnUrl, con la maqueta APAGADA, cualquier rol de gestión va a «/»', () => {
       const restaurar = setReportingMock(false);
       try {
-        expect(elegirConQuery(null, ['PLATFORM_ADMIN'])).toHaveBeenCalledWith('/');
+        expect(chooseWithQuery(null, ['PLATFORM_ADMIN'])).toHaveBeenCalledWith('/');
       } finally {
         restaurar();
       }

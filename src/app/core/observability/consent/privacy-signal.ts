@@ -8,19 +8,19 @@
  *
  * Función pura sobre `Navigator`/`Window` para probarla sin navegador.
  */
-export interface NavegadorConSenales {
+export interface SignalNavigator {
   readonly doNotTrack?: string | null;
   readonly msDoNotTrack?: string | null;
   readonly globalPrivacyControl?: boolean;
 }
 
-export interface VentanaConSenales {
+export interface SignalWindow {
   readonly doNotTrack?: string | null;
-  readonly navigator?: NavegadorConSenales;
+  readonly navigator?: SignalNavigator;
 }
 
 /** `true` si la persona pidió no ser rastreada (DNT = «1»/«yes», o GPC activo). */
-export function senalDePrivacidadActiva(ventana: VentanaConSenales | null | undefined): boolean {
+export function isPrivacySignalActive(ventana: SignalWindow | null | undefined): boolean {
   if (ventana === null || ventana === undefined) {
     return false;
   }

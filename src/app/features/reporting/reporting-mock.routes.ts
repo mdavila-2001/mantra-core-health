@@ -27,7 +27,7 @@ function redirigeTodo(destino: string): Routes {
  *
  * Recibe `chunkFallido` en vez de importarlo porque vive en `app.routes.ts` (mismo patrón que `insightsPortalRoute`).
  */
-export function rutasDeLaMaqueta(chunkFallido: () => Type<unknown>, encendida: boolean): Routes {
+export function mockRoutes(chunkFallido: () => Type<unknown>, encendida: boolean): Routes {
   if (!encendida) {
     // Con hijas y no con `redirectTo` en la propia ruta: así `/reports/**` entero (no sólo `/reports`) redirige, y la
     // ruta vieja sigue delante del armazón como lo estaba la real.

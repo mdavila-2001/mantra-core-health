@@ -541,13 +541,13 @@ export function describirRechazo(error: unknown): string {
   }
   const cuerpo: unknown = error.error;
   const campos = typeof cuerpo === 'object' && cuerpo !== null ? (cuerpo as Record<string, unknown>) : {};
-  const razon = typeof campos['reason'] === 'string' ? campos['reason'] : typeof campos['code'] === 'string' ? campos['code'] : '';
+  const reasonText = typeof campos['reason'] === 'string' ? campos['reason'] : typeof campos['code'] === 'string' ? campos['code'] : '';
   const mensaje = Array.isArray(campos['message'])
     ? campos['message'].filter((m): m is string => typeof m === 'string').join('; ')
     : typeof campos['message'] === 'string'
       ? campos['message']
       : '';
-  return [String(error.status), razon, mensaje].filter((parte) => parte !== '').join(' ').slice(0, 500);
+  return [String(error.status), reasonText, mensaje].filter((parte) => parte !== '').join(' ').slice(0, 500);
 }
 
 /** Red caída, límite de tasa o fallo del servidor: vale la pena reintentar. */

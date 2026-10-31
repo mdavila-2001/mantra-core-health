@@ -143,6 +143,15 @@ export function entryDestination(
   return acceso.insights ? PORTAL_INSIGHTS_ROUTE : PORTAL_ADMINISTRACION_ROUTE;
 }
 
+/**
+ * A dónde lleva «Cambiar de portal». Con la maqueta encendida hay un selector de portales; apagada no
+ * existe (la ruta redirige a `/`), así que el enlace va directo al destino que `entryDestination` da
+ * para quien tiene administración: el inicio de siempre.
+ */
+export function portalSwitchRoute(mockEnabled: boolean = environment.reportingMockEnabled): string {
+  return mockEnabled ? PORTAL_SELECTOR_ROUTE : PORTAL_ADMINISTRACION_ROUTE;
+}
+
 /** Las direcciones de destino, para que nadie las escriba a mano. */
 export const PORTAL_ADMINISTRACION_ROUTE = '/';
 export const PORTAL_REPORTERIA_ROUTE = '/reports';

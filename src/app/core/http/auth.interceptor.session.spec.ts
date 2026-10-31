@@ -132,15 +132,15 @@ describe('authInterceptor · sesión y tenant (BR-04)', () => {
       session.start({ accessToken: PLATAFORMA, refreshToken: 'r-1' });
 
       http.get('/admin/ops/traffic').subscribe();
-      const sin = backend.expectOne('/admin/ops/traffic');
-      expect(sin.request.headers.has('X-Tenant-Id')).toBe(false);
-      sin.flush({});
+      const withoutTenant = backend.expectOne('/admin/ops/traffic');
+      expect(withoutTenant.request.headers.has('X-Tenant-Id')).toBe(false);
+      withoutTenant.flush({});
 
       session.selectTenant('t-2');
       http.get('/admin/ops/traffic').subscribe();
-      const con = backend.expectOne('/admin/ops/traffic');
-      expect(con.request.headers.get('X-Tenant-Id')).toBe('t-2');
-      con.flush({});
+      const withTenant = backend.expectOne('/admin/ops/traffic');
+      expect(withTenant.request.headers.get('X-Tenant-Id')).toBe('t-2');
+      withTenant.flush({});
 
       session.clearTenant();
       http.get('/admin/ops/traffic').subscribe();

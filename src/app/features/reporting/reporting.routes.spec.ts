@@ -14,7 +14,7 @@ import { seccionRolesGuard } from '../../core/navigation/section-roles.guard';
 import { ROLES_ROUTE_DATA } from '../../core/navigation/navigation.types';
 import { ROLES_ADMINISTRACION, ROLES_REPORTERIA } from './reporting-access';
 import { SectionPlaceholder } from '../section-placeholder/section-placeholder';
-import { rutasDeLaMaqueta } from './reporting-mock.routes';
+import { mockRoutes } from './reporting-mock.routes';
 import { DEFAULT_TAB, validTabGuard, REPORTING_ROUTES } from './reporting.routes';
 
 function token(roles: readonly string[]): string {
@@ -33,7 +33,7 @@ function token(roles: readonly string[]): string {
 
 describe('cableado de los portales en app.routes', () => {
   // Las rutas reales con la bandera ENCENDIDA (apagada son sólo redirecciones: ver `app.routes.spec.ts`).
-  const encendidas = rutasDeLaMaqueta(() => SectionPlaceholder, true);
+  const encendidas = mockRoutes(() => SectionPlaceholder, true);
   const selector = encendidas.find((r) => r.path === 'portal-selector');
   const reporting = encendidas.find((r) => r.path === 'reports');
   // Las de `routes` (bandera apagada por defecto) conservan el lugar: delante del armazón.

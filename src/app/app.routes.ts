@@ -42,7 +42,7 @@ import {
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
-import { rutasDeLaMaqueta } from './features/reporting/reporting-mock.routes';
+import { mockRoutes } from './features/reporting/reporting-mock.routes';
 import { RUTAS_DE_GOBIERNO } from './app.routes.governance';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
@@ -1805,7 +1805,7 @@ export const routes: Routes = [
   ...rutasDeFichasPublicas(),
   // La maqueta de reportería (`/portal-selector`, `/reports`) detrás de `environment.reportingMockEnabled`: apagada,
   // redirige al panel de observabilidad y a la raíz (ver `reporting-mock.routes.ts`).
-  ...rutasDeLaMaqueta(chunkFallido, environment.reportingMockEnabled),
+  ...mockRoutes(chunkFallido, environment.reportingMockEnabled),
   insightsPortalRoute(chunkFallido),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
   // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos

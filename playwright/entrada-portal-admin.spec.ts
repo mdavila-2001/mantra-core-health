@@ -24,7 +24,7 @@ import { entrarYObservar, esperarAplicacionLista } from './support/sesion';
 const CLAVE = process.env['E2E_PLAT_CLAVE'] ?? '12345678';
 const SUPERADMIN = process.env['E2E_PLAT_SUPERADMIN'] ?? 'admin@alovidasalud.com';
 const PLATAFORMA = process.env['E2E_PLAT_ADMIN'] ?? 'plataforma@alovida.test';
-const MEDICO = process.env['E2E_PLAT_MEDICO'] ?? 'medico2org@alovida.test';
+const PRACTITIONER_ACCOUNT = process.env['E2E_PLAT_MEDICO'] ?? 'medico2org@alovida.test';
 
 /** Rutas que NO pueden aparecer en el aterrizaje de una cuenta de plataforma. */
 const PROHIBIDAS = [/^\/auth\/organization/, /^\/portal-selector/];
@@ -48,16 +48,16 @@ async function entrar(page: Page, identificador: string): Promise<readonly strin
 /** Anota cada `GET /admin/ops/traffic` con su cabecera `x-tenant-id` y su respuesta. */
 function vigilarTrafico(page: Page): Peticion[] {
   const vistas: Peticion[] = [];
-  const porPeticion = new Map<Request, Peticion>();
+  const byRequest = new Map<Request, Peticion>();
   page.on('request', (r) => {
     if (r.method() === 'GET' && new URL(r.url()).pathname === '/admin/ops/traffic') {
       const p: Peticion = { url: r.url(), tenant: r.headers()['x-tenant-id'] };
-      porPeticion.set(r, p);
+      byRequest.set(r, p);
       vistas.push(p);
     }
   });
   page.on('response', (respuesta) => {
-    const p = porPeticion.get(respuesta.request());
+    const p = byRequest.get(respuesta.request());
     if (p) {
       p.status = respuesta.status();
       p.requestId = respuesta.headers()['x-request-id'];
@@ -110,13 +110,13 @@ test('SUPERADMIN: fijar una organización manda X-Tenant-Id; «Toda la plataform
 
   // UI -> fijar organización -> la siguiente petición lleva la cabecera.
   await page.getByTestId('header-organizacion').click();
-  const opciones = page.locator('#menu-organizaciones .app-menu-item:not([data-testid="header-organizacion-plataforma"])');
+  const opciones = page.locator('#menu-organizaciones .app-menu-item:not([data-testid="header-organization-platform"])');
   await expect(opciones.first()).toBeVisible();
-  const nombre = (await opciones.first().innerText()).trim();
+  const orgName = (await opciones.first().innerText()).trim();
   const antes = trafico.length;
   await opciones.first().click();
   await expect(page).toHaveURL(/\/dashboard/);
-  await expect(page.getByTestId('header-organizacion')).toContainText(nombre, { timeout: 15_000 });
+  await expect(page.getByTestId('header-organizacion')).toContainText(orgName, { timeout: 15_000 });
   // El panel ya estaba cargado: «Actualizar» fuerza la lectura siguiente, que es la que debe llevar la cabecera.
   await page.getByRole('button', { name: 'Actualizar' }).click();
   await expect.poll(() => trafico.slice(antes).find((t) => t.status !== undefined)?.tenant, { timeout: 15_000 }).toBeTruthy();
@@ -124,12 +124,12 @@ test('SUPERADMIN: fijar una organización manda X-Tenant-Id; «Toda la plataform
   // Recarga: la elección se recuerda (localStorage) y el rótulo sigue siendo la organización.
   await page.reload();
   await esperarAplicacionLista(page);
-  await expect(page.getByTestId('header-organizacion')).toContainText(nombre, { timeout: 30_000 });
+  await expect(page.getByTestId('header-organizacion')).toContainText(orgName, { timeout: 30_000 });
 
   // Camino inverso: «Toda la plataforma» -> la cabecera deja de viajar.
   await page.getByTestId('header-organizacion').click();
   const despues = trafico.length;
-  await page.getByTestId('header-organizacion-plataforma').click();
+  await page.getByTestId('header-organization-platform').click();
   await expect(page.getByTestId('header-organizacion')).toContainText('Toda la plataforma', { timeout: 15_000 });
   await page.getByRole('button', { name: 'Actualizar' }).click();
   await expect.poll(() => trafico.slice(despues).find((t) => t.status !== undefined)?.status, { timeout: 15_000 }).toBe(200);
@@ -141,7 +141,7 @@ test('SUPERADMIN: fijar una organización manda X-Tenant-Id; «Toda la plataform
 test('control negativo: una cuenta con 2 membresías y sin rol de plataforma SÍ pasa por /auth/organization', async ({ browser }) => {
   const contexto = await browser.newContext();
   const page = await contexto.newPage();
-  const rutas = await entrar(page, MEDICO);
+  const rutas = await entrar(page, PRACTITIONER_ACCOUNT);
 
   await expect(page).toHaveURL(/\/auth\/organization/, { timeout: 30_000 });
   expect(rutas.some((r) => r.startsWith('/auth/organization')), `rutas: ${rutas.join(' -> ')}`).toBe(true);

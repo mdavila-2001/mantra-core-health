@@ -14,6 +14,15 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { entryDestination } from '../../reporting/reporting-access';
 
 /**
+ * Las pantallas de elección: volver a ellas tras elegir dejaría a la persona donde empezó.
+ * Se compara el camino (sin `?` ni `#`), por segmento completo.
+ */
+function isSelectionRoute(url: string): boolean {
+  const path = (url.split(/[?#]/, 1)[0] ?? '').replace(/\/+$/, '');
+  return ['/auth/organization', '/portal-selector'].some((r) => path === r || path.startsWith(`${r}/`));
+}
+
+/**
  * Selector de organización.
  *
  * Aparece entre el login y la aplicación cuando el token trae más de un tenant.
@@ -81,7 +90,7 @@ export class TenantSelection implements OnInit {
   choose(tenantId: string): void {
     this.auth.selectTenant(tenantId);
     // Si venía de una pantalla que pidió organización (`returnUrl`, validado), vuelve a ella; si no, el destino del login.
-    const volver = safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
-    void this.router.navigateByUrl(volver ?? entryDestination(this.auth.roles()));
+    const back = safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    void this.router.navigateByUrl(back !== null && !isSelectionRoute(back) ? back : entryDestination(this.auth.roles()));
   }
 }

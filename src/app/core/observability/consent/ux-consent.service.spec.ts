@@ -15,7 +15,7 @@ function jwt(payload: Record<string, unknown>): string {
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
 
-const USUARIO = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const USER_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const OTRO = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const PROPOSITO = '9889b3b6-4293-5266-bba2-b27fa26bec2e';
 const CONSENTIMIENTO = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -51,12 +51,12 @@ describe('UxConsent', () => {
     return TestBed.inject(UxConsent);
   }
 
-  function entrar(sub = USUARIO): void {
+  function entrar(sub = USER_ID): void {
     session.start({ accessToken: jwt({ sub, roles: [], tenants: [] }), refreshToken: 'r' });
     TestBed.tick();
   }
 
-  function estadoDeLaApi(status: 'GRANTED' | 'WITHDRAWN' | 'NONE', consentId?: string): void {
+  function apiState(status: 'GRANTED' | 'WITHDRAWN' | 'NONE', consentId?: string): void {
     http
       .expectOne((r) => r.url === URL_ME && r.params.get('purposeDefinitionId') === PROPOSITO)
       .flush({ status, purposeDefinitionId: PROPOSITO, ...(consentId ? { consentId } : {}) });
@@ -87,7 +87,7 @@ describe('UxConsent', () => {
     it('al iniciar sesión pregunta a la API; NONE → anónimo y se muestra el aviso', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('NONE');
+      apiState('NONE');
 
       expect(consent.decision()).toBe('ninguna');
       expect(consent.modo()).toBe('anonimo');
@@ -97,7 +97,7 @@ describe('UxConsent', () => {
     it('GRANTED → completo y sin aviso', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('GRANTED', CONSENTIMIENTO);
+      apiState('GRANTED', CONSENTIMIENTO);
 
       expect(consent.modo()).toBe('completo');
       expect(consent.avisoVisible()).toBe(false);
@@ -106,7 +106,7 @@ describe('UxConsent', () => {
     it('WITHDRAWN → ninguno: ni siquiera vistas anónimas', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('WITHDRAWN');
+      apiState('WITHDRAWN');
 
       expect(consent.decision()).toBe('retirada');
       expect(consent.modo()).toBe('ninguno');
@@ -116,7 +116,7 @@ describe('UxConsent', () => {
     it('otorgar manda POST con el propósito y la versión, sin ningún usuario, y pasa a completo', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('NONE');
+      apiState('NONE');
 
       consent.otorgar();
       const req = http.expectOne(URL_CONSENTIMIENTOS);
@@ -125,23 +125,23 @@ describe('UxConsent', () => {
         purposeDefinitionId: PROPOSITO,
         consentVersion: expect.stringMatching(/^ux-heatmap-/),
       });
-      expect(JSON.stringify(req.request.body)).not.toContain(USUARIO);
-      req.flush({ id: CONSENTIMIENTO, userId: USUARIO, purposeDefinitionId: PROPOSITO, decisionConceptId: 'x' });
+      expect(JSON.stringify(req.request.body)).not.toContain(USER_ID);
+      req.flush({ id: CONSENTIMIENTO, userId: USER_ID, purposeDefinitionId: PROPOSITO, decisionConceptId: 'x' });
 
       expect(consent.modo()).toBe('completo');
       expect(consent.avisoVisible()).toBe(false);
-      expect(localStorage.getItem(`mch.ux.aviso.${USUARIO}`)).toBe('1');
+      expect(localStorage.getItem(`mch.ux.aviso.${USER_ID}`)).toBe('1');
     });
 
     it('retirar usa el id del consentimiento vigente y pasa a ninguno', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('GRANTED', CONSENTIMIENTO);
+      apiState('GRANTED', CONSENTIMIENTO);
 
       consent.retirar();
       const req = http.expectOne(`${URL_CONSENTIMIENTOS}/${CONSENTIMIENTO}/withdraw`);
       expect(req.request.method).toBe('POST');
-      req.flush({ id: 'nuevo', userId: USUARIO, purposeDefinitionId: PROPOSITO, decisionConceptId: 'x' });
+      req.flush({ id: 'nuevo', userId: USER_ID, purposeDefinitionId: PROPOSITO, decisionConceptId: 'x' });
 
       expect(consent.decision()).toBe('retirada');
       expect(consent.modo()).toBe('ninguno');
@@ -150,12 +150,12 @@ describe('UxConsent', () => {
     it('tras un retiro se puede volver a otorgar', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('WITHDRAWN');
+      apiState('WITHDRAWN');
 
       consent.otorgar();
       http
         .expectOne(URL_CONSENTIMIENTOS)
-        .flush({ id: CONSENTIMIENTO, userId: USUARIO, purposeDefinitionId: PROPOSITO, decisionConceptId: 'x' });
+        .flush({ id: CONSENTIMIENTO, userId: USER_ID, purposeDefinitionId: PROPOSITO, decisionConceptId: 'x' });
 
       expect(consent.modo()).toBe('completo');
     });
@@ -165,24 +165,24 @@ describe('UxConsent', () => {
     it('«Ahora no» lo oculta, deja la captura anónima y no vuelve en este navegador', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('NONE');
+      apiState('NONE');
 
       consent.descartarAviso();
       expect(consent.avisoVisible()).toBe(false);
       expect(consent.modo()).toBe('anonimo');
-      expect(localStorage.getItem(`mch.ux.aviso.${USUARIO}`)).toBe('1');
+      expect(localStorage.getItem(`mch.ux.aviso.${USER_ID}`)).toBe('1');
     });
 
     it('lo descartado por una persona no se lo oculta a otra del mismo navegador', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('NONE');
+      apiState('NONE');
       consent.descartarAviso();
 
       session.clear();
       TestBed.tick();
       entrar(OTRO);
-      estadoDeLaApi('NONE');
+      apiState('NONE');
 
       expect(consent.avisoVisible()).toBe(true);
     });
@@ -190,7 +190,7 @@ describe('UxConsent', () => {
     it('con el almacenamiento bloqueado igual se oculta (hasta recargar) y no rompe', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('NONE');
+      apiState('NONE');
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new DOMException('bloqueado', 'SecurityError');
       });
@@ -245,7 +245,7 @@ describe('UxConsent', () => {
     it('si otorgar falla (403) deja el mensaje y no cambia el modo', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('NONE');
+      apiState('NONE');
 
       consent.otorgar();
       http.expectOne(URL_CONSENTIMIENTOS).flush({ message: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
@@ -258,7 +258,7 @@ describe('UxConsent', () => {
     it('si retirar falla por red dice que no hay conexión y conserva el permiso', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('GRANTED', CONSENTIMIENTO);
+      apiState('GRANTED', CONSENTIMIENTO);
 
       consent.retirar();
       http.expectOne(`${URL_CONSENTIMIENTOS}/${CONSENTIMIENTO}/withdraw`).error(new ProgressEvent('error'));
@@ -270,7 +270,7 @@ describe('UxConsent', () => {
     it('retirar sin un consentimiento vigente no manda nada', () => {
       const consent = preparar();
       entrar();
-      estadoDeLaApi('NONE');
+      apiState('NONE');
 
       consent.retirar();
       http.expectNone(() => true);
@@ -285,7 +285,7 @@ describe('UxConsent', () => {
       TestBed.tick();
       entrar(OTRO);
       tardia.flush({ status: 'GRANTED', consentId: CONSENTIMIENTO, purposeDefinitionId: PROPOSITO });
-      estadoDeLaApi('NONE');
+      apiState('NONE');
 
       expect(consent.decision()).toBe('ninguna');
     });

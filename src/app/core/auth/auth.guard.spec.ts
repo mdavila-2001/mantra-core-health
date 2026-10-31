@@ -61,14 +61,14 @@ describe('authGuard · el estado S1 del M34', () => {
   });
 
   it('NEGATIVO: PLATFORM_ADMIN con ámbito de organización y 3 organizaciones sí va al selector', () => {
-    const conAmbito = makeToken({
+    const scoped = makeToken({
       sub: 'u-1',
       sid: 's-1',
       roles: ['PLATFORM_ADMIN'],
       tenants: ['t-1', 't-2', 't-3'],
       scopedRoles: { 't-1': ['PLATFORM_ADMIN'] },
     });
-    session.start({ accessToken: conAmbito, refreshToken: 'r-1' });
+    session.start({ accessToken: scoped, refreshToken: 'r-1' });
 
     const resultado = ejecutar();
     expect(router.serializeUrl(resultado as UrlTree)).toBe(TENANT_SELECTION_ROUTE);

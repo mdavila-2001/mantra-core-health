@@ -3,6 +3,7 @@ import {
   accesoAPortales,
   cantidadDePortales,
   entryDestination,
+  portalSwitchRoute,
   puedeVerAdministracion,
   puedeVerInsights,
   puedeVerPlataforma,
@@ -253,6 +254,22 @@ describe('puedeVerPlataforma', () => {
 });
 
 describe('acceso a los portales · maqueta APAGADA (por defecto)', () => {
+  describe('portalSwitchRoute («Cambiar de portal» de Insights)', () => {
+    it('apagada: va al inicio de siempre, el mismo destino que entryDestination da a quien administra', () => {
+      expect(portalSwitchRoute(false)).toBe('/');
+      expect(portalSwitchRoute(false)).toBe(entryDestination(['PLATFORM_ADMIN'], false));
+    });
+
+    it('apagada: nunca apunta a /portal-selector, que con la bandera apagada redirige', () => {
+      expect(portalSwitchRoute(false)).not.toBe('/portal-selector');
+      expect(portalSwitchRoute()).toBe('/');
+    });
+
+    it('encendida: va al selector de portales', () => {
+      expect(portalSwitchRoute(true)).toBe('/portal-selector');
+    });
+  });
+
   it('la bandera viene apagada en el entorno de pruebas', () => {
     expect(accesoAPortales(['REPORT_VIEWER']).reporteria).toBe(false);
   });

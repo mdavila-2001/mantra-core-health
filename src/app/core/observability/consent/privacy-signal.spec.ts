@@ -1,6 +1,6 @@
-import { senalDePrivacidadActiva } from './privacy-signal';
+import { isPrivacySignalActive } from './privacy-signal';
 
-describe('senalDePrivacidadActiva', () => {
+describe('isPrivacySignalActive', () => {
   describe('válido', () => {
     it.each([
       ['DNT del navegador en «1»', { navigator: { doNotTrack: '1' } }],
@@ -10,7 +10,7 @@ describe('senalDePrivacidadActiva', () => {
       ['Global Privacy Control', { navigator: { globalPrivacyControl: true } }],
       ['DNT y GPC juntos', { navigator: { doNotTrack: '1', globalPrivacyControl: true } }],
     ])('%s → activa', (_nombre, ventana) => {
-      expect(senalDePrivacidadActiva(ventana)).toBe(true);
+      expect(isPrivacySignalActive(ventana)).toBe(true);
     });
   });
 
@@ -22,19 +22,19 @@ describe('senalDePrivacidadActiva', () => {
       ['GPC en false', { navigator: { globalPrivacyControl: false } }],
       ['navegador sin ninguna señal', { navigator: {} }],
     ])('%s → inactiva', (_nombre, ventana) => {
-      expect(senalDePrivacidadActiva(ventana)).toBe(false);
+      expect(isPrivacySignalActive(ventana)).toBe(false);
     });
   });
 
   describe('inválido', () => {
     it('sin ventana (servidor) no hay señal que leer', () => {
-      expect(senalDePrivacidadActiva(null)).toBe(false);
-      expect(senalDePrivacidadActiva(undefined)).toBe(false);
+      expect(isPrivacySignalActive(null)).toBe(false);
+      expect(isPrivacySignalActive(undefined)).toBe(false);
     });
 
     it('un GPC que no es el booleano true no cuenta (cadena «true»)', () => {
       expect(
-        senalDePrivacidadActiva({ navigator: { globalPrivacyControl: 'true' as unknown as boolean } }),
+        isPrivacySignalActive({ navigator: { globalPrivacyControl: 'true' as unknown as boolean } }),
       ).toBe(false);
     });
   });

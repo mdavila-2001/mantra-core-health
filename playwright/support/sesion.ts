@@ -104,17 +104,17 @@ async function intentarIngreso(page: Page, actor: Actor): Promise<void> {
   // existe con la maqueta de reportería encendida (`PW_REPORTING_MOCK=1`, frente 01 H4): sin ella la app redirige
   // `/portal-selector` a `/`, así que aceptarlo escondería una regresión. Quien necesite saber CUÁL fue el aterrizaje
   // (sin aceptar nada de más) usa `entrarYObservar`.
-  const conMaqueta = process.env['PW_REPORTING_MOCK'] === '1';
-  const destinos = conMaqueta ? /\/(dashboard|auth\/organization|portal-selector)/ : /\/(dashboard|auth\/organization)/;
+  const withMock = process.env['PW_REPORTING_MOCK'] === '1';
+  const destinos = withMock ? /\/(dashboard|auth\/organization|portal-selector)/ : /\/(dashboard|auth\/organization)/;
   await page.waitForURL(destinos, { timeout: 60_000 });
 
   if (page.url().includes('/auth/organization')) {
     await page.getByTestId('tenant-opcion').first().click();
-    await page.waitForURL(conMaqueta ? /\/(dashboard|portal-selector)/ : /\/dashboard/, { timeout: 60_000 });
+    await page.waitForURL(withMock ? /\/(dashboard|portal-selector)/ : /\/dashboard/, { timeout: 60_000 });
   }
 
   // Estas pruebas recorren la aplicación de administración: se elige ese portal.
-  if (conMaqueta && page.url().includes('/portal-selector')) {
+  if (withMock && page.url().includes('/portal-selector')) {
     await page.getByRole('link', { name: /Portal de administración/ }).click();
     await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }

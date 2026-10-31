@@ -64,6 +64,9 @@ cada evento).
   (`app-ux-consent-panel`, `features/ux-consent/`), para cualquier cuenta.
 - API: `GET /telemetry/tracking-consents/me?purposeDefinitionId=…`,
   `POST /telemetry/tracking-consents` y `POST /telemetry/tracking-consents/:id/withdraw`.
+- Cliente HTTP: `TelemetryConsentClient` (`core/data-access/telemetry/telemetry-consent.client.ts`).
+  Tres llamadas (`getMine`, `grant`, `withdraw`), siempre del usuario autenticado: el cuerpo
+  no nombra a nadie y la API rechaza una clave `userId`. Solo lo usa `UxConsent`.
 
 ### Lo que nunca sale
 

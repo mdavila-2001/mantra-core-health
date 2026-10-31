@@ -5,7 +5,7 @@ import { computed, DOCUMENT, effect, inject, Injectable, PLATFORM_ID, signal } f
 import { SessionStore } from '../../auth/session.store';
 import { TelemetryConsentClient } from '../../data-access/telemetry/telemetry-consent.client';
 import { VERSION_CONSENTIMIENTO_UX, UX_ANALYTICS_CONFIG } from '../ux/ux-analytics.config';
-import { senalDePrivacidadActiva } from './privacy-signal';
+import { isPrivacySignalActive } from './privacy-signal';
 
 /**
  * Lo que la API sabe de la decisión de esta persona para el propósito de los
@@ -57,7 +57,7 @@ export class UxConsent {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /** DNT o GPC: se lee una vez; cambiarlos exige recargar, como en cualquier sitio. */
-  readonly bloqueadaPorPrivacidad = this.isBrowser && senalDePrivacidadActiva(this.document.defaultView);
+  readonly bloqueadaPorPrivacidad = this.isBrowser && isPrivacySignalActive(this.document.defaultView);
 
   readonly decision = signal<DecisionUx>('desconocida');
   /** El consentimiento vigente, el que se pasa a retirar. */
@@ -95,21 +95,21 @@ export class UxConsent {
     () => this.disponible() && this.decision() === 'ninguna' && !this.avisoDescartado(),
   );
 
-  private usuarioCargado: string | null = null;
+  private loadedUser: string | null = null;
 
   constructor() {
     effect(() => {
-      const usuario = this.session.userId();
+      const userId = this.session.userId();
       const disponible = this.disponible();
-      if (usuario === this.usuarioCargado) {
+      if (userId === this.loadedUser) {
         return;
       }
-      this.usuarioCargado = usuario;
+      this.loadedUser = userId;
       this.decision.set('desconocida');
       this.consentId.set(null);
       this.error.set(null);
-      this.avisoDescartado.set(usuario !== null && this.leerAviso(usuario));
-      if (usuario !== null && disponible) {
+      this.avisoDescartado.set(userId !== null && this.leerAviso(userId));
+      if (userId !== null && disponible) {
         this.refrescar();
       }
     });
@@ -120,10 +120,10 @@ export class UxConsent {
     if (!this.disponible()) {
       return;
     }
-    const usuario = this.session.userId();
+    const userId = this.session.userId();
     this.client.getMine(this.config.consentPurposeDefinitionId).subscribe({
       next: (estado) => {
-        if (usuario !== this.session.userId()) {
+        if (userId !== this.session.userId()) {
           return;
         }
         this.consentId.set(estado.consentId ?? null);
@@ -152,7 +152,7 @@ export class UxConsent {
       },
       error: (error: unknown) => {
         this.ocupado.set(false);
-        this.error.set(mensajeDeError(error, 'No pudimos registrar su decisión. Pruebe de nuevo.'));
+        this.error.set(errorMessage(error, 'No pudimos registrar su decisión. Pruebe de nuevo.'));
       },
     });
   }
@@ -173,7 +173,7 @@ export class UxConsent {
       },
       error: (error: unknown) => {
         this.ocupado.set(false);
-        this.error.set(mensajeDeError(error, 'No pudimos retirar su consentimiento. Pruebe de nuevo.'));
+        this.error.set(errorMessage(error, 'No pudimos retirar su consentimiento. Pruebe de nuevo.'));
       },
     });
   }
@@ -184,29 +184,29 @@ export class UxConsent {
    */
   descartarAviso(): void {
     this.avisoDescartado.set(true);
-    const usuario = this.session.userId();
-    if (usuario === null) {
+    const userId = this.session.userId();
+    if (userId === null) {
       return;
     }
     try {
-      this.document.defaultView?.localStorage.setItem(`${CLAVE_AVISO}.${usuario}`, '1');
+      this.document.defaultView?.localStorage.setItem(`${CLAVE_AVISO}.${userId}`, '1');
     } catch {
       // Almacenamiento bloqueado: el aviso no vuelve a salir hasta recargar.
     }
   }
 
-  private leerAviso(usuario: string): boolean {
+  private leerAviso(userId: string): boolean {
     try {
-      return this.document.defaultView?.localStorage.getItem(`${CLAVE_AVISO}.${usuario}`) === '1';
+      return this.document.defaultView?.localStorage.getItem(`${CLAVE_AVISO}.${userId}`) === '1';
     } catch {
       return false;
     }
   }
 }
 
-function mensajeDeError(error: unknown, porDefecto: string): string {
+function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof HttpErrorResponse && error.status === 0) {
     return 'No pudimos conectarnos. Revise su conexión y pruebe de nuevo.';
   }
-  return porDefecto;
+  return fallback;
 }

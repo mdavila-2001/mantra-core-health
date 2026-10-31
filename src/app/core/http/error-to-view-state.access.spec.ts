@@ -26,7 +26,7 @@ describe('errores del gobierno de accesos', () => {
 });
 
 describe('falta fijar organización (H1): S5 «Elegir organización»', () => {
-  const conReason = (status: number, reason: string, code = 'FORBIDDEN'): HttpErrorResponse =>
+  const withReason = (status: number, reason: string, code = 'FORBIDDEN'): HttpErrorResponse =>
     new HttpErrorResponse({ status, error: { statusCode: status, code, message: 'x', details: { reason }, correlationId: 'req-9', timestamp: '', path: '/x' } });
 
   it.each([
@@ -35,22 +35,22 @@ describe('falta fijar organización (H1): S5 «Elegir organización»', () => {
     [412, 'TENANT_REQUIRED', 'PRECONDITION_FAILED'],
     [422, 'TENANT_REQUIRED', 'PRECONDITION_FAILED'],
   ])('%s %s se pinta como S5 con la acción «Elegir organización» y el ID de petición', (status, reason, code) => {
-    const estado = errorToViewState(conReason(status, reason, code));
-    expect(estado).toMatchObject({
+    const viewState = errorToViewState(withReason(status, reason, code));
+    expect(viewState).toMatchObject({
       status: 'forbidden',
       requestId: 'req-9',
       nextAction: { label: 'Elegir organización' },
     });
-    expect((estado as { nextAction: { route: string } }).nextAction.route.startsWith('/auth/organization')).toBe(true);
+    expect((viewState as { nextAction: { route: string } }).nextAction.route.startsWith('/auth/organization')).toBe(true);
   });
 
   it('NEGATIVO: un 412 con otro `reason` no se confunde con la elección de organización', () => {
-    const estado = errorToViewState(conReason(412, 'OTRA_COSA', 'PRECONDITION_FAILED'));
-    expect(estado.status).not.toBe('forbidden');
+    const viewState = errorToViewState(withReason(412, 'OTRA_COSA', 'PRECONDITION_FAILED'));
+    expect(viewState.status).not.toBe('forbidden');
   });
 
   it('NEGATIVO: un 403 de rol insuficiente no ofrece elegir organización', () => {
-    const estado = errorToViewState(conReason(403, 'ROLE_INSUFFICIENT'));
-    expect(estado).not.toHaveProperty('nextAction');
+    const viewState = errorToViewState(withReason(403, 'ROLE_INSUFFICIENT'));
+    expect(viewState).not.toHaveProperty('nextAction');
   });
 });

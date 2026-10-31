@@ -38,7 +38,7 @@ describe('UxConsentPanel', () => {
 
   it('sin decidir ofrece «Permitir»', () => {
     const { el, doble } = montar({ decision: 'ninguna' });
-    expect(probar(el, 'ux-consent-estado')?.textContent).toContain('Sin decidir');
+    expect(probar(el, 'ux-consent-status')?.textContent).toContain('Sin decidir');
     (probar(el, 'ux-consent-otorgar') as HTMLButtonElement).click();
     expect(doble.otorgar).toHaveBeenCalledTimes(1);
     expect(probar(el, 'ux-consent-retirar')).toBeNull();
@@ -46,7 +46,7 @@ describe('UxConsentPanel', () => {
 
   it('otorgado ofrece «Retirar permiso» y no «Permitir»', () => {
     const { el, doble } = montar({ decision: 'otorgada' });
-    expect(probar(el, 'ux-consent-estado')?.textContent).toContain('Permitido');
+    expect(probar(el, 'ux-consent-status')?.textContent).toContain('Permitido');
     (probar(el, 'ux-consent-retirar') as HTMLButtonElement).click();
     expect(doble.retirar).toHaveBeenCalledTimes(1);
     expect(probar(el, 'ux-consent-otorgar')).toBeNull();
@@ -54,10 +54,10 @@ describe('UxConsentPanel', () => {
 
   it('retirado vuelve a ofrecer «Permitir», y el estado cambia al releer', () => {
     const { fixture, decision, el } = montar({ decision: 'retirada' });
-    expect(probar(el, 'ux-consent-estado')?.textContent).toContain('Retirado');
+    expect(probar(el, 'ux-consent-status')?.textContent).toContain('Retirado');
     expect(probar(el, 'ux-consent-otorgar')).not.toBeNull();
     decision.set('otorgada');
     fixture.detectChanges();
-    expect(probar(el, 'ux-consent-estado')?.textContent).toContain('Permitido');
+    expect(probar(el, 'ux-consent-status')?.textContent).toContain('Permitido');
   });
 });

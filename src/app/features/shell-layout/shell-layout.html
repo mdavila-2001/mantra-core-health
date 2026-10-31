@@ -752,6 +752,9 @@
       <app-new-device-banner />
       <!-- Las organizaciones que niegan ahora a la persona (`deniedTenants` del token): aviso, no bloqueo. -->
       <app-denied-tenants-banner />
+      <!-- Aviso de una sola vez sobre la medición de uso (consentimiento de los mapas de calor). En el flujo,
+           solo en el área autenticada: nunca sobre rutas públicas ni de acceso. -->
+      <app-ux-consent-notice />
       <router-outlet />
     </main>
   </div>

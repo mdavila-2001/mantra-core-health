@@ -19,7 +19,7 @@ import {
 import { tabIndex, TAB, PROFILE_TABS } from './features/account/my-profile/profile-tabs';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { ROLES_REPORTERIA } from './features/reporting/reporting-access';
-import { rutasDeLaMaqueta } from './features/reporting/reporting-mock.routes';
+import { mockRoutes } from './features/reporting/reporting-mock.routes';
 import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
 /**
@@ -1043,7 +1043,7 @@ describe('la maqueta de reportería detrás de su bandera (H4)', () => {
   });
 
   it('apagada, las rutas de la maqueta son sólo redirecciones: sin componente, sin hijas, sin guard que eludir', () => {
-    const rutas = rutasDeLaMaqueta(() => SectionPlaceholder, false);
+    const rutas = mockRoutes(() => SectionPlaceholder, false);
     expect(rutas.map((r) => [r.path, ...(r.children ?? []).map((h) => h.redirectTo)])).toEqual([
       ['portal-selector', '/', '/'],
       ['reports', '/superadmin/observability', '/superadmin/observability'],
@@ -1056,7 +1056,7 @@ describe('la maqueta de reportería detrás de su bandera (H4)', () => {
   });
 
   it('encendida, conserva las rutas de siempre con authGuard y seccionRolesGuard y los roles de cada portal', () => {
-    const rutas = rutasDeLaMaqueta(() => SectionPlaceholder, true);
+    const rutas = mockRoutes(() => SectionPlaceholder, true);
     expect(rutas.map((r) => r.path)).toEqual(['portal-selector', 'reports']);
     for (const r of rutas) {
       expect(r.redirectTo).toBeUndefined();

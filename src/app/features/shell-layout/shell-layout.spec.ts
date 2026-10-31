@@ -353,6 +353,12 @@ describe('ShellLayout', () => {
    * en silencio: la geometría del marco —que es lo que la hoja de la bóveda
    * espera encontrar— y que el menú siga saliendo del registro de secciones.
    */
+  it('el aviso de consentimiento vive dentro del contenido (en el flujo), no suelto en la raíz de la app', () => {
+    fixture.detectChanges();
+    const main = (fixture.nativeElement as HTMLElement).querySelector('main#contenido-principal');
+    expect(main?.querySelector('app-ux-consent-notice')).not.toBeNull();
+  });
+
   describe('marco ALOVIDA', () => {
     function raiz(): HTMLElement {
       fixture.detectChanges();
@@ -1952,7 +1958,7 @@ describe('ShellLayout', () => {
     });
 
     describe('alcance de plataforma (H3): «Toda la plataforma»', () => {
-      function sesionDePlataforma(roles: string[], extra: Record<string, unknown> = {}) {
+      function platformSession(roles: string[], extra: Record<string, unknown> = {}) {
         abrirSesion({
           sub: 'u-1',
           name: 'Ana Salas',
@@ -1964,10 +1970,10 @@ describe('ShellLayout', () => {
       }
       const rotulo = (): string => raiz().querySelector('[data-testid="header-organizacion"]')?.textContent?.trim() ?? '';
       const opcionPlataforma = (): HTMLButtonElement | null =>
-        raiz().querySelector<HTMLButtonElement>('[data-testid="header-organizacion-plataforma"]');
+        raiz().querySelector<HTMLButtonElement>('[data-testid="header-organization-platform"]');
 
       it('ofrece «Toda la plataforma», marcada y como rótulo, mientras no se fije organización (no viaja X-Tenant-Id)', () => {
-        sesionDePlataforma(['PLATFORM_ADMIN']);
+        platformSession(['PLATFORM_ADMIN']);
 
         expect(rotulo()).toContain('Toda la plataforma');
         expect(opcionPlataforma()?.getAttribute('aria-current')).toBe('true');
@@ -1976,7 +1982,7 @@ describe('ShellLayout', () => {
       });
 
       it('fijar una organización la manda como siempre; «Toda la plataforma» la suelta y no deja la recordada', () => {
-        sesionDePlataforma(['PLATFORM_ADMIN']);
+        platformSession(['PLATFORM_ADMIN']);
         vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
         interno<(id: string | null) => void>('changeTenant')('t-2');
@@ -1996,14 +2002,14 @@ describe('ShellLayout', () => {
       });
 
       it('NEGATIVO: quien no tiene alcance de plataforma no ve la opción', () => {
-        sesionDePlataforma(['SECURITY_ADMIN']);
+        platformSession(['SECURITY_ADMIN']);
 
         expect(opcionPlataforma()).toBeNull();
         expect(rotulo()).not.toContain('Toda la plataforma');
       });
 
       it('NEGATIVO: PLATFORM_ADMIN con ámbito de organización no ve la opción', () => {
-        sesionDePlataforma(['PLATFORM_ADMIN'], { scopedRoles: { 't-1': ['PLATFORM_ADMIN'] } });
+        platformSession(['PLATFORM_ADMIN'], { scopedRoles: { 't-1': ['PLATFORM_ADMIN'] } });
 
         expect(opcionPlataforma()).toBeNull();
       });

@@ -225,17 +225,7 @@ Orden de dependencias: H2 (API) y H1 (front) se pueden escribir en paralelo en a
 
 | ID | Microtarea | Archivos | Estado |
 |---|---|---|---|
-| H1.S1.M1 | `core/auth/platform-scope.ts` + spec | nuevo | TODO |
-| H1.S1.M2 | `needsTenantSelection`, `hasPlatformScope`, `platformWide`, `clearTenant` en `SessionStore` + spec | `session.store.ts`, `.spec.ts` | TODO |
-| H1.S1.M3 | `AuthService.clearSelectedTenant()` (borra señal y `localStorage`) + spec | `auth.service.ts`, `refresh-token.storage.ts` | TODO |
-| H1.S2.M1 | `core/auth/return-url.ts` (extraído de `login.ts:261-268`) + `destinoNormal()` nuevo orden + specs | `login.ts`, `login.spec.ts` | TODO |
-| H1.S2.M2 | `tenant-selection`: `returnUrl` + opción «Toda la plataforma» + specs | `tenant-selection.{ts,html,spec.ts}` | TODO |
-| H1.S3.M1 | Conmutador del armazón: rótulo, opción «Toda la plataforma», condición de visibilidad; extraer a `shell-layout/tenant-menu/` si el delta > +12 líneas | `shell-layout.{ts,html}` | TODO |
-| H1.S4.M1 | Interceptor: 412 reconocido; sin navegación para alcance plataforma; `returnUrl` en la navegación | `auth.interceptor.ts`, specs | TODO |
-| H1.S4.M2 | `error-to-view-state`: `TENANT_*` → S5 con `nextAction` «Elegir organización» | `error-to-view-state.ts`, spec | TODO |
-| H1.S5.M1 | Cuenta mock `plataforma@alovida.mock` (sólo `PLATFORM_ADMIN`, 2 tenants) | `mock-session.ts` (o `mock-session.accounts.ts`) | TODO |
-| H1.S5.M2 | Doc: `docs/adr/ADR-00xx-alcance-de-plataforma.md` (regla 2.1, por qué no `SECURITY_ADMIN`) y actualización de `docs/frontend/*` que nombran `needsTenantSelection` | docs | TODO |
-
+| H1.S1.M1 | `core/auth/platform-scope.ts` + spec | nuevo | pendiente || H1.S1.M2 | `needsTenantSelection`, `hasPlatformScope`, `platformWide`, `clearTenant` en `SessionStore` + spec | `session.store.ts`, `.spec.ts` | pendiente || H1.S1.M3 | `AuthService.clearSelectedTenant()` (borra señal y `localStorage`) + spec | `auth.service.ts`, `refresh-token.storage.ts` | pendiente || H1.S2.M1 | `core/auth/return-url.ts` (extraído de `login.ts:261-268`) + `destinoNormal()` nuevo orden + specs | `login.ts`, `login.spec.ts` | pendiente || H1.S2.M2 | `tenant-selection`: `returnUrl` + opción «Toda la plataforma» + specs | `tenant-selection.{ts,html,spec.ts}` | pendiente || H1.S3.M1 | Conmutador del armazón: rótulo, opción «Toda la plataforma», condición de visibilidad; extraer a `shell-layout/tenant-menu/` si el delta > +12 líneas | `shell-layout.{ts,html}` | pendiente || H1.S4.M1 | Interceptor: 412 reconocido; sin navegación para alcance plataforma; `returnUrl` en la navegación | `auth.interceptor.ts`, specs | pendiente || H1.S4.M2 | `error-to-view-state`: `TENANT_*` → S5 con `nextAction` «Elegir organización» | `error-to-view-state.ts`, spec | pendiente || H1.S5.M1 | Cuenta mock `plataforma@alovida.mock` (sólo `PLATFORM_ADMIN`, 2 tenants) | `mock-session.ts` (o `mock-session.accounts.ts`) | pendiente || H1.S5.M2 | Doc: `docs/adr/ADR-00xx-alcance-de-plataforma.md` (regla 2.1, por qué no `SECURITY_ADMIN`) y actualización de `docs/frontend/*` que nombran `needsTenantSelection` | docs | pendiente |
 ### H2 — Rutas de plataforma sin tenant (API)
 
 **CA.** Dado un `PLATFORM_ADMIN` global con 2 membresías y sin `X-Tenant-Id`, cuando pide `GET /admin/ops/traffic`, entonces 200. Con `X-Tenant-Id` de una organización ajena → 403 `TENANT_MEMBERSHIP_REQUIRED`. Dado un `PLATFORM_ADMIN` **con `tenantId`** en su asignación → 403 `TENANT_AMBIGUOUS`. Dado un `REPORT_VIEWER` → 403 `ROLE_INSUFFICIENT`. Dado un `SUPERADMIN` sin cabecera en `GET /admin/analytics/overview` → respuesta con `reason: TENANT_REQUIRED` (412 hoy; si A3 se aprueba, 200 agregado).
@@ -244,22 +234,14 @@ Orden de dependencias: H2 (API) y H1 (front) se pueden escribir en paralelo en a
 
 | ID | Microtarea | Archivos | Estado |
 |---|---|---|---|
-| H2.S1.M1 | `common/tenant/platform-scope.ts` + spec | nuevo | TODO |
-| H2.S1.M2 | `@PlatformTenantOptional(...)` en `OpsConsoleController` + e2e de 4 casos | `ops-console.controller.ts`, spec | TODO |
-| H2.S1.M3 | `tenant-scope.guard.spec.ts` +4 casos de 2.3/A6 | spec | TODO |
-| H2.S2.M1 | Decisión A3 registrada en `CONTEXTO-COMUN.md`/`DECISIONES`; si se aprueba, `@PlatformTenantOptional` en analítica y agregación con `minSample` (coordinar con frente 02) | `telemetry-analytics.controller.ts`, servicio | TODO |
-| H2.S3.M1 | Seed demo `plataforma@alovida.test` (`PLATFORM_ADMIN` global, 2 membresías) tras `demo-gate` | `common/seed/` nuevo + `seed.module.ts` + `README.md` | TODO |
-| H2.S3.M2 | Corregir `CONTEXTO-COMUN.md` (no existe `PlatformAdminScopeGuard`) — lo hace quien coordina; aquí sólo se registra | — | TODO |
-
+| H2.S1.M1 | `common/tenant/platform-scope.ts` + spec | nuevo | pendiente || H2.S1.M2 | `@PlatformTenantOptional(...)` en `OpsConsoleController` + e2e de 4 casos | `ops-console.controller.ts`, spec | pendiente || H2.S1.M3 | `tenant-scope.guard.spec.ts` +4 casos de 2.3/A6 | spec | pendiente || H2.S2.M1 | Decisión A3 registrada en `CONTEXTO-COMUN.md`/`DECISIONES`; si se aprueba, `@PlatformTenantOptional` en analítica y agregación con `minSample` (coordinar con frente 02) | `telemetry-analytics.controller.ts`, servicio | pendiente || H2.S3.M1 | Seed demo `plataforma@alovida.test` (`PLATFORM_ADMIN` global, 2 membresías) tras `demo-gate` | `common/seed/` nuevo + `seed.module.ts` + `README.md` | pendiente || H2.S3.M2 | Corregir `CONTEXTO-COMUN.md` (no existe `PlatformAdminScopeGuard`) — lo hace quien coordina; aquí sólo se registra | — | pendiente |
 ### H3 — Conmutador de organización dentro del panel (front)
 
 Incluido en H1.S3; se separa como hito para la evidencia de mutación: **UI → `selectTenant` → `X-Tenant-Id` en la siguiente request (consola-red.json) → recarga (`localStorage` recordado) → UI**, y el camino inverso con «Toda la plataforma». CA/DoD: capturas antes/después y `consola-red.json` con la cabecera presente/ausente.
 
 | ID | Microtarea | Estado |
 |---|---|---|
-| H3.S1.M1 | Spec Playwright `conmutador-organizacion.spec.ts` (simulador) con los dos sentidos y recarga | TODO |
-| H3.S1.M2 | Misma corrida contra la API real con `plataforma@alovida.test` | TODO |
-
+| H3.S1.M1 | Spec Playwright `conmutador-organizacion.spec.ts` (simulador) con los dos sentidos y recarga | pendiente || H3.S1.M2 | Misma corrida contra la API real con `plataforma@alovida.test` | pendiente |
 ### H4 — Entrada: sin selector de portales, maqueta detrás de bandera
 
 **CA.** Dado cualquier rol de gestión, cuando entra, entonces aterriza en `/dashboard` (Centro) y no en `/portal-selector`. Dado `/reports/commercial/resumen` en la barra, entonces redirige a `/superadmin/observability` (bandera apagada). Dado la bandera encendida en el simulador, entonces `reporteria-capturas.spec.ts` sigue verde (no se toca su contenido). Dado el Centro, entonces la segunda puerta se llama «Observabilidad y gobierno» y lleva a `/superadmin/observability`.
@@ -268,15 +250,7 @@ Incluido en H1.S3; se separa como hito para la evidencia de mutación: **UI → 
 
 | ID | Microtarea | Archivos | Estado |
 |---|---|---|---|
-| H4.S1.M1 | Bandera `reportingMockEnabled` (false) en `environment.types.ts` + generador | `src/environments/*` | TODO |
-| H4.S1.M2 | `entryDestination`/`accesoAPortales` leen la bandera; specs on/off | `reporting-access.ts`, spec | TODO |
-| H4.S1.M3 | `/reports/**` → redirect; `/portal-selector` → redirect; `app.routes.server.ts` acorde | `app.routes.ts`, `app.routes.server.ts`, `app.routes.spec.ts` | TODO |
-| H4.S2.M1 | Centro: puerta renombrada y destino | `platform-home.ts`, `.html`, spec | TODO |
-| H4.S2.M2 | `navigation.platform.ts:91-98`: `label`/`summary` de observabilidad | `navigation.platform.ts`, `navigation.map.spec.ts` | TODO |
-| H4.S3.M1 | `playwright/support/sesion.ts` + `login-cuenta-local.mjs` + `portal-admin-visual.mjs` + `auditoria-qa-mockup.spec.ts` | playwright | TODO |
-| H4.S3.M2 | `reporteria-capturas.spec.ts`: `test.skip` sin `PW_REPORTING_MOCK=1` (sin tocar casos) | playwright | TODO |
-| H4.S4.M1 | Docs: quitar `/reports` y `/portal-selector` de la navegación documentada; `docs/index.md`, `docs/reports/generated/rutas.json` regenerado | docs | TODO |
-
+| H4.S1.M1 | Bandera `reportingMockEnabled` (false) en `environment.types.ts` + generador | `src/environments/*` | pendiente || H4.S1.M2 | `entryDestination`/`accesoAPortales` leen la bandera; specs on/off | `reporting-access.ts`, spec | pendiente || H4.S1.M3 | `/reports/**` → redirect; `/portal-selector` → redirect; `app.routes.server.ts` acorde | `app.routes.ts`, `app.routes.server.ts`, `app.routes.spec.ts` | pendiente || H4.S2.M1 | Centro: puerta renombrada y destino | `platform-home.ts`, `.html`, spec | pendiente || H4.S2.M2 | `navigation.platform.ts:91-98`: `label`/`summary` de observabilidad | `navigation.platform.ts`, `navigation.map.spec.ts` | pendiente || H4.S3.M1 | `playwright/support/sesion.ts` + `login-cuenta-local.mjs` + `portal-admin-visual.mjs` + `auditoria-qa-mockup.spec.ts` | playwright | pendiente || H4.S3.M2 | `reporteria-capturas.spec.ts`: `test.skip` sin `PW_REPORTING_MOCK=1` (sin tocar casos) | playwright | pendiente || H4.S4.M1 | Docs: quitar `/reports` y `/portal-selector` de la navegación documentada; `docs/index.md`, `docs/reports/generated/rutas.json` regenerado | docs | pendiente |
 ### H5 — Matriz de roles y kill-test contra la API real
 
 **CA.** Dado `admin@alovidasalud.com` miembro de 2+ organizaciones **y** `plataforma@alovida.test`, cuando entran contra la API real, entonces la primera URL tras el envío es `/dashboard`, el Centro pinta al menos el bloque «API hoy» con datos (no esqueleto, no error), la red muestra `GET /admin/ops/traffic` → 200 **sin** `X-Tenant-Id`, y `medica@` sigue viendo el selector.
@@ -285,12 +259,7 @@ Incluido en H1.S3; se separa como hito para la evidencia de mutación: **UI → 
 
 | ID | Microtarea | Estado |
 |---|---|---|
-| H5.S1.M1 | `support/sesion.ts › entrarYObservar()` | TODO |
-| H5.S1.M2 | `entrada-portal-admin.spec.ts` (kill-test §5) | TODO |
-| H5.S2.M1 | Matriz: catálogo con `superadmin/*`, `/insights`, cuentas reales; dos corridas; evidencia en `docs/frontend/evidence/roles/` con fecha | TODO |
-| H5.S2.M2 | Triage de rojos (D-11) en `REPORTE.md` | TODO |
-| H5.S3.M1 | Dos PRs por repo (`dev` y `test`, cherry-pick desde `test`) | TODO |
-
+| H5.S1.M1 | `support/sesion.ts › entrarYObservar()` | pendiente || H5.S1.M2 | `entrada-portal-admin.spec.ts` (kill-test §5) | pendiente || H5.S2.M1 | Matriz: catálogo con `superadmin/*`, `/insights`, cuentas reales; dos corridas; evidencia en `docs/frontend/evidence/roles/` con fecha | pendiente || H5.S2.M2 | Triage de rojos (D-11) en `REPORTE.md` | pendiente || H5.S3.M1 | Dos PRs por repo (`dev` y `test`, cherry-pick desde `test`) | pendiente |
 ### H6 — (franja siguiente) Archivo definitivo de la maqueta
 
 Precondición: panel de observabilidad `VERIFIED` contra la API real por otro frente. Pasos: rescatar a `shared/` (`kpi-tile`+`sparkline`, `report-filter-bar`, `tab-view`/`report-table`, `chart-theme.service`) con specs; mover `ROLES_ADMINISTRACION`/`ROLES_INSIGHTS`/`puedeVer*` a `core/navigation/portal-access.ts`; borrar `features/reporting/`, `features/portal-selector/`, `core/mock/handlers/reporting*`, `core/data-access/reporting/`, `reporteria-capturas.spec.ts`; limpiar `session-cleanup.lazy.ts`; quitar la bandera. Costo: −432 `it()`, −35 PW, −~60 archivos (3.2).
