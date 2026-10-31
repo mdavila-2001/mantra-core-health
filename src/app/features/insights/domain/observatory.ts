@@ -150,3 +150,50 @@ export function observatoryTrend(item: ObservatoryItem, until: string): Observat
   const days = eachDay(addDays(until, -29), until);
   return { labels: days, values: days.map((d, i) => Math.max(0, 30 + i * item.trendSlope * 1.2 + (noise(`${item.trendSeed}|${d}`, 0.3) - 1) * 30)) };
 }
+
+/* ---------------------------------------------------------------------------
+    Ámbito, orden y tendencias del sector.
+    Todo es de demostración: los ámbitos y las series son ilustrativos.
+    ------------------------------------------------------------------------ */
+
+export type ObservatoryScope = 'sc' | 'bo' | 'int';
+export const SCOPE_LABELS: Readonly<Record<ObservatoryScope, string>> = { sc: 'Santa Cruz', bo: 'Bolivia', int: 'Internacional' };
+const SCOPE_BY_ID: Readonly<Record<string, ObservatoryScope>> = { resp: 'sc', reg: 'bo', conn: 'bo', mental: 'int', priv: 'int', mkt: 'bo' };
+export const scopeOf = (item: ObservatoryItem): ObservatoryScope => SCOPE_BY_ID[item.id] ?? 'bo';
+
+const RELEVANCE_RANK: Readonly<Record<Relevance, number>> = { high: 3, medium: 2, low: 1 };
+export type ObservatoryOrder = 'relevance' | 'date';
+
+export interface ObservatoryFilter {
+  readonly category: ObservatoryCategory | 'all';
+  readonly impact: Impact | 'all';
+  readonly scope: ObservatoryScope | 'all';
+  readonly minRelevance: Relevance;
+  readonly order: ObservatoryOrder;
+  readonly query: string;
+}
+
+export function filterObservatory(f: ObservatoryFilter, items: readonly ObservatoryItem[] = OBSERVATORY): ObservatoryItem[] {
+  const q = f.query.trim().toLowerCase();
+  return items
+    .filter((o) => (f.category === 'all' || o.category === f.category) && (f.impact === 'all' || o.impact === f.impact) && (f.scope === 'all' || scopeOf(o) === f.scope) && RELEVANCE_RANK[o.relevance] >= RELEVANCE_RANK[f.minRelevance] && (!q || `${o.title} ${o.summary}`.toLowerCase().includes(q)))
+    .sort((a, b) => (f.order === 'date' ? b.date.localeCompare(a.date) : RELEVANCE_RANK[b.relevance] - RELEVANCE_RANK[a.relevance] || b.date.localeCompare(a.date)));
+}
+
+/** Riesgos y oportunidades abiertos por categoría. */
+export function exposureByCategory(items: readonly ObservatoryItem[] = OBSERVATORY): { category: ObservatoryCategory; risks: number; opportunities: number }[] {
+  return (Object.keys(CATEGORY_LABELS) as ObservatoryCategory[])
+    .map((category) => ({ category, risks: items.filter((o) => o.category === category && o.impact === 'risk').length, opportunities: items.filter((o) => o.category === category && o.impact === 'opportunity').length }))
+    .filter((r) => r.risks + r.opportunities > 0);
+}
+
+/** Atención semanal (12 semanas) a los temas del sector: una serie por categoría. Índice relativo. */
+export function sectorTrends(until: string, weeks = 12): { labels: string[]; series: { id: ObservatoryCategory; label: string; values: number[] }[] } {
+  const ends = Array.from({ length: weeks }, (_, k) => addDays(until, -7 * (weeks - 1 - k)));
+  const series = (Object.keys(CATEGORY_LABELS) as ObservatoryCategory[]).map((id, s) => ({
+    id,
+    label: CATEGORY_LABELS[id],
+    values: ends.map((d, k) => Math.round(Math.max(0, 40 + (s - 2) * 4 + k * (1.5 + s * 0.4) + (noise(`sector|${id}|${d}`, 0.3) - 1) * 25))),
+  }));
+  return { labels: ends, series };
+}
