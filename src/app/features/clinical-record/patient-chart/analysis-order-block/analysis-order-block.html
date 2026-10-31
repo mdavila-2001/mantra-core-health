@@ -18,7 +18,7 @@
       El estudio se pide dentro de la consulta que lo motivó. Registre el encuentro acá arriba y
       el formulario aparece. El histórico de abajo se ve igual.
     </app-alert>
-  } @else if (catalogoListo() === false) {
+  } @else if (catalogoListo() === false && tipoOrden() === 'OTHER') {
     <!-- El selector no cae a texto libre por diseño: un uuid tecleado a mano es
          un dato inválido o, peor, uno válido de otro conjunto. Así que cuando el
          catálogo no está, lo honesto es no ofrecer el formulario y decir por qué. -->
@@ -42,21 +42,92 @@
           [(notaSeleccionada)]="notaDelFormularioLibre"
         />
       }
-      <!-- El tipo no se elige: sale del estudio. Un segundo selector dejaba
-           pedir un hemograma como imagen. -->
-      <app-form-field
-        class="app-form-grid__ancho"
-        label="Estudio"
-        [hint]="tipo.label() === null ? 'Busque por nombre: hemograma, radiografía de tórax, ecocardiograma…' : 'Tipo: ' + tipo.label()"
-        [required]="true"
-      >
-        <app-concept-select
-          [target]="targetEstudio"
-          [(value)]="estudio"
-          [clearable]="false"
-          placeholder="Elija un estudio"
+
+      <!-- El tipo FILTRA el catálogo; la categoría que viaja sale del estudio, no
+           de esta elección: un hemograma no se puede pedir como imagen. -->
+      <div class="estudios__tipo app-form-grid__ancho">
+        <span class="estudios__tipo-titulo" id="estudios-tipo">Tipo de estudio</span>
+        <app-segmented-control
+          [options]="opcionesDeTipo"
+          [value]="tipoOrden()"
+          ariaLabel="Tipo de estudio"
+          size="md"
+          (valueChange)="elegirTipo($event)"
+          data-testid="estudios-tipo"
         />
-      </app-form-field>
+      </div>
+
+      @switch (tipoOrden()) {
+        @case ('LAB') {
+          <app-lab-analysis-picker
+            class="app-form-grid__ancho"
+            [analyses]="catalog.labAnalyses()"
+            [specimens]="catalog.specimens()"
+            [state]="catalog.labState()"
+            [disabled]="pidiendo() || flow.busy()"
+            [(selection)]="labSelection"
+            (retry)="reintentarCatalogo('LAB')"
+            data-testid="estudios-laboratorio"
+          />
+          @if (detallesConError().length > 0) {
+            <app-alert class="app-form-grid__ancho" tone="error" data-testid="estudios-detalle-error">
+              No pudimos leer los componentes de {{ detallesConError().length === 1 ? 'un análisis' : 'algunos análisis' }}.
+              <button app-button variant="ghost" size="sm" type="button" (clicked)="reintentarDetalles()">Reintentar</button>
+            </app-alert>
+          } @else if (detallesPendientes().length > 0) {
+            <p class="estudios__revisando app-form-grid__ancho" role="status">Leyendo los componentes de lo que marcó…</p>
+          }
+          @if (panelesSinComponentes().length > 0) {
+            <app-alert class="app-form-grid__ancho" tone="warning" data-testid="estudios-panel-vacio">
+              Marque al menos un componente de: {{ panelesSinComponentes().join(', ') }}. Un panel sin componentes no se puede pedir.
+            </app-alert>
+          }
+        }
+        @case ('IMAGING') {
+          <app-imaging-study-picker
+            class="app-form-grid__ancho"
+            [modalities]="catalog.imaging().modalities"
+            [studies]="catalog.imaging().studies"
+            [regions]="catalog.imaging().regions"
+            [contrastOptions]="catalog.imaging().contrastOptions"
+            [regionConceptIds]="catalog.imaging().regionConceptIds"
+            [lateralityConceptIds]="catalog.imaging().lateralityConceptIds"
+            [state]="catalog.imagingState()"
+            [disabled]="pidiendo() || flow.busy() || imagenCargando()"
+            [(selection)]="imagingSelection"
+            (retry)="reintentarCatalogo('IMAGING')"
+            data-testid="estudios-imagenologia"
+          />
+          @if (imagenConError()) {
+            <app-alert class="app-form-grid__ancho" tone="error" data-testid="estudios-detalle-error">
+              No pudimos leer el detalle del estudio (región, lado y contraste).
+              <button app-button variant="ghost" size="sm" type="button" (clicked)="reintentarDetalles()">Reintentar</button>
+            </app-alert>
+          }
+        }
+        @default {
+          <app-form-field
+            class="app-form-grid__ancho"
+            label="Estudio"
+            [hint]="tipo.label() === null ? 'Cardiología, anatomía patológica y procedimientos diagnósticos.' : 'Tipo: ' + tipo.label()"
+            [required]="true"
+          >
+            <app-select
+              [options]="opcionesDeOtros()"
+              [(value)]="estudio"
+              [searchable]="true"
+              placeholder="Elija un estudio"
+              ariaLabel="Estudio"
+            />
+          </app-form-field>
+          @if (catalog.otherState().status === 'error') {
+            <app-alert class="app-form-grid__ancho" tone="error" data-testid="estudios-otros-error">
+              No pudimos leer el catálogo de estudios.
+              <button app-button variant="ghost" size="sm" type="button" (clicked)="reintentarCatalogo('OTHER')">Reintentar</button>
+            </app-alert>
+          }
+        }
+      }
 
       <app-form-field
         class="app-form-grid__ancho"
@@ -71,31 +142,52 @@
         />
       </app-form-field>
 
-      @if (performer.isProcedure()) {
-        <!-- Quién realiza el procedimiento: una recomendación, no una asignación.
-             Por defecto «Que elija el paciente»; nada viaja hasta que el médico
-             elige otra cosa. -->
+      @if (tipoOrden() === 'OTHER') {
+        @if (performer.isProcedure()) {
+          <!-- Quién realiza el procedimiento: una recomendación, no una asignación.
+               Por defecto «Que elija el paciente»; nada viaja hasta que el médico elige otra cosa. -->
+          <app-performer-selector
+            class="app-form-grid__ancho"
+            [procedureConceptId]="estudio()"
+            [ownSites]="performer.sites().own"
+            [centerSites]="performer.sites().center"
+            [sitesLoading]="performer.sites().loading"
+            [sitesError]="performer.sites().error"
+            [(choice)]="performer.choice"
+          />
+        }
+      } @else if (estudioDelEjecutor() !== null) {
+        <!-- D9: laboratorio e imagen también eligen quién los realiza. -->
         <app-performer-selector
           class="app-form-grid__ancho"
-          [procedureConceptId]="estudio()"
-          [ownSites]="performer.sites().own"
-          [centerSites]="performer.sites().center"
-          [sitesLoading]="performer.sites().loading"
-          [sitesError]="performer.sites().error"
-          [(choice)]="performer.choice"
+          [procedureConceptId]="estudioDelEjecutor()"
+          [ownSites]="ejecutor.sites().own"
+          [centerSites]="ejecutor.sites().center"
+          [sitesLoading]="ejecutor.sites().loading"
+          [sitesError]="ejecutor.sites().error"
+          [(choice)]="ejecutor.choice"
         />
+        @if (ejecutor.sinEjecutor()) {
+          <app-alert class="app-form-grid__ancho" tone="warning" data-testid="estudios-sin-ejecutor">
+            Con «Que elija el paciente» la orden no llega a ninguna bandeja de laboratorio o imagen
+            hasta que la persona elija dónde hacerse el estudio. Elija un centro si quiere que lo reciba ya.
+          </app-alert>
+        }
       }
 
-      @if (checkingDuplicate()) {
-        <!-- Corta a propósito: alimentar `[pending]` acá correría el foco
-             antes de que el diálogo de antiduplicación, si aparece, pueda
-             capturarlo. -->
+      @for (falla of flow.fieldErrors(); track falla.message) {
+        <app-alert class="app-form-grid__ancho" tone="error" data-testid="estudios-error-renglon">{{ falla.message }}</app-alert>
+      }
+
+      @if (checkingDuplicate() || flow.checking()) {
+        <!-- Corta a propósito: alimentar `[pending]` acá correría el foco antes de
+             que el diálogo de antiduplicación, si aparece, pueda capturarlo. -->
         <p class="estudios__revisando" role="status">Revisando estudios previos…</p>
       }
 
       <app-form-actions
-        submitLabel="Pedir estudio"
-        [pending]="pidiendo()"
+        [submitLabel]="tipoOrden() === 'OTHER' ? 'Pedir estudio' : 'Pedir estudios'"
+        [pending]="pidiendo() || flow.sending()"
         [disabled]="!puedePedir()"
         (submitted)="pedir()"
       />
@@ -112,107 +204,15 @@
     />
   }
 
-  <!-- ─── El histórico ─────────────────────────────────────────────────
-       Se ve siempre, con encuentro o sin él: mirar qué se pidió antes no
-       requiere estar atendiendo. Es la mitad que faltaba — el backend tenía
-       veinte endpoints de diagnóstico y ninguna lectura por paciente. -->
-  <section class="estudios__historico">
-    <h3 class="estudios__subtitulo">Estudios pedidos</h3>
+  @if (flow.duplicate(); as pendiente) {
+    <app-duplicate-study-warning-dialog
+      [check]="pendiente.check"
+      [sending]="flow.sending()"
+      (reused)="flow.confirmReuse()"
+      (justified)="flow.confirmRepeat($event)"
+      (closed)="flow.cancel()"
+    />
+  }
 
-    @if (errorDelHistorico(); as mensaje) {
-      <app-alert tone="error" data-testid="estudios-historico-error">{{ mensaje }}</app-alert>
-    } @else if (cargando()) {
-      <p class="estudios__vacio">Buscando los estudios de esta persona…</p>
-    } @else if (estudios().length === 0 && informesSueltos().length === 0) {
-      <p class="estudios__vacio" data-testid="estudios-vacio">
-        Todavía no se le pidió ningún laboratorio ni estudio de imagen.
-      </p>
-    } @else {
-      <ul class="estudios__lista" data-testid="estudios-lista">
-        @for (estudio of estudios(); track estudio.id) {
-          <li class="estudios__fila">
-            <div class="estudios__principal">
-              <span class="estudios__nombre">{{ estudio.estudio }}</span>
-              <span class="estudios__categoria">{{ estudio.categoria }}</span>
-              <app-informed-consent-badge [consent]="consent.consents.of('SERVICE_REQUEST', estudio.id)" />
-            </div>
-            <div class="estudios__meta">
-              <span class="estudios__estado">{{ estudio.estado }}</span>
-              <!-- Antiduplicación (v4.2.17, T-26): estas dos líneas priman
-                   sobre «con resultado» — una orden reutilizada o repetida ya
-                   dice de dónde viene, y no tiene sentido además decir si
-                   «tiene resultado» como si fuera un pedido cualquiera. -->
-              @if (estudio.duplicado === 'reused') {
-                <span class="estudios__resultado" data-testid="estudios-duplicado">
-                  Satisfecha por el informe del {{ estudio.informePrevioDel | date: 'd MMM y' }}
-                </span>
-              } @else if (estudio.duplicado === 'repeated') {
-                <span class="estudios__resultado" data-testid="estudios-duplicado">
-                  Repetida con justificación
-                </span>
-                @if (estudio.justificacion !== null) {
-                  <span class="estudios__justificacion" data-testid="estudios-justificacion">
-                    «{{ estudio.justificacion }}»
-                  </span>
-                }
-              } @else if (estudio.conResultado) {
-                <!-- «Con resultado» quiere decir liberado, no redactado: un
-                     informe con versión vigente pero sin liberar es un borrador. -->
-                <span class="estudios__resultado estudios__resultado--listo">Resultado listo</span>
-              } @else {
-                <span class="estudios__resultado">Sin resultado todavía</span>
-              }
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                data-testid="study-consent"
-                (clicked)="consent.target.set(estudio)"
-              >
-                Consentimiento informado
-              </button>
-            </div>
-          </li>
-        }
-
-        <!-- Los informes que no cuelgan de ninguna orden: papel que llega de un
-             laboratorio externo. Esconderlos porque no tienen orden sería perder
-             el dato clínico para preservar la prolijidad del modelo. -->
-        @for (informe of informesSueltos(); track informe.id) {
-          <li class="estudios__fila">
-            <div class="estudios__principal">
-              <span class="estudios__nombre">{{ etiquetaDe(informe.codeConceptId) }}</span>
-              <span class="estudios__categoria">Informe sin orden registrada</span>
-            </div>
-            <div class="estudios__meta">
-              <span class="estudios__estado">
-                {{ etiquetaDe(informe.lifecycleStatusConceptId) }}
-              </span>
-            </div>
-          </li>
-        }
-      </ul>
-
-      @if (recortado()) {
-        <p class="estudios__vacio" data-testid="estudios-recortado">
-          Se muestran los más recientes. Hay más estudios de los que entran acá.
-        </p>
-      }
-    }
-  </section>
+  <app-analysis-order-history [patientProfileId]="patientProfileId()" [encounterId]="encounterId()" />
 </app-card>
-
-<!-- El consentimiento DIRIGIDO a la orden elegida (CPE art. 44). -->
-@if (consent.target(); as estudio) {
-  <app-informed-consent-dialog
-    [patientProfileId]="patientProfileId()"
-    [encounterId]="consent.encounterId()"
-    targetType="SERVICE_REQUEST"
-    [targetId]="estudio.id"
-    [targetLabel]="estudio.estudio + ' · ' + estudio.categoria"
-    [defaults]="{ purposeText: estudio.categoria + ': ' + estudio.estudio + ', para orientar el diagnóstico o el tratamiento.' }"
-    (consentChanged)="consent.consents.upsert($event)"
-    (closed)="consent.target.set(null)"
-  />
-}

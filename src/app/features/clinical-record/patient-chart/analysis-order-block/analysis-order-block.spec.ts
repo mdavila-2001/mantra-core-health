@@ -2,9 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { AnalysisOrderBlock, TARGET_CATEGORIA, TARGET_ESTUDIO } from './analysis-order-block';
+import type { EstudioEnFicha } from './analysis-order-block.helpers';
+import { AnalysisOrderHistory } from './analysis-order-history/analysis-order-history';
 
 /**
  * Pedir un laboratorio o una imagen desde la ficha, y ver qué volvió — punto 10
@@ -107,6 +110,15 @@ function jwt(payload: Record<string, unknown>): string {
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
 
+/** Lo protegido del histórico que estas pruebas leen. */
+interface HistorialInterno {
+  estudios(): readonly EstudioEnFicha[];
+  informesSueltos(): readonly unknown[];
+  recortado(): boolean;
+  errorDelHistorico(): string | null;
+  consent: { target: { set(value: EstudioEnFicha | null): void }; encounterId(): string | null };
+}
+
 describe('AnalysisOrderBlock', () => {
   let fixture: ComponentFixture<AnalysisOrderBlock>;
   let componente: AnalysisOrderBlock;
@@ -125,6 +137,9 @@ describe('AnalysisOrderBlock', () => {
 
     fixture = TestBed.createComponent(AnalysisOrderBlock);
     componente = fixture.componentInstance;
+    // Estas pruebas cubren el alta de UN estudio («Otros»); laboratorio e imagen
+    // (requisición) tienen su propio bloque de pruebas más abajo.
+    componente['tipoOrden'].set('OTHER');
     fixture.componentRef.setInput('patientProfileId', 'p-1');
     fixture.componentRef.setInput('encounterId', 'enc-1');
   });
@@ -192,7 +207,38 @@ describe('AnalysisOrderBlock', () => {
     );
   }
 
+
+  /** Responde el chequeo de duplicidad de un renglón: sin duplicado. */
+  function responderChequeoSinDuplicado(req: ReturnType<HttpTestingController['expectOne']>): void {
+    req.flush({
+      isDuplicate: false,
+      previousStudy: null,
+      warningMessage: null,
+      requiresJustification: false,
+      pendingReport: false,
+      windowDays: 30,
+    });
+  }
+
+  /** El histórico extraído: ahí viven ahora el circuito, los informes sueltos y el consentimiento. */
+  function historial(): HistorialInterno {
+    fixture.detectChanges();
+    return fixture.debugElement.query(By.directive(AnalysisOrderHistory)).componentInstance as HistorialInterno;
+  }
+
+  /** El listado de «Otros» (cardiología, patología, procedimientos) responde vacío. */
+  function responderEstudiosOtros(): void {
+    for (const req of http.match((r) => r.url === '/clinical/study-catalog')) {
+      req.flush({ items: [], count: 0, limit: 100, nextCursor: null });
+    }
+  }
+
   afterEach(() => {
+    responderEstudiosOtros();
+    // El selector de imagen monta el de región, que pide el atlas 3D: acá no se prueba.
+    for (const atlas of http.match((r) => r.url.includes('/anatomy-atlas-3d/'))) {
+      if (!atlas.cancelled) atlas.flush({ message: 'sin atlas' }, { status: 404, statusText: 'Not Found' });
+    }
     // Los selectores que se montaron al final de la prueba dejan su pedido de
     // catálogo abierto; drenarlos deja que `verify()` hable de lo que importa.
     responderCatalogos();
@@ -222,7 +268,7 @@ describe('AnalysisOrderBlock', () => {
 
     const vacio = fixture.nativeElement.querySelector('[data-testid="estudios-vacio"]');
     expect(vacio).not.toBeNull();
-    expect(componente['estudios']().length).toBe(0);
+    expect(historial()['estudios']().length).toBe(0);
   });
 
   it('un informe liberado marca su orden con resultado', () => {
@@ -235,7 +281,7 @@ describe('AnalysisOrderBlock', () => {
     });
     fixture.detectChanges();
 
-    const estudios = componente['estudios']();
+    const estudios = historial()['estudios']();
     expect(estudios.length).toBe(1);
     expect(estudios[0].conResultado).toBe(true);
   });
@@ -254,7 +300,7 @@ describe('AnalysisOrderBlock', () => {
     });
     fixture.detectChanges();
 
-    expect(componente['estudios']()[0].conResultado).toBe(false);
+    expect(historial()['estudios']()[0].conResultado).toBe(false);
   });
 
   /**
@@ -271,7 +317,7 @@ describe('AnalysisOrderBlock', () => {
     });
     fixture.detectChanges();
 
-    expect(componente['informesSueltos']().length).toBe(1);
+    expect(historial()['informesSueltos']().length).toBe(1);
   });
 
   it('avisa cuando el histórico quedó recortado por el tope', () => {
@@ -280,7 +326,7 @@ describe('AnalysisOrderBlock', () => {
     responderCircuito({ ...CIRCUITO_VACIO, orders: [ORDEN], truncated: ['orders'] });
     fixture.detectChanges();
 
-    expect(componente['recortado']()).toBe(true);
+    expect(historial()['recortado']()).toBe(true);
     expect(
       fixture.nativeElement.querySelector('[data-testid="estudios-recortado"]'),
     ).not.toBeNull();
@@ -309,13 +355,23 @@ describe('AnalysisOrderBlock', () => {
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
   });
 
-  /** El tipo no se elige: sale del estudio, y sin estudio no hay pedido. */
-  it('no ofrece un selector de tipo: lo deduce del estudio', () => {
+  /**
+   * El tipo (Laboratorio · Imagenología · Otros) FILTRA el catálogo, pero la
+   * categoría que viaja sigue saliendo del estudio: elegir una pestaña no
+   * permite pedir un hemograma como imagen. Sin estudio no hay pedido.
+   */
+  it('la categoría sale del estudio: el tipo sólo filtra el catálogo', () => {
     fixture.detectChanges();
     responderCatalogos();
     responderCircuito();
     fixture.detectChanges();
 
+    // El tipo existe como control segmentado con sus tres opciones…
+    const opciones = [...fixture.nativeElement.querySelectorAll('[data-testid="estudios-tipo"] [role="radio"], [data-testid="estudios-tipo"] button')].map(
+      (o: Element) => o.textContent?.trim(),
+    );
+    expect(opciones).toEqual(expect.arrayContaining(['Laboratorio', 'Imagenología', 'Otros']));
+    // …pero sigue sin haber un `<label>` «Tipo» que se pueda llenar a mano.
     const etiquetas = [...fixture.nativeElement.querySelectorAll('label')].map((l: Element) =>
       l.textContent?.trim(),
     );
@@ -329,6 +385,10 @@ describe('AnalysisOrderBlock', () => {
     componente['estudio'].set('code-rx');
     expect(componente['tipo'].label()).toBe('Imagenología');
     componente['estudio'].set('code-raro');
+    expect(componente['tipo'].label()).toBe('Otro estudio');
+
+    // Cambiar la pestaña no cambia la categoría del estudio elegido.
+    componente['elegirTipo']('IMAGING');
     expect(componente['tipo'].label()).toBe('Otro estudio');
   });
 
@@ -409,7 +469,7 @@ describe('AnalysisOrderBlock', () => {
     // Y se relee: no se pinta lo que el servidor no confirmó.
     responderCircuito({ ...CIRCUITO_VACIO, orders: [ORDEN] });
     fixture.detectChanges();
-    expect(componente['estudios']().length).toBe(1);
+    expect(historial()['estudios']().length).toBe(1);
     expect(changed).toHaveBeenCalledTimes(1);
   });
 
@@ -457,10 +517,10 @@ describe('AnalysisOrderBlock', () => {
     expect(screen.querySelector('[data-estado="NONE"]')).not.toBeNull();
     expect(screen.querySelector('[data-testid="study-consent"]')).not.toBeNull();
 
-    const study = componente['estudios']()[0]!;
-    componente['consent'].target.set(study);
+    const study = historial()['estudios']()[0]!;
+    historial()['consent'].target.set(study);
     // El encuentro de la orden manda sobre el del contexto.
-    expect(componente['consent'].encounterId()).toBe('enc-1');
+    expect(historial()['consent'].encounterId()).toBe('enc-1');
     fixture.detectChanges();
     const history = http
       .match((r) => r.url === '/consent/treatment-informed-consents')
@@ -616,7 +676,7 @@ describe('AnalysisOrderBlock', () => {
       });
       fixture.detectChanges();
 
-      expect(componente['estudios']()[0].duplicado).toBe('repeated');
+      expect(historial()['estudios']()[0].duplicado).toBe('repeated');
       const texto = fixture.nativeElement.querySelector('[data-testid="estudios-justificacion"]');
       expect(texto?.textContent).toContain('Muestra anterior hemolizada');
     });
@@ -678,7 +738,7 @@ describe('AnalysisOrderBlock', () => {
       .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
-    expect(componente['errorDelHistorico']()).not.toBeNull();
+    expect(historial()['errorDelHistorico']()).not.toBeNull();
 
     componente['estudio'].set('code-hemograma');
     expect(componente['puedePedir']()).toBe(true);
@@ -820,7 +880,7 @@ describe('AnalysisOrderBlock', () => {
       expect('performerTenantId' in body).toBe(false);
     });
 
-    it('una orden de laboratorio no lleva ninguna clave de ejecutor', () => {
+    it('en el alta de un estudio («Otros») lo que no es procedimiento no lleva ninguna clave de ejecutor', () => {
       abrir('cat-lab');
 
       const { body } = pedirYLeerCuerpo();
@@ -902,6 +962,279 @@ describe('AnalysisOrderBlock', () => {
       responderCircuito();
 
       expect(componente['performer'].choice()).toEqual({ mode: 'PATIENT_CHOICE', siteId: null });
+    });
+  });
+
+  /**
+   * Laboratorio e imagenología (H4.A): el tipo filtra el catálogo, el médico
+   * pide UNA requisición con un renglón por estudio, y la categoría sale de la
+   * familia del estudio.
+   */
+  describe('requisición de laboratorio e imagenología', () => {
+    const ITEM_LAB = {
+      conceptId: 'lab-cbc',
+      code: 'HEMOGRAMA',
+      legacyCode: null,
+      codeSystem: 'X',
+      display: 'Hemograma',
+      family: 'LAB',
+      componentsSelectable: true,
+      componentCount: 3,
+      specimenHint: null,
+      modalityConceptId: null,
+      bodySiteConceptId: null,
+      provenance: { source: null, version: null, sourceIds: [] },
+    };
+    const DETALLE_LAB = {
+      ...ITEM_LAB,
+      components: [
+        { conceptId: 'c-hb', code: 'HB', display: 'Hemoglobina', ordinal: 1, selectedByDefault: true, exampleUnits: ['g/dL'], isPanel: false, loincCode: null, loincName: null, children: [] },
+        { conceptId: 'c-hto', code: 'HTO', display: 'Hematocrito', ordinal: 2, selectedByDefault: true, exampleUnits: [], isPanel: false, loincCode: null, loincName: null, children: [] },
+        { conceptId: 'c-plq', code: 'PLQ', display: 'Plaquetas', ordinal: 3, selectedByDefault: false, exampleUnits: [], isPanel: false, loincCode: null, loincName: null, children: [] },
+      ],
+      suggestedSpecimen: { conceptId: 'sp-edta', code: 'EDTA', display: 'Sangre con EDTA', isDefault: true },
+      allowedSpecimenTypes: [{ conceptId: 'sp-edta', code: 'EDTA', display: 'Sangre con EDTA', isDefault: true }],
+      allowedModalities: [], allowedBodySites: [], lateralityOptions: [], contrastOptions: [],
+      lab: null, imaging: null, attribution: [],
+    };
+    const ITEM_IMG = {
+      ...ITEM_LAB, conceptId: 'img-rx-mano', code: 'RX_MANO', display: 'Radiografía de mano', family: 'IMAGING',
+      componentsSelectable: false, componentCount: 0, modalityConceptId: 'mod-rx', bodySiteConceptId: 'reg-mano',
+    };
+    const DETALLE_IMG = {
+      ...ITEM_IMG, components: [], suggestedSpecimen: null, allowedSpecimenTypes: [],
+      allowedModalities: [{ conceptId: 'mod-rx', code: 'RX', display: 'Radiografía', isDefault: true }],
+      allowedBodySites: [{ conceptId: 'reg-mano', code: 'MANO', display: 'Mano', parentConceptId: null, regionType: 'region', admitsLaterality: true, isDefault: true }],
+      lateralityOptions: [{ conceptId: 'lat-izq', code: 'IZQ', display: 'Izquierda', isDefault: false }],
+      contrastOptions: [{ conceptId: 'ctr-sin', code: 'SIN', display: 'Sin contraste', isDefault: true }],
+      lab: null, imaging: { projections: [], contrast: 'sin', contrastRoute: null, preparation: null, requiresLaterality: true, loincCode: null, radlexRpid: null }, attribution: [],
+    };
+    const CREADA = { requisitionId: 'rq-1', replayed: false, items: [] };
+
+    /** El ejecutor lee sedes al elegir un estudio; acá no es lo que se prueba. */
+    function drenarEjecutor(): void {
+      for (const req of http.match((r) => /^\/(terminology\/value-sets|practitioners\/me|medical-centers)/.test(r.url))) {
+        if (!req.cancelled) req.flush({ message: 'sin sedes' }, { status: 500, statusText: 'Server Error' });
+      }
+    }
+
+    function abrir(tipo: 'LAB' | 'IMAGING', item: object): void {
+      fixture.detectChanges();
+      responderCatalogos();
+      responderCircuito();
+      responderEstudiosOtros();
+      componente['elegirTipo'](tipo);
+      fixture.detectChanges();
+      const lista = http.expectOne((r) => r.url === '/clinical/study-catalog');
+      expect(lista.request.params.get('family')).toBe(tipo);
+      lista.flush({ items: [item], count: 1, limit: 100, nextCursor: null });
+      for (const labels of http.match((r) => r.url === '/terminology/concepts')) {
+        labels.flush({ items: [], total: 0 });
+      }
+      fixture.detectChanges();
+    }
+
+    function marcarAnalisis(): void {
+      componente['labSelection'].set(new Map([['lab-cbc', { components: new Set<string>(), specimenConceptId: null }]]));
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/clinical/study-catalog/lab-cbc').flush(DETALLE_LAB);
+      drenarEjecutor();
+      fixture.detectChanges();
+    }
+
+    it('laboratorio: pide UNA requisición con los componentes MARCADOS y la muestra sugerida', () => {
+      const cambio = vi.fn();
+      componente.cambio.subscribe(cambio);
+      abrir('LAB', ITEM_LAB);
+      expect(componente['puedePedir']()).toBe(false);
+
+      marcarAnalisis();
+      // Entran los marcados por defecto (D3); «Plaquetas» no.
+      expect([...componente['labSelection']().get('lab-cbc')!.components]).toEqual(['c-hb', 'c-hto']);
+      expect(componente['puedePedir']()).toBe(true);
+
+      componente['pedir']();
+      const chequeo = http.expectOne((r) => r.url === '/clinical/service-requests/duplicate-check');
+      expect(chequeo.request.body.componentConceptIds).toEqual(['c-hb', 'c-hto']);
+      responderChequeoSinDuplicado(chequeo);
+      const alta = http.expectOne((r) => r.url === '/clinical/requisitions');
+      expect(alta.request.headers.get('Idempotency-Key')).toBeTruthy();
+      expect(alta.request.body.items).toEqual([
+        {
+          codeConceptId: 'lab-cbc',
+          category: 'LAB',
+          specimenTypeConceptId: 'sp-edta',
+          componentConceptIds: ['c-hb', 'c-hto'],
+        },
+      ]);
+      expect(alta.request.body.encounterId).toBe('enc-1');
+      expect(cambio).not.toHaveBeenCalled();
+
+      alta.flush(CREADA);
+      responderCircuito();
+      expect(cambio).toHaveBeenCalledTimes(1);
+      // Tras el alta el formulario arranca limpio.
+      expect(componente['labSelection']().size).toBe(0);
+      expect(componente['puedePedir']()).toBe(false);
+    });
+
+    it('un panel sin ningún componente marcado bloquea el envío y lo dice', () => {
+      abrir('LAB', ITEM_LAB);
+      marcarAnalisis();
+      componente['labSelection'].set(new Map([['lab-cbc', { components: new Set<string>(), specimenConceptId: 'sp-edta' }]]));
+      fixture.detectChanges();
+
+      expect(componente['puedePedir']()).toBe(false);
+      const aviso = fixture.nativeElement.querySelector('[data-testid="estudios-panel-vacio"]');
+      expect(aviso?.textContent).toContain('Hemograma');
+      componente['pedir']();
+      http.expectNone((r) => r.url === '/clinical/service-requests/duplicate-check');
+    });
+
+    it('mientras no llega el detalle del análisis no deja pedir', () => {
+      abrir('LAB', ITEM_LAB);
+      componente['labSelection'].set(new Map([['lab-cbc', { components: new Set<string>(), specimenConceptId: null }]]));
+      fixture.detectChanges();
+
+      expect(componente['detallesPendientes']()).toEqual(['lab-cbc']);
+      expect(componente['puedePedir']()).toBe(false);
+      http.expectOne((r) => r.url === '/clinical/study-catalog/lab-cbc').flush(DETALLE_LAB);
+      drenarEjecutor();
+    });
+
+    it('«Que elija el paciente» avisa que la orden no llega a ninguna bandeja', () => {
+      abrir('LAB', ITEM_LAB);
+      marcarAnalisis();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="estudios-sin-ejecutor"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="performer-selector"]')).not.toBeNull();
+    });
+
+    it('un 422 con details.itemIndex y field se muestra en castellano con el estudio', () => {
+      abrir('LAB', ITEM_LAB);
+      marcarAnalisis();
+      componente['pedir']();
+      responderChequeoSinDuplicado(http.expectOne((r) => r.url === '/clinical/service-requests/duplicate-check'));
+      http.expectOne((r) => r.url === '/clinical/requisitions').flush(
+        {
+          code: 'PRECONDITION_FAILED',
+          message: 'x',
+          timestamp: '2026-08-14T10:00:00.000Z',
+          path: '/clinical/requisitions',
+          details: { reason: 'COMPONENTS_EMPTY', field: 'componentConceptIds', itemIndex: 0 },
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+      fixture.detectChanges();
+
+      const alerta = fixture.nativeElement.querySelector('[data-testid="estudios-error-renglon"]');
+      expect(alerta?.textContent).toContain('Hemograma: marque al menos un componente del panel.');
+      // Lo elegido se conserva y se puede corregir.
+      expect(componente['labSelection']().size).toBe(1);
+    });
+
+    it('el doble envío queda bloqueado mientras la requisición está en vuelo', () => {
+      abrir('LAB', ITEM_LAB);
+      marcarAnalisis();
+      componente['pedir']();
+      componente['pedir']();
+      const chequeos = http.match((r) => r.url === '/clinical/service-requests/duplicate-check');
+      expect(chequeos.length).toBe(1);
+      expect(componente['puedePedir']()).toBe(false);
+      responderChequeoSinDuplicado(chequeos[0]!);
+      http.expectOne((r) => r.url === '/clinical/requisitions').flush(CREADA);
+      responderCircuito();
+    });
+
+    it('un duplicado en un renglón abre el diálogo y manda la decisión de ESE renglón', () => {
+      abrir('LAB', ITEM_LAB);
+      marcarAnalisis();
+      componente['pedir']();
+      http.expectOne((r) => r.url === '/clinical/service-requests/duplicate-check').flush({
+        isDuplicate: true,
+        previousStudy: PREVIOUS_STUDY_WIRE,
+        warningMessage: 'Ya se hizo.',
+        requiresJustification: true,
+        pendingReport: false,
+        windowDays: 30,
+      });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="duplicate-study-warning-dialog"]')).not.toBeNull();
+      http.expectNone((r) => r.url === '/clinical/requisitions');
+
+      componente['flow'].confirmReuse();
+      const alta = http.expectOne((r) => r.url === '/clinical/requisitions');
+      expect(alta.request.body.items[0].duplicateDecision).toEqual({
+        previousDiagnosticReportId: 'dr-previo',
+        reusePreviousReport: true,
+      });
+      alta.flush(CREADA);
+      responderCircuito();
+    });
+
+    it('imagenología: pide con modalidad, región, lado y contraste del selector', () => {
+      abrir('IMAGING', ITEM_IMG);
+      componente['imagingSelection'].set({
+        studyConceptId: 'img-rx-mano',
+        modalityCode: 'mod-rx',
+        region: 'reg-mano',
+        laterality: null,
+        contrastConceptId: null,
+      });
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/clinical/study-catalog/img-rx-mano').flush(DETALLE_IMG);
+      drenarEjecutor();
+      fixture.detectChanges();
+
+      // Con el detalle la selección arranca en la región del estudio; el lado es obligatorio.
+      expect(componente['imagingSelection']()).toMatchObject({ region: 'MANO', modalityCode: 'RX' });
+      expect(componente['puedePedir']()).toBe(false);
+
+      componente['imagingSelection'].update((sel) => ({ ...sel!, laterality: 'IZQ' }));
+      fixture.detectChanges();
+      expect(componente['puedePedir']()).toBe(true);
+
+      componente['pedir']();
+      const chequeo = http.expectOne((r) => r.url === '/clinical/service-requests/duplicate-check');
+      expect(chequeo.request.body).toMatchObject({ bodySiteConceptId: 'reg-mano', lateralityConceptId: 'lat-izq' });
+      responderChequeoSinDuplicado(chequeo);
+      const alta = http.expectOne((r) => r.url === '/clinical/requisitions');
+      expect(alta.request.body.items).toEqual([
+        {
+          codeConceptId: 'img-rx-mano',
+          category: 'IMAGING',
+          imaging: {
+            modalityConceptId: 'mod-rx',
+            bodySiteConceptId: 'reg-mano',
+            lateralityConceptId: 'lat-izq',
+            contrastConceptId: 'ctr-sin',
+          },
+        },
+      ]);
+      alta.flush(CREADA);
+      responderCircuito();
+    });
+
+    it('cerrar con una selección pendiente se pregunta (DRAFT_BLOCK) y deja de estarlo tras pedir', () => {
+      abrir('LAB', ITEM_LAB);
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+      marcarAnalisis();
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('si el catálogo falla, el selector lo dice y reintentar vuelve a pedirlo', () => {
+      fixture.detectChanges();
+      responderCatalogos();
+      responderCircuito();
+      responderEstudiosOtros();
+      componente['elegirTipo']('LAB');
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/clinical/study-catalog').flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+      expect(componente['catalog'].labState().status).toBe('error');
+
+      componente['reintentarCatalogo']('LAB');
+      http.expectOne((r) => r.url === '/clinical/study-catalog').flush({ items: [], count: 0, limit: 100, nextCursor: null });
     });
   });
 });

@@ -203,7 +203,7 @@
     (dismissAttempt)="pedirDescarteDeLaCasilla()"
     [heading]="tituloDelModal()"
     [description]="descripcionDelModal()"
-    size="lg"
+    [size]="casilla === 'ordenes' ? 'xl' : 'lg'"
     closeLabel="Cerrar"
     data-testid="consulta-modal"
     (keydown.tab)="keepModalFocus($event)"
