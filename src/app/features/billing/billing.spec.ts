@@ -1,15 +1,17 @@
 import { environment } from '../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { API_BASE_URL } from '../../core/data-access/api';
 import type { SimulatedCharge } from '../../core/data-access/billing-simulated/billing-simulated.types';
 import type { SimulatedInvoicing } from '../../core/mock/billing-sim/simulated-invoicing';
 import { forcedRealApi } from '../../core/mock/api-mode';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
-import { Billing } from './billing';
+import { Billing, esAlcanceDeMedico } from './billing';
 import { motorDePrueba } from './billing.spec-fixtures';
 import { resumenDeCobros } from './billing-summary';
 import { SIMULATED_AVAILABLE_INVOICING } from './invoicing-availability';
@@ -23,10 +25,11 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
   let http: HttpTestingController;
   let motor: SimulatedInvoicing;
 
-  function montar(disponible: boolean): void {
+  function montar(disponible: boolean, roles: readonly string[] = []): void {
     TestBed.configureTestingModule({
       imports: [Billing],
       providers: [
+        { provide: AuthService, useValue: { roles: signal(roles) } },
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -335,4 +338,27 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
       .flush({ statusCode: 409, code: 'CONFLICT', message: 'El cobro ya está pagado' }, { status: 409, statusText: 'Conflict' });
     expect(error).toHaveBeenCalledWith('El cobro ya está pagado', 'Facturación (SIMULADO)');
   });
+
+  describe('el médico, que sólo opera SUS consultas', () => {
+    it('lo distingue con el mismo criterio que la API: la administración gana', () => {
+      expect(esAlcanceDeMedico(['PRACTITIONER'])).toBe(true);
+      expect(esAlcanceDeMedico(['CLINICIAN', 'PATIENT'])).toBe(true);
+      expect(esAlcanceDeMedico(['PRACTITIONER', 'BILLING'])).toBe(false);
+      expect(esAlcanceDeMedico(['SUPERADMIN'])).toBe(false);
+      expect(esAlcanceDeMedico([])).toBe(false);
+    });
+
+    it('ve sus cobros sin pedir la bandeja, que la API le niega', () => {
+      montar(true, ['PRACTITIONER']);
+      const cobros = motor.listCharges();
+      http.expectOne('/billing/simulated/charges').flush({ items: cobros, count: cobros.length, simulated: true });
+      http.expectOne('/billing/simulated/catalogs').flush(motor.catalogs());
+      http.expectOne('/billing/simulated/status').flush(motor.statusFiscal());
+      http.expectNone('/billing/simulated/outbox');
+      fixture.detectChanges();
+      expect(fixture.componentInstance.datos()?.cobros.length).toBe(cobros.length);
+      expect(fixture.nativeElement.querySelector('#titulo-bandeja')).toBeNull();
+    });
+  });
 });
+
