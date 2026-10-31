@@ -1,0 +1,9 @@
+:host { display: none; }
+@media (max-width: 649px) {
+  :host { display: block; position: fixed; inset-inline: 0; inset-block-end: 0; z-index: 20; }
+}
+.tb { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--bg-surface); border-block-start: 1px solid var(--border-default); padding-block-end: env(safe-area-inset-bottom); }
+.tb__item { position: relative; display: grid; justify-items: center; gap: var(--sp-1); min-block-size: 56px; padding: var(--sp-2); font: inherit; font-size: var(--fs-caption); color: var(--text-secondary); text-decoration: none; background: none; border: 0; cursor: pointer; }
+.tb__item--on { color: var(--brand-primary); font-weight: 600; }
+.tb__item:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
+.tb__badge { position: absolute; inset-block-start: 4px; inset-inline-end: calc(50% - 22px); min-inline-size: 18px; padding-inline: 5px; font-size: 0.7rem; color: var(--text-inverse); background: var(--st-error-fg); border-radius: var(--r-pill); text-align: center; }

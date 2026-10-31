@@ -28,11 +28,23 @@ export class SegmentConversion {
   protected readonly top = computed(() => this.rows().slice(0, 9));
   protected readonly bars = computed(() => this.rows().filter((r) => r.rates.clickToConv !== null).slice(0, 10));
   protected readonly maxRate = computed(() => Math.max(...this.bars().map((r) => r.rates.clickToConv ?? 0), 0.0001));
-  protected readonly heat = computed(() => ({
-    rows: this.top().map((r) => r.label),
-    cols: SEGMENT_RATES.map((c) => c.label),
-    cells: this.top().map((r) => SEGMENT_RATES.map((c): HeatCell => ({ value: r.rates[c.id], note: r.rates[c.id] === null ? 'Sin base suficiente o no medido en este corte.' : undefined }))),
-  }));
+  /** Cada celda es la tasa del segmento dividida por el promedio de su columna: las cinco tasas no comparten escala. */
+  protected readonly heat = computed(() => {
+    const top = this.top();
+    const mean = SEGMENT_RATES.map((c) => {
+      const v = top.map((r) => r.rates[c.id]).filter((x): x is number => x !== null);
+      return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+    });
+    return {
+      rows: top.map((r) => r.label),
+      cols: SEGMENT_RATES.map((c) => c.label),
+      cells: top.map((r) => SEGMENT_RATES.map((c, k): HeatCell => {
+        const v = r.rates[c.id];
+        const m = mean[k] ?? null;
+        return { value: v === null || !m ? null : v / m, note: v === null ? 'Sin base suficiente o no medido en este corte.' : `Tasa ${formatPercent(v)}` };
+      })),
+    };
+  });
 
   protected readonly pct = (v: number | null): string => (v === null ? '—' : formatPercent(v));
   protected readonly int = formatInt;
