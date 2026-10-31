@@ -14,6 +14,7 @@ import type {
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { PharmacyProducts } from './pharmacy-products';
+import { MedicationLink } from './medication-link/medication-link';
 import { ProductDialog } from './product-dialog/product-dialog';
 import { afterAll, beforeAll } from 'vitest';
 import { environment } from '../../../../environments/environment';
@@ -475,6 +476,55 @@ describe('PharmacyProducts', () => {
     save.flush(product({}));
     fixture.detectChanges();
     expectListing([product({})]);
+  });
+
+  it('editar vincula el medicamento de la receta: elegido en el buscador, viaja como medicationConceptId', async () => {
+    const recetable = product({ requiresPrescription: true, unitPrice: '42.00', category: 'Medicamentos' });
+    mount([recetable]);
+
+    await internal().onRowAction('edit', recetable);
+    fixture.detectChanges();
+    (dialog() as unknown as { tab: { set: (index: number) => void } }).tab.set(1);
+    fixture.detectChanges();
+    const link = fixture.debugElement.query(By.directive(MedicationLink)).componentInstance as unknown as {
+      search: (text: string) => void;
+      choose: (option: { value: string; label: string }) => void;
+    };
+    link.search('amox');
+    http
+      .expectOne((r) => r.url.endsWith('/system-context/dynamic-enums'))
+      .flush({
+        code: 'medication',
+        name: 'Medicamento',
+        definitionId: 'd',
+        valueSetId: 'v',
+        options: [{ conceptId: 'c-amox', code: 'J01CA04', display: 'Amoxicillin', displayEs: 'Amoxicilina', ordinal: 1, isDefault: false }],
+      });
+    fixture.detectChanges();
+    link.choose({ value: 'c-amox', label: 'Amoxicilina' });
+    (dialog() as unknown as { save: () => void }).save();
+
+    const save = http.expectOne(`/pharmacies/${PHARMACY.id}/products/p-1`);
+    expect(save.request.method).toBe('PATCH');
+    expect(save.request.body).toMatchObject({ medicationConceptId: 'c-amox' });
+    save.flush(recetable);
+    fixture.detectChanges();
+    expectListing([recetable]);
+  });
+
+  it('editar sin tocar el medicamento no lo manda: el vínculo queda como estaba', async () => {
+    const original = product({ unitPrice: '18.50', category: 'Medicamentos' });
+    mount([original]);
+
+    await internal().onRowAction('edit', original);
+    fixture.detectChanges();
+    (dialog() as unknown as { save: () => void }).save();
+
+    const save = http.expectOne(`/pharmacies/${PHARMACY.id}/products/p-1`);
+    expect(save.request.body).not.toHaveProperty('medicationConceptId');
+    save.flush(original);
+    fixture.detectChanges();
+    expectListing([original]);
   });
 
   it('una categoría creada por la farmacia (fuera de las seis de partida) se guarda: la valida la API, no una lista fija', async () => {
