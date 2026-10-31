@@ -1,38 +1,49 @@
 <div class="rp">
   <ol class="rp__steps">
     <li class="rp__step">
-      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">1</span> Tipo de informe</h2>
-      <app-segmented-control ariaLabel="Tipo de informe" [options]="typeOptions" [value]="type()" (valueChange)="setType($event)" />
+      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">1</span> Tipo y audiencia</h2>
+      <app-segmented-control ariaLabel="Tipo de informe" [options]="typeOptions" [value]="type()" [wrap]="true" (valueChange)="setType($event)" />
       <p class="rp__hint">{{ typeHint() }}</p>
+      <app-segmented-control ariaLabel="Audiencia del informe" [options]="audienceOptions" [value]="audience()" [wrap]="true" (valueChange)="setAudience($event)" />
+      <p class="rp__hint">
+        @if (external()) { Lector externo: se ocultan los costos y las secciones internas. } @else { La audiencia propone el contenido; usted puede cambiarlo en el paso 3. }
+      </p>
+      <label class="rp__title"><span class="rp__hint">Título del informe (hasta 90 caracteres)</span><input type="text" maxlength="90" [value]="title()" [placeholder]="doc().title" (input)="setTitle($event)" /></label>
     </li>
     <li class="rp__step">
       <h2 class="rp__h"><span class="rp__n" aria-hidden="true">2</span> Alcance</h2>
-      <app-ins-filter-bar [controls]="['campaign', 'period']" />
+      <app-ins-filter-bar [controls]="['campaign', 'period', 'channel']" />
     </li>
     <li class="rp__step">
-      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">3</span> Audiencia</h2>
-      <app-segmented-control ariaLabel="Audiencia del informe" [options]="audienceOptions" [value]="audience()" (valueChange)="setAudience($event)" />
-      <p class="rp__hint">La audiencia propone el contenido; usted puede cambiarlo en el paso siguiente.</p>
-    </li>
-    <li class="rp__step">
-      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">4</span> Contenido</h2>
+      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">3</span> Secciones y orden</h2>
       <p class="rp__hint">Portada, resumen, método y limitaciones siempre se incluyen: un informe sin sus límites se lee como más cierto de lo que es.</p>
-      <ul class="rp__checks">
+      <ol class="rp__order">
         @for (c of choices(); track c.id) {
-          <li><app-checkbox [label]="c.label" [checked]="c.on" (checkedChange)="toggle(c.id, $event)" /></li>
+          <li class="rp__order-item" [class.rp__order-item--off]="!c.on">
+            <app-checkbox [label]="c.label" [checked]="c.on" [disabled]="!c.allowed" (checkedChange)="toggle(c.id, $event)" />
+            @if (!c.allowed) { <span class="rp__hint">Interna: no se ofrece a este lector</span> }
+            @if (c.on) {
+              <span class="rp__move">
+                <button type="button" class="rp__btn" [disabled]="c.first" [attr.aria-label]="'Subir ' + c.label" (click)="move(c.id, -1)">↑</button>
+                <button type="button" class="rp__btn" [disabled]="c.last" [attr.aria-label]="'Bajar ' + c.label" (click)="move(c.id, 1)">↓</button>
+              </span>
+            }
+          </li>
         }
-      </ul>
+      </ol>
       <button type="button" class="rp__btn" (click)="reset()">Restablecer la propuesta</button>
     </li>
   </ol>
 
-  <app-ins-panel title="5 · Vista previa y exportación" question="¿Cómo quedará el informe? Revíselo antes de enviarlo.">
+  <app-ins-panel title="4 · Salida: vista previa, guardado y exportación" question="¿Cómo quedará el informe? Revíselo antes de enviarlo.">
     <div panel-tools class="rp__export">
-      <button type="button" class="rp__btn rp__btn--main" (click)="print()">Imprimir o guardar como PDF</button>
+      <button type="button" class="rp__btn rp__btn--main" [disabled]="saving()" (click)="save()">Guardar en el historial</button>
+      <button type="button" class="rp__btn" (click)="print()">Imprimir o guardar como PDF</button>
       <button type="button" class="rp__btn" (click)="exportCsv()">Descargar datos (CSV)</button>
-      <button type="button" class="rp__btn" disabled aria-describedby="rp-ppt">PowerPoint</button>
-      <span id="rp-ppt" class="rp__hint">Próximamente</span>
+      <span id="rp-na" class="rp__hint">Excel y PowerPoint: no disponibles todavía</span>
     </div>
+
+    @if (notice(); as n) { <p class="rp__notice" role="status">{{ n }}</p> }
 
     <article class="rp__doc" aria-label="Vista previa del informe">
       <header class="rp__cover">
@@ -61,5 +72,29 @@
         </section>
       }
     </article>
+  </app-ins-panel>
+
+  <app-ins-panel title="Historial" question="Los informes que guardó (12 como máximo; el 13.º reemplaza al más viejo).">
+    @switch (historyState()) {
+      @case ('loading') { <p class="rp__hint">Cargando el historial…</p> }
+      @case ('error') { <p class="rp__hint">No se pudo cargar el historial. <button type="button" class="rp__btn" (click)="loadHistory()">Reintentar</button></p> }
+      @default {
+        @if (history().length === 0) {
+          <p class="rp__hint">Todavía no hay informes guardados. Use «Guardar en el historial».</p>
+        } @else {
+          <ul class="rp__hist">
+            @for (r of history(); track r.id) {
+              <li>
+                <div><strong>{{ r.title }}</strong><br /><span class="rp__hint">{{ labelOf(r) }} · {{ r.periodFrom }} a {{ r.periodTo }} · {{ r.sections.length + 4 }} secciones</span></div>
+                <span class="rp__move">
+                  <button type="button" class="rp__btn" (click)="open(r)">Abrir</button>
+                  <button type="button" class="rp__btn" [attr.aria-label]="'Borrar ' + r.title" (click)="remove(r)">Borrar</button>
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
   </app-ins-panel>
 </div>

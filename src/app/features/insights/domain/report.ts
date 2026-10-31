@@ -24,20 +24,31 @@ import { PLATFORMS, PLATFORM_NAMES, socialKpi } from './social';
     pueden quitar: un informe sin sus límites se lee como más cierto de lo que es.
     ========================================================================== */
 
-export type ReportType = 'executive' | 'campaign' | 'monthly';
-export type ReportAudience = 'direction' | 'marketing' | 'product';
-export type OptionalSection = 'kpis' | 'channels' | 'funnel' | 'app' | 'social' | 'opinion' | 'observatory' | 'alerts' | 'recommendations';
+export type ReportType = 'executive' | 'campaign' | 'social' | 'opinion' | 'ecosystem' | 'monthly' | 'custom';
+export type ReportAudience = 'direction' | 'marketing' | 'product' | 'client' | 'partner';
+export type OptionalSection = 'kpis' | 'channels' | 'funnel' | 'app' | 'social' | 'opinion' | 'observatory' | 'alerts' | 'recommendations' | 'next';
 
 export const REPORT_TYPES: Readonly<Record<ReportType, { label: string; description: string; sections: readonly OptionalSection[] }>> = {
   executive: { label: 'Ejecutivo', description: 'Una página de lectura rápida para decidir.', sections: ['kpis', 'alerts', 'recommendations', 'opinion'] },
   campaign: { label: 'De campaña', description: 'Resultados, canales y embudo de las campañas elegidas.', sections: ['kpis', 'channels', 'funnel', 'alerts', 'recommendations'] },
+  social: { label: 'Redes', description: 'Instagram, Facebook, TikTok y YouTube, con lo que dice la gente.', sections: ['social', 'opinion', 'recommendations'] },
+  opinion: { label: 'Opinión pública', description: 'Qué dice la gente de AloVida y cómo se siente.', sections: ['opinion', 'recommendations'] },
+  ecosystem: { label: 'Ecosistema de salud', description: 'Entorno, regulación y tendencias que tocan a las campañas.', sections: ['observatory', 'opinion', 'alerts', 'recommendations', 'next'] },
   monthly: { label: 'Mensual completo', description: 'Todos los módulos del periodo.', sections: ['kpis', 'channels', 'funnel', 'app', 'social', 'opinion', 'observatory', 'alerts', 'recommendations'] },
+  custom: { label: 'Personalizado', description: 'Elija usted las secciones.', sections: [] },
 };
 
-export const REPORT_AUDIENCES: Readonly<Record<ReportAudience, { label: string; allowed: readonly OptionalSection[] }>> = {
-  direction: { label: 'Dirección general', allowed: ['kpis', 'opinion', 'observatory', 'alerts', 'recommendations'] },
-  marketing: { label: 'Equipo de marketing', allowed: ['kpis', 'channels', 'funnel', 'app', 'social', 'opinion', 'observatory', 'alerts', 'recommendations'] },
-  product: { label: 'Producto y tecnología', allowed: ['funnel', 'app', 'opinion', 'observatory', 'alerts', 'recommendations'] },
+/**
+ * `external`: quien lee no es del equipo. No ve costos (inversión, CPA, CAC, ROAS) ni las secciones
+ * internas (alertas, próximas acciones, hallazgos con hipótesis): un informe para un cliente o un
+ * aliado cuenta resultados, no cómo se gestionó.
+ */
+export const REPORT_AUDIENCES: Readonly<Record<ReportAudience, { label: string; allowed: readonly OptionalSection[]; external: boolean }>> = {
+  direction: { label: 'Dirección general', allowed: ['kpis', 'opinion', 'observatory', 'alerts', 'recommendations', 'next'], external: false },
+  marketing: { label: 'Equipo de marketing', allowed: ['kpis', 'channels', 'funnel', 'app', 'social', 'opinion', 'observatory', 'alerts', 'recommendations', 'next'], external: false },
+  product: { label: 'Producto y tecnología', allowed: ['funnel', 'app', 'opinion', 'observatory', 'alerts', 'recommendations', 'next'], external: false },
+  client: { label: 'Cliente', allowed: ['kpis', 'channels', 'social', 'opinion', 'observatory'], external: true },
+  partner: { label: 'Aliado', allowed: ['kpis', 'channels', 'social', 'opinion'], external: true },
 };
 
 export const SECTION_LABELS: Readonly<Record<OptionalSection, string>> = {
@@ -50,6 +61,7 @@ export const SECTION_LABELS: Readonly<Record<OptionalSection, string>> = {
   observatory: 'Observatorio de salud',
   alerts: 'Alertas abiertas',
   recommendations: 'Hallazgos y recomendaciones',
+  next: 'Próximas acciones',
 };
 
 export const OPTIONAL_SECTIONS = Object.keys(SECTION_LABELS) as OptionalSection[];
@@ -70,7 +82,9 @@ export interface ReportSection {
 export interface ReportConfig {
   readonly type: ReportType;
   readonly audience: ReportAudience;
+  /** Las secciones elegidas, EN EL ORDEN en que irán en el informe. */
   readonly sections: readonly OptionalSection[];
+  readonly title?: string;
 }
 
 export interface ReportDoc {
@@ -85,9 +99,11 @@ const section = (id: string, title: string, parts: Partial<Omit<ReportSection, '
 });
 
 const KPI_ROWS: readonly MetricId[] = ['spend', 'impressions', 'clicks', 'ctr', 'conversions', 'cpa', 'roas', 'retention'];
+/** Lo que un lector externo puede ver: alcance y resultados, sin costos. */
+const KPI_ROWS_EXTERNAL: readonly MetricId[] = ['reach', 'impressions', 'clicks', 'ctr', 'registrations', 'conversions', 'retention'];
 
-function kpiSection(filter: InsightsFilter): ReportSection {
-  const rows = KPI_ROWS.map((m) => {
+function kpiSection(filter: InsightsFilter, external: boolean): ReportSection {
+  const rows = (external ? KPI_ROWS_EXTERNAL : KPI_ROWS).map((m) => {
     const a = assess(filter, m);
     const def = METRIC_CATALOG[m];
     return [def.label, formatValue(a.kpi.value, def.unit), a.changeVsPrevious === null ? '—' : formatChange(a.changeVsPrevious), a.target ? formatValue(a.target.value, def.unit) : '—', HEALTH_LABELS[a.status]];
@@ -95,8 +111,8 @@ function kpiSection(filter: InsightsFilter): ReportSection {
   return section('kpis', 'Indicadores principales', { table: { columns: ['Indicador', 'Valor', 'Vs. periodo anterior', 'Meta', 'Estado'], rows }, note: 'Una celda «Sin dato» no es cero: significa que la muestra no alcanza o el dato no existe.' });
 }
 
-function channelSection(filter: InsightsFilter): ReportSection {
-  const metrics: MetricId[] = ['spend', 'ctr', 'conversions', 'cpa', 'roas'];
+function channelSection(filter: InsightsFilter, external: boolean): ReportSection {
+  const metrics: MetricId[] = external ? ['impressions', 'ctr', 'registrations', 'conversions'] : ['spend', 'ctr', 'conversions', 'cpa', 'roas'];
   const tables = metrics.map((m) => new Map(breakdown(filter, 'channel', m).map((r) => [r.key, r.kpi.value])));
   const keys = [...tables[0]!.keys()];
   const rows = keys.map((k) => [CHANNEL_LABELS[k as Channel] ?? k, ...metrics.map((m, i) => formatValue(tables[i]!.get(k) ?? null, METRIC_CATALOG[m].unit))]);
@@ -143,6 +159,14 @@ function alertsSection(): ReportSection {
   return section('alerts', 'Alertas abiertas', { bullets: open.length ? open.map((a) => `${a.title}`) : ['No hay alertas abiertas.'] });
 }
 
+function nextSection(): ReportSection {
+  const open = buildAlerts().filter((a) => a.status === 'open' && a.severity !== 'anomaly').slice(0, 5);
+  return section('next', 'Próximas acciones', {
+    table: { columns: ['Acción', 'Señal que la motiva', 'Cómo sabremos que funcionó'], rows: open.map((a) => [a.recommendation, a.title, a.evidence[0] ?? 'Volver a medir en el próximo periodo']) },
+    note: 'Las fechas límite y los responsables se acuerdan en la reunión de seguimiento; el informe solo propone.',
+  });
+}
+
 function recommendationsSection(filter: InsightsFilter, of: OpinionFilter): ReportSection {
   const items = [...campaignInsights(filter), ...opinionInsights(of)];
   const bullets = items.flatMap((i) => {
@@ -159,21 +183,25 @@ export function buildReport(config: ReportConfig, filter: InsightsFilter): Repor
   const open = buildAlerts().filter((a) => a.status === 'open');
   const critical = open.filter((a) => a.severity === 'critical').length;
   const net = summarizeOpinion(opinionSelect(of)).net;
-  const spend = assess(filter, 'spend').kpi.value;
+  const external = REPORT_AUDIENCES[config.audience].external;
+  const spend = external ? null : assess(filter, 'spend').kpi.value;
   const conv = assess(filter, 'conversions').kpi.value;
 
   const body: Record<OptionalSection, () => ReportSection> = {
-    kpis: () => kpiSection(filter), channels: () => channelSection(filter), funnel: () => funnelSection(filter), app: () => appSection(filter), social: () => socialSection(filter),
-    opinion: () => opinionSection(of), observatory: observatorySection, alerts: alertsSection, recommendations: () => recommendationsSection(filter, of),
+    kpis: () => kpiSection(filter, external), channels: () => channelSection(filter, external), funnel: () => funnelSection(filter), app: () => appSection(filter), social: () => socialSection(filter),
+    opinion: () => opinionSection(of), observatory: observatorySection, alerts: alertsSection, recommendations: () => recommendationsSection(filter, of), next: nextSection,
   };
-  const chosen = OPTIONAL_SECTIONS.filter((s) => config.sections.includes(s));
+  // Se respeta el orden elegido, sin repetidas y solo lo que la audiencia puede leer.
+  const chosen = [...new Set(config.sections)].filter((s) => OPTIONAL_SECTIONS.includes(s) && REPORT_AUDIENCES[config.audience].allowed.includes(s));
 
   const sections: ReportSection[] = [
     section('summary', 'Resumen ejecutivo', {
       bullets: [
         `${campaigns.length === 1 ? '1 campaña analizada' : `${campaigns.length} campañas analizadas`}: ${campaigns.map((c) => c!.name).join(', ')}.`,
-        spend !== null ? `Inversión de ${formatValue(spend, 'money')} y ${conv !== null ? formatInt(conv) : 'sin dato de'} conversiones.` : 'Sin dato de inversión en el periodo.',
-        `${open.length === 1 ? '1 alerta abierta' : `${open.length} alertas abiertas`}, de las cuales ${critical === 1 ? '1 es crítica' : `${critical} son críticas`}.`,
+        external
+          ? `${conv !== null ? formatInt(conv) : 'Sin dato de'} conversiones en el periodo.`
+          : spend !== null ? `Inversión de ${formatValue(spend, 'money')} y ${conv !== null ? formatInt(conv) : 'sin dato de'} conversiones.` : 'Sin dato de inversión en el periodo.',
+        ...(external ? [] : [`${open.length === 1 ? '1 alerta abierta' : `${open.length} alertas abiertas`}, de las cuales ${critical === 1 ? '1 es crítica' : `${critical} son críticas`}.`]),
         net === null ? 'Sentimiento sin muestra suficiente.' : `Sentimiento neto de la conversación pública: ${formatNet(net)} puntos.`,
       ],
     }),
@@ -188,7 +216,7 @@ export function buildReport(config: ReportConfig, filter: InsightsFilter): Repor
   ];
 
   return {
-    title: `Informe ${REPORT_TYPES[config.type].label.toLowerCase()} de marketing`,
+    title: config.title?.trim() || `Informe ${REPORT_TYPES[config.type].label.toLowerCase()} de marketing`,
     subtitle: `${longDate(filter.range.from)} — ${longDate(filter.range.to)} · ${REPORT_AUDIENCES[config.audience].label}`,
     generatedOn: longDate(PROTOTYPE_TODAY),
     sections,
