@@ -3,6 +3,7 @@ import { registrarApoyoAcciones } from './support-access.actions.handlers';
 import { registrarApoyoAgenda } from './support-access.agenda.handlers';
 import { registrarApoyoChat } from './support-access.chat.handlers';
 import { registrarApoyoDoctor } from './support-access.doctor.handlers';
+import { registrarApoyoInvitacionesDelDoctor } from './support-access.doctor-invitations.handlers';
 import { registrarApoyoPacientes } from './support-access.patients.handlers';
 import { registrarApoyoOrganizacion } from './support-access.org.handlers';
 import { registrarApoyoPersona } from './support-access.persona.handlers';
@@ -18,6 +19,7 @@ import { registrarApoyoSesion } from './support-access.session.handlers';
     - `support-access.persona.handlers.ts`  la persona de apoyo;
     - `support-access.org.handlers.ts`      la organización;
     - `support-access.doctor.handlers.ts`   el doctor y el chat;
+    - `support-access.doctor-invitations.handlers.ts` las invitaciones del doctor a una secretaria;
     - `support-access.agenda.handlers.ts`   las reservas del hospital y la búsqueda exacta;
     - `support-access.session.handlers.ts`  controles de sesión, dispositivo nuevo y política en el login;
     - `support-access.actions.handlers.ts`  cancelar, reprogramar, confirmar, atender sin cita y espera;
@@ -33,6 +35,8 @@ export function registrarApoyo(router: MockRouter): void {
   registrarApoyoPersona(router);
   registrarApoyoOrganizacion(router);
   registrarApoyoDoctor(router);
+  // Envuelve `GET /me/practitioner/support-team`, que el doctor ya registró arriba.
+  registrarApoyoInvitacionesDelDoctor(router);
   registrarApoyoAgenda(router);
   registrarApoyoSesion(router);
   registrarApoyoAcciones(router);

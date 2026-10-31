@@ -1,6 +1,6 @@
 # API de backend
 
-Las 784 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 785 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -1943,7 +1943,7 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 |---|---|---|---|
 | `GET` | `/admin/catalog/permission-drift` | `DataCatalogClient` | No |
 
-### `SupportAccessClient` — 35 operaciones
+### `SupportAccessClient` — 36 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -1951,6 +1951,7 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 | `POST` | `/community/conversations/:conversationId/assignment` | `SupportAccessClient` | No |
 | `POST` | `/community/conversations/:conversationId/internal-notes` | `SupportAccessClient` | No |
 | `GET` | `/me/practitioner/support-activity` | `SupportAccessClient` | No |
+| `POST` | `/me/practitioner/support-invitations` | `SupportAccessClient` | No |
 | `GET` | `/me/practitioner/support-team` | `SupportAccessClient` | No |
 | `POST` | `/me/support-access-requests` | `SupportAccessClient` | No |
 | `GET` | `/me/support-activity` | `SupportAccessClient` | No |

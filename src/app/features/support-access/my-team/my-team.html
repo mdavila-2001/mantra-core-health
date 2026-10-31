@@ -3,6 +3,8 @@
   subtitle="Quienes le ayudan con su agenda y sus mensajes. Usted decide qué pueden hacer en su nombre y puede retirar a cualquiera cuando quiera."
 />
 
+<app-invite-support [sent]="invitaciones()" (invited)="cargar()" />
+
 <app-team-attention [members]="miembros()" />
 
 <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
