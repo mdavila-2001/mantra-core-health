@@ -2,7 +2,7 @@
     Contrato del portal de reportería (MAQUETA).
 
     Lo que viaja entre la pantalla y el servidor. En la rama de maqueta lo sirve
-    `core/mock/handlers/reporting.handlers.ts` con datos de EJEMPLO; cuando
+    `mock/handlers/reporting.handlers.ts` del simulador con datos de EJEMPLO; cuando
     exista `POST /reporting/query` (hitos H0–H2 del plan) se cambia el manejador
     por la API real y estos tipos son el contrato a cumplir.
 

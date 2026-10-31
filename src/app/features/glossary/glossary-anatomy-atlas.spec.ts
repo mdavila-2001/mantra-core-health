@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { anatomyShardOf } from '../../core/data-access/anatomy-atlas/anatomy-atlas.client';
-import { ATLAS_3D_FEMALE_ONLY_IDS } from '../../core/mock/fixtures/anatomy-ontology.generated';
+import { ATLAS_3D_FEMALE_ONLY_IDS } from '../../core/data-access/anatomy-atlas/anatomy-ontology.generated';
 import type { AnatomyPart, AnatomyStructure } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
 import { GlossaryAnatomyAtlas } from './glossary-anatomy-atlas';
 
