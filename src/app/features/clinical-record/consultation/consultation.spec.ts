@@ -193,9 +193,10 @@ describe('Consultation', () => {
     // La API no dice si el aviso salió (cuenta de portal, destino activo): la
     // bajada no lo promete.
     expect(interno<() => string>('descripcionDelModal')()).toContain(
-      'Si tiene cuenta en el portal, puede recibir un aviso',
+      'La derivación queda registrada en su historia',
     );
-    expect(interno<() => string>('descripcionDelModal')()).not.toContain('le avisamos');
+    // Neutral: no contradice al éxito de un destino externo, que no recibe aviso.
+    expect(interno<() => string>('descripcionDelModal')()).not.toContain('aviso');
     expect(interno<() => string>('descripcionDelModal')()).toContain('organización médica');
     expect(harness.routeNativeElement!.querySelector('app-referral-block')).not.toBeNull();
     // El bloque recibe la misma lectura que cuenta la casilla.
@@ -728,6 +729,27 @@ describe('Consultation', () => {
     expect(uncounted).not.toBeNull();
     // Con tono de aviso, no el gris de «Contando…».
     expect(uncounted?.classList.contains('consulta__casilla-cantidad--fallida')).toBe(true);
+  });
+
+  it('las migas no repiten «Consulta» mientras no se conoce el nombre (NG0955)', () => {
+    // Antes de leer el perfil, `nombre()` es '' y el título vale «Consulta».
+    const labels = interno<() => readonly { label: string }[]>('breadcrumbs')().map((b) => b.label);
+    expect(labels.length).toBeGreaterThan(1);
+    expect(new Set(labels).size).toBe(labels.length);
+    expect(labels.at(-1)).toBe('Consulta');
+  });
+
+  it('si la relectura falla con cifra, la casilla dice «al menos N» con tono de aviso', async () => {
+    await responderLectura({}, {}, [], [REFERRAL]);
+    interno<{ reload(): void }>('referrals').reload();
+    http
+      .expectOne((r) => r.url === '/referrals')
+      .flush({ code: 'INTERNAL', message: 'x', correlationId: 'r' }, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+    expect(referralTile().lecturaDeCantidad).toBe('stale');
+    const stalePill = harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-derivacion-stale"]');
+    expect(stalePill?.textContent).toMatch(/al menos\s+1\s+derivación/);
+    expect(stalePill?.classList.contains('consulta__casilla-cantidad--fallida')).toBe(true);
   });
 
   it('cerrar el modal con la derivación en vuelo igual relee la lista y la cifra', async () => {

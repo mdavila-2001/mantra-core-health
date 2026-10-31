@@ -86,12 +86,14 @@ export class ConsultationReferrals {
   }
 
   /**
-   * Sin cifra, por qué: `loading` mientras se lee y `failed` si la lectura
-   * falló; `null` con cifra (también al releer con datos, S7).
+   * Qué tan confiable es la cifra: `loading` mientras se lee sin datos,
+   * `failed` si la lectura falló sin datos, `stale` si hay cifra pero la
+   * última relectura falló (puede haber más: una emitida que no se releyó), y
+   * `null` con cifra al día (también mientras relee con datos, S7).
    */
-  readonly missingCount = computed<'loading' | 'failed' | null>(() => {
+  readonly missingCount = computed<'loading' | 'failed' | 'stale' | null>(() => {
     const state = this.state();
-    if (dataOf(state) !== null) return null;
+    if (dataOf(state) !== null) return this.refreshError() === null ? null : 'stale';
     return state.status === 'loading' ? 'loading' : 'failed';
   });
 
@@ -129,7 +131,10 @@ export class ConsultationReferrals {
   private afterFailure(id: string, error: unknown): ViewState<readonly Referral[]> {
     const failure = errorToViewState<readonly Referral[]>(error);
     const previous = dataOf(untracked(() => this.state()));
-    if (previous === null || this.lastRead?.profileId !== id) {
+    // Una lista vacía no es «datos para conservar»: mostrarla como S7 la
+    // convertía en «todavía no tiene derivaciones» (dato clínico falso tras
+    // emitir la primera y fallar la relectura). Sin filas, vale el fallo.
+    if (previous === null || previous.length === 0 || this.lastRead?.profileId !== id) {
       this.refreshError.set(null);
       return failure;
     }

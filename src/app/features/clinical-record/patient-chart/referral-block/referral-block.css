@@ -31,6 +31,12 @@
   justify-self: end;
 }
 
+/* Por qué el botón está apagado: debajo de él, alineado con él. */
+.referral__submit-hint {
+  justify-self: end;
+  text-align: end;
+}
+
 /* Las salidas del aviso «sin servicios», en una fila mientras quepan. */
 .referral__inline-actions {
   display: flex;

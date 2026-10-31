@@ -190,6 +190,13 @@ describe('ReferenceCombobox', () => {
       expect(host.cleared).toBe(1);
     });
 
+    it('avisa queryCleared cuando Escape descarta lo escrito', async () => {
+      await type('pér');
+      expect(host.cleared).toBe(0);
+      press('Escape');
+      expect(host.cleared).toBe(1);
+    });
+
     it('no consulta al hidratar una selección existente', async () => {
       // Abrir un formulario de edición no es buscar.
       host.selected.set(MEDICOS[0]);

@@ -112,6 +112,8 @@ const activeTestId = (page) =>
   await dialog.getByTestId('referral-kind').waitFor();
   const pending = dialog.getByTestId('referral-service-pending');
   check('M: sin destino, el campo «Servicio» ya está, apagado', await pending.isVisible());
+  const submitHint = (await dialog.getByTestId('referral-submit-hint').innerText()).trim();
+  check('8: el botón apagado dice qué falta (aria-describedby)', submitHint === 'Para derivar, elija el destino.' && (await dialog.getByTestId('referral-submit').getAttribute('aria-describedby')) === 'referral-submit-hint', submitHint);
   await pending.scrollIntoViewIfNeeded();
   await shot('04-service-pending-390');
 
@@ -190,7 +192,7 @@ const activeTestId = (page) =>
   check('HIGH: el éxito se ve a 390 tras enviar', successBox.inside, successBox);
   check('HIGH: el foco va al resultado', (await activeTestId(page)) === 'referral-outcome', await activeTestId(page));
   const orgText = (await success.innerText()).replace(/\s+/g, ' ');
-  check('1b: el éxito de organización no promete el aviso', orgText.includes('Derivación registrada a Hospital San Lucas. Si la persona tiene cuenta en el portal, le llega un aviso y la ve en su lista de derivaciones.'), orgText);
+  check('1b: el éxito de organización no promete el aviso', orgText.includes('Derivación registrada') && orgText.includes('Quedó registrada la derivación a Hospital San Lucas. Si la persona tiene cuenta en el portal, puede recibir un aviso; la ve en su lista de derivaciones.'), orgText);
   check('1a: el botón dice «Derivar»', ((await dialog.getByTestId('referral-submit').innerText()).trim()) === 'Derivar');
   await shot('06-submit-success-390');
   await dialog.getByTestId('referral-list').waitFor();
@@ -247,7 +249,7 @@ const activeTestId = (page) =>
   await success.waitFor({ timeout: 20_000 });
   await page.waitForTimeout(600);
   const proText = (await success.innerText()).replace(/\s+/g, ' ');
-  check('1b: el éxito de profesional no promete el aviso', /Derivación registrada a .+\. Si la persona tiene cuenta en el portal, le llega un aviso para ver la ficha y reservar\./.test(proText), proText);
+  check('1b: el éxito de profesional no promete el aviso', /Derivación registrada.*Quedó registrada la derivación a .+\. Si la persona tiene cuenta en el portal, puede recibir un aviso para ver la ficha y reservar\./.test(proText), proText);
   check('HIGH: el éxito de profesional se ve a 390', (await inViewport(success)).inside);
   await shot('08b-submit-success-practitioner-390');
   created += 1;
@@ -298,12 +300,19 @@ const activeTestId = (page) =>
   await refreshError.waitFor({ timeout: 10_000 });
   check('L-4: la relectura fallida no borra la lista', (await dialog.getByTestId('referral-row').count()) > 0);
   const tileDuring = (await tile.innerText()).replace(/\s+/g, ' ');
-  check('L-4: la casilla conserva su cifra', /\d+\s+derivaci/.test(tileDuring) && !tileDuring.includes('No se pudo contar'), tileDuring);
+  check('L-4 / 3: la casilla conserva la cifra y avisa que puede faltar una («al menos N»)', /al menos \d+\s+derivaci/.test(tileDuring) && !tileDuring.includes('No se pudo contar'), tileDuring);
   await refreshError.scrollIntoViewIfNeeded();
   await shot('08e-list-refresh-error-390');
   await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
   await refreshError.getByRole('button', { name: 'Reintentar' }).click();
   await refreshError.waitFor({ state: 'detached', timeout: 10_000 });
+  await page.waitForTimeout(400);
+  const afterRetry = await page.evaluate(() => {
+    const a = document.activeElement;
+    return { id: a?.id ?? null, inDialog: !!a?.closest('dialog') };
+  });
+  check('2: tras «Reintentar» el foco queda en el título de la lista, dentro del diálogo', afterRetry.id === 'referral-list-title' && afterRetry.inDialog, afterRetry);
+  await shot('08f-list-retry-focus-390');
   created += 1;
 
   /* -- Relectura sin salto y recarga --------------------------------------- */

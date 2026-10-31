@@ -43,6 +43,11 @@
       "detail": ""
     },
     {
+      "name": "8: el botón apagado dice qué falta (aria-describedby)",
+      "ok": true,
+      "detail": "Para derivar, elija el destino."
+    },
+    {
       "name": "4: rótulos del selector enteros a 390",
       "ok": true,
       "detail": "[{\"text\":\"Profesional\",\"fits\":true,\"sw\":76,\"cw\":76},{\"text\":\"Organización\",\"fits\":true,\"sw\":89,\"cw\":89},{\"text\":\"Externo\",\"fits\":true,\"sw\":52,\"cw\":52}]"
@@ -90,7 +95,7 @@
     {
       "name": "HIGH: el éxito se ve a 390 tras enviar",
       "ok": true,
-      "detail": "{\"top\":475,\"bottom\":593,\"vh\":844,\"inside\":true}"
+      "detail": "{\"top\":452,\"bottom\":616,\"vh\":844,\"inside\":true}"
     },
     {
       "name": "HIGH: el foco va al resultado",
@@ -100,7 +105,7 @@
     {
       "name": "1b: el éxito de organización no promete el aviso",
       "ok": true,
-      "detail": "Éxito: Derivación registrada a Hospital San Lucas. Si la persona tiene cuenta en el portal, le llega un aviso y la ve en su lista de derivaciones."
+      "detail": "Éxito: Derivación registrada Quedó registrada la derivación a Hospital San Lucas. Si la persona tiene cuenta en el portal, puede recibir un aviso; la ve en su lista de derivaciones."
     },
     {
       "name": "1a: el botón dice «Derivar»",
@@ -145,7 +150,7 @@
     {
       "name": "1b: el éxito de profesional no promete el aviso",
       "ok": true,
-      "detail": "Éxito: Derivación registrada a Giovanna Valeria Daza Kucharsky. Si la persona tiene cuenta en el portal, le llega un aviso para ver la ficha y reservar."
+      "detail": "Éxito: Derivación registrada Quedó registrada la derivación a Giovanna Valeria Daza Kucharsky. Si la persona tiene cuenta en el portal, puede recibir un aviso para ver la ficha y reservar."
     },
     {
       "name": "HIGH: el éxito de profesional se ve a 390",
@@ -170,7 +175,7 @@
     {
       "name": "L-2: S7 «Actualizando · lista de las HH:MM» al releer",
       "ok": true,
-      "detail": "Actualizando · lista de las 07:39"
+      "detail": "Actualizando · lista de las 09:11"
     },
     {
       "name": "L-2: la lista sigue a la vista durante la relectura",
@@ -183,9 +188,14 @@
       "detail": ""
     },
     {
-      "name": "L-4: la casilla conserva su cifra",
+      "name": "L-4 / 3: la casilla conserva la cifra y avisa que puede faltar una («al menos N»)",
       "ok": true,
-      "detail": "Derivar A otro profesional u organización médica, por un servicio concreto. 8 derivaciones"
+      "detail": "Derivar A otro profesional u organización médica, por un servicio concreto. al menos 8 derivaciones"
+    },
+    {
+      "name": "2: tras «Reintentar» el foco queda en el título de la lista, dentro del diálogo",
+      "ok": true,
+      "detail": "{\"id\":\"referral-list-title\",\"inDialog\":true}"
     },
     {
       "name": "persistencia: tras F5 la casilla cuenta 5 más",
@@ -205,7 +215,7 @@
     {
       "name": "L: «Vigencia» alineada con «Tipo» a 768",
       "ok": true,
-      "detail": "560 vs 560"
+      "detail": "543 vs 543"
     },
     {
       "name": "sin desborde horizontal a 1440",
@@ -230,7 +240,7 @@
     {
       "name": "L-3: el aviso de la organización llega con el texto de la API",
       "ok": true,
-      "detail": "Su médico le derivó a Hospital San Lucas Su médico le derivó a Hospital San Lucas para Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros). Puede ver su ficha y reservar una cita desde su portal. 31/10/26, 7:39 a. m."
+      "detail": "Su médico le derivó a Hospital San Lucas Su médico le derivó a Hospital San Lucas para Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros). Puede ver su ficha y reservar una cita desde su portal. 31/10/26, 9:11 a. m."
     },
     {
       "name": "L-3: el aviso es un enlace (botón que navega)",
@@ -258,11 +268,11 @@
     "rowsAfterSubmit": 5,
     "typeVsValidUntil768": {
       "type": {
-        "y": 560,
+        "y": 543,
         "height": 96
       },
       "validUntil": {
-        "y": 560,
+        "y": 543,
         "height": 94
       }
     },
