@@ -253,6 +253,12 @@ app-content-dialog {
   color: var(--text-primary);
 }
 
+/* Sin cifra todavía (o sin lectura): el mismo lugar, sin negrita de dato. */
+.consulta__casilla-cantidad--pendiente {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .consulta__casilla-cantidad-rotulo {
   font-weight: 500;
   color: var(--text-secondary);

@@ -10,9 +10,11 @@ import type {
 } from '../../../../core/data-access/referrals/referrals.types';
 import { REFERRAL_TYPES_WITH_CONSENT } from '../../../../core/data-access/referrals/referrals.types';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import type { StatusSealVariant } from '../../../../shared/components/organisms/status-seal/status-seal.types';
+import { writeFailureMessage } from '../../write-message';
 
 /* ============================================================================
     Lo que el bloque de derivación dice en palabras. Separado del componente
@@ -40,6 +42,14 @@ const REFERRAL_TYPE_LABELS: Readonly<Record<ReferralType, string>> = {
 /** El rótulo del tipo, o «Sin tipo» en las filas anteriores al campo. */
 export function referralTypeLabel(type: ReferralType | undefined): string {
   return type === undefined ? 'Sin tipo' : REFERRAL_TYPE_LABELS[type];
+}
+
+/**
+ * El título de una fila: «Tipo · destino». Una fila anterior al tipo dice sólo
+ * el destino: «Sin tipo» como título se leía como un dato que falta cargar.
+ */
+export function referralHeading(type: ReferralType | undefined, target: string): string {
+  return type === undefined ? target : `${REFERRAL_TYPE_LABELS[type]} · ${target}`;
 }
 
 /** Ejemplo del servicio pedido según el tipo: es el placeholder del campo. */
@@ -133,7 +143,8 @@ export function isExpired(referral: Referral, today: Date = new Date()): boolean
 /** Una derivación ya resuelta para la lista. */
 export interface ReferralRow {
   readonly id: string;
-  readonly type: string;
+  /** «Tipo · destino», o sólo el destino en una fila anterior al tipo. */
+  readonly heading: string;
   readonly target: string;
   readonly service: string | null;
   readonly status: string;
@@ -155,10 +166,11 @@ export function toReferralRow(referral: Referral, labels: ConceptLabels): Referr
         ? undefined
         : STATUS_BY_CODE[concept.code]
       : STATUS_BY_API[referral.status];
+  const target = destinationOf(referral);
   return {
     id: referral.id,
-    type: referralTypeLabel(referral.referralType),
-    target: destinationOf(referral),
+    heading: referralHeading(referral.referralType, target),
+    target,
     service: referral.targetServiceName ?? referral.requestedServiceText ?? null,
     // Un estado que esta versión no conoce no se inventa ni se oculta: se
     // dice con el rótulo del catálogo, en neutro.
@@ -182,13 +194,18 @@ export function offersConsent(referral: Referral): boolean {
   );
 }
 
-/** «Bs 250.00» o «USD 40», tal como llegó; sin arancel, se dice. */
+/**
+ * «Bs 250.00» o «USD 40.00». La API manda el arancel siempre como número y un
+ * `0` cuando nadie lo declaró (`Number(defaultPrice ?? 0)`): eso se dice con
+ * palabras, no como «gratis».
+ */
 export function formatPrice(service: ReferralTargetService): string {
-  if (service.price === null || service.price === '') {
+  if (service.price === 0) {
     return 'Sin arancel declarado';
   }
+  const amount = service.price.toFixed(2);
   const currency = service.currency === 'BOB' ? 'Bs' : service.currency;
-  return currency === null ? String(service.price) : `${currency} ${service.price}`;
+  return currency === null ? amount : `${currency} ${amount}`;
 }
 
 /** El servicio es opcional: la primera opción dice que se deriva sin uno. */
@@ -258,18 +275,50 @@ export function buildNewReferral(v: ReferralFormValues): NewReferral {
   };
 }
 
-/** Un 409: la misma derivación ya existe. */
-export function isConflict(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    (error as { status: unknown }).status === 409
-  );
+/**
+ * Un 404 sin sub-código conocido: no se culpa a una sola pieza, porque la API
+ * responde igual por el encuentro, el destino o el servicio.
+ */
+export const GENERIC_NOT_FOUND =
+  'El encuentro, el destino o el servicio ya no están disponibles. Vuelva a buscar el destino.';
+
+/**
+ * Lo que se dice tras un envío fallido, o `null` si no falló. Manda el
+ * sub-código de la API ya en palabras (400, 404, 422); sin él, la validación
+ * tal cual, y para el resto el texto de escritura de siempre.
+ */
+export function submissionMessage(state: ViewState<null>, serverReason: string | null): string | null {
+  if (state.status === 'ready' || state.status === 'loading') return null;
+  if (serverReason !== null) return serverReason;
+  if (state.status === 'validation') {
+    return state.issues.map((issue) => issue.message).join(' ') || null;
+  }
+  return writeFailureMessage(state, {
+    accion: 'derivar',
+    sinPermiso: 'Sólo puede derivar a quien atiende desde su propia organización.',
+    yaNoExiste: GENERIC_NOT_FOUND,
+  });
+}
+
+/**
+ * Dónde ve la persona el motivo. El aviso a un profesional lo lleva; el de
+ * una organización no (la API lo deja fuera) y a un externo no hay aviso: en
+ * esos dos casos lo ve en su lista de derivaciones.
+ */
+export function reasonHintFor(kind: ReferralDestinationKind): string {
+  return kind === 'PRACTITIONER'
+    ? 'Opcional. Se lo mostramos a la persona en su aviso.'
+    : 'Opcional. La persona lo ve en su lista de derivaciones, no en el aviso.';
 }
 
 /** Los rótulos de las dos pestañas; tras intentar derivar, cuál está lista y a cuál le falta algo. */
 export function referralTabLabels(attempted: boolean, referralOk: boolean, transferOk: boolean): readonly string[] {
   const mark = (ok: boolean): string => (attempted ? (ok ? ' · lista' : ' · falta') : '');
   return [`1 · Derivación${mark(referralOk)}`, `2 · Traslado${mark(transferOk)}`];
+}
+
+/** Una derivación recién emitida, para el aviso de éxito: a quién y de qué clase. */
+export interface IssuedReferral {
+  readonly name: string;
+  readonly kind: ReferralDestinationKind;
 }

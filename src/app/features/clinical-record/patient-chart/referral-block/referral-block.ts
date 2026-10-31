@@ -4,18 +4,19 @@ import {
   computed,
   DestroyRef,
   effect,
+  ElementRef,
   inject,
+  Injector,
   input,
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { of, Subject } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
-import { AuthService } from '../../../../core/auth/auth.service';
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
 import type { BranchListItem } from '../../../../core/data-access/directory/directory.types';
 import {
@@ -32,13 +33,12 @@ import {
   type Referral,
   type ReferralIssue,
   type ReferralTarget,
-  type ReferralTargetService,
   type ReferralType,
 } from '../../../../core/data-access/referrals/referrals.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { dataOf, empty, loading, ready } from '../../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready, stale } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Divider } from '../../../../shared/components/atoms/divider/divider';
@@ -58,25 +58,28 @@ import { ContentDialog } from '../../../../shared/components/organisms/content-d
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { writeFailureMessage } from '../../write-message';
+import { revealAfterRender } from '../../reveal';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
 import { patientConsents } from '../informed-consent/patient-consents';
 import {
   buildNewReferral,
   DEFAULT_REFERRAL_TYPE,
-  isConflict,
+  reasonHintFor,
   referralTabLabels,
   REFERRAL_TYPE_OPTIONS,
   SERVICE_EXAMPLE,
-  serviceOptions as toServiceOptions,
+  submissionMessage,
   TARGET_KIND_OPTIONS,
   toReferralRow,
+  type IssuedReferral,
   type ReferralDestinationKind,
   type ReferralRow,
 } from './referral-block.model';
 import { ReferralDetail } from './referral-detail';
 import { referralDetailState } from './referral-detail-state';
+import { ReferralTargetSearch } from './referral-target-search';
+import { ReferralTargetServices } from './referral-target-services';
 import { ReferralTransferForm } from './referral-transfer-form';
 import { emptyTransferDraft, transferFromDraft, type TransferDraft } from './referral-transfer.model';
 
@@ -89,13 +92,15 @@ const REASON_MAX_LENGTH = 500;
  * organización médica, por **un servicio concreto** de su catálogo («tipo
  * tratamiento», pedido del cliente, 28/10/2026).
  *
- * Uso: `<app-referral-block [patientProfileId] [encounterId] [referrals] (cambio) (retry) />`.
+ * Uso: `<app-referral-block [patientProfileId] [encounterId] [referrals]
+ * [offersOpenEncounter] (cambio) (retry) (openEncounter) />`.
  *
  * ## El recorrido
  *
  * Profesional u organización → buscar por nombre en la API → (opcional) uno
  * de sus servicios, con el arancel a la vista → tipo (Tratamiento por defecto)
- * → motivo y vigencia. La API le avisa a la persona en su campana. **No
+ * → motivo y vigencia. Con un profesional o una organización de la plataforma
+ * la API le avisa a la persona en su campana; a un destino externo no. **No
  * reserva nada**.
  *
  * ## Sin encuentro no hay derivación con aviso
@@ -104,13 +109,16 @@ const REASON_MAX_LENGTH = 500;
  * él la API guarda la derivación pero no avisa, y un formulario que parece
  * funcionar y no avisa a nadie es peor que uno que dice qué falta. Sin
  * encuentro abierto el bloque lo dice y no ofrece el formulario; la lista de
- * lo ya derivado se sigue viendo.
+ * lo ya derivado se sigue viendo. Si quien lo monta sabe abrir el encuentro
+ * (`offersOpenEncounter`), el aviso ofrece ir a hacerlo (`openEncounter`).
  *
  * ## La lista la lee quien monta el bloque
  *
  * Igual que las recetas: la consulta la necesita para el contador de la
  * casilla, y dos lecturas de la misma lista pueden discrepar. Sin `referrals`
- * el bloque no dibuja la lista.
+ * el bloque no dibuja la lista. Tras **emitir**, la relectura no depende de
+ * este bloque: `ConsultationReferrals` escucha `ReferralsClient.issued`, que
+ * llega aunque el modal se haya cerrado con el envío en vuelo.
  *
  * ## v4266: sede, externo, lo clínico, detalle y consentimiento
  *
@@ -127,7 +135,10 @@ const REASON_MAX_LENGTH = 500;
  * UNA tarjeta con dos pestañas: «Derivación» y «Traslado»
  * (`app-referral-transfer-form`). El borrador del traslado vive acá porque
  * `app-tab` no dibuja el panel cerrado. Lo traducible vive aparte
- * (`referral-block.model.ts`, `referral-transfer.model.ts`).
+ * (`referral-block.model.ts`, `referral-transfer.model.ts`), igual que la
+ * búsqueda de destinos (`referral-target-search.ts`) y los servicios del
+ * destino (`referral-target-services.ts`). El resultado del envío va junto
+ * al botón, con el foco: a 390 px un aviso arriba quedaba fuera de vista.
  */
 @Component({
   selector: 'app-referral-block',
@@ -161,9 +172,10 @@ const REASON_MAX_LENGTH = 500;
 export class ReferralBlock {
   private readonly referralsClient = inject(ReferralsClient);
   private readonly terminology = inject(TerminologyClient);
-  private readonly auth = inject(AuthService);
   private readonly directory = inject(DirectoryClient);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** La persona que se deriva. */
   readonly patientProfileId = input.required<string>();
@@ -174,8 +186,18 @@ export class ReferralBlock {
   /** Las derivaciones de la persona, leídas por quien monta el bloque; `null` no dibuja la lista. */
   readonly referrals = input<ViewState<readonly Referral[]> | null>(null);
 
-  /** Avisa que se emitió una derivación, para que quien monta el bloque relea. */
+  /**
+   * Avisa que una derivación cambió desde su detalle (respuesta,
+   * contrarreferencia, anulación, consentimiento), para que quien monta el
+   * bloque relea. La emisión no pasa por acá: ver `ReferralsClient.issued`.
+   */
   readonly cambio = output<void>();
+
+  /** Sin encuentro: quien monta el bloque sabe abrirlo y lo ofrece. */
+  readonly offersOpenEncounter = input(false);
+
+  /** La persona pidió ir a abrir el encuentro. */
+  readonly openEncounter = output<void>();
 
   /** La lista falló y la persona pidió reintentar. */
   readonly retry = output<void>();
@@ -202,10 +224,12 @@ export class ReferralBlock {
 
   protected readonly kind = signal<ReferralDestinationKind>('PRACTITIONER');
   protected readonly target = signal<ReferralTarget | null>(null);
-  protected readonly searching = signal(false);
-  private readonly results = signal<readonly ReferralTarget[]>([]);
-  protected readonly searchError = signal<string | null>(null);
-  private readonly searches = new Subject<{ q: string; kind: 'PRACTITIONER' | 'ORGANIZATION' }>();
+
+  /** La búsqueda de destinos: una respuesta vieja nunca repuebla las opciones. */
+  private readonly targetSearch = new ReferralTargetSearch(() => this.kind());
+  protected readonly searching = this.targetSearch.searching;
+  protected readonly searchError = this.targetSearch.error;
+  protected readonly targetOptions = this.targetSearch.options;
 
   /**
    * Alterna en cada derivación para volver a montar el buscador. El combobox
@@ -213,14 +237,6 @@ export class ReferralBlock {
    * esto quedaría escrito el nombre de alguien que ya no está elegido.
    */
   protected readonly remountToggle = signal(true);
-
-  protected readonly targetOptions = computed<readonly ReferenceOption[]>(() =>
-    this.results().map((r) => ({
-      value: r.id,
-      label: r.displayName,
-      ...(r.subtitle === null ? {} : { hint: r.subtitle }),
-    })),
-  );
 
   /* -- La sede (organización) o el destino externo ----------------------- */
 
@@ -238,24 +254,25 @@ export class ReferralBlock {
 
   /* -- Los servicios del destino ------------------------------------------ */
 
-  protected readonly services = signal<ViewState<readonly ReferralTargetService[]>>(loading());
-  protected readonly selectedService = signal<string | null>(null);
-
-  protected readonly serviceOptions = computed(() => toServiceOptions(dataOf(this.services()) ?? []));
-
-  /** La descripción del servicio elegido, para no elegir a ciegas por el nombre. */
-  protected readonly serviceHint = computed(() => {
-    const chosen = (dataOf(this.services()) ?? []).find((s) => s.id === this.selectedService());
-    if (chosen === undefined) {
-      return 'Opcional. Uno de los servicios que ofrece el destino, con su arancel.';
-    }
-    return chosen.description ?? 'El servicio que se le pide al destino.';
-  });
+  /**
+   * Los del destino elegido; una respuesta tardía de otro no pisa al nuevo.
+   * Sin servicios se dice en línea, dentro del campo, con sus dos salidas: un
+   * S3 de página en medio del formulario empujaba el resto 290 px.
+   */
+  private readonly targetServices = new ReferralTargetServices(() => this.target());
+  protected readonly services = this.targetServices.state;
+  protected readonly selectedService = this.targetServices.selected;
+  protected readonly noServices = this.targetServices.none;
+  protected readonly serviceOptions = this.targetServices.options;
+  protected readonly serviceHint = this.targetServices.hint;
 
   /* -- El resto del formulario -------------------------------------------- */
 
   protected readonly referralType = signal<ReferralType | null>(DEFAULT_REFERRAL_TYPE);
   protected readonly reason = signal('');
+
+  /** Dónde ve la persona el motivo, según la clase de destino. */
+  protected readonly reasonHint = computed(() => reasonHintFor(this.kind()));
   protected readonly validUntil = signal<Date | null>(null);
 
   /* -- Lo clínico (norma de referencia) ------------------------------------ */
@@ -294,8 +311,11 @@ export class ReferralBlock {
 
   protected readonly sending = signal(false);
   protected readonly submission = signal<ViewState<null>>(ready(null));
-  protected readonly referredTo = signal<string | null>(null);
+  protected readonly issued = signal<IssuedReferral | null>(null);
   protected readonly duplicate = signal(false);
+
+  /** El lugar del resultado, junto al botón: recibe el foco al llegar. */
+  private readonly outcome = viewChild<ElementRef<HTMLElement>>('outcome');
 
   /** Hay destino: uno de la plataforma elegido, o el nombre del externo escrito. */
   protected readonly hasTarget = computed(() =>
@@ -339,19 +359,9 @@ export class ReferralBlock {
         });
   });
 
-  protected readonly submissionError = computed<string | null>(() => {
-    const state = this.submission();
-    if (state.status === 'validation') {
-      // El sub-código de la API dice qué falta; si no lo trae, el mensaje tal cual.
-      return this.serverReason() ?? (state.issues.map((issue) => issue.message).join(' ') || null);
-    }
-    return writeFailureMessage(state, {
-      accion: 'derivar',
-      sinPermiso: 'Sólo puede derivar a quien atiende desde su propia organización.',
-      yaNoExiste:
-        'No encontramos este encuentro entre los de esta persona. Vuelva a abrirlo y pruebe de nuevo.',
-    });
-  });
+  protected readonly submissionError = computed(() =>
+    submissionMessage(this.submission(), this.serverReason()),
+  );
 
   /** El `reason` del último 400/404/422 de la API, ya en palabras. */
   private readonly serverReason = signal<string | null>(null);
@@ -386,7 +396,9 @@ export class ReferralBlock {
       return loading();
     }
     const labels = this.labels();
-    return ready(state.data.map((r) => toReferralRow(r, labels)));
+    const rows = state.data.map((r) => toReferralRow(r, labels));
+    // S7 se conserva: la plantilla dice la antigüedad junto al título.
+    return state.status === 'stale' ? stale(rows, state.asOf) : ready(rows);
   });
 
   protected readonly rows = computed(() => {
@@ -402,32 +414,11 @@ export class ReferralBlock {
   /** El detalle abierto, con la respuesta, la contrarreferencia y su consentimiento. */
   protected readonly detail = referralDetailState(this.consents, () => this.cambio.emit());
 
+  /** El bloque ya se desmontó: la respuesta de un envío puede llegar después. */
+  private destroyed = false;
+
   constructor() {
-    this.searches
-      .pipe(
-        switchMap(({ q, kind }) =>
-          this.referralsClient.searchTargets(q, kind).pipe(
-            map((items) => ({ items, failure: null })),
-            catchError((error: unknown) =>
-              of({
-                items: [] as readonly ReferralTarget[],
-                failure:
-                  writeFailureMessage(errorToViewState<null>(error), {
-                    accion: 'buscar destinos',
-                  }) ?? 'No pudimos buscar. Pruebe de nuevo.',
-              }),
-            ),
-          ),
-        ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(({ items, failure }) => {
-        // Quien deriva no se ofrece a sí mismo, aunque la API lo devuelva.
-        const self = this.auth.practitionerProfileId();
-        this.searching.set(false);
-        this.results.set(items.filter((r) => !(r.kind === 'PRACTITIONER' && r.id === self)));
-        this.searchError.set(failure);
-      });
+    this.destroyRef.onDestroy(() => (this.destroyed = true));
 
     // El estado se traduce por código: la lista trae el uuid del concepto.
     // Sólo se piden los que faltan y se suman a los ya conocidos: al releer,
@@ -460,20 +451,13 @@ export class ReferralBlock {
   }
 
   protected search(text: string): void {
-    const q = text.trim();
-    const kind = this.kind();
-    if (q.length < REFERRAL_TARGET_MIN_QUERY || kind === 'EXTERNAL') {
-      this.results.set([]);
-      return;
-    }
-    this.searching.set(true);
-    this.searches.next({ q, kind });
+    this.targetSearch.search(text);
   }
 
   protected choose(option: ReferenceOption | null): void {
-    this.referredTo.set(null);
+    this.issued.set(null);
     this.duplicate.set(false);
-    const target = option === null ? undefined : this.results().find((r) => r.id === option.value);
+    const target = option === null ? undefined : this.targetSearch.find(String(option.value));
     if (target === undefined) {
       this.forgetTarget();
       return;
@@ -497,33 +481,7 @@ export class ReferralBlock {
   }
 
   protected loadServices(): void {
-    const target = this.target();
-    if (target === null) return;
-    this.selectedService.set(null);
-    this.services.set(loading());
-    this.referralsClient
-      .listTargetServices(
-        target.kind === 'PRACTITIONER' ? { targetProfileId: target.id } : { targetTenantId: target.id },
-      )
-      .subscribe({
-        next: (items) => {
-          // Una respuesta tardía de un destino ya descartado no pisa al nuevo.
-          if (this.target()?.id !== target.id) return;
-          this.services.set(
-            items.length === 0
-              ? empty(
-                  { label: 'Derive sin un servicio en particular o busque otro destino' },
-                  `${target.displayName} no tiene servicios publicados para recibir derivaciones.`,
-                )
-              : ready(items),
-          );
-        },
-        error: (error: unknown) => {
-          if (this.target()?.id === target.id) {
-            this.services.set(errorToViewState(error));
-          }
-        },
-      });
+    this.targetServices.load();
   }
 
   protected submit(): void {
@@ -531,51 +489,92 @@ export class ReferralBlock {
     if (!this.canSubmit() || body === null) return;
     this.attempted.set(true);
     if (this.issues().length > 0 || this.transferProblems().length > 0) {
-      // Los errores ya están junto a cada campo; el resumen va arriba, y se
-      // abre la primera pestaña que tiene algo que corregir.
+      // Los errores ya están junto a cada campo; el resumen, junto al botón,
+      // y se abre la primera pestaña que tiene algo que corregir.
       this.tab.set(this.issues().length > 0 ? 0 : 1);
+      this.revealOutcome();
       return;
     }
+    const kind = this.kind();
     const targetName =
-      this.kind() === 'EXTERNAL' ? String(this.externalName() ?? '').trim() : (this.target()?.displayName ?? '');
+      kind === 'EXTERNAL' ? String(this.externalName() ?? '').trim() : (this.target()?.displayName ?? '');
     const offersConsent = body.referralType !== undefined && REFERRAL_TYPES_WITH_CONSENT.has(body.referralType);
 
     this.sending.set(true);
     this.submission.set(loading());
     this.duplicate.set(false);
+    this.issued.set(null);
     this.serverReason.set(null);
 
+    // Sin `takeUntilDestroyed` a propósito: la derivación ya salió, y la
+    // relectura de la lista no depende de este bloque (`issued` del cliente).
     this.referralsClient.create(body).subscribe({
       next: (created) => {
         this.sending.set(false);
         this.submission.set(ready(null));
-        this.referredTo.set(targetName);
+        // Con el modal ya cerrado no hay a quién mostrarle nada: la lista se
+        // relee igual por `issued`.
+        if (this.destroyed) return;
+        this.issued.set({ name: targetName, kind });
         this.reset();
-        this.cambio.emit();
+        this.revealOutcome();
         // Próximo paso de una derivación que lo pide: su consentimiento.
         if (offersConsent) this.detail.open(created.id, true);
       },
       error: (error: unknown) => {
+        if (this.destroyed) return;
         this.sending.set(false);
-        // 409: la misma derivación ya existe. No es un error del médico:
-        // es un aviso, y se dice con palabras de aviso.
-        if (isConflict(error)) {
+        const detail = referralErrorDetail(error);
+        // 409 `REFERRAL_ALREADY_EXISTS`: la misma derivación ya existe. No es
+        // un error del médico: es un aviso, y se dice con palabras de aviso.
+        // Otro 409 (sin ese sub-código) es un conflicto de verdad y va como error.
+        if (detail?.reason === 'REFERRAL_ALREADY_EXISTS') {
           this.submission.set(ready(null));
           this.duplicate.set(true);
-          return;
+        } else {
+          this.serverReason.set(detail?.message ?? null);
+          this.submission.set(errorToViewState<null>(error));
         }
-        this.serverReason.set(referralErrorDetail(error)?.message ?? null);
-        this.submission.set(errorToViewState<null>(error));
+        this.revealOutcome();
       },
     });
   }
 
+  /** «Derivar sin un servicio»: al campo que lo describe a mano. */
+  protected deriveWithoutService(): void {
+    this.focusInside('[data-testid="referral-requested-service"]', 'textarea');
+  }
+
+  /** «Buscar otro destino»: se olvida el elegido y se vuelve al buscador. */
+  protected searchAnotherTarget(): void {
+    this.forgetTarget();
+    this.remountToggle.update((value) => !value);
+    this.focusInside(
+      `[data-testid="${this.kind() === 'ORGANIZATION' ? 'referral-organization' : 'referral-practitioner'}"]`,
+      'input',
+    );
+  }
+
+  /** El resultado del envío, a la vista y con el foco: a 390 px el botón queda abajo. */
+  private revealOutcome(): void {
+    revealAfterRender(this.injector, () => {
+      const element = this.outcome()?.nativeElement;
+      return element === undefined || element.childElementCount === 0 ? null : element;
+    });
+  }
+
+  private focusInside(hostSelector: string, controlSelector: string): void {
+    revealAfterRender(
+      this.injector,
+      () => this.host.nativeElement.querySelector(hostSelector)?.querySelector<HTMLElement>(controlSelector) ?? null,
+    );
+  }
+
   private forgetTarget(): void {
+    // La búsqueda en vuelo, si la hay, ya no es de nadie.
+    this.targetSearch.reset();
     this.target.set(null);
-    this.results.set([]);
-    this.selectedService.set(null);
-    this.services.set(loading());
-    this.searchError.set(null);
+    this.targetServices.reset();
     this.branches.set([]);
     this.selectedBranch.set(null);
   }
