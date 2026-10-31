@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import type { DeviceCodeRequested, DeviceConfirmed, DeviceReportedNotMe, MyNetwork } from './iam-new-device';
 import type { MySession, PasswordChanged } from './iam.types';
 
 interface WireMySession {
@@ -15,7 +16,7 @@ interface WireMySession {
 
 /**
  * Seguridad de la **propia** cuenta (ID-24, CV-22): cambiar la contraseña, ver y
- * cerrar las sesiones abiertas, y cerrarlas todas.
+ * cerrar las sesiones abiertas, cerrarlas todas y responder al aviso de dispositivo nuevo.
  *
  * Es un cliente aparte de `IamClient` a propósito: `IamClient` está en el paquete
  * inicial —lo usa el login— y estas cuatro rutas sólo las toca la pantalla de
@@ -60,6 +61,53 @@ export class AccountSecurityClient {
       this.url(`/iam/me/sessions/${encodeURIComponent(sessionId)}/revoke`),
       {},
     );
+  }
+
+  /**
+   * `POST /iam/me/devices/:id/confirm` — «Fui yo»: la persona reconoce el dispositivo, queda de confianza y el aviso
+   * no vuelve a salir por él (idempotente). Un dispositivo ajeno es 404.
+   *
+   * **Confirmar «desde el propio dispositivo» no prueba nada** (el aviso lo ve quien inicia sesión, que puede ser
+   * quien no debe): solo se confirma desde una sesión abierta en OTRO dispositivo de confianza, o con `code`, el
+   * código de 8 dígitos que {@link requestDeviceCode} manda al correo verificado. Sin ninguno de los dos, 422
+   * `DEVICE_CONFIRM_CODE_REQUIRED` (con `details.canRequestCode`); un código equivocado, de otro dispositivo o ya
+   * usado, 422 `DEVICE_CONFIRM_CODE_INVALID`.
+   */
+  confirmDevice(deviceId: string, code?: string): Observable<DeviceConfirmed> {
+    return this.http.post<DeviceConfirmed>(
+      this.url(`/iam/me/devices/${encodeURIComponent(deviceId)}/confirm`),
+      code === undefined ? {} : { code },
+    );
+  }
+
+  /**
+   * `POST /iam/me/devices/:id/confirm-code` — manda al correo **verificado** de la cuenta el código de 8 dígitos con el
+   * que se confirma un dispositivo. Responde `{ sent, sentTo }` con la dirección **enmascarada**; `sent: false` si el
+   * dispositivo ya era de confianza. Sin correo verificado, 422 `DEVICE_CONFIRM_NO_VERIFIED_EMAIL`. Tope: 3 por minuto.
+   */
+  requestDeviceCode(deviceId: string): Observable<DeviceCodeRequested> {
+    return this.http.post<DeviceCodeRequested>(
+      this.url(`/iam/me/devices/${encodeURIComponent(deviceId)}/confirm-code`),
+      {},
+    );
+  }
+
+  /**
+   * `POST /iam/me/devices/:id/not-me` — «No fui yo»: el dispositivo deja de ser
+   * de confianza y la API revoca **todas las demás** sesiones y refresh tokens
+   * de la cuenta en un solo paso (`revokedSessions` es cuántas cerró). Es la ruta
+   * atómica: no se arma con listar y revocar una por una.
+   */
+  reportDeviceNotMe(deviceId: string): Observable<DeviceReportedNotMe> {
+    return this.http.post<DeviceReportedNotMe>(
+      this.url(`/iam/me/devices/${encodeURIComponent(deviceId)}/not-me`),
+      {},
+    );
+  }
+
+  /** `GET /iam/me/network` — la dirección con la que la API ve esta conexión y cuántos saltos de proxy de confianza tiene. */
+  getMyNetwork(): Observable<MyNetwork> {
+    return this.http.get<MyNetwork>(this.url('/iam/me/network'));
   }
 
   /** `POST /iam/auth/logout-all`. Cierra las sesiones de **todos** los dispositivos. */

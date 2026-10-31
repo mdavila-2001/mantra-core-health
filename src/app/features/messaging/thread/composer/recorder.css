@@ -52,8 +52,9 @@
 }
 
 .grabador__enviar {
-  background: var(--brand-primary);
-  color: var(--text-inverse);
+  /* El mismo relleno que el enviar del composer: 5,4:1 con blanco en los tres temas. */
+  background: var(--petroleo-relleno);
+  color: var(--surface-white);
 }
 
 .grabador__micro:focus-visible,

@@ -24,16 +24,15 @@
   position: relative;
 }
 
-/* Rejilla fija: avatar y texto, todas las filas del mismo alto; el texto se
-   corta con puntos suspensivos y nunca ensancha la fila. La fila deja libre la
-   columna del menú (44 px): el botón vive siempre ahí y nunca tapa la hora ni
-   el contador. */
+/* Rejilla fija: avatar y texto. El texto se corta con puntos suspensivos;
+   nunca ensancha la fila. La fila deja libre la columna del menú (44 px): el
+   botón vive siempre ahí y nunca tapa la hora ni el contador. */
 .conversaciones__item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--e3);
-  block-size: 76px;
+  min-block-size: 76px;
   box-sizing: border-box;
   padding: var(--e2) calc(var(--e2) + 44px) var(--e2) var(--e3);
   border-radius: var(--r-menu);
@@ -46,14 +45,14 @@
   background: var(--sup-inset);
 }
 
+.conversaciones__item:active {
+  background: var(--bg-active);
+}
+
 .conversaciones__item:focus-visible {
   outline: 2px solid var(--anillo-foco);
   outline-offset: -2px;
   background: var(--sup-inset);
-}
-
-.conversaciones__item:active {
-  background: var(--bg-active);
 }
 
 /* La abierta: fondo tintado **y** la barra de marca. El fondo solo es
@@ -385,4 +384,16 @@
 .conversaciones__bloqueada svg {
   inline-size: 15px;
   block-size: 15px;
+}
+
+/* Solo el doctor: su equipo le derivó una conversación clínica y espera su respuesta. */
+.conversaciones__derivada {
+  padding: 1px var(--e2);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-pill);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  white-space: nowrap;
 }

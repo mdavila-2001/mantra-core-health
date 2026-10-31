@@ -28,7 +28,7 @@ export const PDF_TOKENS = {
   petroleo: [11, 85, 126],
   'petroleo-h': [11, 71, 104],
   'petroleo-p': [11, 57, 83],
-  'tinta-marca': [10, 62, 92],
+  'tinta-marca': [36, 40, 40],
   'petroleo-x': [7, 47, 69],
   'petroleo-xx': [5, 34, 50],
   aguamarina: [79, 179, 169],
@@ -68,7 +68,7 @@ const token = (name: PdfToken): ColorRgb => PDF_TOKENS[name];
 export const PDF_COLORS = {
   /** El azul de AloVida: isotipo, acentos, folio. */
   brand: token('petroleo'),
-  /** Títulos y jerarquía: el «azul profundo» de AloVida v1.1. */
+  /** Títulos y jerarquía: `--tinta-marca`, que desde el 27/10/2026 es la tinta neutra y ya no un azul (alovida.css). */
   brandDeep: token('tinta-marca'),
   /** La cabecera de tabla. */
   brandDarker: token('petroleo-x'),

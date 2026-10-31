@@ -178,13 +178,59 @@ describe('Dashboard', () => {
     });
 
     it('a una cuenta administrativa no se le habla de su jornada', () => {
-      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
       http
         .expectOne((request) => request.url.includes('/profiles/patients'))
         .flush({ items: [], count: 0, limit: 5, nextCursor: null });
 
       expect(hayJornada()).toBe(false);
       expect(raiz().textContent).toContain('Las secciones se abren desde el menú');
+    });
+  });
+
+  /* -- Puertas a bandejas fuera de los menús cerrados (28/10/2026) ---------- */
+
+  describe('franjas de «Mis verificaciones» y de la aseguradora', () => {
+    const franja = (id: string) => raiz().querySelector(`[data-testid="${id}"]`);
+
+    it('quien atiende ve «Mis verificaciones» debajo del saludo, no encima', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' });
+      const enlace = franja('panel-mis-verificaciones');
+      const titulo = raiz().querySelector('h1');
+
+      expect(enlace?.querySelector('a')?.getAttribute('href')).toBe('/my-account/verifications');
+      expect(
+        titulo!.compareDocumentPosition(enlace!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(franja('panel-profesionales-que-piden')).toBeNull();
+    });
+
+    it('con perfil profesional pero sin rol de quien atiende, no se ofrece una puerta que la ruta cierra', () => {
+      crear({ sub: 'u-1', roles: ['INSURANCE_ANALYST'], tenants: ['t-1'], hpid: 'hp-1' });
+      expect(franja('panel-mis-verificaciones')).toBeNull();
+    });
+
+    it('la aseguradora activa ve la puerta a los profesionales que piden sumarse', () => {
+      crear({
+        sub: 'u-1',
+        roles: ['INSURANCE_ANALYST'],
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'PAYER' },
+      });
+      expect(
+        franja('panel-profesionales-que-piden')?.querySelector('a')?.getAttribute('href'),
+      ).toBe('/administration/insurer-practitioner-requests');
+      expect(franja('panel-mis-verificaciones')).toBeNull();
+    });
+
+    it('una clínica no la ve: el mismo filtro por tipo de organización que el menú', () => {
+      crear({
+        sub: 'u-1',
+        roles: ['INSURANCE_ANALYST'],
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'HOSPITAL' },
+      });
+      expect(franja('panel-profesionales-que-piden')).toBeNull();
     });
   });
 
@@ -199,7 +245,7 @@ describe('Dashboard', () => {
   });
 
   it('con SECURITY_ADMIN pide el listado y toma el total de `count`, no de las filas', () => {
-    crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+    crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
 
     http
       .expectOne((request) => request.url.includes('/profiles/patients'))
@@ -227,8 +273,26 @@ describe('Dashboard', () => {
     );
   });
 
+  describe('quien sólo gestiona la plataforma', () => {
+    it('entra por su portada y NO pide el listado de pacientes', () => {
+      crear({ sub: 'u-1', roles: ['SUPERADMIN', 'SECURITY_ADMIN'], tenants: ['t-1'] });
+
+      const componente = fixture.componentInstance as unknown as { esGestion: () => boolean };
+      expect(componente.esGestion()).toBe(true);
+      http.expectNone((request) => request.url.includes('/profiles/patients'));
+    });
+
+    it('con un rol clínico además, conserva el panel clínico y su listado', () => {
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
+
+      const componente = fixture.componentInstance as unknown as { esGestion: () => boolean };
+      expect(componente.esGestion()).toBe(false);
+      http.expectOne((request) => request.url.includes('/profiles/patients'));
+    });
+  });
+
   it('el listado vacío es S3, no una lista de cero filas', () => {
-    crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+    crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
 
     http
       .expectOne((request) => request.url.includes('/profiles/patients'))
@@ -243,10 +307,12 @@ describe('Dashboard', () => {
   describe('Sus herramientas', () => {
     it.each([
       [['PRACTITIONER', 'CLINICIAN']],
-      [['SECURITY_ADMIN']],
+      [['SECURITY_ADMIN', 'CLINICIAN']],
+      [['SUPERADMIN', 'SECURITY_ADMIN']],
     ])('con %j el panel ya no dibuja el árbol de accesos', (roles) => {
       crear({ sub: 'u-1', roles, tenants: ['t-1'] });
-      if (roles.includes('SECURITY_ADMIN')) {
+      // Quien sólo gestiona la plataforma entra por su portada y no lista pacientes.
+      if (roles.includes('SECURITY_ADMIN') && roles.includes('CLINICIAN')) {
         http
           .expectOne((request) => request.url.includes('/profiles/patients'))
           .flush({ items: [], count: 0, limit: 5, nextCursor: null });
@@ -305,7 +371,7 @@ describe('Dashboard', () => {
     });
 
     it('a quien no atiende no se le pregunta siquiera', () => {
-      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
       // Este rol sí lista pacientes; se responde para que el `verify()` del
       // teardown hable sólo de lo que esta prueba mira.
       http

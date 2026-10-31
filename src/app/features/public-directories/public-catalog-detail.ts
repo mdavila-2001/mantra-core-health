@@ -9,8 +9,8 @@ import type {
   PublicProfileDetail,
 } from '@core/data-access/public-directory/public-directory.types';
 import { errorToViewState } from '@core/http/error-to-view-state';
-import type { ContextoDeChat } from '@core/messaging/contexto-de-chat';
-import { usarIrAlChat } from '@core/messaging/enlace-de-chat';
+import type { ContextoDeChat } from '@core/messaging/chat-context';
+import { usarIrAlChat } from '@core/messaging/chat-link';
 import { dataOf, loading, notFound, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import type { BreadcrumbItem } from '@shared/components/molecules/breadcrumb/breadcrumb.types';

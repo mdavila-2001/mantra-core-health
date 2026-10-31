@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 
 import type { OfertaDeFarmacia } from '@core/data-access/public-marketplace/public-marketplace.types';
-import { usarIrAlChat } from '@core/messaging/enlace-de-chat';
+import { usarIrAlChat } from '@core/messaging/chat-link';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';

@@ -26,7 +26,7 @@ import { EmptyState } from '../../../shared/components/molecules/empty-state/emp
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { vistaPreviaDe, type VistaPrevia } from './vista-previa';
+import { vistaPreviaDe, type VistaPrevia } from './preview';
 
 /**
  * Qué muestra la bandeja: un `ViewState` del M34 (ADR-0005), el mismo que
@@ -67,16 +67,7 @@ export interface AccionDeFila {
  */
 @Component({
   selector: 'app-conversation-list',
-  imports: [
-    AppButton,
-    AppButtonLink,
-    Avatar,
-    EmptyState,
-    RouterLink,
-    Skeleton,
-    VerificationBadge,
-    ViewStateHost,
-  ],
+  imports: [AppButton, AppButtonLink, Avatar, EmptyState, RouterLink, Skeleton, VerificationBadge, ViewStateHost],
   templateUrl: './conversation-list.html',
   styleUrl: './conversation-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -90,7 +81,7 @@ export class ConversationList {
   /** Cuál está abierta, para marcarla. */
   readonly activaId = input<string | null>(null);
 
-  /** El perfil propio: sin él no se puede decir «Enviado por vos» ni pintar el tilde. */
+  /** El perfil propio: sin él no se puede decir «Enviado por usted» ni pintar el tilde. */
   readonly perfilPropio = input<string | null>(null);
 
   /** A quiénes bloqueó la persona: sus filas lo dicen y el menú ofrece desbloquear. */
@@ -131,8 +122,8 @@ export class ConversationList {
   protected readonly menuAbierto = signal<string | null>(null);
 
   protected readonly conQuien = conversationLabel;
-  protected readonly avatarDeConQuien = conversationAvatar;
   protected readonly verificacionDe = conversationVerification;
+  protected readonly avatarDeConQuien = conversationAvatar;
 
   protected esFavorito(id: string): boolean {
     return this.preferencias.isFavorite(id);
@@ -201,16 +192,16 @@ export class ConversationList {
     return conversacion.groupId !== undefined || conversacion.peers.length > 1;
   }
 
-  protected cerrarMenu(): void {
-    this.menuAbierto.set(null);
-  }
-
   /** `true` si es una conversación directa con alguien que se bloqueó. */
   protected estaBloqueada(conversacion: ConversationListItem): boolean {
     return (
       conversacion.peers.length === 1 &&
       this.bloqueados().has(conversacion.peers[0].profileId)
     );
+  }
+
+  protected cerrarMenu(): void {
+    this.menuAbierto.set(null);
   }
 
   protected alternarMenu(id: string, evento: Event): void {

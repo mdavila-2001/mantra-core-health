@@ -208,9 +208,9 @@
    ancho: dentro de la columna del precio estrangulaba la dirección en un
    teléfono. Arranca alineado con el nombre, no con la letra del pin. */
 .farmacia__chat {
-    flex: 1 0 100%;
-    max-inline-size: calc(100% - 28px - var(--sp-3));
-    margin-inline-start: calc(28px + var(--sp-3));
+  flex: 1 0 100%;
+  max-inline-size: calc(100% - 28px - var(--sp-3));
+  margin-inline-start: calc(28px + var(--sp-3));
 }
 
 .farmacia__km {

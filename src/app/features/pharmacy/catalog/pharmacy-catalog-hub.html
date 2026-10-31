@@ -1,6 +1,6 @@
 <app-page-header
   title="Catálogo"
-  subtitle="Productos, categorías, precios, inventario e importación de su farmacia, en una sola pantalla."
+  subtitle="Productos, categorías, precios, inventario, importación e integración con el sistema de su farmacia, en una sola pantalla."
 />
 
 <!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
@@ -35,7 +35,12 @@
     </app-tab>
     <app-tab [label]="labels[tabs[4]]">
       @if (selected() === 4) {
-        <app-pharmacy-import [embedded]="true" />
+        <app-import-target />
+      }
+    </app-tab>
+    <app-tab [label]="labels[tabs[5]]">
+      @if (selected() === 5) {
+        <app-pharmacy-integration />
       }
     </app-tab>
   </app-tabs>

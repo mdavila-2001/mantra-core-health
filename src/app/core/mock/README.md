@@ -28,10 +28,10 @@ las lista y permite copiarlas.
 | Administradora | `admin@alovida.mock` | Todos los roles administrativos: organizaciones, personas, identidad, terminología, moderación, geolocalización, contabilidad, activos, cotizaciones, laboratorio farmacéutico. |
 | Superadmin | `superadmin@alovida.mock` | Comodín: entra a todo. Tres organizaciones. |
 | Visitador | `visitador@alovida.mock` | Carla Fernández Ríos, visitadora médica de Laboratorios Inti. Solicitudes de visita, agenda de visitas, registros. |
-| Farmacia | `farmacia@alovida.mock` | Mariela Céspedes, encargada de Farmacia Vida, y su mostrador (`PHARMACY_STAFF`). Catálogo de productos (alta, carga masiva por CSV, «sin stock», edición y retiro), pedidos del mostrador y promociones. Chat con los pacientes **como la farmacia** («Escribiendo como» en Chats, «Chatear con el paciente» en cada pedido). |
+| Farmacia | `farmacia@alovida.mock` | Mariela Céspedes, encargada de Farmacia Vida (`PHARMACY_STAFF`). Catálogo de productos (alta, carga masiva por CSV, «sin stock», edición y retiro), pedidos del mostrador (sólo los de su farmacia) y promociones. Chatea con los pacientes **como la farmacia** («Escribiendo como» en Chats, «Chatear con el paciente» en cada pedido). |
 
 También entran por número de documento (`4567890`, `7654321`, `1112223`,
-`9998887`, `5556667`, `7003001`).
+`9998887`, `5556667`).
 
 ## Qué hay adentro
 

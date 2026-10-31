@@ -1,0 +1,45 @@
+@let op = operation();
+
+<section class="cycle" aria-label="Ciclo de la petición" data-testid="portal-request-cycle">
+  <p class="cycle__headline" data-testid="portal-request-cycle-count">{{ headline() }}</p>
+  <p class="cycle__muted">
+    Las etapas son las de toda la API (middleware, guards, interceptores, validación, handler,
+    persistencia, entrega asíncrona y filtro de errores), verificadas en su código. Para
+    <code class="cycle__route">{{ op.metodo }} {{ op.ruta }}</code> se marca cuáles alcanzan según lo
+    que el inventario registró de ella; lo que el inventario no registra se dice «no determinable».
+  </p>
+
+  <ol class="cycle__phases">
+    @for (phase of phases(); track phase.id; let i = $index) {
+      <li class="cycle__phase" data-testid="portal-request-cycle-phase">
+        <h3 class="cycle__phase-title">
+          <span class="cycle__phase-number" aria-hidden="true">{{ i + 1 }}</span>
+          <span>{{ phase.label }}</span>
+          <span class="cycle__muted">{{ phase.note }}</span>
+        </h3>
+        <ol class="cycle__stages">
+          @for (stage of phase.stages; track stage.number) {
+            <li class="cycle__stage" [attr.data-applies]="stage.applicability">
+              <span class="cycle__stage-head">
+                <span class="cycle__stage-number">Etapa {{ stage.number }}</span>
+                <strong class="cycle__stage-label">{{ stage.label }}</strong>
+                <app-badge size="sm" [variant]="verdict(stage.applicability).tone">
+                  {{ verdict(stage.applicability).label }}
+                </app-badge>
+              </span>
+              <span class="cycle__reason">{{ stage.reason }}</span>
+              <span class="cycle__muted">{{ stage.description }}</span>
+              <span class="cycle__source">{{ stage.source }}</span>
+            </li>
+          }
+        </ol>
+      </li>
+    }
+  </ol>
+
+  <p class="cycle__muted">
+    El orden relativo entre el guard de tasa y los guards de autenticación no se comprobó en
+    ejecución (se numeran por convención). Las decisiones concretas de esta operación están en
+    <a app-link [routerLink]="[]" [queryParams]="treeQuery()" queryParamsHandling="merge">su árbol de decisión</a>.
+  </p>
+</section>

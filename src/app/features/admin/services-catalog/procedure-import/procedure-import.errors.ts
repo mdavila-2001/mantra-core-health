@@ -22,9 +22,9 @@ const SIN_PERMISO: Readonly<Record<ContextoDeFallo, string>> = {
   arancel:
     'No tiene permiso para ver el arancel. Pídale acceso a quien administre la organización.',
   'importar-uno':
-    'Dar de alta servicios exige permiso de administración. Pídale a quien administre la organización que lo haga o que te lo otorgue.',
+    'Dar de alta servicios exige permiso de administración. Pídale a quien administre la organización que lo haga o que se lo otorgue.',
   'importar-lote':
-    'Importar al catálogo exige permiso de administración. Pídale a quien administre la organización que lo haga o que te lo otorgue.',
+    'Importar al catálogo exige permiso de administración. Pídale a quien administre la organización que lo haga o que se lo otorgue.',
 };
 
 const NO_ENCONTRADO: Readonly<Record<ContextoDeFallo, string>> = {

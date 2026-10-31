@@ -1,8 +1,8 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import type { ClinicalNoteVersionRef } from '../../data-access/chart-notes/chart-notes.types';
-import { conditionList, noteList, PROGRESS_NOTE_TYPE, type SimulatedCondition, type SimulatedNote } from '../fixtures/clinic';
-import { STATUS, ESTUDIO, VERIFICATION_DX } from '../fixtures/concepts';
+import { conditionList, noteList, prescriptionList, PROGRESS_NOTE_TYPE, type SimulatedCondition, type SimulatedNote } from '../fixtures/clinic';
+import { STATUS, ESTUDIO, PRESCRIPTION_STATUS, VERIFICATION_DX } from '../fixtures/concepts';
 import { PACIENTE, PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
@@ -246,6 +246,54 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
     });
 
     expect(respuesta.status).toBe(409);
+  });
+
+  /*
+   * FAR-03: el estado sigue la máquina de la API (`MR_DRAFT` → `MR_ISSUED`).
+   * Firmar no emite: sólo sella `signedAt`. Una receta firmada y sin emitir no
+   * se puede pedir en la farmacia.
+   */
+  it('firmar deja la receta en borrador; emitirla la pasa a MR_ISSUED con su issuedAt', () => {
+    const creada = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationText: 'Control de síntomas',
+    });
+    const id = (creada.body as { id: string }).id;
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_DRAFT']);
+
+    call('POST', `/clinical/medication-requests/${id}/sign`, {});
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_DRAFT']);
+    expect(prescriptionList.get(id)?.signedAt).not.toBeNull();
+    expect(prescriptionList.get(id)?.issuedAt).toBeNull();
+
+    call('POST', `/clinical/medication-requests/${id}/issue`, {});
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_ISSUED']);
+    expect(prescriptionList.get(id)?.issuedAt).not.toBeNull();
+  });
+
+  /*
+   * FAR-03: como en la API (`medications.service.ts`, el alta deja `validTo`
+   * vacío si no viene), una receta sin fin de vigencia no vence. Antes el
+   * simulador le ponía «ahora» y, ya emitida, salía vencida en «Dónde comprar».
+   */
+  it('una receta continua (sin validTo) se emite sin vencimiento; con validTo lo conserva', () => {
+    const continua = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationText: 'Tratamiento crónico',
+    });
+    const id = (continua.body as { id: string }).id;
+    call('POST', `/clinical/medication-requests/${id}/sign`, {});
+    call('POST', `/clinical/medication-requests/${id}/issue`, {});
+
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_ISSUED']);
+    expect(prescriptionList.get(id)?.validTo).toBeNull();
+
+    const conFin = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationText: 'Antibiótico por diez días',
+      validTo: '2099-01-10T00:00:00.000Z',
+    });
+    expect(prescriptionList.get((conFin.body as { id: string }).id)?.validTo).toBe('2099-01-10T00:00:00.000Z');
   });
 });
 

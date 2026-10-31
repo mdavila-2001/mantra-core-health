@@ -108,7 +108,11 @@ describe('ChatStore', () => {
     http.verify();
   });
 
-  it('varios adjuntos salen en el orden elegido aunque las subidas terminen al revés', async () => {
+  // Las subidas van de a una (fila del store, ver `enviarAdjuntos`): la
+  // segunda no puede «terminar antes». Lo que esta prueba fija sigue siendo el
+  // orden de los MENSAJES: el de la segunda espera a que el de la primera
+  // conteste, aunque su archivo ya esté subido.
+  it('varios adjuntos salen en el orden elegido: suben de a una y cada mensaje espera al anterior', () => {
     encender();
     store.abrir('c-1');
     contestarHilo([mensaje('m-1')]);
@@ -119,24 +123,31 @@ describe('ChatStore', () => {
     store.enviarAdjunto(primero, 'El análisis');
     store.enviarAdjunto(segundo, 'La foto');
 
-    const subidas = http.match((r) => r.url.endsWith('/common/files/upload'));
-    expect(subidas).toHaveLength(2);
-    // La foto chica termina primero, pero no sale antes que el PDF.
-    subidas[1].flush({ id: 'f-2' });
-    TestBed.tick();
-    await Promise.resolve();
-    await Promise.resolve();
-    const contenidosPedidosEnEspera = http.match((r) => r.url.includes('/attachments/f-2/content'));
-    expect(http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages')).toHaveLength(0);
+    const envios = () =>
+      http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    const subidas = () => http.match((r) => r.url.endsWith('/common/files/upload'));
 
-    subidas[0].flush({ id: 'f-1' });
-    await new Promise((listo) => setTimeout(listo, 0));
-    const [envioPdf] = http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    // Aunque sean dos llamadas, sube una sola por vez.
+    const subidaPdf = subidas();
+    expect(subidaPdf).toHaveLength(1);
+    expect(((subidaPdf[0].request.body as FormData).get('file') as File).name).toBe('analisis.pdf');
+    subidaPdf[0].flush({ id: 'f-1' });
+
+    const [envioPdf, ...otros] = envios();
+    expect(otros).toHaveLength(0);
     expect(envioPdf.request.body).toEqual(expect.objectContaining({ attachmentFileId: 'f-1', bodyText: 'El análisis' }));
 
+    // La foto sube mientras el mensaje del PDF sigue en vuelo, pero su mensaje
+    // no sale antes de que el del PDF conteste.
+    const subidaFoto = subidas();
+    expect(subidaFoto).toHaveLength(1);
+    subidaFoto[0].flush({ id: 'f-2' });
+    TestBed.tick();
+    const contenidosPedidosEnEspera = http.match((r) => r.url.includes('/attachments/f-2/content'));
+    expect(envios()).toHaveLength(0);
+
     envioPdf.flush({ id: 'm-pdf', conversationId: 'c-1', sentAt: '2026-09-08T10:01:00.000Z' });
-    await new Promise((listo) => setTimeout(listo, 0));
-    const [envioFoto] = http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    const [envioFoto] = envios();
     expect(envioFoto.request.body).toEqual(expect.objectContaining({ attachmentFileId: 'f-2', bodyText: 'La foto' }));
     envioFoto.flush({ id: 'm-foto', conversationId: 'c-1', sentAt: '2026-09-08T10:01:01.000Z' });
     // Mientras esperaban turno no se pidió su contenido: no existían todavía.
@@ -875,61 +886,10 @@ describe('ChatStore', () => {
       );
 
     expect(store.conversaciones().length).toBe(1);
-    // Queda en S7 (con filas y su antigüedad). Las filas no dicen por qué no
-    // se actualizaron: eso lo dice el aviso, con el código de soporte.
+    // Queda en S7 (con filas y su antigüedad), no en el aviso global: la
+    // bandeja tiene su propio estado.
     expect(store.bandeja().status).toBe('stale');
-    expect(store.error()).toBe('No pudimos cargar sus conversaciones. (Código de soporte: corr-bandeja)');
-  });
-
-  it('sin conexión, el aviso lo dice en vez de culpar a la conversación', () => {
-    encender();
-
-    store.recargarBandeja();
-    http
-      .expectOne((r) => r.url === '/community/conversations')
-      .error(new ProgressEvent('error'));
-
-    expect(store.error()).toBe('No hay conexión con el servidor. Revise su conexión e intente de nuevo.');
-  });
-
-  it('si falla la lectura de bloqueos, la lista vacía no se confunde con «no bloqueó a nadie»', () => {
-    encender();
-
-    http
-      .match((r) => r.url === '/community/blocks')
-      .forEach((pedido) =>
-        pedido.flush(
-          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-blk', timestamp: '', path: '' },
-          { status: 500, statusText: 'Server Error' },
-        ),
-      );
-
-    expect(store.bloqueados()).toEqual([]);
-    expect(store.bloqueosFallaron()).toBe(true);
-    expect(store.error()).toBe('No pudimos leer las personas que bloqueó. (Código de soporte: corr-blk)');
-  });
-
-  it('un envío que falla dice por qué, y reintentar limpia el aviso', () => {
-    encender();
-    store.abrir('c-1');
-    contestarHilo([]);
-
-    store.enviar('Hola');
-    http
-      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/messages'))
-      .flush(
-        { code: 'FORBIDDEN', message: 'Esta persona no recibe mensajes suyos.', correlationId: 'corr-env', timestamp: '', path: '' },
-        { status: 403, statusText: 'Forbidden' },
-      );
-
-    expect(store.enOrden()[0].estado).toBe('fallado');
-    expect(store.error()).toBe('Esta persona no recibe mensajes suyos. (Código de soporte: corr-env)');
-
-    store.reintentar(store.enOrden()[0].pendiente!);
     expect(store.error()).toBe('');
-    http
-      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/messages'))
-      .flush({ id: 'm-9', conversationId: 'c-1', sentAt: '2026-09-08T11:00:00.000Z' });
   });
 
   describe('escribirA con contexto', () => {
@@ -1106,5 +1066,59 @@ describe('ChatStore', () => {
       http.expectNone('/community/profiles/by-slug/farmacia-vida');
       expect(abierto).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('sin conexión, la bandeja lo dice (S8) en vez de culpar a la conversación', () => {
+    // Sin filas que conservar: con filas sería S7 (ver la prueba anterior).
+    encender([]);
+
+    store.recargarBandeja();
+    http
+      .expectOne((r) => r.url === '/community/conversations')
+      .error(new ProgressEvent('error'));
+
+    // La bandeja lo dice en su propio estado (S8), no en el aviso global.
+    expect(store.bandeja().status).toBe('offline');
+    expect(store.error()).toBe('');
+  });
+
+  it('si falla la lectura de bloqueos, la lista vacía no se confunde con «no bloqueó a nadie»', () => {
+    encender();
+
+    http
+      .match((r) => r.url === '/community/blocks')
+      .forEach((pedido) =>
+        pedido.flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-blk', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        ),
+      );
+
+    expect(store.bloqueados()).toEqual([]);
+    expect(store.bloqueosFallaron()).toBe(true);
+    expect(store.error()).toBe('No pudimos leer las personas que bloqueó. (Código de soporte: corr-blk)');
+  });
+
+  it('un envío que falla dice por qué, y reintentar limpia el aviso', () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([]);
+
+    store.enviar('Hola');
+    http
+      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/messages'))
+      .flush(
+        { code: 'FORBIDDEN', message: 'Esta persona no recibe mensajes suyos.', correlationId: 'corr-env', timestamp: '', path: '' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+
+    expect(store.enOrden()[0].estado).toBe('fallado');
+    expect(store.error()).toBe('Esta persona no recibe mensajes suyos. (Código de soporte: corr-env)');
+
+    store.reintentar(store.enOrden()[0].pendiente!);
+    expect(store.error()).toBe('');
+    http
+      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/messages'))
+      .flush({ id: 'm-9', conversationId: 'c-1', sentAt: '2026-09-08T11:00:00.000Z' });
   });
 });

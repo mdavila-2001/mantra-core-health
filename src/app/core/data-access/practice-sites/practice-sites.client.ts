@@ -220,6 +220,7 @@ interface WireRoleAssignment {
   readonly validTo: string | null;
   readonly createdAt: string;
   readonly avatarUrl: string | null;
+  readonly tenantId?: string | null;
 }
 
 interface WireRoleAssignmentResult {
@@ -231,9 +232,11 @@ interface WireRoleAssignmentResult {
 }
 
 function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
-  const { validFrom, validTo, createdAt, avatarUrl, ...resto } = body;
+  const { validFrom, validTo, createdAt, avatarUrl, tenantId, ...resto } = body;
   return {
     ...sinNulos(resto),
+    // Como `avatarUrl`: `MyRoleAssignmentResponseDto.tenantId` es siempre presente y `null` si la práctica no tiene organización.
+    tenantId: tenantId ?? null,
     ...(maybeDateOnly(validFrom) === undefined ? {} : { validFrom: maybeDateOnly(validFrom) }),
     ...(maybeDateOnly(validTo) === undefined ? {} : { validTo: maybeDateOnly(validTo) }),
     createdAt: maybeDate(createdAt) ?? new Date(createdAt as string),

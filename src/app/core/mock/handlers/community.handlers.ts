@@ -112,17 +112,30 @@ function vitrinaDeSesion(request: MockRequest): SimulatedShowcase | undefined {
 export function puedeActuarComo(request: MockRequest, profileId: string): boolean {
   const user = request.user;
   if (user === null || profileId === '') return true;
+  if (enNombreDe.get(request) === profileId) return true;
   if (vitrinaDeSesion(request)?.id === profileId) return true;
   const v = showcases.get(profileId);
-  // Un perfil que la maqueta no siembra (los `synthetic-*` de las pruebas de
-  // cobertura) no es de nadie que ella conozca: no se decide acá, y siguen
-  // valiendo las demás reglas (autoría, participación).
-  if (v === undefined) return true;
   return (
+    v !== undefined &&
     v.kind === 'PHARMACY' &&
     user.tenants.includes(v.tenantId) &&
     user.roles.includes('PHARMACY_STAFF')
   );
+}
+
+/**
+ * Las peticiones que ya pasaron la regla de **responder en nombre de un doctor**
+ * (personal de apoyo con `messages.reply_on_behalf` y la aceptación del doctor):
+ * la API no le pide a quien escribe que el perfil sea suyo, porque lo autorizó
+ * la delegación. Solo la marca quien validó eso (`support-access.chat.handlers`),
+ * y solo vale para esa petición y ese perfil.
+ */
+const enNombreDe = new WeakMap<MockRequest, string>();
+
+/** Marca una petición ya autorizada por la delegación para actuar con `profileId`. */
+export function autorizadaEnNombreDe(request: MockRequest, profileId: string): MockRequest {
+  enNombreDe.set(request, profileId);
+  return request;
 }
 
 /** El 403 de la API cuando no se puede actuar con el perfil pedido. */
@@ -1072,20 +1085,20 @@ export function registrarComunidad(router: MockRouter): void {
    * FT-32-R02) — no sólo para quien lo subió, que es lo único que deja la ruta
    * genérica de archivos.
    *
-   * Como la API: el perfil tiene que ser el de la sesión, participar de la
-   * conversación, y el archivo tiene que viajar en un mensaje de **esa**
-   * conversación. Cualquier otra combinación es el mismo 404: un 403 diría que
-   * el archivo existe.
+   * Como la API: el perfil tiene que ser uno con el que la sesión puede actuar
+   * (el propio o, para el mostrador, la vitrina de su farmacia: ver
+   * {@link puedeActuarComo}), participar de la conversación, y el archivo tiene
+   * que viajar en un mensaje de **esa** conversación. Cualquier otra
+   * combinación es el mismo 404: un 403 diría que el archivo existe.
    */
   router.get('/community/conversations/:id/attachments/:fileId/content', (request) => {
     const notFoundReply = () => notFound('Adjunto no encontrado');
     const c = conversationList.get(request.params['id']!);
     const fileId = request.params['fileId']!;
     const profileId = texto(request.query, 'profileId') ?? '';
-    // El perfil tiene que ser uno con el que la sesión puede actuar: el propio
-    // o la vitrina de su farmacia (`puedeActuarComo`), como la API. Sin sesión
-    // tampoco: una ruta de contexto no se lee anónima.
-    if (c === undefined || request.user === null || profileId === '' || !puedeActuarComo(request, profileId)) return notFoundReply();
+    if (c === undefined || request.user === null || profileId === '' || !puedeActuarComo(request, profileId)) {
+      return notFoundReply();
+    }
     if (!c.participantes.includes(profileId)) return notFoundReply();
     const isAttachedHere = messageList.filtrar(
       (m) => m.conversationId === c.id && m.attachmentFileId === fileId,
@@ -1093,9 +1106,10 @@ export function registrarComunidad(router: MockRouter): void {
     if (!isAttachedHere) return notFoundReply();
     const contenido = fileContent(fileId);
     if (contenido === undefined) return notFoundReply();
-    // Igual que `GET /common/files/:id/content`: `{ body, headers }` sin
-    // `status` no es una respuesta para el interceptor, que lo trataba como el
-    // cuerpo mismo. Un `Blob` (lo subido) ya sale bien.
+    // Tras recargar, `fileContent` entrega la copia `data:` como
+    // `{ body, headers }`, que sin `status` el interceptor no reconoce como
+    // respuesta: el hilo recibía ese JSON y pintaba la foto como un archivo
+    // `octet-stream`. Mismo arreglo que `GET /common/files/:id/content`.
     return contenido instanceof Blob
       ? contenido
       : { status: 200, ...(contenido as { body: unknown; headers: Record<string, string> }) };

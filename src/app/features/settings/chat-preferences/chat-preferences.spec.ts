@@ -80,6 +80,7 @@ describe('ChatPreferences', () => {
     const cargar = vi.spyOn(autoReply, 'cargar').mockImplementation(() => undefined);
     const chat = TestBed.inject(ChatStore);
 
+    // Sin escribir como una vitrina, el perfil con el que se actúa es el propio.
     chat.perfil.set('pp-1');
     chat.perfilPropio.set('pp-1');
     chat.perfilResuelto.set(true);
@@ -389,20 +390,16 @@ describe('ChatPreferences · escribiendo como la farmacia', () => {
     expect(aviso?.textContent).toContain('personal');
     expect(aviso?.textContent).toContain('Farmacia Vida');
 
-    const consultar = (testid: string): HTMLElement =>
-      fixture.nativeElement.querySelector(`[data-testid="${testid}"]`) as HTMLElement;
-    consultar('chat-prefs-modo-fijo').click();
+    // Activa una respuesta fija y la guarda, como lo haría la persona.
+    (fixture.nativeElement.querySelector('[data-testid="chat-prefs-modo-fijo"]') as HTMLInputElement).click();
     fixture.detectChanges();
-    // `ngModel` escribe el valor inicial en una microtarea: se la deja
-    // terminar antes de tipear, o pisaría lo tipeado.
     await fixture.whenStable();
-    const area = consultar('chat-prefs-texto') as HTMLTextAreaElement;
-    area.value = 'Estoy en consulta, respondo más tarde.';
+    const area = fixture.nativeElement.querySelector('[data-testid="chat-prefs-texto"]') as HTMLTextAreaElement;
+    area.value = 'Estoy de vacaciones hasta el lunes.';
     area.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     await fixture.whenStable();
-    fixture.detectChanges();
-    consultar('chat-prefs-guardar').click();
+    (fixture.nativeElement.querySelector('[data-testid="chat-prefs-guardar"]') as HTMLElement).click();
     fixture.detectChanges();
 
     http.expectNone((r) => r.method === 'PUT' && r.url === `/community/profiles/${FARMACIA}/auto-reply`);

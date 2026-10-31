@@ -44,7 +44,7 @@ import { esperarAplicacionLista } from './support/sesion';
  */
 
 /** Dónde quedan las fotos. Una carpeta por tanda, como el resto del repo. */
-const EVIDENCIA = 'docs/frontend/evidence/chat-marketplace-2026-10-30';
+const EVIDENCIA = 'docs/frontend/evidence/chat-marketplace-2026-10-28';
 
 const PACIENTE = 'paciente@alovida.mock';
 const FARMACIA = 'farmacia@alovida.mock';
@@ -85,18 +85,6 @@ let hiloSinTarjeta = '';
 const erroresDeConsola: string[] = [];
 
 async function foto(nombre: string): Promise<void> {
-  // Que la foto muestre el estado quieto y no un fundido a medias (la vista
-  // previa de adjuntos entra animada). Las animaciones infinitas no cuentan.
-  await page
-    .waitForFunction(
-      () =>
-        document
-          .getAnimations()
-          .every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity),
-      undefined,
-      { timeout: 5_000 },
-    )
-    .catch(() => undefined);
   await page.screenshot({ path: `${EVIDENCIA}/${nombre}.png`, fullPage: false });
 }
 
@@ -156,7 +144,7 @@ async function abrirConversacion(quien: string): Promise<void> {
 
 /** Las tarjetas de contexto del hilo abierto, de un tipo. */
 function tarjetas(tipo: 'pedido' | 'producto' | 'farmacia'): Locator {
-  return page.locator(`[data-testid="hilo-contexto"][data-tipo="${tipo}"]`);
+  return page.locator(`[data-testid="thread-context"][data-tipo="${tipo}"]`);
 }
 
 /** Lo que la maqueta guardó en `sessionStorage` bajo una clave. */
@@ -191,12 +179,14 @@ async function imagen(
 }
 
 /**
- * Espera a que la vista previa de adjuntos tenga las fotos ya preparadas
- * (achicadas y sin metadatos) y lista para mandar.
+ * Espera a que la vista previa de adjuntos (la de dev, estilo WhatsApp Web)
+ * esté abierta con `cuantas` miniaturas y sin fotos preparándose (achicado y
+ * limpieza de EXIF de `AttachmentPreparer`).
  */
 async function colaLista(cuantas: number): Promise<void> {
-  await expect(page.getByTestId('composer-preparando')).toHaveCount(0, { timeout: 30_000 });
-  await expect(page.getByTestId('vista-miniatura')).toHaveCount(cuantas, { timeout: 30_000 });
+  await expect(page.getByTestId('composer-vista-previa')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('vista-miniatura')).toHaveCount(cuantas);
+  await expect(page.getByTestId('composer-preparando')).toHaveText('', { timeout: 30_000 });
   await expect(page.getByTestId('vista-enviar')).toBeEnabled();
 }
 
@@ -257,11 +247,11 @@ test('1 · paciente, desde el pedido: una sola tarjeta de pedido, también tras 
   const hilo = page.url();
 
   await expect(tarjetas('pedido')).toHaveCount(1);
-  const fijado = page.getByTestId('hilo-contexto-fijado');
+  const fijado = page.getByTestId('thread-context-fijado');
   await expect(fijado).toContainText('Consulta sobre: Pedido');
   await expect(fijado).toContainText('Farmacias Chávez');
   // La tarjeta lleva al pedido que la originó.
-  await expect(tarjetas('pedido').locator('xpath=..').getByTestId('hilo-contexto-ver')).toHaveAttribute(
+  await expect(tarjetas('pedido').locator('xpath=..').getByTestId('thread-context-ver')).toHaveAttribute(
     'href',
     new RegExp(PEDIDO_CHAVEZ, 'u'),
   );
@@ -272,7 +262,7 @@ test('1 · paciente, desde el pedido: una sola tarjeta de pedido, también tras 
   await recargar();
   await hiloListo();
   await expect(tarjetas('pedido')).toHaveCount(1);
-  await expect(page.getByTestId('hilo-contexto-fijado')).toContainText('Consulta sobre: Pedido');
+  await expect(page.getByTestId('thread-context-fijado')).toContainText('Consulta sobre: Pedido');
 
   // Otra vez el botón: el mismo hilo, y la tarjeta no se repite.
   await page.goto(`/my-account/pharmacy-orders/${PEDIDO_CHAVEZ}`);
@@ -297,7 +287,7 @@ test('2 · paciente, desde la ficha y desde el producto: una tarjeta de cada tip
   await hiloListo();
   await expect(tarjetas('farmacia')).toHaveCount(1);
   await expect(tarjetas('farmacia').first()).toContainText('Farmacia Vida');
-  await expect(page.getByTestId('hilo-contexto-fijado')).toContainText('Consulta sobre: Farmacia');
+  await expect(page.getByTestId('thread-context-fijado')).toContainText('Consulta sobre: Farmacia');
   await foto('02-ficha-tarjeta-farmacia');
 
   await page.goto('/pharmacies-directory/farmacia-vida');
@@ -314,7 +304,7 @@ test('2 · paciente, desde la ficha y desde el producto: una tarjeta de cada tip
   await hiloListo();
   await expect(tarjetas('producto')).toHaveCount(1);
   await expect(tarjetas('producto').first()).toContainText(producto);
-  await expect(page.getByTestId('hilo-contexto-fijado')).toContainText('Consulta sobre: Producto');
+  await expect(page.getByTestId('thread-context-fijado')).toContainText('Consulta sobre: Producto');
   await foto('02b-producto-tarjeta-producto');
 
   await recargar();
@@ -335,8 +325,8 @@ test('3 · un enlace externo con contexto falso abre el hilo sin tarjeta y sin e
     await esperarAplicacionLista(page);
     await hiloListo();
     await expect(page.locator('.hilo__nombre')).toContainText('Farmacia Central');
-    await expect(page.getByTestId('hilo-contexto')).toHaveCount(0);
-    await expect(page.getByTestId('hilo-contexto-fijado')).toHaveCount(0);
+    await expect(page.getByTestId('thread-context')).toHaveCount(0);
+    await expect(page.getByTestId('thread-context-fijado')).toHaveCount(0);
     await expect(page.getByText('INYECTADO')).toHaveCount(0);
     expect(await page.locator('body').innerText()).not.toContain('INYECTADO');
     expect(await guardado('mock.comunidad.mensajes')).not.toContain('INYECTADO');
@@ -346,7 +336,7 @@ test('3 · un enlace externo con contexto falso abre el hilo sin tarjeta y sin e
 
   await recargar();
   await hiloListo();
-  await expect(page.getByTestId('hilo-contexto')).toHaveCount(0);
+  await expect(page.getByTestId('thread-context')).toHaveCount(0);
 });
 
 test('4a · tres fotos y un texto: tres mensajes, la leyenda en la primera, grilla, y siguen tras recargar', async () => {
@@ -361,15 +351,16 @@ test('4a · tres fotos y un texto: tres mensajes, la leyenda en la primera, gril
     await imagen('receta-2.jpg', 'image/jpeg', '#b45309'),
     await imagen('receta-3.png', 'image/png', '#7c3aed'),
   ];
+  // Lo escrito antes de adjuntar pasa a ser el pie de la primera foto.
+  const leyenda = `Estas son las recetas ${MARCA}`;
+  await page.getByTestId('hilo-texto').fill(leyenda);
   await page.getByTestId('composer-input-archivos').setInputFiles(archivos);
   await colaLista(3);
+  await expect(page.getByTestId('vista-comentario')).toHaveValue(leyenda);
   await expect(page.getByTestId('vista-enviar')).toHaveAttribute('aria-label', 'Enviar 3 archivos');
-  // La leyenda es el comentario de la primera foto.
-  const leyenda = `Estas son las recetas ${MARCA}`;
-  await page.getByTestId('vista-miniatura').first().click();
-  await page.getByTestId('vista-comentario').fill(leyenda);
   await foto('04a-cola-con-tres-fotos');
   await page.getByTestId('vista-enviar').click();
+  await expect(page.getByTestId('composer-vista-previa')).toHaveCount(0);
 
   const comprobar = async (): Promise<void> => {
     // La primera, con su leyenda, va sola: «una leyenda es de esa foto».
@@ -407,7 +398,7 @@ test('4a · tres fotos y un texto: tres mensajes, la leyenda en la primera, gril
   await foto('04a-tres-fotos-tras-recargar');
 });
 
-test('4b · pegar una imagen desde el portapapeles la suma a la cola y sale', async () => {
+test('4b · pegar una imagen desde el portapapeles abre la vista previa y sale', async () => {
   await page.goto(hiloSinTarjeta);
   await esperarAplicacionLista(page);
   await hiloListo();
@@ -439,19 +430,19 @@ test('4b · pegar una imagen desde el portapapeles la suma a la cola y sale', as
   await expect(page.getByTestId('hilo-imagen')).toHaveCount(antes + 1);
 });
 
-test('4c · un .txt se rechaza con un mensaje y no entra a la cola', async () => {
+test('4c · lo que la API no guarda (un video) se rechaza con un mensaje y no abre la vista previa', async () => {
   await page.goto(hiloSinTarjeta);
   await esperarAplicacionLista(page);
   await hiloListo();
   await page.getByTestId('composer-input-archivos').setInputFiles({
-    name: 'notas.txt',
-    mimeType: 'text/plain',
+    name: 'clip.mp4',
+    mimeType: 'video/mp4',
     buffer: Buffer.from('no soy una foto'),
   });
   const aviso = page.locator('.composer__error[role="alert"]');
-  await expect(aviso).toContainText('«notas.txt» no se puede mandar');
-  await expect(page.getByTestId('vista-miniatura')).toHaveCount(0);
-  await foto('04c-txt-rechazado');
+  await expect(aviso).toContainText('«clip.mp4» no se puede mandar');
+  await expect(page.getByTestId('composer-vista-previa')).toHaveCount(0);
+  await foto('04c-video-rechazado');
   await aviso.getByRole('button', { name: 'Entendido' }).click();
   await expect(aviso).toHaveCount(0);
 });
@@ -576,12 +567,21 @@ test('6 · farmacia: «Escribiendo como», responde desde el mostrador con texto
   await foto('06d-paciente-tras-recargar');
 });
 
-test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horizontal', async () => {
+test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horizontal', async ({ browser }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(hiloSinTarjeta);
   await esperarAplicacionLista(page);
   await hiloListo();
 
+  // Fase 1, el hilo: «enviar» aparece con algo escrito.
+  await page.getByTestId('hilo-texto').fill('Hola');
+  const delHilo: [string, Locator][] = [
+    ['volver', page.getByRole('link', { name: 'Volver a los chats' })],
+    ['opciones', page.getByTestId('hilo-menu')],
+    ['enviar', page.getByTestId('hilo-enviar')],
+    ['foto', page.getByTestId('composer-foto')],
+    ['adjuntar', page.getByTestId('composer-adjuntar')],
+  ];
   const medidas: Record<string, { ancho: number; alto: number }> = {};
   const conAviso: Record<string, { ancho: number; alto: number }> = {};
   const medir = async (objetivos: [string, Locator][]): Promise<void> => {
@@ -591,36 +591,49 @@ test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horiz
       conAviso[nombre] = await zonaTocable(objetivo, false);
     }
   };
-
-  // La barra del hilo, sin nada elegido. «Enviar» aparece con texto escrito.
-  await page.getByTestId('hilo-texto').fill('hola');
-  await medir([
-    ['volver', page.getByRole('link', { name: 'Volver a los chats' })],
-    ['opciones', page.getByTestId('hilo-menu')],
-    ['enviar', page.getByTestId('hilo-enviar')],
-    ['foto', page.getByTestId('composer-foto')],
-  ]);
+  await medir(delHilo);
   await page.getByTestId('hilo-texto').fill('');
 
-  // «Quitar», «descartar» y su «enviar» sólo existen con algo elegido: la
-  // vista previa ocupa la pantalla.
-  await page
-    .getByTestId('composer-input-archivos')
-    .setInputFiles([await imagen('movil.png', 'image/png', '#0891b2')]);
-  await colaLista(1);
-  await foto('07-movil-390-con-cola');
-  await medir([
-    ['vista-enviar', page.getByTestId('vista-enviar')],
-    ['vista-quitar', page.getByTestId('vista-quitar').first()],
-    ['vista-descartar', page.getByTestId('vista-descartar')],
-  ]);
+  // La vista previa se mide en un teléfono de verdad (`hasTouch`): el «quitar»
+  // de cada miniatura crece a 44 sólo con `(hover: none)`, y con mouse queda
+  // de 20 a propósito (un área invisible quitaría archivos sin querer).
+  const deEscritorio = page;
+  const telefono = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  page = telefono;
+  try {
+    await entrar(PACIENTE);
+    await page.goto('/messaging');
+    await esperarAplicacionLista(page);
+    await page.getByTestId('conversacion').first().click();
+    await hiloListo();
+    expect(await page.evaluate(() => matchMedia('(hover: none)').matches)).toBe(true);
+    await page
+      .getByTestId('composer-input-archivos')
+      .setInputFiles([await imagen('movil.png', 'image/png', '#0891b2')]);
+    await colaLista(1);
+    await foto('07-movil-390-con-vista-previa');
+    // Fase 2, la vista previa: abierta, deja inerte lo de atrás.
+    await medir([
+      ['enviar-adjuntos', page.getByTestId('vista-enviar')],
+      ['quitar', page.getByTestId('vista-quitar').first()],
+    ]);
+    // Quitar la única es descartar: la vista previa se cierra.
+    await page.getByTestId('vista-quitar').first().click();
+    await expect(page.getByTestId('composer-vista-previa')).toHaveCount(0);
+  } finally {
+    page = deEscritorio;
+    await telefono.close();
+  }
   // Lo que el producto ofrece: sin el aviso de la maqueta encima.
   const chicos = Object.entries(medidas).filter(([, m]) => m.ancho < 44 || m.alto < 44);
   expect(chicos, `táctiles por debajo de 44×44: ${JSON.stringify(medidas)}`).toEqual([]);
   // Lo que se siente en la maqueta desplegada, con la pastilla «Demo» de
-  // `mock-banner.ts`. Medido, no supuesto: a 390 tapa la franja de arriba de
-  // «Opciones» (44×34 en la corrida del 28/10). Queda anotado como hallazgo de
-  // la maqueta en vez de hacer fallar la prueba del producto.
+  // `mock-banner.ts`: queda anotado como hallazgo de la maqueta en vez de
+  // hacer fallar la prueba del producto.
   const tapadosPorElAviso = Object.entries(conAviso).filter(([, m]) => m.ancho < 44 || m.alto < 44);
   if (tapadosPorElAviso.length > 0) {
     test.info().annotations.push({
@@ -634,8 +647,6 @@ test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horiz
   );
   expect(desbordaX, 'hay scroll horizontal a 390').toBe(false);
 
-  await page.getByTestId('vista-descartar').click();
-  await expect(page.getByTestId('vista-miniatura')).toHaveCount(0);
   await page.setViewportSize({ width: 1440, height: 900 });
 });
 
@@ -679,9 +690,8 @@ test('8 · bandeja: S8 «Sin conexión», S9 con el código de la petición, y R
 test('9 · la consola quedó limpia en toda la corrida', () => {
   // Lo esperado, nombrado de forma estrecha (mismo criterio que
   // `chat-mejoras-evidencia.spec.ts`): el aviso de la maqueta, el socket que
-  // no conecta sin gateway, el CSP del servidor de desarrollo, los mosaicos
-  // del mapa que el proxy de la máquina no deja bajar y las transiciones de
-  // vista que una navegación rápida interrumpe (sólo en desarrollo).
+  // no conecta sin gateway, el CSP del servidor de desarrollo y los mosaicos
+  // del mapa que el proxy de la máquina no deja bajar.
   // Cada patrón nombra un mensaje exacto: un `mock` suelto taparía el
   // `[mock] el manejador falló` que es justo el que tiene que hacer fallar.
   const esperados = new RegExp(
@@ -690,13 +700,12 @@ test('9 · la consola quedó limpia en toda la corrida', () => {
       String.raw`^WebSocket connection to '[^']*socket\.io[^']*' failed`,
       String.raw`^Executing inline script violates the following Content Security Policy directive 'script-src 'self' `,
       String.raw`^Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED$`,
-      // `withViewTransitions` (app.config.ts): si una navegación pisa a la
-      // anterior, el router de Angular registra la transición abortada con
-      // `console.error`, y sólo en modo desarrollo (`ngDevMode`).
+      // `withViewTransitions` (dev): abrir un chat navega dos veces seguidas
+      // (`?pedido=` y enseguida `/messaging/<id>` con `replaceUrl`), y Chrome
+      // descarta la primera transición. No es un fallo: la navegación llega.
       String.raw`^AbortError: Transition was skipped\. New ViewTransition started$`,
-      // Los dos fallos que el test 8 provoca a propósito sobre la bandeja (sin
-      // red y un 500 simulado): `apiFailureLogInterceptor` los escribe en la
-      // consola en desarrollo. Sólo esa ruta y sólo el fallo simulado.
+      // Los dos fallos que el test 8 inyecta a propósito (`mock:fallos`), tal
+      // como los registra `core/http/api-failure.ts` de dev.
       String.raw`^\[API\] GET /community/conversations → sin respuesta \(red, CORS o servidor caído\)`,
       String.raw`^\[API\] GET /community/conversations → 500 · INTERNAL · «Simulado: fallo del servidor\.» · correlationId=mock-fallo`,
     ].join('|'),

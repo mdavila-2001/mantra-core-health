@@ -1705,6 +1705,52 @@ describe('ShellLayout', () => {
       expect(rutas).not.toContain('/my-account/invoices');
     });
 
+    /**
+     * «Mis solicitudes» (propietario, 01/10/2026) es para paciente, médico,
+     * laboratorio e imagenología. La farmacia no presenta solicitudes de
+     * seguro: desde el 30/10/2026 no ve el paraguas, y sí conserva «Mis
+     * facturas», que el pedido del 30/09 incluye a toda organización.
+     */
+    it.each([
+      ['la farmacia', ['USER'], { 't-1': 'PHARMACY' }, false],
+      ['el paciente', ['PATIENT'], undefined, true],
+      ['el médico de una clínica', ['PRACTITIONER'], { 't-1': 'CLINIC' }, true],
+      ['el laboratorio', ['USER'], { 't-1': 'DIAGNOSTIC_CENTER' }, true],
+    ])(
+      '«Mis solicitudes» en la cabecera para %s: ¿se ofrece? %s',
+      (_quien, roles, tipos, ofrecida) => {
+        abrirSesion({
+          sub: 'u-1',
+          roles,
+          tenants: ['t-1'],
+          ...(tipos === undefined ? {} : { tenantTypes: tipos }),
+        });
+        fixture.detectChanges();
+
+        const enlace = raiz().querySelector<HTMLAnchorElement>(
+          '[data-testid="header-solicitudes"]',
+        );
+        expect(enlace !== null).toBe(ofrecida);
+        if (enlace !== null) {
+          expect(enlace.getAttribute('href')).toBe('/my-account/requests');
+        }
+      },
+    );
+
+    it('la farmacia conserva «Mis facturas» aunque pierda «Mis solicitudes»', () => {
+      abrirSesion({
+        sub: 'u-1',
+        roles: ['USER'],
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'PHARMACY' },
+      });
+      fixture.detectChanges();
+
+      expect(raiz().querySelector('[data-testid="header-facturas"]')?.getAttribute('href')).toBe(
+        '/my-account/invoices',
+      );
+    });
+
     it('al paciente «Mis facturas» le llega dentro de «Mis gastos», no como otro atajo (27/10/2026)', () => {
       abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
       fixture.detectChanges();

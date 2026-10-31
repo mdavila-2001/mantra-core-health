@@ -23,7 +23,7 @@
     class="conversaciones__estado"
     data-testid="bandeja-vacia"
     title="Todavía no tiene chats"
-    description="Consulte a una farmacia desde un producto o desde su pedido, o escríbale a un profesional. Sus conversaciones van a aparecer aquí."
+    description="Consulte a una farmacia desde un producto o desde su pedido, o escríbale a un profesional. Sus conversaciones aparecerán aquí."
     variant="empty"
   >
     <a empty-actions app-button variant="primary" routerLink="/search/medications">
@@ -198,9 +198,12 @@
                 <span class="conversaciones__marcas">
                   @if (estaBloqueada(conversacion)) {
                     <span class="conversaciones__bloqueada" data-testid="conversacion-bloqueada" title="Bloqueado">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></svg>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></svg>
                       <span class="solo-lectores">Bloqueado</span>
                     </span>
+                  }
+                  @if (conversacion.awaitingDoctor) {
+                    <span class="conversaciones__derivada" data-testid="conversacion-derivada">Derivada por su equipo</span>
                   }
                   @if (esFavorito(conversacion.id)) {
                     <span class="conversaciones__estrella" aria-label="Favorito" title="Favorito">

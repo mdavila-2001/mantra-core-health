@@ -1,0 +1,21 @@
+<div class="pestanas" role="tablist" [attr.aria-label]="ariaLabel()">
+  @for (tab of tabs(); track tab.value; let i = $index) {
+    <button
+      #boton
+      type="button"
+      role="tab"
+      class="pestana"
+      [class.pestana--activa]="tab.value === value()"
+      [id]="'pestana-' + tab.value"
+      [attr.aria-selected]="tab.value === value()"
+      [attr.aria-controls]="panelId()"
+      [attr.tabindex]="tab.value === value() ? 0 : -1"
+      [attr.data-testid]="'pestana-' + tab.value"
+      (click)="elegir(tab.value)"
+      (keydown)="alTeclado($event, i)"
+    >
+      <span class="pestana__rotulo">{{ tab.label }}</span>
+      <span class="pestana__cuenta" [attr.aria-label]="tab.count === 1 ? '1 conversación' : tab.count + ' conversaciones'" [attr.data-testid]="'cuenta-' + tab.value">{{ tab.count }}</span>
+    </button>
+  }
+</div>

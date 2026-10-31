@@ -10,10 +10,10 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, concatMap, EMPTY, from, map, Subscription, type Observable } from 'rxjs';
+import { catchError, concatMap, EMPTY, map, Subject, Subscription, type Observable } from 'rxjs';
 
 import { CommunityClient } from '../data-access/community/community.client';
-import { describeApiFailure } from '../http/api-failure';
+import { apiExplainedFailure, describeApiFailure } from '../http/api-failure';
 import { FilesClient } from '../data-access/files/files.client';
 import { SessionStore } from '../auth/session.store';
 import { ChatSocketService } from './chat-socket.service';
@@ -24,7 +24,7 @@ import {
   normalizarContexto,
   textoDeContexto,
   type ContextoDeChat,
-} from './contexto-de-chat';
+} from './chat-context';
 import { errorToViewState } from '../http/error-to-view-state';
 import {
   empty,
@@ -142,10 +142,21 @@ export const ERROR_SIN_PERMISO_EN_LA_CONVERSACION =
  * su miniatura `data:`. Con la miniatura puesta el store no vuelve a leer el
  * archivo: una foto de 8 MB leída tres veces a `data:` era lo que trababa el
  * envío en un teléfono.
+ *
+ * `leyenda` es el pie de **este** archivo (el `caption` de un
+ * `AttachmentDraft` de la vista previa). Sin ella, el adjunto toma la leyenda
+ * común de `enviarAdjuntos` si es el primero, y ninguna si no.
  */
 export interface AdjuntoParaEnviar {
   readonly archivo: File;
   readonly vistaPrevia?: string | null;
+  readonly leyenda?: string;
+}
+
+/** Un adjunto esperando su turno en la fila de subidas. */
+interface SubidaEnCola {
+  readonly pendiente: MensajePendiente;
+  readonly archivo: File;
 }
 
 /** Los estados de error de la bandeja: S5, S8 y S9 del M34. */
@@ -302,6 +313,10 @@ export interface MensajeDelHilo {
   readonly contentType?: DirectMessageContentType;
   readonly reactions?: readonly MessageReaction[];
   readonly receipts?: readonly MessageReceipt[];
+  /** El doctor lo respondió a través de su equipo y decidió que el paciente lo sepa. */
+  readonly repliedByTeam?: boolean;
+  /** Solo para el doctor: quién de su equipo lo escribió de verdad. */
+  readonly teamAuthorName?: string;
   /** Sólo en los pendientes: con qué reintentar. */
   readonly pendiente?: MensajePendiente;
 }
@@ -418,14 +433,6 @@ export class ChatStore {
 
   /** Cuándo se leyó bien la bandeja por última vez: la antigüedad de S7. */
   private readonly bandejaLeidaEn = signal<Date | null>(null);
-
-  /**
-   * El texto que puso en `error` el último tic fallido en S7, para quitarlo
-   * —y sólo ése— cuando la bandeja se vuelve a leer bien. Público porque la
-   * pantalla lo pinta junto a la bandeja (con su antigüedad) y no en el aviso
-   * global: S7 tiene su propio estado.
-   */
-  readonly motivoDeBandejaAtrasada = signal<string | null>(null);
 
   /**
    * La bandeja como uno de los estados del M34 (ADR-0005):
@@ -632,6 +639,8 @@ export class ChatStore {
         contentType: mensaje.contentType,
         reactions: mensaje.reactions,
         receipts: mensaje.receipts,
+        repliedByTeam: mensaje.repliedByTeam,
+        teamAuthorName: mensaje.teamAuthorName,
       }));
 
     const perfil = this.perfil();
@@ -872,17 +881,12 @@ export class ChatStore {
     this.bandejaLeidaEn.set(null);
     // Los contactos buscados eran para iniciar chats con la otra identidad.
     this.resultados.set([]);
-    this.limpiarBloqueos();
     this.error.set('');
     this.guardarActuacion();
     this.socket.reiniciar();
     if (destino !== null && (this.encendido || this.contadorPreparado)) {
       this.socket.joinInbox(destino);
       this.recargarBandeja();
-    }
-    // Los bloqueos son de cada perfil: los de la farmacia no son los propios.
-    if (destino !== null && this.encendido) {
-      this.cargarBloqueos();
     }
   }
 
@@ -924,18 +928,14 @@ export class ChatStore {
    * Si la pregunta falla no se decide nada: el error ya está a la vista.
    */
   private siPerdioElPermiso(error: unknown, profileId: string | null): void {
-    if (profileId !== null && this.revalidaLaVitrina(error, profileId)) {
-      this.revalidarVitrina(profileId);
-    }
-  }
-
-  /** `true` si es un 403 con una vitrina de organización: lo decide la revalidación. */
-  private revalidaLaVitrina(error: unknown, profileId: string): boolean {
-    return (
+    if (
       error instanceof HttpErrorResponse &&
       error.status === 403 &&
+      profileId !== null &&
       this.vitrinasDeOrganizacion().some((v) => v.profileId === profileId)
-    );
+    ) {
+      this.revalidarVitrina(profileId);
+    }
   }
 
   private revalidarVitrina(profileId: string): void {
@@ -1022,7 +1022,6 @@ export class ChatStore {
     this.falloDeLaBandeja.set(null);
     this.bandejaLeidaEn.set(null);
     this.resultados.set([]);
-    this.limpiarBloqueos();
     this.perfil.set(null);
     this.perfilPropio.set(null);
     this.perfilResuelto.set(false);
@@ -1206,16 +1205,8 @@ export class ChatStore {
     if (propio === null) {
       return;
     }
-    // Los bloqueos son del perfil con que se actúa: una respuesta pedida con
-    // otra identidad no se vuelca.
-    const generacion = this.generacionDeIdentidad;
-    const vigente = (): boolean =>
-      generacion === this.generacionDeIdentidad && this.perfil() === propio;
     this.community.listBlocks({ profileId: propio, limit: 100 }).subscribe({
       next: (pagina) => {
-        if (!vigente()) {
-          return;
-        }
         const conocidos = new Map(this.bloqueados().map((b) => [b.profileId, b]));
         this.bloqueados.set(
           pagina.items.map((item) => ({
@@ -1237,9 +1228,6 @@ export class ChatStore {
         }
       },
       error: (error: unknown) => {
-        if (!vigente()) {
-          return;
-        }
         this.bloqueadosCargados.set(true);
         this.bloqueosFallaron.set(true);
         this.fallar(error, 'No pudimos leer las personas que bloqueó.');
@@ -1293,13 +1281,6 @@ export class ChatStore {
       });
   }
 
-  /** Olvida los bloqueos leídos: eran de la identidad anterior. */
-  private limpiarBloqueos(): void {
-    this.bloqueados.set([]);
-    this.bloqueadosCargados.set(false);
-    this.bloqueosFallaron.set(false);
-  }
-
   /** El nombre que ya se sabe de un perfil, por sus conversaciones. */
   private nombreConocido(profileId: string): string {
     for (const conversacion of this.conversaciones()) {
@@ -1349,13 +1330,6 @@ export class ChatStore {
           this.cargandoBandeja.set(false);
           this.falloDeLaBandeja.set(null);
           this.bandejaLeidaEn.set(new Date());
-          // El aviso que dejó un tic fallido se va con la lectura buena; uno
-          // de otra cosa (un envío, una edición) no es de la bandeja y queda.
-          const motivo = this.motivoDeBandejaAtrasada();
-          if (motivo !== null && this.error() === motivo) {
-            this.error.set('');
-          }
-          this.motivoDeBandejaAtrasada.set(null);
         },
         error: (error: unknown) => {
           if (!vigente()) {
@@ -1367,19 +1341,13 @@ export class ChatStore {
           // borrarle a alguien la bandeja que estaba mirando (queda en S7).
           // Salvo un 403: ahí la API dijo que con este perfil no se leen, y
           // las filas —y sus no leídos en el ícono— se van con el permiso.
+          // El fallo va al estado propio de la bandeja (`bandeja`, M34) y no a
+          // `error`: la lista ya lo dice —sin red, prohibido o con su código—.
           const fallo = falloDeBandeja(error);
           if (fallo.status === 'forbidden') {
             this.conversaciones.set([]);
           }
           this.falloDeLaBandeja.set(fallo);
-          // S5, S8 y S9 ocupan el lugar de la lista y ya dicen qué pasó (S9 con
-          // su código): un aviso encima lo repetiría. En S7, en cambio, las
-          // filas siguen a la vista y nada dice por qué no se actualizaron: eso
-          // lo dice el aviso, con el motivo de la API y el código de soporte.
-          if (this.bandeja().status === 'stale') {
-            this.fallar(error, 'No pudimos cargar sus conversaciones.');
-            this.motivoDeBandejaAtrasada.set(this.error());
-          }
           this.siPerdioElPermiso(error, propio);
         },
       });
@@ -1554,9 +1522,6 @@ export class ChatStore {
           }
           this.cargandoHilo.set(false);
           this.hiloCargado.set(true);
-          // Un 403 acá puede ser de la conversación y no de la vitrina: se dice
-          // eso, y `siPerdioElPermiso` revalida la identidad aparte. Lo demás,
-          // con el motivo de la API y el código de soporte.
           if (error instanceof HttpErrorResponse && error.status === 403) {
             this.error.set(ERROR_SIN_PERMISO_EN_LA_CONVERSACION);
           } else {
@@ -1914,12 +1879,10 @@ export class ChatStore {
     this.error.set('');
     // Un adjunto que falló AL SUBIR no tiene `fileId`: despacharlo así mandaba
     // la leyenda sola —o un mensaje vacío— y la foto se perdía. Se vuelve a
-    // subir el mismo archivo, que el store guardó para esto, y vuelve a la
-    // fila de salida de los adjuntos, al final.
+    // subir el mismo archivo, que el store guardó para esto.
     const archivo = this.archivosSinSubir.get(pendiente.claveTemporal);
     if (pendiente.adjunto !== undefined && !pendiente.adjunto.fileId && archivo) {
-      this.filaDeAdjuntos.push({ clave: pendiente.claveTemporal, listo: null });
-      this.subidas.add(this.subirYDespachar(pendiente, archivo).subscribe());
+      this.encolarSubida({ ...pendiente, estado: 'enviando' }, archivo);
       return;
     }
     this.despachar(pendiente);
@@ -1933,15 +1896,10 @@ export class ChatStore {
   private cancelarSubidas(): void {
     this.subidas.unsubscribe();
     this.subidas = new Subscription();
-    // También los que ya subieron y esperaban su turno: eran de la otra
-    // identidad y no salen.
-    const cortadas = new Set([
-      ...this.archivosSinSubir.keys(),
-      ...this.filaDeAdjuntos.map((t) => t.clave),
-    ]);
+    this.colaDeSubidas = null;
+    this.filaDeEnvios = null;
+    const cortadas = new Set(this.archivosSinSubir.keys());
     this.archivosSinSubir.clear();
-    this.filaDeAdjuntos = [];
-    this.adjuntoSaliendo = null;
     if (cortadas.size > 0) {
       this.pendientes.update((lista) => lista.filter((p) => !cortadas.has(p.claveTemporal)));
     }
@@ -1960,8 +1918,8 @@ export class ChatStore {
    * encolarse**, no con los del momento: entre una cosa y otra se pudo haber
    * cambiado de identidad.
    *
-   * @param alTerminar - Corre cuando el envío terminó, bien o mal: es lo que
-   *   libera el turno del siguiente adjunto (ver {@link despacharAdjuntos}).
+   * @param alTerminar - Se llama una vez cuando el servidor contestó, bien o
+   *   mal: libera el turno de los adjuntos (ver {@link enTurnoDeEnvio}).
    */
   private despachar(pendiente: MensajePendiente, alTerminar?: () => void): void {
     const propio = pendiente.profileId;
@@ -2027,13 +1985,14 @@ export class ChatStore {
                 : p,
             ),
           );
-          // La burbuja dice que no salió; el aviso dice por qué. Salvo un 403
-          // escribiendo como la organización: ahí todavía no se sabe si es de
-          // la conversación o de la vitrina, y lo que corresponda decir lo dice
-          // la revalidación (`avisoDePerfil`); un aviso que culpe al mensaje
-          // sería falso, y por cada burbuja en cola se repetiría.
-          if (!this.revalidaLaVitrina(error, propio)) {
-            this.fallar(error, 'No pudimos enviar el mensaje. Puede reintentarlo desde la conversación.');
+          // El fallo vive en la burbuja, con reintentar y descartar. El aviso
+          // de arriba se suma sólo si la API dijo por qué —«esta persona no
+          // recibe mensajes suyos»—, que la burbuja no sabe contar.
+          if (apiExplainedFailure(error)) {
+            this.fallar(
+              error,
+              'No pudimos enviar el mensaje. Puede reintentarlo desde la conversación.',
+            );
           }
           this.siPerdioElPermiso(error, propio);
         },
@@ -2044,11 +2003,11 @@ export class ChatStore {
    * Sube un archivo y lo manda como adjunto.
    *
    * La burbuja aparece antes de que empiece a subir, con la miniatura local
-   * (`data:`) si es una imagen: esperar a que termine la subida para recién
+   * (`blob:`) si es una imagen: esperar a que termine la subida para recién
    * mostrar algo es lo que hace que mandar una foto se sienta lento.
    */
-  enviarAdjunto(archivo: File | AdjuntoParaEnviar, leyenda: string, comoSticker = false): void {
-    this.enviarAdjuntos([archivo], leyenda, comoSticker);
+  enviarAdjunto(adjunto: File | AdjuntoParaEnviar, leyenda = '', comoSticker = false): void {
+    this.enviarAdjuntos([adjunto], leyenda, comoSticker);
   }
 
   /**
@@ -2056,27 +2015,34 @@ export class ChatStore {
    * chat — el contrato lleva un `attachmentFileId` por mensaje y el endpoint de
    * archivos acepta uno por petición (`upload-policy.ts`).
    *
-   * La leyenda viaja con el **primero**: es el que se lee primero y el texto
-   * dice de qué son las fotos que siguen. Todas las burbujas aparecen en el
-   * acto y en orden; las subidas de un mismo lote van **una detrás de otra**,
-   * y una que falla no frena a las demás.
+   * ## El texto de cada uno
    *
-   * Los mensajes salen **en el orden en que se eligieron**, también entre
-   * lotes distintos (dos `enviarAdjunto` seguidos): cada uno espera su turno
-   * en {@link filaDeAdjuntos}, que se libera cuando el anterior terminó de
-   * salir, bien o mal. Sin esto, de varias fotos mandadas juntas llegaba
-   * primero la que menos pesaba.
+   * Cada adjunto puede traer su propio pie (`leyenda`), que es lo que arma la
+   * vista previa de adjuntos (`AttachmentDraft.caption`, uno por archivo). Si
+   * no lo trae, la `leyenda` común viaja con el **primero** —es el que se lee
+   * primero— y los demás salen sin texto.
    *
-   * Cada adjunto puede traer su miniatura ya leída (`vistaPrevia`): el
-   * composer la tiene para la tira, y volver a leer el archivo acá era la
-   * tercera lectura a `data:` de la misma foto. Sólo se lee si no viene.
+   * ## Garantías
    *
-   * @param comoSticker - Un sticker propio que sube la persona: viaja marcado
+   * - Todas las burbujas aparecen en el acto y en orden, cada una con el
+   *   `profileId` **fijado al encolar**: cambiar de identidad con fotos en
+   *   cola no las manda con la otra (las corta, ver `cancelarSubidas`).
+   * - Las subidas van **de a una** (una fila `concatMap` del store, compartida
+   *   por todas las llamadas), y los mensajes salen en el orden en que se
+   *   eligieron: cada envío espera a que el anterior conteste. Una que falla
+   *   no frena a las demás.
+   * - La miniatura ya leída (`vistaPrevia`, `data:`) no se vuelve a leer: era
+   *   la tercera lectura de la misma foto. Sólo se lee si no viene.
+   * - «Reintentar» una subida fallida vuelve a subir el mismo archivo.
+   *
+   * @param adjuntos - Archivos, o archivos con su miniatura y su pie.
+   * @param leyenda - El texto común, para el primero que no traiga el suyo.
+   * @param comoSticker - Un sticker que subió la persona: viaja marcado
    *   (`contentType: 'STICKER'`).
    */
   enviarAdjuntos(
     adjuntos: readonly (File | AdjuntoParaEnviar)[],
-    leyenda: string,
+    leyenda = '',
     comoSticker = false,
   ): void {
     const conversationId = this.activaId();
@@ -2091,15 +2057,17 @@ export class ChatStore {
     }
 
     const lote = adjuntos.map((adjunto, indice) => {
-      const { archivo, vistaPrevia } =
-        adjunto instanceof File ? { archivo: adjunto, vistaPrevia: null } : adjunto;
+      const { archivo, vistaPrevia = null, leyenda: propia } =
+        adjunto instanceof File ? { archivo: adjunto } : adjunto;
+      const texto = propia ?? (indice === 0 ? leyenda : '');
       const esImagen = archivo.type.startsWith('image/');
-      const yaLeida = esImagen && typeof vistaPrevia === 'string' && vistaPrevia.startsWith('data:');
+      const yaLeida =
+        esImagen && typeof vistaPrevia === 'string' && vistaPrevia.startsWith('data:');
       const pendiente: MensajePendiente = {
         claveTemporal: claveTemporal(),
         conversationId,
         profileId: propio,
-        bodyText: indice === 0 ? leyenda.trim() : '',
+        bodyText: texto.trim(),
         creadoEn: new Date(),
         estado: 'enviando',
         ...(comoSticker ? { comoSticker: true } : {}),
@@ -2110,21 +2078,15 @@ export class ChatStore {
         },
       };
       this.archivosSinSubir.set(pendiente.claveTemporal, archivo);
-      this.filaDeAdjuntos.push({ clave: pendiente.claveTemporal, listo: null });
       if (esImagen && !yaLeida) {
         this.ponerVistaPrevia(pendiente.claveTemporal, archivo);
       }
       return { pendiente, archivo };
     });
     this.pendientes.update((lista) => [...lista, ...lote.map((l) => l.pendiente)]);
-
-    // Guardada para poder cortarla: cambiar de identidad con fotos en cola no
-    // puede terminar mandándolas con la otra.
-    this.subidas.add(
-      from(lote)
-        .pipe(concatMap(({ pendiente, archivo }) => this.subirYDespachar(pendiente, archivo)))
-        .subscribe(),
-    );
+    for (const { pendiente, archivo } of lote) {
+      this.encolarSubida(pendiente, archivo);
+    }
   }
 
   /**
@@ -2136,53 +2098,63 @@ export class ChatStore {
   private readonly archivosSinSubir = new Map<string, File>();
 
   /**
-   * Los adjuntos en fila para salir, en el orden en que se eligieron. `listo`
-   * es el pendiente ya subido (con `fileId`); mientras sea `null`, el turno
-   * espera aunque los de atrás ya hayan subido.
+   * La fila de subidas: de a una, en el orden en que se encolaron. Vive en
+   * {@link subidas} para poder cortarla; `null` hasta la primera y después de
+   * cortarla.
    */
-  private filaDeAdjuntos: { readonly clave: string; listo: MensajePendiente | null }[] = [];
+  private colaDeSubidas: Subject<SubidaEnCola> | null = null;
 
-  /** La clave del adjunto que está saliendo ahora; `null` si ninguno. */
-  private adjuntoSaliendo: string | null = null;
+  /**
+   * Los envíos de adjuntos que esperan turno detrás del que está saliendo;
+   * `null` si no sale ninguno. Ver {@link enTurnoDeEnvio}.
+   */
+  private filaDeEnvios: ((liberar: () => void) => void)[] | null = null;
 
-  /** Un adjunto ya subido: espera su turno y, si le toca, sale. */
-  private adjuntoSubido(conFileId: MensajePendiente): void {
-    const turno = this.filaDeAdjuntos.find((t) => t.clave === conFileId.claveTemporal);
-    if (turno === undefined) {
-      // Sin turno (no debería pasar): sale ya antes que quedar colgado.
-      this.despachar(conFileId);
-      return;
+  private encolarSubida(pendiente: MensajePendiente, archivo: File): void {
+    if (this.colaDeSubidas === null) {
+      const cola = new Subject<SubidaEnCola>();
+      this.subidas.add(
+        cola
+          .pipe(concatMap((subida) => this.subirYDespachar(subida.pendiente, subida.archivo)))
+          .subscribe(),
+      );
+      this.colaDeSubidas = cola;
     }
-    turno.listo = conFileId;
-    this.despacharAdjuntos();
+    this.colaDeSubidas.next({ pendiente, archivo });
   }
 
   /**
-   * El que falló al subir cede su turno: el siguiente no puede quedar
-   * esperando a un mensaje que no va a salir. Si se reintenta, vuelve a la
-   * fila al final.
+   * Corre `enviar` cuando el envío de adjunto anterior terminó (bien o mal).
+   *
+   * Sin esto, de dos fotos la segunda podía llegar al servidor antes que la
+   * primera: subir es de a una, pero el `POST` del mensaje de la primera
+   * todavía podía estar en vuelo cuando salía el de la segunda. Si no hay nadie
+   * enviando, corre en el acto, sin esperar un tic.
    */
-  private cederTurno(clave: string): void {
-    this.filaDeAdjuntos = this.filaDeAdjuntos.filter((t) => t.clave !== clave);
-    this.despacharAdjuntos();
-  }
-
-  /** Manda el primero de la fila si ya subió y no hay otro saliendo. */
-  private despacharAdjuntos(): void {
-    const primero = this.filaDeAdjuntos[0];
-    if (this.adjuntoSaliendo !== null || primero?.listo == null) {
+  private enTurnoDeEnvio(enviar: (liberar: () => void) => void): void {
+    if (this.filaDeEnvios !== null) {
+      this.filaDeEnvios.push(enviar);
       return;
     }
-    this.filaDeAdjuntos.shift();
-    const clave = primero.clave;
-    this.adjuntoSaliendo = clave;
-    this.despachar(primero.listo, () => {
-      // Un cambio de identidad en el medio ya vació la fila y soltó el turno.
-      if (this.adjuntoSaliendo === clave) {
-        this.adjuntoSaliendo = null;
-        this.despacharAdjuntos();
-      }
-    });
+    const fila: ((liberar: () => void) => void)[] = [];
+    this.filaDeEnvios = fila;
+    const correr = (paso: (liberar: () => void) => void): void => {
+      let liberado = false;
+      paso(() => {
+        // Una fila cortada (`cancelarSubidas`) ya no libera a nadie.
+        if (liberado || this.filaDeEnvios !== fila) {
+          return;
+        }
+        liberado = true;
+        const siguiente = fila.shift();
+        if (siguiente === undefined) {
+          this.filaDeEnvios = null;
+        } else {
+          correr(siguiente);
+        }
+      });
+    };
+    correr(enviar);
   }
 
   /**
@@ -2190,9 +2162,8 @@ export class ChatStore {
    *
    * La CSP declara `img-src 'self' data:` (`src/server/security-headers.ts`):
    * un `blob:` se bloqueaba en silencio y la burbuja «enviando» salía sin la
-   * foto. Ampliar la CSP es una decisión de arquitectura que no se toma acá.
-   * Se lee aparte porque `FileReader` es asíncrono; la burbuja aparece igual
-   * en el acto y la foto se suma un instante después.
+   * foto. Se lee aparte porque `FileReader` es asíncrono; la burbuja aparece
+   * igual en el acto y la foto se suma un instante después.
    */
   private ponerVistaPrevia(clave: string, archivo: File): void {
     if (!this.isBrowser || typeof FileReader === 'undefined') {
@@ -2213,7 +2184,7 @@ export class ChatStore {
     lector.readAsDataURL(archivo);
   }
 
-  /** Sube uno y, si sube, lo pone en la fila de salida. Nunca falla: el error queda en el pendiente. */
+  /** Sube uno y, si sube, lo despacha en su turno. Nunca falla: el error queda en el pendiente. */
   private subirYDespachar(pendiente: MensajePendiente, archivo: File): Observable<void> {
     const esImagen = archivo.type.startsWith('image/');
     // `PHI` y no `NORMAL`: lo que se adjunta en un chat entre paciente y
@@ -2234,13 +2205,11 @@ export class ChatStore {
           adjunto: { ...actual.adjunto!, fileId: subido.id },
         };
         this.pendientes.update((lista) =>
-          lista.map((p) =>
-            p.claveTemporal === pendiente.claveTemporal ? conFileId : p,
-          ),
+          lista.map((p) => (p.claveTemporal === pendiente.claveTemporal ? conFileId : p)),
         );
-        this.adjuntoSubido(conFileId);
+        this.enTurnoDeEnvio((liberar) => this.despachar(conFileId, liberar));
       }),
-      catchError(() => {
+      catchError((error: unknown) => {
         this.pendientes.update((lista) =>
           lista.map((p) =>
             p.claveTemporal === pendiente.claveTemporal
@@ -2248,9 +2217,12 @@ export class ChatStore {
               : p,
           ),
         );
-        // Sólo en la burbuja, que ya ofrece reintentar y descartar. Un aviso
-        // global encima de todo empujaba la pantalla por un fallo de un mensaje.
-        this.cederTurno(pendiente.claveTemporal);
+        // La burbuja ya dice que no salió y ofrece reintentar y descartar. El
+        // aviso de arriba sólo si la API dijo por qué (pesa demasiado, por
+        // ejemplo): un fallo de un mensaje no empuja toda la pantalla.
+        if (apiExplainedFailure(error)) {
+          this.fallar(error, 'No pudimos subir el archivo.');
+        }
         return EMPTY;
       }),
     );
@@ -2541,33 +2513,48 @@ export class ChatStore {
   }
 
   /**
-   * Abre —o reutiliza— una conversación con el perfil elegido en el chat.
-   *
-   * Como {@link escribirA}: un chat nuevo no se inicia como la organización
-   * (la API no lo deja), así que se vuelve antes al perfil propio y se avisa.
+   * Como la organización sólo se responde: la API no deja iniciar chats con la
+   * vitrina. Quien inicia uno —un contacto del buscador, «Chatear» desde el
+   * marketplace— quiere escribir él, así que se vuelve antes al perfil propio
+   * y se avisa; sin perfil propio, se explica por qué no y devuelve `false`.
+   */
+  private iniciarConPerfilPropio(): boolean {
+    if (!this.actuandoComoOrganizacion()) {
+      return true;
+    }
+    if (this.perfilPropio() === null) {
+      this.error.set(ERROR_CHAT_NUEVO_COMO_ORGANIZACION);
+      return false;
+    }
+    this.actuarComo(null);
+    this.avisoDePerfil.set(AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO);
+    return true;
+  }
+
+  /**
+   * Abre —o reutiliza— una conversación con el perfil elegido en el buscador
+   * del chat. Mismas reglas que {@link escribirA}: con el perfil propio, y
+   * cortable si cambia la identidad mientras viaja.
    */
   escribirAPerfil(profileId: string, alAbrir: (conversationId: string) => void): void {
-    if (this.abriendo()) return;
-    if (this.actuandoComoOrganizacion()) {
-      if (this.perfilPropio() === null) {
-        this.error.set(ERROR_CHAT_NUEVO_COMO_ORGANIZACION);
+    this.conPerfil(() => {
+      if (this.abriendo() || !this.iniciarConPerfilPropio()) {
         return;
       }
-      this.actuarComo(null);
-      this.avisoDePerfil.set(AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO);
-    }
-    const propio = this.perfil();
-    if (propio === null || profileId === propio) return;
-
-    this.abriendo.set(true);
-    this.pasoDeApertura(
-      this.community.createConversation({ participantProfileIds: [propio, profileId] }),
-      ({ id }) => this.entrarAlHilo(propio, id, alAbrir, undefined),
-      () => {
-        this.abriendo.set(false);
-        this.error.set('No pudimos abrir la conversación.');
-      },
-    );
+      const propio = this.perfil();
+      if (propio === null || profileId === propio) {
+        return;
+      }
+      this.abriendo.set(true);
+      this.pasoDeApertura(
+        this.community.createConversation({ participantProfileIds: [propio, profileId] }),
+        ({ id }) => this.entrarAlHilo(propio, id, alAbrir, undefined),
+        (error: unknown) => {
+          this.abriendo.set(false);
+          this.fallar(error, 'No pudimos abrir la conversación.');
+        },
+      );
+    });
   }
 
   /**
@@ -2584,7 +2571,7 @@ export class ChatStore {
    * ese caso volvía sin hacer nada y el botón parecía muerto.
    *
    * Con `contexto`, antes de abrir el hilo manda **una** tarjeta de contexto
-   * (ver `contexto-de-chat.ts`) — salvo que la última tarjeta del hilo ya sea
+   * (ver `chat-context.ts`) — salvo que la última tarjeta del hilo ya sea
    * la misma (tipo, título y ruta): volver a tocar «Chatear» desde el mismo
    * pedido no tiene que repetirla.
    */
@@ -2597,20 +2584,8 @@ export class ChatStore {
     // encendiera antes y `/community/profiles/me` fallara, quedaría prendido
     // para siempre. Dos pedidos encolados a la vez abren uno solo igual.
     this.conPerfil(() => {
-      if (this.abriendo()) {
+      if (this.abriendo() || !this.iniciarConPerfilPropio()) {
         return;
-      }
-      // Como la organización sólo se responde: la API no deja iniciar chats
-      // con la vitrina. Quien llega acá —un contacto del buscador, «Chatear»
-      // desde el marketplace— quiere escribir él, así que se vuelve antes al
-      // perfil propio y se avisa; sin perfil propio, se explica por qué no.
-      if (this.actuandoComoOrganizacion()) {
-        if (this.perfilPropio() === null) {
-          this.error.set(ERROR_CHAT_NUEVO_COMO_ORGANIZACION);
-          return;
-        }
-        this.actuarComo(null);
-        this.avisoDePerfil.set(AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO);
       }
       const propio = this.perfil();
       // Sin perfil público no hay con qué abrir el hilo: la pantalla ya ofrece
@@ -2686,9 +2661,9 @@ export class ChatStore {
       this.pasoDeApertura(
         resolver,
         (id) => this.entrarAlHilo(propio, id, alAbrir, contexto),
-        (error: unknown) => {
+        () => {
           this.abriendo.set(false);
-          this.fallar(error, 'No pudimos abrir la conversación.');
+          this.error.set('No pudimos abrir la conversación.');
         },
       );
     });
@@ -2859,7 +2834,6 @@ export class ChatStore {
     if (propio === null || conversationId === null) {
       return;
     }
-    const generacion = this.generacionDeIdentidad;
     this.community
       .listMessages(conversationId, {
         profileId: propio,
@@ -2867,8 +2841,7 @@ export class ChatStore {
       })
       .subscribe({
         next: (pagina) => {
-          // De otra identidad: ese hilo ya se cerró con `actuarComo`.
-          if (generacion === this.generacionDeIdentidad && this.activaId() === conversationId) {
+          if (this.activaId() === conversationId) {
             this.absorber(pagina.items, true);
             this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
           }

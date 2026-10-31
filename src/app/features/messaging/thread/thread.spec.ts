@@ -13,9 +13,9 @@ import { ChatStore } from '../../../core/messaging/chat.store';
 import { ChatSocketService } from '../../../core/messaging/chat-socket.service';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
-import { Composer } from './composer/composer';
-import { rutaParaQuienMira, subtituloDeContexto } from './hilo-contexto';
 import { environment } from '../../../../environments/environment';
+import { Composer } from './composer/composer';
+import { rutaParaQuienMira, subtituloDeContexto } from './thread-context';
 
 /**
  * Lo que estas pruebas fijan.
@@ -300,7 +300,7 @@ describe('Thread', () => {
 
     // El lugar del botón lo ocupa el micrófono, como en cualquier chat. Acá no
     // se puede afirmar que esté: `MediaRecorder` no existe en el entorno de
-    // pruebas y el grabador se esconde solo cuando el navegador no puede
+    // pruebas y el recorder se esconde solo cuando el navegador no puede
     // grabar, que es justamente lo que se quiere que haga.
     expect(consultar('hilo-enviar')).toBeNull();
     expect(consultar('hilo-texto')).not.toBeNull();
@@ -759,7 +759,11 @@ describe('Thread', () => {
       expect(consultar('hilo-documento-ver')).toBeNull();
     });
 
-    it('la imagen a tamaño completo se abre en un modal nativo y devuelve el foco', async () => {
+    // Un solo visor en el hilo: `app-image-viewer`, un `<dialog>` modal que
+    // además recorre las fotos, responde y reenvía. Lo que fijaba dev para su
+    // modal de una foto sigue valiendo: es un diálogo, muestra la imagen y al
+    // cerrar el foco vuelve a la miniatura.
+    it('la imagen a tamaño completo se abre en el modal del sistema y devuelve el foco', async () => {
       abrir([conAdjunto('m-1', 'f-img')]);
       await servir('f-img', bytes('image/png', 16));
 
@@ -769,10 +773,9 @@ describe('Thread', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      // El visor de fotos es un `<dialog>` modal (trampa de foco, fondo inerte).
       const visor = consultar('hilo-visor');
       expect(visor?.tagName).toBe('DIALOG');
-      expect(consultar('hilo-visor-foto')?.getAttribute('src')).toMatch(/^data:image\/png/);
+      expect(visor?.querySelector('img')?.getAttribute('src')).toMatch(/^data:image\/png/);
 
       (consultar('hilo-visor-cerrar') as HTMLElement).click();
       fixture.detectChanges();
@@ -866,12 +869,12 @@ describe('Thread', () => {
     it('pinta el texto con forma de tarjeta como tarjeta, con su enlace interno', () => {
       abrir([mensaje('m-1', 'pp-1', TARJETA)]);
 
-      const tarjeta = consultar('hilo-contexto');
+      const tarjeta = consultar('thread-context');
       expect(tarjeta).not.toBeNull();
       expect(tarjeta?.getAttribute('data-tipo')).toBe('pedido');
       expect(tarjeta?.textContent).toContain('Farmacia Chávez · Sucursal Miraflores');
       expect(tarjeta?.textContent).toContain('2 productos · Bs 69,00');
-      const ver = consultar('hilo-contexto-ver') as HTMLAnchorElement;
+      const ver = consultar('thread-context-ver') as HTMLAnchorElement;
       expect(ver.textContent?.trim()).toBe('Ver pedido');
       expect(ver.getAttribute('href')).toBe('/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6');
       // La ruta cruda no se lee como texto en la burbuja.
@@ -884,18 +887,18 @@ describe('Thread', () => {
         mensaje('m-1', 'pp-1', TARJETA),
       ]);
 
-      const fijado = consultar('hilo-contexto-fijado');
+      const fijado = consultar('thread-context-fijado');
       expect(fijado?.getAttribute('data-tipo')).toBe('producto');
       expect(fijado?.textContent).toContain('Consulta sobre: Producto');
       expect(fijado?.textContent).toContain('Paracetamol 500 mg');
-      expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-vida');
+      expect(consultar('thread-context-fijado-ver')?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-vida');
     });
 
     it('un texto parecido con ruta externa queda como texto, sin tarjeta ni fijado', () => {
       abrir([mensaje('m-1', 'pp-2', 'Pedido: algo\n//sitio-malo.example/robar')]);
 
-      expect(consultar('hilo-contexto')).toBeNull();
-      expect(consultar('hilo-contexto-fijado')).toBeNull();
+      expect(consultar('thread-context')).toBeNull();
+      expect(consultar('thread-context-fijado')).toBeNull();
       expect(burbujas()[0]?.textContent).toContain('//sitio-malo.example/robar');
     });
 
@@ -916,14 +919,14 @@ describe('Thread', () => {
       expect(sugerenciasDelComposer()).toEqual([]);
     });
 
-    it('el fijado dice quién envió la tarjeta: usted u otra persona', () => {
+    it('el fijado dice quién envió la tarjeta: vos u otra persona', () => {
       abrir([mensaje('m-1', 'pp-1', TARJETA)]);
-      expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por usted');
+      expect(consultar('thread-context-fijado-autor')?.textContent).toContain('Enviada por usted');
     });
 
     it('una tarjeta ajena en el fijado lleva el nombre de quien la mandó', () => {
       abrir([mensaje('m-1', 'pp-2', TARJETA)]);
-      expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por Dra. Quispe');
+      expect(consultar('thread-context-fijado-autor')?.textContent).toContain('Enviada por Dra. Quispe');
     });
 
     it('con una tarjeta, la cabecera dice de qué se habla sin repetir la farmacia del nombre', () => {
@@ -992,10 +995,10 @@ describe('Thread', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const tarjeta = consultar('hilo-contexto')?.closest('[data-clave]') ?? null;
+        const tarjeta = consultar('thread-context')?.closest('[data-clave]') ?? null;
         expect(tarjeta).not.toBeNull();
         expect(observadas).toContain(tarjeta);
-        const fijado = (): HTMLElement | null => consultar('hilo-contexto-fijado');
+        const fijado = (): HTMLElement | null => consultar('thread-context-fijado');
         expect(fijado()?.classList.contains('is-recogido')).toBe(false);
 
         avisar!([{ target: tarjeta!, isIntersecting: true, intersectionRatio: 1 }]);
@@ -1017,8 +1020,8 @@ describe('Thread', () => {
       store.vitrinasDeOrganizacion.set([{ profileId: 'pp-1', nombre: 'Farmacia Chávez' }]);
       fixture.detectChanges();
 
-      expect(consultar('hilo-contexto-ver')?.getAttribute('href')).toBe('/administration/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6');
-      expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe(
+      expect(consultar('thread-context-ver')?.getAttribute('href')).toBe('/administration/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6');
+      expect(consultar('thread-context-fijado-ver')?.getAttribute('href')).toBe(
         '/administration/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
       );
     });
@@ -1123,7 +1126,7 @@ describe('Thread', () => {
       expect(store.respondiendoA()?.id).toBe('m-3');
     });
 
-    it('una foto propia en el visor dice «Usted», con el trato del resto de la app', async () => {
+    it('una foto propia en el visor dice «Usted», de usted como el resto de la app', async () => {
       abrir([foto(1, 'pp-1')]);
       await servirTodos(['f-1']);
 
@@ -1148,7 +1151,6 @@ describe('Thread', () => {
       expect(store.respondiendoA()?.id).toBe('m-1');
     });
   });
-
   /* --- Reacciones, recibos, info del mensaje y bloqueo ------------------- */
 
   describe('reacciones, recibos y bloqueo', () => {
@@ -1325,6 +1327,70 @@ describe('Thread', () => {
       expect(store.estaBloqueado('pp-2')).toBe(true);
     });
   });
+  /**
+   * Personal de apoyo que responde en nombre del doctor (diseño de 2026-10).
+   *
+   * El remitente es **el doctor**: el paciente lo ve a él. Lo único que cambia es
+   * una leyenda, y quién la ve lo decide la API: el paciente, «respondido por su
+   * equipo» si el doctor lo activó; el doctor, el nombre de quien escribió.
+   */
+  describe('respuestas del equipo en nombre del doctor', () => {
+    it('el paciente ve el mensaje como del doctor, con la leyenda «Respondido por su equipo»', () => {
+      abrir([
+        { ...mensaje('m-2', 'pp-2', 'Le confirmamos el jueves a las 15:30.'), repliedByTeam: true },
+        mensaje('m-1', 'pp-1', '¿Puedo cambiar mi cita?'),
+      ]);
+
+      const respuesta = burbujas()[1]!;
+      expect(respuesta.textContent).toContain('Le confirmamos el jueves');
+      expect(respuesta.getAttribute('data-propio')).toBe('false');
+      expect(respuesta.querySelector('[data-testid="hilo-respondido-por-equipo"]')?.textContent).toContain('Respondido por su equipo');
+      expect(respuesta.querySelector('[data-testid="hilo-equipo-autora"]')).toBeNull();
+      // Lo que escribió el propio paciente no lleva leyenda.
+      expect(burbujas()[0]!.querySelector('[data-testid="hilo-respondido-por-equipo"]')).toBeNull();
+    });
+
+    it('si el doctor apagó el aviso, el paciente no ve ninguna leyenda', () => {
+      abrir([mensaje('m-2', 'pp-2', 'Le confirmamos el jueves a las 15:30.'), mensaje('m-1', 'pp-1', 'Hola')]);
+
+      expect(consultar('hilo-respondido-por-equipo')).toBeNull();
+      expect(consultar('hilo-equipo-autora')).toBeNull();
+    });
+
+    it('el doctor ve quién de su equipo respondió por él y puede ir a «Mi equipo» para retirarla', () => {
+      abrir([
+        { ...mensaje('m-2', 'pp-1', 'Le confirmamos el jueves a las 15:30.'), repliedByTeam: true, teamAuthorName: 'Ana Gutiérrez' },
+        mensaje('m-1', 'pp-2', '¿Puedo cambiar mi cita?'),
+      ]);
+
+      const autora = consultar('hilo-equipo-autora')!;
+      expect(autora.textContent).toContain('Respondió Ana Gutiérrez en su nombre');
+      const enlace = consultar('hilo-equipo-enlace') as HTMLAnchorElement;
+      expect(enlace.textContent?.trim()).toBe('Mi equipo');
+      expect(enlace.getAttribute('href')).toBe('/my-team');
+      // La autora real tiene prioridad sobre la leyenda genérica: no se dicen las dos.
+      expect(consultar('hilo-respondido-por-equipo')).toBeNull();
+    });
+
+    it('al doctor se le avisa que su equipo le derivó la conversación; a nadie más', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Tengo dolor de pecho')]);
+      expect(consultar('hilo-derivada')).toBeNull();
+
+      store.conversaciones.set([
+        {
+          id: 'c-1',
+          conversationTypeConceptId: 'c-direct',
+          unreadCount: 0,
+          peers: [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }],
+          awaitingDoctor: true,
+        },
+      ]);
+      fixture.detectChanges();
+
+      expect(consultar('hilo-derivada')?.textContent).toContain('Su equipo le derivó esta conversación');
+      expect(consultar('hilo-derivada')?.getAttribute('role')).toBe('status');
+    });
+  });
 });
 
 describe('Thread · pulsación larga y vacío', () => {
@@ -1475,4 +1541,3 @@ describe('indiceDelPrimerNoLeido', () => {
     expect(indiceDelPrimerNoLeido(de('ella', 'yo'), 'yo', 2)).toBe(-1);
   });
 });
-

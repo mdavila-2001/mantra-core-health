@@ -1,5 +1,30 @@
 # Evidencias
 
+## Modales fuera de la consulta: pie, fechas y campos sueltos · 2026-10-30
+
+Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, Chromium, base `dev` en `c5f2363f2`.
+`playwright/modales-fuera-de-consulta.spec.ts` abre 31 modales con los seis usuarios del simulador, en
+1440 y 390, y mide columnas de campos, hueco a la derecha del último campo y desborde lateral.
+
+| Comprobación | Resultado |
+|---|---|
+| Medidas antes/después (31 modales × 2 anchos) | Cambian sólo los tres tocados a propósito: historial (1→2 columnas, hueco 16→0), nuevo lugar (hueco 16→0), confirmar diagnóstico (1→2 columnas). El resto, idéntico. |
+| Página «Trayectoria» (aloja el modal del historial) | idéntica píxel a píxel a la de `dev` |
+| Regresión propia encontrada y corregida | `.historial__periodo` chocaba con la clase de la lista; renombrada a `.historial__rango` (`a816bb592`) |
+| `yarn test` completo, por tramos (el proceso entero muere con 129 en este entorno) | 15 586 pasan, 3 fallan; las 3 fallan igual con el código de `dev` (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+| `yarn typecheck` · `yarn build` · `eslint` de las pruebas | 0 · 0 · 0 |
+| `check-contrast` · `check-css-tokens` | 0 · 0; `check-colores-sueltos` falla en archivos no tocados |
+
+**Los que no se habían podido abrir (30/10/2026, segunda vuelta).** Los botones habían cambiado
+de lugar: transacciones y cuentas viven dentro de «Registros», las encuestas son una lista con su
+«Abrir», el mostrador es `agenda-ingreso-mostrador` y la aprobación parcial se pide desde el
+detalle. Abiertos los cinco en 1440 y 390: mostrador, nueva cuenta, nueva transacción y aprobar
+parcialmente están bien y no se tocan. «Editar la pregunta» era el único con los botones dentro
+del cuerpo y «Listo» a la izquierda: pasan al pie (`antes-despues-editar-pregunta.png`); en
+teléfono «Cancelar» y «Listo» bajan juntos. Medidas de los tres usuarios antes/después: sólo
+cambian los modales ya corregidos. `ng test` de encuestas: 144/144. Capturas: `capturas/antes/modales-2026-10-28/` y
+`capturas/despues/modales-2026-10-28/antes-despues-*.png`.
+
 ## Modales de la consulta: tarjeta doble, título repetido y tres columnas · 2026-10-27
 
 Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, sesión médica simulada, Chromium.
@@ -256,3 +281,138 @@ Sin cambio: L-2 (las imágenes `geometria-*.png` siguen sin atenciones ni tema o
 oscuro se comprueban en las capturas de la app).
 
 Capturas: `capturas/recorrido-clinico/`.
+
+## Formulario de receta: los diagnósticos confirmados — 2026-10-30
+
+Defecto: el formulario de receta (`medication-block`) sólo ofrece diagnósticos confirmados, y ni el
+expediente ni «Atención» le decían cuáles lo estaban (`diagnosticosParaReceta` no pasaba
+`confirmadoEl`). El selector quedaba siempre en «Otro motivo». Además la lista de recetas no recibía
+su vínculo (`vinculo`, `vinculoEsDiagnostico`): no mostraba para qué era cada una y ofrecía «Vincular»
+aunque ya estuviera atada. Arreglo: `diagnosticoParaReceta` y `vinculoDeReceta`, en
+`medication-block.ts`, usados por las dos pantallas.
+
+Entorno: base `origin/dev` (`d6f3462e3`) · `ng serve --configuration development,demo` · Chromium ·
+`medica@alovida.mock`, paciente `pid-paciente`.
+
+| Comando / prueba | Resultado |
+|---|---|
+| `tsc -p tsconfig.app.json` · `eslint` de `patient-chart/` y `consultation/` | 0 · 0 |
+| `ng test --include='…/clinical-record/**/*.spec.ts'` | 39 archivos; 1 prueba roja preexistente (`follow-up-block`, «el calendario pinta de verde…»: roja también sin este cambio). Nuevas: 9 en `indicacion-de-receta.spec.ts`, 1 en `medication-block.spec.ts`, 2 en `patient-chart.spec.ts` |
+| `yarn test` completo | **no se ejecutó** |
+| UI → alta → lista → salir y volver → tabla y Recorrido | el selector ofrece «Hipertensión arterial esencial · Confirmado»; Losartán prescrito para ese diagnóstico (con el aviso de interacción con Enalapril aceptado); la lista lo muestra con «Diagnóstico: Hipertensión arterial esencial»; tras salir y volver, la tabla de Medicación lo trae atado a Hipertensión y el Recorrido dibuja dos indicaciones; 0 errores de consola. El backend simulado vive dentro de Angular: la petición no pasa por la red |
+
+Capturas: `capturas/receta-diagnostico/`. «Atención» usa el mismo ayudante; no se probó en navegador.
+
+## WEB-F0 · Ficha de organización y vecinos — 2026-10-30
+
+Entorno: contenedor Linux · Node 22.22 · Yarn 4.18 (corepack, `COREPACK_NPM_REGISTRY` a npm) ·
+`ng serve --port 4310` · backend simulado · Chromium 1243 (`PW_CHROMIUM_PATH`) · cuenta
+`superadmin@alovida.mock`.
+
+| Comando | Resultado |
+|---|---|
+| `yarn lint` | exit 1 · 258 errores; base 256. Los 2 nuevos se corrigieron (`f1b27a86`); el `eslint` de los archivos tocados sólo marca `tutorial.engine.spec.ts:33`, preexistente |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 · inicial 1,29 MB / 363 kB transferido · avisos de presupuesto (inicial 667 kB > 620 kB y CSS > 4 kB), no se midió la base |
+| `yarn test` (completo) | exit 1 · 7 563 ✅ · 5 ❌. Aislados: 3 deterministas **iguales en la base `8c695ed5`** (`fichas-estandar`, `pestanas-del-perfil-medico`, `appointment-calendar`); 2 (`diagnosis-block`, `documentos-legales`) pasan solos: dependían de la memoria saturada (Playwright + `ng serve` en paralelo). Los 9 de work-history/instituciones citados antes no aparecieron |
+| Specs tocados (12 archivos) | verdes; **kill-test**: los mismos specs sobre la base `8c695ed5` → 131 rojos, entre ellos todas las pruebas nuevas |
+| `E2E_BASE_URL=http://localhost:4310 yarn pw playwright/infra-f0-ficha-organizacion.spec.ts` | **8/8** (24,8 s) |
+
+Medido en el navegador (spec nuevo): sin desborde horizontal en 1440/768/390 en los seis estados;
+tarjeta centrada (holgura ≤ 2 px) y ≥ 85 % del área (§5); la plantilla no muestra uuid; «Asignar
+sede» → relectura muestra la sede → **F5** → la sede sigue asignada; sin `pageerror`.
+
+Capturas: `capturas/infra-f0/` — `listado-*`, `ficha-{ready,ready-plantilla,forbidden,not-found,error,vacio}-{1440,768,390}.png`,
+`ficha-asignar-sede-1440.png`.
+
+### WEB-F0 · integración de `origin/dev` (merge, 2026-10-30)
+
+`git merge origin/dev` sobre `85c8cee5` (25 conflictos). Criterio: se conserva lo de `dev` y se
+reaplica sólo lo propio de F0; donde `dev` ya lo resolvía igual, gana `dev` (pantalla
+`my-organizations` borrada y trasladada a la pestaña «Mis vinculaciones», su redirección con
+`?tab=memberships`, el buscador de personas `people-search` que ya no traga errores). Textos de F0
+pasados al «usted» que `dev` adoptó.
+
+| Comando | Resultado |
+|---|---|
+| `yarn lint` | exit 0 |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 · avisos de presupuesto, ninguno de los archivos tocados |
+| Specs en conflicto o tocados por F0 (17 archivos) | verdes |
+| Suite completa, por tramos (`ng test` entero muere con un *deadlock* de esbuild en este contenedor) | 1 096 archivos · 3 rojos, **los tres iguales en `origin/dev`** (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+
+`schedule-change.spec.ts` (de `dev`) dependía del `|| true` que F0 quitó del simulador: pedía la
+agenda de la clínica con la organización «Mi consultorio». Se le pone la organización dueña de esa
+agenda y el simulador de prácticas; la aserción no cambia. Navegador: **no se re-ejecutó** el spec
+de Playwright tras el merge.
+
+## Infraestructura F1 (web) — 2026-10-30
+
+Entorno: contenedor Linux · Node 22.22 · Yarn 4.18 (corepack) · `ng serve --port 4371` · backend simulado ·
+Chromium 1243 del sistema (`PW_CHROMIUM_PATH`, sin red para `playwright install`) · cuenta
+`superadmin@alovida.mock`, tenant «Hospital San Lucas». Rama `infra-f1-web`.
+
+| Comando / prueba | Resultado |
+|---|---|
+| `yarn lint` | exit 1 · **256 errores, los mismos 256 de la base** (`8c695ed5`); 0 en archivos tocados |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 · ningún CSS nuevo pasa el presupuesto de 4 kB |
+| `ng test` de lo tocado (infraestructura, consola, `app-tree`, maqueta, view-state-host) | 11 archivos · todos verdes |
+| `yarn test` completo | 596/600 archivos · 7 630/7 634 pruebas · 4 rojas **ajenas**: `fichas-estandar`, `appointment-calendar` (fecha), `pestanas-del-perfil-medico` — rojas también en la base —, e `insurance-analytics.handlers` — verde aislada en la rama y en la base: depende del orden de la corrida |
+| `check-client-prefixes` / `check-route-prefixes` | los 23 endpoints nuevos ruteados (proxy, docker, nginx); 1 rojo previo ajeno (`CommunityClient`) · 242 rutas sin colisión |
+| `check-architecture` | rojo previo ajeno (3 ciclos en fixtures/agenda, 1 capa, 1 red); nada de F1 |
+| `E2E_BASE_URL=… yarn pw infra-f1-infraestructura --workers=1` | **6/6** (2,7 min) · 1440 / 768 / 390 |
+
+Mediciones del navegador (`evidencias/infra-f1/resultados.json`):
+
+| Qué | 1440 | 768 | 390 |
+|---|---|---|---|
+| Desborde horizontal en árbol, ficha (5 pestañas) y Establecimiento | 0 | 0 | 0 |
+| Regla 6, ficha: holgura izq./der. y ancho vs. `.app-main__inner` | 0 / 0 · 100 % | 0 / 0 · 100 % | 0 / 0 · 100 % |
+| `aria-level` de «Cama 301-A» (6.º nivel) | 6 | 6 | 6 |
+| Alta: POST `/sites/:id/care-spaces` → 201 → persistido en `mock.infra.espacios` → F5 → la ficha lo muestra | sí | sí | sí |
+| Edición: PATCH `/care-spaces/:id` con `If-Match: 1` → 200 → F5 → nombre nuevo | sí | sí | sí |
+| Errores de consola fuera del CSP de `/auth` (previo) | 0 | 0 | 0 |
+
+La cadena se lee del registro de escrituras de la maqueta (`sessionStorage['mock:registrar']`, nuevo y apagado
+por defecto): la maqueta responde dentro de Angular y Playwright no ve red. **Contra la API real no se ejecutó**
+(otra franja).
+
+Capturas (`evidencias/infra-f1/`, 66): árbol físico expandido y organizativo; ficha en sus 5 pestañas; alta (pasos
+1 y 2, creada tras recarga), edición; alta masiva con vista previa y códigos repetidos; importación con errores de
+forma, dry-run con errores por línea y confirmada; retiro bloqueado con la lista y su próxima acción;
+Establecimiento con brechas y habilitación vencida; S3, S5, S6, S9 con `mock-fallo` y S9 de la consola una sola vez.
+
+Hallazgo previo, no de F1: en las capturas de página completa a 1440/768 el riel de navegación se dibuja encima
+del borde izquierdo del contenido; pasa igual en `capturas/recorrido-clinico/recorrido-1440.png` (anterior).
+
+Revisión independiente (`visual-reviewer`, `frontend-reviewer`, `regression-auditor`): **pendiente**.
+
+### Infraestructura F1 · integración de WEB-F0 + `origin/dev` (merge, 2026-10-30)
+
+`git merge claude/trusting-hawking-q3p12v` (que ya trae `origin/dev`), 8 conflictos. Criterio: lo de
+`dev` y F0 se conserva; de F1 sólo lo suyo.
+
+- En paralelo, `origin/infra-f1-web` recibió otro merge de `dev` (`b7e9c3d0`, 26 commits más nuevo).
+  Se integró con un segundo merge y, en los siete archivos donde las dos resoluciones chocaban
+  (proxies, `view-state-host`, consola, ficha de espacio, simulador de infraestructura), **gana la
+  de `b7e9c3d0`**: `ofrecerEscritura` sólo con roles, la propiedad del simulador por el primer tenant
+  de la cuenta y `enlace(ruta, queryParams)`.
+- Consola: pestañas por clave (`PESTANAS`) e Infraestructura/Establecimiento de F1, con el selector
+  `app-select` y la pestaña `MembershipsTab` de `dev`; el estado M34 queda en `app-view-state-host`.
+- Simulador: `GET /practices` filtra por tenant (F1) y suma siempre los centros de CM-07 (`dev`).
+
+| Comando | Resultado |
+|---|---|
+| `yarn lint` | exit 0 |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 |
+| Specs de F1 y de los archivos en conflicto (16 archivos) | verdes |
+| Suite completa, por tramos (tras los dos merges) | 1 116 archivos · 3 rojos, **los tres iguales en `origin/dev`** (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+
+Las cifras de arriba son del árbol `4a7ad084`. Después, `origin/infra-f1-web` recibió otro merge de `dev`
+(`c8071f27`, con WEB-F0 ya en `dev` por #1717); el tercer merge sólo aporta esta nota, el comentario de
+`GET /practices` y los dos textos del e2e, y sobre él se corrieron `yarn typecheck` y `yarn lint`.
+
+Navegador: **no se re-ejecutó** `infra-f1-infraestructura.spec.ts` tras el merge (se actualizaron dos
+textos al «usted» de `dev`). Los textos propios de F1 siguen en voseo: pendiente pasarlos.

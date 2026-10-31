@@ -132,6 +132,20 @@ describe('TutorialRegistry', () => {
     expect(registry.all()).toHaveLength(1);
   });
 
+  it('acepta una ruta con query sobre una sección declarada (abre una pestaña)', () => {
+    // El tutorial de vinculaciones abre `?tab=memberships`: la query no
+    // convierte la ruta en una sección inexistente.
+    registry.register([tutorial({ route: '/administration/medical-organization?tab=memberships' })]);
+
+    expect(registry.issues()).toHaveLength(0);
+  });
+
+  it('el tutorial de vinculaciones abre directo la pestaña «Mis vinculaciones»', async () => {
+    const { TUTORIALS } = await import('./definitions');
+    const vinculaciones = TUTORIALS.find((t) => t.id === 'mis-organizaciones');
+    expect(vinculaciones?.route).toBe('/administration/medical-organization?tab=memberships');
+  });
+
   it('acepta una ruta con parámetros sobre una sección declarada', () => {
     registry.register([tutorial({ route: '/medical-records/algun-id' })]);
 

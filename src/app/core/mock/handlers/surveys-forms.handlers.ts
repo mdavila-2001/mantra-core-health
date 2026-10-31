@@ -273,6 +273,15 @@ const PLAZO_BASE_DIAS = 7;
  *
  * Lo llama `POST /scheduling/bookings/:id/complete` del simulador de agenda.
  */
+/**
+ * Deja las invitaciones a encuestas como las trae de fábrica. Solo lo usan las pruebas: `invitaciones` es memoria del módulo y,
+ * con `isolate: false`, las que otro archivo del mismo worker emitió al completar consultas (`POST /scheduling/bookings/:id/complete`)
+ * se las comía al siguiente, que buscaba «una consulta de la paciente sin invitación» y no encontraba ninguna.
+ */
+export function reiniciarLasInvitacionesDeEncuesta(): void {
+  invitaciones.reiniciar();
+}
+
 export function emitirInvitacionDeAtencion(bookingId: string): void {
   const reserva = reservas.get(bookingId);
   if (reserva === undefined) return;

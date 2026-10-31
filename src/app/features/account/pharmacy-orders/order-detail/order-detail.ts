@@ -31,7 +31,7 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
-import { usarIrAlChat } from '../../../../core/messaging/enlace-de-chat';
+import { usarIrAlChat } from '../../../../core/messaging/chat-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -49,7 +49,7 @@ import {
 } from '../order-status';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
-import { contextoDePedido } from '../../../../core/messaging/contexto-de-pedido';
+import { contextoDePedido } from '../../../../core/messaging/order-chat-context';
 
 /** A dónde vuelve quien llegó a un pedido que no existe. */
 const LISTA_ROUTE = '/my-account/pharmacy-orders';

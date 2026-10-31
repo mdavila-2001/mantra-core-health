@@ -1,0 +1,177 @@
+<app-page-header
+  title="Mis verificaciones"
+  subtitle="Lo que AloVida, las instituciones y las aseguradoras ya confirmaron de usted, y lo que falta."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada (composition-rules.md §5). -->
+<app-card padding="lg" class="verif__tarjeta">
+  <app-view-state-host [state]="state()" (retry)="cargar()">
+    <div vsh-skeleton class="verif__esqueleto" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+
+    @if (state().status === 'ready') {
+      <app-tabs
+        [selectedIndex]="pestana()"
+        (selectedIndexChange)="elegirPestana($event)"
+        data-testid="verif-pestanas"
+      >
+        <!-- ─── Hoja de ruta ─────────────────────────────────────────── -->
+        <app-tab [label]="pestanas[0]">
+          @if (etiquetasIlegibles()) {
+            <app-alert tone="warning" data-testid="verif-etiquetas-error">
+              No pudimos leer el estado de su perfil, su matrícula y sus títulos: por eso dicen «Sin
+              dato».
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                size="sm"
+                data-testid="verif-etiquetas-reintentar"
+                (clicked)="cargar()"
+              >
+                Reintentar
+              </button>
+            </app-alert>
+          }
+
+          <div class="verif__resumen" data-testid="verif-resumen">
+            <!-- Una sola frase: como ítems sueltos del flex se partía en tres renglones. -->
+            <p class="verif__resumen-texto">
+              <strong>{{ verificados() }} de {{ pasos().length }}</strong> tramos con sello.
+              @if (pendientes() > 0) {
+                Tiene {{ pendientes() }}
+                {{
+                  pendientes() === 1
+                    ? 'solicitud esperando respuesta'
+                    : 'solicitudes esperando respuesta'
+                }}.
+              }
+            </p>
+            @if (pendientes() > 0) {
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                size="sm"
+                data-testid="verif-ir-bandeja"
+                (clicked)="irABandeja()"
+              >
+                Ver solicitudes
+              </button>
+            }
+          </div>
+
+          <ol class="verif__ruta" aria-label="Tramos de su verificación">
+            @for (paso of pasos(); track paso.key; let i = $index) {
+              <li
+                class="verif__tramo verif__tramo--{{ paso.state }}"
+                [attr.data-testid]="'verif-tramo-' + paso.key"
+              >
+                <span class="verif__marca" aria-hidden="true">
+                  <app-nav-icon [name]="paso.icon" />
+                </span>
+                <div class="verif__tramo-cuerpo">
+                  <div class="verif__tramo-cabeza">
+                    <h2 class="verif__tramo-titulo">
+                      <span class="sr-only">Tramo {{ i + 1 }}: </span>{{ paso.title }}
+                      @if (paso.optional) {
+                        <span class="verif__opcional">Opcional</span>
+                      }
+                    </h2>
+                    <!-- «Sin cargar» también es un sello: un solo modo de decir el estado. -->
+                    <app-status-seal
+                      [variant]="paso.state === 'not-started' ? 'unknown' : paso.state"
+                      [label]="paso.stateLabel"
+                    />
+                  </div>
+                  <p class="verif__tramo-detalle">{{ paso.detail }}</p>
+                  @if (paso.action; as accion) {
+                    <a app-button variant="secondary" size="sm" [routerLink]="accion.route">
+                      {{ accion.label }}
+                    </a>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        </app-tab>
+
+        <!-- ─── Solicitudes enviadas, como un chat ──────────────────────── -->
+        <app-tab [label]="pestanas[1]">
+          @if (avisoDeEnvio(); as aviso) {
+            <app-alert appAnuncio [tone]="aviso.tono" data-testid="verif-aviso">{{
+              aviso.texto
+            }}</app-alert>
+          }
+
+          @if (segurosIlegibles()) {
+            <app-alert tone="warning" data-testid="verif-seguros-error">
+              No pudimos leer sus solicitudes a aseguradoras; las de instituciones se ven abajo.
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                size="sm"
+                data-testid="verif-seguros-reintentar"
+                (clicked)="cargar()"
+              >
+                Reintentar
+              </button>
+            </app-alert>
+          }
+
+          <div class="verif__nueva" data-testid="verif-nueva-aseguradora">
+            <app-form-field class="verif__nueva-campo" label="Pedir trabajar con otra aseguradora">
+              <app-select
+                ariaLabel="Aseguradora"
+                placeholder="Elija una aseguradora"
+                [options]="aseguradorasDisponibles()"
+                [disabled]="sinAseguradoras() !== null || enviando()"
+                [value]="aseguradoraNueva()"
+                (valueChange)="aseguradoraNueva.set($event)"
+              />
+            </app-form-field>
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              data-testid="verif-enviar-aseguradora"
+              [disabled]="aseguradoraNueva() === null || enviando()"
+              (clicked)="pedirAseguradora()"
+            >
+              Enviar solicitud
+            </button>
+          </div>
+          <!-- Fuera del campo para que el botón se alinee con el selector. -->
+          <p class="verif__nueva-ayuda" data-testid="verif-nueva-ayuda">
+            {{
+              sinAseguradoras() ??
+                'Elija una aseguradora y envíe: ella recibe su solicitud y la confirma o la rechaza.'
+            }}
+          </p>
+
+          @if (hilos().length === 0 && !segurosIlegibles()) {
+            <app-empty-state
+              title="Todavía no envió ninguna solicitud"
+              description="Pida trabajar con una aseguradora con el campo de arriba, o declare la institución donde atiende desde su perfil."
+            >
+              <a empty-actions app-button variant="secondary" size="sm" routerLink="/my-account"
+                >Ir a mi perfil</a
+              >
+            </app-empty-state>
+          } @else {
+            <app-request-inbox
+              [threads]="hilos()"
+              [busy]="enviando()"
+              [(openId)]="hiloElegidoId"
+              (withdraw)="retirar($event)"
+              (requestAgain)="volverAPedir($event)"
+            />
+          }
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>

@@ -1,11 +1,8 @@
 <!-- Lo que falló al abrir un chat o crear el perfil. Los fallos de la
      bandeja los pinta la bandeja (su `ViewState`) y los de un mensaje, su
-     burbuja: ninguno de los dos viene acá. El motivo de un S7 se pinta junto
-     a la bandeja (`motivoDeBandejaAtrasada`), no encima de la pantalla. -->
+     burbuja: ninguno de los dos viene acá. -->
 @if (store.error(); as mensaje) {
-  @if (mensaje !== store.motivoDeBandejaAtrasada()) {
-    <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
-  }
+  <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
 }
 
 <!-- Se perdió el permiso de escribir como la farmacia: se dice una vez, con
@@ -31,20 +28,9 @@
 </ng-template>
 
 @if (!store.perfilResuelto()) {
-  <!-- S2 mientras se resuelve el perfil: el mismo marco, con la bandeja en
-       esqueleto. Sin esto la pantalla saltaba de una línea de texto a dos
-       paneles. -->
-  <div class="mensajeria">
-    <section class="mensajeria__panel" aria-label="Sus conversaciones">
-      <header class="mensajeria__cabecera">
-        <h1 class="mensajeria__titulo">Chats</h1>
-      </header>
-      <div class="mensajeria__lista">
-        <app-conversation-list [conversaciones]="[]" [estado]="cargando" />
-      </div>
-    </section>
-    <section class="mensajeria__conversacion" aria-hidden="true"></section>
-  </div>
+  <!-- S2 mientras se resuelve el perfil. Una vez resuelto, la bandeja tiene
+       su propio S2 con la forma de las filas (`ChatStore.bandeja`). -->
+  <app-loading-state class="mensajeria__cargando" message="Cargando sus conversaciones…" />
 } @else if (store.perfil() === null) {
   <div class="mensajeria__como-suelto">
     <ng-container *ngTemplateOutlet="selectorDePerfil" />
@@ -256,9 +242,6 @@
           <!-- S7 sigue siendo S7 aunque el filtro no deje filas: el aviso de
                antigüedad no se pierde por filtrar. -->
           @if (bandeja.status === 'stale') {
-            @if (store.motivoDeBandejaAtrasada(); as motivo) {
-              <p class="mensajeria__motivo" role="status" data-testid="bandeja-motivo-atrasada">{{ motivo }}</p>
-            }
             <app-conversation-list
               [conversaciones]="[]"
               [estado]="bandeja"
@@ -289,7 +272,7 @@
             </p>
           } @else {
             <!-- Hay chats, pero todos archivados: no es el S3 «Todavía no
-                 tenés chats». La salida es abrir el cajón. -->
+                 tiene chats». La salida es abrir el cajón. -->
             <p class="mensajeria__sin-nada" role="status" data-testid="mensajeria-todo-archivado">
               {{ rotuloArchivadas() }}
               <button
@@ -303,11 +286,6 @@
             </p>
           }
         } @else {
-          @if (bandeja.status === 'stale') {
-            @if (store.motivoDeBandejaAtrasada(); as motivo) {
-              <p class="mensajeria__motivo" role="status" data-testid="bandeja-motivo-atrasada">{{ motivo }}</p>
-            }
-          }
           <app-conversation-list
             [conversaciones]="visibles()"
             [estado]="bandeja"
@@ -337,10 +315,11 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
             </span>
           </span>
-          <p class="mensajeria__vacio-titulo">Sus chats con farmacias y profesionales</p>
+          <p class="mensajeria__vacio-titulo">AloVida · Chats</p>
           <p class="mensajeria__vacio-texto">
-            Elija una conversación de la lista para leerla aquí. Para consultar por un
-            producto o un pedido, escríbale a la farmacia desde su ficha.
+            Elija una conversación de la izquierda para leerla aquí, o busque a una persona
+            para empezar una nueva. Para consultar por un producto o un pedido, escríbale a
+            la farmacia desde su ficha.
           </p>
         </div>
       }

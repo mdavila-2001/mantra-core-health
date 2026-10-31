@@ -14,7 +14,6 @@ import {
   inject,
   input,
   output,
-  PendingTasks,
   PLATFORM_ID,
   signal,
   untracked,
@@ -32,57 +31,23 @@ import { StickerPicker } from './sticker-picker/sticker-picker';
 import { Recorder } from './recorder';
 import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
 import { AttachmentPreview } from './attachment-preview/attachment-preview';
-import {
-  type AttachmentDraft,
-  createDraft,
-  MAX_DRAFTS,
-  partitionFiles,
-  rejectionReason,
-} from './attachment-draft';
+import { ATTACHMENT_ACCEPT, type AttachmentDraft, createDraft, DOCUMENT_ACCEPT, PHOTO_ACCEPT } from './attachment-draft';
+import { AttachmentPreparer } from './attachment-preparer';
 import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
-import { UPLOAD_MAX_BYTES } from '../../../../core/data-access/files/upload-policy';
-import { ImagenRechazada, LIENZO, prepararImagen } from './preparar-imagen';
-
-/**
- * Cuántos archivos se juntan para mandar de una vez: el tope de la vista
- * previa ({@link MAX_DRAFTS}). Cada uno sale como su propio mensaje.
- */
-export const TOPE_DE_COLA = MAX_DRAFTS;
-
-/** Lo que se deja elegir con el botón de fotos de la píldora y los chips. */
-const ACEPTA_FOTOS = 'image/*';
-
-/** «Fotos y videos» del menú «+». */
-const ACEPTA_FOTOS_Y_VIDEOS = 'image/*,video/*';
-
-/** «Documento» del menú «+»: un PDF o un audio. */
-const ACEPTA_DOCUMENTOS = 'application/pdf,audio/*';
-
-/**
- * Lo que acepta el selector por omisión y, con él, el arrastre
- * (`appFileDropTarget` mira este `accept`): lo mismo que acepta la vista
- * previa. `image/*` y no la lista exacta: un HEIC o un BMP se convierten a
- * JPEG antes de subir.
- */
-const ACEPTA_POR_OMISION = 'image/*,video/*,audio/*,application/pdf';
 
 /**
  * Las respuestas rápidas cuando el hilo está vacío y nadie pasó otras.
  *
  * Genéricas a propósito: el mismo composer sirve para hablar con una farmacia,
  * un profesional o un proveedor. Quien abre el chat desde un contexto sabe qué
- * preguntar y pasa las suyas — {@link SUGERENCIAS_MARKETPLACE}, por ejemplo.
+ * preguntar y pasa las suyas (`thread-context.ts`).
+ *
+ * Son la voz de quien escribe, no la de AloVida: hablan de usted a la otra
+ * parte, como el resto de la app.
  */
 export const SUGERENCIAS_POR_OMISION: readonly string[] = [
   '¡Hola! Tengo una consulta',
   '¿Tienen disponibilidad?',
-  'Le mando la foto de mi receta',
-];
-
-/** Las de un producto o un servicio del marketplace. */
-export const SUGERENCIAS_MARKETPLACE: readonly string[] = [
-  '¿Lo tienen en stock?',
-  '¿Cuánto tarda el envío?',
   'Le mando la foto de mi receta',
 ];
 
@@ -99,15 +64,6 @@ const PIDE_FOTO = /\b(foto|imagen)\b/i;
  * profesional. Metidas en el hilo, su plantilla pasaba de 200 a 400 líneas y
  * el scroll —que es lo delicado del hilo— quedaba mezclado con el estado de un
  * panel de emojis.
- *
- * ## Los adjuntos pasan por la vista previa
- *
- * Todo lo que se adjunta —el «+», el botón de fotos y la cámara de la píldora,
- * pegar con Ctrl+V, soltar sobre la barra, el chip «Le mando la foto»— entra
- * por {@link agregar}: se valida, **las fotos se preparan** (se achican si
- * pasan el tope del servidor y se les quitan los metadatos con el GPS, ver
- * `prepararImagen`) y recién entonces se abre la vista previa
- * (`AttachmentPreview`) con su pie de foto, su edición y el botón de enviar.
  *
  * ## El envío no espera al servidor
  *
@@ -139,8 +95,8 @@ export class Composer {
   private readonly plantillas = inject(MessageTemplates);
   private readonly route = inject(ActivatedRoute);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly lienzo = inject(LIENZO);
-  private readonly tareas = inject(PendingTasks);
+
+  private readonly preparador = inject(AttachmentPreparer);
 
   /** Avisa que se envió, para que el hilo baje del todo. */
   readonly enviado = output<void>();
@@ -162,18 +118,11 @@ export class Composer {
   private readonly menuAdjuntar = viewChild<Menu>('menuAdjuntar');
   private readonly filaChips = viewChild<ElementRef<HTMLElement>>('filaChips');
 
-  protected readonly texto = signal('');
-  /**
-   * Los paneles que se abren sobre el composer. El de adjuntar no está: es un
-   * `app-menu`, que lleva su propio estado de abierto.
-   */
-  protected readonly panel = signal<'ninguno' | 'emojis' | 'plantillas'>('ninguno');
+  /** El `accept` de arranque del selector, que también filtra el arrastre. */
+  protected readonly aceptaPorOmision = ATTACHMENT_ACCEPT;
 
-  /**
-   * Si la fila de respuestas rápidas tiene más chips de un lado o del otro:
-   * prende el degradado de ese borde.
-   */
-  protected readonly chipsDesbordan = signal({ inicio: false, final: false });
+  protected readonly texto = signal('');
+  protected readonly panel = signal<'ninguno' | 'emojis' | 'plantillas'>('ninguno');
 
   /**
    * Qué pestaña del panel de figuritas está abierta.
@@ -204,15 +153,24 @@ export class Composer {
   private heredoElTexto: string | null = null;
 
   /**
-   * Cuántas fotos se están preparando (achicando, limpiando metadatos). Hasta
-   * que terminen no se abre la vista previa ni se envía el texto: la frase
-   * escrita va a ser el pie de la primera.
+   * Cuántas tandas se están preparando (achicar, convertir, quitar metadatos)
+   * antes de abrir la vista previa. Una foto de 12 MP tarda un instante: la
+   * barra lo dice en vez de parecer que no pasó nada.
    */
-  protected readonly preparandoCuantas = signal(0);
-  protected readonly preparando = computed(() => this.preparandoCuantas() > 0);
+  protected readonly preparando = signal(0);
 
-  /** Lo que se anuncia a los lectores de pantalla al preparar adjuntos. */
-  protected readonly anuncio = signal('');
+  /**
+   * Sube cada vez que lo elegido deja de valer —cambio de conversación,
+   * edición, cierre—: una tanda que termina de prepararse después no abre la
+   * vista previa en otro chat.
+   */
+  private generacion = 0;
+
+  /**
+   * Si la fila de respuestas rápidas tiene más chips de un lado o del otro:
+   * prende el degradado de ese borde.
+   */
+  protected readonly chipsDesbordan = signal({ inicio: false, final: false });
 
   /** Si ya se mandó algo en esta conversación: los chips se retiran. */
   private readonly sugerenciasRetiradas = signal(false);
@@ -222,8 +180,7 @@ export class Composer {
       this.sugerenciasRetiradas() ||
       this.editando() !== null ||
       this.texto().trim() !== '' ||
-      this.adjuntos().length > 0 ||
-      this.preparando()
+      this.adjuntos().length > 0
     ) {
       return [];
     }
@@ -379,8 +336,7 @@ export class Composer {
       return;
     }
 
-    // Mientras se prepara una foto, lo escrito espera: va a ser su pie.
-    if (this.preparando() || this.texto().trim() === '') {
+    if (this.texto().trim() === '') {
       return;
     }
     this.store.enviar(this.texto());
@@ -401,12 +357,12 @@ export class Composer {
    * —el de enviar, que ya está a la vista— y se puede corregir antes.
    *
    * La que habla de una foto además abre el selector de imágenes: la frase
-   * queda como pie de la primera foto.
+   * pasa a ser el pie de la primera foto, como cualquier texto ya escrito.
    */
   protected usarSugerencia(sugerencia: string): void {
     this.alEscribir(sugerencia);
     if (PIDE_FOTO.test(sugerencia)) {
-      this.elegirArchivo('fotos');
+      this.elegirArchivo(true);
       return;
     }
     this.enfocar();
@@ -428,7 +384,6 @@ export class Composer {
   protected mandarSticker(sticker: Sticker): void {
     this.store.enviarSticker(sticker);
     this.panel.set('ninguno');
-    this.sugerenciasRetiradas.set(true);
     this.enviado.emit();
   }
 
@@ -436,10 +391,22 @@ export class Composer {
    * Un sticker o GIF de la persona: sube y se manda en el acto, marcado como
    * sticker para que el otro lado lo vea sin burbuja.
    */
-  protected mandarStickerPropio(archivo: File): void {
-    this.store.enviarAdjunto(archivo, '', true);
+  protected async mandarStickerPropio(archivo: File): Promise<void> {
     this.panel.set('ninguno');
-    this.sugerenciasRetiradas.set(true);
+    // También pasa por la preparación: un GIF o un WEBP guardado de la web
+    // puede traer XMP o EXIF, y un sticker no es excepción a quitarlos.
+    const generacion = this.generacion;
+    let listo: File;
+    try {
+      listo = await this.preparador.prepare(archivo);
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : `No pudimos preparar «${archivo.name}».`);
+      return;
+    }
+    if (generacion !== this.generacion) {
+      return;
+    }
+    this.store.enviarAdjunto(listo, '', true);
     this.enviado.emit();
   }
 
@@ -469,15 +436,11 @@ export class Composer {
 
   /* --- Adjuntos ------------------------------------------------------------ */
 
-  /**
-   * Abre el selector: fotos de la galería (la píldora y los chips), fotos y
-   * videos (el «+») o documentos (PDF o audio).
-   */
-  protected elegirArchivo(que: 'fotos' | 'fotos-y-videos' | 'documento'): void {
+  /** Abre el selector: de fotos (galería) o de documentos. */
+  protected elegirArchivo(soloImagenes: boolean): void {
     const entrada = this.archivo()?.nativeElement;
     if (entrada) {
-      entrada.accept =
-        que === 'fotos' ? ACEPTA_FOTOS : que === 'fotos-y-videos' ? ACEPTA_FOTOS_Y_VIDEOS : ACEPTA_DOCUMENTOS;
+      entrada.accept = soloImagenes ? PHOTO_ACCEPT : DOCUMENT_ACCEPT;
       entrada.click();
     }
     this.panel.set('ninguno');
@@ -497,12 +460,15 @@ export class Composer {
     if (entrada === this.archivo()?.nativeElement) {
       // Vuelve al `accept` amplio: el arrastre lo usa para filtrar, y un PDF
       // soltado después de abrir la galería no tiene por qué rebotar.
-      entrada.accept = ACEPTA_POR_OMISION;
+      entrada.accept = ATTACHMENT_ACCEPT;
     }
-    void this.agregar(archivos);
+    void this.recibir(archivos);
   }
 
-  /** Ctrl+V de una captura o de una foto copiada la suma a la vista previa. */
+  /**
+   * Ctrl+V de una captura o de una foto copiada: entra al mismo flujo que lo
+   * elegido con el selector.
+   */
   protected alPegar(evento: ClipboardEvent): void {
     const datos = evento.clipboardData;
     const archivos = Array.from(datos?.files ?? []);
@@ -514,128 +480,70 @@ export class Composer {
     if (!Array.from(datos?.types ?? []).includes('text/plain')) {
       evento.preventDefault();
     }
-    void this.agregar(archivos);
+    void this.recibir(archivos);
   }
 
   /**
-   * Suma archivos a la vista previa: valida, prepara las fotos y dice qué no
-   * entró.
+   * Valida y prepara lo que llegó, y abre la vista previa con lo que entró.
    *
-   * Editando no se adjunta, tampoco soltando un archivo sobre la barra: la
-   * edición cambia un mensaje que ya salió, y el pie de foto se llevaría ese
-   * texto a un mensaje nuevo.
-   *
-   * Devuelve la promesa para las pruebas; la pantalla no la espera. La
-   * preparación se registra como tarea pendiente de Angular: `whenStable()`
-   * la espera.
+   * Devuelve la promesa para las pruebas; la pantalla no la espera.
    */
-  async agregar(archivos: readonly File[]): Promise<void> {
+  async recibir(archivos: readonly File[]): Promise<void> {
+    // Editando no se adjunta, tampoco soltando ni pegando un archivo: la
+    // edición cambia un mensaje que ya salió, y el pie de foto se llevaría
+    // ese texto a un mensaje nuevo.
     if (archivos.length === 0 || this.editando() !== null) {
       return;
     }
-    const rechazos: string[] = [];
-    const libres = MAX_DRAFTS - this.adjuntos().length - this.preparandoCuantas();
-    const candidatos: File[] = [];
-    for (const archivo of archivos) {
-      // Mismos motivos que la vista previa (`rejectionReason`), con el nombre
-      // del archivo delante: con varios elegidos hay que saber cuál fue.
-      const motivo = rejectionReason(archivo);
-      if (motivo !== null) {
-        rechazos.push(
-          motivo.startsWith('El archivo')
-            ? `«${archivo.name}»: ${motivo}`
-            : `«${archivo.name}» no se puede mandar. ${motivo}`,
-        );
-        continue;
-      }
-      candidatos.push(archivo);
-    }
-    const { accepted, rejection } = partitionFiles(candidatos, Math.max(0, libres));
-    if (rejection !== null) {
-      rechazos.push(rejection);
-    }
-
-    const terminar = this.tareas.add();
-    this.preparandoCuantas.update((n) => n + accepted.length);
-    this.anunciar();
+    const generacion = this.generacion;
+    this.preparando.update((n) => n + 1);
     try {
-      const listos = await Promise.all(
-        accepted.map(async (archivo): Promise<File | null> => {
-          try {
-            return await this.preparar(archivo);
-          } catch (error: unknown) {
-            rechazos.push(
-              error instanceof ImagenRechazada ? error.message : `No pudimos preparar «${archivo.name}».`,
-            );
-            return null;
-          } finally {
-            this.preparandoCuantas.update((n) => n - 1);
-          }
-        }),
-      );
-      const archivosListos = listos.filter((archivo): archivo is File => archivo !== null);
-      const aviso = rechazos.join(' ');
-      if (archivosListos.length === 0) {
-        this.error.set(aviso);
-        this.anunciar();
+      const { accepted, rejection } = await this.preparador.prepareAll(archivos);
+      if (generacion !== this.generacion) {
+        return;
+      }
+      if (accepted.length === 0) {
+        this.error.set(rejection ?? '');
         return;
       }
       this.error.set('');
-      this.avisoDeAdjuntos.set(aviso);
-      this.ponerAdjuntos(archivosListos);
-      this.anunciar();
+      this.avisoDeAdjuntos.set(rejection ?? '');
+      this.ponerAdjuntos(accepted);
     } finally {
-      terminar();
+      this.preparando.update((n) => Math.max(0, n - 1));
     }
   }
 
   /**
-   * Deja un archivo listo para subir: las fotos pasan por `prepararImagen`
-   * (tope del servidor, sin EXIF ni GPS); lo demás tiene que entrar en el tope
-   * tal cual, porque no hay cómo achicarlo acá.
-   */
-  private async preparar(archivo: File): Promise<File> {
-    if (archivo.type.toLowerCase().startsWith('image/')) {
-      return prepararImagen(archivo, this.isBrowser, this.lienzo);
-    }
-    if (archivo.size > UPLOAD_MAX_BYTES) {
-      throw new ImagenRechazada(`«${archivo.name}» pesa más de 10 MB.`);
-    }
-    return archivo;
-  }
-
-  /**
-   * Abre la vista previa con lo elegido, o le suma lo nuevo si ya estaba
-   * abierta.
+   * Abre la vista previa con lo elegido.
    *
    * Lo que ya estaba escrito en el campo pasa a ser el pie de foto del primer
    * archivo, como en WhatsApp: escribir «le mando el análisis» y después
    * adjuntarlo es un solo mensaje, no dos.
    */
   private ponerAdjuntos(archivos: readonly File[]): void {
-    this.cerrarPanel();
-    if (this.adjuntos().length > 0) {
-      this.adjuntos.update((lista) => [...lista, ...archivos.map((archivo) => createDraft(archivo))]);
-      return;
-    }
     const leyenda = this.texto().trim();
+    this.panel.set('ninguno');
     const borradores = archivos.map((archivo, indice) => createDraft(archivo, indice === 0 ? leyenda : ''));
     this.heredoElTexto = leyenda === '' ? null : borradores[0].id;
     this.adjuntos.set(borradores);
   }
 
   /**
-   * Manda cada archivo como un mensaje, con su pie de foto como texto: el
-   * contrato de siempre del store (`enviarAdjunto`), uno por adjunto.
+   * Manda la tanda en **una** llamada al store: cada archivo sale como su
+   * propio mensaje, con su pie de foto como texto, en el orden de la tira. El
+   * store los sube de a uno y no manda un mensaje antes que el anterior
+   * (`ChatStore.enviarAdjuntos`). Sin `vistaPrevia`: la tira usa `blob:` y el
+   * store lee la miniatura de la burbuja por su cuenta.
    */
   protected enviarAdjuntos(): void {
     const borradores = this.adjuntos();
     if (borradores.length === 0) {
       return;
     }
-    for (const borrador of borradores) {
-      this.store.enviarAdjunto(borrador.file, borrador.caption);
-    }
+    this.store.enviarAdjuntos(
+      borradores.map((borrador) => ({ archivo: borrador.file, leyenda: borrador.caption, vistaPrevia: null })),
+    );
     const salioElTexto = borradores.some((borrador) => borrador.id === this.heredoElTexto);
     this.limpiarAdjuntos();
     if (salioElTexto) {
@@ -650,25 +558,14 @@ export class Composer {
   /** Cierra la vista previa sin mandar nada. Lo escrito en el campo queda. */
   protected descartarAdjuntos(): void {
     this.limpiarAdjuntos();
-    this.enfocar();
   }
 
   protected limpiarAdjuntos(): void {
+    this.generacion += 1;
+    this.preparando.set(0);
     this.adjuntos.set([]);
     this.avisoDeAdjuntos.set('');
     this.heredoElTexto = null;
-  }
-
-  private anunciar(): void {
-    const preparando = this.preparandoCuantas();
-    const n = this.adjuntos().length;
-    this.anuncio.set(
-      preparando > 0
-        ? `Preparando ${preparando === 1 ? '1 archivo' : `${preparando} archivos`}…`
-        : n === 0
-          ? ''
-          : `${n} ${n === 1 ? 'archivo' : 'archivos'} para enviar.`,
-    );
   }
 
   /* --- Audio --------------------------------------------------------------- */
@@ -676,7 +573,6 @@ export class Composer {
   /** La nota de voz sale sin pasar por la previsualización: se suelta y va. */
   protected alGrabar(audio: File): void {
     this.store.enviarAdjunto(audio, '');
-    this.sugerenciasRetiradas.set(true);
     this.enviado.emit();
   }
 

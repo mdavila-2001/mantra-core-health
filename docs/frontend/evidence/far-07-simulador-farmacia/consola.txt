@@ -1,0 +1,204 @@
+# FAR-07 · consola, red y persistencia (navegador)
+
+Errores de consola y pageerror: los únicos son los 502 del caso 6 (el simulador apagado a propósito). Ningún pageerror ni pedido fallido.
+
+## Caso 1-2 · farmacia 2 (alta y vínculos)
+[farmacia2 claro 1440] medida §5: {"left":40,"right":40,"ratio":93.3,"overflowX":false}
+[farmacia2 claro 390] medida §5: {"left":12,"right":12,"ratio":93.8,"overflowX":false}
+[farmacia2 claro 1440 alta] alta de conexión: 201 body={"integrationMode":"BATCH","supportsStockQuery":true,"pharmacySiteId":"<Casa central de la farmacia 2>"}
+[farmacia2 claro 1440 vínculos] vínculo X1↔ERP-0001: 201 body={"externalProductCode":"ERP-0001","externalUnitCode":"BOX","pharmacyProductId":"<X1>"}
+[farmacia2 claro 1440 vínculos] vínculo X2↔ERP-0002: 201 body={"externalProductCode":"ERP-0002","externalUnitCode":"BOX","pharmacyProductId":"<X2>"}
+[farmacia2 claro 1440 vínculos] tras recargar, tabla de vínculos: Productos vinculados con el sistema de la farmacia CÓDIGO EN SU SISTEMA PRODUCTO DEL CATÁLOGO VINCULADO EL ERP-0001 Paracetamol 500 mg X1 FAR06-X1 30 oct 2026, 06:09 ERP-0002 Ibuprofeno 400 mg X2 FAR06-X2 30 oct 2026, 06:09
+
+## Casos 1-2 · vistas tras recargar y «sin conexión» a 390 (interceptado)
+[farmacia2 claro 1440 con-vinculos] medida §5: {"left":40,"right":40,"ratio":93.3,"overflowX":false}
+[farmacia2 claro 390 con-vinculos] medida §5: {"left":12,"right":12,"ratio":93.8,"overflowX":false}
+[farmacia2 oscuro 1440 con-vinculos] medida §5: {"left":40,"right":40,"ratio":93.3,"overflowX":false}
+[farmacia2 oscuro 390 con-vinculos] medida §5: {"left":12,"right":12,"ratio":93.8,"overflowX":false}
+[farmacia2 claro 390 sin-conexion-interceptado] (INTERCEPTADO) botón conectar: {"fits":true,"width":224,"height":66}
+[farmacia2 oscuro 390 sin-conexion-interceptado] (INTERCEPTADO) botón conectar: {"fits":true,"width":224,"height":66}
+--- red ---
+[farmacia2 claro 1440 con-vinculos] GET /pharmacies/:id/integration-connections → 200
+[farmacia2 claro 1440 con-vinculos] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia2 claro 1440 con-vinculos] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia2 claro 1440 con-vinculos] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia2 claro 390 con-vinculos] GET /pharmacies/:id/integration-connections → 200
+[farmacia2 claro 390 con-vinculos] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia2 claro 390 con-vinculos] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia2 claro 390 con-vinculos] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia2 oscuro 1440 con-vinculos] GET /pharmacies/:id/integration-connections → 200
+[farmacia2 oscuro 1440 con-vinculos] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia2 oscuro 1440 con-vinculos] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia2 oscuro 1440 con-vinculos] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia2 oscuro 390 con-vinculos] GET /pharmacies/:id/integration-connections → 200
+[farmacia2 oscuro 390 con-vinculos] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia2 oscuro 390 con-vinculos] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia2 oscuro 390 con-vinculos] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia2 claro 390 sin-conexion-interceptado] GET /pharmacies/:id/integration-connections → 200
+[farmacia2 oscuro 390 sin-conexion-interceptado] GET /pharmacies/:id/integration-connections → 200
+
+## Caso 3 · farmacia 1, «Sincronizar ahora»
+[farmacia1 claro 1440] sync: 200 received=12 mapped=2 applied=1 unmapped=10
+[farmacia1 claro 1440] tras recargar, última sincronización: Última sincronización: 30 oct 2026, 06:23 · 12 ítems recibidos · 10 sin vincular.
+[farmacia1 claro 390] medida §5: {"left":12,"right":12,"ratio":93.8,"overflowX":false}
+[farmacia1 claro 390] sync: 200 received=12 mapped=2 applied=0 unmapped=10
+[farmacia1 oscuro 1440] medida §5: {"left":40,"right":40,"ratio":93.3,"overflowX":false}
+[farmacia1 oscuro 1440] sync: 200 received=12 mapped=2 applied=0 unmapped=10
+[farmacia1 oscuro 390] medida §5: {"left":12,"right":12,"ratio":93.8,"overflowX":false}
+[farmacia1 oscuro 390] sync: 200 received=12 mapped=2 applied=0 unmapped=10
+--- red ---
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia1 claro 1440] POST /pharmacies/:id/integration-connections/:id/sync → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 claro 1440] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia1 claro 390] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 claro 390] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 390] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 claro 390] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia1 claro 390] POST /pharmacies/:id/integration-connections/:id/sync → 200
+[farmacia1 claro 390] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 oscuro 1440] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 oscuro 1440] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 oscuro 1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 oscuro 1440] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia1 oscuro 1440] POST /pharmacies/:id/integration-connections/:id/sync → 200
+[farmacia1 oscuro 1440] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 oscuro 390] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 oscuro 390] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 oscuro 390] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 oscuro 390] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[farmacia1 oscuro 390] POST /pharmacies/:id/integration-connections/:id/sync → 200
+[farmacia1 oscuro 390] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+
+## Caso 4 · Inventario, Casa central
+[farmacia1 claro 1440 inventario] GET stock Casa central 200: FAR06-A=1, FAR06-B=11
+[farmacia1 claro 1440 inventario] GET stock Casa central 200: FAR06-A=1, FAR06-B=11
+[farmacia1 claro 1440 inventario] tabla filtrada «FAR06-»: Stock de Casa central PRODUCTO EN LA SUCURSAL CANTIDAD Producto A FAR06-A Lo tengo Producto B FAR06-B Lo tengo Producto C FAR06-C Lo tengo Producto D FAR06-D Marcado sin stock en el catálogo — Sin cantidad Producto G FAR06-G Lo tengo Producto H FAR06-H Lo teng
+[farmacia1 oscuro 1440 inventario] GET stock Casa central 200: FAR06-A=1, FAR06-B=11
+[farmacia1 oscuro 1440 inventario] GET stock Casa central 200: FAR06-A=1, FAR06-B=11
+[farmacia1 oscuro 1440 inventario] tabla filtrada «FAR06-»: Stock de Casa central PRODUCTO EN LA SUCURSAL CANTIDAD Producto A FAR06-A Lo tengo Producto B FAR06-B Lo tengo Producto C FAR06-C Lo tengo Producto D FAR06-D Marcado sin stock en el catálogo — Sin cantidad Producto G FAR06-G Lo tengo Producto H FAR06-H Lo teng
+[farmacia1 claro 390 inventario] GET stock Casa central 200: FAR06-A=1, FAR06-B=11
+[farmacia1 claro 390 inventario] GET stock Casa central 200: FAR06-A=1, FAR06-B=11
+[farmacia1 claro 390 inventario] tabla filtrada «FAR06-»: Stock de Casa central PRODUCTO EN LA SUCURSAL CANTIDAD Producto A FAR06-A Lo tengo Producto B FAR06-B Lo tengo Producto C FAR06-C Lo tengo Producto D FAR06-D Marcado sin stock en el catálogo — Sin cantidad Producto G FAR06-G Lo tengo Producto H FAR06-H Lo teng
+[farmacia1 oscuro 390 inventario] GET stock Casa central 200: FAR06-A=1, FAR06-B=11
+[farmacia1 oscuro 390 inventario] GET stock Casa central 200: FAR06-A=1, FAR06-B=11
+[farmacia1 oscuro 390 inventario] tabla filtrada «FAR06-»: Stock de Casa central PRODUCTO EN LA SUCURSAL CANTIDAD Producto A FAR06-A Lo tengo Producto B FAR06-B Lo tengo Producto C FAR06-C Lo tengo Producto D FAR06-D Marcado sin stock en el catálogo — Sin cantidad Producto G FAR06-G Lo tengo Producto H FAR06-H Lo teng
+--- red ---
+[farmacia1 claro 1440 inventario] GET /pharmacy/products?pharmacyId=620f8a13-123c-429f-9099-7220b30ece54&managed=true&limit=500 → 200
+[farmacia1 oscuro 1440 inventario] GET /pharmacy/products?pharmacyId=620f8a13-123c-429f-9099-7220b30ece54&managed=true&limit=500 → 200
+[farmacia1 claro 390 inventario] GET /pharmacy/products?pharmacyId=620f8a13-123c-429f-9099-7220b30ece54&managed=true&limit=500 → 200
+[farmacia1 oscuro 390 inventario] GET /pharmacy/products?pharmacyId=620f8a13-123c-429f-9099-7220b30ece54&managed=true&limit=500 → 200
+
+## Caso 5 · paciente, tienda
+--- red ---
+[paciente claro 1440] /my-account/pharmacy → 200
+[paciente claro 1440] /pharmacy/orders/me → 200
+### Antes de sincronizar (A en «No lo tengo» en Casa central)
+[paciente claro 1440] FAR Uno por sede: Casa central=B,G,H ; Sucursal Norte=A,B,G,H ; Sucursal Oeste 31=A,B,G,H ; Sucursal Oeste 35=A,B,G,H ; Sucursal Sur 2=B,G
+[paciente oscuro 390] FAR Uno por sede: Casa central=B,G,H ; Sucursal Norte=A,B,G,H ; Sucursal Oeste 31=A,B,G,H ; Sucursal Oeste 35=A,B,G,H ; Sucursal Sur 2=B,G
+--- red ---
+[paciente claro 1440] /my-account/pharmacy → 200
+[paciente claro 1440] /pharmacy/orders/me → 200
+[paciente claro 1440] GET /pharmacy/products?search=FAR06&limit=20 → 200
+[paciente claro 1440] /pharmacy/products?search=FAR06&limit=20 → 200
+[paciente claro 1440] GET /pharmacy-inventory/availability?products=d9cd922f-c25e-4a2e-99ac-cb8828afebec,90d2134e-3b43-48d0-a4eb-5d3258e5fffd,dd3a9b86-2f53-41ac-aece-ed600bc3d221,2a8d27e5-4d5b-4a07-8c84-ca5d13059ffb,4590fe62-952b-45ee-b9ef-5d25f6490850,c9448136-b5e6-4926-9b50-ed43eb15435e,cdaceda0-aa1c-4db0-aa51-224b95ef8ea2,69da5bb0-5297-4f24-bcfc-ef2b4fd25bdc,7239f042-c385-4972-bba9-69076d2e81a7,72e9bbd5-cfef-473a-a15c-bdb51a59e757&limit=20 → 200
+[paciente claro 1440] /pharmacy-inventory/availability?products=d9cd922f-c25e-4a2e-99ac-cb8828afebec,90d2134e-3b43-48d0-a4eb-5d3258e5f → 200
+[paciente oscuro 390] /my-account/pharmacy → 200
+[paciente oscuro 390] /pharmacy/orders/me → 200
+[paciente oscuro 390] GET /pharmacy/products?search=FAR06&limit=20 → 200
+[paciente oscuro 390] /pharmacy/products?search=FAR06&limit=20 → 200
+[paciente oscuro 390] GET /pharmacy-inventory/availability?products=d9cd922f-c25e-4a2e-99ac-cb8828afebec,90d2134e-3b43-48d0-a4eb-5d3258e5fffd,dd3a9b86-2f53-41ac-aece-ed600bc3d221,2a8d27e5-4d5b-4a07-8c84-ca5d13059ffb,4590fe62-952b-45ee-b9ef-5d25f6490850,c9448136-b5e6-4926-9b50-ed43eb15435e,cdaceda0-aa1c-4db0-aa51-224b95ef8ea2,69da5bb0-5297-4f24-bcfc-ef2b4fd25bdc,7239f042-c385-4972-bba9-69076d2e81a7,72e9bbd5-cfef-473a-a15c-bdb51a59e757&limit=20 → 200
+[paciente oscuro 390] /pharmacy-inventory/availability?products=d9cd922f-c25e-4a2e-99ac-cb8828afebec,90d2134e-3b43-48d0-a4eb-5d3258e5f → 200
+### Después de sincronizar
+[paciente claro 1440] FAR Uno por sede: Casa central=A,B,G,H ; Sucursal Norte=A,B,G,H ; Sucursal Oeste 31=A,B,G,H ; Sucursal Oeste 35=A,B,G,H ; Sucursal Sur 2=B,G
+[paciente oscuro 390] FAR Uno por sede: Casa central=A,B,G,H ; Sucursal Norte=A,B,G,H ; Sucursal Oeste 31=A,B,G,H ; Sucursal Oeste 35=A,B,G,H ; Sucursal Sur 2=B,G
+--- red ---
+[paciente claro 1440] /my-account/pharmacy → 200
+[paciente claro 1440] /pharmacy/orders/me → 200
+[paciente claro 1440] GET /pharmacy/products?search=FAR06&limit=20 → 200
+[paciente claro 1440] /pharmacy/products?search=FAR06&limit=20 → 200
+[paciente claro 1440] GET /pharmacy-inventory/availability?products=d9cd922f-c25e-4a2e-99ac-cb8828afebec,90d2134e-3b43-48d0-a4eb-5d3258e5fffd,dd3a9b86-2f53-41ac-aece-ed600bc3d221,2a8d27e5-4d5b-4a07-8c84-ca5d13059ffb,4590fe62-952b-45ee-b9ef-5d25f6490850,c9448136-b5e6-4926-9b50-ed43eb15435e,cdaceda0-aa1c-4db0-aa51-224b95ef8ea2,69da5bb0-5297-4f24-bcfc-ef2b4fd25bdc,7239f042-c385-4972-bba9-69076d2e81a7,72e9bbd5-cfef-473a-a15c-bdb51a59e757&limit=20 → 200
+[paciente claro 1440] /pharmacy-inventory/availability?products=d9cd922f-c25e-4a2e-99ac-cb8828afebec,90d2134e-3b43-48d0-a4eb-5d3258e5f → 200
+[paciente oscuro 390] /my-account/pharmacy → 200
+[paciente oscuro 390] /pharmacy/orders/me → 200
+[paciente oscuro 390] GET /pharmacy/products?search=FAR06&limit=20 → 200
+[paciente oscuro 390] /pharmacy/products?search=FAR06&limit=20 → 200
+[paciente oscuro 390] GET /pharmacy-inventory/availability?products=d9cd922f-c25e-4a2e-99ac-cb8828afebec,90d2134e-3b43-48d0-a4eb-5d3258e5fffd,dd3a9b86-2f53-41ac-aece-ed600bc3d221,2a8d27e5-4d5b-4a07-8c84-ca5d13059ffb,4590fe62-952b-45ee-b9ef-5d25f6490850,c9448136-b5e6-4926-9b50-ed43eb15435e,cdaceda0-aa1c-4db0-aa51-224b95ef8ea2,69da5bb0-5297-4f24-bcfc-ef2b4fd25bdc,7239f042-c385-4972-bba9-69076d2e81a7,72e9bbd5-cfef-473a-a15c-bdb51a59e757&limit=20 → 200
+[paciente oscuro 390] /pharmacy-inventory/availability?products=d9cd922f-c25e-4a2e-99ac-cb8828afebec,90d2134e-3b43-48d0-a4eb-5d3258e5f → 200
+
+## Caso 6 · simulador apagado (real)
+Lotes de la conexión: 7 antes de las cuatro sincronizaciones fallidas y 7 después (`GET …/sync-batches?limit=20`).
+[farmacia1 claro 1440 simulador-apagado] console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[farmacia1 claro 1440 simulador-apagado] console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[farmacia1 claro 1440 simulador-apagado] sync 502 reason=PHARMACY_INTEGRATION_UNAVAILABLE · pantalla: Error: No se pudo sincronizar No pudimos hablar con el sistema de la farmacia. No se cambió ninguna existencia; pruebe de nuevo en unos minutos. (petición b0a26f7d-9368-43ae-b8c4-254d337b6372) · resumen visible: 0
+[farmacia1 oscuro 1440 simulador-apagado] console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[farmacia1 oscuro 1440 simulador-apagado] console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[farmacia1 oscuro 1440 simulador-apagado] sync 502 reason=PHARMACY_INTEGRATION_UNAVAILABLE · pantalla: Error: No se pudo sincronizar No pudimos hablar con el sistema de la farmacia. No se cambió ninguna existencia; pruebe de nuevo en unos minutos. (petición ca58c9d6-d404-4b11-acf7-b607d3d449a3) · resumen visible: 0
+[farmacia1 claro 390 simulador-apagado] console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[farmacia1 claro 390 simulador-apagado] console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[farmacia1 claro 390 simulador-apagado] sync 502 reason=PHARMACY_INTEGRATION_UNAVAILABLE · pantalla: Error: No se pudo sincronizar No pudimos hablar con el sistema de la farmacia. No se cambió ninguna existencia; pruebe de nuevo en unos minutos. (petición 76e8a960-5e93-4b19-a0b5-cea66ee92bbf) · resumen visible: 0
+[farmacia1 oscuro 390 simulador-apagado] console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[farmacia1 oscuro 390 simulador-apagado] console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[farmacia1 oscuro 390 simulador-apagado] sync 502 reason=PHARMACY_INTEGRATION_UNAVAILABLE · pantalla: Error: No se pudo sincronizar No pudimos hablar con el sistema de la farmacia. No se cambió ninguna existencia; pruebe de nuevo en unos minutos. (petición 5717f924-845e-4ff6-aa08-9dc43d7ca7ac) · resumen visible: 0
+--- red ---
+[farmacia1 claro 1440 simulador-apagado] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 claro 1440 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 1440 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 claro 1440 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/external-products → 502
+[farmacia1 claro 1440 simulador-apagado] POST /pharmacies/:id/integration-connections/:id/sync → 502
+[farmacia1 oscuro 1440 simulador-apagado] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 oscuro 1440 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 oscuro 1440 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 oscuro 1440 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/external-products → 502
+[farmacia1 oscuro 1440 simulador-apagado] POST /pharmacies/:id/integration-connections/:id/sync → 502
+[farmacia1 claro 390 simulador-apagado] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 claro 390 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 390 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 claro 390 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/external-products → 502
+[farmacia1 claro 390 simulador-apagado] POST /pharmacies/:id/integration-connections/:id/sync → 502
+[farmacia1 oscuro 390 simulador-apagado] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 oscuro 390 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 oscuro 390 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 oscuro 390 simulador-apagado] GET /pharmacies/:id/integration-connections/:id/external-products → 502
+[farmacia1 oscuro 390 simulador-apagado] POST /pharmacies/:id/integration-connections/:id/sync → 502
+
+## Caso 7 · API sin PHARMACY_ERP_BASE_URL (real)
+[farmacia1 claro 1440 no-configurado] aviso: Advertencia: La conexión con el sistema de la farmacia no está configurada. Mientras tanto, lleve las existencias en «Inventario». · «Sincronizar ahora» aria-disabled=true
+[farmacia1 oscuro 1440 no-configurado] aviso: Advertencia: La conexión con el sistema de la farmacia no está configurada. Mientras tanto, lleve las existencias en «Inventario». · «Sincronizar ahora» aria-disabled=true
+[farmacia1 claro 390 no-configurado] aviso: Advertencia: La conexión con el sistema de la farmacia no está configurada. Mientras tanto, lleve las existencias en «Inventario». · «Sincronizar ahora» aria-disabled=true
+[farmacia1 oscuro 390 no-configurado] aviso: Advertencia: La conexión con el sistema de la farmacia no está configurada. Mientras tanto, lleve las existencias en «Inventario». · «Sincronizar ahora» aria-disabled=true
+--- red ---
+[farmacia1 claro 1440 no-configurado] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 claro 1440 no-configurado] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 1440 no-configurado] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 oscuro 1440 no-configurado] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 oscuro 1440 no-configurado] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 oscuro 1440 no-configurado] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 claro 390 no-configurado] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 claro 390 no-configurado] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 claro 390 no-configurado] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[farmacia1 oscuro 390 no-configurado] GET /pharmacies/:id/integration-connections → 200
+[farmacia1 oscuro 390 no-configurado] GET /pharmacies/:id/integration-connections/:id/sync-batches?limit=5 → 200
+[farmacia1 oscuro 390 no-configurado] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+422 {"code":"PRECONDITION_FAILED","message":"La conexión con el sistema de la farmacia no está configurada","correlationId":"c0909895-a1c1-4456-8bcf-7604b8e4cd5b","details":{"reason":"PHARMACY_INTEG
+
+## Caso 8 · las otras pestañas
+[farmacia1 claro 1440 pestañas] ?tab=products → seleccionada «Productos», pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración
+[farmacia1 claro 1440 pestañas] ?tab=categories → seleccionada «Categorías», pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración
+[farmacia1 claro 1440 pestañas] ?tab=prices → seleccionada «Precios», pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración
+[farmacia1 claro 1440 pestañas] ?tab=inventory → seleccionada «Inventario», pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración
+[farmacia1 claro 1440 pestañas] ?tab=import → seleccionada «Importación», pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración
+--- red ---
+[farmacia1 claro 1440 pestañas] GET /pharmacy/products?pharmacyId=620f8a13-123c-429f-9099-7220b30ece54&managed=true&limit=500 → 200
+[farmacia1 claro 1440 pestañas] GET /pharmacy/products?pharmacyId=620f8a13-123c-429f-9099-7220b30ece54&managed=true&limit=500 → 200
+[farmacia1 claro 1440 pestañas] GET /pharmacy/products?pharmacyId=620f8a13-123c-429f-9099-7220b30ece54&managed=true&limit=500 → 200

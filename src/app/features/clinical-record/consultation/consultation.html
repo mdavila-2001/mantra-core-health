@@ -198,6 +198,9 @@
      muestra lo cobrado. -->
 @if (casillaAbierta(); as casilla) {
   <app-content-dialog
+    #dialogoDeLaCasilla
+    [dismissible]="casillaSinCambios()"
+    (dismissAttempt)="pedirDescarteDeLaCasilla()"
     [heading]="tituloDelModal()"
     [description]="descripcionDelModal()"
     size="lg"
@@ -223,7 +226,7 @@
         <app-medication-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [exigeRespuesta]="true"
+          [ofreceRespuesta]="true"
           [exigeEncuentro]="false"
           [citas]="citas()"
           [recetas]="recetas()"
@@ -237,7 +240,7 @@
         <app-analysis-order-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [exigeRespuesta]="true"
+          [ofreceRespuesta]="true"
           (cambio)="altaRegistrada()"
         />
       }
@@ -245,7 +248,7 @@
         <app-follow-up-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [exigeRespuesta]="true"
+          [ofreceRespuesta]="true"
           [bookingId]="originBookingId()"
           (cambio)="altaRegistrada()"
         />
@@ -270,7 +273,7 @@
         <app-care-plan-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [exigeRespuesta]="true"
+          [ofreceRespuesta]="true"
           [diagnosticos]="diagnosticosParaElPlan()"
           (cambio)="altaRegistrada()"
         />

@@ -1,0 +1,168 @@
+<app-page-header
+  title="Verificación en dos pasos"
+  subtitle="Además de su contraseña, se le pide un código que cambia cada 30 segundos y que solo muestra su teléfono."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="mfa" padding="lg" data-testid="mfa-card">
+  @if (obligatorio()) {
+    <app-alert tone="warning" title="Su organización exige este paso" role="alert" data-testid="mfa-obligatorio">
+      Hasta que active la verificación en dos pasos no puede usar el resto de la aplicación: el servidor también lo exige y le responde que primero la active. Son tres minutos.
+    </app-alert>
+  }
+
+  @switch (fase()) {
+    @case ('cargando') {
+      <app-loading-state message="Revisando su cuenta…" />
+    }
+
+    @case ('error') {
+      <app-alert tone="error" role="alert" data-testid="mfa-error">
+        No pudimos revisar el estado de su verificación en dos pasos.
+        <button app-button variant="secondary" size="sm" type="button" (clicked)="cargar()" data-testid="mfa-reintentar">Reintentar</button>
+      </app-alert>
+    }
+
+    @case ('inicio') {
+      @if (yaActivado()) {
+        <section class="mfa__estado" data-testid="mfa-activada">
+          <h2 class="mfa__titulo">La verificación en dos pasos está activada</h2>
+          <p class="mfa__texto">Para entrar se le pide su contraseña y el código de su aplicación.</p>
+          <ul class="mfa__factores" role="list" aria-label="Aplicaciones activadas">
+            @for (f of factores(); track f.id) {
+              <li class="mfa__factor" data-testid="mfa-factor">
+                <strong>{{ f.label ?? 'Aplicación autenticadora' }}</strong>
+                @if (f.verifiedAt) {
+                  <span class="mfa__texto">Activada el {{ f.verifiedAt.toLocaleDateString('es-BO', { day: 'numeric', month: 'short', year: 'numeric' }) }}</span>
+                }
+                <button app-button variant="ghost" size="sm" type="button" (clicked)="pedirQuitar(f)" [disabled]="quitandoEnCurso()" data-testid="mfa-quitar">Quitar este método</button>
+              </li>
+            }
+          </ul>
+          @if (quitando(); as aQuitar) {
+            <div class="mfa__quitar" data-testid="mfa-quitar-panel">
+              <app-alert tone="warning" title="Va a quitar «{{ aQuitar.label ?? 'Aplicación autenticadora' }}»" data-testid="mfa-quitar-aviso">{{ avisoDeQuitar() }}</app-alert>
+              <app-mfa-reauth-form
+                reason="Para quitar este método."
+                [canUseCode]="true"
+                [busy]="quitandoEnCurso()"
+                [failure]="falloDeReauth()"
+                submitLabel="Quitar el método"
+                prefix="quitar"
+                (proven)="quitar($event)"
+                (cancelled)="cancelarQuitar()"
+              />
+            </div>
+          }
+        </section>
+      } @else {
+        <section class="mfa__estado" data-testid="mfa-inactiva">
+          <h2 class="mfa__titulo">Todavía no la tiene activada</h2>
+          <p class="mfa__texto">
+            Necesita una aplicación de autenticación en su teléfono: Google Authenticator, Microsoft Authenticator, Authy o la
+            que ya use. Aunque alguien conozca su contraseña, sin su teléfono no puede entrar.
+          </p>
+        </section>
+      }
+
+      @if (falloDeInicio(); as fallo) {
+        <app-alert tone="error" role="alert" data-testid="mfa-inicio-error">{{ fallo }}</app-alert>
+      }
+
+      <div class="mfa__acciones">
+        <button app-button type="button" [isLoading]="iniciando()" [disabled]="iniciando() || quitando() !== null" (clicked)="pedirAlta()" data-testid="mfa-empezar">
+          {{ yaActivado() ? 'Configurar otra aplicación' : 'Activar la verificación en dos pasos' }}
+        </button>
+      </div>
+    }
+
+    @case ('reautenticar') {
+      <app-mfa-reauth-form
+        reason="Para activar un método nuevo."
+        [canUseCode]="yaActivado()"
+        [busy]="iniciando()"
+        [failure]="falloDeReauth()"
+        submitLabel="Continuar"
+        prefix="reauth"
+        (proven)="empezar($event)"
+        (cancelled)="cancelar()"
+      />
+    }
+
+    @case ('configurando') {
+      @if (intento(); as factor) {
+        <ol class="mfa__pasos" data-testid="mfa-pasos">
+          <li class="mfa__paso">
+            <h2 class="mfa__titulo">1 · Abra su aplicación de autenticación</h2>
+            <p class="mfa__texto">Si todavía no tiene una, instale Google Authenticator, Microsoft Authenticator o Authy desde la tienda de su teléfono.</p>
+          </li>
+
+          <li class="mfa__paso">
+            <h2 class="mfa__titulo">2 · Agregue esta cuenta</h2>
+            <div class="mfa__codigos">
+              @if (qrDisponible()) {
+                <figure class="mfa__qr">
+                  <!-- Decorativo para quien escucha: el código escrito de al lado dice lo mismo. -->
+                  <canvas #lienzoQrMfa [width]="ladoDelQr" [height]="ladoDelQr" aria-hidden="true" data-testid="mfa-qr"></canvas>
+                  <figcaption class="mfa__texto">Escanéelo con la aplicación.</figcaption>
+                </figure>
+              }
+              <div class="mfa__manual">
+                <p class="mfa__texto">
+                  @if (qrDisponible()) { ¿No puede escanear? } @else { No pudimos dibujar el QR. }
+                  Elija «Ingresar una clave» en la aplicación y escriba este código:
+                </p>
+                <p class="mfa__secreto" data-testid="mfa-secreto" aria-label="Código para escribir en la aplicación">{{ secretoAgrupado() }}</p>
+                <button app-button variant="outline" size="sm" type="button" (clicked)="copiarSecreto()" data-testid="mfa-copiar">Copiar el código</button>
+                <p class="mfa__aviso">Este código se muestra una sola vez. Si recarga esta página, tendrá que empezar de nuevo.</p>
+              </div>
+            </div>
+          </li>
+
+          <li class="mfa__paso">
+            <h2 class="mfa__titulo">3 · Escriba el código que muestra la aplicación</h2>
+            <form class="mfa__form" (submit)="$event.preventDefault(); confirmar()" novalidate>
+              <app-form-field
+                label="Código de 6 dígitos"
+                [required]="true"
+                [errorMessage]="faltaCodigo() ? 'Escriba los 6 dígitos que muestra la aplicación.' : ''"
+              >
+                <app-input
+                  [value]="codigo()"
+                  (valueChange)="codigo.set('' + ($event ?? ''))"
+                  inputMode="numeric"
+                  autocomplete="one-time-code"
+                  placeholder="000000"
+                  ariaLabel="Código de verificación"
+                  [hasError]="faltaCodigo() || falloDeCodigo() !== null"
+                  testId="mfa-codigo"
+                />
+              </app-form-field>
+
+              @if (falloDeCodigo(); as fallo) {
+                <app-alert tone="error" role="alert" data-testid="mfa-codigo-error">{{ fallo }}</app-alert>
+              }
+
+              <div class="mfa__acciones">
+                <button app-button variant="ghost" type="button" [disabled]="confirmando()" (clicked)="cancelar()" data-testid="mfa-cancelar">Cancelar</button>
+                <button app-button variant="outline" type="button" [disabled]="confirmando() || iniciando()" (clicked)="pedirAlta()" data-testid="mfa-reempezar">Empezar de nuevo</button>
+                <button app-button type="submit" [isLoading]="confirmando()" [disabled]="confirmando()" data-testid="mfa-confirmar">Confirmar y activar</button>
+              </div>
+            </form>
+          </li>
+        </ol>
+      }
+    }
+
+    @case ('listo') {
+      <section class="mfa__estado" data-testid="mfa-listo">
+        <app-alert tone="success" title="Listo: la verificación en dos pasos quedó activada" role="status">
+          De ahora en adelante, al iniciar sesión se le va a pedir el código de su aplicación.
+        </app-alert>
+        <div class="mfa__acciones">
+          <button app-button type="button" (clicked)="continuar()" data-testid="mfa-continuar">Continuar</button>
+        </div>
+      </section>
+    }
+  }
+</app-card>

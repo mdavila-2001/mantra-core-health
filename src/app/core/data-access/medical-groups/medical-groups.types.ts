@@ -115,3 +115,18 @@ export interface NewMedicalGroup {
   readonly additionalTermsText?: string;
   readonly members: readonly NewMedicalGroupMember[];
 }
+
+/** Lo que el creador puede corregir de un grupo que todavía no se realizó. */
+export interface UpdateMedicalGroup {
+  readonly locationText?: string;
+  /** Una cadena vacía borra las notas. */
+  readonly notesText?: string;
+}
+
+/** Lo que se puede cambiar de un cargo; cambiarlo vuelve a pedirle respuesta al invitado. */
+export interface UpdateMedicalGroupMember {
+  readonly roleTitle?: string;
+  readonly agreedPaymentAmount?: string;
+  /** Una cadena vacía borra los términos del cargo. */
+  readonly additionalTermsText?: string;
+}

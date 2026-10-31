@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { ConversationList } from './conversation-list';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
-import { textoDeContexto } from '../../../core/messaging/contexto-de-chat';
+import { textoDeContexto } from '../../../core/messaging/chat-context';
 import {
   empty,
   forbidden,
@@ -190,5 +190,16 @@ describe('ConversationList', () => {
       expect(buscar('conversacion')).not.toBeNull();
       expect(texto()).toContain('28/10/2026 09:15');
     });
+  });
+
+  it('al doctor le marca la conversación que su equipo le derivó, y a quien no es el doctor no', () => {
+    montar({ ...fila({ id: 'm-1', senderProfileId: 'pp-2', bodyText: 'Tengo dolor de pecho' }), awaitingDoctor: true });
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="conversacion-derivada"]')?.textContent,
+    ).toContain('Derivada por su equipo');
+
+    fixture.destroy();
+    montar(fila({ id: 'm-1', senderProfileId: 'pp-2', bodyText: 'Tengo dolor de pecho' }));
+    expect(fixture.nativeElement.querySelector('[data-testid="conversacion-derivada"]')).toBeNull();
   });
 });

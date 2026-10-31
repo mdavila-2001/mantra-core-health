@@ -21,6 +21,12 @@ const OPS: readonly Row[] = [
   op('SchedulingController_book', 'POST', '/scheduling/bookings', 'Reservar un cupo', 'ALTO', ['PATIENT'], ['scheduling.bookings', 'scheduling.slots'], 'ESCRIBE', ['ESCRIBE', 'MAQUINA_DE_ESTADOS']),
   op('SchedulingController_cancel', 'DELETE', '/scheduling/bookings/{id}', 'Cancelar una reserva', 'ALTO', [], ['scheduling.bookings'], 'BORRA', ['ESCRIBE_SIN_ROLES', 'SIN_PRUEBAS']),
   op('IamAuthController_login', 'POST', '/iam/auth/login', 'Iniciar sesión', 'ALTO', [], ['iam.users'], 'LEE', ['PUBLICA'], true),
+  // Los dos primeros nodos «declarados» del catálogo de flujos del simulador viven acá para que
+  // el cruce flujo → operación se vea completo en la maqueta (el resto queda sin ficha a propósito).
+  op('BillingSimulatedController_registerPayment', 'POST', '/billing/simulated/charges/{chargeId}/payment', 'Registrar un pago simulado', 'ALTO', ['BILLING'], ['scheduling.bookings', 'iam.users'], 'ESCRIBE', ['ESCRIBE']),
+  op('BillingSimulatedController_issueInvoice', 'POST', '/billing/simulated/charges/{chargeId}/invoices', 'Emitir una factura simulada', 'ALTO', ['BILLING'], ['scheduling.bookings'], 'ESCRIBE', ['ESCRIBE']),
+  op('InsuranceClaimsController_create', 'POST', '/insurance-claims', 'Crear un reclamo al seguro', 'ALTO', ['BILLING'], ['iam.users', 'scheduling.bookings'], 'ESCRIBE', ['ESCRIBE']),
+  op('DirectoryController_search', 'GET', '/public/search/practitioners', 'Buscar profesionales', 'BAJO', [], ['iam.users'], 'LEE', ['PUBLICA'], true),
   op('IamUsersController_me', 'GET', '/iam/users/me', null, 'BAJO', [], ['iam.users'], 'LEE', ['CONTRATO_AUSENTE'], false, 'CONTRATO_AUSENTE'),
 ];
 
@@ -86,18 +92,58 @@ function byFilters(rows: readonly Row[], req: MockRequest, keys: readonly string
   );
 }
 
+/** Las comprobaciones previas al handler, con la misma forma y los mismos códigos que el generador real. */
+function requirementsOf(o: Row): Row[] {
+  const roles = o['roles'] as string[];
+  const controller = `src/modules/${o['modulo']}/controller.ts:40`;
+  if (o['publica']) return [{ tipo: 'AUTENTICACION', detalle: 'Ruta pública: no exige token', fuente: controller }, { tipo: 'RATE_LIMIT', detalle: 'Límite propio: 10 cada 60 s', fuente: controller }];
+  return [
+    { tipo: 'AUTENTICACION', detalle: 'JWT Bearer', fuente: 'contrato (security)' },
+    { tipo: 'ROL', detalle: roles.length ? `Alguno de: ${roles.join(', ')}` : 'Sin @Roles en el controlador (si hay regla de acceso, vive en el servicio)', fuente: controller },
+    { tipo: 'TENANT', detalle: 'Tenant por cabecera X-Tenant-Id o por la membresía única del actor; 403 si es ambiguo o no le pertenece', fuente: 'src/app.module.ts:282' },
+    ...(o['metodo'] === 'POST' ? [{ tipo: 'CUERPO', detalle: 'application/json (obligatorio); máximo 1mb', fuente: 'src/main.ts:180' }, { tipo: 'VALIDACION', detalle: 'Se rechazan las propiedades no declaradas en el DTO (whitelist + forbidNonWhitelisted)', fuente: 'src/common/http/validation-pipe.ts:115' }] : []),
+    { tipo: 'RATE_LIMIT', detalle: '300 solicitudes cada 60 s (límite global)', fuente: 'src/app.module.ts:149' },
+  ];
+}
+
+function responsesOf(o: Row): Row[] {
+  const writes = o['metodo'] !== 'GET';
+  return [
+    { estado: o['metodo'] === 'POST' ? 201 : 200, codigo: null, causas: ['Éxito'] },
+    ...(writes ? [{ estado: 400, codigo: 'VALIDATION_FAILED', causas: ['El cuerpo cumple el DTO (sin propiedades extra)'] }] : []),
+    ...(o['publica'] ? [] : [{ estado: 401, codigo: 'UNAUTHENTICATED', causas: ['Hay una sesión válida (JWT)'] }, { estado: 403, codigo: 'FORBIDDEN', causas: ['El rol está permitido', 'El tenant se resuelve y pertenece al actor'] }]),
+    ...(writes ? [{ estado: 404, codigo: 'NOT_FOUND', causas: ['NotFoundException: El cupo no existe'] }, { estado: 409, codigo: 'CONFLICT', causas: ['ConflictException: El cupo ya está reservado'] }] : []),
+  ];
+}
+
+/** Una fila `datos[]` por (tabla, efecto) con su camino handler → servicio → repositorio, como el inventario real. */
+function tableRowsOf(o: Row): Row[] {
+  const handler = `${String(o['id']).split('_')[0]}.${String(o['id']).split('_')[1]}`;
+  const service = `${o['modulo'] === 'iam' ? 'Users' : 'Scheduling'}Service.${String(o['id']).split('_')[1]}`;
+  return (o['_tablas'] as { tabla: string; efecto: string }[]).flatMap(({ tabla, efecto }, i) => {
+    const [schema, name] = tabla.split('.') as [string, string];
+    const repo = `${name[0]!.toUpperCase()}${name.slice(1)}Repository`;
+    const read = { schema, tabla: name, operacion: 'LEE', detalle: 'LEE', confianza: i === 0 ? 'DIRECTA' : 'POR_SQL', via: [handler, service, `${repo}.findOne`], fuente: `src/modules/${o['modulo']}/repositories/${name}.repository.ts:${12 + i * 10}`, catalogada: true };
+    if (efecto === 'LEE') return [read];
+    // Una escritura siempre lee antes: la misma tabla sale en los dos grupos, como `billing.bills` en la API real.
+    return [read, { schema, tabla: name, operacion: efecto, detalle: efecto === 'BORRA' ? 'BORRA' : (i === 0 ? 'CREA' : 'ACTUALIZA'), confianza: i === 0 ? 'DIRECTA' : 'POR_TIPO', via: [handler, service, `${repo}.${efecto === 'BORRA' ? 'remove' : 'save'}`], fuente: `src/modules/${o['modulo']}/repositories/${name}.repository.ts:${40 + i * 10}`, catalogada: true }];
+  });
+}
+
 function operationDetail(o: Row): Row {
-  const touched = o['_tablas'] as { tabla: string; efecto: string }[];
   const { _tablas, ...summary } = o;
+  const senales = o['senales'] as string[];
   return {
     ...summary, bloque: 'Atención', codigo: `src/modules/${o['modulo']}/controller.ts:40`,
     negocio: { texto: o['nombre'] ? `${o['nombre']} (texto sintético de la maqueta).` : null, estado: o['nombre'] ? 'DOCUMENTADO' : 'SIN_FUENTE', fuentes: [] },
     sistema: 'Generado por la maqueta.', razonesDeRiesgo: [`Riesgo ${String(o['riesgo']).toLowerCase()} por lo que escribe`],
-    requerimientos: (o['roles'] as string[]).length ? [{ tipo: 'ROL', detalle: `Alguno de: ${(o['roles'] as string[]).join(', ')}`, fuente: 'controller.ts:40' }] : [],
-    parametros: [], cuerpo: null, respuesta: { tipoRetorno: null, dto: null, httpCode: '200', campos: [] },
-    respuestasPosibles: [{ estado: 200, codigo: null, causas: ['Éxito'] }, { estado: 403, codigo: 'FORBIDDEN', causas: ['El rol no alcanza'] }],
-    datos: touched.map(({ tabla, efecto }) => ({ schema: tabla.split('.')[0], tabla: tabla.split('.')[1], operacion: efecto, detalle: efecto, confianza: 'DIRECTA', via: [], fuente: 'repository.ts:12', catalogada: true })),
-    eventos: [], trabajos: [], noResuelto: [], sinTablas: null, pruebas: [], revision: 'AUTO_DETECTADA', datosPersonales: 'SIN_FUENTE',
+    requerimientos: requirementsOf(o),
+    parametros: o['metodo'] === 'GET' ? [{ nombre: 'from', en: 'query', obligatorio: false, tipo: 'string', descripcion: 'Desde qué fecha' }] : [],
+    cuerpo: o['metodo'] === 'POST' ? { dto: 'CreateSlotDto', contentType: 'application/json', obligatorio: true, campos: [{ campo: 'startsAt', tipo: 'string', obligatorio: true, restricciones: ['formato date-time'], descripcion: 'Inicio del cupo', fuente: 'dto.ts:10' }], payloadMinimo: { startsAt: '2026-10-30T09:00:00Z' } } : null,
+    respuesta: { tipoRetorno: null, dto: null, httpCode: o['metodo'] === 'POST' ? '201' : '200', campos: [] },
+    respuestasPosibles: responsesOf(o),
+    datos: tableRowsOf(o),
+    eventos: senales.includes('EVENTO') ? ['scheduling.slots.listed'] : [], trabajos: senales.includes('ENCOLA_TRABAJO') ? ['scheduling.reminders'] : [], noResuelto: [], sinTablas: null, pruebas: [], revision: 'AUTO_DETECTADA', datosPersonales: 'SIN_FUENTE',
   };
 }
 
@@ -139,6 +185,24 @@ function tableSheet(t: Row): Row {
   };
 }
 
+/** El árbol de decisión: acceso, y en las escrituras una transacción con su efecto, como los árboles reales. */
+function treeOf(o: Row): Row {
+  const writes = o['metodo'] !== 'GET';
+  const first = (o['_tablas'] as { tabla: string; efecto: string }[])[0]!;
+  return {
+    id: o['id'],
+    nodos: [
+      ...(o['publica'] ? [] : [{ tipo: 'ACCESO', txt: 'Hay una sesión válida (JWT)', falla: { estado: 401, codigo: 'UNAUTHENTICATED' }, f: 'src/common/auth/jwt-auth.guard.ts:28' }]),
+      ...(writes
+        ? [{ tipo: 'TRANSACCION', txt: 'Todo o nada', hijos: [{ tipo: 'EFECTO', tabla: first.tabla, operacion: first.efecto, confianza: 'DIRECTA', f: `src/modules/${o['modulo']}/repositories/repository.ts:40` }], f: `src/modules/${o['modulo']}/services/service.ts:99` }]
+        : []),
+      { tipo: 'RESPUESTA', estado: o['metodo'] === 'POST' ? 201 : 200, txt: 'Responde con éxito' },
+    ],
+    respuestas: responsesOf(o),
+    truncado: false,
+  };
+}
+
 /** Registra el inventario simulado del portal. */
 export function registerPortalInventory(router: MockRouter): void {
   router.get('/admin/portal/version', () => ({ hash: 'maqueta', operaciones: OPS.length, procesos: PROCESSES.length, tablas: TABLES.length, columnas: 29, origen: 'maqueta' }));
@@ -150,7 +214,7 @@ export function registerPortalInventory(router: MockRouter): void {
   });
   router.get('/admin/portal/operaciones/:id/arbol', (req: MockRequest) =>
     OPS.some((x) => x['id'] === req.params['id'])
-      ? { id: req.params['id'], nodos: [{ tipo: 'ACCESO', txt: 'Hay una sesión válida (JWT)', falla: { estado: 401, codigo: 'UNAUTHENTICATED' } }, { tipo: 'RESPUESTA', estado: 200, txt: 'Responde con éxito' }], respuestas: [{ estado: 200, codigo: null, causas: ['Éxito'] }], truncado: false }
+      ? treeOf(OPS.find((x) => x['id'] === req.params['id'])!)
       : notFound('Operación no encontrada en el inventario'));
   router.get('/admin/portal/flujos/mapa', (req: MockRequest) =>
     paginate(byFilters(OPS, req, ['modulo', 'riesgo', 'metodo', 'senal', 'flujo']).filter((o) => contains(req.query.get('q'), o['ruta'], o['modulo'])).map((o) => ({ id: o['id'], metodo: o['metodo'], ruta: o['ruta'], flujos: o['flujos'], modulo: o['modulo'], riesgo: o['riesgo'], autorizacion: (o['roles'] as string[]).join(' · ') || (o['publica'] ? 'Pública' : 'Cualquier sesión válida'), llamadaPor: o['modulo'] === 'iam' ? ['IamClient'] : [], senales: o['senales'] })), req));

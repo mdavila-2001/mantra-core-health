@@ -7,7 +7,9 @@ import { Alert } from '../../shared/components/molecules/alert/alert';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
-import { rolesAlcanzan } from '../../core/navigation/navigation.types';
+import { esPerfilDeGestion } from '../../core/navigation/navigation.management';
+import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from '../../core/navigation/navigation.map';
+import { isVisibleTo, rolesAlcanzan } from '../../core/navigation/navigation.types';
 import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
@@ -21,6 +23,7 @@ import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice'
 import { TodayAgenda } from './today-agenda/today-agenda';
 import { SummaryConsultations } from './consultations-summary/consultations-summary';
 import { PatientHome } from './patient-home/patient-home';
+import { PlatformHome } from './platform-home/platform-home';
 
 /**
  * Los roles con los que se viene a trabajar, no a atenderse.
@@ -91,6 +94,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     TutorialTarget,
     ViewStateHost,
     PatientHome,
+    PlatformHome,
     SetupNotice,
     AdmissionStatusCard,
   ],
@@ -121,6 +125,28 @@ export class Dashboard {
    * que se quedaría siempre en el vacío.
    */
   protected readonly atiendePacientes = computed(() => this.auth.practitionerProfileId() !== null);
+
+  /**
+   * «Mis verificaciones» con el mismo criterio que su ruta (rol de quien
+   * atiende) y además perfil profesional: ofrecer una puerta que el guard
+   * cierra sería mandar a la persona de vuelta al panel sin explicación.
+   */
+  protected readonly veMisVerificaciones = computed(
+    () => this.atiendePacientes() && rolesAlcanzan(ROLES_DE_QUIEN_ATIENDE, this.auth.roles()),
+  );
+
+  /**
+   * La bandeja de la aseguradora está fuera de su menú cerrado: se ofrece acá
+   * a quien la sección le es visible —el mismo filtro que el menú, por rol y
+   * por tipo de organización activa—. No autoriza: eso lo hace la API.
+   */
+  protected readonly veProfesionalesQuePidenSumarse = computed(() => {
+    const seccion = APP_SECTIONS.find((s) => s.path === 'administration/insurer-practitioner-requests');
+    return (
+      seccion !== undefined &&
+      isVisibleTo(seccion, this.auth.roles(), this.auth.tenants(), this.auth.activeTenantType())
+    );
+  });
 
   /**
    * El título saluda por el nombre, igual que el panel del paciente.
@@ -169,6 +195,9 @@ export class Dashboard {
    * siempre. Al revés dejaría a un profesional sin su tablero el día que alguien
    * le cargue una ficha de paciente.
    */
+  /** Quien sólo gestiona la plataforma entra por su portada, no por el panel clínico. */
+  protected readonly esGestion = computed(() => esPerfilDeGestion(this.roles()));
+
   protected readonly esPaciente = computed(() => {
     const roles = this.roles();
     if (!roles.includes('PATIENT')) return false;
@@ -204,7 +233,9 @@ export class Dashboard {
 
   constructor() {
     this.cargarAltaPendiente();
-    if (this.puedeVerPacientes()) {
+    // Quien sólo gestiona la plataforma entra por su portada, que no lista pacientes:
+    // una tarjeta que no se dibuja no gasta una lectura.
+    if (this.puedeVerPacientes() && !this.esGestion()) {
       this.loadPacientes();
     }
   }

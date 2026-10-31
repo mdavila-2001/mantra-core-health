@@ -1,9 +1,13 @@
+import {
+  MAX_ASEGURADORAS_POR_ENVIO,
+  pedirAseguradoras,
+} from './practitioner-insurer-requests.handlers';
 import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { crearAdmisionDeAltaDeDoctor } from './admissions.handlers';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
-import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, reply, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
   buscarUsuario,
@@ -159,6 +163,16 @@ const contrasenaVigente = new Map<string, string>();
 
 const sesionesPorUsuario = new Map<string, SesionSimulada[]>();
 
+/**
+ * Olvida las sesiones abiertas y las contraseñas vigentes: cada cuenta vuelve a tener la actual y otra desde otro equipo. Solo lo
+ * usan las pruebas (`reiniciarLaSesionDelSimulador`): es memoria del módulo, y con `isolate: false` lo que un archivo cerró
+ * («No fui yo», «cerrar todas», cambiar la contraseña) lo veía el siguiente archivo del mismo worker.
+ */
+export function olvidarLasSesionesDeCuenta(): void {
+  sesionesPorUsuario.clear();
+  contrasenaVigente.clear();
+}
+
 /** Las sesiones abiertas de una cuenta: la actual y otra desde otro equipo. */
 function sesionesDe(user: CuentaSimulada): SesionSimulada[] {
   const existentes = sesionesPorUsuario.get(user.id);
@@ -169,6 +183,17 @@ function sesionesDe(user: CuentaSimulada): SesionSimulada[] {
   ];
   sesionesPorUsuario.set(user.id, nuevas);
   return nuevas;
+}
+
+/**
+ * «No fui yo»: cierra todas las sesiones de la cuenta menos la actual. Es lo que hace
+ * `POST /iam/me/devices/:id/not-me` en una sola operación; devuelve cuántas cerró.
+ */
+export function cerrarOtrasSesiones(user: CuentaSimulada): number {
+  const sesiones = sesionesDe(user);
+  const otras = sesiones.filter((s) => !s.current);
+  sesionesPorUsuario.set(user.id, sesiones.filter((s) => s.current));
+  return otras.length;
 }
 
 function unprocessable(message: string, reason: string) {
@@ -280,6 +305,9 @@ export function registrarAuth(router: MockRouter): void {
       collegeName?: string;
       collegeLicenseIssueDate?: string;
       collegeLicenseFileId?: string;
+      // Dónde dice trabajar (28/10/2026), como en la API.
+      institutionSlugs?: string[];
+      insurerCarrierIds?: string[];
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
@@ -324,6 +352,25 @@ export function registrarAuth(router: MockRouter): void {
     }
     const id = nuevoId('profesional-nuevo');
     const practitionerProfileId = uuid(`hpid-${id}`);
+    // Las aseguradoras se validan contra el catálogo antes de dar el alta por
+    // hecha, como la API: una inexistente deshace todo con 422.
+    if ((datos.insurerCarrierIds ?? []).length > MAX_ASEGURADORAS_POR_ENVIO) {
+      return validation(`Hasta ${MAX_ASEGURADORAS_POR_ENVIO} aseguradoras`, [
+        { field: 'insurerCarrierIds', message: 'admite hasta 20' },
+      ]);
+    }
+    const seguros = pedirAseguradoras(
+      practitionerProfileId,
+      datos.insurerCarrierIds ?? [],
+      [datos.name, datos.lastName].filter(Boolean).join(' ') || undefined,
+    );
+    if (seguros === null) {
+      return preconditionFailed('Alguna de las aseguradoras indicadas no existe o no está activa', {
+        field: 'insurerCarrierIds',
+      });
+    }
+    const institutionSlugs = [...new Set(datos.institutionSlugs ?? [])];
+    const affiliationIds = institutionSlugs.map((slug) => uuid(`aff-alta-${practitionerProfileId}-${slug}`));
     if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
       signatureSaveAssets(practitionerProfileId, {
         ...(datos.signatureImageBase64 === undefined
@@ -349,6 +396,10 @@ export function registrarAuth(router: MockRouter): void {
       practitionerProfileId,
       practitionerCode: `MED-${Math.floor(Math.random() * 9000 + 1000)}`,
       ...(datos.photoFileId === undefined ? {} : { photoFileId: datos.photoFileId }),
+      ...(affiliationIds.length === 0 ? {} : { affiliationIds }),
+      ...(seguros.pedidas.length === 0
+        ? {}
+        : { insurerRequestIds: seguros.pedidas.map((s) => s.id) }),
     };
   });
 
@@ -861,6 +912,31 @@ export function registrarAuth(router: MockRouter): void {
 
   router.get('/iam/users', ({ query }) => searchUsers(query));
   router.post('/iam/users/search', (request) => searchUsers(bodyAsQuery(request)));
+
+  // Ficha de una cuenta. Igual que la API (`@Roles('SECURITY_ADMIN')`): sin
+  // ese rol, 403 —así la plantilla de una organización tiene que saber
+  // degradar a «nombre no disponible» también en la maqueta—.
+  router.get('/iam/users/:id', ({ params, user }) => {
+    const roles = user?.roles ?? [];
+    if (!roles.includes('SECURITY_ADMIN') && !roles.includes('SUPERADMIN')) {
+      return forbidden('Se requiere SECURITY_ADMIN para leer la ficha de una cuenta');
+    }
+    const i = MOCK_USERS.findIndex((u) => u.id === params['id']);
+    const base = MOCK_USERS[i];
+    if (base !== undefined) {
+      return {
+        id: base.id,
+        displayName: base.displayName,
+        statusConceptId: STATUS['ST-ACTIVE']!,
+        emailVerified: true,
+        lastLoginAt: iso(-i, 9),
+        createdAt: iso(-400 + i * 7, 8),
+      };
+    }
+    return (
+      usuariosAdicionales.find((u) => u.id === params['id']) ?? notFound('Usuario no encontrado')
+    );
+  });
 
   router.post('/iam/users', ({ body }) => {
     const datos = cuerpo<{ displayName?: string; email?: string }>({ body });

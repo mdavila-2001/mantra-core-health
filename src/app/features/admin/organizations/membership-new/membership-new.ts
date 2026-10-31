@@ -22,6 +22,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -35,6 +36,11 @@ import { FormSection } from '../../../../shared/components/organisms/form-sectio
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 import { crearBuscadorDePersonas } from '../people-search';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
+
+/** S6 del envío: la organización de la ruta no está (o no se puede ver). */
+const ORGANIZACION_NO_ENCONTRADA =
+  'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
 
 /** Cuántos candidatos trae cada búsqueda del combobox de persona. */
 const CANDIDATOS_POR_BUSQUEDA = 10;
@@ -82,6 +88,7 @@ const ETIQUETAS_DE_ALCANCE: Readonly<Record<AccessScopeCode, string>> = {
   imports: [
     Alert,
     AnnounceOnAppear,
+    AppButton,
     FormActions,
     FormField,
     FormSection,
@@ -148,8 +155,37 @@ export class MembershipNew {
 
   protected readonly esPorSede = computed(() => this.alcance() === 'BRANCH');
 
+  /**
+   * Cómo terminó la lectura de sedes. Antes un fallo se tragaba como «cero
+   * sedes» y la pantalla decía «la organización todavía no tiene sedes»: una
+   * afirmación falsa sobre el dato, con un consejo —abrir una— que duplicaba la
+   * que ya existía.
+   */
+  protected readonly lecturaDeSedes = signal<ViewState<null>>(loading());
+
+  protected readonly sedesFallaron = computed(() => {
+    const estado = this.lecturaDeSedes().status;
+    return this.esPorSede() && estado !== 'ready' && estado !== 'loading';
+  });
+
+  protected readonly mensajeDeSedes = computed(() =>
+    errorMessageOf(
+      this.lecturaDeSedes(),
+      'No tiene permiso para ver las sedes de esta organización.',
+      ORGANIZACION_NO_ENCONTRADA,
+    ),
+  );
+
   /** Sin sedes cargadas no se puede acotar a una: hay que abrir alguna antes. */
-  protected readonly sinSedes = computed(() => this.esPorSede() && this.sedes().length === 0);
+  protected readonly sinSedes = computed(
+    () =>
+      this.esPorSede() && this.lecturaDeSedes().status === 'ready' && this.sedes().length === 0,
+  );
+
+  /** Con alcance por sede, sin sedes que ofrecer —no hay o no se pudieron leer— no se envía. */
+  protected readonly bloqueadoPorSedes = computed(
+    () => this.sinSedes() || this.sedesFallaron() || (this.esPorSede() && this.lecturaDeSedes().status === 'loading'),
+  );
 
   protected readonly sedeFaltante = computed(
     () => this.enviado() && this.esPorSede() && this.sede() === null,
@@ -158,22 +194,18 @@ export class MembershipNew {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message || 'Necesita administrar esta organización para sumar a alguien.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * El mensaje del fallo del envío, con el criterio común (`errorMessageOf`).
+   * Antes cada alta repetía su propia copia, y las cinco olvidaban el `404`:
+   * el formulario quedaba mudo cuando la organización ya no existía.
+   */
+  protected readonly errorMessage = computed<string | null>(() =>
+    errorMessageOf(
+      this.state(),
+      'Necesita administrar esta organización para sumar a alguien.',
+      ORGANIZACION_NO_ENCONTRADA,
+    ),
+  );
 
   constructor() {
     // Las sedes alimentan el desplegable del alcance por sucursal, y saber si
@@ -195,12 +227,23 @@ export class MembershipNew {
    * @param tenantId - La organización cuyas sedes se listan.
    */
   private cargarSedes(tenantId: string): void {
+    this.lecturaDeSedes.set(loading());
     this.directory.listBranches(tenantId).subscribe({
-      next: (lista) => this.sedes.set(lista.items),
-      // Un fallo acá no rompe el alta: deja el alcance por sede sin opciones y
-      // la pantalla lo dice. El error general se reserva para el envío.
-      error: () => this.sedes.set([]),
+      next: (lista) => {
+        this.sedes.set(lista.items);
+        this.lecturaDeSedes.set(ready(null));
+      },
+      // Un fallo acá no rompe el alta con alcance a toda la organización; con
+      // alcance por sede, la pantalla dice qué pasó y ofrece reintentar.
+      error: (error: unknown) => {
+        this.sedes.set([]);
+        this.lecturaDeSedes.set(errorToViewState<null>(error));
+      },
     });
+  }
+
+  protected reintentarSedes(): void {
+    this.cargarSedes(this.tenantId());
   }
 
   protected cambiarRol(rol: TenantRoleCode | null): void {
@@ -239,8 +282,8 @@ export class MembershipNew {
    * exige.
    *
    * Si la asignación falla, la membresía ya existe y no se deshace: se avisa
-   * para que alguien la complete desde la ficha, en vez de dejar creer que no
-   * pasó nada. Deshacerla sería peor —la persona quedaría fuera sin que nadie
+   * y se abre la ficha en la pestaña «Plantilla», donde la fila de la persona
+   * tiene «Asignar sede» —la acción existe ahí, no es un consejo vacío—. Deshacerla sería peor —la persona quedaría fuera sin que nadie
    * lo pidiera—.
    *
    * @param membershipId - La membresía recién creada.
@@ -257,11 +300,11 @@ export class MembershipNew {
       error: () => {
         this.state.set(ready(null));
         this.toast.warning(
-          'La persona quedó incorporada, pero no pudimos asignarle la sede. ' +
-            'Complete la asignación desde la ficha de la organización.',
+          'La invitación quedó enviada, pero no pudimos asignarle la sede. ' +
+            'En su fila de la plantilla, use «Asignar sede».',
           'Falta la sede',
         );
-        void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));
+        void this.router.navigateByUrl(`${organizationDetailRoute(this.tenantId())}?tab=plantilla`);
       },
     });
   }
@@ -269,7 +312,8 @@ export class MembershipNew {
   private terminar(): void {
     this.state.set(ready(null));
     const nombre = this.persona()?.label ?? 'La persona';
-    this.toast.success(`${nombre} ya forma parte de la organización.`, 'Alguien más adentro');
+    // Ya no se incorpora al instante: la membresía queda pendiente hasta que la persona la acepte.
+    this.toast.success(`Invitación enviada a ${nombre}: queda pendiente de aceptación. Hasta que la acepte, no cuenta en la organización.`, 'Invitación enviada');
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));
   }
 
@@ -281,7 +325,7 @@ export class MembershipNew {
     if (this.persona() === null) {
       return false;
     }
-    return !(this.esPorSede() && this.sede() === null);
+    return !(this.esPorSede() && (this.sede() === null || this.bloqueadoPorSedes()));
   }
 
   /** El cuerpo de la petición; la sede sólo viaja si el alcance la usa. */

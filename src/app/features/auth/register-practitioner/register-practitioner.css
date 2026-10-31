@@ -407,3 +407,12 @@
     grid-column: auto;
   }
 }
+
+/* El aviso de los pedidos enviados con el alta, bajo el título de bienvenida. */
+.registro__pedidos {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+  text-align: center;
+}

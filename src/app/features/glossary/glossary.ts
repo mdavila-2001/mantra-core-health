@@ -192,6 +192,14 @@ export class Glossary {
     { initialValue: '' },
   );
 
+  /**
+   * Las categorías se esconden mientras se busca por texto: quien escribió ya
+   * eligió su camino y la rejilla le empuja los resultados fuera de la pantalla
+   * (pedido del propietario, repetido). Con una categoría o etiqueta elegida
+   * siguen visibles: son el mapa para cambiar de tema.
+   */
+  protected readonly mostrarCategorias = computed(() => this.busqueda() === '');
+
   /** Si hay algo puesto: texto, categoría o etiqueta. */
   protected readonly hayAlgoPuesto = computed(
     () => this.busqueda() !== '' || this.categoriaCodigo() !== '' || this.etiquetaCodigo() !== '',

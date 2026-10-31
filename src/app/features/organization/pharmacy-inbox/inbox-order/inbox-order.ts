@@ -13,7 +13,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, type Observable } from 'rxjs';
 
 import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
-import { contextoDePedido } from '../../../../core/messaging/contexto-de-pedido';
+import { contextoDePedido } from '../../../../core/messaging/order-chat-context';
 
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyProduct } from '../../../../core/data-access/pharmacy/pharmacy.types';
@@ -35,6 +35,7 @@ import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Input } from '../../../../shared/components/atoms/input/input';
@@ -84,10 +85,10 @@ export function motivoDeChatNoAbierto(error: unknown): string {
       return 'La farmacia no tiene vitrina pública activa: publíquela para poder chatear con los pacientes.';
     }
     if (error.status === 403) {
-      return 'Su cuenta no puede escribir como la farmacia. Pídale a quien administra la farmacia que revise su rol.';
+      return 'Su cuenta no puede escribir como la farmacia. Pida a quien administra la farmacia que revise su rol.';
     }
   }
-  return 'No pudimos abrir el chat con el paciente. Pruebe de nuevo en un momento.';
+  return 'No pudimos abrir el chat con el paciente. Intente de nuevo en un momento.';
 }
 
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
@@ -137,6 +138,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
 @Component({
   selector: 'app-inbox-order',
   imports: [
+    AppButtonLink,
     Alert,
     AppButton,
     Badge,

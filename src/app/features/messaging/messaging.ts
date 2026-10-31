@@ -18,17 +18,16 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
 import { ChatStore, SIN_NOMBRE } from '../../core/messaging/chat.store';
-import { loading } from '../../core/view-state/view-state';
 import { ChatPreferences } from '../../core/messaging/chat-preferences';
 import { conversationLabel } from '../../core/messaging/conversation-label';
-import type { ContextoDeChat } from '../../core/messaging/contexto-de-chat';
+import type { ContextoDeChat } from '../../core/messaging/chat-context';
 import {
   almacenDeLaPestana,
   destinoDeLaQuery,
   nonceDeLaQuery,
   tomarContexto,
   type DestinoDeChat,
-} from '../../core/messaging/enlace-de-chat';
+} from '../../core/messaging/chat-link';
 import { PharmacyOrdersClient } from '../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
@@ -38,6 +37,7 @@ import { EmptyState } from '../../shared/components/molecules/empty-state/empty-
 import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
+import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 
 /** Los cuatro filtros de la bandeja, en el orden en que se muestran. */
 const FILTROS = ['todos', 'no-leidos', 'favoritos', 'grupos'] as const;
@@ -91,6 +91,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
     NgTemplateOutlet,
     RouterOutlet,
     SegmentedControl,
+    LoadingState,
   ],
   templateUrl: './messaging.html',
   styleUrl: './messaging.css',
@@ -259,12 +260,9 @@ export class Messaging {
     return n === 1 ? '1 chat sin leer' : `${n} chats sin leer`;
   });
 
-  /** S2 mientras se resuelve el perfil. */
-  protected readonly cargando = loading();
-
   /**
-   * «Tenés 3 chats archivados». Con todo archivado la bandeja **no** está
-   * vacía: decir «Todavía no tenés chats» (S3) sería mentir, y la salida es
+   * «Tiene 3 chats archivados». Con todo archivado la bandeja **no** está
+   * vacía: decir «Todavía no tiene chats» (S3) sería mentir, y la salida es
    * abrir el cajón, no ir a buscar con quién hablar.
    */
   protected readonly rotuloArchivadas = computed(() => {
@@ -311,10 +309,9 @@ export class Messaging {
     // El `?escribirA=<slug>` con el que llegan el botón «Enviar mensaje» de una
     // ficha pública y «Hablar con el broker» del directorio de aseguradoras. Se
     // atiende cuando el perfil propio ya está resuelto: sin eso no hay con qué
-    // abrir el hilo. La ruta llega antes que el perfil: `ChatStore.escribirA`
-    // y `abrirConversacion` encolan el pedido hasta tenerlo (`conPerfil`), y
-    // antes, atenderlo en el acto lo descartaba en silencio —la bandeja
-    // quedaba abierta sin hilo—.
+    // abrir el hilo. La ruta llega antes que el perfil; la espera la hace el
+    // store (`escribirA` y `abrirConversacion` esperan al perfil propio, y sin
+    // él retoman al crearlo), así que acá se despacha en el acto.
     //
     // Los botones del marketplace («Chatear con la farmacia», «Consultar por
     // chat») dejan de qué se trata en `sessionStorage` y mandan sólo su nonce
@@ -482,21 +479,18 @@ export class Messaging {
 
   /** Abre el contacto autenticado sin resolverlo otra vez por slug público. */
   protected escribirAPerfil(profileId: string): void {
-    this.store.escribirAPerfil(profileId, (conversationId) => {
-      this.limpiarBusqueda();
-      void this.router.navigate(['/messaging', conversationId]);
-    });
+    this.store.escribirAPerfil(profileId, (conversationId) => this.irAlHilo(conversationId));
   }
 
-  private abrirConSlug(slug: string, contexto?: ContextoDeChat): void {
-    this.store.escribirA(
-      slug,
-      (conversationId) => this.irAlHilo(conversationId),
-      contexto,
-    );
+  private abrirConSlug(slug: string): void {
+    this.store.escribirA(slug, (conversationId) => this.irAlHilo(conversationId));
   }
 
-  private irAlHilo(conversationId: string): void {
+  /**
+   * Navega al hilo recién abierto. `reemplazar` cuando se llegó por un enlace
+   * (ver {@link abrirDesdeEnlace}); desde el buscador, la bandeja queda atrás.
+   */
+  private irAlHilo(conversationId: string, reemplazar = false): void {
     // La apertura terminó con la pantalla ya cerrada: no se navega.
     if (this.destruida) {
       return;
@@ -504,28 +498,28 @@ export class Messaging {
     this.limpiarBusqueda();
     // Sin `queryParams`: la dirección del hilo no hereda `escribirA` ni el
     // contexto, que ya se mandó.
-    void this.router.navigate(['/messaging', conversationId], { replaceUrl: true });
+    void this.router.navigate(['/messaging', conversationId], { replaceUrl: reemplazar });
   }
 
   /**
-   * Abre el hilo pedido por `?escribirA=` o `?pedido=` **reemplazando** esa
-   * entrada del historial.
+   * Abre el hilo pedido por `?escribirA=` **reemplazando** esa entrada del
+   * historial.
    *
    * Con un `navigate` común quedaban dos entradas de chat apiladas —
    * `/messaging?escribirA=…` y `/messaging/<id>`—, y la flecha «Volver» caía en
    * la primera, que reabría el hilo: quien tocaba «Hablar con el broker» no
-   * podía salir del chat. Reemplazando (`irAlHilo`), atrás vuelve a la ficha de
-   * donde vino.
+   * podía salir del chat. Reemplazando, atrás vuelve a la ficha de donde vino.
    */
-  private abrirDesdeEnlace(destino: DestinoDeChat, contexto?: ContextoDeChat): void {
+  private abrirDesdeEnlace(destino: DestinoDeChat, contexto: ContextoDeChat | undefined): void {
+    const alAbrir = (conversationId: string): void => this.irAlHilo(conversationId, true);
     if ('pedido' in destino) {
       this.store.abrirConversacion(
         this.pedidos.abrirConversacion(destino.pedido).pipe(map((r) => r.conversationId)),
-        (conversationId) => this.irAlHilo(conversationId),
+        alAbrir,
         contexto,
       );
     } else {
-      this.abrirConSlug(destino.escribirA, contexto);
+      this.store.escribirA(destino.escribirA, alAbrir, contexto);
     }
   }
 }

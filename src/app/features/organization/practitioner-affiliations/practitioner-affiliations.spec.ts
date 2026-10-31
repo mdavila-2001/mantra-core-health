@@ -9,7 +9,7 @@ import type { RoleAssignmentRow } from '../../../core/data-access/role-assignmen
 import { ServicesCatalogClient } from '../../../core/data-access/services-catalog/services-catalog.client';
 import { PractitionerAffiliations } from './practitioner-affiliations';
 
-function row(id: string, statusCode: string, initiatedBy: 'PRACTICE' | 'PRACTITIONER', site = 'site-1'): RoleAssignmentRow {
+function row(id: string, statusCode: string, initiatedBy: 'PRACTICE' | 'PRACTITIONER', site: string | null = 'site-1'): RoleAssignmentRow {
   return {
     id,
     practitionerProfileId: 'pp-1',
@@ -72,6 +72,19 @@ describe('PractitionerAffiliations', () => {
     expect(byId('affiliation-initiator-b')?.textContent).toContain('Invitado por el centro');
     expect(byId('affiliation-status-c')?.textContent).toContain('Activa');
     expect(byId('affiliation-status-d')).toBeNull();
+  });
+
+  it('una solicitud de QR multiuso (sin sede ni servicio) se ve siempre, se rotula y se lee «sin servicio asignado» en vez de «null»', () => {
+    rows = [...rows, { ...row('q', 'ROLE_ASG_PENDING', 'PRACTITIONER', null), healthcareServiceId: null, serviceConceptId: null, serviceDisplay: null }];
+    fixture = TestBed.createComponent(PractitionerAffiliations);
+    fixture.detectChanges();
+    expect(byId('affiliation-status-q')?.textContent).toContain('Pendiente del centro');
+    expect(byId('affiliation-initiator-q')?.textContent).toContain('Pedido por el médico');
+    expect(host().textContent).toContain('Sin sede asignada');
+    expect(host().textContent).not.toContain('null');
+    const aprobar = byId('affiliation-approve-q') as HTMLButtonElement;
+    expect(aprobar.getAttribute('aria-label')).toBe('Aprobar a Dra. Rojas para sin servicio asignado');
+    expect((byId('affiliation-reject-q') as HTMLButtonElement).getAttribute('aria-label')).toBe('Rechazar a Dra. Rojas para sin servicio asignado');
   });
 
   it('aprobar y rechazar solo existen sobre lo pendiente del centro', () => {

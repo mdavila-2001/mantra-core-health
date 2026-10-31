@@ -15,7 +15,7 @@ import {
   pinSubtitle,
   withCodes,
 } from './pharmacy-availability-dialog';
-import { destinoDeLaQuery, tomarContexto } from '@core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '@core/messaging/chat-link';
 
 /* ---- el doble de Leaflet -------------------------------------------------- */
 

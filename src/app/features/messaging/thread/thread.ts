@@ -30,6 +30,7 @@ import {
   conversationVerification as verificacionDe,
 } from '../../../core/messaging/conversation-label';
 import { dayLabel, clockTime } from '../../../shared/date/chat-time';
+import { releaseObjectUrlLater } from '../../../shared/utils/file-download/release-object-url';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -52,7 +53,7 @@ import {
   contextoDelTexto,
   ETIQUETA_DE_CONTEXTO,
   type ContextoDeChat,
-} from '../../../core/messaging/contexto-de-chat';
+} from '../../../core/messaging/chat-context';
 import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
 import {
   FOTOS_EN_GRILLA,
@@ -61,8 +62,8 @@ import {
   rutaParaQuienMira,
   subtituloDeContexto,
   VERBO_DE_CONTEXTO,
-} from './hilo-contexto';
-import { VisorDeImagenes, type ImagenDelVisor } from './visor-de-imagenes/visor-de-imagenes';
+} from './thread-context';
+import { ImageViewer, type ImagenDelVisor } from './image-viewer/image-viewer';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -302,14 +303,14 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
     ContentDialog,
     EmptyState,
     FilePreview,
+    ImageViewer,
     NgTemplateOutlet,
     RouterLink,
     EmojiPicker,
     Spinner,
-    VisorDeImagenes,
   ],
   templateUrl: './thread.html',
-  styleUrls: ['./thread.css', './thread-layers.css', './thread-medios.css'],
+  styleUrls: ['./thread.css', './thread-layers.css', './thread-media.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Thread {
@@ -1004,7 +1005,7 @@ export class Thread {
     );
   }
 
-  /** «Vos y Valeria reaccionaron con ❤️», para quien no puede pasar el mouse. */
+  /** «Usted y Valeria reaccionaron con ❤️», para quien no puede pasar el mouse. */
   protected rotuloDeReaccion(reaccion: MessageReaction): string {
     const nombres = reaccion.profileIds.map((id) => this.nombreDe(id));
     return `${nombres.join(', ')}: ${reaccion.emoji}`;
@@ -1391,14 +1392,12 @@ export class Thread {
       if (json === null) {
         return;
       }
-      const url = URL.createObjectURL(
-        new Blob([json], { type: 'application/json' }),
-      );
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
       const enlace = document.createElement('a');
       enlace.href = url;
       enlace.download = nombreDeArchivo(this.conQuien());
       enlace.click();
-      URL.revokeObjectURL(url);
+      releaseObjectUrlLater(url);
     });
   }
 
@@ -1709,7 +1708,7 @@ export class Thread {
     }
   }
 
-  /** Al enviar siempre se baja: escribiste vos. */
+  /** Al enviar siempre se baja: escribió usted. */
   protected alEnviar(): void {
     this.pegadoAbajo = true;
   }

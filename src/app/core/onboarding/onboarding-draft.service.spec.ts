@@ -118,6 +118,25 @@ describe('OnboardingDraftService', () => {
     vi.useRealTimers();
   });
 
+  it('un guardado en cola no sale si el borrador se descartó antes (el alta terminó)', () => {
+    vi.useFakeTimers();
+    service.saveProgress('practitioner', 0, 'name', 'Paso 1', { name: 'Ana' });
+    vi.advanceTimersByTime(500);
+    http
+      .expectOne((r) => r.method === 'PUT')
+      .flush({ ok: true, savedAt: 'x', draftSecret: 'secreto-3' });
+
+    // Último paso guardado y, dentro de los 400 ms, el alta termina y descarta.
+    service.saveProgress('practitioner', 9, 'signature-seal', 'Paso 10', { name: 'Ana' });
+    service.clearDraft('practitioner', { immediate: true });
+    vi.advanceTimersByTime(500);
+
+    // Sin esto salía un PUT sin secreto sobre un id tomado: 404.
+    http.expectNone((r) => r.method === 'PUT');
+    http.expectOne((r) => r.method === 'DELETE').flush(null);
+    vi.useRealTimers();
+  });
+
   it('ante un 404 empieza otro borrador remoto en vez de insistir con el mismo id', () => {
     vi.useFakeTimers();
     const idViejo = service.getOrCreateDraftId('practitioner');

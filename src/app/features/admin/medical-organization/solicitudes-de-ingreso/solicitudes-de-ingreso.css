@@ -1,0 +1,17 @@
+.buzon__nombre {
+  display: block;
+  font-weight: 500;
+}
+
+.buzon__secundario {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.buzon__acciones {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}

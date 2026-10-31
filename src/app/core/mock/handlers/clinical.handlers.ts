@@ -307,12 +307,12 @@ export function registrarClinica(router: MockRouter): void {
       id: nuevoId('rx'),
       patientProfileId: datos.patientProfileId ?? '',
       medicationConceptId: datos.medicationConceptId ?? '',
-      statusConceptId: PRESCRIPTION_STATUS['RX-DRAFT']!,
+      statusConceptId: PRESCRIPTION_STATUS['MR_DRAFT']!,
       prescriberProfileId: datos.prescriberProfileId ?? request.user?.practitionerProfileId ?? MEDICAL.id,
       doseText: datos.doseText ?? '',
       frequencyText: datos.frequencyText ?? '',
       validFrom: datos.validFrom ?? ahora(),
-      validTo: datos.validTo ?? ahora(),
+      validTo: datos.validTo ?? null, // sin `validTo` no vence, como en la API
       patientInstructionsText: datos.patientInstructionsText ?? '',
       // El «para qué es» de la receta. El concepto gana sobre el texto libre,
       // igual que la ocupación del alta de paciente: el texto sólo tenía
@@ -360,13 +360,13 @@ export function registrarClinica(router: MockRouter): void {
   router.post('/clinical/medication-requests/:id/sign', ({ params }) => {
     const r = prescriptionList.get(params['id']!);
     if (r === undefined) return notFound();
-    return registroReceta(prescriptionList.actualizar(r.id, { signedAt: ahora(), statusConceptId: PRESCRIPTION_STATUS['RX-ACTIVE']! })!);
+    return registroReceta(prescriptionList.actualizar(r.id, { signedAt: ahora() })!); // firmar no emite, como en la API
   });
 
   router.post('/clinical/medication-requests/:id/issue', ({ params }) => {
     const r = prescriptionList.get(params['id']!);
     if (r === undefined) return notFound();
-    return registroReceta(prescriptionList.actualizar(r.id, { issuedAt: ahora(), statusConceptId: PRESCRIPTION_STATUS['RX-ACTIVE']! })!);
+    return registroReceta(prescriptionList.actualizar(r.id, { issuedAt: ahora(), statusConceptId: PRESCRIPTION_STATUS['MR_ISSUED']! })!);
   });
 
   /**
@@ -419,14 +419,30 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/conditions', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; lateralityConceptId?: string; clinicalCourseConceptId?: string; onsetAt?: string; expectedResolutionAt?: string; noteText?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; lateralityConceptId?: string; clinicalCourseConceptId?: string; verificationStatusConceptId?: string; onsetAt?: string; expectedResolutionAt?: string; noteText?: string }>(request);
+
+    // Como `ConditionsService.create`: nace presuntivo o confirmado (por omisión confirmado). Antes
+    // se fijaba siempre presuntivo y un `verificationStatus` que la API rechaza pasaba limpio.
+    const presuntivo = VERIFICATION_DX['COND_PROVISIONAL']!;
+    const confirmado = VERIFICATION_DX['COND_CONFIRMED']!;
+    if (
+      datos.verificationStatusConceptId !== undefined &&
+      datos.verificationStatusConceptId !== presuntivo &&
+      datos.verificationStatusConceptId !== confirmado
+    ) {
+      return preconditionFailed('Un diagnóstico se registra presuntivo o confirmado.', {
+        field: 'verificationStatusConceptId',
+      });
+    }
+    const nace = datos.verificationStatusConceptId ?? confirmado;
+
     const nueva: SimulatedCondition = {
       id: nuevoId('condition'),
       patientProfileId: datos.patientProfileId ?? '',
       codeConceptId: datos.codeConceptId ?? '',
       categoryConceptId: datos.categoryConceptId ?? DX_CATEGORY,
       clinicalStatusConceptId: CONDITION_STATUS['COND_ACTIVE']!,
-      verificationStatusConceptId: VERIFICATION_DX['COND_PROVISIONAL']!,
+      verificationStatusConceptId: nace,
       severityConceptId: datos.severityConceptId ?? SEVERITY['SEV-MILD']!,
       // El curso y la fecha esperada **se guardan**: el contrato los declara
       // desde el patch v4.0.8 y el simulador los descartaba, así que registrar
@@ -446,7 +462,7 @@ export function registrarClinica(router: MockRouter): void {
       encounterId: nueva.encounterId,
       autorProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
     });
-    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: 'PROVISIONAL', clinicalCourse: nueva.clinicalCourseConceptId ?? null, createdAt: nueva.createdAt } };
+    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: nace === presuntivo ? 'PROVISIONAL' : 'CONFIRMED', clinicalCourse: nueva.clinicalCourseConceptId ?? null, createdAt: nueva.createdAt } };
   });
 
   router.post('/clinical/conditions/:id/change-status', (request) => {
@@ -828,7 +844,7 @@ async function recetaEnPdf(r: SimulatedPrescription): Promise<ArrayBuffer> {
 }
 
 function registroReceta(r: SimulatedPrescription) {
-  return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === PRESCRIPTION_STATUS['RX-DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
+  return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === PRESCRIPTION_STATUS['MR_DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
 }
 
 /**

@@ -80,3 +80,17 @@ bloqueados. El flujo termina en **abrir el PR**. El CI propio está caído; los
 del usuario, 28/10/2026; ejemplo: #1526 y #1543). El de `test` sale de una rama
 propia creada desde `test` con solo los commits del cambio (cherry-pick); nunca
 desde la rama de `dev`, que arrastraría lo que `test` todavía no tiene.
+
+## Trabajo en paralelo (autorización explícita)
+
+Por pedido del usuario (30/10/2026) para el portal de reportería
+(`docs/trabajo/2026-10-30-reporteria-comercial-alovida/`), la regla 70 de la casa
+(1 subagente, sin background) se relaja **sólo para esa tarea**: varios agentes en
+paralelo, cada uno dueño de archivos **disjuntos** (una pestaña por agente). Se
+mantiene: **un solo navegador de pruebas a la vez** y capturas en serie, y quien
+implementa no aprueba su propio trabajo.
+
+También por pedido del usuario (30/10/2026) para **AloVida Insights** como portal propio
+(`docs/trabajo/2026-10-30-alovida-insights-portal/`): la misma relajación, en archivos disjuntos
+entre el front, el API y el modelo. Mismas reservas: un solo navegador de pruebas y quien implementa
+no aprueba su propio trabajo.

@@ -4330,6 +4330,22 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
   );
 }
 
+/* `app-form-actions` en el pie del modal (`dialog-actions`). Afuera es una
+   barra de página: línea arriba, relleno y, en teléfono, pegada al fondo con
+   fondo propio y estirada hasta el borde del marco. En el pie del modal, que ya
+   pone su línea, su aire y su lugar fijo, dibujaba una segunda línea y, en
+   teléfono, una caja blanca corrida dentro del pie (sucursales, objetar un
+   cobro, 28/10/2026). Mismo arreglo que ya tenía «Editar perfil» con
+   `.edicion__acciones-modal`, ahora para todos. */
+.content-dialog__pie > app-form-actions {
+  flex-wrap: wrap;
+  position: static;
+  margin-inline: 0;
+  padding: 0;
+  background: transparent;
+  border-block-start: 0;
+}
+
 .content-dialog__cuerpo .app-form-grid.app-form-grid.app-form-grid > app-form-field:has(app-textarea) {
   grid-column: 1 / -1;
 }

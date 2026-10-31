@@ -66,6 +66,14 @@ describe('routeTemplate', () => {
     expect(routeTemplate(router, '/no/existe/esto')).toBe('/no/existe/esto');
   });
 
+  it('el token de una receta compartida no sobrevive aunque ninguna rama encaje (FAR-01)', () => {
+    const token = 'Q2hhcmxpZVN5bnRoZXRpY1Rva2VuMDEyMzQ1Njc4OWFi';
+    expect(routeTemplate(router, `/rx/${token}`)).toBe('/rx/:token');
+    expect(routeTemplate(router, `/administration/pharmacy-orders/rx/${token}`)).toBe(
+      '/administration/pharmacy-orders/rx/:token',
+    );
+  });
+
   it('la raíz es la raíz', () => {
     expect(routeTemplate(router, '/')).toBe('/');
   });

@@ -26,8 +26,6 @@ import { Router } from '@angular/router';
 /**
  * La sesión del mostrador. El botón del chat inyecta `ChatStore`, que mira
  * quién es la cuenta (para no heredar la identidad de otra en la pestaña).
- * Lleva `userId` también por `CartStore` (ver `../pharmacy-inbox.spec.ts`):
- * sin él, su `effect()` revienta en un tick asíncrono y envenena el worker.
  */
 const SESION_DEL_MOSTRADOR = {
   displayName: () => 'Ana Pérez',
@@ -66,6 +64,10 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
           { path: 'administration/pharmacy-orders/:orderId', component: InboxOrder },
           { path: 'messaging/:id', component: HiloDePrueba },
         ]),
+        // Ver el mismo comentario en `../pharmacy-inbox.spec.ts`: sin
+        // `userId`, el `effect()` de `CartStore` (construido igual por
+        // `PharmacyOrdersClient`, aunque esta pantalla no tenga carrito)
+        // revienta en un tick asíncrono y envenena al resto del worker.
         { provide: SessionStore, useValue: SESION_DEL_MOSTRADOR },
         {
           provide: DialogService,

@@ -14,6 +14,7 @@ import { environment } from '../../../environments/environment';
 import { failureBody, failureFor, type SimulatedFailure } from './simulated-failures';
 import { forcedRealApi } from './api-mode';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
+import { bloqueoDelToken } from './mock-token-guard';
 import { usuarioDeAccessToken } from './mock-session';
 
 /* ============================================================================
@@ -95,6 +96,13 @@ function atender(
     return timer(latencia(path)).pipe(mergeMap(() => emitirFallo(request, path, fallo)));
   }
 
+  // Lo que la API hace cumplir con el token antes de cualquier ruta: el alcance limitado del segundo factor
+  // (403 `MFA_ENROLLMENT_REQUIRED`) y la organización que niega ahora a la persona (403 con su motivo).
+  const cerrado = bloqueoDelToken(request, method, path);
+  if (cerrado !== null) {
+    return timer(latencia(path)).pipe(mergeMap(() => emitir(request, cerrado)));
+  }
+
   // `forbidNonWhitelisted`, como la API: una clave que el DTO no declara es
   // un 400 acá también, y no recién en producción. Ver `contract/`.
   const rechazo = contrato.contractViolations(method, path, request.body);
@@ -144,11 +152,43 @@ function atender(
     };
   }
 
+  anotarEnElRegistro(method, path, request, respuesta);
   return timer(latencia(path)).pipe(mergeMap(() => emitir(request, respuesta)));
 }
 
 function comoRespuesta(resultado: unknown): MockReply {
   return isMockReply(resultado) ? resultado : { status: 200, body: resultado };
+}
+
+/**
+ * Registro de peticiones de la maqueta, **sólo si la sesión lo pide**
+ * (`sessionStorage['mock:registrar'] = '1'`).
+ *
+ * La maqueta responde dentro de Angular, así que Playwright no ve ninguna
+ * petición de red: sin esto, la cadena «UI → petición → respuesta» de una
+ * prueba de mutación sólo se podía afirmar, no mostrar. Escrituras nada más
+ * (las lecturas son ruido), con método, ruta, `If-Match`, cuerpo y estado.
+ * Apagado por defecto y muere con la pestaña, igual que `mock:fallos`.
+ */
+function anotarEnElRegistro(method: MockMethod, path: string, request: HttpRequest<unknown>, respuesta: MockReply): void {
+  if (method === 'GET' || typeof sessionStorage === 'undefined') return;
+  try {
+    if (sessionStorage.getItem('mock:registrar') !== '1') return;
+    const previo: unknown = JSON.parse(sessionStorage.getItem('mock:registro') ?? '[]');
+    const lista = Array.isArray(previo) ? previo.slice(-49) : [];
+    lista.push({
+      method,
+      path,
+      query: request.params.toString(),
+      ifMatch: request.headers.get('If-Match'),
+      body: request.body,
+      status: respuesta.status,
+      at: new Date().toISOString(),
+    });
+    sessionStorage.setItem('mock:registro', JSON.stringify(lista));
+  } catch {
+    // Almacenamiento lleno o bloqueado: el registro es una ayuda, no un requisito.
+  }
 }
 
 /**
@@ -188,9 +228,21 @@ export interface PeticionAtendida {
   readonly status: number;
   /** El cuerpo JSON enviado, o `null` si no lo había o no era JSON. */
   readonly body: unknown;
+  /**
+   * Lo que contestó el simulador, **solo** para el inicio de sesión y su renovación
+   * (es lo único que una prueba no puede leer de otra forma: el token vive en memoria y
+   * lo que demuestra qué claims llegan —el plazo de inactividad de la política de
+   * sesión—) y para las rutas chicas de seguridad y de vínculos cuya **forma** es el
+   * contrato con la API (dispositivos, segundo paso, redes y los vínculos de la persona).
+   * El resto no se guarda: serían trescientas copias de fixtures grandes.
+   */
+  readonly response?: unknown;
   /** Lo que respondió, resumido: estado de la admisión, no el cuerpo entero. Solo JSON. */
   readonly respuesta?: unknown;
 }
+
+/** Las rutas de las que `window.__mockRequests` guarda también lo que contestó el simulador. */
+const RESPUESTAS_RECORDADAS = /\/iam\/auth\/(login|token\/refresh)|\/org\/access\/simulate|\/iam\/me\/(devices|mfa)|\/org\/ip-access-rules|\/me\/support-engagements|\/me\/support-patients|\/me\/support-agenda|\/affiliation-invitations\/redeem/;
 
 /** Cuántas peticiones recuerda `window.__mockRequests`: las últimas. */
 const PETICIONES_RECORDADAS = 300;
@@ -221,10 +273,19 @@ function anotarPeticion(request: HttpRequest<unknown>, status: number, cuerpoRes
   const body = cuerpoComoJson(request.body);
   const base = environment.apiBaseUrl.replace(/\/$/, '');
   const url = base !== '' && request.urlWithParams.startsWith(base) ? request.urlWithParams.slice(base.length) : request.urlWithParams;
+  const conRespuesta =
+    RESPUESTAS_RECORDADAS.test(url) && status < 400 ? { response: cuerpoComoJson(cuerpoRespuesta) } : {};
   // Solo lo chico: guardar cada catálogo entero haría de esta lista un problema de memoria.
   const completa = cuerpoRespuesta instanceof Blob ? null : cuerpoComoJson(cuerpoRespuesta);
   const respuesta = completa !== null && JSON.stringify(completa).length <= 400_000 ? completa : null;
-  registro.push({ method: request.method.toUpperCase(), url, status, body, ...(respuesta === null ? {} : { respuesta }) });
+  registro.push({
+    method: request.method.toUpperCase(),
+    url,
+    status,
+    body,
+    ...conRespuesta,
+    ...(respuesta === null ? {} : { respuesta }),
+  });
   if (registro.length > PETICIONES_RECORDADAS) registro.shift();
 }
 

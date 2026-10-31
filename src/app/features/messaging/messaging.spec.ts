@@ -6,8 +6,8 @@ import { provideRouter, Router } from '@angular/router';
 import { Messaging } from './messaging';
 import { ChatStore } from '../../core/messaging/chat.store';
 import { ChatPreferences } from '../../core/messaging/chat-preferences';
-import type { ContextoDeChat } from '../../core/messaging/contexto-de-chat';
-import { guardarContexto, tomarContexto } from '../../core/messaging/enlace-de-chat';
+import type { ContextoDeChat } from '../../core/messaging/chat-context';
+import { guardarContexto, tomarContexto } from '../../core/messaging/chat-link';
 
 /**
  * Lo que estas pruebas fijan.
@@ -109,7 +109,7 @@ describe('Messaging', () => {
 
     // El favorito y el archivado viven en `localStorage`: sin limpiarlo, lo que
     // marca una prueba se lo encuentra la siguiente.
-    localStorage.removeItem('alovida.chat-preferencias');
+    localStorage.removeItem('alovida.chat-preferences');
 
     TestBed.configureTestingModule({
       providers: [
@@ -353,8 +353,6 @@ describe('Messaging', () => {
     // aviso global encima de la pantalla.
     expect(texto()).toContain('pueden estar atrasados');
     expect(fixture.nativeElement.querySelector('.mensajeria__alerta')).toBeNull();
-    // El motivo (acá, sin conexión) va junto a la bandeja, no encima.
-    expect(consultar('bandeja-motivo-atrasada')?.textContent).toContain('No hay conexión con el servidor');
   });
 
   it('si la primera lectura falla, ofrece reintentar y no dice «no tiene chats»', () => {
@@ -539,12 +537,12 @@ describe('Messaging', () => {
 
       // Ni al directorio: la API no deja buscar contactos como la vitrina.
       vi.advanceTimersByTime(300);
-      http.expectNone((r) => r.url === '/public/search/practitioners');
+      http.expectNone((r) => r.url === '/community/conversations/contacts/search');
       expect(consultar('mensajeria-resultado')).toBeNull();
 
       escribir('nadie');
       vi.advanceTimersByTime(300);
-      http.expectNone((r) => r.url === '/public/search/practitioners');
+      http.expectNone((r) => r.url === '/community/conversations/contacts/search');
       const sinNada = consultar('mensajeria-sin-coincidencias')?.textContent ?? '';
       expect(sinNada).toContain('Ningún chat de Farmacia Vida coincide');
       expect(sinNada).toContain('sólo se responde');

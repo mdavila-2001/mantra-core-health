@@ -250,15 +250,14 @@ export class ChatSocketService {
     this.socket?.disconnect();
     this.socket = null;
 
-    // TX-17: el token se lee en cada handshake, no al abrir (`auth` como
-    // función, ver `AuthDeSocket`): un chat abierto más de 15 minutos
-    // reconecta con el access token **vigente** y no con el que había cuando
-    // se abrió la pestaña, que para entonces ya venció.
+    // El token se lee en cada handshake, no al abrir: ver `AuthDeSocket`.
     const socket = this.fabrica((cb) => cb({ token: this.session.accessToken() }));
     if (socket === null) {
       return null;
     }
 
+    // Re-unirse en cada `connect` —el primero y cada reconexión—: el servidor
+    // no recuerda las salas de un transporte que se cayó.
     socket.on('connect', () => {
       this.connected.set(true);
       this.unirseALasSalas(socket);
@@ -327,9 +326,8 @@ export class ChatSocketService {
   }
 
   /**
-   * Cierra el socket, si había uno, y olvida las salas. Se llama sola al
-   * cerrar sesión: las salas eran de esa cuenta, y el `connect` de la próxima
-   * no puede volver a unirse a ellas.
+   * Cierra el socket, si había uno, y olvida las salas: son de la sesión que
+   * terminó. Se llama sola al cerrar sesión (TX-17).
    */
   disconnect(): void {
     this.reiniciar();

@@ -1,0 +1,64 @@
+@if (esProfesional()) {
+  <app-card variant="outlined" padding="lg" data-testid="solicitar-pertenecer">
+    <h2 class="solicitar__titulo">Pertenecer a esta organización</h2>
+
+    @if (lectura().status === 'loading') {
+      <app-loading-state message="Comprobando su vínculo…" />
+    } @else if (errorDeLectura(); as motivo) {
+      <app-alert tone="warning" data-testid="solicitar-error-lectura">
+        {{ motivo }}
+        <div alert-actions>
+          <button app-button type="button" variant="outline" size="sm" (clicked)="cargar()">
+            Reintentar
+          </button>
+        </div>
+      </app-alert>
+    } @else if (contexto(); as ctx) {
+      @if (enviada()) {
+        <app-alert appAnuncio [asertivo]="false" tone="success" data-testid="solicitar-enviada">
+          Solicitud enviada. Queda pendiente hasta que la organización la apruebe.
+        </app-alert>
+      }
+      @if (errorDeEnvio(); as motivo) {
+        <app-alert appAnuncio tone="error" data-testid="solicitar-error-envio">{{ motivo }}</app-alert>
+      }
+
+      @if (ctx.vinculo; as vinculo) {
+        <p class="solicitar__nota" role="status" data-testid="solicitar-bloqueada">
+          @switch (vinculo.status) {
+            @case (estadoActivo) {
+              Ya pertenece a esta organización. Puede retirarse desde «Mis organizaciones».
+            }
+            @case (estadoPendiente) {
+              Su solicitud está pendiente: la organización todavía tiene que aprobarla.
+            }
+            @default {
+              Su vínculo con esta organización está suspendido. Consúltelo con la organización.
+            }
+          }
+        </p>
+      } @else if (ctx.practiceId === null) {
+        <p class="solicitar__nota" data-testid="solicitar-sin-id">
+          No pudimos identificar esta organización para enviar la solicitud desde acá. Pídala desde
+          «Mis organizaciones».
+        </p>
+      } @else {
+        <p class="solicitar__nota">
+          La solicitud queda pendiente hasta que la organización la apruebe. Estar vinculado no da
+          acceso a sus pacientes.
+        </p>
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          [isLoading]="enviando()"
+          [disabled]="enviando()"
+          data-testid="solicitar-boton"
+          (clicked)="solicitar()"
+        >
+          Solicitar pertenecer a esta organización
+        </button>
+      }
+    }
+  </app-card>
+}

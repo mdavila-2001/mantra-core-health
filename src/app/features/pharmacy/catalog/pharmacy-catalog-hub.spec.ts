@@ -11,7 +11,7 @@ import { PharmacyProducts } from '../products/pharmacy-products';
 import { PharmacyCatalogHub } from './pharmacy-catalog-hub';
 
 /**
- * «Catálogo» de la farmacia: cinco pantallas en una tarjeta con pestañas, con
+ * «Catálogo» de la farmacia: seis pantallas en una tarjeta con pestañas, con
  * la pestaña en `?tab=` en las dos direcciones. Las pantallas son las reales;
  * sus peticiones quedan sin contestar porque acá sólo importa cuál se monta.
  */
@@ -23,6 +23,7 @@ const SCREENS = [
   'app-pharmacy-prices',
   'app-pharmacy-inventory',
   'app-pharmacy-import',
+  'app-pharmacy-integration',
 ] as const;
 
 describe('PharmacyCatalogHub', () => {
@@ -55,7 +56,7 @@ describe('PharmacyCatalogHub', () => {
     router = TestBed.inject(Router);
   });
 
-  it('dibuja un membrete «Catálogo» y UNA tarjeta con cinco pestañas de marco de ventana, en orden', async () => {
+  it('dibuja un membrete «Catálogo» y UNA tarjeta con seis pestañas de marco de ventana, en orden', async () => {
     await open(ROUTE);
 
     const headers = root().querySelectorAll('app-page-header');
@@ -70,6 +71,7 @@ describe('PharmacyCatalogHub', () => {
       'Precios',
       'Inventario',
       'Importación',
+      'Integración',
     ]);
   });
 
@@ -87,7 +89,15 @@ describe('PharmacyCatalogHub', () => {
     expect(mountedScreens()).toEqual(['app-pharmacy-prices']);
   });
 
-  it.each(['foo', 'integration'])('con `?tab=%s` cae en Productos', async (tab) => {
+  it('con `?tab=integration` abre Integración y sólo Integración está en el DOM', async () => {
+    await open(`${ROUTE}?tab=integration`);
+
+    expect(selectedLabel()).toBe('Integración');
+    expect(mountedScreens()).toEqual(['app-pharmacy-integration']);
+    expect(root().querySelectorAll('app-page-header')).toHaveLength(1);
+  });
+
+  it.each(['foo', 'INTEGRATION'])('con `?tab=%s` cae en Productos', async (tab) => {
     await open(`${ROUTE}?tab=${tab}`);
 
     expect(selectedLabel()).toBe('Productos');
@@ -95,7 +105,7 @@ describe('PharmacyCatalogHub', () => {
   });
 
   it('ninguna pantalla montada dibuja su propio membrete', async () => {
-    for (const tab of ['products', 'categories', 'prices', 'inventory', 'import']) {
+    for (const tab of ['products', 'categories', 'prices', 'inventory', 'import', 'integration']) {
       await open(`${ROUTE}?tab=${tab}`);
       expect(root().querySelectorAll('app-page-header'), tab).toHaveLength(1);
     }

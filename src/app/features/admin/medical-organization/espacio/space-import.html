@@ -1,0 +1,114 @@
+<app-page-header
+  title="Importar espacios desde CSV"
+  subtitle="Pegá o elegí la planilla. Se valida primero sin escribir nada; recién después se confirma, todo o nada."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="estructura()" (retry)="cargar()">
+  @if (fallo(); as estado) {
+    <app-view-state-host class="importar__fallo" data-testid="importar-fallo" [state]="estado" (retry)="validar()" />
+  }
+  <app-card class="importar" padding="lg" data-testid="importar">
+    @if (creados() !== null) {
+      <app-alert tone="success" title="Importación confirmada" data-testid="importar-ok">
+        Se crearon {{ creados() }} espacio(s), planificados. Se activan desde su ficha.
+        <div alert-actions>
+          <button app-button size="sm" (clicked)="irAlArbol()">Ver en el árbol</button>
+        </div>
+      </app-alert>
+    }
+
+    <div class="importar__entrada">
+      <div class="importar__ayuda">
+        <h2 class="importar__titulo">1 · La planilla</h2>
+        <p>
+          Columnas obligatorias: <code>code</code>, <code>name</code>, <code>form</code>, <code>function</code>.
+          Opcionales: <code>parent</code> (código del padre, existente o de una fila anterior), <code>areaM2</code>,
+          <code>floor</code>, <code>capacity</code>, <code>bedCategory</code>, <code>censable</code>… Separador coma o punto y coma.
+        </p>
+        <div class="importar__botones">
+          <label class="importar__archivo">
+            <span>Elegir archivo .csv</span>
+            <input type="file" accept=".csv,text/csv" (change)="elegirArchivo($event)" data-testid="importar-archivo" />
+          </label>
+          <a app-button size="sm" variant="ghost" [href]="plantilla" download="plantilla-espacios.csv">Descargar plantilla</a>
+        </div>
+        @if (nombreDeArchivo(); as nombre) {
+          <p class="importar__secundario">Archivo: {{ nombre }}</p>
+        }
+      </div>
+      <label class="importar__texto">
+        <span class="importar__titulo">O pegalo acá</span>
+        <textarea
+          rows="8"
+          spellcheck="false"
+          data-testid="importar-texto"
+          [value]="texto()"
+          (input)="escribir($any($event.target).value)"
+          placeholder="code,name,form,function,parent"
+        ></textarea>
+      </label>
+    </div>
+
+    @if (parseo(); as p) {
+      <section class="importar__paso" aria-labelledby="importar-paso-2">
+        <h2 id="importar-paso-2" class="importar__titulo">2 · Lectura del archivo</h2>
+        <p class="importar__secundario">{{ p.rows.length }} fila(s) leídas.</p>
+        @if (erroresDeForma().length > 0) {
+          <table class="importar__tabla" data-testid="importar-errores-forma">
+            <caption>Problemas de forma, por línea del archivo</caption>
+            <thead><tr><th scope="col">Línea</th><th scope="col">Campo</th><th scope="col">Qué pasa</th></tr></thead>
+            <tbody>
+              @for (e of erroresDeForma(); track $index) {
+                <tr><td>{{ e.line }}</td><td><code>{{ e.field }}</code></td><td>{{ e.reason }}</td></tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+    }
+
+    <div class="importar__acciones">
+      <a app-button variant="ghost" [routerLink]="rutaDeConsola" [queryParams]="{ tab: 'infrastructure', site: sitio }">Volver</a>
+      <button app-button variant="outline" type="button" [disabled]="!puedeValidar()" (clicked)="validar()" data-testid="importar-validar">
+        {{ enviando() && validacion() === null ? 'Validando…' : 'Validar sin escribir' }}
+      </button>
+      <button app-button type="button" [disabled]="!puedeConfirmar() || creados() !== null" (clicked)="confirmar()" data-testid="importar-confirmar">
+        Confirmar importación
+      </button>
+    </div>
+
+    @if (validacion(); as v) {
+      <section class="importar__paso" aria-labelledby="importar-paso-3" aria-live="polite">
+        <h2 id="importar-paso-3" class="importar__titulo">3 · Validación de la API</h2>
+        @if (v.ok) {
+          <app-alert tone="success" title="Todo en regla">Las {{ v.rows.length }} filas se pueden importar.</app-alert>
+        } @else {
+          <app-alert tone="error" title="Hay filas con errores" data-testid="importar-hay-errores">
+            Corregí la planilla y volvé a validar: la importación es todo o nada.
+          </app-alert>
+        }
+        <table class="importar__tabla" data-testid="importar-resultado">
+          <caption>Resultado por línea del archivo</caption>
+          <thead><tr><th scope="col">Línea</th><th scope="col">Código</th><th scope="col">Estado</th><th scope="col">Errores</th></tr></thead>
+          <tbody>
+            @for (f of filasDeResultado(); track f.line) {
+              <tr [class.importar__fila-error]="f.status === 'error'">
+                <td>{{ f.line }}</td>
+                <td><code>{{ f.code }}</code></td>
+                <td><app-badge [variant]="f.status === 'ok' ? 'success' : 'error'">{{ f.status === 'ok' ? 'Bien' : 'Error' }}</app-badge></td>
+                <td>
+                  @for (e of f.errores; track e) {
+                    <span class="importar__error">{{ e }}</span>
+                  } @empty {
+                    —
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+  </app-card>
+</app-view-state-host>

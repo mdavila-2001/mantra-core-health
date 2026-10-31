@@ -49,11 +49,21 @@ export function operationDetail(over: Partial<OperacionDetalle> = {}): Operacion
     negocio: { texto: 'Muestra los cupos libres de una agenda.', estado: 'DOCUMENTADO', fuentes: [] },
     sistema: 'Lee los cupos con su capacidad.',
     razonesDeRiesgo: ['Sólo lee'],
-    requerimientos: [{ tipo: 'ROL', detalle: 'Alguno de: SCHEDULING_ADMIN', fuente: 'scheduling.controller.ts:40' }],
+    requerimientos: [
+      { tipo: 'AUTENTICACION', detalle: 'JWT Bearer', fuente: 'contrato (security)' },
+      { tipo: 'ROL', detalle: 'Alguno de: SCHEDULING_ADMIN', fuente: 'scheduling.controller.ts:40' },
+      { tipo: 'TENANT', detalle: 'Tenant por cabecera X-Tenant-Id o por la membresía única del actor; 403 si es ambiguo o no le pertenece', fuente: 'src/app.module.ts:282' },
+      { tipo: 'RATE_LIMIT', detalle: '300 solicitudes cada 60 s (límite global)', fuente: 'src/app.module.ts:149' },
+    ],
     parametros: [{ nombre: 'from', en: 'query', obligatorio: true, tipo: 'string', descripcion: 'Desde' }],
     cuerpo: null,
     respuesta: { tipoRetorno: 'SlotPage', dto: 'SlotPageDto', httpCode: '200', campos: [] },
-    respuestasPosibles: [{ estado: 200, codigo: null, causas: ['Éxito'] }],
+    respuestasPosibles: [
+      { estado: 200, codigo: null, causas: ['Éxito'] },
+      { estado: 401, codigo: 'UNAUTHENTICATED', causas: ['Hay una sesión válida (JWT)'] },
+      { estado: 403, codigo: 'FORBIDDEN', causas: ['El rol está permitido', 'El tenant se resuelve y pertenece al actor'] },
+    ],
+    // Dos caminos de lectura a la misma tabla y una escritura: la pestaña debe contar una tabla, no tres filas.
     datos: [
       {
         schema: 'scheduling',
@@ -61,12 +71,32 @@ export function operationDetail(over: Partial<OperacionDetalle> = {}): Operacion
         operacion: 'LEE',
         detalle: 'LEE',
         confianza: 'DIRECTA',
-        via: ['SlotsRepository.find'],
+        via: ['SchedulingController.listSlots', 'SlotsService.list', 'SlotsRepository.find'],
         fuente: 'slots.repository.ts:12',
         catalogada: true,
       },
+      {
+        schema: 'scheduling',
+        tabla: 'slots',
+        operacion: 'LEE',
+        detalle: 'LEE',
+        confianza: 'POR_SQL',
+        via: ['SchedulingController.listSlots', 'SlotsService.list', 'SlotsRepository.countByDay'],
+        fuente: 'slots.repository.ts:40',
+        catalogada: true,
+      },
+      {
+        schema: 'scheduling',
+        tabla: 'slot_views',
+        operacion: 'ESCRIBE',
+        detalle: 'CREA',
+        confianza: 'POR_TIPO',
+        via: ['SchedulingController.listSlots', 'SlotsService.list', 'SlotViewsRepository.record'],
+        fuente: 'slot-views.repository.ts:8',
+        catalogada: true,
+      },
     ],
-    eventos: [],
+    eventos: ['scheduling.slots.viewed'],
     trabajos: [],
     noResuelto: [],
     sinTablas: null,
@@ -75,6 +105,22 @@ export function operationDetail(over: Partial<OperacionDetalle> = {}): Operacion
     datosPersonales: 'SIN_FUENTE',
     ...over,
   };
+}
+
+/**
+ * Los accesos a tablas de `POST /billing/bills` tal como los trae el inventario
+ * (`inventario/endpoints/billing.json`): `billing.bills` aparece dos veces, una
+ * como `ESCRIBE/CREA` y otra como `LEE`. Son metadatos del código, no datos de personas.
+ */
+export function billingTables(): OperacionDetalle['datos'] {
+  const via = (leaf: string): readonly string[] => ['BillingPayablesController.registerBill', 'BillsService.register', leaf];
+  return [
+    { schema: 'billing', tabla: 'bill_lines', operacion: 'ESCRIBE', detalle: 'CREA', confianza: 'DIRECTA', via: via('BillsRepository.createLine'), fuente: 'src/modules/billing/repositories/bills.repository.ts:209', catalogada: true },
+    { schema: 'billing', tabla: 'bills', operacion: 'ESCRIBE', detalle: 'CREA', confianza: 'DIRECTA', via: via('BillsRepository.create'), fuente: 'src/modules/billing/repositories/bills.repository.ts:177', catalogada: true },
+    { schema: 'billing', tabla: 'bills', operacion: 'LEE', detalle: 'LEE', confianza: 'DIRECTA', via: via('BillsRepository.findByNumber'), fuente: 'src/modules/billing/repositories/bills.repository.ts:155', catalogada: true },
+    { schema: 'billing', tabla: 'vendors', operacion: 'LEE', detalle: 'LEE', confianza: 'POR_SQL', via: via('BillsRepository.findVendor'), fuente: 'src/modules/billing/repositories/bills.repository.ts:166', catalogada: true },
+    { schema: 'erp', tabla: 'contracts', operacion: 'LEE', detalle: 'LEE', confianza: 'DIRECTA', via: [], fuente: 'src/modules/billing/repositories/link-targets.repository.ts:47', catalogada: false },
+  ];
 }
 
 export function tree(): Arbol {

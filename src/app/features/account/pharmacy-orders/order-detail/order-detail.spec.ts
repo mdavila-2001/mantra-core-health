@@ -14,7 +14,7 @@ import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-ord
 import { uuid } from '../../../../core/mock/mock-store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { OrderDetail } from './order-detail';
-import { destinoDeLaQuery, tomarContexto } from '../../../../core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '../../../../core/messaging/chat-link';
 
 describe('OrderDetail with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;

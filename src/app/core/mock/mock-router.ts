@@ -104,6 +104,23 @@ export function unauthorized(message = 'Credenciales inválidas'): MockReply {
   });
 }
 
+/**
+ * El rechazo del `ValidationPipe` de la API: una query o un cuerpo que no pasa
+ * `class-validator` vuelve con **400**, no con 422 (TAREA-41 §5, medido contra
+ * la API real el 2026-10-25). El 422 de `validation()` es el de las reglas de
+ * negocio que la API valida a mano.
+ */
+export function validationPipeRejected(message: string): MockReply {
+  return reply(400, {
+    statusCode: 400,
+    code: 'VALIDATION_FAILED',
+    message,
+    error: 'Bad Request',
+    reason: 'VALIDATION_PIPE_REJECTED',
+    details: { violations: [message] },
+  });
+}
+
 /** Un problema puntual de validación, como lo siguen pasando los manejadores. */
 export interface ValidationIssue {
   readonly field?: string;
@@ -194,6 +211,38 @@ export class MockRouter {
 
   delete(pattern: string, handler: MockHandler): this {
     return this.on('DELETE', pattern, handler);
+  }
+
+  /**
+   * Envuelve el manejador **ya registrado** para ese método y patrón exacto.
+   *
+   * El envoltorio recibe la petición y `siguiente`, que es el manejador
+   * original: lo llama cuando la petición no es suya. Existe para que un
+   * dominio nuevo (el hospital piloto) pueda atender **sus** identificadores en
+   * una ruta que ya tiene dueño sin duplicar la ruta ni romper a los demás.
+   * Si el patrón no estaba registrado, se registra con un `siguiente` que
+   * responde 404.
+   */
+  wrap(
+    method: MockMethod,
+    pattern: string,
+    envoltorio: (request: MockRequest, siguiente: MockHandler) => MockReply | unknown,
+  ): this {
+    const segments = split(pattern);
+    const igual = (route: Route): boolean =>
+      route.method === method &&
+      route.segments.length === segments.length &&
+      route.segments.every((segment, i) => (segment.startsWith(':') && segments[i]!.startsWith(':')) || segment === segments[i]);
+    const indice = this.routes.findIndex(igual);
+    if (indice === -1) {
+      return this.on(method, pattern, (request) => envoltorio(request, () => notFound()));
+    }
+    const original = this.routes[indice]!;
+    this.routes[indice] = {
+      ...original,
+      handler: (request) => envoltorio(request, original.handler),
+    };
+    return this;
   }
 
   /** Todo lo registrado, para los barridos de prueba: método y patrón. */

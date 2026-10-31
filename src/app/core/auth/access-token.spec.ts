@@ -19,6 +19,23 @@ function makeToken(claims: Record<string, unknown>): string {
   return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(claims)}.firma`;
 }
 
+describe('decodeAccessToken · organizaciones que niegan y alcance limitado', () => {
+  it('lee `deniedTenants` como un mapa de organización a motivo', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', roles: ['USER'], tenants: ['t-1'], deniedTenants: { 't-2': 'OUTSIDE_ALLOWED_HOURS', 't-3': 'MFA_REQUIRED', 't-4': 7 } }));
+    expect(claims?.deniedTenants).toEqual({ 't-2': 'OUTSIDE_ALLOWED_HOURS', 't-3': 'MFA_REQUIRED' });
+  });
+
+  it('sin `deniedTenants` el claim queda ausente', () => {
+    expect(decodeAccessToken(makeToken({ sub: 'u-1' }))?.deniedTenants).toBeUndefined();
+  });
+
+  it('lee `mfaEnrollment: true` del token de alcance limitado; cualquier otro valor se ignora', () => {
+    expect(decodeAccessToken(makeToken({ sub: 'u-1', roles: [], tenants: [], mfaEnrollment: true }))?.mfaEnrollment).toBe(true);
+    expect(decodeAccessToken(makeToken({ sub: 'u-1', mfaEnrollment: 'si' }))?.mfaEnrollment).toBeUndefined();
+    expect(decodeAccessToken(makeToken({ sub: 'u-1' }))?.mfaEnrollment).toBeUndefined();
+  });
+});
+
 describe('decodeAccessToken', () => {
   it('lee los claims que emite la API', () => {
     const claims = decodeAccessToken(
@@ -206,6 +223,24 @@ describe('decodeAccessToken', () => {
     it('ante una cadena vacía', () => {
       expect(decodeAccessToken('')).toBeNull();
     });
+  });
+});
+
+describe('idleTimeoutMinutes (política de sesión)', () => {
+  const token = (extra: Record<string, unknown>): string => {
+    const encode = (o: object): string =>
+      btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return `${encode({ alg: 'none' })}.${encode({ sub: 'u-1', roles: [], tenants: [], ...extra })}.x`;
+  };
+
+  it('se lee cuando es un número razonable', () => {
+    expect(decodeAccessToken(token({ idleTimeoutMinutes: 10 }))?.idleTimeoutMinutes).toBe(10);
+  });
+
+  it('se descarta si es absurdo o no es un número: el reloj no se rompe por un claim malo', () => {
+    for (const valor of [0, 1, 99999, 'diez', null]) {
+      expect(decodeAccessToken(token({ idleTimeoutMinutes: valor }))?.idleTimeoutMinutes).toBeUndefined();
+    }
   });
 });
 

@@ -154,6 +154,37 @@ describe('errorToViewState · catálogo real de la API', () => {
     });
   });
 
+  describe('S5 · el 403 de una organización que niega ahora a la persona', () => {
+    const negada = (reason: string, tenantId?: string) =>
+      errorToViewState(apiError(403, { code: 'FORBIDDEN', message: 'texto de la API', details: { reason, ...(tenantId === undefined ? {} : { tenantId }) }, timestamp: 't', path: '/x' }));
+
+    it('cada uno de los cinco motivos se dice con palabras y sin códigos, sin cerrar nada', () => {
+      for (const motivo of ['OUTSIDE_ALLOWED_HOURS', 'OUTSIDE_ALLOWED_NETWORK', 'IDLE_TIMEOUT', 'MFA_REQUIRED', 'MFA_ENROLLMENT_REQUIRED']) {
+        const estado = negada(motivo, 't-9');
+        expect(isForbidden(estado), motivo).toBe(true);
+        if (isForbidden(estado)) {
+          expect(estado.message).toContain('La organización que eligió no le permite actuar ahora');
+          expect(estado.message).not.toContain(motivo);
+        }
+      }
+    });
+
+    it('el segundo factor sin dar de alta ofrece activarlo', () => {
+      const estado = negada('MFA_ENROLLMENT_REQUIRED', 't-9');
+      expect(isForbidden(estado) && estado.nextAction?.route).toBe('/my-account/security/mfa');
+    });
+
+    it('el token limitado trae el mismo motivo sin organización: habla de la cuenta', () => {
+      const estado = negada('MFA_ENROLLMENT_REQUIRED');
+      expect(isForbidden(estado) && estado.message).toContain('Su cuenta no le permite actuar ahora');
+    });
+
+    it('un 403 con otro motivo sigue siendo el muro de siempre', () => {
+      const estado = negada('SUPPORT_DENIED');
+      expect(isForbidden(estado) && estado.message).toBe('texto de la API');
+    });
+  });
+
   describe('S5 · los DOS 403, que son estados opuestos', () => {
     it('FORBIDDEN es un muro: no ofrece acción', () => {
       const state = errorToViewState(

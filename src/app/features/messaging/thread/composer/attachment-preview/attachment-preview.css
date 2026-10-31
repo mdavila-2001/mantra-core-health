@@ -215,11 +215,9 @@
 .vista__tira {
   display: flex;
   justify-content: safe center;
-  /* Lugar para el blanco de 44 × 44 de «Quitar», que sobresale 22 px de la
-     esquina: sin esto, el `overflow-x` de la tira lo recortaba a 20 × 18. */
-  gap: var(--e6);
+  gap: var(--e2);
   margin: 0;
-  padding: var(--e6) var(--e6) var(--e1);
+  padding: var(--e1);
   list-style: none;
   overflow-x: auto;
 }
@@ -263,6 +261,27 @@
   outline-offset: 2px;
 }
 
+/* El peso de lo que va a subir, chiquito sobre la foto: decide si conviene
+   mandarla por datos. Velo y tinta fijos de la rampa, iguales en los tres
+   temas: va sobre una foto, que no cambia con el tema. `--text-inverse` se
+   oscurece de noche y quedaba oscuro sobre velo oscuro (1,2:1); así da ≥7:1
+   aun sobre una foto blanca. */
+.vista__miniatura-peso {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: 1px var(--e1);
+  background: color-mix(in srgb, var(--c-petrol-900) 80%, transparent);
+  color: var(--c-petrol-50);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .vista__miniatura-play {
   position: absolute;
   inline-size: var(--e5);
@@ -283,10 +302,8 @@
 /* Quitar aparece al pasar o al llegar con el teclado, como en WhatsApp. */
 .vista__quitar {
   position: absolute;
-  /* Centrada en la esquina de la miniatura: así su blanco de 44 × 44 cubre
-     sólo esa esquina y el centro de la miniatura sigue eligiéndola. */
-  inset-block-start: calc(var(--e5) / -2);
-  inset-inline-end: calc(var(--e5) / -2);
+  inset-block-start: -6px;
+  inset-inline-end: -6px;
   display: inline-grid;
   place-items: center;
   inline-size: var(--e5);
@@ -297,18 +314,8 @@
   background: var(--tinta);
   color: var(--sup-tarjeta);
   opacity: 0;
-  /* Invisible no se toca: si no, un toque en la esquina quitaba la foto. */
-  pointer-events: none;
   cursor: pointer;
   transition: opacity var(--dur-fast) var(--ease-standard);
-}
-
-/* El blanco táctil: 44 × 44 centrado en la cruz de 20 px, o sea, en la
-   esquina de la miniatura (ver arriba). */
-.vista__quitar::before {
-  content: '';
-  position: absolute;
-  inset: calc((var(--e5) - 44px) / 2);
 }
 
 .vista__quitar svg {
@@ -320,13 +327,34 @@
 .vista__miniatura:focus-within .vista__quitar,
 .vista__miniatura.is-elegida .vista__quitar {
   opacity: 1;
-  pointer-events: auto;
 }
 
 @media (hover: none) {
   .vista__quitar {
     opacity: 1;
-    pointer-events: auto;
+  }
+
+  /* El círculo se ve de 20, pero se toca en 44: un pulgar no acierta a 20.
+     Sólo acá, donde siempre está visible: con el mouse, un área invisible
+     sobre la esquina de la miniatura quitaría el archivo sin querer. */
+  .vista__quitar::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+  }
+
+  /* Encima de la miniatura vecina, que viene después en el DOM y se pintaría
+     arriba robando el toque del borde derecho. */
+  .vista__quitar {
+    z-index: 1;
+  }
+
+  /* La tira desplaza en horizontal (`overflow-x: auto`), así que recorta lo
+     que se sale de la caja: el área de 44 del «quitar» (6 px de la esquina +
+     12 del `::before`) quedaba en 20×18. Este aire la deja entera. */
+  .vista__tira {
+    padding-block-start: var(--e5);
+    padding-inline-end: var(--e5);
   }
 }
 
@@ -386,11 +414,28 @@
   padding-inline: var(--e1);
   border: 2px solid var(--neutro-bg);
   border-radius: var(--r-pill);
-  background: var(--sup-tarjeta);
-  color: var(--tinta-marca);
+  /* Fondo y tinta fijos de la rampa, iguales en los tres temas: el número va
+     sobre el botón de marca, que tampoco cambia de noche, y con los tokens de
+     tema la pastilla de noche se confundía con él. */
+  background: var(--c-petrol-50);
+  color: var(--c-petrol-900);
   font-size: var(--fs-overline);
   font-weight: 800;
   line-height: 18px;
+}
+
+/* --- Táctil -------------------------------------------------------------- */
+
+/* Con el dedo, las herramientas de la barra miden 44 aunque la pantalla sea
+   ancha (una tableta): `app-button` baja a 40 desde 780 px y lee este gancho. */
+@media (pointer: coarse) {
+  .vista__barra {
+    --btn-min-block: 44px;
+  }
+
+  .vista__contrapeso {
+    inline-size: 44px;
+  }
 }
 
 /* --- Angosto ------------------------------------------------------------- */

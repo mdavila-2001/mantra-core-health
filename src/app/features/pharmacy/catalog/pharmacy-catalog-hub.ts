@@ -7,22 +7,25 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PharmacyCategories } from '../categories/pharmacy-categories';
-import { PharmacyImport } from '../import/pharmacy-import';
+import { ImportTargetPicker } from '../import/import-target/import-target';
 import { PharmacyInventory } from '../inventory/pharmacy-inventory';
+import { PharmacyIntegration } from '../integration/pharmacy-integration';
 import { PharmacyPrices } from '../prices/pharmacy-prices';
 import { PharmacyProducts } from '../products/pharmacy-products';
 import { CATALOG_TABS, CATALOG_TAB_LABELS, tabIndexOf, tabKeyOf } from './catalog-tabs';
 
 /**
- * **Catálogo** de la farmacia: productos, categorías, precios, inventario e
- * importación en UNA tarjeta con pestañas (`composition-rules.md` §5), en vez
- * de cinco renglones de menú.
+ * **Catálogo** de la farmacia: productos, categorías, precios, inventario,
+ * importación e integración con el sistema de la farmacia en UNA tarjeta con
+ * pestañas (`composition-rules.md` §5), en vez de un renglón de menú por cada
+ * una.
  *
  * ## Qué NO se reescribió
  *
- * Las cinco pantallas son las mismas clases, con su lógica y sus pruebas: acá
- * se montan con `embedded`, que sólo les quita el membrete propio. Cada una
- * sigue proveyendo su `PharmacyScope`. Sus rutas viejas redirigen a la pestaña
+ * Las cinco primeras pantallas son las mismas clases, con su lógica y sus
+ * pruebas: acá se montan con `embedded`, que sólo les quita el membrete
+ * propio. Integración (FAR-07) nació como pestaña y no tiene membrete ni ruta
+ * propia. Cada una provee su `PharmacyScope`. Sus rutas viejas redirigen a la pestaña
  * (`app.routes.ts`), con el query que traían: `?alerts=true` sigue abriendo
  * Inventario con «solo alertas».
  *
@@ -35,15 +38,16 @@ import { CATALOG_TABS, CATALOG_TAB_LABELS, tabIndexOf, tabKeyOf } from './catalo
  *
  * Sólo se monta la pantalla de la pestaña abierta: `app-tab` no dibuja el
  * panel cerrado, pero el contenido proyectado se instanciaría igual y las
- * cinco pedirían sus datos a la vez.
+ * seis pedirían sus datos a la vez.
  */
 @Component({
   selector: 'app-pharmacy-catalog-hub',
   imports: [
     Card,
+    ImportTargetPicker,
     PageHeader,
     PharmacyCategories,
-    PharmacyImport,
+    PharmacyIntegration,
     PharmacyInventory,
     PharmacyPrices,
     PharmacyProducts,
