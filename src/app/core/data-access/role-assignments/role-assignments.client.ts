@@ -89,6 +89,22 @@ export class RoleAssignmentsClient {
     return this.mine(roleId, 'decline');
   }
 
+  /**
+   * `POST /practitioners/me/role-assignments/:roleId/withdraw` — el médico se retira de una organización
+   * donde está activo; la fila queda `ENDED`. Contrato nuevo: el backend debe exponerlo.
+   */
+  withdraw(roleId: string): Observable<RoleAssignmentRow> {
+    return this.mine(roleId, 'withdraw');
+  }
+
+  /**
+   * `POST /practitioners/me/role-assignments/:roleId/leave-queue` — el médico sale de la fila: retira una
+   * solicitud que la organización todavía no resolvió; la fila queda `ENDED`. Contrato nuevo, como `withdraw`.
+   */
+  leaveQueue(roleId: string): Observable<RoleAssignmentRow> {
+    return this.mine(roleId, 'leave-queue');
+  }
+
   /** `POST /role-assignments/:roleId/approve` — el centro aprueba una solicitud; la fila queda `ACTIVE`. */
   approve(roleId: string): Observable<RoleAssignmentRow> {
     return this.ofPractice(roleId, 'approve');
@@ -99,7 +115,7 @@ export class RoleAssignmentsClient {
     return this.ofPractice(roleId, 'reject');
   }
 
-  private mine(roleId: string, action: 'accept' | 'decline'): Observable<RoleAssignmentRow> {
+  private mine(roleId: string, action: 'accept' | 'decline' | 'withdraw' | 'leave-queue'): Observable<RoleAssignmentRow> {
     return this.http
       .post<WireRow>(this.url(`/practitioners/me/role-assignments/${encodeURIComponent(roleId)}/${action}`), {})
       .pipe(map(toRow));
