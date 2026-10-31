@@ -32,9 +32,10 @@ const BRANCH_CODES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const NOT_RECORDED = 'Sin registrar';
 
 /**
- * Un envase por renglón recetado: la receta no declara cantidades, y la
- * confirmación del pedido las muestra tal cual — inventar más sería decidir
- * por la persona.
+ * Un envase por renglón recetado. Lo que declara la receta viaja aparte
+ * (`cantidadDeclarada`) y se muestra: está en la unidad que recetó el médico
+ * («4 comprimidos»), que no es la del envase, y convertirla sería decidir por
+ * la persona. La farmacia confirma cuántos envases corresponden.
  */
 const UNITS_PER_LINE = 1;
 
@@ -65,6 +66,8 @@ export interface PrescriptionItem {
    * por concepto.
    */
   readonly productId: string | null;
+  /** La cantidad que declara la receta, o `null` si no declara (FAR-03, B3). */
+  readonly declaredQuantity?: number | null;
 }
 
 /** La receta ya traducida, con sus renglones consultables. */
@@ -195,6 +198,8 @@ export function prescriptionItemOf(
     instructions: [row.doseText, row.frequencyText].filter(Boolean).join(' · '),
     issued: row.issuedAt !== undefined,
     productId: products.get(row.medicationConceptId) ?? null,
+    declaredQuantity:
+      typeof row.quantityDecimal === 'number' && row.quantityDecimal > 0 ? row.quantityDecimal : null,
   };
 }
 
@@ -298,6 +303,7 @@ export function orderDraftOf(
         medicamento: item.medication,
         presentacion: presentationOf(product),
         cantidad: UNITS_PER_LINE,
+        ...(typeof item.declaredQuantity === 'number' ? { cantidadDeclarada: item.declaredQuantity } : {}),
         precio: available ? price : null,
         moneda:
           available && price !== null

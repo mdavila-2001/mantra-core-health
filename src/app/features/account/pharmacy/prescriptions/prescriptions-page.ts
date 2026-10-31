@@ -5,6 +5,7 @@ import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
+import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
@@ -23,6 +24,8 @@ import { ViewStateHost } from '../../../../shared/components/organisms/view-stat
 import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
 import {
   prescriptionStandingOf,
+  standingWithOrders,
+  type PrescriptionOrderRef,
   type PrescriptionStanding,
 } from '../../medical-record/where-to-buy/orderable-prescription';
 import { PRESCRIPTION_SHARE_TESTIDS } from '../../../prescription-share/prescription-share.testids';
@@ -50,10 +53,12 @@ interface MedicamentoVisible {
 export const STANDING_BADGE: Readonly<
   Record<
     PrescriptionStanding,
-    { readonly label: string; readonly variant: 'success' | 'warning' | 'secondary' }
+    { readonly label: string; readonly variant: 'success' | 'warning' | 'secondary' | 'info' }
   >
 > = {
   orderable: { label: 'Vigente', variant: 'success' },
+  ordered: { label: 'Ya tiene un pedido', variant: 'info' },
+  collected: { label: 'Retirada', variant: 'secondary' },
   expired: { label: 'Vencida', variant: 'warning' },
   draft: { label: 'Sin emitir', variant: 'warning' },
   invalidated: { label: 'Anulada', variant: 'secondary' },
@@ -65,6 +70,10 @@ export const STANDING_BADGE: Readonly<
 /** Por qué una receta que no está vigente no se puede pedir ni compartir. */
 export const NOT_ORDERABLE_REASON: Readonly<Record<PrescriptionStanding, string>> = {
   orderable: '',
+  ordered:
+    'Ya tiene un pedido con esta receta. Lo sigue en «Mis pedidos»; si lo cancela, puede pedirla de nuevo.',
+  collected:
+    'Ya retiró esta receta en una farmacia. Para volver a comprarla, pida a su médico una nueva.',
   expired: 'Esta receta venció. Pida a su médico una nueva para comprarla.',
   draft: 'Su médico todavía no la emitió: cuando lo haga, podrá comprarla.',
   invalidated: 'Su médico anuló esta receta: ya no sirve para comprar.',
@@ -149,6 +158,7 @@ export class PrescriptionsPage {
   private readonly auth = inject(AuthService);
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
+  private readonly orders = inject(PharmacyOrdersClient);
   private readonly now: () => Date = () => new Date();
 
   private readonly perfil = this.auth.patientProfileId();
@@ -192,12 +202,19 @@ export class PrescriptionsPage {
     }
 
     this.recetas.set(loading());
-    this.clinical
-      .getSummary(perfil, TOPE)
+    forkJoin({
+      resumen: this.clinical.getSummary(perfil, TOPE),
+      // Sin sus pedidos la lista se muestra igual: lo que decide si se puede
+      // pedir lo vuelve a decidir la API al enviar.
+      pedidos: this.orders
+        .misPedidos()
+        .pipe(catchError(() => of<readonly PrescriptionOrderRef[]>([]))),
+    })
       .pipe(
-        switchMap((resumen) =>
+        switchMap(({ resumen, pedidos }) =>
           forkJoin({
             filas: of(resumen.medicationRequests),
+            pedidos: of(pedidos),
             // Sin etiquetas la pantalla no puede nombrar nada, pero perderlas
             // tampoco justifica perder la lista: los renglones salen como
             // «Sin registrar». Se piden también las del estado: su código es
@@ -213,7 +230,7 @@ export class PrescriptionsPage {
           }),
         ),
         map((carga) => {
-          const recetas = agrupar(carga.filas, carga.etiquetas, this.now());
+          const recetas = agrupar(carga.filas, carga.etiquetas, this.now(), carga.pedidos);
           return recetas.length === 0
             ? empty(
                 { label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE },
@@ -272,6 +289,7 @@ export function agrupar(
   filas: readonly MedicationRequest[],
   etiquetas: ConceptLabels,
   ahora: Date,
+  pedidos: readonly PrescriptionOrderRef[] = [],
 ): readonly RecetaVisible[] {
   const porConsulta = new Map<string, MedicationRequest[]>();
   for (const fila of filas) {
@@ -287,7 +305,7 @@ export function agrupar(
   }
 
   return [...porConsulta.values()]
-    .map((grupo) => recetaDe(grupo, etiquetas, ahora))
+    .map((grupo) => recetaDe(grupo, etiquetas, ahora, pedidos))
     .sort(masRecienteAntes);
 }
 
@@ -295,6 +313,7 @@ function recetaDe(
   grupo: readonly MedicationRequest[],
   etiquetas: ConceptLabels,
   ahora: Date,
+  pedidos: readonly PrescriptionOrderRef[],
 ): RecetaVisible {
   // El id de la receta que abre «Dónde comprar» es el de una fila emitida si
   // hay alguna: es la que efectivamente se puede ir a comprar.
@@ -303,7 +322,7 @@ function recetaDe(
     requestId: representante.id,
     encounterId: representante.encounterId ?? null,
     cuando: representante.createdAt,
-    estado: prescriptionStandingOf(grupo, etiquetas, ahora),
+    estado: standingWithOrders(prescriptionStandingOf(grupo, etiquetas, ahora), grupo, pedidos),
     medicamentos: grupo.map((fila) => ({
       conceptId: fila.medicationConceptId,
       nombre: etiquetas.get(fila.medicationConceptId)?.display ?? SIN_DATO,

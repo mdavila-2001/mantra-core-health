@@ -3,7 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
+import { of } from 'rxjs';
+
 import { SessionStore } from '../../../../core/auth/session.store';
+import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
+import type { PrescriptionOrderRef } from '../../medical-record/where-to-buy/orderable-prescription';
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { SHARE_QR_DRAWER } from './share-dialog/share-dialog';
 import { agrupar, PrescriptionsPage, shareTargetOf } from './prescriptions-page';
@@ -19,6 +23,10 @@ function jwt(payload: Record<string, unknown>): string {
   };
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
+
+/** Los pedidos del paciente que devuelve `GET /pharmacy/orders/me` en cada prueba. */
+let pedidos: PrescriptionOrderRef[] = [];
+const ORDERS_STUB = { provide: PharmacyOrdersClient, useValue: { misPedidos: () => of(pedidos) } };
 
 const CONCEPTO_AMOXI = 'c-0000-0001';
 const CONCEPTO_IBU = 'c-0000-0002';
@@ -107,8 +115,9 @@ describe('PrescriptionsPage', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    pedidos = [];
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ORDERS_STUB],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -245,6 +254,43 @@ describe('PrescriptionsPage', () => {
     },
   );
 
+  it.each([
+    ['ENVIADO', 'Ya tiene un pedido', 'Mis pedidos'],
+    ['LISTO_PARA_RETIRO', 'Ya tiene un pedido', 'Mis pedidos'],
+    ['RETIRADO', 'Retirada', 'Ya retiró'],
+  ] as const)(
+    'con un pedido %s de la receta dice «%s» y no ofrece comprar ni compartir',
+    (estado, label, reason) => {
+      pedidos = [{ requestId: 'm-2', estado }];
+      entrarComoPaciente();
+      montar();
+      responder();
+
+      const vigente = [...raiz().querySelectorAll('.receta')][1];
+      expect(
+        vigente.querySelector('[data-testid="pharmacy-prescription-status"]')?.textContent?.trim(),
+      ).toBe(label);
+      expect(
+        vigente.querySelector('[data-testid="pharmacy-prescription-not-orderable"]')?.textContent,
+      ).toContain(reason);
+      expect(raiz().querySelector('[data-testid="pharmacy-prescription-search"]')).toBeNull();
+    },
+  );
+
+  it.each(['CANCELADO', 'RECHAZADO', 'VENCIDO'])(
+    'un pedido %s libera la receta: se puede pedir de nuevo',
+    (estado) => {
+      pedidos = [{ requestId: 'm-1', estado }];
+      entrarComoPaciente();
+      montar();
+      responder();
+
+      expect(raiz().querySelectorAll('[data-testid="pharmacy-prescription-search"]')).toHaveLength(
+        1,
+      );
+    },
+  );
+
   it('una receta emitida y vigente dice «Vigente» con el código real del catálogo', () => {
     entrarComoPaciente();
     montar();
@@ -317,11 +363,13 @@ describe('PrescriptionsPage · compartir', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    pedidos = [];
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        ORDERS_STUB,
         { provide: SHARE_QR_DRAWER, useValue: () => Promise.resolve() },
       ],
     });
