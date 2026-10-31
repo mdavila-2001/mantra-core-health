@@ -1,7 +1,7 @@
 /* ============================================================================
     Consola de organización médica — CARRIL 13.
 
-    Sólo la ficha de ámbito, el selector, los avisos, la nota de cobertura y las
+    Sólo la ficha de ámbito, el selector, los avisos y las
     dos líneas de celda: todo lo demás lo ponen los organismos del banco. Ni un
     color, ni un radio, ni un espaciado que no salga de los tokens
     (`--sp-*`, `--fs-*`/`--lh-*`, `--r-*`, `--text-*`, `--bg-*`, `--border-*`,
@@ -96,40 +96,6 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
-}
-
-/* La declaración de cobertura. Va al pie y en tono secundario: informa el
-   alcance, no compite con el contenido que sí se administra acá. */
-.organizacion-medica__cobertura {
-  padding: var(--sp-6);
-  background: var(--bg-inset);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
-.organizacion-medica__cobertura h2 {
-  margin: 0 0 var(--sp-4);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  color: var(--text-primary);
-}
-
-.organizacion-medica__cobertura dl {
-  display: grid;
-  gap: var(--sp-4);
-  margin: 0;
-}
-
-.organizacion-medica__cobertura dt {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.organizacion-medica__cobertura dd {
-  margin: var(--sp-1) 0 0;
 }
 
 .organizacion-medica__sin-consola {
