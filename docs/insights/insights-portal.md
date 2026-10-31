@@ -14,7 +14,8 @@ contrato con la API y cierre de brechas frente al prototipo).
 
 | Dirección | Qué abre |
 |---|---|
-| `/insights` | Entra al primer módulo (hoy `/insights/campaigns`). |
+| `/insights` | Entra al Panel general (`/insights/home`). |
+| `/insights/home` | 00 · Panel general: índice de reputación, indicadores de la semana, registros de 30 días con hitos, alertas principales, lectura automática y una ficha por módulo. |
 | `/insights/campaigns` | 01 · Resumen de campañas |
 | `/insights/funnel` | 02 · Embudo y experiencia del paciente |
 | `/insights/app-usage` | 03 · Uso de la app |

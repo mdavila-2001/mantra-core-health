@@ -1,42 +1,69 @@
 <div class="alp">
-  <section class="alp__counts" aria-label="Alertas abiertas por nivel">
-    @for (c of counts(); track c.severity) {
-      <button type="button" class="alp__count alp__count--{{ c.severity }}" [attr.aria-pressed]="severity() === c.severity" (click)="setSeverity(c.severity)">
-        <span class="alp__count-n">{{ c.count }}</span>
-        <span class="alp__count-l"><span aria-hidden="true">{{ icon[c.severity] }}</span> {{ labels[c.severity] }}</span>
-      </button>
-    }
-  </section>
+  <app-segmented-control [options]="tabOptions" [value]="tab()" ariaLabel="Vistas de alertas" (valueChange)="setTab($event)" />
 
-  <div class="alp__filters" role="search">
-    <label class="alp__search"><span class="alp__label">Buscar</span><input type="search" placeholder="Título, fuente o descripción" [value]="query()" (input)="search($event)" /></label>
-    <div class="alp__pick"><span class="alp__label">Módulo</span><app-select ariaLabel="Módulo de origen" [value]="module()" [options]="moduleOptions" (valueChange)="setModule($event)" /></div>
-    <div class="alp__pick"><span class="alp__label">Estado</span><app-select ariaLabel="Estado de la alerta" [value]="show()" [options]="showOptions" (valueChange)="setShow($event)" /></div>
-  </div>
+  @if (wf.notice(); as n) {
+    <p class="alp__notice" role="alert">{{ n }} <button type="button" class="alp__btn" (click)="wf.notice.set(null)">Entendido</button></p>
+  }
 
-  <app-view-state-host [state]="state()">
-    <ul class="alp__list">
-      @for (a of cards(); track a.id) {
-        <li class="alp__item" [class.alp__item--done]="a.status === 'resolved'">
-          <app-ins-alert-card [alert]="a" />
-          <div class="alp__actions">
-            @if (a.status === 'open') { <button type="button" class="alp__btn" (click)="mark(a.id, 'seen')">Marcar como vista</button> }
-            @if (a.status !== 'resolved') { <button type="button" class="alp__btn alp__btn--main" (click)="mark(a.id, 'resolved')">Marcar como resuelta</button> }
-            @if (a.status !== 'open') { <button type="button" class="alp__btn" (click)="mark(a.id, null)">Reabrir</button> }
-            <span class="alp__state">{{ a.status === 'resolved' ? 'Resuelta' : a.status === 'seen' ? 'Vista' : 'Sin revisar' }}</span>
-          </div>
-        </li>
+  @if (!wf.ready()) {
+    <app-view-state-host [state]="wf.state()" (retry)="wf.load()"><div vsh-skeleton aria-busy="true">Cargando alertas…</div></app-view-state-host>
+  } @else {
+    @switch (tab()) {
+      @case ('inbox') {
+        <p class="alp__sum">Hoy hay <strong>{{ openCount() }}</strong> alertas abiertas, {{ counts()[0].count }} críticas. Resueltas hasta ahora: {{ resolvedCount() }}.</p>
+
+        <section class="alp__counts" aria-label="Alertas abiertas por nivel">
+          @for (c of counts(); track c.severity) {
+            <button type="button" class="alp__count alp__count--{{ c.severity }}" [attr.aria-pressed]="severity() === c.severity" (click)="setSeverity(c.severity)">
+              <span class="alp__count-n">{{ c.count }}</span>
+              <span class="alp__count-l"><span aria-hidden="true">{{ icon[c.severity] }}</span> {{ labels[c.severity] }}</span>
+              <span class="alp__count-s">{{ c.fresh ? c.fresh + ' sin revisar' : 'todas revisadas' }}</span>
+            </button>
+          }
+        </section>
+
+        <div class="alp__filters" role="search">
+          <label class="alp__search"><span class="alp__label">Buscar</span><input type="search" placeholder="Título, fuente o descripción" [value]="query()" (input)="search($event)" /></label>
+          <div class="alp__pick"><span class="alp__label">Módulo</span><app-select ariaLabel="Módulo de origen" [value]="module()" [options]="moduleOptions" (valueChange)="setModule($event)" /></div>
+          <div class="alp__pick"><span class="alp__label">Estado</span><app-select ariaLabel="Estado de la alerta" [value]="status()" [options]="statusOptions" (valueChange)="setStatus($event)" /></div>
+          <div class="alp__pick"><span class="alp__label">Responsable</span><app-select ariaLabel="Responsable" [value]="owner()" [options]="ownerOptions" (valueChange)="setOwner($event)" /></div>
+          <div class="alp__pick"><span class="alp__label">Ordenar</span><app-select ariaLabel="Orden" [value]="sort()" [options]="sortOptions" (valueChange)="setSort($event)" /></div>
+        </div>
+
+        <app-view-state-host [state]="state()">
+          <p class="alp__showing">Mostrando {{ cards().length }} de {{ detected().length }}</p>
+          <ul class="alp__list">
+            @for (r of cards(); track r.alert.id) {
+              <li class="alp__item" [class.alp__item--done]="!(r.status === 'new' || r.status === 'in_progress')">
+                <app-ins-alert-card [alert]="r.alert" />
+                <div class="alp__actions">
+                  <button type="button" class="alp__btn alp__btn--main" (click)="selected.set(r.alert)">Gestionar</button>
+                  <span class="alp__state">{{ statusLabels[r.status] }} · {{ ownerName(r.owner) }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        </app-view-state-host>
+
+        <app-ins-panel title="Alertas de los últimos 14 días" question="¿Cuántas se detectaron por día y de qué nivel?">
+          <app-ins-stacked-chart [rows]="lastDays()" [segments]="segments" unit="count" ariaLabel="Alertas detectadas por día y por nivel, últimos 14 días" />
+        </app-ins-panel>
+
+        <app-ins-panel title="Cómo se asigna cada nivel" question="¿Por qué esta alerta es crítica y aquella no? Las reglas son explícitas.">
+          <ul class="alp__rules">
+            <li><strong>■ Crítico:</strong> un costo por resultado se encarece ≥ 20 %, un retorno cae, o el sentimiento de un tema cae ≥ 45 puntos con el volumen duplicado.</li>
+            <li><strong>▲ Posible riesgo:</strong> degradación entre 10 y 20 %, una etapa del embudo se fuga, o el sentimiento de un tema cae ≥ 20 puntos.</li>
+            <li><strong>◆ Anomalía:</strong> un cambio grande que no daña (por ejemplo, un CTR muy alto): hay que verificarlo antes de celebrarlo.</li>
+            <li><strong>● Brecha de oportunidad:</strong> un tema crece con volumen suficiente y ninguna campaña lo atiende.</li>
+          </ul>
+          <p class="alp__foot">La causa siempre se escribe como hipótesis. El estado y el responsable de cada alerta se guardan para todo el equipo.</p>
+        </app-ins-panel>
       }
-    </ul>
-  </app-view-state-host>
+      @case ('timeline') { <app-ins-alerts-timeline [alerts]="detected()" /> }
+      @case ('rules') { <app-ins-alerts-rules /> }
+      @case ('notifications') { <app-ins-alerts-notifications /> }
+    }
+  }
 
-  <app-ins-panel title="Cómo se asigna cada nivel" question="¿Por qué esta alerta es crítica y aquella no? Las reglas son explícitas.">
-    <ul class="alp__rules">
-      <li><strong>■ Crítico:</strong> un costo por resultado se encarece ≥ 20 %, un retorno cae, o el sentimiento de un tema cae ≥ 45 puntos con el volumen duplicado.</li>
-      <li><strong>▲ Posible riesgo:</strong> degradación entre 10 y 20 %, una etapa del embudo se fuga, o el sentimiento de un tema cae ≥ 20 puntos.</li>
-      <li><strong>◆ Anomalía:</strong> un cambio grande que no daña (por ejemplo, un CTR muy alto): hay que verificarlo antes de celebrarlo.</li>
-      <li><strong>● Brecha de oportunidad:</strong> un tema crece con volumen suficiente y ninguna campaña lo atiende.</li>
-    </ul>
-    <p class="alp__foot">La causa siempre se escribe como hipótesis. Las marcas de «vista» y «resuelta» se guardan solo en este navegador. Alertas resueltas hasta ahora: {{ resolvedCount() }}.</p>
-  </app-ins-panel>
+  <app-ins-alert-drawer [alert]="selected()" (closed)="selected.set(null)" />
 </div>

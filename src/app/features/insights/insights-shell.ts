@@ -11,6 +11,7 @@ import { SYNTHETIC_NOTICE } from './domain/campaigns.data';
 import { longDate, PROTOTYPE_TODAY } from './domain/dates';
 import { InsightsContext } from './insights-context';
 import { InsightsData } from './insights-data';
+import { InsightsWorkflow } from './insights-workflow';
 import { INSIGHTS_BASE, INSIGHTS_MODULES } from './insights-nav';
 import { openAlertCount } from './insights-summary';
 import { SavedViews } from './components/saved-views';
@@ -36,7 +37,7 @@ function readCollapsed(): boolean {
 @Component({
   selector: 'app-insights-shell',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIcon, SavedViews, ViewStateHost],
-  providers: [InsightsContext, InsightsData],
+  providers: [InsightsContext, InsightsData, InsightsWorkflow],
   templateUrl: './insights-shell.html',
   styleUrl: './insights-shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

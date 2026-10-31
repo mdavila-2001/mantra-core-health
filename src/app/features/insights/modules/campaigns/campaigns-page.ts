@@ -8,12 +8,13 @@ import { InsightCard } from '../../components/insight-card';
 import { KpiCard } from '../../components/kpi-card';
 import { assess } from '../../domain/benchmarks';
 import { campaignInsights } from '../../domain/campaign-insights';
-import { CHANNEL_LABELS } from '../../domain/insights.types';
+import { DRILL_LEVEL_LABELS, stepLabel } from '../../domain/drill';
 import type { Insight, KpiAssessment, MetricId } from '../../domain/insights.types';
 import { selectFacts, timeSeries } from '../../domain/kpi';
 import { InsightsContext } from '../../insights-context';
 import { ComparisonPanel } from './comparison-panel';
 import { DetailTable } from './detail-table';
+import { DrillPanel } from './drill-panel';
 import { DimensionPanel } from './dimension-panel';
 import { MainAnalysis } from './main-analysis';
 import { ObjectivesPanel } from './objectives-panel';
@@ -35,7 +36,7 @@ interface CampaignsModel {
  */
 @Component({
   selector: 'app-insights-campaigns',
-  imports: [ViewStateHost, FilterBar, KpiCard, InsightCard, MainAnalysis, TimingPanel, DimensionPanel, ComparisonPanel, ObjectivesPanel, DetailTable],
+  imports: [ViewStateHost, FilterBar, KpiCard, InsightCard, MainAnalysis, TimingPanel, DimensionPanel, ComparisonPanel, ObjectivesPanel, DetailTable, DrillPanel],
   templateUrl: './campaigns-page.html',
   styleUrl: './campaigns-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,13 +61,11 @@ export class CampaignsPage {
     return s.status === 'ready' ? s.data : null;
   });
 
-  protected readonly drillChannel = computed(() => {
-    const picked = this.ctx.state().channels;
-    return picked && picked.length === 1 ? picked[0] ?? null : null;
-  });
-  protected readonly drillLabel = computed(() => (this.drillChannel() ? CHANNEL_LABELS[this.drillChannel()!] : ''));
+  protected readonly drill = this.ctx.drill;
+  protected readonly drillCrumbs = computed(() => this.drill().map((s, i) => ({ text: `${DRILL_LEVEL_LABELS[s.level]}: ${stepLabel(s)}`, upTo: i + 1 })));
 
   protected setMetric(m: MetricId): void { this.ctx.update({ m }); }
-  protected drillTo(channel: string): void { this.ctx.update({ ch: channel }); }
-  protected clearDrill(): void { this.ctx.update({ ch: null }); }
+  /** Una barra de canal del gráfico baja al canal, desde el nivel General. */
+  protected drillTo(channel: string): void { this.ctx.setDrill([{ level: 'ch', id: channel }]); }
+  protected clearDrill(): void { this.ctx.setDrill([]); }
 }

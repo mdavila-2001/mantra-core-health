@@ -17,6 +17,7 @@ export interface InsightsModule {
 }
 
 export const INSIGHTS_MODULES: readonly InsightsModule[] = [
+  { id: 'home', number: '00', path: 'home', label: 'Panel general', short: 'Panel', icon: 'home', question: '¿Qué pasó esta semana y qué conviene mirar hoy?' },
   { id: 'campaigns', number: '01', path: 'campaigns', label: 'Resumen de campañas', short: 'Campañas', icon: 'megaphone', question: '¿Cómo funcionó nuestra campaña?' },
   { id: 'funnel', number: '02', path: 'funnel', label: 'Embudo y experiencia del paciente', short: 'Embudo', icon: 'route', question: '¿Estamos convirtiendo y entregando una buena experiencia?' },
   { id: 'app', number: '03', path: 'app-usage', label: 'Uso de la app', short: 'App', icon: 'grid', question: '¿Qué hacen realmente nuestros usuarios?' },

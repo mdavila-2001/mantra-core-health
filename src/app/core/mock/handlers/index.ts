@@ -86,6 +86,7 @@ import { registerPrescriptionShares } from './prescription-shares.handlers';
 import { registerPharmacyMedicationAvailability } from './pharmacy-medication-availability.handlers';
 import { registerPharmacyPrescriptionShares } from './pharmacy-prescription-shares.handlers';
 import { registrarInsights } from './insights.handlers';
+import { registrarInsightsWorkspace } from './insights-workspace.handlers';
 import { registrarReporteria } from './reporting.handlers';
 import { registrarApoyo } from './support-access.handlers';
 
@@ -187,6 +188,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarAdmisiones(router);
   registrarReporteria(router);
   registrarInsights(router);
+  registrarInsightsWorkspace(router);
   registrarCargasMasivas(router);
   registerPromotions(router);
   registerPatientSpending(router);
