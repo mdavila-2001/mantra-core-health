@@ -42,6 +42,7 @@ import {
   type SimulatedChecklist,
 } from './operating-rooms.state';
 import { createOrTimeCharge } from './space-billing.handlers';
+import { transitionCleaningOrder } from './infrastructure-ops.handlers';
 import { SITIOS_INFRA } from '../fixtures/infraestructura';
 import { PATIENTS } from '../fixtures/people';
 import { CASE_STATUS, MEMBER_STATUS, periopCases, TEAM_ROLE, type SimulatedCase } from './procedures.handlers';
@@ -309,6 +310,9 @@ const TURNOVER_STEPS = {
 /** `POST /cleaning-orders/:id/{start|finish|inspect}` para las órdenes de recambio de quirófano. */
 function turnoverStep(request: MockRequest, step: keyof typeof TURNOVER_STEPS) {
   const t = turnovers.get(request.params['id']!);
+  // Las órdenes de limpieza de camas (F2) comparten el prefijo `/cleaning-orders` y
+  // estas rutas, más específicas, ganan: lo que no es un recambio de quirófano va a F2.
+  if (t === undefined) return transitionCleaningOrder(request, step);
   const room = roomOf(t?.operatingRoomId);
   const tenant = tenantOf(request);
   if (t === undefined || room === undefined || (tenant !== null && tenant !== room.tenantId)) return notFoundReply();
