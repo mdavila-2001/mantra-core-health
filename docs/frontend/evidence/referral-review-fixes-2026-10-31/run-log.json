@@ -6,6 +6,10 @@
     "error: [API] POST /referrals → 404 · NOT_FOUND · correlationId=mock-fallo {status: 404, code: NOT_FOUND, message: , correlationId: mock-fallo}",
     "error: [API] GET /referrals → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
     "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505",
+    "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505",
+    "error: [API] GET /referrals → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
+    "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505",
+    "error: [API] GET /clinical/patients/c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0/summary → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
     "error: AbortError: Transition was skipped. New ViewTransition started",
     "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
   ],
@@ -158,6 +162,16 @@
       "detail": ""
     },
     {
+      "name": "final 6: el resumen de un externo dice «Revise antes de registrar»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LOW 10 (ronda 2): el resumen lleva viñetas",
+      "ok": true,
+      "detail": ""
+    },
+    {
       "name": "1a: el botón de externo dice «Registrar la derivación»",
       "ok": true,
       "detail": ""
@@ -175,7 +189,7 @@
     {
       "name": "L-2: S7 «Actualizando · lista de las HH:MM» al releer",
       "ok": true,
-      "detail": "Actualizando · lista de las 09:11"
+      "detail": "Actualizando · lista de las 10:01"
     },
     {
       "name": "L-2: la lista sigue a la vista durante la relectura",
@@ -193,9 +207,19 @@
       "detail": "Derivar A otro profesional u organización médica, por un servicio concreto. al menos 8 derivaciones"
     },
     {
+      "name": "final 3: el aviso de relectura muestra el «Código de soporte» con copiar",
+      "ok": true,
+      "detail": ""
+    },
+    {
       "name": "2: tras «Reintentar» el foco queda en el título de la lista, dentro del diálogo",
       "ok": true,
       "detail": "{\"id\":\"referral-list-title\",\"inDialog\":true}"
+    },
+    {
+      "name": "final 5: el título enfocado con teclado lleva el anillo de 2 px con offset",
+      "ok": true,
+      "detail": "{\"style\":\"solid\",\"width\":\"2px\",\"offset\":\"4px\"}"
     },
     {
       "name": "persistencia: tras F5 la casilla cuenta 5 más",
@@ -238,9 +262,19 @@
       "detail": "535 vs 535"
     },
     {
+      "name": "final 4: el S9 de la lista dice que falló la lista, con su código",
+      "ok": true,
+      "detail": "Error: No pudimos cargar la lista No pudimos cargar las derivaciones de esta persona. Código de soporte: mock-fallo Copiar código Reintentar"
+    },
+    {
+      "name": "final 3: view-state-host pinta el código con el mismo componente",
+      "ok": true,
+      "detail": ""
+    },
+    {
       "name": "L-3: el aviso de la organización llega con el texto de la API",
       "ok": true,
-      "detail": "Su médico le derivó a Hospital San Lucas Su médico le derivó a Hospital San Lucas para Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros). Puede ver su ficha y reservar una cita desde su portal. 31/10/26, 9:11 a. m."
+      "detail": "Su médico le derivó a Hospital San Lucas Su médico le derivó a Hospital San Lucas para Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros). Puede ver su ficha y reservar una cita desde su portal. 31/10/26, 10:01 a. m."
     },
     {
       "name": "L-3: el aviso es un enlace (botón que navega)",

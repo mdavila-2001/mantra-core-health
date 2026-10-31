@@ -8,7 +8,7 @@ import type { Referral } from '../../../core/data-access/referrals/referrals.typ
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, ready, stale } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { writeFailureMessage } from '../write-message';
+import { writeFailureParts, type FailureParts } from '../write-message';
 
 /**
  * Las derivaciones de la persona que se atiende, leídas **una vez** para dos
@@ -48,7 +48,7 @@ export class ConsultationReferrals {
    * lista sigue como S7 (con la hora de la última buena) y esto dice qué
    * pasó, para mostrarlo en línea. `null` mientras no haya fallo.
    */
-  readonly refreshError = signal<string | null>(null);
+  readonly refreshError = signal<FailureParts | null>(null);
 
   /** Cada pedido de lectura, con la persona que hay que leer. */
   private readonly reads = new Subject<string>();
@@ -139,19 +139,22 @@ export class ConsultationReferrals {
       return failure;
     }
     this.refreshError.set(
-      writeFailureMessage(errorToViewState<null>(error), {
+      writeFailureParts(errorToViewState<null>(error), {
         accion: 'actualizar la lista',
         yaNoExiste: 'No pudimos actualizar la lista.',
-      }) ??
-        'No pudimos actualizar la lista.',
+      }) ?? { text: 'No pudimos actualizar la lista.', code: null },
     );
     return stale(previous, this.lastRead.at);
   }
 
-  /** Lo que se ve mientras viaja la lectura: lo anterior como S7, o S2. */
+  /**
+   * Lo que se ve mientras viaja la lectura: lo anterior como S7, o S2. Una
+   * lista vacía no se conserva: como S7 se leía «todavía no tiene
+   * derivaciones» y la casilla «0» justo después de emitir la primera.
+   */
   private whileReading(id: string): ViewState<readonly Referral[]> {
     const previous = dataOf(untracked(() => this.state()));
-    return previous !== null && this.lastRead?.profileId === id
+    return previous !== null && previous.length > 0 && this.lastRead?.profileId === id
       ? stale(previous, this.lastRead.at)
       : loading();
   }

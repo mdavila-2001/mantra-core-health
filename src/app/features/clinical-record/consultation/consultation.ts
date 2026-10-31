@@ -137,7 +137,11 @@ export interface CasillaVisible {
   readonly cantidad: number | null;
   /** Lo que sigue a la cifra: «en la historia», o el nombre de lo contado. */
   readonly rotuloDeCantidad: string;
-  /** Sin cifra, por qué (`ConsultationReferrals.missingCount`); `null` si no cuenta o ya está. */
+  /**
+   * Qué tan confiable es la cifra (`ConsultationReferrals.missingCount`):
+   * `loading` o `failed` sin cifra; `stale` con cifra vieja («al menos N»,
+   * falló la última relectura); `null` si la casilla no cuenta o la cifra está al día.
+   */
   readonly lecturaDeCantidad: 'loading' | 'failed' | 'stale' | null;
   /** El trazo del icono, en un `viewBox` de 24. */
   readonly icono: string;

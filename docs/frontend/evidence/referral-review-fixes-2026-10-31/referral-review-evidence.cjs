@@ -263,6 +263,18 @@ const activeTestId = (page) =>
     await dialog.getByTestId('referral-type').click();
     await page.getByRole('option', { name: 'Interconsulta' }).click();
   }
+  // final 6: sin nombre, el resumen de un externo se titula «Revise antes de registrar».
+  await dialog.getByRole('radio', { name: /fuera de la plataforma/ }).click();
+  await dialog.getByTestId('referral-external-name').fill('x');
+  await dialog.getByTestId('referral-requested-service').locator('textarea').fill('');
+  await dialog.getByTestId('referral-clinical-summary').locator('textarea').fill('');
+  await dialog.getByTestId('referral-submit').click();
+  const extIssues = dialog.getByTestId('referral-issues');
+  await extIssues.waitFor({ timeout: 10_000 });
+  check('final 6: el resumen de un externo dice «Revise antes de registrar»', (await extIssues.innerText()).includes('Revise antes de registrar'));
+  check('LOW 10 (ronda 2): el resumen lleva viñetas', (await extIssues.locator('ul').evaluate((e) => getComputedStyle(e).listStyleType)) === 'disc');
+  await extIssues.scrollIntoViewIfNeeded();
+  await shot('08g-external-issues-390');
   await fillExternal('Centro de Hemodiálisis Norte');
   check('1a: el botón de externo dice «Registrar la derivación»', ((await dialog.getByTestId('referral-submit').innerText()).trim()) === 'Registrar la derivación');
   check('1c: pista del motivo para un externo', (await dialog.getByText('Queda en el registro; entréguele la derivación a la persona.').count()) === 1);
@@ -301,10 +313,13 @@ const activeTestId = (page) =>
   check('L-4: la relectura fallida no borra la lista', (await dialog.getByTestId('referral-row').count()) > 0);
   const tileDuring = (await tile.innerText()).replace(/\s+/g, ' ');
   check('L-4 / 3: la casilla conserva la cifra y avisa que puede faltar una («al menos N»)', /al menos \d+\s+derivaci/.test(tileDuring) && !tileDuring.includes('No se pudo contar'), tileDuring);
+  check('final 3: el aviso de relectura muestra el «Código de soporte» con copiar', (await refreshError.locator('app-support-code code').innerText()) === 'mock-fallo' && (await refreshError.getByRole('button', { name: 'Copiar código' }).count()) === 1);
   await refreshError.scrollIntoViewIfNeeded();
   await shot('08e-list-refresh-error-390');
   await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
-  await refreshError.getByRole('button', { name: 'Reintentar' }).click();
+  // Con teclado, para que el anillo de foco del título se vea (`:focus-visible`).
+  await refreshError.getByRole('button', { name: 'Reintentar' }).focus();
+  await page.keyboard.press('Enter');
   await refreshError.waitFor({ state: 'detached', timeout: 10_000 });
   await page.waitForTimeout(400);
   const afterRetry = await page.evaluate(() => {
@@ -312,6 +327,11 @@ const activeTestId = (page) =>
     return { id: a?.id ?? null, inDialog: !!a?.closest('dialog') };
   });
   check('2: tras «Reintentar» el foco queda en el título de la lista, dentro del diálogo', afterRetry.id === 'referral-list-title' && afterRetry.inDialog, afterRetry);
+  const ring = await page.evaluate(() => {
+    const cs = getComputedStyle(document.getElementById('referral-list-title'));
+    return { style: cs.outlineStyle, width: cs.outlineWidth, offset: cs.outlineOffset };
+  });
+  check('final 5: el título enfocado con teclado lleva el anillo de 2 px con offset', ring.style === 'solid' && ring.width === '2px' && ring.offset !== '0px', ring);
   await shot('08f-list-retry-focus-390');
   created += 1;
 
@@ -377,6 +397,33 @@ const activeTestId = (page) =>
     await dialog.getByRole('button', { name: 'Cerrar', exact: true }).first().click();
     await dialog.waitFor({ state: 'detached', timeout: 10_000 });
   }
+
+  /* -- final 3/4: S9 con «Código de soporte»: el de la lista y el de view-state-host -- */
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() =>
+    sessionStorage.setItem('mock:fallos', JSON.stringify([{ patron: '/referrals', modo: 'error', metodos: ['GET'] }])),
+  );
+  await page.reload({ waitUntil: 'commit' });
+  await tile.waitFor({ timeout: 120_000 });
+  await tile.click();
+  const listError = dialog.getByTestId('referral-list-error');
+  await listError.waitFor({ timeout: 30_000 });
+  const listErrorText = (await listError.innerText()).replace(/\s+/g, ' ');
+  check('final 4: el S9 de la lista dice que falló la lista, con su código', listErrorText.includes('No pudimos cargar la lista') && listErrorText.includes('Código de soporte:'), listErrorText);
+  await listError.scrollIntoViewIfNeeded();
+  await shot('15-list-s9-390');
+  await dialog.getByRole('button', { name: 'Cerrar', exact: true }).first().click();
+  await dialog.waitFor({ state: 'detached', timeout: 10_000 });
+  await page.evaluate(() =>
+    sessionStorage.setItem('mock:fallos', JSON.stringify([{ patron: '/clinical/patients', modo: 'error', metodos: ['GET'] }])),
+  );
+  await page.reload({ waitUntil: 'commit' });
+  const vshError = page.locator('app-view-state-host app-support-code').first();
+  await vshError.waitFor({ timeout: 60_000 });
+  check('final 3: view-state-host pinta el código con el mismo componente', (await vshError.locator('code').innerText()).length > 0);
+  await vshError.scrollIntoViewIfNeeded();
+  await shot('16-view-state-host-s9-390');
+  await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
 
   /* -- La campana de la persona: ORGANIZATION_PROFILE → /o/{slug} (L-3) ---- */
   await page.setViewportSize({ width: 1440, height: 900 });
