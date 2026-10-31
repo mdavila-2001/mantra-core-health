@@ -20,6 +20,38 @@
   {
    "call": "GET /admin/analytics/devices",
    "reason": "Desglose de dispositivos (misma franja): el DTO analytics-devices.dto.ts existe en la API en curso y aún no llegó al openapi de dev. Simulador alineado al contrato acordado; se borra de acá al refrescar el contrato."
+  },
+  {
+   "call": "GET /admin/analytics/money",
+   "reason": "Dinero por módulo, moneda y tipo de importe (franja 2026-10-30, «Medición por funcionalidad»): lo está implementando otro agente en la API y aún no está en el openapi de dev. El front lo consume con un simulador (marcado SIMULADO) alineado al contrato acordado: items[{module,moduleLabel,kind,currency,operations,amount:string}] + notMeasured; se borra de acá al ejecutar yarn contract:refresh con la API publicada."
+  },
+  {
+   "call": "GET /admin/bulk-imports/templates",
+   "reason": "Motor de cargas masivas (franja 2026-10-30, H6/H7): el módulo bulk_import está implementado en la API en curso (mantra-core-health-api/src/modules/bulk_import) y aún no llegó al openapi de dev. El front lo consume con un simulador declarado (SIMULADO) alineado a ese módulo; se borra de acá al ejecutar yarn contract:refresh con la API publicada."
+  },
+  {
+   "call": "GET /admin/bulk-imports/templates/{kind}",
+   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
+  },
+  {
+   "call": "GET /admin/bulk-imports",
+   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
+  },
+  {
+   "call": "POST /admin/bulk-imports",
+   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
+  },
+  {
+   "call": "POST /admin/bulk-imports/{id}/confirm",
+   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
+  },
+  {
+   "call": "GET /admin/bulk-imports/{id}",
+   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
+  },
+  {
+   "call": "GET /admin/bulk-imports/{id}/report",
+   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
   }
  ]
 }

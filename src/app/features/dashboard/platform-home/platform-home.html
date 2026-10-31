@@ -20,7 +20,7 @@
           <ul class="portada__operaciones">
             @for (destino of area.destinos; track destino.route) {
               <li>
-                <a app-link [routerLink]="destino.route">{{ destino.label }}</a>
+                <a app-link [routerLink]="destino.route" [queryParams]="destino.queryParams">{{ destino.label }}</a>
               </li>
             }
           </ul>

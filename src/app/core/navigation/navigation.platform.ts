@@ -98,6 +98,24 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     module: 'M58 time_series · M46 platform_ops',
   },
   {
+    // Medición por funcionalidad (30/10/2026): uso, errores y latencia agrupados
+    // por herramienta (`GET /admin/ops/traffic*`), dinero que mueve cada una
+    // (`GET /admin/analytics/money`) y mapa de calor (`/admin/analytics/onboarding/*`).
+    // Roles = los de la lectura de tráfico (`OPS_READ_ROLES`), que es la pestaña
+    // principal. No se agrega `FINANCE`: la API no lo declara como rol de lectura de
+    // ninguno de estos endpoints (el de dinero está en implementación). Cada
+    // pestaña pide por su cuenta y, si la sesión no tiene el rol de esa lectura,
+    // dice que no tiene permiso sin apagar a las otras; la autoridad es la API.
+    path: 'superadmin/measurement',
+    label: 'Medición por funcionalidad',
+    group: 'Superadministración',
+    icon: 'chart',
+    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
+    availability: 'disponible',
+    summary: 'Cuánto se usa cada herramienta, cuánto dinero mueve y dónde falla: uso, errores, latencia y mapa de calor.',
+    module: 'M58 time_series · M28 telemetry',
+  },
+  {
     // Antes `administration/data-catalog` (API módulo 67). Roles = los de
     // `GET /admin/catalog/*`.
     path: 'superadmin/data-catalog',
@@ -185,5 +203,20 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Qué procesos y servicios están vivos, qué herramientas usa la plataforma y desde qué dispositivos se usa.',
     module: 'M46 platform_ops · M28 telemetry',
+  },
+  {
+    // Cargas masivas (`/admin/bulk-imports`, módulo `bulk_import`): altas de
+    // usuarios y carga especial de historias clínicas, con plantilla CSV y JSON
+    // por tipo. La API exige el rol de gestión (`SECURITY_ADMIN`/`PLATFORM_ADMIN`)
+    // y, además, el permiso fino del tipo (`bulk_import.users` / `.clinical`):
+    // sin él responde 403 y la pantalla lo dice. La autoridad es la API.
+    path: 'superadmin/bulk-imports',
+    label: 'Cargas masivas',
+    group: 'Superadministración',
+    icon: 'package',
+    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN'],
+    availability: 'disponible',
+    summary: 'Altas masivas de usuarios y carga especial de historias clínicas, con plantilla CSV y JSON, vista previa, confirmación e informe.',
+    module: 'bulk_import',
   },
 ];

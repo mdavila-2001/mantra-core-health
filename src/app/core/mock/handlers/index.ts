@@ -50,6 +50,7 @@ import { registrarTrafico } from './ops-traffic.handlers';
 import { registrarVidaDeInstancias } from './ops-liveness.handlers';
 import { registrarHerramientas } from './ops-tools.handlers';
 import { registrarDispositivos } from './analytics-devices.handlers';
+import { registrarDinero } from './analytics-money.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 import { registerPortalInventory } from './portal-inventory.handlers';
@@ -59,6 +60,7 @@ import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerRegistrationLogo } from './registration-logo.handlers';
 import { registrarAdmisiones } from './admissions.handlers';
+import { registrarCargasMasivas } from './bulk-imports.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -121,9 +123,11 @@ export function crearRouterSimulado(): MockRouter {
   registrarVidaDeInstancias(router);
   registrarHerramientas(router);
   registrarDispositivos(router);
+  registrarDinero(router);
   registrarFlujos(router);
   registrarAltaDeMedicoAsistida(router);
   registrarAdmisiones(router);
+  registrarCargasMasivas(router);
   registerPromotions(router);
   registerPatientSpending(router);
   registerPortalInventory(router);

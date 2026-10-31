@@ -45,6 +45,8 @@ import { entero, porcentaje } from '../../admin/platform/platform-labels';
 interface Destino {
   readonly label: string;
   readonly route: string;
+  /** Pestaña u otro parámetro de la pantalla destino (p. ej. `?pestana=1`). */
+  readonly queryParams?: Readonly<Record<string, string>>;
 }
 
 interface Area {
@@ -91,6 +93,7 @@ const PORTALES: readonly Portal[] = [
           { label: 'Admisiones', route: '/administration/admissions' },
           { label: 'Acceso delegado', route: '/administration/delegated-access' },
           { label: 'Verificación de identidad', route: '/administration/identity-assurance' },
+          { label: 'Cargas masivas', route: '/superadmin/bulk-imports' },
         ],
       },
       {
@@ -124,6 +127,7 @@ const PORTALES: readonly Portal[] = [
         descripcion: 'Tráfico, errores, latencia y comportamiento en pantalla.',
         destinos: [
           { label: 'Observabilidad', route: '/superadmin/observability' },
+          { label: 'Medición por funcionalidad', route: '/superadmin/measurement' },
           { label: 'Analítica web', route: '/superadmin/web-analytics' },
           { label: 'Operación', route: '/superadmin/operations' },
           { label: 'Instancias y herramientas', route: '/superadmin/instances' },
@@ -133,6 +137,7 @@ const PORTALES: readonly Portal[] = [
         titulo: 'Dinero',
         descripcion: 'Lo que se factura y lo que se contabiliza.',
         destinos: [
+          { label: 'Dinero por funcionalidad', route: '/superadmin/measurement', queryParams: { pestana: '1' } },
           { label: 'Facturación', route: '/billing' },
           { label: 'Contabilidad', route: '/administration/accounting' },
         ],
