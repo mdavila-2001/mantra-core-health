@@ -18,7 +18,12 @@ import { PaginatedForm } from '../../../shared/components/organisms/paginated-fo
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
-const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT', 'SPACE'];
+/*
+ * Sin `SPACE` en la actualización (M6): el `PATCH` no lleva el espacio de
+ * destino y la base rechazaría el cambio (`ck_org_user_assignments_scope_target`)
+ * con un 500 en vez de un 422 guiado. El alcance «Espacio» se da en el alta.
+ */
+const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT'];
 
 /**
  * Reasignar supervisor o suspender una asignación de organización (V29-01,
@@ -70,7 +75,7 @@ export class OrgAssignmentUpdate {
       hint: 'Al menos uno: nuevo supervisor, nuevo alcance o suspensión. Solo viaja lo elegido.',
       campos: [
         { key: 'supervisorUserId', label: 'Nuevo supervisor', hint: UUID_HINT, control: 'text', mensajeDeError: UUID_ERROR },
-        { key: 'accessScope', label: 'Nuevo alcance de acceso', control: 'radio', options: [{ value: 'TENANT', label: 'Toda la organización' }, { value: 'PRACTICE', label: 'Práctica' }, { value: 'SITE', label: 'Sede' }, { value: 'UNIT', label: 'Unidad' }, { value: 'SPACE', label: 'Espacio' }] },
+        { key: 'accessScope', label: 'Nuevo alcance de acceso', control: 'radio', options: [{ value: 'TENANT', label: 'Toda la organización' }, { value: 'PRACTICE', label: 'Práctica' }, { value: 'SITE', label: 'Sede' }, { value: 'UNIT', label: 'Unidad' }] },
       ],
     },
     {

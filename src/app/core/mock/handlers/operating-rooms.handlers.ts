@@ -1,17 +1,12 @@
-import { blockUtilizationPct, intervalOf, median, overlaps, percentage } from '../../data-access/operating-rooms/operating-rooms.rules';
-import type {
-  BlockUtilization,
-  CreateOrBlockRequest,
-  OperatingRoomSummary,
-  OwnerUtilization,
-  RoomDayUtilization,
-} from '../../data-access/operating-rooms/operating-rooms.types';
+import { intervalOf, overlaps } from '../../data-access/operating-rooms/operating-rooms.rules';
+import type { CreateOrBlockRequest, OperatingRoomSummary } from '../../data-access/operating-rooms/operating-rooms.types';
 import type { MockRequest, MockRouter } from '../mock-router';
 import { cuerpo, nuevoId, texto } from '../mock-store';
 import { espacios } from './infrastructure.handlers';
 import {
   blockOfCase,
   blocks,
+  blockListRow,
   blockView,
   casesOfBlock,
   checklistOfCase,
@@ -21,13 +16,13 @@ import {
   hasRole,
   notFoundReply,
   OPERATING_ROOM_FUNCTION,
-  ownerOf,
-  pathOf,
+  ownerLabelOf,
   preconditionReply,
   prepCleanupOf,
   releaseTick,
   roomOf,
-  touchMinutes,
+  roomEvents,
+  specialtyCodeOfConcept,
   turnoverOfCase,
   versionMismatch,
   visibleSite,
@@ -53,19 +48,20 @@ import { CASE_STATUS, connectOperatingRooms, periopCases } from './procedures.ha
     ========================================================================== */
 
 const MANAGER_ROLES = ['PERIOP_ADMIN'] as const;
+/** Quién lee salas y bloques (`f4.or.read`): el equipo quirúrgico y la administración. Facturación no. */
+const OR_READ_ROLES = ['PERIOP_ADMIN', 'SURGERY_SCHEDULER', 'PERIOP_NURSE', 'SURGEON', 'ANESTHESIOLOGIST', 'SECURITY_ADMIN'] as const;
 const MAX_INSTANCES = 400;
 const MAX_RANGE_DAYS = 366;
+
+/** El próximo paso del recambio según su estado (`allowedCleaningActions` de F2). */
+const TURNOVER_NEXT: Readonly<Record<string, string | undefined>> = { CLN_PENDING: 'start', CLN_IN_PROGRESS: 'finish', CLN_DONE: 'inspect' };
 /** Agenda publicada de cada sala con actividad: 08:00–16:00 (la sesión). */
-const SESSION_HOURS = [8, 16] as const;
-const ON_TIME_TOLERANCE_MINUTES = 5;
 
 const sameDay = (iso: string, day: Date): boolean => {
   const d = new Date(iso);
   return d.getFullYear() === day.getFullYear() && d.getMonth() === day.getMonth() && d.getDate() === day.getDate();
 };
 
-const localDate = (d: Date): string =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 function roomsOfSite(siteId: string) {
   return espacios.filtrar((e) => e.siteId === siteId && e.functionCode === OPERATING_ROOM_FUNCTION && e.statusCode !== 'SPACE_RETIRED');
@@ -78,9 +74,6 @@ function roomSummary(e: ReturnType<typeof roomsOfSite>[number]): OperatingRoomSu
       id: e.id,
       code: e.code,
       name: e.name,
-      path: pathOf(e.id),
-      status: { code: e.statusCode, display: e.statusCode === 'SPACE_ACTIVE' ? 'Activo' : 'No disponible' },
-      operationalStatus: e.operationalStatusCode === null ? null : { code: e.operationalStatusCode, display: e.operationalStatusCode === 'SPACE_OP_AVAILABLE' ? 'Disponible' : 'En mantenimiento' },
     },
     resourceId: e.schedulableResource === true ? `res-${e.id}` : null,
     prepMinutes: e.prepMinutes ?? 0,
@@ -116,7 +109,9 @@ function createBlocks(request: MockRequest) {
   if (room === undefined || room.siteId !== site.id || room.functionCode !== OPERATING_ROOM_FUNCTION) {
     return preconditionReply('OR_BLOCK_INVALID_ROOM', 'El espacio elegido no es un quirófano de este establecimiento.');
   }
-  const ownerOk = body.ownerKind === 'SURGEON' ? Boolean(body.surgeonProfileId) : Boolean(body.specialtyCode || body.clinicalUnitId);
+  const specialtyCode = specialtyCodeOfConcept(body.specialtyConceptId);
+  if (body.specialtyConceptId && specialtyCode === null) return preconditionReply('OR_BLOCK_OWNER_REQUIRED', 'La especialidad no es del catálogo.');
+  const ownerOk = body.ownerKind === 'SURGEON' ? Boolean(body.surgeonProfileId) : Boolean(specialtyCode || body.clinicalUnitId);
   if (!ownerOk) return preconditionReply('OR_BLOCK_OWNER_REQUIRED', 'Indique el servicio o el cirujano dueño del bloque.');
   if (!body.startsAt || !body.endsAt || Date.parse(body.endsAt) <= Date.parse(body.startsAt)) {
     return preconditionReply('OR_BLOCK_INVALID_RANGE', 'El bloque tiene que terminar después de empezar.');
@@ -129,7 +124,7 @@ function createBlocks(request: MockRequest) {
       .todos()
       .find((b) => b.status === 'ORB_ACTIVE' && b.operatingRoomId === room.id && overlaps(intervalOf(b.startsAt, b.endsAt), intervalOf(inst.startsAt, inst.endsAt)));
     if (clash !== undefined) {
-      return conflictReply('OR_BLOCK_OVERLAP', `Se superpone con el bloque de ${ownerOf(clash).label} del ${new Date(clash.startsAt).toLocaleDateString('es-BO')}.`, { conflictingBlockId: clash.id });
+      return conflictReply('OR_BLOCK_OVERLAP', `Se superpone con el bloque de ${ownerLabelOf(clash)} del ${new Date(clash.startsAt).toLocaleDateString('es-BO')}.`, { conflictingBlockId: clash.id });
     }
   }
   const seriesId = body.recurrence === undefined ? null : nuevoId('or-series');
@@ -142,7 +137,7 @@ function createBlocks(request: MockRequest) {
       operatingRoomId: room.id,
       ownerKind: body.ownerKind === 'SURGEON' ? 'SURGEON' : 'SERVICE',
       clinicalUnitId: body.clinicalUnitId ?? null,
-      specialtyCode: body.specialtyCode ?? null,
+      specialtyCode,
       surgeonProfileId: body.surgeonProfileId ?? null,
       startsAt: inst.startsAt,
       endsAt: inst.endsAt,
@@ -192,113 +187,61 @@ function utilization(request: MockRequest) {
   if (site === null) return notFoundReply();
   const from = texto(request.query, 'from');
   const to = texto(request.query, 'to');
-  if (from === null || to === null) return preconditionReply('INDICATOR_RANGE_REQUIRED', 'Indique el período.');
-  const start = new Date(`${from}T00:00:00`);
-  const end = new Date(`${to}T23:59:59`);
-  const days = Math.round((end.getTime() - start.getTime()) / 86_400_000);
-  if (days > MAX_RANGE_DAYS) return preconditionReply('INDICATOR_RANGE_TOO_LONG', `El período no puede superar ${MAX_RANGE_DAYS} días.`);
-  const roomFilter = texto(request.query, 'operatingRoomId');
-  const rooms = roomsOfSite(site.id).filter((r) => roomFilter === null || r.id === roomFilter);
-
-  const roomRows: RoomDayUtilization[] = [];
-  const turnovers: number[] = [];
-  const onTime: boolean[] = [];
-  for (const room of rooms) {
-    for (const day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
-      const cases = periopCases
-        .todos()
-        .filter((c) => c.operatingRoomId === room.id && c.statusConceptId !== CASE_STATUS.CANCELADO && sameDay(c.scheduledStartAt, day))
-        .sort((a, b) => a.scheduledStartAt.localeCompare(b.scheduledStartAt));
-      const dayBlocks = blocks.todos().filter((b) => b.operatingRoomId === room.id && b.status !== 'ORB_CANCELLED' && sameDay(b.startsAt, day));
-      if (cases.length === 0 && dayBlocks.length === 0) continue;
-      const session = { start: new Date(day).setHours(SESSION_HOURS[0], 0, 0, 0), end: new Date(day).setHours(SESSION_HOURS[1], 0, 0, 0) };
-      const touch = cases.reduce((sum, c) => sum + touchMinutes(c.id, session), 0);
-      const dayTurnovers: number[] = [];
-      for (let i = 1; i < cases.length; i += 1) {
-        const out = eventsOfCase(cases[i - 1]!.id).find((e) => e.eventCode === 'PATIENT_OUT_OF_ROOM');
-        const next = eventsOfCase(cases[i]!.id).find((e) => e.eventCode === 'PATIENT_IN_ROOM');
-        if (out !== undefined && next !== undefined) dayTurnovers.push(Math.round((Date.parse(next.occurredAt) - Date.parse(out.occurredAt)) / 60_000));
-      }
-      turnovers.push(...dayTurnovers);
-      const first = cases[0];
-      const firstIn = first === undefined ? undefined : eventsOfCase(first.id).find((e) => e.eventCode === 'PATIENT_IN_ROOM');
-      const firstOnTime = first === undefined || firstIn === undefined ? null : Date.parse(firstIn.occurredAt) <= Date.parse(first.scheduledStartAt) + ON_TIME_TOLERANCE_MINUTES * 60_000;
-      if (firstOnTime !== null) onTime.push(firstOnTime);
-      const sessionMinutes = (session.end - session.start) / 60_000;
-      roomRows.push({
-        operatingRoomId: room.id,
-        roomLabel: `${room.code} · ${room.name}`,
-        date: localDate(day),
-        sessionMinutes,
-        touchMinutes: touch,
-        roomUtilizationPct: percentage(touch, sessionMinutes),
-        turnoverMinutes: median(dayTurnovers),
-        firstCaseOnTimePct: firstOnTime === null ? null : firstOnTime ? 100 : 0,
-        cases: cases.length,
-      });
-    }
+  if (from === null || to === null || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+    return preconditionReply('INDICATOR_RANGE_TOO_LONG', 'Rango de fechas inválido');
   }
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const end = Date.parse(`${to}T00:00:00Z`) + 86_400_000;
+  if (!(end > start) || (end - start) / 86_400_000 > MAX_RANGE_DAYS) return preconditionReply('INDICATOR_RANGE_TOO_LONG', `El rango no puede superar ${MAX_RANGE_DAYS} días`);
+  const roomFilter = texto(request.query, 'operatingRoomId');
+  const allowed = roomsOfSite(site.id);
+  if (roomFilter !== null && !allowed.some((r) => r.id === roomFilter)) return notFoundReply();
+  const rooms = allowed.filter((r) => roomFilter === null || r.id === roomFilter);
+  const minutes = (a?: string, b?: string): number => (a !== undefined && b !== undefined ? (Date.parse(b) - Date.parse(a)) / 60_000 : 0);
 
-  const rangeBlocks = blocks
-    .todos()
-    .filter((b) => b.status !== 'ORB_CANCELLED' && rooms.some((r) => r.id === b.operatingRoomId))
-    .filter((b) => Date.parse(b.startsAt) >= start.getTime() && Date.parse(b.startsAt) <= end.getTime())
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  const blockRows: BlockUtilization[] = rangeBlocks.map((b) => {
-    const window = intervalOf(b.startsAt, b.endsAt);
-    const linked = casesOfBlock(b).sort((x, y) => x.scheduledStartAt.localeCompare(y.scheduledStartAt));
-    const used = linked.reduce((sum, c) => sum + touchMinutes(c.id, window, 'PATIENT_IN_ROOM'), 0);
-    let turnover = 0;
-    for (let i = 1; i < linked.length; i += 1) {
-      const out = eventsOfCase(linked[i - 1]!.id).find((e) => e.eventCode === 'PATIENT_OUT_OF_ROOM');
-      const next = eventsOfCase(linked[i]!.id).find((e) => e.eventCode === 'PATIENT_IN_ROOM');
-      if (out !== undefined && next !== undefined) turnover += Math.max(0, Math.round((Math.min(Date.parse(next.occurredAt), window.end) - Math.max(Date.parse(out.occurredAt), window.start)) / 60_000));
+  // Misma cuenta que `OperatingRoomsReadUseCases.utilization` de la API.
+  const result = rooms.map((room) => {
+    const roomBlocks = blocks.todos().filter((b) => b.operatingRoomId === room.id && Date.parse(b.startsAt) < end && Date.parse(b.endsAt) > start);
+    const byCase = new Map<string, Record<string, string>>();
+    for (const e of roomEvents.todos()) {
+      const c = periopCases.get(e.caseId);
+      if (c === undefined || c.operatingRoomId !== room.id) continue;
+      const at = Date.parse(e.occurredAt);
+      if (at < start || at >= end) continue;
+      byCase.set(e.caseId, { ...(byCase.get(e.caseId) ?? {}), [e.eventCode]: e.occurredAt });
     }
-    const allocated = Math.round((window.end - window.start) / 60_000);
-    const released = b.releasedMinutes ?? 0;
+    const sessionMinutes = roomBlocks.filter((b) => b.status === 'ORB_ACTIVE').reduce((a, b) => a + minutes(b.startsAt, b.endsAt), 0);
+    const touch = [...byCase.values()].reduce((a, m) => a + minutes(m['ANESTHESIA_START'], m['PATIENT_OUT_OF_ROOM']), 0);
+    const sorted = [...byCase.values()].filter((m) => m['PATIENT_IN_ROOM'] !== undefined).sort((x, y) => x['PATIENT_IN_ROOM']!.localeCompare(y['PATIENT_IN_ROOM']!));
+    const turnovers: number[] = [];
+    for (let i = 1; i < sorted.length; i += 1) {
+      const out = sorted[i - 1]!['PATIENT_OUT_OF_ROOM'];
+      if (out !== undefined) turnovers.push(minutes(out, sorted[i]!['PATIENT_IN_ROOM']));
+    }
+    const allocated = roomBlocks.reduce((a, b) => a + minutes(b.startsAt, b.endsAt), 0);
+    const released = roomBlocks.reduce((a, b) => a + (b.releasedMinutes ?? 0), 0);
+    const p50 = turnovers.length === 0 ? null : [...turnovers].sort((x, y) => x - y)[Math.floor((turnovers.length - 1) / 2)]!;
     return {
-      blockId: b.id,
-      operatingRoomId: b.operatingRoomId,
-      owner: ownerOf(b).label,
-      startsAt: b.startsAt,
-      allocatedMinutes: allocated,
-      releasedMinutes: released,
-      usedInBlockMinutes: used,
-      turnoverInBlockMinutes: turnover,
-      blockUtilizationPct: blockUtilizationPct(allocated, released, used, turnover),
+      operatingRoomId: room.id,
+      code: room.code,
+      sessionMinutes,
+      touchMinutes: touch,
+      roomUtilizationPct: sessionMinutes > 0 ? (touch / sessionMinutes) * 100 : null,
+      turnoverMinutesP50: p50,
+      blocks: { allocated, released, blockUtilizationPct: allocated - released > 0 ? (touch / (allocated - released)) * 100 : null },
     };
   });
-
-  const owners = new Map<string, { allocated: number; released: number; used: number; turnover: number }>();
-  for (const row of blockRows) {
-    const acc = owners.get(row.owner) ?? { allocated: 0, released: 0, used: 0, turnover: 0 };
-    owners.set(row.owner, { allocated: acc.allocated + row.allocatedMinutes, released: acc.released + row.releasedMinutes, used: acc.used + row.usedInBlockMinutes, turnover: acc.turnover + row.turnoverInBlockMinutes });
-  }
-  const ownerRows: OwnerUtilization[] = [...owners.entries()].map(([owner, a]) => ({
-    owner,
-    allocatedMinutes: a.allocated,
-    releasedMinutes: a.released,
-    usedInBlockMinutes: a.used,
-    blockUtilizationPct: blockUtilizationPct(a.allocated, a.released, a.used, a.turnover),
-  }));
-
-  const sumOf = (rows: readonly RoomDayUtilization[], key: 'sessionMinutes' | 'touchMinutes') => rows.reduce((s, r) => s + r[key], 0);
-  const totalsBlock = [...owners.values()].reduce((s, a) => ({ allocated: s.allocated + a.allocated, released: s.released + a.released, used: s.used + a.used, turnover: s.turnover + a.turnover }), { allocated: 0, released: 0, used: 0, turnover: 0 });
+  // Como la API (`3036730d2`): `asOf` y `totals` calculados del lado servidor.
+  const sum = (f: (r: (typeof result)[number]) => number): number => result.reduce((a, r) => a + f(r), 0);
+  const session = sum((r) => r.sessionMinutes);
+  const touch = sum((r) => r.touchMinutes);
+  const available = sum((r) => r.blocks.allocated - r.blocks.released);
   return {
     from,
     to,
     asOf: new Date().toISOString(),
-    totals: {
-      sessionMinutes: sumOf(roomRows, 'sessionMinutes'),
-      touchMinutes: sumOf(roomRows, 'touchMinutes'),
-      roomUtilizationPct: percentage(sumOf(roomRows, 'touchMinutes'), sumOf(roomRows, 'sessionMinutes')),
-      turnoverMinutes: median(turnovers),
-      firstCaseOnTimePct: percentage(onTime.filter(Boolean).length, onTime.length),
-      blockUtilizationPct: blockUtilizationPct(totalsBlock.allocated, totalsBlock.released, totalsBlock.used, totalsBlock.turnover),
-    },
-    rooms: roomRows,
-    blocks: blockRows,
-    owners: ownerRows,
+    totals: { sessionMinutes: session, touchMinutes: touch, roomUtilizationPct: session > 0 ? (touch / session) * 100 : null, blockUtilizationPct: available > 0 ? (touch / available) * 100 : null },
+    rooms: result,
   };
 }
 
@@ -307,55 +250,60 @@ function utilization(request: MockRequest) {
 export function registerOperatingRooms(router: MockRouter): void {
   connectOperatingRooms({
     visible: (c, tenant) => tenant === null || roomOf(c.operatingRoomId)?.tenantId === tenant,
+    // Forma de `toSummary` + `CaseOrViewBuilder.fields` (API `3036730d2`).
     view: (c) => {
       const room = roomOf(c.operatingRoomId);
       const { prep, cleanup } = prepCleanupOf(c);
       const window = windowOfCase(c);
       const block = blockOfCase(c);
-      const checklist = checklistOfCase(c.id);
+      const type = c.caseType ?? 'ELECTIVE';
       return {
-        operatingRoom: room === undefined ? null : { id: room.id, code: room.code, name: room.name, path: pathOf(room.id) },
-        practiceSiteId: room?.siteId ?? null,
+        operatingRoom: room === undefined ? null : { id: room.id, code: room.code, name: room.name },
         reservedStartAt: window.reservedStartAt,
         reservedEndAt: window.reservedEndAt,
         prepMinutes: prep,
         cleanupMinutes: cleanup,
-        block: block === undefined ? null : { id: block.id, owner: ownerOf(block).label },
-        checklist: checklist === undefined ? null : { id: checklist.id, signIn: checklist.completedAt.SIGN_IN, timeOut: checklist.completedAt.TIME_OUT, signOut: checklist.completedAt.SIGN_OUT },
-        caseType: c.caseType ?? 'ELECTIVE',
+        block: block === undefined ? null : { id: block.id, label: ownerLabelOf(block) },
+        caseType: { code: type, display: type === 'ELECTIVE' ? 'Electiva' : type === 'URGENT' ? 'Urgente' : 'Emergencia' },
         encounterId: c.encounterId ?? null,
       };
     },
+    // Forma de `CaseOrViewBuilder.detail`: check-list, tiempos y recambio al nivel del detalle.
     detail: (c) => {
       const t = turnoverOfCase(c.id);
+      const checklist = checklistOfCase(c.id);
       return {
-        roomEvents: eventsOfCase(c.id).map(({ id, eventCode, occurredAt, recordedAt }) => ({ id, eventCode, occurredAt, recordedAt })),
-        // Desvío anotado: la orden de recambio de la sala, para operar la limpieza desde la ficha.
-        turnoverCleaning: t === undefined ? null : { id: t.id, status: t.status, rowVersion: t.rowVersion },
+        checklist:
+          checklist === undefined
+            ? null
+            : { id: checklist.id, signIn: { completedAt: checklist.completedAt.SIGN_IN }, timeOut: { completedAt: checklist.completedAt.TIME_OUT }, signOut: { completedAt: checklist.completedAt.SIGN_OUT } },
+        roomEvents: eventsOfCase(c.id).map(({ id, eventCode, occurredAt }) => ({ id, eventCode, occurredAt, recordedByUserId: null })),
+        turnoverCleaning: t === undefined ? null : { id: t.id, status: t.status, rowVersion: t.rowVersion, allowedTransitions: TURNOVER_NEXT[t.status] === undefined ? [] : [TURNOVER_NEXT[t.status]!, 'cancel'] },
       };
     },
   });
 
   router.get('/sites/:siteId/operating-rooms', (request) => {
     const site = visibleSite(request, request.params['siteId']);
-    return site === null ? notFoundReply() : roomsOfSite(site.id).map(roomSummary);
+    if (site === null) return notFoundReply();
+    if (!hasRole(request, OR_READ_ROLES)) return forbiddenReply('Su rol no consulta los quirófanos de la sede.', OR_READ_ROLES);
+    return roomsOfSite(site.id).map(roomSummary);
   });
 
   router.get('/sites/:siteId/or-blocks', (request) => {
     const site = visibleSite(request, request.params['siteId']);
     if (site === null) return notFoundReply();
+    if (!hasRole(request, OR_READ_ROLES)) return forbiddenReply('Su rol no consulta los bloques de quirófano.', OR_READ_ROLES);
     releaseTick();
     const from = Date.parse(texto(request.query, 'from') ?? '1970-01-01');
     const to = Date.parse(texto(request.query, 'to') ?? '2999-01-01');
     const room = texto(request.query, 'operatingRoomId');
-    const owner = texto(request.query, 'owner');
     return blocks
       .todos()
       .filter((b: SimulatedBlock) => b.siteId === site.id && Date.parse(b.endsAt) > from && Date.parse(b.startsAt) < to)
       .filter((b) => room === null || b.operatingRoomId === room)
-      .filter((b) => owner === null || ownerOf(b).label === owner || b.specialtyCode === owner || b.surgeonProfileId === owner)
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
-      .map(blockView);
+      .map(blockListRow);
   });
 
   router.post('/sites/:siteId/or-blocks', createBlocks);

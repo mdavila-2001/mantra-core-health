@@ -538,3 +538,73 @@ Capturas (`evidencias/infra-f5-integracion/`, 29 + `resultados.json`): 01–02 c
 1440.
 
 **Contra la API real no se ejecutó.** Revisión independiente: **pendiente** — quien implementa no aprueba.
+
+## Infraestructura F4/F5 — tercera pasada: las formas de la API (web) — 2026-10-31
+
+La revisión `frontend-reviewer` de `infra-f4f5-web` dio **CAMBIOS REQUERIDOS**: la web y la maqueta tenían la forma
+de la web, no la de la API. Decisión del orquestador: **la API manda las formas**. Se reescribieron tipos, clientes y
+maqueta contra `origin/claude/trusting-hawking-q3p12v` (hasta `37c3c6648`, que incluye `3036730d2` F4 y `e46739aaa`
+F5a), y se corrió Playwright **contra la API real** (`:3000`, copia `/home/user/api-run`).
+
+| Hallazgo | Arreglo | Prueba |
+|---|---|---|
+| B1 ficha del caso | Cabecera `toSummary` + `CaseOrViewBuilder` (`operatingRoom`, `block {id,label}`, `caseType {code,display}`); `checklist`, `roomEvents`, `turnoverCleaning` del detalle; ausente ≠ vacío (`checklistReported`); el check-list se lee con el alta idempotente si no viene; la sala se resuelve por `operatingRoomId` | `procedures.client.f4.spec` (formas literales vieja y `3036730d2`), `interventions.f4.spec` «con la API de hoy» ×2, Playwright real |
+| B2 utilización | Tipada contra `rooms[]`; `withTotals` usa los `totals`/`asOf` de la API y completa recambio y asignado/liberado | `operating-rooms.rules.spec`, `operating-rooms.client.contract.spec` (con y sin totals) |
+| B3 tarifas | `tariffKind`, `currencyConceptId`; `tariffView` resuelto con catálogos; estado por vigencia | `space-billing.client.contract.spec` |
+| B4 día-cama | `pending-charges` arreglo, `run → {created[], skipped}`; encuentro elegido de `GET /sites/:siteId/inpatients` o `?encounter=` | `bed-day-charges.spec` (3 pruebas), contrato |
+| B5 ficha de equipo | `GET /diagnostic-equipment/:id`, `/resource`, `/mwl-station` (F5a); relee tras el `PATCH` plano; MWL con su estado (no se traga el error) | `bed-day-charges.spec` «ficha de equipo (B5)», contrato |
+| H1 bloques | `specialtyConceptId`; rótulo de la API (`owner.label`) o armado con catálogos; `cases` como ids | `operating-rooms.handlers.spec`, `interventions.f4.spec`, contrato |
+| H2 `/interventions` | Sala resuelta contra `rooms()` | `interventions.f4.spec` «H2» |
+| H3 autorización simulada | Sin compuertas por rol (`canManageBlocks` y demás eliminadas): se pide y el 403 pinta S5 | `interventions.f4.spec` (facturación → S5 desde el 403 en bloques y programar) |
+| H4 contexto de sede | `SiteContextStore` con clave `userId|tenant`, `switchMap`, `SESSION_CLEANERS`, 403 → S5, `/practice/infrastructure-access/me` con caída a consolas, selector de sede (`app-site-switch`), personal sólo con `ensureDirectory` | `site-context.store.spec` (5) |
+| H5 carreras | `switchMap` por clave en agenda, bloques, utilización, programar, ficha, día-cama, contabilidad, equipo; día-cama compara el encuentro | `bed-day-charges.spec` «H5» |
+| H6 claves que la API rechaza | `INFRA_INTEGRATION_FLAGS` apagada: no se manda `suggestedCareSpaceId`, `collectionCareSpaceId` ni `careSpaceId`; el punto de toma se ata a la sede del ejecutante; sin consola por médico | `collection-point-select.spec` (3), `infrastructure-accounting.spec` «H6», Playwright mock F5 (3) |
+| M1 If-Match en bloques | Se manda; la API lo acepta desde `3036730d2` (412) | contrato |
+| M2 ubicar activo | `If-Match` con `rowVersion` | contrato F5f |
+| M3 respuesta del check-list | UUID de concepto → código (`infra-concepts.ts`, UUID v5 recalculados en la prueba) | `infra-concepts.spec` |
+| M4 índice de pestañas | `fixedTabCount = PESTANAS_DE_LA_FICHA.length` | `space-detail.spec` |
+| M5 stock | `create → {id}`, `relocate → {id, careSpaceId, previousCareSpaceId}`; relee; escritura atenuada a `SECURITY_ADMIN` | contrato |
+| M6 F5g | La actualización no ofrece «Espacio» | `org-assignment-update.spec` «M6» |
+| M7 pruebas tautológicas | Fixtures literales de las vistas de la API, una spec de contrato por cliente | `*.contract.spec.ts` (3 archivos) |
+| M8 `effect` innecesario | Lecturas con `toObservable` + `switchMap` | — |
+| LOW | `backend-api.md` con las 33 operaciones; `or-agenda` → `or-schedule`; grilla fuera de la `<ul>` | `check-api-contract-drift` sin hallazgos de esta rama, `resource-timeline.spec` |
+
+| Gate | Resultado |
+|---|---|
+| `yarn lint` · `yarn typecheck` | exit 0 · exit 0 |
+| `yarn build` (`flock`, `NODE_OPTIONS=--max-old-space-size=6144`) | exit 0 (96 s) · `dist/` borrado |
+| `ng test` de lo tocado (4 tandas, `flock`) | 22 archivos · **346/346** (52 · 95 · 35 · 164) |
+| Playwright maqueta `infra-f4f5.spec.ts` | **12/12** (4,1 min) |
+| Playwright maqueta `infra-f5-integracion.spec.ts` | **12/12** (2,4 min) |
+| Playwright **API real** `infra-f4f5-real-api.spec.ts` | **2/2** (41 s) |
+| `check-route-prefixes`, `check-css-tokens` | exit 0 |
+| `check-client-prefixes`, `check-usted`, `check-max-lines`, `check-architecture`, `check-colores-sueltos`, `check-api-contract-drift` | exit 1 **previos**: ningún hallazgo en archivos de esta pasada (los 14 de prefijos son `AdmissionsClient`/`InsightsClient`) |
+
+### Contra la API real (`evidencias/infra-f4f5/real-api/`)
+
+Semilla **sólo por la API**, con nombres F4W: organización `Hospital F4WBDA842` (`register-organization`), práctica,
+sede, quirófano `QX-F4W` (prep 20, limpieza 30) y su recurso R0, paciente (`register-patient`), dos profesionales
+(`register-practitioner`) con plantilla, membresía, asignaciones F5g y roles, y **relación asistencial aceptada por el
+paciente** (es lo que deja programar a un paciente que no tiene huella propia en el tenant). Build
+`development,real-api` servido estático con proxy a `:3000`, bajo `flock` y el lock de navegador compartido.
+
+| Paso (UI) | Petición → respuesta | SELECT en Postgres | Tras recarga |
+|---|---|---|---|
+| Programar CQ-000007 (QX-F4W, 10:00–11:30) | `POST /procedure-cases` → 201 | `reserved 13:40–16:00 UTC`, prep 20, limpieza 30 | cabecera «QX-F4W · Quirófano F4W» (`02`) |
+| Check-list: alta + Entrada + Pausa + Salida | `POST …/safety-checklists` → 201; 3 × `…/responses` → 201 | `sign_in/time_out/sign_out_completed_at` = `t t t` | fases completas (`03`) |
+| Cinco tiempos de sala, en orden | 5 × `POST …/room-events` → 201; la salida trae `cleaningOrderId` | `OR_RESERVED` + los cinco `OR_EVENT_*`, en orden | línea de tiempo (`04`) |
+| Recambio: iniciar, terminar (enfermería) | `POST /cleaning-orders/:id/start|finish` con `If-Match` «1», «2» → 200 | — | `05` |
+| Inspeccionar quien limpió | `…/inspect` `If-Match` «3» → **422** `INSPECTION_BY_CLEANER_NOT_ALLOWED` | — | S4 en la ficha (`06`) |
+| Inspeccionar otra cuenta (supervisión) | `…/inspect` → 200 `{order, nextOrderId}` | `row_version 4`, `CLN_INSPECTED` | «Lista para el próximo caso», `CLEANUP_START/END`, `ROOM_READY` (`07`) |
+| Día-cama | `GET /sites/:siteId/inpatients` → `[]` | — | S3 «La sede no tiene personas internadas ahora» (`08`) |
+
+**No ejecutado contra la API real**: el día-cama idempotente. `POST /clinical/admissions` exige la huella del paciente
+en el tenant (membresía propia o una cita que reservó él) y no acepta la relación asistencial; sin SQL no hubo
+internación que devengar. Tampoco el cargo de quirófano por tiempo (lo devenga el worker al cerrar el caso con el
+informe firmado, que la web no tiene) ni tarifas (no hay ítem de catálogo sembrado por la API en esa práctica).
+
+Hallazgo para A-F4: la sala tiene una orden de recambio abierta a la vez; si quedó la de un caso anterior, la salida de
+sala del siguiente devuelve esa `cleaningOrderId` y su detalle trae `turnoverCleaning: null` (se vio en una corrida
+previa; la spec opera la orden en la ficha del caso dueño). Consola: sólo los dos errores del 422 provocado.
+
+Revisión independiente: **pendiente** — quien implementa no aprueba.

@@ -3,14 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type {
-  BedDayRunResult,
-  BedDayStay,
-  ChargeCapture,
-  CreateSpaceTariffRequest,
-  EncounterCharges,
-  SpaceTariff,
-} from './space-billing.types';
+import type { BedDayRunResult, ChargeCapture, CreateSpaceTariffRequest, Inpatient, SpaceTariff } from './space-billing.types';
 
 /**
  * Cliente de facturación por espacio — franja F5e (`CONTRATO-F2-F5.md` §F5e).
@@ -19,6 +12,10 @@ import type {
  * borra, y una tarifa nueva con vigencia futura no altera cargos pasados. Los
  * cargos se devengan solos (regla de medianoche, quirófano por tiempo) y
  * Facturación los revisa; nadie los escribe a mano.
+ *
+ * Formas de la API (`billing-space-charges.controller.ts`, `tariffView`,
+ * `chargeView`): los ids viajan sueltos y la pantalla los resuelve con sus
+ * catálogos. `space-billing.client.contract.spec.ts` lo fija.
  */
 @Injectable({ providedIn: 'root' })
 export class SpaceBillingClient {
@@ -40,9 +37,9 @@ export class SpaceBillingClient {
     return this.http.post<SpaceTariff>(this.url(`/billing/space-tariffs/${encodeURIComponent(id)}/close`), { validTo });
   }
 
-  /** `GET /billing/encounters/:encounterId/pending-charges`. */
-  getEncounterCharges(encounterId: string): Observable<EncounterCharges> {
-    return this.http.get<EncounterCharges>(this.url(`/billing/encounters/${encodeURIComponent(encounterId)}/pending-charges`));
+  /** `GET /billing/encounters/:encounterId/pending-charges` — arreglo de cargos **pendientes**. */
+  getPendingCharges(encounterId: string): Observable<readonly ChargeCapture[]> {
+    return this.http.get<readonly ChargeCapture[]>(this.url(`/billing/encounters/${encodeURIComponent(encounterId)}/pending-charges`));
   }
 
   /** `POST /billing/charge-captures/:id/void {reason}`. */
@@ -51,13 +48,14 @@ export class SpaceBillingClient {
   }
 
   /**
-   * `GET /billing/bed-day/stays?siteId` — estancias de la sede con cargos.
+   * `GET /sites/:siteId/inpatients` (F3) — de dónde elegir el encuentro.
    *
-   * Desvío anotado en el contrato: la API sólo declara la lectura por
-   * encuentro, y Facturación necesita de dónde elegirlo.
+   * La API no tiene lectura de estancias de facturación (pedido a A-F5e:
+   * `GET /billing/bed-day/stays`); mientras tanto se eligen las internaciones
+   * vigentes de la lectura de F3. Al integrar con W-F2F3 queda su cliente ADT.
    */
-  listStays(siteId: string): Observable<readonly BedDayStay[]> {
-    return this.http.get<readonly BedDayStay[]>(this.url('/billing/bed-day/stays'), { params: new HttpParams().set('siteId', siteId) });
+  listInpatients(siteId: string): Observable<readonly Inpatient[]> {
+    return this.http.get<readonly Inpatient[]>(this.url(`/sites/${encodeURIComponent(siteId)}/inpatients`));
   }
 
   /**
@@ -65,8 +63,7 @@ export class SpaceBillingClient {
    * día-cama hasta la última medianoche. Idempotente por
    * `BEDDAY:<encuentro>:<fecha>`.
    *
-   * Desvío anotado: el contrato lo deja al job (`/internal/…`, SYSTEM); esto
-   * es el mismo servicio abierto a Facturación para un encuentro.
+   * Devuelve `{created: ChargeCapture[], skipped}`.
    */
   runBedDay(encounterId: string): Observable<BedDayRunResult> {
     return this.http.post<BedDayRunResult>(this.url(`/billing/encounters/${encodeURIComponent(encounterId)}/bed-day-charges/run`), {});

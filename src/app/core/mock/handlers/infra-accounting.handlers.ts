@@ -4,7 +4,7 @@ import { SITIOS_INFRA } from '../fixtures/infraestructura';
 import type { MockRequest, MockRouter } from '../mock-router';
 import { Coleccion, texto, uuid } from '../mock-store';
 import { espacios, tenantDePractica, unidades } from './infrastructure.handlers';
-import { conflictReply, forbiddenReply, hasRole, notFoundReply, pathOf, preconditionReply, tenantOf } from './operating-rooms.state';
+import { conflictReply, forbiddenReply, hasRole, notFoundReply, pathOf, preconditionReply, tenantOf, versionMismatch } from './operating-rooms.state';
 
 /* ============================================================================
     Contabilidad por espacio — franja F5f (`CONTRATO-F2-F5.md` §F5f).
@@ -32,6 +32,7 @@ interface SimulatedItem {
   readonly careSpaceId: string | null;
   readonly locationText: string | null;
   readonly bookValue: string;
+  readonly rowVersion: number;
 }
 
 interface SimulatedCostCenter {
@@ -51,6 +52,7 @@ const item = (code: string, name: string, category: string, space: string | null
   careSpaceId: space === null ? null : spaceId(space),
   locationText,
   bookValue: value,
+  rowVersion: 1,
 });
 
 const items = new Coleccion<SimulatedItem>([
@@ -80,7 +82,9 @@ function itemView(i: SimulatedItem): InfrastructureItem {
     careSpace: space === undefined ? null : { id: space.id, code: space.code, name: space.name, path: [pathOf(space.id), space.name].filter(Boolean).join(' › ') },
     locationText: i.locationText,
     bookValue: i.bookValue,
-    currencyCode: 'BOB',
+    // Como la API (`itemRows`): la moneda todavía viaja vacía.
+    currencyCode: '',
+    rowVersion: i.rowVersion,
   };
 }
 
@@ -127,7 +131,10 @@ export function registerInfraAccounting(router: MockRouter): void {
       const site = SITIOS_INFRA.find((s) => s.id === space.siteId);
       if (site?.practiceId !== i.practiceId) return preconditionReply('INFRASTRUCTURE_SPACE_PRACTICE_MISMATCH', 'El espacio es de otra práctica que el activo.');
     }
-    return itemView(items.actualizar(i.id, { careSpaceId })!);
+    // `If-Match` opcional, como la API: si viene y no coincide, 412.
+    const stale = versionMismatch(request, i.rowVersion);
+    if (stale !== null) return stale;
+    return itemView(items.actualizar(i.id, { careSpaceId, rowVersion: i.rowVersion + 1 })!);
   });
 
   router.get('/accounting/cost-centers', (request) => {

@@ -182,8 +182,8 @@ for (const w of WIDTHS) {
       await shot(page, '01-intervenciones-lista', w.name);
 
       await page.goto('/interventions/operating-rooms', { waitUntil: 'domcontentloaded' });
-      await expect(page.getByTestId('or-agenda-as-of')).toBeVisible({ timeout: 60_000 });
-      log.push({ what: `agenda ${w.name}`, data: { overflow: await overflow(page), card: await measureCard(page, '[data-testid=or-agenda]') } });
+      await expect(page.getByTestId('or-schedule-as-of')).toBeVisible({ timeout: 60_000 });
+      log.push({ what: `agenda ${w.name}`, data: { overflow: await overflow(page), card: await measureCard(page, '[data-testid=or-schedule]') } });
       await shot(page, '02-agenda-quirofanos', w.name);
 
       await page.goto('/interventions/blocks', { waitUntil: 'domcontentloaded' });
@@ -195,7 +195,7 @@ for (const w of WIDTHS) {
       await shot(page, '04-bloques-alta', w.name);
 
       await page.goto('/interventions/utilization', { waitUntil: 'domcontentloaded' });
-      await expect(page.getByTestId('or-utilization-owners')).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByTestId('or-utilization-rooms')).toBeVisible({ timeout: 60_000 });
       log.push({ what: `utilizacion ${w.name}`, data: { overflow: await overflow(page) } });
       await shot(page, '05-utilizacion', w.name);
 
@@ -249,7 +249,8 @@ for (const w of WIDTHS) {
       await expect(page.getByTestId('bed-day-stay')).toBeVisible({ timeout: 60_000 });
       await shot(page, '21-dia-cama-sin-estancia', w.name);
       await page.goto('/interventions/blocks', { waitUntil: 'domcontentloaded' });
-      await expect(page.getByText('jefatura de quirófano').first()).toBeVisible({ timeout: 60_000 });
+      // S5 desde el 403 de la API (la web pide; no corta por rol).
+      await expect(page.getByText('Su rol no consulta los bloques de quirófano.').first()).toBeVisible({ timeout: 60_000 });
       await shot(page, '22-estado-S5-bloques-facturacion', w.name);
     });
 
@@ -404,17 +405,20 @@ test.describe('Cadenas de mutación a 1440', () => {
     await expect(page.getByTestId('bed-day-run')).toBeVisible({ timeout: 60_000 });
     await shot(page, '60-dia-cama-sin-cargos', '1440');
     await page.getByTestId('bed-day-run').click();
-    const run = await record(page, 'devengar día-cama (201)', 'POST', /\/bed-day-charges\/run$/);
-    expect(run.status).toBe(201);
-    await expect(page.getByTestId('bed-day-result')).toContainText('3 cargos nuevos', { timeout: 60_000 });
+    // `runBedDays` responde 200 con `{created: ChargeCapture[], skipped}`.
+    const run = await record(page, 'devengar día-cama (200)', 'POST', /\/bed-day-charges\/run$/);
+    expect(run.status).toBe(200);
+    const created = ((run.response as { created: unknown[] }).created ?? []).length;
+    expect(created).toBeGreaterThan(0);
+    await expect(page.getByTestId('bed-day-result')).toContainText(`${created} cargos nuevos`, { timeout: 60_000 });
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('bed-day-table')).toContainText('BEDDAY:', { timeout: 60_000 });
     const keys = (await page.getByTestId('bed-day-table').textContent())?.match(/BEDDAY:[^\s]+/g) ?? [];
     log.push({ what: 'día-cama · recarga', data: { keys, persisted: await page.evaluate(() => (JSON.parse(sessionStorage.getItem('mock.billing.chargeCaptures') ?? '{"filas":[]}').filas as unknown[]).length) } });
-    expect(keys).toHaveLength(3);
+    expect(keys).toHaveLength(created);
     await shot(page, '61-dia-cama-cargos-recarga', '1440');
     await page.getByTestId('bed-day-run').click();
-    await expect(page.getByTestId('bed-day-result')).toContainText('0 cargos nuevos; 3 días ya estaban devengados', { timeout: 60_000 });
+    await expect(page.getByTestId('bed-day-result')).toContainText(`0 cargos nuevos; ${created} días ya estaban devengados`, { timeout: 60_000 });
     await record(page, 'devengar otra vez (idempotente)', 'POST', /\/bed-day-charges\/run$/);
     await shot(page, '62-dia-cama-idempotente', '1440');
   });

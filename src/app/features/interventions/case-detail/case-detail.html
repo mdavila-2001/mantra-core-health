@@ -5,7 +5,7 @@
         <app-badge variant="info" data-testid="case-status">{{ statusLabel() }}</app-badge>
       }
       @if (c.block; as b) {
-        <app-badge variant="secondary">Bloque {{ b.owner }}</app-badge>
+        <app-badge variant="secondary">Bloque {{ b.label }}</app-badge>
       }
     }
   </span>
@@ -33,19 +33,19 @@
 
         <app-tab label="Check-list OMS">
           <div class="case-detail__panel">
-            <app-case-checklist [caseId]="d.case.id" [checklistId]="d.case.checklist?.id ?? null" [canRecord]="canRecord()" (changed)="reload()" />
+            <app-case-checklist [caseId]="d.case.id" [checklistId]="d.checklist?.id ?? null" [checklistReported]="d.checklistReported ?? false" (changed)="reload()" (phases)="phases.set($event)" />
           </div>
         </app-tab>
 
         <app-tab label="Eventos de sala">
           <div class="case-detail__panel">
-            <app-case-room-events [caseId]="d.case.id" [events]="d.roomEvents" [checklist]="d.case.checklist ?? null" [canRecord]="canRecord()" [turnover]="d.turnoverCleaning" (changed)="reload()" />
+            <app-case-room-events [caseId]="d.case.id" [events]="d.roomEvents" [phases]="phases()" [turnover]="d.turnoverCleaning" (changed)="reload()" />
           </div>
         </app-tab>
 
         <app-tab label="Cargos">
           <div class="case-detail__panel">
-            <app-case-charges [caseId]="d.case.id" [encounterId]="d.case.encounterId ?? null" />
+            <app-case-charges [caseId]="d.case.id" [encounterId]="d.case.encounterId ?? null" [roomLabel]="roomLabel()" />
           </div>
         </app-tab>
       </app-tabs>

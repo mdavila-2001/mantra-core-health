@@ -16,7 +16,10 @@ export interface InfrastructureItem {
   /** Lo que había antes de F5f, en texto libre: sólo lectura heredada. */
   readonly locationText: string | null;
   readonly bookValue: string;
+  /** La API lo manda vacío por ahora (`''`): la pantalla no lo da por moneda. */
   readonly currencyCode: string;
+  /** Versión de la fila: viaja en `If-Match` al ubicar. */
+  readonly rowVersion: number;
 }
 
 /** Un centro de costo con su unidad (`accounting.cost_centers`). */

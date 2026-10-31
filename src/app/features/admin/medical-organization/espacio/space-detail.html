@@ -154,7 +154,7 @@
           @if (extra === 'equipment') {
             <app-tab label="Equipos">
               <div class="ficha-espacio__panel">
-                @if (pestana() === 5 + i) {
+                @if (pestana() === fixedTabCount + i) {
                   <app-space-equipment-tab [space]="e" [canWrite]="puedeEscribir()" data-testid="ficha-equipos" />
                 }
               </div>
@@ -162,7 +162,7 @@
           } @else {
             <app-tab label="Stock">
               <div class="ficha-espacio__panel">
-                @if (pestana() === 5 + i) {
+                @if (pestana() === fixedTabCount + i) {
                   <app-space-stock-tab [space]="e" [canWrite]="canWriteStock()" data-testid="ficha-stock" />
                 }
               </div>

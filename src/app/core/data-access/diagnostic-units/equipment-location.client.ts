@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type { LocatedEquipment, MwlStation, UpdateEquipmentLocation } from './equipment-location.types';
+import type { EquipmentPatchResult, EquipmentResourceResult, LocatedEquipment, MwlStation, UpdateEquipmentLocation } from './equipment-location.types';
 
 /**
  * Cliente de equipos en sala — franja F5a.
@@ -28,19 +28,19 @@ export class EquipmentLocationClient {
     return this.http.get<readonly LocatedEquipment[]>(this.url(`/care-spaces/${encodeURIComponent(careSpaceId)}/equipment`));
   }
 
-  /** `GET /diagnostic-equipment/:id`. */
+  /** `PATCH /diagnostic-equipment/:id` — sala, AE Title y nombre de estación. */
+  update(id: string, body: UpdateEquipmentLocation): Observable<EquipmentPatchResult> {
+    return this.http.patch<EquipmentPatchResult>(this.url(`/diagnostic-equipment/${encodeURIComponent(id)}`), body);
+  }
+
+  /** `GET /diagnostic-equipment/:id` — el equipo con su sala (forma `LocatedEquipment`). */
   get(id: string): Observable<LocatedEquipment> {
     return this.http.get<LocatedEquipment>(this.url(`/diagnostic-equipment/${encodeURIComponent(id)}`));
   }
 
-  /** `PATCH /diagnostic-equipment/:id` — sala, AE Title y nombre de estación. */
-  update(id: string, body: UpdateEquipmentLocation): Observable<LocatedEquipment> {
-    return this.http.patch<LocatedEquipment>(this.url(`/diagnostic-equipment/${encodeURIComponent(id)}`), body);
-  }
-
-  /** `POST /diagnostic-equipment/:id/resource` — el recurso `RES_EQUIPMENT` (409 si ya existe). */
-  createResource(id: string): Observable<{ readonly resourceId: string }> {
-    return this.http.post<{ readonly resourceId: string }>(this.url(`/diagnostic-equipment/${encodeURIComponent(id)}/resource`), {});
+  /** `POST /diagnostic-equipment/:id/resource` — crea el recurso agendable; 409 si ya lo tiene. */
+  createResource(id: string): Observable<EquipmentResourceResult> {
+    return this.http.post<EquipmentResourceResult>(this.url(`/diagnostic-equipment/${encodeURIComponent(id)}/resource`), {});
   }
 
   /** `GET /diagnostic-equipment/:id/mwl-station` — lo que lee la Worklist DICOM. */

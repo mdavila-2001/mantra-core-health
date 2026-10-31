@@ -259,11 +259,15 @@ export class SpaceDetail {
     return [...(p?.hostsEquipment ? (['equipment'] as const) : []), ...(p?.stockPoint ? (['stock'] as const) : [])];
   });
 
-  /** Farmacia (o quien administra) escribe el stock; la API decide. */
-  protected readonly canWriteStock = computed(() => {
-    const roles = this.session.roles();
-    return roles.includes('PHARMACY_STAFF') || roles.includes('SECURITY_ADMIN');
-  });
+  /**
+   * Quien administra escribe el stock: la API exige `SECURITY_ADMIN` para crear
+   * y reubicar ubicaciones (`pharmacy-inventory.controller.ts`). Sólo atenúa;
+   * la API decide.
+   */
+  protected readonly canWriteStock = computed(() => this.session.roles().includes('SECURITY_ADMIN'));
+
+  /** Cuántas pestañas fijas hay antes de las de F5 (M4: no un literal en la plantilla). */
+  protected readonly fixedTabCount = PESTANAS_DE_LA_FICHA.length;
 
   /** Plan §2.3: un local de aislamiento sin validación de climatización no es apto. */
   protected readonly aislamientoSinValidar = computed(

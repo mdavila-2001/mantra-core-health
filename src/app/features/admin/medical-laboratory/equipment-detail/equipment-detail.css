@@ -65,3 +65,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+.equipment-detail__muted {
+  margin: 0;
+  color: var(--text-secondary);
+}

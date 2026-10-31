@@ -1,9 +1,6 @@
 import {
+  blockOwnerLabel,
   blockUtilizationPct,
-  canManageBlocks,
-  canRecordInRoom,
-  canScheduleCases,
-  canSeeUtilization,
   clippedMinutes,
   currentPhase,
   intervalOf,
@@ -15,6 +12,7 @@ import {
   releaseAtOf,
   reservedWindow,
   roomEventBlockedReason,
+  withTotals,
 } from './operating-rooms.rules';
 
 const T = (hhmm: string): string => `2026-11-02T${hhmm}:00.000Z`;
@@ -116,24 +114,42 @@ describe('reglas de quirófano (F4)', () => {
     });
   });
 
-  describe('permisos reflejados', () => {
-    it('sólo el jefe de quirófano gestiona bloques; el soporte no', () => {
-      expect(canManageBlocks(['PERIOP_ADMIN'])).toBe(true);
-      expect(canManageBlocks(['SUPERADMIN', 'SECURITY_ADMIN'])).toBe(false);
-      expect(canManageBlocks(['SURGEON'])).toBe(false);
+  // La web no autoriza: los permisos de §F4.3 los decide la API (H3). En lugar
+  // de las compuertas por rol, se prueban las reglas que reemplazan lo que la
+  // API no manda.
+  describe('lo que el cliente arma porque la API no lo manda', () => {
+    const room = (code: string, session: number, touch: number, p50: number | null, allocated: number, released: number) => ({
+      operatingRoomId: code, code, sessionMinutes: session, touchMinutes: touch,
+      roomUtilizationPct: session > 0 ? (touch / session) * 100 : null, turnoverMinutesP50: p50,
+      blocks: { allocated, released, blockUtilizationPct: null },
     });
 
-    it('programar y registrar en sala siguen los roles del módulo', () => {
-      expect(canScheduleCases(['SURGERY_SCHEDULER'])).toBe(true);
-      expect(canScheduleCases(['PERIOP_NURSE'])).toBe(false);
-      expect(canRecordInRoom(['PERIOP_NURSE'])).toBe(true);
-      expect(canRecordInRoom(['BILLING'])).toBe(false);
+    it('sin totals, los suma de rooms[] con las fórmulas de la API', () => {
+      const u = withTotals({ from: '2026-11-02', to: '2026-11-08', rooms: [room('QX-01', 360, 180, 20, 360, 60), room('QX-02', 240, 120, 40, 0, 0)] });
+      expect(u.totals).toEqual({
+        sessionMinutes: 600, touchMinutes: 300, roomUtilizationPct: 50, turnoverMinutesP50: 30,
+        blockAllocated: 360, blockReleased: 60, blockUtilizationPct: 100,
+      });
     });
 
-    it('facturación y soporte leen la utilización', () => {
-      expect(canSeeUtilization(['BILLING'])).toBe(true);
-      expect(canSeeUtilization(['SUPERADMIN'])).toBe(true);
-      expect(canSeeUtilization(['PERIOP_NURSE'])).toBe(false);
+    it('si la API ya manda totals, ganan los suyos; el cliente sólo completa lo que falta', () => {
+      const api = { sessionMinutes: 1, touchMinutes: 1, roomUtilizationPct: 100, blockUtilizationPct: null };
+      const u = withTotals({ from: 'a', to: 'b', rooms: [room('QX-01', 360, 180, 20, 360, 60)], totals: api });
+      expect(u.totals).toEqual({ ...api, turnoverMinutesP50: 20, blockAllocated: 360, blockReleased: 60 });
+    });
+
+    it('sin rooms los porcentajes son null, no NaN', () => {
+      expect(withTotals({ from: 'a', to: 'b', rooms: [] }).totals?.roomUtilizationPct).toBeNull();
+    });
+
+    it('el dueño del bloque se nombra con catálogos y nunca sale «undefined»', () => {
+      const dir = { specialties: new Map([['sp-1', 'Traumatología']]), units: new Map([['u-1', 'Cirugía general']]), surgeons: new Map([['s-1', 'Dra. Pérez']]) };
+      const owner = { kind: 'SERVICE' as const, clinicalUnitId: null, specialtyConceptId: 'sp-1', surgeonProfileId: null };
+      expect(blockOwnerLabel(owner, dir)).toBe('Traumatología');
+      expect(blockOwnerLabel({ ...owner, specialtyConceptId: null, clinicalUnitId: 'u-1' }, dir)).toBe('Cirugía general');
+      expect(blockOwnerLabel({ kind: 'SURGEON', clinicalUnitId: null, specialtyConceptId: null, surgeonProfileId: 's-1' }, dir)).toBe('Dra. Pérez');
+      expect(blockOwnerLabel({ ...owner, specialtyConceptId: 'otro' }, dir)).toBe('Servicio');
+      expect(blockOwnerLabel({ ...owner, label: 'Rótulo de la API' }, dir)).toBe('Rótulo de la API');
     });
   });
 });

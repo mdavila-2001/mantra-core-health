@@ -66,8 +66,11 @@ describe('Integración F5 · pantallas', () => {
     await settle();
     const table = root().querySelector('[data-testid=bed-day-table]')!.textContent ?? '';
     expect((table.match(/BEDDAY:/g) ?? []).length).toBe(3);
-    expect(table).toContain('Compartida');
-    expect(table).toContain('Privada');
+    // La categoría viene como concepto (`bedCategoryConceptId`) y se traduce.
+    expect(table).toContain('Cama compartida');
+    expect(table).toContain('Cama privada');
+    // Ningún uuid suelto fuera de la clave de idempotencia (que lo lleva por contrato).
+    expect(table.replace(/BEDDAY:\S+/g, '')).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
     expect(root().querySelector('[data-testid=bed-day-result]')?.textContent).toContain('3 cargos nuevos');
     root().querySelector<HTMLButtonElement>('[data-testid=bed-day-run]')!.click();
     await settle();
@@ -111,5 +114,75 @@ describe('Integración F5 · pantallas', () => {
     await settle();
     expect(root().textContent).toContain('hasta 16 caracteres');
     expect(root().querySelector<HTMLElement>('[data-testid=equipment-save]')!.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('ficha de equipo (B5): guardar relee (el PATCH es plano) y la MWL se lee de su endpoint', async () => {
+    await setup(buscarUsuario('superadmin')!);
+    await open(`/administration/medical-laboratory/equipment/${uuid('equipment-sanlucas-us')}?tab=location`, EquipmentDetail);
+    expect(root().querySelector('[data-testid=equipment-detail]')).not.toBeNull();
+    expect(root().querySelector('[data-testid=equipment-mwl]')?.textContent).toContain('SPS Location');
+    const station = root().querySelector<HTMLInputElement>('[data-testid=equipment-station]')!;
+    station.value = 'ECO-B5';
+    station.dispatchEvent(new Event('input'));
+    await settle();
+    root().querySelector<HTMLElement>('[data-testid=equipment-save]')!.click();
+    await settle();
+    expect(root().querySelector('[data-testid=equipment-saved]')).not.toBeNull();
+    // Lo que se ve después es la relectura de la lista, no el DTO plano del PATCH.
+    expect(root().textContent).toContain('Ecógrafo');
+    expect(root().querySelector<HTMLInputElement>('[data-testid=equipment-station]')!.value).toBe('ECO-B5');
+    expect(root().querySelector('[data-testid=equipment-mwl]')?.textContent).toContain('ECO-B5');
+  });
+
+  it('las internaciones salen de la lectura de F3 de la sede (no de /billing/bed-day/stays)', async () => {
+    await setup(buscarUsuario('facturacion')!);
+    await open('/administration/services-catalog/bed-day-charges', BedDayCharges);
+    expect(root().textContent).not.toContain('no tiene personas internadas');
+    expect(root().textContent).toContain('Elija la internación');
+  });
+
+  it('H5: cambiar de estancia rápido nunca deja ver los cargos de otra bajo la elegida', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: 'b', component: BedDayCharges }])],
+    });
+    const session = TestBed.inject(SessionStore);
+    Object.defineProperty(session, 'roles', { value: signal(['BILLING']) });
+    Object.defineProperty(session, 'activeTenantId', { value: signal(TENANT_HOSPITAL) });
+    http = TestBed.inject(HttpTestingController);
+    harness = await RouterTestingHarness.create();
+    const charge = (enc: string, key: string) => ({ id: key, encounterId: enc, source: 'BED_DAY', sourceRefId: enc, serviceDate: '2026-10-29', careSpaceId: null, bedCategoryConceptId: null, spaceTariffId: null, quantity: '1', unitPrice: '450.000000', costCenterId: null, status: 'CHG_PENDING', idempotencyKey: key });
+    const SITE = { siteId: 's-1', practiceId: 'p-1', code: 'SL', name: 'San Lucas', timeZone: null, roles: [], globalRoles: [], actions: [], grants: [] };
+    /** Responde todo lo que no son los cargos: sede, internaciones, tarifas, centros, consola. */
+    const others = () => {
+      for (const req of http.match((r) => !r.url.includes('pending-charges'))) {
+        if (req.cancelled) continue;
+        if (req.request.url === '/practice/infrastructure-access/me') req.flush({ userId: 'u', tenantId: 't', sites: [SITE] });
+        else if (req.request.url.endsWith('/inpatients')) req.flush([{ encounterId: 'enc-A', patientProfileId: 'pa', bed: { careSpaceId: null, clinicalUnitId: null }, since: null, levelOfCare: null, expectedDischargeAt: null, losDays: 2 }]);
+        else if (req.request.url.endsWith('/organization')) req.flush({ organization: { id: 'p-1', name: 'SL' }, sites: [], clinicalUnits: [], careSpaces: [], healthcareServices: [], staff: [], legalDocuments: [], inventory: [] });
+        else req.flush([]);
+      }
+    };
+    await harness.navigateByUrl('/b?encounter=enc-A', BedDayCharges);
+    harness.detectChanges();
+    for (let i = 0; i < 4; i++) {
+      others();
+      TestBed.tick();
+      harness.detectChanges();
+    }
+    const first = http.expectOne('/billing/encounters/enc-A/pending-charges');
+    await harness.navigateByUrl('/b?encounter=enc-B', BedDayCharges);
+    harness.detectChanges();
+    // La lectura de A quedó cancelada; si igual llegara, no se pinta bajo B.
+    expect(first.cancelled).toBe(true);
+    http.expectOne('/billing/encounters/enc-B/pending-charges').flush([charge('enc-B', 'BEDDAY:enc-B:2026-10-29')]);
+    for (let i = 0; i < 3; i++) {
+      others();
+      TestBed.tick();
+      harness.detectChanges();
+    }
+    const table = root().querySelector('[data-testid=bed-day-table]')?.textContent ?? '';
+    expect(table).toContain('BEDDAY:enc-B');
+    expect(table).not.toContain('BEDDAY:enc-A');
+    for (const req of http.match(() => true)) if (!req.cancelled) req.flush([]);
   });
 });

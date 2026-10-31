@@ -1,13 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, linkedSignal, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, filter, forkJoin, map, of, switchMap } from 'rxjs';
 
-import { SessionStore } from '../../../../core/auth/session.store';
 import { EquipmentLocationClient } from '../../../../core/data-access/diagnostic-units/equipment-location.client';
 import { aeTitleProblem, type LocatedEquipment, type MwlStation } from '../../../../core/data-access/diagnostic-units/equipment-location.types';
 import { InfrastructureClient } from '../../../../core/data-access/infrastructure/infrastructure.client';
-import { ofrecerEscritura } from '../../../../core/data-access/infrastructure/infrastructure.rules';
 import type { CareSpaceNode, InfrastructureCatalog } from '../../../../core/data-access/infrastructure/infrastructure.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
@@ -49,6 +47,18 @@ export function hostRoomsFor(equipment: LocatedEquipment, spaces: readonly CareS
  * imagenología); el AE Title se valida con la regla DICOM antes de enviar.
  * La API decide: 422 `EQUIPMENT_SPACE_SITE_MISMATCH` / `SPACE_CANNOT_HOST_EQUIPMENT`
  * / `AE_TITLE_INVALID`, 409 `AE_TITLE_TAKEN`.
+ *
+ * ## Formas de la API
+ *
+ * `GET /diagnostic-equipment/:id` (forma `LocatedEquipment`), `POST …/resource`
+ * (`{equipmentId, resourceId}`) y `GET …/mwl-station` (F5a). El `PATCH`
+ * devuelve un DTO plano (`EquipmentResponseDto`), así que después de guardar
+ * se **relee** el equipo. Si la estación MWL no se puede leer, se dice con su
+ * estado (S5/S9), no se esconde el bloque.
+ *
+ * Sin compuerta por rol: desde `e46739aaa` el `PATCH` lo autoriza el
+ * evaluador de §0.3 (Admin de organización o sucursal todo; Mantenimiento sólo
+ * el estado). La API responde 403 y se pinta en el aviso.
  */
 @Component({
   selector: 'app-equipment-detail',
@@ -60,7 +70,6 @@ export function hostRoomsFor(equipment: LocatedEquipment, spaces: readonly CareS
 export class EquipmentDetail {
   private readonly client = inject(EquipmentLocationClient);
   private readonly infrastructure = inject(InfrastructureClient);
-  private readonly session = inject(SessionStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
@@ -68,11 +77,12 @@ export class EquipmentDetail {
   private readonly params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
   private readonly id = computed(() => this.params().get('id') ?? '');
+  private readonly reloads = signal(0);
+  protected readonly mwl = signal<ViewState<MwlStation>>(loading());
   protected readonly tab = linkedSignal<number>(() => Math.max(0, TABS.indexOf(this.query().get('tab') as (typeof TABS)[number])));
 
   protected readonly state = signal<ViewState<LocatedEquipment>>(routeAuthPending());
   protected readonly rooms = signal<readonly CareSpaceNode[]>([]);
-  protected readonly mwl = signal<MwlStation | null>(null);
   protected readonly saving = signal(false);
   protected readonly failure = signal<ViewState<never> | null>(null);
   protected readonly saved = signal(false);
@@ -82,7 +92,7 @@ export class EquipmentDetail {
   protected readonly stationName = signal('');
 
   protected readonly equipment = computed(() => dataOf(this.state()));
-  protected readonly canWrite = computed(() => ofrecerEscritura(this.session.roles()));
+  protected readonly mwlData = computed(() => dataOf(this.mwl()));
   protected readonly aeProblem = computed(() => aeTitleProblem(this.aeTitle()));
 
   protected readonly roomOptions = computed<readonly SelectOption<string>[]>(() => [
@@ -106,39 +116,22 @@ export class EquipmentDetail {
   });
 
   constructor() {
-    effect(() => {
-      const id = this.id();
-      untracked(() => this.load(id));
-    });
-  }
-
-  protected changeTab(index: number): void {
-    this.tab.set(index);
-    void this.router.navigate([], { relativeTo: this.route, queryParams: { tab: TABS[index] ?? null }, queryParamsHandling: 'merge', replaceUrl: true });
-  }
-
-  protected reload(): void {
-    this.load(this.id());
-  }
-
-  protected save(): void {
-    const e = this.equipment();
-    if (e === null || this.aeProblem() !== null || this.saving()) return;
-    this.saving.set(true);
-    this.failure.set(null);
-    this.saved.set(false);
-    this.client
-      .update(e.id, { careSpaceId: this.roomChoice() === NO_ROOM ? null : this.roomChoice(), aeTitle: this.aeTitle().trim() === '' ? null : this.aeTitle(), stationName: this.stationName().trim() === '' ? null : this.stationName().trim() })
-      .subscribe({
-        next: (updated) => {
-          this.saving.set(false);
-          this.saved.set(true);
-          this.apply(updated);
-        },
-        error: (error: unknown) => {
-          this.saving.set(false);
-          this.failure.set(errorToViewState<never>(error));
-        },
+    // Una lectura por clave (equipo, reintento); `switchMap` cancela la anterior.
+    toObservable(computed(() => ({ id: this.id(), n: this.reloads() })))
+      .pipe(
+        filter((k) => k.id !== ''),
+        switchMap(({ id }) =>
+          this.client.get(id).pipe(
+            map((e) => ready(e) as ViewState<LocatedEquipment>),
+            catchError((error: unknown) => of(errorToViewState<LocatedEquipment>(error))),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((s) => {
+        this.state.set(s);
+        const e = dataOf(s);
+        if (e !== null) this.apply(e);
       });
   }
 
@@ -159,24 +152,49 @@ export class EquipmentDetail {
     });
   }
 
+  protected changeTab(index: number): void {
+    this.tab.set(index);
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { tab: TABS[index] ?? null }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
+  protected reload(): void {
+    if (this.state().status !== 'ready') this.state.set(loading());
+    this.reloads.update((n) => n + 1);
+  }
+
+  protected save(): void {
+    const e = this.equipment();
+    if (e === null || this.aeProblem() !== null || this.saving()) return;
+    this.saving.set(true);
+    this.failure.set(null);
+    this.saved.set(false);
+    this.client
+      .update(e.id, { careSpaceId: this.roomChoice() === NO_ROOM ? null : this.roomChoice(), aeTitle: this.aeTitle().trim() === '' ? null : this.aeTitle(), stationName: this.stationName().trim() === '' ? null : this.stationName().trim() })
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.saved.set(true);
+          // El PATCH devuelve un DTO plano: lo que se pinta sale de releer.
+          this.reload();
+        },
+        error: (error: unknown) => {
+          this.saving.set(false);
+          this.failure.set(errorToViewState<never>(error));
+        },
+      });
+  }
+
   private apply(e: LocatedEquipment): void {
-    this.state.set(ready(e));
     this.roomChoice.set(e.careSpace?.id ?? NO_ROOM);
     this.aeTitle.set(e.aeTitle ?? '');
     this.stationName.set(e.stationName ?? '');
-    this.client.getMwlStation(e.id).pipe(catchError(() => of(null))).subscribe((m) => this.mwl.set(m));
-  }
-
-  private load(id: string): void {
-    this.state.set(loading());
-    this.client.get(id).subscribe({
-      next: (e) => {
-        this.apply(e);
-        forkJoin({ structure: this.infrastructure.getStructure(e.siteId), catalog: this.infrastructure.getCatalog() })
-          .pipe(catchError(() => of(null)))
-          .subscribe((r) => this.rooms.set(r === null ? [] : hostRoomsFor(e, r.structure.spaces, r.catalog)));
-      },
-      error: (error: unknown) => this.state.set(errorToViewState<LocatedEquipment>(error)),
+    this.mwl.set(loading());
+    this.client.getMwlStation(e.id).subscribe({
+      next: (m) => this.mwl.set(ready(m)),
+      error: (error: unknown) => this.mwl.set(errorToViewState<MwlStation>(error)),
     });
+    forkJoin({ structure: this.infrastructure.getStructure(e.siteId), catalog: this.infrastructure.getCatalog() })
+      .pipe(catchError(() => of(null)))
+      .subscribe((r) => this.rooms.set(r === null ? [] : hostRoomsFor(e, r.structure.spaces, r.catalog)));
   }
 }

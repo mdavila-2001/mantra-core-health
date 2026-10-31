@@ -1960,7 +1960,7 @@ export const routes: Routes = [
         import('./features/interventions/schedule-case/schedule-case').then((m) => m.ScheduleCase),
       ),
       pantallaDeOperacion('interventions', 'operating-rooms', 'Agenda de quirófanos', () =>
-        import('./features/interventions/or-agenda/or-agenda').then((m) => m.OrAgenda),
+        import('./features/interventions/or-schedule/or-schedule').then((m) => m.OrSchedule),
       ),
       pantallaDeOperacion('interventions', 'blocks', 'Bloques de quirófano', () =>
         import('./features/interventions/or-blocks/or-blocks').then((m) => m.OrBlocks),

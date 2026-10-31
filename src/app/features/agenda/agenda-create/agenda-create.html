@@ -170,11 +170,13 @@
       </p>
     }
 
-    <!-- F5d: el consultorio de la agenda (opcional, a pedido). -->
-    <section class="agenda-create__bloque" data-testid="agenda-create-room-block">
-      <h2 class="agenda-create__titulo">¿En qué consultorio atiende?</h2>
-      <app-consulting-room-select [(careSpaceId)]="careSpaceId" />
-    </section>
+    <!-- F5d: el consultorio de la agenda (opcional, a pedido), detrás de su bandera. -->
+    @if (roomsEnabled) {
+      <section class="agenda-create__bloque" data-testid="agenda-create-room-block">
+        <h2 class="agenda-create__titulo">¿En qué consultorio atiende?</h2>
+        <app-consulting-room-select [(careSpaceId)]="careSpaceId" />
+      </section>
+    }
 
     <section class="agenda-create__bloque">
       <h2 class="agenda-create__titulo">¿Qué días atiende?</h2>

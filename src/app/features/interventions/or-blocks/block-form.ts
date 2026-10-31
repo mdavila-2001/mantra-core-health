@@ -43,7 +43,8 @@ const WEEKDAYS = [
  * Los campos caben en una página de la tarjeta: dueño (servicio o cirujano),
  * sala, horario, plazo de liberación (72 h por defecto, el de
  * `infra.or_block_release_hours`) y recurrencia. La API valida el solape con
- * otros bloques (409 `OR_BLOCK_OVERLAP`), el pasado y el dueño (422).
+ * otros bloques (409 `OR_BLOCK_OVERLAP`), el pasado y el dueño (422). La
+ * especialidad viaja como concepto (`specialtyConceptId`, `CreateOrBlocksDto`).
  */
 @Component({
   selector: 'app-block-form',
@@ -67,7 +68,7 @@ export class BlockForm {
 
   protected readonly roomId = signal<string | null>(null);
   protected readonly ownerKind = signal<OrBlockOwnerKind>('SERVICE');
-  protected readonly specialtyCode = signal<string | null>(null);
+  protected readonly specialtyConceptId = signal<string | null>(null);
   protected readonly surgeonId = signal<string | null>(null);
   protected readonly day = signal(shiftDay(localDay(new Date()), 7));
   protected readonly from = signal('08:00');
@@ -89,7 +90,7 @@ export class BlockForm {
   protected readonly valid = computed(
     () =>
       this.roomId() !== null &&
-      (this.ownerKind() === 'SERVICE' ? this.specialtyCode() !== null : this.surgeonId() !== null) &&
+      (this.ownerKind() === 'SERVICE' ? this.specialtyConceptId() !== null : this.surgeonId() !== null) &&
       this.from() < this.to() &&
       Number(this.releaseHours()) >= 0 &&
       (this.repeat() === 'once' || (this.weekdays().length > 0 && this.until() >= this.day())),
@@ -97,7 +98,7 @@ export class BlockForm {
 
   constructor() {
     this.specialtiesCatalog.listar().subscribe({
-      next: (list) => this.specialties.set(list.filter((s) => s.selectable !== false).map((s) => ({ value: s.code, label: s.display }))),
+      next: (list) => this.specialties.set(list.filter((s) => s.selectable !== false).map((s) => ({ value: s.conceptId, label: s.display }))),
       error: () => this.specialties.set([]),
     });
   }
@@ -112,7 +113,7 @@ export class BlockForm {
       .createBlock(this.siteId(), {
         operatingRoomId: room,
         ownerKind: this.ownerKind(),
-        ...(service ? { specialtyCode: this.specialtyCode()! } : { surgeonProfileId: this.surgeonId()! }),
+        ...(service ? { specialtyConceptId: this.specialtyConceptId()! } : { surgeonProfileId: this.surgeonId()! }),
         startsAt: toIso(this.day(), this.from()),
         endsAt: toIso(this.day(), this.to()),
         releaseHours: Number(this.releaseHours()),

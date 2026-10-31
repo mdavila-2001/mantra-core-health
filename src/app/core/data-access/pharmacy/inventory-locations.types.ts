@@ -49,3 +49,15 @@ export interface CreateInventoryLocationRequest {
 
 /** Claves que el DTO publicado todavía no declara (se mandan a la API real). */
 export const INVENTORY_LOCATION_CONTRACT_PENDING_KEYS = ['careSpaceId', 'clinicalUnitId', 'locationTypeCode'] as const;
+
+/** Lo que devuelve el alta (`POST /pharmacy/:siteId/inventory-locations`): sólo el id. La pestaña relee. */
+export interface CreatedInventoryLocation {
+  readonly id: string;
+}
+
+/** Lo que devuelve `relocate`: el id y los dos espacios. La pestaña relee. */
+export interface RelocatedInventoryLocation {
+  readonly id: string;
+  readonly careSpaceId: string;
+  readonly previousCareSpaceId: string | null;
+}

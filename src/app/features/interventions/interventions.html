@@ -5,19 +5,16 @@
 >
   <div page-actions class="intervenciones__accesos">
     <a app-button variant="ghost" size="sm" [routerLink]="roomsRoute" data-testid="interventions-rooms-link">Agenda de quirófanos</a>
-    @if (canManage()) {
-      <a app-button variant="ghost" size="sm" [routerLink]="blocksRoute">Bloques</a>
-    }
-    @if (canMeasure()) {
-      <a app-button variant="ghost" size="sm" [routerLink]="utilizationRoute">Utilización</a>
-    }
-    @if (canSchedule()) {
-      <a app-button size="sm" [routerLink]="scheduleRoute" data-testid="interventions-schedule-link">Programar</a>
-    }
+    <!-- Sin compuertas por rol: quién gestiona bloques o ve la utilización lo
+         decide la API en cada pantalla (S5 con su 403). -->
+    <a app-button variant="ghost" size="sm" [routerLink]="blocksRoute">Bloques</a>
+    <a app-button variant="ghost" size="sm" [routerLink]="utilizationRoute">Utilización</a>
+    <a app-button size="sm" [routerLink]="scheduleRoute" data-testid="interventions-schedule-link">Programar</a>
   </div>
 </app-page-header>
 
 <div class="intervenciones">
+  <app-site-switch />
   @if (hasRoomFilter()) {
     <div class="intervenciones__filtro">
       <app-select
@@ -86,12 +83,12 @@
 </ng-template>
 
 <ng-template #roomCell let-caso>
-  @if (caso.operatingRoom; as room) {
+  @if (roomOf(caso); as room) {
     <span class="intervenciones__sala" [appTooltip]="room.path || room.name" tabindex="0" data-testid="interventions-room">
       {{ room.code }} · {{ room.name }}
     </span>
     @if (caso.block; as block) {
-      <app-badge variant="info" size="sm">Bloque {{ block.owner }}</app-badge>
+      <app-badge variant="info" size="sm">Bloque {{ block.label }}</app-badge>
     }
   } @else {
     <span class="intervenciones__sin-fecha">Sin quirófano</span>

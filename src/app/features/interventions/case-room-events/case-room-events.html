@@ -2,8 +2,14 @@
   <app-view-state-host [state]="f" data-testid="room-events-failure" />
 }
 
-@if (canRecord()) {
-  <ol class="room-events__buttons" aria-label="Tiempos del caso, en orden">
+@if (!eventsReported()) {
+  <app-alert tone="warning" title="La ficha todavía no informa los tiempos registrados" data-testid="room-events-unreported">
+    Registre en orden: la API rechaza el tiempo que no corresponde y lo muestra aquí. Sólo se marcan los que se registren
+    desde esta pantalla.
+  </app-alert>
+}
+
+<ol class="room-events__buttons" aria-label="Tiempos del caso, en orden">
     @for (b of buttons(); track b.code) {
       <li class="room-events__button">
         <button
@@ -24,17 +30,24 @@
       </li>
     }
   </ol>
-} @else {
-  <app-alert tone="info" title="Sólo lectura">Los tiempos de sala los registra enfermería quirúrgica o el equipo del caso.</app-alert>
-}
 
 <!-- Recambio: la orden de limpieza que abrió la salida de sala (F2). -->
+@if (turnover() === undefined && openedOrderId()) {
+  <app-alert tone="info" title="Se abrió la orden de recambio" data-testid="room-events-turnover-unreported">
+    La sala quedó sucia con su orden de limpieza en la cola del establecimiento. La ficha todavía no informa su estado: el
+    recambio se opera desde la cola de limpieza.
+  </app-alert>
+}
 @if (turnover(); as t) {
   <section class="room-events__turnover" data-testid="room-events-turnover" aria-label="Recambio de la sala">
     <h3 class="room-events__subtitle">Recambio de la sala</h3>
     <p class="room-events__muted" data-testid="room-events-turnover-status">{{ turnoverLabel() }}</p>
-    @if (canRecord() && turnoverNext(); as next) {
-      <button app-button size="sm" variant="outline" [disabled]="sending() !== null" (clicked)="advanceTurnover()" data-testid="room-events-turnover-next">{{ next.label }}</button>
+    @if (turnoverNext(); as next) {
+      @if (turnoverAllowed()) {
+        <button app-button size="sm" variant="outline" [disabled]="sending() !== null" (clicked)="advanceTurnover()" data-testid="room-events-turnover-next">{{ next.label }}</button>
+      } @else {
+        <p class="room-events__muted" data-testid="room-events-turnover-not-yours">«{{ next.label }}» lo hace el personal de limpieza o la jefatura del sector.</p>
+      }
     }
   </section>
 }

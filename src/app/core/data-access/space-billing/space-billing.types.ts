@@ -4,93 +4,84 @@
     Los importes viajan como texto decimal (`numeric(20,6)`): nunca `number`.
     ========================================================================== */
 
-export interface BillingConcept {
-  readonly code: string;
-  readonly display: string;
-}
+export type TariffKind = 'BED_DAY' | 'OR_TIME';
 
-export type TariffKindCode = 'TARIFF_BED_DAY' | 'TARIFF_OR_TIME';
-
-/** Una tarifa de espacio con su vigencia `[validFrom, validTo)`. */
+/** Una tarifa de espacio con su vigencia `[validFrom, validTo)` (`tariffView` de la API). */
 export interface SpaceTariff {
   readonly id: string;
   readonly practiceId: string;
-  readonly tariffKind: BillingConcept;
-  readonly bedCategory: BillingConcept | null;
-  readonly careSpace: { readonly id: string; readonly code: string; readonly name: string } | null;
+  readonly tariffKind: TariffKind;
+  /** Concepto `BED_CAT_*` (se traduce con `bedCategoryCode`). */
+  readonly bedCategoryConceptId: string | null;
+  readonly careSpaceId: string | null;
   readonly serviceCatalogId: string;
-  readonly serviceName: string;
   readonly unitMinutes: number | null;
   readonly minimumUnits: number | null;
-  readonly unitPrice: string;
-  readonly currencyCode: string;
+  readonly unitPrice: string | null;
+  /** Moneda (pedido a A-F5e en la vista ampliada); la vista actual no la trae. */
+  readonly currencyConceptId?: string | null;
   readonly validFrom: string;
   readonly validTo: string | null;
-  readonly status: BillingConcept;
+  readonly rowVersion: number;
 }
 
-/** `POST /billing/space-tariffs`. */
+/** `POST /billing/space-tariffs` (`CreateSpaceTariffDto`). */
 export interface CreateSpaceTariffRequest {
   readonly practiceId: string;
-  readonly tariffKindCode: TariffKindCode;
+  readonly tariffKind: TariffKind;
   readonly bedCategoryCode?: string;
   readonly careSpaceId?: string;
   readonly serviceCatalogId: string;
   readonly unitMinutes?: number;
   readonly minimumUnits?: number;
   readonly unitPrice: string;
-  readonly currencyCode: string;
+  readonly currencyConceptId?: string;
   readonly validFrom: string;
   readonly validTo?: string;
 }
 
-export type ChargeSourceCode = 'CHG_SRC_BED_DAY' | 'CHG_SRC_OR_TIME';
+export type ChargeSource = 'BED_DAY' | 'OR_TIME';
 export type ChargeStatusCode = 'CHG_PENDING' | 'CHG_INVOICED' | 'CHG_VOIDED';
 
-/** Un cargo devengado (`billing.charge_captures`). */
+/** Un cargo devengado (`chargeView` de la API). */
 export interface ChargeCapture {
   readonly id: string;
-  readonly encounterId: string;
-  readonly sourceKind: BillingConcept;
+  readonly encounterId: string | null;
+  readonly source: ChargeSource;
+  /** Para el quirófano por tiempo, el caso; para el día-cama, la ubicación. */
   readonly sourceRefId: string;
   /** Día de servicio `yyyy-mm-dd`: para el día-cama, el que termina en la medianoche. */
   readonly serviceDate: string;
-  readonly careSpace: { readonly id: string; readonly code: string; readonly name: string };
-  readonly bedCategory: BillingConcept | null;
+  readonly careSpaceId: string | null;
+  readonly bedCategoryConceptId: string | null;
   readonly spaceTariffId: string | null;
   readonly quantity: string;
   /** `null` = tarifa faltante: no se inventa precio. */
   readonly unitPrice: string | null;
-  readonly currencyCode: string;
-  readonly costCenter: { readonly id: string; readonly name: string } | null;
-  readonly status: BillingConcept;
+  readonly costCenterId: string | null;
+  readonly status: ChargeStatusCode;
   readonly idempotencyKey: string;
-  readonly voidReason: string | null;
-  /** Quirófano por tiempo: los minutos facturados (salida − entrada a sala). */
+  /** Minutos en sala (quirófano), sólo si la API los manda. */
   readonly minutes?: number | null;
 }
 
-/** `GET /billing/encounters/:encounterId/pending-charges`. */
-export interface EncounterCharges {
-  readonly encounterId: string;
-  readonly patientName: string;
-  readonly asOf: string;
-  readonly charges: readonly ChargeCapture[];
-}
-
-/** Una estancia de internación con su resumen de cargos (desvío anotado: lectura de la lista). */
-export interface BedDayStay {
-  readonly encounterId: string;
-  readonly patientName: string;
-  readonly admittedAt: string;
-  readonly dischargedAt: string | null;
-  readonly currentBed: string;
-  readonly pendingCharges: number;
-}
-
-/** Resultado de devengar día-cama (idempotente). */
+/** Resultado de devengar día-cama (idempotente): los creados y cuántos ya estaban. */
 export interface BedDayRunResult {
-  readonly created: number;
+  readonly created: readonly ChargeCapture[];
   readonly skipped: number;
-  readonly charges: readonly ChargeCapture[];
+}
+
+/**
+ * Una persona internada en la sede (`GET /sites/:siteId/inpatients`, F3): de
+ * ahí elige Facturación el encuentro, porque la API no tiene lectura de
+ * estancias de facturación.
+ */
+export interface Inpatient {
+  readonly encounterId: string;
+  readonly patientProfileId: string | null;
+  readonly bed: { readonly careSpaceId: string | null; readonly clinicalUnitId: string | null };
+  readonly since: string | null;
+  readonly levelOfCare: string | null;
+  readonly expectedDischargeAt: string | null;
+  readonly losDays: number | null;
 }

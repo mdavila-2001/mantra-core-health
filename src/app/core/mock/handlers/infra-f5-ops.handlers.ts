@@ -13,7 +13,8 @@ import { conflictReply, forbiddenReply, hasRole, notFoundReply, pathOf, precondi
     ========================================================================== */
 
 const ADMIN_ROLES = ['SECURITY_ADMIN'] as const;
-const PHARMACY_ROLES = ['PHARMACY_STAFF', 'SECURITY_ADMIN'] as const;
+/* Como la API (`pharmacy-inventory.controller.ts`): crear y reubicar ubicaciones es de SECURITY_ADMIN. */
+const PHARMACY_ROLES = ['SECURITY_ADMIN'] as const;
 const SAN_LUCAS = SITIOS_INFRA[0]!;
 const space = (code: string) => espacios.todos().find((e) => e.siteId === SAN_LUCAS.id && e.code === code);
 const profileOf = (functionCode: string) => FUNCIONES.find((f) => f.code === functionCode);
@@ -111,7 +112,9 @@ function updateEquipment(request: MockRequest) {
     if (body.stationName !== null && body.stationName.length > 16) return preconditionReply('STATION_NAME_INVALID', 'El nombre de estación admite hasta 16 caracteres.');
     changes.stationName = body.stationName === '' ? null : body.stationName;
   }
-  return equipmentView(equipment.actualizar(e.id, changes)!);
+  const updated = equipment.actualizar(e.id, changes)!;
+  // `EquipmentResponseDto` plano, como la API: no es la vista de la sede.
+  return { id: updated.id, diagnosticUnitSiteId: updated.siteId, operationalStatus: updated.statusCode, careSpaceId: updated.careSpaceId, aeTitle: updated.aeTitle, stationName: updated.stationName };
 }
 
 /* ---- F5c · botiquín por unidad --------------------------------------------------- */
@@ -198,7 +201,8 @@ export function registerInfraF5Ops(router: MockRouter): void {
     if (!hasRole(request, ADMIN_ROLES)) return forbiddenReply('Crear el recurso agendable es de la administración.', ADMIN_ROLES);
     if (e.schedulableResourceId !== null) return conflictReply('RESOURCE_ALREADY_EXISTS_FOR_EQUIPMENT', 'El equipo ya tiene su recurso agendable.');
     const updated = equipment.actualizar(e.id, { schedulableResourceId: nuevoId('res-equipment') })!;
-    return { status: 201, body: { resourceId: updated.schedulableResourceId } };
+    // Forma de `EquipmentF5aService.createResource`.
+    return { status: 201, body: { equipmentId: updated.id, resourceId: updated.schedulableResourceId } };
   });
 
   router.get('/diagnostic-equipment/:id/mwl-station', (request) => {
@@ -236,7 +240,7 @@ export function registerInfraF5Ops(router: MockRouter): void {
     }
     if (!body.code?.trim() || !body.name?.trim()) return preconditionReply('LOCATION_INVALID', 'Indique código y nombre.');
     const created = locations.agregar({ id: nuevoId('inv-loc'), tenantId: SAN_LUCAS.tenantId, pharmacySiteId: PHARMACY_SITE.id, code: body.code.trim(), name: body.name.trim(), typeCode: type, careSpaceId: body.careSpaceId ?? null, clinicalUnitId: unitId, lines: [] });
-    return { status: 201, body: locationView(created) };
+    return { status: 201, body: { id: created.id } };
   });
 
   router.post('/pharmacy/inventory-locations/:id/relocate', (request) => {
@@ -247,7 +251,9 @@ export function registerInfraF5Ops(router: MockRouter): void {
     if (target === undefined) return preconditionReply('LOCATION_TARGET_REQUIRED', 'Indique el espacio de destino.');
     const problem = checkStockPoint(request, target, l.tenantId);
     if (problem !== null) return problem;
-    return locationView(locations.actualizar(l.id, { careSpaceId: target })!);
+    const previous = l.careSpaceId;
+    const moved = locations.actualizar(l.id, { careSpaceId: target })!;
+    return { id: moved.id, careSpaceId: moved.careSpaceId, previousCareSpaceId: previous };
   });
 }
 

@@ -23,41 +23,38 @@
 
         <app-tab label="Ubicación y DICOM">
           <div class="equipment-detail__panel">
-            @if (!canWrite()) {
-              <app-alert tone="info" title="Sólo lectura">La ubicación y el AE Title los cambia la administración de la organización.</app-alert>
-            }
             <div class="equipment-detail__grid">
               <app-form-field label="Sala" hint="Espacios activos de la misma sede que pueden alojar este equipo.">
-                <app-select [options]="roomOptions()" [value]="roomChoice()" [disabled]="!canWrite()" ariaLabel="Sala" data-testid="equipment-room" (valueChange)="roomChoice.set($event ?? '')" />
+                <app-select [options]="roomOptions()" [value]="roomChoice()" ariaLabel="Sala" data-testid="equipment-room" (valueChange)="roomChoice.set($event ?? '')" />
               </app-form-field>
               <app-form-field label="AE Title" hint="DICOM: hasta 16 caracteres, sin barra invertida." [errorMessage]="aeProblem() ?? ''">
-                <app-input [value]="aeTitle()" [disabled]="!canWrite()" [hasError]="aeProblem() !== null" testId="equipment-ae-title" (valueChange)="aeTitle.set($any($event) ?? '')" />
+                <app-input [value]="aeTitle()" [hasError]="aeProblem() !== null" testId="equipment-ae-title" (valueChange)="aeTitle.set($any($event) ?? '')" />
               </app-form-field>
               <app-form-field label="Nombre de estación" hint="(0040,0010) de la Worklist.">
-                <app-input [value]="stationName()" [disabled]="!canWrite()" testId="equipment-station" (valueChange)="stationName.set($any($event) ?? '')" />
+                <app-input [value]="stationName()" testId="equipment-station" (valueChange)="stationName.set($any($event) ?? '')" />
               </app-form-field>
             </div>
             @if (failure(); as f) {
               <app-view-state-host [state]="f" data-testid="equipment-failure" />
             }
             @if (saved()) {
-              <app-alert tone="success" title="Guardado" data-testid="equipment-saved">La API registró la ubicación. Recargue para comprobarlo.</app-alert>
+              <app-alert tone="success" title="Guardado" data-testid="equipment-saved">La API registró la ubicación; lo que ve arriba es la lectura posterior.</app-alert>
             }
-            @if (canWrite()) {
-              <div class="equipment-detail__actions">
-                <button app-button [disabled]="aeProblem() !== null || saving()" [isLoading]="saving()" (clicked)="save()" data-testid="equipment-save">Guardar ubicación</button>
-              </div>
-            }
-            @if (mwl(); as m) {
-              <div class="equipment-detail__mwl" data-testid="equipment-mwl">
-                <h3 class="equipment-detail__subtitle">Lo que lee la Worklist (MWL)</h3>
-                <dl>
-                  <dt>Scheduled Station AE Title (0040,0001)</dt><dd>{{ m.scheduledStationAETitle ?? '—' }}</dd>
-                  <dt>Scheduled Station Name (0040,0010)</dt><dd>{{ m.scheduledStationName ?? '—' }}</dd>
-                  <dt>SPS Location (0040,0011)</dt><dd>{{ m.spsLocation ?? '—' }}</dd>
-                </dl>
-              </div>
-            }
+            <div class="equipment-detail__actions">
+              <button app-button [disabled]="aeProblem() !== null || saving()" [isLoading]="saving()" (clicked)="save()" data-testid="equipment-save">Guardar ubicación</button>
+            </div>
+            <div class="equipment-detail__mwl" data-testid="equipment-mwl">
+              <h3 class="equipment-detail__subtitle">Lo que lee la Worklist (MWL)</h3>
+              <app-view-state-host [state]="mwl()">
+                @if (mwlData(); as m) {
+                  <dl>
+                    <dt>Scheduled Station AE Title (0040,0001)</dt><dd>{{ m.scheduledStationAETitle ?? '—' }}</dd>
+                    <dt>Scheduled Station Name (0040,0010)</dt><dd>{{ m.scheduledStationName ?? '—' }}</dd>
+                    <dt>SPS Location (0040,0011)</dt><dd>{{ m.spsLocation ?? '—' }}</dd>
+                  </dl>
+                }
+              </app-view-state-host>
+            </div>
           </div>
         </app-tab>
 
@@ -67,11 +64,9 @@
               <app-alert tone="success" title="El equipo es agendable">Los estudios reservan un cupo de este equipo y la cita lleva la sala donde está.</app-alert>
             } @else {
               <app-alert tone="warning" title="Todavía no se puede agendar">Sin recurso agendable, no se reservan estudios con este equipo.</app-alert>
-              @if (canWrite()) {
-                <div class="equipment-detail__actions">
-                  <button app-button variant="outline" [isLoading]="saving()" (clicked)="createResource()" data-testid="equipment-create-resource">Crear recurso agendable</button>
-                </div>
-              }
+              <div class="equipment-detail__actions">
+                <button app-button variant="outline" [isLoading]="saving()" (clicked)="createResource()" data-testid="equipment-create-resource">Crear recurso agendable</button>
+              </div>
             }
           </div>
         </app-tab>
