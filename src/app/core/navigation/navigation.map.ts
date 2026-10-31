@@ -1213,9 +1213,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Facturación',
     group: 'Facturación',
     icon: 'billing',
-    roles: ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN'],
+    // El médico entra para cobrar y facturar SUS consultas: la API
+    // (`billing-simulated.access.ts`) le acota los cobros y le niega anular,
+    // revertir, el correo y la bandeja.
+    roles: ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN', 'PRACTITIONER', 'CLINICIAN'],
     // FACT-SIAT-MOCK: la pantalla existe; lo fiscal va contra el SIAT SIMULADO
-    // y, sin `billingSiatDemo`, dice que la facturación no está conectada.
+    // y, sin `billingSimulatedApi` ni `billingSiatDemo`, dice que la
+    // facturación no está conectada.
     availability: 'disponible',
     summary: 'Emita comprobantes y siga los cobros de la organización.',
     module: 'M26 billing · M42 payments',
