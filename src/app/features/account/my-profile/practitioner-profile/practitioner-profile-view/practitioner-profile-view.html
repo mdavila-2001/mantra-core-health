@@ -605,7 +605,12 @@
              que abre este bloque de pestañas—, así que ni un colega en la Guía
              ni la vista previa del perfil público lo ven. -->
         <section class="mi-perfil__seccion" data-testid="perfil-consultorio">
-          <app-work-history secciones="consultorios" (added)="trayectoriaCambio.emit()" />
+          <app-work-history
+            secciones="consultorios"
+            [lugarSugerido]="lugarSugerido()"
+            (lugarSugeridoTomado)="lugarSugerido.set(null)"
+            (added)="trayectoriaCambio.emit()"
+          />
         </section>
       </app-tab>
 
@@ -715,6 +720,8 @@
           <app-work-history
             layout="timeline"
             secciones="historial"
+            [ofreceLlevarADondeAtiendo]="true"
+            (llevarADondeAtiendo)="llevarADondeAtiendo($event)"
             (added)="trayectoriaCambio.emit()"
           />
         </section>

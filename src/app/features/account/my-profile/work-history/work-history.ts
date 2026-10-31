@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   ElementRef,
   inject,
   Injector,
@@ -12,6 +13,7 @@ import {
   output,
   signal,
   type TemplateRef,
+  untracked,
   viewChild,
 } from '@angular/core';
 
@@ -224,6 +226,74 @@ export class WorkHistory implements OnInit {
 
   /** Se emite tras un alta exitosa, para que quien embebe el formulario recargue lo que ya tenía leído. */
   readonly added = output<void>();
+
+  /**
+   * Si el historial ofrece «¿Atiende acá?» en sus vínculos vigentes.
+   *
+   * ## Por qué hace falta el puente
+   *
+   * «Trayectoria» y «Dónde atiendo» son dos datos distintos —una línea del
+   * currículum (`profiles.practitioner_affiliations`) y un lugar con
+   * dirección, punto en el mapa, QR de cobro y agenda (`practice.practice_sites`)—
+   * y el médico los lee como uno: carga «Clínica Foianini, actualidad» en su
+   * trayectoria y espera que el paciente lo encuentre ahí (31/10/2026). Unirlos
+   * en una tabla sería un cambio de modelo; lo que faltaba era el paso de uno
+   * al otro.
+   *
+   * Es opt-in porque el paso es un cambio de pestaña, y sólo quien monta las
+   * dos pestañas puede darlo: el editor y la ficha propia. Ofrecerlo donde
+   * nadie escucha {@link llevarADondeAtiendo} sería un botón que no hace nada.
+   */
+  readonly ofreceLlevarADondeAtiendo = input(false);
+
+  /** «Quiero cargar este lugar en Dónde atiendo», con el nombre de la institución. */
+  readonly llevarADondeAtiendo = output<string>();
+
+  /**
+   * El lugar que otra pestaña pidió cargar en «Dónde atiendo».
+   *
+   * Al llegar abre el alta del lugar con el nombre puesto: el punto en el mapa
+   * lo marca el médico, porque es obligatorio y el historial no lo tiene. Es un
+   * objeto y no el nombre suelto para que pedir dos veces el mismo lugar —tras
+   * cancelar el primero— vuelva a abrir el alta. Al tomarlo se avisa con
+   * {@link lugarSugeridoTomado}, para que quien lo guarda lo suelte y volver a
+   * la pestaña no reabra el modal.
+   */
+  readonly lugarSugerido = input<LugarSugerido | null>(null);
+
+  /** El {@link lugarSugerido} ya se abrió: quien lo pasó puede soltarlo. */
+  readonly lugarSugeridoTomado = output<void>();
+
+  private readonly abrirLugarSugerido = effect(() => {
+    const sugerido = this.lugarSugerido();
+    if (sugerido === null || !this.muestraConsultorios() || !this.esProfesional()) {
+      return;
+    }
+    untracked(() => {
+      this.abrirAltaDeLugarConNombre(sugerido.nombre, null);
+      this.lugarSugeridoTomado.emit();
+    });
+  });
+
+  /**
+   * Si este vínculo puede llevarse a «Dónde atiendo».
+   *
+   * Sólo los vigentes y **declarados**: uno terminado es historia, y los
+   * demás estados nacen de un vínculo con sede —la API sólo pide aprobación
+   * cuando hay `practiceSiteId` (`profiles-affiliations.service.ts`)—, así que
+   * ya son un lugar de atención o la organización dijo que no. Se mira además
+   * `practiceSiteId` por si un declarado llegara atado.
+   *
+   * @param afiliacion - El vínculo del renglón.
+   */
+  protected puedeLlevarseADondeAtiendo(afiliacion: PractitionerAffiliation): boolean {
+    return (
+      this.ofreceLlevarADondeAtiendo() &&
+      afiliacion.current &&
+      afiliacion.statusKind === 'declarado' &&
+      afiliacion.practiceSiteId === null
+    );
+  }
 
   /**
    * Si esta cuenta tiene perfil profesional.
@@ -439,10 +509,14 @@ export class WorkHistory implements OnInit {
      los dos bloques pueden estar en pantalla a la vez y compartir señal los
      haría pelearse por lo tecleado.
 
-     Elegir uno registra un vínculo **en curso** —`addAffiliation` sin fecha de
-     fin—, que es lo que la ficha lee como «dónde ejerce hoy». No se inventa un
-     estado de aprobación: el vínculo queda **declarado por vos**, que es
-     exactamente lo que `avisoDelVinculo` ya sabe contar. */
+     Elegir uno registraba un vínculo **en curso** del historial
+     (`addAffiliation`), y eso no es un lugar de atención: la lista de arriba
+     no lo mostraba y el paciente seguía sin dirección. Desde el 31/10/2026
+     abre el alta del lugar con el nombre del padrón (ver `atiendoAca`). El
+     lugar queda en la práctica personal del médico —es la única sede que hoy
+     puede crear sin que la organización lo acepte—; que cuelgue de la
+     organización de verdad pide que esa organización esté en la plataforma y
+     lo acepte, que es otro trámite (invitaciones de afiliación). */
 
   /**
    * Si está abierto el panel de «Agregar lugar de atención».
@@ -474,7 +548,12 @@ export class WorkHistory implements OnInit {
   protected readonly lugaresDelPadron = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoLugar = signal(false);
   protected readonly lugarElegido = signal<ReferenceOption | null>(null);
-  protected readonly vinculandoLugar = signal(false);
+
+  /**
+   * Lo que el padrón dice del lugar elegido —municipio y dirección—, para
+   * ayudar a marcar el punto. `null` cuando el alta no viene del padrón.
+   */
+  protected readonly referenciaDelPadron = signal<string | null>(null);
 
   protected readonly registrandoSede = signal(false);
   protected readonly registroDeSede = signal<ViewState<null>>(ready(null));
@@ -1121,42 +1200,53 @@ export class WorkHistory implements OnInit {
   }
 
   /**
-   * Declara que atiende en el establecimiento elegido.
+   * «Atiendo en …»: abre el alta del lugar con el nombre del padrón.
    *
-   * Es un vínculo **sin fecha de fin**: así lo lee la ficha como «dónde ejerce
-   * hoy». Sin cargo, porque acá la pregunta es dónde y no como qué —el cargo se
-   * agrega desde el historial, que es donde vive esa pregunta—.
+   * ## Lo que hacía antes, y por qué estaba mal
+   *
+   * Registraba un vínculo **en el historial laboral** (`addAffiliation`) y
+   * avisaba «ya figura entre los lugares donde atiende». No figuraba: la
+   * lista de «Dónde atiendo» lee las sedes del profesional
+   * (`GET /practitioners/:id/sites`), y un vínculo del historial sin sede no
+   * es una. El médico elegía la clínica, veía el aviso de éxito, la lista
+   * seguía vacía y la clínica aparecía en «Trayectoria» con fecha de hoy y sin
+   * cargo —es lo que reportó el cliente el 31/10/2026—. Su ficha seguía sin
+   * decir dónde encontrarle.
+   *
+   * Ahora el padrón sirve para lo que sirve: dar el nombre canónico y una
+   * referencia de dónde queda. El lugar se crea con el mismo formulario de
+   * siempre, con su punto en el mapa —obligatorio—, y desde ahí tiene
+   * dirección, QR de cobro y agenda. Si además quiere que conste en su
+   * currículum, eso se carga en «Trayectoria».
    */
   protected atiendoAca(): void {
     const lugar = this.lugarElegido();
-    if (lugar === null || this.vinculandoLugar()) {
+    if (lugar === null) {
       return;
     }
-    this.vinculandoLugar.set(true);
-    this.registroDeSede.set(loading());
-    this.profiles
-      .addAffiliation({
-        organizationName: lugar.label,
-        healthFacilityConceptId: lugar.value,
-        startDate: soloFecha(new Date()),
-      })
-      .subscribe({
-        next: () => {
-          this.vinculandoLugar.set(false);
-          this.agregandoLugar.set(false);
-          this.registroDeSede.set(ready(null));
-          this.lugarElegido.set(null);
-          this.lugaresDelPadron.set([]);
-          this.toasts.success(`${lugar.label} ya figura entre los lugares donde atiende.`, 'Listo');
-          this.cargarSedes();
-          this.cargar();
-          this.added.emit();
-        },
-        error: (error: unknown) => {
-          this.vinculandoLugar.set(false);
-          this.registroDeSede.set(errorToViewState<null>(error));
-        },
-      });
+    this.abrirAltaDeLugarConNombre(lugar.label, lugar.hint ?? null);
+  }
+
+  /**
+   * Abre el alta de un lugar de atención con el nombre ya puesto.
+   *
+   * Si el alta ya está abierta no se toca: hay un formulario a medio escribir
+   * y pisarlo tiraría el trabajo sin preguntar.
+   *
+   * @param nombre - Cómo se llama el lugar.
+   * @param referencia - Lo que el padrón dice de dónde queda, si viene de ahí.
+   */
+  private abrirAltaDeLugarConNombre(nombre: string, referencia: string | null): void {
+    if (this.altaDeSedeAbierta()) {
+      return;
+    }
+    this.cerrarAgregarLugar();
+    this.lugaresDelPadron.set([]);
+    this.sedeEnEdicion.set(null);
+    this.limpiarSede();
+    this.nombreDeSedeNueva.set(nombre);
+    this.referenciaDelPadron.set(referencia);
+    this.abrirAltaDeSede();
   }
 
   /** El punto confirmado en el mapa (o `null` al quitarlo o moverlo sin confirmar). */
@@ -1862,6 +1952,7 @@ export class WorkHistory implements OnInit {
 
   private limpiarSede(): void {
     this.nombreDeSedeNueva.set('');
+    this.referenciaDelPadron.set(null);
     this.telefonoDeSedeNueva.set('');
     this.direccionDeSede.set('');
     this.ciudadDeSede.set('');
@@ -1871,6 +1962,11 @@ export class WorkHistory implements OnInit {
     this.registroDeSede.set(ready(null));
     this.borradorOriginalDeSede.set(null);
   }
+}
+
+/** Un lugar que otra pestaña pide cargar en «Dónde atiendo». Ver `WorkHistory.lugarSugerido`. */
+export interface LugarSugerido {
+  readonly nombre: string;
 }
 
 /** El fallo de una escritura, en palabras, o `null` si no hubo. */
