@@ -175,9 +175,10 @@ export function allowedRegionsOf(study: ImagingStudyOption, regions: readonly Im
   }
   const out = [study.region];
   const seen = new Set(out);
-  for (let i = 0; i < out.length; i++) {
+  // for-of sobre un arreglo que crece: recorre también lo agregado (recorrido en anchura).
+  for (const current of out) {
     for (const r of regions) {
-      if (r.padre === out[i] && !seen.has(r.codigo)) {
+      if (r.padre === current && !seen.has(r.codigo)) {
         seen.add(r.codigo);
         out.push(r.codigo);
       }

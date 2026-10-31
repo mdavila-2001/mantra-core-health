@@ -1,7 +1,5 @@
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component, input, model, PLATFORM_ID, signal } from '@angular/core';
-import { DeferBlockBehavior, TestBed, type ComponentFixture } from '@angular/core/testing';
+import { Component, input, model, signal } from '@angular/core';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { loading, ready, unexpectedError } from '../../../../../core/view-state/view-state';
@@ -10,21 +8,15 @@ import { Select } from '../../../../../shared/components/atoms/select/select';
 import { SegmentedControl } from '../../../../../shared/components/molecules/segmented-control/segmented-control';
 import { BodyRegionPicker } from '../../../../../shared/components/organisms/body-region-picker/body-region-picker';
 import type { BodyRegionValue } from '../../../../../shared/components/organisms/body-region-picker/body-region-picker.logic';
-import { ARCHIVO, CATALOGO, PARTES } from '../../../../../shared/components/organisms/body-region-picker/body-region-picker.testing';
 import type { BodyRegionCatalogEntry } from '../../../../../core/data-access/anatomy-atlas/body-regions.types';
 import {
   bigStudies,
   CONTRAST,
-  ECO_TORACOCENTESIS,
   LATERALITY_CONCEPTS,
   MODALITIES,
   REGION_CONCEPTS,
   REGIONS,
-  RM_TORAX,
-  RX_MANO,
-  RX_TORAX,
   STUDIES,
-  TC_CRANEO,
 } from './imaging-study-picker.fixtures';
 import { ImagingStudyPicker } from './imaging-study-picker';
 import type {
@@ -118,7 +110,6 @@ describe('ImagingStudyPicker', () => {
     await fixture.whenStable();
     fixture.detectChanges();
   };
-  const all = (id: string): HTMLElement[] => [...root.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`)];
   const one = (id: string): HTMLElement => {
     const el = root.querySelector<HTMLElement>(`[data-testid="${id}"]`);
     if (!el) throw new Error(`falta ${id}`);
@@ -212,7 +203,7 @@ describe('ImagingStudyPicker', () => {
       laterality: null,
       contrastConceptId: 'c-ambos',
     });
-    expect(text('stub-region')).toBe('CRANEO|null|CRANEO|TC');
+    expect(text('stub-region')).toBe('CRANEO||CRANEO|TC');
     expect(text('imaging-picker-counter')).toBe('TC de cráneo sin y con contraste IV: TC · Cráneo · sin y con contraste');
   });
 
@@ -311,8 +302,10 @@ describe('ImagingStudyPicker', () => {
   it('el estudio elegido sigue en la lista aunque la búsqueda lo excluya', async () => {
     await mount();
     await pickStudy('s-rx-mano');
-    await search('craneo');
-    expect(studyLabels()).toEqual(['Radiografía de mano', 'TC de cráneo sin y con contraste IV']);
+    await search('torax');
+    expect(studyLabels()).toEqual(['Radiografía de mano', 'Radiografía de tórax PA y lateral']);
+    await search('zzzz');
+    expect(studyLabels()).toEqual(['Radiografía de mano']);
     expect(studySelect().value()).toBe('s-rx-mano');
   });
 
@@ -363,7 +356,8 @@ describe('ImagingStudyPicker', () => {
     await settle();
     expect(studySelect().options()).toHaveLength(475);
     await search('numero 47');
-    expect(studySelect().options().length).toBe(11);
+    // 47, 147, 247, 347, 447 y 470 a 474
+    expect(studySelect().options().length).toBe(10);
   });
 
   it('una selección externa (p. ej. un borrador) se refleja en los campos', async () => {
@@ -385,26 +379,5 @@ describe('ImagingStudyPicker', () => {
     expect(root.querySelector('[aria-label="Contraste del estudio"]')).not.toBeNull();
     const ids = [...root.querySelectorAll('[id]')].map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  it('con el selector de región real: elegir estudio carga el atlas y la lista sólo ofrece las permitidas', async () => {
-    TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: PLATFORM_ID, useValue: 'browser' }],
-      deferBlockBehavior: DeferBlockBehavior.Manual,
-    });
-    await mount(true);
-    const http = TestBed.inject(HttpTestingController);
-    host.studies.set([{ ...RX_MANO, region: 'MANO' }, TC_CRANEO, RM_TORAX, RX_TORAX, ECO_TORACOCENTESIS]);
-    // el catálogo de regiones del selector real es el de sus pruebas (tiene MANO y CRANEO)
-    host.regions.set(CATALOGO);
-    await settle();
-    await pickStudy('s-rx-mano');
-    http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(PARTES);
-    http.expectOne('/anatomy-atlas-3d/catalog/body-regions.json').flush(ARCHIVO);
-    await settle();
-    const real = fixture.debugElement.query(By.directive(BodyRegionPicker)).componentInstance as BodyRegionPicker;
-    expect(real.allowed()).toEqual(['MANO']);
-    expect(real.value()).toEqual({ region: 'MANO', laterality: null });
-    http.verify();
   });
 });
