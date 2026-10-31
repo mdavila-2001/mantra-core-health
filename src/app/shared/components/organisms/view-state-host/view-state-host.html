@@ -76,10 +76,7 @@
             </p>
           }
           @if (invalido.requestId) {
-            <p class="view-state-host__request-id">
-              Código de soporte:
-              <code class="tabular-nums">{{ invalido.requestId }}</code>
-            </p>
+            <app-support-code class="view-state-host__request-id" [code]="invalido.requestId" [copyable]="false" />
           }
         </app-alert>
       </ng-content>
@@ -94,10 +91,7 @@
         <app-alert tone="error" title="No tiene acceso a esta sección">
           {{ prohibido.message ?? 'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.' }}
           @if (prohibido.requestId) {
-            <p class="view-state-host__request-id">
-              Código de soporte:
-              <code class="tabular-nums">{{ prohibido.requestId }}</code>
-            </p>
+            <app-support-code class="view-state-host__request-id" [code]="prohibido.requestId" [copyable]="false" />
           }
           @if (prohibido.nextAction; as accion) {
             <div alert-actions>
@@ -157,10 +151,8 @@
       <ng-content select="[vsh-error]">
         <app-alert tone="error" title="Algo salió mal">
           {{ fallo.message ?? 'No pudimos completar la acción. Intente de nuevo en unos segundos. Si el problema persiste, repórtelo con este código.' }}
-          <p class="view-state-host__request-id">
-            Código de soporte:
-            <code class="tabular-nums">{{ fallo.requestId }}</code>
-          </p>
+          <!-- «Copiar código» va en las acciones, junto a «Reintentar». -->
+          <app-support-code class="view-state-host__request-id" [code]="fallo.requestId" [copyable]="false" />
           <div alert-actions>
             <button app-button size="sm" variant="outline" (clicked)="copyRequestId()">
               Copiar código

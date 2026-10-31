@@ -147,6 +147,8 @@ export { porcentajeDelRecorrido, STEP_STATUSES } from './stepper/stepper.types';
 export type { StepperStep, StepStatus } from './stepper/stepper.types';
 
 /* `Tab` es la pestaña individual; sin `Tabs` alrededor no significa nada. */
+export { SupportCode } from './support-code/support-code';
+
 export { Tabs } from './tabs/tabs';
 export { Tab } from './tabs/tab/tab';
 export {

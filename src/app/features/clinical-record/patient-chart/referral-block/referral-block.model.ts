@@ -1,4 +1,4 @@
-import type { ReferralTransferInput } from '../../../../core/data-access/referrals/referral-transfer.types';
+import type { ReferralTransferInput, TransferIssue } from '../../../../core/data-access/referrals/referral-transfer.types';
 import type {
   NewReferral,
   Referral,
@@ -10,11 +10,12 @@ import type {
 } from '../../../../core/data-access/referrals/referrals.types';
 import { REFERRAL_TYPES_WITH_CONSENT } from '../../../../core/data-access/referrals/referrals.types';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { empty } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import type { StatusSealVariant } from '../../../../shared/components/organisms/status-seal/status-seal.types';
-import { writeFailureMessage } from '../../write-message';
+import { writeFailureParts, type FailureParts } from '../../write-message';
 
 /* ============================================================================
     Lo que el bloque de derivación dice en palabras. Separado del componente
@@ -282,36 +283,28 @@ export function buildNewReferral(v: ReferralFormValues): NewReferral {
 export const GENERIC_NOT_FOUND =
   'El encuentro, el destino o el servicio ya no están disponibles. Vuelva a buscar el destino.';
 
-/** Lo que se dice tras un envío fallido y, aparte, el código de soporte (S9). */
-export interface SubmissionFailure {
-  readonly text: string;
-  /** El identificador de petición de S9, para pintarlo entero; `null` si no es S9. */
-  readonly code: string | null;
-}
+/** Lo que se dice tras un envío fallido y, aparte, el código de soporte. */
+export type SubmissionFailure = FailureParts;
 
 /**
  * Lo que se dice tras un envío fallido, o `null` si no falló. Manda el
  * sub-código de la API ya en palabras (400, 404, 422); sin él, la validación
- * tal cual, y para el resto el texto de escritura de siempre. El código de
- * soporte sale del **estado** (`requestId` de S9), no de leer el texto.
+ * tal cual, y para el resto los textos de `write-message.ts`. El código de
+ * soporte sale del **estado** (`requestId` de S4, S5 o S9), no del texto.
  */
 export function submissionMessage(state: ViewState<null>, serverReason: string | null): SubmissionFailure | null {
   if (state.status === 'ready' || state.status === 'loading') return null;
-  if (serverReason !== null) return { text: serverReason, code: null };
+  const code = 'requestId' in state ? (state.requestId ?? null) : null;
+  if (serverReason !== null) return { text: serverReason, code };
   if (state.status === 'validation') {
     const text = state.issues.map((issue) => issue.message).join(' ');
-    return text === '' ? null : { text, code: null };
+    return text === '' ? null : { text, code };
   }
-  if (state.status === 'error') {
-    // `writeFailureMessage` le agrega «(requestId)» al final: acá va aparte.
-    return { text: state.message || 'Ocurrió un error inesperado.', code: state.requestId };
-  }
-  const text = writeFailureMessage(state, {
+  return writeFailureParts(state, {
     accion: 'derivar',
     sinPermiso: 'Sólo puede derivar a quien atiende desde su propia organización.',
     yaNoExiste: GENERIC_NOT_FOUND,
   });
-  return text === null ? null : { text, code: null };
 }
 
 /**
@@ -330,36 +323,58 @@ export function reasonHintFor(kind: ReferralDestinationKind): string {
   }
 }
 
+/** Cómo está la lista de servicios del destino, para el aviso de «Servicio pedido». */
+export type ServiceCatalogState = 'listed' | 'none' | 'loading' | 'failed' | 'external' | 'no-target';
+
+/** El estado de la lista de servicios, a partir de lo que tiene el bloque. */
+export function catalogStateOf(
+  kind: ReferralDestinationKind,
+  hasTarget: boolean,
+  services: ViewState<readonly ReferralTargetService[]>,
+): ServiceCatalogState {
+  if (kind === 'EXTERNAL') return 'external';
+  if (!hasTarget) return 'no-target';
+  if (services.status === 'ready') return services.data.length === 0 ? 'none' : 'listed';
+  return services.status === 'loading' ? 'loading' : 'failed';
+}
+
 /**
  * Qué decir cuando falta el servicio pedido, según el contexto: un externo no
- * tiene catálogo; un destino sin servicios publicados, tampoco; con catálogo,
- * se puede elegir de la lista o escribirlo.
+ * tiene catálogo; un destino sin servicios publicados, tampoco; con la lista
+ * a la vista, se elige de ella o se escribe; mientras carga o si falló, sólo
+ * se puede escribir (no se ofrece una lista que no está).
  */
-export function requestedServiceMessage(kind: ReferralDestinationKind, withoutCatalog: boolean): string {
-  if (kind === 'EXTERNAL') {
-    return 'Escriba qué se le pide al destino externo, por ejemplo «Hemodiálisis tres veces por semana».';
+export function requestedServiceMessage(catalog: ServiceCatalogState): string {
+  switch (catalog) {
+    case 'external':
+      return 'Escriba qué se le pide al destino externo, por ejemplo «Hemodiálisis tres veces por semana».';
+    case 'none':
+      return 'Este destino no publica servicios: escriba qué se le pide, por ejemplo «Fisioterapia de rodilla, 10 sesiones».';
+    case 'listed':
+      return 'Elija un servicio de la lista del destino o escriba qué se le pide.';
+    case 'loading':
+      return 'Escriba qué se le pide al destino (sus servicios todavía se están cargando).';
+    case 'failed':
+      return 'Escriba qué se le pide al destino: no pudimos leer sus servicios.';
+    default:
+      return 'Escriba qué se le pide al destino.';
   }
-  if (withoutCatalog) {
-    return 'Este destino no publica servicios: escriba qué se le pide, por ejemplo «Fisioterapia de rodilla, 10 sesiones».';
-  }
-  return 'Elija un servicio de la lista del destino o escriba qué se le pide.';
 }
 
 /** Reemplaza el aviso de «Servicio pedido» vacío por el de su contexto (ver arriba). */
 export function withServiceContext<T extends { readonly field: string; readonly message: string }>(
   issues: readonly T[],
   requestedService: string,
-  kind: ReferralDestinationKind,
-  withoutCatalog: boolean,
+  catalog: ServiceCatalogState,
 ): readonly T[] {
   if (requestedService.trim() !== '') return issues;
   return issues.map((issue) =>
-    issue.field === 'requestedServiceText' ? { ...issue, message: requestedServiceMessage(kind, withoutCatalog) } : issue,
+    issue.field === 'requestedServiceText' ? { ...issue, message: requestedServiceMessage(catalog) } : issue,
   );
 }
 
 /** El orden de los campos en la pestaña «Traslado», para que el resumen lo siga. */
-const TRANSFER_FIELD_ORDER: readonly string[] = [
+const TRANSFER_FIELD_ORDER: readonly TransferIssue['field'][] = [
   'departureCondition',
   'transportMode',
   'transportDetail',
@@ -380,8 +395,8 @@ const TRANSFER_FIELD_ORDER: readonly string[] = [
 ];
 
 /** Los problemas del traslado en el orden del formulario (estable para el mismo campo). */
-export function inFormOrder<T extends { readonly field: string }>(issues: readonly T[]): readonly T[] {
-  const rank = (field: string): number => {
+export function inFormOrder<T extends { readonly field: TransferIssue['field'] }>(issues: readonly T[]): readonly T[] {
+  const rank = (field: TransferIssue['field']): number => {
     const i = TRANSFER_FIELD_ORDER.indexOf(field);
     return i === -1 ? TRANSFER_FIELD_ORDER.length : i;
   };
@@ -409,4 +424,12 @@ export function referralTabLabels(attempted: boolean, referralOk: boolean, trans
 export interface IssuedReferral {
   readonly name: string;
   readonly kind: ReferralDestinationKind;
+}
+
+/** S3 de la lista, con su próxima acción: derivar (abriendo antes el encuentro si falta). */
+export function emptyReferralList(noEncounter: boolean): ViewState<never> {
+  return empty(
+    { label: noEncounter ? 'Abra el encuentro y derive desde el formulario' : 'Derive desde el formulario de arriba' },
+    'Esta persona todavía no tiene derivaciones.',
+  );
 }

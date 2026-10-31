@@ -197,6 +197,17 @@ describe('ReferenceCombobox', () => {
       expect(host.cleared).toBe(1);
     });
 
+    it('avisa queryCleared cuando Tab o salir del campo descartan lo escrito', async () => {
+      await type('pér');
+      press('Tab');
+      expect(host.cleared).toBe(1);
+
+      await type('ram');
+      input().dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+      fixture.detectChanges();
+      expect(host.cleared).toBe(2);
+    });
+
     it('no consulta al hidratar una selección existente', async () => {
       // Abrir un formulario de edición no es buscar.
       host.selected.set(MEDICOS[0]);

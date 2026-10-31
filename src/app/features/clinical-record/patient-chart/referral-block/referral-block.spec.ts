@@ -8,7 +8,7 @@ import { Subject } from 'rxjs';
 
 import { ReferralsClient } from '../../../../core/data-access/referrals/referrals.client';
 import type { Referral, ReferralCreated } from '../../../../core/data-access/referrals/referrals.types';
-import { empty, loading, ready, stale } from '../../../../core/view-state/view-state';
+import { empty, loading, ready, stale, unexpectedError } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ReferralBlock } from './referral-block';
@@ -533,6 +533,43 @@ describe('ReferralBlock', () => {
     expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('destino externo');
   });
 
+  it('el aviso de «Servicio pedido» no ofrece una lista que no está (cargando o fallida)', () => {
+    create();
+    member<(q: string) => void>('search')('lu');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({ items: [LUCIA] });
+    member<(o: ReferenceOption) => void>('choose')(member<() => readonly ReferenceOption[]>('targetOptions')()[0]!);
+    member<() => void>('submit')();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('todavía se están cargando');
+    http
+      .expectOne((r) => r.url === '/referrals/target-services')
+      .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('no pudimos leer sus servicios');
+  });
+
+  it('con un destino externo el resumen se titula «Revise antes de registrar»', () => {
+    create();
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    writable<string>('externalName').set('Centro Norte');
+    member<() => void>('submit')();
+    fixture.detectChanges();
+    expect(host().querySelector('[data-testid="referral-issues"]')?.textContent).toContain('Revise antes de registrar');
+  });
+
+  it('administración de plataforma (SUPERADMIN o SECURITY_ADMIN) sí lee las sedes de una ajena, como la API', () => {
+    for (const role of ['SUPERADMIN', 'SECURITY_ADMIN']) {
+      create();
+      const auth = TestBed.inject(AuthService) as unknown as {
+        tenants: WritableSignal<readonly string[]>;
+        roles: WritableSignal<readonly string[]>;
+      };
+      auth.tenants.set([]);
+      auth.roles.set([role]);
+      member<(k: string) => void>('chooseKind')('ORGANIZATION');
+      pickTarget([HOSPITAL]);
+      http.expectOne((r) => r.url === '/tenants/t-hospital/branches').flush({ items: [], count: 0 });
+    }
+  });
+
   it('el resumen del traslado sigue el orden del formulario', () => {
     const ordered = inFormOrder([
       { field: 'receiverContactName', message: 'c' },
@@ -571,8 +608,9 @@ describe('ReferralBlock', () => {
     submitFailing({ code: 'INTERNAL', message: 'Falló el servidor.', correlationId: 'req-777' }, 500, 'Server Error');
     const error = host().querySelector('[data-testid="referral-error"]')!;
     expect(error.textContent).toContain('No se pudo derivar');
-    const code = error.querySelector('.referral__code');
-    expect(code?.textContent?.trim()).toBe('(req-777)');
+    const code = error.querySelector('app-support-code code');
+    expect(code?.textContent?.trim()).toBe('req-777');
+    expect(error.querySelector('app-support-code button')?.textContent).toContain('Copiar código');
     expect(errorText()).toBe('Falló el servidor.');
   });
 
@@ -1021,25 +1059,39 @@ describe('ReferralBlock', () => {
       fixture.detectChanges();
       http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
       fixture.componentRef.setInput('referrals', stale([REFERRAL], new Date(2026, 9, 31, 9, 5)));
-      fixture.componentRef.setInput('refreshError', 'No pudimos conectarnos. Revise su conexión y reintente.');
+      fixture.componentRef.setInput('refreshError', { text: 'Falló el servidor.', code: 'req-55' });
       fixture.detectChanges();
 
       expect(host().querySelectorAll('[data-testid="referral-row"]')).toHaveLength(1);
       expect(host().querySelector('[data-testid="referral-list-refreshing"]')).toBeNull();
       const alert = host().querySelector('[data-testid="referral-list-refresh-error"]')!;
       expect(alert.textContent).toContain('Se muestra la de las 09:05');
-      alert.querySelector<HTMLElement>('button')!.click();
+      // El mismo «Código de soporte» con copiar que en todo el sistema.
+      expect(alert.querySelector('app-support-code code')?.textContent).toBe('req-55');
+      alert.querySelector<HTMLElement>('[alert-actions] button')!.click();
       expect(retries).toBe(1);
     });
 
     it('una relectura fallida sin filas no se disfraza de «todavía no tiene derivaciones»', () => {
       create();
       fixture.componentRef.setInput('referrals', stale([], new Date(2026, 9, 31, 9, 5)));
-      fixture.componentRef.setInput('refreshError', 'No pudimos conectarnos.');
+      fixture.componentRef.setInput('refreshError', { text: 'No pudimos conectarnos.', code: null });
       fixture.detectChanges();
       expect(member<() => ViewState<unknown>>('list')().status).toBe('stale');
       expect(host().textContent).not.toContain('todavía no tiene derivaciones');
       expect(host().querySelector('[data-testid="referral-list-refresh-error"]')).not.toBeNull();
+    });
+
+    it('si falla la primera lectura tras derivar, dice que falló la lista y no el envío', () => {
+      create();
+      writable<{ name: string; kind: string } | null>('issued').set({ name: 'Dra. Lucía Mendoza', kind: 'PRACTITIONER' });
+      fixture.componentRef.setInput('referrals', unexpectedError('req-31', 'x'));
+      fixture.detectChanges();
+      const error = host().querySelector('[data-testid="referral-list-error"]')!;
+      expect(error.textContent).toContain('No pudimos cargar la lista');
+      expect(error.textContent).toContain('La derivación se registró, pero no pudimos cargar la lista.');
+      expect(error.querySelector('app-support-code code')?.textContent).toBe('req-31');
+      expect(host().textContent).not.toContain('todavía no tiene derivaciones');
     });
 
     it('«Reintentar» deja el foco en el título de la lista, no en <body>', async () => {
@@ -1048,7 +1100,7 @@ describe('ReferralBlock', () => {
       fixture.detectChanges();
       http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
       fixture.componentRef.setInput('referrals', stale([REFERRAL], new Date(2026, 9, 31, 9, 5)));
-      fixture.componentRef.setInput('refreshError', 'No pudimos conectarnos.');
+      fixture.componentRef.setInput('refreshError', { text: 'No pudimos conectarnos.', code: null });
       fixture.detectChanges();
       // Lo que hace quien monta el bloque: relee y el fallo desaparece con el botón.
       fixture.componentInstance.retry.subscribe(() => fixture.componentRef.setInput('refreshError', null));
