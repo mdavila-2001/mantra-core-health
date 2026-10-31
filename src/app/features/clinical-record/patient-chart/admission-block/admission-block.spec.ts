@@ -1,3 +1,5 @@
+import { provideRouter } from '@angular/router';
+import type { PatientCurrentStay } from '../../../../core/data-access/adt/adt.types';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -27,6 +29,7 @@ async function montar(opciones: {
   tenantId?: string | null;
   internaciones?: readonly InternacionEnFicha[];
   confirmar?: boolean;
+  estancia?: PatientCurrentStay | null;
 } = {}) {
   const confirm = vi.fn().mockResolvedValue(opciones.confirmar ?? true);
 
@@ -35,6 +38,8 @@ async function montar(opciones: {
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
+      // F3: el resumen de cama enlaza a la ficha y al ingreso.
+      provideRouter([]),
       {
         provide: AuthService,
         useValue: {
@@ -55,7 +60,13 @@ async function montar(opciones: {
   fixture.componentRef.setInput('internaciones', opciones.internaciones ?? []);
   fixture.detectChanges();
 
-  return { fixture, http: TestBed.inject(HttpTestingController), confirm };
+  // F3: el resumen de la cama actual pide la internación en curso. Se responde
+  // «sin internación» salvo que la prueba pida otra cosa.
+  const http = TestBed.inject(HttpTestingController);
+  for (const req of http.match('/clinical/patients/pp-1/inpatient-stay')) req.flush(opciones.estancia ?? null);
+  fixture.detectChanges();
+
+  return { fixture, http, confirm };
 }
 
 /** Una señal, una computada o un método del componente. */
@@ -230,5 +241,31 @@ describe('AdmissionBlock', () => {
 
     const tardio = api(fixture)['registroTardio'] as unknown as (i: unknown) => boolean;
     expect(tardio(fixture.componentInstance.internaciones()[0])).toBe(false);
+  });
+
+  /* -- F3: la cama actual y el ingreso con cama ---------------------------- */
+
+  it('sin internación con cama ofrece «Internar» con el paciente ya elegido', async () => {
+    const { fixture, http } = await montar();
+    const enlace = (fixture.nativeElement as HTMLElement).querySelector('[data-testid=inpatient-admit]')!;
+    expect(enlace.getAttribute('href')).toBe('/inpatient/admissions/new?patient=pp-1');
+    http.verify();
+  });
+
+  it('con internación en curso muestra la cama, la unidad y el enlace a la ficha', async () => {
+    const { fixture, http } = await montar({
+      estancia: {
+        encounterId: 'enc-9', siteId: 's1', siteName: 'Hospital San Lucas', since: '2026-10-30T14:00:00.000Z',
+        levelOfCare: { code: 'LOC_CARE_GENERAL', display: 'General' },
+        bed: { careSpaceId: 'c1', code: '301-A', name: 'Cama 301-A', unitId: 'u1', unitName: 'Internación de medicina interna', siteId: 's1' },
+      },
+    });
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('[data-testid=inpatient-stay-summary]')?.textContent).toContain('Cama 301-A');
+    expect(raiz.querySelector('[data-testid=inpatient-stay-summary]')?.textContent).toContain('Internación de medicina interna');
+    expect(raiz.querySelector('[data-testid=inpatient-stay-link]')?.getAttribute('href')).toBe('/inpatient/stays/enc-9');
+    // El alta de episodio de siempre sigue en su lugar (comportamiento preservado).
+    expect(raiz.textContent).toContain('Dar de alta la internación');
+    http.verify();
   });
 });

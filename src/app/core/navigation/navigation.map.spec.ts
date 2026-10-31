@@ -409,7 +409,12 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // P34 (26/10/2026) suma «Horario y turnos» a la farmacia. Productos,
     // categorías, precios, inventario e importación son desde el 30/10/2026
     // una sola sección: «Catálogo», con pestañas.
+    // F2/F3 (31/10/2026): las cuatro de internación, sólo en un hospital.
     expect(flagged.map((s) => s.path)).toEqual([
+      'inpatient/bed-board',
+      'inpatient/cleaning',
+      'inpatient/census',
+      'inpatient/indicators',
       'administration/medical-center-setup',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
@@ -424,13 +429,22 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {
-      const tipos = section.path.includes('pharmacy')
+      const tipos = section.path.startsWith('inpatient/')
+        ? ['HOSPITAL']
+        : section.path.includes('pharmacy')
         ? ['PHARMACY']
         : section.path.includes('medical-center')
           ? ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']
           : ['DIAGNOSTIC_CENTER'];
       expect(section.onlyForTenantTypes, section.path).toEqual(tipos);
     }
+  });
+
+  it('internación existe sólo en un hospital, para cualquier rol con organización (la API decide)', () => {
+    const tablero = APP_SECTIONS.find((s) => s.path === 'inpatient/bed-board')!;
+    expect(isVisibleTo(tablero, ['USER'], ['t-1'], 'HOSPITAL')).toBe(true);
+    expect(isVisibleTo(tablero, ['USER'], ['t-1'], 'PROVIDER')).toBe(false);
+    expect(isVisibleTo(tablero, ['USER'], [], 'HOSPITAL')).toBe(false);
   });
 
   it('las órdenes del laboratorio las ve su personal con sólo `USER`, y no el paciente ni otra organización', () => {

@@ -112,6 +112,12 @@ describe('rutas del armazón', () => {
       // cuando todavía no hay ninguna organización; dejarla en el menú sería
       // ofrecerle para siempre «poner en marcha» a quien ya la puso.
       'administration/getting-started',
+      // F2/F3 · el ingreso y la ficha de una internación cuelgan del tablero de
+      // camas, pero sus rutas las fija el contrato (`/inpatient/admissions/new`,
+      // `/inpatient/stays/:id`) y no empiezan con el de ninguna sección. Se
+      // llega desde el tablero, el expediente o la cola; quién puede lo dice la API.
+      'inpatient/admissions/new',
+      'inpatient/stays/:encounterId',
     ];
 
     const huerfanas = hijas.filter((r) => {
