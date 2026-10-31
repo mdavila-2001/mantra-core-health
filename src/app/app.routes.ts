@@ -34,6 +34,7 @@ import {
 } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
+import { simulatorRoutes } from './simulator-routes';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import { mfaEnrollmentGuard } from './core/auth/mfa-enrollment.guard';
 import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from './core/navigation/navigation.map';
@@ -2325,40 +2326,7 @@ export const routes: Routes = [
         .catch(() => chunkFallido()),
     title: 'AloVida - Vitrina de Diseño',
   },
-  {
-    /* El stock de componentes: la lista de todo lo que existe, sacada del
-       código, con cada pieza montada con datos de prueba.
-
-       `canMatch` y no `canActivate`: con `canMatch` la ruta **no existe** allí
-       donde no hay backend simulado —o sea, en cualquier rama que no sea
-       `mockup`—, así que cae en el comodín y da 404 como cualquier dirección
-       inventada. Con `canActivate` existiría y sólo estaría prohibida, que es
-       otra cosa: anuncia que hay algo detrás.
-
-       Va fuera del armazón, como la vitrina: no pide sesión, porque montar un
-       componente suelto no la necesita y pedirla obligaría a entrar sólo para
-       mirar un botón. */
-    path: 'design-system/stock',
-    canMatch: [() => environment.mockBackend],
-    loadComponent: () =>
-      import('./features/component-stock/component-stock')
-        .then((m) => m.ComponentStock)
-        .catch(() => chunkFallido()),
-    title: 'AloVida - Stock de componentes',
-  },
-  {
-    /* Comodín y no `:clave`: la clave de un componente es su ruta de archivo
-       —`shared/components/atoms/badge/badge`— y lleva barras, que un parámetro
-       de un solo segmento no captura. Con `**` la URL sigue siendo legible y
-       se puede copiar y pegar. */
-    path: 'design-system/stock/**',
-    canMatch: [() => environment.mockBackend],
-    loadComponent: () =>
-      import('./features/component-stock/component-stock')
-        .then((m) => m.ComponentStock)
-        .catch(() => chunkFallido()),
-    title: 'AloVida - Stock de componentes',
-  },
+  ...simulatorRoutes(chunkFallido),
   {
     // Verificación pública del certificado de portabilidad de póliza y
     // siniestralidad (subtarea 3.3): a donde apunta el código QR del PDF.

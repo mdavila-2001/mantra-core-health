@@ -110,6 +110,10 @@
                   "with": "src/app/core/mock/simulator.enabled.ts"
                 },
                 {
+                  "replace": "src/app/simulator-routes.ts",
+                  "with": "src/app/simulator-routes.enabled.ts"
+                },
+                {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.development.ts"
                 }
@@ -202,6 +206,10 @@
                 {
                   "replace": "src/app/core/simulator/simulator.ts",
                   "with": "src/app/core/mock/simulator.enabled.ts"
+                },
+                {
+                  "replace": "src/app/simulator-routes.ts",
+                  "with": "src/app/simulator-routes.enabled.ts"
                 },
                 {
                   "replace": "src/environments/environment.ts",
