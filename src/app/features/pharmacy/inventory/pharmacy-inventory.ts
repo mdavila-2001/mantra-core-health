@@ -19,14 +19,17 @@ import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
-import type { ColumnDef, CursorState } from '../../../shared/components/organisms/data-table/data-table.types';
+import type {
+  ColumnDef,
+  CursorState,
+  SortState,
+} from '../../../shared/components/organisms/data-table/data-table.types';
 import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -40,9 +43,10 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
+import { sortRows } from '../catalog/catalog-sort';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
-import { PharmacyScope } from '../pharmacy-scope';
-import { productName, productStatus } from '../products/product-view';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
+import { PRODUCT_SORT_ACCESSORS, productName, productStatus } from '../products/product-view';
 import {
   INVENTORY_CSV_HEADERS,
   INVENTORY_DEFAULT_MINIMUM,
@@ -59,8 +63,8 @@ import { joinNames } from './site-stock/site-stock-rows';
 const STOCK_MAX = INVENTORY_STOCK_MAX;
 /** Tope del listado: el máximo que acepta `GET /pharmacy/products`. */
 const LIST_LIMIT = 500;
-/** Filas por página. */
-const PAGE_SIZE = 10;
+/** Filas por página: con filas compactas, las que entran en una pantalla. */
+const PAGE_SIZE = 25;
 /** Umbral que el servidor asume mientras la farmacia no fije el suyo. */
 const DEFAULT_MINIMUM = INVENTORY_DEFAULT_MINIMUM;
 
@@ -100,9 +104,6 @@ interface InventoryEdit {
  * - Guardar manda **sólo** las filas que cambiaron, en un único
  *   `PATCH /pharmacies/:id/inventory` (P47, sólo simulador): todo o nada, así la
  *   pantalla no queda a medias.
- * - Cuando exista la sincronización con el sistema de la farmacia (registro de
- *   procesos §2.1.2), esta pantalla pasa a ser sólo de lectura; el aviso fijo
- *   de arriba lo dice.
  *
  * Los retirados no aparecen: no se venden, no tienen inventario que llevar.
  *
@@ -116,7 +117,6 @@ interface InventoryEdit {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     FormField,
     Input,
@@ -129,7 +129,7 @@ interface InventoryEdit {
     Switch,
     ViewStateHost,
   ],
-  providers: [PharmacyScope, InventorySites],
+  providers: [providePharmacyScope(), InventorySites],
   templateUrl: './pharmacy-inventory.html',
   styleUrl: './pharmacy-inventory.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -161,6 +161,9 @@ export class PharmacyInventory {
   });
 
   protected readonly products = signal<ViewState<readonly PharmacyProduct[]>>(loading());
+  /** La API cortó el listado en 500: las alertas y el CSV ven sólo esos. */
+  protected readonly truncated = signal(false);
+  protected readonly sort = signal<SortState | null>(null);
   /** Lo escrito y sin guardar, por producto. */
   protected readonly edits = signal<Readonly<Record<string, InventoryEdit>>>({});
   protected readonly viewOptions = VIEW_OPTIONS;
@@ -187,6 +190,9 @@ export class PharmacyInventory {
       new Set([...Object.keys(this.edits()), ...Object.keys(this.availabilityEdits())]).size,
   );
 
+  /** Si hay existencias o «hay / no hay» escritos sin guardar: el catálogo pregunta antes de salir. */
+  readonly hasUnsavedChanges = computed(() => this.dirtyCount() > 0);
+
   private readonly visible = computed<ViewState<readonly PharmacyProduct[]>>(() => {
     const state = this.products();
     if (state.status !== 'ready') {
@@ -203,7 +209,7 @@ export class PharmacyInventory {
           ),
       );
     if (list.length > 0) {
-      return ready(list);
+      return ready(sortRows(list, this.sort(), PRODUCT_SORT_ACCESSORS));
     }
     return term !== ''
       ? empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${this.term().trim()}».`)
@@ -231,12 +237,12 @@ export class PharmacyInventory {
   protected readonly columns = computed<readonly ColumnDef<PharmacyProduct>[]>(() =>
     this.view() === 'AVAILABILITY'
       ? [
-          { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
+          { key: 'name', header: 'Producto', priority: 1, sortable: true, cell: this.nameCell() },
           { key: 'has', header: '¿Lo tiene?', priority: 1, cell: this.hasCell() },
         ]
       : [
-          { key: 'name', header: 'Producto', priority: 1, cell: this.nameCell() },
-          { key: 'stock', header: 'Existencias', priority: 1, cell: this.stockCell() },
+          { key: 'name', header: 'Producto', priority: 1, sortable: true, cell: this.nameCell() },
+          { key: 'stock', header: 'Existencias', priority: 1, sortable: true, cell: this.stockCell() },
           { key: 'minimum', header: 'Umbral de alerta', priority: 1, cell: this.minimumCell() },
           { key: 'availability', header: 'Disponibilidad', priority: 2, cell: this.availabilityCell() },
         ],
@@ -258,6 +264,12 @@ export class PharmacyInventory {
         });
       }
     });
+    // El aviso de «stock propio» sólo dice algo al cambiar o subir algo en «Todas»: recién ahí se leen las sedes.
+    effect(() => {
+      if (this.dirtyCount() > 0) {
+        untracked(() => this.sites.ensureModes());
+      }
+    });
   }
 
   protected chooseSite(siteId: string | null): void {
@@ -277,9 +289,11 @@ export class PharmacyInventory {
       return;
     }
     this.products.set(loading());
+    this.truncated.set(false);
     this.offset.set(0);
     this.pharmacy.searchProducts({ pharmacyId, managed: true, limit: LIST_LIMIT }).subscribe({
       next: (page) => {
+        this.truncated.set(page.truncated);
         const alive = page.items.filter((product) => productStatus(product) !== 'WITHDRAWN');
         this.products.set(
           alive.length > 0
@@ -298,6 +312,11 @@ export class PharmacyInventory {
 
   protected search(term: string): void {
     this.term.set(term);
+    this.offset.set(0);
+  }
+
+  protected sortBy(sort: SortState): void {
+    this.sort.set(sort);
     this.offset.set(0);
   }
 
@@ -479,6 +498,7 @@ export class PharmacyInventory {
   }
 
   protected openUpload(): void {
+    this.sites.ensureModes();
     this.uploadOpen.set(true);
   }
 

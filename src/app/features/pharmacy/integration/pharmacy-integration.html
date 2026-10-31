@@ -13,7 +13,7 @@
   }
 
   @if (scope.pharmacyId(); as pharmacyId) {
-    <app-card class="integration" padding="lg" data-testid="integration-card">
+    <div class="integration" data-testid="integration-card">
       <app-view-state-host [state]="connections()" (retry)="reload()" (refresh)="reload()">
         <!-- S2 · sin conexión: la próxima acción es conectarla, acá mismo. -->
         <section vsh-empty class="integration__connect" data-testid="integration-connect" aria-labelledby="integration-connect-title">
@@ -85,6 +85,6 @@
           </div>
         }
       </app-view-state-host>
-    </app-card>
+    </div>
   }
 </app-view-state-host>

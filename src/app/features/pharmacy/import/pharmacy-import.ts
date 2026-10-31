@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { catchError, map, of, type Subscription } from 'rxjs';
+import { catchError, map, of, takeLast, type Subscription } from 'rxjs';
 
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -22,7 +22,6 @@ import { Progress } from '../../../shared/components/atoms/progress/progress';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import {
   FileInput,
   type RejectedFile,
@@ -61,7 +60,7 @@ import {
   type CsvReading,
   type LoadMode,
 } from '../catalog-rules/catalog.rules';
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import {
   OUTCOME_BADGE,
   bulkFailureMessage,
@@ -153,7 +152,6 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
     Alert,
     AppButton,
     Badge,
-    Card,
     DataTable,
     DecimalPipe,
     FileInput,
@@ -164,7 +162,7 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
     Stepper,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-import.html',
   styleUrl: './pharmacy-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -626,6 +624,10 @@ export class PharmacyImport {
   /**
    * Pide al servidor qué pasaría con cada fila lista (`dryRun`: no escribe
    * nada). Se repite al cambiar el modo; una vista previa vieja se descarta.
+   *
+   * Va en lotes, y la vista previa queda lista sólo con **todos** los lotes
+   * contestados y una respuesta por fila: con el primero de tres, «Cargar»
+   * publicaría filas que el servidor todavía no revisó.
    */
   protected requestPreview(): void {
     const pharmacyId = this.scope.pharmacyId();
@@ -637,8 +639,14 @@ export class PharmacyImport {
     }
     this.serverPreview.set({ status: 'loading' });
     this.previewRequest = sendProducts(this.bulk, pharmacyId, this.mode(), rows, { dryRun: true })
+      .pipe(takeLast(1))
       .subscribe({
-        next: (results) => this.serverPreview.set({ status: 'ready', results }),
+        next: (results) =>
+          this.serverPreview.set(
+            results.length === rows.length
+              ? { status: 'ready', results }
+              : { status: 'failed', message: 'La revisión del servidor llegó incompleta. Pruebe de nuevo.' },
+          ),
         error: (error: unknown) =>
           this.serverPreview.set({ status: 'failed', message: bulkFailureMessage(error) }),
       });

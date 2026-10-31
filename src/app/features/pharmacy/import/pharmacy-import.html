@@ -21,7 +21,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="import" padding="lg" data-testid="import-card">
+    <div class="import" data-testid="import-card">
       <div class="import__panel">
         <app-stepper [steps]="steps()" label="Pasos de la importación" />
 
@@ -472,7 +472,7 @@
           }
         }
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

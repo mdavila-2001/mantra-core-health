@@ -237,11 +237,12 @@ describe('PharmacyImport', () => {
       expect(host.querySelector('app-page-header')).toBeNull();
     });
 
-    it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos en una sola tarjeta', () => {
+    it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos sin tarjeta propia (la pone el catálogo)', () => {
       mount();
 
       expect(root().querySelector('.import__pharmacy')).toBeNull();
-      expect(root().querySelectorAll('app-card')).toHaveLength(1);
+      expect(root().querySelectorAll('app-card')).toHaveLength(0);
+      expect(byId('import-card')).not.toBeNull();
       expect(root().querySelector('h1')?.textContent).toContain('Importación masiva');
       for (const label of ['Subir archivo', 'Asignar columnas', 'Revisar datos', 'Resultado']) {
         expect(text()).toContain(label);
@@ -733,6 +734,34 @@ describe('PharmacyImport', () => {
       fixture.detectChanges();
 
       expect(byId('import-preview-error')).not.toBeNull();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('con la vista previa a medias (un lote contestado de dos) tampoco deja cargar', async () => {
+      mount();
+      const lines = Array.from({ length: 251 }, (_, index) => `P-${index + 1};Producto ${index + 1}`);
+      await upload(`codigo;marca\n${lines.join('\n')}\n`, []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      const [first] = http.match(bulkUrl(PHARMACY.id));
+      bulkAnswer(first!);
+      fixture.detectChanges();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+
+      answerPreview();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).not.toBe('true');
+    });
+
+    it('si el servidor contesta menos filas de las mandadas, la vista previa no vale y no deja cargar', async () => {
+      mount();
+      await upload('codigo;marca\nA-1;Uno\nB-2;Dos\n', []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      http.expectOne(bulkUrl(PHARMACY.id)).flush({ dryRun: true, results: [{ row: 1, outcome: 'CREATED' }] });
+      fixture.detectChanges();
+
+      expect(textOf('import-preview-error')).toContain('llegó incompleta');
       expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
     });
 

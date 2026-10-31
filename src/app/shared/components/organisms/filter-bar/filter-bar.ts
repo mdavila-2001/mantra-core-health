@@ -153,6 +153,7 @@ export interface ActiveFilter {
     class: 'filter-bar',
     '[class.filter-bar--wrap]': 'wrap()',
     '[class.filter-bar--facets]': "layout() === 'facets'",
+    '[class.filter-bar--folded]': 'collapsible() && !expanded()',
   },
 })
 export class FilterBar {
@@ -171,6 +172,20 @@ export class FilterBar {
    * necesitan y siguen exactamente igual.
    */
   readonly wrap = input(false, { transform: booleanAttribute });
+
+  /**
+   * En teléfono, los desplegables quedan detrás de un botón «Filtros» y la
+   * tabla aparece enseguida, sin una pila de controles delante. Desde tablet
+   * se ven siempre y el botón no se dibuja. Opt-in.
+   */
+  readonly collapsible = input(false, { transform: booleanAttribute });
+
+  /** Si la persona desplegó los filtros (sólo cuenta con {@link collapsible}). */
+  protected readonly expanded = signal(false);
+
+  protected toggleExpanded(): void {
+    this.expanded.update((open) => !open);
+  }
 
   /**
    * `facets` dibuja los filtros de chips como la columna de un catálogo: cada
