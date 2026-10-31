@@ -48,6 +48,8 @@ import { registerGovernance } from './governance.handlers';
 import { registrarAltaDeMedicoAsistida } from './assisted-practitioner.handlers';
 import { registrarFlujos } from './flows.handlers';
 import { registrarTrafico } from './ops-traffic.handlers';
+import { registrarSondaDeVida } from './ops-liveness.handlers';
+import { registrarHerramientas } from './ops-tools.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 import { registerPortalInventory } from './portal-inventory.handlers';
@@ -124,6 +126,8 @@ export function crearRouterSimulado(): MockRouter {
   registrarPortalAdministrativo(router);
   registerGovernance(router);
   registrarTrafico(router);
+  registrarSondaDeVida(router);
+  registrarHerramientas(router);
   registrarFlujos(router);
   registrarAltaDeMedicoAsistida(router);
   registrarAdmisiones(router);

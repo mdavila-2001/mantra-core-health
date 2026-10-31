@@ -8,6 +8,14 @@
   {
    "call": "GET /admin/analytics/onboarding/heatmap",
    "reason": "Igual que el embudo de altas: controlador solo en la rama test de la API."
+  },
+  {
+   "call": "GET /admin/ops/instances/liveness",
+   "reason": "Sonda de vida de instancias (doc 04-sonda-de-vida §2.4): la API la implementa en paralelo (31/10/2026) y el OpenAPI de dev todavia no la publica."
+  },
+  {
+   "call": "GET /admin/ops/tools",
+   "reason": "Herramientas de la plataforma (doc 03-herramientas-e-instancias §4.2): la API la implementa en paralelo (31/10/2026) y el OpenAPI de dev todavia no la publica."
   }
  ]
 }
