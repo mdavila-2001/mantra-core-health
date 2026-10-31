@@ -567,6 +567,40 @@ las pantallas son paneles de operación con identificadores pegados.
 del actor efectivo es el PDP, y el backend lo publica junto al resto de la
 autorización.
 
+### `SupportStaffClient` — 22 operaciones · personal de apoyo (la secretaria)
+
+El alta de la secretaria y la solicitud y aceptación con el hospital y con el
+doctor (31/10/2026), contra el contrato de la rama `claude/secretaria-alta-dev`
+de la API. `SUPPORT_STAFF` es un rol global desde el alta; lo que ve la
+secretaria lo deciden sus **vínculos** (uno por doctor o piso), y cada vínculo
+nace `PENDING` y lo acepta la otra parte (`awaiting`). Tras aceptar se refresca
+el token para que el hospital entre a `tenants`. Lo que **ve** sale sólo de
+`/me/support-access`: donde sólo un doctor la aceptó (`organizationAccess:
+false`) ve a ese doctor y su agenda, nada del hospital.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/iam/auth/register-support-staff` | `RegisterSupportStaff` |
+| `GET` | `/me/support-engagements` | `MySupport` (lo que espera una decisión) |
+| `GET` | `/me/support-access` | `MySupport` (lo que ve: hospitales, doctores, pisos) |
+| `GET` | `/me/support-agenda` | `SupportStaffClient.getAgenda` (agenda del doctor que asiste) |
+| `GET` | `/me/support-catalog` | `MySupport` (pedir más doctores o pisos) |
+| `POST` | `/support-engagement-requests` | `MySupport` |
+| `POST` | `/me/support-engagements/:linkId/confirm` | `MySupport` (aceptar la invitación) |
+| `POST` | `/me/support-engagements/:linkId/decline` | `MySupport` |
+| `POST` | `/me/support-engagements/:linkId/leave` | `MySupport` (retirar un pedido) |
+| `GET` | `/org/support-catalog` | `SupportStaffAdmin` |
+| `GET` | `/org/support-engagement-requests` | `SupportStaffAdmin` |
+| `POST` | `/org/support-engagement-requests/:linkId/decision` | `SupportStaffAdmin` (aceptar o rechazar) |
+| `GET` | `/org/support-engagements` | `SupportStaffAdmin` |
+| `POST` | `/org/support-engagements/:linkId/end` | `SupportStaffAdmin` |
+| `POST` | `/org/team/invitations` | `SupportInvitePanel` (el hospital invita por documento) |
+| `GET` | `/me/practitioner/support-team` | `MySupportTeam` |
+| `POST` | `/practitioner-delegates/:linkId/accept` | `MySupportTeam` (el doctor acepta) |
+| `POST` | `/practitioner-delegates/:linkId/reject` | `MySupportTeam` |
+| `POST` | `/me/practitioner/support-team/:linkId/end` | `MySupportTeam` |
+| `POST` | `/me/practitioner/support-invitations` | `MySupportTeam` (el doctor invita por documento) |
+
 ### `AuthProvidersClient` — 12 operaciones · sólo comando
 
 El M40 (`IDENTITY_ADMIN`): proveedores de identidad federada, sus protocolos,

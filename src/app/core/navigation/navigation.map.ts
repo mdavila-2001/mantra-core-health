@@ -980,6 +980,48 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M29 delegated_access',
   },
   {
+    // Personal de apoyo (31/10/2026): el hospital invita a su secretaria por
+    // documento con sus doctores y pisos, y acepta o rechaza lo que ella pide.
+    // La API exige administrar el hospital activo (owner/admin de la membresía o
+    // `SECURITY_ADMIN`); el menú se lo ofrece a `SECURITY_ADMIN`.
+    path: 'administration/support-staff',
+    label: 'Personal de apoyo',
+    group: 'Administración',
+    icon: 'people',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Invite a sus secretarias con sus doctores y pisos, y acepte o rechace lo que piden.',
+    module: 'M29 delegated_access',
+  },
+  {
+    // La secretaria (personal de apoyo), 31/10/2026: sus hospitales, sus
+    // doctores y sus pisos, y la solicitud y aceptación con el hospital y con el
+    // doctor. `SUPPORT_STAFF` es su rol desde el alta; lo que ve lo deciden sus
+    // vínculos, no el rol.
+    path: 'my-support',
+    label: 'Mi trabajo de apoyo',
+    group: 'Atención',
+    icon: 'clipboard',
+    roles: ['SUPPORT_STAFF'],
+    availability: 'disponible',
+    summary: 'Sus hospitales, sus doctores y sus pisos; acepte invitaciones o pida más.',
+    module: 'M29 delegated_access',
+  },
+  {
+    // El equipo de apoyo del doctor (31/10/2026): quién lo asiste, en qué
+    // organización, y aceptar a quien la organización le asignó. Entra en la
+    // lista cerrada del médico por pedido explícito del usuario: la secretaria
+    // tiene que verse en todos lados donde se muestran roles.
+    path: 'my-support-team',
+    label: 'Mi secretaría',
+    group: 'Atención',
+    icon: 'people',
+    roles: ['PRACTITIONER', 'CLINICIAN'],
+    availability: 'disponible',
+    summary: 'Quién lleva su agenda y recibe a sus pacientes; acepte o invite a su secretaria.',
+    module: 'M29 delegated_access',
+  },
+  {
     // W2/F4 (M40): primer uso de `IDENTITY_ADMIN` en el mapa — los doce
     // comandos del backend lo exigen (`AUTH_SERVICE` también puede, pero es un
     // rol de servicio, no de una persona que navega). Como el M29, el módulo

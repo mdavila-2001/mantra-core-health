@@ -224,6 +224,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Quién es quién y quién entra en nombre de quién.
     paths: [
       'administration/delegated-access',
+      // El personal de apoyo del hospital: quién entra a la agenda en nombre de sus doctores.
+      'administration/support-staff',
       'administration/identity-providers',
       'administration/identity-assurance',
     ],

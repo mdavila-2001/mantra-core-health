@@ -29,6 +29,7 @@ las lista y permite copiarlas.
 | Superadmin | `superadmin@alovida.mock` | Comodín: entra a todo. Tres organizaciones. |
 | Visitador | `visitador@alovida.mock` | Carla Fernández Ríos, visitadora médica de Laboratorios Inti. Solicitudes de visita, agenda de visitas, registros. |
 | Farmacia | `farmacia@alovida.mock` | Mariela Céspedes, encargada de Farmacia Vida (`PHARMACY_STAFF`). Catálogo de productos (alta, carga masiva por CSV, «sin stock», edición y retiro), pedidos del mostrador (sólo los de su farmacia) y promociones. Chatea con los pacientes **como la farmacia** («Escribiendo como» en Chats, «Chatear con el paciente» en cada pedido). |
+| Secretaria | `secretaria@alovida.mock` (o CI `6001001`) | Rosa Choque Mamani, personal de apoyo (`SUPPORT_STAFF`). Trabaja en el Hospital San Lucas con la Dra. Rojas y el Piso 2 (`/my-support`) y tiene dos invitaciones de la Clínica Los Olivos (un doctor y un piso) para aceptar. `admin@alovida.mock` acepta en «Personal de apoyo» lo que pidió `lucia.rocha@alovida.mock`, y `medica@alovida.mock` acepta en «Mi secretaría» lo que Lucía le pidió a ella e invita a su secretaria por CI. Una cuenta nueva se da de alta en `/auth/register/support-staff`. |
 
 También entran por número de documento (`4567890`, `7654321`, `1112223`,
 `9998887`, `5556667`).
