@@ -1,0 +1,99 @@
+<app-view-state-host [state]="state()">
+  @if (model(); as m) {
+    <div class="hm">
+      <section class="hm__hero" aria-labelledby="hm-rep">
+        <div class="hm__hero-main">
+          <h2 id="hm-rep" class="hm__ov">Índice de reputación</h2>
+          @if (m.reputation.index !== null) {
+            <p class="hm__big">{{ m.reputation.index }}<small> / 100</small></p>
+            @if (formatDelta(m.reputation.delta); as d) {
+              <p class="hm__delta" [class.hm__delta--good]="(m.reputation.delta ?? 0) > 0" [class.hm__delta--bad]="(m.reputation.delta ?? 0) < 0">{{ d }} frente a los {{ reputationDays }} días anteriores</p>
+            }
+          } @else {
+            <p class="hm__big hm__big--none">Sin evidencia suficiente</p>
+            <p class="hm__delta">Hay muy pocas menciones para estimar la reputación.</p>
+          }
+          <p class="hm__text">
+            {{ m.reputation.mentions.toLocaleString('es-BO') }} menciones en {{ reputationDays }} días
+            @if (m.reputation.positiveShare !== null) {
+              ({{ (m.reputation.positiveShare * 100).toFixed(0) }} % positivas).
+            }
+            @if (m.reputation.rising; as r) {
+              El tema que más crece es <strong>{{ r.label }}</strong> (+{{ (r.growth * 100).toFixed(0) }} %).
+            }
+            El índice es una estimación a partir de sentimiento clasificado automáticamente.
+          </p>
+          <p class="hm__links">
+            <a [routerLink]="opinionLink">Ver opinión pública</a>
+            <a [routerLink]="alertsLink">Ver las alertas</a>
+          </p>
+        </div>
+        <ul class="hm__side" role="list" aria-label="Cifras de la semana">
+          @for (f of m.side; track f.label) {
+            <li>
+              <small>{{ f.label }}</small>
+              <b>{{ f.value }}</b>
+              @if (f.change) {
+                <span class="hm__chg" [class.hm__chg--good]="f.good === true" [class.hm__chg--bad]="f.good === false">{{ f.change }}</span>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section aria-labelledby="hm-week">
+        <h2 id="hm-week" class="hm__h2">Resultados de la semana</h2>
+        <p class="hm__sub">{{ week }} frente a los siete días anteriores</p>
+        <div class="hm__kpis">
+          @for (k of m.kpis; track k.assessment.kpi.metric) {
+            <app-ins-kpi [assessment]="k.assessment" [series]="k.series" (opened)="openMetric(k.assessment.kpi.metric)" />
+          }
+        </div>
+      </section>
+
+      <div class="hm__two">
+        <app-ins-panel title="Registros por día · últimos 30 días" question="¿Qué hechos movieron la curva?">
+          <app-ins-line-chart [labels]="m.chart.labels" [series]="m.chart.series" [milestones]="m.chart.milestones" unit="count" [height]="400" [ariaLabel]="'Registros diarios de los últimos 30 días, con los hitos que movieron la curva'" />
+        </app-ins-panel>
+        <app-ins-panel title="Lo más importante hoy" question="Ordenado por nivel y fecha">
+          <div class="hm__stack">
+            @for (a of m.alerts; track a.id) {
+              <app-ins-alert-card [alert]="a" [compact]="true" />
+            } @empty {
+              <p class="hm__none">No hay alertas abiertas. Lo atendido se ve en el módulo de alertas.</p>
+            }
+          </div>
+          <p class="hm__more"><a [routerLink]="alertsLink">Ver todas las alertas</a></p>
+        </app-ins-panel>
+      </div>
+
+      @if (m.insights.length) {
+        <section aria-labelledby="hm-ai">
+          <h2 id="hm-ai" class="hm__h2">Lectura automática</h2>
+          <p class="hm__sub">Dato, interpretación, hipótesis o conclusión: nunca mezcladas. Reglas deterministas, no un modelo.</p>
+          <div class="hm__three">
+            @for (i of m.insights; track i.id) {
+              <app-ins-insight [insight]="i" />
+            }
+          </div>
+        </section>
+      }
+
+      <section aria-labelledby="hm-mods">
+        <h2 id="hm-mods" class="hm__h2">Los módulos</h2>
+        <p class="hm__sub">Un dato clave de cada uno</p>
+        <ul class="hm__tiles" role="list">
+          @for (t of m.tiles; track t.id) {
+            <li>
+              <a class="hm__tile" [routerLink]="t.link">
+                <span class="hm__tile-t">{{ t.label }}</span>
+                <b class="hm__tile-b">{{ t.big }}</b>
+                <small>{{ t.small }}</small>
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    </div>
+  }
+</app-view-state-host>
