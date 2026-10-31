@@ -1,11 +1,11 @@
 <app-ins-panel title="Explorador de comentarios" question="¿Qué dice la gente, exactamente? El sentimiento es una estimación: por debajo de 80 % de confianza pide revisión humana.">
   <div class="cx__filters" role="search">
     <label><span>Sentimiento</span>
-      <select (change)="setSentiment($event)"><option value="all">Todos</option>@for (t of tones; track t) { <option [value]="t">{{ sentimentLabels[t] }}</option> }</select></label>
+      <select [value]="sentiment()" (change)="setSentiment($event)"><option value="all">Todos</option>@for (t of tones; track t) { <option [value]="t">{{ sentimentLabels[t] }}</option> }</select></label>
     <label><span>Tipo</span>
-      <select (change)="setKind($event)"><option value="all">Todos</option>@for (k of kinds; track k) { <option [value]="k">{{ kindLabels[k] }}</option> }</select></label>
+      <select [value]="kind()" (change)="setKind($event)"><option value="all">Todos</option>@for (k of kinds; track k) { <option [value]="k">{{ kindLabels[k] }}</option> }</select></label>
     <label><span>Departamento</span>
-      <select (change)="setDepartment($event)"><option value="all">Todos</option>@for (d of departments; track d.id) { <option [value]="d.id">{{ d.label }}</option> }</select></label>
+      <select [value]="department()" (change)="setDepartment($event)"><option value="all">Todos</option>@for (d of departments; track d.id) { <option [value]="d.id">{{ d.label }}</option> }</select></label>
     <label class="cx__q"><span>Buscar en el texto</span><input type="search" [value]="query()" (input)="search($event)" placeholder="Una palabra o frase" /></label>
     <button type="button" class="cx__btn" (click)="reset()">Quitar filtros</button>
   </div>

@@ -35,7 +35,7 @@ export class SavedViews {
 
   private load(): void {
     this.client.listSavedViews().subscribe({
-      next: (r) => { this.loaded = true; this.views.set(r.data.filter((v) => v.url.startsWith(INSIGHTS_BASE))); },
+      next: (r) => { this.loaded = true; this.views.set(r.data.filter((v) => (v.url === INSIGHTS_BASE || v.url.startsWith(INSIGHTS_BASE + '/')))); },
       error: () => this.error.set('No se pudieron leer las vistas guardadas.'),
     });
   }

@@ -14,7 +14,6 @@ import { InsightsData } from './insights-data';
 import { InsightsPreferences } from './insights-preferences';
 import { InsightsWorkflow } from './insights-workflow';
 import { INSIGHTS_BASE, INSIGHTS_MODULES } from './insights-nav';
-import { openAlertCount } from './insights-summary';
 import { SavedViews } from './components/saved-views';
 import { CommandPalette } from './components/command-palette';
 import { GlossaryDrawer } from './components/glossary-drawer';
@@ -68,7 +67,8 @@ export class InsightsShell {
   protected readonly base = INSIGHTS_BASE;
   protected readonly notice = SYNTHETIC_NOTICE;
   protected readonly asOf = longDate(PROTOTYPE_TODAY);
-  protected readonly alertCount = openAlertCount();
+  private readonly workflow = inject(InsightsWorkflow);
+  protected readonly alertCount = computed(() => this.workflow.openCount());
 
   protected readonly collapsed = signal(readCollapsed());
 

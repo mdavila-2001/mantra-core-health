@@ -1,3 +1,4 @@
+import { buildAlerts } from './domain/alerts';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, forkJoin, map, of } from 'rxjs';
@@ -39,13 +40,21 @@ export class InsightsWorkflow {
   readonly busy = signal(false);
 
   readonly ready = computed(() => this.state().status === 'ready');
+  /** Alertas críticas o de riesgo que siguen abiertas (nuevas o en revisión) según el estado guardado. */
+  readonly openCount = computed(() => {
+    const flow = this.workflow();
+    return buildAlerts().filter((a) => (a.severity === 'critical' || a.severity === 'risk') && ((flow[a.id]?.status ?? 'new') === 'new' || flow[a.id]?.status === 'in_progress')).length;
+  });
+  /** Cola de escrituras: cada una lee la versión vigente al ejecutarse, así dos cambios seguidos no se chocan. */
+  private readonly queue: (() => void)[] = [];
+  private running = false;
 
   constructor() {
     this.load();
   }
 
-  load(): void {
-    this.state.set(loading());
+  load(silent = false): void {
+    if (!silent) this.state.set(loading());
     forkJoin({ wf: this.client.listAlertWorkflow(), rules: this.client.listAlertRules(), notif: this.client.getNotificationPreferences() })
       .pipe(
         map(({ wf, rules, notif }): ViewState<null> => {
@@ -69,52 +78,76 @@ export class InsightsWorkflow {
 
   /** Cambia estado y/o responsable de una alerta. La primera vez la da de alta con su descripción. */
   setAlert(alert: MarketingAlert, status: InsightsAlertStatus, owner: InsightsOwnerTeam | null, note?: string): void {
-    const current = this.workflow()[alert.id];
+    this.enqueue(() => {
+      const current = this.workflow()[alert.id];
+      this.client
+        .putAlertWorkflow(alert.id, { status, ownerTeam: owner, snapshot: snapshotOf(alert), ...(note ? { note } : {}) }, current?.rowVersion ?? null)
+        .subscribe({
+          next: (res) => {
+            this.workflow.update((w) => ({ ...w, [alert.id]: res.data }));
+            this.next();
+          },
+          error: (error: unknown) => this.fail(error),
+        });
+    });
+  }
+
+  private enqueue(job: () => void): void {
+    this.queue.push(job);
+    if (this.running) return;
+    this.running = true;
     this.busy.set(true);
-    this.client
-      .putAlertWorkflow(alert.id, { status, ownerTeam: owner, snapshot: snapshotOf(alert), ...(note ? { note } : {}) }, current?.rowVersion ?? null)
-      .subscribe({
-        next: (res) => {
-          this.workflow.update((w) => ({ ...w, [alert.id]: res.data }));
-          this.busy.set(false);
-        },
-        error: (error: unknown) => this.fail(error),
-      });
+    this.queue.shift()?.();
+  }
+
+  private next(): void {
+    const job = this.queue.shift();
+    if (job) job();
+    else { this.running = false; this.busy.set(false); }
   }
 
   patchRule(code: InsightsRuleCode, body: PatchAlertRuleBody): void {
     const rule = this.rules().find((r) => r.code === code);
     if (!rule) return;
-    this.busy.set(true);
-    this.client.patchAlertRule(code, body, rule.rowVersion).subscribe({
-      next: (res) => {
-        this.rules.update((list) => list.map((r) => (r.code === code ? res.data : r)));
-        this.busy.set(false);
-      },
-      error: (error: unknown) => this.fail(error),
+    this.enqueue(() => {
+      const version = this.rules().find((r) => r.code === code)?.rowVersion ?? rule.rowVersion;
+      this.client.patchAlertRule(code, body, version).subscribe({
+        next: (res) => {
+          this.rules.update((list) => list.map((r) => (r.code === code ? res.data : r)));
+          this.next();
+        },
+        error: (error: unknown) => this.fail(error),
+      });
     });
   }
 
   saveNotifications(body: PutNotificationPreferencesBody): void {
-    this.busy.set(true);
-    this.client.putNotificationPreferences(body, this.notifications()?.rowVersion ?? null).subscribe({
-      next: (res) => {
-        this.notifications.set(res.data);
-        this.busy.set(false);
-      },
-      error: (error: unknown) => this.fail(error),
+    this.enqueue(() => {
+      this.client.putNotificationPreferences(body, this.notifications()?.rowVersion ?? null).subscribe({
+        next: (res) => {
+          this.notifications.set(res.data);
+          this.next();
+        },
+        error: (error: unknown) => this.fail(error),
+      });
     });
   }
 
   private fail(error: unknown): void {
+    this.queue.length = 0;
+    this.running = false;
     this.busy.set(false);
     if (error instanceof HttpErrorResponse && error.status === 412) {
       this.notice.set('Otra persona cambió esto antes que usted. Se cargó el estado vigente: revíselo y vuelva a intentar.');
-      this.load();
+      this.load(true);
       return;
     }
     if (error instanceof HttpErrorResponse && error.status === 422) {
       this.notice.set('El valor no es válido. Revise el dato e inténtelo de nuevo.');
+      return;
+    }
+    if (error instanceof HttpErrorResponse && (error.status === 403 || error.status === 404)) {
+      this.notice.set(error.status === 403 ? 'Su rol no permite este cambio.' : 'Ese elemento ya no existe. Recargue la pantalla.');
       return;
     }
     this.notice.set('No se pudo guardar el cambio. Nada se modificó; inténtelo de nuevo.');
