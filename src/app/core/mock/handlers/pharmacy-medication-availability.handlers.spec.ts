@@ -19,7 +19,7 @@ interface MedicationSite {
 
 describe('maqueta de la disponibilidad por medicamento', () => {
   const router = crearRouterSimulado();
-  const paciente = buscarUsuario('paciente')!;
+  const patient = buscarUsuario('paciente')!;
   const IBUPROFENO = productos.get(
     uuid(`product-${TENANT_FARMACIA}-MED-IBUPROFENO`),
   )!.medicationConceptId!;
@@ -38,7 +38,7 @@ describe('maqueta de la disponibilidad por medicamento', () => {
       query: new URLSearchParams({ medications }),
       body: {},
       headers: new HttpHeaders(),
-      user: paciente,
+      user: patient,
     } satisfies MockRequest);
     return (isMockReply(answer) ? answer.body : answer) as ReturnType<typeof ask>;
   }
