@@ -1,0 +1,406 @@
+{
+  "date": "2026-10-31T09:23:49.483Z",
+  "log": [
+    {
+      "what": "cola 1440",
+      "data": {
+        "overflow": 0,
+        "points": [
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1"
+        ]
+      }
+    },
+    {
+      "what": "activos 1440",
+      "data": {
+        "overflow": 0,
+        "card": {
+          "left": 0,
+          "right": 0,
+          "ratio": 100
+        }
+      }
+    },
+    {
+      "what": "consultorio 1440",
+      "data": {
+        "overflow": 0
+      }
+    },
+    {
+      "what": "cola 768",
+      "data": {
+        "overflow": 0,
+        "points": [
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1"
+        ]
+      }
+    },
+    {
+      "what": "activos 768",
+      "data": {
+        "overflow": 0,
+        "card": {
+          "left": 0,
+          "right": 0,
+          "ratio": 100
+        }
+      }
+    },
+    {
+      "what": "consultorio 768",
+      "data": {
+        "overflow": 0
+      }
+    },
+    {
+      "what": "cola 390",
+      "data": {
+        "overflow": 0,
+        "points": [
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM1 · Toma de muestras 1",
+          "LAB-TM2 · Toma de muestras 2",
+          "LAB-TM1 · Toma de muestras 1"
+        ]
+      }
+    },
+    {
+      "what": "activos 390",
+      "data": {
+        "overflow": 0,
+        "card": {
+          "left": 0,
+          "right": 0,
+          "ratio": 100
+        }
+      }
+    },
+    {
+      "what": "consultorio 390",
+      "data": {
+        "overflow": 0
+      }
+    },
+    {
+      "what": "pedir laboratorio con punto de toma",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/clinical/service-requests",
+          "ifMatch": null,
+          "body": {
+            "custodianTenantId": "3cf21c14-a986-490a-aad8-1f767ee465be",
+            "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
+            "codeConceptId": "9c46c426-3b75-47ec-a806-f8868f0f7ad2",
+            "category": "OTHER",
+            "encounterId": "b2a1bd80-e1bb-468a-a351-690ab0149caa",
+            "formInstanceId": "575dc4bf-b981-47e7-addc-cb08a8ff3b16",
+            "suggestedCareSpaceId": "e212d5d2-598e-4b0e-a9d6-cf7cd49071c0"
+          }
+        },
+        "response": {
+          "status": 201,
+          "body": {
+            "id": "945e53e3-da74-4ed5-a1e0-c752161ce008",
+            "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
+            "category": "OTHER",
+            "basedOnNoteIds": [],
+            "status": "ACTIVE",
+            "createdAt": "2026-10-31T09:22:41.064Z"
+          }
+        }
+      }
+    },
+    {
+      "what": "ubicar la lámpara cialítica en QX-02",
+      "data": {
+        "request": {
+          "method": "PATCH",
+          "path": "/accounting/infrastructure-items/5fd00c0a-331f-4d64-ad50-929ac4e0ffae",
+          "ifMatch": null,
+          "body": {
+            "careSpaceId": "ef3c9147-2ffd-489f-a853-40381f14c3d6"
+          }
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "id": "5fd00c0a-331f-4d64-ad50-929ac4e0ffae",
+            "practiceId": "3561b5d1-7b24-4ed5-a1f9-c32462d261f6",
+            "code": "AF-0103",
+            "name": "Lámpara cialítica LED",
+            "category": "Equipo médico",
+            "careSpace": {
+              "id": "ef3c9147-2ffd-489f-a853-40381f14c3d6",
+              "code": "QX-02",
+              "name": "Quirófano 2",
+              "path": "Edificio A › Pabellón Norte › Piso 2 › Bloque quirúrgico › Quirófano 2"
+            },
+            "locationText": "Quirófano 2 (planilla 2024)",
+            "bookValue": "64000.00",
+            "currencyCode": "BOB"
+          }
+        }
+      }
+    },
+    {
+      "what": "ligar CC-900 a una unidad que ya tiene centro (409)",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/accounting/cost-centers/da9549ad-79f3-456f-a207-3162f3bce60c/unit-link",
+          "ifMatch": null,
+          "body": {
+            "clinicalUnitId": "e500dd14-45b5-45b6-a0cf-cb2286063e2a"
+          }
+        },
+        "response": {
+          "status": 409,
+          "body": {
+            "statusCode": 409,
+            "code": "CONFLICT",
+            "reason": "UNIT_ALREADY_HAS_COST_CENTER",
+            "message": "«Internación de medicina interna» ya tiene el centro de costo CC-110.",
+            "details": {
+              "costCenterId": "26e70cc0-31e6-4354-a7e0-8e94772d4554",
+              "reason": "UNIT_ALREADY_HAS_COST_CENTER"
+            },
+            "correlationId": "req-periop-mvw70ylb-1",
+            "timestamp": "2026-10-31T09:23:02.303Z",
+            "path": ""
+          }
+        }
+      }
+    },
+    {
+      "what": "ligar CC-120 al bloque quirúrgico",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/accounting/cost-centers/ca3a9fde-8e9f-4702-abb8-92e442cd4700/unit-link",
+          "ifMatch": null,
+          "body": {
+            "clinicalUnitId": "2a35d38a-15d3-4e80-a258-5c369d457a0a"
+          }
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "id": "ca3a9fde-8e9f-4702-abb8-92e442cd4700",
+            "practiceId": "3561b5d1-7b24-4ed5-a1f9-c32462d261f6",
+            "code": "CC-120",
+            "name": "Bloque quirúrgico",
+            "clinicalUnit": {
+              "id": "2a35d38a-15d3-4e80-a258-5c369d457a0a",
+              "name": "Bloque quirúrgico"
+            },
+            "status": {
+              "code": "STATE_ACTIVE",
+              "display": "Vigente"
+            }
+          }
+        }
+      }
+    },
+    {
+      "what": "evento PATIENT_IN_ROOM",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "ifMatch": null,
+          "body": {
+            "eventCode": "PATIENT_IN_ROOM",
+            "occurredAt": "2026-10-31T09:23:22.192Z"
+          }
+        },
+        "response": {
+          "status": 201,
+          "body": {
+            "utilizationEventId": "5bd8449d-5830-42ef-a761-31f23717567c",
+            "milestoneId": "04f2c34a-f58d-4b0c-aef3-7102535d3f16"
+          }
+        }
+      }
+    },
+    {
+      "what": "evento ANESTHESIA_START",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "ifMatch": null,
+          "body": {
+            "eventCode": "ANESTHESIA_START",
+            "occurredAt": "2026-10-31T09:23:24.417Z"
+          }
+        },
+        "response": {
+          "status": 201,
+          "body": {
+            "utilizationEventId": "1ec24448-27bc-4dd4-a142-b28cc2458f5c",
+            "milestoneId": "4dee182b-416e-4f37-a143-8c6ca646aad2"
+          }
+        }
+      }
+    },
+    {
+      "what": "evento INCISION",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "ifMatch": null,
+          "body": {
+            "eventCode": "INCISION",
+            "occurredAt": "2026-10-31T09:23:29.066Z"
+          }
+        },
+        "response": {
+          "status": 201,
+          "body": {
+            "utilizationEventId": "4968c4cc-0343-465c-a6f2-db1080dc30e8",
+            "milestoneId": "5fbc6658-32b0-47b2-aa81-1c5abd78992a"
+          }
+        }
+      }
+    },
+    {
+      "what": "evento CLOSURE",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "ifMatch": null,
+          "body": {
+            "eventCode": "CLOSURE",
+            "occurredAt": "2026-10-31T09:23:31.239Z"
+          }
+        },
+        "response": {
+          "status": 201,
+          "body": {
+            "utilizationEventId": "df186569-6579-4c57-a96d-e40e9c2bc730",
+            "milestoneId": "cfb15afe-f67b-4f14-acf5-e3d62deb2b52"
+          }
+        }
+      }
+    },
+    {
+      "what": "evento PATIENT_OUT_OF_ROOM",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "ifMatch": null,
+          "body": {
+            "eventCode": "PATIENT_OUT_OF_ROOM",
+            "occurredAt": "2026-10-31T09:23:35.698Z"
+          }
+        },
+        "response": {
+          "status": 201,
+          "body": {
+            "utilizationEventId": "09a6c56f-6675-45a7-a1a7-5e18d7739586",
+            "milestoneId": "bdf32930-289c-41de-a90e-deae705e28ee"
+          }
+        }
+      }
+    },
+    {
+      "what": "recambio · Inicio de limpieza",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/cleaning-orders/0caa2c13-57b4-48c9-a04f-5f16df9ec16c/start",
+          "ifMatch": "\"1\"",
+          "body": {}
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "id": "0caa2c13-57b4-48c9-a04f-5f16df9ec16c",
+            "status": "CLN_IN_PROGRESS",
+            "rowVersion": 2
+          }
+        }
+      }
+    },
+    {
+      "what": "recambio · Fin de limpieza",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/cleaning-orders/0caa2c13-57b4-48c9-a04f-5f16df9ec16c/finish",
+          "ifMatch": "\"2\"",
+          "body": {}
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "id": "0caa2c13-57b4-48c9-a04f-5f16df9ec16c",
+            "status": "CLN_DONE",
+            "rowVersion": 3
+          }
+        }
+      }
+    },
+    {
+      "what": "recambio · Sala lista",
+      "data": {
+        "request": {
+          "method": "POST",
+          "path": "/cleaning-orders/0caa2c13-57b4-48c9-a04f-5f16df9ec16c/inspect",
+          "ifMatch": "\"3\"",
+          "body": {
+            "result": "PASS"
+          }
+        },
+        "response": {
+          "status": 200,
+          "body": {
+            "id": "0caa2c13-57b4-48c9-a04f-5f16df9ec16c",
+            "status": "CLN_INSPECTED",
+            "rowVersion": 4
+          }
+        }
+      }
+    },
+    {
+      "what": "cargo de quirófano",
+      "data": {
+        "text": "Pendiente de revisiónQuirófano QX-02 · Quirófano 2 Tiempo en sala 1 min Fracciones facturadas 2 Precio por fracción 600.00 BOB Importe 1200.00 BOB Centro de costo Sin centro de costo (la unidad no tiene uno) Clave ORTIME:231528f1-b81d-4033-a7ad-25625d055c54"
+      }
+    }
+  ],
+  "consoleErrors": [
+    "http://127.0.0.1:4373/administration/accounting/infrastructure :: [API] GET /accounting/infrastructure-items → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
+    "http://127.0.0.1:4373/administration/accounting/infrastructure :: [API] GET /accounting/infrastructure-items → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
+    "http://127.0.0.1:4373/administration/accounting/infrastructure :: [API] GET /accounting/infrastructure-items → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
+    "http://127.0.0.1:4373/administration/accounting/infrastructure?tab=cost-centers :: [API] POST /accounting/cost-centers/da9549ad-79f3-456f-a207-3162f3bce60c/unit-link → 409 · CONFLICT · ««Internación de medicina interna» ya tiene el centro de costo CC-110.» · correlationId=req-periop-mvw70ylb-1 {status: 409, code: CONFLICT, message: «Internación de medicina interna» ya tiene el centro de costo CC-110., correlationId: req-periop-mvw70ylb-1, details: Object}",
+    "http://127.0.0.1:4373/interventions/231528f1-b81d-4033-a7ad-25625d055c54?tab=room :: [API] GET /billing/encounters/941e5516-66ab-48f8-a657-96a2657e2d8e/pending-charges → 403 · FORBIDDEN · «Su rol no consulta cargos.» · correlationId=req-periop-mvw71pjp-1 {status: 403, code: FORBIDDEN, message: Su rol no consulta cargos., correlationId: req-periop-mvw71pjp-1, details: Object}",
+    "http://127.0.0.1:4373/interventions/231528f1-b81d-4033-a7ad-25625d055c54?tab=room :: [API] GET /billing/encounters/941e5516-66ab-48f8-a657-96a2657e2d8e/pending-charges → 403 · FORBIDDEN · «Su rol no consulta cargos.» · correlationId=req-periop-mvw71swk-1 {status: 403, code: FORBIDDEN, message: Su rol no consulta cargos., correlationId: req-periop-mvw71swk-1, details: Object}"
+  ]
+}

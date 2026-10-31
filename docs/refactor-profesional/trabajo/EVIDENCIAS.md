@@ -476,3 +476,65 @@ Hallazgo previo, no de esta rama: en las capturas de página completa a 1440/768
 del borde izquierdo del contenido (igual que en `evidencias/infra-f1/`).
 
 **Contra la API real no se ejecutó** (A-F4/A-F5 en otra ola). Revisión independiente: **pendiente**.
+
+## Infraestructura F4/F5 — segunda pasada (web) — 2026-10-31
+
+F5b (puntos de toma), F5d (agenda con consultorio), F5f (activos y centros de costo por espacio y unidad), cargo de
+quirófano por tiempo y recambio `CLEANUP_*`. Mismo entorno que la primera pasada (build `development,demo` servido
+estático en `127.0.0.1:4373` bajo `flock`, Chromium 1243 del sistema). Cuentas: `medica@alovida.mock`,
+`quirofano@alovida.mock`, `facturacion@alovida.mock`, `superadmin@alovida.mock`; tenants «Hospital San Lucas» y
+«Clínica Los Olivos» (aislamiento).
+
+| Comando / prueba | Resultado |
+|---|---|
+| `yarn lint` | exit 0 |
+| `yarn typecheck` (app + cypress + playwright) | exit 0 |
+| `yarn build` (bajo `flock`, `NODE_OPTIONS=--max-old-space-size=6144`) | exit 0 (105,9 s) · sólo avisos previos (NG8113/NG8102 de pantallas ajenas) · `dist/` borrado |
+| `ng test` de lo tocado, en 4 tandas (el lote único murió con `ERR_WORKER_OUT_OF_MEMORY` del cgroup compartido) | 19 archivos · **480/480** (maqueta y reglas 98 · clientes y reglas de data-access + `resource-timeline` 151 · diagnóstico, contabilidad de infraestructura, pedido de estudios, quirófanos, día-cama 65 · alta de horario y mi agenda 166). La primera corrida de la tanda de maqueta dio 1 rojo en la prueba de cierre del caso mientras se le agregaban las aserciones de 404/403/412; vuelta a correr con el archivo final: 98/98, y 4 archivos · 36/36 con el S3 nuevo de contabilidad |
+| `check-client-prefixes` | `/sample-collection-points` (bajo `/sites`), `/accounting/*` y `/cleaning-orders` ruteados en los tres proxies; quedan 14 rojos **previos ajenos** (`AdmissionsClient`, `InsightsClient`) |
+| `check-route-prefixes`, `check-css-tokens` | exit 0 |
+| `check-english-identifiers` (contra `origin/test`) | exit 1: los hallazgos son de la primera pasada ya commiteada (`or-agenda` —«agenda» también es inglés—, el texto de prueba «Bloque quirúrgico») y tres identificadores (`FechasDelCaso`, `conSala`, `el`) que esta pasada renombró (`CaseDateField`, `withRoom`, `host`); ninguno de los archivos nuevos |
+| `check-max-lines` | exit 1 **previo**: los siete archivos que ya pasaban su techo congelado siguen pasándolo (`scheduling.handlers` +10, `diagnostics.handlers` +12, `scheduling.types` +10, `agenda-create.ts` +6, `analysis-order-block.ts` +9, `app.routes` +4, `scheduling.client` +2 líneas); no se subió ningún techo y los archivos nuevos están por debajo de 600 |
+| `check-architecture`, `check-usted`, `check-colores-sueltos` | exit 1 **previo**: ningún hallazgo en archivos de esta pasada |
+| `playwright test playwright/infra-f5-integracion.spec.ts --workers=1` | **12/12** (2,9 min) · 1440 / 768 / 390 + 3 cadenas a 1440 |
+
+Mediciones (`evidencias/infra-f5-integracion/resultados.json`):
+
+| Qué | 1440 | 768 | 390 |
+|---|---|---|---|
+| Desborde horizontal: cola del laboratorio, activos/centros de costo, alta de horario | 0 | 0 | 0 |
+| Regla 6 en `/administration/accounting/infrastructure` (holgura izq./der. · ancho) | 0 / 0 · 100 % | 0 / 0 · 100 % | 0 / 0 · 100 % |
+| La cola muestra «LAB-TM1 · Toma de muestras 1» / «LAB-TM2 …», nunca un uuid | sí | sí | sí |
+| Errores de consola | sólo los provocados: S9 ×3 (`mock-fallo` en activos), el 409 de la cadena F5f y el 403 de «Cargos» para la jefatura (sólo facturación los lee → S5) | | |
+
+Cadenas UI → petición → respuesta → persistencia → recarga → UI (registro de escrituras de la maqueta):
+
+| Mutación | Petición | Respuesta | Persistencia | Tras recarga |
+|---|---|---|---|---|
+| Pedir Glucosa con punto LAB-TM2 (consulta de la médica) | `POST /clinical/service-requests {…, suggestedCareSpaceId}` | 201 | `mock.clinica.ordenes` (`suggestedCareSpaceId`) | la fila del estudio dice «LAB-TM2» (`31-orden-punto-tras-recarga`) |
+| Ubicar la lámpara cialítica AF-0103 en QX-02 con el árbol físico | `PATCH /accounting/infrastructure-items/:id {careSpaceId}` | 200 · `careSpace.path` «Edificio A › … › Quirófano 2» | `mock.accounting.infrastructureItems` | la tabla de activos muestra «Quirófano 2» (`40-…`) |
+| Ligar CC-900 a Internación de medicina interna | `POST /accounting/cost-centers/:id/unit-link` | 409 `UNIT_ALREADY_HAS_COST_CENTER` · `correlationId` | — | S4 con el centro que ya tiene (`41-…`) |
+| Ligar CC-120 al Bloque quirúrgico | `POST /accounting/cost-centers/:id/unit-link` | 200 · `clinicalUnit` | `mock.accounting.costCenters` | la pestaña «Centros de costo» lo muestra ligado (`42-…`) |
+| Cerrar el caso (5 tiempos de sala con la Salida OMS hecha) | 5 × `POST /procedure-cases/:id/room-events` | 201 cada uno | `mock.periop.roomEvents`; el caso pasa a COMPLETADO, se abre la orden de limpieza (`mock.periop.turnovers`) y se devenga `ORTIME:<caso>` | «Eventos de sala» muestra el recambio pendiente (`50-…`) |
+| Recambio: iniciar, terminar, sala lista | `POST /cleaning-orders/:id/{start,finish,inspect}` con `If-Match` «1», «2», «3» | 200 · `CLN_IN_PROGRESS` → `CLN_DONE` → `CLN_INSPECTED` (`rowVersion` 2/3/4) | `mock.periop.turnovers` + eventos `CLEANUP_START`, `CLEANUP_END`, `ROOM_READY` | tras recargar, recambio completo (`51-…`) |
+| Cargo de quirófano (cuenta de facturación) | `GET /billing/encounters/:id/pending-charges` | 200 · `OR_TIME`, QX-02, fracciones 2 (mínimo), 600.00 BOB, `ORTIME:<caso>` | `mock.billing.chargeCaptures` | pestaña «Cargos» del caso (`52-cargo-quirofano`) |
+
+F5d (consultorio de la plantilla): **la cadena con recarga no se ejecutó en el navegador**. Hay captura del campo en
+los tres anchos (`20-agenda-consultorio-*`) y las reglas de la maqueta están en Vitest
+(`infra-f5-integration.handlers.spec.ts`: 404 de otro tenant, 422 `TEMPLATE_CARE_SPACE_INVALID_FUNCTION`, 422
+`TEMPLATE_RULE_OVERLAP_CARE_SPACE`, 409 `CARE_SPACE_DOUBLE_BOOKED` con dos médicos 15:45–16:15 y 16:00–16:30).
+
+Nota sobre el cargo capturado: dice «Sin centro de costo (la unidad no tiene uno)» porque el ligue CC-120 de la cadena
+F5f se hizo en otra pestaña con su propia `sessionStorage`; el camino con centro ligado está en Vitest (`costCenterOfUnit`).
+El tiempo en sala del navegador es de 1 min (eventos registrados en segundos) → 2 fracciones por el mínimo; los 95 min →
+4 fracciones del criterio de §F5e están en Vitest.
+
+Estados M34 capturados en esta pasada: S4 (409 del centro de costo), S5 («Cargos» para la jefatura), S9 (activos con
+`mock-fallo`, tres anchos). S3, S6 y S8 de las pantallas nuevas están en Vitest, no capturados; S1/S2 son transitorios
+y S7 no se capturó.
+
+Capturas (`evidencias/infra-f5-integracion/`, 29 + `resultados.json`): 01–02 cola y cola filtrada, 10–13 activos,
+árbol, centros de costo y S9, 20 alta de horario con consultorio — en 1440/768/390; 30–31, 40–42 y 50–52 las cadenas a
+1440.
+
+**Contra la API real no se ejecutó.** Revisión independiente: **pendiente** — quien implementa no aprueba.
