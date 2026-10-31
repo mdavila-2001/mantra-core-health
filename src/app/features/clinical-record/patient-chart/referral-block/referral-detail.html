@@ -75,9 +75,12 @@
     [issuedByMe]="issuedByMe()"
     [externalOnly]="externalOnly()"
     (changed)="changed.emit($event)"
+    (editing)="transferEditing.set($event)"
   />
 
-  @if (canRespond() || canCounterRefer() || canCancel()) {
+  <!-- Mientras se completa el traslado o se registra la llegada, el formulario
+       es la única acción a la vista. -->
+  @if (!transferEditing() && (canRespond() || canCounterRefer() || canCancel())) {
     <div class="detail__actions">
       @if (canCancel()) {
         <button

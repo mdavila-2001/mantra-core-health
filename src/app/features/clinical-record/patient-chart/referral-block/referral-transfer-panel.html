@@ -18,7 +18,7 @@
       }
       <app-referral-transfer-form [(draft)]="draft" [issues]="transferProblems()" [showAll]="attempted()" />
       <div class="transfer-panel__actions">
-        <button app-button variant="ghost" size="sm" type="button" [disabled]="working()" (clicked)="back()">
+        <button app-button variant="ghost" size="sm" type="button" [disabled]="working()" (clicked)="back()" data-testid="referral-transfer-back">
           Volver al detalle
         </button>
         <button
@@ -73,7 +73,7 @@
         </app-form-field>
       </div>
       <div class="transfer-panel__actions">
-        <button app-button variant="ghost" size="sm" type="button" [disabled]="working()" (clicked)="back()">
+        <button app-button variant="ghost" size="sm" type="button" [disabled]="working()" (clicked)="back()" data-testid="referral-arrival-back">
           Volver al detalle
         </button>
         <button

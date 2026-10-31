@@ -322,6 +322,9 @@ await pg.keyboard.press('Escape');
 // Como destino: la entrante (la Dra. Rojas es el destino) llega.
 await fila('Interconsulta con cardiología').getByTestId('referral-open').click();
 await pg.getByTestId('referral-arrival-start').click({ timeout: 15_000 });
+await pg.getByTestId('referral-arrival-form').waitFor({ timeout: 15_000 });
+const otrasAcciones = await pg.locator('[data-testid="referral-cancel"], [data-testid="referral-counter"], [data-testid="referral-accept"]').count();
+ok('con el formulario de llegada abierto, no hay otras acciones de la derivación a la vista', otrasAcciones === 0, `otras acciones: ${otrasAcciones}`);
 await pg.getByTestId('referral-arrival-condition').getByText('Inestable', { exact: true }).click();
 await pg.getByTestId('referral-arrival-notes').locator('textarea').fill('Llegó con SatO₂ 91 % con oxígeno por cánula.');
 await captura('18-registrar-llegada');
