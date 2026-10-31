@@ -1,0 +1,20 @@
+const { chromium } = require('playwright');
+(async () => {
+  const [email, pass, tag] = process.argv.slice(2);
+  const b = await chromium.launch();
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  const p = await ctx.newPage();
+  const calls = [];
+  p.on('response', r => { if (r.url().startsWith('http://localhost:3000/')) calls.push(r.request().method() + ' ' + r.url().slice(21) + ' → ' + r.status()); });
+  await p.goto('http://localhost:4000/auth', { waitUntil: 'load' });
+  await p.getByLabel(/Correo o documento/i).fill(email);
+  await p.getByLabel(/Contraseña/i).first().fill(pass);
+  await p.getByRole('button', { name: /^Entrar$/ }).click();
+  await p.waitForURL(u => !u.pathname.startsWith('/auth') || u.pathname.startsWith('/auth/organization'), { timeout: 30000 }).catch(() => {});
+  await p.waitForTimeout(3000);
+  await p.screenshot({ path: process.env.HOME + '/auditoria/evidencia/login-ok-' + tag + '.png' });
+  console.log('after login url=', p.url(), 'title=', await p.title());
+  console.log(calls.slice(0, 8).join('\n'));
+  await ctx.storageState({ path: 'state-' + tag + '.json' });
+  await b.close();
+})().catch(e => { console.error(e); process.exit(1); });
