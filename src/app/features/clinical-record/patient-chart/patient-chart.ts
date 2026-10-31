@@ -103,6 +103,11 @@ import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { DocumentBlock } from './document-block/document-block';
 import { DRAFT_BLOCK } from './draft-block';
 import { FreeNoteBlock } from './free-note-block/free-note-block';
+import { ConsultationReferrals } from '../consultation/consultation-referrals';
+import { consentEncounter } from './informed-consent/consent-encounter';
+import { InformedConsentBadge } from './informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from './informed-consent/informed-consent-dialog';
+import { patientConsents } from './informed-consent/patient-consents';
 import {
   MedicationBlock,
   diagnosticoParaReceta,
@@ -110,6 +115,7 @@ import {
 } from './medication-block/medication-block';
 import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
+import { ReferralBlock } from './referral-block/referral-block';
 import {
   fieldsOf,
   templateByCoverage,
@@ -448,6 +454,8 @@ interface Expediente {
     DocumentBlock,
     FactList,
     FreeNoteBlock,
+    InformedConsentBadge,
+    InformedConsentDialog,
     MedicationBlock,
     Menu,
     MenuItem,
@@ -456,6 +464,7 @@ interface Expediente {
     ObservationBlock,
     PdfExportButton,
     PageHeader,
+    ReferralBlock,
     ReceivedServicesPanel,
     Progress,
     RecorridoClinico,
@@ -518,6 +527,68 @@ export class PatientChart {
   /** El botón de adjuntos de los bloques que no tienen menú propio. */
   private readonly celdaAdjuntos =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAdjuntos');
+  /** El estado del consentimiento dirigido y la acción que lo abre (recetas y planes). */
+  private readonly celdaConsentimiento =
+    viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaConsentimiento');
+
+  /* -- Consentimiento informado DIRIGIDO -------------------------------------
+     A cada receta y a cada plan de cuidados, desde su fila: lo que la persona
+     consiente es esa indicación, no «la consulta». Una lectura por expediente
+     alimenta todas las insignias. */
+
+  protected readonly consents = patientConsents(() => this.pacienteDeLaFicha());
+
+  /** La fila cuyo consentimiento está abierto. */
+  protected readonly consentTarget = signal<{
+    readonly id: string;
+    readonly type: 'MEDICATION_REQUEST' | 'CARE_PLAN';
+    readonly label: string;
+  } | null>(null);
+
+  protected consentTypeOf(fila: FilaClinica): 'MEDICATION_REQUEST' | 'CARE_PLAN' {
+    return this.bloqueDeLaFila(fila) === 'planes' ? 'CARE_PLAN' : 'MEDICATION_REQUEST';
+  }
+
+  protected openConsent(fila: FilaClinica): void {
+    const label = fila.secundario ? `${fila.principal} · ${fila.secundario}` : fila.principal;
+    this.consentTarget.set({ id: fila.id, type: this.consentTypeOf(fila), label });
+  }
+
+  /** La atención abierta del expediente (sin `endAt`), o `null`. */
+  protected readonly openEncounterId = computed(
+    () => (this.datos()?.resumen.encounters ?? []).find((e) => e.endAt === undefined)?.id ?? null,
+  );
+
+  /**
+   * La atención a la que se ata: la de la receta (la lectura la trae), si no
+   * el encuentro abierto del expediente. El plan de cuidados no trae encuentro
+   * en la lectura de `chart`, así que usa el abierto. Sin ninguno, `null` y el
+   * panel muestra el S3 «Falta la atención».
+   */
+  protected readonly consentEncounterId = computed(() => {
+    const target = this.consentTarget();
+    const own =
+      target?.type === 'MEDICATION_REQUEST'
+        ? this.datos()?.resumen.medicationRequests.find((r) => r.id === target.id)?.encounterId
+        : undefined;
+    return consentEncounter(own, this.openEncounterId());
+  });
+
+  /* -- Derivaciones -----------------------------------------------------------
+     La pestaña «Derivaciones» monta el mismo bloque que la consulta. La lista
+     se lee recién la primera vez que se abre la pestaña: hasta entonces el
+     paciente es `''` y `ConsultationReferrals` no pide nada. */
+
+  private readonly referralsTabOpened = signal(false);
+  protected readonly chartReferrals = new ConsultationReferrals(
+    computed(() => (this.referralsTabOpened() ? this.pacienteDeLaFicha() : '')),
+  );
+  private readonly openReferralsTab = effect(() => {
+    if (this.activeTab() === this.bloques().length) {
+      untracked(() => this.referralsTabOpened.set(true));
+    }
+  });
+
   /** El tipo de registro, en la tabla unificada. */
   private readonly celdaTipo =
     viewChild.required<TemplateRef<{ $implicit: FilaDelHistorial }>>('celdaTipo');
@@ -1400,6 +1471,7 @@ export class PatientChart {
       estado: this.label(receta.statusConceptId),
       firmada: receta.signedAt !== undefined,
       emitida: receta.issuedAt !== undefined,
+      ...(receta.encounterId === undefined ? {} : { encounterId: receta.encounterId }),
       // Para qué es: la lista lo muestra, y «Vincular a un diagnóstico…» sólo
       // se ofrece si todavía no está atada a uno.
       ...vinculoDeReceta(receta, this.diagnosticosParaReceta()),
@@ -2183,6 +2255,19 @@ export class PatientChart {
       // propio camino y quedan fuera de esta tanda. `diagnosticos` no la lleva
       // porque ya adjunta desde su menú de acciones, y dos botones que abren el
       // mismo modal en la misma fila es la clase de duda que sobra.
+      // El consentimiento DIRIGIDO: a la receta y al plan de cuidados concretos.
+      ...(this.puedeEscribir() && ['medicacion', 'planes'].includes(clave ?? '')
+        ? [
+            {
+              key: 'consentimiento',
+              header: 'Consentimiento',
+              // 1 y no 2: una acción que la tabla pliega en teléfono deja la
+              // fila sin salida (lo mostró la captura a 390 px).
+              priority: 1,
+              cell: this.celdaConsentimiento(),
+            } satisfies ColumnDef<FilaClinica>,
+          ]
+        : []),
       ...(this.puedeEscribir() && ['medicacion', 'encuentros'].includes(clave ?? '')
         ? [
             {

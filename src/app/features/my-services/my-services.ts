@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -46,11 +47,11 @@ import { Switch } from '../../shared/components/atoms/switch/switch';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { ServiceIcon } from '../../shared/components/atoms/service-icon/service-icon';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
+import { Card } from '../../shared/components/molecules/card/card';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
-import {
-  FilterBar,
-  type FilterDef,
-} from '../../shared/components/organisms/filter-bar/filter-bar';
+import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../shared/components/molecules/tabs/tabs';
+import { FilterBar } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { withDisplayCurrency } from '../../core/money/display-currency';
@@ -146,6 +147,16 @@ const SIN_PRACTICA_ELEGIDA = empty(
 const MAX_DURACION_MINUTOS = 720;
 const MAX_COLCHON_MINUTOS = 240;
 
+/**
+ * Las pestañas de la pantalla. `clave` es el valor de `?estado=`; «Todos» no
+ * lleva ninguno porque es la lectura sin filtro.
+ */
+const PESTANAS_DE_ESTADO: readonly { readonly rotulo: string; readonly clave: string | null }[] = [
+  { rotulo: 'Todos', clave: null },
+  { rotulo: 'Activos', clave: 'activos' },
+  { rotulo: 'Inactivos', clave: 'inactivos' },
+];
+
 /** Cómo se atiende un servicio. «Sin declarar» no viaja: ausente ≡ lo de siempre. */
 const MODALIDADES: readonly SelectOption<string>[] = [
   { value: '', label: 'Sin declarar' },
@@ -166,8 +177,10 @@ function entero(texto: string): number | null {
     AppButton,
     AppButtonLink,
     RouterLink,
+    NgTemplateOutlet,
     Badge,
     Alert,
+    Card,
     ContentDialog,
     FilterBar,
     FormField,
@@ -179,6 +192,8 @@ function entero(texto: string): number | null {
     ServiceTerms,
     Switch,
     Skeleton,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './my-services.html',
@@ -414,16 +429,35 @@ export class MyServices {
     { initialValue: {} as Record<string, string> },
   );
 
-  protected readonly filtros: readonly FilterDef[] = [
-    {
-      key: 'estado',
-      label: 'Estado',
-      options: [
-        { value: 'activos', label: 'Activos' },
-        { value: 'inactivos', label: 'Inactivos' },
-      ],
-    },
-  ];
+  /**
+   * Las pestañas son el filtro «Estado» de siempre, dicho como pestañas
+   * (`composition-rules.md` §5): «Todos», «Activos» e «Inactivos». Siguen
+   * viviendo en `?estado=` —los enlaces que ya circulan no se rompen— y el
+   * servidor sigue resolviéndolas con `isActive`; la pantalla no inventa
+   * ninguna sección que el catálogo no tenga.
+   */
+  protected readonly pestanas = PESTANAS_DE_ESTADO;
+
+  /** Qué pestaña está abierta, leída de la URL: `?estado=` sin valor es «Todos». */
+  protected readonly pestana = computed(() => {
+    const activos = this.soloActivos();
+    return activos === undefined ? 0 : activos ? 1 : 2;
+  });
+
+  /**
+   * Cambia de pestaña y lo deja escrito en la URL, **conservando** el texto
+   * buscado: el buscador sirve a las tres. `replaceUrl` para no llenar el
+   * historial; volver atrás sale de la pantalla.
+   */
+  protected elegirPestana(indice: number): void {
+    const clave = PESTANAS_DE_ESTADO[indice]?.clave ?? null;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { estado: clave },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   /** El texto buscado. Vacío es «sin filtro», no «buscar nada». */
   private readonly texto = computed(() => this.criterios()['q'] ?? '');
@@ -435,11 +469,6 @@ export class MyServices {
     if (estado === 'inactivos') return false;
     return undefined;
   });
-
-  /** Si hay algo puesto: lo vacío del filtro no es lo vacío del catálogo. */
-  protected readonly hayCriterios = computed(
-    () => this.texto() !== '' || this.soloActivos() !== undefined,
-  );
 
   /* ---- catálogo ------------------------------------------------------------*/
 
@@ -743,12 +772,23 @@ export class MyServices {
    * administradora que no hace falta.
    */
   private vacio(): ViewState<readonly ServiceCatalogItem[]> {
-    return this.hayCriterios()
-      ? empty(
-          { label: 'Pruebe con otra palabra o quite el filtro.' },
-          'Ningún servicio de esta práctica coincide con lo que buscó.',
-        )
-      : empty(SIN_SERVICIOS, 'Esta práctica todavía no tiene servicios en su catálogo.');
+    if (this.texto() !== '') {
+      return empty(
+        { label: 'Pruebe con otra palabra o quite el filtro.' },
+        'Ningún servicio de esta práctica coincide con lo que buscó.',
+      );
+    }
+    const activos = this.soloActivos();
+    if (activos !== undefined) {
+      // Sólo la pestaña: el catálogo tiene servicios, ninguno en este estado.
+      return empty(
+        { label: 'Abra «Todos» para ver el resto del catálogo.' },
+        activos
+          ? 'Esta práctica no tiene servicios activos.'
+          : 'Esta práctica no tiene servicios inactivos.',
+      );
+    }
+    return empty(SIN_SERVICIOS, 'Esta práctica todavía no tiene servicios en su catálogo.');
   }
 
   /**

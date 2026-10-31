@@ -243,6 +243,16 @@ describe('PatientChart', () => {
     responderPlantillasDeEspecialidad();
     responderPerfilProfesional();
     responderFavoritosDeReceta();
+    // El estado del consentimiento dirigido de cada ítem se lee aparte: se
+    // responde vacío para que `verify()` siga hablando de lo que esta prueba mira.
+    // Si la persona cambió en medio, la lectura vieja quedó cancelada.
+    for (const consent of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
+      if (!consent.cancelled) consent.flush({ items: [] });
+    }
+    // La pestaña «Derivaciones» trae su propia lista (`GET /referrals`).
+    for (const referrals of http.match((r) => r.url === '/referrals')) {
+      if (!referrals.cancelled) referrals.flush([]);
+    }
     http.verify();
   });
 
@@ -375,8 +385,28 @@ describe('PatientChart', () => {
       harness.detectChanges();
 
       const rotulos = tabs().map((tab) => tab.textContent?.trim().split(' (')[0]);
-      expect(rotulos).toHaveLength(9);
+      // Ocho bloques, «Derivaciones» (v4266) y, al final, «Servicios recibidos».
+      expect(rotulos).toHaveLength(10);
+      expect(rotulos.at(-2)).toBe('Derivaciones');
       expect(rotulos.at(-1)).toBe('Servicios recibidos');
+    });
+
+    it('tampoco lee las derivaciones al abrir la ficha: sólo al abrir su pestaña', async () => {
+      abrirSesion();
+      responderNombre();
+      responderExpediente();
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      http.expectNone((r) => r.url === '/referrals');
+
+      tabs().at(-2)!.click();
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      const lectura = http.expectOne((r) => r.url === '/referrals');
+      expect(lectura.request.params.get('patientProfileId')).toBe('p-1');
+      lectura.flush([]);
+      harness.detectChanges();
+      expect(harness.routeNativeElement?.querySelector('[data-testid="expediente-derivaciones"]')).not.toBeNull();
     });
 
     it('no los lee al abrir la ficha: el contenido proyectado se crea aun cerrado', () => {

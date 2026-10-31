@@ -21,7 +21,7 @@ import {
 import type { Condition, MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { loading, ready } from '../../../../core/view-state/view-state';
+import { fieldIssueOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import {
   CODIGO_CONFIRMADO,
@@ -56,6 +56,9 @@ import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { writeFailureMessage } from '../../write-message';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
+import { consentTargetState } from '../informed-consent/consent-target';
+import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
 
 /**
  * La columna que gobierna el medicamento.
@@ -215,6 +218,8 @@ export interface PrescriptionInChart {
   readonly estado: string;
   readonly firmada: boolean;
   readonly emitida: boolean;
+  /** La consulta en la que se prescribió, si la lectura la trae. Ata su consentimiento. */
+  readonly encounterId?: string;
   /**
    * El diagnóstico o motivo de la receta, ya en palabras (C5). Lo arma
    * {@link vinculoDeReceta} desde `indicationConditionId`/`indicationText`
@@ -314,6 +319,8 @@ export type RecetaEnFicha = PrescriptionInChart;
     DatePicker,
     FormActions,
     FormField,
+    InformedConsentBadge,
+    InformedConsentDialog,
     Menu,
     MenuItem,
     NavIcon,
@@ -650,8 +657,7 @@ export class MedicationBlock implements DraftBlock {
   private readonly recetaSinFirma = signal<PrescriptionInChart | null>(null);
 
   /**
-   * Si el último fallo vino de prescribir y no del ciclo de una receta ya
-   * cargada.
+   * Si el último fallo vino de prescribir y no del ciclo de una receta ya cargada.
    *
    * Existe porque `PRECONDITION_FAILED` cubre **dos cosas distintas**: emitir
    * sin firma o sobre algo que ya no es borrador —el ciclo—, y la indicación
@@ -660,6 +666,7 @@ export class MedicationBlock implements DraftBlock {
    * lado se recuerda de dónde salió en vez de leer el texto.
    */
   private readonly falloAlPrescribir = signal(false);
+  protected readonly issueOf = (field: string): string => fieldIssueOf(this.registro(), field);
 
   /**
    * La revisión de interacciones que **no se pudo hacer**, o `null`.
@@ -728,6 +735,17 @@ export class MedicationBlock implements DraftBlock {
   protected readonly encuentroDeLaReceta = computed<string | null>(
     () => this.citaElegida() ?? this.encounterId(),
   );
+
+  /* -- Consentimiento informado dirigido a cada receta (Ley 1737: DCI + pauta) -- */
+
+  protected readonly consent = consentTargetState<PrescriptionInChart>(
+    () => this.patientProfileId(),
+    (rx) => [rx?.encounterId, this.encounterId(), this.citas()],
+  );
+
+  protected prescriptionLabel(rx: PrescriptionInChart): string {
+    return rx.indicacion === '' ? rx.medicamento : `${rx.medicamento} · ${rx.indicacion}`;
+  }
 
   /** Si el bloque puede prescribir sin encuentro abierto. */
   protected readonly sinExigirEncuentro = computed(() => !this.exigeEncuentro());

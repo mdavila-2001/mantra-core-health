@@ -185,19 +185,6 @@
   />
 }
 
-@if (cargaEnLoteAbierta()) {
-  <app-branch-bulk-import
-    testIdPrefix="organizacion-lote"
-    confirmVerb="Crear"
-    [closeOnConfirm]="false"
-    [pending]="creandoLote()"
-    [existingNames]="nombresDeSucursales()"
-    contextNote="Cada fila se crea como una sucursal activa de esta organización."
-    (imported)="crearSucursalesEnLote($event)"
-    (closed)="cargaEnLoteAbierta.set(false)"
-  />
-}
-
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 
 <ng-template #celdaSucursal let-sucursal>
@@ -295,3 +282,16 @@
     {{ etiquetaDe(hija.statusConceptId)?.display ?? '—' }}
   </app-badge>
 </ng-template>
+
+@if (cargaEnLoteAbierta()) {
+  <app-branch-bulk-import
+    testIdPrefix="organizacion-lote"
+    confirmVerb="Crear"
+    [closeOnConfirm]="false"
+    [pending]="creandoLote()"
+    [existingNames]="nombresDeSucursales()"
+    contextNote="Cada fila se crea como una sucursal activa de esta organización."
+    (imported)="crearSucursalesEnLote($event)"
+    (closed)="cargaEnLoteAbierta.set(false)"
+  />
+}

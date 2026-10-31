@@ -89,14 +89,13 @@ campos fijos: `fact-section` trae buscador y paginación pensados para listas la
 adoptarlo ahí sería forzar el organismo equivocado. Después lo adoptó la ficha de laboratorio
 (`features/laboratory-directory/laboratory-detail`), así que sigue en el catálogo.
 
-### D-20 · Rótulo «Mis organizaciones»: se libera la pantalla vieja, no el de `my-practice` (2026-10-30, WEB-F0)
+### D-20 · Rótulo «Mis organizaciones»: queda sólo el de `my-practice` (2026-10-30, WEB-F0)
 `administration/my-practice` se llama «Mis organizaciones» por decisión del propietario
 (19/09/2026: lista todos los lugares donde atiende). La colisión venía de la pantalla vieja
-`my-organizations`, que redirige a la pestaña «Mis vinculaciones» y conservaba el mismo título
-en su modo suelto. Se renombra esa a «Mis vinculaciones» y no se toca la del propietario.
+`my-organizations`; al integrar `dev` (merge de WEB-F0) esa pantalla ya no existe: `dev` la
+trasladó a la pestaña «Mis vinculaciones» de Organización médica (`7525d979`), que no tiene
+título propio y ya dice los fallos de lectura con reintento. El renombre de WEB-F0 se descarta
+por innecesario y no se toca el rótulo del propietario.
 **Propuesta pendiente de Producto:** si se quiere un rótulo que no choque con la memoria del
 nombre viejo, «Dónde atiendo» (coincide con el `summary` de la sección y con la pestaña de
 «Mi perfil»). «Mis consultorios» se descarta: promete menos de lo que la pantalla lista.
-
-En la rama para `test` no se aplica el renombre: allí `my-organizations` ya no tiene modo
-suelto (es sólo la pestaña `memberships-tab`), así que no hay título que choque.

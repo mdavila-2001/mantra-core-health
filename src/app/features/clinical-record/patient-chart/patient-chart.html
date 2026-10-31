@@ -189,9 +189,30 @@
             />
           </app-tab>
         }
+
+        <!-- Derivaciones: el mismo bloque que la casilla «Derivar» de la
+             consulta (lista, emisión, detalle, respuesta y consentimiento
+             dirigido). No sale de `bloques()` porque no viaja en el resumen
+             clínico: tiene su lectura (`GET /referrals?patientProfileId=`). Se
+             emite atado a la atención abierta; sin ella, el bloque lo dice. -->
+        <app-tab label="Derivaciones">
+          @if (activeTab() === bloques().length) {
+            <app-referral-block
+              data-testid="expediente-derivaciones"
+              [patientProfileId]="pacienteDeLaFicha()"
+              [encounterId]="openEncounterId()"
+              [canWrite]="puedeEscribir()"
+              [appointments]="citasParaElDiagnostico()"
+              [referrals]="chartReferrals.state()"
+              (cambio)="chartReferrals.reload()"
+              (retry)="chartReferrals.reload()"
+            />
+          }
+        </app-tab>
+
         <!-- Servicios recibidos (intervenciones y vacunas): lo proyectado se crea aun cerrado, por eso el @if. -->
         <app-tab label="Servicios recibidos">
-          @if (activeTab() === bloques().length) {
+          @if (activeTab() === bloques().length + 1) {
             <app-received-services-panel data-testid="expediente-servicios" [patientProfileId]="pacienteDeLaFicha()" />
           }
         </app-tab>
@@ -557,6 +578,37 @@
       </section>
     }
   </app-content-dialog>
+}
+
+<!-- El consentimiento DIRIGIDO a la receta o al plan de la fila: su estado y la
+     acción que lo abre en modal (composition-rules §6). -->
+<ng-template #celdaConsentimiento let-fila>
+  <span class="expediente__consentimiento">
+    <app-informed-consent-badge [consent]="consents.of(consentTypeOf(fila), fila.id)" />
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      data-testid="chart-consent"
+      (clicked)="openConsent(fila)"
+    >
+      Consentimiento
+    </button>
+  </span>
+</ng-template>
+
+@if (consentTarget(); as target) {
+  <app-informed-consent-dialog
+    [patientProfileId]="pacienteDeLaFicha()"
+    [encounterId]="consentEncounterId()"
+    [targetType]="target.type"
+    [targetId]="target.id"
+    [targetLabel]="target.label"
+    [defaults]="{ purposeText: target.label + '.' }"
+    (consentChanged)="consents.upsert($event)"
+    (closed)="consentTarget.set(null)"
+  />
 }
 
 <!-- Adjuntar, para cualquier bloque que lo admita. Abre el modal en vez de

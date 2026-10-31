@@ -1,0 +1,119 @@
+/* ============================================================================
+    app-tree — CSS plano con tokens.
+
+    La sangría sale de `--tree-nivel` (lo fija la plantilla por fila) y no de
+    anidar márgenes: así el resaltado de la fila elegida ocupa todo el ancho y
+    no se achica a cada nivel.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.tree,
+.tree__grupo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree__item {
+  outline: none;
+}
+
+.tree__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 44px;
+  padding-block: var(--sp-1);
+  padding-inline: calc(var(--sp-2) + var(--tree-nivel, 0) * var(--sp-5)) var(--sp-2);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+@media (min-width: 780px) {
+  .tree__fila {
+    min-block-size: 36px;
+  }
+}
+
+.tree__fila:hover {
+  background-color: var(--bg-hover);
+}
+
+.tree__fila--elegida {
+  background-color: var(--bg-active);
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
+
+/* El foco lo lleva el `li`; se dibuja en su fila, no alrededor de los hijos. */
+.tree__item:focus-visible > .tree__fila {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.tree__item:focus-visible > .tree__fila--elegida {
+  box-shadow: inset 3px 0 0 var(--brand-primary), 0 0 0 3px var(--focus-ring);
+}
+
+.tree__chevron {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--sp-6);
+  block-size: var(--sp-6);
+  border-radius: var(--r-xs);
+  color: var(--text-secondary);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.tree__chevron svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.tree__chevron--abierto {
+  transform: rotate(90deg);
+}
+
+.tree__chevron:not(.tree__chevron--hoja):hover {
+  background-color: var(--bg-inset);
+  color: var(--text-primary);
+}
+
+.tree__texto {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-2);
+  min-inline-size: 0;
+}
+
+.tree__rotulo {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+
+.tree__descripcion {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.tree__marca {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tree__fila,
+  .tree__chevron {
+    transition: none;
+  }
+}

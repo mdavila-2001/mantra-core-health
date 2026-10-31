@@ -25,211 +25,244 @@
   </button>
 </app-page-header>
 
-<div class="mis-servicios">
-  @if (hayQueElegirPractica()) {
-    <app-form-field label="Práctica" hint="El catálogo es propio de cada práctica.">
-      <app-select
-        [value]="practicaElegida()"
-        (valueChange)="cambiarPractica($event)"
-        [options]="opcionesDePractica()"
-        placeholder="Elija una práctica"
-        data-testid="my-services-practice"
-      />
-    </app-form-field>
-  }
-
-  <!-- Buscador y filtro en el MISMO renglón, igual que en el resto de los
-       listados: el texto a la izquierda, «Estado» al lado. Los dos los
-       resuelve el servidor (`q` e `isActive`), así que el conteo y el «Cargar
-       más» siguen hablando de la lista filtrada y no de otra. -->
-  <app-filter-bar
-    [filters]="filtros"
-    searchLabel="Buscar un servicio por nombre o código"
-    data-testid="my-services-filters"
-  />
-
-  <app-view-state-host [state]="estado()" (retry)="recargar()">
-    <!-- S2 con la forma de lo que viene: bloques de tarjeta, no renglones de
-         texto. Un esqueleto que no se parece al contenido desorienta. -->
-    <div vsh-skeleton class="rejilla mis-servicios__rejilla">
-      @for (hueco of huecosDelEsqueleto; track hueco) {
-        <app-skeleton variant="rect" height="11rem" />
+<!-- El panel de cada pestaña: práctica, buscador y catálogo. Es el mismo en las
+     tres —cambia sólo el filtro `isActive` que viaja— y se monta una vez. -->
+<ng-template #panel>
+  <div class="mis-servicios">
+    <div class="mis-servicios__barra">
+      @if (hayQueElegirPractica()) {
+        <app-form-field
+          class="mis-servicios__practica"
+          label="Práctica"
+          hint="El catálogo es propio de cada práctica."
+        >
+          <app-select
+            [value]="practicaElegida()"
+            (valueChange)="cambiarPractica($event)"
+            [options]="opcionesDePractica()"
+            placeholder="Elija una práctica"
+            data-testid="my-services-practice"
+          />
+        </app-form-field>
       }
+
+      <!-- Buscador en su propio renglón, igual que en el resto de los
+           listados. El texto lo resuelve el servidor (`q`), así que el conteo y
+           el «Cargar más» siguen hablando de la lista filtrada. El estado ya
+           no es un desplegable: son las pestañas de la tarjeta. -->
+      <app-filter-bar
+        class="mis-servicios__buscador"
+        searchLabel="Buscar un servicio por nombre o código"
+        data-testid="my-services-filters"
+      />
     </div>
 
-    <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia cuántos
-         servicios hay antes de leer el primero.
+    <app-view-state-host [state]="estado()" (retry)="recargar()">
+      <!-- S2 con la forma de lo que viene: bloques de tarjeta, no renglones de
+           texto. Un esqueleto que no se parece al contenido desorienta. -->
+      <div vsh-skeleton class="rejilla mis-servicios__rejilla">
+        @for (hueco of huecosDelEsqueleto; track hueco) {
+          <app-skeleton variant="rect" height="11rem" />
+        }
+      </div>
 
-         La rejilla y la tarjeta salen de `card-grid.css`, la misma
-         hoja que pinta las portadas de los directorios: el ícono que encabeza,
-         el nombre y el renglón de dato son la anatomía compartida, y lo único
-         propio de esta pantalla es lo que va debajo —el precio y su edición—. -->
-    <ul class="rejilla mis-servicios__rejilla" data-testid="my-services-grid">
-      @for (servicio of servicios(); track servicio.id) {
-        <li>
-          <article class="rejilla__tarjeta" data-testid="my-services-item">
-            <!-- El ícono encabeza la tarjeta y va `aria-hidden` (lo pone el
-                 propio átomo): la tarjeta ya se llama por su servicio, y
-                 anunciarlo lo repetiría una vez por tarjeta. Lo que aporta es
-                 distinguir de un vistazo una consulta de una ecografía, que es
-                 justo lo que una rejilla de tarjetas iguales no dejaba hacer. -->
-            <app-service-icon class="rejilla__icono" [servicio]="servicio.name" />
+      <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia cuántos
+           servicios hay antes de leer el primero.
 
-            <div class="tarjeta-servicio__ficha">
-              <h2 class="rejilla__nombre">{{ servicio.name }}</h2>
+           La rejilla y la tarjeta salen de `card-grid.css`, la misma
+           hoja que pinta las portadas de los directorios: el ícono que encabeza,
+           el nombre y el renglón de dato son la anatomía compartida, y lo único
+           propio de esta pantalla es lo que va debajo —el precio y su edición—. -->
+      <ul class="rejilla mis-servicios__rejilla" data-testid="my-services-grid">
+        @for (servicio of servicios(); track servicio.id) {
+          <li>
+            <article class="rejilla__tarjeta" data-testid="my-services-item">
+              <!-- El ícono encabeza la tarjeta y va `aria-hidden` (lo pone el
+                   propio átomo): la tarjeta ya se llama por su servicio, y
+                   anunciarlo lo repetiría una vez por tarjeta. Lo que aporta es
+                   distinguir de un vistazo una consulta de una ecografía, que es
+                   justo lo que una rejilla de tarjetas iguales no dejaba hacer. -->
+              <app-service-icon class="rejilla__icono" [servicio]="servicio.name" />
 
-              <!-- Sólo lo inactivo lleva distintivo: en una rejilla, un «Activo»
-                   repetido en cada tarjeta compite con el precio y no informa
-                   nada. Lo excepcional es lo que hay que ver. -->
-              @if (!servicio.isActive) {
-                <app-badge variant="secondary" value="Inactivo" />
-              }
-            </div>
+              <div class="tarjeta-servicio__ficha">
+                <h2 class="rejilla__nombre">{{ servicio.name }}</h2>
 
-            <p class="rejilla__dato">{{ servicio.code }}</p>
-
-            <!-- Cuánto dura lo declara cada profesional, no el catálogo: el mismo
-                 servicio lo hacen dos médicos con tiempos distintos. Sin
-                 declarar, se dice —un servicio sin duración no se puede reservar—. -->
-            @if (ofertaDe(servicio); as oferta) {
-              <p class="rejilla__dato" data-testid="my-services-duration">
-                Dura {{ duracionDe(oferta) }}
-                @if (!oferta.isPatientBookable) {
-                  · el paciente no lo pide solo
+                <!-- Sólo lo inactivo lleva distintivo: en una rejilla, un «Activo»
+                     repetido en cada tarjeta compite con el precio y no informa
+                     nada. Lo excepcional es lo que hay que ver. -->
+                @if (!servicio.isActive) {
+                  <app-badge variant="secondary" value="Inactivo" />
                 }
-              </p>
-            } @else {
-              <p
-                class="rejilla__dato tarjeta-servicio__pendiente"
-                data-testid="my-services-duration-missing"
-              >
-                Todavía no declaró cuánto dura
-              </p>
-            }
+              </div>
 
-            @if (enEdicion() === servicio.id) {
-              <!-- El campo reemplaza al importe en su mismo lugar: la tarjeta no
-                   cambia de alto al abrirse y la rejilla no salta. -->
-              <div class="tarjeta-servicio__edicion">
-                <app-form-field
-                  label="Precio"
-                  [errorMessage]="errorDelPrecio() ?? ''"
-                  hint="Importe con hasta dos decimales."
+              <p class="rejilla__dato">{{ servicio.code }}</p>
+
+              <!-- Cuánto dura lo declara cada profesional, no el catálogo: el mismo
+                   servicio lo hacen dos médicos con tiempos distintos. Sin
+                   declarar, se dice —un servicio sin duración no se puede reservar—. -->
+              @if (ofertaDe(servicio); as oferta) {
+                <p class="rejilla__dato" data-testid="my-services-duration">
+                  Dura {{ duracionDe(oferta) }}
+                  @if (!oferta.isPatientBookable) {
+                    · el paciente no lo pide solo
+                  }
+                </p>
+              } @else {
+                <p
+                  class="rejilla__dato tarjeta-servicio__pendiente"
+                  data-testid="my-services-duration-missing"
                 >
-                  <app-input
-                    inputMode="decimal"
-                    autocomplete="off"
-                    placeholder="0.00"
-                    [value]="borrador()"
-                    (valueChange)="escribirPrecio($event)"
-                    [hasError]="errorDelPrecio() !== null"
-                    [disabled]="guardando() === servicio.id"
-                    testId="my-services-price-input"
-                  />
-                </app-form-field>
+                  Todavía no declaró cuánto dura
+                </p>
+              }
+
+              @if (enEdicion() === servicio.id) {
+                <!-- El campo reemplaza al importe en su mismo lugar: la tarjeta no
+                     cambia de alto al abrirse y la rejilla no salta. -->
+                <div class="tarjeta-servicio__edicion">
+                  <app-form-field
+                    label="Precio"
+                    [errorMessage]="errorDelPrecio() ?? ''"
+                    hint="Importe con hasta dos decimales."
+                  >
+                    <app-input
+                      inputMode="decimal"
+                      autocomplete="off"
+                      placeholder="0.00"
+                      [value]="borrador()"
+                      (valueChange)="escribirPrecio($event)"
+                      [hasError]="errorDelPrecio() !== null"
+                      [disabled]="guardando() === servicio.id"
+                      testId="my-services-price-input"
+                    />
+                  </app-form-field>
+
+                  <div class="tarjeta-servicio__acciones">
+                    <button
+                      app-button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      [isLoading]="guardando() === servicio.id"
+                      data-testid="my-services-price-save"
+                      (clicked)="guardarPrecio(servicio)"
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [disabled]="guardando() === servicio.id"
+                      data-testid="my-services-price-cancel"
+                      (clicked)="cancelar()"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <dl class="tarjeta-servicio__precio">
+                  <dt class="tarjeta-servicio__rotulo">Precio de referencia</dt>
+                  <dd class="tarjeta-servicio__monto tabular-nums" data-testid="my-services-price">
+                    @if (sinPrecio(servicio)) {
+                      <!-- Un «0.00» se lee como que la consulta no se cobra. Lo
+                           que pasa de verdad es que nadie declaró el arancel. -->
+                      <span class="tarjeta-servicio__pendiente">Defina el precio</span>
+                    } @else {
+                      {{ precio(servicio) }}
+                    }
+                  </dd>
+                </dl>
 
                 <div class="tarjeta-servicio__acciones">
                   <button
                     app-button
                     type="button"
-                    variant="primary"
+                    variant="outline"
                     size="sm"
-                    [isLoading]="guardando() === servicio.id"
-                    data-testid="my-services-price-save"
-                    (clicked)="guardarPrecio(servicio)"
+                    data-testid="my-services-price-edit"
+                    [attr.aria-label]="'Editar precio: ' + servicio.name"
+                    (clicked)="editar(servicio)"
                   >
-                    Guardar
+                    Editar precio
                   </button>
                   <button
                     app-button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    [disabled]="guardando() === servicio.id"
-                    data-testid="my-services-price-cancel"
-                    (clicked)="cancelar()"
+                    data-testid="my-services-terms"
+                    [attr.aria-label]="'Términos y condiciones: ' + servicio.name"
+                    (clicked)="terminosDe.set(servicio)"
                   >
-                    Cancelar
+                    Términos
+                  </button>
+                  <!-- Reemplaza al «Programar horario» (C-12), que sólo bloqueaba la
+                       agenda: acá se declara cuánto dura el servicio y el paciente
+                       puede reservarlo. El horario donde se atiende lo marca cada
+                       franja de «Mis horarios». -->
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    data-testid="my-services-offer"
+                    [attr.aria-label]="'Cómo ofrezco: ' + servicio.name"
+                    (clicked)="abrirOferta(servicio)"
+                  >
+                    {{ ofertaDe(servicio) === undefined ? 'Declarar duración' : 'Cómo lo ofrezco' }}
                   </button>
                 </div>
-              </div>
-            } @else {
-              <dl class="tarjeta-servicio__precio">
-                <dt class="tarjeta-servicio__rotulo">Precio de referencia</dt>
-                <dd class="tarjeta-servicio__monto tabular-nums" data-testid="my-services-price">
-                  @if (sinPrecio(servicio)) {
-                    <!-- Un «0.00» se lee como que la consulta no se cobra. Lo
-                         que pasa de verdad es que nadie declaró el arancel. -->
-                    <span class="tarjeta-servicio__pendiente">Defina el precio</span>
-                  } @else {
-                    {{ precio(servicio) }}
-                  }
-                </dd>
-              </dl>
+              }
+            </article>
+          </li>
+        }
+      </ul>
 
-              <div class="tarjeta-servicio__acciones">
-                <button
-                  app-button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  data-testid="my-services-price-edit"
-                  [attr.aria-label]="'Editar precio: ' + servicio.name"
-                  (clicked)="editar(servicio)"
-                >
-                  Editar precio
-                </button>
-                <button
-                  app-button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  data-testid="my-services-terms"
-                  [attr.aria-label]="'Términos y condiciones: ' + servicio.name"
-                  (clicked)="terminosDe.set(servicio)"
-                >
-                  Términos
-                </button>
-                <!-- Reemplaza al «Programar horario» (C-12), que sólo bloqueaba la
-                     agenda: acá se declara cuánto dura el servicio y el paciente
-                     puede reservarlo. El horario donde se atiende lo marca cada
-                     franja de «Mis horarios». -->
-                <button
-                  app-button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  data-testid="my-services-offer"
-                  [attr.aria-label]="'Cómo ofrezco: ' + servicio.name"
-                  (clicked)="abrirOferta(servicio)"
-                >
-                  {{ ofertaDe(servicio) === undefined ? 'Declarar duración' : 'Cómo lo ofrezco' }}
-                </button>
-              </div>
-            }
-          </article>
-        </li>
+      @if (hayMas()) {
+        <div class="tarjeta-servicio__mas">
+          <button
+            app-button
+            type="button"
+            variant="outline"
+            size="sm"
+            [isLoading]="cargandoMas()"
+            data-testid="my-services-load-more"
+            (clicked)="cargarMas()"
+          >
+            Cargar más
+          </button>
+        </div>
       }
-    </ul>
+    </app-view-state-host>
+  </div>
+</ng-template>
 
-    @if (hayMas()) {
-      <div class="tarjeta-servicio__mas">
-        <button
-          app-button
-          type="button"
-          variant="outline"
-          size="sm"
-          [isLoading]="cargandoMas()"
-          data-testid="my-services-load-more"
-          (clicked)="cargarMas()"
-        >
-          Cargar más
-        </button>
-      </div>
+<!-- UNA tarjeta con pestañas, centrada y a lo ancho: la regla de la casa
+     (`docs/components/composition-rules.md` §5). Las pestañas son el estado del
+     servicio —«Todos», «Activos», «Inactivos»—, el filtro que la pantalla ya
+     tenía, y viven en `?estado=`. El tope de ancho lo pone `.app-main__inner`. -->
+<app-card padding="lg" class="mis-servicios__card" data-testid="my-services-card">
+  <app-tabs
+    appearance="browser"
+    [selectedIndex]="pestana()"
+    (selectedIndexChange)="elegirPestana($event)"
+    data-testid="my-services-tabs"
+  >
+    <!-- Sólo se monta el panel de la pestaña abierta: `app-tab` no dibuja el
+         cerrado, pero lo proyectado se instanciaría igual y el catálogo se
+         pediría tres veces. -->
+    @for (definicion of pestanas; track definicion.rotulo; let indice = $index) {
+      <app-tab [label]="definicion.rotulo">
+        @if (pestana() === indice) {
+          <ng-container [ngTemplateOutlet]="panel" />
+        }
+      </app-tab>
     }
-  </app-view-state-host>
-</div>
-
+  </app-tabs>
+</app-card>
 
 <!-- ─── Cómo ofrezco un servicio (v4.2.40) ──────────────────────────────────
      Mínimo y máximo de duración, colchones, y si el paciente puede pedirlo.

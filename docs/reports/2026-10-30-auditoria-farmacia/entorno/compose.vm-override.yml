@@ -1,0 +1,10 @@
+# Solo para esta VM: el kernel tope nofile=20000 y memlock=8192 KB.
+services:
+  opensearch:
+    environment:
+      - bootstrap.memory_lock=false
+      - network.host=0.0.0.0
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ulimits:
+      memlock: { soft: 8192, hard: 8192 }
+      nofile: { soft: 20000, hard: 20000 }

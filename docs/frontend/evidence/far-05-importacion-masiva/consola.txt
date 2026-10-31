@@ -40,3 +40,19 @@ Repetido sobre el código final (tras fusionar dev):
 [claro 1440] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
 [oscuro 390] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
 [oscuro 1440] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
+
+## R2c · alta de producto desde el modal (catálogo oficial cargado por la API)
+
+[oscuro 1440] ficha oficial visible; página sin desborde: true
+[claro 390] ficha oficial visible; página sin desborde: true
+[oscuro 390] ficha oficial visible; página sin desborde: true
+búsqueda «paracetamol cinfa 650» → 200 con 1 resultado(s)
+ficha oficial: PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG CIMA · España · registro 84215 Principio activo PARACETAMOL Concentración 650 mg Forma COMPRIMIDO Bajo receta sí Titular del registro Laboratorios Cinfa S.A. AEMPS · CIMA — PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG (nº r
+presentación elegida: PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG 20 comprimidos
+POST …/products → 201 · catalogProductId en la petición: 892dd9d2-af1f-4a9c-8ecf-66191a8e66bd · respuesta: código ?, estado e4d62cab-56ca-59b9-a460-2e708d0cdbf0
+tras recargar, la fila: Seleccionar PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG 650 mg · PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG 20 comprimidos FAR05-PCT650 Sin categoría Bs 9,50 Publicado Disponible Acciones
+[paciente claro 1440] resultados con 650: 5 · PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG 650 mg · PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG 20 comprimidos Requiere receta Farmacia FAR Uno Casa central Av. Sint
+[paciente oscuro 390] resultados con 650: 5 · PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG 650 mg · PARACETAMOL CINFA 650 MG COMPRIMIDOS EFG 20 comprimidos Requiere receta Farmacia FAR Uno Casa central Av. Sint
+
+Escrituras y errores:
+[alta claro 1440] POST /pharmacies/:id/products → 201

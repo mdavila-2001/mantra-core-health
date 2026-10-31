@@ -420,6 +420,32 @@ function organizacionPropia(t: TenantSimulado, request: MockRequest) {
   };
 }
 
+/**
+ * `assertCanRead` de la API (`TenantAdministrationService`): las lecturas de
+ * `/tenants/:id/**` no piden rol global, pero sí pertenecer a la organización
+ * —o ser de la plataforma—. Sin esto la maqueta le mostraba la ficha de
+ * cualquier organización a cualquier sesión, y el estado «no tenés acceso»
+ * (S5) de la ficha no se podía ni mirar.
+ *
+ * @returns El `403` que respondería la API, o `null` si puede leer.
+ */
+export function sinLecturaDe(tenantId: string, request: MockRequest): MockReply | null {
+  const user = request.user;
+  if (user === null) return forbidden('Se requiere pertenecer a la organización');
+  if (user.roles.includes('SECURITY_ADMIN') || user.roles.includes('SUPERADMIN')) return null;
+  const pertenece =
+    user.tenants.includes(tenantId) ||
+    membresias.filtrar(
+      (m) =>
+        m.tenantId === tenantId &&
+        m.userId === user.id &&
+        m.statusConceptId === STATUS['ST-ACTIVE'],
+    ).length > 0;
+  return pertenece
+    ? null
+    : forbidden('Se requiere pertenecer a la organización, o ser administrador de la plataforma');
+}
+
 /** Lo registrado en el alta de las organizaciones que tienen cuenta propia en la maqueta. */
 const FICHA_DE_ALTA: Readonly<Record<string, object>> = {
   [TENANT_LABORATORIO]: {
@@ -498,31 +524,6 @@ const FICHA_DE_ALTA: Readonly<Record<string, object>> = {
     },
   },
 };
-/**
- * `assertCanRead` de la API (`TenantAdministrationService`): las lecturas de
- * `/tenants/:id/**` no piden rol global, pero sí pertenecer a la organización
- * —o ser de la plataforma—. Sin esto la maqueta le mostraba la ficha de
- * cualquier organización a cualquier sesión, y el estado «no tenés acceso»
- * (S5) de la ficha no se podía ni mirar.
- *
- * @returns El `403` que respondería la API, o `null` si puede leer.
- */
-export function sinLecturaDe(tenantId: string, request: MockRequest): MockReply | null {
-  const user = request.user;
-  if (user === null) return forbidden('Se requiere pertenecer a la organización');
-  if (user.roles.includes('SECURITY_ADMIN') || user.roles.includes('SUPERADMIN')) return null;
-  const pertenece =
-    user.tenants.includes(tenantId) ||
-    membresias.filtrar(
-      (m) =>
-        m.tenantId === tenantId &&
-        m.userId === user.id &&
-        m.statusConceptId === STATUS['ST-ACTIVE'],
-    ).length > 0;
-  return pertenece
-    ? null
-    : forbidden('Se requiere pertenecer a la organización, o ser administrador de la plataforma');
-}
 
 export function registrarDirectorio(router: MockRouter): void {
   // Sustituye al `/admin/tenants` genérico de auth: acá está el modelo completo.

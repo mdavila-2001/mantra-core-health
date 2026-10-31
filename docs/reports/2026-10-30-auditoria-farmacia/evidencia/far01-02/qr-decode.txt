@@ -1,0 +1,2 @@
+b31-qr-canvas-sin.png (221, 220) QRCode texto==URL en pantalla: True | http://localhost:4000/rx/HqyxlDOfKpCQCNCLZLcm_5UR4BU6iPz9YuGOoTy5QV8 68
+b31-qr-canvas-con.png (221, 220) QRCode texto==URL en pantalla: False | http://localhost:4000/rx/OaFc2mx3dEBbC2wBHTkslxwLenxorro4_TZVYiZOOYs 68

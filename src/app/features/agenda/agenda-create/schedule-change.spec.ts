@@ -87,8 +87,7 @@ function restoreTable<T extends { readonly id: string }>(
 describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulador', () => {
   const simulator = new MockRouter();
   registrarAgenda(simulator);
-  // La pantalla lee las prácticas de la organización activa (`GET /practices`)
-  // una sola vez, para saber a qué práctica pertenece el destino.
+  // La pantalla también lee `GET /practices` (la práctica de un recurso nuevo).
   registrarPracticas(simulator);
   const doctor = buscarUsuario('medica')!;
 
@@ -132,8 +131,9 @@ describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulado
           provide: AuthService,
           useValue: {
             roles: signal<readonly string[]>(doctor.roles),
-            // La agenda de «la clínica» es de la clínica: el simulador aísla
-            // `GET /scheduling/resources` por organización, como la API.
+            // La agenda que se cambia (`RECURSO_MEDICA`) es de la clínica: con
+            // `GET /scheduling/resources` aislado por organización, como la API,
+            // desde «Mi consultorio» no se ve.
             activeTenantId: signal<string | null>(TENANT_CLINICA),
             practitionerProfileId: signal<string | null>(doctor.practitionerProfileId ?? null),
             displayName: signal<string | null>(doctor.displayName),

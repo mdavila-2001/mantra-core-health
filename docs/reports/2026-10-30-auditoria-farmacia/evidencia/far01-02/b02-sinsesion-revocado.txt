@@ -1,0 +1,23 @@
+{
+ "tag": "b02-sinsesion-revocado",
+ "state": "none",
+ "requested": "/rx/9ME4ZT4Njb15oevpYdybvSIZ6RJnQzaMosRj6hTVY_A",
+ "finalUrl": "http://localhost:4000/rx/<tok43>",
+ "httpStatus": 200,
+ "title": "AloVida - Receta compartida",
+ "robots": [
+  "noindex, nofollow"
+ ],
+ "h": [
+  "Receta compartida"
+ ],
+ "apiCalls": [
+  "GET /public/prescription-shares/<tok43> → 200"
+ ],
+ "externalLinks": []
+}
+---- texto visible ----
+Receta compartida
+Advertencia:
+El paciente dejó de compartir esta receta
+Ir a AloVida

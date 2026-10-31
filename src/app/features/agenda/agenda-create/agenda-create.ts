@@ -308,10 +308,8 @@ export class AgendaCreate {
     this.attempt.reset();
   }
 
-  /** Las prácticas de la organización activa (`GET /practices`). */
+  /** Las prácticas de la organización de la sesión (`GET /practices`). */
   protected readonly practicas = signal<readonly PracticeSummary[]>([]);
-
-  private practicasPedidas = false;
 
   /** La lectura de prácticas falló: la agenda se publicaría sin práctica, y se dice. */
   protected readonly practicasFallaron = signal(false);
@@ -326,16 +324,17 @@ export class AgendaCreate {
    * agenda que ya existe conserva la suya —`practiceId` sólo viaja en el alta—.
    */
   protected readonly eligePractica = computed(
-    () => this.resourceId() === null && !this.practicaDelDestino() && this.practicas().length > 1,
+    () => this.publicaEnLaPropia() && this.resourceId() === null && this.practicas().length > 1,
   );
 
-  /**
-   * La organización afiliada elegida en «¿Dónde publica?» ya trae su práctica
-   * (`PublicationTarget.practiceId`) y gana sobre la del formulario: ahí no se
-   * pregunta ni se avisa por la práctica de la organización activa.
-   */
-  protected readonly practicaDelDestino = computed(
-    () => this.place.target()?.practiceId !== undefined,
+  /** Sin práctica por un fallo de lectura, sólo cuenta en la organización de la sesión. */
+  protected readonly sinPracticaPorFallo = computed(
+    () => this.publicaEnLaPropia() && this.practicasFallaron() && this.resourceId() === null,
+  );
+
+  /** Se publica en la organización de la sesión (y no en una afiliada elegida). */
+  private readonly publicaEnLaPropia = computed(
+    () => this.place.tenantId() === this.organizacion(),
   );
 
   /** La práctica que se pone sola: la única, si hay una sola. */
@@ -348,7 +347,29 @@ export class AgendaCreate {
     this.formGeneral.controls.practiceId.setValue(id ?? '');
   }
 
-  private cargarPracticas(): void {
+  /** Si ya se pidió `GET /practices`: las de la sesión no cambian al ir y volver de otra organización. */
+  private practicasPedidas = false;
+
+  /**
+   * Lee las prácticas sólo cuando se publica en la organización de la sesión:
+   * `GET /practices` responde las de ésa, y en una organización afiliada la
+   * práctica ya la trae lo elegido en «¿En qué organización publica?»
+   * (`PublicationTarget.practiceId`), que manda sobre la del formulario. Se
+   * piden una vez: volver a «Mi consultorio» repone la de omisión sin releer.
+   */
+  private cargarPracticas(tenantId: string): void {
+    if (tenantId !== this.organizacion()) {
+      // La práctica de la sesión no es de la otra organización: no viaja.
+      this.formGeneral.controls.practiceId.setValue('');
+      return;
+    }
+    if (this.practicasPedidas) {
+      if (this.formGeneral.controls.practiceId.value === '') {
+        this.formGeneral.controls.practiceId.setValue(this.practicaPorOmision());
+      }
+      return;
+    }
+    this.practicasPedidas = true;
     this.organizacionMedica.listPractices().subscribe({
       next: (items) => {
         this.practicas.set(items);
@@ -801,13 +822,7 @@ export class AgendaCreate {
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
     if (perfil === null || tenantId === null || !this.puedeCrear()) return;
 
-    // Una sola vez: son las prácticas de la organización activa de la sesión,
-    // y no cambian al elegir otra organización en «¿Dónde publica?» (ésa trae
-    // la suya en `PublicationTarget.practiceId`).
-    if (!this.practicasPedidas) {
-      this.practicasPedidas = true;
-      this.cargarPracticas();
-    }
+    this.cargarPracticas(tenantId);
     agendaResourcesMy(this.scheduling, tenantId, perfil, this.place.scope()).subscribe({
       next: (recursos) => {
         if (tenantId !== this.place.tenantId()) return;

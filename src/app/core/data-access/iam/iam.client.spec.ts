@@ -831,6 +831,7 @@ describe('IamClient · precarga de firma/sello', () => {
       Object.assign(environment, { mockBackend: original });
     }
   });
+
   describe('getUser', () => {
     it('pide la ficha por id y la reduce a la forma de una fila', () => {
       let nombre = '';

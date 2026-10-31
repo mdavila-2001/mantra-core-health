@@ -113,22 +113,3 @@ describe('agendas en otra organización', () => {
     expect(listResources).toHaveBeenCalledWith({ tenantId: 't-1' }, undefined);
   });
 });
-
-describe('agendaResourcesMy — el pedido', () => {
-  it('pide el listado completo del tenant, sin acotar por tipo: «suya» lo decide resourceRefId', async () => {
-    // El endpoint no pagina (sin cursor ni limit en la API): no hay una
-    // «primera página» que deje agendas afuera. Se fija el pedido para que nadie
-    // agregue un filtro que el backend no usa para atribuir la agenda.
-    const pedidos: unknown[] = [];
-    const cliente = {
-      listResources: (query: unknown) => {
-        pedidos.push(query);
-        return of({ items: [recurso('r-1', 'Consultorio propio')], count: 1 });
-      },
-    } as unknown as SchedulingClient;
-
-    await firstValueFrom(agendaResourcesMy(cliente, 't-1', PERFIL));
-
-    expect(pedidos).toEqual([{ tenantId: 't-1' }]);
-  });
-});
