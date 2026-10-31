@@ -396,7 +396,9 @@ export class Consultation {
     return [
       ...base.slice(0, -1),
       { label: ultimo.label, routerLink: CLINICAL_RECORD_ROUTE },
-      { label: this.titulo(), routerLink: this.rutaDelExpediente() },
+      // Sin nombre todavía (al releer) el título es «Consulta», y dos migas
+      // iguales repetían la clave del `@for` del breadcrumb (NG0955).
+      { label: this.nombre() === '' ? 'Expediente' : this.titulo(), routerLink: this.rutaDelExpediente() },
       { label: 'Consulta' },
     ];
   });
@@ -645,7 +647,7 @@ export class Consultation {
         : `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
     }
     if (this.casillaAbierta() === 'derivacion') {
-      return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. Si el destino está en la plataforma, le avisamos en su campana.`;
+      return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. Si tiene cuenta en el portal, puede recibir un aviso.`;
     }
     return this.encuentroActual() === null
       ? `Se registra en la historia de ${quien}.`

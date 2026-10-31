@@ -264,6 +264,7 @@ describe('derivaciones en el mock', () => {
 
 /** Un aviso de la campana, lo que estas pruebas leen de él. */
 interface Notice {
+  readonly subject: string;
   readonly bodyText: string;
   readonly destination: { type: string; id: string } | null;
   readonly payloadJson: { kind?: string; route?: string; referralId?: string } | null;
@@ -330,7 +331,7 @@ describe('derivaciones v4266 en el mock', () => {
     );
   });
 
-  it('a una sede: resuelve organización y nombre de la sede; una sede inexistente es 404', () => {
+  it('a una sede: no deduce la organización (como la API), la lectura resuelve sus nombres; una sede inexistente es 404', () => {
     const created = send('POST', '/referrals', {
       ...external,
       targetExternalName: undefined,
@@ -340,7 +341,7 @@ describe('derivaciones v4266 en el mock', () => {
     expect(created.status).toBe(201);
     expect(created.body).toMatchObject({
       status: 'PENDING',
-      targetTenantId: TENANT_HOSPITAL,
+      targetTenantId: null,
       targetTenantName: 'Hospital San Lucas',
       targetBranchName: 'Anexo Norte',
     });
@@ -445,8 +446,12 @@ describe('derivaciones v4266 en el mock', () => {
     const notice = inbox.items.find((n) => n.payloadJson?.referralId === created.id);
     expect(notice?.destination).toEqual({ type: 'ORGANIZATION_PROFILE', id: TENANT_HOSPITAL });
     expect(notice?.payloadJson).toMatchObject({ kind: 'REFERRAL_RECOMMENDED', route: '/o/hospital-san-lucas' });
-    // Sin el motivo, como la API; con la frase del enlace porque hay ficha.
-    expect(notice?.bodyText).toBe('Su médico le derivó a Hospital San Lucas. Puede ver su ficha en la plataforma.');
+    // El texto de `ReferralNotifier.organizationNotice`, literal: sin el
+    // motivo, y con la frase de cierre porque la organización tiene ficha.
+    expect(notice?.subject).toBe('Su médico le derivó a Hospital San Lucas');
+    expect(notice?.bodyText).toBe(
+      'Su médico le derivó a Hospital San Lucas. Puede ver su ficha y reservar una cita desde su portal.',
+    );
 
     // Sin ficha pública (el laboratorio no tiene): aviso sin destino ni ruta.
     const noProfile = send('POST', '/referrals', {
@@ -468,6 +473,29 @@ describe('derivaciones v4266 en el mock', () => {
     const ext = send('POST', '/referrals', { ...external, sourceEncounterId: uuid(`encounter-${PACIENTE.id}-2`) }).body as { id: string };
     const last = send('GET', '/notifications/me', {}, { user: patientUser }).body as { items: Notice[] };
     expect(last.items.some((n) => n.payloadJson?.referralId === ext.id)).toBe(false);
+  });
+
+  it('a un profesional: el texto de la API con el motivo y la ruta /directory/{id}', () => {
+    const target = PROFESSIONALS.find((p) => p.id !== doctor.practitionerProfileId)!;
+    const created = send('POST', '/referrals', {
+      patientProfileId: PACIENTE.id,
+      sourceEncounterId: uuid(`encounter-${PACIENTE.id}-2`),
+      targetProfileId: target.id,
+      referralType: 'SECOND_OPINION',
+      requestedServiceText: 'Segunda opinión',
+      clinicalSummary: 'Resumen.',
+      reasonText: 'Control de la tiroides',
+    }).body as { id: string };
+    const inbox = send('GET', '/notifications/me', {}, { user: patientUser }).body as { items: Notice[] };
+    const notice = inbox.items.find((n) => n.payloadJson?.referralId === created.id);
+    const referrer = PROFESSIONALS.find((p) => p.id === doctor.practitionerProfileId)?.displayName ?? 'Su médico';
+    expect(notice?.subject).toBe('Su médico le recomienda otra consulta');
+    expect(notice?.bodyText).toBe(
+      `${referrer} le recomienda consultar con ${target.displayName}. Motivo: Control de la tiroides. ` +
+        'Puede ver su ficha y reservar una cita desde su portal.',
+    );
+    expect(notice?.destination).toEqual({ type: 'PRACTITIONER_PROFILE', id: target.id });
+    expect(notice?.payloadJson).toMatchObject({ kind: 'REFERRAL_RECOMMENDED', route: `/directory/${target.id}` });
   });
 
   it('GET /referrals/me devuelve las propias de la persona, como arreglo', () => {

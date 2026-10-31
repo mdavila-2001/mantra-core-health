@@ -55,10 +55,12 @@ const activeTestId = (page) =>
   });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on('console', (m) => {
-    if (m.type() === 'error' || m.type() === 'warning') runLog.console.push(`${m.type()}: ${m.text().slice(0, 240)}`);
+    if (m.type() === 'error' || m.type() === 'warning') runLog.console.push(`${m.type()}: ${m.text().slice(0, 600)}`);
   });
   page.on('pageerror', (e) => runLog.pageErrors.push(String(e)));
   const shot = (name) => page.screenshot({ path: path.join(outDir, `${name}.png`) });
+  // Reloj controlable: para dejar quieta la relectura y fotografiar S7.
+  await page.clock.install();
 
   await page.goto(`${base}/auth`, { waitUntil: 'commit' });
   await page.getByTestId('login-identifier').waitFor({ timeout: 180_000 });
@@ -113,6 +115,30 @@ const activeTestId = (page) =>
   await pending.scrollIntoViewIfNeeded();
   await shot('04-service-pending-390');
 
+  // 4: los rótulos de «¿A quién deriva?» enteros a 390 y a 360.
+  const kindLabelsFit = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="referral-kind"] .segmentado__rotulo')].map((e) => ({
+        text: e.textContent?.trim(),
+        fits: e.scrollWidth <= e.clientWidth,
+        sw: e.scrollWidth,
+        cw: e.clientWidth,
+      })),
+    );
+  const fit390 = await kindLabelsFit();
+  check('4: rótulos del selector enteros a 390', fit390.length === 3 && fit390.every((l) => l.fits), fit390);
+  check('sin desborde horizontal a 390 (formulario)', (await overflow(page)) === 0);
+  await dialog.getByTestId('referral-kind').scrollIntoViewIfNeeded();
+  await shot('04b-kind-390');
+  await page.setViewportSize({ width: 360, height: 780 });
+  await page.waitForTimeout(400);
+  const fit360 = await kindLabelsFit();
+  check('4: rótulos del selector enteros a 360', fit360.length === 3 && fit360.every((l) => l.fits), fit360);
+  check('sin desborde horizontal a 360', (await overflow(page)) === 0);
+  await shot('04c-kind-360');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(400);
+
   await dialog.getByRole('radio', { name: 'Organización médica' }).click();
   const orgInput = dialog.getByTestId('referral-organization').locator('input');
   await orgInput.fill('laboratorio');
@@ -163,7 +189,9 @@ const activeTestId = (page) =>
   const successBox = await inViewport(success);
   check('HIGH: el éxito se ve a 390 tras enviar', successBox.inside, successBox);
   check('HIGH: el foco va al resultado', (await activeTestId(page)) === 'referral-outcome', await activeTestId(page));
-  check('H1: el texto de organización dice que se le avisó', (await success.innerText()).includes('Le avisamos a la persona que la derivó a Hospital San Lucas'), (await success.innerText()).replace(/\s+/g, ' '));
+  const orgText = (await success.innerText()).replace(/\s+/g, ' ');
+  check('1b: el éxito de organización no promete el aviso', orgText.includes('Derivación registrada a Hospital San Lucas. Si la persona tiene cuenta en el portal, le llega un aviso y la ve en su lista de derivaciones.'), orgText);
+  check('1a: el botón dice «Derivar»', ((await dialog.getByTestId('referral-submit').innerText()).trim()) === 'Derivar');
   await shot('06-submit-success-390');
   await dialog.getByTestId('referral-list').waitFor();
   await page.waitForFunction(() => !(document.querySelector('dialog')?.textContent ?? '').includes('Actualizando'), null, { timeout: 15_000 });
@@ -196,6 +224,87 @@ const activeTestId = (page) =>
   await shot('08-submit-error-390');
   await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
   check('sin desborde horizontal a 390 (modal)', (await overflow(page)) === 0);
+  let created = 1;
+
+  // 1b: el éxito de un profesional, sin prometer el aviso.
+  await dialog.getByRole('radio', { name: /Profesional/ }).click();
+  const proInput = dialog.getByTestId('referral-practitioner').locator('input');
+  await proInput.fill('valeria');
+  await page.getByRole('option').first().click();
+  await page.waitForTimeout(800);
+  const proService = dialog.getByTestId('referral-service');
+  if (await proService.count()) {
+    await proService.click();
+    await page.getByRole('option').nth(1).click();
+  } else {
+    await dialog.getByTestId('referral-requested-service').locator('textarea').fill('Interconsulta de control');
+    await dialog.getByTestId('referral-clinical-summary').locator('textarea').fill('Control evolutivo.');
+  }
+  await dialog.getByTestId('referral-type').click();
+  await page.getByRole('option', { name: 'Interconsulta' }).click();
+  check('1c: pista del motivo para un profesional', (await dialog.getByText('Puede aparecer en el aviso a la persona.').count()) === 1);
+  await dialog.getByTestId('referral-submit').click();
+  await success.waitFor({ timeout: 20_000 });
+  await page.waitForTimeout(600);
+  const proText = (await success.innerText()).replace(/\s+/g, ' ');
+  check('1b: el éxito de profesional no promete el aviso', /Derivación registrada a .+\. Si la persona tiene cuenta en el portal, le llega un aviso para ver la ficha y reservar\./.test(proText), proText);
+  check('HIGH: el éxito de profesional se ve a 390', (await inViewport(success)).inside);
+  await shot('08b-submit-success-practitioner-390');
+  created += 1;
+
+  // 1a/1b/1c: externo — «Registrar la derivación», sin aviso.
+  async function fillExternal(name) {
+    await dialog.getByRole('radio', { name: /fuera de la plataforma/ }).click();
+    await dialog.getByTestId('referral-external-name').fill(name);
+    await dialog.getByTestId('referral-requested-service').locator('textarea').fill('Hemodiálisis tres veces por semana');
+    await dialog.getByTestId('referral-clinical-summary').locator('textarea').fill('ERC estadio 5.');
+    await dialog.getByTestId('referral-type').click();
+    await page.getByRole('option', { name: 'Interconsulta' }).click();
+  }
+  await fillExternal('Centro de Hemodiálisis Norte');
+  check('1a: el botón de externo dice «Registrar la derivación»', ((await dialog.getByTestId('referral-submit').innerText()).trim()) === 'Registrar la derivación');
+  check('1c: pista del motivo para un externo', (await dialog.getByText('Queda en el registro; entréguele la derivación a la persona.').count()) === 1);
+  await dialog.getByTestId('referral-submit').click();
+  await success.waitFor({ timeout: 20_000 });
+  await page.waitForTimeout(600);
+  const extText = (await success.innerText()).replace(/\s+/g, ' ');
+  check('1b: el éxito de externo dice que no hay aviso', extText.includes('no recibe aviso'), extText);
+  await shot('08c-submit-success-external-390');
+  created += 1;
+
+  // L-2: S7 con la relectura quieta (reloj en pausa): «Actualizando · lista de las HH:MM».
+  await fillExternal('Centro de Diálisis Sur');
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  await dialog.getByTestId('referral-submit').click();
+  await page.clock.runFor(150);
+  const refreshing = dialog.getByTestId('referral-list-refreshing');
+  await refreshing.waitFor({ timeout: 5_000 });
+  const refreshingText = (await refreshing.innerText()).trim();
+  check('L-2: S7 «Actualizando · lista de las HH:MM» al releer', /^Actualizando · lista de las \d{2}:\d{2}$/.test(refreshingText), refreshingText);
+  check('L-2: la lista sigue a la vista durante la relectura', (await dialog.getByTestId('referral-row').count()) > 0);
+  await refreshing.scrollIntoViewIfNeeded();
+  await shot('08d-list-s7-refreshing-390');
+  await page.clock.resume();
+  await page.waitForFunction(() => !document.querySelector('[data-testid="referral-list-refreshing"]'), null, { timeout: 10_000 });
+  created += 1;
+
+  // L-4: la relectura falla con la lista a la vista: no se borra, se dice en línea.
+  await fillExternal('Centro de Nefrología Este');
+  await page.evaluate(() =>
+    sessionStorage.setItem('mock:fallos', JSON.stringify([{ patron: '/referrals', modo: 'error', metodos: ['GET'] }])),
+  );
+  await dialog.getByTestId('referral-submit').click();
+  const refreshError = dialog.getByTestId('referral-list-refresh-error');
+  await refreshError.waitFor({ timeout: 10_000 });
+  check('L-4: la relectura fallida no borra la lista', (await dialog.getByTestId('referral-row').count()) > 0);
+  const tileDuring = (await tile.innerText()).replace(/\s+/g, ' ');
+  check('L-4: la casilla conserva su cifra', /\d+\s+derivaci/.test(tileDuring) && !tileDuring.includes('No se pudo contar'), tileDuring);
+  await refreshError.scrollIntoViewIfNeeded();
+  await shot('08e-list-refresh-error-390');
+  await page.evaluate(() => sessionStorage.removeItem('mock:fallos'));
+  await refreshError.getByRole('button', { name: 'Reintentar' }).click();
+  await refreshError.waitFor({ state: 'detached', timeout: 10_000 });
+  created += 1;
 
   /* -- Relectura sin salto y recarga --------------------------------------- */
   await page.keyboard.press('Escape');
@@ -209,7 +318,7 @@ const activeTestId = (page) =>
   );
   const afterText = (await tile.innerText()).replace(/\s+/g, ' ').trim();
   const after = Number((afterText.match(/(\d+)\s+derivaci/) ?? [])[1] ?? NaN);
-  check('persistencia: tras F5 la casilla cuenta una más', after === before + 1, `${before} → ${after}`);
+  check(`persistencia: tras F5 la casilla cuenta ${created} más`, after === before + created, `${before} → ${after}`);
   await tile.click();
   await dialog.getByTestId('referral-list').waitFor({ timeout: 30_000 });
   const reloadedRows = await dialog.getByTestId('referral-row').allInnerTexts();
@@ -260,6 +369,35 @@ const activeTestId = (page) =>
     await dialog.waitFor({ state: 'detached', timeout: 10_000 });
   }
 
+  /* -- La campana de la persona: ORGANIZATION_PROFILE → /o/{slug} (L-3) ---- */
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByTestId('header-cuenta').click();
+  await page.getByTestId('header-cerrar-sesion').first().click();
+  const confirmLogout = page.getByRole('button', { name: /Cerrar sesión/ }).last();
+  await page.waitForTimeout(500);
+  if (!page.url().includes('/auth') && (await confirmLogout.count())) await confirmLogout.click();
+  await page.waitForURL(/\/auth|\/$/, { timeout: 30_000 }).catch(() => {});
+  await page.goto(`${base}/auth`, { waitUntil: 'commit' });
+  await page.getByTestId('login-identifier').waitFor({ timeout: 60_000 });
+  await page.getByTestId('login-identifier').fill('paciente@alovida.mock');
+  await page.getByTestId('login-password').fill('mock');
+  await page.getByTestId('login-submit').click();
+  await page.getByTestId('campana').first().waitFor({ timeout: 60_000 });
+  await page.getByTestId('campana').first().click();
+  const orgNotice = page.getByTestId('campana-item').filter({ hasText: 'Su médico le derivó a Hospital San Lucas' }).first();
+  await orgNotice.waitFor({ timeout: 15_000 });
+  const noticeText = (await orgNotice.innerText()).replace(/\s+/g, ' ');
+  check('L-3: el aviso de la organización llega con el texto de la API', noticeText.includes('Puede ver su ficha y reservar una cita desde su portal.'), noticeText);
+  check('L-3: el aviso es un enlace (botón que navega)', (await orgNotice.evaluate((e) => e.tagName)) === 'BUTTON');
+  await shot('13-bell-organization-1440');
+  await orgNotice.click();
+  await page.waitForURL(/\/o\/hospital-san-lucas$/, { timeout: 30_000 }).catch(() => {});
+  check('L-3: abre la ficha pública /o/hospital-san-lucas', new URL(page.url()).pathname === '/o/hospital-san-lucas', page.url());
+  await page.waitForTimeout(1500);
+  await shot('14-bell-opens-organization-1440');
+
+  check('13: sin NG0955 (claves de @for duplicadas) en la consola', !runLog.console.some((c) => c.includes('NG0955')));
+  check('13: sin el 403 de las sedes de una organización ajena', !runLog.console.some((c) => c.includes('/branches') && c.includes('403')));
   runLog.pageErrorsCount = runLog.pageErrors.length;
   fs.writeFileSync(path.join(outDir, 'run-log.json'), JSON.stringify(runLog, null, 2));
   const failed = runLog.assertions.filter((a) => !a.ok).length;

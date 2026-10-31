@@ -60,16 +60,14 @@ export function registerReferralIssue(router: MockRouter): void {
     if (body.patientProfileId === undefined) {
       return validation('Falta el paciente.', [{ message: 'Falta el paciente.' }]);
     }
-    // El vínculo nace del consentimiento, no del alta.
-    if (body.informedConsentId !== undefined) {
-      return invalid(
-        'REFERRAL_CONSENT_LINK_NOT_ALLOWED',
-        'El consentimiento se vincula registrándolo con targetType=REFERRAL sobre la derivación',
-        ['informedConsentId'],
-      );
-    }
     if (body.referralType !== undefined && !(REFERRAL_TYPES as readonly string[]).includes(body.referralType)) {
       return validation('Tipo de derivación desconocido.', [{ message: 'Tipo de derivación desconocido.' }]);
+    }
+    // Lo que rechaza el DTO (ValidationPipe) va antes que cualquier regla.
+    if ((body.reasonText ?? '').length > 1000) {
+      return validation('El motivo admite hasta 1000 caracteres.', [
+        { message: 'El motivo admite hasta 1000 caracteres.' },
+      ]);
     }
     const hasService = filled(body.targetServiceCatalogId);
     const hasTarget =
@@ -97,10 +95,14 @@ export function registerReferralIssue(router: MockRouter): void {
         );
       }
     }
-    if ((body.reasonText ?? '').length > 1000) {
-      return validation('El motivo admite hasta 1000 caracteres.', [
-        { message: 'El motivo admite hasta 1000 caracteres.' },
-      ]);
+    // Después de las reglas tipadas, como `create` de la API.
+    // El vínculo nace del consentimiento, no del alta.
+    if (body.informedConsentId !== undefined) {
+      return invalid(
+        'REFERRAL_CONSENT_LINK_NOT_ALLOWED',
+        'El consentimiento se vincula registrándolo con targetType=REFERRAL sobre la derivación',
+        ['informedConsentId'],
+      );
     }
     // v4274: el traslado se valida entero antes de abrir la transacción.
     const transfer = body.transfer === undefined ? null : mergeTransfer(null, body.transfer);
@@ -197,8 +199,10 @@ export function registerReferralIssue(router: MockRouter): void {
     }
 
     const practitioner = body.targetProfileId === undefined ? undefined : professionalById(body.targetProfileId);
-    // Como la API: con servicio, la organización es la del servicio si no vino otra.
-    const targetTenantId = body.targetTenantId ?? serviceTenant ?? branch?.tenantId ?? null;
+    // Como la API: con servicio, la organización es la del servicio si no vino
+    // otra. **No** se deduce de la sede: la API tampoco lo hace (la lectura
+    // resuelve el nombre de la organización desde la sede, ver `view`).
+    const targetTenantId = body.targetTenantId ?? serviceTenant ?? null;
     const service =
       serviceTenant === undefined
         ? undefined
@@ -258,49 +262,80 @@ function locateService(
 }
 
 /**
- * El aviso a la persona, como `ReferralNotifier` de la API: sólo con encuentro
- * y con un destino de la plataforma. A un profesional, su ficha
- * (`PRACTITIONER_PROFILE`); a una organización, `ORGANIZATION_PROFILE` con
- * `payloadJson.route = '/o/{slug}'` **sólo si tiene ficha pública**; sin ella
- * el aviso sale sin destino ni ruta. A un destino externo no se avisa.
+ * El aviso a la persona, copiado de `ReferralNotifier` de la API
+ * (`referral-notifier.service.ts`): asuntos, cuerpos y frase de cierre
+ * literales. Sólo con encuentro y con un profesional o una organización de
+ * destino. Al profesional: con el motivo y `route: '/directory/{id}'`
+ * (`PRACTITIONER_PROFILE`). A la organización: sin el motivo, con el servicio
+ * si lo hay; `ORGANIZATION_PROFILE` y `route: '/o/{slug}'` sólo si tiene
+ * ficha pública. A un destino externo no se avisa. (La API además calla si la
+ * persona no tiene cuenta de portal o si la organización está inactiva; acá
+ * todas las organizaciones simuladas están activas.)
  */
 function notifyPatient(referral: SimulatedReferral, referringProfileId: string | null): void {
   if (referral.sourceEncounterId === null) return;
+  if (referral.targetProfileId === null && referral.targetTenantId === null) return;
   const patient = patientById(referral.patientProfileId);
   if (patient === undefined) return;
-  if (referral.targetProfileId !== null) {
-    const author =
-      (referringProfileId === null ? undefined : professionalById(referringProfileId))?.displayName ??
-      'Su profesional';
-    const target = professionalById(referral.targetProfileId)?.displayName ?? 'otro profesional';
-    emitirNotificacion({
-      userId: patient.userId,
-      category: 'CLINICAL',
-      subject: 'Tiene una derivación nueva',
-      bodyText: `${author} le recomienda consultar con ${target}. Puede ver su ficha y reservar.`,
-      destination: { type: 'PRACTITIONER_PROFILE', id: referral.targetProfileId },
-      payloadJson: { kind: 'REFERRAL_RECOMMENDED', referralId: referral.id },
-    });
-    return;
-  }
-  if (referral.targetTenantId === null) return;
-  const tenantId = referral.targetTenantId;
-  const slug = SHOWCASES.find((s) => s.kind === 'ORGANIZATION' && s.tenantId === tenantId)?.slug;
-  const name = TENANT_NAMES[tenantId] ?? 'una organización médica';
-  // Como la API: sin el motivo (la persona lo ve en su lista de derivaciones),
-  // con el servicio si lo hay, y la frase del enlace sólo con ficha pública.
-  const service = referral.targetServiceName === null ? '' : ` para ${referral.targetServiceName}`;
-  const link = slug === undefined ? '' : ' Puede ver su ficha en la plataforma.';
+  const notice =
+    referral.targetProfileId !== null
+      ? practitionerNotice(referral.targetProfileId, referringProfileId, referral.reasonText)
+      : organizationNotice(referral.targetTenantId!, referral.targetServiceName);
   emitirNotificacion({
     userId: patient.userId,
     category: 'CLINICAL',
-    subject: 'Tiene una derivación nueva',
-    bodyText: `Su médico le derivó a ${name}${service}.${link}`,
-    ...(slug === undefined ? {} : { destination: { type: 'ORGANIZATION_PROFILE', id: tenantId } }),
+    subject: notice.subject,
+    bodyText: notice.bodyText,
+    ...(notice.resource === null ? {} : { destination: notice.resource }),
     payloadJson: {
       kind: 'REFERRAL_RECOMMENDED',
+      subject: notice.subject,
+      bodyText: notice.bodyText,
+      ...(notice.route === null ? {} : { route: notice.route }),
       referralId: referral.id,
-      ...(slug === undefined ? {} : { route: `/o/${slug}` }),
     },
   });
+}
+
+interface Notice {
+  readonly subject: string;
+  readonly bodyText: string;
+  readonly route: string | null;
+  readonly resource: { readonly type: string; readonly id: string } | null;
+}
+
+const CLOSING = ' Puede ver su ficha y reservar una cita desde su portal.';
+
+function practitionerNotice(targetProfileId: string, referringProfileId: string | null, reason: string | null): Notice {
+  const referrer = referringProfileId === null ? undefined : professionalById(referringProfileId)?.displayName;
+  const who = referrer ?? 'Su médico';
+  const to = professionalById(targetProfileId)?.displayName ?? 'otro profesional';
+  return {
+    subject: 'Su médico le recomienda otra consulta',
+    bodyText: `${who} le recomienda consultar con ${to}.${reasonSentence(reason)}${CLOSING}`,
+    route: `/directory/${targetProfileId}`,
+    resource: { type: 'PRACTITIONER_PROFILE', id: targetProfileId },
+  };
+}
+
+function organizationNotice(tenantId: string, serviceName: string | null): Notice {
+  const slug = SHOWCASES.find((s) => s.kind === 'ORGANIZATION' && s.tenantId === tenantId)?.slug;
+  const route = slug === undefined ? null : `/o/${slug}`;
+  const to = TENANT_NAMES[tenantId] ?? 'otra organización';
+  const what = serviceName === null ? '' : ` para ${serviceName}`;
+  return {
+    subject: `Su médico le derivó a ${to}`,
+    bodyText: endWithPeriod(`Su médico le derivó a ${to}${what}`) + (route === null ? '' : CLOSING),
+    route,
+    resource: route === null ? null : { type: 'ORGANIZATION_PROFILE', id: tenantId },
+  };
+}
+
+function reasonSentence(reason: string | null): string {
+  return reason === null || reason.trim() === '' ? '' : ` Motivo: ${endWithPeriod(reason.trim())}`;
+}
+
+/** Cierra la frase: el motivo casi nunca lleva punto y lo que sigue es otra oración. */
+function endWithPeriod(text: string): string {
+  return /[.!?…]$/.test(text) ? text : `${text}.`;
 }
