@@ -128,7 +128,8 @@
 
 .destino {
   inline-size: 100%;
-  min-block-size: 2.75rem;
+  /* 44 px literales: `rem` vale 14 px en este sistema, así que 2.75rem eran 38,5 px. */
+  min-block-size: 44px;
   padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
