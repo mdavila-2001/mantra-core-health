@@ -32,11 +32,15 @@ Reglas absolutas:
 - Usar las primitivas existentes antes de crear una nueva.
 - Las mutaciones se demuestran `UI → request → response → persistencia →
   recarga → UI`. Un toast no prueba nada.
-- `MAX_300_LINES` — ningún archivo de código (`.ts`, `.html`, `.css`) puede
-  superar **300 líneas** salvo estricta necesidad justificada (catálogos estáticos).
+- `LEAN_CODE_MAX_300` — escribir **única y exclusivamente las líneas de código necesarias**
+  (cero sobre-ingeniería o boilerplate). Ningún archivo nuevo puede superar **300 líneas**.
   Archivos existentes > 300 líneas están congelados en `scripts/baselines/max-lines.json`
-  y tienen prohibido crecer. Al tocarlos se descomponen en plantilla, estilos,
-  subcomponentes y servicios auxiliares.
+  y tienen prohibido crecer. Al tocarlos se descomponen en:
+  - Subcomponentes subatómicos (Container Smart ≤ 150 lín., subcomponentes Dumb ≤ 120 lín.).
+  - Plantilla `.html` y estilos `.css` separados.
+  - Rutas y menús modularizados por dominio (lazy loading por módulo).
+  - Orquestación en paralelo mediante la herramienta y skill `kman`.
+
 
 
 Skills locales que cargan estas reglas: `project-design-system`,
