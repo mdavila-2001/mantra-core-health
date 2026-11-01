@@ -1,11 +1,41 @@
+<!-- Una sola cabecera sobre el lienzo; las migas viven en la barra superior del portal. -->
 <app-page-header
   title="Catálogo de visibilidad"
-  subtitle="Cada elemento de la interfaz que puede mostrarse u ocultarse, por módulo y con su jerarquía. Primero se cataloga, después se regla: un elemento que no está acá no puede tener reglas."
-  [breadcrumbs]="breadcrumbs()"
-/>
+  subtitle="Cada elemento de la interfaz que puede mostrarse u ocultarse, por módulo y con su jerarquía. Primero se cataloga, después se regla."
+>
+  <button
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="ui-catalog-sync"
+    [isLoading]="syncing()"
+    [disabled]="syncing()"
+    (clicked)="sync()"
+  >
+    Sincronizar con el código
+  </button>
+</app-page-header>
 
 <div class="vis">
   <app-visibility-notice />
+
+  <section class="vis__metrics" aria-label="Resumen del catálogo" data-testid="ui-catalog-metrics">
+    <app-metric-card label="Elementos" icon="grid" [value]="metric(totals().elements)" hint="En el catálogo, activos y retirados" />
+    <app-metric-card label="Módulos" icon="folder" [value]="metric(totals().modules)" hint="Con al menos un elemento" />
+    <app-metric-card
+      label="Con reglas vigentes"
+      icon="sliders"
+      [value]="metric(totals().withRules)"
+      hint="Elementos que hoy tienen alguna regla"
+    />
+    <app-metric-card
+      label="Retirados del código"
+      icon="history"
+      [value]="metric(totals().retired)"
+      [tone]="totals().retired > 0 ? 'warning' : 'neutral'"
+      hint="Ya no los declara la interfaz; sus reglas se conservan"
+    />
+  </section>
 
   <app-card class="vis__card" variant="outlined" padding="md" data-testid="portal-ui-catalog">
     <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
@@ -14,23 +44,6 @@
           @if (notice(); as message) {
             <app-alert tone="success" data-testid="ui-catalog-notice">{{ message }}</app-alert>
           }
-
-          <div class="vis__toolbar">
-            <p class="vis__note">
-              Padre oculto, hijos ocultos: ocultar una pantalla oculta todo lo que contiene, aunque un hijo tenga una regla
-              que lo muestre.
-            </p>
-            <button
-              app-button
-              variant="secondary"
-              data-testid="ui-catalog-sync"
-              [isLoading]="syncing()"
-              [disabled]="syncing()"
-              (clicked)="sync()"
-            >
-              Sincronizar con el código
-            </button>
-          </div>
 
           @if (syncResult(); as r) {
             <app-alert tone="success" title="Sincronización terminada" data-testid="ui-catalog-sync-result">
@@ -41,44 +54,60 @@
             <app-alert tone="error" data-testid="ui-catalog-sync-error">{{ message }}</app-alert>
           }
 
+          <!-- Filtros en una fila: buscador y desplegables; se apilan en el teléfono. Viven en la URL. -->
+          <app-filter-bar
+            searchLabel="Buscar elementos"
+            searchPlaceholder="Clave o nombre"
+            [filters]="filterDefs()"
+            [searchLoading]="list.state().status === 'loading'"
+            wrap
+            collapsible
+          />
+
           @if (index.modules().length > 0) {
-            <ul class="vis__chips" aria-label="Módulos del catálogo" data-testid="ui-catalog-modules">
-              @for (m of index.modules(); track m.code) {
-                <li>
-                  <button
-                    app-button
-                    size="sm"
-                    [variant]="values().module === m.code ? 'primary' : 'ghost'"
-                    [attr.aria-pressed]="values().module === m.code"
-                    (clicked)="pickModule(m.code)"
-                  >
-                    {{ m.label }} · {{ m.total }}
-                  </button>
-                </li>
-              }
-            </ul>
+            <div class="vis__quick">
+              <span class="vis__quick-label" id="ui-catalog-modules-label">Módulos</span>
+              <ul class="vis__chips" aria-labelledby="ui-catalog-modules-label" data-testid="ui-catalog-modules">
+                @for (m of index.modules(); track m.code) {
+                  <li>
+                    <button
+                      app-button
+                      size="sm"
+                      [variant]="values().module === m.code ? 'primary' : 'outline'"
+                      [attr.aria-pressed]="values().module === m.code"
+                      (clicked)="pickModule(m.code)"
+                    >
+                      {{ m.label }} · {{ m.total }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
           }
 
-          <app-governance-filter-form
-            [fields]="fields()"
-            [values]="values()"
-            (applied)="apply($event)"
-            (cleared)="clear()"
-          />
+          <p class="vis__hint">
+            Padre oculto, hijos ocultos: ocultar una pantalla oculta todo lo que contiene, aunque un
+            hijo tenga una regla que lo muestre.
+          </p>
 
           <app-data-table
             data-testid="ui-catalog-table"
             caption="Elementos de la interfaz del catálogo de visibilidad"
-            [state]="list.state()"
+            [state]="tableState()"
             [columns]="columns()"
             [trackBy]="byId"
             [rowLabel]="rowName"
             [cursor]="list.cursor()"
-            stackedOnMobile
             fitContainer
+            dense
             (cursorChanged)="list.move($event)"
             (retry)="list.reload()"
           />
+          @if (foldedRows() > 0) {
+            <button app-button variant="outline" class="vis__more" data-testid="ui-catalog-more" (clicked)="showAll.set(true)">
+              Ver los {{ foldedRows() }} elementos restantes
+            </button>
+          }
         </div>
       </app-tab>
 
@@ -101,7 +130,18 @@
   <div class="vis__cell">
     <span class="vis__name">{{ row.label }}</span>
     <span class="vis__code" data-testid="ui-catalog-key">{{ row.key }}</span>
-    <span class="vis__path">{{ pathOfParent(row) }}</span>
+    @if (narrow()) {
+    <!-- Teléfono: tipo y estado en una línea dentro de la fila, sin rótulos repetidos. -->
+    <span class="vis__badges">
+      <app-badge size="sm" [variant]="kind(row.kind).tone">{{ kind(row.kind).label }}</app-badge>
+      <app-badge size="sm" [variant]="status(row.status).tone">{{ status(row.status).label }}</app-badge>
+      @if (!row.defaultVisible) {
+        <app-badge size="sm" variant="secondary">Oculto por omisión</app-badge>
+      }
+    </span>
+    } @else {
+      <span class="vis__path">{{ pathOfParent(row) }}</span>
+    }
   </div>
 </ng-template>
 
@@ -111,7 +151,6 @@
       <app-badge size="sm" [variant]="kind(row.kind).tone">{{ kind(row.kind).label }}</app-badge>
       <app-badge size="sm" [variant]="source(row.source).tone">{{ source(row.source).label }}</app-badge>
     </span>
-    <span class="vis__secondary">Módulo {{ row.moduleCode }}</span>
   </div>
 </ng-template>
 

@@ -20,7 +20,7 @@ import type {
   UiElementStatus,
   UiElementSyncResult,
 } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
+import { Breakpoints } from '../../../../../core/layout/breakpoints';
 import { empty } from '../../../../../core/view-state/view-state';
 import type { EmptyViewState } from '../../../../../core/view-state/view-state.types';
 import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
@@ -28,13 +28,14 @@ import { AppButton } from '../../../../../shared/components/atoms/button/button'
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
+import { FilterBar, type FilterDef } from '../../../../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../../../../shared/components/organisms/page-header/page-header';
-import { FilterForm, type FilterField } from '../../governance/filter-form';
 import { portalUrl } from '../../portal-nav';
 import { pagedList } from '../../support/paged-list';
 import { patchQuery, queryFilters, queryParamsSignal } from '../../support/route-query';
@@ -54,6 +55,8 @@ import { ElementFormPanel } from './element-form-panel';
 const VIEWS = ['catalog', 'add'] as const;
 const FILTER_KEYS = ['q', 'module', 'kind', 'status'] as const;
 const PAGE_SIZE = 50;
+/** Filas a la vista en el teléfono antes de «Ver los demás». */
+const MOBILE_ROWS = 10;
 const SCREEN = portalUrl('governance/ui-catalog');
 const RULES_SCREEN = portalUrl('governance/ui-rules');
 
@@ -71,11 +74,12 @@ const RULES_SCREEN = portalUrl('governance/ui-rules');
     Badge,
     Alert,
     Card,
+    MetricCard,
     Tab,
     Tabs,
     DataTable,
     PageHeader,
-    FilterForm,
+    FilterBar,
     VisibilityNotice,
     ElementFormPanel,
   ],
@@ -90,9 +94,10 @@ export class UiCatalogPage {
   private readonly route = inject(ActivatedRoute);
   private readonly drafts = inject(UI_ELEMENT_DRAFTS);
   protected readonly index = inject(UiElementIndex);
+  /** Teléfono: sólo las columnas que se leen de un vistazo; lo demás va dentro de la fila. */
+  protected readonly narrow = inject(Breakpoints).isNavDrawer;
   /** El motor de visibilidad de esta sesión: un elemento oculto por omisión o retirado cambia lo que se ve. */
   private readonly visibility = inject(UiVisibilityService);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   private readonly params = queryParamsSignal(this.route);
   protected readonly values = queryFilters(this.params, FILTER_KEYS);
@@ -112,34 +117,36 @@ export class UiCatalogPage {
   protected readonly syncError = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
 
-  protected readonly fields = computed<readonly FilterField[]>(() => [
-    { key: 'q', label: 'Buscar', kind: 'text', placeholder: 'Clave o nombre' },
-    {
-      key: 'module',
-      label: 'Módulo',
-      kind: 'select',
-      options: [
-        { value: '', label: 'Todos los módulos' },
-        ...this.index.modules().map((m) => ({ value: m.code, label: m.label === m.code ? m.code : `${m.label} (${m.code})` })),
-      ],
-    },
-    {
-      key: 'kind',
-      label: 'Tipo',
-      kind: 'select',
-      options: [{ value: '', label: 'Todos los tipos' }, ...optionsOf(KINDS, (k) => kindLabel(k).label)],
-    },
+  /**
+   * La barra de filtros escribe cada clave en la URL (`q` el buscador) y la pantalla los lee con
+   * `values()`. El módulo se elige con la fila de módulos de abajo, que muestra cuántos tiene cada uno.
+   */
+  protected readonly filterDefs = computed<readonly FilterDef[]>(() => [
+    { key: 'kind', label: 'Tipo', placeholder: 'Todos los tipos', options: optionsOf(KINDS, (k) => kindLabel(k).label) },
     {
       key: 'status',
       label: 'Estado',
-      kind: 'select',
+      placeholder: 'Todos los estados',
       options: [
-        { value: '', label: 'Todos los estados' },
         { value: 'ACTIVE', label: 'Activos' },
         { value: 'RETIRED', label: 'Retirados del código' },
       ],
     },
   ]);
+
+  /** Las cifras de la cabecera, del índice que la pantalla ya pide (sin peticiones nuevas). */
+  protected readonly totals = computed(() => {
+    const all = this.index.elements();
+    return {
+      ready: this.index.state().status === 'ready' || this.index.state().status === 'stale',
+      elements: all.length,
+      modules: this.index.modules().length,
+      withRules: all.filter((e) => e.activeRuleCount > 0).length,
+      retired: all.filter((e) => e.status === 'RETIRED').length,
+    };
+  });
+  /** Mientras el índice no llegó, la cifra es «sin dato», no un cero. */
+  protected readonly metric = (n: number): number | null => (this.totals().ready ? n : null);
 
   protected readonly list = pagedList<UiElement>(
     (cursor) => {
@@ -158,17 +165,42 @@ export class UiCatalogPage {
     () => this.whenEmpty(),
   );
 
+  /**
+   * Teléfono: las primeras {@link MOBILE_ROWS} filas y «Ver los demás». Es sólo presentación sobre
+   * la página que ya llegó: no cambia la consulta ni el cursor.
+   */
+  protected readonly showAll = signal(false);
+  protected readonly tableState = computed(() => {
+    const s = this.list.state();
+    if (!this.narrow() || this.showAll() || (s.status !== 'ready' && s.status !== 'stale') || s.data.length <= MOBILE_ROWS) {
+      return s;
+    }
+    return { ...s, data: s.data.slice(0, MOBILE_ROWS) };
+  });
+  protected readonly foldedRows = computed(() => {
+    const s = this.list.state();
+    if (!this.narrow() || this.showAll() || (s.status !== 'ready' && s.status !== 'stale')) return 0;
+    return Math.max(0, s.data.length - MOBILE_ROWS);
+  });
+
   private readonly elementCell = viewChild.required<TemplateRef<{ $implicit: UiElement }>>('elementCell');
   private readonly kindCell = viewChild.required<TemplateRef<{ $implicit: UiElement }>>('kindCell');
   private readonly stateCell = viewChild.required<TemplateRef<{ $implicit: UiElement }>>('stateCell');
   private readonly rulesCell = viewChild.required<TemplateRef<{ $implicit: UiElement }>>('rulesCell');
 
-  protected readonly columns = computed<readonly ColumnDef<UiElement>[]>(() => [
-    { key: 'element', header: 'Elemento', priority: 1, cell: this.elementCell() },
-    { key: 'kind', header: 'Tipo', priority: 2, cell: this.kindCell() },
-    { key: 'state', header: 'Estado', priority: 2, cell: this.stateCell() },
-    { key: 'rules', header: 'Reglas vigentes', priority: 1, align: 'end', cell: this.rulesCell() },
-  ]);
+  protected readonly columns = computed<readonly ColumnDef<UiElement>[]>(() =>
+    this.narrow()
+      ? [
+          { key: 'element', header: 'Elemento', priority: 1, cell: this.elementCell() },
+          { key: 'rules', header: 'Reglas', priority: 1, align: 'end', cell: this.rulesCell() },
+        ]
+      : [
+          { key: 'element', header: 'Elemento', priority: 1, cell: this.elementCell() },
+          { key: 'kind', header: 'Tipo', priority: 2, cell: this.kindCell() },
+          { key: 'state', header: 'Estado', priority: 2, cell: this.stateCell() },
+          { key: 'rules', header: 'Reglas vigentes', priority: 1, align: 'end', cell: this.rulesCell() },
+        ],
+  );
 
   protected readonly byId = (row: UiElement): string => row.id;
   protected readonly rowName = (row: UiElement): string => row.label;
@@ -185,14 +217,6 @@ export class UiCatalogPage {
       this.values();
       untracked(() => this.list.restart());
     });
-  }
-
-  protected apply(filters: Readonly<Record<string, string>>): void {
-    void patchQuery(this.router, this.route, filters);
-  }
-
-  protected clear(): void {
-    void patchQuery(this.router, this.route, Object.fromEntries(FILTER_KEYS.map((k) => [k, null])));
   }
 
   protected pickModule(code: string): void {

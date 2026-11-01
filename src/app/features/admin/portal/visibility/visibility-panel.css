@@ -110,6 +110,116 @@
 
 .preview__metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(13rem, 1fr);
   gap: var(--sp-3);
+  overflow-x: auto;
+  padding-block-end: var(--sp-1);
+  scrollbar-width: thin;
+}
+
+@media (min-width: 1024px) {
+  .preview__metrics {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+}
+
+/* Fila de cifras sobre la tarjeta (la cabecera de la pantalla queda arriba, sobre el lienzo). */
+.vis__metrics {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 1fr);
+  gap: var(--sp-3);
+  /* Teléfono y tableta: un carril desplazable de una sola fila; la tabla queda a la vista. */
+  overflow-x: auto;
+  padding-block-end: var(--sp-1);
+  scrollbar-width: thin;
+}
+
+@media (min-width: 1024px) {
+  .vis__metrics {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+}
+
+.vis__metrics app-metric-card {
+  min-inline-size: 0;
+}
+
+/* Filtro rápido por módulo: una fila con su rótulo; desplazable si hay muchos módulos. */
+.vis__quick {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.vis__quick-label {
+  flex: none;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.vis__quick .vis__chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  min-inline-size: 0;
+  padding-block: var(--sp-1);
+  scrollbar-width: thin;
+}
+
+.vis__quick .vis__chips li {
+  flex: none;
+}
+
+/* «Ver como»: el campo y su botón en una fila desde tableta; en teléfono, el botón debajo. */
+.preview__query {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+@media (min-width: 780px) {
+  .preview__query {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  /* Alinea el botón con la caja del campo (debajo de su rótulo). */
+  .preview__run {
+    padding-block-start: calc(var(--lh-body) + var(--sp-1));
+  }
+}
+
+
+/* Reglas: las dos acciones de la fila, del mismo tamaño y en una fila. */
+.vis__actions--row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+@media (min-width: 780px) {
+  .vis__actions--row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+}
+
+/* «Sin fecha de fin» no parte en dos; el motivo cede ancho y parte en líneas. */
+.vis__cell--validity {
+  min-inline-size: 10rem;
+}
+
+.vis__cell--reason {
+  max-inline-size: 32ch;
+}
+
+.vis__more {
+  align-self: center;
 }
