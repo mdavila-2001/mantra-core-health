@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
+import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
@@ -22,46 +22,43 @@ const AUDIT_ACTIONS = ['USER_SUSPENDED', 'USER_REACTIVATED', 'USER_DEACTIVATED',
  */
 @Component({
   selector: 'app-portal-access-reviews-page',
-  imports: [Card, Tab, Tabs, PageHeader, LifecyclePanel, ReviewsPanel, AuditTrailPanel],
+  imports: [Alert, Card, Tab, Tabs, PageHeader, LifecyclePanel, ReviewsPanel, AuditTrailPanel],
   template: `
     <app-page-header
       title="Ciclo de vida y revisión de accesos"
       subtitle="Suspender, reactivar o dar de baja una cuenta interna, y revisar de forma periódica que sus accesos siguen siendo los correctos."
-      [breadcrumbs]="breadcrumbs()"
     />
-    <app-card class="reviews-page" variant="outlined" padding="md" data-testid="portal-access-reviews">
-      <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
-        <app-tab label="Ciclo de vida">
-          @if (tabIndex() === 0) {
-            <app-portal-lifecycle-panel />
-          }
-        </app-tab>
-        <app-tab label="Revisión de accesos">
-          @if (tabIndex() === 1) {
-            <app-portal-reviews-panel />
-          }
-        </app-tab>
-        <app-tab label="Cambios registrados">
-          @if (tabIndex() === 2) {
-            <app-portal-audit-trail-panel [actions]="auditActions" />
-          }
-        </app-tab>
-      </app-tabs>
-    </app-card>
+    <div class="perm-page" data-testid="portal-access-reviews">
+      <app-alert class="perm-honesty" tone="info" data-testid="portal-access-reviews-honesty">
+        Suspender se puede deshacer; la baja revoca credenciales y roles globales y no se reactiva. Registrar una revisión deja constancia, pero no cambia ningún permiso.
+      </app-alert>
+      <app-card class="perm-card" variant="outlined" padding="md">
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Ciclo de vida">
+            @if (tabIndex() === 0) {
+              <app-portal-lifecycle-panel />
+            }
+          </app-tab>
+          <app-tab label="Revisión">
+            @if (tabIndex() === 1) {
+              <app-portal-reviews-panel />
+            }
+          </app-tab>
+          <app-tab label="Historial">
+            @if (tabIndex() === 2) {
+              <app-portal-audit-trail-panel [actions]="auditActions" />
+            }
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    </div>
   `,
-  styles: `
-    .reviews-page {
-      display: block;
-      inline-size: 100%;
-      margin-inline: auto;
-    }
-  `,
+  styleUrl: '../permissions-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccessReviewsPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
   protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
   protected readonly tabIndex = computed(() =>
     Math.max(0, VIEWS.indexOf(this.values().view as (typeof VIEWS)[number])),

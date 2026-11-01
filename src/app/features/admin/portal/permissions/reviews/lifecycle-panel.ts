@@ -32,11 +32,13 @@ const URL_KEYS = ['user'] as const;
       @if (notice(); as message) {
         <app-alert tone="success" dismissible (dismissed)="notice.set(null)">{{ message }}</app-alert>
       }
+      <div class="panel__toolbar">
+        <app-search-field label="Buscar personas" placeholder="Nombre visible" [value]="query()" (searched)="query.set($event)" [loading]="users.state().status === 'loading'" />
+      </div>
       <p class="panel__note">
-        Suspender bloquea la cuenta, corta las sesiones y se puede deshacer. La baja además revoca sus credenciales y sus
-        roles globales, y no se reactiva. Elija una persona para ver su estado, su historial y lo que se puede hacer.
+        Suspender bloquea la cuenta y corta sus sesiones. Elija una persona para ver su estado, su historial y lo que se
+        puede hacer.
       </p>
-      <app-search-field label="Buscar personas" placeholder="Nombre visible" [value]="query()" (searched)="query.set($event)" [loading]="users.state().status === 'loading'" />
       <app-data-table
         data-testid="portal-lifecycle-table"
         caption="Cuentas internas"
@@ -46,6 +48,7 @@ const URL_KEYS = ['user'] as const;
         [rowLabel]="rowName"
         [cursor]="users.cursor()"
         rowNavigable
+        dense
         stackedOnMobile
         fitContainer
         (rowActivated)="open($event)"

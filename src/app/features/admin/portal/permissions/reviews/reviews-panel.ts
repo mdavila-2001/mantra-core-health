@@ -35,17 +35,21 @@ const URL_KEYS = ['review'] as const;
       @if (notice(); as message) {
         <app-alert tone="success" dismissible (dismissed)="notice.set(null)">{{ message }}</app-alert>
       }
+      <div class="panel__toolbar">
+        <app-form-field label="Sin revisar hace más de (días)" [errorMessage]="daysProblem()">
+          <app-input
+            type="number"
+            ariaLabel="Días sin revisar"
+            placeholder="90, el plazo por omisión"
+            data-testid="portal-reviews-days"
+            [(value)]="daysText"
+          />
+        </app-form-field>
+      </div>
       <p class="panel__note">
-        Revisar es dejar asentado que alguien miró los accesos de una cuenta: quién, a quién y cuándo. Registrar la
-        revisión no cambia ningún permiso; quitar un rol se hace en «Usuarios y roles». Nadie revisa sus propios accesos.
+        Revisar es dejar asentado quién miró los accesos de una cuenta y cuándo. Quitar un rol se hace en «Usuarios y
+        roles»; nadie revisa sus propios accesos.
       </p>
-      <app-form-field
-        label="Sin revisar hace más de (días)"
-        [hint]="'Déjelo vacío para usar el plazo por omisión de la API (90 días).'"
-        [errorMessage]="daysProblem()"
-      >
-        <app-input type="number" ariaLabel="Días sin revisar" data-testid="portal-reviews-days" [(value)]="daysText" />
-      </app-form-field>
       <app-data-table
         data-testid="portal-reviews-table"
         caption="Personas con accesos por revisar"
@@ -55,6 +59,7 @@ const URL_KEYS = ['review'] as const;
         [rowLabel]="rowName"
         [cursor]="due.cursor()"
         rowNavigable
+        dense
         stackedOnMobile
         fitContainer
         (rowActivated)="open($event)"
