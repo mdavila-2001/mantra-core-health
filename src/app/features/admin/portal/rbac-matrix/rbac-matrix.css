@@ -23,6 +23,15 @@
   align-items: end;
 }
 
+.rbac__limits-summary {
+  cursor: pointer;
+}
+
+.rbac__limits-summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 .rbac__notes {
   margin: var(--sp-2) 0 0;
   padding-inline-start: var(--sp-5);

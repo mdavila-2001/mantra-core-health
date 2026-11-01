@@ -59,13 +59,18 @@ const URL_KEYS = ['view', 'module', 'mode', 'role'] as const;
     <app-card class="rbac-page" variant="outlined" padding="md" data-testid="portal-rbac-matrix">
       <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
         @if (catalog(); as data) {
+          <!-- Plegado: la honestidad se queda, pero en una línea y no media pantalla. -->
           <app-alert tone="info" data-testid="rbac-notes">
-            <strong>Qué no demuestra esta pantalla.</strong>
-            <ul class="rbac__notes">
-              @for (note of data.notes; track note) {
-                <li>{{ note }}</li>
-              }
-            </ul>
+            <details class="rbac__limits">
+              <summary class="rbac__limits-summary">
+                <strong>Qué no demuestra esta pantalla</strong> · {{ data.notes.length }} límites
+              </summary>
+              <ul class="rbac__notes">
+                @for (note of data.notes; track note) {
+                  <li>{{ note }}</li>
+                }
+              </ul>
+            </details>
           </app-alert>
           @if (refreshError(); as message) {
             <app-alert tone="warning" data-testid="rbac-refresh-error">{{ message }}</app-alert>
