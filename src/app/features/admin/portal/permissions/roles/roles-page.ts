@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
@@ -10,7 +10,8 @@ import { PageHeader } from '../../../../../shared/components/organisms/page-head
 import { patchQuery, queryFilters, queryParamsSignal } from '../../support/route-query';
 import { portalUrl } from '../../portal-nav';
 import { AuditTrailPanel } from '../common/audit-trail-panel';
-import { RolePermissionsEditor } from './role-permissions-editor';
+import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
+import { RolePermissionsEditor, type RoleSummary } from './role-permissions-editor';
 
 const VIEWS = ['edit', 'audit'] as const;
 const URL_KEYS = ['view', 'role'] as const;
@@ -23,7 +24,7 @@ const AUDIT_ACTIONS = ['ROLE_PERMISSIONS_SET', 'ROLE_CREATED'] as const;
  */
 @Component({
   selector: 'app-portal-roles-page',
-  imports: [RouterLink, Alert, Link, Card, Tab, Tabs, PageHeader, RolePermissionsEditor, AuditTrailPanel],
+  imports: [RouterLink, Alert, Link, Card, MetricCard, Tab, Tabs, PageHeader, RolePermissionsEditor, AuditTrailPanel],
   template: `
     <app-page-header
       title="Roles y permisos"
@@ -35,10 +36,22 @@ const AUDIT_ACTIONS = ['ROLE_PERMISSIONS_SET', 'ROLE_CREATED'] as const;
         exige. Dónde pasa cada cosa, en la
         <a app-link [routerLink]="matrixUrl">matriz RBAC por módulo</a>.
       </app-alert>
+      @if (summary(); as k) {
+        <ul class="panel__kpis" aria-label="Resumen del rol elegido" data-testid="portal-role-editor-kpis">
+          <li><app-metric-card label="Permite" tone="success" icon="check-circle" [value]="k.allow" /></li>
+          <li><app-metric-card label="Niega" tone="error" icon="lock" [value]="k.deny" /></li>
+          <li><app-metric-card label="Sensibles" tone="warning" icon="shield" [value]="k.dangerous" /></li>
+          <li><app-metric-card label="Pendientes" tone="info" icon="edit" [value]="k.pending" /></li>
+        </ul>
+      }
       <app-card class="perm-card" variant="outlined" padding="md">
         <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
           <app-tab label="Por acción">
-            <app-portal-role-permissions-editor [roleId]="values().role" (roleChanged)="selectRole($event)" />
+            <app-portal-role-permissions-editor
+              [roleId]="values().role"
+              (roleChanged)="selectRole($event)"
+              (summaryChanged)="summary.set($event)"
+            />
           </app-tab>
           <!-- El contenido proyectado se instancia aunque la pestaña no se dibuje: el @if evita pedir la bitácora de balde
                y la hace releerse cada vez que se abre, que es lo que muestra un cambio recién guardado. -->
@@ -57,6 +70,7 @@ const AUDIT_ACTIONS = ['ROLE_PERMISSIONS_SET', 'ROLE_CREATED'] as const;
 export class RolesPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  protected readonly summary = signal<RoleSummary | null>(null);
   protected readonly matrixUrl = portalUrl('governance/rbac-matrix');
   protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
   protected readonly tabIndex = computed(() =>

@@ -39,7 +39,6 @@ import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../../../shared/components/molecules/search-field/search-field';
-import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { portalUrl } from '../../portal-nav';
@@ -61,6 +60,14 @@ const SCOPE_OPTIONS: readonly SelectOption<string>[] = [
   ...optionsOf(PERMISSION_SCOPES, (c) => scopeLabel(c)),
 ];
 
+/** Lo que la página muestra como KPIs del rol elegido. */
+export interface RoleSummary {
+  readonly allow: number;
+  readonly deny: number;
+  readonly dangerous: number;
+  readonly pending: number;
+}
+
 interface Cell {
   readonly effect: string;
   readonly scope: string;
@@ -74,7 +81,7 @@ interface Cell {
  */
 @Component({
   selector: 'app-portal-role-permissions-editor',
-  imports: [AppButton, Badge, Select, Alert, FormField, SearchField, DataTable, MetricCard],
+  imports: [AppButton, Badge, Select, Alert, FormField, SearchField, DataTable],
   template: `
     <div class="panel" data-testid="portal-role-editor">
       @if (notice(); as message) {
@@ -125,16 +132,6 @@ interface Cell {
           }
         </section>
       } @else {
-        @if (catalogReady()) {
-          <ul class="panel__kpis" aria-label="Resumen del rol" data-testid="portal-role-editor-kpis">
-            <li><app-metric-card label="Permite" tone="success" icon="check-circle" [value]="kpis().allow" /></li>
-            <li><app-metric-card label="Niega" tone="error" icon="lock" [value]="kpis().deny" /></li>
-            <li>
-              <app-metric-card label="Sensibles" tone="warning" icon="shield" [value]="kpis().dangerous" />
-            </li>
-            <li><app-metric-card label="Pendientes" tone="info" icon="edit" [value]="changes().total" /></li>
-          </ul>
-        }
 
         <app-data-table
           data-testid="portal-role-editor-table"
@@ -151,7 +148,7 @@ interface Cell {
         />
       }
 
-      @if (roleId() !== '') {
+      @if (roleId() !== '' && catalogReady()) {
         <div class="panel__actions">
           <span class="panel__secondary" aria-live="polite" data-testid="portal-role-editor-summary">{{ summary() }}</span>
           <button app-button variant="ghost" [disabled]="saving() || changes().total === 0" (clicked)="discard()">
@@ -222,6 +219,8 @@ export class RolePermissionsEditor {
   /** El rol elegido (vive en la URL); `''` es ninguno. */
   readonly roleId = input.required<string>();
   readonly roleChanged = output<string>();
+  /** Las cifras del rol para los KPIs de la página; `null` mientras no hay rol o catálogo leído. */
+  readonly summaryChanged = output<RoleSummary | null>();
 
   protected readonly effectOptions = EFFECT_OPTIONS;
   protected readonly scopeOptions = SCOPE_OPTIONS;
@@ -240,7 +239,7 @@ export class RolePermissionsEditor {
   private readonly draft = signal<ReadonlyMap<string, Cell>>(new Map());
 
   protected readonly roleOptions = computed<readonly SelectOption<string>[]>(() =>
-    this.roles().map((r) => ({ value: r.id, label: `${r.name} · ${r.code}` })),
+    this.roles().map((r) => ({ value: r.id, label: r.name })),
   );
 
   protected readonly rows = computed<ViewState<readonly PermissionSummary[]>>(() => {
@@ -324,6 +323,12 @@ export class RolePermissionsEditor {
         error: () => this.rolesUnavailable.set(true),
       }),
     );
+    effect(() => {
+      const ready = this.roleId() !== '' && this.catalogReady();
+      const k = this.kpis();
+      const pending = this.changes().total;
+      untracked(() => this.summaryChanged.emit(ready ? { ...k, pending } : null));
+    });
     effect(() => {
       const id = this.roleId();
       untracked(() => {

@@ -149,8 +149,14 @@
   gap: var(--sp-2);
 }
 
+/* Un solo bloque por celda: en la tabla apilada se alinea entero con el valor, no línea por línea. */
 .panel__cell {
+  display: block;
   min-inline-size: 0;
+}
+
+.panel__cell > * + * {
+  margin-block-start: var(--sp-1);
 }
 
 .panel__name {
@@ -206,4 +212,19 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
   gap: var(--sp-3);
+}
+
+/* Las filas que abren una ficha lo dicen: texto de acción y flecha en el color de enlace. */
+.panel__open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--brand-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.panel__open app-nav-icon {
+  inline-size: var(--sp-4);
+  block-size: var(--sp-4);
 }
