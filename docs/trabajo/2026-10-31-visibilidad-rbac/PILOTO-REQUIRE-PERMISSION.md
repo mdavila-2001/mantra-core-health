@@ -3,9 +3,11 @@
 Pendiente 1 de [TRASPASO.md](./TRASPASO.md) · Hallazgo de partida: [RBAC-POR-MODULO.md](./RBAC-POR-MODULO.md) §1.1–1.3
 («asignar un permiso a un rol no cambia lo que un endpoint permite»).
 
-**Peldaño de evidencia:** `TESTED` con dobles (unitarias + HTTP con Nest/supertest y un PDP falso). **No** se probó contra
-Postgres ni con la API arrancada. **Nada del piloto está aplicado a controladores**: el diff de §5 es una propuesta y
-los permisos de §4 **no están sembrados**. Hoy ninguna ruta usa el decorador, así que el comportamiento de la API no cambia.
+**Peldaño de evidencia:** `TESTED` con dobles **y** una prueba HTTP contra Postgres real (§9). **Estado (2026-11-01):** el usuario
+autorizó aplicar el piloto en `shadow`; el diff de §5 **está aplicado** a las 11 rutas (7 archivos de controlador), sin tocar `@Roles`
+ni ningún otro comportamiento y sin variables que pongan algo en `enforce`. Los 11 códigos de §4 **siguen sin sembrar** (decisión abierta):
+mientras no se siembren, el PDP responde `permiso inexistente` y **toda** petición que pase `@Roles` en esas rutas (salvo `SUPERADMIN` de
+plataforma) dejará un `SHADOW_WOULD_DENY` en el log. Es ruido esperado, no un fallo; la medición útil empieza al sembrar.
 
 ## 1. Qué se construyó (API, rama `claude/upbeat-darwin-rm3rn2`)
 
@@ -119,7 +121,7 @@ pilot('scheduling.templates.delete', 'Retirar una plantilla de agenda', 'DELETE'
 pilot('scheduling.exceptions.delete', 'Quitar una excepción de agenda', 'DELETE', 'TENANT', ['SCHEDULING_ADMIN', 'PRACTITIONER']),
 ```
 
-## 5. Diff propuesto para los controladores (NO aplicado)
+## 5. Diff de los controladores (APLICADO el 2026-11-01, modo shadow)
 
 Sólo agrega una línea por ruta y un import; no cambia `@Roles`, ni rutas, ni DTOs, ni servicios. Con el modo por defecto (`shadow`)
 el comportamiento HTTP **no cambia**: sólo aparece el log de discrepancias. (Alternativa: exportar `RequirePermission` desde el barril
@@ -252,3 +254,28 @@ es justo lo que se busca, pero hoy no tiene efecto y nadie las revisó con esa c
 - `eslint` sobre los 9 archivos tocados: **exit 0**.
 - Escáner: `node evidencia/scan-rbac-por-modulo.cjs <api>` (con `typescript` del front) → 1 907 rutas, 43 sensibles sólo por rol.
 - **No ejecutado:** contra Postgres, API arrancada, `enforce` con datos reales, medición de `shadow`.
+
+## 9. Aplicación del piloto en shadow (2026-11-01)
+
+- Aplicado a `accounting-ledger`, `accounting-practitioner-simple`, `authz-admin`, `authz-clinical`, `authz-governance-ext`,
+  `scheduling-bookings` y `scheduling` (controladores). Spec de metadatos nuevo: `src/common/auth/require-permission.pilot-routes.spec.ts`
+  comprueba en las 11 rutas el código y `resourceIdParam` esperados, la guarda montada y que **método, ruta y `@Roles` siguen iguales**.
+- `jest` del spec nuevo + specs de la guarda/decorador/adaptador + specs existentes de `accounting-ledger`, `accounting-practitioner-simple`,
+  `authz-clinical` y `scheduling` controllers: **8 suites, 88 pruebas en verde**. `eslint` de los 8 archivos tocados: **exit 0**.
+- `tsc` de toda la API: **exit 2 por 2 errores ajenos** (`src/modules/system_ops/services/governance-catalog.service.spec.ts:221,242`,
+  `Cannot find module '../system_ops.concepts'`, archivo en curso de otro agente). Ninguno en archivos de este piloto.
+- **HTTP contra Postgres 16 real** (`127.0.0.1:5433/alovida`, API `dist` en :3100; evidencia:
+  [`evidencia/piloto-shadow-http-2026-11-01.txt`](./evidencia/piloto-shadow-http-2026-11-01.txt)), id inexistente fijo:
+
+  | Actor | Ruta | Respuesta | Log del guard |
+  |---|---|---|---|
+  | `superadmin@alovida.local` (SUPERADMIN) | `DELETE /authz/resource-scope-grants/:id` | 404 `RESOURCE_SCOPE_GRANT_NOT_FOUND` | ninguno (comodín, no consulta) |
+  | `farmacia.demo` (USER + PRACTITIONER) | `DELETE /authz/resource-scope-grants/:id` | 403 `ROLE_INSUFFICIENT` (lo corta `@Roles`) | ninguno |
+  | superadmin | `DELETE /scheduling/exceptions/:id` | 404 | ninguno |
+  | `farmacia.demo` (PRACTITIONER pasa `@Roles`) | `DELETE /scheduling/exceptions/:id` | **404 del servicio** (no bloqueó) | **`warn` `SHADOW_WOULD_DENY`**, `pdpReason: permiso inexistente para scheduling.exceptions.delete:DELETE`, `route` = plantilla |
+
+  Repetido en dos arranques con resultado idéntico. **Límite honesto:** el `dist` ya había sido recompilado (por otro agente) con los
+  decoradores antes de mi primer arranque, y mi `nest build` falló (`nest: not found`), así que **no hay un arranque «sin decorador»**
+  para comparar byte a byte. Lo que sí está demostrado: las respuestas son las que deciden `@Roles` y el servicio (403 por rol, 404 del
+  handler), y el modo shadow no cambió ninguna. Para tener una cuenta que pase `@Roles` sin ser SUPERADMIN, a `farmacia.demo` se le
+  concedió `PRACTITIONER` global por `POST /iam/users/:id/global-roles` (200) y se le revocó al terminar (200).

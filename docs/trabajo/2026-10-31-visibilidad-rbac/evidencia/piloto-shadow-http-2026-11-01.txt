@@ -1,0 +1,16 @@
+# Piloto @RequirePermission en shadow — prueba HTTP contra Postgres 16 real (127.0.0.1:5433/alovida), API dist en :3100, 2026-11-01
+# Dos arranques de la API (cada uno con 4 peticiones). Cuenta farmacia.demo con PRACTITIONER global concedido temporalmente y revocado al final (200/200).
+
+## arranque before
+superadmin DELETE /authz/resource-scope-grants/9b1f6c2e-7a4d-4c1b-8e3f-000000000001 -> 404 NOT_FOUND/RESOURCE_SCOPE_GRANT_NOT_FOUND
+farmacia_USER+PRACTITIONER DELETE /authz/resource-scope-grants/9b1f6c2e-7a4d-4c1b-8e3f-000000000001 -> 403 FORBIDDEN/ROLE_INSUFFICIENT
+superadmin DELETE /scheduling/exceptions/9b1f6c2e-7a4d-4c1b-8e3f-000000000001 -> 404 NOT_FOUND/-
+farmacia_USER+PRACTITIONER DELETE /scheduling/exceptions/9b1f6c2e-7a4d-4c1b-8e3f-000000000001 -> 404 NOT_FOUND/-
+{"level":40,"time":1793542350013,"pid":13751,"hostname":"vm","reqId":"67b534e5-0e3d-4598-bed0-aee364610735","context":"RequirePermissionGuard","operation":"authz.permission.check","permission":"scheduling.exceptions.delete","mode":"shadow","modeSource":"default","userId":"3cf59bbd-2938-4c42-9973-6154893932be","tenantId":"1befcfea-44c0-563a-81cd-337ec6acc840","method":"DELETE","route":"/scheduling/exceptions/:id","outcome":"SHADOW_WOULD_DENY","pdpReason":"permiso inexistente para scheduling.exceptions.delete:DELETE","msg":"Discrepancia @Roles/PDP: en enforce esta petición se denegaría"}
+
+## arranque after
+superadmin DELETE /authz/resource-scope-grants/9b1f6c2e-7a4d-4c1b-8e3f-000000000001 -> 404 NOT_FOUND/RESOURCE_SCOPE_GRANT_NOT_FOUND
+farmacia_USER+PRACTITIONER DELETE /authz/resource-scope-grants/9b1f6c2e-7a4d-4c1b-8e3f-000000000001 -> 403 FORBIDDEN/ROLE_INSUFFICIENT
+superadmin DELETE /scheduling/exceptions/9b1f6c2e-7a4d-4c1b-8e3f-000000000001 -> 404 NOT_FOUND/-
+farmacia_USER+PRACTITIONER DELETE /scheduling/exceptions/9b1f6c2e-7a4d-4c1b-8e3f-000000000001 -> 404 NOT_FOUND/-
+{"level":40,"time":1793542379191,"pid":14353,"hostname":"vm","reqId":"0d007c8d-accf-4f86-bcdb-58d300b5fe42","context":"RequirePermissionGuard","operation":"authz.permission.check","permission":"scheduling.exceptions.delete","mode":"shadow","modeSource":"default","userId":"3cf59bbd-2938-4c42-9973-6154893932be","tenantId":"1befcfea-44c0-563a-81cd-337ec6acc840","method":"DELETE","route":"/scheduling/exceptions/:id","outcome":"SHADOW_WOULD_DENY","pdpReason":"permiso inexistente para scheduling.exceptions.delete:DELETE","msg":"Discrepancia @Roles/PDP: en enforce esta petición se denegaría"}
