@@ -25,27 +25,6 @@
   }
 }
 
-/* La conciliación trae tres cifras: tres columnas desde la tableta, ningún hueco al final. */
-.pii__metrics--3 > :last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-}
-
-@media (min-width: 650px) {
-  .pii__metrics--3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .pii__metrics--3 > :last-child:nth-child(odd) {
-    grid-column: auto;
-  }
-}
-
-@media (min-width: 1024px) {
-  .pii__metrics--3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 .pii__metrics app-metric-card {
   min-inline-size: 0;
 }
@@ -98,26 +77,18 @@
   }
 }
 
+/* Secciones dentro de la tarjeta: sin borde propio (nada de tarjetas dentro de la tarjeta). */
 .pii__panel {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
   min-inline-size: 0;
-  padding: var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
 }
 
 .pii__panel > p {
   margin: 0;
 }
 
-@media (min-width: 650px) {
-  .pii__panel {
-    padding: var(--sp-4);
-  }
-}
 
 .pii__subtitle {
   margin: 0;
@@ -225,4 +196,17 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+}
+
+/* Las tres cifras de la conciliación, en una franja sin tarjetas. */
+.pii__facts--3 {
+  grid-template-columns: minmax(0, 1fr);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 650px) {
+  .pii__facts--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }

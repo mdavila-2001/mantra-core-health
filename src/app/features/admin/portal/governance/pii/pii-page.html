@@ -9,25 +9,6 @@
   <app-view-state-host [state]="summary()" (retry)="reloadSummary()">
     @if (summaryReady(); as d) {
       <div class="pii__top">
-        <section class="pii__metrics" aria-label="Resumen de datos personales" data-testid="portal-pii-metrics">
-          <app-metric-card
-            label="Columnas observadas"
-            [value]="d.observedColumns"
-            hint="Las que encontró el último escaneo del catálogo"
-          />
-          <app-metric-card
-            label="Clasificadas"
-            [value]="d.classifiedColumns"
-            hint="Con un nivel distinto de «sin clasificar»"
-          />
-          <app-metric-card label="Personales" [value]="d.personalColumns" hint="De nivel personal o superior" />
-          <app-metric-card
-            label="Tablas con datos personales"
-            [value]="d.objectsWithPersonalColumns"
-            hint="Con al menos una columna personal"
-          />
-        </section>
-
         <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
         <app-alert tone="info" data-testid="portal-pii-honesty">
           <details class="pii__fold">
@@ -49,6 +30,28 @@
             </ul>
           </details>
         </app-alert>
+
+        <section class="pii__metrics" aria-label="Resumen de datos personales" data-testid="portal-pii-metrics">
+          <app-metric-card
+            label="Columnas observadas"
+            icon="table"
+            [value]="d.observedColumns"
+            hint="Las que encontró el último escaneo del catálogo"
+          />
+          <app-metric-card
+            label="Clasificadas"
+            icon="tag"
+            [value]="d.classifiedColumns"
+            hint="Con un nivel distinto de «sin clasificar»"
+          />
+          <app-metric-card label="Personales" icon="people" [value]="d.personalColumns" hint="De nivel personal o superior" />
+          <app-metric-card
+            label="Tablas con datos personales"
+            icon="folder"
+            [value]="d.objectsWithPersonalColumns"
+            hint="Con al menos una columna personal"
+          />
+        </section>
       </div>
     }
   </app-view-state-host>
@@ -154,20 +157,29 @@
       <app-tab label="Conciliación">
         <section class="pii__section" aria-label="Conciliación con el registro de gobierno">
           @if (reconciliationSummary(); as r) {
-            <div class="pii__metrics pii__metrics--3" data-testid="portal-pii-reconciliation-summary">
-              <app-metric-card
-                label="Personales aprobadas"
-                [value]="r.approvedPersonalColumns"
-                hint="Columnas con ficha aprobada y nivel personal o superior"
-              />
-              <app-metric-card label="Campos declarados" [value]="r.declaredFields" />
-              <app-metric-card
-                label="Discrepancias"
-                [value]="r.total"
-                [tone]="r.total > 0 ? 'warning' : 'neutral'"
-                hint="Sobre el esquema elegido, sin el filtro de clase"
-              />
-            </div>
+            <dl class="pii__facts pii__facts--3" data-testid="portal-pii-reconciliation-summary">
+              <div>
+                <dt>Personales aprobadas</dt>
+                <dd>
+                  <strong>{{ r.approvedPersonalColumns }}</strong>
+                  <span class="pii__secondary">Ficha aprobada y nivel personal o superior</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Campos declarados</dt>
+                <dd>
+                  <strong>{{ r.declaredFields }}</strong>
+                  <span class="pii__secondary">En el registro de gobierno</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Discrepancias</dt>
+                <dd>
+                  <strong>{{ r.total }}</strong>
+                  <span class="pii__secondary">Sobre el esquema elegido, sin el filtro de clase</span>
+                </dd>
+              </div>
+            </dl>
           }
           <app-governance-filter-form
             [fields]="reconciliationFields"
