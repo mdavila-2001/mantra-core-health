@@ -1,6 +1,7 @@
 import type { AbstractControl, ValidationErrors } from '@angular/forms';
 
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { OFFLINE_MESSAGE, TIMEOUT_MESSAGE } from '../../core/http/api-failure';
 
 /**
  * Apoyo común de los formularios de los módulos solo-comando (M29, M40, …).
@@ -64,10 +65,13 @@ export function errorMessageOf(
     return notFoundMessage;
   }
   if (state.status === 'offline') {
-    return 'No pudimos conectarnos. Revise su conexión y reintente.';
+    return state.timedOut === true ? TIMEOUT_MESSAGE : OFFLINE_MESSAGE;
   }
   if (state.status === 'error') {
-    return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
+    const texto = [state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.', state.hint]
+      .filter((parte): parte is string => typeof parte === 'string' && parte !== '')
+      .join(' ');
+    return `${texto} (Código de soporte: ${state.requestId})`;
   }
   return null;
 }

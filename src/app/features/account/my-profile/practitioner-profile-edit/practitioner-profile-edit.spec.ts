@@ -1487,7 +1487,7 @@ describe('PractitionerProfileEdit', () => {
     );
 
     expect(ultimoAviso()?.message).toBe(
-      'No se pudo agregar el título. Intente de nuevo. (Código de soporte: corr-500)',
+      'No se pudo agregar el título. Intente de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-500)',
     );
   });
 
@@ -3802,7 +3802,7 @@ describe('PractitionerProfileEdit', () => {
       expect(ultimoAviso()).toEqual(
         expect.objectContaining({
           title: 'Perfil',
-          message: 'No se pudo guardar el cambio. Intente de nuevo. (Código de soporte: corr-perfil)',
+          message: 'No se pudo guardar el cambio. Intente de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-perfil)',
         }),
       );
     });

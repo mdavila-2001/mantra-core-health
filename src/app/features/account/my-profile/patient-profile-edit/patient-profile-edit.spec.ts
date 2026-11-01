@@ -765,7 +765,7 @@ describe('PatientProfileEdit', () => {
     interno<() => void>('guardar')();
     pedidoDeGuardado().error(new ProgressEvent('error'), { status: 500 });
 
-    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Pruebe de nuevo.');
+    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Pruebe de nuevo. El problema fue del servidor, no de lo que usted ingresó.');
     expect(interno<() => boolean>('guardando')()).toBe(false);
     expect(señal<string>('nombre')()).toBe('Ana María');
   });
@@ -839,7 +839,7 @@ describe('PatientProfileEdit', () => {
     );
 
     expect(toasts.toasts().at(-1)?.message).toBe(
-      'No pudimos guardar los cambios. Pruebe de nuevo. (Código de soporte: corr-500)',
+      'No pudimos guardar los cambios. Pruebe de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-500)',
     );
   });
 

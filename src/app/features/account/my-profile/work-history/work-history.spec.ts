@@ -2428,7 +2428,9 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
       );
       fixture.detectChanges();
 
-      expect(tabla(fixture)?.textContent).toContain('Algo salió mal');
+      // Un 500 dice qué pasó y que el fallo fue del servidor, no «algo salió mal».
+      expect(tabla(fixture)?.textContent).toContain('No pudimos completar la operación');
+      expect(tabla(fixture)?.textContent).toContain('El fallo no está en lo que usted ingresó');
       expect(tabla(fixture)?.textContent).toContain('historial-test-500');
       expect(
         fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]'),
@@ -2443,7 +2445,7 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
       fixture.detectChanges();
 
       expect(filas(fixture)).toHaveLength(6);
-      expect(tabla(fixture)?.textContent).not.toContain('Algo salió mal');
+      expect(tabla(fixture)?.textContent).not.toContain('No pudimos completar la operación');
       http.verify();
     },
   );

@@ -308,7 +308,9 @@ describe('errorToViewState · catálogo real de la API', () => {
       );
 
       if (isUnexpectedError(state)) {
-        expect(state.message).toContain('Reintente');
+        // La causa va en el mensaje y la próxima acción en la pista.
+        expect(state.message).toContain('no responde o está en mantenimiento');
+        expect(state.hint).toContain('Intente de nuevo en unos minutos');
       } else {
         throw new Error('esperaba S9');
       }

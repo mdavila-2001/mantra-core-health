@@ -61,7 +61,7 @@ describe('ExpirySweep', () => {
     expect(interno<() => { expiredGrants: number } | null>('resultado')()?.expiredGrants).toBe(3);
   });
 
-  it('un fallo se cuenta con el requestId para poder reportarlo', async () => {
+  it('un fallo se cuenta con el requestId, sin repetir el mensaje interno del backend', async () => {
     await interno<() => Promise<void>>('ejecutar')();
 
     http.expectOne('/delegated-access/expiry-sweep').flush(
@@ -69,6 +69,12 @@ describe('ExpirySweep', () => {
       { status: 500, statusText: 'Internal Server Error' },
     );
 
-    expect(interno<() => string | null>('errorMessage')()).toContain('barrido en curso');
+    // El `message` de un 500 no se repite en pantalla (la API ya lo censura y el
+    // front no confía en que siempre lo haga): se dice qué pasó y el código de
+    // soporte, que es lo que permite encontrar el detalle en el registro.
+    const mensaje = interno<() => string | null>('errorMessage')();
+    expect(mensaje).not.toContain('barrido en curso');
+    expect(mensaje).toContain('El servidor encontró un problema inesperado');
+    expect(mensaje).toContain('req-7');
   });
 });

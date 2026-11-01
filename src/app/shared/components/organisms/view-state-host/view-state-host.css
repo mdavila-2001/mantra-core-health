@@ -42,6 +42,16 @@
 
 /* El código de soporte lo dibuja `app-support-code` (el mismo en toda la app). */
 
+/* S9 · qué hacer. Párrafo propio debajo de la causa: se lee como el paso
+   siguiente y no se pierde dentro de la explicación. */
+.view-state-host__hint {
+    margin: var(--sp-2) 0 0;
+}
+
+.view-state-host__hint-label {
+    font-weight: 600;
+}
+
 /* El foco programático de S4 no debe dibujar el anillo de foco de teclado:
    llega por script, no por Tab. */
 .view-state-host__validation:focus {
