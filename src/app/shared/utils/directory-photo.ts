@@ -54,31 +54,39 @@ export function specialtyPhoto(nombre: string): string {
 }
 
 /**
- * Las puertas cuya foto se elige a mano y no por hash.
+ * Las fotos de las cinco puertas de la portada «Directorios».
  *
- * La de aseguradoras comparte tema con la de médicos y el hash de las dos
- * rutas caía en la **misma** foto: dos tarjetas vecinas con la misma imagen.
- * Se le fija una del mismo tema que habla de cuidado familiar, que es lo que
- * cubre un seguro de salud.
+ * Son fotos propias de la portada, en alta resolución (Unsplash, ver
+ * `CREDITOS.md`), recortadas a 16:9 y guardadas en tres anchos para que el
+ * navegador baje la nítida según la pantalla —incluida la retina— sin pagar
+ * 2400 px en un teléfono. No salen del pool del directorio: ahí las fotos son
+ * de 960 px y en la tarjeta destacada se veían pobres (01/11/2026).
  */
-const FIXED_VERTICAL_PHOTO: Readonly<Record<string, string>> = {
-  'insurers-directory': directoryPhoto('medico', 'insurers'),
-};
+const PORTADA_DIR = '/alovida/directorio/portada';
 
-/** La foto de cada puerta de la portada «Directorios». */
+/** Los anchos en los que existe cada foto de la portada. */
+export const VERTICAL_PHOTO_WIDTHS = [960, 1600, 2400] as const;
+
+type VerticalPhotoName = 'medico' | 'laboratorio' | 'clinica' | 'farmacia' | 'aseguradora';
+
+function verticalPhotoName(ruta: string): VerticalPhotoName {
+  const limpia = ruta.replace(/^\//u, '');
+  if (limpia.startsWith('insurers')) return 'aseguradora';
+  if (limpia.includes('laboratory')) return 'laboratorio';
+  if (limpia.includes('clinic')) return 'clinica';
+  if (limpia.includes('pharmac')) return 'farmacia';
+  return 'medico';
+}
+
+/** La foto de cada puerta de la portada «Directorios», en su ancho intermedio. */
 export function verticalPhoto(ruta: string): string {
-  const fixed = FIXED_VERTICAL_PHOTO[ruta.replace(/^\//u, '')];
-  if (fixed !== undefined) {
-    return fixed;
-  }
-  const tema: PhotoTheme = ruta.includes('laboratory')
-    ? 'laboratorio'
-    : ruta.includes('clinic')
-      ? 'clinica'
-      : ruta.includes('pharmac')
-        ? 'farmacia'
-        : 'medico';
-  return directoryPhoto(tema, ruta);
+  return `${PORTADA_DIR}/${verticalPhotoName(ruta)}-1600.jpg`;
+}
+
+/** El `srcset` de la foto de una puerta: los tres anchos que existen. */
+export function verticalPhotoSrcset(ruta: string): string {
+  const nombre = verticalPhotoName(ruta);
+  return VERTICAL_PHOTO_WIDTHS.map((w) => `${PORTADA_DIR}/${nombre}-${w}.jpg ${w}w`).join(', ');
 }
 
 /**
