@@ -157,13 +157,14 @@ export interface FilterField {
       }
       /* Cada campo pide el ancho de lo que muestra: un select, su opción
          «Cualquier …» entera (no «Cualquier per…»); una fecha, DD/MM/AAAA y su
-         botón. Si no entran todos, los CAMPOS pasan a otra fila. */
+         botón. Si no entran todos (Auditoría: 4 campos + 3 acciones), los
+         CAMPOS pasan a otra fila: nunca se trunca un valor ni bajan las acciones. */
       .filter-form__fields > * {
         flex: 1 1 11rem;
         min-inline-size: 0;
       }
       .filter-form__fields > .filter-form__campo--select {
-        flex: 1 0 13.5rem;
+        flex: 1 0 13rem;
       }
       .filter-form__fields > .filter-form__campo--date {
         flex: 1 0 11rem;
