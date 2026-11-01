@@ -169,7 +169,7 @@ describe('CatalogFitPage', () => {
       .click();
     harness.detectChanges();
     (Array.from(el().querySelectorAll('button, [role="radio"]')) as HTMLElement[])
-      .find((b) => b.textContent?.trim() === 'Puntos ciegos')!
+      .find((b) => b.textContent?.trim() === 'Sin medir')!
       .click();
     harness.detectChanges();
     const tabla = q('catalog-fit-checks')!.textContent ?? '';

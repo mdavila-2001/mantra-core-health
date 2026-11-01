@@ -1,0 +1,64 @@
+[
+ {
+  "file": "despues-390-oscuro-ok.png",
+  "sw": 390,
+  "iw": 390,
+  "h": 2241,
+  "h1": [
+   "Sonda de catalogación"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-carga.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   ""
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": [
+   "TimeoutError: Transition was aborted because of timeout in DOM update. DOM update timed out"
+  ]
+ },
+ {
+  "file": "despues-1440-claro-hallazgos.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1710,
+  "h1": [
+   "Sonda de catalogación"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-detalle.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1710,
+  "h1": [
+   "Sonda de catalogación"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-hallazgos.png",
+  "sw": 390,
+  "iw": 390,
+  "h": 3890,
+  "h1": [
+   "Sonda de catalogación"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]

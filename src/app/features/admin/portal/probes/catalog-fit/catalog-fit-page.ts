@@ -14,10 +14,10 @@ import { CatalogFitClient } from '../../../../../core/data-access/admin-portal/c
 import type {
   CatalogFit,
   FitCheckResult,
+  FitDimensionScore,
   FitReport,
 } from '../../../../../core/data-access/admin-portal/catalog-fit.types';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { empty, loading, ready, stale } from '../../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
@@ -26,9 +26,11 @@ import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { SegmentedControl } from '../../../../../shared/components/molecules/segmented-control/segmented-control';
+import type { Tone } from '../../../../../shared/components/tone/tone.types';
 import type { SegmentedOption } from '../../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
+import { DrawerPanel } from '../../../../../shared/components/organisms/drawer-panel/drawer-panel';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../../shared/components/organisms/page-header/page-header';
@@ -61,8 +63,8 @@ export const INTERVALO_DE_ESPERA_MS = 1_500;
 export const MAXIMO_DE_ESPERAS = 40;
 
 const OPCIONES_FILTRO: readonly SegmentedOption<FiltroComprobaciones>[] = [
-  { value: 'fallan', label: 'Las que fallan' },
-  { value: 'ciegas', label: 'Puntos ciegos' },
+  { value: 'fallan', label: 'Fallan' },
+  { value: 'ciegas', label: 'Sin medir' },
   { value: 'todas', label: 'Todas' },
 ];
 
@@ -100,6 +102,7 @@ export function estadoDe(respuesta: CatalogFit): ViewState<CatalogFit> {
     Badge,
     Card,
     DataTable,
+    DrawerPanel,
     MetricCard,
     PageHeader,
     SegmentedControl,
@@ -113,7 +116,6 @@ export function estadoDe(respuesta: CatalogFit): ViewState<CatalogFit> {
 })
 export class CatalogFitPage {
   private readonly client = inject(CatalogFitClient);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly estado = signal<ViewState<CatalogFit>>(loading());
   protected readonly solicitando = signal(false);
@@ -142,6 +144,18 @@ export class CatalogFitPage {
     return new Date(r.lastFailure.finishedAt) > new Date(r.report.evaluatedAt)
       ? r.lastFailure
       : null;
+  });
+
+  /** Cuántas comprobaciones fallan (y cuántas de severidad alta) y cuántas no pudieron medir. */
+  protected readonly conteo = computed(() => {
+    const checks = this.informe()?.checks ?? [];
+    const fallan = checks.filter((c) => c.status === 'FALLA');
+    return {
+      total: checks.length,
+      fallan: fallan.length,
+      altas: fallan.filter((c) => c.severity === 'ALTA').length,
+      ciegas: checks.filter((c) => c.status === 'SIN_DATO' || c.status === 'NO_DECLARADO').length,
+    };
   });
 
   protected readonly filas = computed<readonly FilaComprobacion[]>(() =>
@@ -184,7 +198,6 @@ export class CatalogFitPage {
   protected readonly etiquetaDimension = dimensionLabel;
   protected readonly texto = ratioText;
   protected readonly pista = dimensionHint;
-  protected readonly tono = dimensionTone;
   protected readonly cuando = dateTime;
   protected readonly antiguedad = ageText;
   protected readonly disparador = trigger;
@@ -192,12 +205,8 @@ export class CatalogFitPage {
 
   private readonly celdaId =
     viewChild.required<TemplateRef<{ $implicit: FilaComprobacion }>>('celdaId');
-  private readonly celdaTitulo =
-    viewChild.required<TemplateRef<{ $implicit: FilaComprobacion }>>('celdaTitulo');
   private readonly celdaEstado =
     viewChild.required<TemplateRef<{ $implicit: FilaComprobacion }>>('celdaEstado');
-  private readonly celdaSeveridad =
-    viewChild.required<TemplateRef<{ $implicit: FilaComprobacion }>>('celdaSeveridad');
   private readonly celdaVeredicto =
     viewChild.required<TemplateRef<{ $implicit: FilaHistorial }>>('celdaVeredicto');
   private readonly celdaFecha =
@@ -207,11 +216,9 @@ export class CatalogFitPage {
 
   protected readonly columnas = computed<readonly ColumnDef<FilaComprobacion>[]>(() => [
     { key: 'id', header: 'Comprobación', priority: 1, cell: this.celdaId() },
-    { key: 'title', header: 'Qué comprueba', priority: 1, cell: this.celdaTitulo() },
-    { key: 'status', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+    { key: 'status', header: 'Estado y severidad si falla', priority: 1, cell: this.celdaEstado() },
     { key: 'base', header: 'Cumplen', priority: 2, align: 'end' },
     { key: 'hallazgos', header: 'Hallazgos', priority: 2, align: 'end' },
-    { key: 'severity', header: 'Severidad si falla', priority: 3, cell: this.celdaSeveridad() },
   ]);
 
   protected readonly columnasHistorial = computed<readonly ColumnDef<FilaHistorial>[]>(() => [
@@ -297,6 +304,27 @@ export class CatalogFitPage {
 
   protected seleccionar(fila: FilaComprobacion): void {
     this.seleccionada.set(fila.id);
+  }
+
+  protected cerrarDetalle(): void {
+    this.seleccionada.set(null);
+  }
+
+  /** El estado de una dimensión según sus comprobaciones (no un umbral del puntaje). */
+  protected estadoDimension(
+    d: FitDimensionScore,
+    checks: readonly FitCheckResult[],
+  ): { label: string; tone: Tone } {
+    switch (dimensionTone(d, checks)) {
+      case 'error':
+        return { label: 'Falla grave', tone: 'error' };
+      case 'warning':
+        return { label: 'Con fallas', tone: 'warning' };
+      case 'success':
+        return { label: 'Sin fallas', tone: 'success' };
+      default:
+        return { label: d.status === 'NO_DECLARADO' ? 'No declarado' : 'Sin medir', tone: 'secondary' };
+    }
   }
 
   protected cambiarFiltro(valor: FiltroComprobaciones): void {
