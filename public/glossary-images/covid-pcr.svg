@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Prueba PCR para COVID-19</title>
+  <desc id="d">Arriba, tres pasos: hisopado de nariz o garganta, extracción del material genético y RT-PCR que amplifica un fragmento del virus. Abajo a la izquierda, perfil de una cabeza con el hisopo llegando a la nasofaringe. Abajo a la derecha, curvas de amplificación: la que cruza antes el umbral indica más virus, otra más tardía indica poco virus y una línea plana indica que no se detecta.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="30" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="52" cy="54" r="13" fill="var(--accent)"/>
+  <text x="52" y="59" text-anchor="middle" class="step on">1</text>
+  <text x="72" y="59" class="step">Hisopado</text>
+  <text x="46" y="84" class="small">Nariz o garganta</text>
+  <text x="46" y="103" class="small">en el fondo</text>
+  <path d="M260 78.0 L283 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="287" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="309" cy="54" r="13" fill="var(--accent)"/>
+  <text x="309" y="59" text-anchor="middle" class="step on">2</text>
+  <text x="329" y="59" class="step">Extracción</text>
+  <text x="303" y="84" class="small">Se aísla el material</text>
+  <text x="303" y="103" class="small">genético (ARN)</text>
+  <path d="M517 78.0 L540 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="544" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="566" cy="54" r="13" fill="var(--accent)"/>
+  <text x="566" y="59" text-anchor="middle" class="step on">3</text>
+  <text x="586" y="59" class="step">RT-PCR</text>
+  <text x="560" y="84" class="small">Se copia y amplifica</text>
+  <text x="560" y="103" class="small">un fragmento del virus</text>
+  <rect x="30" y="150" width="330" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="195.0" y="180" text-anchor="middle" class="title">Toma de la muestra</text>
+  <path d="M120 200 C80 200 70 260 90 300 L110 320 Q100 340 120 350 L130 380 Q150 400 190 395 L200 430 L300 430 L300 200 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <path d="M104 286 Q90 300 104 316" fill="none" stroke="var(--line)" stroke-width="2"/>
+  <path d="M40 300 L200 296" stroke="var(--muted)" stroke-width="3"/><ellipse cx="204" cy="296" rx="8" ry="5" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M140 280 Q200 270 240 300 L240 340" fill="none" stroke="var(--organ)" stroke-width="8" opacity=".7"/>
+  <text x="60" y="286" class="small">Hisopo</text>
+  <text x="250" y="286" class="small">Nasofaringe</text>
+  <text x="195" y="440" text-anchor="middle" class="small muted">El hisopo recoge células y secreciones</text>
+  <rect x="380" y="150" width="390" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="575.0" y="180" text-anchor="middle" class="title">Amplificación en el equipo</text>
+  <path d="M420 400 H740 M420 400 V190" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M420 398 C500 398 520 395 540 370 C560 330 570 250 610 220 C630 210 660 208 740 206" fill="none" stroke="var(--bad)" stroke-width="3"/>
+  <path d="M420 398 C560 398 620 396 660 380 C690 360 710 320 740 300" fill="none" stroke="var(--warn)" stroke-width="3"/>
+  <path d="M420 398 H740" stroke="var(--ok)" stroke-width="3" stroke-dasharray="6 4"/>
+  <path d="M420 340 H740" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <text x="736" y="334" text-anchor="end" class="small">Umbral</text>
+  <text x="580" y="424" text-anchor="middle" class="small muted">Ciclos de amplificación</text>
+  <text x="430" y="204" class="small muted">Fluorescencia</text>
+  <text x="548" y="250" text-anchor="end" class="small" style="fill:var(--bad)">Mucho virus</text>
+  <text x="700" y="290" text-anchor="end" class="small" style="fill:var(--warn)">Poco virus</text>
+  <text x="736" y="392" text-anchor="end" class="small" style="fill:var(--ok)">No detectado</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

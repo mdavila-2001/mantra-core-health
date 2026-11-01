@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Tuberculosis pulmonar</title>
+  <desc id="d">A la izquierda, una persona con tuberculosis activa que expulsa gotitas al toser y otra que las inhala, con la aclaración de que solo contagia la enfermedad activa en el pulmón. A la derecha, unos pulmones con una lesión en la parte alta, los síntomas típicos y el tratamiento con varios antibióticos durante meses.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Cómo se contagia</text>
+  <circle cx="90" cy="130" r="30" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <rect x="64" y="162" width="52" height="90" rx="14" fill="var(--tissue)" stroke="var(--line)"/>
+  <circle cx="140" cy="120" r="5.0" fill="var(--warn)"/>
+  <circle cx="162" cy="136" r="4.6" fill="var(--warn)"/>
+  <circle cx="180" cy="112" r="4.2" fill="var(--warn)"/>
+  <circle cx="200" cy="140" r="3.8" fill="var(--warn)"/>
+  <circle cx="222" cy="124" r="3.4" fill="var(--warn)"/>
+  <circle cx="240" cy="146" r="3.0" fill="var(--warn)"/>
+  <circle cx="300" cy="140" r="30" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <rect x="274" y="172" width="52" height="90" rx="14" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="90" y="280" text-anchor="middle" class="small">Tose o habla</text>
+  <text x="300" y="290" text-anchor="middle" class="small">Inhala las gotitas</text>
+  <text x="200" y="330" text-anchor="middle" class="lab">Solo contagia la enfermedad activa</text>
+  <text x="200" y="350" text-anchor="middle" class="lab">en el pulmón, no la latente</text>
+  <rect x="40" y="370" width="340" height="54" rx="10" fill="var(--tissue)"/>
+  <text x="210" y="393" text-anchor="middle" class="step">Mycobacterium tuberculosis</text>
+  <text x="210" y="413" text-anchor="middle" class="small muted">se transmite por el aire</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Síntomas y tratamiento</text>
+  <path d="M530 87.0 V122.0" fill="none" stroke="var(--muted)" stroke-width="7.0" stroke-linecap="round"/>
+  <path d="M530 122.0 L509.0 143.0 M530 122.0 L551.0 143.0" fill="none" stroke="var(--muted)" stroke-width="4.8999999999999995" stroke-linecap="round"/>
+  <path d="M520.2 108.0 C488.0 94.0 460.0 136.0 460.0 185.0 C460.0 213.0 502.0 213.0 517.4 199.0 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5" opacity=".85"/>
+  <path d="M539.8 108.0 C572.0 94.0 600.0 136.0 600.0 185.0 C600.0 213.0 558.0 213.0 542.6 199.0 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5" opacity=".85"/>
+  <circle cx="500" cy="120" r="14" fill="var(--warn)" opacity=".7"/>
+  <text x="620" y="100" class="small">Lesión en la</text>
+  <text x="620" y="116" class="small">parte alta</text>
+  <text x="436" y="248" class="lab">• Tos más de 2 a 3 semanas</text>
+  <text x="436" y="270" class="lab">• Fiebre y sudor nocturno</text>
+  <text x="436" y="292" class="lab">• Pérdida de peso y cansancio</text>
+  <text x="436" y="314" class="lab">• A veces sangre al toser</text>
+  <rect x="436" y="342" width="324" height="78" rx="10" fill="var(--ok-l)"/>
+  <text x="452" y="366" class="lab">Se cura con varios antibióticos</text>
+  <text x="452" y="386" class="lab">durante meses, sin interrumpirlos</text>
+  <text x="452" y="406" class="small">Se estudia a los contactos</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

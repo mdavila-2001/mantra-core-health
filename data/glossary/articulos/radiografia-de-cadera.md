@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-cadera
+image: radiografia-de-cadera.svg | La radiografía de cadera muestra la pelvis, la articulación y el extremo superior del fémur. | Radiografía frontal esquemática de la pelvis con el hueso ilíaco y las cabezas y cuellos de ambos fémures en blanco sobre fondo oscuro, junto a lo que permite ver y cómo es la prueba.
 ---
 
 ## [definition] Introducción

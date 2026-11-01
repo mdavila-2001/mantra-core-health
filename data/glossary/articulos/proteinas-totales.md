@@ -1,5 +1,6 @@
 ---
 slug: proteinas-totales
+image: proteinas-totales.svg | Las proteínas totales suman la albúmina y las globulinas del suero. | Barra dividida en albúmina y globulinas, con el hígado y las células plasmáticas que las producen, y un tubo de suero con la utilidad clínica de la prueba.
 ---
 
 ## [definition] Introducción

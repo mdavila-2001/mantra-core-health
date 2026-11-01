@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1413084
+image: wikidata-especialidad-q1413084.svg | Tramos del intestino grueso y lo que trata la coloproctología | Intestino grueso con sus tramos, del ciego al ano, un pólipo y divertículos señalados, junto a las enfermedades que trata la especialidad y sus herramientas
 ---
 
 ## [definition] Introducción

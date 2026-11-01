@@ -1,5 +1,6 @@
 ---
 slug: trombosis-venosa-profunda
+image: trombosis-venosa-profunda.svg | Un coágulo en una vena profunda de la pierna puede desprenderse y llegar al pulmón. | Pierna con una vena profunda y un coágulo en su interior, la zona hinchada y una flecha hacia el pulmón por el riesgo de embolia. A la derecha, la tríada de Virchow, los factores de riesgo y los signos de embolia pulmonar.
 ---
 
 ## [definition] Introducción

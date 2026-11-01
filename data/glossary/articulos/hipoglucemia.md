@@ -1,5 +1,6 @@
 ---
 slug: hipoglucemia
+image: hipoglucemia.svg | La hipoglucemia es una bajada del azúcar en sangre por debajo de lo normal. | Curva de glucosa que desciende a la zona de hipoglucemia y se recupera tras tomar azúcar, junto a los síntomas iniciales, los signos de gravedad y los pasos para actuar.
 ---
 
 ## [definition] Introducción

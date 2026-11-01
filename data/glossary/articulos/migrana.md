@@ -1,5 +1,6 @@
 ---
 slug: migrana
+image: migrana.svg | Dolor de un lado y las cuatro fases de un ataque de migraña. | Cabeza con dolor pulsátil en un lado y una línea de tiempo con pródromo, aura, cefalea y posdromo, junto a desencadenantes y señales de urgencia.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: hipotension-arterial
+image: hipotension-arterial.svg | Por qué baja la tensión al levantarse y qué hacer | Persona que pasa de tumbada a de pie con la sangre acumulándose en las piernas y menos riego al cerebro, junto a los síntomas, las causas y las medidas que ayudan
 ---
 
 ## [definition] Introducción

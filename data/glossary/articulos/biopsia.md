@@ -1,5 +1,6 @@
 ---
 slug: biopsia
+image: biopsia.svg | La muestra de tejido se fija, se corta, se tiñe y la analiza un patólogo al microscopio. | Arriba, cinco pasos en fila: toma de tejido, fijación en formol, corte fino, tinción y lectura al microscopio con informe. Abajo, cuatro formas de obtener la muestra: con aguja, endoscópica, quirúrgica y superficial de piel.
 ---
 
 ## [definition] Introducción

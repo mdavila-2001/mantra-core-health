@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q15218776
+image: wikidata-especialidad-q15218776.svg | Tres intervenciones frecuentes de la cirugía ortopédica | Tres esquemas: un hueso fracturado fijado con placa y tornillos, una prótesis de rodilla y una artroscopia con cámara y pinzas dentro de la articulación
 ---
 
 ## [definition] Introducción

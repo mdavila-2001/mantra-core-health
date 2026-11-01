@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1498222
+image: wikidata-especialidad-q1498222.svg | Territorio vascular que atiende la especialidad y sus formas de tratamiento. | Silueta con arterias y venas, carótidas, aorta con aneurisma y vasos de las piernas señalados, junto a las enfermedades que trata y la cirugía abierta o endovascular.
 ---
 
 ## [definition] Introducción

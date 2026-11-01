@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">T4 libre (tiroxina libre)</title>
+  <desc id="d">A la izquierda, el eje hipófisis-tiroides: la TSH estimula la tiroides, que produce T4 y frena a la hipófisis; en la sangre la mayor parte de la T4 va unida a proteínas y una pequeña parte va libre. A la derecha, un tubo de sangre y los usos de la prueba, que se interpreta junto a la TSH.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">El eje que regula la tiroides</text>
+  <rect x="110" y="60" width="180" height="34" rx="8" fill="var(--purple)"/>
+  <text x="200.0" y="81.68" text-anchor="middle" class="lab" style="fill:var(--on)">Hipófisis (cerebro)</text>
+  <line x1="200" y1="96" x2="200" y2="150" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="212" y="128" class="small">TSH estimula</text>
+  <ellipse cx="172" cy="196" rx="22" ry="38" fill="var(--organ)" stroke="var(--line)" stroke-width="1.5"/>
+  <ellipse cx="228" cy="196" rx="22" ry="38" fill="var(--organ)" stroke="var(--line)" stroke-width="1.5"/>
+  <rect x="184" y="200" width="32" height="16" rx="6" fill="var(--organ)"/>
+  <text x="200" y="260" text-anchor="middle" class="step">Tiroides</text>
+  <line x1="200" y1="270" x2="200" y2="300" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M300 186 C350 150 350 90 292 78" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <text x="318" y="210" class="small muted">Frena</text>
+  <rect x="44" y="306" width="332" height="110" rx="10" fill="var(--tissue)"/>
+  <text x="60" y="328" class="small muted">En la sangre, la T4 viaja</text>
+  <circle cx="80" cy="362" r="13" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+  <circle cx="80" cy="362" r="5" fill="var(--nerve)"/>
+  <circle cx="120" cy="362" r="13" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+  <circle cx="120" cy="362" r="5" fill="var(--nerve)"/>
+  <circle cx="160" cy="362" r="13" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+  <circle cx="160" cy="362" r="5" fill="var(--nerve)"/>
+  <circle cx="200" cy="362" r="13" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+  <circle cx="200" cy="362" r="5" fill="var(--nerve)"/>
+  <circle cx="240" cy="362" r="13" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+  <circle cx="240" cy="362" r="5" fill="var(--nerve)"/>
+  <text x="140" y="398" text-anchor="middle" class="small">Unida a proteínas</text>
+  <circle cx="300" cy="362" r="6" fill="var(--nerve)" stroke="var(--ink)" stroke-width="1"/>
+  <circle cx="330" cy="352" r="6" fill="var(--nerve)" stroke="var(--ink)" stroke-width="1"/>
+  <text x="312" y="398" text-anchor="middle" class="step" style="fill:var(--nerve)">Libre</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">La prueba de T4 libre</text>
+  <rect x="438" y="64" width="34" height="16" rx="4" fill="var(--vessel)"/>
+  <path d="M440 80 V144 a15 15 0 0 0 30 0 V80 Z" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <path d="M442 110 V144 a13 13 0 0 0 26 0 V110 Z" fill="var(--vessel)"/>
+  <text x="486" y="92" class="lab">Suero o plasma</text>
+  <text x="486" y="114" class="small muted">Mide solo la tiroxina libre,</text>
+  <text x="486" y="132" class="small muted">la que puede actuar en los tejidos</text>
+  <text x="436" y="200" class="step">Se interpreta junto a la TSH</text>
+  <text x="440" y="230" class="lab">• Estudio de hipotiroidismo</text>
+  <text x="440" y="256" class="lab">• Estudio de hipertiroidismo</text>
+  <text x="440" y="282" class="lab">• Ajuste del tratamiento tiroideo</text>
+  <text x="440" y="308" class="lab">• Problemas de la hipófisis</text>
+  <rect x="436" y="348" width="324" height="70" rx="10" fill="var(--accent-l)"/>
+  <text x="452" y="374" class="lab">El embarazo y algunos fármacos cambian</text>
+  <text x="452" y="394" class="lab">las proteínas que transportan la T4</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

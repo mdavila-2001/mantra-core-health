@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q7900864
+image: wikidata-especialidad-q7900864.svg | La uroginecología trata los trastornos del suelo pélvico de la mujer. | Corte lateral de la pelvis femenina con vejiga, útero, vagina y recto sobre la hamaca muscular del suelo pélvico, junto a los problemas que trata y sus tratamientos.
 ---
 
 ## [definition] Introducción

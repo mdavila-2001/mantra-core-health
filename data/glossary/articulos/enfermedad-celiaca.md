@@ -1,5 +1,6 @@
 ---
 slug: enfermedad-celiaca
+image: enfermedad-celiaca.svg | En la celiaquía el gluten desencadena una reacción que aplana las vellosidades intestinales. | Comparación de vellosidades intestinales largas y normales con vellosidades aplanadas en la enfermedad celíaca, con la secuencia gluten, reacción inmune y daño de la mucosa.
 ---
 
 ## [definition] Introducción

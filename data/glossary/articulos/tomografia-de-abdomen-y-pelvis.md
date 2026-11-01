@@ -1,5 +1,6 @@
 ---
 slug: tomografia-de-abdomen-y-pelvis
+image: tomografia-de-abdomen-y-pelvis.svg | El tubo de rayos X gira alrededor del cuerpo y obtiene cortes finos del abdomen y la pelvis. | Anillo del tomógrafo con el tubo de rayos X y los detectores que giran alrededor de una persona tumbada en la camilla. A la derecha, la imagen en cortes transversales, los tipos de contraste y los órganos que se estudian.
 ---
 
 ## [definition] Introducción

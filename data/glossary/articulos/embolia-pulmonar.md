@@ -1,5 +1,6 @@
 ---
 slug: embolia-pulmonar
+image: embolia-pulmonar.svg | Recorrido del coágulo hasta el pulmón y síntomas de alarma | Silueta humana con un coágulo que nace en una vena de la pierna, sube hasta el corazón y bloquea una arteria pulmonar, junto a los síntomas de urgencia y los factores de riesgo
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: ecografia-pelvica
+image: ecografia-pelvica.svg | El transductor emite ultrasonido que rebota en los órganos de la pelvis. | Corte lateral de la pelvis con vejiga, útero y ovario, un transductor que emite ondas sobre el abdomen y una comparación de las vías transabdominal y transvaginal.
 ---
 
 ## [definition] Introducción

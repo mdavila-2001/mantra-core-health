@@ -1,5 +1,6 @@
 ---
 slug: bocio
+image: bocio.svg | El bocio es el aumento de tamaño de la glándula tiroides. | Cuello de frente con la tiroides en forma de mariposa delante de la tráquea y su contorno agrandado en línea discontinua, junto a los tipos de bocio, sus causas y los signos de alarma.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-columna-cervical
+image: radiografia-de-columna-cervical.svg | Vértebras cervicales y proyecciones de la radiografía | Perfil del cuello con las siete vértebras cervicales numeradas, junto al esquema del tubo de rayos X y el detector, las proyecciones habituales y lo que puede mostrar la prueba
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: infeccion-por-helicobacter-pylori
+image: infeccion-por-helicobacter-pylori.svg | Helicobacter pylori vive en el moco que protege la pared del estómago. | Estómago con una ampliación de su pared donde bacterias en espiral viven en la capa de moco, junto a las enfermedades que puede causar y los métodos de diagnóstico.
 ---
 
 ## [definition] Introducción

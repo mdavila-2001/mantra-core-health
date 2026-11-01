@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué mide el colesterol total</title>
+  <desc id="d">A la izquierda, las lipoproteínas LDL, HDL y VLDL con colesterol en su interior y una barra que suma el colesterol de todas ellas. A la derecha, un tubo de suero y la utilidad de la prueba para estimar el riesgo cardiovascular dentro del perfil lipídico.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Colesterol total: la suma del colesterol de todas las partículas</text>
+  <rect x="20" y="60" width="480" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="260.0" y="88" text-anchor="middle" class="title">Quién transporta el colesterol</text>
+  <circle cx="100" cy="160" r="44" fill="var(--warn-l)" stroke="var(--muted)"/>
+  <circle cx="120" cy="160" r="4" fill="var(--warn)"/>
+  <circle cx="110" cy="177" r="4" fill="var(--warn)"/>
+  <circle cx="90" cy="177" r="4" fill="var(--warn)"/>
+  <circle cx="80" cy="160" r="4" fill="var(--warn)"/>
+  <circle cx="90" cy="143" r="4" fill="var(--warn)"/>
+  <circle cx="110" cy="143" r="4" fill="var(--warn)"/>
+  <text x="100" y="224" text-anchor="middle" class="lab b">LDL</text>
+  <text x="100" y="240" text-anchor="middle" class="small muted">lleva colesterol</text>
+  <text x="100" y="256" text-anchor="middle" class="small muted">a los tejidos</text>
+  <circle cx="260" cy="160" r="30" fill="var(--ok-l)" stroke="var(--muted)"/>
+  <circle cx="274" cy="160" r="4" fill="var(--warn)"/>
+  <circle cx="267" cy="172" r="4" fill="var(--warn)"/>
+  <circle cx="253" cy="172" r="4" fill="var(--warn)"/>
+  <circle cx="246" cy="160" r="4" fill="var(--warn)"/>
+  <circle cx="253" cy="148" r="4" fill="var(--warn)"/>
+  <circle cx="267" cy="148" r="4" fill="var(--warn)"/>
+  <text x="260" y="210" text-anchor="middle" class="lab b">HDL</text>
+  <text x="260" y="226" text-anchor="middle" class="small muted">lo devuelve</text>
+  <text x="260" y="242" text-anchor="middle" class="small muted">al hígado</text>
+  <circle cx="410" cy="160" r="54" fill="var(--accent-l)" stroke="var(--muted)"/>
+  <circle cx="434" cy="160" r="4" fill="var(--warn)"/>
+  <circle cx="422" cy="181" r="4" fill="var(--warn)"/>
+  <circle cx="398" cy="181" r="4" fill="var(--warn)"/>
+  <circle cx="386" cy="160" r="4" fill="var(--warn)"/>
+  <circle cx="398" cy="139" r="4" fill="var(--warn)"/>
+  <circle cx="422" cy="139" r="4" fill="var(--warn)"/>
+  <text x="410" y="234" text-anchor="middle" class="lab b">VLDL</text>
+  <text x="410" y="250" text-anchor="middle" class="small muted">rica en</text>
+  <text x="410" y="266" text-anchor="middle" class="small muted">triglicéridos</text>
+  <circle cx="60" cy="292" r="5" fill="var(--warn)"/>
+  <text x="72" y="297" class="small">Colesterol dentro de cada partícula</text>
+  <rect x="50" y="320" width="420" height="40" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+  <rect x="50" y="320" width="230" height="40" rx="8" fill="var(--warn-l)"/>
+  <rect x="280" y="320" width="110" height="40" fill="var(--ok-l)"/>
+  <text x="165" y="345" text-anchor="middle" class="lab">LDL</text>
+  <text x="335" y="345" text-anchor="middle" class="lab">HDL</text>
+  <text x="430" y="345" text-anchor="middle" class="lab">Otras</text>
+  <text x="260" y="392" text-anchor="middle" class="h">Colesterol total = todo junto</text>
+  <text x="260" y="418" text-anchor="middle" class="small muted">No distingue la partícula que lo lleva</text>
+  <rect x="516" y="60" width="264" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="648.0" y="88" text-anchor="middle" class="h">Para qué sirve</text>
+  <rect x="560" y="110" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="562" y="140" width="22" height="48" rx="10" fill="var(--warn)" opacity=".85"/>
+  <rect x="557" y="102" width="32" height="12" rx="3" fill="var(--accent)"/>
+  <text x="573" y="210" text-anchor="middle" class="small muted">Suero o plasma</text>
+  <text x="670" y="135" text-anchor="middle" class="small">Parte del perfil</text>
+  <text x="670" y="151" text-anchor="middle" class="small">lipídico, con LDL,</text>
+  <text x="670" y="167" text-anchor="middle" class="small">HDL y triglicéridos</text>
+  <text x="532" y="260" class="lab">• Estimar el riesgo</text>
+  <text x="543" y="286" class="lab">cardiovascular</text>
+  <text x="532" y="312" class="lab">• Calcular el colesterol</text>
+  <text x="543" y="338" class="lab">no HDL</text>
+  <text x="532" y="364" class="lab">• Seguir el efecto de</text>
+  <text x="543" y="390" class="lab">dieta y fármacos</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

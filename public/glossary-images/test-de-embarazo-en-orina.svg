@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Test de embarazo en orina</title>
+  <desc id="d">Arriba, tres pasos: tras la implantación el embrión produce la hormona hCG, la hormona pasa a la orina y la tira reactiva la detecta con anticuerpos. Abajo a la izquierda, un vaso con orina y la tira con su punta y su ventana, con consejos sobre cuándo hacerlo. Abajo a la derecha, cómo se lee: positivo con línea de control y de prueba, negativo solo con la línea de control.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="30" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="52" cy="54" r="13" fill="var(--accent)"/>
+  <text x="52" y="59" text-anchor="middle" class="step on">1</text>
+  <text x="72" y="59" class="step">Implantación</text>
+  <text x="46" y="84" class="small">El embrión anidado</text>
+  <text x="46" y="103" class="small">empieza a producir hCG</text>
+  <path d="M260 78.0 L283 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="287" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="309" cy="54" r="13" fill="var(--accent)"/>
+  <text x="309" y="59" text-anchor="middle" class="step on">2</text>
+  <text x="329" y="59" class="step">Orina</text>
+  <text x="303" y="84" class="small">La hormona hCG pasa</text>
+  <text x="303" y="103" class="small">a la orina</text>
+  <path d="M517 78.0 L540 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="544" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="566" cy="54" r="13" fill="var(--accent)"/>
+  <text x="566" y="59" text-anchor="middle" class="step on">3</text>
+  <text x="586" y="59" class="step">Tira reactiva</text>
+  <text x="560" y="84" class="small">Detecta la hCG</text>
+  <text x="560" y="103" class="small">con anticuerpos</text>
+  <rect x="30" y="150" width="360" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="180" text-anchor="middle" class="title">Cómo se hace</text>
+  <path d="M70 210 L114 210 L110 274 Q92 280 74 274 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M72 232 L112 232 L110 274 Q92 280 74 274 Z" fill="var(--beam)"/>
+  <rect x="67" y="200" width="50" height="12" rx="3" fill="var(--accent)"/>
+  <text x="92" y="300" text-anchor="middle" class="small">Vaso limpio</text>
+  <rect x="180" y="230" width="180" height="40" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <rect x="180" y="238" width="40" height="24" rx="4" fill="var(--accent-l)"/>
+  <rect x="250" y="240" width="70" height="20" rx="3" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200" y="292" text-anchor="middle" class="small">Punta</text>
+  <text x="285" y="292" text-anchor="middle" class="small">Ventana</text>
+  <text x="56" y="350" class="small">• Mejor con la primera orina de la mañana</text>
+  <text x="56" y="374" class="small">• Tras el primer día de retraso de la regla</text>
+  <text x="56" y="398" class="small">• Leer en el tiempo que indica el envase</text>
+  <rect x="410" y="150" width="360" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="590.0" y="180" text-anchor="middle" class="title">Cómo se lee</text>
+  <rect x="460" y="196" width="90" height="34" rx="4" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="484" y="198" width="5" height="30" fill="var(--accent)"/>
+  <rect x="520" y="198" width="5" height="30" fill="var(--bad)"/>
+  <text x="486" y="248" text-anchor="middle" class="small muted">C</text>
+  <text x="522" y="248" text-anchor="middle" class="small muted">T</text>
+  <text x="505" y="276" text-anchor="middle" class="step" style="fill:var(--bad)">Positivo</text>
+  <rect x="630" y="196" width="90" height="34" rx="4" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="654" y="198" width="5" height="30" fill="var(--accent)"/>
+  <text x="656" y="248" text-anchor="middle" class="small muted">C</text>
+  <text x="692" y="248" text-anchor="middle" class="small muted">T</text>
+  <text x="675" y="276" text-anchor="middle" class="step" style="fill:var(--ok)">Negativo</text>
+  <text x="428" y="322" class="small">• Una línea T tenue también cuenta</text>
+  <text x="428" y="346" class="small">• Si sale negativo y la regla no viene,</text>
+  <text x="428" y="370" class="small">• repetir en unos días</text>
+  <text x="428" y="394" class="small">• Confirmar con su médico</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

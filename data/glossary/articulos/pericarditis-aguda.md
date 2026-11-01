@@ -1,5 +1,6 @@
 ---
 slug: pericarditis-aguda
+image: pericarditis-aguda.svg | El pericardio inflamado envuelve el corazón y causa dolor torácico. | Corazón envuelto por un pericardio inflamado de dos hojas, con el dolor típico que mejora al inclinarse hacia delante, el tratamiento y los signos de urgencia.
 ---
 
 ## [definition] Introducción

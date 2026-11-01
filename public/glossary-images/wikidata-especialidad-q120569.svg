@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Aparato digestivo y gastroenterología</title>
+  <desc id="d">Silueta humana con el esófago, el estómago, el hígado, la vesícula, el páncreas, el intestino delgado, el colon y el recto. A la derecha, las enfermedades que atiende la gastroenterología y sus herramientas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Aparato digestivo</text>
+<path d="M168.0,136.6 Q129.0,139.2 123.8,179.5 L110.8,329.0 Q116.0,344.6 129.0,331.6 L139.4,199.0 L142.0,355.0 Q142.0,396.6 162.8,409.6 L277.2,409.6 Q298.0,396.6 298.0,355.0 L300.6,199.0 L311.0,331.6 Q324.0,344.6 329.2,329.0 L316.2,179.5 Q311.0,139.2 272.0,136.6 L235.6,131.4 L235.6,115.8 L204.4,115.8 L204.4,131.4 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="220" cy="87.2" r="31.2" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+<path d="M220,110 L220,190" fill="none" stroke="var(--organ-d)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M232,190 Q270,186 268,214 Q262,240 226,236 Q214,232 210,222" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M160,180 Q200,170 236,186 Q220,214 170,220 Q150,210 160,180 Z" fill="var(--organ-d)" stroke="none" stroke-width="0" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+<ellipse cx="184" cy="226" rx="8" ry="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<ellipse cx="236" cy="250" rx="22" ry="6" fill="var(--beam)" stroke="var(--warn)" stroke-width="1"/>
+<path d="M170,330 L170,258 L270,258 L270,330 Q250,346 224,340 L222,370" fill="none" stroke="var(--organ)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M190,270 q15,10 0,20 q-15,10 0,20 q15,10 30,0 q15,-10 30,0" fill="none" stroke="var(--vessel-l)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40" y="120" class="small">Esófago</text>
+<line x1="86.19999999999999" y1="116" x2="218" y2="140" stroke="var(--muted)" stroke-width="1"/>
+<text x="40" y="196" class="small">Hígado</text>
+<line x1="79.6" y1="192" x2="168" y2="198" stroke="var(--muted)" stroke-width="1"/>
+<text x="40" y="236" class="small">Vesícula</text>
+<line x1="92.8" y1="232" x2="180" y2="226" stroke="var(--muted)" stroke-width="1"/>
+<text x="330" y="200" class="small">Estómago</text>
+<line x1="326" y1="196" x2="262" y2="210" stroke="var(--muted)" stroke-width="1"/>
+<text x="330" y="250" class="small">Páncreas</text>
+<line x1="326" y1="246" x2="256" y2="250" stroke="var(--muted)" stroke-width="1"/>
+<text x="40" y="300" class="small">Colon</text>
+<line x1="73.0" y1="296" x2="168" y2="300" stroke="var(--muted)" stroke-width="1"/>
+<text x="330" y="300" class="small">Intestino</text>
+<line x1="326" y1="296" x2="230" y2="300" stroke="var(--muted)" stroke-width="1"/>
+<text x="330" y="316" class="small">delgado</text>
+<text x="330" y="370" class="small">Recto y ano</text>
+<line x1="326" y1="366" x2="226" y2="364" stroke="var(--muted)" stroke-width="1"/>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Qué atiende</text>
+<rect x="456" y="56" width="304" height="144" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="78" class="step">Enfermedades</text>
+<text x="468" y="102" class="lab">• Reflujo, úlcera, Helicobacter</text>
+<text x="468" y="124" class="lab">• Celiaquía, intestino irritable</text>
+<text x="468" y="146" class="lab">• Enfermedad inflamatoria intestinal</text>
+<text x="468" y="168" class="lab">• Hepatitis, cirrosis, pancreatitis</text>
+<text x="468" y="190" class="lab">• Pólipos y cánceres digestivos</text>
+<rect x="456" y="220" width="304" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="242" class="step">Herramientas</text>
+<text x="468" y="266" class="lab">• Endoscopia y colonoscopia</text>
+<text x="468" y="288" class="lab">• Ecografía y elastografía</text>
+<text x="468" y="310" class="lab">• Análisis de heces y sangre</text>
+<text x="456" y="360" class="lab">Hepatología: rama dedicada al</text>
+<text x="456" y="380" class="lab">hígado y las vías biliares.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

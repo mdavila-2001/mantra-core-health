@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q103824
+image: wikidata-especialidad-q103824.svg | Células de la sangre y enfermedades que trata la hematología | Vaso sanguíneo con glóbulos rojos, un glóbulo blanco y plaquetas, un hueso con médula ósea y la lista de enfermedades de la sangre que atiende la especialidad
 ---
 
 ## [definition] Introducción

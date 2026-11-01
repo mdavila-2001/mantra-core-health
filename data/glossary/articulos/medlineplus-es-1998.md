@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1998
+image: medlineplus-es-1998.svg | La cirugía láser cambia la curvatura de la córnea para que la luz enfoque en la retina. | Corte de un ojo con rayos de luz que pasan por la córnea y el cristalino hasta la retina, con la nueva curvatura corneal marcada, y los tres pasos del LASIK junto a requisitos previos.
 ---
 
 ## [definition] Introducción

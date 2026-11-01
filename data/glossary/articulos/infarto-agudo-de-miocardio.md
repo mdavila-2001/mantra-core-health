@@ -1,5 +1,6 @@
 ---
 slug: infarto-agudo-de-miocardio
+image: infarto-agudo-de-miocardio.svg | Arteria coronaria bloqueada y síntomas del infarto | Corazón con una arteria coronaria bloqueada por un trombo y la zona de músculo sin oxígeno, junto a los síntomas de alarma y la indicación de llamar a emergencias
 ---
 
 ## [definition] Introducción

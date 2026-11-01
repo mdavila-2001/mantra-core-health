@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Endodoncia</title>
+  <desc id="d">A la izquierda, corte de un diente con el esmalte, la dentina, la pulpa con sus vasos y nervios, los conductos de la raíz y el ápice, rodeado de encía y hueso, con una caries en la corona. A la derecha, los cinco pasos del tratamiento de conductos: anestesiar y aislar, abrir la corona, limpiar y dar forma, sellar los conductos y restaurar el diente.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">Partes del diente</text>
+  <path d="M140 80 C120 80 110 120 120 160 C130 200 140 220 150 280 L170 400 L200 400 L210 260 L230 260 L240 400 L270 400 L290 280 C300 220 310 200 320 160 C330 120 320 80 300 80 C270 76 250 96 220 92 C190 96 170 76 140 80 Z" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/>
+  <path d="M140 80 C120 80 110 120 118 150 L322 150 C330 120 320 80 300 80 C270 76 250 96 220 92 C190 96 170 76 140 80 Z" fill="var(--accent-l)" opacity=".8"/>
+  <path d="M180 140 C176 120 264 120 260 140 L254 200 L232 250 L236 380 L224 380 L220 250 L208 250 L204 380 L192 380 L196 250 L186 200 Z" fill="var(--vessel)" opacity=".7"/>
+  <path d="M40 220 H400" stroke="var(--organ)" stroke-width="3" opacity=".7"/>
+  <rect x="40" y="260" width="360" height="160" fill="var(--bone)" opacity=".35"/>
+  <circle cx="160" cy="110" r="10" fill="var(--ink)" opacity=".6"/>
+  <circle cx="300" cy="110" r="3" fill="var(--ink)"/>
+  <path d="M300 110 L340 74" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="344" y="78" class="lab">Esmalte</text>
+  <circle cx="290" cy="200" r="3" fill="var(--ink)"/>
+  <path d="M290 200 L340 190" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="344" y="194" class="lab">Dentina</text>
+  <circle cx="220" cy="170" r="3" fill="var(--ink)"/>
+  <path d="M220 170 L340 140" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="344" y="144" class="lab">Pulpa</text>
+  <circle cx="230" cy="330" r="3" fill="var(--ink)"/>
+  <path d="M230 330 L340 320" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="344" y="324" class="lab">Conducto</text>
+  <circle cx="198" cy="392" r="3" fill="var(--ink)"/>
+  <path d="M198 392 L100 430" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="96" y="434" text-anchor="end" class="lab">Ápice</text>
+  <text x="60" y="240" class="small">Encía</text>
+  <text x="60" y="300" class="small">Hueso</text>
+  <circle cx="160" cy="110" r="3" fill="var(--ink)"/>
+  <path d="M160 110 L80 70" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="76" y="74" text-anchor="end" class="lab">Caries</text>
+  <rect x="440" y="20" width="340" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="610.0" y="50" text-anchor="middle" class="title">Tratamiento de conductos</text>
+  <circle cx="478" cy="84" r="14" fill="var(--accent)"/>
+  <text x="478" y="89" text-anchor="middle" class="step on">1</text>
+  <rect x="500" y="58" width="260" height="54" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="516" y="80" class="step">Anestesiar y aislar</text>
+  <text x="516" y="98" class="small">Con un dique de goma</text>
+  <circle cx="478" cy="156" r="14" fill="var(--accent)"/>
+  <text x="478" y="161" text-anchor="middle" class="step on">2</text>
+  <rect x="500" y="130" width="260" height="54" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="516" y="152" class="step">Abrir la corona</text>
+  <text x="516" y="170" class="small">Acceder a la pulpa</text>
+  <circle cx="478" cy="228" r="14" fill="var(--accent)"/>
+  <text x="478" y="233" text-anchor="middle" class="step on">3</text>
+  <rect x="500" y="202" width="260" height="54" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="516" y="224" class="step">Limpiar y dar forma</text>
+  <text x="516" y="242" class="small">Lima y desinfectante</text>
+  <circle cx="478" cy="300" r="14" fill="var(--accent)"/>
+  <text x="478" y="305" text-anchor="middle" class="step on">4</text>
+  <rect x="500" y="274" width="260" height="54" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="516" y="296" class="step">Sellar los conductos</text>
+  <text x="516" y="314" class="small">Material de relleno</text>
+  <circle cx="478" cy="372" r="14" fill="var(--accent)"/>
+  <text x="478" y="377" text-anchor="middle" class="step on">5</text>
+  <rect x="500" y="346" width="260" height="54" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="516" y="368" class="step">Restaurar</text>
+  <text x="516" y="386" class="small">Empaste o corona</text>
+  <text x="610" y="436" text-anchor="middle" class="small muted">Conserva el diente propio</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

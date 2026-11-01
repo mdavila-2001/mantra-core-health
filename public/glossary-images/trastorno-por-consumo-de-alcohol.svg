@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Trastorno por consumo de alcohol</title>
+  <desc id="d">A la izquierda, seis señales del trastorno: deseo intenso de beber, beber más de lo previsto, necesitar más para notar el efecto, malestar al dejarlo, abandonar otras actividades y seguir pese a los daños, con una barra de gravedad de leve a grave. A la derecha, una silueta con los órganos más afectados, cerebro, corazón, hígado y páncreas, y el recordatorio de que tiene tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">Señales del trastorno</text>
+  <rect x="40" y="62" width="360" height="36" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="220.0" y="85.0" text-anchor="middle" class="lab">Deseo intenso de beber</text>
+  <rect x="40" y="108" width="360" height="36" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="220.0" y="131.0" text-anchor="middle" class="lab">Beber más de lo previsto</text>
+  <rect x="40" y="154" width="360" height="36" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="220.0" y="177.0" text-anchor="middle" class="lab">Necesitar más para el efecto</text>
+  <rect x="40" y="200" width="360" height="36" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="220.0" y="223.0" text-anchor="middle" class="lab">Malestar al dejarlo</text>
+  <rect x="40" y="246" width="360" height="36" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="220.0" y="269.0" text-anchor="middle" class="lab">Abandonar otras actividades</text>
+  <rect x="40" y="292" width="360" height="36" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="220.0" y="315.0" text-anchor="middle" class="lab">Seguir pese a los daños</text>
+  <defs><linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="var(--warn-l)"/><stop offset="1" stop-color="var(--bad)"/></linearGradient></defs>
+  <rect x="40" y="350" width="360" height="20" rx="10" fill="url(#g2)"/>
+  <text x="40" y="392" class="small">Leve</text>
+  <text x="220" y="392" text-anchor="middle" class="small">Moderado</text>
+  <text x="400" y="392" text-anchor="end" class="small">Grave</text>
+  <text x="220" y="426" text-anchor="middle" class="small muted">La gravedad depende de cuántas señales hay</text>
+  <rect x="440" y="20" width="340" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="610.0" y="50" text-anchor="middle" class="title">Órganos afectados</text>
+  <g transform="translate(530 64) scale(0.9)" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5">
+    <circle cx="0" cy="26" r="24"/>
+    <rect x="-9" y="48" width="18" height="12"/>
+    <path d="M-52 62 Q0 52 52 62 L56 200 Q0 214 -56 200 Z"/>
+    <path d="M-52 64 Q-70 70 -74 120 L-80 200 Q-82 210 -72 210 L-64 130 L-56 100 Z"/>
+    <path d="M52 64 Q70 70 74 120 L80 200 Q82 210 72 210 L64 130 L56 100 Z"/>
+    <path d="M-54 198 L-50 320 Q-48 330 -36 330 L-28 330 L-6 214 Z"/>
+    <path d="M54 198 L50 320 Q48 330 36 330 L28 330 L6 214 Z"/>
+  </g>
+  <circle cx="530.0" cy="85.6" r="10" fill="var(--purple)"/>
+  <circle cx="537.2" cy="157.6" r="10" fill="var(--vessel)"/>
+  <circle cx="512.0" cy="182.8" r="10" fill="var(--organ)"/>
+  <circle cx="544.4" cy="191.8" r="10" fill="var(--warn)"/>
+  <text x="640" y="88" class="small">Cerebro</text>
+  <text x="640" y="160" class="small">Corazón</text>
+  <text x="640" y="186" class="small">Hígado</text>
+  <text x="640" y="212" class="small">Páncreas</text>
+  <path d="M540.0 85.6 L636 84" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <path d="M547.2 157.6 L636 156" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <path d="M522.0 182.8 L636 182" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <path d="M554.4 191.8 L636 208" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <rect x="460" y="370" width="300" height="64" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="610" y="394" text-anchor="middle" class="step">Tiene tratamiento</text>
+  <text x="610" y="414" text-anchor="middle" class="small">médico, psicológico y grupos</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

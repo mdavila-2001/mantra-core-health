@@ -1,5 +1,6 @@
 ---
 slug: resonancia-de-columna-lumbar
+image: resonancia-de-columna-lumbar.svg | La resonancia muestra con detalle discos, nervios y médula sin usar radiación. | Equipo de resonancia con túnel y camilla junto a un corte lateral de la columna lumbar con vértebras, discos y nervios, y la lista de indicaciones, precauciones y cómo transcurre la prueba.
 ---
 
 ## [definition] Introducción

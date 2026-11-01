@@ -1,5 +1,6 @@
 ---
 slug: enfermedad-de-parkinson
+image: enfermedad-de-parkinson.svg | En el Parkinson se pierden neuronas de la sustancia negra que fabrican dopamina. | Cerebro con la sustancia negra señalada y la dopamina que produce, comparación de neuronas sanas y perdidas, y tarjetas con temblor, lentitud, rigidez e inestabilidad.
 ---
 
 ## [definition] Introducción

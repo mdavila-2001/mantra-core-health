@@ -1,5 +1,6 @@
 ---
 slug: duelo
+image: duelo.svg | El duelo alterna entre afrontar la pérdida y reconstruir la vida. | Línea ondulada que oscila entre mirar la pérdida y reconstruir la vida a lo largo del tiempo, con reacciones comunes del duelo y señales para pedir ayuda.
 ---
 
 ## [definition] Introducción

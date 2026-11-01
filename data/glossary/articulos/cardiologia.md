@@ -1,5 +1,6 @@
 ---
 slug: cardiologia
+image: cardiologia.svg | Campo de trabajo de la cardiología | Corazón en el centro rodeado de cuatro recuadros con las enfermedades que trata la cardiología, las pruebas que utiliza, los tratamientos y la prevención
 ---
 
 ## [definition] Introducción

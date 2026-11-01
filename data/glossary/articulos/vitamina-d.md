@@ -1,5 +1,6 @@
 ---
 slug: vitamina-d
+image: vitamina-d.svg | La prueba mide la 25-hidroxivitamina D, la reserva que forma el hígado. | Recorrido de la vitamina D desde el sol en la piel hasta el hígado y el riñón, con la forma 25-hidroxi resaltada como la que se mide, y un tubo de sangre con sus indicaciones.
 ---
 
 ## [definition] Introducción

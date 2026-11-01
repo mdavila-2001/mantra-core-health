@@ -1,5 +1,6 @@
 ---
 slug: infeccion-urinaria
+image: infeccion-urinaria.svg | La infección puede afectar la uretra, la vejiga o subir hasta el riñón. | Aparato urinario con riñones, uréteres, vejiga y uretra, señalando pielonefritis en el riñón, cistitis en la vejiga y uretritis en la uretra. A la derecha, un frasco de orina con las pruebas diagnósticas y medidas de prevención.
 ---
 
 ## [definition] Introducción

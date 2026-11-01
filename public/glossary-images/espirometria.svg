@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Espirometría: la maniobra y las curvas</title>
+  <desc id="d">A la izquierda, una persona sentada con una pinza en la nariz sopla con fuerza por una boquilla unida a un espirómetro. A la derecha, una gráfica de volumen espirado frente al tiempo con tres curvas: normal, que sube rápido y alto; obstructiva, que sube despacio; y restrictiva, que sube rápido pero se queda baja.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --skin:#e9edf2; --air:#bcd6f2; --c1:#1f8a5b; --c2:#c0392b; --c3:#d68910; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --skin:#2a3541; --air:#27405c; --c1:#4cc38a; --c2:#ef7467; --c3:#f0b04a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="330" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="185" y="50" text-anchor="middle" class="title">La maniobra</text>
+  <!-- persona -->
+  <circle cx="110" cy="130" r="36" fill="var(--skin)" stroke="var(--line)"/>
+  <path d="M60 180 H160 L170 320 H50 Z" fill="var(--skin)" stroke="var(--line)"/>
+  <rect x="50" y="320" width="130" height="16" rx="6" fill="var(--line)"/>
+  <!-- pinza -->
+  <rect x="134" y="112" width="16" height="12" rx="3" fill="var(--accent)"/>
+  <text x="132" y="96" class="small">Pinza nasal</text>
+  <!-- boquilla y tubo -->
+  <rect x="144" y="134" width="30" height="12" rx="4" fill="var(--muted)"/>
+  <path d="M174 140 H230" stroke="var(--muted)" stroke-width="10"/>
+  <path d="M176 128 C196 120 210 120 224 128 M176 152 C196 160 210 160 224 152" fill="none" stroke="var(--air)" stroke-width="4"/>
+  <!-- espirometro -->
+  <rect x="230" y="110" width="100" height="70" rx="10" fill="var(--accent)"/>
+  <text x="280" y="150" text-anchor="middle" class="lab" style="fill:var(--on)">Espirómetro</text>
+  <g class="small">
+    <text x="40" y="370">1 · Tomar todo el aire posible</text>
+    <text x="40" y="394">2 · Soplar de golpe, fuerte y rápido</text>
+    <text x="40" y="418">3 · Seguir hasta vaciar los pulmones</text>
+    <text x="40" y="442" class="muted">Se repite al menos tres veces</text>
+  </g>
+
+  <rect x="366" y="20" width="414" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="573" y="50" text-anchor="middle" class="title">Qué forma tiene la curva</text>
+  <!-- ejes -->
+  <path d="M420 90 V370 H750" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <text x="404" y="230" class="small muted" transform="rotate(-90 404 230)" text-anchor="middle">Volumen espirado</text>
+  <text x="585" y="392" text-anchor="middle" class="small muted">Tiempo</text>
+  <path d="M470 370 V95" stroke="var(--line)" stroke-dasharray="4 3"/>
+  <text x="470" y="384" text-anchor="middle" class="small muted">1 s</text>
+  <!-- curvas -->
+  <path d="M420 370 C440 200 455 140 500 120 C560 104 650 102 740 102" fill="none" stroke="var(--c1)" stroke-width="3.5"/>
+  <path d="M420 370 C450 300 480 250 540 200 C600 160 670 140 740 132" fill="none" stroke="var(--c2)" stroke-width="3.5"/>
+  <path d="M420 370 C436 270 450 240 490 232 C560 222 650 222 740 222" fill="none" stroke="var(--c3)" stroke-width="3.5"/>
+  <!-- leyenda -->
+  <g class="lab">
+    <rect x="420" y="410" width="18" height="6" fill="var(--c1)"/><text x="444" y="417">Normal</text>
+    <rect x="520" y="410" width="18" height="6" fill="var(--c2)"/><text x="544" y="417">Obstructiva</text>
+    <rect x="640" y="410" width="18" height="6" fill="var(--c3)"/><text x="664" y="417">Restrictiva</text>
+  </g>
+  <text x="573" y="442" text-anchor="middle" class="small muted">Obstructiva: sale despacio · Restrictiva: cabe menos aire</text>
+</svg>

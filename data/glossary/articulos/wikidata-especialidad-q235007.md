@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q235007
+image: wikidata-especialidad-q235007.svg | La cirugía cardíaca opera el corazón y los grandes vasos. | Corazón con una coronaria obstruida y un injerto de bypass, un esquema de circulación extracorpórea con bomba y oxigenador, y las principales operaciones de la especialidad.
 ---
 
 ## [definition] Introducción

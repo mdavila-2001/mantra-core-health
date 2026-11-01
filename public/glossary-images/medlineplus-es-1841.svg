@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Terapia intensiva</title>
+  <desc id="d">A la izquierda, una cama de cuidados intensivos con una persona conectada a un respirador, a un monitor que muestra el ritmo del corazón, a sueros y a bombas de infusión, para la vigilancia continua de sus funciones vitales. A la derecha, situaciones que requieren ingreso en la UCI, como el fallo respiratorio, el shock o una cirugía mayor, y el equipo que atiende.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="470" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="255.0" y="50" text-anchor="middle" class="title">Una cama de cuidados intensivos</text>
+  <rect x="60" y="300" width="300" height="20" rx="6" fill="var(--bone)"/>
+  <path d="M70 320 V380 M350 320 V380" stroke="var(--bone)" stroke-width="8"/>
+  <path d="M60 300 V250" stroke="var(--bone)" stroke-width="8"/>
+  <circle cx="100" cy="282" r="18" fill="var(--skin)" stroke="var(--line)"/>
+  <rect x="118" y="272" width="230" height="28" rx="12" fill="var(--accent-l)" stroke="var(--line)"/>
+  <rect x="380" y="90" width="90" height="66" rx="8" fill="var(--ink)"/>
+  <path d="M388 124 h14 l6 -16 l8 30 l6 -14 h40" fill="none" stroke="var(--ok)" stroke-width="2"/>
+  <path d="M425 156 V400" stroke="var(--muted)" stroke-width="4"/>
+  <path d="M380 140 C300 150 200 200 180 286" fill="none" stroke="var(--ok)" stroke-width="1.5"/>
+  <rect x="40" y="110" width="70" height="90" rx="8" fill="var(--accent)" opacity=".85"/>
+  <path d="M75 200 C80 240 90 260 100 270" fill="none" stroke="var(--accent)" stroke-width="5"/>
+  <path d="M180 70 V130" stroke="var(--muted)" stroke-width="3"/>
+  <rect x="164" y="80" width="32" height="44" rx="6" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <path d="M180 124 C190 200 230 260 240 280" fill="none" stroke="var(--warn)" stroke-width="1.5"/>
+  <rect x="250" y="160" width="60" height="70" rx="6" fill="var(--purple-l)" stroke="var(--purple)"/>
+  <path d="M280 230 C280 250 270 270 260 280" fill="none" stroke="var(--purple)" stroke-width="1.5"/>
+  <text x="75" y="96" text-anchor="middle" class="small">Respirador</text>
+  <text x="425" y="80" text-anchor="middle" class="small">Monitor</text>
+  <text x="180" y="64" text-anchor="middle" class="small">Suero</text>
+  <text x="280" y="152" text-anchor="middle" class="small">Bombas</text>
+  <text x="210" y="350" text-anchor="middle" class="step">Vigilancia continua</text>
+  <text x="210" y="372" text-anchor="middle" class="small">del corazón, la respiración</text>
+  <text x="210" y="390" text-anchor="middle" class="small">y la tensión arterial</text>
+  <text x="255" y="430" text-anchor="middle" class="small muted">Esquema de una cama de UCI</text>
+  <rect x="510" y="20" width="270" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="645.0" y="50" text-anchor="middle" class="title">Cuándo se necesita</text>
+  <rect x="530" y="60" width="230" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="645.0" y="82.0" text-anchor="middle" class="small">Fallo respiratorio</text>
+  <rect x="530" y="104" width="230" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="645.0" y="126.0" text-anchor="middle" class="small">Shock o sepsis</text>
+  <rect x="530" y="148" width="230" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="645.0" y="170.0" text-anchor="middle" class="small">Tras cirugía mayor</text>
+  <rect x="530" y="192" width="230" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="645.0" y="214.0" text-anchor="middle" class="small">Traumatismo grave</text>
+  <rect x="530" y="236" width="230" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="645.0" y="258.0" text-anchor="middle" class="small">Parada o arritmia grave</text>
+  <text x="530" y="300" class="step">Equipo</text>
+  <text x="530" y="326" class="small">• Médicos intensivistas</text>
+  <text x="530" y="348" class="small">• Enfermería especializada</text>
+  <text x="530" y="370" class="small">• Fisioterapia y otros</text>
+  <text x="530" y="412" class="small muted">La familia recibe información</text>
+  <text x="530" y="428" class="small muted">diaria del equipo</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

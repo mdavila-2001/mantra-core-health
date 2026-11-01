@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Insomnio</title>
+  <desc id="d">Arriba, tres barras que representan la noche desde que se acuesta hasta que se levanta: dificultad para dormirse, despertares frecuentes y despertar muy temprano, con los periodos de sueño y vigilia. Abajo a la izquierda, las consecuencias al día siguiente, como cansancio, irritabilidad y falta de concentración. Abajo a la derecha, medidas que ayudan, incluida la terapia cognitivo-conductual.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Tres formas de insomnio a lo largo de la noche</text>
+  <text x="40" y="90" class="lab">Le cuesta dormirse</text>
+  <rect x="240" y="70" width="175" height="28" fill="var(--warn)"/>
+  <rect x="415" y="70" width="325" height="28" fill="var(--accent)"/>
+  <text x="40" y="134" class="lab">Se despierta a menudo</text>
+  <rect x="240" y="114" width="40" height="28" fill="var(--warn)"/>
+  <rect x="280" y="114" width="110" height="28" fill="var(--accent)"/>
+  <rect x="390" y="114" width="40" height="28" fill="var(--warn)"/>
+  <rect x="430" y="114" width="120" height="28" fill="var(--accent)"/>
+  <rect x="550" y="114" width="40" height="28" fill="var(--warn)"/>
+  <rect x="590" y="114" width="150" height="28" fill="var(--accent)"/>
+  <text x="40" y="178" class="lab">Despierta muy temprano</text>
+  <rect x="240" y="158" width="30" height="28" fill="var(--warn)"/>
+  <rect x="270" y="158" width="320" height="28" fill="var(--accent)"/>
+  <rect x="590" y="158" width="150" height="28" fill="var(--warn)"/>
+  <text x="240" y="214" class="small muted">Acostarse</text>
+  <text x="740" y="214" text-anchor="end" class="small muted">Levantarse</text>
+  <rect x="430" y="202" width="14" height="12" fill="var(--accent)"/>
+  <text x="450" y="212" class="small">Dormido</text>
+  <rect x="520" y="202" width="14" height="12" fill="var(--warn)"/>
+  <text x="540" y="212" class="small">Despierto</text>
+  <rect x="20" y="234" width="370" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="264" text-anchor="middle" class="title">Al día siguiente</text>
+  <rect x="40" y="276" width="330" height="34" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="205.0" y="298.0" text-anchor="middle" class="lab">Cansancio y somnolencia</text>
+  <rect x="40" y="318" width="330" height="34" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="205.0" y="340.0" text-anchor="middle" class="lab">Irritabilidad</text>
+  <rect x="40" y="360" width="330" height="34" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="205.0" y="382.0" text-anchor="middle" class="lab">Falta de concentración</text>
+  <rect x="40" y="402" width="330" height="34" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="205.0" y="424.0" text-anchor="middle" class="lab">Más riesgo de accidentes</text>
+  <rect x="410" y="234" width="370" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595.0" y="264" text-anchor="middle" class="title">Qué ayuda</text>
+  <text x="430" y="282" class="lab">• Horarios regulares</text>
+  <text x="430" y="310" class="lab">• Cama solo para dormir</text>
+  <text x="430" y="338" class="lab">• Evitar pantallas antes</text>
+  <text x="430" y="366" class="lab">• Poca cafeína y alcohol</text>
+  <text x="430" y="394" class="lab">• Terapia cognitivo-conductual</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

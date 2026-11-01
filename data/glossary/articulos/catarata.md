@@ -1,5 +1,6 @@
 ---
 slug: catarata
+image: catarata.svg | En la catarata el cristalino pierde transparencia y la luz llega dispersa a la retina. | Comparación de un ojo sano, con cristalino transparente que enfoca la luz en la retina, y un ojo con catarata, con cristalino opaco que dispersa la luz.
 ---
 
 ## [definition] Introducción

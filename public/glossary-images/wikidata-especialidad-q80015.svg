@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Obstetricia y ginecología</title>
+  <desc id="d">Útero, trompas, ovarios, cuello uterino y vagina en vista frontal. A la derecha, una línea de vida con las etapas que acompaña la especialidad: pubertad, edad fértil, embarazo, parto y puerperio, y menopausia.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="300" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">Aparato reproductor femenino</text>
+<path d="M180,110 Q230,80 280,110 Q290,190 246,240 L246,272 L214,272 L214,240 Q170,190 180,110 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M182,116 Q130,80 96,110 M278,116 Q330,80 364,110" fill="none" stroke="var(--organ-d)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="100" cy="140" rx="22" ry="15" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+<ellipse cx="360" cy="140" rx="22" ry="15" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+<rect x="218" y="272" width="24" height="36" rx="4" fill="var(--organ-d)" stroke-width="1" opacity=".5"/>
+<text x="230" y="170" text-anchor="middle" class="step">Útero</text>
+<text x="100" y="176" text-anchor="middle" class="small">Ovario</text>
+<text x="360" y="176" text-anchor="middle" class="small">Ovario</text>
+<text x="100" y="86" text-anchor="middle" class="small">Trompa</text>
+<text x="280" y="262" class="small">Cuello uterino</text>
+<line x1="276" y1="258" x2="244" y2="256" stroke="var(--muted)" stroke-width="1"/>
+<text x="280" y="300" class="small">Vagina</text>
+<line x1="276" y1="296" x2="242" y2="294" stroke="var(--muted)" stroke-width="1"/>
+<rect x="20" y="336" width="420" height="104" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="36" y="362" class="lab">Ginecología: salud reproductiva</text>
+<text x="36" y="384" class="lab">a lo largo de la vida.</text>
+<text x="36" y="412" class="lab">Obstetricia: embarazo, parto y puerperio.</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Etapas que acompaña</text>
+<circle cx="490" cy="78" r="10" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="512" y="74" class="step">Pubertad</text>
+<text x="512" y="92" class="small">primeras reglas</text>
+<line x1="490" y1="88" x2="490" y2="126" stroke="var(--purple)" stroke-width="2"/>
+<circle cx="490" cy="136" r="10" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="512" y="132" class="step">Edad fértil</text>
+<text x="512" y="150" class="small">anticoncepción, ciclos</text>
+<line x1="490" y1="146" x2="490" y2="184" stroke="var(--purple)" stroke-width="2"/>
+<circle cx="490" cy="194" r="10" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="512" y="190" class="step">Embarazo</text>
+<text x="512" y="208" class="small">control prenatal</text>
+<line x1="490" y1="204" x2="490" y2="242" stroke="var(--purple)" stroke-width="2"/>
+<circle cx="490" cy="252" r="10" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="512" y="248" class="step">Parto y puerperio</text>
+<text x="512" y="266" class="small">nacimiento y posparto</text>
+<line x1="490" y1="262" x2="490" y2="300" stroke="var(--purple)" stroke-width="2"/>
+<circle cx="490" cy="310" r="10" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="512" y="306" class="step">Menopausia</text>
+<text x="512" y="324" class="small">cambios y prevención</text>
+<text x="476" y="368" class="small">También: cribado de cáncer de cuello</text>
+<text x="476" y="386" class="small">uterino y mama, infecciones, suelo</text>
+<text x="476" y="404" class="small">pélvico y cirugía ginecológica.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

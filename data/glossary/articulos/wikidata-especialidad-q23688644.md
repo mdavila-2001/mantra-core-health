@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q23688644
+image: wikidata-especialidad-q23688644.svg | Las crisis epilépticas pueden empezar en una zona del cerebro o afectar a ambos hemisferios. | Dos cerebros vistos de lado, uno con una crisis focal en una zona y otro con una crisis generalizada, y dos trazados de electroencefalograma, uno normal y otro con descargas. A la derecha, el diagnóstico, el tratamiento y cuándo llamar a emergencias.
 ---
 
 ## [definition] Introducción

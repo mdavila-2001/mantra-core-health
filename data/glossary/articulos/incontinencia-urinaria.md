@@ -1,5 +1,6 @@
 ---
 slug: incontinencia-urinaria
+image: incontinencia-urinaria.svg | La incontinencia urinaria es la pérdida involuntaria de orina. | Vejiga con el músculo detrusor, el esfínter y los músculos del suelo pélvico, junto a cuatro tarjetas con los tipos de incontinencia y un recuadro con los tratamientos que ayudan.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Posibles orígenes del dolor de pecho</title>
+  <desc id="d">A la izquierda, un tórax esquemático con los pulmones, el corazón, la aorta, el esófago y las costillas, cada uno señalado como posible origen del dolor. A la derecha, un recuadro con las señales de alarma de infarto que obligan a llamar a emergencias.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --lung:#bcd6f2; --heart:#c0392b; --aorta:#e07b67; --eso:#d9a441; --rib:#cfd6df; --skin:#e9edf2; --warn:#c0392b; --warn-l:#fbe3e1; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --lung:#27405c; --heart:#ef7467; --aorta:#b85c4c; --eso:#b08a3a; --rib:#566472; --skin:#2a3541; --warn:#ef7467; --warn-l:#3a2427; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="440" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="240" y="50" text-anchor="middle" class="title">¿De dónde puede venir?</text>
+  <!-- torso -->
+  <path d="M130 80 H350 C380 160 380 330 360 420 H120 C100 330 100 160 130 80 Z" fill="var(--skin)" stroke="var(--line)"/>
+  <!-- costillas -->
+  <g fill="none" stroke="var(--rib)" stroke-width="6" stroke-linecap="round">
+    <path d="M240 120 C200 110 160 120 140 140 M240 120 C280 110 320 120 340 140"/>
+    <path d="M240 160 C200 150 155 160 135 185 M240 160 C280 150 325 160 345 185"/>
+    <path d="M240 200 C200 190 152 200 132 230 M240 200 C280 190 328 200 348 230"/>
+    <path d="M240 240 C200 232 152 242 134 274 M240 240 C280 232 328 242 346 274"/>
+  </g>
+  <rect x="232" y="110" width="16" height="160" rx="6" fill="var(--rib)"/>
+  <!-- pulmones -->
+  <path d="M220 110 C170 110 145 190 150 300 C175 310 205 300 222 280 Z" fill="var(--lung)" opacity=".9"/>
+  <path d="M260 110 C310 110 335 190 330 300 C305 310 275 300 258 280 Z" fill="var(--lung)" opacity=".9"/>
+  <!-- esófago -->
+  <rect x="236" y="90" width="8" height="250" rx="4" fill="var(--eso)"/>
+  <!-- aorta -->
+  <path d="M250 200 C250 150 290 150 290 190 V340" fill="none" stroke="var(--aorta)" stroke-width="9"/>
+  <!-- corazón -->
+  <path d="M250 220 C220 200 190 230 210 265 C225 290 260 305 270 310 C285 290 305 260 295 235 C288 212 262 212 250 220 Z" fill="var(--heart)"/>
+  <!-- etiquetas -->
+  <g class="lab">
+    <path d="M160 250 H60" stroke="var(--muted)"/><text x="40" y="244">Pulmón</text>
+    <text x="40" y="262" class="small muted">y pleura</text>
+    <path d="M240 330 L80 380" stroke="var(--muted)"/><text x="40" y="398">Esófago</text>
+    <path d="M300 330 L380 370" stroke="var(--muted)"/><text x="360" y="392">Aorta</text>
+    <path d="M280 280 L390 300" stroke="var(--muted)"/><text x="368" y="318">Corazón</text>
+    <path d="M335 150 L392 120" stroke="var(--muted)"/><text x="362" y="110">Costillas</text>
+    <text x="362" y="126" class="small muted">y músculos</text>
+  </g>
+  <text x="240" y="446" text-anchor="middle" class="small muted">También pueden doler el estómago o la vesícula</text>
+
+  <rect x="476" y="20" width="304" height="440" rx="14" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="628" y="52" text-anchor="middle" class="h" style="fill:var(--warn)">Llame a emergencias si:</text>
+  <g class="lab">
+    <text x="496" y="88">• Presión u opresión en el centro</text>
+    <text x="508" y="106">del pecho que dura minutos</text>
+    <text x="496" y="136">• Se extiende al brazo, cuello,</text>
+    <text x="508" y="154">mandíbula o espalda</text>
+    <text x="496" y="184">• Sudor frío, náuseas o mareo</text>
+    <text x="496" y="214">• Falta de aire repentina</text>
+    <text x="496" y="244">• Dolor súbito y desgarrador</text>
+    <text x="496" y="274">• Desmayo o palpitaciones</text>
+    <text x="508" y="292">muy rápidas</text>
+  </g>
+  <line x1="496" y1="318" x2="760" y2="318" stroke="var(--warn)" opacity=".5"/>
+  <text x="496" y="346" class="small muted">En mujeres, mayores y personas</text>
+  <text x="496" y="364" class="small muted">con diabetes los síntomas pueden</text>
+  <text x="496" y="382" class="small muted">ser más sutiles: cansancio, falta</text>
+  <text x="496" y="400" class="small muted">de aire o molestia abdominal.</text>
+  <text x="496" y="434" class="lab" style="font-weight:700">No conduzca usted mismo.</text>
+</svg>

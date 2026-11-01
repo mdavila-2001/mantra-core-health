@@ -1,5 +1,6 @@
 ---
 slug: hernia-inguinal
+image: hernia-inguinal.svg | La hernia inguinal es un bulto en la ingle por un punto débil de la pared abdominal. | Parte baja del abdomen con un bulto en la ingle sobre el conducto inguinal y un corte de la pared por donde sale el intestino, con los signos de hernia atascada.
 ---
 
 ## [definition] Introducción

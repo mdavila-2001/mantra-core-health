@@ -1,5 +1,6 @@
 ---
 slug: pediatria
+image: pediatria.svg | Etapas que atiende la pediatría y sus áreas de trabajo | Cinco siluetas de tamaño creciente desde el recién nacido hasta el adolescente, con las áreas de revisiones, vacunas, crecimiento y enfermedades agudas
 ---
 
 ## [definition] Introducción

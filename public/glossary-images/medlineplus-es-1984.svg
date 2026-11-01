@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Trasplante de islotes pancreáticos</title>
+  <desc id="d">Un páncreas donante del que se aíslan los islotes en el laboratorio; los islotes se infunden por la vena porta en el hígado del receptor, donde producen insulina. Abajo, a quién se ofrece y qué implica.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="250" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Del páncreas donante al hígado del receptor</text>
+<path d="M40,140 Q60,100 120,110 Q180,120 210,104 Q230,96 236,112 Q230,136 190,142 Q130,158 60,160 Q40,158 40,140 Z" fill="var(--beam)" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="140" y="186" text-anchor="middle" class="small">Páncreas donante</text>
+<circle cx="170" cy="130" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<circle cx="110" cy="136" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<line x1="250" y1="130" x2="290" y2="130" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<circle cx="350" cy="130" r="40" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="2"/>
+<circle cx="340" cy="120" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<circle cx="356" cy="116" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<circle cx="364" cy="132" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<circle cx="346" cy="140" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<circle cx="334" cy="134" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<circle cx="352" cy="148" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<circle cx="366" cy="146" r="6" fill="var(--ok)" stroke="none" stroke-width="1"/>
+<text x="350" y="196" text-anchor="middle" class="small">Islotes aislados</text>
+<text x="350" y="212" text-anchor="middle" class="small">en el laboratorio</text>
+<line x1="400" y1="130" x2="440" y2="130" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M480,90 Q560,70 640,90 Q680,110 650,150 Q600,180 520,170 Q470,160 480,90 Z" fill="var(--organ-d)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+<path d="M560,210 L560,150" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="574" y="206" class="small">Vena porta</text>
+<circle cx="590" cy="104" r="5" fill="var(--ok)" stroke="var(--on)" stroke-width="1"/>
+<circle cx="620" cy="118" r="5" fill="var(--ok)" stroke="var(--on)" stroke-width="1"/>
+<circle cx="610" cy="140" r="5" fill="var(--ok)" stroke="var(--on)" stroke-width="1"/>
+<circle cx="570" cy="146" r="5" fill="var(--ok)" stroke="var(--on)" stroke-width="1"/>
+<text x="520" y="108" text-anchor="middle" class="small" style="fill:var(--on)">Hígado del</text>
+<text x="520" y="124" text-anchor="middle" class="small" style="fill:var(--on)">receptor</text>
+<line x1="670" y1="130" x2="700" y2="130" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="706" y="100" width="64" height="60" rx="8" fill="var(--ok)" stroke-width="1"/>
+<text x="738.0" y="126.7" text-anchor="middle" class="small" style="fill:var(--on)">Insulina</text>
+<text x="738.0" y="141.7" text-anchor="middle" class="small" style="fill:var(--on)">propia</text>
+<text x="400" y="248" text-anchor="middle" class="lab" style="fill:var(--muted)">Se infunden por un catéter: no es una cirugía abierta.</text>
+<rect x="20" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="205.0" y="316" text-anchor="middle" class="title">A quién se ofrece</text>
+<text x="36" y="346" class="lab">• Diabetes tipo 1 de difícil control</text>
+<text x="36" y="370" class="lab">• Hipoglucemias graves sin aviso</text>
+<text x="36" y="394" class="lab">• A veces junto a un trasplante renal</text>
+<rect x="406" y="286" width="374" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="593.0" y="316" text-anchor="middle" class="title">A tener en cuenta</text>
+<text x="422" y="346" class="lab">• Requiere fármacos inmunosupresores</text>
+<text x="422" y="370" class="lab">• Puede necesitar más de una infusión</text>
+<text x="422" y="394" class="lab">• Reduce o elimina la insulina inyectada</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: carcinoma-basocelular
+image: carcinoma-basocelular.svg | El carcinoma basocelular nace en la capa basal de la epidermis. | Corte de la piel con epidermis, dermis y grasa, un nódulo perlado que crece desde la capa basal y rayos de sol como causa, junto a sus signos, factores de riesgo y pronóstico.
 ---
 
 ## [definition] Introducción

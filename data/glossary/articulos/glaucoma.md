@@ -1,5 +1,6 @@
 ---
 slug: glaucoma
+image: glaucoma.svg | Aumento de presión en el ojo y pérdida de visión periférica | Corte del ojo con el drenaje bloqueado y el nervio óptico dañado, junto a un campo visual con los bordes oscurecidos y las pruebas para detectar el glaucoma
 ---
 
 ## [definition] Introducción

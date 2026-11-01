@@ -1,5 +1,6 @@
 ---
 slug: hepatitis-c-anticuerpos
+image: hepatitis-c-anticuerpos.svg | Los anticuerpos anti-VHC muestran contacto con el virus; el ARN confirma si la infección sigue activa. | Tubo de sangre y un virus rodeado de anticuerpos. A la derecha, un diagrama de decisión: si los anticuerpos son positivos se mide el ARN del virus para distinguir infección pasada de activa, que se trata con antivirales.
 ---
 
 ## [definition] Introducción

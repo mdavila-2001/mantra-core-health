@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q499500
+image: wikidata-especialidad-q499500.svg | Las fases preanalítica, analítica y posanalítica del laboratorio. | Tres recuadros encadenados con las fases preanalítica, analítica y posanalítica del análisis, y una fila con las áreas del laboratorio clínico como hematología o microbiología.
 ---
 
 ## [definition] Introducción

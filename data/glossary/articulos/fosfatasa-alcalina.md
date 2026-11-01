@@ -1,5 +1,6 @@
 ---
 slug: fosfatasa-alcalina
+image: fosfatasa-alcalina.svg | La fosfatasa alcalina procede sobre todo del hígado, las vías biliares y el hueso. | Cuatro fuentes de la enzima, hígado y vías biliares, hueso, placenta e intestino, que confluyen en un tubo de sangre. A la derecha, los problemas de origen hepático y óseo que ayuda a evaluar y las situaciones normales en que está más alta.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q40821
+image: wikidata-especialidad-q40821.svg | La cirugía abarca la preparación, la operación y la recuperación, con abordajes cada vez menos invasivos. | Arriba, los tres momentos de la atención quirúrgica: preoperatorio, intraoperatorio y posoperatorio. Abajo, tres abdómenes esquemáticos con cirugía abierta, laparoscópica con pequeñas incisiones y robótica.
 ---
 
 ## [definition] Introducción

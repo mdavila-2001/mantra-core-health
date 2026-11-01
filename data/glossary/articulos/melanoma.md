@@ -1,5 +1,6 @@
 ---
 slug: melanoma
+image: melanoma.svg | La regla ABCDE ayuda a reconocer los lunares que conviene revisar. | Cinco columnas con la regla ABCDE que comparan un lunar habitual con lunares asimétricos, de bordes irregulares, de varios colores, de gran diámetro o que cambian.
 ---
 
 ## [definition] Introducción

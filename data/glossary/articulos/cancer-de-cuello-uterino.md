@@ -1,5 +1,6 @@
 ---
 slug: cancer-de-cuello-uterino
+image: cancer-de-cuello-uterino.svg | El cáncer cervical nace en el cuello del útero tras años de infección por VPH. | Útero con el cuello uterino resaltado y una línea de tiempo que va de la infección por VPH a la lesión precancerosa y al cáncer, con prevención y síntomas.
 ---
 
 ## [definition] Introducción

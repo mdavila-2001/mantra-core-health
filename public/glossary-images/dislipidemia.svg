@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Dislipidemia</title>
+  <desc id="d">A la izquierda, un vaso sanguíneo con partículas de LDL, HDL y triglicéridos, y debajo una arteria con una placa de grasa que la estrecha y aumenta el riesgo de infarto o ictus. A la derecha, factores que la favorecen, su detección con un perfil lipídico en sangre y su manejo.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Lípidos en la sangre</text>
+  <rect x="40" y="72" width="340" height="120" rx="50" fill="var(--vessel)" opacity=".18"/>
+  <path d="M40 78 H380 M40 190 H380" fill="none" stroke="var(--vessel)" stroke-width="6"/>
+  <circle cx="80" cy="110" r="18" fill="var(--nerve)"/>
+  <text x="80" y="114" text-anchor="middle" class="small" style="fill:var(--on)">LDL</text>
+  <circle cx="160" cy="150" r="18" fill="var(--ok)"/>
+  <text x="160" y="154" text-anchor="middle" class="small" style="fill:var(--on)">HDL</text>
+  <circle cx="240" cy="104" r="18" fill="var(--nerve)"/>
+  <text x="240" y="108" text-anchor="middle" class="small" style="fill:var(--on)">LDL</text>
+  <circle cx="320" cy="150" r="18" fill="var(--purple)"/>
+  <text x="320" y="154" text-anchor="middle" class="small" style="fill:var(--on)">TG</text>
+  <circle cx="120" cy="160" r="18" fill="var(--purple)"/>
+  <text x="120" y="164" text-anchor="middle" class="small" style="fill:var(--on)">TG</text>
+  <circle cx="290" cy="110" r="18" fill="var(--nerve)"/>
+  <text x="290" y="114" text-anchor="middle" class="small" style="fill:var(--on)">LDL</text>
+  <rect x="40" y="214" width="108" height="30" rx="8" fill="var(--nerve)"/>
+  <text x="94.0" y="233.32" text-anchor="middle" class="small" style="fill:var(--on)">LDL «malo»</text>
+  <rect x="156" y="214" width="108" height="30" rx="8" fill="var(--ok)"/>
+  <text x="210.0" y="233.32" text-anchor="middle" class="small" style="fill:var(--on)">HDL «bueno»</text>
+  <rect x="272" y="214" width="108" height="30" rx="8" fill="var(--purple)"/>
+  <text x="326.0" y="233.32" text-anchor="middle" class="small" style="fill:var(--on)">Triglicéridos</text>
+  <text x="210" y="280" text-anchor="middle" class="step">Exceso de LDL con los años</text>
+  <path d="M60 300 H360 V390 H60 Z" fill="var(--tissue)"/>
+  <path d="M60 300 H360 M60 390 H360" fill="none" stroke="var(--vessel)" stroke-width="6"/>
+  <path d="M120 300 C150 300 160 344 210 344 C260 344 270 300 300 300 Z" fill="var(--nerve)" opacity=".85"/>
+  <text x="210" y="322" text-anchor="middle" class="small" style="fill:var(--on)">Placa</text>
+  <text x="210" y="416" text-anchor="middle" class="lab">Estrecha la arteria: infarto o ictus</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Qué la favorece</text>
+  <text x="436" y="80" class="lab">• Dieta rica en grasas saturadas</text>
+  <text x="436" y="106" class="lab">• Sedentarismo y exceso de peso</text>
+  <text x="436" y="132" class="lab">• Diabetes, hipotiroidismo</text>
+  <text x="436" y="158" class="lab">• Herencia familiar</text>
+  <text x="436" y="184" class="lab">• Algunos medicamentos</text>
+  <text x="436" y="222" class="step">Cómo se detecta</text>
+  <rect x="438" y="236" width="34" height="16" rx="4" fill="var(--vessel)"/>
+  <path d="M440 252 V316 a15 15 0 0 0 30 0 V252 Z" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <path d="M442 282 V316 a13 13 0 0 0 26 0 V282 Z" fill="var(--vessel)"/>
+  <text x="486" y="270" class="lab">Perfil lipídico en sangre</text>
+  <text x="486" y="292" class="small muted">No suele dar síntomas</text>
+  <rect x="436" y="350" width="324" height="70" rx="10" fill="var(--ok-l)"/>
+  <text x="452" y="376" class="lab">Hábitos saludables y, si hace falta,</text>
+  <text x="452" y="398" class="lab">fármacos que bajan el colesterol</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

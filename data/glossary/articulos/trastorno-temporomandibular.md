@@ -1,5 +1,6 @@
 ---
 slug: trastorno-temporomandibular
+image: trastorno-temporomandibular.svg | La articulación temporomandibular une la mandíbula al cráneo delante del oído. | Perfil de la cara con la articulación temporomandibular, la mandíbula y el músculo masetero señalados, junto a los síntomas, los factores y las medidas que ayudan.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: anorexia-nerviosa
+image: anorexia-nerviosa.svg | Ciclo de la anorexia nerviosa, efectos en el cuerpo y tratamiento. | Diagrama circular con el miedo a engordar, la restricción, el bajo peso y la imagen corporal distorsionada, junto a los efectos físicos y los pilares del tratamiento.
 ---
 
 ## [definition] Introducción

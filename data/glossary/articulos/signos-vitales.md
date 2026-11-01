@@ -1,5 +1,6 @@
 ---
 slug: signos-vitales
+image: signos-vitales.svg | Temperatura, pulso, respiración, presión arterial y saturación de oxígeno. | Silueta de una persona con líneas que señalan dónde se miden la temperatura, el pulso, la respiración, la presión arterial y la saturación de oxígeno.
 ---
 
 ## [definition] Introducción

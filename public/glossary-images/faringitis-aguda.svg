@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Faringitis aguda</title>
+  <desc id="d">A la izquierda, la garganta vista desde la boca abierta, con la faringe enrojecida, la úvula y las amígdalas inflamadas con puntos blancos. A la derecha, comparación entre la faringitis por virus, la más frecuente, y la causada por estreptococo del grupo A, y los signos de alarma.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">La garganta por dentro</text>
+  <path d="M60 90 C60 70 340 70 340 90 V330 C340 380 300 410 200 410 C100 410 60 380 60 330 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M90 100 C90 90 310 90 310 100 V320 C310 360 280 380 200 380 C120 380 90 360 90 320 Z" fill="var(--warn)" opacity=".55"/>
+  <path d="M190 100 C190 140 210 140 210 100 Z" fill="var(--organ)" stroke="var(--ink)" stroke-width="2"/>
+  <ellipse cx="120" cy="230" rx="26" ry="40" fill="var(--warn)" stroke="var(--line)" stroke-width="1.5"/>
+  <ellipse cx="280" cy="230" rx="26" ry="40" fill="var(--warn)" stroke="var(--line)" stroke-width="1.5"/>
+  <circle cx="114" cy="220" r="5" fill="var(--panel)"/>
+  <circle cx="126" cy="244" r="5" fill="var(--panel)"/>
+  <circle cx="286" cy="222" r="5" fill="var(--panel)"/>
+  <circle cx="276" cy="248" r="5" fill="var(--panel)"/>
+  <ellipse cx="200" cy="270" rx="50" ry="40" fill="var(--organ)" opacity=".8"/>
+  <path d="M110 370 Q200 330 290 370" fill="none" stroke="var(--organ)" stroke-width="26" opacity=".7"/>
+  <text x="200" y="360" text-anchor="middle" class="small">Lengua</text>
+  <text x="200" y="162" text-anchor="middle" class="small">Úvula</text>
+  <text x="76" y="300" class="small">Amígdala</text>
+  <text x="200" y="274" text-anchor="middle" class="small" style="fill:var(--on)">Faringe roja</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Virus o bacteria</text>
+  <rect x="436" y="70" width="156" height="160" rx="10" fill="var(--warn-l)"/>
+  <line x1="526.0" y1="108.0" x2="531.0" y2="108.0" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="522.4852813742385" y1="116.48528137423857" x2="526.0208152801713" y2="120.0208152801713" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="514.0" y1="120.0" x2="514.0" y2="125.0" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="505.5147186257614" y1="116.48528137423857" x2="501.9791847198287" y2="120.0208152801713" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="502.0" y1="108.0" x2="497.0" y2="108.0" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="505.5147186257614" y1="99.51471862576143" x2="501.9791847198287" y2="95.9791847198287" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="514.0" y1="96.0" x2="514.0" y2="91.0" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="522.4852813742385" y1="99.51471862576143" x2="526.0208152801713" y2="95.9791847198287" stroke="var(--warn)" stroke-width="2"/>
+  <circle cx="514" cy="108" r="12" fill="var(--warn)"/>
+  <text x="514" y="150" text-anchor="middle" class="step" style="fill:var(--warn)">Virus</text>
+  <text x="514" y="172" text-anchor="middle" class="small">La mayoría</text>
+  <text x="514" y="192" text-anchor="middle" class="small">Tos, moco, ronquera</text>
+  <text x="514" y="212" text-anchor="middle" class="small">Sin antibiótico</text>
+  <rect x="604" y="70" width="156" height="160" rx="10" fill="var(--ok-l)"/>
+  <rect x="656" y="98" width="28" height="12" rx="6" fill="var(--ok)" transform="rotate(20 670 104)"/>
+  <rect x="680" y="106" width="28" height="12" rx="6" fill="var(--ok)" transform="rotate(-30 694 112)"/>
+  <text x="682" y="150" text-anchor="middle" class="step" style="fill:var(--ok)">Estreptococo A</text>
+  <text x="682" y="172" text-anchor="middle" class="small">Fiebre, placas</text>
+  <text x="682" y="192" text-anchor="middle" class="small">Sin tos</text>
+  <text x="682" y="212" text-anchor="middle" class="small">Prueba rápida</text>
+  <text x="436" y="264" class="step" style="fill:var(--warn)">Señales de alarma</text>
+  <text x="440" y="290" class="lab">• Dificultad para tragar saliva o babeo</text>
+  <text x="440" y="316" class="lab">• Dificultad para respirar</text>
+  <text x="440" y="342" class="lab">• No puede abrir bien la boca</text>
+  <text x="440" y="368" class="lab">• Hinchazón en un lado del cuello</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

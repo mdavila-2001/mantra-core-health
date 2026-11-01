@@ -1,5 +1,6 @@
 ---
 slug: calcio
+image: calcio.svg | El calcio sanguíneo depende del hueso, el intestino y el riñón. | Esquema del equilibrio del calcio entre sangre, hueso, intestino y riñón, regulado por parathormona y vitamina D, con un tubo de sangre y los usos de la prueba.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Endocrinología reproductiva e infertilidad</title>
+  <desc id="d">Eje hormonal vertical de hipotálamo, hipófisis, ovario y útero, con un folículo que crece y ovula. A la derecha, las causas frecuentes de infertilidad y una escalera de técnicas de menor a mayor complejidad.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">El eje de la reproducción</text>
+<rect x="60" y="60" width="150" height="42" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="135.0" y="85.5" text-anchor="middle" class="lab" style="fill:var(--on)">Hipotálamo</text>
+<line x1="135.0" y1="103" x2="135.0" y2="133" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="60" y="136" width="150" height="42" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="135.0" y="161.6" text-anchor="middle" class="lab" style="fill:var(--on)">Hipófisis</text>
+<line x1="135.0" y1="179" x2="135.0" y2="209" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="60" y="212" width="150" height="42" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="135.0" y="237.6" text-anchor="middle" class="lab" style="fill:var(--on)">Ovario</text>
+<line x1="135.0" y1="255" x2="135.0" y2="285" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="60" y="288" width="150" height="42" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="135.0" y="313.6" text-anchor="middle" class="lab" style="fill:var(--on)">Útero</text>
+<text x="222" y="124" class="small" style="fill:var(--muted)">GnRH</text>
+<text x="222" y="200" class="small" style="fill:var(--muted)">FSH y LH</text>
+<text x="222" y="276" class="small" style="fill:var(--muted)">estrógenos y</text>
+<text x="222" y="292" class="small" style="fill:var(--muted)">progesterona</text>
+<circle cx="300" cy="226" r="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+<circle cx="334" cy="226" r="16" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+<circle cx="368" cy="226" r="24" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+<circle cx="360" cy="226" r="6" fill="var(--beam)" stroke="var(--warn)" stroke-width="1"/>
+<text x="330" y="180" text-anchor="middle" class="small">Folículo crece</text>
+<text x="330" y="196" text-anchor="middle" class="small">y ovula</text>
+<text x="220" y="396" text-anchor="middle" class="lab">También se estudia el factor masculino</text>
+<text x="220" y="416" text-anchor="middle" class="lab">(espermiograma).</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Problemas y técnicas</text>
+<rect x="456" y="56" width="304" height="122" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="78" class="step">Causas de infertilidad</text>
+<text x="468" y="102" class="lab">• Trastornos de la ovulación (SOP)</text>
+<text x="468" y="124" class="lab">• Trompas obstruidas, endometriosis</text>
+<text x="468" y="146" class="lab">• Edad y reserva ovárica</text>
+<text x="468" y="168" class="lab">• Factor masculino</text>
+<text x="456" y="206" class="step">De menor a mayor complejidad</text>
+<rect x="456" y="218" width="304" height="38" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="470" y="242" class="lab">Inducción de la ovulación</text>
+<rect x="466" y="266" width="294" height="38" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="480" y="290" class="lab">Inseminación intrauterina</text>
+<rect x="476" y="314" width="284" height="38" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="490" y="338" class="lab">Fecundación in vitro (FIV, ICSI)</text>
+<rect x="486" y="362" width="274" height="38" rx="8" fill="var(--ok-l)" stroke-width="1"/>
+<text x="500" y="386" class="lab">Preservación de la fertilidad</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

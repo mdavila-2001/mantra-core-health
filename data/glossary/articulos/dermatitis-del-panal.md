@@ -1,5 +1,6 @@
 ---
 slug: dermatitis-del-panal
+image: dermatitis-del-panal.svg | Humedad, roce y contacto con orina y heces irritan la piel del pañal. | Esquema de la zona del pañal rodeada por cuatro factores que la irritan, con una lista de cuidados preventivos y los signos que justifican consultar.
 ---
 
 ## [definition] Introducción

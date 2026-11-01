@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2964004
+image: wikidata-especialidad-q2964004.svg | La cirugía torácica trata los pulmones, la pleura, la tráquea y el mediastino. | Tórax con costillas, tráquea, bronquios y ambos pulmones, un nódulo pulmonar y la pleura señalada, junto a las enfermedades que trata la cirugía torácica y sus vías de acceso.
 ---
 
 ## [definition] Introducción

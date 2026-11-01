@@ -1,5 +1,6 @@
 ---
 slug: trastorno-de-estres-postraumatico
+image: trastorno-de-estres-postraumatico.svg | Los cuatro grupos de síntomas del TEPT tras un hecho traumático. | Hecho traumático del que parten cuatro recuadros: revivir, evitar, cambios de ánimo y pensamiento, y alerta excesiva, con el tratamiento y un aviso de ayuda urgente.
 ---
 
 ## [definition] Introducción

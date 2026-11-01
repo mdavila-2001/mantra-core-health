@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2073
+image: medlineplus-es-2073.svg | El páncreas donado se conecta a los vasos y al intestino. | Abdomen con el páncreas donado en la parte baja unido a los vasos ilíacos y al intestino, con la insulina que libera a la sangre y los tipos de trasplante de páncreas.
 ---
 
 ## [definition] Introducción

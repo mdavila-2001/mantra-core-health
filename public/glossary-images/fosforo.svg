@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué mide el fósforo sérico</title>
+  <desc id="d">Diagrama con el fosfato de la sangre en el centro y tres órganos que lo regulan: el intestino que lo absorbe, el hueso que lo almacena y el riñón que elimina el exceso, junto con la hormona paratiroidea y la vitamina D. A la derecha, un tubo de suero y lo que ayuda a evaluar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Fósforo en sangre: un equilibrio entre tres órganos</text>
+  <rect x="20" y="60" width="500" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="270" cy="250" r="62" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <text x="270" y="245" text-anchor="middle" class="h">Fosfato</text>
+  <text x="270" y="264" text-anchor="middle" class="small">en la sangre</text>
+  <rect x="50" y="90" width="150" height="56" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="125.0" y="115.0" text-anchor="middle" class="lab b">Intestino</text>
+  <text x="125.0" y="132.0" text-anchor="middle" class="small muted">absorbe de la dieta</text>
+  <rect x="340" y="90" width="150" height="56" rx="10" fill="var(--bone)" stroke="var(--muted)"/>
+  <text x="415.0" y="115.0" text-anchor="middle" class="lab b">Hueso</text>
+  <text x="415.0" y="132.0" text-anchor="middle" class="small muted">almacén principal</text>
+  <rect x="195" y="360" width="150" height="56" rx="10" fill="var(--organ)" stroke="var(--red)"/>
+  <text x="270.0" y="385.0" text-anchor="middle" class="lab b">Riñón</text>
+  <text x="270.0" y="402.0" text-anchor="middle" class="small muted">elimina el exceso</text>
+  <line x1="170" y1="148" x2="225" y2="200" stroke="var(--warn)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="325" y1="205" x2="380" y2="150" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="390" y1="150" x2="335" y2="210" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="270" y1="314" x2="270" y2="356" stroke="var(--red)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="50" y="230" width="130" height="56" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="115.0" y="255.0" text-anchor="middle" class="lab b">Paratiroides</text>
+  <text x="115.0" y="272.0" text-anchor="middle" class="small muted">PTH</text>
+  <rect x="370" y="290" width="130" height="56" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="435.0" y="315.0" text-anchor="middle" class="lab b">Vitamina D</text>
+  <text x="435.0" y="332.0" text-anchor="middle" class="small muted">regula absorción</text>
+  <line x1="182" y1="258" x2="204" y2="252" stroke="var(--pur)" stroke-width="2" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+  <line x1="380" y1="300" x2="330" y2="275" stroke="var(--ok)" stroke-width="2" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+  <text x="60" y="312" class="small muted">Hormonas que</text>
+  <text x="60" y="328" class="small muted">ajustan el balance</text>
+  <rect x="536" y="60" width="244" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="658.0" y="88" text-anchor="middle" class="h">La prueba</text>
+  <rect x="565" y="105" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="567" y="135" width="22" height="48" rx="10" fill="var(--warn)" opacity=".85"/>
+  <rect x="562" y="97" width="32" height="12" rx="3" fill="var(--accent)"/>
+  <text x="578" y="205" text-anchor="middle" class="small muted">Suero</text>
+  <text x="610" y="130" class="small">Fosfato</text>
+  <text x="610" y="146" class="small">inorgánico</text>
+  <text x="552" y="250" class="lab">• Enfermedad renal</text>
+  <text x="552" y="276" class="lab">• Trastornos de la</text>
+  <text x="563" y="302" class="lab">paratiroides</text>
+  <text x="552" y="328" class="lab">• Alteraciones óseas</text>
+  <text x="552" y="354" class="lab">• Desnutrición o</text>
+  <text x="563" y="380" class="lab">realimentación</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

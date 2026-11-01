@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Mecanismo y control de la diabetes gestacional</title>
+  <desc id="d">Útero con feto y placenta, cuyas hormonas reducen el efecto de la insulina; el páncreas no compensa y sube la glucosa. A la derecha, la prueba de detección del segundo trimestre, los riesgos y el tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Por qué aparece</text>
+<ellipse cx="130" cy="140" rx="70" ry="64" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+<circle cx="110" cy="122" r="20" fill="var(--skin)" stroke="var(--muted)" stroke-width="1.5"/>
+<ellipse cx="142" cy="150" rx="28" ry="20" fill="var(--skin)" stroke="var(--muted)" stroke-width="1.5" transform="rotate(30 142 150)"/>
+<path d="M80,100 Q60,140 80,180" fill="none" stroke="var(--vessel)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="70" y="226" text-anchor="middle" class="small">Placenta</text>
+<line x1="210" y1="140" x2="250" y2="140" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="256" y="110" width="148" height="60" rx="8" fill="var(--purple-l)" stroke-width="1"/>
+<text x="330.0" y="129.2" text-anchor="middle" class="small" style="fill:var(--ink)">Hormonas que</text>
+<text x="330.0" y="144.2" text-anchor="middle" class="small" style="fill:var(--ink)">reducen el efecto</text>
+<text x="330.0" y="159.2" text-anchor="middle" class="small" style="fill:var(--ink)">de la insulina</text>
+<line x1="330" y1="174" x2="330" y2="206" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="256" y="212" width="148" height="44" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="330.0" y="230.7" text-anchor="middle" class="small" style="fill:var(--ink)">El páncreas no</text>
+<text x="330.0" y="245.7" text-anchor="middle" class="small" style="fill:var(--ink)">compensa del todo</text>
+<line x1="330" y1="260" x2="330" y2="292" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="256" y="298" width="148" height="44" rx="8" fill="var(--vessel)" stroke-width="1"/>
+<text x="330.0" y="316.7" text-anchor="middle" class="small" style="fill:var(--on)">Sube la glucosa</text>
+<text x="330.0" y="331.7" text-anchor="middle" class="small" style="fill:var(--on)">en sangre</text>
+<rect x="40" y="300" width="196" height="114" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="52" y="322" class="step">Más riesgo si:</text>
+<text x="52" y="344" class="small">• Sobrepeso</text>
+<text x="52" y="364" class="small">• Edad materna mayor</text>
+<text x="52" y="384" class="small">• Familia con diabetes</text>
+<text x="52" y="404" class="small">• Diabetes gestacional previa</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Detección y cuidado</text>
+<rect x="456" y="58" width="304" height="52" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="608.0" y="80.5" text-anchor="middle" class="lab" style="fill:var(--on)">Prueba de glucosa con sobrecarga</text>
+<text x="608.0" y="96.5" text-anchor="middle" class="lab" style="fill:var(--on)">habitualmente en semanas 24 a 28</text>
+<rect x="456" y="126" width="304" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="148" class="step">Si no se controla</text>
+<text x="468" y="172" class="lab">• Bebé grande, parto difícil</text>
+<text x="468" y="194" class="lab">• Glucosa baja del recién nacido</text>
+<text x="468" y="216" class="lab">• Preeclampsia</text>
+<rect x="456" y="248" width="304" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="270" class="step">Tratamiento</text>
+<text x="468" y="294" class="lab">• Dieta y actividad física</text>
+<text x="468" y="316" class="lab">• Autocontrol de glucosa</text>
+<text x="468" y="338" class="lab">• Insulina si hace falta</text>
+<text x="456" y="394" class="lab">Suele desaparecer tras el parto, pero</text>
+<text x="456" y="414" class="lab">aumenta el riesgo de diabetes tipo 2.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

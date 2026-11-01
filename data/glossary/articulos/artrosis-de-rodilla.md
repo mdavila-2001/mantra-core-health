@@ -1,5 +1,6 @@
 ---
 slug: artrosis-de-rodilla
+image: artrosis-de-rodilla.svg | En la artrosis el cartílago de la rodilla se desgasta y aparecen osteofitos. | Comparación de una rodilla sana con cartílago grueso y una rodilla con artrosis con el cartílago gastado, el espacio articular estrecho y osteofitos en los bordes del hueso.
 ---
 
 ## [definition] Introducción

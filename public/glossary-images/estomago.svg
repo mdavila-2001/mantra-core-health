@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Partes del estómago</title>
+  <desc id="d">Estómago en forma de J. El esófago llega por arriba al cardias. Por encima queda el fondo, en el centro el cuerpo con pliegues de mucosa, abajo el antro y a la derecha el píloro, que comunica con el duodeno. Se señalan la curvatura menor y la mayor. A la derecha, un corte de la pared con sus capas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --wall:#e7a99a; --muc:#f6d3c8; --fold:#d98a78; --eso:#d9a441; --duo:#e6c27a; --m1:#f6d3c8; --m2:#f0e2c2; --m3:#d98a78; --m4:#cfd6df; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --wall:#8a4f44; --muc:#5a3a35; --fold:#b06a5a; --eso:#b08a3a; --duo:#9a7f42; --m1:#5a3a35; --m2:#4f4636; --m3:#8a4f44; --m4:#566472; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="520" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="280" y="50" text-anchor="middle" class="title">Anatomía del estómago</text>
+  <!-- esofago -->
+  <path d="M300 60 L300 120" stroke="var(--eso)" stroke-width="26" stroke-linecap="round"/>
+  <!-- estomago -->
+  <path d="M290 120 C250 80 170 80 150 140 C130 200 140 300 200 360 C250 405 340 410 390 370 C410 354 420 340 430 330 L432 300 C410 310 395 320 370 330 C330 345 290 330 280 290 C270 250 290 200 312 150 Z" fill="var(--wall)" stroke="var(--fold)" stroke-width="2"/>
+  <path d="M286 132 C252 104 186 104 170 150 C154 200 162 290 212 342 C254 382 330 386 372 352 C390 338 400 330 412 322" fill="none" stroke="var(--muc)" stroke-width="12" opacity=".7"/>
+  <!-- pliegues -->
+  <g fill="none" stroke="var(--fold)" stroke-width="2.5" opacity=".8">
+    <path d="M190 170 C210 220 205 270 230 320"/><path d="M215 160 C235 210 232 260 258 316"/><path d="M240 150 C258 200 255 250 282 312"/>
+  </g>
+  <!-- duodeno -->
+  <path d="M432 315 C470 312 480 340 470 380" fill="none" stroke="var(--duo)" stroke-width="24" stroke-linecap="round"/>
+  <!-- etiquetas -->
+  <g class="lab">
+    <text x="318" y="80">Esófago</text>
+    <path d="M300 125 L360 140" stroke="var(--muted)"/><text x="364" y="144">Cardias</text>
+    <path d="M190 100 L110 82" stroke="var(--muted)"/><text x="40" y="78">Fondo</text>
+    <path d="M160 230 L80 230" stroke="var(--muted)"/><text x="40" y="226">Cuerpo</text>
+    <text x="40" y="242" class="small muted">con pliegues</text>
+    <path d="M300 385 L280 430" stroke="var(--muted)"/><text x="230" y="446">Antro</text>
+    <path d="M425 320 L470 280" stroke="var(--muted)"/><text x="440" y="272">Píloro</text>
+    <text x="482" y="410">Duodeno</text>
+    <text x="300" y="250" class="small muted">Curvatura</text><text x="300" y="266" class="small muted">menor</text>
+    <path d="M150 330 L90 380" stroke="var(--muted)"/><text x="40" y="396" class="small muted">Curvatura mayor</text>
+  </g>
+
+  <rect x="556" y="20" width="224" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="668" y="50" text-anchor="middle" class="h">Capas de la pared</text>
+  <rect x="580" y="80" width="40" height="56" fill="var(--m1)"/><text x="630" y="104" class="lab">Mucosa</text><text x="630" y="122" class="small muted">jugo y moco</text>
+  <rect x="580" y="136" width="40" height="40" fill="var(--m2)"/><text x="630" y="160" class="lab">Submucosa</text>
+  <rect x="580" y="176" width="40" height="70" fill="var(--m3)"/><text x="630" y="206" class="lab">Músculo</text><text x="630" y="224" class="small muted">tres capas</text>
+  <rect x="580" y="246" width="40" height="20" fill="var(--m4)"/><text x="630" y="261" class="lab">Serosa</text>
+  <line x1="576" y1="296" x2="760" y2="296" stroke="var(--line)"/>
+  <text x="668" y="324" text-anchor="middle" class="h">Funciones</text>
+  <g class="small">
+    <text x="576" y="350">• Almacena el alimento</text>
+    <text x="576" y="372">• Lo mezcla y tritura</text>
+    <text x="576" y="394">• Digiere proteínas con ácido</text>
+    <text x="576" y="416">• Destruye microbios</text>
+    <text x="576" y="438">• Lo libera poco a poco</text>
+  </g>
+</svg>

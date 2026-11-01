@@ -1,5 +1,6 @@
 ---
 slug: hernia-hiatal
+image: hernia-hiatal.svg | Estómago normal frente a hernia de hiato | Dos esquemas del esófago, el diafragma y el estómago, uno normal y otro con parte del estómago subiendo por encima del diafragma, junto a los síntomas y las medidas que ayudan
 ---
 
 ## [definition] Introducción

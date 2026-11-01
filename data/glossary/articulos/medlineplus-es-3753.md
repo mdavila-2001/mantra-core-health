@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-3753
+image: medlineplus-es-3753.svg | Los tipos de mastectomía se diferencian por cuánta piel, pezón y ganglios se extirpan. | Corte lateral de la mama con costillas, músculo pectoral, glándula, piel, pezón y ganglios axilares. A la derecha, los tipos de mastectomía según lo que se extirpa y la posibilidad de reconstrucción.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Formas clínicas del aborto espontáneo</title>
+  <desc id="d">A la izquierda, dos úteros con saco gestacional: uno con el cuello cerrado (amenaza de aborto) y otro con el cuello abierto (aborto inevitable). A la derecha, la lista de formas clínicas y los signos de alarma.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Cuello cerrado o abierto</text>
+<path d="M50,120 Q110,90 170,120 Q180,180 128,220 L124,250 L96,250 L92,220 Q40,180 50,120 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M70,130 Q110,110 150,130 Q150,180 116,216 L104,216 Q70,180 70,130 Z" fill="var(--vessel-l)" stroke="var(--organ-d)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="108.5" y="216" width="3.0" height="36" rx="2" fill="var(--organ-d)" stroke-width="1"/>
+<ellipse cx="110" cy="140" rx="16" ry="13" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+<text x="110" y="282" text-anchor="middle" class="step">Cuello cerrado</text>
+<text x="110" y="302" text-anchor="middle" class="small" style="fill:var(--muted)">Amenaza de aborto:</text>
+<text x="110" y="318" text-anchor="middle" class="small" style="fill:var(--muted)">puede continuar</text>
+<path d="M230,120 Q290,90 350,120 Q360,180 308,220 L304,250 L276,250 L272,220 Q220,180 230,120 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M250,130 Q290,110 330,130 Q330,180 296,216 L284,216 Q250,180 250,130 Z" fill="var(--vessel-l)" stroke="var(--organ-d)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="283" y="216" width="14" height="36" rx="2" fill="var(--vessel-l)" stroke-width="1"/>
+<ellipse cx="290" cy="190" rx="14" ry="11" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+<text x="290" y="282" text-anchor="middle" class="step">Cuello abierto</text>
+<text x="290" y="302" text-anchor="middle" class="small" style="fill:var(--muted)">Aborto inevitable:</text>
+<text x="290" y="318" text-anchor="middle" class="small" style="fill:var(--muted)">ya no se detiene</text>
+<text x="110" y="82" text-anchor="middle" class="small">Saco gestacional</text>
+<line x1="110" y1="88" x2="110" y2="126" stroke="var(--muted)" stroke-width="1.5"/>
+<rect x="40" y="340" width="320" height="60" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="52" y="362" class="lab">La ecografía y la exploración del cuello</text>
+<text x="52" y="384" class="lab">orientan la forma clínica.</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Formas clínicas</text>
+<rect x="416" y="60" width="110" height="26" rx="6" fill="var(--accent-l)" stroke-width="1"/>
+<text x="471" y="78" text-anchor="middle" class="step">Amenaza</text>
+<text x="538" y="78" class="lab">sangrado con cuello cerrado</text>
+<rect x="416" y="94" width="110" height="26" rx="6" fill="var(--accent-l)" stroke-width="1"/>
+<text x="471" y="112" text-anchor="middle" class="step">Inevitable</text>
+<text x="538" y="112" class="lab">cuello dilatado</text>
+<rect x="416" y="128" width="110" height="26" rx="6" fill="var(--accent-l)" stroke-width="1"/>
+<text x="471" y="146" text-anchor="middle" class="step">Incompleto</text>
+<text x="538" y="146" class="lab">quedan restos dentro</text>
+<rect x="416" y="162" width="110" height="26" rx="6" fill="var(--accent-l)" stroke-width="1"/>
+<text x="471" y="180" text-anchor="middle" class="step">Completo</text>
+<text x="538" y="180" class="lab">salió todo el tejido</text>
+<rect x="416" y="196" width="110" height="26" rx="6" fill="var(--accent-l)" stroke-width="1"/>
+<text x="471" y="214" text-anchor="middle" class="step">Retenido</text>
+<text x="538" y="214" class="lab">sin latido, sin expulsión</text>
+<rect x="416" y="230" width="110" height="26" rx="6" fill="var(--accent-l)" stroke-width="1"/>
+<text x="471" y="248" text-anchor="middle" class="step">Séptico</text>
+<text x="538" y="248" class="lab">infección: urgencia</text>
+<rect x="416" y="272" width="344" height="122" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="428" y="294" class="step" style="fill:var(--warn)">Consultar de urgencia si:</text>
+<text x="428" y="316" class="lab">• Sangrado que empapa compresas</text>
+<text x="428" y="338" class="lab">• Dolor intenso o en un solo lado</text>
+<text x="428" y="360" class="lab">• Fiebre o flujo con mal olor</text>
+<text x="428" y="382" class="lab">• Mareo o desmayo</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

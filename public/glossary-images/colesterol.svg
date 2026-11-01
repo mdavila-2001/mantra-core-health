@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">El colesterol en la sangre y la placa de ateroma</title>
+  <desc id="d">Una arteria cortada a lo largo. Por la izquierda circulan partículas LDL y HDL. Las LDL en exceso entran en la pared y forman una placa que estrecha el paso de la sangre. Las HDL recogen colesterol y lo llevan de vuelta al hígado, dibujado a la derecha.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --wall:#e7b7a8; --blood:#f6dada; --ldl:#d68910; --hdl:#1f8a5b; --plaque:#f2d27a; --liver:#a0522d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --wall:#7a4a40; --blood:#3a2629; --ldl:#f0b04a; --hdl:#4cc38a; --plaque:#9b8538; --liver:#c97a50; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .pt { font-size: 10px; font-weight: 700; fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Cómo se forma una placa en la arteria</text>
+
+  <!-- arteria -->
+  <rect x="50" y="110" width="520" height="40" fill="var(--wall)"/>
+  <rect x="50" y="270" width="520" height="40" fill="var(--wall)"/>
+  <rect x="50" y="150" width="520" height="120" fill="var(--blood)"/>
+  <!-- placa -->
+  <path d="M300 270 C330 200 420 200 450 270 Z" fill="var(--plaque)" stroke="var(--ldl)" stroke-width="2"/>
+  <text x="375" y="258" text-anchor="middle" class="small">Placa</text>
+  <!-- flechas flujo -->
+  <path d="M70 200 H130" stroke="var(--muted)" stroke-width="3" marker-end="url(#a)"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <text x="70" y="186" class="small muted">Sangre</text>
+  <!-- particulas -->
+  <g>
+    <circle cx="170" cy="180" r="13" fill="var(--ldl)"/><text x="170" y="184" text-anchor="middle" class="pt">LDL</text>
+    <circle cx="230" cy="235" r="13" fill="var(--ldl)"/><text x="230" y="239" text-anchor="middle" class="pt">LDL</text>
+    <circle cx="330" cy="285" r="10" fill="var(--ldl)"/>
+    <circle cx="410" cy="288" r="10" fill="var(--ldl)"/>
+    <circle cx="200" cy="205" r="11" fill="var(--hdl)"/><text x="200" y="209" text-anchor="middle" class="pt">HDL</text>
+    <circle cx="500" cy="190" r="11" fill="var(--hdl)"/><text x="500" y="194" text-anchor="middle" class="pt">HDL</text>
+  </g>
+  <path d="M245 240 C280 260 300 275 320 284" fill="none" stroke="var(--ldl)" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="300" y="336" text-anchor="middle" class="lab">El exceso de LDL entra en la pared</text>
+  <text x="375" y="180" text-anchor="middle" class="small muted">Paso estrechado</text>
+  <!-- higado -->
+  <path d="M620 160 C640 120 760 120 760 175 C760 240 690 270 640 250 C610 236 605 190 620 160 Z" fill="var(--liver)"/>
+  <text x="690" y="200" text-anchor="middle" class="lab" style="fill:var(--on)">Hígado</text>
+  <path d="M515 190 C560 170 590 170 615 180" fill="none" stroke="var(--hdl)" stroke-width="2.5" marker-end="url(#b)"/>
+  <defs><marker id="b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--hdl)"/></marker></defs>
+  <text x="690" y="290" text-anchor="middle" class="small muted">Fabrica colesterol</text>
+  <text x="690" y="306" text-anchor="middle" class="small muted">y recibe el que trae la HDL</text>
+
+  <!-- leyenda -->
+  <circle cx="70" cy="380" r="9" fill="var(--ldl)"/><text x="86" y="384" class="lab">LDL: lleva colesterol a los tejidos («malo» en exceso)</text>
+  <circle cx="70" cy="410" r="9" fill="var(--hdl)"/><text x="86" y="414" class="lab">HDL: devuelve colesterol al hígado («bueno»)</text>
+  <rect x="470" y="372" width="18" height="14" rx="3" fill="var(--plaque)" stroke="var(--ldl)"/><text x="496" y="384" class="lab">Placa de ateroma</text>
+  <rect x="470" y="402" width="18" height="14" rx="3" fill="var(--wall)"/><text x="496" y="414" class="lab">Pared de la arteria</text>
+</svg>

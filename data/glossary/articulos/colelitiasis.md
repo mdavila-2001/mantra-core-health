@@ -1,5 +1,6 @@
 ---
 slug: colelitiasis
+image: colelitiasis.svg | Los cálculos se forman en la vesícula y pueden obstruir la salida de la bilis. | Hígado, vesícula biliar con varios cálculos, conducto colédoco, páncreas y duodeno. A la derecha, las posibles consecuencias: ausencia de síntomas, cólico biliar, colecistitis, coledocolitiasis y pancreatitis.
 ---
 
 ## [definition] Introducción

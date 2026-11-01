@@ -1,5 +1,6 @@
 ---
 slug: administracion-de-medicamentos
+image: administracion-de-medicamentos.svg | Circuito de la administración segura de medicamentos. | Ocho pasos en secuencia desde la prescripción y la validación por farmacia hasta la administración, el registro, el monitoreo y la notificación de errores, con la verificación a pie de cama resaltada.
 ---
 
 ## [definition] Introducción

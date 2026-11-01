@@ -1,5 +1,6 @@
 ---
 slug: herpes-zoster
+image: herpes-zoster.svg | El virus de la varicela dormido en un ganglio se reactiva y sigue el trayecto de un nervio. | Médula espinal con un ganglio donde el virus de la varicela queda dormido y un nervio que lleva la reactivación hasta una franja de piel con ampollas en un solo lado. A la derecha, síntomas, complicaciones, tratamiento y vacuna.
 ---
 
 ## [definition] Introducción

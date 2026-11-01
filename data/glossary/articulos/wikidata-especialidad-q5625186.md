@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q5625186
+image: wikidata-especialidad-q5625186.svg | Órganos donde se originan los cánceres ginecológicos. | Útero con endometrio, trompas, ovarios, cuello uterino, vagina y vulva señalados, junto a las medidas de prevención y los síntomas que justifican consultar.
 ---
 
 ## [definition] Introducción

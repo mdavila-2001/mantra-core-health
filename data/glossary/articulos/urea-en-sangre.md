@@ -1,5 +1,6 @@
 ---
 slug: urea-en-sangre
+image: urea-en-sangre.svg | La urea se forma en el hígado a partir de las proteínas y los riñones la eliminan. | Cadena de proteínas a aminoácidos y amoníaco, que el hígado convierte en urea; la urea viaja en la sangre y los riñones la eliminan. Abajo, situaciones en que puede subir o bajar.
 ---
 
 ## [definition] Introducción

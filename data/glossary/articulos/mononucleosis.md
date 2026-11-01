@@ -1,5 +1,6 @@
 ---
 slug: mononucleosis
+image: mononucleosis.svg | Síntomas y cuidados de la mononucleosis | Figura con la garganta inflamada, los ganglios del cuello aumentados y el bazo agrandado, junto a los síntomas, el diagnóstico y el aviso de evitar deportes de contacto
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se origina y se extiende un cáncer</title>
+  <desc id="d">Tres paneles: un tejido normal con células ordenadas; un tumor formado por células que crecen sin control por cambios en sus genes; y células tumorales que viajan por un vaso y forman una metástasis en otro órgano.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --warn:#c0392b; --ok:#1f8a5b; --beam:#f2c46d; --violet:#7b5ea7; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --warn:#ef7467; --ok:#4cc38a; --beam:#8a6f2f; --violet:#b39ddb; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <text x="400" y="42" text-anchor="middle" class="title">Cómo se origina y se extiende un cáncer</text>
+  <rect x="20" y="64" width="240" height="330" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="140" y="92" text-anchor="middle" class="step" style="fill:var(--ok)">1 · Tejido normal</text>
+  <g fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2">
+    <rect x="44" y="130" width="44" height="44" rx="10"/><rect x="96" y="130" width="44" height="44" rx="10"/><rect x="148" y="130" width="44" height="44" rx="10"/><rect x="200" y="130" width="40" height="44" rx="10"/>
+    <rect x="44" y="182" width="44" height="44" rx="10"/><rect x="96" y="182" width="44" height="44" rx="10"/><rect x="148" y="182" width="44" height="44" rx="10"/><rect x="200" y="182" width="40" height="44" rx="10"/>
+  </g>
+  <rect x="40" y="236" width="204" height="10" rx="4" fill="var(--bone)"/>
+  <text x="140" y="290" text-anchor="middle" class="lab">Las células se dividen y</text>
+  <text x="140" y="310" text-anchor="middle" class="lab">mueren de forma ordenada</text>
+  <path d="M262 230 H290" stroke="var(--muted)" stroke-width="3" marker-end="url(#a)"/>
+  <rect x="292" y="64" width="240" height="330" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="412" y="92" text-anchor="middle" class="step" style="fill:var(--warn)">2 · Tumor</text>
+  <g fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2">
+    <rect x="316" y="182" width="44" height="44" rx="10"/><rect x="472" y="182" width="40" height="44" rx="10"/>
+  </g>
+  <g fill="var(--warn)" opacity=".75">
+    <circle cx="390" cy="200" r="22"/><circle cx="432" cy="198" r="20"/><circle cx="410" cy="160" r="20"/><circle cx="450" cy="160" r="16"/><circle cx="372" cy="160" r="15"/><circle cx="412" cy="124" r="14"/><circle cx="420" cy="238" r="12"/>
+  </g>
+  <rect x="312" y="236" width="204" height="10" rx="4" fill="var(--bone)"/>
+  <text x="412" y="290" text-anchor="middle" class="lab">Cambios en los genes:</text>
+  <text x="412" y="310" text-anchor="middle" class="lab">crecen sin control</text>
+  <text x="412" y="334" text-anchor="middle" class="small muted">y atraviesan su capa de origen</text>
+  <path d="M534 230 H562" stroke="var(--muted)" stroke-width="3" marker-end="url(#a)"/>
+  <rect x="564" y="64" width="216" height="330" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="672" y="92" text-anchor="middle" class="step" style="fill:var(--violet)">3 · Diseminación</text>
+  <path d="M584 200 C640 170 700 230 760 200" fill="none" stroke="var(--warn)" stroke-width="22" opacity=".25" stroke-linecap="round"/>
+  <circle cx="620" cy="190" r="8" fill="var(--warn)"/>
+  <circle cx="690" cy="206" r="8" fill="var(--warn)"/>
+  <text x="672" y="160" text-anchor="middle" class="small">Vaso sanguíneo o linfático</text>
+  <circle cx="700" cy="262" r="20" fill="var(--violet)" opacity=".35" stroke="var(--violet)"/>
+  <circle cx="700" cy="262" r="7" fill="var(--warn)"/>
+  <text x="672" y="310" text-anchor="middle" class="lab">Puede formar tumores</text>
+  <text x="672" y="330" text-anchor="middle" class="lab">en otros órganos</text>
+  <text x="672" y="350" text-anchor="middle" class="small muted">(metástasis)</text>
+  <text x="400" y="430" text-anchor="middle" class="lab">Detectarlo en las primeras fases mejora mucho las opciones de tratamiento.</text>
+  <text x="400" y="462" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

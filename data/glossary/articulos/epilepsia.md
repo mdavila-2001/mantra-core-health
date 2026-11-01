@@ -1,5 +1,6 @@
 ---
 slug: epilepsia
+image: epilepsia.svg | En una crisis, grupos de neuronas descargan a la vez de forma excesiva. | Cerebro con un foco de actividad excesiva y un trazado eléctrico que muestra una crisis, junto a los tipos de crisis, primeros auxilios y cuándo llamar a emergencias.
 ---
 
 ## [definition] Introducción

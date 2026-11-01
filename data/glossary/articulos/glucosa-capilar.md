@@ -1,5 +1,6 @@
 ---
 slug: glucosa-capilar
+image: glucosa-capilar.svg | Los cuatro pasos de la medición de glucosa en una gota de sangre del dedo. | Secuencia ilustrada de cuatro pasos: lavado de manos, punción del dedo con lanceta, gota sobre la tira reactiva y lectura en el glucómetro, con sus usos y precauciones debajo.
 ---
 
 ## [definition] Introducción

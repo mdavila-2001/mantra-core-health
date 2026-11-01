@@ -1,5 +1,6 @@
 ---
 slug: tuberculosis-pulmonar
+image: tuberculosis-pulmonar.svg | La tuberculosis pulmonar se transmite por gotitas en el aire. | Dos personas, una que tose gotitas con la bacteria y otra que las inhala, y unos pulmones con una lesión en la parte superior, junto a síntomas y tratamiento.
 ---
 
 ## [definition] Introducción

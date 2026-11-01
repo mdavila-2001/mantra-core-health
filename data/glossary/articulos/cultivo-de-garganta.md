@@ -1,5 +1,6 @@
 ---
 slug: cultivo-de-garganta
+image: cultivo-de-garganta.svg | Con un hisopo se toma muestra de las amígdalas y la parte posterior de la garganta. | Boca abierta con amígdalas y un hisopo que toma la muestra de la garganta, y a la derecha los pasos del cultivo para buscar estreptococo del grupo A.
 ---
 
 ## [definition] Introducción

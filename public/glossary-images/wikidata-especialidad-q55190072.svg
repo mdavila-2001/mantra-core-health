@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Medicina de la adicción</title>
+  <desc id="d">Cerebro visto de lado con el circuito de recompensa: área tegmental ventral, núcleo accumbens y corteza prefrontal unidos por flechas de dopamina. A la derecha, el ciclo de consumo, abstinencia y deseo intenso, y las opciones de tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">Circuito de recompensa</text>
+<path d="M242.0,229.5 L250.8,301.0" fill="none" stroke="var(--organ-d)" stroke-width="24.2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M242.0,229.5 L250.8,301.0" fill="none" stroke="var(--tissue)" stroke-width="19.8" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="280.5" cy="240.5" rx="37.4" ry="22.0" fill="var(--tissue)" stroke="var(--organ-d)" stroke-width="2"/>
+<path d="M110.0,191.0 C99.0,114.0 176.0,81.0 231.0,92.0 C297.0,92.0 341.0,136.0 330.0,202.0 C324.5,235.0 286.0,235.0 264.0,224.0 C231.0,246.0 176.0,246.0 143.0,229.5 C115.5,224.0 110.0,207.5 110.0,191.0 Z" fill="var(--tissue)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M154.0,136.0 q22.0,22.0 44.0,0 M209.0,114.0 q11.0,33.0 33.0,22.0 M264.0,136.0 q11.0,33.0 33.0,33.0 M143.0,191.0 q33.0,-11.0 55.0,11.0 M220,169.0 q22.0,22.0 55.0,0" fill="none" stroke="var(--organ-d)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="242" cy="230" r="9" fill="var(--warn)" stroke="none" stroke-width="1"/>
+<circle cx="187" cy="191" r="9" fill="var(--accent)" stroke="none" stroke-width="1"/>
+<circle cx="132" cy="158" r="11" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<path d="M242,230 Q215,222 194,198" fill="none" stroke="var(--warn)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M182,186 Q160,170 140,162" fill="none" stroke="var(--warn)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="30" y="96" class="small">Corteza</text>
+<text x="30" y="112" class="small">prefrontal</text>
+<line x1="96" y1="108" x2="124" y2="152" stroke="var(--muted)" stroke-width="1"/>
+<text x="30" y="250" class="small">Núcleo</text>
+<text x="30" y="266" class="small">accumbens</text>
+<line x1="100" y1="256" x2="180" y2="196" stroke="var(--muted)" stroke-width="1"/>
+<text x="262" y="322" class="small">Área tegmental ventral</text>
+<line x1="258" y1="318" x2="242" y2="238" stroke="var(--muted)" stroke-width="1"/>
+<text x="230" y="370" text-anchor="middle" class="lab">La dopamina refuerza la conducta;</text>
+<text x="230" y="390" text-anchor="middle" class="lab">con el consumo repetido el control</text>
+<text x="230" y="410" text-anchor="middle" class="lab">de la corteza se debilita.</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">El ciclo de la adicción</text>
+<circle cx="618" cy="170" r="82" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 5"/>
+<rect x="566" y="68" width="104" height="40" rx="8" fill="var(--purple)" stroke-width="1"/>
+<text x="618.0" y="92.2" text-anchor="middle" class="small" style="fill:var(--on)">Consumo</text>
+<rect x="637" y="191" width="104" height="40" rx="8" fill="var(--purple)" stroke-width="1"/>
+<text x="689.0" y="207.7" text-anchor="middle" class="small" style="fill:var(--on)">Abstinencia</text>
+<text x="689.0" y="222.7" text-anchor="middle" class="small" style="fill:var(--on)">malestar</text>
+<rect x="495" y="191" width="104" height="40" rx="8" fill="var(--purple)" stroke-width="1"/>
+<text x="547.0" y="207.7" text-anchor="middle" class="small" style="fill:var(--on)">Deseo</text>
+<text x="547.0" y="222.7" text-anchor="middle" class="small" style="fill:var(--on)">intenso</text>
+<rect x="476" y="286" width="284" height="122" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="488" y="308" class="step">Es tratable</text>
+<text x="488" y="332" class="lab">• Tratamiento farmacológico</text>
+<text x="488" y="354" class="lab">• Terapias psicológicas</text>
+<text x="488" y="376" class="lab">• Reducción de daños</text>
+<text x="488" y="398" class="lab">• Apoyo social y grupos</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>
