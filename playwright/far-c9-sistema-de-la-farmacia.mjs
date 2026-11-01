@@ -63,7 +63,16 @@ async function abrir(ancho, alto, tema) {
   return { ctx, pg };
 }
 
+/** Cierra los avisos emergentes de pasos anteriores: tapaban la acción principal en la captura. */
+async function sinAvisos(pg) {
+  for (const cerrar of await pg.getByTestId('toast-cerrar').all()) {
+    await cerrar.click().catch(() => {});
+  }
+  await pg.getByTestId('toast-cerrar').first().waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+}
+
 async function foto(pg, nombre) {
+  await sinAvisos(pg);
   await pg.getByTestId('integration-system').scrollIntoViewIfNeeded();
   await pg.waitForTimeout(400);
   await pg.screenshot({ path: `${OUT}/${nombre}.jpg`, quality: 80, type: 'jpeg' });
@@ -94,6 +103,13 @@ async function recorrido(ancho, alto, tema) {
     await pg.getByTestId('integration-system-form').waitFor();
   }
   await foto(pg, `01-sin-sistema-${sufijo}`);
+  // Sin sistema, «Sincronizar ahora» está deshabilitado: a la vista.
+  await sinAvisos(pg);
+  await pg.getByTestId('integration-sync').scrollIntoViewIfNeeded();
+  await pg.waitForTimeout(300);
+  const deshabilitado = await pg.getByTestId('integration-sync-button').getAttribute('aria-disabled');
+  log.push(`[${ancho}] «Sincronizar ahora» sin sistema, aria-disabled=${deshabilitado}`);
+  await pg.screenshot({ path: `${OUT}/01b-sin-sistema-sincronizar-${sufijo}.jpg`, quality: 80, type: 'jpeg' });
 
   await guardar(pg);
   await pg.getByText('Escriba la clave.').waitFor();
@@ -127,10 +143,12 @@ async function recorrido(ancho, alto, tema) {
 
   await pg.getByTestId('integration-sync-button').click();
   await pg.getByTestId('integration-sync-result').waitFor({ timeout: 60000 });
+  await sinAvisos(pg);
   await pg.getByTestId('integration-sync-result').scrollIntoViewIfNeeded();
   await pg.waitForTimeout(400);
   await pg.screenshot({ path: `${OUT}/09-sincronizado-${sufijo}.jpg`, quality: 80, type: 'jpeg' });
 
+  await sinAvisos(pg);
   await pg.getByTestId('integration-system-remove').click();
   await pg.getByTestId('dialogo').waitFor();
   // Quieto: sin animaciones en curso, para que la captura muestre el diálogo y no la transición.
@@ -156,8 +174,20 @@ async function recorrido(ancho, alto, tema) {
   await ctx.close();
 }
 
-await recorrido(1440, 900, 'light');
-await recorrido(390, 844, 'dark');
+try {
+  await recorrido(1440, 900, 'light');
+  await recorrido(390, 844, 'dark');
+} catch (error) {
+  // Lo que se veía cuando falló, para no adivinar.
+  for (const ctx of nav.contexts()) {
+    for (const pg of ctx.pages()) {
+      await pg.screenshot({ path: `${OUT}/zz-fallo.jpg`, quality: 70, type: 'jpeg' }).catch(() => {});
+      log.push(`[fallo] ${pg.url()}`);
+    }
+  }
+  writeFileSync(`${OUT}/red-y-consola.txt`, log.join('\n') + '\n');
+  throw error;
+}
 await nav.close();
 writeFileSync(`${OUT}/red-y-consola.txt`, log.join('\n') + '\n');
 console.log(log.join('\n'));

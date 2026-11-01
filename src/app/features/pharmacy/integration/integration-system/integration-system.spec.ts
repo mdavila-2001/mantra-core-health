@@ -292,6 +292,20 @@ describe('IntegrationSystem', () => {
     expect(request.cancelled).toBe(true);
     expect(byTestId('integration-system-save')?.getAttribute('aria-busy')).not.toBe('true');
     expect(byTestId('integration-system-error')).toBeNull();
+    // El PUT pudo aplicarse en la API aunque se cortó: la pestaña relee.
+    expect(changed).toBe(1);
+  });
+
+  it('cortar una prueba en vuelo no pide releer: probar no cambia nada', () => {
+    mount(WITH_SYSTEM);
+    button('integration-system-probe').click();
+    const request = http.expectOne((r) => r.method === 'POST' && r.url === `${SYSTEM_URL}/test`);
+
+    fixture.componentRef.setInput('connection', { ...WITH_SYSTEM, id: 'otra-conexion' });
+    fixture.detectChanges();
+
+    expect(request.cancelled).toBe(true);
+    expect(byTestId('integration-system-probe-ok')).toBeNull();
     expect(changed).toBe(0);
   });
 });

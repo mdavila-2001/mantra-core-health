@@ -159,7 +159,14 @@ export class IntegrationSystem {
     effect(() => {
       key();
       untracked(() => {
+        // Cortar la petición no la deshace en la API: un guardado o un quitado
+        // que ya salió pudo aplicarse. La pestaña relee para no mostrar la
+        // conexión anterior vieja; la relectura conserva la conexión elegida.
+        const wasMutating = this.saving() || this.removing();
         this.cancelInFlight();
+        if (wasMutating) {
+          this.changed.emit();
+        }
         this.editing.set(false);
         this.resetForm();
         this.error.set(null);

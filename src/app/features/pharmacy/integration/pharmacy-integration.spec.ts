@@ -15,7 +15,7 @@ import type {
 } from '../../../core/data-access/pharmacy/pharmacy-integration.types';
 import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { IntegrationMappings } from './integration-mappings/integration-mappings';
-import { PharmacyIntegration } from './pharmacy-integration';
+import { MISSING_SYSTEM_TEXT, PharmacyIntegration } from './pharmacy-integration';
 
 /**
  * Pestaña «Integración» (FAR-07): sin conexión ofrece conectarla; con conexión
@@ -322,7 +322,8 @@ describe('PharmacyIntegration', () => {
       expectOne('GET', `${CONN}/product-mappings`).flush({ items: [] });
       fixture.detectChanges();
 
-      expect(text('integration-not-configured')).toContain('no está configurada');
+      // Con la conexión dada de alta, el aviso dice qué falta sin negar que está activa.
+      expect(text('integration-not-configured')).toContain(MISSING_SYSTEM_TEXT);
       expect(disabled('integration-sync-button')).toBe(true);
       http.expectNone(`${CONN}/external-products`);
     });

@@ -17,7 +17,8 @@ Todo se escribió de verdad por la API. La clave no aparece en ninguna captura n
 
 | Paso | Captura | Petición → respuesta | Qué se ve después |
 |---|---|---|---|
-| Sin sistema | `01-sin-sistema-*` | `GET …/integration-connections` 200, `system: null` | El aviso de la conexión dice qué falta y dónde («falta cargar el sistema de la farmacia, abajo»); el formulario en dos columnas (formato y dirección, código y clave), una en el teléfono |
+| Sin sistema | `01-sin-sistema-*` | `GET …/integration-connections` 200, `system: null` | El aviso dice qué falta y dónde, sin negar el «Activa» de arriba («Falta cargar el sistema de la farmacia, abajo…»); el formulario en dos columnas (formato y dirección, código y clave), una en el teléfono |
+| Sin sistema, sincronizar | `01b-sin-sistema-sincronizar-*` | ninguna | «Sincronizar ahora» deshabilitado (`aria-disabled=true` en el registro) |
 | «Guardar y probar» vacío | `02-faltan-campos-*` | ninguna | Cada campo vacío marcado con su motivo |
 | Clave equivocada | `03-clave-equivocada-*` | `PUT …/external-system` → **502** | Debajo de la introducción: «Su sistema no respondió con esa dirección, ese código y esa clave… no se guardó nada», con el ID de la petición; lo escrito se conserva |
 | Clave correcta (Estándar ALOVIDA) | `04-guardado-*` | `PUT` → 200, después `GET …/integration-connections` 200 | Los datos del sistema **releídos de la API**, en filas (la dirección entera en una línea), «Clave: Guardada» |
@@ -37,14 +38,14 @@ haber es un sistema con quién sincronizar, y el aviso lo dice.
 
 ```
 connection_id nulo: true
-conexiones de integraciones del tenant: 7 · pausadas: 7
+conexiones de integraciones del tenant: 12 · pausadas: 12
 credenciales activas: 0
 stock de PARA-500 en la sede: 13
 estado de la conexión de la farmacia: pharmacy:CONNECTION_ACTIVE
 ```
 
 Cada recorrido crea una conexión de integraciones al guardar por primera vez, la reusa al
-«Cambiar» y la pausa al «Quitar»; las siete son de todas las corridas sobre esta base. El 13 es
+«Cambiar» y la pausa al «Quitar»; todas son de las corridas sobre esta base. El stock es
 lo que la cadena simulada mandaba para `ERP-0001` en esa ventana de cinco minutos.
 
 ## Consola
@@ -61,5 +62,5 @@ no en esta pestaña. El 502 del paso 3 es el buscado.
   y en la API por su recorrido real.
 - **Con el sistema del servidor** (sin sistema propio, `providerConfigured: true`): el texto se
   cubre en la prueba; esta API corría sin `PHARMACY_ERP_BASE_URL`.
-- **Los avisos emergentes** se apilan (`08`–`11`): es el comportamiento del servicio compartido de
-  toasts, no de esta sección.
+- **Los avisos emergentes**: el script los cierra antes de cada captura (si no, tapaban «Guardar y
+  probar»). Que se apilen y duren es del servicio compartido de toasts, no de esta sección.
