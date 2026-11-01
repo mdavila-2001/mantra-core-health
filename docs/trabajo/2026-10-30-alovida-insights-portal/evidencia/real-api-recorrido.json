@@ -1,0 +1,208 @@
+{
+  "net": [
+    {
+      "method": "GET",
+      "url": "/marketing/insights/catalog",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "05317c2a-f480-4b29-8f5e-b45dddc054dc"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/notification-preferences",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "15f5daab-506e-434c-a48a-ed6181b678e0"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/alert-rules",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "bacc4acd-428d-4d02-94f3-2a0d5b061c13"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/alert-workflow",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "bc8da5e9-f981-4391-acd9-1d8c71f65dec"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/user-preferences",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "801ea263-96b7-4040-b3b0-7e75fed78357"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/campaign-facts?from=2026-09-01&to=2026-10-29",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "3eb69b33-652e-41f2-8c9a-de9886e303e3"
+    },
+    {
+      "method": "PUT",
+      "url": "/marketing/insights/alert-workflow/onboarding-c1",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "1d0b4fce-e11e-476c-9ef3-c193081ea360",
+      "body": "{\"status\":\"new\",\"ownerTeam\":\"marketing\",\"snapshot\":{\"severity\":\"risk\",\"title\":\"El abandono del onboarding aumentó 18%\",\"whatText\":\"Entre quienes se registran en"
+    },
+    {
+      "method": "PUT",
+      "url": "/marketing/insights/alert-workflow/onboarding-c1",
+      "status": 200,
+      "ifMatch": "1",
+      "tenant": "sí",
+      "reqId": "4b3ec321-f7c0-4fd0-9a74-58ad5781cad0",
+      "body": "{\"status\":\"in_progress\",\"ownerTeam\":\"marketing\",\"snapshot\":{\"severity\":\"risk\",\"title\":\"El abandono del onboarding aumentó 18%\",\"whatText\":\"Entre quienes se regi"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/catalog",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "e675da95-bf02-40c5-ba06-e9d88a49097e"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/notification-preferences",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "d38f14ba-b6d8-4e36-8477-892f26a06292"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/user-preferences",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "d6459cfb-df15-4422-ab7d-8a73b5a0ec4a"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/alert-workflow",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "54df83d8-ca64-44a6-9637-c1f89525ef1a"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/alert-rules",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "1ce269c2-253a-410c-8594-9cdbeabec156"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/campaign-facts?from=2026-09-01&to=2026-10-29",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "a087cd1e-1b23-4cf6-ba51-1abbbbcb84e0"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/catalog",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "f1a3d773-676a-4d59-8a3b-80c284cb2bed"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/alert-rules",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "d749bdb5-8f53-4190-ab4c-75cb4fa8d411"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/alert-workflow",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "453c7f14-5388-4b24-9d7e-e56c19277489"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/notification-preferences",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "cf560768-3a5a-4adc-94a1-59451275c8cc"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/user-preferences",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "258797e8-4f34-41c0-a5c5-258a040b3da7"
+    },
+    {
+      "method": "GET",
+      "url": "/marketing/insights/campaign-facts?from=2026-09-01&to=2026-10-29",
+      "status": 200,
+      "ifMatch": null,
+      "tenant": "sí",
+      "reqId": "d212572e-3a27-4ff5-a6c3-aefce07f2302"
+    }
+  ],
+  "errors": [
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash ("
+  ],
+  "steps": {
+    "landed": "http://127.0.0.1:4200/insights/home",
+    "before": {
+      "sum": "Hoy hay 5 alertas abiertas, 0 críticas. Resueltas hasta ahora: 0.",
+      "states": [
+        "Nuevo · Sin asignar",
+        "Nuevo · Sin asignar",
+        "Nuevo · Sin asignar",
+        "Nuevo · Sin asignar",
+        "Nuevo · Sin asignar"
+      ],
+      "sql": "1"
+    },
+    "drawer": {
+      "status": "En revisión",
+      "hist": [
+        "1 nov de 2026, 12:45 a. m. · Nuevo → En revisión · Marketing ",
+        "1 nov de 2026, 12:45 a. m. · Nuevo → Nuevo · Marketing "
+      ],
+      "notice": null
+    },
+    "sqlAfter": {
+      "alerts": "A-AE8CBBB8B8 | t | product | 2 | 2\nA-405F04C09F | t | marketing | 2 | 2",
+      "transitions": "t | marketing | 2026-11-01 00:23:52.095745+00\nt | product | 2026-11-01 00:23:52.118634+00\nt | marketing | 2026-11-01 00:45:21.645943+00\nt | marketing | 2026-11-01 00:45:22.50318+00"
+    },
+    "afterReload": {
+      "sum": "Hoy hay 5 alertas abiertas, 0 críticas. Resueltas hasta ahora: 0.",
+      "states": [
+        "En revisión · Marketing",
+        "Nuevo · Sin asignar",
+        "Nuevo · Sin asignar",
+        "Nuevo · Sin asignar",
+        "Nuevo · Sin asignar"
+      ]
+    },
+    "prefSql": "compact | light | 2",
+    "densityAfterReload": "compact"
+  }
+}

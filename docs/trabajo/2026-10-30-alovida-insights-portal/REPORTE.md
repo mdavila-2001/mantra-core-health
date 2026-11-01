@@ -2,7 +2,7 @@
 
 Estado al 31/10/2026. Rama `claude/insights-f5-panel-general` (PR mdavila-2001/mantra-core-health#1829). API: mdavila-2001/mantra-core-health-api#1221 (lecturas) y #1222 (escrituras, apilado). Modelo: mantra-core-technologies/mantra-core-health-model#99.
 
-**Peldaño global: «demostrado en navegador contra el simulador».** Ninguna escritura se demostró contra el API real y la base: el total es el peldaño más bajo.
+**Peldaño global: «demostrado en navegador contra el API real y PostgreSQL 16 local»** para alertas, preferencias y vistas guardadas (ver «Prueba con el API real»). Informes e historial, reglas y notificaciones se probaron contra el API real solo con `curl`, no por la interfaz.
 
 ## Evidencia por área
 
@@ -18,6 +18,27 @@ Estado al 31/10/2026. Rama `claude/insights-f5-panel-general` (PR mdavila-2001/m
 
 Comandos de cierre en el front: `yarn build` exit 0; `tsc -p tsconfig.app.json` limpio; `eslint src/app/features/insights src/app/core/mock src/app/core/data-access/insights` limpio.
 
+## Prueba con el API real (01/11/2026)
+
+Entorno: API NestJS completo (`origin/dev`, AppModule entero) contra PostgreSQL 16 local; front con `ng serve --configuration development` (sin simulador) y el proxy `/marketing` hacia el API; sesión real de `marketing.demo@alovida.local` (MARKETING_MANAGER, con `X-Tenant-Id`). Sin Docker, TimescaleDB, pgvector, Mongo, Redis ni OpenSearch. Datos: seeds `boot` + `mock` de los módulos 03 y 50.
+
+Evidencia en `evidencia/real-api-recorrido.json`, `real-api-recorrido-2.json` y `evidencia/capturas/real-*.png`:
+
+| Recorrido | Petición | Respuesta | SQL | Tras recargar |
+|---|---|---|---|---|
+| Alerta: responsable «Marketing» y estado «En revisión» | `PUT /marketing/insights/alert-workflow/onboarding-c1` (sin `If-Match`, luego `If-Match: 1`) | 200, 200 | `insights_alerts`: owner `marketing`, `row_version` 2; 2 filas nuevas en `insights_alert_transitions` | La alerta sigue «En revisión · Marketing» |
+| Densidad cómoda → compacta | `PUT /user-preferences` con `If-Match: 2` y `3` | 200, 200 | `insights_user_preferences`: `comfortable | 3`, luego `compact | 4` | `data-density` coincide en cada recarga |
+| Vista guardada | `PUT /saved-views/<uuid>` | 200 | fila en `insights_saved_views` (módulo `home`) | Aparece en la lista |
+| Conflicto real: se sube `row_version` en la base | `PUT` con `If-Match: 2` | 412 | `row_version` 7, sin cambio de estado | Aviso «Otra persona cambió esto antes que usted…» |
+
+Por `curl` (agente aparte, ver `/tmp/api-real.md`, no versionado): 403 de `PATCH alert-rules` para `MARKETING_MANAGER`, 200 para `PLATFORM_ADMIN`; informes y notificaciones; persistencia tras reiniciar el API.
+
+Hallazgos de esta prueba:
+- Con solo seeds `boot`, `PUT alert-workflow` y `GET catalog` dan 500: los value sets `VS_INSIGHTS_*` están en la parte `mock` de `03_terminology.seeds.json`. Cargada la terminología completa, ambos responden 200. Un entorno que cargue solo `boot` no podrá usar Insights.
+- La consola del navegador mostró dos avisos de Content-Security-Policy por un script en línea del servidor de desarrollo; no vienen de Insights y no se investigaron.
+- La prueba del conflicto 412 se provocó modificando `row_version` en la base, no con dos personas reales.
+- El API real marca las respuestas con `meta.dataset: "demo"` y los datos siguen siendo sintéticos.
+
 ## Revisiones independientes
 
 - **frontend-reviewer**: NO APROBADO con 3 HIGH. Corregidos: filtros del explorador de comentarios que no se restablecían, 412 de preferencias (relee versión y reintenta una vez; la carga tardía ya no pisa un cambio), insignia de alertas ligada al estado guardado. También corregidos M1 (el filtro global limpia el drill), cola de escrituras de alertas (dos cambios seguidos ya no se chocan) y 403/404 con mensaje propio. **No se volvió a pasar la revisión.**
@@ -26,7 +47,7 @@ Comandos de cierre en el front: `yarn build` exit 0; `tsc -p tsconfig.app.json` 
 
 ## Abierto y límites declarados
 
-1. Prueba UI → petición → respuesta → SQL → recarga con el API real: **no ejecutada** (depende de desplegar #1221/#1222).
+1. Informes (historial de 12), reglas de alerta y notificaciones: probados contra el API real solo con `curl`, no por la interfaz.
 2. Faltan pruebas de componente y de `InsightsWorkflow`/`InsightsPreferences` (400 de dominio y mock sí; servicios no).
 3. M2, M4, M5, M7, M8 y M9 de la revisión de frontend siguen abiertos (campos no controlados tras un rechazo del API, el Panel no distingue carga/error del flujo, estados a mano en vez de `ViewState`, falta confirmar borrados, accesibilidad de la paleta, colisión de clase `.rp__title`).
 4. Omitido: popover de la campana, «Crear alerta» desde Opinión/Observatorio, filtros avanzados por módulo, Excel/PPT (no disponible, sin stub).

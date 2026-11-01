@@ -1,0 +1,52 @@
+{
+  "net": [
+    {
+      "m": "PUT",
+      "u": "/marketing/insights/user-preferences",
+      "status": 200,
+      "ifMatch": "2",
+      "body": "{\"density\":\"comfortable\",\"theme\":\"light\",\"navCollapsed\":false,\"timezone\":\"America/La_Paz\"}"
+    },
+    {
+      "m": "PUT",
+      "u": "/marketing/insights/user-preferences",
+      "status": 200,
+      "ifMatch": "3",
+      "body": "{\"density\":\"compact\",\"theme\":\"light\",\"navCollapsed\":false,\"timezone\":\"America/La_Paz\"}"
+    },
+    {
+      "m": "PUT",
+      "u": "/marketing/insights/saved-views/928933cc-1614-4e25-935a-1c356ba1b170",
+      "status": 200,
+      "ifMatch": null,
+      "body": "{\"name\":\"Prueba API real 734\",\"url\":\"/insights/home\"}"
+    },
+    {
+      "m": "PUT",
+      "u": "/marketing/insights/alert-workflow/onboarding-c1",
+      "status": 412,
+      "ifMatch": "2",
+      "body": "{\"status\":\"resolved\",\"ownerTeam\":\"marketing\",\"snapshot\":{\"severity\":\"risk\",\"title\":\"El abandono del onboarding"
+    }
+  ],
+  "steps": {
+    "densidad_comfortable": {
+      "sql": "comfortable | 3",
+      "ui": "comfortable"
+    },
+    "densidad_compact": {
+      "sql": "compact | 4",
+      "ui": "compact"
+    },
+    "vistaSql": "Prueba API real 734 | home | 1\nCAC ultimos 30 dias | campaigns | 1",
+    "vistaUiTrasRecarga": [
+      "CAC ultimos 30 dias",
+      "Prueba API real 734"
+    ],
+    "conflicto": {
+      "notice": "Otra persona cambió esto antes que usted. Se cargó el estado vigente: revíselo y vuelva a intentar.\nEntendido",
+      "sql": "t | 7"
+    }
+  },
+  "errors": []
+}
