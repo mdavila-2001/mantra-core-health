@@ -26,33 +26,32 @@
   <path d="M250 150 C210 170 200 260 230 330 C270 410 360 440 420 440 C500 440 590 380 600 300 C610 220 590 160 540 145 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="2"/>
   <rect x="236" y="168" width="110" height="100" rx="30" fill="var(--vein-l)" stroke="var(--vein)"/>
   <path d="M246 280 H390 V330 C390 380 350 420 300 410 C260 400 246 340 246 300 Z" fill="var(--vein-l)" stroke="var(--vein)"/>
-  <rect x="430" y="168" width="140" height="92" rx="30" fill="var(--art-l)" stroke="var(--art)"/>
+  <rect x="484" y="168" width="100" height="92" rx="30" fill="var(--art-l)" stroke="var(--art)"/>
   <path d="M402 274 H584 C590 330 560 410 470 424 C430 428 402 380 402 330 Z" fill="var(--art-l)" stroke="var(--art)"/>
   <text x="291" y="212" text-anchor="middle" class="small">Aurícula</text>
   <text x="291" y="227" text-anchor="middle" class="small">derecha</text>
-  <text x="318" y="330" text-anchor="middle" class="small">Ventrículo</text>
-  <text x="318" y="345" text-anchor="middle" class="small">derecho</text>
-  <text x="520" y="196" text-anchor="middle" class="small">Aurícula</text>
-  <text x="520" y="211" text-anchor="middle" class="small">izquierda</text>
+  <text x="296" y="370" text-anchor="middle" class="small">Ventrículo</text>
+  <text x="296" y="385" text-anchor="middle" class="small">derecho</text>
+  <text x="534" y="206" text-anchor="middle" class="small">Aurícula</text>
+  <text x="534" y="221" text-anchor="middle" class="small">izquierda</text>
   <text x="510" y="340" text-anchor="middle" class="small">Ventrículo</text>
   <text x="510" y="355" text-anchor="middle" class="small">izquierdo</text>
   <path d="M360 280 C360 220 360 160 340 120 L300 92" fill="none" stroke="var(--vein)" stroke-width="16" stroke-linecap="round" opacity=".35"/>
   <path d="M450 280 C440 200 430 130 470 100 C520 70 600 80 640 130 L660 420" fill="none" stroke="var(--art)" stroke-width="20" stroke-linecap="round" opacity=".3"/>
   <text x="668" y="250" text-anchor="start" class="small">Aorta</text>
   <text x="250" y="80" text-anchor="middle" class="small">Arteria pulmonar</text>
-  <path d="M60 430 C120 420 170 390 210 330 C230 300 250 280 270 240 C290 220 300 260 300 300 C300 360 340 360 356 300 C362 240 356 170 336 124 L302 98" fill="none" stroke="var(--vein)" stroke-width="4" stroke-linecap="round" stroke-dasharray="9 5" marker-end="url(#arb)"/>
+  <path d="M60 404 C130 392 200 330 250 250 C270 214 320 220 330 262 C338 300 352 360 370 330 C382 290 368 200 340 124 L302 98" fill="none" stroke="var(--vein)" stroke-width="4" stroke-linecap="round" stroke-dasharray="9 5" marker-end="url(#arb)"/>
   <circle cx="296" cy="94" r="7" fill="var(--vein)"/>
   <text x="150" y="112" text-anchor="middle" class="small b">Posición de cuña</text>
   <path d="M210 108 L286 96" stroke="var(--muted)" stroke-width="1"/>
-  <text x="44" y="410" text-anchor="start" class="small b" style="fill:var(--vein)">Entrada por vena</text>
-  <text x="44" y="425" text-anchor="start" class="tiny muted">(femoral, yugular o braquial)</text>
-  <path d="M740 430 C700 430 676 410 672 380 L652 140 C630 96 560 80 510 92 C462 106 450 160 456 230 C460 270 470 300 490 330" fill="none" stroke="var(--art)" stroke-width="4" stroke-linecap="round" marker-end="url(#arr)"/>
-  <text x="756" y="410" text-anchor="end" class="small b" style="fill:var(--art)">Entrada por arteria</text>
-  <text x="756" y="425" text-anchor="end" class="tiny muted">(radial o femoral)</text>
+  <text x="44" y="426" text-anchor="start" class="small b" style="fill:var(--vein)">Entrada por vena</text>
+  <text x="44" y="441" text-anchor="start" class="tiny muted">(femoral, yugular o braquial)</text>
+  <path d="M740 430 C700 430 676 410 672 380 L652 140 C630 96 560 80 510 92 C462 106 450 160 456 230 C458 272 462 296 470 312" fill="none" stroke="var(--art)" stroke-width="4" stroke-linecap="round" marker-end="url(#arr)"/>
+  <text x="660" y="412" text-anchor="end" class="small b" style="fill:var(--art)">Entrada por arteria</text>
+  <text x="660" y="427" text-anchor="end" class="tiny muted">(radial o femoral)</text>
   <rect x="436" y="262" width="34" height="8" rx="3" fill="var(--ink)" opacity=".55"/>
-  <text x="388" y="266" text-anchor="end" class="tiny">Válvula</text>
-  <text x="388" y="278" text-anchor="end" class="tiny">aórtica</text>
-  <path d="M392 268 L432 266" stroke="var(--muted)" stroke-width="1"/>
+  <text x="478" y="296" text-anchor="start" class="tiny">Válvula aórtica</text>
+  <path d="M476 290 L458 272" stroke="var(--muted)" stroke-width="1"/>
   <line x1="44" y1="150" x2="80" y2="150" stroke="var(--vein)" stroke-width="4" stroke-dasharray="9 5"/>  <text x="88" y="154" class="small">Cateterismo derecho</text>
   <line x1="44" y1="174" x2="80" y2="174" stroke="var(--art)" stroke-width="4"/>  <text x="88" y="178" class="small">Cateterismo izquierdo</text>
   <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
