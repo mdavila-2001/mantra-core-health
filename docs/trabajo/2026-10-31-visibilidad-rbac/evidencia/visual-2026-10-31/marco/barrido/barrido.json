@@ -1,0 +1,263 @@
+[
+ {
+  "p": "systems/operations",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Operaciones",
+  "errs": 0
+ },
+ {
+  "p": "systems/flows",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Mapa de rutas",
+  "errs": 0
+ },
+ {
+  "p": "systems/flows/diagram",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Diagrama",
+  "errs": 0
+ },
+ {
+  "p": "systems/drift",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Deriva",
+  "errs": 0
+ },
+ {
+  "p": "systems/review",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Revisión",
+  "errs": 0
+ },
+ {
+  "p": "systems/runtime-pieces",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Piezas en ejecución",
+  "errs": 0
+ },
+ {
+  "p": "processes",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Procesos",
+  "errs": 0
+ },
+ {
+  "p": "catalog/tables",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Tablas",
+  "errs": 0
+ },
+ {
+  "p": "catalog/domains",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Dominios y glosario",
+  "errs": 0
+ },
+ {
+  "p": "catalog/fit",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Sonda de catalogación",
+  "errs": 0
+ },
+ {
+  "p": "lineage",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Linaje",
+  "errs": 0
+ },
+ {
+  "p": "schemas",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Esquema",
+  "errs": 0
+ },
+ {
+  "p": "governance/audit",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Auditoría",
+  "errs": 0
+ },
+ {
+  "p": "governance/users",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Usuarios y roles",
+  "errs": 0
+ },
+ {
+  "p": "governance/permission-drift",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Deriva de permisos",
+  "errs": 0
+ },
+ {
+  "p": "governance/roles",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Roles y permisos",
+  "errs": 0
+ },
+ {
+  "p": "governance/field-permissions",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Permisos por campo y alcance",
+  "errs": 0
+ },
+ {
+  "p": "governance/who-can",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Quién puede qué",
+  "errs": 0
+ },
+ {
+  "p": "governance/access-reviews",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Ciclo de vida y revisión de accesos",
+  "errs": 0
+ },
+ {
+  "p": "governance/rbac-matrix",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Matriz RBAC por módulo",
+  "errs": 0
+ },
+ {
+  "p": "governance/ui-catalog",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Catálogo de visibilidad",
+  "errs": 0
+ },
+ {
+  "p": "governance/ui-rules",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Reglas de visibilidad",
+  "errs": 0
+ },
+ {
+  "p": "governance/ui-preview",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Ver como",
+  "errs": 0
+ },
+ {
+  "p": "governance/mutability",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Mutabilidad de datos",
+  "errs": 0
+ },
+ {
+  "p": "governance/policies",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Políticas de gobierno",
+  "errs": 0
+ },
+ {
+  "p": "governance/pii",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Datos personales",
+  "errs": 0
+ },
+ {
+  "p": "governance/privacy-requests",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Solicitudes de privacidad",
+  "errs": 0
+ },
+ {
+  "p": "data-quality/issues",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Incidencias de calidad de datos clínicos",
+  "errs": 0
+ },
+ {
+  "p": "data-quality/rules",
+  "migasPagina": 0,
+  "h1": 1,
+  "cabeceras": 1,
+  "sw": 1440,
+  "t": "Reglas de calidad de datos clínicos",
+  "errs": 0
+ }
+]

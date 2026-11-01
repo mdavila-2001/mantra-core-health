@@ -11,3 +11,44 @@
 | T3 | inputs de fecha «mm/dd/yyyy» | — | `src/index.html` YA tiene `lang="es"`; el formato del input nativo lo pone la configuración regional del navegador (Chromium headless = en-US), no el `lang`. Las capturas nuevas usan `locale: 'es-PE'`. No es defecto del código. |
 | T3 | pestaña «Huecos (13)» con icono apilado a 390 | — | NO es del marco: es `app-tabs` (shared/molecules) o el panel de rbac-matrix; queda anotado para el agente de pantallas |
 | T3 | infraestructura | — | ng serve + ng test no caben juntos en el cgroup (14,3 GB): ng test llegó a 7 GB y ng serve a 4,4–6 GB; los OOM matan uno u otro. Mientras corre un ng test el servidor puede caerse. |
+
+## Barrido del marco — todas las rutas del portal, 1440×900, tema claro (tras commit 0c3868ea)
+
+Medido con Playwright: migas propias dentro del lienzo (debe ser 0), cantidad de h1 (debe ser 1), cabeceras `app-page-header` (1), desborde horizontal (scrollWidth = 1440), errores de consola.
+
+| Ruta | Captura | migas en página | h1 | cabeceras | scrollWidth | errores consola | Estado |
+|---|---|---|---|---|---|---|---|
+| systems/operations | marco/barrido/systems_operations-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| systems/flows | marco/barrido/systems_flows-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| systems/flows/diagram | marco/barrido/systems_flows_diagram-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| systems/drift | marco/barrido/systems_drift-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| systems/review | marco/barrido/systems_review-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| systems/runtime-pieces | marco/barrido/systems_runtime-pieces-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| processes | marco/barrido/processes-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| catalog/tables | marco/barrido/catalog_tables-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| catalog/domains | marco/barrido/catalog_domains-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| catalog/fit | marco/barrido/catalog_fit-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| lineage | marco/barrido/lineage-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| schemas | marco/barrido/schemas-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/audit | marco/barrido/governance_audit-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/users | marco/barrido/governance_users-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/permission-drift | marco/barrido/governance_permission-drift-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/roles | marco/barrido/governance_roles-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/field-permissions | marco/barrido/governance_field-permissions-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/who-can | marco/barrido/governance_who-can-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/access-reviews | marco/barrido/governance_access-reviews-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/rbac-matrix | marco/barrido/governance_rbac-matrix-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/ui-catalog | marco/barrido/governance_ui-catalog-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/ui-rules | marco/barrido/governance_ui-rules-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/ui-preview | marco/barrido/governance_ui-preview-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/mutability | marco/barrido/governance_mutability-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/policies | marco/barrido/governance_policies-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/pii | marco/barrido/governance_pii-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| governance/privacy-requests | marco/barrido/governance_privacy-requests-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| data-quality/issues | marco/barrido/data-quality_issues-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| data-quality/rules | marco/barrido/data-quality_rules-1440-claro.png | 0 | 1 | 1 | 1440 | 0 | OK |
+| (centro) `/superadmin/portal` | — | — | — | — | — | — | NO barrido (la ruta vacía se cayó de la lista del guion) |
+
+Pendientes vistos y NO del marco: fechas nativas «mm/dd/yyyy» (lo pone la configuración regional de Chromium headless; `index.html` ya declara `lang="es"`); icono apilado sobre el texto en la pestaña «Huecos (13)» a 390 (rbac-matrix / `app-tabs`).
+
+Barra lateral: fondo continuo `--nav-carril` (también pintado en el contenedor para páginas largas); el cuerpo ya no reserva el relleno inferior de la maqueta bajo el portal.
