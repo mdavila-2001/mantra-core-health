@@ -976,6 +976,25 @@ describe('RegisterPractitioner', () => {
     expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
   });
 
+  it('la cédula se valida de verdad: sólo dígitos, de 5 a 9, y no un relleno', () => {
+    const control = component.formProfesional.controls.nationalId;
+    for (const invalida of ['QA-123', '1234', '1234567890', '1.234.567', '0000000', '9999999']) {
+      control.setValue(invalida);
+      expect(control.invalid, `«${invalida}» no es una cédula`).toBe(true);
+    }
+    for (const valida of ['12345', '1234567', '12345678', '123456789']) {
+      control.setValue(valida);
+      expect(control.valid, `«${valida}» sí lo es`).toBe(true);
+    }
+  });
+
+  it('con la cédula inválida no se puede enviar el alta', () => {
+    completarProfesional({ nationalId: 'QA-123' });
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
+  });
+
   it('el documento admite letras, dígitos, punto y guion, mínimo 4', () => {
     const control = component.formProfesional.controls.nationalId;
     for (const invalida of ['123', 'QA 123', 'CI#1234']) {
@@ -3200,6 +3219,16 @@ describe('RegisterPractitioner', () => {
       http.expectNone('/iam/auth/register-practitioner');
       expect(component.registered()).toBe(false);
 
+      // El DTO real rechaza el base64 a propósito: primero se pre-cargan.
+      const subidas = http.match('/iam/auth/upload-registration-signature-image');
+      expect(subidas).toHaveLength(2);
+      for (const subida of subidas) {
+        expect(subida.request.body).toBeInstanceOf(FormData);
+        expect((subida.request.body as FormData).get('file')).toBeInstanceOf(Blob);
+      }
+      subidas[0]!.flush({ fileId: 'file-firma', originalName: 'firma.png', sizeBytes: 1, mimeType: 'image/png' });
+      subidas[1]!.flush({ fileId: 'file-sello', originalName: 'sello.png', sizeBytes: 1, mimeType: 'image/png' });
+
       component.submit();
       http.expectOne('/iam/auth/upload-registration-signature-image').flush({ fileId: 'sello-id' });
       const req = http.expectOne('/iam/auth/register-practitioner');
@@ -3223,8 +3252,8 @@ describe('RegisterPractitioner', () => {
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.signatureImageBase64).toBeUndefined();
-      expect(req.request.body.sealImageBase64).toBeUndefined();
+      expect(req.request.body.signatureFileId).toBeUndefined();
+      expect(req.request.body.sealFileId).toBeUndefined();
       req.flush(RESPUESTA_PRO);
     });
 

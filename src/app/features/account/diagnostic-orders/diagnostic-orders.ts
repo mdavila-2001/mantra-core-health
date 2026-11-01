@@ -16,6 +16,7 @@ import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { CenterScheduleClient } from '../../../core/data-access/diagnostic-units/center-schedule.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type { PatientOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
 import { performerSelectionCodeOf } from '../../../core/data-access/diagnostics/service-request-performer.types';
@@ -111,6 +112,7 @@ export class DiagnosticOrders {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly centros = inject(CenterScheduleClient);
 
   /** Sin perfil de paciente no hay órdenes que leer: la API respondería 412. */
   protected readonly sinPerfilDePaciente = this.auth.patientProfileId() === null;
@@ -259,6 +261,8 @@ export class DiagnosticOrders {
           : `Consulta del ${this.fechaCorta(item.createdAt)}`,
       requestedAt: item.createdAt,
       preparation: item.preparationInstructions ?? null,
+      appointment: item.appointment ?? null,
+      bookable: (categoria === 'LAB' || categoria === 'IMAGING') && !item.hasReleasedResult && (item.appointment ?? null) === null,
       // El modo sale del código del concepto, no de su texto ni de su uuid; sin campo no se inventa nada.
       performerMode:
         item.performerSelectionConceptId === undefined
@@ -471,6 +475,9 @@ export class DiagnosticOrders {
       icon: 'billing',
     });
     acciones.push({ code: 'reservar', label: 'Reservar hora en un laboratorio', icon: 'calendar' });
+    if (fila.appointment !== null) {
+      acciones.push({ code: 'ver-turno', label: 'Ver cita', icon: 'calendar' });
+    }
     return acciones;
   }
 
@@ -478,6 +485,35 @@ export class DiagnosticOrders {
   protected readonly preparacionAbierta = signal<PatientOrderRow | null>(null);
   /** La orden cuya liquidación está abierta en el diálogo, o `null`. */
   protected readonly liquidacionAbierta = signal<PatientOrderRow | null>(null);
+  /** La orden cuyo turno está abierto en el diálogo, o `null`. */
+  protected readonly turnoAbierto = signal<PatientOrderRow | null>(null);
+  protected readonly cancelando = signal(false);
+  protected readonly cancelacionFallida = signal(false);
+
+  /** Cancela el turno de la orden y vuelve a leer la lista: la orden queda para reservar de nuevo. */
+  protected cancelarTurno(fila: PatientOrderRow): void {
+    if (this.cancelando()) return;
+    this.cancelando.set(true);
+    this.cancelacionFallida.set(false);
+    this.centros.cancelOrderBooking(fila.id).subscribe({
+      next: () => {
+        this.cancelando.set(false);
+        this.turnoAbierto.set(null);
+        this.cargar();
+      },
+      error: () => {
+        this.cancelando.set(false);
+        this.cancelacionFallida.set(true);
+      },
+    });
+  }
+
+  protected fechaDelTurno(instante: string): string {
+    const d = new Date(instante);
+    const dia = new Intl.DateTimeFormat('es-BO', { weekday: 'long', day: 'numeric', month: 'long' }).format(d);
+    const hora = new Intl.DateTimeFormat('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+    return `${dia}, ${hora}`;
+  }
 
   /**
    * `app-row-actions` emite un código, no un `routerLink`: `RowAction` no
@@ -512,9 +548,11 @@ export class DiagnosticOrders {
         });
         return;
       case 'reservar':
-        void this.router.navigate(['/my-account/appointments'], {
-          queryParams: { resource: 'lab' },
-        });
+        void this.router.navigate(['/my-account/diagnostic-orders', fila.id, 'book']);
+        return;
+      case 'ver-turno':
+        this.cancelacionFallida.set(false);
+        this.turnoAbierto.set(fila);
         return;
     }
   }

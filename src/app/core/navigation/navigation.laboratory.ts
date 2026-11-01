@@ -2,14 +2,14 @@ import { ANY_ROLE } from './navigation.types';
 import type { AppSection } from './navigation.types';
 
 /* ============================================================================
-    El portal de la **cuenta de laboratorio**: cuatro secciones de un menú plano y
-    cerrado (resumen, órdenes, precios y sucursales), todas solo para el tipo de
+    El portal de la **cuenta de laboratorio**: cinco secciones de un menú plano y
+    cerrado (resumen, órdenes, precios, horarios y equipos, y sucursales), todas solo para el tipo de
     organización `DIAGNOSTIC_CENTER`. Desde el 31/10/2026 «Órdenes» junta lo que
     antes eran recepción de muestras, cola de trabajo y resultados.
 
     Viven en su propio archivo y no en `navigation.map.ts` porque ese registro
     está congelado por `scripts/check-max-lines.mjs` (un ratchet: no puede
-    crecer) y estas cuatro son una unidad: se mudan juntas. Mismo patrón que
+    crecer) y estas cinco son una unidad: se mudan juntas. Mismo patrón que
     `navigation.platform.ts`.
 
     `navigation.map.ts` las esparce al **final** de `APP_SECTIONS`, donde
@@ -70,6 +70,23 @@ export const SECCIONES_DE_LABORATORIO: readonly AppSection[] = [
     requiresTenant: true,
     availability: 'disponible',
     summary: 'El precio de lista y el descuento AloVida de cada servicio.',
+    module: 'M20 diagnostics',
+  },
+  {
+    // Horarios y equipos del centro (mockup, 2026-10-06): el horario general,
+    // los propios de cada modalidad, las excepciones por estudio y el estado
+    // de cada equipo, que es el cupo de cada turno.
+    path: 'administration/center-schedule',
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Horarios y equipos',
+    group: 'General',
+    icon: 'calendar',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Cuándo atiende cada servicio y con cuántos equipos: de eso salen los turnos.',
     module: 'M20 diagnostics',
   },
   {

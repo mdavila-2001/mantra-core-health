@@ -156,6 +156,7 @@ test.describe('Contabilidad en cristiano', () => {
 
     /* ---- activos y pasivos: adentro, no al lado ---------------------------- */
 
+    await page.getByRole('tab', { name: 'Bienes y deudas' }).click();
     await expect(
       page.getByRole('heading', { name: 'Lo que tiene y lo que debe' }),
     ).toBeVisible();

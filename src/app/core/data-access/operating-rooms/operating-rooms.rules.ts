@@ -253,3 +253,34 @@ export function blockOwnerLabel(owner: OrBlockOwner, directory: OwnerDirectory):
     'Servicio'
   );
 }
+
+
+/* ---- permisos reflejados (la API decide) ------------------------------------ */
+
+const hasAny = (roles: readonly string[], wanted: readonly string[]): boolean =>
+  wanted.some((r) => roles.includes(r));
+
+/*
+ * Sin el comodín `SUPERADMIN` a propósito en las escrituras: la matriz de §F4.3
+ * deja al soporte en lectura (bloques, programación, sala). Sólo lee.
+ */
+
+/** Bloques: crear, liberar, cancelar. Sólo jefe de quirófano. */
+export function canManageBlocks(roles: readonly string[]): boolean {
+  return hasAny(roles, ['PERIOP_ADMIN']);
+}
+
+/** Programar un caso (roles existentes del módulo). */
+export function canScheduleCases(roles: readonly string[]): boolean {
+  return hasAny(roles, ['SURGERY_SCHEDULER', 'SURGEON', 'PERIOP_ADMIN']);
+}
+
+/** Check-list y eventos de sala. */
+export function canRecordInRoom(roles: readonly string[]): boolean {
+  return hasAny(roles, ['PERIOP_NURSE', 'SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_ADMIN']);
+}
+
+/** Utilización: jefe de quirófano, facturación y quien administra. */
+export function canSeeUtilization(roles: readonly string[]): boolean {
+  return hasAny(roles, ['SUPERADMIN', 'PERIOP_ADMIN', 'BILLING', 'SECURITY_ADMIN', 'PLATFORM_ADMIN']);
+}

@@ -140,6 +140,8 @@ export class SpaceDetail {
   protected readonly rutaDeAltaMasiva = RUTA_DE_ALTA_MASIVA;
   protected readonly textoDeAccion = TEXTO_DE_ACCION;
   protected readonly etiquetaDeBloqueo = ETIQUETA_DE_BLOQUEO;
+  /** Pestañas fijas de la ficha (F1 + «Operación» de F2); las de F5 van detrás. */
+  protected readonly fixedTabCount = PESTANAS_DE_LA_FICHA.length;
 
   private readonly parametros = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
@@ -268,8 +270,7 @@ export class SpaceDetail {
    */
   protected readonly canWriteStock = computed(() => this.session.roles().includes('SECURITY_ADMIN'));
 
-  /** Cuántas pestañas fijas hay antes de las de F5 (M4: no un literal en la plantilla). */
-  protected readonly fixedTabCount = PESTANAS_DE_LA_FICHA.length;
+
 
   /** Plan §2.3: un local de aislamiento sin validación de climatización no es apto. */
   protected readonly aislamientoSinValidar = computed(

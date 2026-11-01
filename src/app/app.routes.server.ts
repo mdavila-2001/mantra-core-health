@@ -46,6 +46,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
   },
   {
+    path: 'auth/register/organization-type',
+    renderMode: RenderMode.Prerender,
+  },
+  {
     // Consulta catálogos dinámicos por HTTP al montarse (departamentos, ocupaciones,
     // empleadores, municipios, parentescos): con mockBackend apagado necesitaría un
     // backend real disponible durante el build.

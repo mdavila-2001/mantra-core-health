@@ -55,7 +55,7 @@ function tenantSelectionRoute(): string {
  */
 export function errorToViewState<T>(error: unknown): ViewState<T> {
   if (!(error instanceof HttpErrorResponse)) {
-    return unexpectedError('sin-id', 'Ocurrió un error inesperado.');
+    return unexpectedError('sin-id', 'No pudimos completar la acción. Intente de nuevo en unos segundos.');
   }
 
   // Estado 0 es «la petición no llegó»: sin conexión, DNS caído o CORS. Nunca

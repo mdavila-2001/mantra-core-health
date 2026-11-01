@@ -31,6 +31,7 @@ import type {
   CursorState,
 } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { LabServicesImport } from './services-import/lab-services-import';
 
 /** Filas por página. */
 const PAGE_SIZE = 10;
@@ -63,10 +64,24 @@ interface PriceRejection {
  * `PATCH /diagnostics/lab/services/:id` (P52, sólo simulador). Una que falla no
  * frena a las demás: al final se dice cuáles no entraron y por qué. Los
  * retirados no aparecen.
+ *
+ * «Importar análisis (CSV)» carga o actualiza el catálogo entero desde la
+ * planilla del laboratorio (registro de procesos 4.2), con
+ * `POST /diagnostics/lab/services/import`; ver `services-import/`.
  */
 @Component({
   selector: 'app-laboratory-prices',
-  imports: [Alert, AppButton, Badge, Card, DataTable, Input, PageHeader, SearchField],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    Card,
+    DataTable,
+    Input,
+    LabServicesImport,
+    PageHeader,
+    SearchField,
+  ],
   templateUrl: './laboratory-prices.html',
   styleUrl: './laboratory-prices.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,6 +98,8 @@ export class LaboratoryPrices {
   protected readonly rejected = signal<readonly PriceRejection[]>([]);
   protected readonly saving = signal(false);
   protected readonly offset = signal(0);
+  /** El diálogo «Importar análisis (CSV)». */
+  protected readonly importOpen = signal(false);
 
   protected readonly dirtyCount = computed(() => Object.keys(this.edits()).length);
 
@@ -156,6 +173,18 @@ export class LaboratoryPrices {
       },
       error: (error: unknown) => this.services.set(errorToViewState<readonly LabService[]>(error)),
     });
+  }
+
+  /**
+   * Al cerrar la importación se relee la lista si la API llegó a cargar algo:
+   * los análisis nuevos aparecen con su precio. Lo escrito y sin guardar se
+   * conserva, porque la relectura no lo toca.
+   */
+  protected importClosed(imported: boolean): void {
+    this.importOpen.set(false);
+    if (imported) {
+      this.reload();
+    }
   }
 
   protected goToCursor(cursor: string): void {

@@ -1,0 +1,18 @@
+2026-10-24T16:14:11Z
+https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi 000
+https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=femur&format=json 000
+https://api.openalex.org/works?search=femur 000
+https://api.crossref.org/works/10.1111/joa.12345 000
+https://commons.wikimedia.org/w/api.php?action=query&format=json 000
+https://upload.wikimedia.org/ 000
+https://www.ebi.ac.uk/ols4/api/ontologies/uberon 000
+https://ta2viewer.openanatomy.org/ 000
+https://purl.obolibrary.org/obo/UBERON_0000981 000
+
+# Diagnóstico (curl -sS, misma sesión)
+# curl: (56) CONNECT tunnel failed, response 403
+# Proxy del agente (/__agentproxy/status, recentRelayFailures):
+#   kind=connect_rejected, "gateway answered 403 to CONNECT (policy denial or upstream failure)"
+#   hosts: eutils.ncbi.nlm.nih.gov, www.ebi.ac.uk, api.openalex.org, ... (los 9 hosts probados)
+# Conclusión: la política de red del entorno sigue denegando los 9 hosts.
+# Según el PASO 0 del pedido, la tarea se detiene aquí: no se escribió contenido de memoria.

@@ -25,6 +25,7 @@ import {
 import { encounterList, type SimulatedEncounter } from '../fixtures/clinic';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
+import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
 import { writeFromSupport } from './community.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { patientById, patientList } from '../fixtures/people';
@@ -209,6 +210,36 @@ function cambiarEstado(
   const r = reservas.get(id);
   if (r === undefined) return undefined;
   return reservas.actualizar(id, { statusConceptId: BOOKING_STATUS[estado]!, ...extra });
+}
+
+/**
+ * Confirma una solicitud y se lo avisa al paciente por el chat de la app. Es
+ * lo que hace «Aceptar la solicitud» de la agenda del profesional, y lo que la
+ * maqueta hace sola con las solicitudes del portal (ver
+ * {@link activarAceptacionDeDemostracion}).
+ */
+function _aceptarYAvisar(id: string): void {
+  const r = reservas.get(id);
+  if (r === undefined || r.statusConceptId !== BOOKING_STATUS['BK-REQUESTED']) return;
+  cambiarEstado(id, 'BK-CONFIRMED', { confirmedAt: ahora(), appointmentId: nuevoId('appointment') });
+  const quien = recursos.get(r.resourceId)?.practitionerName ?? null;
+  avisarPorChatDeSoporte(
+    r.patientProfileId,
+    `${quien === null ? 'Su cita' : `Su solicitud de cita con ${quien}`} fue aceptada para el ${fechaDelAviso(r.startAt)}. Puede ver el detalle en «Mis citas».`,
+  );
+}
+
+/**
+ * En la maqueta no hay un profesional del otro lado que acepte a tiempo para
+ * una demostración: con esto encendido, una solicitud del portal se acepta
+ * sola a los pocos segundos y el paciente recibe la confirmación por chat.
+ * Lo enciende `crearRouterSimulado()`, o sea la app; las pruebas que arman su
+ * propio router no lo encienden y siguen viendo la solicitud pendiente.
+ */
+let _aceptacionDeDemostracionMs: number | null = null;
+
+export function activarAceptacionDeDemostracion(ms = 6000): void {
+  _aceptacionDeDemostracionMs = ms;
 }
 
 /**
@@ -1758,5 +1789,22 @@ export function registrarAgenda(router: MockRouter): void {
       status: 201,
       body: { id: nueva.id, priority: nueva.priority, statusConceptId: nueva.statusConceptId },
     };
+  });
+}
+
+/** Sincroniza un pago QR confirmado con el estado de la cita del mock. */
+export function registrarPagoConfirmadoDeReserva(referencia: string, amount: string): void {
+  const reserva = reservas.todos().find((r) => r.id === referencia || r.appointmentId === referencia);
+  if (reserva === undefined) return;
+  reservas.actualizar(reserva.id, {
+    paymentState: {
+      state: 'PAID',
+      label: 'Pagada',
+      conceptId: STATUS['ST-COMPLETED']!,
+      insuranceUsed: false,
+      markedByUserId: 'confirmacion-pago-demo',
+      markedAt: ahora(),
+    },
+    paymentAmount: amount,
   });
 }

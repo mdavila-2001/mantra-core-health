@@ -96,7 +96,7 @@ export function writeMessage(
 
 /** El texto de S9 sin el código: el del servidor, o el de respaldo. */
 function unexpectedErrorText(message: string | undefined): string {
-  return message || 'Ocurrió un error inesperado.';
+  return message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.';
 }
 
 /** {@link writeFailureMessage} con el código de soporte aparte, para pintarlo con `app-support-code`. */

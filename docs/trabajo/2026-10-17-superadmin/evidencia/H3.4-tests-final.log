@@ -1,0 +1,4 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   mantra-core-health  src/app/core/navigation/navigation.subgroups.spec.ts > NAV_SUBGROUPS > reparte el registro entero: ninguna sección se queda sin bloque por descuido
+ Test Files  1 failed | 15 passed (16)
+      Tests  1 failed | 335 passed (336)

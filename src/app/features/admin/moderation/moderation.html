@@ -59,10 +59,7 @@
 }
 
 @if (!cargoAlgunaVez() && cargando()) {
-  <app-loading-state
-    class="moderacion__cargando"
-    message="Trayendo el contenido reportado y las apelaciones…"
-  />
+  <p class="moderacion__cargando" role="status">Cargando…</p>
 } @else if (vacio()) {
   <app-empty-state
     [title]="pestania() === 'cola' ? 'No hay nada en la cola' : 'No hay apelaciones abiertas'"
@@ -157,13 +154,7 @@
               </div>
             </div>
           } @else {
-            <button
-              app-button
-              variant="secondary"
-              size="sm"
-              [attr.aria-label]="'Decidir: contenido ' + entrada.contentRefId.slice(0, 8)"
-              (clicked)="decidir(entrada.id)"
-            >
+            <button app-button variant="secondary" size="sm" (clicked)="decidir(entrada.id)">
               Decidir
             </button>
           }

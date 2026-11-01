@@ -1,0 +1,28 @@
+# API real (dist de la copia con parche de DI aislado) + Postgres 16 descartable + front en modo real-api; tabla importada: iam.refresh_tokens
+
+== telefono-light
+  ✓ telefono-light
+
+== telefono-dark
+  ✓ telefono-dark
+
+Sin fallos
+exit(telefono)=0
+
+== tableta-light
+  ✓ tableta-light
+
+== tableta-dark
+  ✓ tableta-dark
+
+Sin fallos
+exit(tableta)=0
+
+== escritorio-light
+  ✓ escritorio-light
+
+== escritorio-dark
+  ✓ escritorio-dark
+
+Sin fallos
+exit(escritorio)=0

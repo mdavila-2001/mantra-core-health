@@ -2673,11 +2673,11 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     http.verify();
   });
   /**
-   * La razón de ser del bloque: en «Trayectoria» —que es el único lugar donde
-   * el perfil monta este componente— la lista plana está suprimida a propósito,
-   * así que sin este bloque los botones no existirían para nadie.
+   * En «Trayectoria» (layout="timeline", ficha del perfil médico) no se dibuja
+   * la tabla de corregir/retirar porque la edición pertenece a la pantalla de
+   * edición (layout="tabla"); sólo se ofrece el botón de alta con su ícono SVG.
    */
-  it('en «Trayectoria» ofrece lo accionable, sin repetir la historia entera', async () => {
+  it('en «Trayectoria» no dibuja vínculos editables, sólo el alta con su ícono', async () => {
     const { fixture, http } = await montarConVinculo(
       enCable({ statusKind: 'declarado' }),
       true,
@@ -2685,9 +2685,13 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     );
 
     const raiz: HTMLElement = fixture.nativeElement;
-    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).not.toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).toBeNull();
+
+    const botonAlta = raiz.querySelector('[data-testid="abrir-alta-vinculo"]');
+    expect(botonAlta).not.toBeNull();
+    expect(botonAlta?.querySelector('svg')).not.toBeNull();
 
     http.verify();
   });

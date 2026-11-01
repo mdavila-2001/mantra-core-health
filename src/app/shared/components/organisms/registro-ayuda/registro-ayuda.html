@@ -1,0 +1,68 @@
+<!-- `role="complementary"` y no un `<h2>` visible: la pila es apoyo del
+     formulario, y un titular más compitiendo con el del paso es ruido para
+     todos. Quien navega con lector la encuentra igual, por su nombre de región.
+
+     `aria-live="polite"` porque el contenido cambia solo al pasar de paso: sin
+     esto, quien no mira la pantalla no se entera de que apareció una
+     explicación. «Polite» y no «assertive» — es ayuda, no una alarma: espera a
+     que termine lo que se esté leyendo. -->
+@if (enNavegador) {
+  <div
+    class="pila"
+    role="complementary"
+    aria-live="polite"
+    aria-label="Por qué te pedimos estos datos y cómo los cuidamos"
+    data-testid="registro-ayuda"
+  >
+    @for (aviso of cola(); track aviso.clave) {
+      <article
+        class="aviso"
+        [class.aviso--sello]="aviso.sello"
+        [class.aviso--saliendo]="estaSaliendo(aviso.clave)"
+        [style.--_dur.ms]="aviso.duracionMs"
+        [style.--_i]="$index"
+        data-testid="registro-ayuda-aviso"
+        (mouseenter)="pausar()"
+        (mouseleave)="reanudar()"
+        (focusin)="pausar()"
+        (focusout)="reanudar()"
+      >
+        <span class="aviso__glifo" aria-hidden="true">
+          <app-nav-icon [name]="aviso.icono" />
+        </span>
+
+        <div class="aviso__cuerpo">
+          <h3 class="aviso__titulo">{{ aviso.titulo }}</h3>
+          @if (aviso.texto) {
+            <p class="aviso__texto">{{ aviso.texto }}</p>
+          }
+          @if (aviso.puntos; as puntos) {
+            <ul class="aviso__lista">
+              @for (punto of puntos; track punto) {
+                <li>{{ punto }}</li>
+              }
+            </ul>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="aviso__cerrar"
+          data-testid="registro-ayuda-cerrar"
+          [attr.aria-label]="'Cerrar: ' + aviso.titulo"
+          (click)="cerrar(aviso.clave)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        <!-- El plazo, dibujado. Un aviso que se va solo sin avisar se lee como
+             un error; la barrita dice cuánto queda y, con el puntero encima, se
+             detiene a la vista: el congelamiento se ve, no hay que suponerlo. -->
+        <span class="aviso__reloj" aria-hidden="true"></span>
+      </article>
+    }
+  </div>
+}

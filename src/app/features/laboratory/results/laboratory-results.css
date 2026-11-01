@@ -71,8 +71,8 @@
   background: var(--bg-surface-alt);
   text-align: center;
   transition:
-    border-color 150ms ease,
-    background-color 150ms ease;
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
 }
 
 .results__drop--active {

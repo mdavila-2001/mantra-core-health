@@ -67,8 +67,5 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   'POST /clinical/service-requests': SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS,
   // F5d: el consultorio de la plantilla de horario.
   'POST /scheduling/resources/:id/templates': TEMPLATE_CARE_SPACE_PENDING_KEYS,
-  // Personal de apoyo que responde en nombre del doctor (ronda «personal de
-  // apoyo»): la API lo acepta, el `openapi.json` aún no lo trae. El cliente SÍ
-  // lo manda a la API real; se borra al regenerar el contrato.
   'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,
 };

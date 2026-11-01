@@ -600,6 +600,11 @@ describe('rutas públicas del buscador', () => {
     ['/buscar/aseguradoras', '/search/insurers'],
     ['/buscar/sintomas', '/search/symptoms'],
     ['/buscar/mapa', '/search/map'],
+    // Las direcciones en castellano de las maquetas, a su dirección nueva.
+    ['/buscar/buscador-listado', '/search/finder-list'],
+    ['/buscar/perfil-profesional-detalle', '/search/practitioner-profile-detail'],
+    ['/buscar/perfil-farmacia-detalle/una', '/f/una'],
+    ['/search/pharmacy-profile-detail/una', '/f/una'],
     // Las direcciones en castellano de las maquetas: vieja → nueva → real.
     ['/buscar/buscador-listado', '/search'],
     ['/buscar/perfil-profesional-detalle', '/search/practitioners'],

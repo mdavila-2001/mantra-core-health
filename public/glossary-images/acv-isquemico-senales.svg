@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-labelledby="t d">
+  <title id="t">Accidente cerebrovascular isquémico: qué ocurre y cómo reconocerlo</title>
+  <desc id="d">Dos partes. A la izquierda, un coágulo bloquea un vaso del cerebro, una zona deja de recibir sangre, oxígeno y nutrientes, y sus células empiezan a morir en pocos minutos. A la derecha, cuatro señales de alarma: cara caída de un lado al sonreír, debilidad de un brazo que cae al levantarlo, habla arrastrada o extraña, y tiempo de llamar a emergencias de inmediato. Debajo, otras señales súbitas: adormecimiento de un lado, confusión, problemas para ver o caminar y dolor de cabeza intenso sin causa conocida.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --brain:#e3b9c4; --vessel:#c0392b; --clot:#7b1f1a; --dead:#8e8aa0; --bad:#c0392b; --bad-l:#f6d5cf; --warn:#b7791f; --warn-l:#f7e4bf; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --brain:#6b4a55; --vessel:#ef7467; --clot:#ff8a7d; --dead:#5c5870; --bad:#ef7467; --bad-l:#4a2a27; --warn:#e0b25a; --warn-l:#4a3b1f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .hd { font-size: 14px; font-weight: 700; }
+    .big { font-size: 15px; font-weight: 700; }
+  </style>
+  <rect width="800" height="440" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">ACV isquémico: un coágulo tapa un vaso del cerebro</text>
+
+  <rect x="40" y="76" width="330" height="250" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="205" y="102" text-anchor="middle" class="hd">Qué ocurre</text>
+  <ellipse cx="205" cy="190" rx="100" ry="66" fill="var(--brain)"/>
+  <path d="M95 215 C 140 215, 160 190, 205 190" stroke="var(--vessel)" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M205 190 C 250 190, 270 160, 310 150" stroke="var(--vessel)" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="205" cy="190" r="11" fill="var(--clot)"/>
+  <ellipse cx="270" cy="160" rx="38" ry="26" fill="var(--dead)" opacity="0.7"/>
+  <text x="272" y="164" text-anchor="middle" class="small" style="fill:var(--ink)">sin sangre</text>
+  <text x="205" y="262" text-anchor="middle" class="lab">Una zona deja de recibir sangre,</text>
+  <text x="205" y="280" text-anchor="middle" class="lab">oxígeno y nutrientes</text>
+  <text x="205" y="304" text-anchor="middle" class="small muted">Las células empiezan a morir en pocos minutos</text>
+
+  <rect x="390" y="76" width="370" height="250" rx="10" fill="var(--bad-l)" stroke="var(--bad)" stroke-width="2"/>
+  <text x="575" y="102" text-anchor="middle" class="hd" style="fill:var(--bad)">Cómo reconocerlo</text>
+  <text x="410" y="136" class="big">Cara</text>
+  <text x="480" y="136" class="lab">se cae un lado al sonreír</text>
+  <text x="410" y="172" class="big">Brazo</text>
+  <text x="480" y="172" class="lab">al levantar los dos, uno cae</text>
+  <text x="410" y="208" class="big">Habla</text>
+  <text x="480" y="208" class="lab">arrastrada o extraña</text>
+  <text x="410" y="244" class="big">Tiempo</text>
+  <text x="480" y="244" class="lab">llame a emergencias ya</text>
+  <text x="575" y="286" text-anchor="middle" class="small muted">Cada minuto cuenta: no espere a ver si se pasa</text>
+  <text x="575" y="306" text-anchor="middle" class="small muted">Un mini-ACV (AIT) también es una advertencia</text>
+
+  <rect x="40" y="342" width="720" height="58" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
+  <text x="400" y="366" text-anchor="middle" class="hd" style="fill:var(--warn)">Otras señales súbitas</text>
+  <text x="400" y="386" text-anchor="middle" class="small">Adormecimiento de un lado · confusión · problemas para ver · para caminar · dolor de cabeza intenso sin causa conocida</text>
+</svg>

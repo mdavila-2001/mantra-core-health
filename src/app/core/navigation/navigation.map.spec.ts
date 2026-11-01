@@ -428,6 +428,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // Personal de apoyo (2026-10): las cuatro del hospital como cuenta de
     // organización y las dos de la persona de apoyo, que existen solo en las
     // organizaciones médicas (`onlyForAccountKind` las separa por clase de cuenta).
+    // F2/F3 (31/10/2026): las cuatro de internación, sólo en un hospital.
     expect(flagged.map((s) => s.path)).toEqual([
       'inpatient/bed-board',
       'inpatient/cleaning',
@@ -456,6 +457,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/laboratory',
       'administration/laboratory-orders',
       'administration/laboratory-prices',
+      'administration/center-schedule',
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {

@@ -1,0 +1,268 @@
+/* Horarios y equipos del centro: una tarjeta a lo ancho con dos pestañas
+   (regla 8 del sistema de diseño), mobile-first. */
+
+:host {
+  display: block;
+}
+
+.centro {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.centro__nombre {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.centro__panel {
+  display: grid;
+  gap: var(--sp-6);
+  padding-block-start: var(--sp-4);
+}
+
+.seccion {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.seccion__cabecera {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.seccion__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.seccion__ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--st-info-bd);
+  border-radius: var(--r-pill);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  font-size: var(--fs-caption);
+}
+
+.chip--vacio {
+  border-color: var(--border-subtle);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+}
+
+.modalidades,
+.excepciones__lista,
+.resumen,
+.equipos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.modalidad {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.modalidad__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalidad__nombre {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modalidad__equipos {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.modalidad__equipos--sin {
+  color: var(--text-danger);
+}
+
+.modalidad__propio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.modalidad__propio app-segmented-control {
+  /* Crece y no se encoge: a 390 px el segmentado reparte la fila entera
+     (su propia regla angosta) en vez de cortar los rótulos. */
+  flex: 1 0 auto;
+  /* Por debajo de 30rem sus opciones tienen base 0: sin un mínimo, el
+     tamaño «auto» queda en el mínimo y corta los rótulos. */
+  min-inline-size: 8rem;
+}
+
+.modalidad__rotulo {
+  color: var(--text-secondary);
+}
+
+.excepciones summary {
+  cursor: pointer;
+  color: var(--text-link);
+}
+
+.excepciones__lista {
+  margin-block-start: var(--sp-3);
+}
+
+.excepcion {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-sm);
+}
+
+.excepcion__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resumen__fila {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border-inline-start: 3px solid var(--brand-primary);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+}
+
+.resumen__fila--sin-turnos {
+  border-inline-start-color: var(--border-default);
+}
+
+.resumen__fila--sin-turnos .resumen__horario {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+.resumen__fila--sin-turnos .resumen__cupo {
+  color: var(--text-danger);
+}
+
+.resumen__fila p {
+  margin: 0;
+}
+
+.resumen__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.resumen__origen {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.resumen__horario {
+  color: var(--text-primary);
+}
+
+.resumen__cupo,
+.resumen__excepcion {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.problemas {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+.centro__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}
+
+.equipo {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.equipo__datos {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.equipo__datos p {
+  margin: 0;
+}
+
+.equipo__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.equipo__mapa summary {
+  cursor: pointer;
+}
+
+.equipo__mapa app-glossary-data-flow {
+  margin-block-start: var(--sp-2);
+  font-size: var(--fs-body);
+}
+
+.equipo__mapa {
+  color: var(--text-link);
+  font-size: var(--fs-caption);
+}
+
+/* Tableta (--bp-md, 780 px): el equipo en una fila, con su estado a la derecha. */
+@media (min-width: 780px) {
+  .equipo {
+    grid-template-columns: 1fr auto;
+    /* Arriba y no al centro: con el mapa de datos abierto, el estado quedaba
+       flotando a mitad de la tarjeta, lejos del nombre del equipo. */
+    align-items: start;
+  }
+}
+
+.equipo__estado {
+  min-inline-size: 12rem;
+}

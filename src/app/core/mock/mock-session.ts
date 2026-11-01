@@ -19,6 +19,8 @@ export const TENANT_HOSPITAL = uuid('tenant-hospital-san-lucas');
 export const TENANT_PLATAFORMA = uuid('tenant-plataforma-alovida');
 export const TENANT_FARMACIA = uuid('tenant-farmacia-vida');
 export const TENANT_LABORATORIO = uuid('tenant-laboratorio-central');
+/** El Centro de Imagen Sur: el centro de imagen con el que el paciente reserva sus estudios. */
+export const TENANT_IMAGEN_SUR = uuid('tenant-imagen-sur');
 export const TENANT_ASEGURADORA = uuid('tenant-seguros-andina');
 /** El consultorio propio de la médica: su organización por defecto. */
 export const TENANT_CONSULTORIO = uuid('tenant-consultorio-rojas');
@@ -38,6 +40,7 @@ export const TENANT_NAMES: Readonly<Record<string, string>> = {
   [TENANT_PLATAFORMA]: 'AloVida Plataforma',
   [TENANT_FARMACIA]: 'Farmacia Vida',
   [TENANT_LABORATORIO]: 'Laboratorio Central',
+  [TENANT_IMAGEN_SUR]: 'Centro de Imagen Sur',
   [TENANT_ASEGURADORA]: 'Seguros Andina',
   [TENANT_HOSPITAL_PILOTO]: 'Hospital Piloto Mantra',
   [TENANT_CESPEDES]: 'Consultorio Dra. Paola Céspedes',
@@ -71,6 +74,7 @@ export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode | 'DIAGNOSTIC_
   // `TENANT_TYPE_CODES` —esa lista es la del alta administrativa— pero sí en el
   // claim, y es lo que abre «Recepción de muestras» en el menú.
   [TENANT_LABORATORIO]: 'DIAGNOSTIC_CENTER',
+  [TENANT_IMAGEN_SUR]: 'DIAGNOSTIC_CENTER',
   [TENANT_ASEGURADORA]: 'PAYER',
   [TENANT_HOSPITAL_PILOTO]: 'HOSPITAL',
   [TENANT_CESPEDES]: 'MEDICAL_OFFICE',
@@ -116,6 +120,10 @@ export const IDS = {
   laboratorio: {
     userId: uuid('user-laboratorio-staff'),
     personId: uuid('person-laboratorio-staff'),
+  },
+  imagen: {
+    userId: uuid('user-imagen-sur-staff'),
+    personId: uuid('person-imagen-sur-staff'),
   },
   farmacia: {
     userId: uuid('user-farmacia-vida'),
@@ -339,6 +347,22 @@ export const MOCK_USERS: readonly MockUser[] = [
     accountKind: 'ORGANIZATION',
   },
   {
+    // El Centro de Imagen Sur (mockup, 2026-10-06): la cuenta con la que el
+    // centro configura sus horarios por modalidad y el estado de sus equipos.
+    // Mismo molde que `laboratorio`: `USER` y la membresía de su tenant
+    // `DIAGNOSTIC_CENTER`.
+    key: 'imagen',
+    id: IDS.imagen.userId,
+    email: 'imagen@alovida.mock',
+    nationalId: '7002002',
+    displayName: 'Centro de Imagen Sur',
+    roles: ['USER'],
+    tenants: [TENANT_IMAGEN_SUR],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.imagen.personId,
+    accountKind: 'ORGANIZATION',
+  },
+  {
     // La encargada de Farmacia Vida: `USER` y la membresía del tenant
     // `PHARMACY`, igual que la API. Es la cuenta con la que la maqueta recorre
     // lo que hace una farmacia: su catálogo, sus pedidos y sus promociones.
@@ -556,6 +580,7 @@ export const MOCK_USERS: readonly MockUser[] = [
     personId: IDS.suarez.personId,
     accountKind: 'PERSON',
   },
+
   // Infraestructura F2/F3 (31/10/2026): el personal del Hospital San Lucas, una
   // cuenta por rol operativo. El token no trae el rol —es una fila de
   // `organization_user_assignments` que resuelve la API (`fixtures/inpatient.ts`)—.
@@ -607,6 +632,18 @@ export function resolverCuentasDePacientes(resolver: ResolverDeCuentas): void {
 }
 
 /**
+ * Las cuentas que nacen de un alta pública durante el recorrido (hoy, la de
+ * farmacia). Mismo mecanismo que {@link resolverCuentasDePacientes}: las
+ * guarda quien atiende el alta (`auth.handlers`) y se resuelven acá, así el
+ * login, el token y la renovación las reconocen igual que a las sembradas.
+ */
+let cuentaRegistrada: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasRegistradas(resolver: ResolverDeCuentas): void {
+  cuentaRegistrada = resolver;
+}
+
+/**
  * Las cuentas de personal de apoyo dadas de alta en la maqueta
  * (`/iam/auth/register-support-staff`). Las resuelve
  * `support-staff.handlers`, igual que las de pacientes: este archivo no puede
@@ -618,23 +655,35 @@ export function resolverCuentasDeApoyo(resolver: ResolverDeCuentas): void {
   cuentaDeApoyo = resolver;
 }
 
+/**
+ * Correos con los que se conoce, fuera del simulador, a una cuenta de
+ * demostración. `admin@alovidasalud.com` es el superadministrador local con el
+ * que se probó la Superadministración contra la API real (sólo local y dev):
+ * quien lo escribe acá entra a la cuenta `superadmin` del simulador, con
+ * cualquier contraseña no vacía como el resto.
+ */
+export const ALIAS_DE_CUENTA: Readonly<Record<string, string>> = {
+  'admin@alovidasalud.com': 'superadmin',
+};
+
 export function buscarUsuario(identificador: string): MockUser | undefined {
-  const limpio = identificador.trim().toLocaleLowerCase('es');
+  const escrito = identificador.trim().toLocaleLowerCase('es');
+  const limpio = ALIAS_DE_CUENTA[escrito] ?? escrito;
+  // Primero lo exacto, en todas las fuentes; recién al final el atajo «la
+  // parte antes de la arroba es la clave» (`farmacia@…` → la cuenta demo).
+  // Al revés, `farmacia@sanmartin.bo`, registrada en el recorrido, entraba a
+  // la cuenta de demostración.
   return (
-    MOCK_USERS.find(
-      (u) =>
-        u.email === limpio ||
-        u.nationalId === limpio ||
-        u.key === limpio ||
-        u.key === limpio.replace(/@.*$/, ''),
-    ) ??
+    MOCK_USERS.find((u) => u.email === limpio || u.nationalId === limpio || u.key === limpio) ??
     cuentaDePaciente({ identificador: limpio }) ??
-    cuentaDeApoyo({ identificador: limpio })
+    cuentaRegistrada({ identificador: limpio }) ??
+    cuentaDeApoyo({ identificador: limpio }) ??
+    MOCK_USERS.find((u) => u.key === limpio.replace(/@.*$/, ''))
   );
 }
 
 export function usuarioPorId(userId: string): MockUser | undefined {
-  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaDeApoyo({ id: userId });
+  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaRegistrada({ id: userId }) ?? cuentaDeApoyo({ id: userId });
 }
 
 /* ---- tokens ---------------------------------------------------------------- */
@@ -687,7 +736,7 @@ export function emitirRefreshToken(user: MockUser): string {
 export function usuarioDeRefreshToken(refreshToken: string): MockUser | undefined {
   const [prefijo, key] = refreshToken.split('.');
   if (prefijo !== 'mock-refresh' || key === undefined) return undefined;
-  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaDeApoyo({ key });
+  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaRegistrada({ key }) ?? cuentaDeApoyo({ key });
 }
 
 export function usuarioDeAccessToken(token: string): MockUser | undefined {

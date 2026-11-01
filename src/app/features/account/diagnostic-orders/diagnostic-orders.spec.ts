@@ -56,6 +56,8 @@ interface OrdenDeApi {
   readonly performerPractitionerProfileId?: string;
   readonly suggestedPracticeSiteId?: string;
   readonly suggestedPracticeSiteName?: string | null;
+  /** El turno reservado en un centro para la orden (CM-10). */
+  readonly appointment?: unknown;
 }
 
 /**
@@ -365,6 +367,51 @@ describe('DiagnosticOrders', () => {
     const filas = api(componente).filasFiltradas();
     expect(api(componente).accionesDe(filas[0]).map((a) => a.code)).toContain('ver-preparacion');
     expect(api(componente).accionesDe(filas[1]).map((a) => a.code)).not.toContain('ver-preparacion');
+  });
+
+  it('«Reservar hora» sólo aparece en estudios de laboratorio o imagen sin resultado ni turno', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    const IMG = id('o-img');
+    const RES = id('o-res');
+    const OTRA = id('o-otra');
+    const imagenPendiente = orden({ id: IMG, categoryConceptId: 'cat-img' });
+    const imagenConResultado = orden({ id: RES, categoryConceptId: 'cat-img', hasReleasedResult: true, reportId: id('r') });
+    const otra = orden({ id: OTRA });
+    responder([imagenPendiente, imagenConResultado, otra], [concepto('cat-img', 'SRQ-IMAGING', 'Imagenología')]);
+
+    const filas = api(componente).filasFiltradas();
+    const codigos = (oid: string) => api(componente).accionesDe(filas.find((f) => f.id === oid)!).map((a) => a.code);
+    expect(codigos(IMG)).toContain('reservar');
+    expect(codigos(RES)).not.toContain('reservar');
+    expect(codigos(OTRA)).not.toContain('reservar');
+  });
+
+  it('una orden con turno muestra «Con turno» y cambia «Reservar hora» por «Ver cita»', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    const conTurno = orden({
+      categoryConceptId: 'cat-img',
+      appointment: {
+        bookingId: 'b-1',
+        unitId: 'u-1',
+        unitName: 'Centro de Imagen Sur',
+        addressText: null,
+        startAt: '2026-10-06T12:00:00.000Z',
+        endAt: '2026-10-06T12:30:00.000Z',
+        studyName: 'Ecografía abdominal',
+        price: 340,
+        currency: 'BOB',
+        preparation: null,
+      },
+    });
+    responder([conTurno], [concepto('cat-img', 'SRQ-IMAGING', 'Imagenología')]);
+
+    const fila = api(componente).filasFiltradas()[0];
+    const codigos = api(componente).accionesDe(fila).map((a) => a.code);
+    expect(codigos).toContain('ver-turno');
+    expect(codigos).not.toContain('reservar');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="mis-ordenes-turno"]')?.textContent).toContain('Centro de Imagen Sur');
   });
 
   it('todas las acciones de fila llevan texto, ninguna es sólo un ícono', async () => {

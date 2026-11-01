@@ -1,3 +1,4 @@
+import type { OrderAppointment } from '../diagnostic-units/center-schedule.types';
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 import type { CollectionPointRef } from './sample-collection.types';
 import type {
@@ -353,6 +354,12 @@ export interface PatientOrder extends PatientSettlementFields, ServiceRequestPer
   readonly preparationInstructions?: string;
   readonly hasReleasedResult: boolean;
   readonly reportId?: string;
+  /**
+   * El turno que el paciente reservó en un centro para hacer este estudio.
+   * `null` o ausente: todavía no reservó. Contrato del simulador, pendiente de
+   * backend (P-CENTRO-HORARIOS).
+   */
+  readonly appointment?: OrderAppointment | null;
 }
 
 /** Página de órdenes propias. */
@@ -373,6 +380,7 @@ export interface PatientOwnOrders {
 export interface DiagnosticResultShare {
   readonly id: string;
   readonly reportId: string;
+  /** La cuenta del profesional con acceso; la API la resuelve del perfil. */
   readonly practitionerUserId: string;
   /**
    * El nombre del profesional, para que «Compartido con» no muestre un uuid.

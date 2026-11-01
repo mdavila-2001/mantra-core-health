@@ -209,9 +209,15 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
       );
       expect(order.deliveryMode?.code).toBe('PINV_DELIVERY_RETIRO');
 
+      // La bandeja no muestra lo que todavía no llegó (pedidos con la hora del día
+      // fija, como las 11:40 del de entrega a domicilio): se mira de noche para que
+      // la prueba no dependa de la hora a la que corre.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date().setHours(23, 0, 0, 0));
       const bandeja = cuerpoDe<{ items: readonly WithDeliveryMode[] }>(
         pedir('GET', '/pharmacy/orders', undefined, {}, null),
       );
+      vi.useRealTimers();
       const aDomicilio = bandeja.items.filter(
         (item) => item.deliveryMode?.code !== 'PINV_DELIVERY_RETIRO',
       );

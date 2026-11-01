@@ -62,13 +62,18 @@ function taxonomyOf(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
 /**
  * La imagen publicable de una fila, o `undefined`.
  *
- * Mismo criterio que `imageFromProperty` de la API: sin URL, atribución o
- * licencia no se publica. Una foto sin crédito no se muestra.
+ * Exige aprobación explícita de pertinencia además de URL, atribución y licencia.
+ * Las imágenes importadas automáticamente no tienen esa aprobación.
  */
 export function imageOf(fila: FilaDeGlosario) {
   // Los importadores escriben `null` donde no hay imagen (SCHEMA.md): null y
   // ausente valen lo mismo.
-  if (!fila.imageUrl || !fila.imageAttribution || !fila.imageLicense) {
+  if (
+    fila.properties?.['image_review_status'] !== 'approved' ||
+    !fila.imageUrl ||
+    !fila.imageAttribution ||
+    !fila.imageLicense
+  ) {
     return undefined;
   }
   return {
@@ -141,6 +146,17 @@ export function inlineFacets(manifiesto: ManifiestoDelGlosario) {
   return { categories, tags, total: manifiesto.total };
 }
 
+/**
+ * El resumen llano de la fila, o `''` si es una plantilla repetida en muchos
+ * términos (ver `genericSummaries` en el manifiesto). Una plantilla no explica
+ * el término: mostrarla como si lo hiciera es peor que no mostrar nada.
+ */
+function resumenPropio(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario): string {
+  return manifiesto.genericSummaries?.includes(fila.plainSummaryEs) === true
+    ? ''
+    : fila.plainSummaryEs;
+}
+
 /** Una entrada de la lista, como la devuelve la búsqueda del glosario. */
 export function inlineTerm(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
   const { categoria, etiquetas } = taxonomyOf(fila, manifiesto);
@@ -156,14 +172,17 @@ export function inlineTerm(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosar
     // (no se redacta nada), así que cae a la frase descriptiva oficial de la
     // fuente y, si tampoco, a la definición verbatim (la tarjeta la corta a
     // cuatro líneas). Todo texto de la fuente, ninguno escrito acá.
-    shortDefinition: fila.plainSummaryEs || fila.metaDescription || fila.definition,
+    shortDefinition: resumenPropio(fila, manifiesto) || fila.metaDescription || fila.definition,
     tags: etiquetas.map((etiqueta) => etiqueta.name),
     relationsCount: fila.relations.length,
     status: 'active' as const,
     valueSets: [PARAGUAS_DEL_GLOSARIO, categoria, ...etiquetas].map(reference),
     ...(imagen === undefined
       ? {}
-      : { imageThumbnailUrl: imagen.thumbnailSource ?? imagen.source }),
+      : {
+          imageThumbnailUrl: imagen.thumbnailSource ?? imagen.source,
+          imageReviewStatus: 'approved' as const,
+        }),
   };
 }
 
@@ -237,9 +256,9 @@ export function inlineSheet(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosa
     ...(fila.definition === ''
       ? {}
       : { clinicalDefinition: { text: fila.definition, translated: fila.lang !== 'en' } }),
-    ...(fila.plainSummaryEs === ''
+    ...(resumenPropio(fila, manifiesto) === ''
       ? {}
-      : { plainSummary: { text: fila.plainSummaryEs, translated: true } }),
+      : { plainSummary: { text: resumenPropio(fila, manifiesto), translated: true } }),
     relations: fila.relations.map((relacion) => ({
       type: relacion.type,
       conceptId: relacion.targetId,

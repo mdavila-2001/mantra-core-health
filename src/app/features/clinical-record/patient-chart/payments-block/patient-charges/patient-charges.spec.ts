@@ -176,4 +176,19 @@ describe('CobrosDelPaciente', () => {
     expect(fixture.nativeElement.textContent).toContain('No puede operar los cobros');
     expect(el('cobros-vacio')).toBeNull();
   });
+  it('«Recibidos» muestra el comprobante que envió la persona, no sólo el aviso', () => {
+    const pendiente = motor.listCharges().find((c) => c.source === 'CONSULTATION' && c.payment === null && c.plan === null)!;
+    motor.informarPagoDelPaciente(pendiente.id, {
+      fileName: 'transferencia.png',
+      mimeType: 'image/png',
+      sizeBytes: 8,
+      dataUrl: 'data:image/png;base64,iVBORw0KGgo=',
+    });
+    montar(pendiente.patientProfileId);
+    responder(pendiente.patientProfileId);
+
+    const comprobante = el('pago-recibido-comprobante');
+    expect(comprobante?.textContent).toContain('transferencia.png');
+    expect(comprobante?.querySelector('img')?.getAttribute('alt')).toBe('Comprobante enviado: transferencia.png');
+  });
 });

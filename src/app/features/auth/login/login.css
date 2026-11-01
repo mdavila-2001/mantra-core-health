@@ -1,8 +1,7 @@
-/* La estructura partida (2 columnas), el fondo vivo y el selector de tema son
-   del organismo `app-auth-split`. Acá va solo la tarjeta del formulario: un
-   cristal que flota sobre esa aurora, con la jerarquía tipo "documento" de la
-   familia expediente (membrete con regla, cuerpo y pie separados por líneas).
-   Solo tokens ALOVIDA. */
+/* La estructura partida (2 columnas) y el selector de tema son del organismo
+   `app-auth-split`. Acá va solo la tarjeta del formulario, con la jerarquía
+   tipo "documento" de la familia expediente (membrete con regla, cuerpo y pie
+   separados por líneas). Solo tokens ALOVIDA. */
 
 /* Pantalla enrutada: el host es un custom element y sin `display` sería EN
    LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
@@ -14,26 +13,19 @@
 /* ==========================================================================
     La tarjeta.
 
-    Cristal, no papel: la superficie deja pasar la aurora que se mueve detrás,
-    y por eso la pantalla se siente viva incluso mirando solo el formulario.
-
-    El 92 % NO es un número al azar. Es el punto en que el fondo se insinúa y
-    el contraste del texto sigue siendo el de los tokens: `--text-primary`
-    sobre `--bg-surface` mide 13,46:1 en el peor caso, y una capa al 8 % de una
-    mancha de marca —que además está desenfocada por el propio degradado— lo
-    deja por encima de 12:1, muy lejos del 7:1 de AAA. Bajarlo a 80 % ya sería
-    apostar el contraste a lo que haya debajo, y debajo hay algo que se mueve.
-
-    Sin `backdrop-filter`: el desenfoque se recalculaba en cada cuadro, porque
-    detrás de la tarjeta pasa el cometa del latido. Al 92 % de opacidad el
-    vidrio apenas se notaba, y su costo sí, en los equipos sin GPU.
+    Papel, no vidrio: una superficie del tema con su filete y una sombra
+    mínima. Antes era un cristal inclinable con reflejo que seguía al puntero,
+    una sombra larga y un canto de luz sobre el escenario oscuro; eso tenía
+    sentido flotando sobre un latido que se movía detrás, y deja de tenerlo en
+    una pantalla quieta donde lo único que se mueve es lo que la persona toca.
+    Una tarjeta que se inclina mientras se escribe en ella era, además, justo el
+    momento en que el efecto pasa de gracioso a molesto.
     ========================================================================== */
 .login {
-  position: relative;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-2xl);
   padding: var(--sp-6);
   /* La sombra del sistema, más un filo de luz interior arriba: es lo que hace
@@ -249,9 +241,9 @@ form {
   color: var(--st-secondary-fg);
 }
 
-.login__anexo-icono svg {
-  inline-size: 1.25rem;
-  block-size: 1.25rem;
+.login__anexo-icono app-account-icon {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
 }
 
 .login__anexo-texto {
@@ -355,10 +347,6 @@ form > *:nth-child(n + 4) {
   form > *,
   .login__footer {
     animation-delay: 0ms !important;
-  }
-
-  .login {
-    transform: none;
   }
 }
 

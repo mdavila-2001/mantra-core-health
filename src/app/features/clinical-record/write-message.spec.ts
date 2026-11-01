@@ -76,7 +76,7 @@ describe('mensajeDeFalloDeEscritura', () => {
       'Se cayó el índice (req-42)',
     );
     expect(writeFailureMessage(unexpectedError('req-42', ''), textos)).toBe(
-      'Ocurrió un error inesperado. (req-42)',
+      'No pudimos completar la acción. Intente de nuevo en unos segundos. (req-42)',
     );
   });
 
@@ -132,7 +132,7 @@ describe('mensajeDeEscritura', () => {
   describe('writeFailureParts', () => {
     it('separa el código de S9 del texto, con el mismo respaldo', () => {
       expect(writeFailureParts(unexpectedError('req-1', ''), { accion: 'x' })).toEqual({
-        text: 'Ocurrió un error inesperado.',
+        text: 'No pudimos completar la acción. Intente de nuevo en unos segundos.',
         code: 'req-1',
       });
     });

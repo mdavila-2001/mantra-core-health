@@ -67,9 +67,12 @@ SEXOS = {"neutro": "neutral", "masculino": "male", "femenino": "female"}
 VISTAS = {"frente": "front", "espalda": "back", "cara": "face"}
 NOMBRE_VISTA = {"frente": "Frente", "espalda": "Espalda", "cara": "Cara"}
 
-# Píxeles por unidad del viewBox en el WebP publicado: a 3× de densidad la
-# figura entera (16rem) y la cara (19rem) siguen nítidas.
-DENSIDAD_WEBP = {"frente": 3.5, "espalda": 3.5, "cara": 4.5}
+# Píxeles por unidad del viewBox en el WebP publicado. Desde 2026-10-29 son
+# «ultra HD»: el render sale a 10 px/unidad (cuerpo) y 16 (cara) y se publica
+# a 8 y 10, es decir 1920×3520 y 2000×2400. La figura entera (20rem) sigue
+# nítida a 3× de densidad y el acercamiento 5× del organismo muestra píxeles
+# reales hasta ~2× (antes se veía a 840×1540 y se desenfocaba a 1,5×).
+DENSIDAD_WEBP = {"frente": 8.0, "espalda": 8.0, "cara": 10.0}
 CALIDAD_WEBP = 82
 
 INF = 1000.0

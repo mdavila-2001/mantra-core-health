@@ -6,6 +6,11 @@ import { registrarAuth } from './auth.handlers';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
+// Este spec se escribió contra el entorno de `dev` (API real); la maqueta arranca con `mockBackend: true`.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: false }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
+
 /**
  * El simulador de las especialidades y las matrículas propias tiene que fallar
  * donde falla la API (BR-07): `404` a lo ajeno o inexistente, `400` a una clave
