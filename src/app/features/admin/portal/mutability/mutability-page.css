@@ -12,13 +12,39 @@
 
 .mut__metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(11rem, 1fr);
   gap: var(--sp-3);
+  /* Teléfono y tableta: las cinco cifras en un carril desplazable, una sola fila; la tabla queda a la vista. */
+  overflow-x: auto;
+  padding-block-end: var(--sp-1);
+  scrollbar-width: thin;
 }
 
-.mut__note {
-  margin: 0;
-  color: var(--text-secondary);
+@media (min-width: 1024px) {
+  .mut__metrics {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+}
+
+.mut__metrics app-metric-card {
+  min-inline-size: 0;
+}
+
+/* Aviso de honestidad: una línea, el detalle se despliega. */
+.mut__limits-summary {
+  cursor: pointer;
+}
+
+.mut__limits-summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.mut__limits-text {
+  margin: var(--sp-2) 0 0;
 }
 
 .mut__card {
@@ -31,11 +57,70 @@
   flex-direction: column;
   gap: var(--sp-4);
   padding-block: var(--sp-4);
+  min-inline-size: 0;
+}
+
+/* Resumen: paneles en rejilla (uno en el teléfono, dos desde escritorio). */
+.mut__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.mut__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.mut__panel > p {
+  margin: 0;
+}
+
+@media (min-width: 650px) {
+  .mut__panel {
+    padding: var(--sp-4);
+  }
+}
+
+@media (min-width: 1024px) {
+  .mut__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mut__panel--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.mut__intro {
+  margin: 0;
+  color: var(--text-secondary);
+  max-inline-size: 72ch;
+}
+
+.mut__scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.mut__back {
+  align-self: flex-start;
 }
 
 .mut__h {
   margin: 0;
   font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
   color: var(--text-primary);
 }
 
@@ -67,6 +152,60 @@ p.mut__help {
 
 .mut__name {
   color: var(--text-link);
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.mut__code--tag {
+  display: block;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  margin-block-start: var(--sp-1);
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-xs);
+  background: var(--bg-inset);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  overflow-wrap: anywhere;
+}
+
+.mut__finding-name {
+  display: block;
+}
+
+.mut__h--sub {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* Paneles plegables del resumen: el título a la vista, el detalle al desplegar. */
+.mut__fold-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  cursor: pointer;
+  list-style: none;
+}
+
+.mut__fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mut__fold-summary .mut__h::before {
+  content: '▸';
+  display: inline-block;
+  margin-inline-end: var(--sp-2);
+  color: var(--text-secondary);
+  transition: transform var(--dur-fast) ease;
+}
+
+.mut__fold[open] > .mut__fold-summary .mut__h::before {
+  transform: rotate(90deg);
+}
+
+.mut__fold-summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .mut__cell {
@@ -120,9 +259,17 @@ p.mut__help {
 }
 
 .mut__table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  background: var(--bg-surface-alt);
   font-size: var(--fs-caption);
+  font-weight: 600;
   color: var(--text-secondary);
   border-block-end-color: var(--border-default);
+}
+
+.mut__table tbody tr:hover {
+  background: var(--bg-hover);
 }
 
 .mut__table tbody th {
@@ -131,6 +278,70 @@ p.mut__help {
 
 .mut__table tbody th > * + * {
   margin-block-start: var(--sp-1);
+}
+
+/* Tablas del resumen en teléfono: cada fila es un bloque (título + cifra en la misma línea,
+   la evidencia debajo). Desde 650 px vuelven a ser tabla. */
+.mut__table thead {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.mut__table,
+.mut__table tbody {
+  display: block;
+}
+
+.mut__table tbody tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.mut__table tbody tr > * {
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.mut__table tbody tr > :nth-child(n + 3) {
+  grid-column: 1 / -1;
+  padding-block-start: var(--sp-1);
+}
+
+@media (min-width: 650px) {
+  .mut__table {
+    display: table;
+  }
+
+  .mut__table thead {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    overflow: visible;
+    clip-path: none;
+    display: table-header-group;
+  }
+
+  .mut__table tbody {
+    display: table-row-group;
+  }
+
+  .mut__table tbody tr {
+    display: table-row;
+    padding: 0;
+    border: 0;
+  }
+
+  .mut__table tbody tr > * {
+    padding: var(--sp-2) var(--sp-3);
+    border-block-end: 1px solid var(--border-subtle);
+  }
 }
 
 .mut__num {
@@ -197,7 +408,7 @@ p.mut__help {
   gap: var(--sp-2);
   padding: var(--sp-3);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-md);
   background: var(--bg-surface-alt);
 }
 
@@ -223,4 +434,26 @@ p.mut__help {
   margin: 0;
   font-size: var(--fs-caption);
   color: var(--text-secondary);
+}
+
+.mut__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.mut__detail > .mut__head {
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+/* Tabla estrecha (teléfono): la tabla pliega las secundarias y un rótulo largo
+   («Sólo se agrega; se purga por retención») parte en vez de salirse. */
+@container data-table (width < 52rem) {
+  .mut__cell app-badge {
+    max-inline-size: 100%;
+    white-space: normal;
+    text-align: start;
+  }
 }

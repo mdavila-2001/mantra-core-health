@@ -21,19 +21,23 @@ import {
   type MutabilitySummary,
 } from '../../../../core/data-access/admin-portal/mutability.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { NavigationService } from '../../../../core/navigation/navigation.service';
+import { Breakpoints } from '../../../../core/layout/breakpoints';
 import { empty, loading, notFound, ready } from '../../../../core/view-state/view-state';
 import type { EmptyViewState, ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { MetricCard } from '../../../../shared/components/molecules/metric-card/metric-card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
+import {
+  FilterBar,
+  type FilterDef,
+} from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { FilterForm, type FilterField } from '../governance/filter-form';
 import { portalUrl } from '../portal-nav';
 import { pagedList } from '../support/paged-list';
 import { patchQuery, queryFilters, queryParamsSignal } from '../support/route-query';
@@ -88,6 +92,7 @@ const NO_FILTERS: MutabilityUrlValues = {
 @Component({
   selector: 'app-portal-mutability-page',
   imports: [
+    Alert,
     Badge,
     Card,
     MetricCard,
@@ -96,7 +101,7 @@ const NO_FILTERS: MutabilityUrlValues = {
     DataTable,
     PageHeader,
     ViewStateHost,
-    FilterForm,
+    FilterBar,
     RouterLink,
   ],
   templateUrl: './mutability-page.html',
@@ -107,7 +112,6 @@ export class MutabilityPage {
   private readonly client = inject(MutabilityClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   private readonly params = queryParamsSignal(this.route);
   protected readonly values = queryFilters(this.params, MUTABILITY_URL_KEYS);
@@ -144,47 +148,17 @@ export class MutabilityPage {
   );
 
   // ---- Filtros y listas ---------------------------------------------------------------------
-  protected readonly fields: readonly FilterField[] = [
-    { key: 'q', label: 'Buscar', kind: 'text', placeholder: 'Esquema o tabla' },
-    {
-      key: 'writeMode',
-      label: 'Modo de escritura',
-      kind: 'select',
-      options: [{ value: '', label: 'Cualquier modo' }, ...WRITE_MODE_OPTIONS],
-    },
-    {
-      key: 'evidence',
-      label: 'Nivel de evidencia',
-      kind: 'select',
-      options: [{ value: '', label: 'Cualquier nivel' }, ...EVIDENCE_OPTIONS],
-    },
-    {
-      key: 'finding',
-      label: 'Hallazgos',
-      kind: 'select',
-      options: [{ value: '', label: 'Con o sin hallazgos' }, ...FINDING_OPTIONS],
-    },
-    {
-      key: 'disposition',
-      label: 'Retención',
-      kind: 'select',
-      options: [{ value: '', label: 'Cualquiera' }, ...DISPOSITION_OPTIONS],
-      advanced: true,
-    },
-    {
-      key: 'legalHold',
-      label: 'Legal hold',
-      kind: 'select',
-      options: [{ value: '', label: 'Cualquiera' }, ...LEGAL_HOLD_OPTIONS],
-      advanced: true,
-    },
-    {
-      key: 'schema',
-      label: 'Esquema exacto',
-      kind: 'text',
-      placeholder: 'Ej.: audit',
-      advanced: true,
-    },
+  /**
+   * La barra de filtros escribe cada clave en la URL (`q` el buscador); la pantalla los lee de ahí
+   * con `values()`. «Esquema exacto» no tiene control propio: llega por enlace (`?schema=`) y se
+   * muestra como alcance con su forma de quitarlo; el buscador ya cubre esquema o tabla.
+   */
+  protected readonly filterDefs: readonly FilterDef[] = [
+    { key: 'writeMode', label: 'Modo de escritura', placeholder: 'Cualquier modo', options: WRITE_MODE_OPTIONS },
+    { key: 'evidence', label: 'Nivel de evidencia', placeholder: 'Cualquier nivel', options: EVIDENCE_OPTIONS },
+    { key: 'finding', label: 'Hallazgos', placeholder: 'Con o sin hallazgos', options: FINDING_OPTIONS },
+    { key: 'disposition', label: 'Retención', placeholder: 'Cualquier retención', options: DISPOSITION_OPTIONS },
+    { key: 'legalHold', label: 'Legal hold', placeholder: 'Con o sin legal hold', options: LEGAL_HOLD_OPTIONS },
   ];
 
   protected readonly tables = pagedList<MutabilityItem>(
@@ -225,19 +199,37 @@ export class MutabilityPage {
   private readonly findingsCell =
     viewChild.required<TemplateRef<{ $implicit: MutabilityItem }>>('findingsCell');
 
-  protected readonly tableColumns = computed<readonly ColumnDef<MutabilityItem>[]>(() => [
-    { key: 'table', header: 'Tabla', priority: 1, cell: this.tableCell() },
-    { key: 'mode', header: 'Modo de escritura y evidencia', priority: 1, cell: this.modeCell() },
-    { key: 'keep', header: 'Retención y legal hold', priority: 2, cell: this.keepCell() },
-    { key: 'findings', header: 'Hallazgos', priority: 2, cell: this.findingsCell() },
-  ]);
-  protected readonly contradictionColumns = computed<readonly ColumnDef<MutabilityItem>[]>(() => [
-    { key: 'table', header: 'Tabla', priority: 1, cell: this.tableCell() },
-    { key: 'mode', header: 'Modo declarado y evidencia', priority: 1, cell: this.modeCell() },
-    { key: 'findings', header: 'Hallazgos', priority: 1, cell: this.findingsCell() },
-  ]);
+  /** Teléfono: tabla y modo; los hallazgos van dentro de la fila y la retención, en «Evidencia». */
+  protected readonly narrow = inject(Breakpoints).isNavDrawer;
+  protected readonly tableColumns = computed<readonly ColumnDef<MutabilityItem>[]>(() =>
+    this.narrow()
+      ? [
+          { key: 'table', header: 'Tabla', priority: 1, cell: this.tableCell() },
+          { key: 'mode', header: 'Modo y evidencia', priority: 1, cell: this.modeCell() },
+        ]
+      : [
+          { key: 'table', header: 'Tabla', priority: 1, cell: this.tableCell() },
+          { key: 'mode', header: 'Modo y evidencia', priority: 1, cell: this.modeCell() },
+          { key: 'keep', header: 'Retención', priority: 2, cell: this.keepCell() },
+          { key: 'findings', header: 'Hallazgos', priority: 2, cell: this.findingsCell() },
+        ],
+  );
+  protected readonly contradictionColumns = computed<readonly ColumnDef<MutabilityItem>[]>(() =>
+    this.narrow()
+      ? [
+          { key: 'table', header: 'Tabla', priority: 1, cell: this.tableCell() },
+          { key: 'mode', header: 'Modo y evidencia', priority: 1, cell: this.modeCell() },
+        ]
+      : [
+          { key: 'table', header: 'Tabla', priority: 1, cell: this.tableCell() },
+          { key: 'mode', header: 'Modo y evidencia', priority: 1, cell: this.modeCell() },
+          { key: 'findings', header: 'Hallazgos', priority: 1, cell: this.findingsCell() },
+        ],
+  );
 
   protected readonly keyOf = (row: MutabilityItem): string => `${row.schema}.${row.table}`;
+  /** «schema.tabla» con cortes permitidos sólo tras «.» y «_»: nunca a mitad de palabra. */
+  protected readonly breakable = (name: string): readonly string[] => name.split(/(?<=[._])/);
   protected readonly rowName = (row: MutabilityItem): string => this.keyOf(row);
   protected readonly hasFilters = computed(() => hasMutabilityFilters(this.values()));
 
@@ -300,16 +292,8 @@ export class MutabilityPage {
     void patchQuery(this.router, this.route, { view: view === 'summary' ? null : view });
   }
 
-  protected apply(filters: Readonly<Record<string, string>>): void {
-    void patchQuery(this.router, this.route, filters);
-  }
-
-  protected clear(): void {
-    void patchQuery(
-      this.router,
-      this.route,
-      Object.fromEntries(MUTABILITY_URL_KEYS.map((k) => [k, null])),
-    );
+  protected clearSchema(): void {
+    void patchQuery(this.router, this.route, { schema: null });
   }
 
   protected open(row: MutabilityItem): void {

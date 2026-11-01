@@ -1,18 +1,39 @@
+<!-- Una sola cabecera, sobre el lienzo: las migas viven en la barra superior del portal. -->
 <app-page-header
   title="Mutabilidad de datos"
-  subtitle="Qué tablas son append-only, cuáles se pueden borrar, cuáles se purgan por retención y cuáles aceptan un legal hold. Cada dato trae su nivel de evidencia y su fuente: «sin evidencia» no es lo mismo que «No»."
-  [breadcrumbs]="breadcrumbs()"
+  subtitle="Qué tablas sólo se agregan, cuáles se actualizan o se borran, cuáles se purgan por retención y cuáles admiten un legal hold, con la fuente de cada dato."
 />
 
 <app-view-state-host [state]="summaryState()" (retry)="loadSummary()">
   @if (summary(); as s) {
     <div class="mut" data-testid="portal-mutability">
+      <!-- Aviso de honestidad en una línea; el detalle se despliega. Nada se borra. -->
+      <app-alert tone="info" data-testid="portal-mutability-provenance">
+        <details class="mut__limits">
+          <summary class="mut__limits-summary">
+            <strong>Catálogo derivado, sin revisión humana.</strong>
+            «Sin evidencia» significa que no se sabe, no que «No».
+          </summary>
+          <p class="mut__limits-text">
+            Se derivó del modelo{{ s.generatedFrom.modelVersion ? ' v' + s.generatedFrom.modelVersion : '' }}
+            y del código: no es un catálogo oficial ni lo revisó una persona. Los plazos de retención
+            no se infieren; los que aparecen los declara el modelo y siguen pendientes de
+            cumplimiento.
+          </p>
+        </details>
+      </app-alert>
+
       <section
         class="mut__metrics"
         aria-label="Resumen de mutabilidad"
         data-testid="portal-mutability-metrics"
       >
-        <app-metric-card label="Tablas" [value]="s.totalTables" hint="Base principal y bases pay" />
+        <app-metric-card
+          label="Tablas"
+          icon="table"
+          [value]="s.totalTables"
+          hint="Base principal y bases pay"
+        />
         <app-metric-card
           label="Con modo decidido"
           [value]="ratio(s.decided)"
@@ -38,19 +59,12 @@
         />
       </section>
 
-      <p class="mut__note" data-testid="portal-mutability-provenance">
-        Catálogo <strong>derivado</strong> del modelo{{
-          s.generatedFrom.modelVersion ? ' v' + s.generatedFrom.modelVersion : ''
-        }}
-        y del código: no es un catálogo oficial ni lo revisó una persona. Los plazos de retención no
-        se infieren; los que aparecen los declara el modelo y siguen pendientes de cumplimiento.
-      </p>
-
       <app-card class="mut__card" variant="outlined" padding="md">
         <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
           <app-tab label="Resumen">
-            <div class="mut__section" data-testid="portal-mutability-summary">
-              <h2 class="mut__h">Modo de escritura</h2>
+            <div class="mut__section mut__grid" data-testid="portal-mutability-summary">
+              <section class="mut__panel mut__panel--wide" aria-labelledby="mut-modo">
+              <h2 class="mut__h" id="mut-modo">Modo de escritura</h2>
               <div class="mut__scroll">
                 <table class="mut__table">
                   <caption class="mut__sr">
@@ -92,20 +106,9 @@
                 </table>
               </div>
 
-              <h2 class="mut__h">Qué tan firme es cada dato</h2>
-              <ul class="mut__levels">
-                @for (l of s.byEvidence; track l.level) {
-                  <li>
-                    <app-badge size="sm" [variant]="evidence(l.level).tone">{{
-                      evidence(l.level).label
-                    }}</app-badge>
-                    <strong>{{ ratio(l) }}</strong>
-                    <span class="mut__help">{{ evidenceHelp[l.level] }}</span>
-                  </li>
-                }
-              </ul>
-
-              <h2 class="mut__h">Hallazgos</h2>
+              </section>
+              <section class="mut__panel mut__panel--wide" aria-labelledby="mut-hallazgos">
+              <h2 class="mut__h" id="mut-hallazgos">Hallazgos</h2>
               <div class="mut__scroll">
                 <table class="mut__table">
                   <caption class="mut__sr">
@@ -114,22 +117,23 @@
                   <thead>
                     <tr>
                       <th scope="col">Hallazgo</th>
-                      <th scope="col">Clase</th>
                       <th scope="col" class="mut__num">Tablas</th>
+                      <th scope="col">Clase</th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (f of s.findingCodes; track f.code) {
                       <tr>
                         <th scope="row">
-                          {{ findingCode(f.code) }}<code class="mut__code">{{ f.code }}</code>
+                          <span class="mut__finding-name">{{ findingCode(f.code) }}</span>
+                          <code class="mut__code mut__code--tag">{{ f.code }}</code>
                         </th>
+                        <td class="mut__num">{{ f.tables }}</td>
                         <td>
                           <app-badge size="sm" [variant]="kind(f.kind).tone">{{
                             kind(f.kind).label
                           }}</app-badge>
                         </td>
-                        <td class="mut__num">{{ f.tables }}</td>
                       </tr>
                     } @empty {
                       <tr>
@@ -147,7 +151,30 @@
                 </button>
               </p>
 
-              <h2 class="mut__h">Retención y legal hold</h2>
+              </section>
+              <details class="mut__panel mut__fold">
+              <summary class="mut__fold-summary">
+                <h2 class="mut__h" id="mut-firmeza">Qué tan firme es cada dato</h2>
+                <span class="mut__help">{{ s.byEvidence.length }} niveles de evidencia</span>
+              </summary>
+              <ul class="mut__levels">
+                @for (l of s.byEvidence; track l.level) {
+                  <li>
+                    <app-badge size="sm" [variant]="evidence(l.level).tone">{{
+                      evidence(l.level).label
+                    }}</app-badge>
+                    <strong>{{ ratio(l) }}</strong>
+                    <span class="mut__help">{{ evidenceHelp[l.level] }}</span>
+                  </li>
+                }
+              </ul>
+
+              </details>
+              <details class="mut__panel mut__fold">
+              <summary class="mut__fold-summary">
+                <h2 class="mut__h" id="mut-retencion">Retención, legal hold y registro</h2>
+                <span class="mut__help">{{ s.withDeclaredPeriod }} con plazo declarado · ningún legal hold registrado</span>
+              </summary>
               <ul class="mut__levels">
                 @for (d of s.disposition; track d.disposition) {
                   <li>
@@ -172,7 +199,7 @@
                 hold: es un hecho operativo y ninguna fuente lo da.
               </p>
 
-              <h2 class="mut__h">Registro de gobierno</h2>
+              <h3 class="mut__h mut__h--sub" id="mut-gobierno">Registro de gobierno</h3>
               @if (s.registered; as r) {
                 <p>
                   Registradas en el registro de entidades: <strong>{{ ratio(r) }}</strong
@@ -184,17 +211,30 @@
                   registradas.
                 </p>
               }
+              </details>
             </div>
           </app-tab>
 
           <app-tab [label]="'Tablas (' + s.totalTables + ')'">
             <div class="mut__section">
-              <app-governance-filter-form
-                [fields]="fields"
-                [values]="values()"
-                (applied)="apply($event)"
-                (cleared)="clear()"
+              <!-- Filtros en una fila sobre la tabla; se apilan en el teléfono. Viven en la URL. -->
+              <app-filter-bar
+                class="mut__filters"
+                searchLabel="Buscar tablas"
+                searchPlaceholder="Esquema o tabla"
+                [filters]="filterDefs"
+                [searchLoading]="tables.state().status === 'loading'"
+                wrap
+                collapsible
               />
+              @if (values().schema; as schema) {
+                <p class="mut__scope" data-testid="portal-mutability-schema">
+                  Sólo el esquema <code class="mut__code">{{ schema }}</code>.
+                  <button type="button" class="mut__link" (click)="clearSchema()">
+                    Ver todos los esquemas
+                  </button>
+                </p>
+              }
               <app-data-table
                 data-testid="portal-mutability-table"
                 caption="Mutabilidad por tabla"
@@ -203,9 +243,8 @@
                 [trackBy]="keyOf"
                 [rowLabel]="rowName"
                 [cursor]="tables.cursor()"
-                [totalCount]="tables.total()"
-                stackedOnMobile
                 fitContainer
+                dense
                 rowNavigable
                 (rowActivated)="open($event)"
                 (cursorChanged)="tables.move($event)"
@@ -216,10 +255,10 @@
 
           <app-tab [label]="'Contradicciones (' + s.withContradictions.numerator + ')'">
             <div class="mut__section">
-              <p class="mut__help">
+              <p class="mut__intro">
                 Tablas cuyas fuentes se contradicen: declaradas inmutables pero con UPDATE o DELETE
-                en el código, o con una barrera en la base que ningún documento declara. Se muestran
-                las dos caras en «Evidencia»; no se resuelven aquí ni en el registro.
+                en el código, o con una barrera en la base que ningún documento declara. Las dos
+                caras se ven en «Evidencia»; aquí no se resuelven.
               </p>
               <app-data-table
                 data-testid="portal-mutability-contradictions"
@@ -229,9 +268,8 @@
                 [trackBy]="keyOf"
                 [rowLabel]="rowName"
                 [cursor]="contradictions.cursor()"
-                [totalCount]="contradictions.total()"
-                stackedOnMobile
                 fitContainer
+                dense
                 rowNavigable
                 (rowActivated)="open($event)"
                 (cursorChanged)="contradictions.move($event)"
@@ -245,6 +283,10 @@
               @if (detailState(); as ds) {
                 <app-view-state-host [state]="ds" (retry)="retryDetail()">
                   @if (detail(); as d) {
+                    <div class="mut__detail">
+                    <button type="button" class="mut__link mut__back" (click)="goTo('tables')">
+                      ← Volver a las tablas
+                    </button>
                     <header class="mut__head">
                       <h2 class="mut__h mut__mono">{{ d.schema }}.{{ d.table }}</h2>
                       <span class="mut__badges">
@@ -378,10 +420,11 @@
                         </table>
                       </div>
                     }
+                    </div>
                   }
                 </app-view-state-host>
               } @else {
-                <p class="mut__help">
+                <p class="mut__intro">
                   Elegí una tabla en «Tablas» o «Contradicciones» para ver toda su evidencia, con la
                   fuente exacta de cada dato.
                 </p>
@@ -412,7 +455,7 @@
       [routerLink]="[]"
       [queryParams]="{ view: 'evidence', table: keyOf(row) }"
       queryParamsHandling="merge"
-      >{{ row.schema }}.{{ row.table }}</a
+      >@for (part of breakable(keyOf(row)); track $index) {{{ part }}<wbr />}</a
     >
     @if (row.database === 'pay') {
       <span class="mut__help">Base pay</span>
@@ -421,6 +464,16 @@
       <span class="mut__help">En el registro de gobierno</span>
     } @else if (row.registered === false) {
       <span class="mut__help">Aún sin registrar</span>
+    }
+    @if (narrow() && (row.contradictions > 0 || row.gaps > 0)) {
+      <span class="mut__badges">
+        @if (row.contradictions > 0) {
+          <app-badge size="sm" variant="error">{{ row.contradictions }} contradicción(es)</app-badge>
+        }
+        @if (row.gaps > 0) {
+          <app-badge size="sm" variant="warning">{{ row.gaps }} brecha(s)</app-badge>
+        }
+      </span>
     }
   </div>
 </ng-template>
