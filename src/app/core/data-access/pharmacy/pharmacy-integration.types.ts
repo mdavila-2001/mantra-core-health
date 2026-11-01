@@ -23,9 +23,53 @@ export interface IntegrationConnection {
   readonly integrationMode: IntegrationMode;
   readonly supportsStockQuery: boolean;
   readonly status: IntegrationConnectionStatus;
-  /** Si la API sabe dónde está el sistema de la farmacia. */
+  /**
+   * Si hay con quién sincronizar: el sistema propio de la farmacia o, si no
+   * tiene, el que configura el servidor.
+   */
   readonly providerConfigured: boolean;
+  /**
+   * El sistema propio de la farmacia (FAR-C9 · C9-3), sin la clave; `null` si
+   * la conexión usa el del servidor o trabaja en manual. Opcional: una API
+   * anterior a C9-3 no lo manda.
+   */
+  readonly system?: ExternalSystemSummary | null;
   readonly createdAt: string;
+}
+
+/** Formatos de sistema que la plataforma sabe leer. */
+export const EXTERNAL_SYSTEM_FORMATS = ['ALOVIDA_STANDARD', 'SIMULATED_CHAIN'] as const;
+
+export type ExternalSystemFormat = (typeof EXTERNAL_SYSTEM_FORMATS)[number];
+
+/** Lo que la API muestra del sistema de la farmacia. Nunca trae la clave. */
+export interface ExternalSystemSummary {
+  readonly format: ExternalSystemFormat;
+  readonly baseUrl: string;
+  readonly externalPharmacyCode: string;
+  /** Si hay una clave guardada. */
+  readonly apiKeyConfigured: boolean;
+  readonly configuredAt: string;
+}
+
+/** `PUT …/:connectionId/external-system`. La clave viaja solo acá. */
+export interface ExternalSystemDraft {
+  readonly format: ExternalSystemFormat;
+  readonly baseUrl: string;
+  readonly externalPharmacyCode: string;
+  readonly apiKey: string;
+}
+
+/** Respuesta del `PUT`: el sistema guardado y que respondió al probarlo. */
+export interface ExternalSystemSaved {
+  readonly system: ExternalSystemSummary;
+  readonly probe: 'OK';
+}
+
+/** `POST …/:connectionId/external-system/test`. */
+export interface ExternalSystemProbe {
+  readonly status: 'OK';
+  readonly source: 'PHARMACY' | 'SERVER';
 }
 
 /** `GET /pharmacies/:pharmacyId/integration-connections`. */
@@ -242,6 +286,8 @@ export const INTEGRATION_ERROR_REASONS = [
   'PHARMACY_INTEGRATION_NOT_CONFIGURED',
   'PHARMACY_INTEGRATION_CONNECTION_INACTIVE',
   'PHARMACY_INTEGRATION_UNAVAILABLE',
+  'PHARMACY_INTEGRATION_HOST_NOT_ALLOWED',
+  'PHARMACY_INTEGRATION_URL_INVALID',
   'EXTERNAL_MAPPING_NOT_AVAILABLE',
   'EXTERNAL_MAPPING_PRODUCT_TAKEN',
   'EXTERNAL_MAPPING_EMPTY_UPDATE',

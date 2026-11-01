@@ -18,6 +18,10 @@ export const INTEGRATION_ERROR_TEXT: Readonly<Record<IntegrationErrorReason, str
     'La conexión no está activa o no permite consultar stock, así que no se puede sincronizar.',
   PHARMACY_INTEGRATION_UNAVAILABLE:
     'No pudimos hablar con el sistema de la farmacia. No se cambió ninguna existencia; pruebe de nuevo en unos minutos.',
+  PHARMACY_INTEGRATION_HOST_NOT_ALLOWED:
+    'La plataforma no tiene permitido llamar a esa dirección. Pídale a soporte que la habilite y vuelva a intentar.',
+  PHARMACY_INTEGRATION_URL_INVALID:
+    'La dirección no es válida. Escríbala completa, con http:// o https://, sin usuario ni contraseña.',
   EXTERNAL_MAPPING_NOT_AVAILABLE: 'Ese vínculo ya no existe: alguien lo deshizo. La tabla ya muestra lo que hay ahora.',
   EXTERNAL_MAPPING_PRODUCT_TAKEN:
     'Ese producto ya está vinculado con otro código del sistema de la farmacia. Corrija ese vínculo o elija otro producto.',

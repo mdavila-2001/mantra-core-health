@@ -1,0 +1,78 @@
+[1440 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1440 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=05ce42b0-dce0-40d9-b822-bdc0a361c62d {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[1440 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1440 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=2006f72a-8850-4cc7-943d-ad55336528d3 {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[1440 consola] Failed to load resource: the server responded with a status of 404 (Not Found)
+[1440 consola] [API] GET /tenants/me/membership-invitations → 404 · NOT_FOUND · «Cannot GET /tenants/me/membership-invitations» · correlationId=a106c096-7a19-4c7a-b2df-e156d15befc9 {status: 404, code: NOT_FOUND, mes
+[1440 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1440 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=6ae00a65-f56f-4c09-9061-4a9687bbc3e8 {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[1440 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1440 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=8b47ff51-d72f-495e-bb30-2ac1b0fddbdc {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[1440] GET /pharmacies/:id/integration-connections → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[1440] PUT /pharmacies/:id/integration-connections/:id/external-system → 502 (cuerpo con apiKey)
+[1440 consola] Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[1440 consola] [API] PUT /pharmacies/023142e5-587d-422f-9eb3-c5b773a3c6d0/integration-connections/9e5fe100-6a1f-4b2a-937c-fca7dae8b95f/external-system → 502 · DEPENDENCY_UNAVAILABLE · «No pudimos hablar con el siste
+[1440] PUT /pharmacies/:id/integration-connections/:id/external-system → 200 (cuerpo con apiKey)
+[1440] GET /pharmacies/:id/integration-connections → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[1440 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[1440 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=deb91f9a-5809-43d0-b7c4-6136f0d7dfd3 {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[1440] GET /pharmacies/:id/integration-connections → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[1440] POST /pharmacies/:id/integration-connections/:id/external-system/test → 200
+[1440] PUT /pharmacies/:id/integration-connections/:id/external-system → 200 (cuerpo con apiKey)
+[1440] GET /pharmacies/:id/integration-connections → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[1440] POST /pharmacies/:id/integration-connections/:id/sync → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[1440] DELETE /pharmacies/:id/integration-connections/:id/external-system → 204
+[1440] GET /pharmacies/:id/integration-connections → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[1440] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[390 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[390 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=81f6f763-6385-4b87-add3-b3b24898c3cb {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[390 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[390 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=9ab02ecc-8849-4162-853a-829bc6dcc6de {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[390 consola] Failed to load resource: the server responded with a status of 404 (Not Found)
+[390 consola] [API] GET /tenants/me/membership-invitations → 404 · NOT_FOUND · «Cannot GET /tenants/me/membership-invitations» · correlationId=e2a0e1e1-4f2f-48fc-9939-267c2818550f {status: 404, code: NOT_FOUND, mes
+[390 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[390 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=3fc45fa7-8cf3-434a-b62d-029c3bcd907f {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[390 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[390 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=b3cef182-72c1-4f31-9993-709d5c6025ea {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[390] GET /pharmacies/:id/integration-connections → 200
+[390] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[390] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[390] PUT /pharmacies/:id/integration-connections/:id/external-system → 502 (cuerpo con apiKey)
+[390 consola] Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+[390 consola] [API] PUT /pharmacies/023142e5-587d-422f-9eb3-c5b773a3c6d0/integration-connections/9e5fe100-6a1f-4b2a-937c-fca7dae8b95f/external-system → 502 · DEPENDENCY_UNAVAILABLE · «No pudimos hablar con el siste
+[390] PUT /pharmacies/:id/integration-connections/:id/external-system → 200 (cuerpo con apiKey)
+[390] GET /pharmacies/:id/integration-connections → 200
+[390] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[390] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[390] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[390 consola] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[390 consola] [API] GET /me/ui-visibility → 500 · INTERNAL · «Error interno del servidor» · correlationId=037e1f22-406e-4f68-88c2-69104a77b228 {status: 500, code: INTERNAL, message: Error interno del servidor, corr
+[390] GET /pharmacies/:id/integration-connections → 200
+[390] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[390] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[390] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[390] POST /pharmacies/:id/integration-connections/:id/external-system/test → 200
+[390] PUT /pharmacies/:id/integration-connections/:id/external-system → 200 (cuerpo con apiKey)
+[390] GET /pharmacies/:id/integration-connections → 200
+[390] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[390] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200
+[390] GET /pharmacies/:id/integration-connections/:id/external-products → 200
+[390] POST /pharmacies/:id/integration-connections/:id/sync → 200
+[390] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[390] DELETE /pharmacies/:id/integration-connections/:id/external-system → 204
+[390] GET /pharmacies/:id/integration-connections → 200
+[390] GET /pharmacies/:id/integration-connections/:id/sync-batches → 200
+[390] GET /pharmacies/:id/integration-connections/:id/product-mappings → 200

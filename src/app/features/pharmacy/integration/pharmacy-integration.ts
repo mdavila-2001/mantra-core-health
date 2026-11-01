@@ -34,6 +34,7 @@ import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { INTEGRATION_ERROR_TEXT, integrationErrorMessage } from './integration-error-message';
 import { IntegrationMappings } from './integration-mappings/integration-mappings';
 import { IntegrationSync } from './integration-sync/integration-sync';
+import { IntegrationSystem } from './integration-system/integration-system';
 
 /** Valor del desplegable de sucursal que no manda ninguna: la conexión vale para todas. */
 export const ALL_SITES = 'ALL';
@@ -64,6 +65,7 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
     FormField,
     IntegrationMappings,
     IntegrationSync,
+    IntegrationSystem,
     Select,
     ViewStateHost,
   ],

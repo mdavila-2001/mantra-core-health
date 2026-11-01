@@ -1,0 +1,63 @@
+:host {
+  display: block;
+}
+
+.system {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.system__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.system__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.system__actions,
+.system__form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.system__form-actions {
+  justify-content: flex-end;
+  grid-column: 1 / -1;
+}
+
+.system__lead {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+/*
+ * A lo ancho de la tarjeta, en dos columnas parejas (formato y dirección,
+ * código y clave): cuatro campos en tres columnas dejaban la clave sola con dos
+ * huecos al lado. En el teléfono, una columna.
+ */
+.system__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+/* --bp-sm (650px): las variables no valen dentro de una consulta de medios. */
+@media (min-width: 650px) {
+  .system__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

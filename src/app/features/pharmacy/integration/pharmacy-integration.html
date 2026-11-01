@@ -79,6 +79,8 @@
               }
             </section>
 
+            <app-integration-system [pharmacyId]="pharmacyId" [connection]="current" (changed)="reload()" />
+
             <!-- «Vincular» sobre un código sin vínculo del resultado abre el alta de abajo con ese código. -->
             <app-integration-sync
               [pharmacyId]="pharmacyId"

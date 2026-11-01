@@ -1,0 +1,139 @@
+<section class="system" aria-labelledby="integration-system-title" data-testid="integration-system">
+  <div class="system__heading">
+    <h2 class="system__title" id="integration-system-title">Sistema de la farmacia</h2>
+    @if (system() !== null && !editing()) {
+      <div class="system__actions">
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          [isLoading]="probing()"
+          [disabled]="probing() || removing()"
+          (clicked)="probe()"
+          data-testid="integration-system-probe"
+        >
+          Probar conexión
+        </button>
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          [disabled]="probing() || removing()"
+          (clicked)="startEdit()"
+          data-testid="integration-system-edit"
+        >
+          Cambiar
+        </button>
+        <button
+          app-button
+          type="button"
+          variant="danger"
+          [isLoading]="removing()"
+          [disabled]="probing() || removing()"
+          (clicked)="remove()"
+          data-testid="integration-system-remove"
+        >
+          Quitar
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <app-alert tone="error" data-testid="integration-system-error">{{ message }}</app-alert>
+  }
+  @if (probeOk(); as message) {
+    <app-alert tone="success" data-testid="integration-system-probe-ok">{{ message }}</app-alert>
+  }
+
+  @if (!showForm()) {
+    <app-fact-list disposicion="columnas" etiqueta="Datos del sistema de la farmacia" [hechos]="facts()" />
+  } @else {
+    @if (system() === null) {
+      <p class="system__lead" data-testid="integration-system-none">{{ serverText() }}</p>
+    }
+    <form class="system__form" (submit)="$event.preventDefault(); save()" novalidate data-testid="integration-system-form">
+      <app-form-field label="Formato" hint="Cómo habla el sistema de su farmacia.">
+        <app-select
+          [options]="formatOptions"
+          [value]="format()"
+          (valueChange)="chooseFormat($event)"
+          ariaLabel="Formato"
+          data-testid="integration-system-format"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Dirección"
+        [hint]="formatHint()"
+        [required]="true"
+        [errorMessage]="submitted() && missing().baseUrl ? 'Escriba la dirección del sistema.' : ''"
+      >
+        <app-input
+          type="url"
+          autocomplete="off"
+          [value]="baseUrl()"
+          (valueChange)="baseUrl.set($any($event) ?? '')"
+          [hasError]="submitted() && missing().baseUrl"
+          placeholder="https://"
+          testId="integration-system-url"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Código de la farmacia"
+        hint="Cómo identifica su sistema a esta farmacia (o a su cadena)."
+        [required]="true"
+        [errorMessage]="submitted() && missing().pharmacyCode ? 'Escriba el código de la farmacia.' : ''"
+      >
+        <app-input
+          autocomplete="off"
+          [value]="pharmacyCode()"
+          (valueChange)="pharmacyCode.set($any($event) ?? '')"
+          [hasError]="submitted() && missing().pharmacyCode"
+          testId="integration-system-code"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Clave"
+        [hint]="
+          editing()
+            ? 'Por seguridad, escriba la clave otra vez: no se puede cambiar el sistema conservando la anterior.'
+            : 'La entrega su sistema. Se guarda cifrada y no se vuelve a mostrar.'
+        "
+        [required]="true"
+        [errorMessage]="submitted() && missing().apiKey ? 'Escriba la clave.' : ''"
+      >
+        <app-input
+          type="password"
+          autocomplete="new-password"
+          [value]="apiKey()"
+          (valueChange)="apiKey.set($any($event) ?? '')"
+          [hasError]="submitted() && missing().apiKey"
+          testId="integration-system-key"
+        />
+      </app-form-field>
+      <div class="system__form-actions">
+        @if (editing()) {
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            [disabled]="saving()"
+            (clicked)="cancelEdit()"
+            data-testid="integration-system-cancel"
+          >
+            Cancelar
+          </button>
+        }
+        <button
+          app-button
+          type="submit"
+          [isLoading]="saving()"
+          [disabled]="saving()"
+          data-testid="integration-system-save"
+        >
+          Guardar y probar
+        </button>
+      </div>
+    </form>
+  }
+</section>
