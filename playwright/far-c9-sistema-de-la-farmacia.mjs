@@ -30,6 +30,15 @@ const log = [];
 
 async function abrir(ancho, alto, tema) {
   const ctx = await nav.newContext({ viewport: { width: ancho, height: alto }, colorScheme: tema });
+  // La app no sigue `prefers-color-scheme`: el tema sale de la preferencia
+  // guardada (`ThemeService`, `data-theme`). Se fija antes de que cargue.
+  await ctx.addInitScript((modo) => {
+    try {
+      localStorage.setItem('mantra-core-health.theme', modo);
+    } catch {
+      /* sin almacenamiento: queda el tema por defecto y la captura lo muestra */
+    }
+  }, tema);
   const pg = await ctx.newPage();
   pg.on('console', (m) => m.type() === 'error' && log.push(`[${ancho} consola] ${m.text().slice(0, 200)}`));
   pg.on('response', async (r) => {
@@ -124,6 +133,21 @@ async function recorrido(ancho, alto, tema) {
 
   await pg.getByTestId('integration-system-remove').click();
   await pg.getByTestId('dialogo').waitFor();
+  // Quieto: sin animaciones en curso, para que la captura muestre el diálogo y no la transición.
+  // Solo las del diálogo: la página tiene animaciones que no terminan (indicadores de carga).
+  await pg.waitForFunction(() => {
+    const dialogo = document.querySelector('[data-testid="dialogo"]');
+    return (
+      dialogo !== null &&
+      dialogo.getAnimations({ subtree: true }).every((a) => a.playState !== 'running') &&
+      getComputedStyle(dialogo).opacity === '1'
+    );
+  });
+  await pg.waitForTimeout(300);
+  const foco = await pg.evaluate(() => document.activeElement?.textContent?.trim() ?? '(nada)');
+  log.push(`[${ancho}] foco al abrir «Quitar»: ${foco}`);
+  const temaActivo = await pg.evaluate(() => document.documentElement.getAttribute('data-theme'));
+  log.push(`[${ancho}] data-theme: ${temaActivo}`);
   await pg.screenshot({ path: `${OUT}/10-quitar-confirmar-${sufijo}.jpg`, quality: 80, type: 'jpeg' });
   await pg.getByTestId('dialogo-confirmar').click();
   await pg.getByTestId('integration-system-form').waitFor({ timeout: 30000 });

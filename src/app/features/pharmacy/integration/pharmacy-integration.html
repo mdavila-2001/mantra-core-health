@@ -73,7 +73,7 @@
               </div>
               <app-fact-list disposicion="columnas" etiqueta="Datos de la conexión" [hechos]="facts()" />
               @if (!current.providerConfigured) {
-                <app-alert tone="warning" data-testid="integration-not-configured">{{ notConfiguredText }}</app-alert>
+                <app-alert tone="warning" data-testid="integration-not-configured">{{ missingSystemText }}</app-alert>
               } @else if (current.status !== 'ACTIVE' || !current.supportsStockQuery) {
                 <app-alert tone="warning" data-testid="integration-inactive">{{ inactiveText }}</app-alert>
               }

@@ -39,6 +39,10 @@
     }
   </div>
 
+  @if (showForm() && system() === null) {
+    <p class="system__lead" data-testid="integration-system-none">{{ serverText() }}</p>
+  }
+
   @if (error(); as message) {
     <app-alert tone="error" data-testid="integration-system-error">{{ message }}</app-alert>
   }
@@ -47,11 +51,9 @@
   }
 
   @if (!showForm()) {
-    <app-fact-list disposicion="columnas" etiqueta="Datos del sistema de la farmacia" [hechos]="facts()" />
+    <!-- En filas: la dirección es larga y en columnas se partía a mitad de palabra. -->
+    <app-fact-list disposicion="filas" etiqueta="Datos del sistema de la farmacia" [hechos]="facts()" />
   } @else {
-    @if (system() === null) {
-      <p class="system__lead" data-testid="integration-system-none">{{ serverText() }}</p>
-    }
     <form class="system__form" (submit)="$event.preventDefault(); save()" novalidate data-testid="integration-system-form">
       <app-form-field label="Formato" hint="Cómo habla el sistema de su farmacia.">
         <app-select
@@ -72,7 +74,7 @@
           type="url"
           autocomplete="off"
           [value]="baseUrl()"
-          (valueChange)="baseUrl.set($any($event) ?? '')"
+          (valueChange)="baseUrl.set(textOf($event))"
           [hasError]="submitted() && missing().baseUrl"
           placeholder="https://"
           testId="integration-system-url"
@@ -87,7 +89,7 @@
         <app-input
           autocomplete="off"
           [value]="pharmacyCode()"
-          (valueChange)="pharmacyCode.set($any($event) ?? '')"
+          (valueChange)="pharmacyCode.set(textOf($event))"
           [hasError]="submitted() && missing().pharmacyCode"
           testId="integration-system-code"
         />
@@ -106,7 +108,7 @@
           type="password"
           autocomplete="new-password"
           [value]="apiKey()"
-          (valueChange)="apiKey.set($any($event) ?? '')"
+          (valueChange)="apiKey.set(textOf($event))"
           [hasError]="submitted() && missing().apiKey"
           testId="integration-system-key"
         />

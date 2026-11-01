@@ -32,6 +32,18 @@
   gap: var(--sp-2);
 }
 
+/*
+ * En el teléfono, las tres acciones una debajo de otra y a lo ancho: en fila
+ * se partían dos y una, con «Quitar» sola contra el borde.
+ */
+@media (max-width: 649px) {
+  .system__actions {
+    flex-direction: column;
+    align-items: stretch;
+    inline-size: 100%;
+  }
+}
+
 .system__form-actions {
   justify-content: flex-end;
   grid-column: 1 / -1;

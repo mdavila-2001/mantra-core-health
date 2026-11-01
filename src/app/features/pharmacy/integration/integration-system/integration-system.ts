@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
@@ -11,6 +12,7 @@ import {
   untracked,
 } from '@angular/core';
 import { formatDate } from '@angular/common';
+import type { Subscription } from 'rxjs';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
@@ -29,7 +31,7 @@ import type {
   IntegrationConnection,
 } from '../../../../core/data-access/pharmacy/pharmacy-integration.types';
 
-import { integrationErrorMessage, integrationReasonOf } from '../integration-error-message';
+import { integrationErrorMessage } from '../integration-error-message';
 
 /** Cómo se nombra cada formato en la pestaña. */
 export const FORMAT_LABEL: Readonly<Record<ExternalSystemFormat, string>> = {
@@ -55,6 +57,9 @@ export const SERVER_SYSTEM_TEXT =
  */
 export const SAVE_UNAVAILABLE_TEXT =
   'Su sistema no respondió con esa dirección, ese código y esa clave. Revíselos y vuelva a probar: no se guardó nada.';
+
+/** «Probar conexión» respondió bien. */
+export const PROBE_OK_TEXT = 'El sistema de la farmacia respondió y aceptó la clave.';
 
 /** Sin sistema propio ni del servidor: no hay con quién sincronizar (el aviso de arriba ya lo dice). */
 export const NO_SYSTEM_TEXT = 'Cargue el sistema de su farmacia para poder sincronizar.';
@@ -111,6 +116,9 @@ export class IntegrationSystem {
   protected readonly error = signal<string | null>(null);
   protected readonly probeOk = signal<string | null>(null);
 
+  /** La petición en vuelo, para cortarla si la persona cambia de conexión. */
+  private inFlight: Subscription | null = null;
+
   protected readonly system = computed(() => this.connection().system ?? null);
   protected readonly showForm = computed(() => this.system() === null || this.editing());
   protected readonly formatHint = computed(() => FORMAT_HINT[this.format()]);
@@ -143,16 +151,27 @@ export class IntegrationSystem {
   });
 
   constructor() {
-    // Otra conexión: se cierra lo que hubiera abierto y no queda nada de la anterior.
+    // Otra conexión u otra farmacia: se corta lo que estuviera en vuelo (su
+    // respuesta hablaría de la anterior), se cierra lo abierto y no queda nada
+    // escrito. Por la clave y no por el objeto, como Sincronización y Vínculos:
+    // releer la misma conexión no borra lo que la persona está escribiendo.
+    const key = computed(() => `${this.pharmacyId()}|${this.connection().id}`);
     effect(() => {
-      this.connection();
+      key();
       untracked(() => {
+        this.cancelInFlight();
         this.editing.set(false);
         this.resetForm();
         this.error.set(null);
         this.probeOk.set(null);
       });
     });
+    inject(DestroyRef).onDestroy(() => this.cancelInFlight());
+  }
+
+  /** El valor de un campo de texto: `app-input` puede emitir número o nulo. */
+  protected textOf(value: string | number | null): string {
+    return value === null ? '' : String(value);
   }
 
   protected chooseFormat(value: ExternalSystemFormat | null): void {
@@ -193,7 +212,7 @@ export class IntegrationSystem {
     this.saving.set(true);
     this.error.set(null);
     this.probeOk.set(null);
-    this.integration
+    this.inFlight = this.integration
       .saveSystem(this.pharmacyId(), this.connection().id, {
         format: this.format(),
         baseUrl: this.baseUrl(),
@@ -211,14 +230,11 @@ export class IntegrationSystem {
         error: (error: unknown) => {
           this.saving.set(false);
           // La clave no se borra: la persona corrige la dirección sin volver a escribirla.
-          const message = integrationErrorMessage(error, 'No se pudo guardar el sistema de la farmacia.');
-          if (integrationReasonOf(error) === 'PHARMACY_INTEGRATION_UNAVAILABLE') {
-            // Se conserva el identificador de la petición, para soporte.
-            const requestId = /\(petición [^)]+\)$/.exec(message)?.[0];
-            this.error.set(requestId ? `${SAVE_UNAVAILABLE_TEXT} ${requestId}` : SAVE_UNAVAILABLE_TEXT);
-          } else {
-            this.error.set(message);
-          }
+          this.error.set(
+            integrationErrorMessage(error, 'No se pudo guardar el sistema de la farmacia.', {
+              PHARMACY_INTEGRATION_UNAVAILABLE: SAVE_UNAVAILABLE_TEXT,
+            }),
+          );
         },
       });
   }
@@ -230,14 +246,11 @@ export class IntegrationSystem {
     this.probing.set(true);
     this.error.set(null);
     this.probeOk.set(null);
-    this.integration.probeSystem(this.pharmacyId(), this.connection().id).subscribe({
-      next: (result) => {
+    // «Probar» solo se ofrece con sistema propio: lo que responde es el de la farmacia.
+    this.inFlight = this.integration.probeSystem(this.pharmacyId(), this.connection().id).subscribe({
+      next: () => {
         this.probing.set(false);
-        this.probeOk.set(
-          result.source === 'PHARMACY'
-            ? 'El sistema de la farmacia respondió y aceptó la clave.'
-            : 'Respondió el sistema que configura la plataforma.',
-        );
+        this.probeOk.set(PROBE_OK_TEXT);
       },
       error: (error: unknown) => {
         this.probing.set(false);
@@ -250,6 +263,8 @@ export class IntegrationSystem {
     if (this.removing()) {
       return;
     }
+    // La conexión de la que se habla en el diálogo: si cambió mientras estaba abierto, no se quita nada.
+    const key = `${this.pharmacyId()}|${this.connection().id}`;
     const confirmed = await this.dialogs.confirm({
       title: 'Quitar el sistema de la farmacia',
       message:
@@ -257,13 +272,13 @@ export class IntegrationSystem {
       confirmLabel: 'Quitar',
       destructive: true,
     });
-    if (!confirmed) {
+    if (!confirmed || key !== `${this.pharmacyId()}|${this.connection().id}`) {
       return;
     }
     this.removing.set(true);
     this.error.set(null);
     this.probeOk.set(null);
-    this.integration.removeSystem(this.pharmacyId(), this.connection().id).subscribe({
+    this.inFlight = this.integration.removeSystem(this.pharmacyId(), this.connection().id).subscribe({
       next: () => {
         this.removing.set(false);
         this.toasts.success('Quitó el sistema de la farmacia.');
@@ -274,6 +289,14 @@ export class IntegrationSystem {
         this.error.set(integrationErrorMessage(error, 'No se pudo quitar el sistema de la farmacia.'));
       },
     });
+  }
+
+  private cancelInFlight(): void {
+    this.inFlight?.unsubscribe();
+    this.inFlight = null;
+    this.saving.set(false);
+    this.probing.set(false);
+    this.removing.set(false);
   }
 
   private resetForm(): void {

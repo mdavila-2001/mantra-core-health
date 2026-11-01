@@ -470,4 +470,39 @@ describe('PharmacyIntegration', () => {
     expect(mappings.externalCode()).toBe('ERP-0003');
     expect((root().querySelector('input[data-testid="integration-link-unit"]') as HTMLInputElement).value).toBe('BOX');
   });
+
+  describe('sistema de la farmacia (FAR-C9 · C9-4)', () => {
+    it('la sección está en la pestaña y, al guardar, la conexión se relee de la API', () => {
+      const withSystem: IntegrationConnection = {
+        ...CONNECTION,
+        system: {
+          format: 'ALOVIDA_STANDARD',
+          baseUrl: 'https://api.farmacia.bo/alovida-standard',
+          externalPharmacyCode: 'FC',
+          apiKeyConfigured: true,
+          configuredAt: '2026-11-01T04:19:57.180Z',
+        },
+      };
+      mount([withSystem]);
+      answerConnection();
+
+      expect(text('integration-system')).toContain('https://api.farmacia.bo/alovida-standard');
+
+      button('integration-system-edit').click();
+      fixture.detectChanges();
+      const key = root().querySelector('input[data-testid="integration-system-key"]') as HTMLInputElement;
+      key.value = 'otra-clave';
+      key.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      button('integration-system-save').click();
+      expectOne('PUT', `${CONN}/external-system`).flush({ system: withSystem.system, probe: 'OK' });
+      fixture.detectChanges();
+
+      // `changed` → la pestaña relee la lista: lo que se ve sale de la API.
+      expectOne('GET', BASE).flush({ providerConfigured: true, items: [withSystem] });
+      fixture.detectChanges();
+      answerConnection();
+      expect(byTestId('integration-system-form')).toBeNull();
+    });
+  });
 });

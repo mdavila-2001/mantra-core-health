@@ -72,13 +72,21 @@ export function integrationReasonOf(error: unknown): IntegrationErrorReason | nu
  * El texto de un error de la integración, para la persona: el de su `reason`
  * si lo trae (con el identificador de la petición en un 5xx, para soporte), y
  * si no, el mismo que el resto del portal de la farmacia.
+ *
+ * `overrides` cambia el texto de algún `reason` para una pantalla que lo dice
+ * distinto (al configurar, un 502 no es «pruebe en unos minutos»), sin perder
+ * el identificador de la petición.
  */
-export function integrationErrorMessage(error: unknown, fallback: string): string {
+export function integrationErrorMessage(
+  error: unknown,
+  fallback: string,
+  overrides: Partial<Readonly<Record<IntegrationErrorReason, string>>> = {},
+): string {
   const reason = integrationReasonOf(error);
   if (reason === null) {
     return pharmacyErrorMessage(error, fallback);
   }
-  const text = INTEGRATION_ERROR_TEXT[reason];
+  const text = overrides[reason] ?? INTEGRATION_ERROR_TEXT[reason];
   const requestId = requestIdOf(error);
   return error instanceof HttpErrorResponse && error.status >= 500 && requestId !== null
     ? `${text} (petición ${requestId})`

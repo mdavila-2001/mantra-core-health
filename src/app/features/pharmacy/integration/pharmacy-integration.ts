@@ -39,6 +39,10 @@ import { IntegrationSystem } from './integration-system/integration-system';
 /** Valor del desplegable de sucursal que no manda ninguna: la conexión vale para todas. */
 export const ALL_SITES = 'ALL';
 
+/** Conexión activa sin sistema con quién sincronizar (FAR-C9 · C9-4). */
+export const MISSING_SYSTEM_TEXT =
+  'La conexión todavía no está configurada: falta cargar el sistema de la farmacia, abajo. Mientras tanto, lleve las existencias en «Inventario».';
+
 /** El texto del botón que conecta, también la próxima acción del estado vacío. */
 export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
 
@@ -94,6 +98,11 @@ export class PharmacyIntegration {
 
   protected readonly connectLabel = CONNECT_LABEL;
   protected readonly notConfiguredText = INTEGRATION_ERROR_TEXT.PHARMACY_INTEGRATION_NOT_CONFIGURED;
+  /**
+   * Con la conexión ya dada de alta, el aviso dice qué falta y dónde: la
+   * conexión está activa, lo que no hay es el sistema con quién sincronizar.
+   */
+  protected readonly missingSystemText = MISSING_SYSTEM_TEXT;
   protected readonly inactiveText = INTEGRATION_ERROR_TEXT.PHARMACY_INTEGRATION_CONNECTION_INACTIVE;
 
   /**

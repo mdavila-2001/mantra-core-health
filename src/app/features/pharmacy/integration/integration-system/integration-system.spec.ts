@@ -6,7 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IntegrationConnection } from '../../../../core/data-access/pharmacy/pharmacy-integration.types';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
-import { IntegrationSystem, NO_SYSTEM_TEXT, SAVE_UNAVAILABLE_TEXT, SERVER_SYSTEM_TEXT } from './integration-system';
+import {
+  IntegrationSystem,
+  NO_SYSTEM_TEXT,
+  PROBE_OK_TEXT,
+  SAVE_UNAVAILABLE_TEXT,
+  SERVER_SYSTEM_TEXT,
+} from './integration-system';
 
 /**
  * El sistema de la farmacia de una conexión (FAR-C9 · C9-4): cargarlo con su
@@ -56,6 +62,9 @@ describe('IntegrationSystem', () => {
     field.dispatchEvent(new Event('input'));
     fixture.detectChanges();
   }
+
+  const value = (id: string): string =>
+    (root().querySelector(`input[data-testid="${id}"]`) as HTMLInputElement | null)?.value ?? '';
 
   function mount(connection: IntegrationConnection): void {
     fixture = TestBed.createComponent(IntegrationSystem);
@@ -117,6 +126,8 @@ describe('IntegrationSystem', () => {
     request.flush({ system: WITH_SYSTEM.system, probe: 'OK' });
     fixture.detectChanges();
     expect(changed).toBe(1);
+    // La clave no queda en el estado después de guardar.
+    expect(value('integration-system-key')).toBe('');
   });
 
   it('si el sistema no responde con esa clave, lo dice y conserva lo escrito', () => {
@@ -166,7 +177,7 @@ describe('IntegrationSystem', () => {
       .expectOne((r) => r.method === 'POST' && r.url === `${SYSTEM_URL}/test`)
       .flush({ status: 'OK', source: 'PHARMACY' });
     fixture.detectChanges();
-    expect(text('integration-system-probe-ok')).toContain('El sistema de la farmacia respondió y aceptó la clave.');
+    expect(text('integration-system-probe-ok')).toContain(PROBE_OK_TEXT);
   });
 
   it('«Cambiar» trae lo guardado menos la clave, que hay que escribir otra vez', () => {
@@ -201,6 +212,86 @@ describe('IntegrationSystem', () => {
     button('integration-system-remove').click();
     await fixture.whenStable();
     http.expectNone((r) => r.url === SYSTEM_URL);
+    expect(changed).toBe(0);
+  });
+
+  it('una dirección inválida se explica (400)', () => {
+    mount(BASE);
+    fill();
+    button('integration-system-save').click();
+    http
+      .expectOne((r) => r.method === 'PUT' && r.url === SYSTEM_URL)
+      .flush({ reason: 'PHARMACY_INTEGRATION_URL_INVALID' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+    expect(text('integration-system-error')).toContain('La dirección no es válida');
+  });
+
+  it('si «Probar conexión» falla, lo dice con el ID de la petición', () => {
+    mount(WITH_SYSTEM);
+    button('integration-system-probe').click();
+    http
+      .expectOne((r) => r.method === 'POST' && r.url === `${SYSTEM_URL}/test`)
+      .flush(
+        { reason: 'PHARMACY_INTEGRATION_UNAVAILABLE', correlationId: 'req-7' },
+        { status: 502, statusText: 'Bad Gateway' },
+      );
+    fixture.detectChanges();
+    expect(text('integration-system-error')).toContain('No pudimos hablar con el sistema de la farmacia');
+    expect(text('integration-system-error')).toContain('req-7');
+    expect(byTestId('integration-system-probe-ok')).toBeNull();
+  });
+
+  it('si «Quitar» falla, lo dice y no pide releer', async () => {
+    mount(WITH_SYSTEM);
+    button('integration-system-remove').click();
+    await fixture.whenStable();
+    http
+      .expectOne((r) => r.method === 'DELETE' && r.url === SYSTEM_URL)
+      .flush({ code: 'INTERNAL', correlationId: 'req-8' }, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+    expect(text('integration-system-error')).not.toBe('');
+    expect(changed).toBe(0);
+  });
+
+  it('otra conexión: borra lo escrito y el error', () => {
+    mount(BASE);
+    fill();
+    button('integration-system-save').click();
+    http
+      .expectOne((r) => r.method === 'PUT' && r.url === SYSTEM_URL)
+      .flush({ reason: 'PHARMACY_INTEGRATION_HOST_NOT_ALLOWED' }, { status: 422, statusText: 'Unprocessable' });
+    fixture.detectChanges();
+    expect(byTestId('integration-system-error')).not.toBeNull();
+
+    fixture.componentRef.setInput('connection', { ...BASE, id: 'otra-conexion' });
+    fixture.detectChanges();
+    expect(value('integration-system-url')).toBe('');
+    expect(value('integration-system-key')).toBe('');
+    expect(byTestId('integration-system-error')).toBeNull();
+  });
+
+  it('la misma conexión releída (otro objeto) no borra lo que se está escribiendo', () => {
+    mount(BASE);
+    fill();
+    fixture.componentRef.setInput('connection', { ...BASE });
+    fixture.detectChanges();
+    // `type="url"` limpia los espacios del borde al redibujar; lo escrito sigue ahí.
+    expect(value('integration-system-url').trim()).toBe('http://simulador:4100/alovida-standard');
+    expect(value('integration-system-key')).toBe('k-secreta');
+  });
+
+  it('cambiar de conexión con un guardado en vuelo lo corta: su respuesta no cae sobre la otra', () => {
+    mount(BASE);
+    fill();
+    button('integration-system-save').click();
+    const request = http.expectOne((r) => r.method === 'PUT' && r.url === SYSTEM_URL);
+
+    fixture.componentRef.setInput('connection', { ...BASE, id: 'otra-conexion' });
+    fixture.detectChanges();
+
+    expect(request.cancelled).toBe(true);
+    expect(byTestId('integration-system-save')?.getAttribute('aria-busy')).not.toBe('true');
+    expect(byTestId('integration-system-error')).toBeNull();
     expect(changed).toBe(0);
   });
 });
