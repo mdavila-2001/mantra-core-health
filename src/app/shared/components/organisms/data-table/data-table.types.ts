@@ -47,6 +47,12 @@ export interface ColumnDef<Row> {
    * alinea al final de la fila.
    */
   readonly accion?: boolean;
+  /**
+   * El valor no se parte en renglones: fechas, horas, códigos cortos. Una hora
+   * partida («12:00 a.» / «m.») se lee como dos datos. Para el texto armado a
+   * mano, `sinCortes()` (mismo directorio) cambia los espacios por duros.
+   */
+  readonly nowrap?: boolean;
   /** Plantilla de celda; sin ella se muestra el valor crudo de `key`. */
   readonly cell?: TemplateRef<{ $implicit: Row }>;
 }

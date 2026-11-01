@@ -26,7 +26,7 @@ const FILAS: readonly Paciente[] = [
 /** `priority` 1 = imprescindible; ≥ 2 se pliega al detalle en móvil. */
 const COLUMNAS: readonly ColumnDef<Paciente>[] = [
   { key: 'apellido', header: 'Apellido', priority: 1, sortable: true },
-  { key: 'documento', header: 'Documento', priority: 1, align: 'end' },
+  { key: 'documento', header: 'Documento', priority: 1, align: 'end', nowrap: true },
   { key: 'obraSocial', header: 'Obra social', priority: 2, sticky: 'end' },
 ];
 
@@ -619,6 +619,28 @@ describe('DataTable', () => {
       expect(css).toContain('@media not all and (min-width: 40.0625rem)');
       expect(css).toContain(':host(.data-table--apilada) .data-table__row > td::before');
       expect(css).toContain('content: attr(data-label)');
+    });
+
+    it('apilada, el rótulo va ARRIBA y el valor DEBAJO, los dos a la izquierda', () => {
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      const apilado = css.slice(
+        css.indexOf('@media not all and (min-width: 40.0625rem)'),
+        css.indexOf('Encabezado de la tarjeta'),
+      );
+      expect(apilado).toMatch(
+        /:host\(\.data-table--apilada\) \.data-table__row > td \{\s+display: block;[^}]*text-align: start;/,
+      );
+      expect(apilado).toMatch(/td::before \{\s+content: attr\(data-label\);\s+display: block;/);
+      expect(apilado).not.toContain('justify-content: space-between');
+    });
+
+    it('una columna `nowrap` marca sus celdas para que no se partan', () => {
+      const documentos = [...root().querySelectorAll<HTMLTableCellElement>('td[data-label="Documento"]')];
+      expect(documentos.length).toBeGreaterThan(0);
+      expect(documentos.every((celda) => celda.classList.contains('data-table__cell--nowrap'))).toBe(true);
+      const apellidos = [...root().querySelectorAll<HTMLTableCellElement>('td[data-label="Apellido"]')];
+      expect(apellidos.some((celda) => celda.classList.contains('data-table__cell--nowrap'))).toBe(false);
+      expect(readFileSync(DATA_TABLE_CSS, 'utf8')).toMatch(/\.data-table__cell--nowrap \{\s+white-space: nowrap;/);
     });
   });
 

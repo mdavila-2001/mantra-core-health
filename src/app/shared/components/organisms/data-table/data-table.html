@@ -8,7 +8,13 @@
   </header>
 }
 
-<app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="refresh.emit()">
+<app-view-state-host
+  [state]="state()"
+  [filtered]="filtered()"
+  (retry)="retry.emit()"
+  (refresh)="refresh.emit()"
+  (clearFilters)="clearFilters.emit()"
+>
   <div
     #scrollBox
     class="data-table__scroll"

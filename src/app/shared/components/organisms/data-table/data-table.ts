@@ -221,6 +221,14 @@ export class DataTable<Row> {
    */
   readonly retry = output<void>();
 
+  /**
+   * El vacío es por filtro (S3 filtrado, ver `app-view-state-host`): el host
+   * dice «Ningún resultado con estos filtros» y ofrece «Quitar filtros».
+   */
+  readonly filtered = input(false, { transform: booleanAttribute });
+  /** «Quitar filtros» del vacío filtrado. */
+  readonly clearFilters = output<void>();
+
   /** S7: la persona pide datos frescos. Misma razón que {@link retry}. */
   readonly refresh = output<void>();
 
@@ -240,7 +248,8 @@ export class DataTable<Row> {
     const secundaria = column.priority >= MOBILE_DETAIL_PRIORITY ? ' data-table__secondary' : '';
     const fija = column.sticky === 'end' ? ' data-table__cell--sticky-end' : '';
     const accion = column.accion ? ' data-table__cell--accion' : '';
-    return `data-table__cell${secundaria}${fija}${accion} data-table__cell--${column.align ?? 'start'}`;
+    const sinCortes = column.nowrap ? ' data-table__cell--nowrap' : '';
+    return `data-table__cell${secundaria}${fija}${accion}${sinCortes} data-table__cell--${column.align ?? 'start'}`;
   }
 
   /** Las que en móvil se pliegan a la fila de detalle — nunca se ocultan. */

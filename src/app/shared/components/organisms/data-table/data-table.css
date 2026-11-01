@@ -132,6 +132,11 @@
 }
 
 /* Cifras a la derecha y tabulares: así se comparan de un vistazo. */
+/* `nowrap` de la columna: fechas, horas y códigos cortos no se parten. */
+.data-table__cell--nowrap {
+    white-space: nowrap;
+}
+
 .data-table__cell--end {
     text-align: end;
     font-variant-numeric: tabular-nums;
@@ -398,31 +403,42 @@ thead .data-table__cell {
         background: transparent;
     }
 
+    /* Rótulo ARRIBA y valor DEBAJO, los dos al borde izquierdo (estructura de
+       AtlasAdminPortal). Era «rótulo · valor» en una fila con el valor
+       empujado a la derecha: a 390 px el valor se partía en dos columnas
+       («12:00 a.» / «m.») y rótulos y valores no alineaban con nada. Ahora el
+       valor tiene el ancho entero de la fila y fluye como texto. */
     :host(.data-table--apilada) .data-table__row > td {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--sp-3);
+        display: block;
         padding: var(--sp-1) 0;
         border: 0;
-        text-align: end;
+        text-align: start;
         white-space: normal;
+        overflow-wrap: anywhere;
     }
 
     :host(.data-table--apilada) .data-table__row > td::before {
         content: attr(data-label);
-        flex: none;
-        font-size: var(--fs-caption);
-        font-weight: 600;
+        display: block;
+        margin-block-end: 2px;
+        font-size: var(--fs-overline);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        line-height: 1.3;
+        text-transform: uppercase;
         color: var(--text-secondary);
         text-align: start;
+        white-space: normal;
+    }
+
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--nowrap {
+        white-space: nowrap;
     }
 
     :host(.data-table--apilada) .data-table__row > td.data-table__cell--sticky-end {
         position: static;
         box-shadow: none;
         background: none;
-        justify-content: flex-end;
         padding-block-start: var(--sp-2);
     }
 
@@ -431,8 +447,13 @@ thead .data-table__cell {
         display: none;
     }
 
-    :host(.data-table--apilada) .data-table__row > td.data-table__cell--accion {
-        justify-content: flex-end;
+    /* Las acciones, solas en su renglón y al borde izquierdo como el resto. */
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--accion,
+    :host(.data-table--apilada) .data-table__row > td.data-table__cell--sticky-end {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: var(--sp-2);
     }
 
     /* Apilada muestra TODAS las celdas (también las secundarias): el botón que
