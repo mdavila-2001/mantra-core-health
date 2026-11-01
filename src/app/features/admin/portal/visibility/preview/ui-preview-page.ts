@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
@@ -22,10 +21,10 @@ const VIEWS = ['user', 'role'] as const;
   selector: 'app-portal-ui-preview-page',
   imports: [Card, Tab, Tabs, PageHeader, VisibilityNotice, PreviewPanel],
   template: `
+    <!-- Una sola cabecera sobre el lienzo; las migas viven en la barra superior del portal. -->
     <app-page-header
       title="Ver como"
-      subtitle="Previsualice qué se le oculta a una persona o a un rol, con la regla ganadora de cada elemento y si fue por cascada."
-      [breadcrumbs]="breadcrumbs()"
+      subtitle="Previsualice qué se le oculta a una persona o a un rol, con la regla que lo decide en cada elemento y si fue por cascada. No cambia nada."
     />
     <div class="preview-page">
       <app-visibility-notice />
@@ -66,7 +65,6 @@ const VIEWS = ['user', 'role'] as const;
 export class UiPreviewPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly values = queryFilters(queryParamsSignal(this.route), ['view', 'user', 'role']);
   protected readonly tabIndex = computed(() =>

@@ -22,6 +22,7 @@ import type {
   UiPreviewEntry,
   UiVisibilityRule,
 } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
+import { Breakpoints } from '../../../../../core/layout/breakpoints';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
@@ -31,6 +32,7 @@ import { Input } from '../../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../../shared/components/atoms/select/select.types';
 import { Switch } from '../../../../../shared/components/atoms/switch/switch';
+import { EmptyState } from '../../../../../shared/components/molecules/empty-state/empty-state';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
 import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
@@ -63,7 +65,7 @@ export interface PreviewRow {
  */
 @Component({
   selector: 'app-visibility-preview-panel',
-  imports: [RouterLink, AppButton, Badge, Input, Select, Switch, FormField, MetricCard, DataTable],
+  imports: [RouterLink, AppButton, Badge, Input, Select, Switch, EmptyState, FormField, MetricCard, DataTable],
   templateUrl: './preview-panel.html',
   styleUrl: '../visibility-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +74,8 @@ export class PreviewPanel {
   private readonly client = inject(UiVisibilityAdminClient);
   private readonly authz = inject(AuthzAdminClient);
   protected readonly index = inject(UiElementIndex);
+  /** Teléfono: dos columnas; el enlace a la regla va dentro de «Por qué». */
+  protected readonly narrow = inject(Breakpoints).isNavDrawer;
 
   readonly mode = input.required<'USER' | 'ROLE'>();
   /** Con qué se abre (de la URL). Si ya es válido, se consulta solo. */
@@ -82,6 +86,20 @@ export class PreviewPanel {
   protected readonly serverProblem = signal('');
   protected readonly includeVisible = signal(false);
   protected readonly roles = signal<readonly SelectOption<string>[] | null>(null);
+  /** El nombre legible de cada rol, por código: la cabecera muestra «Personal de farmacia», no el código. */
+  private readonly roleNames = signal<ReadonlyMap<string, string>>(new Map());
+  /**
+   * Las opciones del selector. Si el rol elegido (p. ej. de un enlace) no figura entre los
+   * asignables, se agrega tal cual: el control tiene que mostrar lo que se está consultando.
+   */
+  protected readonly roleOptions = computed<readonly SelectOption<string>[] | null>(() => {
+    const options = this.roles();
+    const target = this.target();
+    if (options === null || target === '' || options.some((o) => o.value === target)) return options;
+    return [...options, { value: target, label: `${target} (no figura entre los roles asignables)` }];
+  });
+  protected readonly subjectName = (label: string): string =>
+    this.mode() === 'ROLE' ? (this.roleNames().get(label) ?? label) : label;
   protected readonly state = signal<ViewState<readonly PreviewRow[]> | null>(null);
   protected readonly summary = signal<{ readonly label: string; readonly hidden: number; readonly shown: number; readonly byCascade: number } | null>(null);
   private readonly allRows = signal<readonly PreviewRow[]>([]);
@@ -135,11 +153,18 @@ export class PreviewPanel {
   private readonly whyCell = viewChild.required<TemplateRef<{ $implicit: PreviewRow }>>('whyCell');
   private readonly ruleCell = viewChild.required<TemplateRef<{ $implicit: PreviewRow }>>('ruleCell');
 
-  protected readonly columns = computed<readonly ColumnDef<PreviewRow>[]>(() => [
-    { key: 'element', header: 'Elemento', priority: 1, cell: this.elementCell() },
-    { key: 'why', header: 'Por qué', priority: 1, cell: this.whyCell() },
-    { key: 'rule', header: 'Regla ganadora', priority: 2, cell: this.ruleCell() },
-  ]);
+  protected readonly columns = computed<readonly ColumnDef<PreviewRow>[]>(() =>
+    this.narrow()
+      ? [
+          { key: 'element', header: 'Elemento', priority: 1, cell: this.elementCell() },
+          { key: 'why', header: 'Por qué', priority: 1, cell: this.whyCell() },
+        ]
+      : [
+          { key: 'element', header: 'Elemento', priority: 1, cell: this.elementCell() },
+          { key: 'why', header: 'Por qué', priority: 1, cell: this.whyCell() },
+          { key: 'rule', header: 'Regla ganadora', priority: 2, cell: this.ruleCell() },
+        ],
+  );
   protected readonly byKey = (row: PreviewRow): string => row.entry.elementKey;
   protected readonly rowName = (row: PreviewRow): string => this.index.path(row.entry.elementKey);
   protected readonly ruleQuery = (row: PreviewRow): Record<string, string> => ({ element: row.entry.elementKey });
@@ -150,8 +175,10 @@ export class PreviewPanel {
   constructor() {
     inject(DestroyRef).onDestroy(() => this.subscription?.unsubscribe());
     const rolesSub = this.authz.assignableRoles().subscribe({
-      next: (roles) =>
-        this.roles.set(roles.length === 0 ? null : roles.map((r) => ({ value: r.code, label: `${r.name} (${r.code})` }))),
+      next: (roles) => {
+        this.roleNames.set(new Map(roles.map((r) => [r.code, r.name])));
+        this.roles.set(roles.length === 0 ? null : roles.map((r) => ({ value: r.code, label: `${r.name} (${r.code})` })));
+      },
       error: () => this.roles.set(null),
     });
     inject(DestroyRef).onDestroy(() => rolesSub.unsubscribe());
