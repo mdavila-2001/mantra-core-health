@@ -32,6 +32,12 @@ Reglas absolutas:
 - Usar las primitivas existentes antes de crear una nueva.
 - Las mutaciones se demuestran `UI → request → response → persistencia →
   recarga → UI`. Un toast no prueba nada.
+- `MAX_300_LINES` — ningún archivo de código (`.ts`, `.html`, `.css`) puede
+  superar **300 líneas** salvo estricta necesidad justificada (catálogos estáticos).
+  Archivos existentes > 300 líneas están congelados en `scripts/baselines/max-lines.json`
+  y tienen prohibido crecer. Al tocarlos se descomponen en plantilla, estilos,
+  subcomponentes y servicios auxiliares.
+
 
 Skills locales que cargan estas reglas: `project-design-system`,
 `visual-quality-gate`, `frontend-production-gate`,

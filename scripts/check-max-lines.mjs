@@ -33,7 +33,7 @@ import { join } from 'node:path';
 import { read, repoPath, REPO_ROOT, SRC_ROOT, walk } from './lib/scan.mjs';
 
 const argv = process.argv.slice(2);
-const TOPE = 600;
+const TOPE = Number(argv.includes('--tope') ? argv[argv.indexOf('--tope') + 1] : 300);
 const EXCEPCIONES = join(REPO_ROOT, 'scripts/baselines/max-lines.json');
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -42,6 +42,7 @@ if (!FECHA.test(hoy)) {
   console.error(`✗ check-max-lines — CHECK_MAX_LINES_HOY no es una fecha AAAA-MM-DD: ${hoy}`);
   process.exit(2);
 }
+
 
 const medidas = new Map(
   walk(SRC_ROOT, ['.ts', '.html', '.css'])
@@ -59,6 +60,24 @@ if (argv.includes('--lista')) {
   for (const f of filas) console.log(`${String(f.lineas).padStart(6)}  ${f.ruta}`);
   process.exit(0);
 }
+
+if (argv.includes('--congelar') || argv.includes('--fijar-reforma')) {
+  const excepciones = {};
+  for (const f of filas) {
+    excepciones[f.ruta] = { lineas: f.lineas };
+  }
+  const nuevaLista = {
+    $comentario: `Excepciones al techo de ${TOPE} líneas fijadas por reforma estructural (${hoy}). Ningún archivo nuevo puede superar ${TOPE} líneas. Los archivos congelados no pueden crecer ni 1 línea (ratchet descendente). Al tocarlos deben modularizarse (< 300).`,
+    tarea: 'REFORMA-300',
+    fijada: hoy,
+    vence: '2027-04-01',
+    excepciones,
+  };
+  writeFileSync(EXCEPCIONES, JSON.stringify(nuevaLista, null, 2) + '\n');
+  console.log(`✓ Baseline congelado con ${filas.length} archivos > ${TOPE} líneas. Ratchet activo.`);
+  process.exit(0);
+}
+
 
 if (!existsSync(EXCEPCIONES)) {
   console.error(`✗ check-max-lines — falta ${repoPath(EXCEPCIONES)}`);
