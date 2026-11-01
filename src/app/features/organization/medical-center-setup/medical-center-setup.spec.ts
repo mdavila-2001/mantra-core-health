@@ -350,7 +350,7 @@ describe('MedicalCenterSetup · organización todavía no verificada (S3)', () =
     const raiz = f.nativeElement as HTMLElement;
 
     expect(raiz.querySelector('[data-testid="medical-center-setup-form"]')).toBeNull();
-    expect(raiz.textContent).toContain('Algo salió mal');
+    expect(raiz.textContent).toContain('No pudimos completar la operación');
   });
 });
 

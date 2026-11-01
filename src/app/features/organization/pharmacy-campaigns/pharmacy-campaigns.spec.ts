@@ -224,7 +224,7 @@ describe('PharmacyCampaigns', () => {
 
     expect(texto()).not.toContain('No hay productos de su catálogo con ese nombre');
     expect(ultimoAviso()).toBe(
-      'No se pudo consultar el catálogo. Pruebe de nuevo. (Código de soporte: c-cat)',
+      'No se pudo consultar el catálogo. Pruebe de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: c-cat)',
     );
   });
 

@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { describe, expect, it } from 'vitest';
 
+import { explanationOf } from '../../../core/http/error-explanation';
 import { failureMessage } from './agenda-errors';
 
 const respuesta = (status: number, code: string, message: string): HttpErrorResponse =>
@@ -21,7 +22,11 @@ describe('lo que la API dijo cuando falló una acción', () => {
   });
 
   it('un fallo que no es de la API cae al texto de reserva', () => {
-    expect(failureMessage(new Error('boom'), 'No pudimos completar la acción.')).toBe('Ocurrió un error inesperado.');
-    expect(failureMessage(new HttpErrorResponse({ status: 502, error: '<html>' }), 'No pudimos completar la acción.')).toBe('No pudimos completar la operación.');
+    expect(failureMessage(new Error('boom'), 'No pudimos completar la acción.')).toBe(
+      `No pudimos completar la acción. ${explanationOf('client').cause}`,
+    );
+    const proxy = failureMessage(new HttpErrorResponse({ status: 502, error: '<html>' }), 'No pudimos completar la acción.');
+    expect(proxy).toBe(`No pudimos completar la acción. ${explanationOf('unavailable').cause}`);
+    expect(proxy).not.toContain('<html>');
   });
 });
