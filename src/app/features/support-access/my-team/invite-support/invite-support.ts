@@ -145,22 +145,27 @@ export class InviteSupport {
   protected onSecretariaCreada(creada: CreatedSupportStaffResponse): void {
     this.cerrar();
     this.invited.emit({
+      id: creada.linkId,
+      tenantId: 'tenant-hospital',
       items: [
         {
           id: creada.linkId,
-          nationalId: '',
+          kind: 'PRACTITIONER',
+          targetKind: 'PRACTITIONER',
+          tenantId: 'tenant-hospital',
+          organizationName: creada.organizationName ?? null,
+          userId: creada.userId,
           personName: creada.organizationName ?? 'Secretaria vinculada',
-          roleTemplate: 'RECEPTION',
           status: 'ACTIVE',
-          mayReplyOnBehalf: true,
-          replyDisclosure: 'SHOW',
-          coverageSummary: 'Vinculación activa creada de inmediato',
-          actions: [],
-          grants: [],
-          lastActivityAt: null,
-          acceptedAt: new Date().toISOString(),
-          origin: 'DOCTOR_ACCEPTED',
-          pendingClinicalRequests: [],
+          initiatedBy: 'PRACTITIONER',
+          awaiting: null,
+          practiceSiteId: null,
+          clinicalUnitId: null,
+          careSpaceId: null,
+          practitionerRoleAssignmentId: null,
+          practitionerProfileId: null,
+          targetName: creada.organizationName ?? null,
+          createdAt: new Date().toISOString(),
         },
       ],
     });
