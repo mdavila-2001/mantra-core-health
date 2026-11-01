@@ -19,7 +19,11 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { chooseSelectOption, selectOptionLabels } from '../../../../../testing/select';
 import { InboxOrder, motivoDeChatNoAbierto } from './inbox-order';
-import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
+import {
+  CHAT_YA_ABRIENDO,
+  ChatOcupadoError,
+  ChatStore,
+} from '../../../../core/messaging/chat.store';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -200,6 +204,73 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     );
     expect(text()).toContain('En preparación');
     expect(element('[data-testid="mostrador-listo"]')).not.toBeNull();
+  });
+
+  it('shows an empty labelled count for a pending line', async () => {
+    const original = pharmacyOrderDtoFixture();
+    await mount({
+      ...original,
+      status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      lines: [
+        {
+          ...original.lines[0],
+          status: { code: 'PINV_RES_LINE_PENDING_CONFIRMATION', display: 'Por confirmar' },
+        },
+      ],
+    });
+    const input = element<HTMLInputElement>('input[type="number"]');
+    expect(input?.value).toBe('');
+    expect(input?.id).toBeTruthy();
+    expect(element<HTMLLabelElement>(`label[for="${input!.id}"]`)?.textContent).toContain(
+      'Unidades disponibles',
+    );
+    expect(
+      element<HTMLButtonElement>('[data-testid="mostrador-confirmar"]')?.getAttribute(
+        'aria-disabled',
+      ),
+    ).toBe('true');
+  });
+
+  it('requires an explicit quantity for a pending line and sends the API decision', async () => {
+    const original = pharmacyOrderDtoFixture();
+    await mount({
+      ...original,
+      status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      lines: [
+        {
+          ...original.lines[0],
+          status: { code: 'PINV_RES_LINE_PENDING_CONFIRMATION', display: 'Por confirmar' },
+        },
+      ],
+    });
+    expect(text()).toContain('La sucursal confirma la disponibilidad');
+    expect(
+      element<HTMLButtonElement>('[data-testid="mostrador-confirmar"]')?.getAttribute(
+        'aria-disabled',
+      ),
+    ).toBe('true');
+    const input = element<HTMLInputElement>('input[type="number"]');
+    expect(input).not.toBeNull();
+    input!.value = '12';
+    input!.dispatchEvent(new Event('input', { bubbles: true }));
+    harness.detectChanges();
+    click('mostrador-confirmar');
+    const request = http.expectOne({
+      method: 'POST',
+      url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/confirm`,
+    });
+    expect(request.request.body).toEqual({
+      adjustments: [
+        { productId: original.lines[0].productId, decision: 'CONFIRMAR_STOCK', quantity: 12 },
+      ],
+    });
+    const confirmed = {
+      ...original,
+      status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
+    };
+    request.flush(confirmed);
+    flushReload(confirmed);
+    expect(text()).toContain('En preparación');
   });
 
   it('proposes a real published product from the same medication concept', async () => {
@@ -549,8 +620,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
   it('descartar un renglón mueve el reparto del seguro, no sólo el total', async () => {
     await mount(pedidoConSeguro());
-    const reparto = (): string =>
-      element('[data-testid="mostrador-seguro"]')?.textContent ?? '';
+    const reparto = (): string => element('[data-testid="mostrador-seguro"]')?.textContent ?? '';
     const total = (): string => element('[data-testid="mostrador-total-vivo"]')?.textContent ?? '';
 
     expect(total()).toContain('163.50');
@@ -644,9 +714,9 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       comoLaPintaLaPantalla(new Date('2026-09-03T14:00:00.000Z')),
     );
     // Va justo antes de la salida: el pie de la pantalla sigue siendo la bandeja.
-    expect(
-      factura?.closest('app-invoice-summary')?.nextElementSibling?.textContent?.trim(),
-    ).toBe('Volver a la bandeja');
+    expect(factura?.closest('app-invoice-summary')?.nextElementSibling?.textContent?.trim()).toBe(
+      'Volver a la bandeja',
+    );
   });
 
   it('la descarga del comprobante dice lo que es, en vez de bajar un archivo vacío', async () => {
@@ -753,12 +823,19 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
     async function abrirElChat(): Promise<void> {
       await mount(
-        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
       );
       click('mostrador-chatear');
     }
 
-    const pagina = (items: unknown[]) => ({ items, count: items.length, limit: 30, nextCursor: null });
+    const pagina = (items: unknown[]) => ({
+      items,
+      count: items.length,
+      limit: 30,
+      nextCursor: null,
+    });
 
     it('abre el hilo del pedido como la farmacia, pone la tarjeta una vez y navega al chat', async () => {
       await abrirElChat();
@@ -770,9 +847,14 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       expect(lectura.request.params.get('profileId')).toBe(VITRINA);
       lectura.flush(pagina([]));
 
-      const tarjeta = http.expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      const tarjeta = http.expectOne({
+        method: 'POST',
+        url: '/community/conversations/c-9/messages',
+      });
       expect(tarjeta.request.body.senderProfileId).toBe(VITRINA);
-      expect(tarjeta.request.body.bodyText).toMatch(/^Pedido: .+\n.+\n\/my-account\/pharmacy-orders\//u);
+      expect(tarjeta.request.body.bodyText).toMatch(
+        /^Pedido: .+\n.+\n\/my-account\/pharmacy-orders\//u,
+      );
       tarjeta.flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
 
       const bandeja = http.expectOne((r) => r.url === '/community/conversations');
@@ -792,7 +874,10 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
         .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
       http.expectOne((r) => r.url === '/community/conversations/c-9/messages').flush(pagina([]));
-      const primera = http.expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      const primera = http.expectOne({
+        method: 'POST',
+        url: '/community/conversations/c-9/messages',
+      });
       const tarjeta = primera.request.body.bodyText as string;
       primera.flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
       http
@@ -802,26 +887,30 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
       // Vuelve al pedido y lo toca de nuevo: el hilo ya tiene esa tarjeta.
       await harness.navigateByUrl(`/administration/pharmacy-orders/${ID}`, InboxOrder);
-      http
-        .expectOne(`/pharmacy/orders/${ID}`)
-        .flush(pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }));
+      http.expectOne(`/pharmacy/orders/${ID}`).flush(
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
+      );
       harness.detectChanges();
       click('mostrador-chatear');
       http
         .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
         .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
-      http.expectOne((r) => r.url === '/community/conversations/c-9/messages').flush(
-        pagina([
-          {
-            id: 'm-1',
-            conversationId: 'c-9',
-            senderProfileId: VITRINA,
-            contentTypeConceptId: 'c-text',
-            bodyText: tarjeta,
-            sentAt: '2026-10-28T10:00:00.000Z',
-          },
-        ]),
-      );
+      http
+        .expectOne((r) => r.url === '/community/conversations/c-9/messages')
+        .flush(
+          pagina([
+            {
+              id: 'm-1',
+              conversationId: 'c-9',
+              senderProfileId: VITRINA,
+              contentTypeConceptId: 'c-text',
+              bodyText: tarjeta,
+              sentAt: '2026-10-28T10:00:00.000Z',
+            },
+          ]),
+        );
       http.expectNone({ method: 'POST', url: '/community/conversations/c-9/messages' });
       http
         .match((r) => r.url === '/community/conversations')
@@ -848,12 +937,14 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
     it('422 ORGANIZATION_CHAT_PROFILE_UNAVAILABLE: dice que la farmacia no tiene vitrina activa', async () => {
       await abrirElChat();
-      http
-        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
-        .flush(
-          { code: 'PRECONDITION_FAILED', reason: 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE', message: 'x' },
-          { status: 422, statusText: 'Unprocessable Entity' },
-        );
+      http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` }).flush(
+        {
+          code: 'PRECONDITION_FAILED',
+          reason: 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE',
+          message: 'x',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
       harness.detectChanges();
       expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
         'La farmacia no tiene vitrina pública activa',
@@ -867,7 +958,9 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
     it('store ocupado: avisa con ChatOcupadoError, el botón no queda girando y lo dice', async () => {
       await mount(
-        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
       );
       // Otro chat a medio abrir: el store no pide este y avisa por `alFallar`.
       TestBed.inject(ChatStore).abriendo.set(true);
@@ -876,13 +969,17 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
       http.expectNone({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
       expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
-      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(CHAT_YA_ABRIENDO);
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        CHAT_YA_ABRIENDO,
+      );
       expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
     });
 
     it('store ocupado que sí llama a alFallar: queda su motivo, no el resguardo', async () => {
       await mount(
-        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
       );
       vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation(
         (_resolver, _nombre, _alAbrir, _contexto, alFallar) => alFallar?.(new Error('ocupado')),
@@ -898,12 +995,16 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
     it('la respuesta termina sin traer el hilo: el botón deja de girar', async () => {
       await mount(
-        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
       );
       // Un store que se suscribe pero corta antes de la respuesta, sin avisar.
-      vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation((resolver) => {
-        resolver.subscribe().unsubscribe();
-      });
+      vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation(
+        (resolver) => {
+          resolver.subscribe().unsubscribe();
+        },
+      );
       click('mostrador-chatear');
       harness.detectChanges();
 

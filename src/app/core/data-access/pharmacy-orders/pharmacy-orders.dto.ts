@@ -98,12 +98,13 @@ export interface CreatePharmacyOrderDto {
   }[];
 }
 
-export type ConfirmOrderDecisionDto = 'NO_DISPONIBLE' | 'PROPONER_GENERICO';
+export type ConfirmOrderDecisionDto = 'NO_DISPONIBLE' | 'PROPONER_GENERICO' | 'CONFIRMAR_STOCK';
 
 export interface ConfirmPharmacyOrderDto {
   readonly adjustments?: readonly {
     readonly productId: string;
     readonly decision: ConfirmOrderDecisionDto;
+    readonly quantity?: number;
     readonly proposedProductId?: string;
   }[];
 }

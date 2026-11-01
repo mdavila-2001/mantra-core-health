@@ -12,7 +12,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, type Observable } from 'rxjs';
 
-import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
+import {
+  CHAT_YA_ABRIENDO,
+  ChatOcupadoError,
+  ChatStore,
+} from '../../../../core/messaging/chat.store';
 import { contextoDePedido } from '../../../../core/messaging/order-chat-context';
 
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
@@ -92,14 +96,7 @@ export function motivoDeChatNoAbierto(error: unknown): string {
 }
 
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
-interface AjusteEnEdicion {
-  readonly decision: DecisionDeLinea;
-  readonly propuesta?: {
-    readonly productId: string;
-    readonly nombre: string;
-    readonly precio: null;
-  };
-}
+import { canConfirmLines, type InboxLineAdjustment as AjusteEnEdicion } from './stock-confirmation';
 
 interface SubstituteSearch {
   readonly status: 'idle' | 'loading' | 'ready' | 'error' | 'missing-concept';
@@ -160,7 +157,6 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InboxOrder {
-
   /**
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
    * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
@@ -271,12 +267,13 @@ export class InboxOrder {
    * distintas del pedido — si el total baja al descartar un renglón y el
    * reparto del seguro no se mueve, una de las dos miente.
    */
-  private readonly renglonesEnPie = computed<ReadonlySet<number>>(() =>
-    new Set(
-      this.ajustes().flatMap((ajuste, indice) =>
-        ajuste.decision === 'NO_DISPONIBLE' ? [] : [indice],
+  private readonly renglonesEnPie = computed<ReadonlySet<number>>(
+    () =>
+      new Set(
+        this.ajustes().flatMap((ajuste, indice) =>
+          ajuste.decision === 'NO_DISPONIBLE' ? [] : [indice],
+        ),
       ),
-    ),
   );
 
   /**
@@ -327,9 +324,7 @@ export class InboxOrder {
   protected readonly puedeMarcarListo = computed(() => {
     const abierto = this.pedido();
     return (
-      abierto !== null &&
-      puedePrepararse(abierto.estado) &&
-      this.entrega()?.modalidad === 'RETIRO'
+      abierto !== null && puedePrepararse(abierto.estado) && this.entrega()?.modalidad === 'RETIRO'
     );
   });
 
@@ -397,17 +392,7 @@ export class InboxOrder {
    * Confirmar exige que cada genérico tenga nombre y que quede al menos un
    * renglón en pie — un pedido sin nada que preparar se rechaza con motivo.
    */
-  protected readonly puedeConfirmar = computed(() => {
-    const ajustes = this.ajustes();
-    if (ajustes.length === 0) {
-      return false;
-    }
-    const todoCaido = ajustes.every((ajuste) => ajuste.decision === 'NO_DISPONIBLE');
-    const hasUnresolvedSubstitute = ajustes.some(
-      (ajuste) => ajuste.decision === 'PROPONER_GENERICO' && ajuste.propuesta === undefined,
-    );
-    return !todoCaido && !hasUnresolvedSubstitute;
-  });
+  protected readonly puedeConfirmar = computed(() => canConfirmLines(this.ajustes()));
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -450,14 +435,12 @@ export class InboxOrder {
     }
     this.pidioChat.set(true);
     this.errorDeChat.set(null);
-    const resolver = this.ordersClient
-      .abrirConversacion(abierto.id)
-      .pipe(
-        map((respuesta) => ({
-          conversationId: respuesta.conversationId,
-          profileId: respuesta.pharmacyProfileId,
-        })),
-      );
+    const resolver = this.ordersClient.abrirConversacion(abierto.id).pipe(
+      map((respuesta) => ({
+        conversationId: respuesta.conversationId,
+        profileId: respuesta.pharmacyProfileId,
+      })),
+    );
     this.chat.abrirComoOrganizacion(
       resolver,
       abierto.farmacia,
@@ -484,6 +467,11 @@ export class InboxOrder {
     if (nextDecision === 'PROPONER_GENERICO') {
       this.loadSubstitutes(indice);
     }
+  }
+
+  protected setConfirmedQuantity(index: number, value: string | number | null): void {
+    const quantity = value === null || value === '' ? undefined : Number(value);
+    this.actualizarAjuste(index, (adjustment) => ({ ...adjustment, quantity }));
   }
 
   protected selectSubstitute(indice: number, productId: string | null): void {
@@ -518,6 +506,7 @@ export class InboxOrder {
     const ajustes: readonly AjusteDeLinea[] = this.ajustes().map((ajuste, indice) => ({
       indice,
       decision: ajuste.decision,
+      ...(ajuste.quantity === undefined ? {} : { quantity: ajuste.quantity }),
       ...(ajuste.propuesta === undefined ? {} : { propuesta: ajuste.propuesta }),
     }));
     this.ejecutar(this.ordersClient.confirmarPedido(abierto, ajustes));
@@ -618,7 +607,11 @@ export class InboxOrder {
     this.substituteSearches.set({});
     this.ajustes.set(
       pedido.lineas.map((linea) => ({
-        decision: linea.disponible ? 'TAL_CUAL' : 'NO_DISPONIBLE',
+        decision: !linea.disponible
+          ? 'NO_DISPONIBLE'
+          : linea.porConfirmar
+            ? 'CONFIRMAR_STOCK'
+            : 'TAL_CUAL',
       })),
     );
   }

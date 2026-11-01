@@ -239,6 +239,12 @@ export interface SyncResult {
 
 /** Los `reason` de la API que la pestaña sabe decir. */
 export const INTEGRATION_ERROR_REASONS = [
+  'PHARMACY_CONNECTION_ENCRYPTION_NOT_CONFIGURED',
+  'PHARMACY_SYSTEM_NOT_AVAILABLE',
+  'PHARMACY_CONNECTION_KEY_REQUIRED',
+  'PHARMACY_CONNECTION_SITE_NOT_IN_PHARMACY',
+  'PHARMACY_CONNECTION_NOT_FOUND',
+  'PHARMACY_CONNECTION_INCOMPLETE',
   'PHARMACY_INTEGRATION_NOT_CONFIGURED',
   'PHARMACY_INTEGRATION_CONNECTION_INACTIVE',
   'PHARMACY_INTEGRATION_UNAVAILABLE',
@@ -251,3 +257,47 @@ export type IntegrationErrorReason = (typeof INTEGRATION_ERROR_REASONS)[number];
 
 /** Tope de lotes que acepta `GET …/sync-batches?limit=`. */
 export const SYNC_BATCH_LIMIT_MAX = 20;
+
+export type PharmacySystemCode = 'ALOVIDA_STANDARD' | 'SIMULATED_CHAIN';
+export type ErpConnectionMode = 'MANUAL' | 'CONNECTED';
+export type ErpConnectionResult = 'OK' | 'UNREACHABLE' | 'AUTH_REJECTED';
+
+export interface ErpSiteCode {
+  readonly siteId: string;
+  readonly externalCode: string;
+}
+
+export interface ErpConnectionAccess {
+  readonly systemCode: PharmacySystemCode;
+  readonly baseUrl: string;
+  readonly pharmacyCode: string;
+  readonly apiKey?: string;
+}
+
+export interface SaveErpConnection extends Partial<ErpConnectionAccess> {
+  readonly mode: ErpConnectionMode;
+  readonly siteCodes?: readonly ErpSiteCode[];
+}
+
+export interface ErpConnection {
+  readonly pharmacyId: string;
+  readonly mode: ErpConnectionMode;
+  readonly status: 'MANUAL' | 'ACTIVE' | 'ERROR';
+  readonly errorReason: Exclude<ErpConnectionResult, 'OK'> | null;
+  readonly checkedAt: string | null;
+  readonly systemCode: PharmacySystemCode | null;
+  readonly baseUrl: string | null;
+  readonly pharmacyCode: string | null;
+  readonly keyHint: string | null;
+  readonly encryptionConfigured: boolean;
+  readonly integrationConnectionId: string | null;
+  readonly sites: readonly (ErpSiteCode & {
+    readonly siteName: string;
+    readonly platformCode: string;
+  })[];
+}
+
+export interface ErpConnectionTestResult {
+  readonly result: ErpConnectionResult;
+  readonly connection?: ErpConnection;
+}

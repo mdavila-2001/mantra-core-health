@@ -80,8 +80,24 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     return harness.routeNativeElement?.textContent ?? '';
   }
 
+  it('explains that the branch confirms availability for a pending line', async () => {
+    const order = pharmacyOrderDtoFixture();
+    await mount({
+      ...order,
+      lines: [
+        {
+          ...order.lines[0],
+          status: { code: 'PINV_RES_LINE_PENDING_CONFIRMATION', display: 'Por confirmar' },
+        },
+      ],
+    });
+    expect(text()).toContain('La sucursal confirma la disponibilidad');
+  });
+
   function byTestId(testId: string): HTMLElement | null {
-    return harness.routeNativeElement?.querySelector<HTMLElement>(`[data-testid="${testId}"]`) ?? null;
+    return (
+      harness.routeNativeElement?.querySelector<HTMLElement>(`[data-testid="${testId}"]`) ?? null
+    );
   }
 
   function click(testId: string): void {
@@ -96,10 +112,12 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
       OrderDetail,
     );
     await navigation;
-    http.expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`).flush(
-      { code: 'NOT_FOUND', message: 'Order not found' },
-      { status: 404, statusText: 'Not Found' },
-    );
+    http
+      .expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`)
+      .flush(
+        { code: 'NOT_FOUND', message: 'Order not found' },
+        { status: 404, statusText: 'Not Found' },
+      );
     http.expectOne(AVISOS_URL).flush(paginaDeAvisos([]));
     harness.detectChanges();
 
@@ -116,20 +134,28 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
   });
 
   it('sin vitrina de la farmacia no ofrece el chat del pedido', async () => {
-    await mount(pharmacyOrderDtoFixture({ pharmacyPublicSlug: null, pharmacyPublicProfileId: null }));
+    await mount(
+      pharmacyOrderDtoFixture({ pharmacyPublicSlug: null, pharmacyPublicProfileId: null }),
+    );
     expect(byTestId('pedido-chatear')).toBeNull();
   });
 
   it('«Chatear con la farmacia» lleva al chat DEL PEDIDO con la tarjeta puesta', async () => {
     await mount(
-      pharmacyOrderDtoFixture({ pharmacyPublicSlug: 'farmacia-vida', pharmacyPublicProfileId: 'pp-f' }),
+      pharmacyOrderDtoFixture({
+        pharmacyPublicSlug: 'farmacia-vida',
+        pharmacyPublicProfileId: 'pp-f',
+      }),
     );
     const router = TestBed.inject(Router);
     const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     click('pedido-chatear');
 
     // Sin sesión en la prueba: pasa por el login y vuelve al chat.
-    const [destino, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    const [destino, extras] = navegar.mock.calls[0] as [
+      string[],
+      { queryParams: { returnUrl: string } },
+    ];
     expect(destino).toEqual(['/auth']);
     const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
     expect(vuelta.get('pedido')).toBe(PHARMACY_ORDER_TEST_IDS.order);
@@ -145,7 +171,10 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
 
   it('«Chatear con la farmacia» es secundario y va junto a la farmacia, no sobre la decisión', async () => {
     await mount(
-      pharmacyOrderDtoFixture({ pharmacyPublicSlug: 'farmacia-vida', pharmacyPublicProfileId: 'pp-f' }),
+      pharmacyOrderDtoFixture({
+        pharmacyPublicSlug: 'farmacia-vida',
+        pharmacyPublicProfileId: 'pp-f',
+      }),
     );
     const boton = byTestId('pedido-chatear') as HTMLElement;
     // Al lado del nombre de la farmacia, dentro de la sección del estado —
@@ -191,10 +220,14 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     expect(text()).not.toContain('Alternativa anterior');
 
     click('pedido-aceptar');
-    http.expectOne({
-      method: 'POST',
-      url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/accept-substitutions`,
-    }).flush(pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_ACEPTADO', display: 'Aceptado' } }));
+    http
+      .expectOne({
+        method: 'POST',
+        url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/accept-substitutions`,
+      })
+      .flush(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_ACEPTADO', display: 'Aceptado' } }),
+      );
     harness.detectChanges();
     expect(text()).toContain('Propuesta aceptada');
   });
@@ -250,7 +283,9 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
 
     it('says «En preparación» for a confirmed order', async () => {
       await mount(
-        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } }),
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
+        }),
       );
       expect(byTestId('pedido-estado-badge')?.textContent).toContain('En preparación');
     });
@@ -334,7 +369,9 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
 
     it('CONFIRMADO no afirma que hubo revisión: el backend admite el salto', async () => {
       await mount(
-        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } }),
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
+        }),
       );
 
       expect(byTestId('pedido-estado-badge')?.textContent).toContain('En preparación');
@@ -345,7 +382,10 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
       Object.assign(environment, { mockBackend: true });
       const id = uuid('pharmacy-order-3');
       await mount(
-        pharmacyOrderDtoFixture({ id, status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+        pharmacyOrderDtoFixture({
+          id,
+          status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' },
+        }),
         id,
       );
 
@@ -477,9 +517,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
             { status: 500, statusText: 'Server Error' },
           );
         } else {
-          pedido.flush(
-            dtoDe(orderId, orderId === PEDIDO_B ? FARMACIA.B : FARMACIA.A),
-          );
+          pedido.flush(dtoDe(orderId, orderId === PEDIDO_B ? FARMACIA.B : FARMACIA.A));
         }
         const peticion = http.expectOne(AVISOS_URL);
         if (opciones.avisosFalla === true) {
@@ -528,7 +566,9 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         // Todavía no respondió nada de B y los avisos de A ya no están.
         expect(byTestId('pedido-avisos')).toBeNull();
 
-        http.expectOne(`/pharmacy/orders/${PEDIDO_B}`).flush(pharmacyOrderDtoFixture({ id: PEDIDO_B }));
+        http
+          .expectOne(`/pharmacy/orders/${PEDIDO_B}`)
+          .flush(pharmacyOrderDtoFixture({ id: PEDIDO_B }));
         http.expectOne(AVISOS_URL).flush(paginaDeAvisos([avisoDeB()]));
         harness.detectChanges();
         expect(byTestId('pedido-avisos')?.textContent).toContain('Su pedido B está listo');
@@ -593,9 +633,9 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         // Cambiar de pedido cancela las dos lecturas anteriores.
         expect(pedidoDeA.cancelled).toBe(true);
         expect(avisosDeA.cancelled).toBe(true);
-        expect(() => pedidoDeA.flush(dtoDe(PHARMACY_ORDER_TEST_IDS.order, FARMACIA.A))).toThrowError(
-          /cancel/i,
-        );
+        expect(() =>
+          pedidoDeA.flush(dtoDe(PHARMACY_ORDER_TEST_IDS.order, FARMACIA.A)),
+        ).toThrowError(/cancel/i);
 
         // B sigue siendo el pedido presentado, con sus propios avisos.
         expect(text()).toContain(FARMACIA.B);

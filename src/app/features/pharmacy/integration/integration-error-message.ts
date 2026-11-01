@@ -12,16 +12,28 @@ import { pharmacyErrorMessage } from '../pharmacy-error-message';
  * texto es el de la API con lo que le sigue a la persona.
  */
 export const INTEGRATION_ERROR_TEXT: Readonly<Record<IntegrationErrorReason, string>> = {
+  PHARMACY_CONNECTION_ENCRYPTION_NOT_CONFIGURED:
+    'Falta configurar el cifrado de conexiones. Solicite su habilitación al responsable del entorno.',
+  PHARMACY_SYSTEM_NOT_AVAILABLE: 'Ese tipo de sistema no está disponible en este entorno.',
+  PHARMACY_CONNECTION_KEY_REQUIRED:
+    'Falta la clave. Si cambió la dirección o el tipo de sistema, vuelva a cargarla.',
+  PHARMACY_CONNECTION_SITE_NOT_IN_PHARMACY:
+    'No se pudo usar esa sucursal. Vuelva a cargar la configuración.',
+  PHARMACY_CONNECTION_NOT_FOUND: 'No hay una conexión guardada disponible para probar.',
+  PHARMACY_CONNECTION_INCOMPLETE:
+    'Complete el tipo de sistema, la dirección y el código de farmacia.',
   PHARMACY_INTEGRATION_NOT_CONFIGURED:
     'La conexión con el sistema de la farmacia no está configurada. Mientras tanto, lleve las existencias en «Inventario».',
   PHARMACY_INTEGRATION_CONNECTION_INACTIVE:
     'La conexión no está activa o no permite consultar stock, así que no se puede sincronizar.',
   PHARMACY_INTEGRATION_UNAVAILABLE:
     'No pudimos hablar con el sistema de la farmacia. No se cambió ninguna existencia; pruebe de nuevo en unos minutos.',
-  EXTERNAL_MAPPING_NOT_AVAILABLE: 'Ese vínculo ya no existe: alguien lo deshizo. La tabla ya muestra lo que hay ahora.',
+  EXTERNAL_MAPPING_NOT_AVAILABLE:
+    'Ese vínculo ya no existe: alguien lo deshizo. La tabla ya muestra lo que hay ahora.',
   EXTERNAL_MAPPING_PRODUCT_TAKEN:
     'Ese producto ya está vinculado con otro código del sistema de la farmacia. Corrija ese vínculo o elija otro producto.',
-  EXTERNAL_MAPPING_EMPTY_UPDATE: 'No cambió nada del vínculo: modifique el producto, el código o la unidad.',
+  EXTERNAL_MAPPING_EMPTY_UPDATE:
+    'No cambió nada del vínculo: modifique el producto, el código o la unidad.',
 };
 
 /**
@@ -29,12 +41,17 @@ export const INTEGRATION_ERROR_TEXT: Readonly<Record<IntegrationErrorReason, str
  * (`details.mappingId`), para ofrecer corregir ese en lugar de este; o `null`.
  */
 export function takenMappingIdOf(error: unknown): string | null {
-  if (integrationReasonOf(error) !== 'EXTERNAL_MAPPING_PRODUCT_TAKEN' || !(error instanceof HttpErrorResponse)) {
+  if (
+    integrationReasonOf(error) !== 'EXTERNAL_MAPPING_PRODUCT_TAKEN' ||
+    !(error instanceof HttpErrorResponse)
+  ) {
     return null;
   }
   const details = (error.error as Record<string, unknown>)['details'];
   const mappingId =
-    typeof details === 'object' && details !== null ? (details as Record<string, unknown>)['mappingId'] : undefined;
+    typeof details === 'object' && details !== null
+      ? (details as Record<string, unknown>)['mappingId']
+      : undefined;
   return typeof mappingId === 'string' && mappingId !== '' ? mappingId : null;
 }
 
@@ -56,7 +73,9 @@ export function integrationReasonOf(error: unknown): IntegrationErrorReason | nu
   const details = record['details'];
   const candidates = [
     record['reason'],
-    typeof details === 'object' && details !== null ? (details as Record<string, unknown>)['reason'] : undefined,
+    typeof details === 'object' && details !== null
+      ? (details as Record<string, unknown>)['reason']
+      : undefined,
   ];
   const found = candidates.find((value): value is IntegrationErrorReason =>
     (INTEGRATION_ERROR_REASONS as readonly unknown[]).includes(value),

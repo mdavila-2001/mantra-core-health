@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+.erp {
+  display: grid;
+  gap: var(--sp-4);
+}
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+legend {
+  margin-block-end: var(--sp-4);
+}
+.erp__fields {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-4);
+}
+.erp__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block: var(--sp-4);
+}
+@media (min-width: 780px) {
+  .erp__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,5 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting, type TestRequest } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+  type TestRequest,
+} from '@angular/common/http/testing';
 import type { WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -50,8 +54,20 @@ const MAPPINGS: readonly ProductMapping[] = [
 ];
 
 const EXTERNALS: readonly ExternalProduct[] = [
-  { code: 'ERP-0001', name: 'Paracetamol 500 mg', presentation: 'Caja x 20', unitCode: 'BOX', mappedProductId: 'p-a' },
-  { code: 'ERP-0003', name: 'Amoxicilina 500 mg', presentation: 'Caja x 21', unitCode: 'BOX', mappedProductId: null },
+  {
+    code: 'ERP-0001',
+    name: 'Paracetamol 500 mg',
+    presentation: 'Caja x 20',
+    unitCode: 'BOX',
+    mappedProductId: 'p-a',
+  },
+  {
+    code: 'ERP-0003',
+    name: 'Amoxicilina 500 mg',
+    presentation: 'Caja x 21',
+    unitCode: 'BOX',
+    mappedProductId: null,
+  },
 ];
 
 const BATCH: SyncBatch = {
@@ -91,10 +107,13 @@ describe('PharmacyIntegration', () => {
   let http: HttpTestingController;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
-  const byTestId = (id: string): HTMLElement | null => root().querySelector(`[data-testid="${id}"]`);
+  const byTestId = (id: string): HTMLElement | null =>
+    root().querySelector(`[data-testid="${id}"]`);
   const text = (id: string): string => byTestId(id)?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
   const button = (id: string): HTMLButtonElement =>
-    (byTestId(id)?.tagName === 'BUTTON' ? byTestId(id) : byTestId(id)?.querySelector('button')) as HTMLButtonElement;
+    (byTestId(id)?.tagName === 'BUTTON'
+      ? byTestId(id)
+      : byTestId(id)?.querySelector('button')) as HTMLButtonElement;
 
   /** `app-button` deshabilita con `aria-disabled` (y no deja salir el clic), no con el atributo nativo. */
   const disabled = (id: string): boolean => button(id).getAttribute('aria-disabled') === 'true';
@@ -104,7 +123,11 @@ describe('PharmacyIntegration', () => {
   }
 
   /** Monta la pestaña con la farmacia elegida y contesta conexiones y sucursales. */
-  function mount(connections: readonly IntegrationConnection[], providerConfigured = true): void {
+  function mount(
+    connections: readonly IntegrationConnection[],
+    providerConfigured = true,
+    erpLink: string | null = null,
+  ): void {
     fixture = TestBed.createComponent(PharmacyIntegration);
     fixture.detectChanges();
     http
@@ -112,6 +135,20 @@ describe('PharmacyIntegration', () => {
       .flush({ items: [{ ...PHARMACY, code: 'FC', siteCount: 1, productCount: 1 }], count: 1 });
     fixture.detectChanges();
     expectOne('GET', BASE).flush({ providerConfigured, items: connections });
+    expectOne('GET', `/pharmacies/${PHARMACY.id}/erp-connection`).flush({
+      pharmacyId: PHARMACY.id,
+      mode: 'MANUAL',
+      status: 'MANUAL',
+      errorReason: null,
+      checkedAt: null,
+      systemCode: null,
+      baseUrl: null,
+      pharmacyCode: null,
+      keyHint: null,
+      encryptionConfigured: true,
+      integrationConnectionId: erpLink,
+      sites: [],
+    });
     expectOne('GET', `/pharmacies/${PHARMACY.id}/opening-hours`).flush({
       pharmacyId: PHARMACY.id,
       asOf: '2026-10-30T03:00:00Z',
@@ -152,7 +189,9 @@ describe('PharmacyIntegration', () => {
 
     it('conecta por lotes con consulta de stock y la sucursal elegida, y relee la lista', () => {
       mount([]);
-      (fixture.componentInstance as unknown as { siteId: WritableSignal<string> }).siteId.set(SITE.siteId);
+      (fixture.componentInstance as unknown as { siteId: WritableSignal<string> }).siteId.set(
+        SITE.siteId,
+      );
       fixture.detectChanges();
 
       button('integration-connect-button').click();
@@ -186,7 +225,10 @@ describe('PharmacyIntegration', () => {
       expect(create.request.body).toEqual({ integrationMode: 'BATCH', supportsStockQuery: true });
       create.flush({ id: CONNECTION.id });
       fixture.detectChanges();
-      expectOne('GET', BASE).flush({ providerConfigured: true, items: [{ ...CONNECTION, pharmacySiteId: null, siteName: null }] });
+      expectOne('GET', BASE).flush({
+        providerConfigured: true,
+        items: [{ ...CONNECTION, pharmacySiteId: null, siteName: null }],
+      });
       fixture.detectChanges();
       answerConnection();
 
@@ -203,6 +245,17 @@ describe('PharmacyIntegration', () => {
   });
 
   describe('con conexión', () => {
+    it('loads mappings for the saved ERP link instead of the first active legacy link', () => {
+      const erpLink = '00000000-0000-4000-8000-000000000099';
+      mount([CONNECTION, { ...CONNECTION, id: erpLink }], true, erpLink);
+      const erpBase = `${BASE}/${erpLink}`;
+      expectOne('GET', `${erpBase}/sync-batches`).flush({ items: [] });
+      expectOne('GET', `${erpBase}/product-mappings`).flush({ items: [] });
+      expectOne('GET', `${erpBase}/external-products`).flush({ items: [] });
+      http.expectNone((request) => request.url.startsWith(`${CONN}/`));
+      fixture.detectChanges();
+      expect(byTestId('integration-connection')).not.toBeNull();
+    });
     it('muestra sus datos, la última sincronización y los productos vinculados', () => {
       mount([CONNECTION]);
       answerConnection();
@@ -242,8 +295,8 @@ describe('PharmacyIntegration', () => {
       expect(text('integration-sync-mapped')).toBe('2');
       expect(text('integration-sync-applied')).toBe('2');
       expect(text('integration-sync-unmapped')).toContain('2 productos sin vincular');
-      const rows = [...root().querySelectorAll('[data-testid="integration-sync-unmapped"] li')].map((li) =>
-        [...li.children].map((child) => child.textContent?.trim()),
+      const rows = [...root().querySelectorAll('[data-testid="integration-sync-unmapped"] li')].map(
+        (li) => [...li.children].map((child) => child.textContent?.trim()),
       );
       expect(rows).toEqual([
         ['ERP-0003', 'Amoxicilina 500 mg'],
@@ -271,7 +324,8 @@ describe('PharmacyIntegration', () => {
 
       button('integration-sync-button').click();
       expectOne('POST', `${CONN}/sync`).flush(
-        apiError('PRECONDITION_FAILED',
+        apiError(
+          'PRECONDITION_FAILED',
           'PHARMACY_INTEGRATION_NOT_CONFIGURED',
           'La conexión con el sistema de la farmacia no está configurada',
         ),
@@ -292,7 +346,8 @@ describe('PharmacyIntegration', () => {
 
       button('integration-sync-button').click();
       expectOne('POST', `${CONN}/sync`).flush(
-        apiError('DEPENDENCY_UNAVAILABLE',
+        apiError(
+          'DEPENDENCY_UNAVAILABLE',
           'PHARMACY_INTEGRATION_UNAVAILABLE',
           'No pudimos hablar con el sistema de la farmacia',
         ),
@@ -328,7 +383,12 @@ describe('PharmacyIntegration', () => {
     });
 
     it('con varias conexiones se elige cuál mirar; sin elegir, la activa', () => {
-      const other: IntegrationConnection = { ...CONNECTION, id: 'c-2', status: 'INACTIVE', siteName: 'Sucursal Norte' };
+      const other: IntegrationConnection = {
+        ...CONNECTION,
+        id: 'c-2',
+        status: 'INACTIVE',
+        siteName: 'Sucursal Norte',
+      };
       mount([other, CONNECTION]);
       answerConnection();
 
@@ -361,7 +421,8 @@ describe('PharmacyIntegration', () => {
         .flush({ items: PRODUCTS, limit: 500, truncated: false });
       expectOne('GET', `${CONN}/external-products`).flush({ items: EXTERNALS });
       fixture.detectChanges();
-      return fixture.debugElement.query(By.directive(IntegrationMappings)).componentInstance as unknown as MappingsInternal;
+      return fixture.debugElement.query(By.directive(IntegrationMappings))
+        .componentInstance as unknown as MappingsInternal;
     }
 
     it('ofrece los productos sin vínculo y los códigos libres del sistema de la farmacia', () => {
@@ -389,7 +450,10 @@ describe('PharmacyIntegration', () => {
         externalProductCode: 'ERP-0003',
         externalUnitCode: 'BOX',
       });
-      create.flush({ id: 'm-2', pharmacyProductId: 'p-c', externalProductCode: 'ERP-0003' }, { status: 201, statusText: 'Created' });
+      create.flush(
+        { id: 'm-2', pharmacyProductId: 'p-c', externalProductCode: 'ERP-0003' },
+        { status: 201, statusText: 'Created' },
+      );
       fixture.detectChanges();
 
       const added: ProductMapping = {
@@ -402,7 +466,9 @@ describe('PharmacyIntegration', () => {
       };
       expectOne('GET', `${CONN}/product-mappings`).flush({ items: [...MAPPINGS, added] });
       expectOne('GET', `${CONN}/external-products`).flush({
-        items: EXTERNALS.map((item) => (item.code === 'ERP-0003' ? { ...item, mappedProductId: 'p-c' } : item)),
+        items: EXTERNALS.map((item) =>
+          item.code === 'ERP-0003' ? { ...item, mappedProductId: 'p-c' } : item,
+        ),
       });
       fixture.detectChanges();
 
@@ -418,7 +484,12 @@ describe('PharmacyIntegration', () => {
 
       button('integration-link-save').click();
       expectOne('POST', `${CONN}/product-mappings`).flush(
-        { code: 'CONFLICT', message: 'El producto ya está mapeado en esta conexión', timestamp: '', path: '' },
+        {
+          code: 'CONFLICT',
+          message: 'El producto ya está mapeado en esta conexión',
+          timestamp: '',
+          path: '',
+        },
         { status: 409, statusText: 'Conflict' },
       );
       fixture.detectChanges();
@@ -432,14 +503,22 @@ describe('PharmacyIntegration', () => {
       answerConnection();
       button('integration-link-button').click();
       fixture.detectChanges();
-      http.expectOne((r) => r.url.endsWith('/pharmacy/products')).flush({ items: PRODUCTS, limit: 500, truncated: false });
+      http
+        .expectOne((r) => r.url.endsWith('/pharmacy/products'))
+        .flush({ items: PRODUCTS, limit: 500, truncated: false });
       expectOne('GET', `${CONN}/external-products`).flush(
-        apiError('DEPENDENCY_UNAVAILABLE', 'PHARMACY_INTEGRATION_UNAVAILABLE', 'No pudimos hablar con el sistema de la farmacia'),
+        apiError(
+          'DEPENDENCY_UNAVAILABLE',
+          'PHARMACY_INTEGRATION_UNAVAILABLE',
+          'No pudimos hablar con el sistema de la farmacia',
+        ),
         { status: 502, statusText: 'Bad Gateway' },
       );
       fixture.detectChanges();
 
-      expect(text('integration-externals-error')).toContain('No pudimos hablar con el sistema de la farmacia');
+      expect(text('integration-externals-error')).toContain(
+        'No pudimos hablar con el sistema de la farmacia',
+      );
       expect(disabled('integration-link-save')).toBe(true);
     });
   });
@@ -451,7 +530,14 @@ describe('PharmacyIntegration', () => {
     button('integration-sync-button').click();
     expectOne('POST', `${CONN}/sync`).flush({
       ...RESULT,
-      unmapped: [{ externalCode: 'ERP-0003', name: 'Amoxicilina 500 mg', reason: 'NO_MAPPING', productIds: [] }],
+      unmapped: [
+        {
+          externalCode: 'ERP-0003',
+          name: 'Amoxicilina 500 mg',
+          reason: 'NO_MAPPING',
+          productIds: [],
+        },
+      ],
     });
     fixture.detectChanges();
     expectOne('GET', `${CONN}/sync-batches`).flush({ items: [BATCH] });
@@ -459,15 +545,21 @@ describe('PharmacyIntegration', () => {
 
     button('integration-sync-link').click();
     fixture.detectChanges();
-    http.expectOne((r) => r.url.endsWith('/pharmacy/products')).flush({ items: [], limit: 500, truncated: false });
+    http
+      .expectOne((r) => r.url.endsWith('/pharmacy/products'))
+      .flush({ items: [], limit: 500, truncated: false });
     expectOne('GET', `${CONN}/external-products`).flush({ items: EXTERNALS });
     fixture.detectChanges();
 
     expect(byTestId('integration-link-dialog')).not.toBeNull();
-    const mappings = fixture.debugElement.query(By.directive(IntegrationMappings)).componentInstance as unknown as {
+    const mappings = fixture.debugElement.query(By.directive(IntegrationMappings))
+      .componentInstance as unknown as {
       externalCode: () => string | null;
     };
     expect(mappings.externalCode()).toBe('ERP-0003');
-    expect((root().querySelector('input[data-testid="integration-link-unit"]') as HTMLInputElement).value).toBe('BOX');
+    expect(
+      (root().querySelector('input[data-testid="integration-link-unit"]') as HTMLInputElement)
+        .value,
+    ).toBe('BOX');
   });
 });

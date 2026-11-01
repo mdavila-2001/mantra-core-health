@@ -16,6 +16,10 @@ import {
   type ProductMappingUpdate,
   type SyncBatchList,
   type SyncResult,
+  type ErpConnection,
+  type ErpConnectionAccess,
+  type ErpConnectionTestResult,
+  type SaveErpConnection,
 } from './pharmacy-integration.types';
 
 /**
@@ -36,6 +40,40 @@ import {
 export class PharmacyIntegrationClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+
+  readErpConnection(pharmacyId: string): Observable<ErpConnection> {
+    return this.http.get<ErpConnection>(this.erpUrl(pharmacyId));
+  }
+
+  saveErpConnection(pharmacyId: string, draft: SaveErpConnection): Observable<ErpConnection> {
+    return this.http.put<ErpConnection>(this.erpUrl(pharmacyId), this.erpBody(draft));
+  }
+
+  testErpConnection(
+    pharmacyId: string,
+    draft: ErpConnectionAccess,
+  ): Observable<ErpConnectionTestResult> {
+    return this.http.post<ErpConnectionTestResult>(
+      `${this.erpUrl(pharmacyId)}/test`,
+      this.erpBody(draft),
+    );
+  }
+
+  testSavedErpConnection(pharmacyId: string): Observable<ErpConnectionTestResult> {
+    return this.http.post<ErpConnectionTestResult>(`${this.erpUrl(pharmacyId)}/test-saved`, {});
+  }
+
+  private erpUrl(pharmacyId: string): string {
+    return apiUrl(this.baseUrl, `/pharmacies/${encodeURIComponent(pharmacyId)}/erp-connection`);
+  }
+
+  private erpBody(draft: SaveErpConnection | ErpConnectionAccess): Record<string, unknown> {
+    return Object.fromEntries(
+      Object.entries(draft).filter(
+        ([key, value]) => value !== undefined && (key !== 'apiKey' || value !== ''),
+      ),
+    );
+  }
 
   /** `GET /pharmacies/:pharmacyId/integration-connections`. */
   listConnections(pharmacyId: string): Observable<IntegrationConnectionList> {
@@ -87,16 +125,27 @@ export class PharmacyIntegrationClient {
     mappingId: string,
     patch: ProductMappingUpdate,
   ): Observable<ProductMappingChanged> {
-    const body = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
-    return this.http.patch<ProductMappingChanged>(this.mappingUrl(pharmacyId, connectionId, mappingId), body);
+    const body = Object.fromEntries(
+      Object.entries(patch).filter(([, value]) => value !== undefined),
+    );
+    return this.http.patch<ProductMappingChanged>(
+      this.mappingUrl(pharmacyId, connectionId, mappingId),
+      body,
+    );
   }
 
   /**
    * `DELETE …/product-mappings/:mappingId` — deshace el vínculo y devuelve cómo
    * estaba. El stock que ya se sincronizó se conserva. 404 si ya no existe.
    */
-  deleteMapping(pharmacyId: string, connectionId: string, mappingId: string): Observable<ProductMappingChanged> {
-    return this.http.delete<ProductMappingChanged>(this.mappingUrl(pharmacyId, connectionId, mappingId));
+  deleteMapping(
+    pharmacyId: string,
+    connectionId: string,
+    mappingId: string,
+  ): Observable<ProductMappingChanged> {
+    return this.http.delete<ProductMappingChanged>(
+      this.mappingUrl(pharmacyId, connectionId, mappingId),
+    );
   }
 
   /** `GET …/:connectionId/external-products` — el catálogo del sistema de la farmacia. */
@@ -109,9 +158,12 @@ export class PharmacyIntegrationClient {
   /** `GET …/:connectionId/sync-batches?limit=` — los últimos lotes, del más nuevo al más viejo. */
   listSyncBatches(pharmacyId: string, connectionId: string, limit = 5): Observable<SyncBatchList> {
     const bounded = Math.min(SYNC_BATCH_LIMIT_MAX, Math.max(1, Math.trunc(limit)));
-    return this.http.get<SyncBatchList>(`${this.connectionUrl(pharmacyId, connectionId)}/sync-batches`, {
-      params: new HttpParams().set('limit', String(bounded)),
-    });
+    return this.http.get<SyncBatchList>(
+      `${this.connectionUrl(pharmacyId, connectionId)}/sync-batches`,
+      {
+        params: new HttpParams().set('limit', String(bounded)),
+      },
+    );
   }
 
   /** `POST …/:connectionId/sync` — 200 con el resumen de lo recibido y lo aplicado. */
@@ -120,7 +172,10 @@ export class PharmacyIntegrationClient {
   }
 
   private connectionsUrl(pharmacyId: string): string {
-    return apiUrl(this.baseUrl, `/pharmacies/${encodeURIComponent(pharmacyId)}/integration-connections`);
+    return apiUrl(
+      this.baseUrl,
+      `/pharmacies/${encodeURIComponent(pharmacyId)}/integration-connections`,
+    );
   }
 
   private connectionUrl(pharmacyId: string, connectionId: string): string {

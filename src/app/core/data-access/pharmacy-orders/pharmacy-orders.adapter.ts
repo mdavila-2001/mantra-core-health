@@ -1,4 +1,5 @@
 import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
+import { isValidStockConfirmationQuantity } from './pharmacy-orders.confirmation';
 import type {
   AjusteDeLinea,
   EnvioDePedido,
@@ -150,14 +151,28 @@ export function confirmOrderRequest(
 ): ConfirmPharmacyOrderDto {
   const changed: {
     productId: string;
-    decision: 'NO_DISPONIBLE' | 'PROPONER_GENERICO';
+    decision: 'NO_DISPONIBLE' | 'PROPONER_GENERICO' | 'CONFIRMAR_STOCK';
     proposedProductId?: string;
+    quantity?: number;
   }[] = [];
   for (const adjustment of adjustments) {
     if (adjustment.decision === 'TAL_CUAL') continue;
     const line = order.lineas[adjustment.indice];
     if (!line?.productId) {
       throw new Error('El ajuste no corresponde a un producto del pedido.');
+    }
+    if (adjustment.decision === 'CONFIRMAR_STOCK') {
+      if (!line.porConfirmar || !isValidStockConfirmationQuantity(adjustment.quantity)) {
+        throw new Error(
+          'Confirme una cantidad entera positiva sólo sobre una línea por confirmar.',
+        );
+      }
+      changed.push({
+        productId: line.productId,
+        decision: 'CONFIRMAR_STOCK',
+        quantity: adjustment.quantity,
+      });
+      continue;
     }
     if (adjustment.decision === 'PROPONER_GENERICO') {
       const proposedProductId = adjustment.propuesta?.productId;

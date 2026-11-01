@@ -250,7 +250,12 @@ export interface EnvioDePedido {
 /* ─── El lado del mostrador (carril FAR-I3, contrato de FAR-E2) ─────────── */
 
 /** Qué decide la farmacia sobre un renglón al confirmar el pedido. */
-export const DECISIONES_DE_LINEA = ['TAL_CUAL', 'PROPONER_GENERICO', 'NO_DISPONIBLE'] as const;
+export const DECISIONES_DE_LINEA = [
+  'TAL_CUAL',
+  'PROPONER_GENERICO',
+  'NO_DISPONIBLE',
+  'CONFIRMAR_STOCK',
+] as const;
 
 export type DecisionDeLinea = (typeof DECISIONES_DE_LINEA)[number];
 
@@ -263,6 +268,7 @@ export interface AjusteDeLinea {
   /** Índice (base 0) del renglón dentro de `PedidoFarmacia.lineas`. */
   readonly indice: number;
   readonly decision: DecisionDeLinea;
+  readonly quantity?: number;
   readonly propuesta?: {
     /** Producto real elegido del catálogo. */
     readonly productId?: string;

@@ -101,10 +101,32 @@
                       [value]="ajuste.decision"
                       (valueChange)="cambiarDecision(i, $event)"
                     >
-                      <app-radio value="TAL_CUAL" label="Tal cual" />
+                      @if (linea.porConfirmar) {
+                        <app-radio value="CONFIRMAR_STOCK" label="Confirmar existencias" />
+                      } @else {
+                        <app-radio value="TAL_CUAL" label="Tal cual" />
+                      }
                       <app-radio value="PROPONER_GENERICO" label="Proponer sustituto" />
                       <app-radio value="NO_DISPONIBLE" label="No disponible" />
                     </app-radio-group>
+                    @if (linea.porConfirmar) {
+                      <p class="mostrador__secundario">
+                        La sucursal confirma la disponibilidad de esta línea.
+                      </p>
+                    }
+                    @if (ajuste.decision === 'CONFIRMAR_STOCK') {
+                      <app-form-field
+                        label="Unidades disponibles para vender"
+                        hint="Ingrese una cantidad entera entre 1 y 1.000.000."
+                        [required]="true"
+                      >
+                        <app-input
+                          type="number"
+                          [value]="ajuste.quantity ?? null"
+                          (valueChange)="setConfirmedQuantity(i, $event)"
+                        />
+                      </app-form-field>
+                    }
                     @if (ajuste.decision === 'PROPONER_GENERICO') {
                       @if (substituteSearchAt(i); as search) {
                         @switch (search.status) {
@@ -244,8 +266,8 @@
             <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
           </div>
           <p class="mostrador__secundario">
-            {{ seguro.aseguradora }} · {{ seguro.plan }} — cubre el {{ seguro.porcentaje }}% de
-            cada renglón aprobado. Lo no aprobado lo paga la persona en el mostrador.
+            {{ seguro.aseguradora }} · {{ seguro.plan }} — cubre el {{ seguro.porcentaje }}% de cada
+            renglón aprobado. Lo no aprobado lo paga la persona en el mostrador.
           </p>
           <dl class="mostrador__reparto">
             <div class="mostrador__reparto-dato">
@@ -267,8 +289,8 @@
       <!-- ─── Esperando la decisión del paciente ─────────────────────────── -->
       @if (abierto.estado === 'ACEPTACION_PENDIENTE') {
         <app-alert tone="info" title="La decisión es del paciente">
-          Le propuso una alternativa: puede aceptarla, quedarse con su receta original o
-          cancelar. La pantalla se actualiza cuando decida.
+          Le propuso una alternativa: puede aceptarla, quedarse con su receta original o cancelar.
+          La pantalla se actualiza cuando decida.
         </app-alert>
       }
 
@@ -353,7 +375,9 @@
         />
       }
 
-      <a app-button variant="ghost" class="volver-al-origen" [routerLink]="bandejaRoute">Volver a la bandeja</a>
+      <a app-button variant="ghost" class="volver-al-origen" [routerLink]="bandejaRoute"
+        >Volver a la bandeja</a
+      >
     </div>
   }
 </app-view-state-host>

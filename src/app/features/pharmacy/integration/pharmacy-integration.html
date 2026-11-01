@@ -14,82 +14,115 @@
 
   @if (scope.pharmacyId(); as pharmacyId) {
     <div class="integration" data-testid="integration-card">
-      <app-view-state-host [state]="connections()" (retry)="reload()" (refresh)="reload()">
-        <!-- S2 · sin conexión: la próxima acción es conectarla, acá mismo. -->
-        <section vsh-empty class="integration__connect" data-testid="integration-connect" aria-labelledby="integration-connect-title">
-          <h2 class="integration__title" id="integration-connect-title">Su farmacia todavía no está conectada</h2>
-          <p class="integration__lead">
-            Conecte el sistema donde lleva sus existencias. Después vincule cada producto del catálogo con su código
-            en ese sistema y sincronice: las existencias de las sucursales se actualizan solas.
-          </p>
+      <app-pharmacy-erp-connection
+        [pharmacyId]="pharmacyId"
+        (connectionLoaded)="onErpLoaded($event)"
+        (saved)="reload()"
+      />
+      @if (erpReady()) {
+        <app-view-state-host [state]="connections()" (retry)="reload()" (refresh)="reload()">
+          <!-- S2 · sin conexión: la próxima acción es conectarla, acá mismo. -->
+          <section
+            vsh-empty
+            class="integration__connect"
+            data-testid="integration-connect"
+            aria-labelledby="integration-connect-title"
+          >
+            <h2 class="integration__title" id="integration-connect-title">
+              Su farmacia todavía no está conectada
+            </h2>
+            <p class="integration__lead">
+              Conecte el sistema donde lleva sus existencias. Después vincule cada producto del
+              catálogo con su código en ese sistema y sincronice: las existencias de las sucursales
+              se actualizan solas.
+            </p>
 
-          @if (!providerConfigured()) {
-            <app-alert tone="warning" data-testid="integration-not-configured">{{ notConfiguredText }}</app-alert>
-          }
-          @if (connectError(); as message) {
-            <app-alert tone="error" data-testid="integration-connect-error">{{ message }}</app-alert>
-          }
+            @if (!providerConfigured()) {
+              <app-alert tone="warning" data-testid="integration-not-configured">{{
+                notConfiguredText
+              }}</app-alert>
+            }
+            @if (connectError(); as message) {
+              <app-alert tone="error" data-testid="integration-connect-error">{{
+                message
+              }}</app-alert>
+            }
 
-          <div class="integration__connect-form">
-            <app-form-field
-              label="Sucursal"
-              hint="Elija una sucursal o déjela en «Todas»: la sincronización actualiza las que correspondan."
-            >
-              <app-select
-                [options]="siteOptions()"
-                [value]="siteId()"
-                (valueChange)="chooseSite($event)"
-                data-testid="integration-site"
-              />
-            </app-form-field>
-            <button
-              app-button
-              type="button"
-              [isLoading]="connecting()"
-              [disabled]="connecting()"
-              (clicked)="connect()"
-              data-testid="integration-connect-button"
-            >
-              {{ connectLabel }}
-            </button>
-          </div>
-        </section>
+            <div class="integration__connect-form">
+              <app-form-field
+                label="Sucursal"
+                hint="Elija una sucursal o déjela en «Todas»: la sincronización actualiza las que correspondan."
+              >
+                <app-select
+                  [options]="siteOptions()"
+                  [value]="siteId()"
+                  (valueChange)="chooseSite($event)"
+                  data-testid="integration-site"
+                />
+              </app-form-field>
+              <button
+                app-button
+                type="button"
+                [isLoading]="connecting()"
+                [disabled]="connecting()"
+                (clicked)="connect()"
+                data-testid="integration-connect-button"
+              >
+                {{ connectLabel }}
+              </button>
+            </div>
+          </section>
 
-        @if (connection(); as current) {
-          <div class="integration__panel">
-            <section class="integration__section" aria-labelledby="integration-connection-title" data-testid="integration-connection">
-              <div class="integration__heading">
-                <h2 class="integration__title" id="integration-connection-title">Conexión con el sistema de la farmacia</h2>
-                @if (connectionOptions().length > 1) {
-                  <app-select
-                    class="integration__chooser"
-                    ariaLabel="Conexión"
-                    [options]="connectionOptions()"
-                    [value]="current.id"
-                    (valueChange)="chooseConnection($event)"
-                    data-testid="integration-connection-chooser"
-                  />
+          @if (connection(); as current) {
+            <div class="integration__panel">
+              <section
+                class="integration__section"
+                aria-labelledby="integration-connection-title"
+                data-testid="integration-connection"
+              >
+                <div class="integration__heading">
+                  <h2 class="integration__title" id="integration-connection-title">
+                    Conexión con el sistema de la farmacia
+                  </h2>
+                  @if (connectionOptions().length > 1) {
+                    <app-select
+                      class="integration__chooser"
+                      ariaLabel="Conexión"
+                      [options]="connectionOptions()"
+                      [value]="current.id"
+                      (valueChange)="chooseConnection($event)"
+                      data-testid="integration-connection-chooser"
+                    />
+                  }
+                </div>
+                <app-fact-list
+                  disposicion="columnas"
+                  etiqueta="Datos de la conexión"
+                  [hechos]="facts()"
+                />
+                @if (!current.providerConfigured) {
+                  <app-alert tone="warning" data-testid="integration-not-configured">{{
+                    notConfiguredText
+                  }}</app-alert>
+                } @else if (current.status !== 'ACTIVE' || !current.supportsStockQuery) {
+                  <app-alert tone="warning" data-testid="integration-inactive">{{
+                    inactiveText
+                  }}</app-alert>
                 }
-              </div>
-              <app-fact-list disposicion="columnas" etiqueta="Datos de la conexión" [hechos]="facts()" />
-              @if (!current.providerConfigured) {
-                <app-alert tone="warning" data-testid="integration-not-configured">{{ notConfiguredText }}</app-alert>
-              } @else if (current.status !== 'ACTIVE' || !current.supportsStockQuery) {
-                <app-alert tone="warning" data-testid="integration-inactive">{{ inactiveText }}</app-alert>
-              }
-            </section>
+              </section>
 
-            <!-- «Vincular» sobre un código sin vínculo del resultado abre el alta de abajo con ese código. -->
-            <app-integration-sync
-              [pharmacyId]="pharmacyId"
-              [connection]="current"
-              (linkRequested)="links.startLink($event)"
-            />
+              <!-- «Vincular» sobre un código sin vínculo del resultado abre el alta de abajo con ese código. -->
+              <app-integration-sync
+                [pharmacyId]="pharmacyId"
+                [connection]="current"
+                (linkRequested)="links.startLink($event)"
+              />
 
-            <app-integration-mappings #links [pharmacyId]="pharmacyId" [connection]="current" />
-          </div>
-        }
-      </app-view-state-host>
+              <app-integration-mappings #links [pharmacyId]="pharmacyId" [connection]="current" />
+            </div>
+          }
+        </app-view-state-host>
+      }
     </div>
   }
 </app-view-state-host>

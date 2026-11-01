@@ -1,0 +1,110 @@
+<section class="erp" aria-labelledby="erp-title">
+  <h2 id="erp-title">Conexión con el sistema de la farmacia</h2>
+  <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+    @if (connection(); as current) {
+      <p role="status">
+        @switch (current.status) {
+          @case ('MANUAL') {
+            Manual: cada sucursal confirma el stock de cada pedido.
+          }
+          @case ('ACTIVE') {
+            Activa.
+          }
+          @case ('ERROR') {
+            Con error:
+            {{ current.errorReason === 'AUTH_REJECTED' ? 'clave rechazada' : 'no responde' }}.
+          }
+        }
+        Última comprobación: {{ current.checkedAt ?? 'sin comprobar' }}.
+      </p>
+      @if (!current.encryptionConfigured) {
+        <app-alert tone="warning"
+          >Falta configurar el cifrado de conexiones. No se puede guardar ni probar.</app-alert
+        >
+      }
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <fieldset [disabled]="busy()">
+          <legend>Configuración por farmacia</legend>
+          <div class="erp__fields">
+            <app-form-field label="Modo"
+              ><app-select formControlName="mode" [options]="modes"
+            /></app-form-field>
+            <app-form-field label="Tipo de sistema"
+              ><app-select formControlName="systemCode" [options]="systems"
+            /></app-form-field>
+            <app-form-field
+              label="Dirección de la API"
+              hint="Incluya http:// o https://; sin credenciales, consulta ni fragmento."
+              ><app-input formControlName="baseUrl" type="url" autocomplete="off"
+            /></app-form-field>
+            <app-form-field label="Código de farmacia"
+              ><app-input formControlName="pharmacyCode" autocomplete="off"
+            /></app-form-field>
+            <app-form-field
+              label="Clave de conexión"
+              hint="Vacío conserva la guardada. Si cambia dirección o sistema, vuelva a cargar la clave."
+            >
+              <app-input formControlName="apiKey" type="password" autocomplete="new-password" />
+            </app-form-field>
+          </div>
+          @if (current.keyHint) {
+            <p>Clave guardada: {{ current.keyHint }}</p>
+          }
+          <div formArrayName="siteCodes" class="erp__fields">
+            @for (control of form.controls.siteCodes.controls; track control; let i = $index) {
+              <div [formGroupName]="i">
+                <app-form-field
+                  [label]="'Código de sucursal: ' + siteDescription(control.controls.siteId.value)"
+                >
+                  <app-input formControlName="externalCode" autocomplete="off" />
+                </app-form-field>
+              </div>
+            }
+          </div>
+          <div class="erp__actions">
+            <button
+              app-button
+              type="button"
+              variant="secondary"
+              [disabled]="busy()"
+              (clicked)="reload()"
+            >
+              Volver a cargar
+            </button>
+            <button
+              app-button
+              type="button"
+              variant="secondary"
+              [disabled]="busy() || !current.encryptionConfigured"
+              (clicked)="testDraft()"
+            >
+              Probar conexión
+            </button>
+            <button app-button type="submit" [disabled]="busy() || !current.encryptionConfigured">
+              Guardar
+            </button>
+            @if (current.integrationConnectionId) {
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                [disabled]="busy() || !current.encryptionConfigured"
+                (clicked)="testSaved()"
+              >
+                Probar conexión guardada
+              </button>
+            }
+          </div>
+        </fieldset>
+      </form>
+      @if (checkResult(); as result) {
+        <app-alert [tone]="result === 'OK' ? 'success' : 'warning'">{{
+          resultText[result]
+        }}</app-alert>
+      }
+      @if (message(); as text) {
+        <app-alert [tone]="messageTone()">{{ text }}</app-alert>
+      }
+    }
+  </app-view-state-host>
+</section>

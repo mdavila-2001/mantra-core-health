@@ -34,6 +34,7 @@ import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { INTEGRATION_ERROR_TEXT, integrationErrorMessage } from './integration-error-message';
 import { IntegrationMappings } from './integration-mappings/integration-mappings';
 import { IntegrationSync } from './integration-sync/integration-sync';
+import { PharmacyErpConnection } from './erp-connection/erp-connection';
 
 /** Valor del desplegable de sucursal que no manda ninguna: la conexión vale para todas. */
 export const ALL_SITES = 'ALL';
@@ -64,6 +65,7 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
     FormField,
     IntegrationMappings,
     IntegrationSync,
+    PharmacyErpConnection,
     Select,
     ViewStateHost,
   ],
@@ -82,6 +84,7 @@ export class PharmacyIntegration {
   protected readonly connections = signal<ViewState<IntegrationConnectionList>>(loading());
   /** La conexión elegida cuando hay más de una. */
   protected readonly chosenId = signal<string | null>(null);
+  protected readonly erpReady = signal(false);
 
   protected readonly siteOptions = signal<readonly SelectOption<string>[]>([
     { value: ALL_SITES, label: 'Todas las sucursales' },
@@ -129,10 +132,16 @@ export class PharmacyIntegration {
     const active = connection.status === 'ACTIVE';
     return [
       { etiqueta: 'Sucursal', valor: connection.siteName ?? 'Todas las sucursales activas' },
-      { etiqueta: 'Modo', valor: connection.integrationMode === 'BATCH' ? 'Por lotes' : 'En tiempo real' },
+      {
+        etiqueta: 'Modo',
+        valor: connection.integrationMode === 'BATCH' ? 'Por lotes' : 'En tiempo real',
+      },
       { etiqueta: 'Consulta de stock', valor: connection.supportsStockQuery ? 'Sí' : 'No' },
       { etiqueta: 'Estado', valor: active ? 'Activa' : 'Inactiva', tono: active ? 'ok' : 'aviso' },
-      { etiqueta: 'Conectada el', valor: formatDate(connection.createdAt, 'd MMM y, HH:mm', this.locale) },
+      {
+        etiqueta: 'Conectada el',
+        valor: formatDate(connection.createdAt, 'd MMM y, HH:mm', this.locale),
+      },
     ];
   });
 
@@ -142,6 +151,7 @@ export class PharmacyIntegration {
       if (pharmacyId !== null) {
         untracked(() => {
           this.chosenId.set(null);
+          this.erpReady.set(false);
           this.connectError.set(null);
           this.reload();
           this.loadSites(pharmacyId);
@@ -162,15 +172,24 @@ export class PharmacyIntegration {
         this.connections.set(
           list.items.length > 0
             ? ready(list)
-            : empty({ label: CONNECT_LABEL }, 'Su farmacia todavía no está conectada con su sistema.'),
+            : empty(
+                { label: CONNECT_LABEL },
+                'Su farmacia todavía no está conectada con su sistema.',
+              ),
         );
       },
-      error: (error: unknown) => this.connections.set(errorToViewState<IntegrationConnectionList>(error)),
+      error: (error: unknown) =>
+        this.connections.set(errorToViewState<IntegrationConnectionList>(error)),
     });
   }
 
   protected chooseConnection(id: string | null): void {
     this.chosenId.set(id);
+  }
+
+  protected onErpLoaded(id: string | null): void {
+    if (id) this.chosenId.set(id);
+    this.erpReady.set(true);
   }
 
   protected chooseSite(id: string | null): void {
@@ -201,7 +220,9 @@ export class PharmacyIntegration {
         },
         error: (error: unknown) => {
           this.connecting.set(false);
-          this.connectError.set(integrationErrorMessage(error, 'No se pudo conectar el sistema de la farmacia.'));
+          this.connectError.set(
+            integrationErrorMessage(error, 'No se pudo conectar el sistema de la farmacia.'),
+          );
         },
       });
   }
