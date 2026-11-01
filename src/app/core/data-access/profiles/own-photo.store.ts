@@ -1,6 +1,7 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { catchError, of, switchMap } from 'rxjs';
 
+import { AuthService } from '../../auth/auth.service';
 import { FilesClient } from '../files/files.client';
 import { ProfilesClient } from './profiles.client';
 
@@ -20,9 +21,27 @@ import { ProfilesClient } from './profiles.client';
 export class OwnPhotoStore {
   private readonly profiles = inject(ProfilesClient);
   private readonly files = inject(FilesClient);
+  private readonly auth = inject(AuthService);
 
   readonly url = signal<string | null>(null);
   private pedida = false;
+
+  /** De quién es la foto que se está pidiendo o ya se tiene; `null` sin sesión. */
+  private duenio: string | null = null;
+
+  constructor() {
+    // La foto es de **una** sesión: si la persona cambia o la sesión termina
+    // —por cerrar sesión, por vencimiento o por un 401—, se borra. Atarlo sólo
+    // al botón de salir dejaba la foto de la cuenta anterior a la vista de la
+    // siguiente.
+    effect(() => {
+      const actual = this.auth.userId() ?? null;
+      if (actual !== this.duenio) {
+        this.reset();
+        this.duenio = actual;
+      }
+    });
+  }
 
   /** Lee la foto una sola vez por sesión de navegador. */
   load(): void {
@@ -30,6 +49,7 @@ export class OwnPhotoStore {
       return;
     }
     this.pedida = true;
+    const paraQuien = this.duenio;
     this.profiles
       .getOwnPatientProfile()
       .pipe(
@@ -38,7 +58,12 @@ export class OwnPhotoStore {
         ),
         catchError(() => of<string | null>(null)),
       )
-      .subscribe((url) => this.url.set(url));
+      .subscribe((url) => {
+        // Una respuesta que llega después de un cambio de sesión es de otra persona.
+        if (this.duenio === paraQuien) {
+          this.url.set(url);
+        }
+      });
   }
 
   /** Quien ya tiene la foto en la mano (perfil, subida) la deja acá. */
