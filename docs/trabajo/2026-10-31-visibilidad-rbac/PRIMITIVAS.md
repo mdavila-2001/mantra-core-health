@@ -51,3 +51,25 @@ dentro de la tarjeta**: los bloques internos van con `app-section-heading` o un 
 ## T2 · Lateral
 
 - Fondo continuo hasta el pie también en capturas de página entera: es del marco, nada que hacer en pantallas.
+
+## Revisión visual 2 (N1–N9, parte de primitivas)
+
+- **KPIs (`app-metric-card`)**: la cifra no se parte nunca («11 de 13», «hace 2 min»), baja un escalón en el
+  teléfono, el rótulo reserva dos renglones (las cifras de una fila quedan alineadas) y en una tarjeta angosta la
+  loseta sube y el cuerpo toma todo el ancho. No le pongas `white-space` ni alturas desde la pantalla.
+- **Navegación (N2)**: un solo criterio en `portal-nav.ts`: cada línea del lateral es una sección y sus hermanas
+  son pestañas. Sistemas → «Inventario técnico» (6 pestañas), Catálogo → «Catálogo de datos» (3), Calidad →
+  «Incidencias y reglas» (Incidencias / Reglas). Rutas y guardas sin cambios.
+- **Fechas (N4)**: UN formateador: `fechaHora(valor)` / `fecha(valor)` de
+  `shared/components/organisms/data-table/sin-cortes.ts` → «1 nov de 2026, 6:34 p. m.» con la hora sin cortes.
+  Reemplazá `| date: 'dd/MM/yyyy HH:mm'` y los `toLocaleString` propios. Los campos de fecha del formulario de
+  filtros usan `app-date-picker` (DD/MM/AAAA); el valor de la URL sigue siendo AAAA-MM-DD.
+- **Filtros (N3)**: cada select pide el ancho de su opción «Cualquier …» entera; si no entran, bajan los campos,
+  nunca las acciones.
+- **Aviso (N5)**: UN estilo: `<app-alert tone="info" title="Lead en una frase." collapsible>detalle</app-alert>`
+  (lead en negrita + ▸, el detalle se despliega). Sin `collapsible` cuando el aviso es corto y va entero. No armes
+  `<details>` propios ni cambies el tamaño de letra.
+- **Tabla (N6)**: UNA cabecera: la de `app-data-table` (versalitas sobre el fondo de la tarjeta). No pintes bandas
+  de fondo en `thead` ni tablas a mano.
+- **390 (N9)**: la barra inferior tiene alto fijo y el lienzo reserva ese alto + safe area; al tabular, el navegador
+  deja libre la franja de la barra. Una captura de VISTA sigue mostrando la barra encima del borde inferior: es fija.

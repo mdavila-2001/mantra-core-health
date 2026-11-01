@@ -36,11 +36,22 @@
   <!-- El tono dicho en palabras: quien no ve el color igual sabe qué es. -->
   <span class="sr-only">{{ toneNoun() }}:</span>
 
-  @if (title()) {
+  @if (plegable()) {
+    <button
+      type="button"
+      class="alert__title alert__plegar"
+      [attr.aria-expanded]="abierto()"
+      [attr.aria-controls]="idMensaje"
+      (click)="alternar()"
+    >
+      {{ title() }}
+      <span class="alert__flecha" [class.alert__flecha--abierta]="abierto()" aria-hidden="true">▸</span>
+    </button>
+  } @else if (title()) {
     <p class="alert__title">{{ title() }}</p>
   }
 
-  <div class="alert__message">
+  <div class="alert__message" [id]="idMensaje" [hidden]="plegable() && !abierto()">
     <ng-content />
   </div>
 

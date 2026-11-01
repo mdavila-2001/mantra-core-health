@@ -14,7 +14,9 @@
   z-index: var(--z-sticky);
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  min-block-size: var(--portal-inferior);
+  /* Alto FIJO (no mínimo): el lienzo reserva exactamente esto abajo, así la
+     barra nunca tapa la última acción de la pantalla. */
+  block-size: calc(var(--portal-inferior) + env(safe-area-inset-bottom, 0px));
   padding-block-end: env(safe-area-inset-bottom, 0px);
   border-block-start: 1px solid var(--border-subtle);
   background: var(--bg-surface);
@@ -86,8 +88,20 @@
   cursor: pointer;
 }
 
+/* Al tabular o al llevar algo a la vista (un error, «Aplicar filtros»), el
+   navegador deja libre la franja de la barra superior y la de la inferior:
+   sin esto el control enfocado quedaba debajo de la barra. */
+::ng-deep html:has(app-portal-shell) {
+  scroll-padding-block: calc(var(--sp-16) + var(--sp-2))
+    calc(var(--sp-12) + var(--sp-4) + env(safe-area-inset-bottom, 0px));
+}
+
 @media (min-width: 64rem) {
   .portal__inferior {
     display: none;
+  }
+
+  ::ng-deep html:has(app-portal-shell) {
+    scroll-padding-block-end: 0;
   }
 }

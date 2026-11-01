@@ -99,3 +99,47 @@
     width: var(--sp-4);
     height: var(--sp-4);
 }
+
+/* ---- aviso plegado (`collapsible`): una línea con el lead y «▸» ---------- */
+.alert__plegar {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--sp-1);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    text-align: start;
+    cursor: pointer;
+}
+
+.alert__plegar:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--r-xs);
+}
+
+.alert__flecha {
+    display: inline-block;
+    transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.alert__flecha--abierta {
+    transform: rotate(90deg);
+}
+
+:host(.alert--plegable) {
+    padding-block: var(--sp-3);
+}
+
+:host(.alert--plegable) .alert__icon {
+    margin-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .alert__flecha {
+        transition: none;
+    }
+}

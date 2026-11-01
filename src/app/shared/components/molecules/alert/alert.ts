@@ -5,6 +5,7 @@ import {
   computed,
   input,
   output,
+  signal,
 } from '@angular/core';
 
 import { ALERT_TONE_NOUNS, type AlertTone } from './alert.types';
@@ -39,6 +40,18 @@ export class Alert {
   readonly title = input<string>('');
   readonly dismissible = input(false, { transform: booleanAttribute });
   readonly icon = input(true, { transform: booleanAttribute });
+  /**
+   * Aviso plegado en una línea: el título es un botón («Lead ▸») y el texto
+   * proyectado se despliega al pulsarlo. Es EL aviso de honestidad del portal
+   * (datos simulados, límites de una vista): una sola receta en vez de que
+   * cada pantalla arme su `<details>` con otro tamaño de letra. Sin título no
+   * se pliega (no habría qué mostrar plegado).
+   */
+  readonly collapsible = input(false, { transform: booleanAttribute });
+  protected readonly abierto = signal(false);
+  private static siguienteId = 0;
+  protected readonly idMensaje = `alerta-${Alert.siguienteId++}`;
+  protected readonly plegable = computed(() => this.collapsible() && this.title() !== '');
 
   readonly dismissed = output<void>();
 
@@ -59,8 +72,15 @@ export class Alert {
     if (this.dismissible()) {
       classes.push('alert--dismissible');
     }
+    if (this.plegable()) {
+      classes.push('alert--plegable');
+    }
     return classes.join(' ');
   });
+
+  protected alternar(): void {
+    this.abierto.update((v) => !v);
+  }
 
   protected dismiss(): void {
     this.dismissed.emit();

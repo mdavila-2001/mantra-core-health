@@ -152,4 +152,30 @@ describe('Alert', () => {
       );
     });
   });
+
+  describe('plegado (collapsible): el aviso de honestidad en una línea', () => {
+    it('el título es un botón con ▸ y el detalle queda oculto hasta pulsarlo', async () => {
+      await setInputs({ title: 'Datos simulados.', collapsible: true });
+
+      const boton = host().querySelector<HTMLButtonElement>('button.alert__plegar');
+      const mensaje = host().querySelector<HTMLElement>('.alert__message');
+      expect(boton?.textContent).toContain('Datos simulados.');
+      expect(boton?.getAttribute('aria-expanded')).toBe('false');
+      expect(boton?.getAttribute('aria-controls')).toBe(mensaje?.id);
+      expect(mensaje?.hidden).toBe(true);
+      expect(host().classList).toContain('alert--plegable');
+
+      boton?.click();
+      await fixture.whenStable();
+      expect(boton?.getAttribute('aria-expanded')).toBe('true');
+      expect(mensaje?.hidden).toBe(false);
+    });
+
+    it('sin título no se pliega: no habría nada a la vista', async () => {
+      await setInputs({ collapsible: true });
+
+      expect(host().querySelector('button.alert__plegar')).toBeNull();
+      expect(host().querySelector<HTMLElement>('.alert__message')?.hidden).toBe(false);
+    });
+  });
 });
