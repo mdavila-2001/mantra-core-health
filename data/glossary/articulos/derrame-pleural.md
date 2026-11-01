@@ -1,5 +1,6 @@
 ---
 slug: derrame-pleural
+image: derrame-pleural.svg | Acumulación de líquido en la pleura y cómo se estudia | Tórax con dos pulmones y líquido acumulado en la base de uno de ellos entre las capas de la pleura, junto a causas, síntomas y pruebas diagnósticas
 ---
 
 ## [definition] Introducción

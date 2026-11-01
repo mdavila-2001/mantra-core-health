@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q10379
+image: wikidata-especialidad-q10379.svg | La cardiología se ocupa del corazón y de los vasos sanguíneos. | Corazón con las arterias coronarias, el músculo, el trazado del ritmo eléctrico y las válvulas señalados, junto a las enfermedades que atiende la cardiología y sus pruebas habituales.
 ---
 
 ## [definition] Introducción

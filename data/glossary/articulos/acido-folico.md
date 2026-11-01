@@ -1,5 +1,6 @@
 ---
 slug: acido-folico
+image: acido-folico.svg | El folato es necesario para fabricar glóbulos rojos; la prueba lo mide en sangre. | Esquema de los alimentos con folato que llegan a la médula ósea, comparación entre glóbulos rojos normales y los grandes de la anemia megaloblástica, y un tubo de sangre con los motivos para pedir la prueba.
 ---
 
 ## [definition] Introducción

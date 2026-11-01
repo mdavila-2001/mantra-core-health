@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q33226
+image: wikidata-especialidad-q33226.svg | La logopedia trata el lenguaje, el habla, la voz, la audición y la deglución. | Perfil de cabeza con el cerebro, el oído, la lengua y los labios, la laringe y la vía de la deglución señalados. A la derecha, las áreas que atiende la logopedia: lenguaje, habla, voz, deglución, audición y lectoescritura.
 ---
 
 ## [definition] Introducción

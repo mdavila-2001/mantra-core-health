@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué activa el centro del vómito</title>
+  <desc id="d">En el centro, el centro del vómito en el tronco encefálico. Cuatro flechas llegan a él desde el tubo digestivo irritado, el oído interno por el movimiento, sustancias en la sangre como toxinas, medicamentos u hormonas del embarazo, y las emociones, olores o dolor. Debajo, la respuesta: náuseas, el diafragma y el abdomen se contraen y el estómago expulsa su contenido.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --c1:#d9822b; --c2:#7b4bb7; --c3:#c0392b; --c4:#1f8a5b; --core:#2b6cb0; --stomach:#e7b7a4; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --c1:#e8a560; --c2:#a98ad8; --c3:#ef7467; --c4:#4cc38a; --core:#6aa7e8; --stomach:#8f5a4e; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="50" text-anchor="middle" class="title">Cuatro vías hacia el centro del vómito</text>
+
+  <!-- núcleo -->
+  <ellipse cx="400" cy="180" rx="110" ry="46" fill="var(--core)"/>
+  <text x="400" y="176" text-anchor="middle" class="step" style="fill:var(--on)">Centro del vómito</text>
+  <text x="400" y="196" text-anchor="middle" class="small" style="fill:var(--on)">tronco encefálico</text>
+
+  <!-- vías -->
+  <rect x="40" y="76" width="200" height="66" rx="10" fill="none" stroke="var(--c1)" stroke-width="2"/>
+  <text x="56" y="102" class="step" style="fill:var(--c1)">Tubo digestivo</text>
+  <text x="56" y="124" class="small">irritación, infección, obstrucción</text>
+  <path d="M240 112 C270 120 280 150 292 165" fill="none" stroke="var(--c1)" stroke-width="3"/>
+  <polygon points="294,170 284,160 298,158" fill="var(--c1)"/>
+
+  <rect x="40" y="200" width="200" height="66" rx="10" fill="none" stroke="var(--c2)" stroke-width="2"/>
+  <text x="56" y="226" class="step" style="fill:var(--c2)">Oído interno</text>
+  <text x="56" y="248" class="small">movimiento, vértigo, mareo</text>
+  <path d="M240 232 C260 222 275 205 292 196" fill="none" stroke="var(--c2)" stroke-width="3"/>
+  <polygon points="296,194 282,192 288,204" fill="var(--c2)"/>
+
+  <rect x="560" y="76" width="200" height="66" rx="10" fill="none" stroke="var(--c3)" stroke-width="2"/>
+  <text x="576" y="102" class="step" style="fill:var(--c3)">Sangre</text>
+  <text x="576" y="124" class="small">toxinas, fármacos, embarazo</text>
+  <path d="M560 112 C530 120 520 150 508 165" fill="none" stroke="var(--c3)" stroke-width="3"/>
+  <polygon points="506,170 502,158 516,160" fill="var(--c3)"/>
+
+  <rect x="560" y="200" width="200" height="66" rx="10" fill="none" stroke="var(--c4)" stroke-width="2"/>
+  <text x="576" y="226" class="step" style="fill:var(--c4)">Emociones y sentidos</text>
+  <text x="576" y="248" class="small">olores, ansiedad, dolor</text>
+  <path d="M560 232 C540 222 525 205 508 196" fill="none" stroke="var(--c4)" stroke-width="3"/>
+  <polygon points="504,194 512,204 518,192" fill="var(--c4)"/>
+
+  <!-- respuesta -->
+  <path d="M400 226 V280" stroke="var(--muted)" stroke-width="3"/>
+  <polygon points="400,288 392,274 408,274" fill="var(--muted)"/>
+  <path d="M330 340 C330 300 380 296 400 310 C430 330 470 320 470 350 C470 390 400 400 360 384 C335 374 330 360 330 340 Z" fill="var(--stomach)" stroke="var(--line)"/>
+  <path d="M352 300 C352 290 360 286 366 280" fill="none" stroke="var(--stomach)" stroke-width="10" stroke-linecap="round"/>
+  <path d="M280 300 C330 288 470 288 520 300" fill="none" stroke="var(--accent)" stroke-width="4"/>
+  <text x="528" y="304" class="small">Diafragma</text>
+  <text x="400" y="416" text-anchor="middle" class="small muted">Estómago</text>
+  <text x="56" y="318" class="lab">Respuesta:</text>
+  <text x="56" y="340" class="small">• náuseas, saliva, sudor</text>
+  <text x="56" y="360" class="small">• contracción del abdomen</text>
+  <text x="56" y="380" class="small">• la vía aérea se protege</text>
+  <text x="576" y="340" class="small muted">Prioridad en casa:</text>
+  <text x="576" y="360" class="small">sorbos pequeños y</text>
+  <text x="576" y="380" class="small">frecuentes de líquido</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

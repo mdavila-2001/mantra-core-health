@@ -1,5 +1,6 @@
 ---
 slug: acido-urico
+image: acido-urico.svg | El ácido úrico procede de las purinas y se elimina sobre todo por el riñón. | Esquema del ciclo del ácido úrico desde las purinas y el hígado hasta el riñón y el intestino, con un tubo de sangre, una articulación con cristales de urato y la lista de usos de la prueba.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q101929
+image: wikidata-especialidad-q101929.svg | La inmunología estudia los órganos, células y moléculas que defienden al organismo. | Silueta humana con los órganos del sistema inmunitario: amígdalas y ganglios, timo, bazo y médula ósea. A la derecha, la inmunidad innata y la adaptativa y las áreas que atiende la especialidad.
 ---
 
 ## [definition] Introducción

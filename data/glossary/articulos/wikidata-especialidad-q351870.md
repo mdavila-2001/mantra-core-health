@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q351870
+image: wikidata-especialidad-q351870.svg | Pasos de la fertilidad y tratamientos de reproducción asistida | Útero, trompas y ovarios con la ovulación, la fecundación y la implantación numeradas, junto a los tratamientos de inducción, inseminación, FIV, ICSI y preservación
 ---
 
 ## [definition] Introducción

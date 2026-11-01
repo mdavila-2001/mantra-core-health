@@ -1,5 +1,6 @@
 ---
 slug: anticuerpos-antinucleares
+image: anticuerpos-antinucleares.svg | Los anticuerpos antinucleares se dirigen contra componentes del núcleo de las células. | Célula con el núcleo rodeado de anticuerpos en forma de Y, cuatro patrones de fluorescencia (homogéneo, moteado, nucleolar y centromérico) y la lista de enfermedades autoinmunes asociadas.
 ---
 
 ## [definition] Introducción

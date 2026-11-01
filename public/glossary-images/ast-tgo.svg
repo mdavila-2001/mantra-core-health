@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Aspartato aminotransferasa (AST o TGO)</title>
+  <desc id="d">Arriba, tres pasos: muestra de sangre, medición de la enzima AST y orientación sobre daño del hígado, músculo o corazón. Abajo a la izquierda, células hepáticas, una de ellas dañada, que liberan la enzima a un vaso sanguíneo. Abajo a la derecha, las fuentes posibles de AST: hígado, músculo, corazón y glóbulos rojos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="30" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="52" cy="54" r="13" fill="var(--accent)"/>
+  <text x="52" y="59" text-anchor="middle" class="step on">1</text>
+  <text x="72" y="59" class="step">Muestra</text>
+  <text x="46" y="84" class="small">Sangre de una vena</text>
+  <text x="46" y="103" class="small">del brazo</text>
+  <path d="M260 78.0 L283 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="287" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="309" cy="54" r="13" fill="var(--accent)"/>
+  <text x="309" y="59" text-anchor="middle" class="step on">2</text>
+  <text x="329" y="59" class="step">Se mide</text>
+  <text x="303" y="84" class="small">La enzima AST (TGO)</text>
+  <text x="303" y="103" class="small">que sale de células dañadas</text>
+  <path d="M517 78.0 L540 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="544" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="566" cy="54" r="13" fill="var(--accent)"/>
+  <text x="566" y="59" text-anchor="middle" class="step on">3</text>
+  <text x="586" y="59" class="step">Orienta sobre</text>
+  <text x="560" y="84" class="small">Daño del hígado,</text>
+  <text x="560" y="103" class="small">músculo o corazón</text>
+  <rect x="30" y="150" width="440" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="250.0" y="180" text-anchor="middle" class="title">De dónde sale la AST</text>
+  <path d="M70 200 l30 -16 l30 16 v40 l-30 16 l-30 -16 Z" fill="var(--organ)" opacity=".75" stroke="var(--line)"/>
+  <circle cx="100" cy="220" r="7" fill="var(--purple)"/>
+  <path d="M142 200 l30 -16 l30 16 v40 l-30 16 l-30 -16 Z" fill="var(--organ)" opacity=".35" stroke="var(--line)"/>
+  <circle cx="172" cy="220" r="7" fill="var(--purple)"/>
+  <path d="M214 200 l30 -16 l30 16 v40 l-30 16 l-30 -16 Z" fill="var(--organ)" opacity=".75" stroke="var(--line)"/>
+  <circle cx="244" cy="220" r="7" fill="var(--purple)"/>
+  <path d="M134 200 l8 10 l-6 8 l9 10" fill="none" stroke="var(--bad)" stroke-width="2"/>
+  <text x="166" y="286" text-anchor="middle" class="small">Células del hígado</text>
+  <path d="M60 340 H440" stroke="var(--vessel)" stroke-width="34" stroke-linecap="round" opacity=".35"/>
+  <circle cx="150" cy="334" r="5" fill="var(--warn)"/>
+  <circle cx="200" cy="346" r="5" fill="var(--warn)"/>
+  <circle cx="260" cy="346" r="5" fill="var(--warn)"/>
+  <circle cx="330" cy="334" r="5" fill="var(--warn)"/>
+  <circle cx="390" cy="334" r="5" fill="var(--warn)"/>
+  <path d="M172 250 L190 322" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <text x="250" y="384" text-anchor="middle" class="small">AST liberada a la sangre</text>
+  <text x="60" y="416" class="small muted">Cuando las células se dañan, la enzima pasa</text>
+  <text x="60" y="434" class="small muted">al torrente sanguíneo y su nivel sube</text>
+  <circle cx="352" cy="214" r="10" fill="var(--warn)"/>
+  <text x="368" y="219" class="small">= AST</text>
+  <rect x="490" y="150" width="280" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="630.0" y="180" text-anchor="middle" class="title">Fuentes posibles</text>
+  <rect x="510" y="190" width="240" height="36" rx="10" fill="var(--organ)" stroke="var(--line)"/>
+  <text x="630.0" y="213.0" text-anchor="middle" class="lab">Hígado</text>
+  <rect x="510" y="238" width="240" height="36" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="630.0" y="261.0" text-anchor="middle" class="lab">Músculo</text>
+  <rect x="510" y="286" width="240" height="36" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="630.0" y="309.0" text-anchor="middle" class="lab">Corazón</text>
+  <rect x="510" y="334" width="240" height="36" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="630.0" y="357.0" text-anchor="middle" class="lab">Glóbulos rojos</text>
+  <text x="630" y="402" text-anchor="middle" class="small">Se interpreta junto con la ALT</text>
+  <text x="630" y="422" text-anchor="middle" class="small">y otras pruebas hepáticas</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

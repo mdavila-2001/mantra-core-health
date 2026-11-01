@@ -1,5 +1,6 @@
 ---
 slug: gastroenteritis-infecciosa
+image: gastroenteritis-infecciosa.svg | Virus, bacterias o parásitos irritan el intestino y hacen perder agua y sales. | Tramo de intestino con microbios en su interior y flechas que muestran la salida de agua y sales que causa la diarrea. Debajo, las vías de contagio; a la derecha, la rehidratación oral y los signos de deshidratación.
 ---
 
 ## [definition] Introducción

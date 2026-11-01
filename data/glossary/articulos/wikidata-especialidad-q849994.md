@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q849994
+image: wikidata-especialidad-q849994.svg | La química clínica mide sustancias en la sangre y la orina para ayudar al diagnóstico. | Secuencia de cinco pasos con iconos de tubo de sangre, centrífuga, analizador, control y informe, junto a la lista de sustancias que se miden y consejos para preparar un análisis.
 ---
 
 ## [definition] Introducción

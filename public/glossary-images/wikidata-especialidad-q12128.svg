@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Odontología</title>
+  <desc id="d">A la izquierda, un corte de un diente con el esmalte, la dentina, la pulpa, la encía y la raíz en el hueso. A la derecha, las ramas de la odontología y las medidas diarias de prevención.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">Partes del diente</text>
+  <path d="M150 90 C140 60 290 60 280 90 L272 200 L256 380 C252 400 236 400 232 380 L215 230 L198 380 C194 400 178 400 174 380 L158 200 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M150 90 C140 60 290 60 280 90 L276 160 C240 150 190 150 154 160 Z" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5"/>
+  <path d="M184 120 C184 104 246 104 246 120 L240 200 L226 360 L215 240 L204 360 L190 200 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1"/>
+  <path d="M100 220 C140 196 160 180 160 180 L270 180 C270 180 290 196 330 220 V420 H100 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1" opacity=".35"/>
+  <text x="330" y="96" class="small" style="fill:var(--accent)">Esmalte</text>
+  <line x1="326" y1="92" x2="280" y2="96" stroke="var(--accent)" stroke-width="1"/>
+  <text x="330" y="140" class="small">Dentina</text>
+  <line x1="326" y1="136" x2="272" y2="140" stroke="var(--muted)" stroke-width="1"/>
+  <text x="90" y="150" text-anchor="end" class="small" style="fill:var(--organ-d)">Pulpa</text>
+  <line x1="94" y1="146" x2="190" y2="150" stroke="var(--organ-d)" stroke-width="1"/>
+  <text x="340" y="240" class="small" style="fill:var(--organ-d)">Encía</text>
+  <text x="340" y="320" class="small" style="fill:var(--muted)">Hueso y</text>
+  <text x="340" y="336" class="small" style="fill:var(--muted)">raíz</text>
+  <text x="220" y="430" text-anchor="middle" class="small" style="fill:var(--muted)">Corona visible, raíz en el hueso</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Ramas y cuidados</text>
+  <rect x="456" y="66" width="148" height="52" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="530.0" y="88.5" text-anchor="middle" class="small">Caries</text>
+  <text x="530.0" y="105.5" text-anchor="middle" class="small">operatoria</text>
+  <rect x="612" y="66" width="148" height="52" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="686.0" y="88.5" text-anchor="middle" class="small">Encías</text>
+  <text x="686.0" y="105.5" text-anchor="middle" class="small">periodoncia</text>
+  <rect x="456" y="128" width="148" height="52" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="530.0" y="150.5" text-anchor="middle" class="small">Conductos</text>
+  <text x="530.0" y="167.5" text-anchor="middle" class="small">endodoncia</text>
+  <rect x="612" y="128" width="148" height="52" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="686.0" y="150.5" text-anchor="middle" class="small">Posición</text>
+  <text x="686.0" y="167.5" text-anchor="middle" class="small">ortodoncia</text>
+  <rect x="456" y="190" width="148" height="52" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="530.0" y="212.5" text-anchor="middle" class="small">Prótesis</text>
+  <text x="530.0" y="229.5" text-anchor="middle" class="small">implantes</text>
+  <rect x="612" y="190" width="148" height="52" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="686.0" y="212.5" text-anchor="middle" class="small">Niños</text>
+  <text x="686.0" y="229.5" text-anchor="middle" class="small">odontopediatría</text>
+  <rect x="456" y="268" width="304" height="154" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="472" y="294" class="step">Prevención diaria</text>
+  <text x="480" y="318" class="small">• Cepillado con pasta con flúor</text>
+  <text x="480" y="338" class="small">• Limpieza entre los dientes</text>
+  <text x="480" y="358" class="small">• Menos azúcar entre comidas</text>
+  <text x="480" y="378" class="small">• Revisiones periódicas</text>
+  <text x="480" y="398" class="small">• No fumar</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

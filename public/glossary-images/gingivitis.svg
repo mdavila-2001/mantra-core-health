@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Gingivitis</title>
+  <desc id="d">A la izquierda, dos dientes con su encía: uno con encía sana, rosada y firme, y otro con gingivitis, con placa en el borde y encía roja, hinchada y sangrante. A la derecha, signos, medidas que la revierten y el riesgo de periodontitis.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="115" y="52" text-anchor="middle" class="step">Encía sana</text>
+  <text x="305" y="52" text-anchor="middle" class="step">Gingivitis</text>
+  <path d="M75 110 C71 80 159 80 155 110 L151 200 L137 330 C133 344 121 344 119 330 L115 230 L111 330 C109 344 97 344 93 330 L79 200 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M35 360 V214 C55 196 71 194 79 200 C85 206 145 206 151 200 C159 194 175 196 195 214 V360 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1" opacity=".6"/>
+  <path d="M265 110 C261 80 349 80 345 110 L341 200 L327 330 C323 344 311 344 309 330 L305 230 L301 330 C299 344 287 344 283 330 L269 200 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M225 360 V200 C245 178 261 176 267 186 C275 200 335 200 343 186 C349 176 365 178 385 200 V360 Z" fill="var(--vessel)" stroke="var(--vessel)" stroke-width="1" opacity=".55"/>
+  <path d="M265 190 Q305 200 345 190" fill="none" stroke="var(--beam)" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="255" cy="212" r="3" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <circle cx="357" cy="216" r="3" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="115" y="384" text-anchor="middle" class="small" style="fill:var(--muted)">Rosada y firme</text>
+  <text x="305" y="384" text-anchor="middle" class="small" style="fill:var(--vessel)">Roja, hinchada, sangra</text>
+  <text x="220" y="150" text-anchor="middle" class="small" style="fill:var(--warn)">Placa</text>
+  <line x1="240" y1="154" x2="270" y2="188" stroke="var(--warn)" stroke-width="1"/>
+  <text x="220" y="424" text-anchor="middle" class="small" style="fill:var(--muted)">La placa bacteriana irrita el borde de la encía</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Prevención y evolución</text>
+  <text x="456" y="80" class="small">• Sangrado al cepillarse</text>
+  <text x="456" y="104" class="small">• Mal aliento</text>
+  <text x="456" y="128" class="small">• Encía retraída o sensible</text>
+  <rect x="456" y="160" width="304" height="130" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="472" y="186" class="step" style="fill:var(--ok)">Es reversible</text>
+  <text x="480" y="210" class="small">• Cepillado dos veces al día</text>
+  <text x="480" y="230" class="small">• Hilo dental o cepillos interdentales</text>
+  <text x="480" y="250" class="small">• Limpieza profesional periódica</text>
+  <text x="480" y="270" class="small">• No fumar</text>
+  <rect x="456" y="310" width="304" height="112" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+  <text x="472" y="336" class="step" style="fill:var(--warn)">Si no se trata</text>
+  <text x="472" y="360" class="small">Puede avanzar a periodontitis,</text>
+  <text x="472" y="380" class="small">que destruye el hueso que sostiene</text>
+  <text x="472" y="400" class="small">el diente y puede hacer que se caiga.</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se produce una reacción alérgica</title>
+  <desc id="d">Dos pasos. En el primero, sensibilización, un grano de polen entra en contacto con el sistema inmunitario, que fabrica anticuerpos IgE con forma de Y; estos se fijan sobre un mastocito. En el segundo, reacción, el polen vuelve, se une a los anticuerpos del mastocito y este libera gránulos de histamina, que causan estornudos, picazón, ronchas o falta de aire.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --pollen:#e0a526; --cell:#bcd6f2; --cell-b:#2b6cb0; --ab:#7b4bb7; --hist:#c0392b; --ok:#1f8a5b; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --pollen:#d6a440; --cell:#27405c; --cell-b:#6aa7e8; --ab:#a98ad8; --hist:#ef7467; --ok:#4cc38a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .step { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <defs>
+    <g id="pol"><circle r="16" fill="var(--pollen)"/><circle cx="-6" cy="-5" r="3" fill="var(--panel)" opacity=".6"/><circle cx="6" cy="4" r="3" fill="var(--panel)" opacity=".6"/></g>
+    <path id="y" d="M0 0 V14 M0 0 L-8 -10 M0 0 L8 -10" fill="none" stroke="var(--ab)" stroke-width="3" stroke-linecap="round"/>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <!-- Paso 1 -->
+  <rect x="20" y="20" width="370" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205" y="50" text-anchor="middle" class="step">1 · Primer contacto: sensibilización</text>
+  <use href="#pol" x="80" y="110"/>
+  <text x="104" y="114" class="lab">Alérgeno (polen)</text>
+  <path d="M90 130 C110 160 130 170 150 180" fill="none" stroke="var(--muted)" stroke-width="2"/>
+  <circle cx="180" cy="200" r="34" fill="var(--cell)" stroke="var(--cell-b)" stroke-width="2"/>
+  <text x="180" y="204" text-anchor="middle" class="small">Defensas</text>
+  <use href="#y" x="240" y="180"/>
+  <use href="#y" x="262" y="200"/>
+  <use href="#y" x="244" y="220"/>
+  <text x="280" y="190" class="small">Anticuerpos</text>
+  <text x="280" y="206" class="small">IgE</text>
+  <path d="M250 245 C240 270 220 285 205 298" fill="none" stroke="var(--muted)" stroke-width="2"/>
+  <circle cx="190" cy="340" r="44" fill="var(--cell)" stroke="var(--cell-b)" stroke-width="2"/>
+  <use href="#y" x="160" y="300" transform="rotate(-30 160 300)"/>
+  <use href="#y" x="190" y="292"/>
+  <use href="#y" x="220" y="300" transform="rotate(30 220 300)"/>
+  <text x="190" y="344" text-anchor="middle" class="small">Mastocito</text>
+  <text x="205" y="414" text-anchor="middle" class="small muted">Todavía sin síntomas</text>
+
+  <!-- Paso 2 -->
+  <rect x="410" y="20" width="370" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595" y="50" text-anchor="middle" class="step">2 · Contactos siguientes: reacción</text>
+  <circle cx="560" cy="200" r="54" fill="var(--cell)" stroke="var(--cell-b)" stroke-width="2"/>
+  <use href="#y" x="530" y="150" transform="rotate(-30 530 150)"/>
+  <use href="#y" x="560" y="140"/>
+  <use href="#y" x="590" y="150" transform="rotate(30 590 150)"/>
+  <use href="#pol" x="560" y="112"/>
+  <text x="560" y="206" text-anchor="middle" class="small">Mastocito activado</text>
+  <circle cx="630" cy="220" r="6" fill="var(--hist)"/>
+  <circle cx="648" cy="196" r="5" fill="var(--hist)"/>
+  <circle cx="654" cy="236" r="5" fill="var(--hist)"/>
+  <circle cx="672" cy="214" r="6" fill="var(--hist)"/>
+  <text x="640" y="270" class="lab" style="fill:var(--hist)">Histamina</text>
+
+  <rect x="440" y="296" width="310" height="120" rx="10" fill="none" stroke="var(--line)"/>
+  <text x="456" y="320" class="lab">• Nariz y ojos: estornudos, picazón</text>
+  <text x="456" y="342" class="lab">• Piel: ronchas, hinchazón</text>
+  <text x="456" y="364" class="lab">• Bronquios: tos, falta de aire</text>
+  <text x="456" y="390" class="small" style="fill:var(--hist)">Varios sistemas a la vez: posible anafilaxia</text>
+  <text x="456" y="406" class="small muted">(urgencia)</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

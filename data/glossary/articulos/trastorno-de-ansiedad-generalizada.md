@@ -1,5 +1,6 @@
 ---
 slug: trastorno-de-ansiedad-generalizada
+image: trastorno-de-ansiedad-generalizada.svg | La preocupación excesiva, los síntomas físicos y la evitación se refuerzan entre sí. | Círculo que se retroalimenta entre preocupación excesiva, síntomas físicos y conductas de evitación o búsqueda de seguridad. A la derecha, los síntomas frecuentes y los tratamientos eficaces.
 ---
 
 ## [definition] Introducción

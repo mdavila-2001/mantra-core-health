@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">COVID-19</title>
+  <desc id="d">A la izquierda, el coronavirus SARS-CoV-2 con sus espículas uniéndose al receptor ACE2 de las células de las vías respiratorias. A la derecha, síntomas frecuentes, signos de alarma y medidas de prevención.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="50" text-anchor="middle" class="title">El virus y su entrada</text>
+  <circle cx="140" cy="150" r="50" fill="var(--violet-l)" stroke="var(--violet)" stroke-width="2"/>
+  <line x1="190.0" y1="150.0" x2="208.0" y2="150.0" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="208.0" cy="150.0" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="183.3" y1="175.0" x2="198.9" y2="184.0" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="198.9" cy="184.0" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="165.0" y1="193.3" x2="174.0" y2="208.9" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="174.0" cy="208.9" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="140.0" y1="200.0" x2="140.0" y2="218.0" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="140.0" cy="218.0" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="115.0" y1="193.3" x2="106.0" y2="208.9" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="106.0" cy="208.9" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="96.7" y1="175.0" x2="81.1" y2="184.0" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="81.1" cy="184.0" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="90.0" y1="150.0" x2="72.0" y2="150.0" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="72.0" cy="150.0" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="96.7" y1="125.0" x2="81.1" y2="116.0" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="81.1" cy="116.0" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="115.0" y1="106.7" x2="106.0" y2="91.1" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="106.0" cy="91.1" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="140.0" y1="100.0" x2="140.0" y2="82.0" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="140.0" cy="82.0" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="165.0" y1="106.7" x2="174.0" y2="91.1" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="174.0" cy="91.1" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <line x1="183.3" y1="125.0" x2="198.9" y2="116.0" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="198.9" cy="116.0" r="5" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <text x="140" y="155" text-anchor="middle" class="small" style="fill:var(--violet)">SARS-CoV-2</text>
+  <text x="140" y="244" text-anchor="middle" class="small" style="fill:var(--muted)">Proteína espícula</text>
+  <rect x="40" y="290" width="320" height="70" rx="8" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5" opacity=".7"/>
+  <path d="M60 290 V274 M54 268 L60 274 L66 268" fill="none" stroke="var(--ok)" stroke-width="3"/>
+  <path d="M110 290 V274 M104 268 L110 274 L116 268" fill="none" stroke="var(--ok)" stroke-width="3"/>
+  <path d="M160 290 V274 M154 268 L160 274 L166 268" fill="none" stroke="var(--ok)" stroke-width="3"/>
+  <path d="M210 290 V274 M204 268 L210 274 L216 268" fill="none" stroke="var(--ok)" stroke-width="3"/>
+  <path d="M260 290 V274 M254 268 L260 274 L266 268" fill="none" stroke="var(--ok)" stroke-width="3"/>
+  <path d="M310 290 V274 M304 268 L310 274 L316 268" fill="none" stroke="var(--ok)" stroke-width="3"/>
+  <text x="200" y="334" text-anchor="middle" class="small">Células de las vías respiratorias</text>
+  <text x="270" y="262" class="small" style="fill:var(--ok)">Receptor ACE2</text>
+  <line x1="170" y1="214" x2="205" y2="266" stroke="var(--violet)" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="200" y="396" text-anchor="middle" class="small">Se contagia por gotas y aerosoles</text>
+  <text x="200" y="414" text-anchor="middle" class="small" style="fill:var(--muted)">al hablar, toser o respirar</text>
+  <rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="50" text-anchor="middle" class="title">Síntomas y alarma</text>
+  <text x="424" y="82" class="lab">• Fiebre, tos y dolor de garganta</text>
+  <text x="424" y="106" class="lab">• Cansancio y dolores musculares</text>
+  <text x="424" y="130" class="lab">• Pérdida de olfato o gusto</text>
+  <text x="424" y="154" class="lab">• Congestión o dolor de cabeza</text>
+  <rect x="416" y="180" width="344" height="124" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+  <text x="432" y="204" class="step" style="fill:var(--warn)">Buscar atención urgente si hay</text>
+  <text x="440" y="228" class="small">• Dificultad para respirar</text>
+  <text x="440" y="248" class="small">• Dolor o presión en el pecho</text>
+  <text x="440" y="268" class="small">• Confusión o somnolencia</text>
+  <text x="440" y="288" class="small">• Labios o piel azulados</text>
+  <text x="416" y="334" class="step" style="fill:var(--ok)">Prevención</text>
+  <text x="424" y="358" class="small">• Vacunación según las recomendaciones</text>
+  <text x="424" y="380" class="small">• Ventilar y lavarse las manos</text>
+  <text x="424" y="402" class="small">• Quedarse en casa si hay síntomas</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

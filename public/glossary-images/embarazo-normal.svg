@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Embarazo normal</title>
+  <desc id="d">Arriba, los tres trimestres del embarazo con el feto creciendo dentro del útero: formación de órganos, movimientos perceptibles y aumento de peso. Abajo, los controles prenatales y las señales para consultar de inmediato.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="250" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Los tres trimestres</text>
+  <ellipse cx="150" cy="146" rx="34" ry="38" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5" opacity=".5"/>
+  <circle cx="150" cy="146" r="16" fill="var(--skin)" stroke="var(--organ-d)" stroke-width="1.5"/>
+  <circle cx="144.4" cy="138.8" r="6.08" fill="var(--skin)" stroke="var(--organ-d)" stroke-width="1"/>
+  <text x="150" y="80" text-anchor="middle" class="step">1.er trimestre</text>
+  <text x="150" y="222" text-anchor="middle" class="small" style="fill:var(--muted)">Semanas 1 a 13</text>
+  <text x="150" y="242" text-anchor="middle" class="small">Se forman los órganos</text>
+  <line x1="250" y1="150" x2="300" y2="150" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <ellipse cx="400" cy="146" rx="46" ry="50" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5" opacity=".5"/>
+  <circle cx="400" cy="146" r="28" fill="var(--skin)" stroke="var(--organ-d)" stroke-width="1.5"/>
+  <circle cx="390.2" cy="133.4" r="10.64" fill="var(--skin)" stroke="var(--organ-d)" stroke-width="1"/>
+  <text x="400" y="80" text-anchor="middle" class="step">2.º trimestre</text>
+  <text x="400" y="222" text-anchor="middle" class="small" style="fill:var(--muted)">Semanas 14 a 27</text>
+  <text x="400" y="242" text-anchor="middle" class="small">Se notan los movimientos</text>
+  <line x1="500" y1="150" x2="550" y2="150" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <ellipse cx="650" cy="146" rx="58" ry="62" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5" opacity=".5"/>
+  <circle cx="650" cy="146" r="40" fill="var(--skin)" stroke="var(--organ-d)" stroke-width="1.5"/>
+  <circle cx="636.0" cy="128.0" r="15.2" fill="var(--skin)" stroke="var(--organ-d)" stroke-width="1"/>
+  <text x="650" y="80" text-anchor="middle" class="step">3.er trimestre</text>
+  <text x="650" y="222" text-anchor="middle" class="small" style="fill:var(--muted)">Semanas 28 a 40</text>
+  <text x="650" y="242" text-anchor="middle" class="small">Crece y gana peso</text>
+  <rect x="20" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="316" text-anchor="middle" class="title">Controles prenatales</text>
+  <text x="40" y="342" class="small">• Visitas periódicas y análisis</text>
+  <text x="40" y="366" class="small">• Ecografías en momentos clave</text>
+  <text x="40" y="390" class="small">• Ácido fólico, vacunas y buena dieta</text>
+  <text x="40" y="414" class="small">• Evitar alcohol y tabaco</text>
+  <rect x="410" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="410" y="286" width="370" height="154" rx="14" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+  <text x="595" y="316" text-anchor="middle" class="step" style="fill:var(--warn)">Consultar de inmediato si hay</text>
+  <text x="430" y="344" class="small">• Sangrado o pérdida de líquido</text>
+  <text x="430" y="366" class="small">• Dolor abdominal intenso</text>
+  <text x="430" y="388" class="small">• Menos movimientos del bebé</text>
+  <text x="430" y="410" class="small">• Dolor de cabeza fuerte o visión borrosa</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

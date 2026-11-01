@@ -1,5 +1,6 @@
 ---
 slug: coprocultivo
+image: coprocultivo.svg | El coprocultivo cultiva una muestra de heces para identificar bacterias que causan diarrea. | Secuencia de cuatro pasos del coprocultivo, desde el frasco de heces a la placa de cultivo, el crecimiento de colonias y la identificación, con listas de bacterias buscadas y motivos para pedirlo.
 ---
 
 ## [definition] Introducción

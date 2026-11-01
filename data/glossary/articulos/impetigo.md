@@ -1,5 +1,6 @@
 ---
 slug: impetigo
+image: impetigo.svg | Costras color miel alrededor de la nariz y la boca. | Rostro esquemático con costras amarillentas alrededor de la nariz y la boca, junto a las bacterias que causan el impétigo, su contagio y las medidas de cuidado.
 ---
 
 ## [definition] Introducción

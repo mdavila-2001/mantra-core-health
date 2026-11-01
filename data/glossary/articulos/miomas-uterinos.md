@@ -1,5 +1,6 @@
 ---
 slug: miomas-uterinos
+image: miomas-uterinos.svg | Los miomas son tumores benignos del músculo del útero y se clasifican por su posición. | Útero con trompas y ovarios y tres miomas en posiciones subserosa, intramural y submucosa, junto a la lista de síntomas, el diagnóstico por ecografía y las opciones de tratamiento.
 ---
 
 ## [definition] Introducción

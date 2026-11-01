@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q80015
+image: wikidata-especialidad-q80015.svg | La especialidad cuida el aparato reproductor femenino y acompaña el embarazo y el parto. | Útero, trompas, ovarios, cuello uterino y vagina en vista frontal. A la derecha, una línea de vida con las etapas que acompaña la especialidad: pubertad, edad fértil, embarazo, parto y puerperio, y menopausia.
 ---
 
 ## [definition] Introducción

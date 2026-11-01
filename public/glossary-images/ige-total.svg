@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">IgE total y reacción alérgica</title>
+  <desc id="d">Tubo de sangre y un mastocito con anticuerpos IgE en su superficie que se unen a un alérgeno y liberan histamina. A la derecha, en qué situaciones puede estar elevada la IgE total, sus límites y qué pruebas identifican el alérgeno.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">La IgE y la reacción alérgica</text>
+<rect x="44" y="78" width="30" height="96" rx="12" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+<rect x="47" y="113.5" width="24" height="57.50000000000001" rx="10" fill="var(--vessel)" stroke-width="1" opacity=".8"/>
+<rect x="41" y="64" width="36" height="18" rx="4" fill="var(--vessel)" stroke-width="1"/>
+<text x="59" y="194" text-anchor="middle" class="lab">Sangre</text>
+<text x="59" y="212" text-anchor="middle" class="small" style="fill:var(--muted)">IgE total</text>
+<circle cx="270" cy="220" r="80" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="270" y="250" text-anchor="middle" class="step">Mastocito</text>
+<circle cx="240" cy="200" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="300" cy="200" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="255" cy="230" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="290" cy="232" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="270" cy="190" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="240" cy="268" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="300" cy="268" r="6" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<path d="M190,188 L190,174 M190,174 L181,163 M190,174 L199,163" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-60 190 174)"/>
+<path d="M224,154 L224,140 M224,140 L215,129 M224,140 L233,129" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-30 224 140)"/>
+<path d="M270,142 L270,128 M270,128 L261,117 M270,128 L279,117" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M316,154 L316,140 M316,140 L307,129 M316,140 L325,129" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" transform="rotate(30 316 140)"/>
+<path d="M350,188 L350,174 M350,174 L341,163 M350,174 L359,163" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" transform="rotate(60 350 174)"/>
+<path d="M232,104 L270,92 L308,104 L290,120 L250,120 Z" fill="var(--beam)" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="270" y="82" text-anchor="middle" class="small">Alérgeno</text>
+<text x="120" y="140" text-anchor="middle" class="small" style="fill:var(--accent)">IgE unida</text>
+<text x="120" y="156" text-anchor="middle" class="small" style="fill:var(--accent)">a la célula</text>
+<circle cx="370" cy="300" r="5" fill="var(--vessel)" stroke="none" stroke-width="1"/>
+<circle cx="385" cy="320" r="5" fill="var(--vessel)" stroke="none" stroke-width="1"/>
+<circle cx="360" cy="326" r="5" fill="var(--vessel)" stroke="none" stroke-width="1"/>
+<text x="340" y="356" text-anchor="middle" class="small" style="fill:var(--vessel)">Libera histamina</text>
+<text x="230" y="400" text-anchor="middle" class="lab" style="fill:var(--muted)">Suma de todas las IgE, no de una alergia concreta.</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Qué puede indicar</text>
+<rect x="476" y="56" width="284" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="488" y="78" class="step">Puede estar elevada en</text>
+<text x="488" y="102" class="lab">• Asma, rinitis, dermatitis atópica</text>
+<text x="488" y="124" class="lab">• Infección por parásitos</text>
+<text x="488" y="146" class="lab">• Algunas inmunodeficiencias raras</text>
+<rect x="476" y="176" width="284" height="118" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1"/>
+<text x="490" y="200" class="step" style="fill:var(--warn)">Límites</text>
+<text x="490" y="224" class="lab">• Un valor normal no descarta alergia</text>
+<text x="490" y="246" class="lab">• No dice a qué se es alérgico</text>
+<text x="490" y="268" class="lab">• Varía con la edad</text>
+<text x="476" y="330" class="step">Para identificar el alérgeno:</text>
+<text x="476" y="354" class="lab">• IgE específica en sangre</text>
+<text x="476" y="376" class="lab">• Pruebas cutáneas (prick)</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

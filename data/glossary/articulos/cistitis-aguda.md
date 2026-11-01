@@ -1,5 +1,6 @@
 ---
 slug: cistitis-aguda
+image: cistitis-aguda.svg | En la cistitis, bacterias intestinales ascienden por la uretra e inflaman la vejiga. | Esquema del aparato urinario femenino con riñones, uréteres, vejiga inflamada y uretra corta por la que ascienden bacterias. A la derecha, los síntomas típicos y los signos que sugieren infección renal.
 ---
 
 ## [definition] Introducción

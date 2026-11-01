@@ -1,5 +1,6 @@
 ---
 slug: presbicia
+image: presbicia.svg | Con la edad el cristalino pierde flexibilidad y cuesta enfocar de cerca. | Dos ojos mirando un texto cercano, uno con el cristalino flexible que enfoca la luz en la retina y otro con el cristalino rígido que deja el foco detrás, junto a síntomas y formas de corrección.
 ---
 
 ## [definition] Introducción

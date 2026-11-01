@@ -1,5 +1,6 @@
 ---
 slug: amenorrea
+image: amenorrea.svg | La falta de regla puede originarse en cualquier nivel del eje que controla el ciclo. | Esquema vertical del eje hipotálamo, hipófisis, ovarios y útero, con posibles causas de falta de regla en cada nivel. A la derecha, la diferencia entre amenorrea primaria y secundaria y las causas más comunes, empezando por el embarazo.
 ---
 
 ## [definition] Introducción

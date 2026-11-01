@@ -1,5 +1,6 @@
 ---
 slug: trastorno-por-consumo-de-alcohol
+image: trastorno-por-consumo-de-alcohol.svg | Señales del trastorno por consumo de alcohol y órganos afectados | Lista de seis señales del trastorno con una barra de gravedad de leve a grave, junto a una silueta con el cerebro, el corazón, el hígado y el páncreas señalados
 ---
 
 ## [definition] Introducción

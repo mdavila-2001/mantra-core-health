@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q120569
+image: wikidata-especialidad-q120569.svg | La gastroenterología abarca todo el tubo digestivo y el hígado, la vía biliar y el páncreas. | Silueta humana con el esófago, el estómago, el hígado, la vesícula, el páncreas, el intestino delgado, el colon y el recto. A la derecha, las enfermedades que atiende la gastroenterología y sus herramientas.
 ---
 
 ## [definition] Introducción

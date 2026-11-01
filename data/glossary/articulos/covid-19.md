@@ -1,5 +1,6 @@
 ---
 slug: covid-19
+image: covid-19.svg | El SARS-CoV-2 entra en las células respiratorias uniéndose al receptor ACE2. | Coronavirus con espículas que se acerca a células respiratorias con receptores ACE2, junto a los síntomas frecuentes, los signos de alarma y las medidas de prevención de la COVID-19.
 ---
 
 ## [definition] Introducción

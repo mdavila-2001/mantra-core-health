@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-5915
+image: medlineplus-es-5915.svg | Etapas y áreas de la recuperación tras un ictus | Cuatro etapas desde el hospital hasta la comunidad, las capacidades que se trabajan con cada terapia y un cerebro que crea nuevas conexiones alrededor de la zona dañada
 ---
 
 ## [definition] Introducción

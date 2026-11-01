@@ -1,5 +1,6 @@
 ---
 slug: prueba-de-esfuerzo
+image: prueba-de-esfuerzo.svg | La prueba de esfuerzo registra el corazón mientras el ejercicio aumenta por etapas. | Persona caminando sobre una cinta con electrodos en el pecho, un monitor de electrocardiograma y un manguito de presión, junto a lo que busca la prueba, sus usos y los motivos para detenerla.
 ---
 
 ## [definition] Introducción

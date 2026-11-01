@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q10344696
+image: wikidata-especialidad-q10344696.svg | Grupos de parásitos, métodos de diagnóstico y ámbito de la especialidad. | Dibujos de un protozoo, un gusano y un ácaro como grupos de parásitos humanos, con un microscopio y los métodos de diagnóstico y prevención de la parasitología.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Campo de la neurorradiología intervencionista</title>
+  <desc id="d">Silueta con un catéter que entra por la arteria de la ingle o la muñeca y sube guiado por rayos X hasta un vaso cerebral. A la derecha, los tratamientos principales: trombectomía en el ictus, aneurismas, malformaciones y estenosis, y las señales de ictus.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Neurorradiología intervencionista: tratar desde dentro de los vasos</text>
+  <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="88" text-anchor="middle" class="h">El catéter sube hasta el cerebro</text>
+  <circle cx="200" cy="146" r="40" fill="var(--skin)" stroke="var(--muted)"/>
+  <path d="M174 136 C174 118 226 118 226 136 C230 156 210 168 200 164 C188 168 170 156 174 136 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <path d="M160 190 L240 190 L256 330 L236 336 L230 430 L170 430 L164 336 L144 330 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M200 140 L200 190 L196 300 L186 380 L172 420" fill="none" stroke="var(--red)" stroke-width="5"/>
+  <path d="M200 146 L200 190 L196 300 L186 380 L172 420" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 3"/>
+  <line x1="176" y1="412" x2="100" y2="400" stroke="var(--muted)" stroke-width="1"/>
+  <text x="40" y="396" class="small b">Entrada:</text>
+  <text x="40" y="412" class="small">ingle o muñeca</text>
+  <line x1="214" y1="146" x2="280" y2="150" stroke="var(--muted)" stroke-width="1"/>
+  <text x="284" y="154" class="small b">Vaso</text>
+  <text x="284" y="170" class="small b">cerebral</text>
+  <text x="290" y="250" class="small">Rayos X en</text>
+  <text x="290" y="266" class="small">tiempo real</text>
+  <text x="290" y="282" class="small">guían el</text>
+  <text x="290" y="298" class="small">catéter</text>
+  <rect x="396" y="60" width="384" height="260" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="88" text-anchor="middle" class="h">Tratamientos principales</text>
+  <rect x="414" y="102" width="168" height="64" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="498.0" y="131.0" text-anchor="middle" class="lab b">Trombectomía</text>
+  <text x="498.0" y="148.0" text-anchor="middle" class="small muted">retira el coágulo</text>
+  <rect x="594" y="102" width="168" height="64" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="678.0" y="131.0" text-anchor="middle" class="lab b">Aneurismas</text>
+  <text x="678.0" y="148.0" text-anchor="middle" class="small muted">espirales o stent</text>
+  <rect x="414" y="178" width="168" height="64" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="498.0" y="207.0" text-anchor="middle" class="lab b">Malformaciones</text>
+  <text x="498.0" y="224.0" text-anchor="middle" class="small muted">embolización</text>
+  <rect x="594" y="178" width="168" height="64" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="678.0" y="207.0" text-anchor="middle" class="lab b">Estenosis</text>
+  <text x="678.0" y="224.0" text-anchor="middle" class="small muted">balón y stent</text>
+  <text x="588" y="270" text-anchor="middle" class="small b" style="fill:var(--red)">En el ictus por coágulo, cada minuto cuenta</text>
+  <text x="588" y="292" text-anchor="middle" class="small muted">Sin abrir el cráneo</text>
+  <rect x="396" y="336" width="384" height="104" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="364" text-anchor="middle" class="h">Señales de ictus: llamar a emergencias</text>
+  <text x="588" y="388" text-anchor="middle" class="lab">Cara torcida · Brazo débil · Habla alterada</text>
+  <text x="588" y="412" text-anchor="middle" class="small muted">También pérdida brusca de visión o equilibrio</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

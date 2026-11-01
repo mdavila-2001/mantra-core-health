@@ -1,5 +1,6 @@
 ---
 slug: alt-tgp
+image: alt-tgp.svg | La ALT sale a la sangre cuando se dañan las células del hígado. | Hígado esquemático con hepatocitos que liberan la enzima ALT a la sangre al dañarse, junto a un tubo de muestra y listas de causas de aumento y pruebas relacionadas.
 ---
 
 ## [definition] Introducción

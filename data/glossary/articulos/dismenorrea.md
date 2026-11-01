@@ -1,5 +1,6 @@
 ---
 slug: dismenorrea
+image: dismenorrea.svg | Las prostaglandinas contraen el útero y causan el dolor menstrual. | Útero con el endometrio y marcas de contracción, junto a dos recuadros que comparan la dismenorrea primaria y la secundaria y una lista de motivos para consultar.
 ---
 
 ## [definition] Introducción

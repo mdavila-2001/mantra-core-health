@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1992
+image: medlineplus-es-1992.svg | El riñón trasplantado se coloca en la parte baja del abdomen. | Abdomen con los riñones propios en su lugar y el injerto en la fosa ilíaca unido a los vasos y a la vejiga, junto a los pasos del proceso de trasplante.
 ---
 
 ## [definition] Introducción

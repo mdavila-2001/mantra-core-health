@@ -1,5 +1,6 @@
 ---
 slug: hepatitis-b-antigeno-de-superficie
+image: hepatitis-b-antigeno-de-superficie.svg | La prueba detecta una proteína de la envoltura del virus de la hepatitis B. | Dibujo del virus de la hepatitis B con el antígeno de superficie resaltado en su envoltura, un tubo de suero y dos recuadros que explican el resultado positivo y el negativo.
 ---
 
 ## [definition] Introducción

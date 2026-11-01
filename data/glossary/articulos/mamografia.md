@@ -1,5 +1,6 @@
 ---
 slug: mamografia
+image: mamografia.svg | La mama se comprime entre dos placas y se obtienen dos proyecciones con rayos X. | Vista lateral del equipo: tubo de rayos X, placa de compresión, mama y detector. A la derecha, las dos proyecciones habituales, craneocaudal y oblicua, y los hallazgos que busca la prueba.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Hiperemesis gravídica</title>
+  <desc id="d">A la izquierda, una barra que va de las náuseas habituales del embarazo a la hiperemesis, y sus rasgos: vómitos muy frecuentes, intolerancia a líquidos, pérdida de peso, deshidratación y orina escasa. A la derecha, la silueta de una embarazada y el tratamiento: líquidos por vena, antieméticos seguros, vitaminas y comidas pequeñas, con los motivos para consultar pronto.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Más allá de las náuseas</text>
+  <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="var(--ok-l)"/><stop offset=".5" stop-color="var(--warn-l)"/><stop offset="1" stop-color="var(--bad-l)"/></linearGradient></defs>
+  <rect x="44" y="70" width="332" height="30" rx="15" fill="url(#g1)" stroke="var(--line)"/>
+  <text x="50" y="120" class="small">Náuseas habituales</text>
+  <text x="370" y="120" text-anchor="end" class="small">Hiperemesis</text>
+  <text x="210" y="160" text-anchor="middle" class="step">En la hiperemesis gravídica</text>
+  <rect x="50" y="176" width="320" height="38" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="210.0" y="200.0" text-anchor="middle" class="lab">Vómitos muy frecuentes</text>
+  <rect x="50" y="224" width="320" height="38" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="210.0" y="248.0" text-anchor="middle" class="lab">No tolera líquidos</text>
+  <rect x="50" y="272" width="320" height="38" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="210.0" y="296.0" text-anchor="middle" class="lab">Pierde peso</text>
+  <rect x="50" y="320" width="320" height="38" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="210.0" y="344.0" text-anchor="middle" class="lab">Deshidratación</text>
+  <rect x="50" y="368" width="320" height="38" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="210.0" y="392.0" text-anchor="middle" class="lab">Mareo, orina escasa</text>
+  <text x="210" y="436" text-anchor="middle" class="small muted">Suele empezar en el primer trimestre</text>
+  <rect x="420" y="20" width="360" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="600.0" y="50" text-anchor="middle" class="title">Tratamiento</text>
+  <circle cx="500" cy="96" r="18" fill="var(--skin)" stroke="var(--line)"/>
+  <path d="M486 116 Q480 160 488 200 Q520 230 532 190 Q560 170 540 140 Q520 120 512 116 Z" fill="var(--skin)" stroke="var(--line)"/>
+  <path d="M492 200 L488 270 M520 205 L522 270" stroke="var(--line)" stroke-width="10" stroke-linecap="round"/>
+  <rect x="580" y="70" width="184" height="52" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="672" y="92" text-anchor="middle" class="step">Líquidos</text>
+  <text x="672" y="110" text-anchor="middle" class="small">por vena si no tolera</text>
+  <rect x="580" y="134" width="184" height="52" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="672" y="156" text-anchor="middle" class="step">Antieméticos</text>
+  <text x="672" y="174" text-anchor="middle" class="small">seguros en embarazo</text>
+  <rect x="580" y="198" width="184" height="52" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="672" y="220" text-anchor="middle" class="step">Vitaminas</text>
+  <text x="672" y="238" text-anchor="middle" class="small">como la tiamina</text>
+  <rect x="580" y="262" width="184" height="52" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="672" y="284" text-anchor="middle" class="step">Comidas</text>
+  <text x="672" y="302" text-anchor="middle" class="small">pequeñas y frecuentes</text>
+  <rect x="440" y="340" width="324" height="90" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="602" y="366" text-anchor="middle" class="step">Consultar pronto si</text>
+  <text x="602" y="388" text-anchor="middle" class="small">no retiene nada en un día,</text>
+  <text x="602" y="406" text-anchor="middle" class="small">hay sangre en el vómito o</text>
+  <text x="602" y="422" text-anchor="middle" class="small">mucho dolor abdominal</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

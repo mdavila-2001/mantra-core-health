@@ -1,5 +1,6 @@
 ---
 slug: linfoma
+image: linfoma.svg | El linfoma nace en los linfocitos de ganglios y bazo. | Silueta con los ganglios linfáticos del cuello, axilas e ingles y el bazo, junto a un ganglio ampliado con linfocitos anormales y los síntomas para consultar.
 ---
 
 ## [definition] Introducción

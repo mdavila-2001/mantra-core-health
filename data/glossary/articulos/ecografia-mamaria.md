@@ -1,5 +1,6 @@
 ---
 slug: ecografia-mamaria
+image: ecografia-mamaria.svg | La ecografía mamaria distingue quistes con líquido de nódulos sólidos. | Mama con un transductor de ecografía y dos pantallas que comparan un quiste líquido oscuro y liso con un nódulo sólido de borde irregular.
 ---
 
 ## [definition] Introducción

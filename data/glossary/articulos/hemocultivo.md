@@ -1,5 +1,6 @@
 ---
 slug: hemocultivo
+image: hemocultivo.svg | Se extraen varios frascos de sangre para comprobar si crecen bacterias u hongos. | Arriba, un brazo con dos puntos de punción y dos sets de frascos, cada uno con un frasco aerobio y otro anaerobio. Abajo, los pasos en el laboratorio: incubación, alarma de crecimiento, tinción de Gram, identificación y antibiograma.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1207969
+image: wikidata-especialidad-q1207969.svg | Regulación de la glucosa y órganos que vigila el diabetólogo. | Flujo de la glucosa desde la comida a la sangre y a las células con la insulina del páncreas, junto a los ojos, riñones, nervios y corazón como órganos vigilados.
 ---
 
 ## [definition] Introducción

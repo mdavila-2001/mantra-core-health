@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Medicina ambiental</title>
+  <desc id="d">A la izquierda, una silueta humana rodeada de factores del entorno que influyen en su salud: aire, agua, alimentos, químicos, ruido, calor y radiación. A la derecha, los problemas que atiende y cómo trabaja la especialidad.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">El entorno y la salud</text>
+  <path d="M219.5,149.0 L219.5,156.5 C200.0,158.0 186.5,162.5 183.5,177.5 L174.5,260.0 L183.5,261.5 L194.0,192.5 L195.5,252.5 L197.0,372.5 L219.5,372.5 L230.0,271.2 L240.5,372.5 L263.0,372.5 L264.5,252.5 L266.0,192.5 L276.5,261.5 L285.5,260.0 L276.5,177.5 C273.5,162.5 260.0,158.0 240.5,156.5 L240.5,149.0 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+  <circle cx="230" cy="131.0" r="19.5" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+  <rect x="36" y="70" width="90" height="40" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="81.0" y="95.0" text-anchor="middle" class="small">Aire</text>
+  <line x1="126" y1="90" x2="190" y2="164.0" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="334" y="70" width="90" height="40" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="379.0" y="95.0" text-anchor="middle" class="small">Agua</text>
+  <line x1="334" y1="90" x2="270" y2="164.0" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="36" y="210" width="90" height="40" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="81.0" y="235.0" text-anchor="middle" class="small">Alimentos</text>
+  <line x1="126" y1="230" x2="190" y2="220.0" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="334" y="210" width="90" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="379.0" y="235.0" text-anchor="middle" class="small">Químicos</text>
+  <line x1="334" y1="230" x2="270" y2="220.0" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="36" y="350" width="90" height="40" rx="10" fill="var(--violet-l)" stroke="var(--line)"/>
+  <text x="81.0" y="375.0" text-anchor="middle" class="small">Ruido</text>
+  <line x1="126" y1="370" x2="190" y2="276.0" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="304" y="350" width="120" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="364.0" y="375.0" text-anchor="middle" class="small">Calor y radiación</text>
+  <line x1="304" y1="370" x2="270" y2="276.0" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="50" text-anchor="middle" class="title">Qué atiende</text>
+  <text x="476" y="80" class="small">• Asma y alergias por contaminación</text>
+  <text x="476" y="102" class="small">• Intoxicaciones por plomo o pesticidas</text>
+  <text x="476" y="124" class="small">• Enfermedades laborales</text>
+  <text x="476" y="146" class="small">• Efectos del calor extremo</text>
+  <text x="476" y="168" class="small">• Sensibilidad a químicos</text>
+  <text x="476" y="210" class="step">Cómo trabaja</text>
+  <text x="484" y="234" class="small">• Historia de exposiciones en casa,</text>
+  <text x="484" y="256" class="small">• trabajo y barrio</text>
+  <text x="484" y="278" class="small">• Mediciones en sangre u orina</text>
+  <text x="484" y="300" class="small">• Medidas para reducir la exposición</text>
+  <rect x="476" y="336" width="284" height="86" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="618" y="362" text-anchor="middle" class="small">La prevención actúa sobre</text>
+  <text x="618" y="382" text-anchor="middle" class="small">el entorno, no solo</text>
+  <text x="618" y="402" text-anchor="middle" class="small">sobre la persona</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

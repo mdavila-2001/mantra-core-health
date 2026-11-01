@@ -1,5 +1,6 @@
 ---
 slug: holter
+image: holter.svg | El Holter graba el ritmo cardíaco mientras la persona hace su vida habitual. | Torso con electrodos en el pecho conectados a una grabadora portátil, un trazado continuo de electrocardiograma y un diario de síntomas.
 ---
 
 ## [definition] Introducción

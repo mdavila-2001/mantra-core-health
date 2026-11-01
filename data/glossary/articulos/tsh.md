@@ -1,5 +1,6 @@
 ---
 slug: tsh
+image: tsh.svg | La TSH es la señal de la hipófisis que ordena a la tiroides producir hormonas. | Eje formado por la hipófisis que libera TSH, la tiroides en forma de mariposa y la retroalimentación que la frena, con dos recuadros que muestran la TSH alta en la tiroides lenta y baja en la acelerada.
 ---
 
 ## [definition] Introducción

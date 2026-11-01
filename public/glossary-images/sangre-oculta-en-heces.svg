@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Sangre oculta en heces</title>
+  <desc id="d">Arriba, los pasos de la prueba: toma de una pequeña muestra con el kit en casa, tubo con líquido, análisis de hemoglobina en el laboratorio y resultado. Abajo, el colon con un pólipo que sangra, su uso en el cribado del cáncer de colon y qué hacer si sale positiva.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Del hogar al laboratorio</text>
+  <rect x="44" y="80" width="156" height="70" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="122.0" y="111.5" text-anchor="middle" class="lab">Kit en casa</text>
+  <text x="122.0" y="128.5" text-anchor="middle" class="lab">tomar una muestra</text>
+  <line x1="202" y1="115" x2="226" y2="115" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="230" y="80" width="156" height="70" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="308.0" y="111.5" text-anchor="middle" class="lab">Tubo con líquido</text>
+  <text x="308.0" y="128.5" text-anchor="middle" class="lab">cerrar y etiquetar</text>
+  <line x1="388" y1="115" x2="412" y2="115" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="416" y="80" width="156" height="70" rx="10" fill="var(--violet-l)" stroke="var(--line)"/>
+  <text x="494.0" y="111.5" text-anchor="middle" class="lab">Laboratorio</text>
+  <text x="494.0" y="128.5" text-anchor="middle" class="lab">busca hemoglobina</text>
+  <line x1="574" y1="115" x2="598" y2="115" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="602" y="80" width="156" height="70" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="680.0" y="111.5" text-anchor="middle" class="lab">Resultado</text>
+  <text x="680.0" y="128.5" text-anchor="middle" class="lab">negativo o positivo</text>
+  <text x="400" y="192" text-anchor="middle" class="lab">Detecta sangre que no se ve a simple vista</text>
+  <text x="400" y="212" text-anchor="middle" class="small" style="fill:var(--muted)">Prueba inmunológica (FIT) que reconoce la hemoglobina humana</text>
+  <rect x="20" y="256" width="370" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="286" text-anchor="middle" class="title">Para qué sirve</text>
+  <path d="M60 364 C60 324 120 320 140 324 L280 324 C320 324 330 354 330 384 C330 414 300 424 280 424" fill="none" stroke="var(--organ)" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="240" cy="324" r="8" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="200" y="354" text-anchor="middle" class="small" style="fill:var(--vessel)">Pólipo que sangra</text>
+  <text x="205" y="380" text-anchor="middle" class="small">Cribado del cáncer de colon</text>
+  <text x="205" y="398" text-anchor="middle" class="small" style="fill:var(--muted)">en personas sin síntomas</text>
+  <rect x="410" y="256" width="370" height="184" rx="14" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+  <text x="595" y="286" text-anchor="middle" class="step" style="fill:var(--warn)">Si sale positivo</text>
+  <text x="430" y="314" class="small">• Se completa con una colonoscopia</text>
+  <text x="430" y="336" class="small">• No significa cáncer: puede ser</text>
+  <text x="430" y="358" class="small">• un pólipo o hemorroides</text>
+  <text x="430" y="380" class="small">• Si hay sangrado visible, consultar</text>
+  <text x="430" y="402" class="small">• aunque la prueba sea negativa</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

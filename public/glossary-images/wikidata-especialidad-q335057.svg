@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Campo de la andrología</title>
+  <desc id="d">Esquema lateral de los órganos reproductores masculinos con la vejiga, la próstata, la vesícula seminal, el conducto deferente, el epidídimo, el testículo y el pene. A la derecha, las afecciones que atiende la andrología, como la infertilidad o la disfunción eréctil, y sus pruebas habituales.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Andrología: salud reproductiva y sexual masculina</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="88" text-anchor="middle" class="title">Órganos reproductores masculinos</text>
+  <path d="M160 140 C160 110 260 110 260 140 C262 180 220 196 210 196 C200 196 158 180 160 140 Z" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="210" y="150" text-anchor="middle" class="small">Vejiga</text>
+  <ellipse cx="210" cy="214" rx="26" ry="18" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <ellipse cx="256" cy="200" rx="12" ry="20" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <path d="M210 232 L210 300 C210 330 190 340 170 340" fill="none" stroke="var(--muted)" stroke-width="8" stroke-linecap="round"/>
+  <ellipse cx="240" cy="360" rx="30" ry="38" fill="var(--organ)" stroke="var(--red)"/>
+  <ellipse cx="262" cy="336" rx="10" ry="22" fill="var(--warn)" stroke="none" opacity=".6"/>
+  <path d="M266 320 C300 280 300 220 266 206" fill="none" stroke="var(--warn)" stroke-width="3"/>
+  <line x1="184" y1="214" x2="90" y2="230" stroke="var(--muted)" stroke-width="1"/>
+  <text x="40" y="226" class="small b">Próstata</text>
+  <line x1="268" y1="196" x2="320" y2="170" stroke="var(--muted)" stroke-width="1"/>
+  <text x="324" y="166" class="small b">Vesícula</text>
+  <text x="324" y="182" class="small">seminal</text>
+  <line x1="296" y1="270" x2="330" y2="260" stroke="var(--muted)" stroke-width="1"/>
+  <text x="334" y="264" class="small b">Deferente</text>
+  <line x1="270" y1="340" x2="330" y2="330" stroke="var(--muted)" stroke-width="1"/>
+  <text x="334" y="334" class="small b">Epidídimo</text>
+  <line x1="220" y1="386" x2="140" y2="410" stroke="var(--muted)" stroke-width="1"/>
+  <text x="40" y="414" class="small b">Testículo</text>
+  <line x1="184" y1="336" x2="100" y2="320" stroke="var(--muted)" stroke-width="1"/>
+  <text x="40" y="316" class="small b">Pene</text>
+  <rect x="436" y="60" width="344" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Qué atiende</text>
+  <text x="454" y="108" class="small">• Infertilidad masculina</text>
+  <text x="454" y="132" class="small">• Disfunción eréctil</text>
+  <text x="454" y="156" class="small">• Testosterona baja</text>
+  <text x="454" y="180" class="small">• Varicocele</text>
+  <text x="454" y="204" class="small">• Anticoncepción: vasectomía</text>
+  <text x="454" y="228" class="small">• Cambios de la pubertad</text>
+  <rect x="436" y="276" width="344" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="304" text-anchor="middle" class="h">Pruebas habituales</text>
+  <text x="454" y="322" class="small">• Espermograma</text>
+  <text x="454" y="348" class="small">• Hormonas en sangre</text>
+  <text x="454" y="374" class="small">• Ecografía testicular</text>
+  <text x="454" y="400" class="small">• Estudios genéticos</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

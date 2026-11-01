@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué mide el hierro sérico</title>
+  <desc id="d">Ciclo del hierro: el intestino lo absorbe, la transferrina lo transporta en la sangre, la médula ósea lo usa para fabricar hemoglobina, los glóbulos rojos viejos se reciclan y la ferritina lo almacena. A la derecha, un tubo de sangre y las pruebas con las que se interpreta.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Hierro sérico: el hierro que viaja en la sangre</text>
+  <rect x="20" y="60" width="520" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="280.0" y="88" text-anchor="middle" class="title">El recorrido del hierro</text>
+  <rect x="40" y="100" width="140" height="60" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="110.0" y="127.0" text-anchor="middle" class="lab b">Intestino</text>
+  <text x="110.0" y="144.0" text-anchor="middle" class="small muted">absorbe de la dieta</text>
+  <rect x="200" y="200" width="150" height="70" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="275.0" y="232.0" text-anchor="middle" class="lab b">Transferrina</text>
+  <text x="275.0" y="249.0" text-anchor="middle" class="small muted">lo transporta</text>
+  <rect x="380" y="100" width="140" height="60" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="450.0" y="127.0" text-anchor="middle" class="lab b">Médula ósea</text>
+  <text x="450.0" y="144.0" text-anchor="middle" class="small muted">fabrica hemoglobina</text>
+  <rect x="40" y="320" width="140" height="60" rx="10" fill="var(--bone)" stroke="var(--muted)"/>
+  <text x="110.0" y="347.0" text-anchor="middle" class="lab b">Ferritina</text>
+  <text x="110.0" y="364.0" text-anchor="middle" class="small muted">depósito</text>
+  <rect x="380" y="320" width="140" height="60" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="450.0" y="347.0" text-anchor="middle" class="lab b">Glóbulos rojos</text>
+  <text x="450.0" y="364.0" text-anchor="middle" class="small muted">viejos se reciclan</text>
+  <line x1="150" y1="162" x2="220" y2="198" stroke="var(--warn)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="330" y1="198" x2="400" y2="162" stroke="var(--pur)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="450" y1="162" x2="450" y2="316" stroke="var(--red)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="378" y1="340" x2="330" y2="274" stroke="var(--red)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="220" y1="274" x2="160" y2="318" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="130" y1="318" x2="205" y2="270" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+  <text x="275" y="420" text-anchor="middle" class="small" style="fill:var(--red)">Lo que mide la prueba: hierro unido a transferrina</text>
+  <rect x="556" y="60" width="224" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="668.0" y="88" text-anchor="middle" class="h">Interpretación</text>
+  <rect x="585" y="105" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="587" y="135" width="22" height="48" rx="10" fill="var(--red)" opacity=".85"/>
+  <rect x="582" y="97" width="32" height="12" rx="3" fill="var(--accent)"/>
+  <text x="598" y="205" text-anchor="middle" class="small muted">Sangre</text>
+  <text x="626" y="130" class="small">Muestra de</text>
+  <text x="626" y="146" class="small">la mañana</text>
+  <text x="572" y="250" class="lab b">Se lee junto con:</text>
+  <text x="572" y="276" class="lab">• Ferritina</text>
+  <text x="572" y="300" class="lab">• Transferrina</text>
+  <text x="572" y="324" class="lab">• Saturación</text>
+  <text x="572" y="348" class="lab">• Hemograma</text>
+  <text x="572" y="390" class="small muted">Varía en el día</text>
+  <text x="572" y="406" class="small muted">y tras comer</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

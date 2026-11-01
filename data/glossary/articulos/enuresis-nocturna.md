@@ -1,5 +1,6 @@
 ---
 slug: enuresis-nocturna
+image: enuresis-nocturna.svg | Tres mecanismos que se combinan en la enuresis nocturna. | Diagrama de tres círculos superpuestos con mucha orina nocturna, vejiga pequeña y sueño profundo, junto a las medidas útiles y los motivos de consulta.
 ---
 
 ## [definition] Introducción

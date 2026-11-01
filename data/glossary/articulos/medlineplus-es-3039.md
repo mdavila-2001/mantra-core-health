@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-3039
+image: medlineplus-es-3039.svg | Un estoma es una abertura en el abdomen por la que salen las heces o la orina. | Abdomen de frente con el colon y las posiciones habituales de ileostomía, colostomía y urostomía, junto a un corte de la pared abdominal con el estoma y la bolsa colectora adherida.
 ---
 
 ## [definition] Introducción

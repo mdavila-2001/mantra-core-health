@@ -1,5 +1,6 @@
 ---
 slug: dermatitis-seborreica
+image: dermatitis-seborreica.svg | La dermatitis seborreica afecta a las zonas de la piel con más glándulas sebáceas. | Cara de frente con las zonas afectadas resaltadas en el cuero cabelludo, las cejas, los pliegues de la nariz y detrás de las orejas, junto a sus causas y medidas de control.
 ---
 
 ## [definition] Introducción

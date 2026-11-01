@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q4313186
+image: wikidata-especialidad-q4313186.svg | La narcología trata los trastornos por consumo de sustancias que alteran el circuito de la recompensa. | Cerebro con el circuito de la recompensa en el que la dopamina activa una zona de placer, una secuencia de consumo, tolerancia y abstinencia, y la lista de sustancias y tratamientos.
 ---
 
 ## [definition] Introducción

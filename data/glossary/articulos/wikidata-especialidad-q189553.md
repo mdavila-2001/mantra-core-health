@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q189553
+image: wikidata-especialidad-q189553.svg | La otorrinolaringología se ocupa del oído, la nariz, los senos, la garganta y la laringe. | Cabeza de perfil con el oído, los senos, la nariz, la garganta y la laringe marcados, y una lista de enfermedades que atiende el otorrinolaringólogo en cada zona.
 ---
 
 ## [definition] Introducción

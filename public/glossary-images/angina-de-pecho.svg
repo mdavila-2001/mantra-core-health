@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Mecanismo de la angina de pecho</title>
+  <desc id="d">Corazón con dos arterias coronarias, una estrechada por una placa de ateroma y una zona de músculo con poco oxígeno. A la derecha, los rasgos de la angina estable, los factores de riesgo y cuándo llamar a emergencias.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="210.0" y="50" text-anchor="middle" class="title">Arteria coronaria estrechada</text>
+<path d="M200,312.5 C100.0,250.0 75.0,162.5 125.0,125.0 C162.5,100.0 193.8,125.0 200,150.0 C206.2,125.0 237.5,100.0 275.0,125.0 C325.0,162.5 300.0,250.0 200,312.5 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="182.5" y="62.5" width="35.0" height="75.0" rx="12.5" fill="var(--vessel)" stroke-width="1"/>
+<path d="M200,140 C170,160 160,200 150,250 C145,280 160,300 180,310" fill="none" stroke="var(--vessel)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M200,140 C240,170 250,210 240,260" fill="none" stroke="var(--vessel)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="158" cy="226" r="12" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+<text x="40" y="218" class="lab">Placa de</text>
+<text x="40" y="234" class="lab">ateroma</text>
+<ellipse cx="260" cy="270" rx="30" ry="24" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="300" y="330" text-anchor="middle" class="small">Músculo con</text>
+<text x="300" y="346" text-anchor="middle" class="small">poco oxígeno</text>
+<rect x="40" y="368" width="340" height="56" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="52" y="390" class="lab">Al esfuerzo el corazón pide más sangre</text>
+<text x="52" y="410" class="lab">y la arteria estrecha no puede darla.</text>
+<rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="598.0" y="50" text-anchor="middle" class="title">Rasgos de la angina estable</text>
+<text x="442" y="78" class="lab">Opresión en el pecho, puede ir al brazo,</text>
+<text x="442" y="100" class="lab">cuello o mandíbula</text>
+<text x="442" y="122" class="lab">Aparece con esfuerzo, frío o emociones</text>
+<text x="442" y="144" class="lab">Cede en pocos minutos con reposo</text>
+<text x="442" y="166" class="lab">o con nitroglicerina</text>
+<rect x="434" y="62" width="4" height="108" rx="2" fill="var(--accent)" stroke-width="1"/>
+<rect x="436" y="178" width="324" height="78" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="448" y="200" class="step">Factores de riesgo</text>
+<text x="448" y="224" class="lab">• Tabaco, presión alta, colesterol</text>
+<text x="448" y="246" class="lab">• Diabetes, sedentarismo, edad</text>
+<rect x="436" y="292" width="324" height="106" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="448" y="314" class="step" style="fill:var(--warn)">Llamar a emergencias si:</text>
+<text x="448" y="338" class="lab">• Dolor en reposo o que no cede</text>
+<text x="448" y="362" class="lab">• Dolor más intenso o frecuente</text>
+<text x="448" y="386" class="lab">• Sudor frío, falta de aire</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

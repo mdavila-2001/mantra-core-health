@@ -1,5 +1,6 @@
 ---
 slug: osteoporosis
+image: osteoporosis.svg | En la osteoporosis el hueso pierde densidad y se fractura con golpes leves. | Dos cortes de hueso: uno con trabéculas densas y otro con huecos grandes y más frágil. Debajo, las fracturas típicas de cadera, vértebras y muñeca; a la derecha, factores de riesgo, densitometría y prevención.
 ---
 
 ## [definition] Introducción

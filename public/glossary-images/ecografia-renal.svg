@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ecografía renal</title>
+  <desc id="d">A la izquierda, la espalda con los dos riñones a ambos lados de la columna, sus cavidades internas y los uréteres, y una sonda de ecografía apoyada en el costado. A la derecha, lo que puede detectar y cómo es la prueba.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Riñones vistos desde la espalda</text>
+  <path d="M110 70 C90 70 80 90 80 120 L70 420 H330 L320 120 C320 90 310 70 290 70 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <line x1="200" y1="80" x2="200" y2="420" stroke="var(--bone)" stroke-width="8"/>
+  <path d="M140 140 C190 138 192 262 140 260 C100 258 110 220 124 200 C110 180 100 142 140 140 Z" fill="var(--organ-d)" stroke="var(--organ-d)" stroke-width="1" opacity=".9"/>
+  <path d="M126 200 C144 186 156 180 160 170 M126 200 C144 214 156 220 160 230" fill="none" stroke="var(--fluid)" stroke-width="4"/>
+  <path d="M124 200 C110 260 100 320 100 360" fill="none" stroke="var(--fluid)" stroke-width="3"/>
+  <path d="M260 140 C210 138 208 262 260 260 C300 258 290 220 276 200 C290 180 300 142 260 140 Z" fill="var(--organ-d)" stroke="var(--organ-d)" stroke-width="1" opacity=".9"/>
+  <path d="M274 200 C256 186 244 180 240 170 M274 200 C256 214 244 220 240 230" fill="none" stroke="var(--fluid)" stroke-width="4"/>
+  <path d="M276 200 C290 260 300 320 300 360" fill="none" stroke="var(--fluid)" stroke-width="3"/>
+  <text x="140" y="124" text-anchor="middle" class="small">Riñón</text>
+  <text x="260" y="124" text-anchor="middle" class="small">Riñón</text>
+  <text x="200" y="400" text-anchor="middle" class="small" style="fill:var(--muted)">Uréteres hacia la vejiga</text>
+  <path d="M300 220 l40 -10 l6 24 l-40 10 Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1"/>
+  <text x="340" y="196" text-anchor="middle" class="small" style="fill:var(--accent)">Sonda</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Qué puede detectar</text>
+  <rect x="436" y="66" width="324" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="452" y="87" class="lab">Cálculos</text>
+  <text x="452" y="105" class="small" style="fill:var(--muted)">piedras en el riñón</text>
+  <rect x="436" y="124" width="324" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="452" y="145" class="lab">Hidronefrosis</text>
+  <text x="452" y="163" class="small" style="fill:var(--muted)">riñón dilatado por obstrucción</text>
+  <rect x="436" y="182" width="324" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="452" y="203" class="lab">Quistes y masas</text>
+  <text x="452" y="221" class="small" style="fill:var(--muted)">distingue líquido de sólido</text>
+  <rect x="436" y="240" width="324" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="452" y="261" class="lab">Tamaño y grosor</text>
+  <text x="452" y="279" class="small" style="fill:var(--muted)">útil en enfermedad renal crónica</text>
+  <rect x="436" y="310" width="324" height="112" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="452" y="336" class="step">Cómo es la prueba</text>
+  <text x="460" y="360" class="small">• Sin radiación ni contraste</text>
+  <text x="460" y="380" class="small">• Gel y sonda en el costado o la espalda</text>
+  <text x="460" y="400" class="small">• A veces con la vejiga llena</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q162555
+image: wikidata-especialidad-q162555.svg | La oncología reúne a varias especialidades en torno a la persona con cáncer. | Diagrama radial con el paciente en el centro y cinco disciplinas oncológicas alrededor, junto a una secuencia vertical de prevención, detección, diagnóstico, tratamiento y seguimiento.
 ---
 
 ## [definition] Introducción

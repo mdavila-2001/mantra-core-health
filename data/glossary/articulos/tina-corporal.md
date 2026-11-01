@@ -1,5 +1,6 @@
 ---
 slug: tina-corporal
+image: tina-corporal.svg | La tiña corporal forma un anillo rojo y escamoso con el centro más claro. | Mancha de piel en forma de anillo con borde rojo y escamoso y centro claro, junto a las fuentes de contagio y las indicaciones de tratamiento.
 ---
 
 ## [definition] Introducción

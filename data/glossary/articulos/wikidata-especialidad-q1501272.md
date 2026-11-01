@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1501272
+image: wikidata-especialidad-q1501272.svg | La foniatría atiende la voz, el habla, el lenguaje, la audición y la deglución. | Perfil de cabeza y cuello con el cerebro, el oído, la lengua y los labios, la laringe con las cuerdas vocales y la faringe señalados, junto a cinco tarjetas con las áreas que atiende la foniatría.
 ---
 
 ## [definition] Introducción

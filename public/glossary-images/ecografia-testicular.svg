@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ecografía testicular</title>
+  <desc id="d">A la izquierda, corte esquemático de un lado del escroto con el testículo, el epidídimo y el cordón con sus vasos. A la derecha, motivos para pedir la prueba: dolor o hinchazón, bulto, varicocele y traumatismo, y un aviso de que el dolor brusco e intenso es una urgencia para descartar torsión, que el Doppler ayuda a valorar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">Estructuras que se ven</text>
+  <path d="M140 110 C120 200 110 330 230 380 C350 330 340 200 320 110 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <ellipse cx="200" cy="260" rx="44" ry="62" fill="var(--organ)" opacity=".75"/>
+  <path d="M240 210 C262 220 262 300 236 318" fill="none" stroke="var(--purple)" stroke-width="12" stroke-linecap="round"/>
+  <path d="M232 60 C232 120 246 160 246 206" fill="none" stroke="var(--vein)" stroke-width="7"/>
+  <path d="M222 60 C222 120 238 160 238 206" fill="none" stroke="var(--vessel)" stroke-width="3"/>
+  <circle cx="180" cy="260" r="3" fill="var(--ink)"/>
+  <path d="M180 260 L60 300" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="64" y="304" class="lab">Testículo</text>
+  <circle cx="258" cy="270" r="3" fill="var(--ink)"/>
+  <path d="M258 270 L320 230" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="324" y="234" class="lab">Epidídimo</text>
+  <circle cx="234" cy="120" r="3" fill="var(--ink)"/>
+  <path d="M234 120 L280 90" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="284" y="94" class="lab">Cordón y vasos</text>
+  <text x="230" y="420" text-anchor="middle" class="small muted">Corte esquemático de un lado del escroto</text>
+  <rect x="460" y="20" width="320" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="620.0" y="50" text-anchor="middle" class="title">Para qué se pide</text>
+  <rect x="480" y="60" width="280" height="38" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="620.0" y="84.0" text-anchor="middle" class="lab">Dolor o hinchazón</text>
+  <rect x="480" y="110" width="280" height="38" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="620.0" y="134.0" text-anchor="middle" class="lab">Bulto palpable</text>
+  <rect x="480" y="160" width="280" height="38" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="620.0" y="184.0" text-anchor="middle" class="lab">Varicocele</text>
+  <rect x="480" y="210" width="280" height="38" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="620.0" y="234.0" text-anchor="middle" class="lab">Traumatismo</text>
+  <rect x="480" y="268" width="280" height="64" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="620" y="292" text-anchor="middle" class="step">Dolor brusco e intenso</text>
+  <text x="620" y="312" text-anchor="middle" class="small">urgencia: descartar torsión</text>
+  <text x="480" y="360" class="small">El Doppler muestra si llega</text>
+  <text x="480" y="378" class="small">sangre al testículo</text>
+  <text x="480" y="410" class="small muted">Sin radiación ni preparación</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

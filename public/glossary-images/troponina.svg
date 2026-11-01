@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué mide la troponina cardíaca</title>
+  <desc id="d">A la izquierda, filamentos de una fibra muscular cardíaca con la proteína troponina, que pasa a la sangre cuando la célula se daña. A la derecha, un tubo de sangre, una curva que muestra que importa si sube o baja entre muestras, y las situaciones en que se eleva.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Troponina cardíaca: marcador de daño del músculo del corazón</text>
+  <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Dentro de la fibra cardíaca</text>
+  <line x1="50" y1="120" x2="370" y2="120" stroke="var(--red)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="70" cy="120" r="8" fill="var(--pur)"/>
+  <circle cx="130" cy="120" r="8" fill="var(--pur)"/>
+  <circle cx="190" cy="120" r="8" fill="var(--pur)"/>
+  <circle cx="250" cy="120" r="8" fill="var(--pur)"/>
+  <circle cx="310" cy="120" r="8" fill="var(--pur)"/>
+  <line x1="50" y1="170" x2="370" y2="170" stroke="var(--red)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="70" cy="170" r="8" fill="var(--pur)"/>
+  <circle cx="130" cy="170" r="8" fill="var(--pur)"/>
+  <circle cx="190" cy="170" r="8" fill="var(--pur)"/>
+  <circle cx="250" cy="170" r="8" fill="var(--pur)"/>
+  <circle cx="310" cy="170" r="8" fill="var(--pur)"/>
+  <line x1="50" y1="220" x2="370" y2="220" stroke="var(--red)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="70" cy="220" r="8" fill="var(--pur)"/>
+  <circle cx="130" cy="220" r="8" fill="var(--pur)"/>
+  <circle cx="190" cy="220" r="8" fill="var(--pur)"/>
+  <circle cx="250" cy="220" r="8" fill="var(--pur)"/>
+  <circle cx="310" cy="220" r="8" fill="var(--pur)"/>
+  <text x="210" y="250" text-anchor="middle" class="small">Filamentos de actina con troponina</text>
+  <circle cx="60" cy="272" r="8" fill="var(--pur)"/>
+  <text x="76" y="277" class="small">Troponina: regula la contracción</text>
+  <rect x="50" y="300" width="320" height="40" rx="20" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="210" y="325" text-anchor="middle" class="lab">Si la célula se daña, pasa a la sangre</text>
+  <text x="210" y="370" text-anchor="middle" class="small muted">En personas sanas casi no circula</text>
+  <text x="210" y="390" text-anchor="middle" class="small muted">Las pruebas de alta sensibilidad</text>
+  <text x="210" y="406" text-anchor="middle" class="small muted">detectan cantidades muy pequeñas</text>
+  <rect x="416" y="60" width="364" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Cómo se usa</text>
+  <rect x="440" y="105" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="442" y="135" width="22" height="48" rx="10" fill="var(--red)" opacity=".85"/>
+  <rect x="437" y="97" width="32" height="12" rx="3" fill="var(--accent)"/>
+  <text x="453" y="205" text-anchor="middle" class="small muted">Sangre</text>
+  <text x="486" y="125" class="small">Varias muestras</text>
+  <text x="486" y="141" class="small">separadas por horas:</text>
+  <text x="486" y="157" class="small">importa si sube o baja</text>
+  <path d="M630 200 L660 200 L680 150 L720 135 L760 160" fill="none" stroke="var(--pur)" stroke-width="3"/>
+  <text x="695" y="224" text-anchor="middle" class="small muted">Curva que cambia</text>
+  <text x="434" y="270" class="lab">• Sospecha de infarto</text>
+  <text x="434" y="300" class="lab">• Miocarditis</text>
+  <text x="434" y="330" class="lab">• Embolia pulmonar</text>
+  <text x="434" y="360" class="lab">• Otras causas: insuficiencia</text>
+  <text x="445" y="390" class="lab">renal, sepsis, esfuerzo extremo</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

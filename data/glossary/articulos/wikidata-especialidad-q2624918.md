@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2624918
+image: wikidata-especialidad-q2624918.svg | Contagio y evolución de la tuberculosis y tareas de la tisiología | Esquema del contagio de la tuberculosis por gotitas, el paso de infección latente a enfermedad activa y un pulmón con lesión, junto al diagnóstico, el tratamiento y el control de contactos
 ---
 
 ## [definition] Introducción

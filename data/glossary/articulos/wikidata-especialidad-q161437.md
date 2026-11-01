@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q161437
+image: wikidata-especialidad-q161437.svg | La oftalmología se ocupa del ojo y de todo el sistema visual. | Corte del ojo con córnea, iris, cristalino, vítreo, retina y nervio óptico señalados, junto a las enfermedades que atiende la oftalmología y sus herramientas de diagnóstico.
 ---
 
 ## [definition] Introducción

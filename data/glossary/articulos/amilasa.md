@@ -1,5 +1,6 @@
 ---
 slug: amilasa
+image: amilasa.svg | La amilasa procede sobre todo del páncreas y de las glándulas salivales. | Silueta humana con las glándulas salivales y el páncreas resaltados, y un tubo de sangre con la lista de situaciones en que la amilasa sube, como la pancreatitis o las paperas.
 ---
 
 ## [definition] Introducción

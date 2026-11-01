@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Convulsión febril</title>
+  <desc id="d">A la izquierda, la cara de un niño pequeño junto a un termómetro con fiebre alta, con la explicación de que la crisis aparece con la fiebre entre los 6 meses y los 5 años y que suele ser breve y sin secuelas. A la derecha, qué hacer durante la crisis y los signos que obligan a pedir ayuda urgente.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Qué es</text>
+  <circle cx="200" cy="150" r="70" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <circle cx="176" cy="140" r="6" fill="var(--ink)"/>
+  <circle cx="224" cy="140" r="6" fill="var(--ink)"/>
+  <path d="M184 176 Q200 168 216 176" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <rect x="290" y="90" width="22" height="110" rx="11" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="295" y="130" width="12" height="66" rx="6" fill="var(--vessel)"/>
+  <circle cx="301" cy="200" r="14" fill="var(--vessel)"/>
+  <text x="301" y="236" text-anchor="middle" class="step" style="fill:var(--vessel)">Fiebre</text>
+  <text x="200" y="264" text-anchor="middle" class="step">Niño de 6 meses a 5 años</text>
+  <text x="200" y="288" text-anchor="middle" class="lab">La crisis aparece con la fiebre</text>
+  <text x="200" y="308" text-anchor="middle" class="lab">sin infección del cerebro</text>
+  <rect x="40" y="334" width="340" height="88" rx="10" fill="var(--ok-l)"/>
+  <text x="210" y="360" text-anchor="middle" class="lab">Suele durar pocos minutos</text>
+  <text x="210" y="382" text-anchor="middle" class="lab">y no deja secuelas en la mayoría</text>
+  <text x="210" y="404" text-anchor="middle" class="lab">No es epilepsia</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Durante la crisis</text>
+  <text x="436" y="72" class="lab">• Mantener la calma y mirar la hora</text>
+  <text x="436" y="98" class="lab">• Acostarlo de lado, en lugar seguro</text>
+  <text x="436" y="124" class="lab">• No meter nada en la boca</text>
+  <text x="436" y="150" class="lab">• No sujetarlo con fuerza</text>
+  <rect x="436" y="196" width="324" height="214" rx="10" fill="var(--warn-l)"/>
+  <text x="452" y="222" class="step" style="fill:var(--warn)">Pedir ayuda urgente si</text>
+  <text x="456" y="250" class="small">• Dura más de 5 minutos</text>
+  <text x="456" y="276" class="small">• Afecta solo a un lado del cuerpo</text>
+  <text x="456" y="302" class="small">• Se repite en el mismo día</text>
+  <text x="456" y="328" class="small">• No se recupera bien después</text>
+  <text x="456" y="354" class="small">• Rigidez de cuello o manchas en la piel</text>
+  <text x="456" y="380" class="small">• Dificultad para respirar</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

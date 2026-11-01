@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1789
+image: medlineplus-es-1789.svg | La mama puede reconstruirse con implantes, con tejido propio o con ambos. | Silueta del torso con un implante mamario y las zonas donantes de tejido propio en el abdomen y la espalda, junto a las opciones de reconstrucción y su momento inmediato o diferido.
 ---
 
 ## [definition] Introducción

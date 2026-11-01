@@ -1,5 +1,6 @@
 ---
 slug: tdah
+image: tdah.svg | El TDAH combina, en distinta medida, inatención, hiperactividad e impulsividad. | Tres recuadros con los grupos de síntomas del TDAH: inatención, hiperactividad e impulsividad, con ejemplos. Abajo, los requisitos para el diagnóstico y los pilares del tratamiento combinado.
 ---
 
 ## [definition] Introducción

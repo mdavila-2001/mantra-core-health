@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q473867
+image: wikidata-especialidad-q473867.svg | La medicina psicosomática atiende la interacción entre cuerpo, mente y entorno. | Tres círculos superpuestos, biológico, psicológico y social, con la persona en el centro. A la derecha, los problemas que atiende la psiquiatría de consulta y enlace y cómo trabaja con otros servicios del hospital.
 ---
 
 ## [definition] Introducción

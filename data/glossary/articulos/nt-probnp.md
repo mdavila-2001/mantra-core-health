@@ -1,5 +1,6 @@
 ---
 slug: nt-probnp
+image: nt-probnp.svg | Por qué el corazón libera NT-proBNP y qué indica | Corazón con el ventrículo distendido que libera proBNP, que se divide en BNP y NT-proBNP, con los pasos del análisis y los factores que influyen en el resultado
 ---
 
 ## [definition] Introducción

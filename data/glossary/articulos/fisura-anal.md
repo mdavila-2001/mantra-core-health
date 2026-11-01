@@ -1,5 +1,6 @@
 ---
 slug: fisura-anal
+image: fisura-anal.svg | Una fisura anal es un pequeño desgarro que se mantiene por el espasmo del esfínter. | Esquema frontal del canal anal con el esfínter y un pequeño desgarro, y un círculo de flechas que une heces duras, desgarro, dolor y espasmo, junto a los cuidados.
 ---
 
 ## [definition] Introducción

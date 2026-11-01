@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-5981
+image: medlineplus-es-5981.svg | Los componentes de un programa de rehabilitación pulmonar. | Diagrama con la persona con enfermedad respiratoria crónica en el centro y seis componentes alrededor: ejercicio, respiración, educación, nutrición, apoyo emocional y vida diaria.
 ---
 
 ## [definition] Introducción

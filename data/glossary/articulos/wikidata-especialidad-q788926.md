@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q788926
+image: wikidata-especialidad-q788926.svg | La infectología se ocupa de las enfermedades causadas por microorganismos. | Cuatro recuadros con bacterias, virus, hongos y parásitos, junto a las herramientas del infectólogo, el uso prudente de antibióticos y la prevención.
 ---
 
 ## [definition] Introducción

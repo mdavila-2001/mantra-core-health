@@ -1,5 +1,6 @@
 ---
 slug: sangre-oculta-en-heces
+image: sangre-oculta-en-heces.svg | La prueba busca sangre invisible en las heces para detectar lesiones del colon. | Secuencia de cuatro pasos desde el kit en casa hasta el resultado, un colon con un pólipo que sangra y un recuadro que explica que un resultado positivo se completa con una colonoscopia.
 ---
 
 ## [definition] Introducción

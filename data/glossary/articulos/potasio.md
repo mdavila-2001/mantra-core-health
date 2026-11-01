@@ -1,5 +1,6 @@
 ---
 slug: potasio
+image: potasio.svg | El potasio está sobre todo dentro de las células y su equilibrio protege el ritmo cardíaco. | Célula esquemática con iones de potasio dentro y sodio fuera, un trazado de electrocardiograma y un tubo de sangre con causas de potasio bajo y alto.
 ---
 
 ## [definition] Introducción

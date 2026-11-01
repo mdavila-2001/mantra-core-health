@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Hígado graso</title>
+  <desc id="d">Arriba, un hígado sano junto a un hígado graso con gotas de grasa dentro de las células, y los factores asociados. Abajo, la evolución posible de esteatosis a esteatohepatitis, fibrosis y cirrosis, y las medidas que la revierten en fases iniciales.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="150" y="54" text-anchor="middle" class="step">Hígado sano</text>
+  <text x="400" y="54" text-anchor="middle" class="step">Hígado graso</text>
+  <path d="M54 132 C62 92 134 84 198 95 C246 105 254 124 238 145 C206 180 134 188 86 175 C57 167 51 151 54 132 Z" fill="var(--organ-d)" stroke="var(--organ-d)" stroke-width="1.5"/>
+  <path d="M292 131 C301 86 382 77 454 90 C508 100 517 122 499 145 C463 185 382 194 328 180 C296 171 288 153 292 131 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5"/>
+  <circle cx="350" cy="120" r="9" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="380" cy="150" r="12" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="420" cy="116" r="8" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="440" cy="150" r="10" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="360" cy="165" r="7" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="410" cy="170" r="9" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="330" cy="140" r="6" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="460" cy="128" r="7" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <text x="400" y="222" text-anchor="middle" class="small" style="fill:var(--warn)">Gotas de grasa dentro de las células</text>
+  <text x="640" y="70" text-anchor="middle" class="step">Factores asociados</text>
+  <text x="560" y="98" class="small">• Exceso de peso abdominal</text>
+  <text x="560" y="122" class="small">• Diabetes tipo 2</text>
+  <text x="560" y="146" class="small">• Colesterol o triglicéridos altos</text>
+  <text x="560" y="170" class="small">• Alcohol</text>
+  <rect x="20" y="256" width="760" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="286" text-anchor="middle" class="title">Cómo puede avanzar si no se corrige</text>
+  <rect x="46" y="300" width="150" height="56" rx="10" fill="var(--fluid)" stroke="var(--line)"/>
+  <text x="121.0" y="324.5" text-anchor="middle" class="lab">Esteatosis</text>
+  <text x="121.0" y="341.5" text-anchor="middle" class="lab">grasa sin daño</text>
+  <line x1="198" y1="328" x2="228" y2="328" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="232" y="300" width="150" height="56" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="307.0" y="324.5" text-anchor="middle" class="lab">Esteatohepatitis</text>
+  <text x="307.0" y="341.5" text-anchor="middle" class="lab">grasa e inflamación</text>
+  <line x1="384" y1="328" x2="414" y2="328" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="418" y="300" width="150" height="56" rx="10" fill="var(--organ)" stroke="var(--line)"/>
+  <text x="493.0" y="324.5" text-anchor="middle" class="lab">Fibrosis</text>
+  <text x="493.0" y="341.5" text-anchor="middle" class="lab">cicatrices</text>
+  <line x1="570" y1="328" x2="600" y2="328" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="604" y="300" width="150" height="56" rx="10" fill="var(--organ-d)" stroke="var(--line)"/>
+  <text x="679.0" y="324.5" text-anchor="middle" class="lab" style="fill:var(--on)">Cirrosis</text>
+  <text x="679.0" y="341.5" text-anchor="middle" class="lab" style="fill:var(--on)">hígado endurecido</text>
+  <rect x="46" y="372" width="708" height="52" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="400" y="395" text-anchor="middle" class="small">En las primeras fases es reversible: perder peso, moverse más,</text>
+  <text x="400" y="413" text-anchor="middle" class="small">controlar la diabetes y evitar el alcohol.</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

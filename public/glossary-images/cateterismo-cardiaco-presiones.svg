@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ondas de presión del cateterismo cardíaco</title>
+  <desc id="d">Seis trazados esquemáticos en secuencia: aurícula derecha, ventrículo derecho, arteria pulmonar, posición de cuña, ventrículo izquierdo y aorta, con la forma característica de cada onda y sin valores numéricos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f7; --art:#c0392b; --art-l:#f6dcd8; --vein:#2f6fbf; --vein-l:#d6e4f6; --ok:#1f8a5b; --ok-l:#d7efe3; --warn:#c77d12; --warn-l:#f8ead2; --purple:#7a4fb5; --purple-l:#e8def5; --nerve:#d9a514; --tissue:#f1e4dc; --bone:#e3dccf; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --art:#ef7467; --art-l:#4a2a2a; --vein:#78a9e6; --vein-l:#22364f; --ok:#4cc38a; --ok-l:#1d3a2e; --warn:#e6a54a; --warn-l:#3f3220; --purple:#b393e3; --purple-l:#352a47; --nerve:#e8c04a; --tissue:#3a302c; --bone:#4f4a40; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .tiny { font-size: 11px; }
+    .on { fill: var(--on); }
+    .b { font-weight: 700; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--art)"/></marker>
+    <marker id="arb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--vein)"/></marker>
+    <marker id="arg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--ok)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="42" text-anchor="middle" class="title">Ondas de presión a lo largo del recorrido</text>
+  <rect x="24" y="60" width="240" height="180" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="38" y="84" text-anchor="start" class="h" style="fill:var(--vein)">1 · Aurícula derecha</text>
+  <line x1="44" y1="100" x2="44" y2="202" stroke="var(--line)"/><line x1="44" y1="202" x2="250" y2="202" stroke="var(--line)"/>
+  <path d="M48 195 L52 194 L55 191 L59 188 L62 189 L66 192 L69 194 L73 195 L76 194 L80 193 L83 192 L87 194 L90 195 L94 195 L98 195 L101 195 L105 195 L108 193 L112 191 L115 189 L119 189 L122 191 L126 193 L129 194 L133 195 L136 195 L140 195 L143 195 L147 195 L151 194 L154 191 L158 188 L161 189 L165 192 L168 194 L172 195 L175 194 L179 193 L182 192 L186 194 L189 195 L193 195 L196 195 L200 195 L204 195 L207 193 L211 191 L214 189 L218 189 L221 191 L225 193 L228 194 L232 195 L235 195 L239 195 L242 195 L246 195" fill="none" stroke="var(--vein)" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="144" y="224" text-anchor="middle" class="small muted">Ondas a y v pequeñas</text>
+  <path d="M265 150 L278 150" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="280" y="60" width="240" height="180" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="294" y="84" text-anchor="start" class="h" style="fill:var(--vein)">2 · Ventrículo derecho</text>
+  <line x1="300" y1="100" x2="300" y2="202" stroke="var(--line)"/><line x1="300" y1="202" x2="506" y2="202" stroke="var(--line)"/>
+  <path d="M304 198 L308 198 L311 198 L315 198 L318 198 L322 190 L325 181 L329 174 L332 169 L336 167 L339 169 L343 173 L346 179 L350 188 L354 197 L357 197 L361 197 L364 197 L368 197 L371 197 L375 197 L378 196 L382 196 L385 196 L389 196 L392 196 L396 196 L399 196 L403 198 L407 198 L410 198 L414 198 L417 198 L421 190 L424 181 L428 174 L431 169 L435 167 L438 169 L442 173 L445 179 L449 188 L452 197 L456 197 L460 197 L463 197 L467 197 L470 197 L474 197 L477 196 L481 196 L484 196 L488 196 L491 196 L495 196 L498 196 L502 198" fill="none" stroke="var(--vein)" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="400" y="224" text-anchor="middle" class="small muted">Subida sistólica, diástole cerca de la base</text>
+  <path d="M521 150 L534 150" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="536" y="60" width="240" height="180" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="550" y="84" text-anchor="start" class="h" style="fill:var(--vein)">3 · Arteria pulmonar</text>
+  <line x1="556" y1="100" x2="556" y2="202" stroke="var(--line)"/><line x1="556" y1="202" x2="762" y2="202" stroke="var(--line)"/>
+  <path d="M560 188 L564 188 L567 188 L571 189 L574 189 L578 188 L581 182 L585 177 L588 173 L592 171 L595 170 L599 171 L602 174 L606 179 L610 184 L613 184 L617 184 L620 186 L624 186 L627 187 L631 187 L634 187 L638 187 L641 188 L645 188 L648 188 L652 188 L655 188 L659 188 L663 188 L666 188 L670 189 L673 189 L677 188 L680 182 L684 177 L687 173 L691 171 L694 170 L698 171 L701 174 L705 179 L708 184 L712 184 L716 184 L719 186 L723 186 L726 187 L730 187 L733 187 L737 187 L740 188 L744 188 L747 188 L751 188 L754 188 L758 188" fill="none" stroke="var(--vein)" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="656" y="224" text-anchor="middle" class="small muted">Muesca dícrota, diástole más alta</text>
+  <rect x="24" y="256" width="240" height="180" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="38" y="280" text-anchor="start" class="h" style="fill:var(--vein)">4 · Posición de cuña</text>
+  <line x1="44" y1="296" x2="44" y2="398" stroke="var(--line)"/><line x1="44" y1="398" x2="250" y2="398" stroke="var(--line)"/>
+  <path d="M48 391 L52 390 L55 386 L59 382 L62 383 L66 388 L69 390 L73 391 L76 390 L80 388 L83 387 L87 389 L90 391 L94 391 L98 391 L101 391 L105 390 L108 389 L112 386 L115 384 L119 384 L122 386 L126 389 L129 390 L133 391 L136 391 L140 391 L143 391 L147 391 L151 390 L154 386 L158 382 L161 383 L165 388 L168 390 L172 391 L175 390 L179 388 L182 387 L186 389 L189 391 L193 391 L196 391 L200 391 L204 390 L207 389 L211 386 L214 384 L218 384 L221 386 L225 389 L228 390 L232 391 L235 391 L239 391 L242 391 L246 391" fill="none" stroke="var(--vein)" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="144" y="420" text-anchor="middle" class="small muted">Refleja la aurícula izquierda (a y v)</text>
+  <path d="M265 346 L278 346" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="280" y="256" width="240" height="180" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="294" y="280" text-anchor="start" class="h" style="fill:var(--art)">5 · Ventrículo izquierdo</text>
+  <line x1="300" y1="296" x2="300" y2="398" stroke="var(--line)"/><line x1="300" y1="398" x2="506" y2="398" stroke="var(--line)"/>
+  <path d="M304 394 L308 394 L311 394 L315 394 L318 393 L322 370 L325 344 L329 323 L332 308 L336 303 L339 306 L343 319 L346 338 L350 364 L354 392 L357 392 L361 392 L364 392 L368 391 L371 391 L375 391 L378 391 L382 391 L385 391 L389 391 L392 390 L396 390 L399 390 L403 394 L407 394 L410 394 L414 394 L417 393 L421 370 L424 344 L428 323 L431 308 L435 303 L438 306 L442 319 L445 338 L449 364 L452 392 L456 392 L460 392 L463 392 L467 391 L470 391 L474 391 L477 391 L481 391 L484 391 L488 391 L491 390 L495 390 L498 390 L502 394" fill="none" stroke="var(--art)" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="400" y="420" text-anchor="middle" class="small muted">Pico sistólico alto, diástole baja</text>
+  <path d="M521 346 L534 346" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="536" y="256" width="240" height="180" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="550" y="280" text-anchor="start" class="h" style="fill:var(--art)">6 · Aorta</text>
+  <line x1="556" y1="296" x2="556" y2="398" stroke="var(--line)"/><line x1="556" y1="398" x2="762" y2="398" stroke="var(--line)"/>
+  <path d="M560 341 L564 342 L567 343 L571 344 L574 345 L578 342 L581 331 L585 320 L588 312 L592 307 L595 306 L599 309 L602 315 L606 324 L610 335 L613 334 L617 333 L620 338 L624 339 L627 339 L631 340 L634 340 L638 340 L641 340 L645 341 L648 341 L652 341 L655 341 L659 341 L663 342 L666 343 L670 344 L673 345 L677 342 L680 331 L684 320 L687 312 L691 307 L694 306 L698 309 L701 315 L705 324 L708 335 L712 334 L716 333 L719 338 L723 339 L726 339 L730 340 L733 340 L737 340 L740 340 L744 341 L747 341 L751 341 L754 341 L758 341" fill="none" stroke="var(--art)" stroke-width="2.5" stroke-linejoin="round"/>
+  <text x="656" y="420" text-anchor="middle" class="small muted">Muesca dícrota, diastólica elevada</text>
+  <text x="400" y="448" text-anchor="middle" class="tiny muted">Misma escala vertical en los seis trazados: las cavidades izquierdas soportan presiones mayores. Sin valores numéricos.</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

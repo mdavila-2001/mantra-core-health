@@ -1,5 +1,6 @@
 ---
 slug: varicela
+image: varicela.svg | Fases de las lesiones de la varicela y claves de la enfermedad | Cuatro fases de una lesión de varicela, de mancha roja a costra, junto a las claves de contagio, el virus que queda latente en un nervio y la vacuna
 ---
 
 ## [definition] Introducción

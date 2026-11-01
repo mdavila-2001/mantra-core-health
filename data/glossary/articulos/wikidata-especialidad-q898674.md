@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q898674
+image: wikidata-especialidad-q898674.svg | La neonatología cuida al recién nacido en sus primeros 28 días de vida. | Recién nacido rodeado de cuatro retos de la transición al nacer, junto a los problemas que atiende la neonatología y los niveles de cuidado hasta la UCI neonatal.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q7320661
+image: wikidata-especialidad-q7320661.svg | La rinología estudia la nariz, las fosas nasales y los senos paranasales. | Corte lateral de la fosa nasal con los cornetes superior, medio e inferior y los senos frontal y esfenoidal. A la derecha, las enfermedades que atiende la rinología y sus herramientas, como la endoscopia nasal.
 ---
 
 ## [definition] Introducción

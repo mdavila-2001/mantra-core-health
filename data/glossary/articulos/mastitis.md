@@ -1,5 +1,6 @@
 ---
 slug: mastitis
+image: mastitis.svg | La mastitis es la inflamación de una zona de la mama, frecuente durante la lactancia. | Corte lateral de la mama con un conducto obstruido y una zona inflamada en forma de cuña, junto a los síntomas, los cuidados recomendados durante la lactancia y los signos para consultar.
 ---
 
 ## [definition] Introducción

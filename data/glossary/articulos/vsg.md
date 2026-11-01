@@ -1,5 +1,6 @@
 ---
 slug: vsg
+image: vsg.svg | La VSG mide cuánto bajan los glóbulos rojos en un tubo en una hora. | Tres tubos de sangre que muestran cómo los glóbulos rojos se depositan con distinta rapidez, una regla sobre la columna de plasma y una lista de situaciones que la VSG ayuda a orientar.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: tendinopatia-del-manguito-rotador
+image: tendinopatia-del-manguito-rotador.svg | La tendinopatía del manguito rotador daña los tendones que estabilizan el hombro. | Hombro de frente con clavícula, acromion, escápula y cabeza del húmero, y el tendón supraespinoso con una zona dañada bajo el acromion, junto a los síntomas, las causas y el tratamiento.
 ---
 
 ## [definition] Introducción
