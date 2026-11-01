@@ -4,7 +4,8 @@ import type { HttpInterceptorFn } from '@angular/common/http';
     El «backend simulado» de los builds REALES: un interceptor que no hace nada.
 
     `angular.json` sustituye `mock-backend.interceptor.ts` por este archivo (`fileReplacements`) en las
-    configuraciones `production`, `production-api`, `real-api` y `e2e-real`. La sustitución saca del paquete de producción:
+    configuraciones `production-api`, `real-api` y `e2e-real`. En la rama `mockup`, `production` es la maqueta
+    (la despliega `docker-compose.yml`, con `mockBackend: true`) y NO se sustituye. La sustitución saca del paquete de producción:
 
       · el import dinámico `import('./handlers')` y, con él, el chunk de ~4,6 MB con todos los manejadores y fixtures;
       · las cuentas y códigos de prueba (`123456`, `12345678`, el secreto TOTP de ejemplo, `hospital_piloto`…);
