@@ -63,7 +63,8 @@ describe('UiPreviewPage', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
 
-  async function open(url = SCREEN): Promise<void> {
+  /** Por omisión el listado de personas llega vacío: el campo pide el identificador a mano. */
+  async function open(url = SCREEN, people: readonly { id: string; displayName: string }[] = []): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -76,6 +77,13 @@ describe('UiPreviewPage', () => {
     await harness.navigateByUrl(url, UiPreviewPage);
     harness.detectChanges();
     http.match((r) => r.url === ELEMENTS).forEach((r) => r.flush({ items: ELEMENT_LIST, nextCursor: null, total: 4 }));
+    http.match((r) => r.url === '/authz/internal-users').forEach((r) =>
+      r.flush({
+        items: people.map((p) => ({ ...p, statusConceptId: 'active', globalRoles: [], assignments: [] })),
+        nextCursor: null,
+        total: people.length,
+      }),
+    );
     http.match('/authz/roles').forEach((r) =>
       r.flush([{ id: 'r-ph', code: 'PHARMACY_STAFF', name: 'Personal de farmacia', isSystem: true, tenantId: null }]),
     );
@@ -112,6 +120,24 @@ describe('UiPreviewPage', () => {
     http.expectNone((r) => r.url === PREVIEW);
     expect(byTestId('visibility-notice')!.textContent).toContain('Ocultar no es proteger');
     expect(text()).toContain('Ver como esta persona');
+  });
+
+  it('con el listado de personas, se elige por nombre (no se pide el uuid) y se consulta su userId', async () => {
+    await open(SCREEN, [
+      { id: USER_ID, displayName: 'Persona sintética (SIMULADO)' },
+      { id: '00000000-0000-4000-8000-00000000c003', displayName: 'Otra persona (SIMULADO)' },
+    ]);
+    expect(text()).toContain('Persona');
+    expect(text()).not.toContain('Identificador de la persona');
+    expect(root().querySelector('input[data-testid="preview-target-USER"]')).toBeNull();
+    panel().target.set(USER_ID);
+    panel().run();
+    const req = http.expectOne((r) => r.url === PREVIEW);
+    expect(req.request.params.get('userId')).toBe(USER_ID);
+    req.flush(PREVIEW_BODY);
+    http.match((x) => x.url === RULES).forEach((r) => r.flush({ items: [WINNER], nextCursor: null, total: 1 }));
+    harness.detectChanges();
+    expect(byTestId('preview-summary')!.textContent).toContain('Persona sintética (SIMULADO)');
   });
 
   it('por persona: manda userId, y para cada oculto muestra la regla ganadora y la cascada con su ancestro', async () => {

@@ -3,6 +3,16 @@
     <app-form-field [label]="copy().label" [required]="true" [hint]="copy().hint" [errorMessage]="problem()">
       @if (mode() === 'ROLE' && roleOptions(); as options) {
         <app-select [ariaLabel]="copy().label" [options]="options" [value]="target() === '' ? null : target()" (valueChange)="setTarget($event ?? '')" />
+      } @else if (mode() === 'USER' && userOptions(); as options) {
+        <app-select
+          [ariaLabel]="copy().label"
+          placeholder="Elegir una persona"
+          [searchable]="true"
+          [options]="options"
+          [value]="target() === '' ? null : target()"
+          [attr.data-testid]="'preview-target-USER'"
+          (valueChange)="setTarget($event ?? '')"
+        />
       } @else {
         <app-input
           [ariaLabel]="copy().label"
@@ -23,11 +33,12 @@
     <section class="preview__metrics" aria-label="Resumen de lo que ve" data-testid="preview-summary">
       <app-metric-card
         label="Mirando como"
+        icon="eye"
         [value]="subjectName(s.label)"
         [hint]="mode() === 'ROLE' && subjectName(s.label) !== s.label ? 'Rol ' + s.label : ''"
       />
-      <app-metric-card label="Ocultos" [value]="s.hidden" [tone]="s.hidden > 0 ? 'warning' : 'success'" hint="Elementos que no se le presentan" />
-      <app-metric-card label="Por cascada" [value]="s.byCascade" hint="Ocultos porque un elemento superior lo está" />
+      <app-metric-card label="Ocultos" icon="eye-off" [value]="s.hidden" [tone]="s.hidden > 0 ? 'warning' : 'success'" hint="Elementos que no se le presentan" />
+      <app-metric-card label="Por cascada" icon="network" [value]="s.byCascade" hint="Ocultos porque un elemento superior lo está" />
     </section>
     <p class="vis__hint">
       Es una vista previa del servidor: no cambia nada. Los permisos de la persona no cambian por esto; un elemento
@@ -42,7 +53,7 @@
     <!-- Antes de consultar: qué hace esta pestaña y qué hacer, no un hueco en blanco. -->
     <app-empty-state
       data-testid="preview-idle"
-      [title]="mode() === 'ROLE' ? 'Elija un rol para ver qué se le oculta' : 'Escriba el identificador de una persona'"
+      [title]="mode() === 'ROLE' ? 'Elija un rol para ver qué se le oculta' : 'Elija una persona para ver qué se le oculta'"
       description="La vista previa la calcula el servidor con las reglas vigentes: lista cada elemento oculto, la regla que lo decide y si fue por cascada. No cambia nada."
     />
   }

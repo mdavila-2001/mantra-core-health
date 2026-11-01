@@ -109,6 +109,15 @@ const ROLES: readonly MockRole[] = [
     scope: 'TENANT',
     permissions: [{ permissionId: 'perm-schedule-read', effect: 'ALLOW' }],
   },
+  {
+    // Lo usan las reglas sintéticas de visibilidad («Ver como» por rol): sin él, el rol se veía
+    // sólo por su código. Sin permisos del catálogo de gobierno: es personal de mostrador.
+    id: 'role-pharmacy-staff',
+    code: 'PHARMACY_STAFF',
+    name: 'Personal de farmacia',
+    scope: 'TENANT',
+    permissions: [],
+  },
 ];
 
 /* ---- Usuarios y asignaciones --------------------------------------------- */

@@ -98,6 +98,17 @@ export class PreviewPanel {
     if (options === null || target === '' || options.some((o) => o.value === target)) return options;
     return [...options, { value: target, label: `${target} (no figura entre los roles asignables)` }];
   });
+  /**
+   * Las personas internas, para elegir por nombre (el mismo listado que usa el simulador de
+   * «Quién puede qué»). Si no llega, el campo vuelve a pedir el identificador a mano.
+   */
+  private readonly users = signal<readonly SelectOption<string>[] | null>(null);
+  protected readonly userOptions = computed<readonly SelectOption<string>[] | null>(() => {
+    const options = this.users();
+    const target = this.target();
+    if (options === null || target === '' || options.some((o) => o.value === target)) return options;
+    return [...options, { value: target, label: `${target} (no figura en el listado de personas)` }];
+  });
   protected readonly subjectName = (label: string): string =>
     this.mode() === 'ROLE' ? (this.roleNames().get(label) ?? label) : label;
   protected readonly state = signal<ViewState<readonly PreviewRow[]> | null>(null);
@@ -114,11 +125,13 @@ export class PreviewPanel {
 
   protected readonly copy = computed(() =>
     this.mode() === 'USER'
-      ? {
-          label: 'Identificador de la persona',
-          hint: 'El id (uuid) de la cuenta, como figura en «Usuarios y roles».',
-          action: 'Ver como esta persona',
-        }
+      ? this.users() !== null
+        ? { label: 'Persona', hint: 'Búsquela por nombre; la vista previa usa su cuenta.', action: 'Ver como esta persona' }
+        : {
+            label: 'Identificador de la persona',
+            hint: 'El id (uuid) de la cuenta, como figura en «Usuarios y roles».',
+            action: 'Ver como esta persona',
+          }
       : { label: 'Rol', hint: 'Qué le queda oculto a quien tenga este rol y nada más.', action: 'Ver como este rol' },
   );
 
@@ -181,7 +194,21 @@ export class PreviewPanel {
       },
       error: () => this.roles.set(null),
     });
-    inject(DestroyRef).onDestroy(() => rolesSub.unsubscribe());
+    const usersSub = this.authz.internalUsers({ limit: 200 }).subscribe({
+      next: (page) =>
+        this.users.set(
+          page.items.length === 0
+            ? null
+            : [...page.items]
+                .sort((a, b) => a.displayName.localeCompare(b.displayName, 'es'))
+                .map((u) => ({ value: u.id, label: u.displayName })),
+        ),
+      error: () => this.users.set(null),
+    });
+    inject(DestroyRef).onDestroy(() => {
+      rolesSub.unsubscribe();
+      usersSub.unsubscribe();
+    });
     effect(() => {
       const preset = this.preset();
       untracked(() => {
