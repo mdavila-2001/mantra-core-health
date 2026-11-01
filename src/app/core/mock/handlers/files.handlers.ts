@@ -63,9 +63,10 @@ const TOPE_PERSISTIBLE = 1_500_000;
 /** La cuenta del laboratorio que sube los PDF de resultados del simulador. */
 const LABORATORIO_UPLOADER = uuid('user-laboratorio-central');
 
-/** `SECURITY_ADMIN` y `SUPERADMIN` revisan cualquier archivo (`FILE_REVIEWER_ROLES`). */
+/** `SECURITY_ADMIN` y `SUPERADMIN` revisan cualquier archivo. Fotos e imágenes normales son públicas. */
 function puedeLeerPorAutoria(archivo: ArchivoSimulado, user: { readonly id: string; readonly roles: readonly string[] } | null): boolean {
   if (archivo.uploaderUserId === undefined) return true;
+  if (archivo.category === 'IMAGE' && archivo.sensitivity === 'NORMAL') return true;
   if (user === null) return false;
   return archivo.uploaderUserId === user.id || user.roles.includes('SECURITY_ADMIN') || user.roles.includes('SUPERADMIN');
 }
@@ -308,13 +309,7 @@ const urlsDeArchivos = new Map<string, string>();
 export function urlDeArchivoSimulado(fileId: string): string | null {
   const archivo = archivos.get(fileId);
   if (archivo === undefined) return null;
-  // Como `data:` sólo una imagen chica: se guarda dentro de la publicación.
-  // La copia de lo más grande existe para sobrevivir a F5, no para esto.
-  if (
-    archivo.dataUrlReal !== undefined &&
-    archivo.category === 'IMAGE' &&
-    archivo.dataUrlReal.length * 0.75 <= MAX_BYTES_EN_DATA_URL
-  ) {
+  if (archivo.dataUrlReal !== undefined && archivo.category === 'IMAGE') {
     return archivo.dataUrlReal;
   }
   if (!(archivo.bytes instanceof Blob) || typeof URL.createObjectURL !== 'function') {
