@@ -145,6 +145,7 @@ export const SECCIONES_DE_APOYO: readonly AppSection[] = [
     group: 'Atención',
     icon: 'people',
     roles: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
     availability: 'disponible',
     summary: 'Quién le ayuda con su agenda y sus mensajes, y qué puede hacer en su nombre.',
     module: 'M29 delegated_access',
@@ -154,11 +155,12 @@ export const SECCIONES_DE_APOYO: readonly AppSection[] = [
     label: 'Mis accesos',
     group: 'Atención',
     icon: 'key',
-    // `USER` (el personal de apoyo) y `PRACTITIONER`: es la única pantalla donde se canjea un código, y el QR multiuso de
-    // doctores lo canjea un médico que solo tiene el rol `PRACTITIONER`. Las cuentas de organización quedan fuera por
-    // `onlyForAccountKind`. La persona que **aún no** tiene un vínculo también la necesita: es donde se une con un código.
-    roles: ['USER', 'PRACTITIONER'],
+    // `SUPPORT_STAFF` (el personal de apoyo / secretarias) y `PRACTITIONER` (médicos): es la pantalla donde la persona ve sus
+    // accesos y canjea un código o el QR multiuso de doctores. Las cuentas de organización quedan fuera por
+    // `onlyForAccountKind`, y los pacientes quedan fuera por `hiddenFor: ['PATIENT']`.
+    roles: ['SUPPORT_STAFF', 'PRACTITIONER'],
     onlyForAccountKind: 'PERSON',
+    hiddenFor: ['PATIENT'],
     // Solo donde hay personal de apoyo: la persona de una farmacia, de un
     // laboratorio o de una aseguradora no ve esto, y su menú no cambia.
     onlyForTenantTypes: ['HOSPITAL', 'CLINIC', 'PROVIDER', 'MEDICAL_OFFICE'],
@@ -171,8 +173,10 @@ export const SECCIONES_DE_APOYO: readonly AppSection[] = [
     label: 'Bandeja de mensajes',
     group: 'Atención',
     icon: 'chat',
-    roles: ['USER'],
+    // Solo para secretarias / personal de apoyo (`SUPPORT_STAFF`).
+    roles: ['SUPPORT_STAFF'],
     onlyForAccountKind: 'PERSON',
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     // Como la agenda combinada: solo donde hay personal de apoyo.
     onlyForTenantTypes: ['HOSPITAL', 'CLINIC', 'PROVIDER', 'MEDICAL_OFFICE'],
     availability: 'disponible',
@@ -184,8 +188,10 @@ export const SECCIONES_DE_APOYO: readonly AppSection[] = [
     label: 'Agenda combinada',
     group: 'Atención',
     icon: 'calendar',
-    roles: ['USER'],
+    // Solo para secretarias / personal de apoyo (`SUPPORT_STAFF`). Médicos usan su propia agenda (`/agenda`) y pacientes no tienen agenda combinada.
+    roles: ['SUPPORT_STAFF'],
     onlyForAccountKind: 'PERSON',
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     // Solo donde hay personal de apoyo: la persona de una farmacia, de un
     // laboratorio o de una aseguradora no ve esto, y su menú no cambia.
     onlyForTenantTypes: ['HOSPITAL', 'CLINIC', 'PROVIDER', 'MEDICAL_OFFICE'],
@@ -225,6 +231,7 @@ export const SECCIONES_DE_APOYO: readonly AppSection[] = [
     roles: ['SUPPORT_STAFF'],
     onlyForAccountKind: 'PERSON',
     onlyForTenantTypes: ['HOSPITAL', 'CLINIC', 'PROVIDER'],
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Administre a su gente dentro de su servicio o piso: permisos, invitaciones, bajas y reactivaciones.',
     module: 'M29 delegated_access',
@@ -240,6 +247,7 @@ export const SECCIONES_DE_APOYO: readonly AppSection[] = [
     group: 'Atención',
     icon: 'check-circle',
     roles: ['SECURITY_ADMIN', 'SUPPORT_STAFF'],
+    hiddenFor: ['PATIENT'],
     availability: 'disponible',
     summary: 'Los accesos que le toca revisar en las campañas de certificación: mantener, quitar o ajustar.',
     module: 'M29 delegated_access',
