@@ -2,9 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ActivatedRoute, Router } from '@angular/router';
 
 import type { UiVisibilityRule } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
+import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../../../shared/components/organisms/page-header/page-header';
@@ -25,15 +26,36 @@ const FILTER_KEYS = ['element', 'subjectType', 'state'] as const;
  */
 @Component({
   selector: 'app-portal-ui-rules-page',
-  imports: [Card, Tab, Tabs, PageHeader, VisibilityNotice, RulesPanel, RuleFormPanel],
+  imports: [AppButton, Card, MetricCard, Tab, Tabs, PageHeader, VisibilityNotice, RulesPanel, RuleFormPanel],
   template: `
+    <!-- Una sola cabecera sobre el lienzo; las migas viven en la barra superior del portal. -->
     <app-page-header
       title="Reglas de visibilidad"
       subtitle="Mostrar u ocultar un elemento de la interfaz para una persona, una organización, un rol, un tipo de organización o todos. Cada regla lleva su motivo y su vigencia; no se borran, se terminan."
-      [breadcrumbs]="breadcrumbs()"
-    />
+    >
+      @if (tabIndex() === 0) {
+        <button app-button page-actions variant="primary" data-testid="ui-rules-new" (clicked)="selectTab(1)">
+          Nueva regla
+        </button>
+      }
+    </app-page-header>
     <div class="rules-page">
       <app-visibility-notice />
+      <section class="rules-page__metrics" aria-label="Resumen de las reglas" data-testid="ui-rules-metrics">
+        <app-metric-card label="Reglas vigentes" icon="sliders" [value]="metric(totals().rules)" hint="Según el catálogo, al abrir la pantalla" />
+        <app-metric-card
+          label="Elementos con reglas"
+          icon="eye-off"
+          [value]="metric(totals().withRules)"
+          [hint]="totals().ready ? 'De ' + totals().elements + ' catalogados' : 'Elementos que hoy tienen alguna regla'"
+        />
+        <app-metric-card
+          label="Ocultos por omisión"
+          icon="eye"
+          [value]="metric(totals().hiddenByDefault)"
+          hint="No se muestran salvo que una regla los muestre"
+        />
+      </section>
       <app-card class="rules-page__card" variant="outlined" padding="md" data-testid="portal-ui-rules">
         <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
           <app-tab label="Reglas">
@@ -61,6 +83,26 @@ const FILTER_KEYS = ['element', 'subjectType', 'state'] as const;
       inline-size: 100%;
       margin-inline: auto;
     }
+    /* Teléfono y tableta: las cifras en un carril de una fila; desde escritorio, en rejilla. */
+    .rules-page__metrics {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(15rem, 1fr);
+      gap: var(--sp-3);
+      overflow-x: auto;
+      padding-block-end: var(--sp-1);
+      scrollbar-width: thin;
+    }
+    @media (min-width: 1024px) {
+      .rules-page__metrics {
+        grid-auto-flow: row;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        overflow-x: visible;
+      }
+    }
+    .rules-page__metrics app-metric-card {
+      min-inline-size: 0;
+    }
     .rules-page__card {
       display: block;
       inline-size: 100%;
@@ -74,9 +116,8 @@ const FILTER_KEYS = ['element', 'subjectType', 'state'] as const;
 export class UiRulesPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly index = inject(UiElementIndex);
+  protected readonly index = inject(UiElementIndex);
   private readonly visibility = inject(UiVisibilityService);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   private readonly params = queryParamsSignal(this.route);
   protected readonly filters = queryFilters(this.params, FILTER_KEYS);
@@ -85,6 +126,21 @@ export class UiRulesPage {
     Math.max(0, VIEWS.indexOf(this.view().view as (typeof VIEWS)[number])),
   );
   protected readonly notice = signal<string | null>(null);
+
+  /** Las cifras de la cabecera, del índice del catálogo que la pantalla ya pide (sin peticiones nuevas). */
+  protected readonly totals = computed(() => {
+    const all = this.index.elements();
+    const status = this.index.state().status;
+    return {
+      ready: status === 'ready' || status === 'stale',
+      elements: all.length,
+      rules: all.reduce((sum, e) => sum + e.activeRuleCount, 0),
+      withRules: all.filter((e) => e.activeRuleCount > 0).length,
+      hiddenByDefault: all.filter((e) => !e.defaultVisible).length,
+    };
+  });
+  /** Mientras el índice no llegó, la cifra es «sin dato», no un cero. */
+  protected readonly metric = (n: number): number | null => (this.totals().ready ? n : null);
 
   constructor() {
     this.index.load();
