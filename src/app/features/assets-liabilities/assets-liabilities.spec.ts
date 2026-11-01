@@ -175,7 +175,7 @@ describe('AssetsLiabilities — FT-26', () => {
     );
 
     expect(componente.errorDeAutomatizacionDeActivo()).toBe(
-      'No se pudo cambiar la automatización de «Ecógrafo». Intente de nuevo. (Código de soporte: corr-as1)',
+      'No se pudo cambiar la automatización de «Ecógrafo». Intente de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-as1)',
     );
     // La relectura es la que devuelve el interruptor a la posición del servidor.
     await flushRecarga();
