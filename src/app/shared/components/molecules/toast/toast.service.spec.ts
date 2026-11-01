@@ -166,6 +166,10 @@ describe('ToastService', () => {
       service.show({ type: 'info', message: 'viejo', key: 'k' });
       vi.advanceTimersByTime(INFO_MS - 100);
       service.show({ type: 'info', message: 'nuevo', key: 'k' });
+      // El temporizador del reemplazado se cancela: queda uno solo vivo, el del
+      // nuevo. Sin esto, el viejo vencería y llamaría a `dismiss` de un id que
+      // ya no está, sin romper nada visible pero dejando la fuga en `timers`.
+      expect(vi.getTimerCount()).toBe(1);
 
       // El viejo vencería acá; el nuevo tiene que seguir.
       vi.advanceTimersByTime(200);
