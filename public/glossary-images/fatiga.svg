@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Causas frecuentes de la fatiga</title>
+  <desc id="d">En el centro, una batería con poca carga que representa la falta de energía, rodeada de cuatro grupos de causas: sueño y estilo de vida, emociones y estrés, enfermedades del cuerpo, y medicamentos o sustancias.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --warn:#c0392b; --ok:#1f8a5b; --beam:#f2c46d; --violet:#7b5ea7; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --warn:#ef7467; --ok:#4cc38a; --beam:#8a6f2f; --violet:#b39ddb; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="42" text-anchor="middle" class="title">Fatiga: causas que a menudo se combinan</text>
+  <rect x="330" y="190" width="130" height="70" rx="12" fill="var(--panel)" stroke="var(--ink)" stroke-width="3"/>
+  <rect x="460" y="210" width="12" height="30" rx="3" fill="var(--ink)"/>
+  <rect x="340" y="200" width="30" height="50" rx="5" fill="var(--warn)"/>
+  <text x="395" y="290" text-anchor="middle" class="step">Poca energía</text>
+  <path d="M330 210 L270 160 M460 210 L530 160 M330 245 L270 300 M460 245 L530 300" stroke="var(--line)" stroke-width="2"/>
+  <rect x="30" y="70" width="300" height="150" rx="14" fill="var(--panel)" stroke="var(--accent)"/>
+  <text x="50" y="98" class="step" style="fill:var(--accent)">Sueño y estilo de vida</text>
+  <text x="50" y="124" class="lab">• Dormir poco o mal, apnea del sueño</text>
+  <text x="50" y="146" class="lab">• Sedentarismo o exceso de esfuerzo</text>
+  <text x="50" y="168" class="lab">• Alimentación, alcohol, cafeína</text>
+  <rect x="470" y="70" width="300" height="150" rx="14" fill="var(--panel)" stroke="var(--violet)"/>
+  <text x="490" y="98" class="step" style="fill:var(--violet)">Emociones y estrés</text>
+  <text x="490" y="124" class="lab">• Estrés mantenido, sobrecarga</text>
+  <text x="490" y="146" class="lab">• Depresión o ansiedad</text>
+  <text x="490" y="168" class="lab">• Duelo, cuidar de otros</text>
+  <rect x="30" y="250" width="300" height="170" rx="14" fill="var(--panel)" stroke="var(--warn)"/>
+  <text x="50" y="278" class="step" style="fill:var(--warn)">Enfermedades del cuerpo</text>
+  <text x="50" y="304" class="lab">• Anemia, tiroides, diabetes</text>
+  <text x="50" y="326" class="lab">• Infecciones y su convalecencia</text>
+  <text x="50" y="348" class="lab">• Corazón, pulmón, riñón, hígado</text>
+  <text x="50" y="370" class="lab">• Fatiga crónica, cáncer</text>
+  <rect x="470" y="250" width="300" height="170" rx="14" fill="var(--panel)" stroke="var(--ok)"/>
+  <text x="490" y="278" class="step" style="fill:var(--ok)">Medicamentos y sustancias</text>
+  <text x="490" y="304" class="lab">• Algunos fármacos dan cansancio</text>
+  <text x="490" y="326" class="lab">• No suspenderlos sin consultar</text>
+  <text x="490" y="348" class="lab">• Revisar suplementos y alcohol</text>
+</svg>

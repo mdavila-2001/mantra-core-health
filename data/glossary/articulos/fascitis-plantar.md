@@ -1,5 +1,6 @@
 ---
 slug: fascitis-plantar
+image: fascitis-plantar.svg | La fascia plantar se irrita en su inserción en el talón. | Pie de perfil con la fascia plantar marcada desde el talón a los dedos y el punto de dolor en el talón, junto a listas de factores de riesgo y tratamientos.
 ---
 
 ## [definition] Introducción

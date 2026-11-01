@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Relación albúmina/creatinina en orina</title>
+  <desc id="d">A la izquierda, dos filtros renales: el sano retiene la albúmina en la sangre y el dañado deja que pase a la orina. A la derecha, un frasco de orina y la fracción albúmina sobre creatinina, con la explicación de por qué se usa la creatinina y los grupos en los que se aplica la prueba.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">El filtro del riñón</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">La prueba</text>
+<text x="115" y="76" text-anchor="middle" class="step" style="fill:var(--ok)">Filtro sano</text>
+<rect x="40" y="90" width="150" height="110" rx="12" fill="var(--vessel)" opacity=".18"/>
+<text x="115" y="110" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre</text>
+<rect x="50" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="70" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="90" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="110" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="130" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="150" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="170" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="40" y="210" width="150" height="80" rx="12" fill="var(--yellow)" opacity=".35"/>
+<text x="115" y="278" text-anchor="middle" class="small" style="fill:var(--muted)">Orina</text>
+<circle cx="80" cy="150" r="12" fill="var(--accent)"/>
+<circle cx="140" cy="160" r="12" fill="var(--accent)"/>
+<text x="285" y="76" text-anchor="middle" class="step" style="fill:var(--bad)">Filtro dañado</text>
+<rect x="210" y="90" width="150" height="110" rx="12" fill="var(--vessel)" opacity=".18"/>
+<text x="285" y="110" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre</text>
+<rect x="220" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="240" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="260" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="280" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="300" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="320" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="340" y="200" width="10" height="8" rx="2" fill="var(--organ)"/>
+<rect x="210" y="210" width="150" height="80" rx="12" fill="var(--yellow)" opacity=".35"/>
+<text x="285" y="278" text-anchor="middle" class="small" style="fill:var(--muted)">Orina</text>
+<circle cx="250" cy="150" r="12" fill="var(--accent)"/>
+<circle cx="310" cy="160" r="12" fill="var(--accent)"/>
+<circle cx="276" cy="236" r="10" fill="var(--accent)"/>
+<circle cx="322" cy="248" r="9" fill="var(--accent)"/>
+<line x1="280" y1="176" x2="278" y2="222" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar)"/>
+<circle cx="52" cy="322" r="9" fill="var(--accent)"/>
+<text x="68" y="327" class="lab">Albúmina (proteína grande)</text>
+<text x="40" y="364" class="lab">El daño temprano del riñón deja escapar</text>
+<text x="40" y="384" class="lab">pequeñas cantidades de albúmina.</text>
+<text x="40" y="414" class="small" style="fill:var(--muted)">Puede aparecer antes de otros signos.</text>
+<rect x="416" y="70" width="58" height="10" rx="3" fill="var(--accent)"/>
+<path d="M420 80 L424 134 H466 L470 80 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<path d="M422 100 L425 132 H465 L468 100 Z" fill="var(--yellow)" opacity=".8"/>
+<text x="445" y="154" text-anchor="middle" class="small" style="fill:var(--muted)">Orina al azar</text>
+<rect x="530" y="70" width="200" height="40" rx="8" fill="var(--accent)"/>
+<text x="630" y="95" text-anchor="middle" class="lab" style="fill:var(--on)">Albúmina</text>
+<line x1="530" y1="122" x2="730" y2="122" stroke="var(--ink)" stroke-width="2"/>
+<rect x="530" y="134" width="200" height="40" rx="8" fill="var(--warn)"/>
+<text x="630" y="159" text-anchor="middle" class="lab" style="fill:var(--on)">Creatinina</text>
+<text x="630" y="196" text-anchor="middle" class="small" style="fill:var(--muted)">La creatinina corrige si la orina</text>
+<text x="630" y="212" text-anchor="middle" class="small" style="fill:var(--muted)">está más o menos concentrada.</text>
+<text x="416" y="254" class="h">Se usa para</text>
+<text x="416" y="280" class="lab">• Control anual en diabetes</text>
+<text x="416" y="304" class="lab">• Hipertensión arterial</text>
+<text x="416" y="328" class="lab">• Enfermedad renal crónica</text>
+<text x="416" y="352" class="lab">• Riesgo cardiovascular</text>
+<text x="416" y="392" class="small" style="fill:var(--muted)">Un resultado alto se confirma con</text>
+<text x="416" y="410" class="small" style="fill:var(--muted)">nuevas muestras en semanas o meses.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

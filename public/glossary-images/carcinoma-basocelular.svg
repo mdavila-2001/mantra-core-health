@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Carcinoma basocelular</title>
+  <desc id="d">A la izquierda, un corte de la piel con epidermis, dermis y grasa, y un nódulo perlado que nace de la capa basal de la epidermis, con el sol como factor de riesgo. A la derecha, cómo reconocerlo, factores de riesgo y pronóstico.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="50" text-anchor="middle" class="title">Capas de la piel</text>
+  <rect x="40" y="120" width="320" height="50" rx="0" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+  <rect x="40" y="170" width="320" height="120" rx="0" fill="var(--organ)" stroke="var(--line)" stroke-width="1" opacity=".55"/>
+  <rect x="40" y="290" width="320" height="90" rx="0" fill="var(--fluid)" stroke="var(--line)" stroke-width="1" opacity=".6"/>
+  <line x1="40" y1="166" x2="360" y2="166" stroke="var(--violet)" stroke-width="3"/>
+  <path d="M170 120 C170 96 240 96 240 120 Z" fill="var(--violet-l)" stroke="var(--violet)" stroke-width="1.5"/>
+  <path d="M172 166 C165 200 180 230 205 228 C232 226 245 200 238 166 Z" fill="var(--violet-l)" stroke="var(--violet)" stroke-width="1.5"/>
+  <text x="52" y="145" class="small">Epidermis</text>
+  <text x="52" y="230" class="small">Dermis</text>
+  <text x="52" y="340" class="small">Grasa</text>
+  <text x="260" y="160" class="small" style="fill:var(--violet)">Capa basal</text>
+  <text x="140" y="100" text-anchor="middle" class="small" style="fill:var(--violet)">Nódulo perlado</text>
+  <text x="205" y="260" text-anchor="middle" class="small">Crece de forma local</text>
+  <circle cx="330" cy="74" r="16" fill="var(--beam)" stroke="none" stroke-width="2"/>
+  <text x="306" y="78" text-anchor="end" class="small">Sol</text>
+  <line x1="280" y1="86" x2="250" y2="114" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="300" y1="86" x2="270" y2="114" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="320" y1="86" x2="290" y2="114" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="200" y="412" text-anchor="middle" class="small" style="fill:var(--muted)">Nace en las células basales de la epidermis</text>
+  <rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="50" text-anchor="middle" class="title">Cómo reconocerlo</text>
+  <text x="424" y="84" class="lab">• Bulto perlado o rosado con vasitos</text>
+  <text x="424" y="110" class="lab">• Herida que sangra y no cicatriza</text>
+  <text x="424" y="136" class="lab">• Placa roja o cicatriz brillante</text>
+  <text x="424" y="162" class="lab">• Más en cara, orejas y cuello</text>
+  <text x="416" y="200" class="step">Factores de riesgo</text>
+  <text x="424" y="224" class="lab">• Exposición solar acumulada y quemaduras</text>
+  <text x="424" y="248" class="lab">• Piel clara y edad avanzada</text>
+  <text x="424" y="272" class="lab">• Camas de bronceado</text>
+  <rect x="416" y="300" width="344" height="122" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="432" y="326" class="step">Buen pronóstico si se trata</text>
+  <text x="440" y="350" class="small">• Es el cáncer de piel más frecuente</text>
+  <text x="440" y="368" class="small">• Casi nunca se extiende a otros órganos</text>
+  <text x="440" y="386" class="small">• Se extirpa con cirugía u otras técnicas</text>
+  <text x="440" y="404" class="small">• Protección solar para prevenirlo</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

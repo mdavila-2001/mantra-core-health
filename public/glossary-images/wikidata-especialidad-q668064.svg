@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Campo de la hepatología</title>
+  <desc id="d">Hígado con la vesícula biliar y las vías biliares que desembocan en el colédoco, junto a sus funciones principales. A la derecha, las enfermedades que atiende la hepatología, como hepatitis virales, hígado graso o cirrosis, y las herramientas de estudio.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Hepatología: hígado, vesícula y vías biliares</text>
+  <rect x="20" y="60" width="420" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="88" text-anchor="middle" class="title">Lo que estudia</text>
+  <path d="M50 180 C70 110 280 90 400 130 C430 145 420 210 360 240 C300 270 190 290 110 280 C60 270 40 230 50 180 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <text x="170" y="170" text-anchor="middle" class="h">Hígado</text>
+  <path d="M220 230 C240 260 252 280 256 320 M300 220 C290 260 270 280 256 320 M256 320 L256 400" fill="none" stroke="var(--ok)" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="322" cy="314" rx="24" ry="15" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <path d="M298 316 C282 316 266 320 258 334" fill="none" stroke="var(--ok)" stroke-width="3"/>
+  <text x="352" y="340" class="small b">Vesícula</text>
+  <text x="266" y="394" class="small b">Colédoco</text>
+  <text x="60" y="330" class="small b">Funciones:</text>
+  <text x="60" y="350" class="small">• Fabrica proteínas</text>
+  <text x="60" y="370" class="small">• Procesa fármacos</text>
+  <text x="60" y="390" class="small">• Produce bilis</text>
+  <text x="60" y="410" class="small">• Almacena energía</text>
+  <rect x="456" y="60" width="324" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="88" text-anchor="middle" class="h">Qué atiende</text>
+  <text x="474" y="108" class="small">• Hepatitis virales B y C</text>
+  <text x="474" y="132" class="small">• Hígado graso</text>
+  <text x="474" y="156" class="small">• Hepatitis por alcohol</text>
+  <text x="474" y="180" class="small">• Cirrosis y sus complicaciones</text>
+  <text x="474" y="204" class="small">• Cáncer de hígado</text>
+  <text x="474" y="228" class="small">• Trasplante hepático</text>
+  <rect x="456" y="276" width="324" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="304" text-anchor="middle" class="h">Herramientas</text>
+  <text x="474" y="322" class="small">• Análisis hepáticos</text>
+  <text x="474" y="348" class="small">• Ecografía y elastografía</text>
+  <text x="474" y="374" class="small">• Endoscopia (várices)</text>
+  <text x="474" y="400" class="small">• Biopsia si hace falta</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: resonancia-magnetica
+image: resonancia-magnetica.svg | La resonancia combina un imán potente y ondas de radio para obtener cortes del cuerpo. | Equipo de resonancia magnética con el túnel, la camilla y el paciente, una lista de precauciones como marcapasos o metal, y un corte esquemático del cerebro con las zonas que mejor muestra.
 ---
 
 ## [definition] Introducción

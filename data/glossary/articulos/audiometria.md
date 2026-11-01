@@ -1,5 +1,6 @@
 ---
 slug: audiometria
+image: audiometria.svg | En la audiometría se busca el sonido más débil que oye cada oído. | Persona con auriculares en una cabina pulsando un botón al oír tonos, y un audiograma de ejemplo con audición normal en tonos graves y pérdida en los agudos.
 ---
 
 ## [definition] Introducción

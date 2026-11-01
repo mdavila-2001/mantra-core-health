@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q216685
+image: wikidata-especialidad-q216685.svg | Partes del aparato locomotor y lo que atiende la ortopedia | Esquema del brazo y el codo con el hueso, el músculo, el tendón, el ligamento, la articulación y el nervio señalados, junto a las lesiones y tratamientos más habituales
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1778
+image: medlineplus-es-1778.svg | La sangre donada se analiza, se separa en componentes y se transfunde tras comprobar la compatibilidad. | Arriba, el recorrido de la sangre: donación voluntaria, bolsa, análisis y separación en hematíes, plasma y plaquetas, y transfusión por una vena. Abajo, los grupos sanguíneos que se comprueban y los síntomas que deben avisarse durante la transfusión.
 ---
 
 ## [definition] Introducción

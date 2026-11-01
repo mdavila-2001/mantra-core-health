@@ -1,5 +1,6 @@
 ---
 slug: cefalea-tensional
+image: cefalea-tensional.svg | Dolor opresivo en banda, a ambos lados, sin rasgos de alarma. | Rostro con una banda de presión alrededor de la frente y los lados de la cabeza. A la derecha, desencadenantes frecuentes como el estrés o la mala postura y los signos de alarma que requieren urgencias.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Zonas del abdomen y órganos relacionados con el dolor</title>
+  <desc id="d">Silueta de un tronco con el abdomen dividido en una cuadrícula de nueve regiones. Cada región indica algunos órganos que pueden causar dolor en esa zona: hígado y vesícula arriba a la derecha, estómago arriba en el centro, apéndice abajo a la derecha, vejiga y útero abajo en el centro, colon a los lados.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#e3eefa; --skin:#f1dccb; --skin-d:#c9a88f; --alert:#c0392b; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22344a; --skin:#4a3e36; --skin-d:#8a7464; --alert:#ef7467; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .reg { font-size: 12px; font-weight: 700; fill: var(--accent); }
+    .small { font-size: 11px; }
+    .lab { font-size: 13px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="50" text-anchor="middle" class="title">¿Dónde duele? Las nueve regiones del abdomen</text>
+
+  <!-- tronco -->
+  <path d="M220 70 C200 120 190 160 200 200 L195 420 L605 420 L600 200 C610 160 600 120 580 70 Z" fill="var(--skin)" stroke="var(--skin-d)" stroke-width="2"/>
+  <path d="M250 120 C320 150 480 150 550 120" fill="none" stroke="var(--skin-d)" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="400" y="110" text-anchor="middle" class="small muted">Borde de las costillas</text>
+
+  <!-- cuadrícula -->
+  <g fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5">
+    <rect x="240" y="150" width="106" height="88"/><rect x="346" y="150" width="108" height="88"/><rect x="454" y="150" width="106" height="88"/>
+    <rect x="240" y="238" width="106" height="88"/><rect x="346" y="238" width="108" height="88"/><rect x="454" y="238" width="106" height="88"/>
+    <rect x="240" y="326" width="106" height="88"/><rect x="346" y="326" width="108" height="88"/><rect x="454" y="326" width="106" height="88"/>
+  </g>
+  <circle cx="400" cy="282" r="4" fill="var(--ink)"/>
+
+  <text x="293" y="172" text-anchor="middle" class="reg">Arriba dcha.</text>
+  <text x="293" y="192" text-anchor="middle" class="small">Hígado</text>
+  <text x="293" y="208" text-anchor="middle" class="small">Vesícula</text>
+  <text x="400" y="172" text-anchor="middle" class="reg">Epigastrio</text>
+  <text x="400" y="192" text-anchor="middle" class="small">Estómago</text>
+  <text x="400" y="208" text-anchor="middle" class="small">Páncreas</text>
+  <text x="507" y="172" text-anchor="middle" class="reg">Arriba izq.</text>
+  <text x="507" y="192" text-anchor="middle" class="small">Bazo</text>
+  <text x="507" y="208" text-anchor="middle" class="small">Estómago</text>
+
+  <text x="293" y="260" text-anchor="middle" class="reg">Flanco dcho.</text>
+  <text x="293" y="280" text-anchor="middle" class="small">Riñón</text>
+  <text x="293" y="296" text-anchor="middle" class="small">Colon</text>
+  <text x="400" y="260" text-anchor="middle" class="reg">Ombligo</text>
+  <text x="400" y="304" text-anchor="middle" class="small">Intestino delgado</text>
+  <text x="507" y="260" text-anchor="middle" class="reg">Flanco izq.</text>
+  <text x="507" y="280" text-anchor="middle" class="small">Riñón</text>
+  <text x="507" y="296" text-anchor="middle" class="small">Colon</text>
+
+  <text x="293" y="348" text-anchor="middle" class="reg">Abajo dcha.</text>
+  <text x="293" y="368" text-anchor="middle" class="small" style="fill:var(--alert);font-weight:700">Apéndice</text>
+  <text x="293" y="384" text-anchor="middle" class="small">Ovario dcho.</text>
+  <text x="400" y="348" text-anchor="middle" class="reg">Hipogastrio</text>
+  <text x="400" y="368" text-anchor="middle" class="small">Vejiga</text>
+  <text x="400" y="384" text-anchor="middle" class="small">Útero</text>
+  <text x="507" y="348" text-anchor="middle" class="reg">Abajo izq.</text>
+  <text x="507" y="368" text-anchor="middle" class="small">Colon sigmoide</text>
+  <text x="507" y="384" text-anchor="middle" class="small">Ovario izq.</text>
+
+  <!-- leyenda -->
+  <text x="40" y="180" class="lab">Derecha e</text>
+  <text x="40" y="196" class="lab">izquierda</text>
+  <text x="40" y="212" class="lab">de la persona</text>
+  <text x="620" y="180" class="lab" style="fill:var(--alert);font-weight:700">Consulte urgente</text>
+  <text x="620" y="200" class="small">• Dolor intenso o súbito</text>
+  <text x="620" y="218" class="small">• Abdomen duro</text>
+  <text x="620" y="236" class="small">• Fiebre y vómitos</text>
+  <text x="620" y="254" class="small">• Sangre en heces</text>
+  <text x="620" y="272" class="small">• Mareo o desmayo</text>
+  <text x="400" y="445" text-anchor="middle" class="small muted">Orientativo: el dolor puede sentirse lejos del órgano que lo causa</text>
+</svg>

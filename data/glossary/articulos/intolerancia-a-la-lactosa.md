@@ -1,5 +1,6 @@
 ---
 slug: intolerancia-a-la-lactosa
+image: intolerancia-a-la-lactosa.svg | Sin suficiente lactasa, la lactosa llega al colon y fermenta. | Arriba, la lactasa del intestino delgado divide la lactosa en glucosa y galactosa, que se absorben. Abajo, sin lactasa suficiente la lactosa llega al colon, las bacterias la fermentan y producen gases, hinchazón, dolor y diarrea.
 ---
 
 ## [definition] Introducción

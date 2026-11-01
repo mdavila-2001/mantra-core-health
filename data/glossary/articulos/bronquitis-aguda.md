@@ -1,5 +1,6 @@
 ---
 slug: bronquitis-aguda
+image: bronquitis-aguda.svg | En la bronquitis aguda se inflaman los bronquios, no los alvéolos. | Pulmones con los bronquios inflamados resaltados, corte de un bronquio normal frente a uno inflamado con moco, y lista de rasgos de la enfermedad y signos de alarma.
 ---
 
 ## [definition] Introducción

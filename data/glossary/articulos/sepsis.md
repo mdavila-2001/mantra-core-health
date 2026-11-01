@@ -1,5 +1,6 @@
 ---
 slug: sepsis
+image: sepsis.svg | Cómo la sepsis daña los órganos y qué se hace | Secuencia desde la infección hasta el daño de órganos con una silueta que marca cerebro, pulmones, corazón y riñones, junto a las medidas urgentes de tratamiento
 ---
 
 ## [definition] Introducción

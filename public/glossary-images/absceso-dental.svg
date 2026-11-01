@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Absceso dental periapical</title>
+  <desc id="d">Corte de un diente con una caries en la corona por la que las bacterias llegan a la pulpa y bajan por la raíz hasta formar una bolsa de pus en el hueso, junto a la punta de la raíz. A la derecha, cómo se forma, cómo se nota y los signos que obligan a consultar de urgencia.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Absceso dental: infección en la raíz del diente</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="40" y="240" width="360" height="186" rx="8" fill="var(--bone)" stroke="none"/>
+  <text x="56" y="414" class="small muted">Hueso maxilar</text>
+  <rect x="40" y="214" width="360" height="40" rx="8" fill="var(--organ)" stroke="none" opacity=".75"/>
+  <text x="56" y="238" class="small">Encía</text>
+  <path d="M130 110 C130 84 270 84 270 110 L262 220 C258 260 250 330 236 380 C230 395 216 392 214 375 L206 300 C204 290 196 290 194 300 L186 375 C184 392 170 395 164 380 C150 330 142 260 138 220 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M172 140 C172 128 228 128 228 140 L224 230 L222 368 L216 368 L208 270 L192 270 L184 368 L178 368 L176 230 Z" fill="var(--red-l)" stroke="var(--red)" stroke-width="1.5"/>
+  <ellipse cx="150" cy="104" rx="14" ry="10" fill="var(--ink)" stroke="none" opacity=".75"/>
+  <path d="M156 112 C166 124 172 132 176 142" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <ellipse cx="181" cy="392" rx="26" ry="18" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+  <line x1="140" y1="100" x2="90" y2="90" stroke="var(--muted)" stroke-width="1"/>
+  <text x="48" y="86" class="small">Caries</text>
+  <line x1="228" y1="160" x2="300" y2="140" stroke="var(--muted)" stroke-width="1"/>
+  <text x="304" y="136" class="small">Pulpa</text>
+  <text x="304" y="152" class="small">infectada</text>
+  <line x1="206" y1="392" x2="300" y2="360" stroke="var(--muted)" stroke-width="1"/>
+  <text x="304" y="356" class="small b">Pus en la</text>
+  <text x="304" y="372" class="small b">punta de la raíz</text>
+  <text x="240" y="118" text-anchor="middle" class="small muted">Esmalte</text>
+  <rect x="436" y="60" width="344" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Cómo se forma y se nota</text>
+  <text x="454" y="112" class="small">• Caries profunda, fractura o golpe</text>
+  <text x="454" y="138" class="small">• Las bacterias llegan a la pulpa</text>
+  <text x="454" y="164" class="small">• Dolor intenso y pulsátil</text>
+  <text x="454" y="190" class="small">• Dolor al masticar o con frío/calor</text>
+  <text x="454" y="216" class="small">• Encía o cara hinchada</text>
+  <text x="454" y="242" class="small">• Que el dolor ceda no es curación</text>
+  <rect x="436" y="292" width="344" height="148" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="450" y="316" class="lab b" style="fill:var(--red)">Consultar de urgencia si</text>
+  <text x="450" y="340" class="small">• Hinchazón que avanza a ojo o cuello</text>
+  <text x="450" y="362" class="small">• Dificultad para tragar o respirar</text>
+  <text x="450" y="384" class="small">• Fiebre alta o mal estado general</text>
+  <text x="450" y="406" class="small">• Boca que no se puede abrir</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

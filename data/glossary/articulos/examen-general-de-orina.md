@@ -1,5 +1,6 @@
 ---
 slug: examen-general-de-orina
+image: examen-general-de-orina.svg | El examen general de orina combina un análisis físico, uno químico y otro al microscopio. | Frasco de orina con los pasos para recoger el chorro medio, una escala de colores para el análisis físico y una tira reactiva con lo que mide, junto a lo que se observa al microscopio.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: chikungunya
+image: chikungunya.svg | Transmisión por mosquito y síntomas del chikungunya | Ciclo de transmisión del virus por el mosquito Aedes y silueta humana con las articulaciones dolorosas marcadas, junto a la fiebre, la erupción y el cansancio
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Periodoncia: periodonto sano y enfermo</title>
+  <desc id="d">Dos dientes en corte: uno sano con la encía firme y el hueso a su altura, y otro con periodontitis, bolsa, sarro y pérdida de hueso. A la derecha, la diferencia entre gingivitis y periodontitis, los factores de riesgo y el tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="520" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="280.0" y="50" text-anchor="middle" class="title">Periodonto sano y enfermo</text>
+<path d="M30,220 L100,220 L100,380 L30,380 Z M180,220 L250,220 L250,380 L180,380 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M90,120 Q84,70 140,66 Q196,70 190,120 L178,340 Q140,372 102,340 Z" fill="var(--panel)" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M98,150 L106,330 M182,150 L174,330" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3"/>
+<path d="M30,160 Q80,140 94,150 L96,220 L30,220 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M250,160 Q200,140 186,150 L184,220 L250,220 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M290,290 L360,290 L360,380 L290,380 Z M440,290 L510,290 L510,380 L440,380 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M350,120 Q344,70 400,66 Q456,70 450,120 L438,340 Q400,372 362,340 Z" fill="var(--panel)" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M358,150 L366,330 M442,150 L434,330" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3"/>
+<path d="M290,210 Q340,190 354,200 L356,290 L290,290 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M510,210 Q460,190 446,200 L444,290 L510,290 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M354,200 L356,286 L344,286 Z" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="352" y="150" width="10" height="46" rx="3" fill="var(--beam)" stroke="var(--warn)" stroke-width="1"/>
+<text x="140" y="406" text-anchor="middle" class="step">Sano</text>
+<text x="400" y="406" text-anchor="middle" class="step">Periodontitis</text>
+<text x="140" y="424" text-anchor="middle" class="small" style="fill:var(--muted)">encía firme, hueso a su altura</text>
+<text x="400" y="424" text-anchor="middle" class="small" style="fill:var(--muted)">bolsa, sarro y pérdida de hueso</text>
+<text x="270" y="180" text-anchor="middle" class="small">Encía</text>
+<text x="270" y="300" text-anchor="middle" class="small">Hueso</text>
+<text x="140" y="300" text-anchor="middle" class="small" style="fill:var(--accent)">Ligamento</text>
+<rect x="556" y="20" width="224" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="668.0" y="50" text-anchor="middle" class="title">Claves</text>
+<text x="570" y="76" class="lab">Gingivitis: encía</text>
+<text x="570" y="98" class="lab">inflamada, reversible</text>
+<text x="570" y="120" class="lab">Periodontitis: se</text>
+<text x="570" y="142" class="lab">pierde el soporte</text>
+<text x="570" y="164" class="lab">Causa: placa</text>
+<text x="570" y="186" class="lab">bacteriana</text>
+<rect x="570" y="224" width="196" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="582" y="246" class="step">Más riesgo con</text>
+<text x="582" y="270" class="lab">• Tabaco</text>
+<text x="582" y="292" class="lab">• Diabetes</text>
+<text x="582" y="314" class="lab">• Mala higiene</text>
+<text x="570" y="350" class="step">Tratamiento:</text>
+<text x="570" y="370" class="small">limpieza profunda,</text>
+<text x="570" y="388" class="small">cirugía, controles</text>
+<text x="570" y="406" class="small">y cepillado diario.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

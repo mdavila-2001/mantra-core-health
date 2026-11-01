@@ -1,5 +1,6 @@
 ---
 slug: hipotiroidismo
+image: hipotiroidismo.svg | En el hipotiroidismo la tiroides produce poca hormona y el cuerpo se enlentece. | Persona con la tiroides señalada en el cuello, el patrón de TSH alta y T4 libre baja, y una cuadrícula con síntomas frecuentes como cansancio, frío y aumento de peso.
 ---
 
 ## [definition] Introducción

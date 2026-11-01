@@ -1,5 +1,6 @@
 ---
 slug: neurologia
+image: neurologia.svg | La neurología se ocupa del encéfalo, la médula, los nervios y los músculos. | Silueta humana con el encéfalo, la médula espinal, los nervios y los músculos señalados. A la derecha, las enfermedades más frecuentes que atiende la neurología y sus herramientas diagnósticas.
 ---
 
 ## [definition] Introducción

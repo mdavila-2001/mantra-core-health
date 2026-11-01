@@ -1,5 +1,6 @@
 ---
 slug: grupo-sanguineo
+image: grupo-sanguineo.svg | Grupos ABO, factor Rh y cómo se determinan | Cuatro glóbulos rojos de los grupos A, B, AB y O con sus antígenos, el factor Rh y una prueba en la que la sangre forma grumos con los reactivos anti-A y anti-D
 ---
 
 ## [definition] Introducción

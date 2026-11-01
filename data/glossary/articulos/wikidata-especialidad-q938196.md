@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q938196
+image: wikidata-especialidad-q938196.svg | La periodoncia trata los tejidos que sostienen el diente: encía, ligamento, cemento y hueso. | Dos dientes en corte: uno sano con la encía firme y el hueso a su altura, y otro con periodontitis, bolsa, sarro y pérdida de hueso. A la derecha, la diferencia entre gingivitis y periodontitis, los factores de riesgo y el tratamiento.
 ---
 
 ## [definition] Introducción

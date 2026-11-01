@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Bronquio normal y bronquio con asma</title>
+  <desc id="d">Dos cortes transversales de un bronquio. A la izquierda, un bronquio normal con pared fina, músculo relajado y luz amplia por donde pasa el aire. A la derecha, un bronquio durante una crisis de asma: la pared está inflamada y engrosada, el músculo contraído y hay moco, de modo que el paso del aire queda muy estrecho.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --wall:#e7b7a4; --wall-in:#f4d4c6; --muscle:#b34a4a; --mucus:#d8c36a; --air:#cfe6fb; --ok:#1f8a5b; --warn:#c0392b; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --wall:#8f5a4e; --wall-in:#a8705f; --muscle:#d07a7a; --mucus:#a99640; --air:#27405c; --ok:#4cc38a; --warn:#ef7467; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <!-- Normal -->
+  <rect x="20" y="20" width="370" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205" y="50" text-anchor="middle" class="title" style="fill:var(--ok)">Bronquio normal</text>
+  <circle cx="205" cy="220" r="120" fill="var(--wall)"/>
+  <circle cx="205" cy="220" r="112" fill="none" stroke="var(--muscle)" stroke-width="5" stroke-dasharray="14 6"/>
+  <circle cx="205" cy="220" r="96" fill="var(--wall-in)"/>
+  <circle cx="205" cy="220" r="84" fill="var(--air)"/>
+  <text x="205" y="216" text-anchor="middle" class="lab">Luz amplia:</text>
+  <text x="205" y="234" text-anchor="middle" class="lab">el aire pasa bien</text>
+  <text x="205" y="372" text-anchor="middle" class="small">Músculo relajado · pared fina</text>
+  <text x="205" y="394" text-anchor="middle" class="small muted">Respiración sin esfuerzo</text>
+
+  <!-- Asma -->
+  <rect x="410" y="20" width="370" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595" y="50" text-anchor="middle" class="title" style="fill:var(--warn)">Bronquio en una crisis</text>
+  <circle cx="595" cy="220" r="120" fill="var(--wall)"/>
+  <circle cx="595" cy="220" r="104" fill="none" stroke="var(--muscle)" stroke-width="10"/>
+  <path d="M595 120 C640 125 690 160 692 210 C694 260 650 312 595 316 C540 318 498 270 498 220 C498 170 548 118 595 120 Z" fill="var(--wall-in)"/>
+  <path d="M595 168 C618 172 640 190 636 214 C632 240 618 262 595 266 C572 268 556 246 554 222 C552 196 572 166 595 168 Z" fill="var(--mucus)"/>
+  <path d="M590 200 C604 200 614 210 612 222 C610 234 600 240 590 238 C580 236 574 226 576 216 C578 206 584 200 590 200 Z" fill="var(--air)"/>
+  <text x="595" y="372" text-anchor="middle" class="small">Luz estrecha: cuesta sacar el aire</text>
+  <text x="595" y="394" text-anchor="middle" class="small muted">Tos, silbidos y falta de aire</text>
+
+  <!-- etiquetas -->
+  <line x1="700" y1="150" x2="740" y2="100" stroke="var(--muted)"/>
+  <text x="680" y="92" class="small">Músculo contraído</text>
+  <line x1="510" y1="140" x2="460" y2="96" stroke="var(--muted)"/>
+  <text x="430" y="88" class="small">Pared inflamada</text>
+  <line x1="630" y1="250" x2="730" y2="320" stroke="var(--muted)"/>
+  <text x="690" y="336" class="small">Moco</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

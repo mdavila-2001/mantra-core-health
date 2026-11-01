@@ -1,5 +1,6 @@
 ---
 slug: higado-graso
+image: higado-graso.svg | El hígado graso acumula grasa dentro de sus células y puede avanzar si no se corrige. | Hígado sano junto a un hígado con gotas de grasa en su interior, y una secuencia de cuatro fases de esteatosis, esteatohepatitis, fibrosis y cirrosis, con las medidas para revertirla.
 ---
 
 ## [definition] Introducción

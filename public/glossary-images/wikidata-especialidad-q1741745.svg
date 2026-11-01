@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Psiquiatría infantil y adolescente</title>
+  <desc id="d">Arriba, tres figuras de tamaño creciente que representan la primera infancia, la edad escolar y la adolescencia, con los temas principales de cada etapa. Abajo, los problemas frecuentes y el trabajo conjunto con el niño, la familia y la escuela.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="210" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Etapas del desarrollo que atiende</text>
+  <circle cx="150" cy="122.4" r="7.199999999999999" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <path d="M139 150 C139 134 161 134 161 150 Z" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <text x="150" y="176" text-anchor="middle" class="step">Primera infancia</text>
+  <text x="150" y="196" text-anchor="middle" class="small" style="fill:var(--muted)">vínculo, sueño, desarrollo</text>
+  <line x1="230" y1="120" x2="320" y2="120" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <circle cx="400" cy="113.2" r="9.600000000000001" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <path d="M386 150 C386 129 414 129 414 150 Z" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <text x="400" y="176" text-anchor="middle" class="step">Edad escolar</text>
+  <text x="400" y="196" text-anchor="middle" class="small" style="fill:var(--muted)">atención, aprendizaje</text>
+  <line x1="480" y1="120" x2="570" y2="120" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <circle cx="650" cy="104.0" r="12.0" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <path d="M632 150 C632 124 668 124 668 150 Z" fill="var(--violet)" stroke="none" stroke-width="2"/>
+  <text x="650" y="176" text-anchor="middle" class="step">Adolescencia</text>
+  <text x="650" y="196" text-anchor="middle" class="small" style="fill:var(--muted)">ánimo, conducta, identidad</text>
+  <rect x="20" y="246" width="370" height="194" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="276" text-anchor="middle" class="title">Problemas frecuentes</text>
+  <text x="40" y="304" class="small">• TDAH y dificultades de atención</text>
+  <text x="40" y="330" class="small">• Trastornos del espectro autista</text>
+  <text x="40" y="356" class="small">• Ansiedad y depresión</text>
+  <text x="40" y="382" class="small">• Conducta alimentaria</text>
+  <text x="40" y="408" class="small">• Autolesiones e ideas suicidas</text>
+  <rect x="410" y="246" width="370" height="194" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595.0" y="276" text-anchor="middle" class="title">Cómo trabaja</text>
+  <rect x="430" y="290" width="104" height="56" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="482.0" y="314.5" text-anchor="middle" class="small">Niño o</text>
+  <text x="482.0" y="331.5" text-anchor="middle" class="small">adolescente</text>
+  <rect x="544" y="290" width="104" height="56" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="596.0" y="323.0" text-anchor="middle" class="small">Familia</text>
+  <rect x="658" y="290" width="104" height="56" rx="10" fill="var(--violet-l)" stroke="var(--line)"/>
+  <text x="710.0" y="323.0" text-anchor="middle" class="small">Escuela</text>
+  <text x="595" y="378" text-anchor="middle" class="small">Evaluación del desarrollo y del entorno,</text>
+  <text x="595" y="396" text-anchor="middle" class="small">psicoterapia, apoyo familiar y escolar</text>
+  <text x="595" y="414" text-anchor="middle" class="small" style="fill:var(--muted)">y medicación cuando está indicada</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

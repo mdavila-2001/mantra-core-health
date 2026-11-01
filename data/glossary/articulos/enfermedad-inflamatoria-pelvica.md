@@ -1,5 +1,6 @@
 ---
 slug: enfermedad-inflamatoria-pelvica
+image: enfermedad-inflamatoria-pelvica.svg | La infección sube desde la vagina al útero, las trompas y los ovarios. | Útero con trompas inflamadas y flechas que muestran el ascenso de bacterias desde la vagina, junto a listas de síntomas y complicaciones de la enfermedad inflamatoria pélvica.
 ---
 
 ## [definition] Introducción

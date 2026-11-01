@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">HDL colesterol: transporte del colesterol al hígado</title>
+  <desc id="d">A la izquierda, partículas HDL recogen colesterol de la pared de una arteria y lo llevan al hígado para su eliminación. A la derecha, un tubo de sangre del perfil de lípidos y dos listas: factores que tienden a subir el HDL y factores que tienden a bajarlo.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">El HDL recoge colesterol</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">La prueba y qué la modifica</text>
+<rect x="40" y="80" width="320" height="56" rx="20" fill="var(--organ-l)" stroke="var(--organ)"/>
+<rect x="40" y="92" width="320" height="32" rx="12" fill="var(--panel)"/>
+<path d="M150 104 C170 96 200 96 220 104 Z" fill="var(--warn)" stroke="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="200" y="156" text-anchor="middle" class="small" style="fill:var(--muted)">Pared de una arteria</text>
+<circle cx="90" cy="108" r="8" fill="var(--ok)"/>
+<circle cx="90" cy="108" r="3" fill="var(--warn)"/>
+<circle cx="260" cy="108" r="8" fill="var(--ok)"/>
+<circle cx="260" cy="108" r="3" fill="var(--warn)"/>
+<circle cx="320" cy="108" r="8" fill="var(--ok)"/>
+<circle cx="320" cy="108" r="3" fill="var(--warn)"/>
+<text x="50" y="72" class="small" style="fill:var(--ok)">Partículas HDL</text>
+<line x1="320" y1="140" x2="320" y2="200" stroke="var(--ok)" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M210 210 C210 190 260 184 310 186 C350 188 360 200 360 214 C360 236 330 248 300 252 C260 258 210 246 210 210 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="285" y="224" text-anchor="middle" class="lab">Hígado</text>
+<text x="40" y="210" class="lab">Lleva el colesterol</text>
+<text x="40" y="228" class="lab">sobrante al hígado</text>
+<text x="40" y="246" class="lab">para eliminarlo</text>
+<rect x="40" y="290" width="320" height="130" rx="10" fill="var(--ok-l)"/>
+<text x="56" y="316" class="lab">Por eso se lo llama</text>
+<text x="56" y="336" class="h" style="fill:var(--ok)">«colesterol bueno»</text>
+<text x="56" y="366" class="small">Un HDL más alto suele asociarse</text>
+<text x="56" y="384" class="small">a menor riesgo de enfermedad</text>
+<text x="56" y="402" class="small">cardiovascular, pero no lo anula.</text>
+<rect x="418" y="70" width="30" height="14" rx="3" fill="var(--accent)"/>
+<path d="M420 84 V150 a13 13 0 0 0 26 0 V84 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<path d="M421.5 110 V150 a11.5 11.5 0 0 0 23 0 V110 Z" fill="var(--vessel)"/>
+<text x="433" y="186" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre</text>
+<text x="470" y="92" class="lab">Forma parte del perfil</text>
+<text x="470" y="110" class="lab">de lípidos, junto al colesterol</text>
+<text x="470" y="128" class="lab">total, LDL y triglicéridos.</text>
+<text x="416" y="214" class="h" style="fill:var(--ok)">Tiende a subir</text>
+<text x="606" y="214" class="h" style="fill:var(--bad)">Tiende a bajar</text>
+<text x="416" y="242" class="lab">• Actividad física</text>
+<text x="416" y="266" class="lab">• Dejar de fumar</text>
+<text x="416" y="290" class="lab">• Peso saludable</text>
+<text x="416" y="314" class="lab">• Dieta con grasas</text>
+<text x="427" y="338" class="lab">insaturadas</text>
+<text x="606" y="242" class="lab">• Tabaquismo</text>
+<text x="606" y="266" class="lab">• Sedentarismo</text>
+<text x="606" y="290" class="lab">• Obesidad abdominal</text>
+<text x="606" y="314" class="lab">• Diabetes tipo 2</text>
+<text x="606" y="338" class="lab">• Triglicéridos altos</text>
+<text x="416" y="410" class="small" style="fill:var(--muted)">Se interpreta con el riesgo global.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

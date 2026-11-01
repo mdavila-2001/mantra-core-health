@@ -1,5 +1,6 @@
 ---
 slug: escabiosis
+image: escabiosis.svg | La hembra del ácaro excava túneles y deposita huevos en la piel. | Corte de la piel con un túnel en la epidermis, huevos alineados y el ácaro al final, junto a las zonas típicas del cuerpo y las claves del tratamiento.
 ---
 
 ## [definition] Introducción

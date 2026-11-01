@@ -1,5 +1,6 @@
 ---
 slug: sindrome-del-tunel-carpiano
+image: sindrome-del-tunel-carpiano.svg | El nervio mediano se comprime al pasar por el túnel carpiano de la muñeca. | Mano con el nervio mediano y el túnel carpiano señalados y la zona de hormigueo en los primeros dedos, un corte de la muñeca, y los síntomas y factores que lo favorecen.
 ---
 
 ## [definition] Introducción

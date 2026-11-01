@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Herpes labial: virus latente y fases del brote</title>
+  <desc id="d">A la izquierda, una cabeza de perfil con el ganglio nervioso donde el virus herpes simple queda latente y el trayecto del nervio hasta el labio, donde reaparece. A la derecha, cuatro fases del brote: hormigueo, ampollas agrupadas, úlcera y costra, con consejos para no contagiar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Ciclo del virus</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Fases del brote</text>
+<path d="M98.0 308.0 L98.0 248.0 C62.0 200 74.0 104.0 170 92.0 C242.0 92.0 266.0 152.0 263.6 188.0 L280.4 219.2 L261.2 226.4 L263.6 252.8 C254.0 272.0 218.0 267.2 206.0 272.0 L206.0 308.0 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M144 156 C200 170 230 210 252 252" fill="none" stroke="var(--purple)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4"/>
+<circle cx="130" cy="150" r="14" fill="var(--purple)" opacity=".5"/>
+<text x="40" y="96" class="small" style="fill:var(--purple)">Ganglio nervioso:</text>
+<text x="40" y="112" class="small" style="fill:var(--purple)">el virus queda latente</text>
+<line x1="84" y1="118" x2="124" y2="142" stroke="var(--purple)" stroke-width="1"/>
+<circle cx="258" cy="260" r="9" fill="var(--bad)" opacity=".7"/>
+<text x="276" y="290" class="small" style="fill:var(--bad)">Labio</text>
+<text x="200" y="360" text-anchor="middle" class="small">El virus herpes simple viaja por el nervio</text>
+<text x="200" y="376" text-anchor="middle" class="small">y reaparece en el mismo sitio.</text>
+<text x="200" y="404" text-anchor="middle" class="small" style="fill:var(--muted)">Desencadenantes: sol, fiebre, estrés, regla</text>
+<rect x="416" y="70" width="164" height="112" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+<path d="M446 120 Q498 100 550 120 Q498 136 446 120 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="498" cy="114" r="8" fill="var(--bad)" opacity=".3"/>
+<text x="498" y="156" text-anchor="middle" class="step">1 · Hormigueo</text>
+<text x="498" y="174" text-anchor="middle" class="small" style="fill:var(--muted)">picor o ardor</text>
+<rect x="592" y="70" width="164" height="112" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+<path d="M622 120 Q674 100 726 120 Q674 136 622 120 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="666" cy="112" r="4" fill="var(--panel)" stroke="var(--bad)" stroke-width="2"/>
+<circle cx="674" cy="110" r="4" fill="var(--panel)" stroke="var(--bad)" stroke-width="2"/>
+<circle cx="682" cy="112" r="4" fill="var(--panel)" stroke="var(--bad)" stroke-width="2"/>
+<circle cx="670" cy="114" r="4" fill="var(--panel)" stroke="var(--bad)" stroke-width="2"/>
+<circle cx="678" cy="114" r="4" fill="var(--panel)" stroke="var(--bad)" stroke-width="2"/>
+<text x="674" y="156" text-anchor="middle" class="step">2 · Ampollas</text>
+<text x="674" y="174" text-anchor="middle" class="small" style="fill:var(--muted)">pequeñas, agrupadas</text>
+<rect x="416" y="200" width="164" height="112" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+<path d="M446 250 Q498 230 550 250 Q498 266 446 250 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="498" cy="244" rx="12" ry="6" fill="var(--bad)" opacity=".6"/>
+<text x="498" y="286" text-anchor="middle" class="step">3 · Úlcera</text>
+<text x="498" y="304" text-anchor="middle" class="small" style="fill:var(--muted)">se rompen</text>
+<rect x="592" y="200" width="164" height="112" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+<path d="M622 250 Q674 230 726 250 Q674 266 622 250 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="674" cy="244" rx="11" ry="5" fill="var(--warn)"/>
+<text x="674" y="286" text-anchor="middle" class="step">4 · Costra</text>
+<text x="674" y="304" text-anchor="middle" class="small" style="fill:var(--muted)">cura sin cicatriz</text>
+<text x="416" y="344" class="small">Contagia sobre todo con ampollas abiertas:</text>
+<text x="416" y="362" class="small">no besar ni compartir vasos o toallas.</text>
+<text x="416" y="392" class="small" style="fill:var(--muted)">Antivirales precoces acortan el brote.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

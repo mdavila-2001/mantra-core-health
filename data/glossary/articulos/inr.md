@@ -1,5 +1,6 @@
 ---
 slug: inr
+image: inr.svg | El INR expresa de forma estandarizada cuánto tarda la sangre en coagular. | Tubo de sangre con citrato, un reactivo y un cronómetro que mide el tiempo de coagulación para calcular el INR, y una balanza entre riesgo de sangrado con INR alto y de trombos con INR bajo.
 ---
 
 ## [definition] Introducción

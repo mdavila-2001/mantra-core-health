@@ -1,5 +1,6 @@
 ---
 slug: tomografia-de-columna-lumbar
+image: tomografia-de-columna-lumbar.svg | El tomógrafo gira alrededor de la cintura y obtiene cortes de las vértebras. | Anillo del tomógrafo con el tubo de rayos X girando alrededor de la cintura y un corte transversal de vértebra lumbar con cuerpo, disco, canal y apófisis señalados.
 ---
 
 ## [definition] Introducción

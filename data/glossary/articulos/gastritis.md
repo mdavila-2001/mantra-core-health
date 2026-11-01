@@ -1,5 +1,6 @@
 ---
 slug: gastritis
+image: gastritis.svg | En la gastritis la capa interna del estómago se inflama. | Estómago con zonas de mucosa inflamada marcadas en rojo, junto a una lista de causas de gastritis, sus síntomas y señales de alarma.
 ---
 
 ## [definition] Introducción

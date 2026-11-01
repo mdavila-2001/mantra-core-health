@@ -1,5 +1,6 @@
 ---
 slug: trastorno-adaptativo
+image: trastorno-adaptativo.svg | Un estresor identificable desencadena una respuesta que desborda a la persona. | Secuencia de estresor, respuesta emocional excesiva y repercusión en la vida diaria, con una línea de tiempo orientativa y recuadros sobre la ayuda disponible y los signos de urgencia.
 ---
 
 ## [definition] Introducción

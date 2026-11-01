@@ -1,5 +1,6 @@
 ---
 slug: cancer-gastrico
+image: cancer-gastrico.svg | El cáncer gástrico suele nacer en la capa interna del estómago y dar síntomas tardíos. | Estómago con esófago, fondo, píloro y duodeno, y un tumor marcado en la pared. A la derecha, los factores de riesgo como Helicobacter pylori, los síntomas habituales y los signos que obligan a consultar.
 ---
 
 ## [definition] Introducción

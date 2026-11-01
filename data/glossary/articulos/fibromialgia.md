@@ -1,5 +1,6 @@
 ---
 slug: fibromialgia
+image: fibromialgia.svg | Zonas de dolor y síntomas de la fibromialgia | Silueta humana con zonas de dolor repartidas por todo el cuerpo, junto a los síntomas de cansancio, sueño poco reparador y niebla mental y las medidas que ayudan
 ---
 
 ## [definition] Introducción

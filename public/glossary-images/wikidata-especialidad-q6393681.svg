@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ceraunomedicina: lesiones por rayo</title>
+  <desc id="d">Cuatro figuras que muestran cómo puede lesionar un rayo: impacto directo, descarga lateral desde un objeto, contacto y corriente de suelo. Abajo, las lesiones y secuelas principales y qué hacer ante una víctima y una tormenta.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="250" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Cómo puede lesionar el rayo</text>
+<path d="M124,56 L108,92 L120,92 L104,128" fill="none" stroke="var(--beam)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="114" cy="150" r="9" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<path d="M114,159 L114,186 M102,172 L126,172 M114,186 L105,204 M114,186 L123,204" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="20" y1="206" x2="780" y2="206" stroke="var(--line)" stroke-width="1"/>
+<text x="114" y="232" text-anchor="middle" class="step">Impacto directo</text>
+<text x="114" y="252" text-anchor="middle" class="small">entra en el cuerpo</text>
+<path d="M314,56 L298,92 L310,92 L294,128" fill="none" stroke="var(--beam)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="304" cy="150" r="9" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<path d="M304,159 L304,186 M292,172 L316,172 M304,186 L295,204 M304,186 L313,204" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="340" y="90" width="10" height="114" rx="4" fill="var(--ok)" stroke-width="1"/>
+<text x="304" y="232" text-anchor="middle" class="step">Descarga lateral</text>
+<text x="304" y="252" text-anchor="middle" class="small">salta desde un objeto cercano</text>
+<path d="M504,56 L488,92 L500,92 L484,128" fill="none" stroke="var(--beam)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="494" cy="150" r="9" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<path d="M494,159 L494,186 M482,172 L506,172 M494,186 L485,204 M494,186 L503,204" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M506,172 L534,120" fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="494" y="232" text-anchor="middle" class="step">Contacto</text>
+<text x="494" y="252" text-anchor="middle" class="small">por algo que se toca</text>
+<path d="M694,56 L678,92 L690,92 L674,128" fill="none" stroke="var(--beam)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="684" cy="150" r="9" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<path d="M684,159 L684,186 M672,172 L696,172 M684,186 L675,204 M684,186 L693,204" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M624,206 Q654,196 684,206 Q714,216 744,206" fill="none" stroke="var(--beam)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="684" y="232" text-anchor="middle" class="step">Corriente de suelo</text>
+<text x="684" y="252" text-anchor="middle" class="small">se extiende por el terreno</text>
+<rect x="20" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="205.0" y="316" text-anchor="middle" class="title">Lesiones y secuelas</text>
+<text x="36" y="336" class="lab">• Parada cardiorrespiratoria</text>
+<text x="36" y="360" class="lab">• Quemaduras en helecho (pasajeras)</text>
+<text x="36" y="384" class="lab">• Rotura de tímpano, lesión ocular</text>
+<text x="36" y="408" class="lab">• Secuelas neurológicas y de memoria</text>
+<rect x="406" y="286" width="374" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="593.0" y="316" text-anchor="middle" class="title">Qué hacer</text>
+<text x="422" y="336" class="lab">• Es seguro tocar a la víctima</text>
+<text x="422" y="360" class="lab">• RCP de inmediato si no respira</text>
+<text x="422" y="384" class="lab">• Ante tormenta: refugio cerrado</text>
+<text x="422" y="408" class="lab">• Esperar 30 min tras el último trueno</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2699874
+image: wikidata-especialidad-q2699874.svg | La neuropsiquiatría atiende los trastornos que comparten la neurología y la psiquiatría. | Diagrama de dos círculos superpuestos, neurología y psiquiatría, con ejemplos de enfermedades en cada uno y en la zona común que corresponde a la neuropsiquiatría.
 ---
 
 ## [definition] Introducción

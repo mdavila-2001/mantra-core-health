@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Factor reumatoide</title>
+  <desc id="d">Arriba, tres pasos: muestra de sangre, detección de un autoanticuerpo que ataca a otros anticuerpos y orientación sobre artritis reumatoide. Abajo a la izquierda, un anticuerpo con forma de Y al que se une el factor reumatoide. Abajo a la derecha, una mano con articulaciones hinchadas y notas para interpretar el resultado.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="30" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="52" cy="54" r="13" fill="var(--accent)"/>
+  <text x="52" y="59" text-anchor="middle" class="step on">1</text>
+  <text x="72" y="59" class="step">Muestra</text>
+  <text x="46" y="84" class="small">Sangre de una vena</text>
+  <text x="46" y="103" class="small">del brazo</text>
+  <path d="M260 78.0 L283 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="287" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="309" cy="54" r="13" fill="var(--accent)"/>
+  <text x="309" y="59" text-anchor="middle" class="step on">2</text>
+  <text x="329" y="59" class="step">Se detecta</text>
+  <text x="303" y="84" class="small">Un autoanticuerpo que</text>
+  <text x="303" y="103" class="small">ataca a otros anticuerpos</text>
+  <path d="M517 78.0 L540 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="544" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="566" cy="54" r="13" fill="var(--accent)"/>
+  <text x="566" y="59" text-anchor="middle" class="step on">3</text>
+  <text x="586" y="59" class="step">Orienta sobre</text>
+  <text x="560" y="84" class="small">Artritis reumatoide y</text>
+  <text x="560" y="103" class="small">otras enfermedades</text>
+  <rect x="30" y="150" width="370" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="215.0" y="180" text-anchor="middle" class="title">Qué es el factor reumatoide</text>
+  <g transform="translate(140 300) rotate(0)"><path d="M0 0 V40 M0 0 L-22 -26 M0 0 L22 -26" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" fill="none"/></g>
+  <g transform="translate(260 260) rotate(180)"><path d="M0 0 V40 M0 0 L-22 -26 M0 0 L22 -26" stroke="var(--purple)" stroke-width="9" stroke-linecap="round" fill="none"/></g>
+  <text x="140" y="370" text-anchor="middle" class="small">Anticuerpo propio</text>
+  <text x="270" y="206" text-anchor="middle" class="small" style="fill:var(--purple)">Factor reumatoide</text>
+  <circle cx="140" cy="340" r="12" fill="none" stroke="var(--bad)" stroke-width="2" stroke-dasharray="3 2"/>
+  <text x="215" y="410" text-anchor="middle" class="small muted">Se une a la base de otros anticuerpos</text>
+  <text x="215" y="428" text-anchor="middle" class="small muted">del propio cuerpo</text>
+  <rect x="420" y="150" width="350" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595.0" y="180" text-anchor="middle" class="title">Cómo interpretarlo</text>
+  <path d="M460 230 h24 v-26 h14 v26 h14 v-36 h14 v36 h14 v-30 h14 v30 h20" fill="none" stroke="var(--skin)" stroke-width="10" stroke-linejoin="round"/>
+  <circle cx="491" cy="232" r="9" fill="var(--bad)" opacity=".6"/>
+  <circle cx="519" cy="232" r="9" fill="var(--bad)" opacity=".6"/>
+  <circle cx="547" cy="232" r="9" fill="var(--bad)" opacity=".6"/>
+  <text x="640" y="214" text-anchor="middle" class="small">Articulaciones</text>
+  <text x="640" y="230" text-anchor="middle" class="small">hinchadas</text>
+  <text x="440" y="280" class="small">• Positivo: apoya el diagnóstico</text>
+  <text x="440" y="304" class="small">• No basta por sí solo</text>
+  <text x="440" y="328" class="small">• Puede salir positivo en sanos</text>
+  <text x="440" y="352" class="small">• y en otras enfermedades</text>
+  <text x="440" y="376" class="small">• Se combina con anti-CCP</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: prevencion-de-ulceras-por-presion
+image: prevencion-de-ulceras-por-presion.svg | Cómo la presión y la cizalla dañan la piel y los tejidos | Dos cortes de tejido sobre una superficie de apoyo: a la izquierda la presión entre el hueso y la superficie comprime los tejidos, a la derecha la cizalla deforma las capas al deslizarse el cuerpo
 ---
 
 ## [definition] Introducción

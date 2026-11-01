@@ -1,5 +1,6 @@
 ---
 slug: sinusitis-aguda
+image: sinusitis-aguda.svg | En la sinusitis la mucosa de los senos se inflama y el moco no drena. | Rostro con los senos frontales, etmoidales y maxilares dibujados, uno de los maxilares con moco retenido. A la derecha, los síntomas, cuándo sospechar infección bacteriana y los signos de urgencia.
 ---
 
 ## [definition] Introducción

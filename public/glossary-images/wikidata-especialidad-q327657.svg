@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Reumatología: enfermedades del aparato locomotor y autoinmunes</title>
+  <desc id="d">A la izquierda, una silueta con las articulaciones marcadas en hombros, codos, manos, columna, caderas, rodillas y tobillos. A la derecha, los grandes grupos de enfermedades reumáticas: artritis inflamatorias, autoinmunes sistémicas, por cristales, degenerativas, metabólicas del hueso y dolor de partes blandas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Articulaciones y tejidos</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Grandes grupos de enfermedades</text>
+<circle cx="200" cy="92.0" r="22.0" fill="var(--tissue)" stroke="var(--line)"/>
+<path d="M188.0 112.0 L150.0 126.0 C140.0 130.0 138.0 140.0 137.0 150.0 L128.0 240.0 L142.0 242.0 L154.0 162.0 L156.0 230.0 L154.0 370.0 L186.0 370.0 L196.0 250.0 L204.0 250.0 L214.0 370.0 L246.0 370.0 L244.0 230.0 L246.0 162.0 L258.0 242.0 L272.0 240.0 L263.0 150.0 C262.0 140.0 260.0 130.0 250.0 126.0 L212.0 112.0 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round"/>
+<circle cx="170" cy="132" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="230" cy="132" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="148" cy="160" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="252" cy="160" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="140" cy="238" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="260" cy="238" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="182" cy="230" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="218" cy="230" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="184" cy="300" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="216" cy="300" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="186" cy="362" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="214" cy="362" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="200" cy="190" r="8" fill="var(--warn)" stroke="var(--panel)" stroke-width="2"/>
+<text x="40" y="132" class="small">Hombros</text>
+<text x="40" y="240" class="small">Manos</text>
+<text x="300" y="300" class="small">Rodillas</text>
+<text x="300" y="190" class="small">Columna</text>
+<line x1="96" y1="128" x2="160" y2="132" stroke="var(--muted)" stroke-width="1"/>
+<line x1="84" y1="236" x2="130" y2="238" stroke="var(--muted)" stroke-width="1"/>
+<line x1="298" y1="296" x2="224" y2="300" stroke="var(--muted)" stroke-width="1"/>
+<line x1="298" y1="186" x2="210" y2="190" stroke="var(--muted)" stroke-width="1"/>
+<text x="200" y="404" text-anchor="middle" class="small" style="fill:var(--muted)">Especialidad médica, no quirúrgica:</text>
+<text x="200" y="420" text-anchor="middle" class="small" style="fill:var(--muted)">la cirugía corresponde a traumatología.</text>
+<rect x="416" y="66" width="8" height="46" rx="3" fill="var(--bad)"/>
+<text x="436" y="85" class="step" style="fill:var(--bad)">Artritis inflamatorias</text>
+<text x="436" y="104" class="small">artritis reumatoide, espondiloartritis</text>
+<rect x="416" y="124" width="8" height="46" rx="3" fill="var(--purple)"/>
+<text x="436" y="143" class="step" style="fill:var(--purple)">Autoinmunes sistémicas</text>
+<text x="436" y="162" class="small">lupus, Sjögren, vasculitis</text>
+<rect x="416" y="182" width="8" height="46" rx="3" fill="var(--warn)"/>
+<text x="436" y="201" class="step" style="fill:var(--warn)">Por cristales</text>
+<text x="436" y="220" class="small">gota</text>
+<rect x="416" y="240" width="8" height="46" rx="3" fill="var(--accent)"/>
+<text x="436" y="259" class="step" style="fill:var(--accent)">Degenerativas</text>
+<text x="436" y="278" class="small">artrosis</text>
+<rect x="416" y="298" width="8" height="46" rx="3" fill="var(--ok)"/>
+<text x="436" y="317" class="step" style="fill:var(--ok)">Metabólicas del hueso</text>
+<text x="436" y="336" class="small">osteoporosis</text>
+<rect x="416" y="356" width="8" height="46" rx="3" fill="var(--organ)"/>
+<text x="436" y="375" class="step" style="fill:var(--organ)">Dolor de partes blandas</text>
+<text x="436" y="394" class="small">tendinitis, fibromialgia</text>
+<text x="416" y="424" class="small" style="fill:var(--muted)">Más de doscientas enfermedades distintas.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

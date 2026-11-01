@@ -1,5 +1,6 @@
 ---
 slug: otitis-media-aguda
+image: otitis-media-aguda.svg | En la otitis media se acumula pus detrás del tímpano, en el oído medio. | Corte del oído con el conducto auditivo, el tímpano abombado, el oído medio lleno de pus y la trompa de Eustaquio hacia la garganta, junto a las causas, los síntomas y el manejo habitual.
 ---
 
 ## [definition] Introducción

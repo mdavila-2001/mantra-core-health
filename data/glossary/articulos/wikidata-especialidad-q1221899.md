@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1221899
+image: wikidata-especialidad-q1221899.svg | Órganos que atiende la ginecología y sus áreas de trabajo | Esquema frontal del útero, el cuello uterino, las trompas, los ovarios y la vagina, junto a las áreas de prevención, anticoncepción, ciclo menstrual, infecciones, menopausia y tumores
 ---
 
 ## [definition] Introducción

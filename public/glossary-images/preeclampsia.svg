@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Mecanismo y señales de alarma de la preeclampsia</title>
+  <desc id="d">Secuencia de cuatro pasos: una placenta con vasos mal formados libera sustancias que dañan los vasos, sube la presión arterial y se afectan órganos como el riñón, el hígado o el cerebro. Abajo, el control prenatal y las señales de alarma que requieren urgencias obstétricas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Preeclampsia: la placenta y la presión arterial</text>
+  <rect x="20" y="60" width="760" height="196" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="88" text-anchor="middle" class="title">Cómo se produce</text>
+  <rect x="40" y="104" width="160" height="74" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="120.0" y="138.0" text-anchor="middle" class="lab b">Placenta</text>
+  <text x="120.0" y="155.0" text-anchor="middle" class="small muted">vasos mal formados</text>
+  <line x1="202" y1="141.0" x2="228" y2="141.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="230" y="104" width="160" height="74" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="310.0" y="138.0" text-anchor="middle" class="lab b">Sustancias</text>
+  <text x="310.0" y="155.0" text-anchor="middle" class="small muted">dañan los vasos</text>
+  <line x1="392" y1="141.0" x2="418" y2="141.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="420" y="104" width="160" height="74" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="500.0" y="138.0" text-anchor="middle" class="lab b">Presión alta</text>
+  <text x="500.0" y="155.0" text-anchor="middle" class="small muted">en el embarazo</text>
+  <line x1="582" y1="141.0" x2="608" y2="141.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="610" y="104" width="160" height="74" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="690.0" y="138.0" text-anchor="middle" class="lab b">Órganos afectados</text>
+  <text x="690.0" y="155.0" text-anchor="middle" class="small muted">riñón, hígado, cerebro</text>
+  <text x="400" y="210" text-anchor="middle" class="small">Suele aparecer en la segunda mitad del embarazo o tras el parto</text>
+  <text x="400" y="230" text-anchor="middle" class="small muted">Proteínas en la orina y análisis ayudan al diagnóstico</text>
+  <rect x="20" y="272" width="300" height="168" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="170.0" y="300" text-anchor="middle" class="h">Prevención y control</text>
+  <text x="38" y="320" class="small">• Controles prenatales con presión</text>
+  <text x="38" y="346" class="small">• Aspirina si lo indica el médico</text>
+  <text x="38" y="372" class="small">• El parto resuelve la causa</text>
+  <rect x="336" y="272" width="444" height="168" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="350" y="296" class="lab b" style="fill:var(--red)">Urgencias obstétricas si</text>
+  <text x="350" y="320" class="small">• Dolor de cabeza intenso que no cede</text>
+  <text x="350" y="342" class="small">• Visión borrosa o luces</text>
+  <text x="350" y="364" class="small">• Dolor en la boca del estómago</text>
+  <text x="350" y="386" class="small">• Hinchazón brusca de cara o manos</text>
+  <text x="350" y="408" class="small">• Falta de aire</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

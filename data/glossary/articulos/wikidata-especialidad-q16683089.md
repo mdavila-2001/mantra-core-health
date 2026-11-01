@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q16683089
+image: wikidata-especialidad-q16683089.svg | Glándulas en las que trabaja la oncología endocrina | Silueta humana con la hipófisis, la tiroides, las paratiroides, las suprarrenales, el páncreas, el pulmón y el intestino señalados, junto a las claves de estos tumores y el equipo que los trata
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: hiperemesis-gravidica
+image: hiperemesis-gravidica.svg | Rasgos de la hiperemesis gravídica y su tratamiento | Barra que va de las náuseas habituales del embarazo a la hiperemesis con sus rasgos principales, junto a la silueta de una embarazada y las medidas de tratamiento
 ---
 
 ## [definition] Introducción

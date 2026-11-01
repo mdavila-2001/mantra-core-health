@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q3149141
+image: wikidata-especialidad-q3149141.svg | El equilibrio del sistema inmunitario en la inmunología clínica | Balanza con la defensa insuficiente de las inmunodeficiencias en un lado y la respuesta excesiva de la autoinmunidad y la alergia en el otro, con las herramientas de la especialidad
 ---
 
 ## [definition] Introducción

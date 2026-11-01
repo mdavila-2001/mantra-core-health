@@ -1,5 +1,6 @@
 ---
 slug: colonoscopia
+image: colonoscopia.svg | El colonoscopio recorre el intestino grueso desde el recto hasta el ciego. | Intestino grueso con un tubo flexible que entra por el recto y avanza hasta el ciego, un pólipo en el colon transverso y una lista numerada de los pasos de la colonoscopia.
 ---
 
 ## [definition] Introducción

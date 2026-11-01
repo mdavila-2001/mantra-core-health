@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-3168
+image: medlineplus-es-3168.svg | El balón abre la arteria estrechada y el stent la mantiene abierta. | Tres viñetas de una arteria: estrechada por una placa, con un balón inflado que la abre y con un stent de malla metálica colocado, junto a la vía de acceso y los cuidados posteriores.
 ---
 
 ## [definition] Introducción

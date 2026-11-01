@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2092
+image: medlineplus-es-2092.svg | La cirugía plástica abarca la reparación de tejidos y los cambios de aspecto por elección. | Esquemas de un injerto de piel trasladado a otra zona y de un colgajo que gira con sus vasos sanguíneos, junto a dos recuadros con ejemplos de cirugía reconstructiva y estética.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: crup
+image: crup.svg | En el crup se hincha la zona situada justo debajo de las cuerdas vocales. | Dos vías aéreas infantiles lado a lado, una normal y otra con la subglotis estrechada por la inflamación, con los signos típicos del crup y los signos de alarma.
 ---
 
 ## [definition] Introducción

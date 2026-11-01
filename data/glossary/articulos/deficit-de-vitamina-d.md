@@ -1,5 +1,6 @@
 ---
 slug: deficit-de-vitamina-d
+image: deficit-de-vitamina-d.svg | La vitamina D se fabrica en la piel con el sol y se activa en el hígado y el riñón. | El sol actúa sobre la piel, que fabrica vitamina D; el hígado la transforma en 25-hidroxivitamina D y el riñón en la forma activa, que favorece la absorción de calcio y la mineralización ósea. Abajo, causas de déficit y consecuencias.
 ---
 
 ## [definition] Introducción

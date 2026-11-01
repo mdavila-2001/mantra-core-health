@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Magnesio: dónde está y cuándo se mide</title>
+  <desc id="d">A la izquierda, barras sin escala que muestran que la mayor parte del magnesio está en los huesos y los músculos y muy poco en la sangre, y sus funciones en músculo, nervios, ritmo cardíaco, enzimas y hueso. A la derecha, un tubo de sangre, motivos para pedir la prueba y causas de magnesio bajo y alto.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Dónde está el magnesio</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Cuándo se pide</text>
+<text x="40" y="84" class="lab">Reparto aproximado en el cuerpo</text>
+<text x="40" y="114.4" class="small">Huesos</text>
+<rect x="130" y="100" width="230" height="20" rx="4" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="130" y="100" width="142.6" height="20" rx="4" fill="var(--bone)"/>
+<text x="40" y="150.4" class="small">Músculos</text>
+<rect x="130" y="136" width="230" height="20" rx="4" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="130" y="136" width="82.8" height="20" rx="4" fill="var(--organ)"/>
+<text x="40" y="186.4" class="small">Sangre</text>
+<rect x="130" y="172" width="230" height="20" rx="4" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="130" y="172" width="9.200000000000001" height="20" rx="4" fill="var(--vessel)"/>
+<text x="40" y="216" class="small" style="fill:var(--muted)">La sangre tiene una parte mínima:</text>
+<text x="40" y="232" class="small" style="fill:var(--muted)">un valor normal no descarta déficit.</text>
+<text x="40" y="266" class="h">Para qué sirve</text>
+<circle cx="70" cy="306" r="24" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2"/>
+<text x="70" y="311" text-anchor="middle" class="step">Mg</text>
+<text x="70" y="350" text-anchor="middle" class="small">Músculo</text>
+<circle cx="134" cy="306" r="24" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="134" y="311" text-anchor="middle" class="step">Mg</text>
+<text x="134" y="350" text-anchor="middle" class="small">Nervios</text>
+<circle cx="198" cy="306" r="24" fill="var(--bad-l)" stroke="var(--bad)" stroke-width="2"/>
+<text x="198" y="311" text-anchor="middle" class="step">Mg</text>
+<text x="198" y="350" text-anchor="middle" class="small">Ritmo</text>
+<circle cx="262" cy="306" r="24" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="2"/>
+<text x="262" y="311" text-anchor="middle" class="step">Mg</text>
+<text x="262" y="350" text-anchor="middle" class="small">Enzimas</text>
+<circle cx="326" cy="306" r="24" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
+<text x="326" y="311" text-anchor="middle" class="step">Mg</text>
+<text x="326" y="350" text-anchor="middle" class="small">Hueso</text>
+<text x="40" y="392" class="small" style="fill:var(--muted)">Interviene en cientos de reacciones</text>
+<text x="40" y="408" class="small" style="fill:var(--muted)">químicas de las células.</text>
+<rect x="418" y="70" width="30" height="14" rx="3" fill="var(--accent)"/>
+<path d="M420 84 V150 a13 13 0 0 0 26 0 V84 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<path d="M421.5 110 V150 a11.5 11.5 0 0 0 23 0 V110 Z" fill="var(--vessel)"/>
+<text x="433" y="186" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre</text>
+<text x="470" y="92" class="lab">Calambres, temblor,</text>
+<text x="470" y="110" class="lab">palpitaciones o arritmias.</text>
+<text x="470" y="128" class="lab">Calcio o potasio bajos que</text>
+<text x="470" y="146" class="lab">no se corrigen.</text>
+<text x="416" y="214" class="h" style="fill:var(--accent)">Bajo</text>
+<text x="606" y="214" class="h" style="fill:var(--bad)">Alto</text>
+<text x="416" y="242" class="lab">• Diarrea crónica</text>
+<text x="416" y="266" class="lab">• Alcohol</text>
+<text x="416" y="290" class="lab">• Diuréticos</text>
+<text x="416" y="314" class="lab">• Antiácidos de uso</text>
+<text x="427" y="338" class="lab">prolongado</text>
+<text x="416" y="362" class="lab">• Diabetes mal controlada</text>
+<text x="606" y="242" class="lab">• Enfermedad renal</text>
+<text x="606" y="266" class="lab">• Exceso de laxantes</text>
+<text x="617" y="290" class="lab">o antiácidos con</text>
+<text x="617" y="314" class="lab">magnesio</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

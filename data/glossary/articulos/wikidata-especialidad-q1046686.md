@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1046686
+image: wikidata-especialidad-q1046686.svg | La alergología estudia las reacciones del sistema inmunitario contra sustancias inofensivas. | Esquema de un mastocito con anticuerpos IgE que libera histamina ante un alérgeno, junto a una prueba cutánea en el antebrazo con dos ronchas positivas.
 ---
 
 ## [definition] Introducción

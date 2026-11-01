@@ -1,5 +1,6 @@
 ---
 slug: magnesio
+image: magnesio.svg | Casi todo el magnesio está en huesos y músculos; la sangre refleja una parte mínima. | Barras esquemáticas del reparto del magnesio en huesos, músculos y sangre, iconos de sus funciones y un tubo de sangre con causas de valores bajos y altos.
 ---
 
 ## [definition] Introducción

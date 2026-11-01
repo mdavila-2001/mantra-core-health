@@ -1,5 +1,6 @@
 ---
 slug: insuficiencia-renal-aguda
+image: insuficiencia-renal-aguda.svg | La lesión renal aguda puede originarse antes, dentro o después del riñón. | Tres riñones que ilustran las causas de la lesión renal aguda: falta de riego sanguíneo, daño del propio riñón y obstrucción de la salida de la orina, con síntomas y forma de detección.
 ---
 
 ## [definition] Introducción

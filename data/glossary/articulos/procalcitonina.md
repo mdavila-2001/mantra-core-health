@@ -1,5 +1,6 @@
 ---
 slug: procalcitonina
+image: procalcitonina.svg | La procalcitonina sube sobre todo en las infecciones bacterianas graves. | Comparación de una infección bacteriana con procalcitonina alta y una infección viral con procalcitonina poco elevada, junto a un tubo de sangre y los usos clínicos de la prueba.
 ---
 
 ## [definition] Introducción

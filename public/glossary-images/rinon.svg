@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Anatomía del riñón y la nefrona</title>
+  <desc id="d">A la izquierda, un riñón cortado a lo largo: la cápsula, la corteza externa, la médula con pirámides, los cálices que recogen la orina, la pelvis renal y el uréter que sale hacia la vejiga; por el hilio entran la arteria renal y sale la vena renal. A la derecha, una nefrona: el glomérulo, un ovillo de capilares dentro de la cápsula de Bowman, filtra la sangre y el túbulo recupera agua y sustancias útiles hasta formar la orina.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --cortex:#d9998a; --medulla:#b9675a; --pelvis:#f2d36b; --art:#c0392b; --vein:#3d5a99; --tube:#e0a526; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --cortex:#9a6458; --medulla:#73403a; --pelvis:#a99640; --art:#ef7467; --vein:#7f9ad6; --tube:#d6a440; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <!-- Riñón -->
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230" y="50" text-anchor="middle" class="title">Riñón en corte</text>
+  <path d="M190 80 C110 80 70 150 72 240 C74 330 120 400 195 400 C250 400 270 360 262 320 C256 290 230 280 230 240 C230 200 256 190 262 160 C270 120 250 80 190 80 Z" fill="var(--cortex)" stroke="var(--medulla)" stroke-width="3"/>
+  <!-- pirámides -->
+  <path d="M110 140 L170 175 L120 190 Z" fill="var(--medulla)"/>
+  <path d="M96 225 L172 228 L102 270 Z" fill="var(--medulla)"/>
+  <path d="M112 320 L172 282 L132 345 Z" fill="var(--medulla)"/>
+  <path d="M170 110 L200 168 L148 128 Z" fill="var(--medulla)"/>
+  <path d="M160 370 L194 312 L190 378 Z" fill="var(--medulla)"/>
+  <!-- cálices y pelvis -->
+  <path d="M170 178 C190 190 200 205 212 220 M172 232 H214 M170 284 C190 270 200 258 212 246 M198 168 C204 190 208 205 214 218 M192 312 C200 290 206 270 214 250" fill="none" stroke="var(--pelvis)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M208 210 C236 214 250 226 250 240 C250 258 236 266 212 262 Z" fill="var(--pelvis)"/>
+  <!-- uréter -->
+  <path d="M244 256 C270 290 280 340 286 430" fill="none" stroke="var(--pelvis)" stroke-width="8" stroke-linecap="round"/>
+  <!-- vasos -->
+  <path d="M234 222 C280 214 320 210 360 208" fill="none" stroke="var(--art)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M236 238 C280 240 320 244 360 246" fill="none" stroke="var(--vein)" stroke-width="9" stroke-linecap="round"/>
+  <text x="366" y="212" class="small" style="fill:var(--art)">Arteria renal</text>
+  <text x="366" y="250" class="small" style="fill:var(--vein)">Vena renal</text>
+  <text x="296" y="420" class="small">Uréter</text>
+  <text x="296" y="436" class="small muted">a la vejiga</text>
+  <!-- etiquetas -->
+  <line x1="80" y1="110" x2="40" y2="92" stroke="var(--muted)"/>
+  <text x="36" y="86" class="small">Cápsula</text>
+  <line x1="86" y1="300" x2="44" y2="330" stroke="var(--muted)"/>
+  <text x="36" y="346" class="small">Corteza</text>
+  <line x1="130" y1="250" x2="44" y2="270" stroke="var(--muted)"/>
+  <text x="36" y="266" class="small">Pirámide</text>
+  <text x="36" y="282" class="small">(médula)</text>
+  <line x1="236" y1="244" x2="290" y2="290" stroke="var(--muted)"/>
+  <text x="294" y="300" class="small">Pelvis renal</text>
+  <line x1="200" y1="196" x2="296" y2="150" stroke="var(--muted)"/>
+  <text x="300" y="150" class="small">Cálices</text>
+
+  <!-- Nefrona -->
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618" y="50" text-anchor="middle" class="title">Una nefrona</text>
+  <circle cx="530" cy="120" r="34" fill="none" stroke="var(--tube)" stroke-width="5"/>
+  <path d="M510 110 C520 95 540 95 545 110 C550 125 520 135 515 122 C512 112 530 108 538 120" fill="none" stroke="var(--art)" stroke-width="4"/>
+  <path d="M480 100 H508" stroke="var(--art)" stroke-width="4"/>
+  <text x="476" y="86" class="small" style="fill:var(--art)">Sangre que llega</text>
+  <path d="M560 112 C600 100 620 120 600 140 C580 160 610 180 630 170 L640 160 V340 C640 380 680 380 680 340 V180 C680 160 710 160 720 180 V400" fill="none" stroke="var(--tube)" stroke-width="6" stroke-linecap="round"/>
+  <text x="572" y="176" class="small">Glomérulo y cápsula:</text>
+  <text x="572" y="192" class="small">filtran la sangre</text>
+  <text x="496" y="300" class="small">Asa de Henle</text>
+  <line x1="580" y1="296" x2="636" y2="320" stroke="var(--muted)"/>
+  <path d="M690 250 C705 246 712 240 716 232" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <text x="652" y="236" class="small" style="fill:var(--accent)">recupera</text>
+  <text x="652" y="252" class="small" style="fill:var(--accent)">agua y sales</text>
+  <text x="728" y="410" text-anchor="end" class="small">Túbulo colector</text>
+  <text x="728" y="426" text-anchor="end" class="small muted">sale la orina</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

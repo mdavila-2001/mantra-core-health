@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q203337
+image: wikidata-especialidad-q203337.svg | Estructuras del aparato respiratorio que atiende la neumología. | Tráquea, bronquios, pulmones, pleura y diafragma señalados, junto a las enfermedades respiratorias que atiende la especialidad y sus pruebas principales.
 ---
 
 ## [definition] Introducción

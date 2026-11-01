@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Anemia ferropénica</title>
+  <desc id="d">A la izquierda, el hierro llega a la médula ósea para fabricar hemoglobina; se comparan glóbulos rojos normales, llenos de hemoglobina, con los de la ferropenia, más escasos, pequeños y pálidos, que transportan menos oxígeno. A la derecha, las causas frecuentes: pérdidas de sangre, más necesidad, poco aporte y mala absorción.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Sin hierro no hay hemoglobina</text>
+  <rect x="40" y="66" width="150" height="30" rx="8" fill="var(--warn)"/>
+  <text x="115.0" y="85.68" text-anchor="middle" class="lab" style="fill:var(--on)">Hierro</text>
+  <rect x="210" y="66" width="170" height="30" rx="8" fill="var(--accent)"/>
+  <text x="295.0" y="85.68" text-anchor="middle" class="lab" style="fill:var(--on)">Médula ósea</text>
+  <line x1="190" y1="81" x2="208" y2="81" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="120" y="140" text-anchor="middle" class="step" style="fill:var(--ok)">Normal</text>
+  <text x="290" y="140" text-anchor="middle" class="step" style="fill:var(--warn)">Ferropenia</text>
+  <circle cx="80" cy="180" r="18" fill="var(--vessel)"/>
+  <circle cx="80" cy="180" r="7" fill="var(--organ)"/>
+  <circle cx="124" cy="176" r="18" fill="var(--vessel)"/>
+  <circle cx="124" cy="176" r="7" fill="var(--organ)"/>
+  <circle cx="100" cy="222" r="18" fill="var(--vessel)"/>
+  <circle cx="100" cy="222" r="7" fill="var(--organ)"/>
+  <circle cx="148" cy="222" r="18" fill="var(--vessel)"/>
+  <circle cx="148" cy="222" r="7" fill="var(--organ)"/>
+  <circle cx="78" cy="262" r="18" fill="var(--vessel)"/>
+  <circle cx="78" cy="262" r="7" fill="var(--organ)"/>
+  <circle cx="126" cy="266" r="18" fill="var(--vessel)"/>
+  <circle cx="126" cy="266" r="7" fill="var(--organ)"/>
+  <circle cx="160" cy="260" r="18" fill="var(--vessel)"/>
+  <circle cx="160" cy="260" r="7" fill="var(--organ)"/>
+  <circle cx="262" cy="186" r="13" fill="var(--organ)"/>
+  <circle cx="262" cy="186" r="8" fill="var(--panel)"/>
+  <circle cx="310" cy="200" r="13" fill="var(--organ)"/>
+  <circle cx="310" cy="200" r="8" fill="var(--panel)"/>
+  <circle cx="280" cy="250" r="13" fill="var(--organ)"/>
+  <circle cx="280" cy="250" r="8" fill="var(--panel)"/>
+  <circle cx="330" cy="256" r="13" fill="var(--organ)"/>
+  <circle cx="330" cy="256" r="8" fill="var(--panel)"/>
+  <text x="120" y="310" text-anchor="middle" class="small">Glóbulos rojos</text>
+  <text x="120" y="328" text-anchor="middle" class="small">llenos de hemoglobina</text>
+  <text x="290" y="310" text-anchor="middle" class="small">Menos, más pequeños</text>
+  <text x="290" y="328" text-anchor="middle" class="small">y más pálidos</text>
+  <rect x="40" y="352" width="340" height="70" rx="10" fill="var(--tissue)"/>
+  <text x="210" y="380" text-anchor="middle" class="lab">Llega menos oxígeno a los tejidos</text>
+  <text x="210" y="402" text-anchor="middle" class="small muted">Cansancio, palidez, falta de aire</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Causas más frecuentes</text>
+  <rect x="436" y="66" width="324" height="64" rx="10" fill="var(--tissue)"/>
+  <rect x="436" y="66" width="8" height="64" rx="3" fill="var(--vessel)"/>
+  <text x="458" y="92" class="step">Pérdidas de sangre</text>
+  <text x="458" y="114" class="small muted">Reglas abundantes, sangrado digestivo</text>
+  <rect x="436" y="142" width="324" height="64" rx="10" fill="var(--tissue)"/>
+  <rect x="436" y="142" width="8" height="64" rx="3" fill="var(--purple)"/>
+  <text x="458" y="168" class="step">Más necesidad</text>
+  <text x="458" y="190" class="small muted">Embarazo, crecimiento infantil</text>
+  <rect x="436" y="218" width="324" height="64" rx="10" fill="var(--tissue)"/>
+  <rect x="436" y="218" width="8" height="64" rx="3" fill="var(--ok)"/>
+  <text x="458" y="244" class="step">Poco aporte</text>
+  <text x="458" y="266" class="small muted">Dieta pobre en hierro</text>
+  <rect x="436" y="294" width="324" height="64" rx="10" fill="var(--tissue)"/>
+  <rect x="436" y="294" width="8" height="64" rx="3" fill="var(--accent)"/>
+  <text x="458" y="320" class="step">Mala absorción</text>
+  <text x="458" y="342" class="small muted">Celiaquía, cirugía del estómago</text>
+  <text x="598" y="394" text-anchor="middle" class="small">Se busca la causa, no solo</text>
+  <text x="598" y="412" text-anchor="middle" class="small">se repone el hierro</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

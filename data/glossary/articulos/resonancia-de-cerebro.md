@@ -1,5 +1,6 @@
 ---
 slug: resonancia-de-cerebro
+image: resonancia-de-cerebro.svg | Equipo de resonancia y estructuras del encéfalo que estudia. | Equipo de resonancia magnética en forma de anillo con la mesa del paciente y un corte lateral del encéfalo con cerebro, cerebelo y tronco encefálico señalados.
 ---
 
 ## [definition] Introducción

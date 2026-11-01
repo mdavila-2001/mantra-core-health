@@ -1,5 +1,6 @@
 ---
 slug: ecocardiograma
+image: ecocardiograma.svg | El ecocardiograma usa ultrasonido para ver el corazón en movimiento. | Tórax con el corazón dividido en aurículas y ventrículos y un transductor de ultrasonido sobre el pecho emitiendo ondas, junto a lo que muestra la prueba y sus tres modalidades.
 ---
 
 ## [definition] Introducción

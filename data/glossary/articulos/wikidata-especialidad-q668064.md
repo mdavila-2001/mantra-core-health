@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q668064
+image: wikidata-especialidad-q668064.svg | Hígado, vesícula y vías biliares, territorio de la hepatología. | Hígado con vesícula y vías biliares hasta el colédoco y sus funciones, junto a las enfermedades que atiende la hepatología y sus herramientas de diagnóstico.
 ---
 
 ## [definition] Introducción

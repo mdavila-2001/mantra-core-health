@@ -1,5 +1,6 @@
 ---
 slug: estrenimiento
+image: estrenimiento.svg | Cuanto más tiempo pasan en el colon, más agua pierden las heces. | Intestino grueso con heces que avanzan hacia el recto y se secan al absorberse agua, junto a medidas útiles contra el estreñimiento y señales de alarma.
 ---
 
 ## [definition] Introducción

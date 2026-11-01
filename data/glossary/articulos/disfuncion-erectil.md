@@ -1,5 +1,6 @@
 ---
 slug: disfuncion-erectil
+image: disfuncion-erectil.svg | Mecanismo de la erección y factores que lo alteran | Secuencia desde el estímulo hasta el llenado de sangre del tejido eréctil con un corte transversal esquemático, junto a las causas vasculares, nerviosas, hormonales, psicológicas y farmacológicas
 ---
 
 ## [definition] Introducción

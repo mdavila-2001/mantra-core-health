@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q12128
+image: wikidata-especialidad-q12128.svg | La odontología cuida los dientes, las encías y las demás estructuras de la boca. | Corte de un diente con esmalte, dentina, pulpa, encía y raíz dentro del hueso, junto a seis tarjetas con las ramas de la odontología y un recuadro con medidas de prevención diaria.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: pediculosis
+image: pediculosis.svg | El piojo de la cabeza y las liendres que deja pegadas al pelo. | Piojo adulto ampliado y un pelo con liendres adheridas, junto a los síntomas de la pediculosis y los pasos para detectarla y tratarla.
 ---
 
 ## [definition] Introducción

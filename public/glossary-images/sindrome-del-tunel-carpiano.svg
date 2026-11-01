@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Síndrome del túnel carpiano</title>
+  <desc id="d">A la izquierda, una mano con el nervio mediano que pasa por el túnel carpiano de la muñeca y se ramifica hacia el pulgar, el índice y el medio, zona donde aparece el hormigueo. A la derecha, un corte de la muñeca con el nervio bajo el ligamento, los síntomas y los factores que lo favorecen.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Dónde se comprime el nervio</text>
+  <path d="M150 420 V300 C150 280 140 250 120 220 L90 160 C84 146 100 138 108 150 L140 200 V110 C140 96 160 96 160 110 V190 V90 C160 76 182 76 182 90 V190 V96 C182 82 204 82 204 96 V196 V120 C204 106 226 106 226 120 V250 C226 290 230 300 230 320 V420 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <path d="M190 420 V290 L170 250 L150 200 M190 290 L180 230 L171 160 M190 290 L193 230 L193 150 M190 290 L206 240" fill="none" stroke="var(--nerve)" stroke-width="3"/>
+  <rect x="150" y="286" width="82" height="26" rx="8" fill="var(--accent)" opacity=".55"/>
+  <text x="240" y="304" class="small">Túnel carpiano</text>
+  <ellipse cx="150" cy="210" rx="34" ry="70" fill="var(--warn)" opacity=".18"/>
+  <text x="56" y="120" class="small" style="fill:var(--warn)">Zona con</text>
+  <text x="56" y="136" class="small" style="fill:var(--warn)">hormigueo</text>
+  <text x="200" y="400" class="small" style="fill:var(--nerve)">Nervio mediano</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Síntomas y causas</text>
+  <rect x="436" y="70" width="324" height="80" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="92" class="small muted">Corte de la muñeca</text>
+  <path d="M480 136 C520 100 660 100 716 136 Z" fill="var(--bone)" stroke="var(--line)" stroke-width="1"/>
+  <path d="M480 108 H716" fill="none" stroke="var(--accent)" stroke-width="5"/>
+  <circle cx="598" cy="120" r="7" fill="var(--nerve)"/>
+  <text x="436" y="180" class="step">Síntomas</text>
+  <text x="440" y="206" class="lab">• Hormigueo en pulgar, índice y medio</text>
+  <text x="440" y="230" class="lab">• Peor de noche o al agarrar</text>
+  <text x="440" y="254" class="lab">• Torpeza y debilidad de la mano</text>
+  <text x="436" y="296" class="step">Favorecen</text>
+  <rect x="436" y="310" width="158" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="515.0" y="331.32" text-anchor="middle" class="small" style="fill:var(--ink)">Movimientos repetidos</text>
+  <rect x="602" y="310" width="158" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="681.0" y="331.32" text-anchor="middle" class="small" style="fill:var(--ink)">Embarazo</text>
+  <rect x="436" y="354" width="158" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="515.0" y="375.32" text-anchor="middle" class="small" style="fill:var(--ink)">Diabetes</text>
+  <rect x="602" y="354" width="158" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="681.0" y="375.32" text-anchor="middle" class="small" style="fill:var(--ink)">Hipotiroidismo</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

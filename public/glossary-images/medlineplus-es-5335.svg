@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Oxigenoterapia: cómo llega el oxígeno</title>
+  <desc id="d">A la izquierda, la tráquea y los pulmones con alvéolos por donde el oxígeno pasa a la sangre y se une a la hemoglobina. A la derecha, los dispositivos de administración de menor a mayor apoyo: cánula nasal, mascarilla simple, mascarilla con reservorio, alto flujo nasal y ventilación, y las fuentes de oxígeno.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Del aire a las células</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Formas de administrarlo</text>
+<path d="M200 80 V130 M200 130 C170 140 120 150 100 200 C84 250 100 320 150 330 C180 336 190 300 190 250 V140 M200 130 C230 140 280 150 300 200 C316 250 300 320 250 330 C220 336 210 300 210 250 V140" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="200" y="72" text-anchor="middle" class="small" style="fill:var(--muted)">Tráquea</text>
+<text x="150" y="360" text-anchor="middle" class="small" style="fill:var(--muted)">Pulmón</text>
+<circle cx="130" cy="230" r="10" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+<circle cx="150" cy="270" r="10" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+<circle cx="260" cy="240" r="10" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+<circle cx="250" cy="290" r="10" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="42" y="236" class="small">Alvéolos</text>
+<text x="200" y="396" text-anchor="middle" class="lab">El oxígeno pasa a la sangre y se une</text>
+<text x="200" y="414" text-anchor="middle" class="lab">a la hemoglobina de los glóbulos rojos.</text>
+<circle cx="436" cy="90" r="14" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
+<text x="462" y="86" class="lab" style="fill:var(--accent)">Cánula nasal</text>
+<text x="462" y="104" class="small" style="fill:var(--muted)">flujos bajos, cómoda</text>
+<circle cx="436" cy="152" r="14" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="2"/>
+<text x="462" y="148" class="lab" style="fill:var(--ok)">Mascarilla simple</text>
+<text x="462" y="166" class="small" style="fill:var(--muted)">flujos medios</text>
+<circle cx="436" cy="214" r="14" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
+<text x="462" y="210" class="lab" style="fill:var(--warn)">Mascarilla con reservorio</text>
+<text x="462" y="228" class="small" style="fill:var(--muted)">concentraciones altas</text>
+<circle cx="436" cy="276" r="14" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="462" y="272" class="lab" style="fill:var(--purple)">Alto flujo nasal</text>
+<text x="462" y="290" class="small" style="fill:var(--muted)">aire húmedo y caliente</text>
+<circle cx="436" cy="338" r="14" fill="var(--vessel)" stroke="var(--vessel)" stroke-width="2"/>
+<text x="462" y="334" class="lab" style="fill:var(--vessel)">Ventilación</text>
+<text x="462" y="352" class="small" style="fill:var(--muted)">apoyo con presión</text>
+<text x="416" y="396" class="small" style="fill:var(--muted)">Fuentes: cilindros, concentrador</text>
+<text x="416" y="414" class="small" style="fill:var(--muted)">o red del hospital. Se ajusta con oximetría.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

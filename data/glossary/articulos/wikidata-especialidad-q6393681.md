@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q6393681
+image: wikidata-especialidad-q6393681.svg | El rayo puede lesionar por impacto directo, descarga lateral, contacto o corriente de suelo. | Cuatro figuras que muestran cómo puede lesionar un rayo: impacto directo, descarga lateral desde un objeto, contacto y corriente de suelo. Abajo, las lesiones y secuelas principales y qué hacer ante una víctima y una tormenta.
 ---
 
 ## [definition] Introducción

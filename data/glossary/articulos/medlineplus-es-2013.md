@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2013
+image: medlineplus-es-2013.svg | El trasplante puede sustituir uno o los dos pulmones. | Dos esquemas de pulmones que distinguen el trasplante de un pulmón y el de ambos, con los pasos del proceso y los signos de alarma tras la cirugía.
 ---
 
 ## [definition] Introducción

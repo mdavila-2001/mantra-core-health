@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1650750
+image: wikidata-especialidad-q1650750.svg | Del tejido nervioso al diagnóstico integrado en cinco pasos. | Secuencia de cinco pasos: muestra, procesado, microscopio, estudio molecular e informe, con las enfermedades que estudia la neuropatología y las especialidades con que colabora.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se organiza la fisioterapia</title>
+  <desc id="d">Una figura humana que hace un ejercicio con banda elástica en el centro de un ciclo de cuatro pasos: valoración, objetivos compartidos, tratamiento activo y revisión de los avances.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --warn:#c0392b; --ok:#1f8a5b; --beam:#f2c46d; --violet:#7b5ea7; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --warn:#ef7467; --ok:#4cc38a; --beam:#8a6f2f; --violet:#b39ddb; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <text x="400" y="40" text-anchor="middle" class="title">Cómo se organiza la fisioterapia</text>
+  <circle cx="400" cy="250" r="150" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="8 6"/>
+  <circle cx="400" cy="190" r="16" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="3"/>
+  <path d="M400 206 V266 M400 266 L380 316 M400 266 L420 316 M400 222 L370 246 M400 222 L432 196" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M432 196 C450 220 440 280 420 316" fill="none" stroke="var(--ok)" stroke-width="3"/>
+  <text x="400" y="342" text-anchor="middle" class="small muted">Ejercicio con banda elástica</text>
+  <rect x="300" y="64" width="200" height="56" rx="12" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="400" y="88" text-anchor="middle" class="step">1 · Valoración</text>
+  <text x="400" y="108" text-anchor="middle" class="small">Historia y exploración</text>
+  <rect x="560" y="222" width="220" height="56" rx="12" fill="var(--panel)" stroke="var(--violet)" stroke-width="2"/>
+  <text x="670" y="246" text-anchor="middle" class="step">2 · Objetivos</text>
+  <text x="670" y="266" text-anchor="middle" class="small">Realistas y compartidos</text>
+  <rect x="290" y="380" width="220" height="56" rx="12" fill="var(--panel)" stroke="var(--ok)" stroke-width="2"/>
+  <text x="400" y="404" text-anchor="middle" class="step">3 · Tratamiento activo</text>
+  <text x="400" y="424" text-anchor="middle" class="small">Ejercicio, técnicas, educación</text>
+  <rect x="20" y="222" width="220" height="56" rx="12" fill="var(--panel)" stroke="var(--warn)" stroke-width="2"/>
+  <text x="130" y="246" text-anchor="middle" class="step">4 · Revisión</text>
+  <text x="130" y="266" text-anchor="middle" class="small">Medir avances y ajustar</text>
+  <path d="M500 110 C560 140 600 180 620 220" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M640 280 C620 340 570 380 512 400" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M290 400 C230 380 180 340 160 280" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M150 222 C180 160 240 120 298 100" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <text x="620" y="130" class="small muted">Ejercicios también en casa</text>
+  <text x="400" y="468" text-anchor="middle" class="small muted">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

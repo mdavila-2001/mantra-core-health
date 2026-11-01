@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Resonancia magnética de rodilla</title>
+  <desc id="d">A la izquierda, el equipo de resonancia con la persona tumbada que entra con los pies primero y una bobina colocada en la rodilla; se indica que no usa radiación y que hay que avisar si se lleva metal o marcapasos. A la derecha, las estructuras de la rodilla que muestra: fémur, tibia, peroné, rótula, meniscos y ligamentos cruzados.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">El equipo</text>
+  <rect x="160" y="90" width="200" height="220" rx="30" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <ellipse cx="260" cy="200" rx="56" ry="60" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <rect x="40" y="260" width="320" height="16" rx="6" fill="var(--bone)"/>
+  <path d="M90 276 V330 M330 276 V330" stroke="var(--bone)" stroke-width="8"/>
+  <rect x="60" y="240" width="210" height="20" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <rect x="200" y="232" width="44" height="34" rx="8" fill="var(--warn)" opacity=".7"/>
+  <text x="222" y="224" text-anchor="middle" class="small">Bobina de rodilla</text>
+  <text x="120" y="232" text-anchor="middle" class="small">Pies primero</text>
+  <text x="260" y="110" text-anchor="middle" class="small">Imán</text>
+  <text x="220" y="370" text-anchor="middle" class="small">Sin radiación: usa un imán y ondas de radio</text>
+  <text x="220" y="392" text-anchor="middle" class="small muted">Ruidoso; hay que estar quieto</text>
+  <rect x="40" y="406" width="360" height="34" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="220.0" y="428.0" text-anchor="middle" class="small">Avisar si lleva metal, marcapasos o implantes</text>
+  <rect x="440" y="20" width="340" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="610.0" y="50" text-anchor="middle" class="title">Qué muestra</text>
+  <path d="M540 60 L600 60 L604 200 C620 210 620 236 600 240 L540 240 C520 236 520 210 536 200 Z" fill="var(--bone)" stroke="var(--line)"/>
+  <text x="570" y="110" text-anchor="middle" class="small">Fémur</text>
+  <path d="M536 262 C520 270 530 290 544 290 L548 420 L592 420 L596 290 C612 290 620 270 604 262 Z" fill="var(--bone)" stroke="var(--line)"/>
+  <text x="570" y="360" text-anchor="middle" class="small">Tibia</text>
+  <rect x="604" y="290" width="14" height="130" rx="6" fill="var(--bone)" opacity=".8"/>
+  <path d="M530 248 Q550 240 566 250 M574 250 Q590 240 610 248" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M556 238 L586 264 M586 238 L556 264" stroke="var(--vessel)" stroke-width="4"/>
+  <ellipse cx="516" cy="226" rx="12" ry="20" fill="var(--bone)" stroke="var(--line)"/>
+  <circle cx="612" cy="248" r="3" fill="var(--ink)"/>
+  <path d="M612 248 L650 226" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="654" y="230" class="lab">Meniscos</text>
+  <circle cx="580" cy="256" r="3" fill="var(--ink)"/>
+  <path d="M580 256 L650 266" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="654" y="270" class="lab">Ligamentos</text>
+  <circle cx="508" cy="222" r="3" fill="var(--ink)"/>
+  <path d="M508 222 L490 168" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="494" y="172" class="lab">Rótula</text>
+  <text x="654" y="282" class="small">cruzados</text>
+  <text x="620" y="320" class="small">Peroné</text>
+  <text x="456" y="436" class="small muted">También cartílago, tendones y edema óseo</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q17147442
+image: wikidata-especialidad-q17147442.svg | Un catéter guiado por imagen llega a los vasos del cerebro. | Silueta con un catéter que sube desde la ingle hasta un vaso cerebral, junto a los tratamientos de trombectomía, aneurismas, malformaciones y estenosis, y señales de ictus.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Anatomía de los pulmones y el intercambio de gases</title>
+  <desc id="d">A la izquierda, los dos pulmones vistos de frente: la tráquea se divide en dos bronquios; el pulmón derecho tiene tres lóbulos y el izquierdo dos, con la escotadura del corazón; debajo, el diafragma. A la derecha, la ampliación de un alvéolo rodeado de un capilar: el oxígeno pasa del aire a la sangre y el dióxido de carbono pasa de la sangre al aire.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --lung:#f2c6c6; --lung-d:#c98484; --airway:#e9eef5; --airway-d:#7d8a99; --dia:#d7a86e; --o2:#c0392b; --co2:#2b6cb0; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --lung:#55363a; --lung-d:#b57a80; --airway:#2d3a48; --airway-d:#9fb0c1; --dia:#8a6b45; --o2:#ef7467; --co2:#6aa7e8; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--o2)"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--co2)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <rect x="20" y="20" width="440" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="240" y="48" text-anchor="middle" class="title">Los pulmones</text>
+  <!-- pulmón derecho (a la izquierda del dibujo) -->
+  <path d="M205 120 C170 110 120 150 105 230 C92 300 100 360 120 380 C160 390 200 375 215 360 L220 160 C220 140 215 125 205 120 Z" fill="var(--lung)" stroke="var(--lung-d)" stroke-width="2"/>
+  <path d="M110 230 C150 225 190 210 218 200" fill="none" stroke="var(--lung-d)" stroke-width="2"/>
+  <path d="M112 300 C150 280 190 260 217 255" fill="none" stroke="var(--lung-d)" stroke-width="2"/>
+  <!-- pulmón izquierdo -->
+  <path d="M275 120 C310 110 360 150 375 230 C388 300 380 360 360 380 C320 390 290 378 270 365 C285 340 300 320 290 300 C275 290 262 280 262 260 L260 160 C260 140 265 125 275 120 Z" fill="var(--lung)" stroke="var(--lung-d)" stroke-width="2"/>
+  <path d="M370 210 C330 230 290 260 265 275" fill="none" stroke="var(--lung-d)" stroke-width="2"/>
+  <!-- tráquea y bronquios -->
+  <rect x="230" y="64" width="20" height="96" rx="6" fill="var(--airway)" stroke="var(--airway-d)" stroke-width="2"/>
+  <path d="M240 158 C225 175 205 185 185 205 M240 158 C255 175 275 185 295 205" fill="none" stroke="var(--airway-d)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M185 205 L165 235 M185 205 L180 250 M295 205 L315 235 M295 205 L300 250" stroke="var(--airway-d)" stroke-width="4" stroke-linecap="round"/>
+  <!-- diafragma -->
+  <path d="M90 395 C150 360 200 375 240 385 C280 375 330 360 390 395" fill="none" stroke="var(--dia)" stroke-width="7" stroke-linecap="round"/>
+  <!-- etiquetas -->
+  <text x="258" y="80" class="lab">Tráquea</text>
+  <text x="60" y="180" class="small">Lóbulo superior</text>
+  <text x="44" y="262" class="small">Lóbulo medio</text>
+  <text x="44" y="340" class="small">Lóbulo inferior</text>
+  <text x="365" y="168" class="small">Superior</text>
+  <text x="385" y="300" class="small">Inferior</text>
+  <text x="300" y="342" class="small muted">Escotadura</text>
+  <text x="300" y="356" class="small muted">del corazón</text>
+  <text x="240" y="420" text-anchor="middle" class="lab">Diafragma</text>
+  <text x="140" y="110" text-anchor="middle" class="small muted">Pulmón derecho</text>
+  <text x="340" y="110" text-anchor="middle" class="small muted">Pulmón izquierdo</text>
+  <text x="240" y="445" text-anchor="middle" class="small muted">Vista de frente: el lado derecho de la persona queda a la izquierda</text>
+
+  <rect x="476" y="20" width="304" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="628" y="48" text-anchor="middle" class="title">Dentro de un alvéolo</text>
+  <path d="M628 70 V130" stroke="var(--airway-d)" stroke-width="10" stroke-linecap="round"/>
+  <text x="640" y="95" class="small">Bronquiolo</text>
+  <circle cx="628" cy="230" r="95" fill="var(--airway)" stroke="var(--airway-d)" stroke-width="2"/>
+  <text x="628" y="236" text-anchor="middle" class="lab">Aire</text>
+  <path d="M520 300 C540 350 600 360 628 345 C660 360 720 350 738 300" fill="none" stroke="var(--o2)" stroke-width="12" stroke-linecap="round" opacity=".8"/>
+  <path d="M540 170 C510 210 512 260 528 300" fill="none" stroke="var(--co2)" stroke-width="12" stroke-linecap="round" opacity=".7"/>
+  <text x="628" y="385" text-anchor="middle" class="small">Capilar (sangre)</text>
+  <path d="M600 270 L590 320" stroke="var(--o2)" stroke-width="3" marker-end="url(#ar)"/>
+  <text x="560" y="262" class="lab" style="fill:var(--o2);font-weight:700">O₂</text>
+  <path d="M660 325 L670 275" stroke="var(--co2)" stroke-width="3" marker-end="url(#ab)"/>
+  <text x="676" y="262" class="lab" style="fill:var(--co2);font-weight:700">CO₂</text>
+  <text x="628" y="410" text-anchor="middle" class="small">El oxígeno pasa a la sangre;</text>
+  <text x="628" y="426" text-anchor="middle" class="small">el dióxido de carbono sale con el aire</text>
+</svg>

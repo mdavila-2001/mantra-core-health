@@ -1,5 +1,6 @@
 ---
 slug: cloro
+image: cloro.svg | El cloruro es el principal ion negativo del líquido que rodea a las células. | Ilustración de iones de cloruro y sodio en el líquido extracelular, con las funciones de agua, equilibrio ácido y riñón, junto a un tubo de sangre y las situaciones que alteran el cloruro.
 ---
 
 ## [definition] Introducción

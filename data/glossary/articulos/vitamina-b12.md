@@ -1,5 +1,6 @@
 ---
 slug: vitamina-b12
+image: vitamina-b12.svg | Absorción de la vitamina B12 y causas de su déficit | Recorrido de la vitamina B12 desde los alimentos al estómago, donde se une al factor intrínseco, y al íleon, donde pasa a la sangre, junto a las causas y síntomas del déficit
 ---
 
 ## [definition] Introducción

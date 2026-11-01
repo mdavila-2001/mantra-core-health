@@ -1,5 +1,6 @@
 ---
 slug: intubacion-endotraqueal
+image: intubacion-endotraqueal.svg | En la intubación un tubo pasa entre las cuerdas vocales hasta la tráquea. | Corte lateral de cabeza y cuello con un tubo que entra por la boca, cruza las cuerdas vocales y queda en la tráquea con un globo inflado, conectado a un respirador, y una lista numerada de pasos.
 ---
 
 ## [definition] Introducción

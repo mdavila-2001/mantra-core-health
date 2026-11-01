@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Sepsis</title>
+  <desc id="d">A la izquierda, la secuencia de la sepsis: una infección provoca una respuesta descontrolada del organismo que daña los órganos, y una silueta humana con los órganos afectados marcados: cerebro con confusión, pulmones que respiran rápido, corazón con tensión baja y riñones que producen poca orina. A la derecha, lo que se hace: antibiótico precoz, sueros, control del foco, análisis y UCI si hay shock.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="480" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="260.0" y="50" text-anchor="middle" class="title">De la infección al fallo de órganos</text>
+  <rect x="40" y="64" width="140" height="56" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="110" y="88" text-anchor="middle" class="step">Infección</text>
+  <text x="110" y="106" text-anchor="middle" class="small">pulmón, orina, piel</text>
+  <path d="M110 122 L110 150" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="40" y="152" width="140" height="72" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="110" y="176" text-anchor="middle" class="step">Respuesta</text>
+  <text x="110" y="194" text-anchor="middle" class="small">descontrolada</text>
+  <text x="110" y="210" text-anchor="middle" class="small">del organismo</text>
+  <path d="M110 226 L110 256" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="40" y="258" width="140" height="56" rx="10" fill="var(--bad)" stroke="var(--line)"/>
+  <text x="110" y="282" text-anchor="middle" class="step" style="fill:var(--on)">Daño de</text>
+  <text x="110" y="300" text-anchor="middle" class="small" style="fill:var(--on)">órganos</text>
+  <g transform="translate(330 64) scale(1.1)" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5">
+    <circle cx="0" cy="26" r="24"/>
+    <rect x="-9" y="48" width="18" height="12"/>
+    <path d="M-52 62 Q0 52 52 62 L56 200 Q0 214 -56 200 Z"/>
+    <path d="M-52 64 Q-70 70 -74 120 L-80 200 Q-82 210 -72 210 L-64 130 L-56 100 Z"/>
+    <path d="M52 64 Q70 70 74 120 L80 200 Q82 210 72 210 L64 130 L56 100 Z"/>
+    <path d="M-54 198 L-50 320 Q-48 330 -36 330 L-28 330 L-6 214 Z"/>
+    <path d="M54 198 L50 320 Q48 330 36 330 L28 330 L6 214 Z"/>
+  </g>
+  <circle cx="330.0" cy="90.4" r="11" fill="var(--purple)" opacity=".85"/>
+  <circle cx="305.8" cy="171.8" r="11" fill="var(--accent)" opacity=".85"/>
+  <circle cx="354.2" cy="171.8" r="11" fill="var(--accent)" opacity=".85"/>
+  <circle cx="336.6" cy="187.2" r="11" fill="var(--vessel)" opacity=".85"/>
+  <circle cx="303.6" cy="231.2" r="11" fill="var(--warn)" opacity=".85"/>
+  <circle cx="356.4" cy="231.2" r="11" fill="var(--warn)" opacity=".85"/>
+  <text x="216" y="340" class="small">Cerebro: confusión</text>
+  <text x="216" y="358" class="small">Pulmón: respira rápido</text>
+  <text x="216" y="376" class="small">Corazón: tensión baja</text>
+  <text x="216" y="394" class="small">Riñón: orina poco</text>
+  <text x="40" y="430" text-anchor="fill:var(--bad)" class="step">Es una urgencia médica</text>
+  <rect x="520" y="20" width="260" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="650.0" y="50" text-anchor="middle" class="title">Qué se hace</text>
+  <rect x="536" y="58" width="228" height="58" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="650" y="82" text-anchor="middle" class="step">Antibiótico</text>
+  <text x="650" y="100" text-anchor="middle" class="small">lo antes posible</text>
+  <rect x="536" y="130" width="228" height="58" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="650" y="154" text-anchor="middle" class="step">Sueros</text>
+  <text x="650" y="172" text-anchor="middle" class="small">para la tensión</text>
+  <rect x="536" y="202" width="228" height="58" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="650" y="226" text-anchor="middle" class="step">Buscar el foco</text>
+  <text x="650" y="244" text-anchor="middle" class="small">y controlarlo</text>
+  <rect x="536" y="274" width="228" height="58" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="650" y="298" text-anchor="middle" class="step">Lactato y cultivos</text>
+  <text x="650" y="316" text-anchor="middle" class="small">para guiar</text>
+  <rect x="536" y="346" width="228" height="58" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="650" y="370" text-anchor="middle" class="step">UCI</text>
+  <text x="650" y="388" text-anchor="middle" class="small">si hay shock</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

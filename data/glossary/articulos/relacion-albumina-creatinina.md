@@ -1,5 +1,6 @@
 ---
 slug: relacion-albumina-creatinina
+image: relacion-albumina-creatinina.svg | La prueba detecta pequeñas pérdidas de albúmina por un riñón dañado. | Comparación entre un filtro renal sano que retiene la albúmina y uno dañado que la deja pasar a la orina, con un frasco de orina y la fracción albúmina sobre creatinina.
 ---
 
 ## [definition] Introducción
