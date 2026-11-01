@@ -13,17 +13,8 @@ import { MOCK_USERS } from './mock-session';
   template: `
     <aside class="mock" [class.mock--plegado]="plegado()" aria-label="Modo de demostración">
       <div class="mock__botones">
-        <button
-          type="button"
-          class="mock__boton"
-          [attr.aria-label]="plegado() ? 'Datos de prueba' : 'Ocultar'"
-          (click)="plegado.set(!plegado())"
-        >
-          @if (plegado()) {
-            <span class="mock__largo">Datos de prueba</span><span class="mock__corto" aria-hidden="true">Demo</span>
-          } @else {
-            Ocultar
-          }
+        <button type="button" class="mock__boton" (click)="plegado.set(!plegado())">
+          {{ plegado() ? 'Datos de prueba' : 'Ocultar' }}
         </button>
         <!-- El acceso al stock de componentes. Vive acá y no en el menú porque
              el panel ya está en todas las pantallas y no pide sesión: se llega
@@ -34,7 +25,7 @@ import { MOCK_USERS } from './mock-session';
       </div>
       @if (!plegado()) {
         <p class="mock__texto">
-          <strong>Modo demo:</strong> sin backend. Todo lo que ve sale de datos de prueba en memoria y
+          <strong>Rama mockup:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
           los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
         </p>
         <p class="mock__texto">
@@ -50,44 +41,59 @@ import { MOCK_USERS } from './mock-session';
     </aside>
   `,
   styles: `
-    /* El aviso no flota: va al final de la página, alineado a la derecha.
-       Fijo no había rincón que no tapara algo —arriba a la derecha la
-       portada del panel (propietario, 27/10/2026), abajo a la izquierda el
-       menú lateral, abajo a la derecha el campo de síntomas, en el teléfono
-       el del chat— y cada offset calculado se rompía cuando la cabecera o la
-       portada crecían. En el flujo no tapa nada por construcción; se llega a
-       él desplazando hasta abajo, que para una herramienta de demo alcanza.
-       «fit-content» y margen automático: ocupa sólo su ancho, a la derecha,
-       lejos del menú lateral. */
-    :host {
-      display: block;
-    }
+    /* Abajo a la IZQUIERDA, pegado al borde del contenido.
+
+       Estaba abajo a la derecha, que es exactamente donde el chat clava su
+       botón de enviar: el cartel se lo comía y en la maqueta no se podía
+       mandar un mensaje. Es la única esquina que una pantalla puede reclamar
+       —una acción fija al pie va a la derecha—, así que el cartel se corre.
+
+       Se apoya después del menú para no taparle los ítems; en angosto, donde
+       el menú no está fijo, vuelve al borde. */
     .mock {
-      inline-size: fit-content;
-      max-inline-size: min(22rem, calc(100% - 24px));
-      margin: 8px 12px 12px auto;
+      position: fixed;
+      inset-inline-start: calc(var(--w-nav, 264px) + 12px);
+      inset-block-end: 12px;
+      z-index: 9999;
+      max-inline-size: 22rem;
       padding: 10px 12px;
       border-radius: 10px;
-      background: var(--brand-primary);
-      color: var(--text-inverse);
+      background: #1f2937; /* colores-sueltos:ok cartel dev flotante */
+      color: #f9fafb; /* colores-sueltos:ok cartel dev flotante */
       font: 12px/1.4 system-ui, sans-serif;
-      box-shadow: var(--shadow-lg);
+      box-shadow: 0 8px 24px rgb(0 0 0 / 0.25); /* colores-sueltos:ok cartel dev flotante */
     }
-    .mock__corto { display: none; }
-    .mock--plegado .mock__boton {
-      padding: 5px 9px;
-      font-size: 11px;
-    }
-    /* En angosto: pastillas más chicas, y plegado dice «Demo». */
+    /* En angosto no hay esquina libre abajo: el chat clava ahí el campo de
+       escribir de borde a borde y el cartel lo tapaba. Se va arriba, bajo el
+       header de la aplicación, y a la derecha, que es la franja que las
+       cabeceras dejan vacía. Achicado: en 390 px dos pastillas grandes son un
+       cuarto del ancho. */
     @media (max-width: 60rem) {
+      /* Plegado: una sola pastilla dentro de la barra de arriba, a la derecha
+         de la hamburguesa, que es el único hueco que ninguna pantalla usa.
+         Bajo el header tapaba el nombre de la conversación.
+
+         Los 112 px son la cuenta de lo que hay antes: 12 de margen + 40 de
+         hamburguesa + 8 de aire + 44 de la flecha de «Volver» del marco + 8.
+         Eran 60 —justo el borde de la flecha— y el cartel la tapaba entera en
+         un teléfono, que es donde la flecha más se usa. */
+      .mock {
+        inset-inline-start: 112px;
+        inset-inline-end: auto;
+        inset-block-start: 14px;
+        inset-block-end: auto;
+        max-inline-size: calc(100vw - 16px);
+      }
+      /* Abierto, el panel baja del header y ocupa el ancho. */
+      .mock:not(.mock--plegado) {
+        inset-inline-start: 8px;
+        inset-inline-end: 8px;
+        inset-block-start: calc(var(--h-header, 64px) + 8px);
+      }
       .mock__boton {
         padding: 5px 10px;
         font-size: 11px;
       }
-      /* Plegado dice «Demo»: es lo que basta para saber que el modo está
-         encendido. */
-      .mock__largo { display: none; }
-      .mock__corto { display: inline; }
       /* El stock de componentes es una herramienta de escritorio. */
       .mock--plegado .mock__boton--stock {
         display: none;
@@ -115,14 +121,6 @@ import { MOCK_USERS } from './mock-session';
       text-decoration: none;
       white-space: nowrap;
     }
-    .mock__boton:hover {
-      filter: brightness(0.94);
-    }
-    .mock__boton:focus-visible {
-      outline: 3px solid #fff;
-      outline-offset: 3px;
-      box-shadow: 0 0 0 5px #111827;
-    }
     .mock__boton--stock {
       background: #38bdf8;
     }
@@ -140,14 +138,9 @@ import { MOCK_USERS } from './mock-session';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MockBanner {
-  /**
-   * En backend real el banner de datos de prueba / demo se desactiva completamente.
-   */
-  protected readonly activo = false;
   protected readonly plegado = signal(true);
   protected readonly cuentas = MOCK_USERS.map((u) => ({
     email: u.email,
     rol: u.roles[0] === 'PRACTITIONER' ? 'médica' : u.roles[0] === 'PATIENT' ? 'paciente' : u.roles[0] === 'SUPERADMIN' ? 'superadmin' : u.roles[0] === 'MEDICAL_VISITOR' ? 'visitador médico' : 'administrador',
   }));
 }
-

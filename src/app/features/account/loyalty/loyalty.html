@@ -1,16 +1,14 @@
-@if (!embebido()) {
-  <app-page-header
-    title="Mis puntos"
-    subtitle="Lo que sumó con sus compras, y cómo canjearlo."
-    [breadcrumbs]="breadcrumbs()"
-  />
-}
+<app-page-header
+  title="Mis puntos"
+  subtitle="Lo que sumaste con tus compras, y cómo canjearlo."
+  [breadcrumbs]="breadcrumbs()"
+/>
 
 @if (sinPerfilDePaciente) {
   <!-- Sesión válida de una cuenta que no es de un paciente: la pantalla no le
        corresponde, y no es un error. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
-    Su cuenta no tiene un perfil de paciente, así que no hay puntos propios que mirar.
+    Tu cuenta no tiene un perfil de paciente, así que no hay puntos propios que mirar.
   </app-alert>
 } @else {
   <app-view-state-host [state]="membresia()" (retry)="cargar()">
@@ -24,16 +22,17 @@
 
         @case ('canjear') {
           <section class="canjear" aria-labelledby="canjear-titulo" data-testid="canjear-form">
-            <h2 id="canjear-titulo" class="canjear__titulo">¿Cuántos puntos quiere canjear?</h2>
+            <h2 id="canjear-titulo" class="canjear__titulo">¿Cuántos puntos querés canjear?</h2>
             <p class="canjear__disponible">
-              Tiene
+              Tenés
               <strong class="cifras-tabulares">{{ cuenta.saldo }}</strong>
               {{ unidadDe(cuenta.saldo) }} disponibles.
             </p>
 
             <app-form-field
+              icon="star"
               label="Puntos a canjear"
-              hint="Después le mostramos el código para presentar en la caja del supermercado."
+              hint="Después te mostramos el código para presentar en el mostrador."
               [errorMessage]="errorDeCanje() ?? ''"
             >
               <app-input
@@ -70,17 +69,7 @@
 
         @default {
           <section class="saldo" aria-labelledby="saldo-titulo" data-testid="puntos-saldo">
-            <div class="saldo__encabezado">
-              <h2 id="saldo-titulo" class="saldo__programa">{{ cuenta.programa }}</h2>
-              <!-- F4.1: el nombre lo decide el cliente después. La marca va
-                   sólo mientras se muestre el nombre provisorio del front; el
-                   que publique el backend no la lleva. -->
-              @if (cuenta.programa === nombreDelPrograma) {
-                <app-badge variant="secondary" data-testid="puntos-nombre-provisional">
-                  nombre provisional
-                </app-badge>
-              }
-            </div>
+            <h2 id="saldo-titulo" class="saldo__programa">{{ cuenta.programa }}</h2>
 
             <p class="saldo__cifra">
               <strong class="cifras-tabulares" data-testid="puntos-disponibles">
@@ -92,7 +81,7 @@
             <dl class="saldo__datos">
               @if (cuenta.nivel; as nivel) {
                 <div class="saldo__dato">
-                  <dt>Su nivel</dt>
+                  <dt>Tu nivel</dt>
                   <dd data-testid="puntos-nivel">{{ nivel.nombre }}</dd>
                 </div>
               }
@@ -118,28 +107,12 @@
           </section>
 
           <section class="movimientos" aria-labelledby="movimientos-titulo">
-            <h2 id="movimientos-titulo" class="movimientos__titulo">Sus movimientos</h2>
-
-            @if (errorDeMovimientos(); as mensaje) {
-              <app-alert tone="error" data-testid="movimientos-error">{{ mensaje }}</app-alert>
-            }
+            <h2 id="movimientos-titulo" class="movimientos__titulo">Tus movimientos</h2>
 
             @if (movimientos().length === 0) {
-              @if (errorDeMovimientos() === null) {
-                <p class="movimientos__vacio" data-testid="movimientos-vacio">
-                  Todavía no hay movimientos para mostrar.
-                </p>
-              } @else {
-                <button
-                  app-button
-                  variant="outline"
-                  type="button"
-                  data-testid="movimientos-reintentar"
-                  (clicked)="cargarMovimientos()"
-                >
-                  Volver a intentar
-                </button>
-              }
+              <p class="movimientos__vacio" data-testid="movimientos-vacio">
+                Todavía no hay movimientos para mostrar.
+              </p>
             } @else {
               <ul class="movimientos__lista" data-testid="movimientos-lista">
                 @for (movimiento of movimientos(); track movimiento.id) {
@@ -152,11 +125,9 @@
                         {{ movimiento.ocurrioEl | date: 'dd/MM/yyyy' }}
                       </span>
                     </div>
-                    <span class="movimientos__etiquetas">
-                      <app-badge [variant]="tonoDe(movimiento)">
-                        {{ etiquetaDe(movimiento) }}
-                      </app-badge>
-                    </span>
+                    <app-badge [variant]="tonoDe(movimiento)">
+                      {{ etiquetaDe(movimiento) }}
+                    </app-badge>
                     <!-- El signo va en el texto: el color no puede ser lo único
                          que diga si sumaste o restaste. -->
                     <span class="movimientos__puntos cifras-tabulares" aria-hidden="true">

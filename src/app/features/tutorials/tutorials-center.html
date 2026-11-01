@@ -1,6 +1,6 @@
 <app-page-header
   title="Centro de tutoriales"
-  subtitle="Recorridos guiados sobre la aplicación real. Puede dejarlos y retomarlos cuando quiera."
+  subtitle="Recorridos guiados sobre la aplicación real. Podés dejarlos y retomarlos cuando quieras."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -32,9 +32,9 @@
   <app-card variant="outlined" padding="lg" appTutorialTarget="tutoriales-avance">
     <div class="tutoriales__avance">
       <div class="tutoriales__avance-texto">
-        <h2 class="tutoriales__titulo">Su avance</h2>
+        <h2 class="tutoriales__titulo">Tu avance</h2>
         <p class="tutoriales__nota">
-          Completó {{ completados() }} de {{ total() }} tutoriales disponibles para su rol.
+          Completaste {{ completados() }} de {{ total() }} tutoriales disponibles para tu rol.
         </p>
       </div>
 
@@ -72,13 +72,7 @@
               <p class="tutoriales__tarjeta-texto">{{ fila.definicion.description }}</p>
 
               <div class="tutoriales__tarjeta-acciones">
-                <button
-                  app-button
-                  variant="primary"
-                  type="button"
-                  [attr.aria-label]="fila.accion + ': ' + fila.definicion.title"
-                  (clicked)="abrir(fila)"
-                >
+                <button app-button variant="primary" type="button" (clicked)="abrir(fila)">
                   {{ fila.accion }}
                 </button>
               </div>
@@ -100,7 +94,7 @@
     <div class="tutoriales__filtro" appTutorialTarget="tutoriales-busqueda">
       <app-search-field
         label="Buscar un tutorial"
-        placeholder="Qué quiere aprender"
+        placeholder="Qué querés aprender"
         (searched)="buscar($event)"
       />
     </div>
@@ -160,13 +154,7 @@
               }
 
               <div class="tutoriales__tarjeta-acciones">
-                <button
-                  app-button
-                  variant="primary"
-                  type="button"
-                  [attr.aria-label]="fila.accion + ': ' + fila.definicion.title"
-                  (clicked)="abrir(fila)"
-                >
+                <button app-button variant="primary" type="button" (clicked)="abrir(fila)">
                   {{ fila.accion }}
                 </button>
 
@@ -185,7 +173,7 @@
       <!-- Un vacío que no ofrece salida deja a la persona sin qué hacer: el
            vacío de un listado filtrado casi siempre es culpa del filtro. -->
       <div class="tutoriales__vacio">
-        <p class="tutoriales__nota">Ningún tutorial coincide con lo que buscó.</p>
+        <p class="tutoriales__nota">Ningún tutorial coincide con lo que buscaste.</p>
         <button app-button variant="outline" type="button" (clicked)="limpiarFiltros()">
           Limpiar los filtros
         </button>

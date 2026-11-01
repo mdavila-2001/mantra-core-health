@@ -229,6 +229,9 @@ producto:
    rutas profundas para lo interno.
 3. **Quitarlo**: si nadie lo usa, mantenerlo es deuda documental.
 
+Registrado como brecha `MEDIUM` en
+[el análisis de brechas](../reports/documentation-gap-analysis.md).
+
 ## Detección de cambios
 
 **Todos los componentes son `OnPush`**, con una sola excepción: `App` (la raíz),
