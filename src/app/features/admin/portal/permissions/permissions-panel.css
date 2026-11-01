@@ -1,26 +1,145 @@
-/* Estilos comunes de los paneles del gobierno de permisos. Sólo tokens. */
+/* Estilos comunes de las pantallas y paneles del gobierno de permisos. Sólo tokens.
+   Página (estructura Atlas): cabecera → aviso compacto → UNA tarjeta con pestañas. */
 :host {
   display: block;
+  min-inline-size: 0;
+}
+
+.perm-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.perm-honesty {
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.perm-card {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
 }
 
 .panel {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
-  padding-block: var(--sp-4);
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+  min-inline-size: 0;
 }
 
 .panel__note,
 .panel__empty {
   margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
 
+/* Filtros en una fila: se reparten el ancho y se apilan cuando no caben. */
 .panel__toolbar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
   gap: var(--sp-3);
   align-items: end;
+}
+
+/* Filtros que crecen + la acción de la pestaña al final de la misma fila. */
+.panel__toolbar--action {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.panel__toolbar--action > :not(.panel__actions) {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+}
+
+.panel__toolbar--action > .panel__actions {
+  flex: 1 0 auto;
+}
+
+.panel__kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel__kpis > li {
+  display: grid;
+  min-inline-size: 0;
+}
+
+/* Sin elección todavía: la próxima acción, a un clic (S3). */
+.panel__pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.panel__pick-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.panel__pick-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel__pick-list > li {
+  display: grid;
+}
+
+.panel__pick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  inline-size: 100%;
+  min-block-size: var(--h-ctrl);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.panel__pick-item:hover {
+  border-color: var(--brand-primary);
+}
+
+.panel__pick-item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (min-width: 780px) {
+  .panel__kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .panel__actions {

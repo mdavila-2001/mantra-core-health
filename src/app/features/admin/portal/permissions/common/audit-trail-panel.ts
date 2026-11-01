@@ -64,6 +64,7 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
         [columns]="columns()"
         [trackBy]="byId"
         [rowLabel]="rowName"
+        dense
         stackedOnMobile
         fitContainer
         (retry)="load()"

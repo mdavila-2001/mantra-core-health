@@ -27,6 +27,7 @@ import {
   type PermissionScopeInput,
   type RolePermissionBinding,
 } from '../../../../../core/data-access/authz-governance/authz-governance.types';
+import { Breakpoints } from '../../../../../core/layout/breakpoints';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
@@ -38,6 +39,7 @@ import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../../../shared/components/molecules/search-field/search-field';
+import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { portalUrl } from '../../portal-nav';
@@ -72,7 +74,7 @@ interface Cell {
  */
 @Component({
   selector: 'app-portal-role-permissions-editor',
-  imports: [AppButton, Badge, Select, Alert, FormField, SearchField, DataTable],
+  imports: [AppButton, Badge, Select, Alert, FormField, SearchField, DataTable, MetricCard],
   template: `
     <div class="panel" data-testid="portal-role-editor">
       @if (notice(); as message) {
@@ -89,11 +91,8 @@ interface Cell {
           conservan como están en el rol.
         </app-alert>
       }
-      <div class="panel__toolbar">
-        <app-form-field
-          label="Rol"
-          [hint]="rolesUnavailable() ? 'No llegó la lista de roles.' : 'Elija el rol cuyos permisos quiere editar.'"
-        >
+      <div class="panel__toolbar panel__toolbar--wide">
+        <app-form-field label="Rol" [errorMessage]="rolesUnavailable() ? 'No llegó la lista de roles.' : ''">
           <app-select
             ariaLabel="Rol"
             placeholder="Elegir un rol"
@@ -104,20 +103,53 @@ interface Cell {
             (valueChange)="roleChanged.emit($event ?? '')"
           />
         </app-form-field>
-        <app-search-field label="Buscar permisos" placeholder="Código, nombre o recurso" [(value)]="query" />
+        @if (roleId() !== '') {
+          <app-search-field label="Buscar permisos" placeholder="Código, nombre o recurso" [(value)]="query" />
+        }
       </div>
 
-      <app-data-table
-        data-testid="portal-role-editor-table"
-        caption="Permisos por acción del rol elegido"
-        [state]="rows()"
-        [columns]="columns()"
-        [trackBy]="byId"
-        [rowLabel]="rowName"
-        stackedOnMobile
-        fitContainer
-        (retry)="reload()"
-      />
+      @if (roleId() === '') {
+        <section class="panel__pick" aria-labelledby="role-pick-title">
+          <h2 class="panel__pick-title" id="role-pick-title">Elija un rol para ver y editar qué permite y qué niega.</h2>
+          @if (roles().length > 0) {
+            <ul class="panel__pick-list">
+              @for (r of roles(); track r.id) {
+                <li>
+                  <button type="button" class="panel__pick-item" (click)="roleChanged.emit(r.id)">
+                    <span class="panel__name">{{ r.name }}</span>
+                    <code class="panel__code">{{ r.code }}</code>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      } @else {
+        @if (catalogReady()) {
+          <ul class="panel__kpis" aria-label="Resumen del rol" data-testid="portal-role-editor-kpis">
+            <li><app-metric-card label="Permite" tone="success" icon="check-circle" [value]="kpis().allow" /></li>
+            <li><app-metric-card label="Niega" tone="error" icon="lock" [value]="kpis().deny" /></li>
+            <li>
+              <app-metric-card label="Sensibles" tone="warning" icon="shield" [value]="kpis().dangerous" />
+            </li>
+            <li><app-metric-card label="Pendientes" tone="info" icon="edit" [value]="changes().total" /></li>
+          </ul>
+        }
+
+        <app-data-table
+          data-testid="portal-role-editor-table"
+          caption="Permisos por acción del rol elegido"
+          [state]="rows()"
+          [columns]="columns()"
+          [trackBy]="byId"
+          [rowLabel]="rowName"
+          [maxHeight]="narrow() ? null : '60vh'"
+          dense
+          stackedOnMobile
+          fitContainer
+          (retry)="reload()"
+        />
+      }
 
       @if (roleId() !== '') {
         <div class="panel__actions">
@@ -184,6 +216,8 @@ export class RolePermissionsEditor {
   private readonly authz = inject(AuthzAdminClient);
   private readonly governance = inject(AuthzGovernanceClient);
   private readonly dialogs = inject(DialogService);
+  /** En teléfono la tabla apilada no va en una caja con alto propio: se lee con el desplazamiento de la página. */
+  protected readonly narrow = inject(Breakpoints).isNavDrawer;
 
   /** El rol elegido (vive en la URL); `''` es ninguno. */
   readonly roleId = input.required<string>();
@@ -198,7 +232,7 @@ export class RolePermissionsEditor {
   protected readonly truncated = signal(false);
   protected readonly rolesUnavailable = signal(false);
 
-  private readonly roles = signal<readonly AssignableRole[]>([]);
+  protected readonly roles = signal<readonly AssignableRole[]>([]);
   private readonly catalog = signal<ViewState<readonly PermissionSummary[]>>(loading());
   /** Lo que el servidor tiene hoy, por permiso. */
   private readonly serverState = signal<ReadonlyMap<string, Cell>>(new Map());
@@ -237,6 +271,22 @@ export class RolePermissionsEditor {
       else if (cell.effect !== '' && (was?.effect !== cell.effect || was?.scope !== cell.scope)) changed += 1;
     }
     return { added, changed, removed, total: added + changed + removed };
+  });
+  protected readonly catalogReady = computed(() => this.catalog().status === 'ready');
+  /** Lo que el borrador deja: es lo que se guardaría, no lo que el servidor tiene. */
+  protected readonly kpis = computed(() => {
+    const state = this.catalog();
+    const dangerousIds = new Set(state.status === 'ready' ? state.data.filter((p) => p.isDangerous).map((p) => p.id) : []);
+    let allow = 0;
+    let deny = 0;
+    let dangerous = 0;
+    for (const [id, cell] of this.draft()) {
+      if (cell.effect === 'ALLOW') {
+        allow += 1;
+        if (dangerousIds.has(id)) dangerous += 1;
+      } else if (cell.effect === 'DENY') deny += 1;
+    }
+    return { allow, deny, dangerous };
   });
   protected readonly bindingCount = computed(() => [...this.draft().values()].filter((c) => c.effect !== '').length);
   protected readonly summary = computed(() => {
