@@ -43,6 +43,9 @@ ninguna
 - La rama `test` está dada de baja: un solo PR a `dev`. `mockup` no se tocó.
 - La lista «Piezas femeninas del modelo» filtra las clases genéricas («conducto», «tubérculo»): 51 entradas.
 
+- Rebasado sobre `dev` del 01/11: la regla nueva `MAX_300_LINES` obligó a sacar de `glossary-anatomy-atlas.ts` las listas de «Mujer» y los rótulos de referencias a `glossary-anatomy-atlas.logic.ts`, y a unificar las dos listas del HTML en un `@for` (`node scripts/check-max-lines.mjs` en verde).
+- `dev` trae dos specs rotos ajenos (`adt/inpatient-indicators.spec.ts`, `adt/bed-compatibility.spec.ts`) que frenan la compilación de vitest: para correr las 59 del atlas se apartaron sólo en local y se restauraron sin cambios. Hay que arreglarlos en su carril.
+
 ## Riesgos residuales
 - `organs.glb` pasa de 295 KB a 829 KB y `skeleton.glb` de 885 KB a 974 KB; «Hombre» también los baja.
 - Las piezas se escalan al cuerpo de referencia (escala 0,80): forma femenina, tamaño del modelo masculino.

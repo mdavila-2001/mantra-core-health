@@ -24,7 +24,6 @@ import type {
   AnatomyIndexEntry,
   AnatomyLayer,
   AnatomyPart,
-  AnatomyReference,
   AnatomySex,
   AnatomyStructure,
 } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
@@ -59,6 +58,10 @@ import {
   ontologyUrl,
   pageOf,
   pageRelationGroups,
+  referenceLabel,
+  referenceUrl,
+  femaleMissingEntries,
+  femaleModelEntries,
   relatedMeshes,
   searchIndex,
   sideLabel,
@@ -70,7 +73,7 @@ import {
 const SEARCH_LIMIT = 500;
 
 /** Filas por página en cada lista del panel: el panel no crece con el catálogo. */
-const PAGE_SIZE = { results: 8, relations: 10, references: 6, female: 12, femaleMissing: 12 } as const;
+const PAGE_SIZE = { results: 8, relations: 10, references: 6, female: 12 } as const;
 
 const SEX_OPTIONS: readonly SegmentedOption<AnatomySex>[] = [
   { value: 'male', label: 'Hombre' },
@@ -131,6 +134,9 @@ export class GlossaryAnatomyAtlas {
   protected readonly layerLabels = LAYER_LABELS;
   protected readonly displayName = displayName;
   protected readonly ontologyUrl = ontologyUrl;
+  protected readonly referenceUrl = referenceUrl;
+  protected readonly referenceLabel = referenceLabel;
+  protected readonly pageOf = pageOf;
   protected readonly modelUrls: Readonly<Record<AnatomyLayer, string>> = {
     skeleton: this.atlas.modelUrl('skeleton.glb'),
     muscles: this.atlas.modelUrl('muscles.glb'),
@@ -227,36 +233,16 @@ export class GlossaryAnatomyAtlas {
     pageOf(this.structure()?.definition?.refs ?? [], this.referencesPage(), PAGE_SIZE.references),
   );
 
-  /**
-   * Lo que se ve sólo en «Mujer», para elegirlo sin tocar el lienzo: las
-   * estructuras de las piezas femeninas, los órganos que ellas forman (útero,
-   * mama) y las estructuras exclusivamente femeninas con pieza.
-   */
-  protected readonly femaleModel = computed(() => {
-    const femeninas = new Set(this.parts().filter((p) => p.sex === 'female').map((p) => p.structureId));
-    // Sólo los órganos: las clases genéricas que también quedan formadas sólo
-    // por piezas femeninas («conducto», «tubérculo») no ayudan a elegir. Los
-    // órganos de HuBMAP que UBERON no trae (la mama izquierda) son `FMA:`.
-    const exclusivasIds = new Set(ATLAS_3D_FEMALE_ONLY_IDS);
-    const compuestas = Object.entries(this.composites())
-      .filter(([id, miembros]) => (exclusivasIds.has(id) || id.startsWith('FMA:')) && miembros.every((m) => femeninas.has(m)))
-      .map(([id]) => id);
-    const exclusivas = ATLAS_3D_FEMALE_ONLY_IDS.filter((id) => this.entryById().get(id)?.[3] === 1);
-    return entriesOf([...femeninas, ...compuestas, ...exclusivas], this.entryById());
-  });
-
-  /** Las estructuras exclusivamente femeninas que ninguna malla libre dibuja (la vagina, la vulva). */
-  protected readonly femaleMissing = computed(() =>
-    entriesOf(
-      ATLAS_3D_FEMALE_ONLY_IDS.filter((id) => this.entryById().get(id)?.[3] === 0),
-      this.entryById(),
-    ),
+  protected readonly femaleModel = computed(() =>
+    femaleModelEntries(this.parts(), this.composites(), ATLAS_3D_FEMALE_ONLY_IDS, this.entryById()),
   );
+  protected readonly femaleMissing = computed(() => femaleMissingEntries(ATLAS_3D_FEMALE_ONLY_IDS, this.entryById()));
 
-  protected readonly femaleShown = computed(() => pageOf(this.femaleModel(), this.femalePage(), PAGE_SIZE.female));
-  protected readonly femaleMissingShown = computed(() =>
-    pageOf(this.femaleMissing(), this.femaleMissingPage(), PAGE_SIZE.femaleMissing),
-  );
+  /** Las dos listas de «Mujer»: con pieza en el modelo y sin malla libre. */
+  protected readonly femaleGroups = computed(() => [
+    { id: 'modelo', title: 'Piezas femeninas del modelo', entries: this.femaleModel(), page: this.femalePage },
+    { id: 'sin-pieza', title: 'Estructuras femeninas sin pieza 3D', entries: this.femaleMissing(), page: this.femaleMissingPage },
+  ]);
 
   protected readonly viewerLabel = computed(() => {
     const visibles = this.layers().map((c) => LAYER_LABELS[c].toLowerCase()).join(', ');
@@ -417,41 +403,5 @@ export class GlossaryAnatomyAtlas {
     return entry[3] === 1;
   }
 
-  /** El enlace de una referencia, si es de un tipo que se puede abrir. */
-  protected referenceUrl(ref: AnatomyReference): string | null {
-    switch (ref.kind) {
-      case 'pmid':
-        return `https://pubmed.ncbi.nlm.nih.gov/${ref.value}/`;
-      case 'doi':
-        return `https://doi.org/${ref.value}`;
-      case 'wikipedia':
-        return `https://en.wikipedia.org/wiki/${encodeURIComponent(ref.value)}`;
-      case 'url':
-      case 'curator':
-        return ref.value;
-      default:
-        return null;
-    }
-  }
-
-  protected referenceLabel(ref: AnatomyReference): string {
-    const nombres: Record<AnatomyReference['kind'], string> = {
-      pmid: 'PubMed',
-      doi: 'DOI',
-      isbn: 'ISBN',
-      wikipedia: 'Wikipedia (en)',
-      url: 'Enlace',
-      curator: 'Curador (ORCID)',
-      xref: 'Referencia cruzada',
-    };
-    return `${nombres[ref.kind]}: ${ref.value}`;
-  }
 }
 
-/** Las filas del índice de estos ids, sin repetir y en orden alfabético castellano. */
-function entriesOf(ids: readonly string[], porId: ReadonlyMap<string, AnatomyIndexEntry>): AnatomyIndexEntry[] {
-  return [...new Set(ids)]
-    .map((id) => porId.get(id))
-    .filter((e): e is AnatomyIndexEntry => e !== undefined)
-    .sort((a, b) => displayName(a[1], a[2], a[0]).localeCompare(displayName(b[1], b[2], b[0]), 'es'));
-}
