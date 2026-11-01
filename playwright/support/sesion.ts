@@ -99,20 +99,22 @@ async function intentarIngreso(page: Page, actor: Actor): Promise<void> {
   await escribir(page, 'login-password', actor.clave);
   await page.getByTestId('login-submit').click();
 
-  // Tres destinos legítimos: el panel, la elección de organización cuando la
-  // sesión pertenece a más de una, o la elección de portal cuando la cuenta
-  // administra Y tiene reportería (`/portal-selector`). Esperar sólo el panel
-  // dejaría la suite roja para cualquiera con dos organizaciones o con ambos
-  // accesos, que es normal.
-  await page.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/, { timeout: 60_000 });
+  // Destinos legítimos: el panel, o la elección de organización cuando la sesión pertenece a más de una **y no tiene
+  // alcance de plataforma** (una médica con dos organizaciones). La elección de portal (`/portal-selector`) sólo
+  // existe con la maqueta de reportería encendida (`PW_REPORTING_MOCK=1`, frente 01 H4): sin ella la app redirige
+  // `/portal-selector` a `/`, así que aceptarlo escondería una regresión. Quien necesite saber CUÁL fue el aterrizaje
+  // (sin aceptar nada de más) usa `entrarYObservar`.
+  const withMock = process.env['PW_REPORTING_MOCK'] === '1';
+  const destinos = withMock ? /\/(dashboard|auth\/organization|portal-selector)/ : /\/(dashboard|auth\/organization)/;
+  await page.waitForURL(destinos, { timeout: 60_000 });
 
   if (page.url().includes('/auth/organization')) {
     await page.getByTestId('tenant-opcion').first().click();
-    await page.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 60_000 });
+    await page.waitForURL(withMock ? /\/(dashboard|portal-selector)/ : /\/dashboard/, { timeout: 60_000 });
   }
 
   // Estas pruebas recorren la aplicación de administración: se elige ese portal.
-  if (page.url().includes('/portal-selector')) {
+  if (withMock && page.url().includes('/portal-selector')) {
     await page.getByRole('link', { name: /Portal de administración/ }).click();
     await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
@@ -154,4 +156,48 @@ export async function estable(page: Page): Promise<void> {
     // Deliberado: la inestabilidad se reporta como estado de la ruta.
   }
   await expect(page.locator('app-root')).not.toBeEmpty();
+}
+
+/** Lo que se vio al entrar: las rutas visitadas en orden, sin haber hecho clic en nada. */
+export interface EntradaObservada {
+  /** Primera ruta (path + query) a la que navegó la app tras el envío del login. */
+  readonly primeraTrasLogin: string;
+  /** Todas las rutas por las que pasó el documento principal, en orden, desde el envío del login. */
+  readonly rutas: readonly string[];
+}
+
+/**
+ * Entra por la pantalla de ingreso y **observa dónde aterriza**, sin hacer clic en nada ni aceptar destinos de
+ * más (a diferencia de `entrar`, que oculta `/auth/organization` y `/portal-selector` haciendo clic).
+ *
+ * Es la función del kill-test de entrada (frente 01 §5): un `/auth/organization` o un `/portal-selector` en
+ * `rutas` es un fallo, no algo que se atraviese. Se espera a que la aplicación se estabilice en una ruta que no
+ * sea `/auth` (sin `networkidle`: con HMR no llega) y se devuelve el recorrido.
+ */
+export async function entrarYObservar(page: Page, actor: Actor): Promise<EntradaObservada> {
+  const rutas: string[] = [];
+  const alNavegar = (marco: { parentFrame(): unknown; url(): string }): void => {
+    if (marco.parentFrame() !== null) return;
+    const url = new URL(marco.url());
+    rutas.push(`${url.pathname}${url.search}`);
+  };
+
+  await page.goto('/auth');
+  await esperarAplicacionLista(page);
+  await escribir(page, 'login-identifier', actor.identificador);
+  await escribir(page, 'login-password', actor.clave);
+
+  // Desde acá cuenta: lo anterior (la propia pantalla de ingreso) no es aterrizaje.
+  page.on('framenavigated', alNavegar);
+  try {
+    await page.getByTestId('login-submit').click();
+    await page.waitForURL((url) => !url.pathname.startsWith('/auth') || url.pathname.startsWith('/auth/organization'), {
+      timeout: 60_000,
+    });
+    // Un respiro para que un redirect encadenado (p. ej. `/dashboard` -> `/auth/organization`) quede registrado.
+    await page.waitForTimeout(1_500);
+  } finally {
+    page.off('framenavigated', alNavegar);
+  }
+  return { primeraTrasLogin: rutas[0] ?? new URL(page.url()).pathname, rutas };
 }

@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+/* En el flujo, arriba del contenido del área autenticada (igual que el aviso de
+   dispositivo nuevo): no flota, no tapa controles en ningún ancho y se desplaza
+   con la página. Nada de `position: fixed`. */
+.ux-aviso {
+  margin-block-end: var(--sp-4);
+  max-inline-size: 100%;
+}
+
+.ux-aviso__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  /* El contenedor de acciones del aviso es flex: este bloque ocupa toda la fila para que los
+     botones se estiren en móvil. */
+  flex: 1 1 100%;
+  min-inline-size: 0;
+  /* Área táctil de 48 px en móvil; cada botón ocupa todo el ancho. */
+  --btn-min-block: 48px;
+  --btn-flex: 1 1 auto;
+}
+
+.ux-aviso__acciones > * {
+  inline-size: 100%;
+}
+
+@media (min-width: 40rem) {
+  .ux-aviso__acciones {
+    flex-direction: row;
+    flex-wrap: wrap;
+    --btn-min-block: 44px;
+    --btn-flex: 0 1 auto;
+    flex: 0 1 auto;
+  }
+
+  .ux-aviso__acciones > * {
+    inline-size: auto;
+  }
+}
+
+.ux-aviso__error {
+  display: block;
+  margin-block-start: var(--sp-2);
+  color: var(--st-error-fg);
+}

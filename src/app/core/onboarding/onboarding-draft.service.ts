@@ -3,7 +3,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, debounceTime, EMPTY, Subject, tap } from 'rxjs';
 
-import { OnboardingDraftClient } from './onboarding-draft.client';
+import { OnboardingDraftClient } from '../data-access/onboarding-drafts/onboarding-draft.client';
 import type {
   OnboardingDraft,
   OnboardingEventType,

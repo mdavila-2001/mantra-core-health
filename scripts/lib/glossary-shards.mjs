@@ -143,6 +143,30 @@ const collator = new Intl.Collator('es');
  * @param {ReadonlyArray<{ id: string, slug: string, esName: string, categoryKey: string, relations?: ReadonlyArray<{ type: string, targetId?: string }> }>} rows
  * @returns {Map<string, Record<string, Array<[string, string, string, string, string]>>>} Ruta → cubeta.
  */
+/**
+ * Los resúmenes llanos que son una plantilla y no una explicación del término.
+ *
+ * Un mismo texto repetido en varios términos distintos («Estructura anatómica
+ * del organismo que cumple una función específica…» en 876 estructuras) no
+ * explica ninguno: es el molde de su tipo. Se publican en el manifiesto para
+ * que las pantallas no los presenten como la definición del término. No se
+ * borran de las filas: lo que se decide acá es sólo cómo se leen.
+ */
+export const MIN_REPETIDOS_PARA_PLANTILLA = 3;
+
+export function resumenesGenericos(rows) {
+  const cuenta = new Map();
+  for (const row of rows) {
+    const texto = String(row.plainSummaryEs ?? '').trim();
+    if (texto === '') continue;
+    cuenta.set(texto, (cuenta.get(texto) ?? 0) + 1);
+  }
+  return [...cuenta]
+    .filter(([, veces]) => veces >= MIN_REPETIDOS_PARA_PLANTILLA)
+    .map(([texto]) => texto)
+    .sort();
+}
+
 export function buildIncomingIndex(rows) {
   const cubetas = new Map();
   for (const row of rows) {
@@ -256,6 +280,7 @@ export function buildGlossaryDataset(rawRows, taxonomy) {
     pageSize: SHARD_PAGE_SIZE,
     total: rows.length,
     translatedTotal: rows.filter((row) => row.lang !== 'en').length,
+    genericSummaries: resumenesGenericos(rows),
     categories: categoriasDelManifiesto,
     tags: etiquetasDelManifiesto,
   };

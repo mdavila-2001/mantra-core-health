@@ -82,6 +82,8 @@ export interface GlossaryArticleSection {
   readonly license: string;
   readonly retrievedAt: string;
   readonly sourceVersion: string;
+  /** Número de registro del producto cuya ficha técnica aporta el extracto. */
+  readonly nregistro?: string;
   /** Título o anclaje de la sección de origen. */
   readonly locator: string;
   /** Sólo con los párrafos limpios; el resto se omitió (dosis, A.D.A.M.). */

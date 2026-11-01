@@ -110,7 +110,7 @@ import {
   SIGNATURE_IMAGE_MAX_BYTES,
 } from './image-status';
 import { DOCTOR_PROFILE_TABS, TAB_EDITOR, EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
-import { WorkHistory } from '../work-history/work-history';
+import { WorkHistory, type LugarSugerido } from '../work-history/work-history';
 import {
   OPCIONES_DE_ESTADO,
   OPCIONES_DE_ESTADO_DE_ESPECIALIDAD,
@@ -585,6 +585,22 @@ export class PractitionerProfileEdit {
   readonly pestana = model<number>(TAB_EDITOR.personales);
   protected readonly pestanas = EDITOR_DOCTOR_TABS;
   protected readonly pestanaEditor = TAB_EDITOR;
+
+  /**
+   * El lugar que «Trayectoria» pidió cargar en «Dónde atiendo».
+   *
+   * Vive acá porque las dos pestañas montan instancias distintas de
+   * `app-work-history`, y sólo se monta la de la pestaña abierta: el editor es
+   * quien puede cambiar de pestaña y pasarle el nombre a la otra. Se suelta en
+   * cuanto ella lo toma, para que volver a la pestaña no reabra el alta.
+   */
+  protected readonly lugarSugerido = signal<LugarSugerido | null>(null);
+
+  /** «¿Atiende acá?» desde Trayectoria: a «Dónde atiendo», con el alta abierta. */
+  protected llevarADondeAtiendo(nombre: string): void {
+    this.lugarSugerido.set({ nombre });
+    this.pestana.set(TAB_EDITOR.dondeAtiendo);
+  }
 
   /**
    * Si la pestaña abierta es de las que se corrigen.

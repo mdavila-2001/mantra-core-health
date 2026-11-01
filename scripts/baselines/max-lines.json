@@ -1,139 +1,1973 @@
 {
-  "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts": 3234,
-  "src/app/features/auth/register-practitioner/register-practitioner.ts": 3213,
-  "src/app/features/agenda/agenda.ts": 3117,
-  "src/app/features/auth/register-patient/register-patient.ts": 2598,
-  "src/app/features/clinical-record/patient-chart/patient-chart.ts": 2281,
-  "src/app/app.routes.ts": 2273,
-  "src/app/features/account/appointments/appointments.ts": 2265,
-  "src/app/features/agenda/my-agenda/my-agenda.ts": 2218,
-  "src/app/core/navigation/navigation.map.ts": 2080,
-  "src/app/core/data-access/community/community.client.ts": 2001,
-  "src/app/features/account/my-profile/work-history/work-history.ts": 1917,
-  "src/app/core/messaging/chat.store.ts": 1864,
-  "src/app/core/mock/handlers/profiles.handlers.ts": 1733,
-  "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html": 1717,
-  "src/app/core/mock/handlers/insurance.handlers.ts": 1677,
-  "src/app/core/mock/handlers/diagnostics.handlers.ts": 1637,
-  "src/app/shared/components/organisms/date-picker/date-picker.ts": 1626,
-  "src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.ts": 1562,
-  "src/app/shared/utils/pdf-export/pdf-export.ts": 1559,
-  "src/app/core/mock/handlers/pharmacy.handlers.ts": 1537,
-  "src/app/features/form-builder/form-builder.ts": 1504,
-  "src/app/features/agenda/agenda-create/agenda-create.ts": 1452,
-  "src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.html": 1425,
-  "src/app/core/alovida/alovida-runtime.service.ts": 1402,
-  "src/app/core/mock/fixtures/concepts.ts": 1398,
-  "src/app/core/data-access/community/community.types.ts": 1375,
-  "src/app/features/clinical-record/patient-chart/medication-block/medication-block.ts": 1356,
-  "src/app/core/data-access/profiles/profiles.types.ts": 1334,
-  "src/app/features/auth/register-imaging-center/register-imaging-center.ts": 1316,
-  "src/app/core/data-access/scheduling/scheduling.types.ts": 1266,
-  "src/app/core/mock/handlers/finance.handlers.ts": 1264,
-  "src/app/features/symptom-check/symptom-check.css": 1263,
-  "src/app/features/design-system-sample/design-system-sample.html": 1260,
-  "src/app/core/data-access/profiles/profiles.client.ts": 1240,
-  "src/app/core/data-access/scheduling/scheduling.client.ts": 1223,
-  "src/app/features/account/medical-record/where-to-buy/where-to-buy.ts": 1201,
-  "src/app/features/messaging/thread/thread.ts": 1162,
-  "src/app/features/account/my-profile/practitioner-profile/practitioner-profile.ts": 1132,
-  "src/app/core/mock/handlers/scheduling.handlers.ts": 1116,
-  "src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.ts": 1097,
-  "src/app/features/accounting/accounting.ts": 1075,
-  "src/app/features/admin/medical-laboratory/medical-laboratory.ts": 1074,
-  "src/app/core/mock/handlers/community.handlers.ts": 1059,
-  "src/app/features/auth/register-laboratory/register-laboratory.ts": 1059,
-  "src/app/core/mock/handlers/lab-portal.handlers.ts": 1008,
-  "src/app/core/data-access/clinical/clinical.client.ts": 994,
-  "src/app/features/component-stock/component-stock.ts": 986,
-  "src/app/features/auth/register-organization/register-organization.ts": 984,
-  "src/app/core/data-access/iam/iam.types.ts": 970,
-  "src/app/features/agenda/my-agenda/day-view/day-view.ts": 958,
-  "src/app/core/data-access/insurance/insurance.client.ts": 950,
-  "src/app/features/account/medical-record/medical-record.ts": 950,
-  "src/app/core/data-access/insurance/insurance.types.ts": 944,
-  "src/app/features/alovida/alovida.routes.ts": 944,
-  "src/app/features/auth/register-pharmacy/register-pharmacy.ts": 943,
-  "src/app/features/symptom-check/text.ts": 938,
-  "src/app/features/auth/register-practitioner/register-practitioner.html": 915,
-  "src/app/shared/components/organisms/auth-split/auth-split.css": 915,
-  "src/app/core/mock/handlers/clinical.handlers.ts": 910,
-  "src/app/features/symptom-check/symptom-check.html": 895,
-  "src/app/core/mock/fixtures/agenda.ts": 888,
-  "src/app/features/alovida/inicio/portada/portada.html": 884,
-  "src/app/core/mock/billing-sim/simulated-invoicing.ts": 879,
-  "src/app/features/account/my-profile/work-history/work-history.html": 877,
-  "src/app/features/organization/pharmacy-catalog/pharmacy-catalog.ts": 855,
-  "src/app/features/accounting/cockpit/cockpit.css": 852,
-  "src/app/features/agenda/appointment-new/appointment-new.ts": 850,
-  "src/app/features/clinical-record/consultation/consultation.ts": 850,
-  "src/app/features/form-builder/field-editor/field-editor.ts": 848,
-  "src/app/features/accounting/cockpit/cockpit.html": 833,
-  "src/app/features/agenda/my-agenda/schedule-grid/schedule-grid.ts": 830,
-  "src/app/core/mock/handlers/directory.handlers.ts": 822,
-  "src/app/features/symptom-check/symptom-check.ts": 818,
-  "src/app/features/pharmacy/import/pharmacy-import.ts": 817,
-  "src/app/core/data-access/clinical/clinical.types.ts": 811,
-  "src/app/features/symptom-check/engine.ts": 793,
-  "src/app/features/agenda/agenda-create/agenda-create.html": 784,
-  "src/app/features/admin/medical-laboratory/medical-laboratory.html": 783,
-  "src/app/features/auth/register-patient/register-patient.html": 782,
-  "src/app/core/mock/handlers/admin-portal.handlers.ts": 781,
-  "src/app/core/data-access/iam/iam.client.ts": 778,
-  "src/app/features/accounting/cockpit/cockpit.ts": 775,
-  "src/app/core/mock/handlers/auth.handlers.ts": 773,
-  "src/app/core/mock/handlers/misc.handlers.ts": 771,
-  "src/app/features/pharmacy/catalog-rules/catalog.rules.ts": 771,
-  "src/app/core/mock/fixtures/clinic.ts": 758,
-  "src/app/core/mock/handlers/public.handlers.ts": 758,
-  "src/app/features/my-services/my-services.ts": 744,
-  "src/app/shared/components/organisms/paginated-form/paginated-form.ts": 744,
-  "src/app/features/agenda/agenda.html": 738,
-  "src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.css": 733,
-  "src/app/features/clinical-record/patient-chart/follow-up-block/follow-up-block.ts": 730,
-  "src/app/features/clinical-record/patient-chart/procedures-block/procedures-block.ts": 728,
-  "src/app/features/agenda/my-agenda/month-view/month-view.ts": 726,
-  "src/app/features/quotations/quotation-form/quotation-form.ts": 725,
-  "src/app/core/mock/fixtures/community.ts": 723,
-  "src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.client.ts": 718,
-  "src/app/features/component-stock/component-stock.css": 718,
-  "src/app/features/insurance/received-claims/received-claims.ts": 709,
-  "src/app/features/account/my-profile/my-profile.ts": 708,
-  "src/app/features/accounting/accounting.html": 707,
-  "src/app/features/agenda/booking-new/booking-new.ts": 705,
-  "src/app/features/admin/terminology/version-import/version-import.ts": 704,
-  "src/app/core/data-access/public-directory/public-search.store.ts": 696,
-  "src/app/features/symptom-check/corpus.fixture.ts": 693,
-  "src/app/core/data-access/terminology/terminology.types.ts": 692,
-  "src/app/core/data-access/directory/directory.client.ts": 688,
-  "src/app/features/shell-layout/shell-layout.html": 686,
-  "src/app/features/admin/organizations/organization-new/organization-new.ts": 681,
-  "src/app/features/account/appointments/appointments.html": 680,
-  "src/app/core/data-access/accounting/accounting.client.ts": 673,
-  "src/app/core/navigation/navigation.types.ts": 673,
-  "src/app/features/public-profile/public-profile-card/public-profile-card.css": 671,
-  "src/app/features/directory/practitioners-directory/practitioners-directory.ts": 670,
-  "src/app/core/data-access/pharmacy/pharmacy.types.ts": 661,
-  "src/app/features/messaging/thread/thread.css": 660,
-  "src/app/features/laboratory-directory/laboratory-directory.ts": 656,
-  "src/app/core/mock/handlers/surveys-forms.handlers.ts": 655,
-  "src/app/features/account/medical-record/history-view-model.ts": 654,
-  "src/app/features/clinical-record/patient-chart/analysis-order-block/analysis-order-block.ts": 649,
-  "src/app/features/account/my-profile/my-profile.html": 647,
-  "src/app/features/shell-layout/shell-layout.ts": 645,
-  "src/app/core/mock/fixtures/people.ts": 643,
-  "src/app/features/component-stock/scenarios/data-table.scenarios.ts": 641,
-  "src/app/features/lab-reception/lab-reception.ts": 641,
-  "src/app/features/alovida/buscar/hospitales-listado/hospitales-listado.ts": 635,
-  "src/app/core/data-access/terminology/terminology.client.ts": 632,
-  "src/app/features/insurance/insurance-campaigns/insurance-campaigns.ts": 623,
-  "src/app/features/organization/pharmacy-catalog/catalog.rules.ts": 623,
-  "src/app/shared/components/organisms/map/map.ts": 620,
-  "src/app/features/clinical-record/patient-chart/patient-chart.html": 616,
-  "src/app/features/component-stock/component-stock.html": 616,
-  "src/app/shared/components/molecules/rich-text-editor/rich-text-editor.ts": 615,
-  "src/app/features/dashboard/today-agenda/today-agenda.css": 609,
-  "src/app/features/agenda/my-agenda/day-view/day-view.css": 607,
-  "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.ts": 606,
-  "src/app/features/questionnaires/survey-detail/survey-detail.ts": 603
+  "$comentario": "Excepciones al techo de 300 líneas fijadas por reforma estructural (2026-11-01). Ningún archivo nuevo puede superar 300 líneas. Los archivos congelados no pueden crecer ni 1 línea (ratchet descendente). Al tocarlos deben modularizarse (< 300).",
+  "tarea": "REFORMA-300",
+  "fijada": "2026-11-01",
+  "vence": "2027-04-01",
+  "excepciones": {
+    "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts": {
+      "lineas": 3618
+    },
+    "src/app/features/auth/register-patient/register-patient.ts": {
+      "lineas": 3379
+    },
+    "src/app/features/auth/register-practitioner/register-practitioner.ts": {
+      "lineas": 3362
+    },
+    "src/app/core/messaging/chat.store.ts": {
+      "lineas": 3058
+    },
+    "src/app/features/clinical-record/patient-chart/patient-chart.ts": {
+      "lineas": 2672
+    },
+    "src/app/app.routes.ts": {
+      "lineas": 2112
+    },
+    "src/app/features/account/appointments/appointments.ts": {
+      "lineas": 2302
+    },
+    "src/app/features/agenda/my-agenda/my-agenda.ts": {
+      "lineas": 2297
+    },
+    "src/app/features/agenda/agenda.ts": {
+      "lineas": 2294
+    },
+    "src/app/core/data-access/community/community.client.ts": {
+      "lineas": 2072
+    },
+    "src/app/core/navigation/navigation.map.ts": {
+      "lineas": 2069
+    },
+    "src/app/features/account/my-profile/work-history/work-history.ts": {
+      "lineas": 2033
+    },
+    "src/app/core/mock/handlers/insurance.handlers.ts": {
+      "lineas": 1962
+    },
+    "src/app/core/mock/handlers/scheduling.handlers.ts": {
+      "lineas": 1811
+    },
+    "src/app/core/mock/handlers/profiles.handlers.ts": {
+      "lineas": 1774
+    },
+    "src/app/core/mock/handlers/diagnostics.handlers.ts": {
+      "lineas": 1758
+    },
+    "src/app/features/messaging/thread/thread.ts": {
+      "lineas": 1758
+    },
+    "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html": {
+      "lineas": 1744
+    },
+    "src/app/core/mock/handlers/pharmacy.handlers.ts": {
+      "lineas": 1698
+    },
+    "src/app/core/mock/fixtures/concepts.ts": {
+      "lineas": 1683
+    },
+    "src/app/shared/components/organisms/date-picker/date-picker.ts": {
+      "lineas": 1681
+    },
+    "src/app/features/form-builder/form-builder.ts": {
+      "lineas": 1596
+    },
+    "src/app/features/agenda/agenda-create/agenda-create.ts": {
+      "lineas": 1557
+    },
+    "src/app/core/data-access/community/community.types.ts": {
+      "lineas": 1482
+    },
+    "src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.ts": {
+      "lineas": 1480
+    },
+    "src/app/features/clinical-record/patient-chart/medication-block/medication-block.ts": {
+      "lineas": 1449
+    },
+    "src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.html": {
+      "lineas": 1446
+    },
+    "src/app/features/auth/register-imaging-center/register-imaging-center.ts": {
+      "lineas": 1411
+    },
+    "src/app/core/data-access/scheduling/scheduling.types.ts": {
+      "lineas": 1408
+    },
+    "src/app/core/alovida/alovida-runtime.service.ts": {
+      "lineas": 1402
+    },
+    "src/app/core/data-access/scheduling/scheduling.client.ts": {
+      "lineas": 1401
+    },
+    "src/app/core/mock/handlers/community.handlers.ts": {
+      "lineas": 1388
+    },
+    "src/app/core/data-access/profiles/profiles.types.ts": {
+      "lineas": 1370
+    },
+    "src/app/features/symptom-check/symptom-check.css": {
+      "lineas": 1331
+    },
+    "src/app/features/accounting/accounting.ts": {
+      "lineas": 1287
+    },
+    "src/app/features/design-system-sample/design-system-sample.html": {
+      "lineas": 1262
+    },
+    "src/app/core/data-access/profiles/profiles.client.ts": {
+      "lineas": 1243
+    },
+    "src/app/features/admin/medical-laboratory/medical-laboratory.ts": {
+      "lineas": 1198
+    },
+    "src/app/features/auth/register-laboratory/register-laboratory.ts": {
+      "lineas": 1191
+    },
+    "src/app/core/mock/handlers/finance.handlers.ts": {
+      "lineas": 1190
+    },
+    "src/app/core/mock/handlers/infrastructure.handlers.ts": {
+      "lineas": 1185
+    },
+    "src/app/shared/components/organisms/auth-split/auth-split.css": {
+      "lineas": 1184
+    },
+    "src/app/core/mock/handlers/auth.handlers.ts": {
+      "lineas": 1163
+    },
+    "src/app/features/auth/register-practitioner/register-practitioner.html": {
+      "lineas": 1147
+    },
+    "src/app/core/mock/handlers/infrastructure-ops.handlers.ts": {
+      "lineas": 1123
+    },
+    "src/app/features/account/my-profile/practitioner-profile/practitioner-profile.ts": {
+      "lineas": 1108
+    },
+    "src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.ts": {
+      "lineas": 1102
+    },
+    "src/app/core/data-access/insurance/insurance.types.ts": {
+      "lineas": 1089
+    },
+    "src/app/features/auth/register-pharmacy/register-pharmacy.ts": {
+      "lineas": 1085
+    },
+    "src/app/features/auth/register-organization/register-organization.ts": {
+      "lineas": 1084
+    },
+    "src/app/core/data-access/insurance/insurance.client.ts": {
+      "lineas": 1073
+    },
+    "src/app/core/data-access/iam/iam.types.ts": {
+      "lineas": 1053
+    },
+    "src/app/core/mock/fixtures/support-hospital-governance.ts": {
+      "lineas": 1029
+    },
+    "src/app/core/mock/handlers/directory.handlers.ts": {
+      "lineas": 1025
+    },
+    "src/app/core/mock/handlers/admissions.handlers.ts": {
+      "lineas": 1023
+    },
+    "src/app/features/agenda/appointment-new/appointment-new.ts": {
+      "lineas": 1017
+    },
+    "src/app/core/mock/handlers/lab-portal.handlers.ts": {
+      "lineas": 1015
+    },
+    "src/app/shared/utils/pdf-export/pdf-blocks.ts": {
+      "lineas": 1013
+    },
+    "src/app/core/data-access/clinical/clinical.client.ts": {
+      "lineas": 996
+    },
+    "src/app/features/account/medical-record/where-to-buy/where-to-buy.ts": {
+      "lineas": 993
+    },
+    "src/app/features/component-stock/component-stock.ts": {
+      "lineas": 993
+    },
+    "src/app/features/agenda/my-agenda/day-view/day-view.ts": {
+      "lineas": 985
+    },
+    "src/app/shared/utils/clinical-pdf/clinical-pdf.ts": {
+      "lineas": 979
+    },
+    "src/app/features/clinical-record/consultation/consultation.ts": {
+      "lineas": 955
+    },
+    "src/app/features/account/medical-record/medical-record.ts": {
+      "lineas": 950
+    },
+    "src/app/core/mock/billing-sim/simulated-invoicing.ts": {
+      "lineas": 945
+    },
+    "src/app/features/alovida/alovida.routes.ts": {
+      "lineas": 944
+    },
+    "src/app/core/mock/handlers/surveys-forms.handlers.ts": {
+      "lineas": 940
+    },
+    "src/app/features/symptom-check/text.ts": {
+      "lineas": 938
+    },
+    "src/app/core/mock/handlers/admin-portal.handlers.ts": {
+      "lineas": 932
+    },
+    "src/app/core/mock/handlers/clinical.handlers.ts": {
+      "lineas": 926
+    },
+    "src/app/core/mock/handlers/adt.handlers.ts": {
+      "lineas": 916
+    },
+    "src/app/core/mock/fixtures/agenda.ts": {
+      "lineas": 894
+    },
+    "src/app/core/data-access/iam/iam.client.ts": {
+      "lineas": 867
+    },
+    "src/app/features/symptom-check/symptom-check.html": {
+      "lineas": 866
+    },
+    "src/app/shared/components/organisms/paginated-form/paginated-form.ts": {
+      "lineas": 864
+    },
+    "src/app/features/account/my-profile/work-history/work-history.html": {
+      "lineas": 857
+    },
+    "src/app/features/alovida/inicio/portada/portada.html": {
+      "lineas": 855
+    },
+    "src/app/features/shell-layout/shell-layout.ts": {
+      "lineas": 855
+    },
+    "src/app/features/organization/pharmacy-catalog/pharmacy-catalog.ts": {
+      "lineas": 854
+    },
+    "src/app/features/accounting/cockpit/cockpit.css": {
+      "lineas": 852
+    },
+    "src/app/features/admin/services-catalog/procedure-import/procedure-import.ts": {
+      "lineas": 850
+    },
+    "src/app/features/form-builder/field-editor/field-editor.ts": {
+      "lineas": 848
+    },
+    "src/app/features/agenda/agenda.html": {
+      "lineas": 841
+    },
+    "src/app/features/agenda/my-agenda/schedule-grid/schedule-grid.ts": {
+      "lineas": 841
+    },
+    "src/app/features/my-services/my-services.ts": {
+      "lineas": 828
+    },
+    "src/app/features/accounting/accounting.html": {
+      "lineas": 823
+    },
+    "src/app/features/symptom-check/symptom-check.ts": {
+      "lineas": 823
+    },
+    "src/app/core/mock/handlers/public.handlers.ts": {
+      "lineas": 821
+    },
+    "src/app/features/messaging/thread/thread.html": {
+      "lineas": 817
+    },
+    "src/app/core/data-access/clinical/clinical.types.ts": {
+      "lineas": 814
+    },
+    "src/app/features/admin/medical-laboratory/medical-laboratory.html": {
+      "lineas": 812
+    },
+    "src/app/core/mock/fixtures/community.ts": {
+      "lineas": 808
+    },
+    "src/app/features/lab-reception/lab-reception.ts": {
+      "lineas": 798
+    },
+    "src/app/core/mock/handlers/misc.handlers.ts": {
+      "lineas": 786
+    },
+    "src/app/features/accounting/cockpit/cockpit.ts": {
+      "lineas": 780
+    },
+    "src/app/core/data-access/admissions/admissions.types.ts": {
+      "lineas": 777
+    },
+    "src/app/features/symptom-check/engine.ts": {
+      "lineas": 777
+    },
+    "src/app/features/shell-layout/shell-layout.html": {
+      "lineas": 775
+    },
+    "src/app/core/mock/mock-session.ts": {
+      "lineas": 773
+    },
+    "src/app/features/pharmacy/import/pharmacy-import.ts": {
+      "lineas": 773
+    },
+    "src/app/core/mock/handlers/bulk-imports.handlers.ts": {
+      "lineas": 770
+    },
+    "src/app/core/data-access/terminology/terminology.types.ts": {
+      "lineas": 766
+    },
+    "src/app/features/agenda/agenda-create/agenda-create.html": {
+      "lineas": 766
+    },
+    "src/app/core/mock/fixtures/clinic.ts": {
+      "lineas": 764
+    },
+    "src/app/features/clinical-record/patient-chart/patient-chart.html": {
+      "lineas": 760
+    },
+    "src/app/core/mock/fixtures/admissions.ts": {
+      "lineas": 758
+    },
+    "src/app/features/clinical-record/patient-chart/procedures-block/procedures-block.ts": {
+      "lineas": 755
+    },
+    "src/app/features/auth/shared-registration/map-location-picker/map-location-picker.ts": {
+      "lineas": 754
+    },
+    "src/app/features/admin/bulk-imports/bulk-imports.ts": {
+      "lineas": 751
+    },
+    "src/app/features/agenda/booking-new/booking-new.ts": {
+      "lineas": 751
+    },
+    "src/app/features/clinical-record/patient-chart/follow-up-block/follow-up-block.ts": {
+      "lineas": 739
+    },
+    "src/app/features/account/appointments/appointments.html": {
+      "lineas": 737
+    },
+    "src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.css": {
+      "lineas": 736
+    },
+    "src/app/features/admin/organizations/organization-detail/organization-detail.ts": {
+      "lineas": 736
+    },
+    "src/app/features/pharmacy/catalog-rules/catalog.rules.ts": {
+      "lineas": 736
+    },
+    "src/app/features/account/my-profile/my-profile.ts": {
+      "lineas": 728
+    },
+    "src/app/core/data-access/directory/directory.client.ts": {
+      "lineas": 726
+    },
+    "src/app/features/agenda/my-agenda/month-view/month-view.ts": {
+      "lineas": 726
+    },
+    "src/app/features/quotations/quotation-form/quotation-form.ts": {
+      "lineas": 725
+    },
+    "src/app/features/clinical-record/patient-chart/recorrido-clinico/recorrido-clinico.model.ts": {
+      "lineas": 722
+    },
+    "src/app/core/mock/handlers/terminology.handlers.ts": {
+      "lineas": 716
+    },
+    "src/app/core/navigation/navigation.types.ts": {
+      "lineas": 716
+    },
+    "src/app/core/data-access/pharmacy-campaigns/pharmacy-campaigns.client.ts": {
+      "lineas": 710
+    },
+    "src/app/features/insurance/received-claims/received-claims.ts": {
+      "lineas": 709
+    },
+    "src/app/features/component-stock/component-stock.css": {
+      "lineas": 708
+    },
+    "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.ts": {
+      "lineas": 706
+    },
+    "src/app/features/admin/terminology/version-import/version-import.ts": {
+      "lineas": 704
+    },
+    "src/app/features/public-profile/public-profile-card/public-profile-card.css": {
+      "lineas": 699
+    },
+    "src/app/features/questionnaires/survey-detail/survey-detail.ts": {
+      "lineas": 697
+    },
+    "src/app/core/data-access/public-directory/public-search.store.ts": {
+      "lineas": 696
+    },
+    "src/app/features/symptom-check/corpus.fixture.ts": {
+      "lineas": 696
+    },
+    "src/app/features/clinical-record/patient-chart/analysis-order-block/analysis-order-block.ts": {
+      "lineas": 693
+    },
+    "src/app/features/messaging/thread/thread-media.css": {
+      "lineas": 691
+    },
+    "src/app/core/data-access/admissions/admissions.client.ts": {
+      "lineas": 682
+    },
+    "src/app/core/mock/handlers/support-access.explain.handlers.ts": {
+      "lineas": 680
+    },
+    "src/app/features/messaging/thread/thread.css": {
+      "lineas": 680
+    },
+    "src/app/core/data-access/accounting/accounting.client.ts": {
+      "lineas": 678
+    },
+    "src/app/core/mock/handlers/support-access.governance.rules.handlers.ts": {
+      "lineas": 678
+    },
+    "src/app/core/mock/handlers/insurer-received-claims.handlers.ts": {
+      "lineas": 676
+    },
+    "src/app/features/account/medical-record/history-view-model.ts": {
+      "lineas": 674
+    },
+    "src/app/features/directory/practitioners-directory/practitioners-directory.ts": {
+      "lineas": 674
+    },
+    "src/app/features/account/my-profile/my-profile.html": {
+      "lineas": 668
+    },
+    "src/app/features/admin/admissions/admission-detail/admission-detail.ts": {
+      "lineas": 662
+    },
+    "src/app/features/accounting/summary/summary.css": {
+      "lineas": 658
+    },
+    "src/app/features/public-directories/pharmacy-detail/pharmacy-detail.ts": {
+      "lineas": 657
+    },
+    "src/app/features/medical-groups/medical-group-detail/medical-group-detail.ts": {
+      "lineas": 652
+    },
+    "src/app/features/admin/bulk-imports/bulk-imports.html": {
+      "lineas": 645
+    },
+    "src/app/features/glossary/glossary-graph.ts": {
+      "lineas": 645
+    },
+    "src/app/core/mock/fixtures/people.ts": {
+      "lineas": 643
+    },
+    "src/app/features/component-stock/scenarios/data-table.scenarios.ts": {
+      "lineas": 641
+    },
+    "src/app/shared/components/molecules/result-card/result-card.css": {
+      "lineas": 639
+    },
+    "src/app/features/glossary/glossary.css": {
+      "lineas": 635
+    },
+    "src/app/core/data-access/terminology/terminology.client.ts": {
+      "lineas": 632
+    },
+    "src/app/features/laboratory-directory/laboratory-directory.ts": {
+      "lineas": 631
+    },
+    "src/app/features/admin/medical-organization/medical-organization.ts": {
+      "lineas": 628
+    },
+    "src/app/features/messaging/thread/composer/composer.ts": {
+      "lineas": 625
+    },
+    "src/app/features/admin/organizations/organization-new/organization-new.ts": {
+      "lineas": 623
+    },
+    "src/app/features/insurance/insurance-campaigns/insurance-campaigns.ts": {
+      "lineas": 623
+    },
+    "src/app/features/organization/pharmacy-catalog/catalog.rules.ts": {
+      "lineas": 623
+    },
+    "src/app/features/accounting/summary/summary.ts": {
+      "lineas": 616
+    },
+    "src/app/shared/components/organisms/map/map.ts": {
+      "lineas": 616
+    },
+    "src/app/shared/components/molecules/rich-text-editor/rich-text-editor.ts": {
+      "lineas": 615
+    },
+    "src/app/features/component-stock/component-stock.html": {
+      "lineas": 614
+    },
+    "src/app/core/data-access/infrastructure/infrastructure.rules.ts": {
+      "lineas": 613
+    },
+    "src/app/features/dashboard/today-agenda/today-agenda.css": {
+      "lineas": 611
+    },
+    "src/app/core/mock/handlers/support-access.governance.lifecycle.handlers.ts": {
+      "lineas": 610
+    },
+    "src/app/features/agenda/my-agenda/day-view/day-view.css": {
+      "lineas": 607
+    },
+    "src/app/features/messaging/messaging.css": {
+      "lineas": 605
+    },
+    "src/app/core/mock/handlers/support-access.chat.handlers.ts": {
+      "lineas": 603
+    },
+    "src/app/features/messaging/thread/composer/composer.css": {
+      "lineas": 603
+    },
+    "src/app/core/data-access/pharmacy/pharmacy.types.ts": {
+      "lineas": 601
+    },
+    "src/app/features/glossary/glossary-term.ts": {
+      "lineas": 600
+    },
+    "src/app/shared/components/organisms/body-map/body-map.ts": {
+      "lineas": 600
+    },
+    "src/app/features/agenda/my-agenda/my-agenda.html": {
+      "lineas": 599
+    },
+    "src/app/features/clinical-record/patient-chart/referral-block/referral-block.ts": {
+      "lineas": 599
+    },
+    "src/app/features/insurance/insurance-claim-detail/insurance-claim-detail.html": {
+      "lineas": 599
+    },
+    "src/app/features/support-access/combined-agenda/agenda-model.ts": {
+      "lineas": 599
+    },
+    "src/app/features/accounting/records/records.ts": {
+      "lineas": 596
+    },
+    "src/app/features/account/medical-record/where-to-buy/pharmacy-branches.ts": {
+      "lineas": 595
+    },
+    "src/app/core/data-access/support-access/support-access.client.ts": {
+      "lineas": 594
+    },
+    "src/app/core/data-access/directory/directory.types.ts": {
+      "lineas": 593
+    },
+    "src/app/core/mock/handlers/medical-groups.handlers.ts": {
+      "lineas": 593
+    },
+    "src/app/core/mock/handlers/practice.handlers.ts": {
+      "lineas": 593
+    },
+    "src/app/features/clinical-record/patient-chart/informed-consent/informed-consent-panel.ts": {
+      "lineas": 593
+    },
+    "src/app/features/pharmacy/products/pharmacy-products.ts": {
+      "lineas": 593
+    },
+    "src/app/core/mock/handlers/ui-visibility.handlers.ts": {
+      "lineas": 591
+    },
+    "src/app/features/organization/organization-panel.ts": {
+      "lineas": 591
+    },
+    "src/app/features/support-access/permissions-editor/permissions-editor.html": {
+      "lineas": 591
+    },
+    "src/app/shared/components/atoms/nav-icon/nav-icon.ts": {
+      "lineas": 591
+    },
+    "src/app/features/agenda/my-agenda/day-card/day-card.ts": {
+      "lineas": 589
+    },
+    "src/app/features/support-access/combined-agenda/combined-agenda.ts": {
+      "lineas": 589
+    },
+    "src/app/features/access-governance/access-matrix/access-matrix.ts": {
+      "lineas": 588
+    },
+    "src/app/features/account/pharmacy-orders/new-order/new-order.ts": {
+      "lineas": 588
+    },
+    "src/app/core/mock/handlers/permissions-admin.handlers.ts": {
+      "lineas": 586
+    },
+    "src/app/features/accounting/cash-flow/cash-flow.ts": {
+      "lineas": 586
+    },
+    "src/app/core/data-access/diagnostics/diagnostics.client.ts": {
+      "lineas": 585
+    },
+    "src/app/features/account/diagnostic-results/diagnostic-results.ts": {
+      "lineas": 585
+    },
+    "src/app/features/accounting/flujo/flujo-de-dinero.ts": {
+      "lineas": 584
+    },
+    "src/app/features/dashboard/today-agenda/today-agenda.ts": {
+      "lineas": 584
+    },
+    "src/app/core/profession/educational-institutions.ts": {
+      "lineas": 583
+    },
+    "src/app/features/glossary/glossary.ts": {
+      "lineas": 582
+    },
+    "src/app/features/auth/register-medical-center/register-medical-center.ts": {
+      "lineas": 579
+    },
+    "src/app/features/auth/register-patient/register-patient.html": {
+      "lineas": 576
+    },
+    "src/app/features/messaging/thread/composer/prepare-image.ts": {
+      "lineas": 573
+    },
+    "src/app/features/assets-liabilities/assets-liabilities.ts": {
+      "lineas": 572
+    },
+    "src/app/core/mock/fixtures/infraestructura.ts": {
+      "lineas": 571
+    },
+    "src/app/features/agenda/my-agenda/day-view/day-view.html": {
+      "lineas": 571
+    },
+    "src/app/features/pharmacy/products/product-dialog/product-dialog.ts": {
+      "lineas": 571
+    },
+    "src/app/features/public-directories/pharmacy-detail/pharmacy-detail.html": {
+      "lineas": 571
+    },
+    "src/app/features/account/diagnostic-orders/diagnostic-orders.ts": {
+      "lineas": 568
+    },
+    "src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.ts": {
+      "lineas": 566
+    },
+    "src/app/features/agenda/agenda-create/agenda-create.css": {
+      "lineas": 566
+    },
+    "src/app/features/clinical-record/patient-chart/referral-block/referral-block.html": {
+      "lineas": 566
+    },
+    "src/app/core/mock/handlers/support-access.core.ts": {
+      "lineas": 565
+    },
+    "src/app/features/clinical-record/patient-chart/diagnosis-block/presuntivo-form/presuntivo-form.ts": {
+      "lineas": 563
+    },
+    "src/app/core/data-access/support-access/support-access.types.ts": {
+      "lineas": 562
+    },
+    "src/app/features/access-governance/campaigns/campaign-wizard/campaign-wizard.ts": {
+      "lineas": 561
+    },
+    "src/app/features/laboratory/results/laboratory-results.ts": {
+      "lineas": 561
+    },
+    "src/app/core/observability/ux/ux-analytics.service.ts": {
+      "lineas": 560
+    },
+    "src/app/core/promotions-engine/evaluate-order.ts": {
+      "lineas": 559
+    },
+    "src/app/features/account/spending/spending.css": {
+      "lineas": 559
+    },
+    "src/app/shared/components/organisms/anatomy-viewer/anatomy-viewer.ts": {
+      "lineas": 552
+    },
+    "src/app/features/account/medical-record/where-to-buy/where-to-buy.html": {
+      "lineas": 551
+    },
+    "src/app/features/auth/shared-registration/practitioner-fields.ts": {
+      "lineas": 551
+    },
+    "src/app/shared/components/organisms/auth-stage/auth-stage.css": {
+      "lineas": 551
+    },
+    "src/app/core/navigation/navigation.subgroups.ts": {
+      "lineas": 550
+    },
+    "src/app/core/data-access/accounting/accounting.types.ts": {
+      "lineas": 548
+    },
+    "src/app/features/alovida/buscar/hospitales-listado/hospitales-listado.ts": {
+      "lineas": 545
+    },
+    "src/app/core/mock/handlers/surveys-insights.simulator.ts": {
+      "lineas": 543
+    },
+    "src/app/features/account/pharmacy-orders/order-detail/order-detail.ts": {
+      "lineas": 541
+    },
+    "src/app/features/clinical-record/patient-chart/informed-consent/informed-consent-panel.html": {
+      "lineas": 540
+    },
+    "src/app/features/public-profile/public-profile-card/public-profile-card.html": {
+      "lineas": 540
+    },
+    "src/app/features/access-governance/access-matrix/access-matrix.html": {
+      "lineas": 538
+    },
+    "src/app/features/access-governance/my-reviews/my-reviews.ts": {
+      "lineas": 537
+    },
+    "src/app/features/identity-verification/identity-verification.ts": {
+      "lineas": 536
+    },
+    "src/app/features/organization/pharmacy-inbox/pharmacy-inbox.ts": {
+      "lineas": 533
+    },
+    "src/app/features/insurance/received-claims/received-claims.html": {
+      "lineas": 531
+    },
+    "src/app/features/messaging/messaging.ts": {
+      "lineas": 531
+    },
+    "src/app/features/settings/chat-preferences/chat-preferences.css": {
+      "lineas": 531
+    },
+    "src/app/features/admin/services-catalog/procedure-offers/procedure-offers.ts": {
+      "lineas": 530
+    },
+    "src/app/core/mock/fixtures/support-hospital.ts": {
+      "lineas": 529
+    },
+    "src/app/features/pharmacy/inventory/pharmacy-inventory.ts": {
+      "lineas": 529
+    },
+    "src/app/shared/components/molecules/reference-combobox/reference-combobox.ts": {
+      "lineas": 528
+    },
+    "src/app/features/insurance/insurance-claim-detail/insurance-claim-detail.ts": {
+      "lineas": 527
+    },
+    "src/app/features/form-builder/field-editor/field-editor.html": {
+      "lineas": 523
+    },
+    "src/app/core/data-access/public-directory/public-directory.client.ts": {
+      "lineas": 522
+    },
+    "src/app/core/mock/mock-store.ts": {
+      "lineas": 521
+    },
+    "src/app/features/support-access/permissions-editor/permissions-editor.ts": {
+      "lineas": 520
+    },
+    "src/app/core/mock/handlers/catalog-editor.handlers.ts": {
+      "lineas": 519
+    },
+    "src/app/features/pharmacy/import/pharmacy-import.html": {
+      "lineas": 519
+    },
+    "src/app/features/glossary/glossary-anatomy-atlas.css": {
+      "lineas": 517
+    },
+    "src/app/features/organization/pharmacy-campaigns/pharmacy-campaigns.ts": {
+      "lineas": 517
+    },
+    "src/app/core/mock/glossary-shards.ts": {
+      "lineas": 516
+    },
+    "src/app/core/messaging/chat-auto-reply.ts": {
+      "lineas": 515
+    },
+    "src/app/shared/geo/bo-provinces.ts": {
+      "lineas": 515
+    },
+    "src/app/core/mock/handlers/governance.handlers.ts": {
+      "lineas": 514
+    },
+    "src/app/shared/components/organisms/filter-bar/filter-bar.ts": {
+      "lineas": 514
+    },
+    "src/app/shared/components/organisms/tree-select/tree-select.ts": {
+      "lineas": 512
+    },
+    "src/app/core/mock/handlers/payment-receipts.handlers.ts": {
+      "lineas": 511
+    },
+    "src/app/core/mock/mock-backend.interceptor.ts": {
+      "lineas": 511
+    },
+    "src/app/core/tutorials/definitions/index.ts": {
+      "lineas": 511
+    },
+    "src/app/features/agenda/my-agenda/schedule-grid/schedule-grid.css": {
+      "lineas": 511
+    },
+    "src/app/features/public-directories/public-directory-listing.ts": {
+      "lineas": 511
+    },
+    "src/app/core/mock/siat-sim/siat-simulated.adapter.ts": {
+      "lineas": 509
+    },
+    "src/app/core/mock/handlers/centros.handlers.ts": {
+      "lineas": 505
+    },
+    "src/app/features/account/pharmacy-orders/checkout/checkout.ts": {
+      "lineas": 503
+    },
+    "src/app/features/insurance/insurance-analytics/insurance-analytics.ts": {
+      "lineas": 503
+    },
+    "src/app/features/medical-groups/medical-group-detail/medical-group-detail.html": {
+      "lineas": 503
+    },
+    "src/app/core/mock/handlers/billing-simulated.handlers.ts": {
+      "lineas": 502
+    },
+    "src/app/shared/components/organisms/directory-page/directory-page.ts": {
+      "lineas": 502
+    },
+    "src/app/core/mock/fixtures/bolivia-central-axis.ts": {
+      "lineas": 498
+    },
+    "src/app/features/account/my-verifications/my-verifications.model.ts": {
+      "lineas": 498
+    },
+    "src/app/features/messaging/thread/composer/image-editor/image-editor.ts": {
+      "lineas": 498
+    },
+    "src/app/core/mock/handlers/runtime-pieces.seed.ts": {
+      "lineas": 497
+    },
+    "src/app/features/medical-groups/medical-group-form/medical-group-form.ts": {
+      "lineas": 497
+    },
+    "src/app/shared/forms/paginated/paginated-form.types.ts": {
+      "lineas": 496
+    },
+    "src/app/shared/text/article-markup.ts": {
+      "lineas": 496
+    },
+    "src/app/core/data-access/procedures/procedures.client.ts": {
+      "lineas": 493
+    },
+    "src/app/features/admin/patients/patient-detail/patient-detail.ts": {
+      "lineas": 492
+    },
+    "src/app/features/billing/billing.ts": {
+      "lineas": 492
+    },
+    "src/app/features/admin/measurement/measurement.ts": {
+      "lineas": 491
+    },
+    "src/app/shared/components/organisms/data-table/data-table.css": {
+      "lineas": 491
+    },
+    "src/app/core/data-access/observability/observability.types.ts": {
+      "lineas": 490
+    },
+    "src/app/features/accounting/summary/summary.html": {
+      "lineas": 490
+    },
+    "src/app/features/messaging/thread/composer/attachment-preview/attachment-preview.css": {
+      "lineas": 490
+    },
+    "src/app/features/admin/medical-organization/espacio/space-detail.ts": {
+      "lineas": 489
+    },
+    "src/app/features/form-builder/form-builder.css": {
+      "lineas": 489
+    },
+    "src/app/features/clinical-record/patient-chart/recorrido-clinico/recorrido-clinico.css": {
+      "lineas": 488
+    },
+    "src/app/features/laboratory/results/laboratory-results.css": {
+      "lineas": 488
+    },
+    "src/app/features/support-access/combined-agenda/combined-agenda.css": {
+      "lineas": 488
+    },
+    "src/app/shared/components/organisms/chart-panel/chart-option.builder.ts": {
+      "lineas": 487
+    },
+    "src/app/shared/components/organisms/directory-page/directory-page.css": {
+      "lineas": 487
+    },
+    "src/app/core/mock/handlers/insurance-campaigns.handlers.ts": {
+      "lineas": 485
+    },
+    "src/app/features/organization/pharmacy-catalog/pharmacy-catalog.html": {
+      "lineas": 485
+    },
+    "src/app/features/access-governance/my-reviews/my-reviews.html": {
+      "lineas": 484
+    },
+    "src/app/features/clinical-record/patient-chart/additional-fields/additional-fields.ts": {
+      "lineas": 484
+    },
+    "src/app/core/mock/handlers/referrals.handlers.ts": {
+      "lineas": 483
+    },
+    "src/app/features/access-governance/team-management/team-member/team-member.ts": {
+      "lineas": 482
+    },
+    "src/app/core/data-access/pharmacy/pharmacy.client.ts": {
+      "lineas": 481
+    },
+    "src/app/features/clinical-record/patient-chart/measurement-grid/measurement-grid.ts": {
+      "lineas": 478
+    },
+    "src/app/shared/utils/form-template-pdf/form-template-pdf.ts": {
+      "lineas": 474
+    },
+    "src/app/features/admin/medical-organization/espacio/space-form.ts": {
+      "lineas": 473
+    },
+    "src/app/features/clinical-record/patient-chart/medical-note-block/medical-note-block.ts": {
+      "lineas": 473
+    },
+    "src/app/features/access-governance/campaigns/campaign-detail/campaign-detail.ts": {
+      "lineas": 470
+    },
+    "src/app/features/access-governance/campaigns/campaign-wizard/campaign-wizard.html": {
+      "lineas": 469
+    },
+    "src/app/features/access-governance/team-management/team-management.ts": {
+      "lineas": 469
+    },
+    "src/app/features/messaging/thread/thread-layers.css": {
+      "lineas": 468
+    },
+    "src/app/features/pharmacy/integration/integration-mappings/integration-mappings.ts": {
+      "lineas": 468
+    },
+    "src/app/features/account/quotations/quotations.ts": {
+      "lineas": 466
+    },
+    "src/app/features/admin/portal/mutability/mutability-page.html": {
+      "lineas": 466
+    },
+    "src/app/core/data-access/admin-portal/portal.types.ts": {
+      "lineas": 465
+    },
+    "src/app/features/organization/pharmacy-profile/pharmacy-profile.ts": {
+      "lineas": 465
+    },
+    "src/app/core/data-access/public-directory/public-directory.types.ts": {
+      "lineas": 464
+    },
+    "src/app/core/mock/handlers/authz-modules-catalog.handlers.ts": {
+      "lineas": 464
+    },
+    "src/app/features/public-profile/public-profile-card/public-profile-card.ts": {
+      "lineas": 464
+    },
+    "src/app/features/glossary/glossary-term.html": {
+      "lineas": 463
+    },
+    "src/app/features/support-access/permissions-editor/condition-editor/condition-editor.html": {
+      "lineas": 463
+    },
+    "src/app/features/accounting/cockpit/cockpit.html": {
+      "lineas": 462
+    },
+    "src/app/features/account/my-profile/medical-articles/article-composer/article-composer.ts": {
+      "lineas": 461
+    },
+    "src/app/features/agenda/my-agenda/week-view/week-view.ts": {
+      "lineas": 461
+    },
+    "src/app/core/mock/handlers/governance-policies.handlers.ts": {
+      "lineas": 460
+    },
+    "src/app/features/account/my-requests/my-requests.ts": {
+      "lineas": 460
+    },
+    "src/app/features/support-access/my-support/my-support.ts": {
+      "lineas": 460
+    },
+    "src/app/core/tokens/design-tokens.types.ts": {
+      "lineas": 459
+    },
+    "src/app/core/mock/handlers/files.handlers.ts": {
+      "lineas": 457
+    },
+    "src/app/core/mock/handlers/support-access.governance.reviews.handlers.ts": {
+      "lineas": 454
+    },
+    "src/app/features/laboratory-directory/laboratory-detail/laboratory-detail.ts": {
+      "lineas": 452
+    },
+    "src/app/features/questionnaires/insights/survey-insights.css": {
+      "lineas": 452
+    },
+    "src/app/shared/components/atoms/select/select.ts": {
+      "lineas": 451
+    },
+    "src/app/core/i18n/legal-entity-types.dictionary.ts": {
+      "lineas": 450
+    },
+    "src/app/shared/components/organisms/promotion-rule-editor/promotion-rule-editor.html": {
+      "lineas": 450
+    },
+    "src/app/core/mock/handlers/simple-accounting.handlers.ts": {
+      "lineas": 446
+    },
+    "src/app/features/auth/shared-registration/registration-errors.ts": {
+      "lineas": 446
+    },
+    "src/app/core/mock/handlers/support-access.governance.reports.handlers.ts": {
+      "lineas": 445
+    },
+    "src/app/features/clinical-record/patient-chart/medication-block/medication-block.html": {
+      "lineas": 445
+    },
+    "src/app/features/pharmacy/products/product-dialog/product-dialog.html": {
+      "lineas": 445
+    },
+    "src/app/shared/utils/pdf-export/pdf-composer.ts": {
+      "lineas": 445
+    },
+    "src/app/core/data-access/infrastructure-ops/infrastructure-ops.types.ts": {
+      "lineas": 443
+    },
+    "src/app/features/form-builder/field-editor/field-editor.css": {
+      "lineas": 441
+    },
+    "src/app/shared/components/organisms/date-picker/date-picker.css": {
+      "lineas": 441
+    },
+    "src/app/core/mock/handlers/pharmacy-prescription-shares.handlers.ts": {
+      "lineas": 440
+    },
+    "src/app/core/data-access/surveys/surveys.client.ts": {
+      "lineas": 439
+    },
+    "src/app/features/insurance/insurance-patients/insurance-patients.ts": {
+      "lineas": 439
+    },
+    "src/app/features/support-access/permissions-editor/editor-save-flow.ts": {
+      "lineas": 439
+    },
+    "src/app/core/data-access/infrastructure/infrastructure.types.ts": {
+      "lineas": 438
+    },
+    "src/app/features/glossary/glossary-term.css": {
+      "lineas": 437
+    },
+    "src/app/features/account/my-profile/patient-profile-edit/patient-profile-edit.html": {
+      "lineas": 436
+    },
+    "src/app/features/clinical-record/patient-chart/referral-block/referral-block.model.ts": {
+      "lineas": 436
+    },
+    "src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.html": {
+      "lineas": 436
+    },
+    "src/app/features/questionnaires/insights/survey-insights.ts": {
+      "lineas": 434
+    },
+    "src/app/core/data-access/admin-portal/data-catalog.types.ts": {
+      "lineas": 433
+    },
+    "src/app/core/mock/handlers/support-access.governance.team.handlers.ts": {
+      "lineas": 433
+    },
+    "src/app/features/account/spending/spending.model.ts": {
+      "lineas": 433
+    },
+    "src/app/features/admin/medical-organization/medical-organization.html": {
+      "lineas": 433
+    },
+    "src/app/features/support-access/permissions-editor/editor-grant.ts": {
+      "lineas": 433
+    },
+    "src/app/features/laboratory/prices/services-import/lab-services-import.rules.ts": {
+      "lineas": 431
+    },
+    "src/app/core/mock/handlers/service-offerings.handlers.ts": {
+      "lineas": 430
+    },
+    "src/app/features/admin/patients/patient-list/patient-list.ts": {
+      "lineas": 430
+    },
+    "src/app/features/admin/portal/probes/runtime-pieces/runtime-pieces-page.ts": {
+      "lineas": 429
+    },
+    "src/app/features/account/promotions/promotions.ts": {
+      "lineas": 428
+    },
+    "src/app/shared/components/atoms/account-icon/account-icon.ts": {
+      "lineas": 427
+    },
+    "src/app/shared/utils/pdf-export/pdf-page.ts": {
+      "lineas": 426
+    },
+    "src/app/features/account/quotations/quotations.sources.ts": {
+      "lineas": 423
+    },
+    "src/app/features/glossary/glossary-anatomy-atlas.ts": {
+      "lineas": 423
+    },
+    "src/app/shared/components/organisms/tutorial-overlay/tutorial-overlay.ts": {
+      "lineas": 423
+    },
+    "src/app/core/emergency/ambulance-directory.seed.ts": {
+      "lineas": 421
+    },
+    "src/app/core/mock/handlers/support-access.session.handlers.ts": {
+      "lineas": 420
+    },
+    "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.css": {
+      "lineas": 420
+    },
+    "src/app/features/auth/shared-registration/location-picker/location-picker.ts": {
+      "lineas": 420
+    },
+    "src/app/features/design-system-sample/design-system-sample.ts": {
+      "lineas": 420
+    },
+    "src/app/features/admin/portal/rbac-matrix/role-view-editor.ts": {
+      "lineas": 419
+    },
+    "src/app/features/auth/register-practitioner/register-practitioner.css": {
+      "lineas": 419
+    },
+    "src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts": {
+      "lineas": 419
+    },
+    "src/app/core/mock/fixtures/support-hospital-inbox.ts": {
+      "lineas": 418
+    },
+    "src/app/shared/components/organisms/data-table/data-table.ts": {
+      "lineas": 417
+    },
+    "src/app/features/agenda/blocks/blocks.ts": {
+      "lineas": 416
+    },
+    "src/app/features/public-directories/insurer-detail/insurer-detail.ts": {
+      "lineas": 415
+    },
+    "src/app/shared/components/organisms/auth-split/auth-split.html": {
+      "lineas": 415
+    },
+    "src/app/shared/components/organisms/body-map/body-map.css": {
+      "lineas": 414
+    },
+    "src/app/features/messaging/thread/composer/attachment-preview/attachment-preview.ts": {
+      "lineas": 413
+    },
+    "src/app/features/questionnaires/insights/survey-insights.logic.ts": {
+      "lineas": 413
+    },
+    "src/app/core/data-access/diagnostics/diagnostics.types.ts": {
+      "lineas": 412
+    },
+    "src/app/core/mock/billing-sim/simulated-data.ts": {
+      "lineas": 409
+    },
+    "src/app/shared/components/molecules/stepper/stepper.css": {
+      "lineas": 409
+    },
+    "src/app/core/mock/handlers/space-billing.handlers.ts": {
+      "lineas": 408
+    },
+    "src/app/features/glossary/glossary-drug-facts.ts": {
+      "lineas": 408
+    },
+    "src/app/features/glossary/glossary-network.ts": {
+      "lineas": 408
+    },
+    "src/app/features/groups/group-detail/group-detail.ts": {
+      "lineas": 408
+    },
+    "src/app/features/agenda/appointment-new/appointment-new.html": {
+      "lineas": 407
+    },
+    "src/app/features/alovida/buscar/medicamentos-listado/medication-graph/medication-graph.css": {
+      "lineas": 407
+    },
+    "src/app/features/support-access/permissions-editor/condition-editor/condition-editor.ts": {
+      "lineas": 407
+    },
+    "src/app/core/mock/handlers/operating-rooms.state.ts": {
+      "lineas": 406
+    },
+    "src/app/features/admin/admissions/admission-detail/admission-document-viewer.ts": {
+      "lineas": 406
+    },
+    "src/app/features/my-services/my-services.html": {
+      "lineas": 406
+    },
+    "src/app/features/clinical-record/patient-chart/care-plan-block/care-plan-block.ts": {
+      "lineas": 404
+    },
+    "src/app/features/clinical-record/patient-chart/recorrido-clinico/recorrido-clinico.ts": {
+      "lineas": 404
+    },
+    "src/app/features/form-builder/form-builder.html": {
+      "lineas": 404
+    },
+    "src/app/features/auth/login/login.css": {
+      "lineas": 403
+    },
+    "src/app/features/observability/sistema/obs-mappers.ts": {
+      "lineas": 403
+    },
+    "src/app/core/data-access/pharmacy/pharmacy.fixtures.ts": {
+      "lineas": 401
+    },
+    "src/app/features/admin/organizations/child-organization-new/child-organization-new.ts": {
+      "lineas": 401
+    },
+    "src/app/features/alovida/buscar/medicamentos-listado/medicamentos-listado.ts": {
+      "lineas": 401
+    },
+    "src/app/features/insights/insights-shell.css": {
+      "lineas": 401
+    },
+    "src/app/features/directories-overview/directories-overview.ts": {
+      "lineas": 400
+    },
+    "src/app/features/messaging/conversation-list/conversation-list.css": {
+      "lineas": 400
+    },
+    "src/app/features/organization/organization-panel.html": {
+      "lineas": 400
+    },
+    "src/app/core/data-access/admin-portal/platform.types.ts": {
+      "lineas": 399
+    },
+    "src/app/features/glossary/glossary-anatomy-atlas.html": {
+      "lineas": 399
+    },
+    "src/app/shared/components/organisms/department-map/bolivia-municipalities.geometry.ts": {
+      "lineas": 398
+    },
+    "src/app/features/access-governance/sod/sod.ts": {
+      "lineas": 397
+    },
+    "src/app/features/clinical-record/patient-chart/diagnosis-verify-dialog/diagnosis-verify-dialog.ts": {
+      "lineas": 397
+    },
+    "src/app/features/admin/web-analytics/web-analytics.css": {
+      "lineas": 396
+    },
+    "src/app/features/admin/portal/permissions/roles/role-permissions-editor.ts": {
+      "lineas": 393
+    },
+    "src/app/core/data-access/support-access/support-access.wire.ts": {
+      "lineas": 392
+    },
+    "src/app/features/lab-reception/lab-reception.html": {
+      "lineas": 392
+    },
+    "src/app/features/account/my-profile/medical-articles/medical-articles.ts": {
+      "lineas": 391
+    },
+    "src/app/shared/components/organisms/attachment-uploader/attachment-uploader.ts": {
+      "lineas": 391
+    },
+    "src/app/features/admin/practitioner-assisted-registration/practitioner-assisted-registration.ts": {
+      "lineas": 390
+    },
+    "src/app/features/design-system-sample/organisms-gallery/organisms-gallery.html": {
+      "lineas": 390
+    },
+    "src/app/features/agenda/my-agenda/my-agenda.css": {
+      "lineas": 389
+    },
+    "src/app/shared/components/organisms/filter-bar/filter-bar.css": {
+      "lineas": 389
+    },
+    "src/app/features/admin/portal/portal.fixture.ts": {
+      "lineas": 388
+    },
+    "src/app/features/organization/organization-branches/organization-branches.ts": {
+      "lineas": 388
+    },
+    "src/app/core/data-access/procedures/procedures.types.ts": {
+      "lineas": 387
+    },
+    "src/app/features/account/pharmacy/search/pharmacy-search.service.ts": {
+      "lineas": 387
+    },
+    "src/app/features/dashboard/patient-home/patient-home.ts": {
+      "lineas": 387
+    },
+    "src/app/shared/components/atoms/verification-badge/verification-badge.ts": {
+      "lineas": 386
+    },
+    "src/app/core/mock/handlers/insurance-portability.handlers.ts": {
+      "lineas": 383
+    },
+    "src/app/features/agenda/my-agenda/week-view/week-view.css": {
+      "lineas": 383
+    },
+    "src/app/features/settings/chat-preferences/chat-preferences.ts": {
+      "lineas": 383
+    },
+    "src/app/core/messaging/chat-socket.service.ts": {
+      "lineas": 382
+    },
+    "src/app/features/account/appointments/appointments.css": {
+      "lineas": 382
+    },
+    "src/app/features/glossary/glossary-graph.css": {
+      "lineas": 381
+    },
+    "src/app/features/admin/medical-organization/memberships-tab/memberships-tab.ts": {
+      "lineas": 380
+    },
+    "src/app/features/dashboard/patient-home/patient-home.html": {
+      "lineas": 380
+    },
+    "src/app/core/mock/handlers/mutability.seed.ts": {
+      "lineas": 379
+    },
+    "src/app/features/delegated-access/org-assignment-form/org-assignment-form.ts": {
+      "lineas": 378
+    },
+    "src/app/core/mock/inline-glossary.ts": {
+      "lineas": 376
+    },
+    "src/app/features/access-governance/simulator/simulator.fixtures.ts": {
+      "lineas": 376
+    },
+    "src/app/features/questionnaires/survey-detail/question-editor/question-editor.ts": {
+      "lineas": 376
+    },
+    "src/app/features/access-governance/anomalies/anomalies.ts": {
+      "lineas": 375
+    },
+    "src/app/features/account/medical-record/medical-record.html": {
+      "lineas": 375
+    },
+    "src/app/features/support-access/combined-agenda/agenda-runner.ts": {
+      "lineas": 375
+    },
+    "src/app/core/mock/handlers/governance-data.handlers.ts": {
+      "lineas": 374
+    },
+    "src/app/features/agenda/walk-in/walk-in-form.ts": {
+      "lineas": 374
+    },
+    "src/app/features/settings/chat-preferences/chat-preferences.html": {
+      "lineas": 374
+    },
+    "src/app/shared/components/molecules/tabs/tabs.css": {
+      "lineas": 374
+    },
+    "src/app/features/agenda/agenda.css": {
+      "lineas": 373
+    },
+    "src/app/features/insights/domain/opinion.ts": {
+      "lineas": 373
+    },
+    "src/app/features/auth-providers/protocol-config-form/protocol-config-form.ts": {
+      "lineas": 372
+    },
+    "src/app/features/pharma-lab/doctor-visits/doctor-visits.ts": {
+      "lineas": 371
+    },
+    "src/app/features/insights/domain/metric-catalog.ts": {
+      "lineas": 370
+    },
+    "src/app/features/access-governance/lifecycle/lifecycle-case/lifecycle-case.ts": {
+      "lineas": 369
+    },
+    "src/app/features/account/pharmacy-orders/new-order/new-order.html": {
+      "lineas": 369
+    },
+    "src/app/features/clinical-record/patient-chart/form-conclusion-block/form-conclusion-block.ts": {
+      "lineas": 369
+    },
+    "src/app/features/admin/data-catalog/data-catalog.ts": {
+      "lineas": 368
+    },
+    "src/app/core/data-access/billing-simulated/billing-simulated.types.ts": {
+      "lineas": 367
+    },
+    "src/app/core/tutorials/tutorial.engine.ts": {
+      "lineas": 367
+    },
+    "src/app/features/feed/post-card/post-card.ts": {
+      "lineas": 367
+    },
+    "src/app/features/account/pharmacy-hub/pharmacy-shop/pharmacy-shop.ts": {
+      "lineas": 366
+    },
+    "src/app/features/laboratory/center-schedule/center-schedule.ts": {
+      "lineas": 366
+    },
+    "src/app/features/shell-layout/shell-layout.css": {
+      "lineas": 365
+    },
+    "src/app/core/data-access/support-access/session-policy.ts": {
+      "lineas": 364
+    },
+    "src/app/features/glossary/glossary.html": {
+      "lineas": 364
+    },
+    "src/app/features/access-governance/simulator/draft-panel/draft-panel.ts": {
+      "lineas": 363
+    },
+    "src/app/features/agenda/my-agenda/month-view/month-view.css": {
+      "lineas": 363
+    },
+    "src/app/shared/utils/branch-import/branch-import.ts": {
+      "lineas": 363
+    },
+    "src/app/core/mock/fixtures/glossary.ts": {
+      "lineas": 362
+    },
+    "src/app/features/account/my-profile/address-book/address-book.ts": {
+      "lineas": 362
+    },
+    "src/app/features/admin/data-catalog/object-detail/catalog-object-detail.ts": {
+      "lineas": 362
+    },
+    "src/app/features/admin/moderation/moderation.ts": {
+      "lineas": 362
+    },
+    "src/app/features/directory/practitioner-availability/practitioner-availability.ts": {
+      "lineas": 362
+    },
+    "src/app/shared/components/organisms/registro-ayuda/registro-ayuda.ts": {
+      "lineas": 362
+    },
+    "src/app/shared/utils/pdf-export/pdf-theme.ts": {
+      "lineas": 362
+    },
+    "src/app/core/mock/handlers/reporting/resumen.graficos.ts": {
+      "lineas": 361
+    },
+    "src/app/features/account/quotations/quotations.html": {
+      "lineas": 361
+    },
+    "src/app/features/admin/organizations/membership-new/membership-new.ts": {
+      "lineas": 361
+    },
+    "src/app/features/admin/portal/rbac-matrix/rbac-matrix-model.ts": {
+      "lineas": 361
+    },
+    "src/app/core/i18n/legal-entity-types-bo.dictionary.ts": {
+      "lineas": 360
+    },
+    "src/app/features/alovida/buscar/hospitales-listado/hospitales-listado.html": {
+      "lineas": 360
+    },
+    "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.html": {
+      "lineas": 360
+    },
+    "src/app/features/laboratory/prices/laboratory-prices.ts": {
+      "lineas": 359
+    },
+    "src/app/features/laboratory/results/laboratory-results.html": {
+      "lineas": 359
+    },
+    "src/app/features/support-access/support-requests/support-requests.ts": {
+      "lineas": 359
+    },
+    "src/app/features/account/my-verifications/my-verifications.ts": {
+      "lineas": 358
+    },
+    "src/app/features/assets-liabilities/assets-liabilities.html": {
+      "lineas": 358
+    },
+    "src/app/features/symptom-check/symptoms.ts": {
+      "lineas": 358
+    },
+    "src/app/features/admin/web-analytics/web-analytics.html": {
+      "lineas": 357
+    },
+    "src/app/features/billing/billing.html": {
+      "lineas": 356
+    },
+    "src/app/shared/components/organisms/content-dialog/content-dialog.ts": {
+      "lineas": 356
+    },
+    "src/app/features/clinical-record/clinical-record.ts": {
+      "lineas": 353
+    },
+    "src/app/core/data-access/referrals/referrals.types.ts": {
+      "lineas": 352
+    },
+    "src/app/core/mock/handlers/catalog-fit.seed.ts": {
+      "lineas": 352
+    },
+    "src/app/features/clinical-record/patient-chart/follow-up-block/follow-up-block.css": {
+      "lineas": 352
+    },
+    "src/app/core/mock/handlers/periop-case-flow.handlers.ts": {
+      "lineas": 351
+    },
+    "src/app/features/access-governance/lifecycle/move-dialog/move-dialog.ts": {
+      "lineas": 351
+    },
+    "src/app/features/access-governance/lifecycle/offboard-dialog/offboard-dialog.html": {
+      "lineas": 351
+    },
+    "src/app/features/access-governance/sod/sod.html": {
+      "lineas": 351
+    },
+    "src/app/features/admin/services-catalog/services-catalog.ts": {
+      "lineas": 351
+    },
+    "src/app/features/clinical-record/patient-chart/form-response-picker/form-response-picker.ts": {
+      "lineas": 351
+    },
+    "src/app/features/dashboard/consultations-summary/consultations-summary.ts": {
+      "lineas": 351
+    },
+    "src/app/shared/components/organisms/registro-ayuda/registro-ayuda.css": {
+      "lineas": 351
+    },
+    "src/app/features/account/questionnaires/answer/answer.ts": {
+      "lineas": 350
+    },
+    "src/app/shared/components/organisms/paginated-form/paginated-form.html": {
+      "lineas": 350
+    },
+    "src/app/core/data-access/access-governance/access-reviews.types.ts": {
+      "lineas": 349
+    },
+    "src/app/features/insurance/insurance-claims/insurance-claims.ts": {
+      "lineas": 349
+    },
+    "src/app/features/questionnaires/questionnaires.ts": {
+      "lineas": 348
+    },
+    "src/app/core/mock/fixtures/reference-prices.ts": {
+      "lineas": 347
+    },
+    "src/app/features/access-governance/simulator/explain-text.ts": {
+      "lineas": 347
+    },
+    "src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.types.ts": {
+      "lineas": 347
+    },
+    "src/app/features/clinical-record/patient-chart/diagnosis-block/diagnosis-block.ts": {
+      "lineas": 347
+    },
+    "src/app/features/dashboard/patient-home/first-steps/first-steps-card.css": {
+      "lineas": 347
+    },
+    "src/app/features/health-context/version-form/version-form.ts": {
+      "lineas": 347
+    },
+    "src/app/features/insights/domain/insights.types.ts": {
+      "lineas": 347
+    },
+    "src/app/features/questionnaires/survey-detail/survey-detail.html": {
+      "lineas": 347
+    },
+    "src/app/shared/utils/pdf-export/pdf-export.ts": {
+      "lineas": 347
+    },
+    "src/app/features/clinical-record/patient-chart/document-block/document-block.ts": {
+      "lineas": 346
+    },
+    "src/app/features/pharma-lab/pharma-lab-home/pharma-lab-home.ts": {
+      "lineas": 346
+    },
+    "src/app/core/mock/handlers/insurer-patients.handlers.ts": {
+      "lineas": 345
+    },
+    "src/app/features/identity-assurance/verification-cases/verification-cases.ts": {
+      "lineas": 345
+    },
+    "src/app/core/data-access/authz-governance/authz-governance.types.ts": {
+      "lineas": 344
+    },
+    "src/app/core/notifications/notifications.store.ts": {
+      "lineas": 344
+    },
+    "src/app/core/data-access/surveys/surveys.types.ts": {
+      "lineas": 343
+    },
+    "src/app/features/admin/clinical-forms/clinical-forms.ts": {
+      "lineas": 343
+    },
+    "src/app/features/admin/getting-started/getting-started.ts": {
+      "lineas": 343
+    },
+    "src/app/features/admin/portal/permissions/who-can/decision-simulator.ts": {
+      "lineas": 343
+    },
+    "src/app/shared/components/molecules/phone-input/phone-input.ts": {
+      "lineas": 343
+    },
+    "src/app/core/mock/handlers/referral-issue.handlers.ts": {
+      "lineas": 342
+    },
+    "src/app/core/mock/handlers/catalog-fit.handlers.ts": {
+      "lineas": 341
+    },
+    "src/app/features/public-profile/public-post-card/public-post-card.css": {
+      "lineas": 341
+    },
+    "src/app/shared/components/organisms/department-map/bolivia-provinces.geometry.ts": {
+      "lineas": 341
+    },
+    "src/app/features/account/questionnaires/questionnaires.ts": {
+      "lineas": 340
+    },
+    "src/app/core/mock/handlers/support-access.governance.grants.handlers.ts": {
+      "lineas": 339
+    },
+    "src/app/features/account/appointments/booking-payment-receipts/booking-payment-receipts.ts": {
+      "lineas": 339
+    },
+    "src/app/features/alovida/buscar/public-result.mapper.ts": {
+      "lineas": 339
+    },
+    "src/app/features/insights/modules/opinion/opinion-page.css": {
+      "lineas": 339
+    },
+    "src/app/features/public-directories/insurer-detail/insurer-detail.html": {
+      "lineas": 339
+    },
+    "src/app/shared/components/molecules/menu/menu.ts": {
+      "lineas": 339
+    },
+    "src/app/features/account/pharmacy/prescriptions/prescriptions-page.ts": {
+      "lineas": 338
+    },
+    "src/app/features/clinical-record/patient-chart/procedures-block/procedures-block.html": {
+      "lineas": 338
+    },
+    "src/app/shared/components/atoms/select/select.css": {
+      "lineas": 338
+    },
+    "src/app/features/account/my-invoices/my-invoices.ts": {
+      "lineas": 337
+    },
+    "src/app/core/data-access/identity/identity-admin.client.ts": {
+      "lineas": 336
+    },
+    "src/app/core/data-access/referrals/referral-transfer.types.ts": {
+      "lineas": 335
+    },
+    "src/app/core/mock/handlers/pharmacy-opening-hours.handlers.ts": {
+      "lineas": 335
+    },
+    "src/app/features/access-governance/lifecycle/offboard-dialog/offboard-dialog.ts": {
+      "lineas": 335
+    },
+    "src/app/shared/components/molecules/checkbox-group/checkbox-group.ts": {
+      "lineas": 335
+    },
+    "src/app/features/directory/practitioner-detail/practitioner-detail.ts": {
+      "lineas": 334
+    },
+    "src/app/features/insights/charts/line-chart.css": {
+      "lineas": 334
+    },
+    "src/app/features/organization/medical-center-setup/medical-center-setup.ts": {
+      "lineas": 334
+    },
+    "src/app/features/organization/organization-profile/organization-profile.ts": {
+      "lineas": 334
+    },
+    "src/app/core/data-access/files/files.client.ts": {
+      "lineas": 333
+    },
+    "src/app/features/admin/portal/mutability/mutability-page.ts": {
+      "lineas": 333
+    },
+    "src/app/features/clinical-record/patient-chart/observation-block/observation-block.ts": {
+      "lineas": 333
+    },
+    "src/app/features/pharmacy/prices/pharmacy-prices.ts": {
+      "lineas": 333
+    },
+    "src/app/shared/styles/public-sheet.css": {
+      "lineas": 333
+    },
+    "src/app/core/mock/handlers/support-access.patients.handlers.ts": {
+      "lineas": 332
+    },
+    "src/app/features/reporting/assistant/question-resolver.ts": {
+      "lineas": 332
+    },
+    "src/app/features/access-governance/access-matrix/access-matrix.css": {
+      "lineas": 331
+    },
+    "src/app/features/account/appointments/appointment-calendar/appointment-calendar.css": {
+      "lineas": 331
+    },
+    "src/app/features/admin/instances/instances.ts": {
+      "lineas": 331
+    },
+    "src/app/features/auth/login/login.ts": {
+      "lineas": 331
+    },
+    "src/app/features/glossary/glossary-clinical-route.ts": {
+      "lineas": 331
+    },
+    "src/app/features/insurance/insurance-patients/insurance-patients.html": {
+      "lineas": 331
+    },
+    "src/app/core/auth/auth.service.ts": {
+      "lineas": 330
+    },
+    "src/app/features/insurance/insurance-analytics/insurance-analytics.html": {
+      "lineas": 330
+    },
+    "src/app/features/reporting/shell/reporting-shell.css": {
+      "lineas": 330
+    },
+    "src/environments/environment.types.ts": {
+      "lineas": 330
+    },
+    "src/app/core/data-access/access-governance/access-explain.types.ts": {
+      "lineas": 329
+    },
+    "src/app/core/data-access/informed-consents/informed-consents.types.ts": {
+      "lineas": 329
+    },
+    "src/app/features/clinical-record/consultation/consultation.html": {
+      "lineas": 329
+    },
+    "src/app/features/messaging/messaging.html": {
+      "lineas": 329
+    },
+    "src/app/core/data-access/adt/adt.types.ts": {
+      "lineas": 328
+    },
+    "src/app/features/laboratory/results/result-upload-queue.ts": {
+      "lineas": 328
+    },
+    "src/app/features/support-access/support-inbox/support-conversation.ts": {
+      "lineas": 328
+    },
+    "src/app/features/account/loyalty/loyalty.ts": {
+      "lineas": 327
+    },
+    "src/app/features/account/pharmacy/store-front/store-front.ts": {
+      "lineas": 327
+    },
+    "src/app/features/admin/admissions/admissions-queue/admissions-queue.ts": {
+      "lineas": 327
+    },
+    "src/app/shared/components/organisms/paginated-form/paginated-form.css": {
+      "lineas": 327
+    },
+    "src/app/shared/components/organisms/tree-select/tree-select.css": {
+      "lineas": 327
+    },
+    "src/app/core/data-access/reporting/reporting.types.ts": {
+      "lineas": 326
+    },
+    "src/app/features/access-governance/access-matrix/access-matrix.support.ts": {
+      "lineas": 326
+    },
+    "src/app/features/admin/patients/patient-merge/patient-merge.ts": {
+      "lineas": 326
+    },
+    "src/app/core/mock/handlers/support-access.org.handlers.ts": {
+      "lineas": 325
+    },
+    "src/app/features/admin/organizations/organization-detail/organization-detail.html": {
+      "lineas": 325
+    },
+    "src/app/features/admin/portal/probes/runtime-pieces/runtime-pieces-page.html": {
+      "lineas": 325
+    },
+    "src/app/features/admin/terminology/version-import/version-import.html": {
+      "lineas": 325
+    },
+    "src/app/features/alovida/buscar/medicamentos-listado/medicamentos-listado.html": {
+      "lineas": 325
+    },
+    "src/app/features/alovida/buscar/medicamentos-listado/medication-graph/medication-graph.html": {
+      "lineas": 325
+    },
+    "src/app/features/billing/graphic-representation.ts": {
+      "lineas": 325
+    },
+    "src/app/features/organization/pharmacy-inbox/pharmacy-inbox.css": {
+      "lineas": 325
+    },
+    "src/app/features/public-profile/public-post-card/public-post-card.ts": {
+      "lineas": 325
+    },
+    "src/app/shared/utils/clinical-pdf/from-summary.ts": {
+      "lineas": 325
+    },
+    "src/app/core/onboarding/onboarding-draft.service.ts": {
+      "lineas": 324
+    },
+    "src/app/features/laboratory/orders/laboratory-orders.ts": {
+      "lineas": 324
+    },
+    "src/app/features/organization/pharmacy-inbox/pharmacy-inbox.fixtures.ts": {
+      "lineas": 324
+    },
+    "src/app/features/pharmacy/inventory/site-stock/site-stock-panel.ts": {
+      "lineas": 324
+    },
+    "src/app/features/agenda/my-agenda/block-form/block-form.ts": {
+      "lineas": 323
+    },
+    "src/app/core/http/auth.interceptor.ts": {
+      "lineas": 322
+    },
+    "src/app/features/access-governance/rules/rules.html": {
+      "lineas": 322
+    },
+    "src/app/core/data-access/support-access/support-atoms.ts": {
+      "lineas": 321
+    },
+    "src/app/core/mock/fixtures/glosario-equipos.ts": {
+      "lineas": 321
+    },
+    "src/app/features/organization/pharmacy-profile/legal-documents/legal-documents.ts": {
+      "lineas": 321
+    },
+    "src/app/features/admin/bulk-imports/bulk-imports-labels.ts": {
+      "lineas": 319
+    },
+    "src/app/core/mock/handlers/operating-rooms.handlers.ts": {
+      "lineas": 317
+    },
+    "src/app/core/tutorials/tutorial-progress.store.ts": {
+      "lineas": 317
+    },
+    "src/app/features/insurance/insurance-catalog/insurance-catalog.html": {
+      "lineas": 317
+    },
+    "src/app/shared/components/organisms/department-map/department-map.ts": {
+      "lineas": 317
+    },
+    "src/app/features/insurance/insurance-campaigns/insurance-campaigns.html": {
+      "lineas": 315
+    },
+    "src/app/core/auth/session.store.ts": {
+      "lineas": 314
+    },
+    "src/app/core/mock/handlers/reporting/publicidad.graficos.ts": {
+      "lineas": 314
+    },
+    "src/app/core/mock/mock-router.ts": {
+      "lineas": 314
+    },
+    "src/app/features/accounting/accounting.css": {
+      "lineas": 314
+    },
+    "src/app/features/support-access/my-support/my-support.html": {
+      "lineas": 314
+    },
+    "src/app/core/mock/handlers/reporting/comisiones.graficos-pagos.ts": {
+      "lineas": 312
+    },
+    "src/app/features/access-governance/lifecycle/lifecycle-list/lifecycle-list.ts": {
+      "lineas": 312
+    },
+    "src/app/features/access-governance/rules/rules.ts": {
+      "lineas": 312
+    },
+    "src/app/features/clinical-record/patient-chart/patient-chart.css": {
+      "lineas": 312
+    },
+    "src/app/features/quotations/quotation-form/quotation-form.html": {
+      "lineas": 312
+    },
+    "src/app/features/admin/medical-organization/infraestructura/infraestructura-tab.ts": {
+      "lineas": 311
+    },
+    "src/app/features/dashboard/dashboard.ts": {
+      "lineas": 311
+    },
+    "src/app/core/mock/handlers/medical-notes.handlers.ts": {
+      "lineas": 309
+    },
+    "src/app/features/account/my-profile/work-history/work-history.css": {
+      "lineas": 309
+    },
+    "src/app/features/alovida/directorio/organizaciones-formulario/organizaciones-formulario.html": {
+      "lineas": 309
+    },
+    "src/app/features/accounting/records/records.html": {
+      "lineas": 308
+    },
+    "src/app/core/mock/handlers/reporting/calidad.catalogo.ts": {
+      "lineas": 307
+    },
+    "src/app/core/mock/handlers/reporting/calidad.dataset.ts": {
+      "lineas": 307
+    },
+    "src/app/features/admin/portal/probes/catalog-fit/catalog-fit-page.ts": {
+      "lineas": 307
+    },
+    "src/app/features/glossary/glossary-graph.html": {
+      "lineas": 307
+    },
+    "src/app/features/groups/groups.ts": {
+      "lineas": 307
+    },
+    "src/app/features/insights/domain/kpi.ts": {
+      "lineas": 307
+    },
+    "src/app/features/laboratory/prices/services-import/lab-services-import.ts": {
+      "lineas": 307
+    },
+    "src/app/features/support-access/permissions-editor/permissions-editor.css": {
+      "lineas": 307
+    },
+    "src/app/features/auth/shared-registration/workplace-picker/workplace-picker.ts": {
+      "lineas": 306
+    },
+    "src/app/features/glossary/glossary-article.logic.ts": {
+      "lineas": 306
+    },
+    "src/app/features/insights/domain/social.ts": {
+      "lineas": 306
+    },
+    "src/app/features/messaging/thread/composer/composer.html": {
+      "lineas": 306
+    },
+    "src/app/features/reporting/assistant/report-assistant.css": {
+      "lineas": 306
+    },
+    "src/app/features/reporting/assistant/report-assistant.ts": {
+      "lineas": 306
+    },
+    "src/app/core/mock/handlers/patient-spending.handlers.ts": {
+      "lineas": 305
+    },
+    "src/app/core/mock/handlers/reporting/calidad.graficos.ts": {
+      "lineas": 305
+    },
+    "src/app/features/public-profile/public-post-comments/public-post-comments.ts": {
+      "lineas": 305
+    },
+    "src/server/security-headers.ts": {
+      "lineas": 305
+    },
+    "src/app/core/mock/handlers/flows.handlers.ts": {
+      "lineas": 304
+    },
+    "src/app/features/account/medical-record/medical-record.css": {
+      "lineas": 304
+    },
+    "src/app/shared/components/organisms/date-picker/date-picker.html": {
+      "lineas": 304
+    },
+    "src/app/features/admin/organizations/branch-new/branch-new.ts": {
+      "lineas": 303
+    },
+    "src/app/features/auth/register-account-type/register-account-type.css": {
+      "lineas": 303
+    },
+    "src/app/features/medical-groups/medical-group-form/medical-group-form.html": {
+      "lineas": 303
+    },
+    "src/app/core/tutorials/tutorial.registry.ts": {
+      "lineas": 302
+    },
+    "src/app/features/alovida/directorio/organizaciones-hijas-formulario/organizaciones-hijas-formulario.html": {
+      "lineas": 302
+    },
+    "src/app/features/notifications/notification-center.ts": {
+      "lineas": 302
+    },
+    "src/app/features/pharmacy/opening-hours/pharmacy-opening-hours.ts": {
+      "lineas": 302
+    },
+    "src/app/shared/components/organisms/body-map/body-map.export.ts": {
+      "lineas": 301
+    }
+  }
 }

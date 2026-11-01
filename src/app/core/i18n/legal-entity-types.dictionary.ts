@@ -1,5 +1,9 @@
 import { LEGAL_ENTITY_TYPES_BO_NON_CORPORATE } from './legal-entity-types-bo.dictionary';
+import type { LegalEntityCountryIso, LegalEntityTypeEntry } from './legal-entity-types.model';
 import type { UiLanguage } from './ui-language';
+
+export { LEGAL_ENTITY_COUNTRIES } from './legal-entity-types.model';
+export type { LegalEntityCountryIso, LegalEntityTypeEntry, LegalEntityTypeText } from './legal-entity-types.model';
 
 /* ============================================================================
     Diccionario trilingüe de tipos societarios (subtarea 1.1).
@@ -22,11 +26,6 @@ import type { UiLanguage } from './ui-language';
     (`SRL`, `US_LLC`...) — este diccionario nunca inventa uno propio.
     ========================================================================== */
 
-/** Los cinco países que el diccionario cubre hoy, en el orden en que se ofrecen. */
-export const LEGAL_ENTITY_COUNTRIES = ['BO', 'BR', 'US', 'AR', 'MX'] as const;
-
-export type LegalEntityCountryIso = (typeof LEGAL_ENTITY_COUNTRIES)[number];
-
 /** El nombre del país, en los tres idiomas. */
 export const COUNTRY_NAMES: Readonly<Record<LegalEntityCountryIso, Record<UiLanguage, string>>> =
   {
@@ -36,21 +35,6 @@ export const COUNTRY_NAMES: Readonly<Record<LegalEntityCountryIso, Record<UiLang
     AR: { es: 'Argentina', en: 'Argentina', pt: 'Argentina' },
     MX: { es: 'México', en: 'Mexico', pt: 'México' },
   };
-
-/** Rótulo y explicación de una forma societaria, en un idioma. */
-export interface LegalEntityTypeText {
-  /** «ACRÓNIMO · Nombre», tal como se ve en el selector. */
-  readonly label: string;
-  /** Una línea de qué es, para el texto de ayuda del campo. */
-  readonly description: string;
-}
-
-/** Una entrada del diccionario: sus tres idiomas más lo que no cambia entre ellos. */
-export interface LegalEntityTypeEntry {
-  readonly countryIso: LegalEntityCountryIso;
-  readonly acronym: string;
-  readonly translations: Readonly<Record<UiLanguage, LegalEntityTypeText>>;
-}
 
 /**
  * El diccionario completo, indexado por el código de la API

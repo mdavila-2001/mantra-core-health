@@ -353,6 +353,12 @@ describe('ShellLayout', () => {
    * en silencio: la geometría del marco —que es lo que la hoja de la bóveda
    * espera encontrar— y que el menú siga saliendo del registro de secciones.
    */
+  it('el aviso de consentimiento vive dentro del contenido (en el flujo), no suelto en la raíz de la app', () => {
+    fixture.detectChanges();
+    const main = (fixture.nativeElement as HTMLElement).querySelector('main#contenido-principal');
+    expect(main?.querySelector('app-ux-consent-notice')).not.toBeNull();
+  });
+
   describe('marco ALOVIDA', () => {
     function raiz(): HTMLElement {
       fixture.detectChanges();
@@ -1899,7 +1905,7 @@ describe('ShellLayout', () => {
     it('con una sola organización no se ofrece cambiarla', () => {
       abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles: [], tenants: ['t-1'] });
 
-      expect(raiz().querySelector('[data-testid="header-organizacion"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="header-organization"]')).toBeNull();
       expect(raiz().querySelector('[data-testid="header-cuenta"]')).not.toBeNull();
     });
 
@@ -1920,7 +1926,7 @@ describe('ShellLayout', () => {
     it('con varias organizaciones el selector las lista todas, con su nombre legible', () => {
       sesionConDosOrganizaciones();
 
-      expect(raiz().querySelector('[data-testid="header-organizacion"]')).not.toBeNull();
+      expect(raiz().querySelector('[data-testid="header-organization"]')).not.toBeNull();
       expect(opcionesDeOrganizacion().map((o) => o.textContent?.trim())).toEqual([
         'Clínica Norte',
         'Clínica Sur',
@@ -1949,6 +1955,73 @@ describe('ShellLayout', () => {
       );
       expect(marcadas).toHaveLength(1);
       expect(marcadas[0].textContent?.trim()).toBe('Clínica Sur');
+    });
+
+    describe('alcance de plataforma (H3): «Toda la plataforma»', () => {
+      function platformSession(roles: string[], extra: Record<string, unknown> = {}) {
+        abrirSesion({
+          sub: 'u-1',
+          name: 'Ana Salas',
+          roles,
+          tenants: ['t-1', 't-2'],
+          tenantNames: { 't-1': 'Clínica Norte', 't-2': 'Clínica Sur' },
+          ...extra,
+        });
+      }
+      const rotulo = (): string => raiz().querySelector('[data-testid="header-organization"]')?.textContent?.trim() ?? '';
+      const opcionPlataforma = (): HTMLButtonElement | null =>
+        raiz().querySelector<HTMLButtonElement>('[data-testid="header-organization-platform"]');
+
+      it('ofrece «Toda la plataforma», marcada y como rótulo, mientras no se fije organización (no viaja X-Tenant-Id)', () => {
+        platformSession(['PLATFORM_ADMIN']);
+
+        expect(rotulo()).toContain('Toda la plataforma');
+        expect(opcionPlataforma()?.getAttribute('aria-current')).toBe('true');
+        expect(opcionesDeOrganizacion().map((o) => o.textContent?.trim())).toEqual(['Toda la plataforma', 'Clínica Norte', 'Clínica Sur']);
+        expect(session.activeTenantId()).toBeNull();
+      });
+
+      it('fijar una organización la manda como siempre; «Toda la plataforma» la suelta y no deja la recordada', () => {
+        platformSession(['PLATFORM_ADMIN']);
+        vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+        interno<(id: string | null) => void>('changeTenant')('t-2');
+        expect(session.activeTenantId()).toBe('t-2');
+        expect(rotulo()).toContain('Clínica Sur');
+        expect(opcionPlataforma()?.getAttribute('aria-current')).toBeNull();
+
+        opcionPlataforma()?.click();
+        expect(session.activeTenantId()).toBeNull();
+        expect(rotulo()).toContain('Toda la plataforma');
+      });
+
+      it('también se ofrece con una sola organización, porque se puede alternar con «toda la plataforma»', () => {
+        abrirSesion({ sub: 'u-1', roles: ['SUPERADMIN'], tenants: ['t-1'] });
+
+        expect(raiz().querySelector('[data-testid="header-organization"]')).not.toBeNull();
+      });
+
+      it('NEGATIVO: quien no tiene alcance de plataforma no ve la opción', () => {
+        platformSession(['SECURITY_ADMIN']);
+
+        expect(opcionPlataforma()).toBeNull();
+        expect(rotulo()).not.toContain('Toda la plataforma');
+      });
+
+      it('NEGATIVO: PLATFORM_ADMIN con ámbito de organización no ve la opción', () => {
+        platformSession(['PLATFORM_ADMIN'], { scopedRoles: { 't-1': ['PLATFORM_ADMIN'] } });
+
+        expect(opcionPlataforma()).toBeNull();
+      });
+
+      it('NEGATIVO: «Toda la plataforma» no hace nada para quien no tiene el alcance (la API manda)', () => {
+        sesionConDosOrganizaciones();
+        vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        interno<(id: string) => void>('changeTenant')('t-1');
+
+        interno<(id: string | null) => void>('changeTenant')(null);
+        expect(session.activeTenantId()).toBe('t-1');
+      });
     });
 
     it('el avatar lleva las iniciales del nombre, no el nombre entero', () => {

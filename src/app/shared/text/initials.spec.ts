@@ -1,4 +1,4 @@
-import { initialsOf } from './initials';
+import { initialsOf, personInitials } from './initials';
 
 /**
  * Las iniciales del cuadrado sin foto.
@@ -38,5 +38,19 @@ describe('inicialesDe', () => {
 
   it('respeta los acentos como primera letra', () => {
     expect(initialsOf('Ángel Íñiguez')).toBe('ÁÍ');
+  });
+});
+
+describe('personInitials', () => {
+  it.each([
+    ['Danny Marcelo Dávila Barrancos', 'DD'],
+    ['Danny Dávila Barrancos', 'DD'],
+    ['Danny Dávila', 'DD'],
+    ['Danny', 'D'],
+    ['Dra. Valeria Rojas Mendoza', 'VR'],
+    ['Dr(a). Ana Lucía Pérez Quiroga', 'AP'],
+    ['', ''],
+  ])('«%s» → %s: primer nombre y primer apellido', (nombre, esperado) => {
+    expect(personInitials(nombre)).toBe(esperado);
   });
 });

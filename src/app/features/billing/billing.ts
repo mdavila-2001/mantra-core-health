@@ -17,6 +17,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, type Observable } from 'rxjs';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { AccessChallengeCancelledError, withAccessChallenge, type ChallengeRequestOptions } from '../../core/access-challenge/access-challenge';
 import { SessionStore } from '../../core/auth/session.store';
 import { BillingSimulatedClient } from '../../core/data-access/billing-simulated/billing-simulated.client';
@@ -125,6 +126,15 @@ export class Billing {
   private abiertoDesde: string | null = null;
 
   readonly disponible = inject(SIMULATED_AVAILABLE_INVOICING)();
+
+  private readonly auth = inject(AuthService);
+
+  /**
+   * Opera como médico: sólo SUS consultas. La API (`operatingScope`) le niega
+   * anular, revertir, entregar por correo y la bandeja; no se le ofrecen.
+   * Ocultarlas no autoriza nada: el 403 sigue siendo de la API.
+   */
+  readonly soloSusConsultas = computed(() => esAlcanceDeMedico(this.auth.roles()));
 
   readonly estado = signal<ViewState<DatosDeFacturacion>>(loading());
   readonly datos = computed(() => {
@@ -463,9 +473,19 @@ export class Billing {
   }
 
   private cargarBandeja(): void {
+    if (this.soloSusConsultas()) return;
     this.client
       .outbox()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (b) => this.bandeja.set(b.items), error: () => this.bandeja.set([]) });
   }
+}
+
+const ROLES_DE_ADMINISTRACION: readonly string[] = ['SUPERADMIN', 'SECURITY_ADMIN', 'BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN'];
+const ROLES_DE_MEDICO: readonly string[] = ['PRACTITIONER', 'CLINICIAN'];
+
+/** Mismo criterio que `operatingScope` de la API: la administración gana. */
+export function esAlcanceDeMedico(roles: readonly string[]): boolean {
+  if (roles.some((r) => ROLES_DE_ADMINISTRACION.includes(r))) return false;
+  return roles.some((r) => ROLES_DE_MEDICO.includes(r));
 }

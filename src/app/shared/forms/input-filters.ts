@@ -5,9 +5,17 @@
  * coincide con el anterior y ninguna señal cambia.
  */
 
-/** Un nombre o apellido: sólo letras (con tildes y ñ). Sin espacios, dígitos ni símbolos. */
+/**
+ * Un nombre o apellido: sólo letras (con tildes y ñ) separadas por un solo espacio,
+ * para apellidos compuestos («De La Cruz»). Sin dígitos ni símbolos, sin espacio
+ * al inicio ni espacios seguidos. El espacio final se conserva: se va a seguir
+ * escribiendo la palabra siguiente.
+ */
 export function soloLetrasDeNombre(valor: string): string {
-  return valor.replace(/[^\p{L}\p{M}]/gu, '');
+  return valor
+    .replace(/[^\p{L}\p{M} ]/gu, '')
+    .replace(/ {2,}/g, ' ')
+    .replace(/^ /, '');
 }
 
 /** Un documento: sólo letras y dígitos. Sin espacios ni símbolos. */

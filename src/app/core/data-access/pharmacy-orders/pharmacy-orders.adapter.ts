@@ -36,6 +36,9 @@ const DELIVERY_MODE_BY_API_CODE: Readonly<Record<string, ModalidadDeEntrega>> = 
 
 const UNAVAILABLE_LINE_CODES = new Set(['PINV_RES_LINE_OUT_OF_STOCK', 'PINV_RES_LINE_RELEASED']);
 
+/** Una línea que la sede ofrecía sin existencias cargadas: no reserva hasta que la farmacia confirma. */
+const PENDING_CONFIRMATION_LINE_CODE = 'PINV_RES_LINE_PENDING_CONFIRMATION';
+
 /** The unresolved product policy is deliberately isolated here. */
 export class UnsupportedPharmacyOrderLineError extends Error {
   constructor() {
@@ -86,6 +89,7 @@ export function pharmacyOrderFromDto(
       precio: line.unitPriceAmount,
       moneda: line.currency?.code ?? null,
       disponible: !UNAVAILABLE_LINE_CODES.has(line.status.code),
+      porConfirmar: line.status.code === PENDING_CONFIRMATION_LINE_CODE,
     })),
     totalEstimado: dto.totalAmount,
     moneda: dto.currency?.code ?? null,
@@ -122,7 +126,10 @@ export function createOrderRequest(
   if (order.modalidad !== 'RETIRO') {
     throw new Error('La integración real solo admite retiro en farmacia.');
   }
-  if (order.borrador.lineas.some((line) => line.productId === null)) {
+  // Lo que la sede elegida no tiene se mostró, pero no viaja: no hay un
+  // producto suyo que mandar.
+  const sentLines = order.borrador.lineas.filter((line) => line.missingAtSite !== true);
+  if (sentLines.some((line) => line.productId === null)) {
     throw new UnsupportedPharmacyOrderLineError();
   }
   return {
@@ -130,7 +137,7 @@ export function createOrderRequest(
     ...(order.borrador.requestId === '' ? {} : { medicationRequestId: order.borrador.requestId }),
     deliveryMode: 'RETIRO',
     idempotencyKey,
-    lines: order.borrador.lineas.map((line) => {
+    lines: sentLines.map((line) => {
       if (line.productId === null) throw new UnsupportedPharmacyOrderLineError();
       return { productId: line.productId, quantity: line.cantidad };
     }),

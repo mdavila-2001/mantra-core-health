@@ -624,7 +624,7 @@ const entradasTs = indice
       .split('\n')
       .map((linea, i) => (i === 0 ? linea : `  ${linea}`))
       .join('\n');
-    return `  {\n    ...${json},\n    cargar: () => import('${importDesdeElIndice(c.path)}').then((m) => m.${c.clase} as Type<unknown>),\n  },`;
+    return `  ({\n    ...${json},\n    cargar: () => import('${importDesdeElIndice(c.path)}').then((m) => m.${c.clase} as Type<unknown>),\n  } as ComponenteDelStock),`;
   })
   .join('\n');
 
@@ -635,9 +635,9 @@ import type { Type } from '@angular/core';
 import type { ComponenteDelStock } from './component-stock.types';
 
 /** Los ${indice.length} componentes del proyecto, con su ficha y su carga diferida. */
-export const COMPONENTES: readonly ComponenteDelStock[] = [
+export const COMPONENTES: readonly ComponenteDelStock[] = ([
 ${entradasTs}
-];
+] as unknown as readonly ComponenteDelStock[]);
 `;
 
 if (process.argv.includes('--check')) {

@@ -1,0 +1,844 @@
+{
+  "auditor": "literature-audit-r2-1",
+  "items": [
+    {
+      "id": "FMA:33586",
+      "sentence": 1,
+      "es": "Elevar el hombro corresponde a la porción superior del trapecio, en conjunto con el elevador de la escápula y los romboides.",
+      "cites": [
+        "PMID:27629832"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Its superior part together with the levator scapulae and rhomboids elevate the shoulder': misma oración traducida con el sujeto pospuesto."
+    },
+    {
+      "id": "FMA:33586",
+      "sentence": 2,
+      "es": "Medida en 30 fetos de 13 a 19 semanas, era la más larga de las tres porciones del trapecio, y su longitud aumentaba de forma proporcional a la edad.",
+      "cites": [
+        "PMID:27629832"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'30 fetuses ... aged 13-19 weeks'; 'descending part of trapezius is the longest'; 'All the studied parameters ... increased proportionately with age'. Alcance fetal explícito."
+    },
+    {
+      "id": "FMA:33586",
+      "sentence": 3,
+      "es": "En la disección de 26 especímenes de cadáveres coreanos, la arborización densa de las ramas perforantes del nervio accesorio se concentraba en dos sectores de esta porción, que reunían 54 y 27 de los 81 puntos.",
+      "cites": [
+        "PMID:29946827"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Twenty-six specimens ... Korean cadavers'; 'section b (66.7%, 54/81) and section c (33.3%, 27/81)'."
+    },
+    {
+      "id": "FMA:33586",
+      "sentence": 4,
+      "es": "Clínicamente se la vincula con el dolor cervical, y es diana de la toxina botulínica con fines estéticos para afinar el contorno del hombro.",
+      "cites": [
+        "PMID:29946827"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'clinically associated with neck pain and aesthetic applications' + BoNT 'for aesthetic treatment of shoulder contouring'. La primera mitad es literal, pero la frase fusiona dos oraciones."
+    },
+    {
+      "id": "FMA:44250",
+      "sentence": 1,
+      "es": "La forma en reloj de arena predominó (62 %) en 50 piernas de cadáveres japoneses, por delante de la triangular (26 %) y la rectangular (12 %).",
+      "cites": [
+        "PMID:33413502"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'rectangular ... 12%, hourglass ... 62%, triangular ... 26%' en '50 legs from 25 Japanese cadavers'; reordenado."
+    },
+    {
+      "id": "FMA:44250",
+      "sentence": 2,
+      "es": "No hubo diferencias morfométricas significativas entre esas formas, por lo que no parecen implicar diferencias funcionales.",
+      "cites": [
+        "PMID:33413502"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'there appeared to be no functional difference ... since there were no significant differences among the types'. Aspecto 'parts' admisible (morfología)."
+    },
+    {
+      "id": "FMA:44250",
+      "sentence": 3,
+      "es": "En 100 pies de donantes, la cabeza medial del cuadrado plantar se originaba en él en el 93 % y la cabeza lateral en el 90 %.",
+      "cites": [
+        "PMID:29166622"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Medial 93 % ('in 93% from the long plantar ligament') correcto. Pero la cabeza lateral faltaba en 31 de los 100 pies, así que el 90 % no puede referirse a los 100 pies que la frase toma como base; es el 90 % de las cabezas laterales presentes."
+    },
+    {
+      "id": "FMA:44250",
+      "sentence": 4,
+      "es": "En 45 pies de cadáver, figuraba entre los orígenes habituales de la cabeza oblicua del aductor del dedo gordo.",
+      "cites": [
+        "PMID:14704005"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Forty-five feet'; 'Most commonly, the oblique head ... arose from ... the long plantar ligament'."
+    },
+    {
+      "id": "FMA:44250",
+      "sentence": 5,
+      "es": "En un modelo cadavérico de pie plano, al alargar la columna lateral del calcáneo sólo se tensaba el tercio más lateral del ligamento y los dos tercios mediales se relajaban.",
+      "cites": [
+        "PMID:14752758"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'only the lateral most one-third ... measured positive strain'; 'medial two-thirds ... decreased in tension and became fully lax'. Modelo cadavérico explícito."
+    },
+    {
+      "id": "FMA:44250",
+      "sentence": 6,
+      "es": "En 11 pacientes con fiebre mediterránea familiar y dolor de pierna al esfuerzo, 10 mostraron en la resonancia signos de entesitis del tendón calcáneo, de este ligamento o de la fascia plantar.",
+      "cites": [
+        "PMID:22950526"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "El resumen dice 'signs compatible with enthesitis'; la frase dice 'signos de entesitis' y pierde el 'compatible'. Las cifras (10/11) son correctas."
+    },
+    {
+      "id": "FMA:79980",
+      "sentence": 1,
+      "es": "La maniobra de aducción forzada pone de manifiesto la anomalía que nunca falta en el síndrome de Poland: la agenesia de esta porción del pectoral mayor.",
+      "cites": [
+        "PMID:27567946"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Constant anomaly ... is agenesis of sternocostal part' + 'forced adduction maneuver highlighting pectoralis major agenesis'. Fusiona dos oraciones."
+    },
+    {
+      "id": "UBERON:0000370",
+      "sentence": 1,
+      "es": "Tomando como referencia el recorrido de las arterias perforantes, un estudio de diez especímenes cadavéricos distinguió cuatro porciones en el aductor mayor.",
+      "cites": [
+        "PMID:22537037"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Ten cadaveric specimens'; 'separated into four portios (AM1-AM4) based on the courses of the corresponding perforating arteries'."
+    },
+    {
+      "id": "UBERON:0000370",
+      "sentence": 2,
+      "es": "Según ese análisis, la porción más proximal parece orientada sobre todo a estabilizar la cadera, mientras que las tres restantes, de fibras más largas, servirían para mover el muslo en un arco amplio.",
+      "cites": [
+        "PMID:22537037"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'AM1 appears ... oriented principally toward stabilizing the hip joint'; AM2-4 'longer muscle fiber lengths ... large range of motion'. Dos oraciones invertidas y combinadas."
+    },
+    {
+      "id": "UBERON:0000370",
+      "sentence": 3,
+      "es": "Por compartir origen en la tuberosidad isquiática y una función parecida, el tendón de la porción isquiocondílea suele describirse como un tercer tendón proximal de los isquiotibiales.",
+      "cites": [
+        "PMID:38733350"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'has often been described as a third proximal hamstring tendon due to its common origin on the ischial tuberosity as well as similar function': misma oración traducida, con la causal antepuesta."
+    },
+    {
+      "id": "UBERON:0000370",
+      "sentence": 4,
+      "es": "En 76 tendones estudiados por resonancia, esa porción tendinosa se situaba, de media, a 7,5 ± 2,5 mm en sentido medial del tendón del semimembranoso.",
+      "cites": [
+        "PMID:26554947"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Seventy-six AMMHs'; 'medial distance from the semimembranosus tendon was 7.5 ± 2.5 mm'. AMMH = porción isquiocondílea."
+    },
+    {
+      "id": "UBERON:0000370",
+      "sentence": 5,
+      "es": "La rama articular de la arteria descendente de la rodilla vasculariza tanto el tendón distal como el hueso cortical y esponjoso de su inserción.",
+      "cites": [
+        "PMID:3903149"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The adductor magnus tendon and its insertion (cortical and cancellous bone) are vascularized by the articular branch of the descending genicular artery': traducción de la oración, sólo pasada a voz activa."
+    },
+    {
+      "id": "UBERON:0000370",
+      "sentence": 6,
+      "es": "En 20 rodillas de cadáver, la distancia media entre el tubérculo del aductor y el hiato del aductor fue de 99 ± 14 mm.",
+      "cites": [
+        "PMID:22001735"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The mean distance from the adductor tubercle to the adductor hiatus was 99 ± 14 mm': literal, con el prefijo de muestra ('Twenty cadaveric knees')."
+    },
+    {
+      "id": "UBERON:0001272",
+      "sentence": 1,
+      "es": "La osteotomía triple del hueso coxal corta el ilion, el isquion y el pubis alrededor del acetábulo para reorientarlo y cubrir una cabeza femoral luxada o subluxada.",
+      "cites": [
+        "PMID:837597"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'total redirectional reconstruction ... circum-acetabular osteotomies through the ilium, ischium and pubis'; 'achieves coverage of a dislocated or subluxated femoral head'."
+    },
+    {
+      "id": "UBERON:0001272",
+      "sentence": 2,
+      "es": "En una serie de 175 caderas tratadas con esa osteotomía, el 86 % obtuvo un resultado satisfactorio.",
+      "cites": [
+        "PMID:837597"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'performed on 175 hips'; 'Eighty-six per cent had a satisfactory result': literal, con el prefijo de muestra."
+    },
+    {
+      "id": "UBERON:0001272",
+      "sentence": 3,
+      "es": "Al aplicar un momento asimétrico a la pelvis de 15 especímenes embalsamados, el hueso coxal fijado se deformó en promedio tanto como se desplazó la sínfisis del pubis (3,39 ± 2,92 frente a 3,20 ± 2,58 mm).",
+      "cites": [
+        "PMID:22018438"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'15 embalmed specimens'; '3.39 ± 2.92 mm' 'comparable to' '3.20 ± 2.58 mm; p > 0.05'. 'Tanto como' equivale a 'comparable'."
+    },
+    {
+      "id": "UBERON:0001272",
+      "sentence": 4,
+      "es": "Fue en el plano transversal donde el hueso se deformó más.",
+      "cites": [
+        "PMID:22018438"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Deformation of the innominate is the largest in the transverse plane': traducida como oración hendida."
+    },
+    {
+      "id": "UBERON:0001272",
+      "sentence": 5,
+      "es": "Con un sistema de rastreo magnético en sujetos sanos, el rango medio de movimiento del hueso coxal en el plano transversal fue de 3 a 4 grados por lado, con gran variabilidad individual.",
+      "cites": [
+        "PMID:14659935"
+      ],
+      "verdict": "parcial",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'mean range ... between 3 degrees and 4 degrees (transverse plane) for each side with large variability' es literal. Pero omite que es movimiento durante 'passive hip abduction and external rotation' y lo presenta como el rango del hueso en general."
+    },
+    {
+      "id": "UBERON:0001272",
+      "sentence": 6,
+      "es": "Aplicada retrospectivamente a 59 de 60 huesos coxales de edad y sexo conocidos, una función discriminante construida con 17 medidas acertó el sexo en 58, aunque los autores dudan de que esa precisión se mantenga en material nuevo.",
+      "cites": [
+        "PMID:1052746"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'60 innominate bones of known age and sex'; '17 absolute measurements' (y 7 índices, omitidos); '58 were sexed correctly'; 'accuracy ... would not be reached ... new material'. La determinación del sexo es forense; 'clinical' es la opción más cercana."
+    },
+    {
+      "id": "UBERON:0001470",
+      "sentence": 1,
+      "es": "Su configuración ósea hace de la glenohumeral la articulación más móvil del cuerpo, pero también una articulación inestable por naturaleza.",
+      "cites": [
+        "PMID:21182115"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Due to the configuration of its bony elements, the glenohumeral joint is the most mobile joint of the body, but also an inherently unstable articulation': traducción literal."
+    },
+    {
+      "id": "UBERON:0001470",
+      "sentence": 2,
+      "es": "Su alineación depende de estabilizadores de partes blandas, estáticos y dinámicos, entre ellos el rodete glenoideo, los ligamentos glenohumerales y diversos músculos y tendones.",
+      "cites": [
+        "PMID:34509200",
+        "PMID:21182115"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": false,
+      "note": "'maintained in alignment by ... glenoid labrum, glenohumeral ligaments (GHLs), and muscles and tendons' + 'static and dynamic soft tissue stabilizers'. Contenido correcto, pero la frase trata de estabilización (function), no de partes: músculos y tendones no son partes de la articulación."
+    },
+    {
+      "id": "UBERON:0001470",
+      "sentence": 3,
+      "es": "En 36 hombros de cadáver, el músculo subescapular estabilizaba en gran medida la articulación frente a la luxación anterior con el brazo a 0° de abducción.",
+      "cites": [
+        "PMID:7287791"
+      ],
+      "verdict": "parcial",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'at zero degrees of abduction, the subscapularis muscle stabilizes the joint to a large extent' (literal). Atribuye la conclusión sólo a los 36 hombros disecados, cuando sale de 'these experiments', que incluyen además los estudios radiográficos de 10 hombros no embalsamados."
+    },
+    {
+      "id": "UBERON:0001470",
+      "sentence": 4,
+      "es": "En ese estudio, a 45° de abducción la estabilidad dependía del subescapular, del ligamento glenohumeral medio y de las fibras anterosuperiores del inferior, y cerca de 90° era el ligamento glenohumeral inferior el que impedía la luxación en rotación externa.",
+      "cites": [
+        "PMID:7287791"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "La conclusión de 45° y 90° está traducida tal cual ('subscapularis, middle glenohumeral ligament, and anterosuperior fibers of the inferior ... inferior glenohumeral ligament prevents dislocation during external rotation')."
+    },
+    {
+      "id": "UBERON:0001470",
+      "sentence": 5,
+      "es": "La inestabilidad glenohumeral es más frecuente en dirección anterior y produce patrones lesionales reconocibles en la imagen, como la deformidad de Hill-Sachs y la lesión de Bankart.",
+      "cites": [
+        "PMID:34509200"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'This is most common in the anterior direction, which has several recognizable patterns of injury on advanced imaging, including humeral Hill Sachs ... Bankart': misma construcción."
+    },
+    {
+      "id": "UBERON:0001470",
+      "sentence": 6,
+      "es": "En un estudio radiológico, el ángulo crítico del hombro medía de media 33,1° en controles, 38,0° en roturas del manguito rotador y 28,1° en artrosis glenohumeral primaria.",
+      "cites": [
+        "PMID:23814246"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The mean CSA was 33.1° ... control group, 38.0° ... RCT group and 28.1° ... OA group': literal."
+    },
+    {
+      "id": "UBERON:0001930",
+      "sentence": 1,
+      "es": "Se le reconoce un papel importante en el control del balance energético y del crecimiento del feto.",
+      "cites": [
+        "PMID:28706241"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'plays important roles in the regulation of energy balance and fetal growth': traducción literal de la oración inicial."
+    },
+    {
+      "id": "UBERON:0001930",
+      "sentence": 2,
+      "es": "En un estudio estereológico de 26 cerebros de autopsia, el número total de neuronas del núcleo paraventricular fue cerca de un 50 % menor en la depresión mayor y en el trastorno bipolar que en controles de la misma edad.",
+      "cites": [
+        "PMID:15804054"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'26 brains removed at autopsy'; 'reduction of approximately 50% in total neuron number in the PVN for major depression and bipolar cases compared with age-matched controls': literal, con el prefijo de muestra."
+    },
+    {
+      "id": "UBERON:0002206",
+      "sentence": 1,
+      "es": "Dentro del circuito límbico medial, el cuerpo mamilar actúa como un nodo subcortical.",
+      "cites": [
+        "PMID:37075128"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'The mammillary body (MB), a subcortical node of the medial limbic circuit': sale de una aposición, no de una oración entera."
+    },
+    {
+      "id": "UBERON:0002206",
+      "sentence": 2,
+      "es": "El diagnóstico anatomopatológico de enfermedad de Alzheimer guarda correlación con el depósito de amiloide en el cuerpo mamilar, según tejido cerebral humano post mortem.",
+      "cites": [
+        "PMID:37075128"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Amyloid burden in the MB correlates with pathological diagnosis of AD in human postmortem brain tissue': misma oración con los términos permutados. Alcance humano correcto (el resto del trabajo es en ratón)."
+    },
+    {
+      "id": "UBERON:0002206",
+      "sentence": 3,
+      "es": "La atrofia de los cuerpos mamilares obedece con más frecuencia a la falta de tiamina que a cualquier otra causa.",
+      "cites": [
+        "PMID:19308712"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'The most common cause of atrophy of mammillary bodies (MBs) is thiamine deficiency'. Reformulada ('obedece con más frecuencia ... que a cualquier otra causa'), no sigue la construcción."
+    },
+    {
+      "id": "UBERON:0002206",
+      "sentence": 4,
+      "es": "En un estudio de resonancia, el volumen de los cuerpos mamilares estaba reducido en la insuficiencia hepática aguda y aguda sobre crónica de origen no alcohólico, pero no en la crónica.",
+      "cites": [
+        "PMID:19308712"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'significant volume loss occurs in MBs in patients with ALF and ACLF of non-alcoholic etiology but not in CLF': sigue la conclusión."
+    },
+    {
+      "id": "UBERON:0002206",
+      "sentence": 5,
+      "es": "En 12 pacientes con anorexia nerviosa y bajo peso, los cuerpos mamilares tenían un volumen significativamente menor que en controles sanos.",
+      "cites": [
+        "PMID:27414055"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'12 underweight AN'; 'significantly smaller MB volumes in the underweight AN group' frente a '30 ... healthy comparisons': literal, con el prefijo."
+    },
+    {
+      "id": "UBERON:0002395",
+      "sentence": 1,
+      "es": "Como hueso más proximal del retropié, el astrágalo es el eslabón que articula el pie con la pierna.",
+      "cites": [
+        "PMID:25281512"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The talus is the most proximal bone of the hindfoot that couples the foot to the leg': misma oración."
+    },
+    {
+      "id": "UBERON:0002395",
+      "sentence": 2,
+      "es": "Sus lesiones son poco habituales en conjunto, pero entre los huesos del tarso sólo el calcáneo se fractura con más frecuencia.",
+      "cites": [
+        "PMID:25281512"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'second most common fracture of the tarsal bones, second ... to the calcaneous'; 'overall injuries to the talus are relatively rare'. Dos oraciones invertidas."
+    },
+    {
+      "id": "UBERON:0002395",
+      "sentence": 3,
+      "es": "En una serie de 71 fracturas del cuello del astrágalo seguidas una media de 12,7 años, el 52 % presentó necrosis avascular del cuerpo.",
+      "cites": [
+        "PMID:417084"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Seventy-one fractures'; 'averaged 12.7 years'; 'Avascular necrosis of the talar body occurred in 52 per cent': literal, con el prefijo."
+    },
+    {
+      "id": "UBERON:0002395",
+      "sentence": 4,
+      "es": "En resonancias de 428 tobillos con lesiones osteocondrales de la cúpula, el 62 % asentaba en la vertiente medial y el 34 % en la lateral, sobre todo en el tercio medio anteroposterior (80 %).",
+      "cites": [
+        "PMID:17296131"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'428 ankles'; 'medial ... 62%', 'lateral ... 34%'; 'mid talar dome (equator) ... 80%'. Combina tres oraciones."
+    },
+    {
+      "id": "UBERON:0002395",
+      "sentence": 5,
+      "es": "En esa serie, las lesiones mediales eran mayores en superficie y más profundas que las laterales.",
+      "cites": [
+        "PMID:17296131"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Lesions in the medial third ... significantly larger in surface area involvement and deeper than those at the lateral talar dome': literal."
+    },
+    {
+      "id": "UBERON:0002395",
+      "sentence": 6,
+      "es": "Hueso accesorio excepcional, el astrágalo secundario se une por su cara lateral al cuerpo del astrágalo mediante una sincondrosis o una sinostosis de pequeño tamaño.",
+      "cites": [
+        "PMID:31989844"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'attached via a synchondrosis or small synostosis to the lateral aspect of the talar body'. 'Se une por su cara lateral' es ambiguo y, por la gramática, atribuye la cara lateral al hueso accesorio, cuando la cara lateral es la del cuerpo del astrágalo. Debería decir 'se une a la cara lateral del cuerpo del astrágalo'."
+    },
+    {
+      "id": "UBERON:0003126",
+      "sentence": 1,
+      "es": "La tráquea tiene un tramo cervical y otro torácico y discurre próxima a grandes vasos.",
+      "cites": [
+        "PMID:24338486"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'part cervical part thoracic location, proximity to major vessels' (citado como dificultad para reconstruir)."
+    },
+    {
+      "id": "UBERON:0003126",
+      "sentence": 2,
+      "es": "Su irrigación es variable, rasgo que complica su reconstrucción quirúrgica.",
+      "cites": [
+        "PMID:24338486"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Reconstruction ... is challenging due to ... variable blood supply'."
+    },
+    {
+      "id": "UBERON:0003126",
+      "sentence": 3,
+      "es": "Además de conducir el aire en ambos tiempos de la respiración, interviene en la fonación y, como escalera mucociliar, en la limpieza y defensa de la vía aérea.",
+      "cites": [
+        "PMID:39515887"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'conduit for inspiration and expiration'; 'apparatus for phonation'; 'mucociliary escalator for airway clearance and pulmonary defense'. 'Pulmonary defense' pasa a 'defensa de la vía aérea': pequeño cambio de alcance."
+    },
+    {
+      "id": "UBERON:0003126",
+      "sentence": 4,
+      "es": "Para reconstruirla, las resecciones cortas suelen resolverse con anastomosis primaria o colgajos locales, y las extensas con un colgajo libre radial de antebrazo reforzado con injertos de cartílago, opción que se ha mostrado viable.",
+      "cites": [
+        "PMID:24338486"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'limited resection, primary anastomosis ... local advancement rotation flaps ... will often suffice'; 'radial forearm free flap with cartilage grafts for skeletal support has proven to be viable and reliable'. Resume la lista sin traducirla oración por oración."
+    },
+    {
+      "id": "UBERON:0003126",
+      "sentence": 5,
+      "es": "Los ensayos con prótesis traqueales sintéticas, macizas o porosas, decepcionaron: la infección, el desplazamiento, la migración y la obstrucción no fueron raros.",
+      "cites": [
+        "PMID:24338486"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Synthetic tracheal prostheses, solid as well as porous, have been trialed with disappointing results. Infection, dislodgement, migration, and obstruction are not uncommon': dos oraciones traducidas en orden."
+    },
+    {
+      "id": "UBERON:0006681",
+      "sentence": 1,
+      "es": "Llamada también masa intermedia, la adhesión intertalámica cruza el tercer ventrículo como un puente de tejido nervioso entre los dos tálamos y en general aloja el núcleo reuniens.",
+      "cites": [
+        "PMID:40915394"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The interthalamic adhesion, or massa intermedia, is a midline bridge of neural tissue connecting the thalami across the third ventricle and usually containing the nucleus reuniens': literal."
+    },
+    {
+      "id": "UBERON:0006681",
+      "sentence": 2,
+      "es": "Según una revisión sistemática, está presente de media en el 87,3 % de las personas, con mayor frecuencia en las mujeres.",
+      "cites": [
+        "PMID:34254165"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'average prevalence among reviewed studies ... 87.3%'; 'higher prevalence among females'. Prevalencia bajo 'parts': admisible como variación anatómica."
+    },
+    {
+      "id": "UBERON:0006681",
+      "sentence": 3,
+      "es": "De 100 encéfalos indios (50 de cadáver y 50 en resonancia), 87 la tenían, sobre todo en el cuadrante anterosuperior de la pared lateral del tercer ventrículo.",
+      "cites": [
+        "PMID:35929033"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'100 human brains [50 cadaveric and 50 ... MR]'; 'found in 87 brains'; 'most commonly located in the anterosuperior quadrant'; 'in the lateral wall of the third ventricle'."
+    },
+    {
+      "id": "UBERON:0006681",
+      "sentence": 4,
+      "es": "En esa serie estaba duplicada en el 4 % y, de media, era más ancha (7,13 ± 4,31 mm) que alta (5,13 ± 3,17 mm).",
+      "cites": [
+        "PMID:35929033"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'four showed duplication (4%)'; 'mean horizontal diameter (7.13 ± 4.31 mm) was longer than the vertical (5.13 ± 3.17)'. Medido en el plano medio sagital, el diámetro horizontal es anteroposterior: 'más ancha' sugiere una medida transversal, así que el término es dudoso (mejor 'más larga que alta')."
+    },
+    {
+      "id": "UBERON:0006681",
+      "sentence": 5,
+      "es": "Mediante disección de fibras se siguieron haces de la adhesión hacia delante, hasta el núcleo accumbens, el caudado y la región frontoorbitaria, y hacia atrás, hasta la habénula lateral y la comisura posterior.",
+      "cites": [
+        "PMID:37119096"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Dissection showed that these fiber tracts in the ITA reach the nucleus accumbens, caudate nucleus, and frontoorbital region anteriorly and the lateral habenula and posterior commissure posteriorly': misma construcción."
+    },
+    {
+      "id": "UBERON:0006681",
+      "sentence": 6,
+      "es": "Según simulaciones de dinámica de fluidos en cuatro modelos ventriculares, el lugar que ocupa la adhesión cambia cómo se reparte la presión del líquido cefalorraquídeo, y la presión máxima del tercer ventrículo puede variar cerca de un 50 %.",
+      "cites": [
+        "PMID:19896132"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'4 three-dimensional models'; 'location ... influences the pattern of pressure distribution'; 'highest CSF pressure in the third ventricle can vary by approximately 50%'. Combina dos oraciones; que es una simulación queda explícito."
+    },
+    {
+      "id": "UBERON:0008573",
+      "sentence": 1,
+      "es": "Para varios trastornos neurolaríngeos, el patrón de referencia es inyectarle toxina botulínica por vía anterior percutánea bajo control electromiográfico.",
+      "cites": [
+        "PMID:36773100"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The anterior, percutaneous ... BoNT injection in the LCA guided by LEMG is considered the golden standard treatment for several neurolaryngological disorders': literal, reordenada."
+    },
+    {
+      "id": "UBERON:0008573",
+      "sentence": 2,
+      "es": "En diez especímenes cadavéricos, la inyección lateral guiada por ecografía depositó el colorante sólo en este músculo en nueve casos.",
+      "cites": [
+        "PMID:36773100"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'In 9/10 specimens, the dye was exclusively detectable in the LCA' (abordaje lateral con ecografía): literal, con el prefijo."
+    },
+    {
+      "id": "UBERON:0008573",
+      "sentence": 3,
+      "es": "Para el conjunto del cricoaritenoideo lateral y el tiroaritenoideo externo se estimó una fuerza potencial de 26,56 N.",
+      "cites": [
+        "PMID:3710117"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'for the lateral crico-arytenoid and thyreoarytenoid external muscles with 26,56 N': fragmento traducido literalmente."
+    },
+    {
+      "id": "UBERON:0011193",
+      "sentence": 1,
+      "es": "A través de un coloboma coriorretiniano pudo verse con el oftalmoscopio un vaso retrobulbar, interpretado como una vena situada por debajo del nervio óptico.",
+      "cites": [
+        "PMID:7832239"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'a retrobulbar vessel'; 'the retrobulbar vessel was a vein situated inferiorly to the optic nerve'; coloboma coriorretiniano (título). Es un caso único; 'pudo verse' no lo generaliza."
+    },
+    {
+      "id": "UBERON:0011193",
+      "sentence": 2,
+      "es": "Que una fístula carótido-cavernosa dural drene sobre todo por la vena oftálmica inferior, y no por la superior como es habitual, es raro: un informe contaba sólo cuatro casos publicados.",
+      "cites": [
+        "PMID:38722765"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'typically drain into the superior ophthalmic vein. Predominant involvement of the inferior ophthalmic vein (IOV) is rare, with only 4 documented cases'. Reestructurada."
+    },
+    {
+      "id": "UBERON:0011193",
+      "sentence": 3,
+      "es": "En una mujer de 76 años con fístula dural del seno cavernoso, se llegó a la vena oftálmica inferior por el espacio orbitario inferonasal y, a través de ella, se embolizó la fístula con espirales.",
+      "cites": [
+        "PMID:18030122"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'76-year-old woman'; 'dural cavernous sinus fistula'; 'accessed via the inferonasal orbital space ... multiple platinum coils'."
+    },
+    {
+      "id": "UBERON:0012118",
+      "sentence": 1,
+      "es": "Fino, ancho y con forma de cinta: así aparece el tendón del infraespinoso en un trabajo que combinó la disección de seis hombros de cadáver con la ecografía de doce voluntarios sanos.",
+      "cites": [
+        "PMID:25680718"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'The IST is a thin, wide, strap-like tendon'; 'Six non-diseased shoulders'; 'Twelve healthy volunteers'."
+    },
+    {
+      "id": "UBERON:0012118",
+      "sentence": 2,
+      "es": "Colocando el hombro en rotación interna con hiperextensión y explorando por vía anterosuperolateral, ese mismo trabajo consiguió separar ecográficamente el borde anterosuperior del tendón respecto del supraespinoso.",
+      "cites": [
+        "PMID:25680718"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'hyperextended internal rotation (HIR) position with US anterosuperolateral approach'; 'The anterosuperior margin of the IST was distinguishable from the SST'."
+    },
+    {
+      "id": "UBERON:0012118",
+      "sentence": 3,
+      "es": "En hombros de cadáver, los tendones del supraespinoso y del infraespinoso interactúan mecánicamente: al crecer la carga o el tamaño de un desgarro del supraespinoso, cambian las deformaciones principales del infraespinoso.",
+      "cites": [
+        "PMID:19483078",
+        "PMID:20080051"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Supraspinatus and infraspinatus tendons mechanically interact' es correcto. Pero 19483078 aclara que pasar de intacto a un desgarro del 33 % 'had no significant effect on infraspinatus tendon strain': no cualquier aumento del desgarro cambia las deformaciones, como generaliza la frase."
+    },
+    {
+      "id": "UBERON:0012118",
+      "sentence": 4,
+      "es": "Una rotura completa y aislada del tendón en su inserción humeral se acompañó, en un varón de 43 años, de atrofia y degeneración grasa limitadas al músculo infraespinoso.",
+      "cites": [
+        "PMID:21918868"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'43-year-old male with isolated infraspinatus muscle atrophy and fatty degeneration following an isolated full-thickness infraspinatus tendon tear at the insertion site on the humerus'."
+    },
+    {
+      "id": "UBERON:0012118",
+      "sentence": 5,
+      "es": "En una serie de 21 pacientes con roturas masivas del manguito rotador, la transposición del tendón del infraespinoso desde el tubérculo mayor, con injerto de tendón del bíceps, permitió cerrar defectos considerados irreparables.",
+      "cites": [
+        "PMID:33484306"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'23 operations ... on 21 patients'; separación del infraespinoso 'from the point of insertion on the greater tubercle'; 'autologous biceps tendon interposition graft'; 'complete closure of the defect'; 'otherwise non-reconstructable massive rotator cuff lesions'."
+    },
+    {
+      "id": "UBERON:0035038",
+      "sentence": 1,
+      "es": "De todas las neuropatías por atrapamiento periférico, el síndrome del túnel carpiano es la más común.",
+      "cites": [
+        "PMID:27751557",
+        "PMID:21922474"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'most common peripheral nerve entrapment syndrome worldwide' (27751557); 'most common nerve entrapment' (21922474). Reformulada."
+    },
+    {
+      "id": "UBERON:0035038",
+      "sentence": 2,
+      "es": "La cirugía libera el nervio mediano cortando el ligamento transverso del carpo, con lo que el túnel gana volumen y baja la presión.",
+      "cites": [
+        "PMID:18269111"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'increase the volume of the carpal tunnel by dividing transverse carpal ligament to release the pressure on the median nerve'."
+    },
+    {
+      "id": "UBERON:0035038",
+      "sentence": 3,
+      "es": "Para la ecografía se mide el área del mediano donde es más grueso, casi siempre a la entrada proximal del túnel; por debajo de 8 mm² el síndrome es improbable y a partir de 12 mm² se considera confirmado.",
+      "cites": [
+        "PMID:23487331"
+      ],
+      "verdict": "parcial",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Sigue las dos oraciones del resumen en orden. Pero 'in most cases' pasa a 'casi siempre', y 'to rule in' pasa a 'se considera confirmado', que sobrestima: el resumen presenta la ecografía como complemento de la electrofisiología."
+    },
+    {
+      "id": "UBERON:0035038",
+      "sentence": 4,
+      "es": "Lo sufren sobre todo mujeres de mediana edad, y el cuadro típico es dolor nocturno con hormigueo y adormecimiento en el territorio del mediano en la mano.",
+      "cites": [
+        "PMID:18269111"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'It affects mainly middle aged women'; 'classic symptoms ... nocturnal pain associated with tingling and numbness in the distribution of median nerve in the hand': dos oraciones traducidas y unidas."
+    },
+    {
+      "id": "UBERON:0035038",
+      "sentence": 5,
+      "es": "Las 29 variantes del mediano halladas al abrir 246 túneles carpianos llevaron a los autores a aconsejar que el nervio se aborde por su lado cubital.",
+      "cites": [
+        "PMID:839054"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'In 246 hands ... 29 variations'; 'emphasize the importance of approaching the median nerve from the ulnar side when opening the carpal tunnel'. 'Por su lado cubital' es levemente ambiguo, pero aceptable."
+    }
+  ],
+  "summary": {
+    "sentences": 69,
+    "fiel": 60,
+    "parcial": 9,
+    "infiel": 0,
+    "copied": 28,
+    "aspectWrong": 1
+  }
+}

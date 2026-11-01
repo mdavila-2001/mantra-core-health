@@ -22,6 +22,8 @@ import type {
   ChargeSource,
   InvoiceEvent,
   IssueInvoiceInput,
+  PatientPaymentReport,
+  PaymentProof,
   PlanInstanceKind,
   SiatResponse,
   SimulatedCatalogs,
@@ -89,6 +91,7 @@ export interface InitialCharge {
    * salen de sus instancias: los que traiga el cobro se ignoran.
    */
   readonly plan?: ChargePlan | null;
+  readonly patientPaymentReport?: PatientPaymentReport | null;
 }
 
 /** Una instancia del plan como se guarda: los importes derivados se calculan al leer. */
@@ -271,6 +274,20 @@ export class SimulatedInvoicing {
       .map((c) => this.aCharge(c));
   }
 
+  /**
+   * Agrega el cobro de una cita si todavía no existe ninguno para ella. Devuelve
+   * `true` si lo creó. Idempotente: se llama en cada lectura de «pagos de la cita».
+   */
+  asegurarCobro(nuevo: InitialCharge | null): boolean {
+    if (nuevo === null || this.charges.has(nuevo.id)) return false;
+    const yaHay = this.charges.filtrar(
+      (c) => c.source === nuevo.source && c.sourceRef === nuevo.sourceRef && c.patientProfileId === nuevo.patientProfileId,
+    );
+    if (yaHay.length > 0) return false;
+    this.charges.agregar(this.normalize(nuevo));
+    return true;
+  }
+
   charge(id: string): SimulatedCharge | null {
     const guardado = this.charges.get(id);
     return guardado === undefined ? null : this.aCharge(guardado);
@@ -408,6 +425,54 @@ export class SimulatedInvoicing {
   }
 
   // ---- emisión -----------------------------------------------------------------------
+
+  /**
+   * Guarda el aviso del paciente sin marcar el cobro como pagado.
+   *
+   * Con `proof`, el comprobante queda adjunto al aviso. Si ya había un aviso
+   * pendiente y llega un comprobante, lo reemplaza: es el caso de quien se
+   * equivocó de archivo y lo vuelve a subir antes de que lo revisen.
+   */
+  informarPagoDelPaciente(cobroId: string, proof?: PaymentProof): Result<SimulatedCharge> {
+    const cobro = this.charges.get(cobroId);
+    if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
+    if (cobro.payment !== null) return error('ALREADY_PAID', 'El cobro ya está pagado');
+    if (cobro.plan !== null && cobro.plan !== undefined) {
+      return error('PLAN_REQUIRED', 'El servicio tiene un plan de pagos: informe cada cuota al consultorio');
+    }
+    const previo = cobro.patientPaymentReport;
+    if (previo?.status === 'PENDING_CONFIRMATION') {
+      if (proof === undefined) return { ok: true, value: this.aCharge(cobro) };
+      const reemplazado = this.charges.actualizar(cobroId, { patientPaymentReport: { ...previo, proof } });
+      return { ok: true, value: this.aCharge(reemplazado!) };
+    }
+    const patientPaymentReport: PatientPaymentReport = {
+      id: `reporte-${sha256Hex(`${cobroId}|${this.clock().getTime()}`).slice(0, 16)}`,
+      status: 'PENDING_CONFIRMATION',
+      methodLabel: 'QR (demo)',
+      amount: cobro.total,
+      reportedAt: this.clock().toISOString(),
+      confirmedAt: null,
+      proof: proof ?? null,
+    };
+    return { ok: true, value: this.aCharge(this.charges.actualizar(cobroId, { patientPaymentReport })!) };
+  }
+
+  /** Quien atiende confirma el aviso y recién ahí crea el pago contable. */
+  confirmarPagoInformado(cobroId: string): Result<SimulatedCharge> {
+    const cobro = this.charges.get(cobroId);
+    if (cobro === undefined) return error('NOT_FOUND', 'El cobro no existe');
+    if (cobro.patientPaymentReport?.status !== 'PENDING_CONFIRMATION') {
+      return error('PAYMENT_REQUIRED', 'No hay un pago pendiente de confirmación');
+    }
+    const resultado = this.registerPayment(cobroId, 3);
+    if (!resultado.ok) return resultado;
+    const report = cobro.patientPaymentReport;
+    const actualizado = this.charges.actualizar(cobroId, {
+      patientPaymentReport: { ...report, status: 'CONFIRMED', confirmedAt: this.clock().toISOString() },
+    });
+    return actualizado === undefined ? error('NOT_FOUND', 'El cobro no existe') : { ok: true, value: this.aCharge(actualizado) };
+  }
 
   issueInvoice(cobroId: string, entrada: IssueInvoiceInput, usuario: string): Result<SimulatedInvoice> {
     const cobro = this.charges.get(cobroId);
@@ -873,6 +938,7 @@ export class SimulatedInvoicing {
       latestInvoice: ultima === null ? null : this.toSummary(ultima),
       plan: c.plan ? this.aPlan(c.plan) : null,
       simulated: true,
+      patientPaymentReport: c.patientPaymentReport ?? null,
     };
   }
 }

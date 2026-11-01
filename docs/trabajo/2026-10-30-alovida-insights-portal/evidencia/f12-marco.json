@@ -1,0 +1,17 @@
+{
+  "console": [],
+  "requests": [
+    "GET /@ng/component?c=src%2Fapp%2Ffeatures%2Finsights%2Fcomponents%2Fsaved-views.ts%40SavedViews&t=1793461563456",
+    "GET /@ng/component?c=src%2Fapp%2Ffeatures%2Finsights%2Fcomponents%2Fsaved-views.ts%40SavedViews&t=1793461569192",
+    "GET /@ng/component?c=src%2Fapp%2Ffeatures%2Finsights%2Fcomponents%2Fsaved-views.ts%40SavedViews&t=1793461573905"
+  ],
+  "steps": [
+    "paleta resultados: 1",
+    "paleta navega a http://127.0.0.1:4200/insights/campaigns?c=c3",
+    "densidad tras cambiar: compact",
+    "densidad tras recargar: compact",
+    "tema tras recargar: dark",
+    "vistas tras recargar: Campañas oscuro",
+    "tabbar visible: true"
+  ]
+}

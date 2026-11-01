@@ -346,7 +346,9 @@ describe('ChatAutoReply', () => {
 
     it('en esta rama la app va contra la API real: el modo IA no se ofrece y `replyMode` nunca sale', () => {
       // `test` y `dev` se construyen con `mockBackend: false`: la maqueta, que es
-      // la única que guarda el modo, no corre acá.
+      // la única que guarda el modo, no corre acá. `mockup` sí la trae encendida,
+      // así que la prueba fuerza la API real como el resto del bloque.
+      apiRealForzada.set(true);
       expect(servicio.iaDisponible()).toBe(false);
       servicio.guardar({ activa: true, conIa: true, texto: 'Vuelvo luego.' }, 'pp-1');
 

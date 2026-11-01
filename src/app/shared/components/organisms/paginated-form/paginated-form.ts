@@ -213,6 +213,12 @@ export class PaginatedForm {
     return null;
   }
 
+  /** Ver `FieldDef.alSalir`: pasa el valor ya escrito del campo, recortado. */
+  protected alSalirDe(campo: { key: string; alSalir?: (valor: string) => void }): void {
+    const valor = this.form().get(campo.key)?.value;
+    campo.alSalir?.(typeof valor === 'string' ? valor.trim() : '');
+  }
+
   private readonly platformId = inject(PLATFORM_ID);
   private readonly dialogs = inject(DialogService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);

@@ -12,5 +12,6 @@ export const environment: Environment = {
   billingSiatDemo: true,
   billingSimulatedApi: false,
   designMockups: true,
+  reportingMockEnabled: true,
   mockBackend: true,
 };

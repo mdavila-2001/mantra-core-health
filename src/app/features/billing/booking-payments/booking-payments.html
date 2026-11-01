@@ -1,0 +1,140 @@
+<app-content-dialog
+  heading="Pagos de la cita"
+  [description]="'Comprobantes enviados por ' + patientName() + ' y factura de la consulta.'"
+  size="lg"
+  closeLabel="Cerrar"
+  data-testid="booking-payments"
+  (closed)="closed.emit()"
+>
+  @if (loading() && charges().length === 0) {
+    <p role="status" data-testid="booking-payments-loading">Buscando los pagos de esta cita…</p>
+  } @else {
+    @if (problem(); as message) {
+      <app-alert tone="error" title="No pudimos completar la operación" data-testid="booking-payments-error">
+        {{ message }}
+        <button app-button variant="outline" size="sm" type="button" (clicked)="load()">Reintentar</button>
+      </app-alert>
+    }
+    @if (notice(); as message) {
+      <app-alert tone="success" title="Listo" data-testid="booking-payments-notice">{{ message }}</app-alert>
+    }
+
+    @if (charges().length === 0 && problem() === null) {
+      <p data-testid="booking-payments-empty">
+        Esta cita todavía no tiene un cobro. El cobro se carga cuando comienza la atención.
+      </p>
+    } @else {
+      <app-tabs [(selectedIndex)]="selectedTab">
+        <app-tab label="Comprobantes">
+          <ul class="booking-payments__list" data-testid="booking-payments-proofs">
+            @for (charge of charges(); track charge.id) {
+              <li class="booking-payments__item">
+                <header class="booking-payments__head">
+                  <strong>{{ charge.description }}</strong>
+                  <span class="booking-payments__amount">{{ bs(charge.total) }}</span>
+                </header>
+
+                @if (charge.payment !== null) {
+                  <app-badge variant="success" data-testid="booking-payments-paid">
+                    Pagado · {{ bs(charge.payment.amount) }}
+                  </app-badge>
+                } @else if (charge.patientPaymentReport?.status === 'PENDING_CONFIRMATION') {
+                  <app-badge variant="warning">Comprobante por confirmar</app-badge>
+                } @else {
+                  <app-badge variant="secondary">Sin comprobante</app-badge>
+                }
+
+                @if (charge.patientPaymentReport; as report) {
+                  <p class="booking-payments__meta">
+                    Enviado el {{ report.reportedAt | date: "d 'de' MMM 'de' y, HH:mm" }} · {{ bs(report.amount) }}
+                  </p>
+                  @if (report.proof; as proof) {
+                    <div class="booking-payments__proof" data-testid="booking-payments-file">
+                      @if (isImage(proof)) {
+                        <a [href]="proof.dataUrl" target="_blank" rel="noopener" class="booking-payments__thumb">
+                          <img [src]="proof.dataUrl" [alt]="'Comprobante enviado: ' + proof.fileName" />
+                        </a>
+                      }
+                      <p class="booking-payments__meta">
+                        {{ proof.fileName }} · {{ formatProofSize(proof.sizeBytes) }}
+                        @if (pdfLink(proof); as link) {
+                          · <a [href]="link" [attr.download]="proof.fileName">Descargar PDF</a>
+                        }
+                      </p>
+                    </div>
+                  } @else {
+                    <p class="booking-payments__meta">El aviso llegó sin archivo adjunto.</p>
+                  }
+                } @else if (charge.payment === null) {
+                  <p class="booking-payments__meta">La persona todavía no envió un comprobante para esta cita.</p>
+                }
+
+                @if (charge.patientPaymentReport?.status === 'PENDING_CONFIRMATION' && charge.payment === null) {
+                  <button
+                    app-button
+                    type="button"
+                    variant="primary"
+                    data-testid="booking-payments-confirm"
+                    [isLoading]="confirming() === charge.id"
+                    (clicked)="confirm(charge)"
+                  >
+                    Confirmar pago
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </app-tab>
+
+        <app-tab label="Factura">
+          <ul class="booking-payments__list" data-testid="booking-payments-invoices">
+            @for (charge of charges(); track charge.id) {
+              <li class="booking-payments__item">
+                <header class="booking-payments__head">
+                  <strong>{{ charge.description }}</strong>
+                  <span class="booking-payments__amount">{{ bs(charge.total) }}</span>
+                </header>
+                <app-badge variant="secondary">{{ stateLabel[stateOf(charge)] }}</app-badge>
+
+                @if (actionOf(charge) === 'VER_PLAN') {
+                  <p class="booking-payments__meta">
+                    Este servicio tiene un plan de pagos. Se factura al saldarlo, desde Consulta › Pagos.
+                  </p>
+                } @else {
+                  @if (charge.payment === null) {
+                    <p class="booking-payments__meta">
+                      El pago todavía no está confirmado. Confírmelo en «Comprobantes» o cóbrelo aquí en
+                      efectivo.
+                    </p>
+                  }
+                  <button
+                    app-button
+                    type="button"
+                    [variant]="actionOf(charge) === 'VER_FACTURA' ? 'outline' : 'primary'"
+                    data-testid="booking-payments-invoice"
+                    [attr.aria-label]="actionFull[actionOf(charge)] + ': ' + charge.description"
+                    (clicked)="invoicingId.set(charge.id)"
+                  >
+                    {{ actionOf(charge) === 'FACTURAR' ? 'Generar factura' : actionLabel[actionOf(charge)] }}
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </app-tab>
+      </app-tabs>
+    }
+  }
+</app-content-dialog>
+
+@if (invoicing(); as charge) {
+  @if (catalogs(); as catalog) {
+    <app-simulated-invoice-dialog
+      [cobro]="charge"
+      [catalogos]="catalog"
+      (pagado)="onInvoiceDone()"
+      (emitida)="onInvoiceDone()"
+      (cerrado)="invoicingId.set(null)"
+    />
+  }
+}

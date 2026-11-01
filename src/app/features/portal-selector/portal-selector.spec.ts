@@ -4,6 +4,14 @@ import { provideRouter, Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { PortalSelector } from './portal-selector';
+import { setReportingMock } from '../reporting/reporting-mock-flag.testing';
+
+// Estas pantallas son la maqueta de reportería: su comportamiento se fija con la bandera encendida.
+let restaurarMaqueta: () => void;
+beforeEach(() => {
+  restaurarMaqueta = setReportingMock(true);
+});
+afterEach(() => restaurarMaqueta());
 
 describe('PortalSelector', () => {
   let roles: ReturnType<typeof signal<readonly string[]>>;

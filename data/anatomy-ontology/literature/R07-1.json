@@ -1,0 +1,1374 @@
+{
+  "UBERON:0000303": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "La cresta del pubis y el ligamento púbico anterior sirven de anclaje proximal al aductor largo, según la disección por capas de siete cadáveres masculinos frescos.",
+        "cites": [
+          "PMID:28866812"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El ligamento púbico anterior une directamente el tendón del aductor largo con el piramidal, un conjunto que los autores bautizaron como complejo piramidal-ligamento púbico anterior-aductor largo.",
+        "cites": [
+          "PMID:28866812"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Salvo en 2 de los 20 miembros disecados, la inserción proximal presentaba una cara superficial tendinosa sobre un plano profundo de fibras musculares.",
+        "cites": [
+          "PMID:23553712"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En la mayoría de los especímenes, el tendón proximal enviaba conexiones secundarias que lo ligaban, entre otras estructuras, a la cápsula anterior de la sínfisis y a la vaina distal del recto contralateral.",
+        "cites": [
+          "PMID:23553712"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La zona proximal de la unidad musculotendinosa, próxima a su anclaje púbico, es donde con más frecuencia se lesiona el aductor largo.",
+        "cites": [
+          "PMID:9604200"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 19 jugadores de fútbol americano profesional con rotura completa del tendón proximal, la vuelta al juego fue más rápida con tratamiento no quirúrgico (media de 6,1 semanas) que con reparación (media de 12,0 semanas).",
+        "cites": [
+          "PMID:19329786"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000368": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Aductor corto y grácil compartían sin excepción una misma inserción proximal, fruto de la fusión de sus tendones, en los diez cadáveres embalsamados examinados.",
+        "cites": [
+          "PMID:22006933"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El mismo trabajo describió en el aductor corto un tendón intramuscular extenso, de 5,4 ± 1,1 cm de longitud.",
+        "cites": [
+          "PMID:22006933"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Hacia la entesis, de tipo fibrocartilaginoso, su tendón proximal se volvía significativamente menos vascularizado.",
+        "cites": [
+          "PMID:22006933"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 100 muslos de 50 cadáveres japoneses adultos, el 23,0 % de los aductores cortos recibía doble inervación, de las ramas anterior y posterior del nervio obturador.",
+        "cites": [
+          "PMID:7808725"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se han publicado casos aislados de abscesos y de quiste hidatídico localizados en el aductor corto.",
+        "cites": [
+          "PMID:16816911",
+          "PMID:19598099"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000370": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Tomando como referencia el recorrido de las arterias perforantes, un estudio de diez especímenes cadavéricos distinguió cuatro porciones en el aductor mayor.",
+        "cites": [
+          "PMID:22537037"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Según ese análisis, la porción más proximal parece orientada sobre todo a estabilizar la cadera, mientras que las tres restantes, de fibras más largas, servirían para mover el muslo en un arco amplio.",
+        "cites": [
+          "PMID:22537037"
+        ]
+      },
+      {
+        "aspect": "situation",
+        "es": "Por compartir origen en la tuberosidad isquiática y una función parecida, el tendón de la porción isquiocondílea suele describirse como un tercer tendón proximal de los isquiotibiales.",
+        "cites": [
+          "PMID:38733350"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 76 tendones estudiados por resonancia, esa porción tendinosa se situaba, de media, a 7,5 ± 2,5 mm en sentido medial del tendón del semimembranoso.",
+        "cites": [
+          "PMID:26554947"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "La rama articular de la arteria descendente de la rodilla vasculariza tanto el tendón distal como el hueso cortical y esponjoso de su inserción.",
+        "cites": [
+          "PMID:3903149"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 20 rodillas de cadáver, la distancia media entre el tubérculo del aductor y el hiato del aductor fue de 99 ± 14 mm.",
+        "cites": [
+          "PMID:22001735"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000950": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 11 personas operadas para una transferencia funcional del grácil, la longitud óptima media de sus fibras fue de 23,1 ± 0,7 cm.",
+        "cites": [
+          "PMID:34355750"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Calculada en el músculo vivo, su área fisiológica de sección transversal (6,8 ± 0,7 cm² de media) triplicaba aproximadamente las cifras obtenidas antes en cadáveres.",
+        "cites": [
+          "PMID:34355750"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El grácil se emplea como colgajo libre microvascular para restituir la sonrisa en algunos pacientes con parálisis facial.",
+        "cites": [
+          "PMID:36754505"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Como colgajo también sirve para reconstruir el periné tras resecciones abdominoperineales o proctocolectomías.",
+        "cites": [
+          "PMID:33886373"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Para mamas de tamaño pequeño o mediano, el colgajo transverso musculocutáneo de grácil ofrece una buena opción de reconstrucción con tejido propio.",
+        "cites": [
+          "PMID:25456283"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su tendón autólogo sirve de injerto en la reconstrucción del ligamento patelofemoral medial.",
+        "cites": [
+          "PMID:22538501"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000979": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Un estudio por tomografía de 116 tibias de cadáver halló que, entre el 20 % y el 80 % de su longitud biomecánica, el diámetro del conducto medular oscilaba entre 13 y 32 mm.",
+        "cites": [
+          "PMID:32585072"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa muestra, el sexo influyó en la morfología de las secciones transversales, mientras que la lateralidad sólo modificó la posición de los puntos de referencia.",
+        "cites": [
+          "PMID:32585072"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En seis rodillas de cadáver estudiadas por resonancia, la superficie articular medial de la tibia, en corte sagital, estaba formada por dos planos angulados, y la lateral era aproximadamente plana.",
+        "cites": [
+          "PMID:11132285"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En esas rodillas sin carga, la flexión se acompañaba de una rotación interna de la tibia alrededor de un eje medial, de unos 20 grados en total a 110 grados de flexión.",
+        "cites": [
+          "PMID:11132285"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre los supervivientes de explosiones, ningún otro hueso largo resulta afectado con tanta frecuencia como la tibia.",
+        "cites": [
+          "PMID:31877527"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000981": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Por tamaño y resistencia, ningún hueso del cuerpo humano supera al fémur.",
+        "cites": [
+          "PMID:23322864"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 32 fémures de cadáver, el ángulo valgo transcondíleo medio fue de 3,8 grados.",
+        "cites": [
+          "PMID:3597501"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa misma serie se observó una variación considerable entre especímenes en el ángulo de anteversión y en el ángulo cervicodiafisario.",
+        "cites": [
+          "PMID:3597501"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Romperlo requiere mucha energía: los accidentes de tráfico son la causa principal en adultos, mientras que en ancianos predominan las caídas.",
+        "cites": [
+          "PMID:23322864"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las fracturas femorales atípicas asociadas al uso prolongado de bisfosfonatos tardan más en consolidar y evolucionan a seudoartrosis con más frecuencia que las típicas.",
+        "cites": [
+          "PMID:30256339"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001267": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Entre los bloqueos anestésicos del miembro inferior, ninguno se realiza con tanta frecuencia como el del nervio femoral.",
+        "cites": [
+          "PMID:21173942"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una revisión Cochrane de 45 ensayos aleatorizados (2710 participantes) halló que, tras la artroplastia total de rodilla, el bloqueo femoral reducía el dolor en reposo y en movimiento durante las primeras 72 horas frente a la analgesia opioide controlada por el paciente sola.",
+        "cites": [
+          "PMID:24825360"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 709 bloqueos femorales previos a la artroplastia de rodilla, 12 pacientes (1,6 %) sufrieron caídas, y los autores vinculan ese riesgo con la menor función del cuádriceps en el posoperatorio temprano.",
+        "cites": [
+          "PMID:19680735"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 18 lesiones iatrogénicas del nervio femoral reunidas en una serie, la cirugía de cadera fue el antecedente más habitual.",
+        "cites": [
+          "PMID:445241"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los autores de esa serie señalan la compresión del nervio por los separadores y su estiramiento excesivo durante la cirugía de cadera como mecanismos que deben evitarse.",
+        "cites": [
+          "PMID:445241"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001323": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En el 90 % de 31 pies cadavéricos, la bifurcación del nervio tibial en los plantares medial y lateral quedaba a no más de 1 cm del eje maleolocalcáneo.",
+        "cites": [
+          "PMID:6721738"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En esa serie, el origen del ramo calcáneo fue muy variable: dentro del túnel tarsiano, proximal a él o con ramas múltiples en ambos niveles.",
+        "cites": [
+          "PMID:6721738"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Poco habitual, el síndrome del túnel tarsiano produce ardor u hormigueo repartido por la planta, y hoy se reconoce que no se reduce a una simple neuropatía por atrapamiento.",
+        "cites": [
+          "PMID:15165582"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 98 pacientes diabéticos, el área de sección del nervio tibial posterior medida por ecografía era mayor en quienes tenían polineuropatía sensitivomotora (23,03 frente a 17,72 mm² a 1 cm por encima del maléolo medial).",
+        "cites": [
+          "PMID:23033242"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Con ecografía de superresolución en 100 participantes, se observó tortuosidad de los microvasos del nervio en el 83 % de los diabéticos con neuropatía y úlceras, frente al 14 % de los controles.",
+        "cites": [
+          "PMID:41557902"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aunque hace tiempo que se estimula este nervio para tratar trastornos del tracto urinario inferior, aún no se sabe bien cómo actúa.",
+        "cites": [
+          "PMID:37178068"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001375": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En seis cadáveres, un protocolo de ecografía tridimensional midió las longitudes del vientre, del tendón y de los fascículos y el volumen del semitendinoso y de sus dos compartimentos, con diferencias medias menores del 10 % frente a la disección.",
+        "cites": [
+          "PMID:27271461"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "El semitendinoso desempeña un papel relevante en la marcha.",
+        "cites": [
+          "PMID:40990969"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En niños con parálisis cerebral ambulatoria de 6 a 9 años, algunas de sus fibras de tipo II tenían mayor área de sección que en niños con desarrollo típico, sin diferencias en el grupo de 3 a 5 años.",
+        "cites": [
+          "PMID:40990969"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su tendón se emplea como injerto en la reconstrucción del ligamento cruzado anterior, con técnicas de uno o de dos fascículos.",
+        "cites": [
+          "PMID:10495178",
+          "PMID:18193194"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 15 pares de rodillas de cadáver, el injerto doble de semitendinoso y grácil soportó una carga de rotura media de 2422 N, superior a los 1784 N del injerto central de tendón rotuliano.",
+        "cites": [
+          "PMID:10102102"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "También se ha descrito su uso como autoinjerto para reconstruir los ligamentos coracoclaviculares.",
+        "cites": [
+          "PMID:32246596"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001378": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Las disecciones muestran un tendón proximal doble: la cabeza directa aporta su lámina superficial y anterior, y la indirecta, un componente profundo situado dentro del músculo.",
+        "cites": [
+          "PMID:7573663"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Esa doble procedencia explica su arquitectura: unipenniforme en la parte proximal, a cargo de las fibras de la cabeza directa, y bipenniforme alrededor del tendón intramuscular de la cabeza indirecta.",
+        "cites": [
+          "PMID:7573663"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 40 músculos rectos femorales, el 80 % recibía un pedículo vascular dominante con uno o dos pedículos menores, el 12,5 % un único pedículo y el 7,5 % dos pedículos dominantes.",
+        "cites": [
+          "PMID:10597681"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Su inervación llegaba por un único ramo grueso de la división posterior del nervio femoral, que por lo general se bifurcaba antes de entrar en el músculo.",
+        "cites": [
+          "PMID:10597681"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El fútbol, con sus golpeos y esprints repetidos, figura entre los deportes en que más a menudo se distiende el cuádriceps, incluido el recto femoral.",
+        "cites": [
+          "PMID:22864009"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 47 supervivientes de ictus, la profundidad ecográfica del músculo en el lado hemiparético varió entre 0,44 y 3,54 cm.",
+        "cites": [
+          "PMID:32751934"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001379": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "En 30 vastos laterales de cadáver, el pedículo dominante fue la rama descendente de la arteria circunfleja femoral lateral, con un diámetro medio de 2,1 mm.",
+        "cites": [
+          "PMID:21119465"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Además del pedículo principal, todas las disecciones mostraron una rama distal menor, y en la parte proximal llegaban pedículos accesorios de las ramas ascendente y transversa de la misma arteria.",
+        "cites": [
+          "PMID:21119465"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "El nervio femoral le proporcionaba su nervio motor, cuya entrada en el músculo se situaba a 194,6 mm de la espina ilíaca anterosuperior.",
+        "cites": [
+          "PMID:21119465"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En cortes completos del músculo de 22 varones de 5 a 37 años, la proporción de fibras de tipo 2 pasó de alrededor del 35 % a los 5 años a cerca del 50 % a los 20.",
+        "cites": [
+          "PMID:1557091"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 43 varones sanos de 15 a 83 años, la atrofia del músculo ligada a la edad comenzaba hacia los 25 años y se debía sobre todo a la pérdida de fibras.",
+        "cites": [
+          "PMID:3379447"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Se lo ha descrito como uno de los principales contribuyentes al rendimiento en el esprint.",
+        "cites": [
+          "PMID:41016260"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001380": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Las 44 disecciones de la cara anterior del muslo de una serie no hallaron en el vasto medial una división clara en porciones: su morfología fue siempre regular.",
+        "cites": [
+          "PMID:7597569"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En esa serie, el músculo recibía del nervio femoral uno o dos pedículos nerviosos.",
+        "cites": [
+          "PMID:7597569"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Sus dos funciones son la extensión de la rodilla y la alineación de la rótula.",
+        "cites": [
+          "PMID:7597569"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Cerca de la rótula, donde se inserta, el ligamento patelofemoral medial mezclaba sus fibras con las de la porción oblicua del vasto medial, según ocho rodillas de cadáver.",
+        "cites": [
+          "PMID:16001289"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En seis miembros de cadáver, suprimir la tensión simulada de la porción oblicua desplazó la rótula 4,2 mm hacia lateral y aumentó la carga sobre su carilla lateral.",
+        "cites": [
+          "PMID:7706335"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 16 varones sanos, la contribución relativa del vasto medial frente al vasto lateral fue menor con la rodilla a 30° de flexión que a 100°.",
+        "cites": [
+          "PMID:28029696"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001381": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "El semimembranoso ocupa la cara posteromedial del muslo a partir de una huella superolateral de la tuberosidad isquiática.",
+        "cites": [
+          "PMID:40738374"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 100 miembros de 50 cadáveres, su tendón principal era único en el 66 %, doble en el 24 % y triple en el 10 %.",
+        "cites": [
+          "PMID:40738374"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La disección de 56 rodillas reveló un patrón estable: el tendón distal terminaba trifurcado en tres expansiones principales.",
+        "cites": [
+          "PMID:23749704"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En la estabilidad de la cara posteromedial de la rodilla tiene un papel destacado la porción distal del semimembranoso.",
+        "cites": [
+          "PMID:23749704"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En el 43,2 % de 42 rodillas de cadáver, un ramo tendinoso del músculo se insertaba en el cuerno posterior del menisco lateral.",
+        "cites": [
+          "PMID:9479710"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancia, esa inserción normal puede confundirse con un desgarro del menisco lateral y llevar a un diagnóstico erróneo.",
+        "cites": [
+          "PMID:9479710"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001382": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En una disección de 100 muslos de 52 cadáveres, el pectíneo recibía inervación del nervio femoral en todos los casos.",
+        "cites": [
+          "PMID:34156649"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En esa serie aparecía además un ramo del nervio obturador en el 10 % y uno del nervio obturador accesorio en el 2 %, y el nervio femoral era el componente dominante.",
+        "cites": [
+          "PMID:34156649"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La misma serie halló un hiato dentro del músculo en el 18 % de los especímenes.",
+        "cites": [
+          "PMID:34156649"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En un varón de 82 años, las capas superficial y profunda del pectíneo se separaban distalmente y la arteria femoral profunda atravesaba el hiato resultante en ambos lados.",
+        "cites": [
+          "PMID:33400248"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se han publicado casos aislados de piomiositis y de hematoma del pectíneo, este último tras una artroplastia total de cadera.",
+        "cites": [
+          "PMID:28853599",
+          "PMID:21715235"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001385": {
+    "sentences": [
+      {
+        "aspect": "function",
+        "es": "Es el mayor de los dorsiflexores del tobillo y tiene un peso importante durante la marcha.",
+        "cites": [
+          "PMID:35821059"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 40 piernas de 20 cadáveres japoneses, el extremo distal de su origen en la tibia se situaba significativamente más abajo en los varones que en las mujeres.",
+        "cites": [
+          "PMID:35821059"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Su parálisis tras una lesión del nervio peroneo común produce pie caído.",
+        "cites": [
+          "PMID:19048462"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de factibilidad en cadáveres, el ramo nervioso del sóleo fue el donante más parecido al ramo del tibial anterior, por número de axones y área de sección, para una transferencia interósea.",
+        "cites": [
+          "PMID:19048462"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 73 pacientes con debilidad bilateral de los miembros inferiores, la percusión directa del músculo provocó una dorsiflexión enérgica en 11 de los 14 con polirradiculoneuropatía desmielinizante inflamatoria aguda.",
+        "cites": [
+          "PMID:24760338"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001386": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Pertenece al grupo muscular del compartimento anterior de la pierna.",
+        "cites": [
+          "PMID:27845481"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Junto al tibial anterior delimita, en la porción proximal de la pierna, el espacio por el que pasan los vasos tibiales anteriores y el nervio fibular profundo.",
+        "cites": [
+          "PMID:27845481"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Es un músculo muy variable, y la mayoría de sus variantes afectan a lengüetas tendinosas supernumerarias o a inserciones atípicas.",
+        "cites": [
+          "PMID:36967625"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Se han descrito casos aislados de tendón desdoblado, de músculo con dos cabezas y de ausencia del tendón destinado al cuarto dedo.",
+        "cites": [
+          "PMID:27845481",
+          "PMID:36967625",
+          "PMID:15633462"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de pacientes con quinto dedo supraducto flexible tratados mediante transferencia de su tendón, 37 de los 48 pies reevaluados (77,1 %) recuperaron una alineación fisiológica.",
+        "cites": [
+          "PMID:24005569"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001387": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Ocupa el compartimento lateral de la pierna.",
+        "cites": [
+          "PMID:30930196"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En las 43 piernas cadavéricas estudiadas, tabiques conectivos lo dividían sistemáticamente en cuatro sectores, anteriores y posteriores, cada uno con un plano superficial y otro profundo.",
+        "cites": [
+          "PMID:8915617"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Cada una de esas porciones recibía su propio ramo motor primario, de modo que el patrón de inervación coincidía con la segmentación.",
+        "cites": [
+          "PMID:8915617"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 30 pies de cadáver, el tendón se fijaba siempre en la base del primer metatarsiano mediante una banda firme, y en el 86,6 % enviaba además una lengüeta al cuneiforme medial.",
+        "cites": [
+          "PMID:18021587"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 100 miembros, la inserción única en el tubérculo lateral de la base del primer metatarsiano fue el tipo más frecuente (49 %), seguida de la inserción bifurcada (40 %).",
+        "cites": [
+          "PMID:30930196"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En 11 pies de cadáver, una tracción de 150 N sobre el tendón acortó de media la distancia del arco transverso en 4,6 mm y la del arco longitudinal medial en 6,8 mm.",
+        "cites": [
+          "PMID:32986255"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001389": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "El reflejo H del sóleo se obtiene al estimular eléctricamente el nervio tibial, que activa las fibras aferentes Ia procedentes de los husos del músculo.",
+        "cites": [
+          "PMID:29187549"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En niños con parálisis cerebral espástica, un modelo estadístico de forma mostró sóleos más pequeños y con tendencia a ser largos, delgados y estrechos.",
+        "cites": [
+          "PMID:35546597"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una masa blanda en la región posteromedial del tobillo puede corresponder a un sóleo accesorio, variante anatómica infrecuente.",
+        "cites": [
+          "PMID:15547128"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Esta variante forma un abultamiento medial entre el extremo inferior de la tibia y el tendón de Aquiles y, por lo general, termina mediante un tendón independiente en el calcáneo, en posición anteromedial respecto de la inserción aquílea.",
+        "cites": [
+          "PMID:3722230"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aunque es congénito, por lo común no da manifestaciones hasta la segunda o tercera década de la vida.",
+        "cites": [
+          "PMID:15547128"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En biopsias de cuatro astronautas tras 17 días en órbita, la densidad de filamentos delgados de las fibras del sóleo bajó de 2976 a 2215 por µm².",
+        "cites": [
+          "PMID:10658024"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001391": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 25 rodillas disecadas se describieron cuatro inserciones proximales del poplíteo: condílea, meniscal, capsular y fibular.",
+        "cites": [
+          "PMID:1219927"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "El tendón poplíteo ancla la porción lateral del músculo al cóndilo femoral lateral, mientras que la porción medial fija sus fibras profundas en la parte posterior del menisco lateral.",
+        "cites": [
+          "PMID:1219927"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 42 especímenes, la inserción fibular apareció en el 98 % de los casos, con una anchura media de 11 mm, y al menos una inserción en el menisco lateral en el 95 %.",
+        "cites": [
+          "PMID:12677465"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Salvo en una décima parte de los 44 miembros disecados, en la que se sumaba el nervio ciático, la inervación corría sólo a cargo del nervio tibial.",
+        "cites": [
+          "PMID:35047639"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En esa serie, la arteria inferior medial de la rodilla lo irrigaba en el 90 % de los casos y la arteria tibial posterior en el 65 %.",
+        "cites": [
+          "PMID:35047639"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En rodillas de cadáver, tensar su unidad musculotendinosa produjo una rotación interna de la tibia, y cargar el músculo redujo las fuerzas soportadas por el ligamento cruzado posterior.",
+        "cites": [
+          "PMID:11914765",
+          "PMID:9784814"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001392": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "Un solo ramo del nervio tibial inervaba el flexor largo del dedo gordo en cada uno de los 15 miembros inferiores adultos disecados.",
+        "cites": [
+          "PMID:30664228"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "El origen de ese ramo se situaba a una distancia media de 21,39 ± 3,05 cm del maléolo medial.",
+        "cites": [
+          "PMID:30664228"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "La lengüeta tendinosa que a menudo acompaña a este músculo no siempre tiene el mismo número de ramas.",
+        "cites": [
+          "PMID:31439503"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 24 pies de cadáver, todos mostraron conexiones cruzadas entre su tendón y el del flexor largo de los dedos cerca del nudo de Henry, en la vecindad del nervio tibial posterior.",
+        "cites": [
+          "PMID:17697656"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una causa habitual de pinzamiento posterior del tobillo es la tenosinovitis estenosante de este tendón cuando se asocia al síndrome del os trigonum.",
+        "cites": [
+          "PMID:26409593"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La transferencia de este tendón es un recurso habitual frente a la tendinopatía aquílea crónica y la insuficiencia del tibial posterior.",
+        "cites": [
+          "PMID:17697656"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001446": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "En 31 piernas de cadáver se hallaron 88 perforantes cutáneas del colgajo de peroné, con una media de 2,8 por pierna (entre 1 y 4) y un diámetro medio de 1,7 mm que disminuía de proximal a distal.",
+        "cites": [
+          "PMID:35576016"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "El 81 % de esas perforantes eran septocutáneas, y las musculocutáneas (19 %) se concentraban todas en la mitad proximal de la pierna.",
+        "cites": [
+          "PMID:35576016"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "La división tibiofibular quedaba a menos de 10 mm del nacimiento de seis de las perforantes más proximales, todas ramas de la arteria fibular.",
+        "cites": [
+          "PMID:35576016"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El peroné se emplea como colgajo libre osteocutáneo para reconstruir la mandíbula.",
+        "cites": [
+          "PMID:35300661"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 51 pacientes con esa reconstrucción, la eficacia masticatoria y la función subjetiva de masticación volvieron a los valores previos en un plazo de 9 a 12 meses.",
+        "cites": [
+          "PMID:35300661"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una revisión de 97 miembros con deficiencia congénita del peroné, el 76 % de los pacientes con hipoplasia mínima y el 59 % de los que tenían ausencia completa presentaban también anomalías congénitas del fémur.",
+        "cites": [
+          "PMID:438260"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001450": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Para las fracturas intraarticulares desplazadas, la osteosíntesis estable con placa lateral tras reducción abierta se ha convertido en tratamiento estándar, y en las series más grandes entre dos tercios y tres cuartos de los casos logran resultados buenos o excelentes.",
+        "cites": [
+          "PMID:15081321"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Cuánto se recupere la anatomía, tanto la congruencia de la superficie articular como la forma general del hueso, influye de manera importante en el pronóstico.",
+        "cites": [
+          "PMID:15081321"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Con el abordaje lateral ampliado se accede bien, en la mayoría de las fracturas, a la pared lateral rota y a las articulaciones subastragalina y calcaneocuboidea sin comprometer los vasos y nervios del talón.",
+        "cites": [
+          "PMID:15081321"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Lo que con más frecuencia limita el tratamiento de las infecciones del calcáneo es la fragilidad, o a veces la falta, de las partes blandas que lo recubren.",
+        "cites": [
+          "PMID:20682417"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 16 cadáveres, la densidad mineral ósea del calcáneo se asoció de forma significativa con la carga de rotura del fémur proximal (r² = 0,63).",
+        "cites": [
+          "PMID:7736330"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001455": {
+    "sentences": [
+      {
+        "aspect": "irrigation",
+        "es": "Tras inyectar látex en 15 especímenes, la arteria tarsiana lateral siguió el mismo recorrido hasta el cuboides en todos ellos y siempre proporcionó un pedículo vascularizado.",
+        "cites": [
+          "PMID:34232369"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "Esa arteria tenía un diámetro medio de 1,40 ± 0,12 mm, y el pedículo, una longitud media de 67,15 ± 3,18 mm.",
+        "cites": [
+          "PMID:34232369"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un injerto óseo pediculado del cuboides basado en esa arteria alcanza ambos maléolos y se ha propuesto para la necrosis avascular inicial del astrágalo.",
+        "cites": [
+          "PMID:34232369"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La articulación calcaneocuboidea mostró en el plano transversal una inclinación mediana de 67° en calcáneos secos y de 72° en tomografías de pacientes sin lesión del tarso.",
+        "cites": [
+          "PMID:32512202"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 80 pacientes operados por fractura de calcáneo, la articulación calcaneocuboidea estaba afectada en el 47,3 %.",
+        "cites": [
+          "PMID:32512202"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El cuboides es una localización infrecuente de osteosarcoma, ganglión intraóseo y osteomielitis, descritos en casos aislados.",
+        "cites": [
+          "PMID:37535761",
+          "PMID:8252000",
+          "PMID:9732491"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001538": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 60 niños pequeños, el diámetro de la arteria tibial posterior (1,5 ± 0,2 mm) fue similar al de la arteria radial y mayor que el de la arteria dorsal del pie (1,2 ± 0,2 mm).",
+        "cites": [
+          "PMID:28682811"
+        ]
+      },
+      {
+        "aspect": "irrigation",
+        "es": "En 10 piernas de cadáver, la arteria irrigaba el tabique intermuscular de la pierna, y esas ramas se observaban con frecuencia a 60 mm por encima de la punta del maléolo medial.",
+        "cites": [
+          "PMID:16876081"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Sus perforantes cutáneas de la pierna y el tobillo, estudiadas en 11 cadáveres, sustentan colgajos locales para cubrir defectos con exposición de hueso, tendón o paquetes vasculonerviosos.",
+        "cites": [
+          "PMID:16641734"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los colgajos de sus perforantes se emplean para cubrir defectos de partes blandas de la región aquílea.",
+        "cites": [
+          "PMID:25457333"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 234 colgajos libres de miembro inferior, la arteria tibial posterior fue el vaso receptor en el 70 % de los casos, sin diferencias clínicamente relevantes en el fracaso del colgajo frente a la tibial anterior.",
+        "cites": [
+          "PMID:35180330"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En niños pequeños se ha propuesto como alternativa a la arteria radial para la canulación arterial guiada por ecografía.",
+        "cites": [
+          "PMID:28682811"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001543": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En un estudio histológico de los ganglios poplíteos de 10 personas de 80 a 91 años, la celularidad estaba muy reducida y el estroma reticular mostraba cambios destructivos profundos.",
+        "cites": [
+          "PMID:30638334"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Además, fibras colágenas y adipocitos ocupaban el parénquima de esos ganglios, cuyos senos estaban ensanchados.",
+        "cites": [
+          "PMID:30638334"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Los autores interpretan esta morfología como señal de que el ganglio ya no produce linfocitos ni sostiene la inmunidad humoral y celular.",
+        "cites": [
+          "PMID:30638334"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aunque la diseminación metastásica a la fosa poplítea es rara, cuando ocurre obliga a una disección ganglionar sistemática de esa región.",
+        "cites": [
+          "PMID:37784250"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un caso de hamartoma angiomiomatoso en un ganglio poplíteo como causa de dolor posterior de rodilla.",
+        "cites": [
+          "PMID:18774503"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001666": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En seis tobillos de donantes, el flexor largo de los dedos discurría inferomedial al sustentáculo del astrágalo, y su vaina tendinosa se fijaba en éste o se unía a la vaina del tibial posterior.",
+        "cites": [
+          "PMID:36075954"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En siete voluntarios, la ecografía mostró que la curvatura de su trayecto era mayor de pie que sentado, y los autores proponen que su fuerza ayuda a evitar la eversión excesiva del pie.",
+        "cites": [
+          "PMID:36075954"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En ocho pies de cadáver, la división del tendón en la planta se situaba a mitad de camino entre la parte posterior del talón y la base del segundo dedo, a unos 3,7 cm del borde lateral del pie.",
+        "cites": [
+          "PMID:19083606"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Esa división quedaba muy cerca de los paquetes vasculonerviosos plantares: a unos 0,43 cm el medial y a unos 0,86 cm el lateral.",
+        "cites": [
+          "PMID:19083606"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En 24 piernas disecadas, una lengüeta del flexor largo del dedo gordo llegaba a este tendón en 10, había conexiones en ambos sentidos en otras 10 y no existía unión en 4.",
+        "cites": [
+          "PMID:16842720"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Para la disfunción del tendón tibial posterior se recurre a menudo a transferir este tendón, anclándolo al navicular, al cuneiforme medial o al muñón distal del tibial posterior.",
+        "cites": [
+          "PMID:24115238"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001667": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "Al disecar 51 piernas de cadáver, nunca apareció un tabique fascial definido entre el tibial posterior y los flexores largos de los dedos y del dedo gordo.",
+        "cites": [
+          "PMID:1403255"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Otro estudio, con inyección de contraste y mediciones de presión en deportistas, describió en cambio un compartimento osteofascial propio para este músculo.",
+        "cites": [
+          "PMID:6496837"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En 28 miembros inferiores de cadáver, el punto medio de su ramo motor se hallaba unos 50 mm por debajo de la cabeza del peroné y a unos 10 mm de su borde interno.",
+        "cites": [
+          "PMID:33915194"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "A diferencia de su porción proximal, sometida sobre todo a tracción, el tramo del tendón que rodea el maléolo medial, presumiblemente expuesto también a compresión y cizallamiento, mostraba en 24 cadáveres células redondeadas y un contenido mayor de glucosaminoglucanos.",
+        "cites": [
+          "PMID:8423522"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Por su posición, el tendón sostiene de forma dinámica la planta y el arco longitudinal medial, y los cambios de ese arco cuando el músculo falla respaldan su papel.",
+        "cites": [
+          "PMID:1855713"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 40 pacientes con parálisis peronea irreparable tratados con transferencia anterior de su tendón, la técnica de Barr modificada logró mejores resultados funcionales que la clásica.",
+        "cites": [
+          "PMID:18498267"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002395": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Como hueso más proximal del retropié, el astrágalo es el eslabón que articula el pie con la pierna.",
+        "cites": [
+          "PMID:25281512"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Sus lesiones son poco habituales en conjunto, pero entre los huesos del tarso sólo el calcáneo se fractura con más frecuencia.",
+        "cites": [
+          "PMID:25281512"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de 71 fracturas del cuello del astrágalo seguidas una media de 12,7 años, el 52 % presentó necrosis avascular del cuerpo.",
+        "cites": [
+          "PMID:417084"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancias de 428 tobillos con lesiones osteocondrales de la cúpula, el 62 % asentaba en la vertiente medial y el 34 % en la lateral, sobre todo en el tercio medio anteroposterior (80 %).",
+        "cites": [
+          "PMID:17296131"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En esa serie, las lesiones mediales eran mayores en superficie y más profundas que las laterales.",
+        "cites": [
+          "PMID:17296131"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El astrágalo secundario es un hueso accesorio muy raro que se fija a la cara lateral del cuerpo del astrágalo por una sincondrosis o por una pequeña sinostosis.",
+        "cites": [
+          "PMID:31989844"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002446": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Este sesamoideo resulta clave para que la rodilla sea estable.",
+        "cites": [
+          "PMID:29322497"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La agenesia o hipoplasia rotuliana puede acompañarse de subluxaciones repetidas de la rodilla, alteraciones patelofemorales y artrosis temprana.",
+        "cites": [
+          "PMID:29322497"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En el síndrome uña-rótula, de herencia autosómica dominante y causado por mutaciones de LMX1B, las rótulas son pequeñas o faltan.",
+        "cites": [
+          "PMID:28681095",
+          "PMID:12624132"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Apenas una de cada cien fracturas afecta a la rótula.",
+        "cites": [
+          "PMID:30321439"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En resonancias de 100 pacientes con inestabilidad rotuliana lateral y 157 controles, la displasia troclear y la distancia entre la tuberosidad tibial y el surco troclear eran más marcadas en las mujeres con luxación.",
+        "cites": [
+          "PMID:20713643"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Dado que el dolor anterior de rodilla que provocan es poco específico, las metástasis rotulianas, ya de por sí raras, suelen diagnosticarse tarde.",
+        "cites": [
+          "PMID:40643283"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002503": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Cuatro carillas, anterior, lateral, posterior y posterosuperior, dividen su superficie ósea, según la resonancia de 10 caderas cadavéricas y 12 de voluntarios asintomáticos.",
+        "cites": [
+          "PMID:11687692"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La carilla anterior recibe al glúteo menor, mientras que el glúteo medio ocupa la lateral y la posterosuperior.",
+        "cites": [
+          "PMID:11687692"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "La bolsa trocantérea cubre la carilla posterior y la inserción lateral del glúteo medio, y bajo los tendones de los glúteos medio y menor se sitúan sendas bolsas propias.",
+        "cites": [
+          "PMID:11687692"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Este síndrome se traduce en dolor en la cara lateral de la cadera, que a menudo se ha achacado a una bursitis trocantérea.",
+        "cites": [
+          "PMID:12581065"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una revisión señala la afectación del tendón del glúteo medio, y en menor medida del glúteo menor, como su causa más común.",
+        "cites": [
+          "PMID:41666512"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aunque se describe a cualquier edad, la bursitis trocantérea es más frecuente de la cuarta a la sexta década de la vida.",
+        "cites": [
+          "PMID:8642885"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002504": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "En 25 caderas de cadáver en posición neutra, el trocánter menor quedaba más cerca del isquion en rotación lateral y más lejos en rotación medial.",
+        "cites": [
+          "PMID:26869034"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Esa distancia también se reducía al rotar lateralmente el fémur con la cadera en 10° de extensión y aducción.",
+        "cites": [
+          "PMID:26869034"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Medidos en 34 fémures cadavéricos, el diámetro de la cabeza femoral y la distancia desde el extremo superior del trocánter menor hasta su centro resultaron de magnitud parecida.",
+        "cites": [
+          "PMID:17414164"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 100 fémures emparejados de 50 cadáveres, la distancia del trocánter menor al centro de la cabeza femoral difería entre lados una media de 1,6 ± 1,4 mm, con una correlación alta entre ambos lados (r = 0,93).",
+        "cites": [
+          "PMID:33706727"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En tomografías de fémures normales de 366 personas, la diferencia entre lados del perfil del trocánter menor fue inferior a 4 mm en el 83 %, y los autores lo consideran útil como guía de la rotación al enclavar fracturas diafisarias.",
+        "cites": [
+          "PMID:34424871"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un caso de choque óseo entre el trocánter menor y el isquion, con afectación del cuadrado femoral interpuesto, como posible causa de dolor de cadera.",
+        "cites": [
+          "PMID:18682931"
+        ]
+      }
+    ]
+  }
+}

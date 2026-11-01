@@ -1,0 +1,153 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                   | Names                                                              |  Raw size
+spec-app-core-mock-fixtures-anatomy-atlas.js                          | spec-app-core-mock-fixtures-anatomy-atlas                          |   1.94 MB | 
+spec-app-features-glossary-glossary-anatomy-atlas.js                  | spec-app-features-glossary-glossary-anatomy-atlas                  | 811.14 kB | 
+styles.css                                                            | styles                                                             | 189.18 kB | 
+chunk-K7WRJCWO.js                                                     | -                                                                  |  26.32 kB | 
+setup-test-setup.js                                                   | setup-test-setup                                                   |  13.20 kB | 
+spec-app-features-glossary-glossary-anatomy-atlas.logic.js            | spec-app-features-glossary-glossary-anatomy-atlas.logic            |   9.59 kB | 
+chunk-CQLTLLAH.js                                                     | -                                                                  |   6.74 kB | 
+chunk-RSTWSNOR.js                                                     | -                                                                  |   4.75 kB | 
+spec-app-core-data-access-anatomy-atlas-anatomy-atlas.client.js       | spec-app-core-data-access-anatomy-atlas-anatomy-atlas.client       |   2.93 kB | 
+chunk-WMFDHUXE.js                                                     | -                                                                  |   2.22 kB | 
+spec-app-shared-components-organisms-anatomy-viewer-anatomy-viewer.js | spec-app-shared-components-organisms-anatomy-viewer-anatomy-viewer |   1.81 kB | 
+init-testbed.js                                                       | init-testbed                                                       |   1.21 kB | 
+vitest-mock-patch.js                                                  | vitest-mock-patch                                                  | 974 bytes | 
+chunk-RE2KDXNP.js                                                     | -                                                                  | 250 bytes | 
+
+                                                                      | Initial total                                                      |   3.01 MB
+
+Lazy chunk files                                                      | Names                                                              |  Raw size
+paciente.css                                                          | paciente                                                           |  21.35 kB | 
+
+Application bundle generation complete. [145.865 seconds] - 2026-11-01T19:19:17.481Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of Anomalies[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/access-governance/anomalies/anomalies.ts:117:4:
+[37m      117 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: SegmentedControl is not used within the template of Cockpit[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/accounting/cockpit/cockpit.ts:104:4:
+[37m      104 │     [32mSegmentedControl[37m,
+          ╵     [32m~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: EmptyState is not used within the template of Cockpit[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/accounting/cockpit/cockpit.ts:110:4:
+[37m      110 │     [32mEmptyState[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of Summary[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/accounting/summary/summary.ts:229:4:
+[37m      229 │     [32mAlert[37m,
+          ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoadingState is not used within the template of Moderation[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/moderation/moderation.ts:111:4:
+[37m      111 │     [32mLoadingState[37m,
+          ╵     [32m~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/governance/filter-form.ts:50:25:
+[37m      50 │                 [value]="[32mdraft()[field.key] ?? ''[37m"
+         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/governance/filter-form.ts:58:25:
+[37m      58 │                 [value]="[32mdraft()[field.key] ?? ''[37m"
+         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: DatePipe is not used within the template of PortalHub[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/hub/portal-hub.ts:19:12:
+[37m      19 │   imports: [[32mDatePipe[37m, RouterLink, MetricCard, PageHeader, ViewStat...
+         ╵             [32m~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of SpaceTariffs[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/services-catalog/space-tariffs/space-tariffs.ts:61:12:
+[37m      61 │   imports: [[32mAlert[37m, AppButton, AppButtonLink, Badge, DataTable, For...
+         ╵             [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Input is not used within the template of MapLocationPicker[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/auth/shared-registration/map-location-picker/map-location-picker.ts:238:4:
+[37m      238 │     [32mInput[37m,
+          ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8011: Node matches the "[alert-actions]" slot of the "Alert" component, but will not be projected into the specific slot because the surrounding @if has more than one node at its root. To project the node in the right slot, you can:
+
+1. Wrap the content of the @if block in an <ng-container/> that matches the "[alert-actions]" selector.
+2. Split the content of the @if block across multiple @if blocks such that each one only has a single projectable node at its root.
+3. Remove all content from the @if block, except for the node being projected.
+
+This check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress" compiler option.`[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/clinical-record/patient-chart/referral-block/referral-block.html:19:8:
+[37m      19 │         [32m<div alert-actions>[37m
+         ╵         [32m~~~~~~~~~~~~~~~~~~~[0m
+
+  Warning occurs in the template of component ReferralBlock.
+
+    src/app/features/clinical-record/patient-chart/referral-block/referral-block.ts:176:15:
+[37m      176 │   templateUrl: [32m'./referral-block.html'[37m,
+          ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:144:4:
+[37m      144 │     [32mCard[37m,
+          ╵     [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[32m59 passed[39m[22m[90m (59)[39m
+[2m   Start at [22m 19:19:17
+[2m   Duration [22m 5.24s[2m (transform 5.62s, setup 1.95s, import 7.58s, tests 1.90s, environment 3.92s)[22m
+
+exit=0

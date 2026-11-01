@@ -68,6 +68,8 @@ import {
 } from '../shared-registration/name-fields/person-name';
 import { codeFromAcronym, MAX_ACRONYM, MIN_ACRONYM, codeDriftAcronym } from './code-from-acronym';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -157,7 +159,7 @@ function grupoDeGerente() {
  */
 @Component({
   selector: 'app-register-organization',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     RouterLink,
     // El botón «Ir a iniciar sesión» de la confirmación es `<button app-button>`:
     // sin esta importación es un `<button>` nativo y su `(clicked)` —un output
@@ -188,13 +190,14 @@ function grupoDeGerente() {
     OnboardingDraftBanner,
   ],
   templateUrl: './register-organization.html',
-  styleUrl: './register-organization.css',
+  styleUrls: ['../shared-registration/registration.css', './register-organization.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterOrganization {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
   private readonly draftService = inject(OnboardingDraftService);
 
@@ -411,6 +414,7 @@ export class RegisterOrganization {
         campos: [
           {
             key: 'legalName',
+            alSalir: (valor: string) => this.cuentaExistente.verificar('ORG_NAME', valor),
             label: 'Nombre de la empresa',
             control: 'text' as const,
             required: true,
@@ -612,7 +616,7 @@ export class RegisterOrganization {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });

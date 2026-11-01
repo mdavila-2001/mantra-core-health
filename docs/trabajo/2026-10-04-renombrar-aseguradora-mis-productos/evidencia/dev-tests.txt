@@ -1,0 +1,94 @@
+Using Vitest configuration file: C:\Alovida\mantra-core-health\vitest.config.ts
+> Building...
+√ Building...
+Initial chunk files                                                | Names                                                           |  Raw size
+spec-app-features-insurance-insurance-catalog-insurance-catalog.js | spec-app-features-insurance-insurance-catalog-insurance-catalog | 844.44 kB | 
+spec-app-features-shell-layout-shell-layout.js                     | spec-app-features-shell-layout-shell-layout                     | 547.65 kB | 
+styles.css                                                         | styles                                                          | 166.42 kB | 
+chunk-2JRH4NK7.js                                                  | -                                                               | 154.87 kB | 
+chunk-KITGO4NA.js                                                  | -                                                               | 100.38 kB | 
+chunk-IFLZWZJX.js                                                  | -                                                               |  87.06 kB | 
+spec-app-core-navigation-navigation.service.js                     | spec-app-core-navigation-navigation.service                     |  25.43 kB | 
+spec-app-core-navigation-navigation.map.js                         | spec-app-core-navigation-navigation.map                         |  15.10 kB | 
+chunk-Q36OGJ2V.js                                                  | -                                                               |   6.52 kB | 
+chunk-HZXEPMDQ.js                                                  | -                                                               |   5.27 kB | 
+chunk-CC4FCPEK.js                                                  | -                                                               |   2.26 kB | 
+chunk-QU7JWPHW.js                                                  | -                                                               |   1.66 kB | 
+init-testbed.js                                                    | init-testbed                                                    |   1.21 kB | 
+setup-test-setup.js                                                | setup-test-setup                                                | 984 bytes | 
+vitest-mock-patch.js                                               | vitest-mock-patch                                               | 974 bytes | 
+
+                                                                   | Initial total                                                   |   1.96 MB
+
+Application bundle generation complete. [56.487 seconds] - 2026-10-04T23:53:01.718Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:122:39:
+      122 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:122:62:
+      122 │ ..., BodyMap, Card, Chip, FormField, RouterLink, Spinner, Textarea],
+          ╵                                      ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 C:/Alovida/mantra-core-health
+
+(node:25276) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25276) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25276) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25276) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓  mantra-core-health  src/app/core/navigation/navigation.map.spec.ts (41 tests) 27ms
+ ✓  mantra-core-health  src/app/features/insurance/insurance-catalog/insurance-catalog.spec.ts (18 tests) 494ms
+ ✓  mantra-core-health  src/app/core/navigation/navigation.service.spec.ts (43 tests) 155ms
+ ✓  mantra-core-health  src/app/features/shell-layout/shell-layout.spec.ts (88 tests) 3243ms
+
+ Test Files  4 passed (4)
+      Tests  190 passed (190)
+   Start at  19:53:03
+   Duration  22.76s (transform 5.10s, setup 2.20s, import 6.54s, tests 3.92s, environment 63.44s)
+

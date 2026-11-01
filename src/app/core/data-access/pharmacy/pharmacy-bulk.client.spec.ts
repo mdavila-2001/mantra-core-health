@@ -46,6 +46,26 @@ describe('PharmacyBulkClient', () => {
     },
   );
 
+  it('el stock de una sucursal va a su ruta …/sites/:siteId/availability/bulk, con el mismo contrato y en lotes', () => {
+    const SITE_ID = '1b2c3d4e-0000-4000-8000-000000000001';
+    let response: BulkResponse | null = null;
+    const rows = Array.from({ length: 300 }, (_, i) => ({ productCode: `P-${i}`, available: true }));
+    client
+      .bulkAll(PHARMACY_ID, { siteAvailability: SITE_ID }, { mode: 'UPSERT', dryRun: true, rows })
+      .subscribe((value) => (response = value));
+
+    const url = `/pharmacies/${PHARMACY_ID}/sites/${SITE_ID}/availability/bulk`;
+    const first = http.expectOne(url);
+    expect(first.request.body).toEqual({ mode: 'UPSERT', dryRun: true, rows: rows.slice(0, 250) });
+    first.flush(answer(250, true));
+    const second = http.expectOne(url);
+    expect(second.request.body.rows).toHaveLength(50);
+    second.flush(answer(50, true));
+
+    expect(response!.results).toHaveLength(300);
+    expect(response!.results[299]!.row).toBe(300);
+  });
+
   it('sin dryRun no declara la clave: la API escribe', () => {
     client.bulk(PHARMACY_ID, 'prices', { mode: 'UPDATE', rows: [{ productCode: 'A', unitPrice: '3' }] }).subscribe();
 

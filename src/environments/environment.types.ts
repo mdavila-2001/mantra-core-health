@@ -275,6 +275,16 @@ export interface Environment {
   readonly designMockups: boolean;
 
   /**
+   * Maqueta comercial de reportería (`features/reporting/`, datos de ejemplo
+   * generados en el navegador). **Apagada por defecto**: con `false` el portal
+   * no se ofrece en el login ni en el Centro, `/reports/**` redirige al panel de
+   * observabilidad y `/portal-selector` a la raíz. Se enciende con
+   * `PUBLIC_REPORTING_MOCK=true` (o con la configuración demo) para las capturas
+   * del simulador. La API real no tiene las rutas que la maqueta consulta.
+   */
+  readonly reportingMockEnabled: boolean;
+
+  /**
    * El refresh token viaja en una cookie `httpOnly` que pone y lee la API, y no
    * en el cuerpo de las respuestas ni en `localStorage` (TX-10, decisión D-I).
    *
@@ -289,7 +299,7 @@ export interface Environment {
   /**
    * Rama `mockup`: la aplicación no habla con ninguna API. Un interceptor
    * responde cada petición desde datos de prueba en memoria, con todas las
-   * pantallas pobladas. Ver `src/app/core/mock/`.
+   * pantallas pobladas. Ver el simulador, en la carpeta `mock/` de `src/app/core/`.
    */
   readonly mockBackend: boolean;
 }
@@ -313,6 +323,7 @@ export interface EnvironmentOverrides {
   readonly campaignsDemo?: boolean;
   readonly billingSiatDemo?: boolean;
   readonly designMockups?: boolean;
+  readonly reportingMockEnabled?: boolean;
   readonly refreshCookie?: boolean;
   readonly mockBackend?: boolean;
 }

@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core';
 
 import { environment } from '../../../environments/environment';
-import { forcedRealApi } from '../../core/mock/api-mode';
+import { forcedRealApi } from '../../core/simulator/api-mode';
 
 /**
  * Si la pantalla de facturación puede hablar con el motor fiscal SIMULADO.

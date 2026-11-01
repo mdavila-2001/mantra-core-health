@@ -5,6 +5,7 @@ import {
 import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { crearAdmisionDeAltaDeDoctor } from './admissions.handlers';
+import { sumarSucursalesDelAlta } from './directory.handlers';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
 import { conflict, forbidden, notFound, preconditionFailed, reply, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
@@ -16,13 +17,16 @@ import {
   expiracion,
   MOCK_USERS,
   resolverCuentasDePacientes,
+  resolverCuentasRegistradas,
+  TENANT_FARMACIA,
+  TENANT_LABORATORIO,
   TENANT_NAMES,
   TENANT_PLATAFORMA,
   usuarioDeRefreshToken,
   type MockUser,
 } from '../mock-session';
 import { medicalFacilityRejection } from './medical-facility.validation';
-import { ahora, bodyAsQuery, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, bodyAsQuery, Coleccion, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     IAM: sesión, altas y usuarios.
@@ -130,6 +134,67 @@ function cuentaDe(p: PacienteSimulado): MockUser {
   };
 }
 
+/* ---- las organizaciones que se registran durante el recorrido -------------
+
+   Antes el alta respondía «Tu cuenta está lista» y el login rechazaba ese
+   mismo correo: nada se guardaba. Ahora la cuenta queda (en la pestaña, como
+   el resto de la maqueta) y entra con el correo del representante legal.
+   Vale para la farmacia (3.1) y el laboratorio (4.1).
+
+   Límite del doble, a propósito: la cuenta entra a la organización de
+   demostración de su tipo —Farmacia Vida o Laboratorio Central, con su
+   catálogo, sus sedes y su bandeja sembrados— rotulada con la razón social
+   que se registró. Una organización vacía de verdad exigiría un tenant nuevo
+   en todo el simulador. */
+
+interface CuentaRegistrada {
+  readonly id: string;
+  readonly email: string;
+  readonly razonSocial: string;
+  /** El tenant de demostración al que entra. Ausente en las guardadas antes: farmacia. */
+  readonly tenantId?: string;
+}
+
+/** A qué organización de demostración entra cada tipo de alta. */
+const TENANT_DE_DEMOSTRACION: Readonly<Record<string, string>> = {
+  PHARMACY: TENANT_FARMACIA,
+  // Sólo el alta de laboratorio sale a la red con este tipo (la de
+  // imagenología todavía no envía nada): es el Laboratorio Central.
+  DIAGNOSTIC_CENTER: TENANT_LABORATORIO,
+};
+
+const cuentasRegistradas = new Coleccion<CuentaRegistrada>([]).persistirEn(
+  'mock.auth.cuentas-de-farmacia',
+);
+
+function cuentaRegistrada(c: CuentaRegistrada): MockUser {
+  const tenant = c.tenantId ?? TENANT_FARMACIA;
+  return {
+    key: `alta-${c.id}`,
+    id: c.id,
+    email: c.email,
+    nationalId: '',
+    displayName: c.razonSocial,
+    roles: ['USER'],
+    tenants: [tenant],
+    tenantNames: { ...TENANT_NAMES, [tenant]: c.razonSocial },
+    personId: uuid(`person-${c.id}`),
+    accountKind: 'ORGANIZATION',
+  };
+}
+
+resolverCuentasRegistradas(({ identificador, id, key }) => {
+  const c = cuentasRegistradas
+    .todos()
+    .find(
+      (cuenta) =>
+        (identificador !== undefined && cuenta.email === identificador) ||
+        (id !== undefined && cuenta.id === id) ||
+        (key !== undefined && `alta-${cuenta.id}` === key),
+    );
+  return c === undefined ? undefined : cuentaRegistrada(c);
+});
+
 resolverCuentasDePacientes(({ identificador, id, key }) => {
   const p = patientList
     .todos()
@@ -206,6 +271,18 @@ function unprocessable(message: string, reason: string) {
   });
 }
 
+/** El tope de `uploadSignatureImage` en la API. */
+const MAX_SIGNATURE_IMAGE_BYTES = 2 * 1024 * 1024;
+
+function leerComoDataUrl(archivo: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(String(lector.result));
+    lector.onerror = () => reject(lector.error ?? new Error('No se pudo leer la imagen'));
+    lector.readAsDataURL(archivo);
+  });
+}
+
 export function registrarAuth(router: MockRouter): void {
   router.post('/iam/auth/change-password', ({ body, user }) => {
     if (user === null) return unauthorized('Sesión vencida');
@@ -266,6 +343,25 @@ export function registrarAuth(router: MockRouter): void {
 
   router.post('/iam/auth/logout', () => ({ ok: true }));
 
+  // Contrato nuevo (31/10/2026): ¿ya existe una cuenta con este dato? Público y
+  // sin detalle de quién es. Compara sin distinguir mayúsculas ni espacios.
+  router.get('/iam/auth/identifier-exists', ({ query }) => {
+    const kind = query.get('kind') ?? '';
+    const value = (query.get('value') ?? '').trim().toLowerCase();
+    if (value === '' || !['NATIONAL_ID', 'EMAIL', 'ORG_NAME'].includes(kind)) {
+      return validation('Falta el tipo o el valor a verificar');
+    }
+    const igual = (otro: string | undefined): boolean =>
+      otro !== undefined && otro.trim().toLowerCase() === value;
+    const exists =
+      kind === 'NATIONAL_ID'
+        ? MOCK_USERS.some((u) => igual(u.nationalId))
+        : kind === 'EMAIL'
+          ? MOCK_USERS.some((u) => igual(u.email))
+          : MOCK_USERS.some((u) => igual(u.displayName));
+    return { exists };
+  });
+
   router.post('/iam/auth/register-patient', ({ body }) => {
     const datos = cuerpo<{ email?: string; name?: string; lastName?: string }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
@@ -308,6 +404,10 @@ export function registrarAuth(router: MockRouter): void {
       // Dónde dice trabajar (28/10/2026), como en la API.
       institutionSlugs?: string[];
       insurerCarrierIds?: string[];
+      // Como `RegisterPractitionerDto`: la firma y el sello llegan como id de un
+      // archivo ya pre-cargado en `upload-registration-signature-image`.
+      signatureFileId?: string;
+      sealFileId?: string;
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
@@ -371,14 +471,23 @@ export function registrarAuth(router: MockRouter): void {
     }
     const institutionSlugs = [...new Set(datos.institutionSlugs ?? [])];
     const affiliationIds = institutionSlugs.map((slug) => uuid(`aff-alta-${practitionerProfileId}-${slug}`));
-    if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
+    if (
+      datos.signatureImageBase64 !== undefined ||
+      datos.sealImageBase64 !== undefined ||
+      datos.signatureFileId !== undefined ||
+      datos.sealFileId !== undefined
+    ) {
       signatureSaveAssets(practitionerProfileId, {
-        ...(datos.signatureImageBase64 === undefined
-          ? {}
-          : { signatureFileId: guardarImagenDeDataUrl(datos.signatureImageBase64, 'firma.png') }),
-        ...(datos.sealImageBase64 === undefined
-          ? {}
-          : { sealFileId: guardarImagenDeDataUrl(datos.sealImageBase64, 'sello.png') }),
+        ...(datos.signatureFileId !== undefined
+          ? { signatureFileId: datos.signatureFileId }
+          : datos.signatureImageBase64 === undefined
+            ? {}
+            : { signatureFileId: guardarImagenDeDataUrl(datos.signatureImageBase64, 'firma.png') }),
+        ...(datos.sealFileId !== undefined
+          ? { sealFileId: datos.sealFileId }
+          : datos.sealImageBase64 === undefined
+            ? {}
+            : { sealFileId: guardarImagenDeDataUrl(datos.sealImageBase64, 'sello.png') }),
       });
     }
     // Cada alta de médico nace como solicitud de admisión pendiente de revisión.
@@ -407,6 +516,7 @@ export function registrarAuth(router: MockRouter): void {
     const datos = cuerpo<{
       organization?: {
         code?: string;
+        legalName?: string;
         legalEntityType?: string;
         tenantType?: string;
         countryConceptId?: string;
@@ -470,12 +580,6 @@ export function registrarAuth(router: MockRouter): void {
       };
       owner?: { email?: string };
     }>({ body });
-    if (
-      datos.owner?.email !== undefined &&
-      MOCK_USERS.some((u) => u.email === datos.owner?.email)
-    ) {
-      return conflict('Ya existe una cuenta con ese correo', { email: datos.owner.email });
-    }
     const legalEntityType = datos.organization?.legalEntityType;
     // Mismo contrato que el `ValidationPipe` real: un código fuera del
     // diccionario es 400, no un 422 de negocio (subtarea 1.1).
@@ -768,10 +872,49 @@ export function registrarAuth(router: MockRouter): void {
         ? undefined
         : (legalRepresentative === undefined ? 0 : 1) + (executives === undefined ? 0 : 3);
 
+    // Como el `ValidationPipe` va antes que el servicio, el conflicto de correo se
+    // resuelve después de validar el cuerpo: un cuerpo inválido es 400/422, no 409.
+    // Por correo exacto, no con `buscarUsuario`: aquél acepta `farmacia@…`
+    // como atajo de la cuenta demo, y acá eso respondía «ya existe» a
+    // cualquier farmacia que se registrara con `farmacia@su-dominio`.
+    const correoDelOwner = datos.owner?.email?.trim().toLocaleLowerCase('es');
+    if (
+      correoDelOwner !== undefined &&
+      (MOCK_USERS.some((u) => u.email === correoDelOwner) ||
+        cuentasRegistradas.todos().some((c) => c.email === correoDelOwner))
+    ) {
+      return conflict('Ya existe una cuenta con ese correo', { email: correoDelOwner });
+    }
+    const ownerUserId = nuevoId('owner');
+    const tenantDeDemostracion = TENANT_DE_DEMOSTRACION[datos.organization?.tenantType ?? ''];
+    if (tenantDeDemostracion !== undefined && datos.owner?.email !== undefined) {
+      cuentasRegistradas.agregar({
+        id: ownerUserId,
+        email: datos.owner.email.trim().toLocaleLowerCase('es'),
+        razonSocial: datos.organization?.legalName?.trim() || TENANT_NAMES[tenantDeDemostracion] || 'Mi organización',
+        tenantId: tenantDeDemostracion,
+      });
+      const declaradas =
+        datos.organization?.tenantType === 'PHARMACY'
+          ? (pharmacy?.branches ?? [])
+          : (diagnosticUnit?.branches ?? []).map((b) => {
+              // El formulario manda `addressLines` suelto; el contrato de la API, `address.lines`.
+              const lineas = b.address?.lines ?? (b as { addressLines?: readonly string[] }).addressLines;
+              return {
+                ...b,
+                ...(b.description === undefined && lineas?.length ? { description: lineas.join(', ') } : {}),
+              };
+            });
+      sumarSucursalesDelAlta(
+        tenantDeDemostracion,
+        declaradas.flatMap((b) => (b.name ? [{ ...b, name: b.name }] : [])),
+      );
+    }
+
     return {
       tenantId: nuevoId('tenant-nuevo'),
       code: datos.organization?.code ?? 'ORG-NUEVA',
-      ownerUserId: nuevoId('owner'),
+      ownerUserId,
       status: 'PENDING_VERIFICATION',
       verificationStatus: 'PENDING',
       emailVerificationSent: true,
@@ -786,6 +929,35 @@ export function registrarAuth(router: MockRouter): void {
       // Como la API: el bloque se persiste en la misma transacción del alta.
       ...(datos.organization?.medicalFacility === undefined ? {} : { medicalFacilityRegistered: true }),
     };
+  });
+
+  // La firma o el sello del alta de médico (`uploadSignatureImage` de la API):
+  // sólo imagen, hasta 2 MB. Devuelve el `fileId` que el alta reclama.
+  router.post('/iam/auth/upload-registration-signature-image', ({ body }) => {
+    const archivo = typeof FormData !== 'undefined' && body instanceof FormData ? body.get('file') : null;
+    if (!(archivo instanceof Blob)) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'No se recibió contenido en el campo "file"',
+        error: 'Unprocessable Entity',
+      });
+    }
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(archivo.type)) {
+      return reply(415, { statusCode: 415, code: 'VALIDATION_FAILED', message: 'La imagen debe ser PNG, JPEG o WebP' });
+    }
+    if (archivo.size > MAX_SIGNATURE_IMAGE_BYTES) {
+      return reply(422, { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'La imagen supera el límite de 2 MB' });
+    }
+    return leerComoDataUrl(archivo).then((dataUrl) => ({
+      status: 201,
+      body: {
+        fileId: guardarImagenDeDataUrl(dataUrl, archivo instanceof File ? archivo.name : 'firma.png'),
+        originalName: archivo instanceof File ? archivo.name : 'firma.png',
+        sizeBytes: archivo.size,
+        mimeType: archivo.type,
+      },
+    }));
   });
 
   router.post('/iam/auth/upload-registration-document', ({ body }) => {

@@ -22,9 +22,16 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 
 import { SessionStore, type SessionTokens } from '../../core/auth/session.store';
-import { generarEntradas, type ValorGenerado } from '../../core/mock/faker';
-import { forcedRealApi } from '../../core/mock/api-mode';
-import { MOCK_USERS, emitirAccessToken, emitirRefreshToken } from '../../core/mock/mock-session';
+// El simulador entra por su enchufe (O3-4): fuera de `development` y `demo` es la versión neutra y el
+// stock —que de todos modos sólo existe con `mockBackend`— no arrastra cuentas, tokens ni generador.
+import { forcedRealApi } from '../../core/simulator/api-mode';
+import {
+  MOCK_USERS,
+  emitirAccessToken,
+  emitirRefreshToken,
+  generarEntradas,
+} from '../../core/simulator/simulator';
+import type { ValorGenerado } from '../../core/simulator/simulator.types';
 
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';

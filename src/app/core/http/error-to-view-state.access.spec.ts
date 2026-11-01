@@ -24,3 +24,33 @@ describe('errores del gobierno de accesos', () => {
     expect(errorToViewState(forbiddenWith('ALGO_NUEVO', 'Mensaje de la API'))).toMatchObject({ message: 'Mensaje de la API' });
   });
 });
+
+describe('falta fijar organización (H1): S5 «Elegir organización»', () => {
+  const withReason = (status: number, reason: string, code = 'FORBIDDEN'): HttpErrorResponse =>
+    new HttpErrorResponse({ status, error: { statusCode: status, code, message: 'x', details: { reason }, correlationId: 'req-9', timestamp: '', path: '/x' } });
+
+  it.each([
+    [403, 'TENANT_AMBIGUOUS', 'FORBIDDEN'],
+    [403, 'TENANT_REQUIRED', 'FORBIDDEN'],
+    [412, 'TENANT_REQUIRED', 'PRECONDITION_FAILED'],
+    [422, 'TENANT_REQUIRED', 'PRECONDITION_FAILED'],
+  ])('%s %s se pinta como S5 con la acción «Elegir organización» y el ID de petición', (status, reason, code) => {
+    const viewState = errorToViewState(withReason(status, reason, code));
+    expect(viewState).toMatchObject({
+      status: 'forbidden',
+      requestId: 'req-9',
+      nextAction: { label: 'Elegir organización' },
+    });
+    expect((viewState as { nextAction: { route: string } }).nextAction.route.startsWith('/auth/organization')).toBe(true);
+  });
+
+  it('NEGATIVO: un 412 con otro `reason` no se confunde con la elección de organización', () => {
+    const viewState = errorToViewState(withReason(412, 'OTRA_COSA', 'PRECONDITION_FAILED'));
+    expect(viewState.status).not.toBe('forbidden');
+  });
+
+  it('NEGATIVO: un 403 de rol insuficiente no ofrece elegir organización', () => {
+    const viewState = errorToViewState(withReason(403, 'ROLE_INSUFFICIENT'));
+    expect(viewState).not.toHaveProperty('nextAction');
+  });
+});

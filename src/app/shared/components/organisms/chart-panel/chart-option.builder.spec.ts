@@ -16,6 +16,10 @@ const TEMA: ChartTheme = {
   malo: '#a02020',
   superficie: '#ffffff',
   rampa: ['#cde2fb', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b'],
+  ordinal: ['#86b6ef', '#3987e5', '#1c5cab', '#0d366b'],
+  aviso: '#7a4d00',
+  estado: { exito: '#0a7a3c', aviso: '#7a4d00', error: '#a02020' },
+  atenuado: '#8a8f8f',
   fuente: 'Nunito, sans-serif',
 };
 
@@ -287,7 +291,8 @@ describe('filtro por serie en el constructor', () => {
     const base: ChartSpec = { ...spec(datos), filtro: { dimension: 'plan', valorDe: 'serie' } };
     const o = construirOpciones({ spec: base, tema: TEMA, modo: 'normal', seleccion: 'Pro' }) as { series: { name: string; itemStyle?: { opacity: number } }[] };
     expect(o.series.find((s) => s.name === 'Esencial')?.itemStyle?.opacity).toBe(0.35);
-    expect(o.series.find((s) => s.name === 'Pro')?.itemStyle).toBeUndefined();
+    // La elegida no se atenúa (sin opacidad); su itemStyle ahora lleva el color y la brecha de superficie.
+    expect(o.series.find((s) => s.name === 'Pro')?.itemStyle?.opacity).toBeUndefined();
   });
 });
 
@@ -437,6 +442,191 @@ describe('correcciones de lectura (revisión visual)', () => {
       const html = f([{ name: MALO, dataIndex: 0, value: 5 }]);
       expect(html).not.toContain('<img');
       expect(html).toContain('&lt;img');
+    });
+  });
+
+  describe('marcas (skill dataviz)', () => {
+    it('barra de a lo sumo 24 px, 2 px de brecha de superficie y rejilla sólida', () => {
+      media({});
+      const o = build({ tipo: 'cartesiano', categorias: ['A', 'B'], series: [{ nombre: 'S', valores: [1, 2], forma: 'barra' }] });
+      expect(at(o, 'series.0.barMaxWidth')).toBe(24);
+      expect(at(o, 'series.0.itemStyle.borderColor')).toBe(TEMA.superficie);
+      expect(at(o, 'series.0.itemStyle.borderWidth')).toBe(1);
+      expect(at(o, 'yAxis.splitLine.lineStyle.type')).toBe('solid');
+    });
+
+    it('las barras APILADAS también llevan la brecha, y sólo las no apiladas se redondean', () => {
+      media({});
+      const o = build({
+        tipo: 'cartesiano',
+        categorias: ['A'],
+        series: [
+          { nombre: 'X', valores: [1], forma: 'barra', apilar: 'g' },
+          { nombre: 'Y', valores: [2], forma: 'barra', apilar: 'g' },
+        ],
+      });
+      expect(at(o, 'series.0.itemStyle.borderColor')).toBe(TEMA.superficie);
+      expect(at(o, 'series.1.itemStyle.borderColor')).toBe(TEMA.superficie);
+      expect(at(o, 'series.0.itemStyle.borderRadius')).toBeUndefined();
+    });
+
+    it('línea de 2 px, marcador de 8 px con anillo de superficie de 2 px y área al 10 %', () => {
+      media({});
+      const o = build({ tipo: 'cartesiano', categorias: ['A', 'B'], series: [{ nombre: 'S', valores: [1, 2], forma: 'area' }] });
+      expect(at(o, 'series.0.lineStyle.width')).toBe(2);
+      expect(at(o, 'series.0.symbolSize')).toBe(8);
+      expect(at(o, 'series.0.itemStyle.borderWidth')).toBe(2);
+      expect(at(o, 'series.0.itemStyle.borderColor')).toBe(TEMA.superficie);
+      expect(at(o, 'series.0.areaStyle.opacity')).toBe(0.1);
+    });
+  });
+
+  describe('leyenda (enmienda X-8: una serie no lleva caja)', () => {
+    it('con una serie no se dibuja la leyenda; con dos sí', () => {
+      media({});
+      const una = build({ tipo: 'cartesiano', categorias: ['A'], series: [{ nombre: 'S', valores: [1], forma: 'barra' }] });
+      const dos = build({
+        tipo: 'cartesiano',
+        categorias: ['A'],
+        series: [
+          { nombre: 'S', valores: [1], forma: 'barra' },
+          { nombre: 'T', valores: [2], forma: 'barra' },
+        ],
+      });
+      expect(at(una, 'legend.show')).toBe(false);
+      expect(at(dos, 'legend.show')).toBe(true);
+    });
+  });
+
+  describe('paleta por significado', () => {
+    const SERIES = [
+      { nombre: 'Exitosas', valores: [8], forma: 'barra' as const, apilar: 'g', rol: 'exito' as const },
+      { nombre: '4xx', valores: [2], forma: 'barra' as const, apilar: 'g', rol: 'aviso' as const },
+      { nombre: '5xx', valores: [1], forma: 'barra' as const, apilar: 'g', rol: 'error' as const },
+    ];
+
+    it('paleta de estado: cada serie viste el color de su rol, no el de su posición', () => {
+      media({});
+      const o = build({ tipo: 'cartesiano', categorias: ['A'], paleta: 'estado', series: SERIES });
+      expect(at(o, 'color')).toEqual([TEMA.estado?.exito, TEMA.estado?.aviso, TEMA.estado?.error]);
+      expect(at(o, 'series.2.itemStyle.color')).toBe(TEMA.estado?.error);
+    });
+
+    it('paleta ordinal: p50 < p95 < p99 es una rampa de un matiz que salta el paso más claro', () => {
+      media({});
+      const o = build({
+        tipo: 'cartesiano',
+        categorias: ['A', 'B'],
+        paleta: 'ordinal',
+        series: ['p50', 'p95', 'p99'].map((nombre) => ({ nombre, valores: [1, 2], forma: 'linea' as const })),
+      });
+      expect(at(o, 'color')).toEqual(['#3987e5', '#1c5cab', '#0d366b']);
+    });
+
+    it('énfasis: la serie nombrada lleva el acento y las demás se atenúan sin recolorearse al azar', () => {
+      media({});
+      const o = build({
+        tipo: 'cartesiano',
+        categorias: ['A'],
+        enfasis: 'Agenda',
+        series: [
+          { nombre: 'Agenda', valores: [1], forma: 'linea' },
+          { nombre: 'Recetas', valores: [2], forma: 'linea' },
+        ],
+      });
+      expect(at(o, 'color')).toEqual([TEMA.serie[0], TEMA.atenuado]);
+    });
+
+    it('énfasis en una categoría de una serie única: sólo esa barra lleva el acento', () => {
+      media({});
+      const o = build({
+        tipo: 'cartesiano',
+        categorias: ['Agenda', 'Recetas'],
+        enfasis: 'Recetas',
+        horizontal: true,
+        series: [{ nombre: 'Peticiones', valores: [5, 3], forma: 'barra' }],
+      });
+      const data = at(o, 'series.0.data') as { value: number; itemStyle?: { color: string } }[];
+      expect(data[0]?.itemStyle?.color).toBe(TEMA.atenuado);
+      expect(data[1]).toBe(3);
+    });
+  });
+
+  describe('objetivo y anotaciones', () => {
+    it('el objetivo es una línea sólida de color de aviso con su rótulo, y el eje la incluye', () => {
+      media({});
+      const o = build({
+        tipo: 'cartesiano',
+        categorias: ['A', 'B'],
+        objetivo: { valor: 2000, etiqueta: 'Objetivo p95: 2 s' },
+        series: [{ nombre: 'p95', valores: [100, 300], forma: 'linea' }],
+      });
+      const marca = at(o, 'series.0.markLine.data.0') as { yAxis: number; lineStyle: { color: string; type: string }; label: { formatter: string } };
+      expect(marca.yAxis).toBe(2000);
+      expect(marca.lineStyle).toMatchObject({ color: TEMA.aviso, type: 'solid' });
+      expect(marca.label.formatter).toBe('Objetivo p95: 2 s');
+      const max = at(o, 'yAxis.max') as (v: { max: number }) => number;
+      expect(max({ max: 300 })).toBeGreaterThanOrEqual(2000);
+    });
+
+    it('una anotación (despliegue) es una línea vertical sutil sobre su categoría', () => {
+      media({});
+      const o = build({
+        tipo: 'cartesiano',
+        categorias: ['10:00', '11:00'],
+        anotaciones: [{ en: '11:00', etiqueta: 'Despliegue v4.2' }],
+        series: [{ nombre: 'S', valores: [1, 2], forma: 'linea' }],
+      });
+      expect(at(o, 'series.0.markLine.data.0.xAxis')).toBe('11:00');
+    });
+  });
+
+  describe('histograma', () => {
+    const HIST: DatosGrafico = {
+      tipo: 'histograma',
+      bordes: [0, 5, 10, null],
+      conteos: [4, 9, 1],
+      unidadBorde: { tipo: 'duracion' },
+      nombreValor: 'Peticiones',
+    };
+
+    it('barras contiguas, un solo matiz, brecha de superficie, redondeo sólo arriba y sin leyenda', () => {
+      media({});
+      const o = build(HIST);
+      expect(at(o, 'series.0.barCategoryGap')).toBe('0%');
+      expect(at(o, 'series.0.itemStyle.color')).toBe(TEMA.serie[0]);
+      expect(at(o, 'series.0.itemStyle.borderColor')).toBe(TEMA.superficie);
+      expect(at(o, 'series.0.itemStyle.borderRadius')).toEqual([4, 4, 0, 0]);
+      expect(at(o, 'legend.show')).toBe(false);
+      expect(at(o, 'xAxis.data')).toEqual(['< 5 ms', '5–10 ms', '≥ 10 ms']);
+    });
+
+    it('el tooltip dice el rango con todas las letras: «≥ a y < b»', () => {
+      media({});
+      const o = build(HIST);
+      const fmt = at(o, 'tooltip.formatter') as (p: unknown) => string;
+      const html = fmt([{ name: '5–10 ms', value: 9, data: 9 }]);
+      expect(html).toContain('≥ 5 ms y &lt; 10 ms');
+      expect(html).toContain('9');
+    });
+
+    it('el nombre del valor es un dato no confiable: se escapa en el tooltip', () => {
+      media({});
+      const o = build({ ...(HIST as Extract<DatosGrafico, { tipo: 'histograma' }>), nombreValor: '<img src=x onerror=alert(1)>' });
+      const fmt = at(o, 'tooltip.formatter') as (p: unknown) => string;
+      expect(fmt([{ name: '< 5 ms', value: 4, data: 4 }])).not.toContain('<img');
+    });
+
+    it('un histograma acumulado «menos o igual» cierra a la derecha: «> a y ≤ b»', () => {
+      media({});
+      const o = build({ ...(HIST as Extract<DatosGrafico, { tipo: 'histograma' }>), cerrado: 'derecha' });
+      expect(at(o, 'xAxis.data')).toEqual(['≤ 5 ms', '5–10 ms', '> 10 ms']);
+      const fmt = at(o, 'tooltip.formatter') as (p: unknown) => string;
+      expect(fmt([{ name: '5–10 ms', value: 9, data: 9 }])).toContain('&gt; 5 ms y ≤ 10 ms');
+    });
+
+    it('un clic sobre el histograma no filtra', () => {
+      expect(clickedValue(HIST, { name: '5–10 ms' }, { dimension: 'endpoint' })).toBeNull();
     });
   });
 });

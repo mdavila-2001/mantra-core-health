@@ -122,6 +122,23 @@ describe('BodyMap', () => {
    * y la silueta se volvería inusable con el dedo sin que nada fallara a la vista.
    */
   it('cada vista trae el render de su maniquí, publicado y liviano', () => {
+    for (const vistas of [VISTAS_DEL_CUERPO, VISTAS_DEL_CUERPO_MASCULINA, VISTAS_DEL_CUERPO_FEMENINA]) {
+      for (const vista of vistas) {
+        const archivo = join(PUBLICO, vista.image);
+        expect(existsSync(archivo), `${vista.image} no está en public/`).toBe(true);
+        expect(statSync(archivo).size, `${vista.image} pesa de más`).toBeLessThan(PESO_MAXIMO_IMAGEN);
+      }
+    }
+  });
+
+  it('las tres proporciones usan imágenes distintas', () => {
+    const imagenes = [VISTAS_DEL_CUERPO, VISTAS_DEL_CUERPO_MASCULINA, VISTAS_DEL_CUERPO_FEMENINA].flatMap((vistas) =>
+      vistas.map((vista) => vista.image),
+    );
+    expect(new Set(imagenes).size).toBe(imagenes.length);
+  });
+
+  it('cada vista trae el render de su maniquí, publicado y liviano', () => {
     for (const vistas of [
       VISTAS_DEL_CUERPO,
       VISTAS_DEL_CUERPO_MASCULINA,
@@ -575,5 +592,83 @@ describe('BodyMap · el cambio de vista espera la imagen', () => {
 
     expect(imagenDibujada()).toBe(ESPALDA_IMG);
     expect(dibujada('nuca')).toBe(true);
+  });
+});
+
+/*
+ * El cambio de vista no espera a la red (reporte del propietario, 24/10/2026:
+ * «tarda muchísimo en cambiar de frente a espalda y cara»). Las tres vistas se
+ * bajan al montar la figura y el `<image>` pasa a la copia en memoria.
+ */
+describe('BodyMap — vistas precargadas en memoria', () => {
+  let fixture: ComponentFixture<BodyMap>;
+  let html: HTMLElement;
+  let pedidas: string[];
+  let liberar: ReturnType<typeof vi.fn<(url: string) => void>>;
+  const originales = { crear: URL.createObjectURL, liberar: URL.revokeObjectURL };
+
+  beforeEach(() => {
+    pedidas = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (ruta: string) => {
+        pedidas.push(ruta);
+        return new Response(new Blob(['x'], { type: 'image/webp' }));
+      }),
+    );
+    // jsdom no implementa `URL.createObjectURL`: sin él la figura usa la ruta.
+    liberar = vi.fn<(url: string) => void>();
+    URL.createObjectURL = vi.fn(() => `blob:copia-${pedidas.length}`);
+    URL.revokeObjectURL = liberar;
+
+    TestBed.configureTestingModule({ imports: [BodyMap] });
+    fixture = TestBed.createComponent(BodyMap);
+    fixture.componentRef.setInput('zonas', ZONAS);
+    fixture.componentRef.setInput('sexo', 'FEMALE');
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    URL.createObjectURL = originales.crear;
+    URL.revokeObjectURL = originales.liberar;
+  });
+
+  async function esperarDescargas(): Promise<void> {
+    await fixture.whenStable();
+    await new Promise((listo) => setTimeout(listo));
+    fixture.detectChanges();
+  }
+
+  function imagenDibujada(): string | null {
+    return html.querySelector('[data-testid="body-map-render"]')?.getAttribute('href') ?? null;
+  }
+
+  it('baja las tres vistas del sexo puesto una sola vez, sin esperar a que se pidan', async () => {
+    await esperarDescargas();
+    expect([...pedidas].sort()).toEqual(VISTAS_DEL_CUERPO_FEMENINA.map((vista) => vista.image).sort());
+  });
+
+  it('al cambiar de vista dibuja la copia en memoria, sin volver a pedirla', async () => {
+    await esperarDescargas();
+    const antes = pedidas.length;
+
+    for (const nombre of ['Espalda', 'Cara', 'Frente']) {
+      const opcion = [...html.querySelectorAll<HTMLElement>('[role="radio"]')].find(
+        (radio) => radio.textContent?.trim() === nombre,
+      );
+      if (opcion === undefined) throw new Error(`no está la vista ${nombre}`);
+      opcion.click();
+      fixture.detectChanges();
+      expect(imagenDibujada(), nombre).toMatch(/^blob:/);
+    }
+    expect(pedidas.length).toBe(antes);
+  });
+
+  it('libera las copias en memoria al destruirse', async () => {
+    await esperarDescargas();
+    fixture.destroy();
+    expect(liberar).toHaveBeenCalledTimes(VISTAS_DEL_CUERPO_FEMENINA.length);
   });
 });

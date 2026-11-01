@@ -713,7 +713,11 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { practitionerProfileId: signal(profileId), userId: signal('u-1') },
+          useValue: {
+            practitionerProfileId: signal(profileId),
+            userId: signal('u-1'),
+            roles: signal<readonly string[]>([]),
+          },
         },
         { provide: DialogService, useValue: dialogs },
       ],
@@ -1164,7 +1168,10 @@ describe('PractitionerProfile · el logo del consultorio', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        {
+          provide: AuthService,
+          useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1'), roles: signal<readonly string[]>([]) },
+        },
         { provide: DialogService, useValue: { confirm: vi.fn() } },
       ],
     });
@@ -1244,7 +1251,10 @@ describe('PractitionerProfile · la firma y el sello', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        {
+          provide: AuthService,
+          useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1'), roles: signal<readonly string[]>([]) },
+        },
         { provide: DialogService, useValue: { confirm: vi.fn() } },
       ],
     });

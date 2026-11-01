@@ -96,6 +96,7 @@ import { TutorialTarget } from '../../../shared/components/organisms/tutorial-ov
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { writeFailureMessage } from '../write-message';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
+import { chartError } from '../consultation/consultation-forbidden';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
@@ -1739,7 +1740,7 @@ export class PatientChart {
       case 'validation':
         return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos leerlos.';
       case 'error':
-        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+        return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
       default:
         return null;
     }
@@ -2554,7 +2555,9 @@ export class PatientChart {
           this.etiquetas.set(etiquetas);
           this.expediente.set(ready(datos));
         },
-        error: (error: unknown) => this.expediente.set(errorToViewState<Expediente>(error)),
+        // El 403 de la API le habla al paciente; acá se le dice a quien
+        // atiende qué le falta y se le da la salida (pedir acceso).
+        error: (error: unknown) => this.expediente.set(chartError<Expediente>(error, profileId)),
       });
   }
 

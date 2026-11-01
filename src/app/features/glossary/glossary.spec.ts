@@ -278,8 +278,15 @@ describe('Glossary', () => {
     expect(lista?.getAttribute('role')).toBe('region');
   });
 
-  it('con miniatura, la tarjeta la muestra decorativa; el crédito vive en la ficha', async () => {
+  it('una miniatura sin aprobación de pertinencia no se muestra en la tarjeta', async () => {
     await responderLanding([{ ...TERMINO, imageThumbnailUrl: 'https://ejemplo.org/t.jpg' }]);
+    expect(html().querySelector('.glosario__entrada-foto')).toBeNull();
+  });
+
+  it('con miniatura, la tarjeta la muestra decorativa; el crédito vive en la ficha', async () => {
+    await responderLanding([
+      { ...TERMINO, imageThumbnailUrl: 'https://ejemplo.org/t.jpg', imageReviewStatus: 'approved' },
+    ]);
     const foto = html().querySelector<HTMLImageElement>('.glosario__entrada-foto');
     expect(foto?.getAttribute('src')).toBe('https://ejemplo.org/t.jpg');
     expect(foto?.getAttribute('alt')).toBe('');

@@ -128,7 +128,7 @@ export class InsuranceCatalog {
     const editor = this.planEditor();
     this.toasts.success(
       editor?.plan === null
-        ? 'El producto seguro se creó correctamente.'
+        ? 'El producto quedó creado en su catálogo.'
         : 'Los datos del producto seguro se actualizaron.',
     );
     this.reloadCarrier();
@@ -158,19 +158,19 @@ export class InsuranceCatalog {
     const editor = this.benefitEditor();
     if (editor === null) return;
     if (update === null || editor.benefit === null) {
-      this.toasts.success('La cláusula se añadió correctamente.');
+      this.toasts.success('La cláusula quedó agregada.');
       this.reloadCarrier();
       return;
     }
     this.patchBenefit(editor.plan.id, editor.benefit.id, update);
-    this.toasts.success('La cláusula se actualizó correctamente.');
+    this.toasts.success('Guardamos los cambios de la cláusula.');
   }
 
   protected premiumSaved(monthlyPremiumAmount: string | null): void {
     const plan = this.premiumEditor();
     if (plan === null) return;
     this.patchPlan(plan.id, { monthlyPremiumAmount });
-    this.toasts.success('La prima de lista se actualizó correctamente.');
+    this.toasts.success('Guardamos la nueva prima de lista.');
   }
 
   protected rulesSaved(update: UpdatePlanBenefitRulesInput): void {

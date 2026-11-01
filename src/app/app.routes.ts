@@ -1,21 +1,24 @@
+import { CATALOG_EDITOR_LOADER, CATALOG_EDITOR_PATH } from './features/admin/catalog-editor/catalog-editor.routes';
 import { inject, type Type } from '@angular/core';
 import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { Dashboard } from './features/dashboard/dashboard';
 import { ShellLayout } from './features/shell-layout/shell-layout';
-import { Login } from './features/auth/login/login';
-import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
-import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
+import { AUTH_ROUTES } from './features/auth/auth.routes';
 import {
-  MEDICAL_CENTER_SCREENS,
-  MEDICAL_CENTER_SIGNUP_ROUTE,
-} from './features/auth/register-medical-center/medical-center.routes';
-import { VerifyEmail } from './features/auth/verify-email/verify-email';
-import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
-import { ResetPassword } from './features/auth/reset-password/reset-password';
-import { ActivateAccount } from './features/auth/activate-account/activate-account';
-import { ResendVerification } from './features/auth/resend-verification/resend-verification';
+  RUTAS_HEREDADAS_PUBLICAS,
+  RUTAS_HEREDADAS_DEL_BUSCADOR,
+  rutasHeredadas,
+} from './app.routes.redirects';
+import { MEDICAL_CENTER_SCREENS } from './features/auth/register-medical-center/medical-center.routes';
+import { PUBLIC_DIRECTORIES_SCREENS } from './features/public-directories/public-directories.screens';
+import { ACCOUNT_SCREENS } from './features/account/account.screens';
+import { INSURANCE_SCREENS } from './features/insurance/insurance.screens';
+import { ADMIN_SCREENS } from './features/admin/admin.screens';
+import { PHARMACY_LABORATORY_SCREENS } from './features/pharmacy/pharmacy-laboratory.screens';
+import { ACCESS_GOVERNANCE_SCREENS } from './features/access-governance/access-governance.screens';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
+import { INPATIENT_SCREENS, inpatientRoutes } from './features/inpatient/inpatient.routes';
 import { NotFound } from './features/not-found/not-found';
 import {
   ADMISSIONS_SCREENS,
@@ -33,8 +36,13 @@ import {
 } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
+import { simulatorRoutes } from './simulator-routes';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import { mfaEnrollmentGuard } from './core/auth/mfa-enrollment.guard';
+import {
+  PANTALLA_NO_DISPONIBLE_ROUTE,
+  visibilityChildGuard,
+} from './core/visibility/visibility.guard';
 import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from './core/navigation/navigation.map';
 import {
   RUTAS_HEREDADAS_CON_PARAMETRO,
@@ -42,11 +50,9 @@ import {
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
-import {
-  ROLES_ADMINISTRACION,
-  ROLES_REPORTERIA,
-} from './features/reporting/reporting-access';
+import { mockRoutes } from './features/reporting/reporting-mock.routes';
 import { RUTAS_DE_GOBIERNO } from './app.routes.governance';
+import { cargarSistema } from './features/observability/observability.routes';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
@@ -96,53 +102,14 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   ...MEDICAL_CENTER_SCREENS,
   ...ADMISSIONS_SCREENS,
-  // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
-  // de publicación con sus reacciones.
-  //
-  // Sigue existiendo aunque el menú ya no la ofrezca (carril R2-1): quien tenga
-  // el enlace guardado llega igual. Borrarla es una decisión de producto que el
-  // cliente no pidió — dijo «sacar del perfil de paciente», no «eliminar».
-  feed: () => import('./features/feed/feed').then((m) => m.Feed),
-  // Carril P1 · el centro de notificaciones. Diferido: la campana del header ya
-  // resuelve el 90 % de los casos —enterarse y saltar— y esta pantalla sólo la
-  // abre quien viene a revisar.
-  'notification-center': () =>
-    import('./features/notifications/notification-center').then((m) => m.NotificationCenter),
-  // Carril P2 · la bandeja de mensajería. Diferida: no es la primera pantalla
-  // de nadie y arrastra el buscador del directorio.
-  messaging: () => import('./features/messaging/messaging').then((m) => m.Messaging),
-  // El directorio de grupos (P7). Diferido como el muro: no es la primera
-  // pantalla de nadie y arrastra la tarjeta de grupo con su alta.
-  groups: () => import('./features/groups/groups').then((m) => m.Groups),
-  // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
-  // olvida, que es exactamente lo que una pantalla de preferencias debería
-  // conseguir.
-  settings: () => import('./features/settings/settings').then((m) => m.Settings),
-  // FT-18-R01/R02 · la portada de los cuatro directorios.
-  directories: () =>
-    import('./features/directories-overview/directories-overview').then(
-      (m) => m.DirectoriesOverview,
-    ),
-  // La guía que ocupó su lugar en el menú.
-  directory: () =>
-    import('./features/directory/practitioners-directory/practitioners-directory').then(
-      (m) => m.PractitionersDirectory,
-    ),
-  'psychological-help': () =>
-    import('./features/psychological-help/psychological-help').then((m) => m.PsychologicalHelp),
-  'laboratory-directory': () =>
-    import('./features/laboratory-directory/laboratory-directory').then(
-      (m) => m.LaboratoryDirectory,
-    ),
-  // A5 y A6 del plan de UX · los dos hermanos que faltaban. Diferidos como el
-  // resto de los directorios: no son la primera pantalla de nadie.
-  'clinics-directory': () =>
-    import('./features/public-directories/clinics-directory').then((m) => m.ClinicsDirectory),
-  'pharmacies-directory': () =>
-    import('./features/public-directories/pharmacies-directory').then((m) => m.PharmaciesDirectory),
-  // El mercado de seguros del paciente (28/09/2026). Ver su fila del registro.
-  'insurers-directory': () =>
-    import('./features/public-directories/insurers-directory').then((m) => m.InsurersDirectory),
+  ...INPATIENT_SCREENS,
+  ...PUBLIC_DIRECTORIES_SCREENS,
+  ...ACCOUNT_SCREENS,
+  ...INSURANCE_SCREENS,
+  ...ADMIN_SCREENS,
+  ...PHARMACY_LABORATORY_SCREENS,
+  ...ACCESS_GOVERNANCE_SCREENS,
+
   // §4.H del plan de UX · las dos pantallas nuevas del panel del médico.
   // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
   // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
@@ -157,226 +124,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/primary-practitioner/my-primary-patients/my-primary-patients').then(
       (m) => m.MyPrimaryPatients,
     ),
-  'administration/users': () =>
-    import('./features/admin/user-registration/user-registration').then((m) => m.UserRegistration),
-  'administration/patients': () =>
-    import('./features/admin/patients/patient-list/patient-list').then((m) => m.PatientList),
-  'administration/organizations': () =>
-    import('./features/admin/organizations/organization-list/organization-list').then(
-      (m) => m.OrganizationList,
-    ),
-  // Carril 13: la consola de la organización médica. Diferida como el resto de
-  // administración — sólo la alcanza quien administra, así que no tiene sentido
-  // que la descargue todo el mundo al entrar.
-  'administration/medical-organization': () =>
-    import('./features/admin/medical-organization/medical-organization').then(
-      (m) => m.MedicalOrganization,
-    ),
-  // TP-1: la organización mirándose a sí misma. Diferida por lo mismo que sus
-  // hermanas de administración.
-  'administration/my-organization': () =>
-    import('./features/organization/organization-panel').then((m) => m.OrganizationPanel),
-  // Carril 16: la consola del laboratorio. Distinta de `laboratory-directory`,
-  // que es la vitrina del paciente y sigue en pie sin cambios.
-  'administration/medical-laboratory': () =>
-    import('./features/admin/medical-laboratory/medical-laboratory').then(
-      (m) => m.MedicalLaboratory,
-    ),
-  'administration/insurance': () =>
-    import('./features/insurance/insurance-catalog/insurance-catalog').then(
-      (m) => m.InsuranceCatalog,
-    ),
-  'administration/brokers': () =>
-    import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
-  'administration/insurance-claims': () =>
-    import('./features/insurance/insurance-claims/insurance-claims').then((m) => m.InsuranceClaims),
-  'administration/insurance-analytics': () =>
-    import('./features/insurance/insurance-analytics/insurance-analytics').then(
-      (m) => m.InsuranceAnalytics,
-    ),
-  'administration/insurance-campaigns': () =>
-    import('./features/insurance/insurance-campaigns/insurance-campaigns').then(
-      (m) => m.InsuranceCampaigns,
-    ),
-  'administration/received-claims': () =>
-    import('./features/insurance/received-claims/received-claims').then((m) => m.ReceivedClaims),
-  // La bandeja de la aseguradora: profesionales que piden trabajar con ella
-  // (28/10/2026). Es la otra cara de «Mis verificaciones» del médico.
-  'administration/insurer-practitioner-requests': () =>
-    import('./features/insurance/practitioner-requests/practitioner-requests').then(
-      (m) => m.InsurerPractitionerRequests,
-    ),
-  'administration/insurance-patients': () =>
-    import('./features/insurance/insurance-patients/insurance-patients').then(
-      (m) => m.InsurancePatients,
-    ),
-  // Contabilidad abre en el **resumen llano**: cuánto entró hoy, esta semana y
-  // este mes; en qué se va la plata; quién te debe y a quién le debés. Es lo
-  // que el propietario pidió el 2026-09-19 —«se supone que es contabilidad
-  // para no contadores»— después de que la ruta abriera nueve meses en el
-  // cockpit, que es la vista del contador.
-  //
-  // Nada se borró, sólo cambió el orden: el cockpit está en
-  // `administration/accounting/cockpit` y los libros en `.../books`, los dos
-  // enlazados al pie del resumen.
-  'administration/accounting': () =>
-    import('./features/accounting/summary/summary').then((m) => m.Summary),
-  'administration/terminology': () =>
-    import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
-  'administration/content-packs': () =>
-    import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
-  'administration/moderation': () =>
-    import('./features/admin/moderation/moderation').then((m) => m.Moderation),
-  // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
-  // vivían bajo `administration/*`; esas direcciones redirigen (ver
-  // `SECCIONES_REDIRIGIDAS`).
-  'superadmin/observability': () =>
-    import('./features/admin/observability/observability').then((m) => m.Observability),
-  'superadmin/measurement': () =>
-    import('./features/admin/measurement/measurement').then((m) => m.Measurement),
-  'superadmin/data-catalog': () =>
-    import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
-  // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
-  'superadmin/portal': () =>
-    import('./features/admin/portal/portal-shell').then((m) => m.PortalShell),
-  'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
-  'superadmin/web-analytics': () =>
-    import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
-  'superadmin/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
-  'superadmin/operations': () =>
-    import('./features/admin/operations/operations').then((m) => m.Operations),
-  'superadmin/instances': () =>
-    import('./features/admin/instances/instances').then((m) => m.Instances),
-  'superadmin/bulk-imports': () =>
-    import('./features/admin/bulk-imports/bulk-imports').then((m) => m.BulkImports),
-  tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
-  'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
-  'my-account/dependents': () =>
-    import('./features/account/dependents/dependents').then((m) => m.Dependents),
-  'my-account/security': () =>
-    import('./features/account/security/security').then((m) => m.AccountSecurity),
-  'my-account/privacy': () =>
-    import('./features/account/privacy/privacy').then((m) => m.AccountPrivacy),
-  'my-account/appointments': () =>
-    import('./features/account/appointments/appointments').then((m) => m.Appointments),
-  'my-account/medical-record': () =>
-    import('./features/account/medical-record/medical-record').then((m) => m.MedicalRecord),
-  'my-account/diagnostic-results': () =>
-    import('./features/account/diagnostic-results/diagnostic-results').then(
-      (m) => m.DiagnosticResults,
-    ),
-  'my-account/diagnostic-orders': () =>
-    import('./features/account/diagnostic-orders/diagnostic-orders').then(
-      (m) => m.DiagnosticOrders,
-    ),
-  'my-account/quotations': () =>
-    import('./features/account/quotations/quotations').then((m) => m.Quotations),
-  'my-account/pharmacy-orders': () =>
-    import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
-  // «Farmacia»: el punto de entrada del menú desde el 24/09/2026 (pedido del
-  // propietario). Desde el 25/09/2026 es **la tienda** (`StoreFront`, carril
-  // 43) y no el hub de pestañas: buscador de productos y farmacias, con precio
-  // y distancia reales. «Mis pedidos» conserva su ruta propia (el detalle, el
-  // checkout y las notificaciones siguen apuntando ahí) y la tienda la enlaza;
-  // «Cotizaciones» también, con sus cuatro verticales. Los `?tab=` del hub
-  // viejo los redirige `StoreFront`; el hub lo borra Pablo en la Ola 3.
-  'my-account/pharmacy': () =>
-    import('./features/account/pharmacy/store-front/store-front').then((m) => m.StoreFront),
-  // 'my-account/loyalty' SALIÓ de acá (N-03/Q-17, 2026-09-22): la sección
-  // redirige en vez de pintar una pantalla — ver `SECCIONES_REDIRIGIDAS`,
-  // que `componenteDe()` consulta antes que esta tabla.
-  'my-account/promotions': () =>
-    import('./features/account/promotions/promotions').then((m) => m.Promotions),
-  'my-account/spending': () =>
-    import('./features/account/spending/spending').then((m) => m.Spending),
-  'my-account/invoices': () =>
-    import('./features/account/my-invoices/my-invoices').then((m) => m.MyInvoices),
-  'my-account/requests': () =>
-    import('./features/account/my-requests/my-requests').then((m) => m.MyRequests),
-  'administration/pharmacy-orders': () =>
-    import('./features/organization/pharmacy-inbox/pharmacy-inbox').then((m) => m.PharmacyInbox),
-  // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
-  // sección dentro del panel de organización, por el mismo motivo que aquélla:
-  // el panel es de TP-1 y así no se le toca una línea.
-  // **La verificación de identidad dejó de ir directa** (2026-09-10). Iba, y el
-  // motivo era bueno mientras la ruta apuntaba a una pantalla sola: es la salida
-  // del 403 `IDENTITY_VERIFICATION_REQUIRED`, y diferirla agrega una descarga
-  // donde alguien ya está esperando.
-  //
-  // Al unificarla con «Mis trámites» dejó de ser una pantalla y pasó a ser un
-  // centro con pestañas, y con él entraron al paquete inicial las pestañas y la
-  // tarjeta. El bundle quedó **9 kB por encima del techo de `angular.json`** y el
-  // build pasó a fallar. El reparto correcto cambió con el tamaño: la descarga
-  // la paga una vez quien cae en un 403 —un camino de error, ya interrumpido— en
-  // vez de pagarla **toda** primera visita a la aplicación.
-  'my-account/identity': () =>
-    import('./features/identity-verification/identity-hub/identity-hub').then((m) => m.IdentityHub),
-  // «Mis verificaciones» del profesional (28/10/2026): hoja de ruta y bandeja
-  // de solicitudes. Diferida: arrastra el stepper, el sello y el chat.
-  'my-account/verifications': () =>
-    import('./features/account/my-verifications/my-verifications').then((m) => m.MyVerifications),
   'administration/my-practice': () =>
     import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
-  'administration/pharmacy-campaigns': () =>
-    import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
-      (m) => m.PharmacyCampaigns,
-    ),
-  // El catálogo de la farmacia: cinco pantallas en pestañas (`features/pharmacy/catalog/`).
-  'administration/pharmacy-catalog': () =>
-    import('./features/pharmacy/catalog/pharmacy-catalog-hub').then((m) => m.PharmacyCatalogHub),
-  'administration/pharmacy': () =>
-    import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
-  // P34 · 24 h y turnos de guardia de cada sucursal (26/10/2026).
-  'administration/pharmacy-hours': () =>
-    import('./features/pharmacy/opening-hours/pharmacy-opening-hours').then(
-      (m) => m.PharmacyOpeningHoursPage,
-    ),
-  // Las sucursales de la organización activa (01/10/2026): una sola pantalla
-  // para la farmacia y el laboratorio, cada una en su menú.
-  'administration/pharmacy-branches': () =>
-    import('./features/organization/organization-branches/organization-branches').then(
-      (m) => m.OrganizationBranches,
-    ),
-  // El portal de la cuenta de laboratorio (30/09/2026): el espejo del de la
-  // farmacia, para quien vende servicios. Todo en `features/laboratory/`.
-  'administration/laboratory': () =>
-    import('./features/laboratory/summary/laboratory-summary').then((m) => m.LaboratorySummaryPage),
-  // Recepción, cola y resultados son UNA pantalla desde el 31/10/2026: «Órdenes».
-  'administration/laboratory-orders': () =>
-    import('./features/laboratory/orders/laboratory-orders').then((m) => m.LaboratoryOrders),
-  'administration/laboratory-prices': () =>
-    import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
-  'administration/laboratory-branches': () =>
-    import('./features/organization/organization-branches/organization-branches').then(
-      (m) => m.OrganizationBranches,
-    ),
-  'my-account/identity/cases': () =>
-    import('./features/identity-assurance/verification-cases/verification-cases').then(
-      (m) => m.VerificationCases,
-    ),
-  // Personal de apoyo (secretaria y otros roles), diseño de 2026-10. Cada una se
-  // enciende con su fila del registro; quién la ve lo decide `APP_SECTIONS`.
-  'administration/support-requests': () =>
-    import('./features/support-access/support-requests/support-requests').then((m) => m.SupportRequests),
-  'administration/support-team': () =>
-    import('./features/support-access/support-team/support-team').then((m) => m.SupportTeam),
-  'administration/support-access-lookup': () =>
-    import('./features/support-access/access-lookup/access-lookup').then((m) => m.AccessLookup),
-  'administration/support-invitations': () =>
-    import('./features/support-access/invitations/invitations').then((m) => m.Invitations),
-  'administration/session-controls': () =>
-    import('./features/support-access/session-controls/session-controls').then((m) => m.SessionControls),
-  'administration/support-review': () =>
-    import('./features/support-access/support-review/support-review').then((m) => m.SupportReview),
-  'administration/support-activity': () =>
-    import('./features/support-access/support-activity/support-activity').then((m) => m.SupportActivity),
-  // Gobierno de accesos (fase 5): el tablero, la administración delegada y la bandeja del revisor. Las hijas, más abajo.
-  'administration/access-governance': () =>
-    import('./features/access-governance/governance-home/governance-home').then((m) => m.GovernanceHome),
-  'administration/team-management': () =>
-    import('./features/access-governance/team-management/team-management').then((m) => m.TeamManagement),
-  'my-reviews': () => import('./features/access-governance/my-reviews/my-reviews').then((m) => m.MyReviews),
-  'my-team': () => import('./features/support-access/my-team/my-team').then((m) => m.MyTeam),
   'my-support': () => import('./features/support-access/my-support/my-support').then((m) => m.MySupport),
   'combined-agenda': () =>
     import('./features/support-access/combined-agenda/combined-agenda').then((m) => m.CombinedAgenda),
@@ -625,6 +374,17 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/checkout/checkout')
         .then((m) => m.Checkout)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Reservar el estudio de una orden médica (mockup, 2026-10-06): la orden ya
+    // dice qué estudio es, así que se elige centro y horario y se confirma.
+    path: 'my-account/diagnostic-orders/:orderId/book',
+    title: `${APP_TITLE} - Reservar estudio`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/diagnostic-orders/order-booking/order-booking')
+        .then((m) => m.OrderBooking)
         .catch(() => chunkFallido()),
   },
   {
@@ -984,6 +744,8 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   ...affiliationRoutes({ practitionerOnly: soloDeQuienAtiende, chunkFailed: chunkFallido }),
+  // Internación (F3): el ingreso y la ficha de una internación.
+  ...inpatientRoutes({ chunkFailed: chunkFallido }),
   {
     // La ficha de una admisión cuelga de la bandeja: hereda los roles de su sección.
     path: ADMISSION_DETAIL_PATH,
@@ -1158,6 +920,17 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/glossary/glossary-anatomy-atlas')
         .then((m) => m.GlossaryAnatomyAtlas)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El mismo vecindario que el mapa en columnas, abierto en profundidad:
+    // cada término con su definición y, ramificado, lo que lo rodea.
+    path: 'glossary/graph',
+    title: `${APP_TITLE} - Árbol de términos médicos`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-graph')
+        .then((m) => m.GlossaryGraph)
         .catch(() => chunkFallido()),
   },
   {
@@ -1519,61 +1292,6 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   superadmin: '/superadmin/observability',
 };
 
-/**
- * La superficie de búsqueda pública, renombrada a inglés por TAREA-29.
- *
- * ## Por qué van en su propia tabla y no en `RUTAS_HEREDADAS_PUBLICAS`
- *
- * Porque estas rutas **son las que la gente comparte**: un enlace a
- * `/buscar/profesionales?q=cardio` pegado en un mensaje tiene que seguir
- * abriendo el directorio, no un 404. Separarlas deja ver de un vistazo cuáles
- * son las del buscador y cuáles las del correo de alta.
- *
- * ## `pathMatch: 'full'`, una por una, y no un redirect de prefijo sobre `buscar`
- *
- * Un `{ path: 'buscar', redirectTo: 'search' }` con coincidencia por prefijo
- * habría cubierto las siete de una línea — y habría mandado a `/search/…`
- * las direcciones viejas de las pantallas portadas
- * (`/buscar/buscador-listado`, `/buscar/perfil-profesional-detalle`…), que
- * tienen su propia redirección exacta a su dirección en inglés
- * (`legacyMockupRedirects`). Así que cada redirect nombra su ruta exacta y
- * ninguna otra.
- */
-const RUTAS_HEREDADAS_DEL_BUSCADOR: Readonly<Record<string, string>> = {
-  publicaciones: '/posts',
-  'buscar/profesionales': '/search/practitioners',
-  'buscar/medicamentos': '/search/medications',
-  'buscar/hospitales': '/search/hospitals',
-  'buscar/diagnostico': '/search/diagnostics',
-  'buscar/aseguradoras': '/search/insurers',
-  'buscar/sintomas': '/search/symptoms',
-  'buscar/mapa': '/search/map',
-};
-
-/** Las landings públicas, que son las que viajan en los correos. */
-const RUTAS_HEREDADAS_PUBLICAS: Readonly<Record<string, string>> = {
-  'auth/organizacion': '/auth/organization',
-  'auth/registro': '/auth/register',
-  'auth/register-organization': '/auth/register/organization',
-  'auth/verificar': '/auth/verify-email',
-  'auth/recuperar': '/auth/forgot-password',
-  'auth/nueva-clave': '/auth/reset-password',
-  'auth/activar': '/auth/activate',
-  'auth/reenviar-verificacion': '/auth/resend-verification',
-};
-
-/**
- * `pathMatch: 'full'` en las dos tablas: sin él, `administracion/pacientes`
- * capturaría también `administracion/pacientes/<id>` y lo mandaría al listado,
- * perdiendo el identificador en silencio — que es peor que el 404.
- */
-function rutasHeredadas(mapa: Readonly<Record<string, string>>): Routes {
-  return Object.entries(mapa).map(([vieja, nueva]) => ({
-    path: vieja,
-    pathMatch: 'full' as const,
-    redirectTo: nueva,
-  }));
-}
 
 /**
  * Las cinco fichas públicas por slug, bajo el marco público del buscador.
@@ -1806,39 +1524,9 @@ export const routes: Routes = [
   // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
   // es de otra clase en vez de redirigir.
   ...rutasDeFichasPublicas(),
-  // Los dos portales a los que entra quien administra y consulta reportes
-  // (30/10/2026). Van **fuera** del armazón de administración, cada uno con su
-  // propio marco, y delante del comodín: ninguno cuelga de una sección del
-  // registro, así que no hay menú que los filtre.
-  //
-  // Los dos llevan `authGuard` y `seccionRolesGuard` con los roles escritos en
-  // `data`: ocultar una tarjeta del selector no es seguridad, y quien escriba la
-  // dirección a mano se topa con este guard primero y con la API después. El
-  // guard mira `ROLES_ROUTE_DATA` antes que cualquier sección, con la misma
-  // regla del comodín `SUPERADMIN`.
-  {
-    path: 'portal-selector',
-    title: `${APP_TITLE} - Elegir portal`,
-    canActivate: [authGuard, seccionRolesGuard],
-    // La unión de los dos: el selector decide por sí mismo si hay algo que
-    // elegir, y a quien solo tiene un acceso lo redirige directo.
-    data: { [ROLES_ROUTE_DATA]: [...ROLES_ADMINISTRACION, ...ROLES_REPORTERIA] },
-    loadComponent: () =>
-      import('./features/portal-selector/portal-selector')
-        .then((m) => m.PortalSelector)
-        .catch(() => chunkFallido()),
-  },
-  {
-    path: 'reports',
-    canActivate: [authGuard, seccionRolesGuard],
-    data: { [ROLES_ROUTE_DATA]: ROLES_REPORTERIA },
-    loadChildren: () =>
-      import('./features/reporting/reporting.routes')
-        .then((m) => m.REPORTING_ROUTES)
-        // Un fragmento que ya no existe tras un despliegue: la misma pantalla de
-        // recuperación que el resto, en vez de una navegación muerta.
-        .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
-  },
+  // La maqueta de reportería (`/portal-selector`, `/reports`) detrás de `environment.reportingMockEnabled`: apagada,
+  // redirige al panel de observabilidad y a la raíz (ver `reporting-mock.routes.ts`).
+  ...mockRoutes(chunkFallido, environment.reportingMockEnabled),
   insightsPortalRoute(chunkFallido),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
   // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos
@@ -1861,10 +1549,19 @@ export const routes: Routes = [
     canActivate: [authGuard],
     // Quien entró sin el segundo paso que su organización exige no usa el resto de
     // la aplicación hasta darlo de alta: la API lo deja entrar y lo cumple el cliente.
-    canActivateChild: [mfaEnrollmentGuard],
+    // Después, las reglas de visibilidad: lo que el menú ya no ofrece tampoco se abre por enlace. Presentación, no
+    // seguridad —la API sigue autorizando— y falla abierto si las reglas no se pudieron leer.
+    canActivateChild: [mfaEnrollmentGuard, visibilityChildGuard],
     children: [
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      {
+        // A donde la guarda de visibilidad manda a quien abre una pantalla que se le oculta (S3 con próxima acción).
+        path: PANTALLA_NO_DISPONIBLE_ROUTE.slice(1),
+        title: `${APP_TITLE} - No disponible para su perfil`,
+        loadComponent: () =>
+          import('./features/visibility-unavailable/visibility-unavailable').then((m) => m.VisibilityUnavailable),
+      },
       {
         // El muro profesional, **sin entrada de menú**.
         //
@@ -1953,6 +1650,34 @@ export const routes: Routes = [
       ),
       pantallaDeOperacion('administration/medical-organization', 'spaces/:id', 'Ficha del espacio', () =>
         import('./features/admin/medical-organization/espacio/space-detail').then((m) => m.SpaceDetail),
+      ),
+      // Infraestructura hospitalaria F4 (quirófanos): las pantallas de la sala
+      // cuelgan de Intervenciones. Las literales van antes que `:caseId`.
+      pantallaDeOperacion('interventions', 'new', 'Programar una intervención', () =>
+        import('./features/interventions/schedule-case/schedule-case').then((m) => m.ScheduleCase),
+      ),
+      pantallaDeOperacion('interventions', 'operating-rooms', 'Agenda de quirófanos', () =>
+        import('./features/interventions/or-schedule/or-schedule').then((m) => m.OrSchedule),
+      ),
+      pantallaDeOperacion('interventions', 'blocks', 'Bloques de quirófano', () =>
+        import('./features/interventions/or-blocks/or-blocks').then((m) => m.OrBlocks),
+      ),
+      pantallaDeOperacion('interventions', 'utilization', 'Utilización de quirófanos', () =>
+        import('./features/interventions/or-utilization/or-utilization').then((m) => m.OrUtilizationPage),
+      ),
+      pantallaDeOperacion('interventions', ':caseId', 'Ficha de la intervención', () =>
+        import('./features/interventions/case-detail/case-detail').then((m) => m.CaseDetail),
+      ),
+      // F5a · la ficha de un equipo (sala y DICOM) y F5e · cargos de día-cama.
+      pantallaDeOperacion('administration/medical-laboratory', 'equipment/:id', 'Ficha del equipo', () =>
+        import('./features/admin/medical-laboratory/equipment-detail/equipment-detail').then((m) => m.EquipmentDetail),
+      ),
+      // F5f · activos de infraestructura por espacio y centros de costo por unidad.
+      pantallaDeOperacion('administration/accounting', 'infrastructure', 'Activos y centros de costo', () =>
+        import('./features/accounting/infrastructure/infrastructure-accounting').then((m) => m.InfrastructureAccounting),
+      ),
+      pantallaDeOperacion('administration/services-catalog', 'bed-day-charges', 'Cargos de día-cama', () =>
+        import('./features/admin/services-catalog/bed-day-charges/bed-day-charges').then((m) => m.BedDayCharges),
       ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
         import('./features/agenda/appointment-new/appointment-new').then((m) => m.AppointmentNew),
@@ -2325,40 +2050,7 @@ export const routes: Routes = [
         .catch(() => chunkFallido()),
     title: 'AloVida - Vitrina de Diseño',
   },
-  {
-    /* El stock de componentes: la lista de todo lo que existe, sacada del
-       código, con cada pieza montada con datos de prueba.
-
-       `canMatch` y no `canActivate`: con `canMatch` la ruta **no existe** allí
-       donde no hay backend simulado —o sea, en cualquier rama que no sea
-       `mockup`—, así que cae en el comodín y da 404 como cualquier dirección
-       inventada. Con `canActivate` existiría y sólo estaría prohibida, que es
-       otra cosa: anuncia que hay algo detrás.
-
-       Va fuera del armazón, como la vitrina: no pide sesión, porque montar un
-       componente suelto no la necesita y pedirla obligaría a entrar sólo para
-       mirar un botón. */
-    path: 'design-system/stock',
-    canMatch: [() => environment.mockBackend],
-    loadComponent: () =>
-      import('./features/component-stock/component-stock')
-        .then((m) => m.ComponentStock)
-        .catch(() => chunkFallido()),
-    title: 'AloVida - Stock de componentes',
-  },
-  {
-    /* Comodín y no `:clave`: la clave de un componente es su ruta de archivo
-       —`shared/components/atoms/badge/badge`— y lleva barras, que un parámetro
-       de un solo segmento no captura. Con `**` la URL sigue siendo legible y
-       se puede copiar y pegar. */
-    path: 'design-system/stock/**',
-    canMatch: [() => environment.mockBackend],
-    loadComponent: () =>
-      import('./features/component-stock/component-stock')
-        .then((m) => m.ComponentStock)
-        .catch(() => chunkFallido()),
-    title: 'AloVida - Stock de componentes',
-  },
+  ...simulatorRoutes(chunkFallido),
   {
     // Verificación pública del certificado de portabilidad de póliza y
     // siniestralidad (subtarea 3.3): a donde apunta el código QR del PDF.
@@ -2373,151 +2065,7 @@ export const routes: Routes = [
     title: 'AloVida - Verificar certificado',
   },
   ...publicPrescriptionShareRoutes(chunkFallido),
-  {
-    path: 'auth',
-    component: Login,
-    pathMatch: 'full',
-    title: 'AloVida - Iniciar sesión',
-  },
-  {
-    // La ruta la fija `TENANT_SELECTION_ROUTE`, que es a donde manda el guard.
-    path: 'auth/organization',
-    component: TenantSelection,
-    title: 'AloVida - Elija su organización',
-  },
-  {
-    // La elección de tipo de cuenta. Cada alta cuelga de acá con URL propia, así
-    // que «registrate como doctor» se puede enlazar desde afuera.
-    path: 'auth/register',
-    component: RegisterAccountType,
-    pathMatch: 'full',
-    title: 'AloVida - Crear cuenta',
-  },
-  {
-    // La misma rejilla, con las organizaciones: es a donde lleva «Registre su
-    // organización» del acceso. Las altas de aseguradora, laboratorio,
-    // imagenología, farmacia y organización médica no se ofrecen en «Crear cuenta».
-    path: 'auth/register/organization-type',
-    component: RegisterAccountType,
-    data: { audience: 'organizations' },
-    title: 'AloVida - Registre su organización',
-  },
-  {
-    path: 'auth/register/patient',
-    // Diferida: el alta arrastra el árbol de municipios y el combobox de
-    // ocupaciones, y con import directo eso viaja en el bundle inicial que
-    // toda visita paga —incluida la de quien sólo entra a leer—. Mismo
-    // criterio que la vitrina de diseño.
-    loadComponent: () =>
-      import('./features/auth/register-patient/register-patient').then((m) => m.RegisterPatient),
-    title: 'AloVida - Crear cuenta de paciente',
-  },
-  {
-    // Cada alta monta SU componente. Las dos vivían en `RegisterPatient`, que
-    // decidía cuál dibujar leyendo `data.tipoDeCuenta`; eran dos formularios,
-    // dos juegos de páginas y dos endpoints en la misma clase, así que el dato
-    // de ruta se fue con la separación y lo que queda es lo que ya decía la
-    // URL.
-    path: 'auth/register/practitioner',
-    // Diferida por lo mismo que el alta de paciente: arrastra el árbol de
-    // municipios y el catálogo de especialidades.
-    loadComponent: () =>
-      import('./features/auth/register-practitioner/register-practitioner').then(
-        (m) => m.RegisterPractitioner,
-      ),
-    title: 'AloVida - Crear cuenta de profesional',
-  },
-  {
-    // Signup público de una organización aseguradora: crea el tenant `PAYER`
-    // y su usuario owner en la misma operación.
-    // Diferida desde la subtarea 1.2: la documentación legal en PDF arrastra
-    // `app-file-input` (y con él `FilePreview`/`pdfjs-dist`, diferido a su vez).
-    path: 'auth/register/organization',
-    loadComponent: () =>
-      import('./features/auth/register-organization/register-organization').then(
-        (m) => m.RegisterOrganization,
-      ),
-    title: 'AloVida - Registrar aseguradora',
-  },
-  {
-    // El alta del laboratorio de sangre: los dieciocho puntos de datos legales
-    // del proceso 4.1 del stakeholder. Sale a `POST /iam/auth/register-organization`
-    // con `tenantType: 'DIAGNOSTIC_CENTER'`: crea la cuenta del dueño y la unidad,
-    // pendientes de verificación; ver el JSDoc de `RegisterLaboratory`.
-    path: 'auth/register/laboratory',
-    // Diferida por lo mismo que las otras dos altas largas: arrastra el mapa,
-    // que no tiene por qué viajar en el paquete inicial de toda visita.
-    loadComponent: () =>
-      import('./features/auth/register-laboratory/register-laboratory').then(
-        (m) => m.RegisterLaboratory,
-      ),
-    title: 'AloVida - Registrar laboratorio',
-  },
-  {
-    // El alta del centro de imagenología: el módulo «ANÁLISIS MÉDICOS (RAYOS X,
-    // RESONANCIA, ETC.)» del registro del stakeholder. Los dieciocho puntos de
-    // datos legales son los mismos que los del laboratorio de sangre —la fuente
-    // los repite enteros—, y lo que cambia es qué estudios hace el centro; ver
-    // el JSDoc de `RegisterImagingCenter`. Sale al mismo endpoint que el
-    // laboratorio, con las modalidades como conceptos.
-    //
-    // La ruta dice `imaging-center` y no `imaging` a secas para no chocar con
-    // `?kind=IMAGING`, que es la **categoría** del directorio de laboratorios:
-    // aquélla filtra una vitrina, ésta da de alta una empresa.
-    path: 'auth/register/imaging-center',
-    // Diferida por lo mismo que las otras altas largas: arrastra el mapa, que
-    // no tiene por qué viajar en el paquete inicial de toda visita.
-    loadComponent: () =>
-      import('./features/auth/register-imaging-center/register-imaging-center').then(
-        (m) => m.RegisterImagingCenter,
-      ),
-    title: 'AloVida - Registrar centro de imagenología',
-  },
-  {
-    // El alta pública de una farmacia: Módulo Farmacia §1 del registro de
-    // procesos. A diferencia del laboratorio y de imagenología, ésta SÍ sale a
-    // la red — `POST /iam/auth/register-organization` con
-    // `tenantType: 'PHARMACY'` — ver el JSDoc de `RegisterPharmacy`.
-    // Diferida por lo mismo que las otras altas largas: arrastra el mapa y el
-    // subidor de PDF.
-    path: 'auth/register/pharmacy',
-    loadComponent: () =>
-      import('./features/auth/register-pharmacy/register-pharmacy').then((m) => m.RegisterPharmacy),
-    title: 'AloVida - Registrar farmacia',
-  },
-  MEDICAL_CENTER_SIGNUP_ROUTE,
-  {
-    // El enlace del correo trae el token por query string: /auth/verificar?token=…
-    path: 'auth/verify-email',
-    component: VerifyEmail,
-    title: 'AloVida - Verificar correo',
-  },
-  {
-    path: 'auth/forgot-password',
-    component: ForgotPassword,
-    title: 'AloVida - Recuperar contraseña',
-  },
-  {
-    // V01-08. El token puede venir por el enlace (`?token=…`) o escribirse a
-    // mano: el alta asistida lo entrega en pantalla para que alguien lo pase
-    // por teléfono o en papel, y obligar a armar una URL sería devolverle el
-    // problema a quien menos herramientas tiene.
-    path: 'auth/activate',
-    component: ActivateAccount,
-    title: 'AloVida - Activar cuenta',
-  },
-  {
-    // V01-14.
-    path: 'auth/resend-verification',
-    component: ResendVerification,
-    title: 'AloVida - Reenviar verificación',
-  },
-  {
-    // También por query string: /auth/nueva-clave?token=…
-    path: 'auth/reset-password',
-    component: ResetPassword,
-    title: 'AloVida - Nueva contraseña',
-  },
+  ...AUTH_ROUTES,
   {
     // Pantalla de recuperación: a donde llega un fragmento que no bajó.
     // No lleva `title` propio para no anunciar «error» en la pestaña de

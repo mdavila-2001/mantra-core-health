@@ -1,81 +1,148 @@
 {
-  "uberon": {
-    "release": "releases/2026-10-01",
-    "url": "https://github.com/obophenotype/uberon/releases/download/v2026-10-01/uberon.obo",
-    "sha256": "d4751a15d7551a8414caee2628c62bf68301d567caf54ccfa3eef383ae7cbb61",
-    "license": "CC-BY 3.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
-    "citation": "Mungall CJ, Torniai C, Gkoutos GV, Lewis SE, Haendel MA. Uberon, an integrative multi-species anatomy ontology. Genome Biol. 2012;13(1):R5.",
-    "citationDoi": "10.1186/gb-2012-13-1-r5",
-    "termsInRelease": 16141,
-    "humanTermsKept": 6074,
-    "criterion": "clase UBERON no obsoleta con al menos un xref FMA"
+ "uberon": {
+  "release": "releases/2026-10-01",
+  "url": "https://github.com/obophenotype/uberon/releases/download/v2026-10-01/uberon.obo",
+  "sha256": "d4751a15d7551a8414caee2628c62bf68301d567caf54ccfa3eef383ae7cbb61",
+  "license": "CC-BY 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "citation": "Mungall CJ, Torniai C, Gkoutos GV, Lewis SE, Haendel MA. Uberon, an integrative multi-species anatomy ontology. Genome Biol. 2012;13(1):R5.",
+  "citationDoi": "10.1186/gb-2012-13-1-r5",
+  "termsInRelease": 16141,
+  "humanTermsKept": 6074,
+  "criterion": "clase UBERON no obsoleta con al menos un xref FMA"
+ },
+ "fma": {
+  "source": "FMA.csv distribuido con BodyParts3D 3.0 (copia en github.com/Kevin-Mattheus-Moerman/BodyParts3D)",
+  "sha256": "14aa88169ea1013bf64853b8fcbe88b2a11477fc8e920f6ddde7be6ac5e1d2e8",
+  "license": "CC-BY 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "citation": "Rosse C, Mejino JLV. A reference ontology for biomedical informatics: the Foundational Model of Anatomy. J Biomed Inform. 2003;36(6):478-500.",
+  "citationDoi": "10.1016/j.jbi.2003.11.007",
+  "classes": 104698
+ },
+ "bodyparts3d": {
+  "version": "3.0 (20110915)",
+  "repository": "https://github.com/Kevin-Mattheus-Moerman/BodyParts3D",
+  "license": "CC-BY-SA 2.1 JP",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.1/jp/",
+  "attribution": "BodyParts3D, (c) The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan",
+  "citation": "Mitsuhashi N, Fujieda K, Tamura T, Kawamoto S, Takagi T, Okubo K. BodyParts3D: 3D structure database for anatomical concepts. Nucleic Acids Res. 2009;37(Database issue):D782-5.",
+  "citationDoi": "10.1093/nar/gkn613",
+  "partsWithMesh": 934
+ },
+ "relationsPublished": {
+  "part_of": "forma parte de",
+  "has_part": "tiene como parte",
+  "innervated_by": "inervado por",
+  "innervates": "inerva",
+  "vessel_supplies_blood_to": "irriga",
+  "indirectly_supplies": "irriga indirectamente",
+  "vessel_drains_blood_from": "drena sangre de",
+  "tributary_of": "tributaria de",
+  "branching_part_of": "rama de",
+  "connecting_branch_of": "rama comunicante de",
+  "has_muscle_origin": "origen muscular en",
+  "has_muscle_insertion": "inserci\u00f3n muscular en",
+  "connected_to": "conectado con",
+  "attaches_to": "se fija a",
+  "adjacent_to": "adyacente a"
+ },
+ "regionRoots": {
+  "R01": [
+   "UBERON:0000033",
+   "UBERON:0000974"
+  ],
+  "R02": [
+   "UBERON:0001137",
+   "UBERON:0001130",
+   "UBERON:0002240"
+  ],
+  "R03": [
+   "UBERON:0000915",
+   "UBERON:0001443"
+  ],
+  "R04": [
+   "UBERON:0000916"
+  ],
+  "R05": [
+   "UBERON:0002355",
+   "UBERON:0001270",
+   "UBERON:0002356"
+  ],
+  "R06": [
+   "UBERON:0002102",
+   "UBERON:0001460"
+  ],
+  "R07": [
+   "UBERON:0002103",
+   "UBERON:0000978"
+  ]
+ },
+ "hra": {
+  "name": "HuBMAP Human Reference Atlas \u2014 3D Reference Object Library",
+  "repository": "https://cdn.humanatlas.io/digital-objects/ref-organ",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "HuBMAP CCF 3D Reference Object Library (Browne K, Schlehlein H, Herr BW II, Quardokus E, Bueckle A, B\u00f6rner K. 2024), del Visible Human Project female (NLM), CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)",
+  "citation": "Browne K, Schlehlein H, Herr BW II, Quardokus E, Bueckle A, B\u00f6rner K. HuBMAP CCF 3D Reference Object Library. 2024. https://humanatlas.io/3d-reference-library",
+  "citationDoi": "10.48539/HBM627.VTKD.892",
+  "alignment": {
+   "method": "ICP de similitud (escala uniforme) de la pelvis \u00f3sea femenina contra coxales y sacro de BodyParts3D; mamas trasladadas por el estern\u00f3n",
+   "scale": 0.803754,
+   "meanErrorMm": 3.91
   },
-  "fma": {
-    "source": "FMA.csv distribuido con BodyParts3D 3.0 (copia en github.com/Kevin-Mattheus-Moerman/BodyParts3D)",
-    "sha256": "14aa88169ea1013bf64853b8fcbe88b2a11477fc8e920f6ddde7be6ac5e1d2e8",
-    "license": "CC-BY 3.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
-    "citation": "Rosse C, Mejino JLV. A reference ontology for biomedical informatics: the Foundational Model of Anatomy. J Biomed Inform. 2003;36(6):478-500.",
-    "citationDoi": "10.1016/j.jbi.2003.11.007",
-    "classes": 104698
+  "files": {
+   "pelvis-female": {
+    "version": "v1.3",
+    "glbSha256": "6ef3436e42b7203afcdfa075e57098e97c4e1aaaec08cfdacf6300ba3d5a551d",
+    "crosswalkSha256": "0bfeff126f5707b6ca58160af4cf192143453380be8e528f86d20898df30c48b"
+   },
+   "uterus-female": {
+    "version": "v1.2",
+    "glbSha256": "41014d2b222c2dbbe8d1cc38206b0099ce76d79659a9fdea9f28b8c7d669b864",
+    "crosswalkSha256": "d30bd7a11810bdc964543dfd675ad859b81f8f36997efeff95f48d48a5050b06"
+   },
+   "fallopian-tube-female-left": {
+    "version": "v1.2",
+    "glbSha256": "34817c498e038b599b338f8a35e6c1b3cbda576255c4f2ecca6d9efdebac6c15",
+    "crosswalkSha256": "f220127b2844cae86ab057abffac6c4f3b2a269ff83ab1f294ab6d2f24eed877"
+   },
+   "fallopian-tube-female-right": {
+    "version": "v1.2",
+    "glbSha256": "eec911de07307d1a27cfe27c939e3f3562590e5c419e27decaf3b1d7b13ab038",
+    "crosswalkSha256": "92d42e1cb3623fbcaa25cb1140bd95f1e5abfb31587a87817f9634b770410ce6"
+   },
+   "ovary-female-left": {
+    "version": "v1.3",
+    "glbSha256": "defd5cdc4b053b4e92193c5864bab2abae1807864ffde8bde7a7cb57f4736609",
+    "crosswalkSha256": "a3487f60aa9aad8c8bf4fba037b58bebeb8c84d3ed44ecb37ae19f6c25a9b943"
+   },
+   "ovary-female-right": {
+    "version": "v1.3",
+    "glbSha256": "381df741bf3d2511716e68db3ff70d94c0eda770d28a503af2d9fcb7b65113f8",
+    "crosswalkSha256": "40fec47dfddb4b9f91343c191fd4b9c602c971a905b4917282a32b7f34b0b518"
+   },
+   "mammary-gland-female-left": {
+    "version": "v1.1",
+    "glbSha256": "e279f2dacb93d44b59dade4f52ed209ddffc1600f228bd544d464dc50663d7d5",
+    "crosswalkSha256": "19679f9aec2f05a7a12580a8d439423d18bd32521158df9c7e0adfe0a114bbb5"
+   },
+   "mammary-gland-female-right": {
+    "version": "v1.1",
+    "glbSha256": "07d176a3a93761e63de47f86628617e763973cb983ce77d92ec62e8f00a1e1db",
+    "crosswalkSha256": "303b4f9a4858f0b62fe2b2b865e61157d81d86b2d5ad272131df4a976f58a6cd"
+   },
+   "sternum-female": {
+    "version": "v1.0",
+    "glbSha256": "530d45a6f7919b29fead3e66e8fa95dd18380e3069d5fbdcd0fd18a8cc230535",
+    "crosswalkSha256": "68dcc4a07779cd8f9c21e23da3d9bc4910bc790ffb59486ed4704e2aac3f8aa4"
+   },
+   "manubrium-female": {
+    "version": "v1.0",
+    "glbSha256": "65d757efc43367e5245f76c11689e9b50ba07115e575f9ce90c5c47bfb17c70e",
+    "crosswalkSha256": "1f97cc98f2b9e27f2b5860f6fade8395212d37bd3804afcdb3a81d7426118acb"
+   }
   },
-  "bodyparts3d": {
-    "version": "3.0 (20110915)",
-    "repository": "https://github.com/Kevin-Mattheus-Moerman/BodyParts3D",
-    "license": "CC-BY-SA 2.1 JP",
-    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.1/jp/",
-    "attribution": "BodyParts3D, (c) The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan",
-    "citation": "Mitsuhashi N, Fujieda K, Tamura T, Kawamoto S, Takagi T, Okubo K. BodyParts3D: 3D structure database for anatomical concepts. Nucleic Acids Res. 2009;37(Database issue):D782-5.",
-    "citationDoi": "10.1093/nar/gkn613",
-    "partsWithMesh": 934
-  },
-  "relationsPublished": {
-    "part_of": "forma parte de",
-    "has_part": "tiene como parte",
-    "innervated_by": "inervado por",
-    "innervates": "inerva",
-    "vessel_supplies_blood_to": "irriga",
-    "indirectly_supplies": "irriga indirectamente",
-    "vessel_drains_blood_from": "drena sangre de",
-    "tributary_of": "tributaria de",
-    "branching_part_of": "rama de",
-    "connecting_branch_of": "rama comunicante de",
-    "has_muscle_origin": "origen muscular en",
-    "has_muscle_insertion": "inserción muscular en",
-    "connected_to": "conectado con",
-    "attaches_to": "se fija a",
-    "adjacent_to": "adyacente a"
-  },
-  "regionRoots": {
-    "R01": [
-      "UBERON:0000033",
-      "UBERON:0000974"
-    ],
-    "R02": [
-      "UBERON:0001137",
-      "UBERON:0001130",
-      "UBERON:0002240"
-    ],
-    "R03": [
-      "UBERON:0000915",
-      "UBERON:0001443"
-    ],
-    "R04": [
-      "UBERON:0000916"
-    ],
-    "R05": [
-      "UBERON:0002355",
-      "UBERON:0001270",
-      "UBERON:0002356"
-    ],
-    "R06": [
-      "UBERON:0002102",
-      "UBERON:0001460"
-    ],
-    "R07": [
-      "UBERON:0002103",
-      "UBERON:0000978"
-    ]
-  }
+  "partsWithMesh": 45
+ }
 }

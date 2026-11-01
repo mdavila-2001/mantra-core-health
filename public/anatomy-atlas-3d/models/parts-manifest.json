@@ -1,5 +1,5 @@
 {
- "license": "BodyParts3D, (c) The Database Center for Life Science, CC-BY-SA 2.1 JP (https://creativecommons.org/licenses/by-sa/2.1/jp/). Mallas reducidas para Mantra Core Health.",
+ "license": "BodyParts3D, (c) The Database Center for Life Science, CC-BY-SA 2.1 JP (https://creativecommons.org/licenses/by-sa/2.1/jp/). Mallas reducidas para Mantra Core Health. Piezas VH_F_*: HuBMAP CCF 3D Reference Object Library (Browne K, Schlehlein H, Herr BW II, Quardokus E, Bueckle A, B\u00f6rner K. 2024), del Visible Human Project female (NLM), CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).",
  "layers": {
   "muscles": {
    "file": "muscles.glb",
@@ -11,11 +11,11 @@
   },
   "organs": {
    "file": "organs.glb",
-   "parts": 78
+   "parts": 115
   },
   "skeleton": {
    "file": "skeleton.glb",
-   "parts": 251
+   "parts": 259
   },
   "vessels": {
    "file": "vessels.glb",
@@ -301,7 +301,7 @@
   },
   "FMA21930": {
    "layer": "muscles",
-   "sex": "male",
+   "sex": "shared",
    "triangles": 240,
    "sourceTriangles": 3668
   },
@@ -1789,13 +1789,13 @@
   },
   "FMA45854": {
    "layer": "muscles",
-   "sex": "male",
+   "sex": "shared",
    "triangles": 414,
    "sourceTriangles": 23080
   },
   "FMA45855": {
    "layer": "muscles",
-   "sex": "male",
+   "sex": "shared",
    "triangles": 416,
    "sourceTriangles": 23362
   },
@@ -3979,19 +3979,19 @@
   },
   "FMA16202": {
    "layer": "skeleton",
-   "sex": "shared",
+   "sex": "male",
    "triangles": 576,
    "sourceTriangles": 44416
   },
   "FMA16586": {
    "layer": "skeleton",
-   "sex": "shared",
+   "sex": "male",
    "triangles": 268,
    "sourceTriangles": 9716
   },
   "FMA16587": {
    "layer": "skeleton",
-   "sex": "shared",
+   "sex": "male",
    "triangles": 264,
    "sourceTriangles": 9470
   },
@@ -5602,6 +5602,321 @@
    "sex": "shared",
    "triangles": 238,
    "sourceTriangles": 4084
+  },
+  "VH_F_coccyx": {
+   "layer": "skeleton",
+   "sex": "female",
+   "triangles": 456,
+   "sourceTriangles": 1390,
+   "source": "HRA pelvis-female v1.3"
+  },
+  "VH_F_ilium_compact_bone_L": {
+   "layer": "skeleton",
+   "sex": "female",
+   "triangles": 1380,
+   "sourceTriangles": 12684,
+   "source": "HRA pelvis-female v1.3"
+  },
+  "VH_F_ilium_compact_bone_R": {
+   "layer": "skeleton",
+   "sex": "female",
+   "triangles": 1330,
+   "sourceTriangles": 11810,
+   "source": "HRA pelvis-female v1.3"
+  },
+  "VH_F_ischium_compact_bone_L": {
+   "layer": "skeleton",
+   "sex": "female",
+   "triangles": 900,
+   "sourceTriangles": 5392,
+   "source": "HRA pelvis-female v1.3"
+  },
+  "VH_F_ischium_compact_bone_R": {
+   "layer": "skeleton",
+   "sex": "female",
+   "triangles": 900,
+   "sourceTriangles": 5390,
+   "source": "HRA pelvis-female v1.3"
+  },
+  "VH_F_pubis_compact_bone_L": {
+   "layer": "skeleton",
+   "sex": "female",
+   "triangles": 898,
+   "sourceTriangles": 5376,
+   "source": "HRA pelvis-female v1.3"
+  },
+  "VH_F_pubis_compact_bone_R": {
+   "layer": "skeleton",
+   "sex": "female",
+   "triangles": 874,
+   "sourceTriangles": 5080,
+   "source": "HRA pelvis-female v1.3"
+  },
+  "VH_F_sacrum": {
+   "layer": "skeleton",
+   "sex": "female",
+   "triangles": 1718,
+   "sourceTriangles": 19636,
+   "source": "HRA pelvis-female v1.3"
+  },
+  "VH_F_abdominal_ostium_of_uterine_tube": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 286,
+   "sourceTriangles": 546,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_anterior_wall_of_uterus": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1234,
+   "sourceTriangles": 10148,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_body_of_uterus": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 896,
+   "sourceTriangles": 5344,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_cervicovaginal_junction": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 752,
+   "sourceTriangles": 3766,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_cervix": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 726,
+   "sourceTriangles": 3508,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_cornua": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 314,
+   "sourceTriangles": 660,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_external_cervical_os": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 201,
+   "sourceTriangles": 270,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_fundus_of_uterus": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 677,
+   "sourceTriangles": 3062,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_internal_cervical_os": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 180,
+   "sourceTriangles": 216,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_lower_uterine_segment": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 458,
+   "sourceTriangles": 1408,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_posterior_wall_of_uterus": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1344,
+   "sourceTriangles": 12022,
+   "source": "HRA uterus-female v1.2"
+  },
+  "VH_F_ampulla_of_uterine_tube_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1310,
+   "sourceTriangles": 11424,
+   "source": "HRA fallopian-tube-female-left v1.2"
+  },
+  "VH_F_fibria_of_uterine_tube_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 655,
+   "sourceTriangles": 2871,
+   "source": "HRA fallopian-tube-female-left v1.2"
+  },
+  "VH_F_isthmus_of_fallopian_tube_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 529,
+   "sourceTriangles": 1870,
+   "source": "HRA fallopian-tube-female-left v1.2"
+  },
+  "VH_F_uterine_tube_infundibulum_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 563,
+   "sourceTriangles": 2116,
+   "source": "HRA fallopian-tube-female-left v1.2"
+  },
+  "VH_F_ampulla_of_uterine_tube_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1252,
+   "sourceTriangles": 10440,
+   "source": "HRA fallopian-tube-female-right v1.2"
+  },
+  "VH_F_fibria_of_uterine_tube_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 727,
+   "sourceTriangles": 3530,
+   "source": "HRA fallopian-tube-female-right v1.2"
+  },
+  "VH_F_isthmus_of_fallopian_tube_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 490,
+   "sourceTriangles": 1600,
+   "source": "HRA fallopian-tube-female-right v1.2"
+  },
+  "VH_F_uterine_tube_infundibulum_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 574,
+   "sourceTriangles": 2200,
+   "source": "HRA fallopian-tube-female-right v1.2"
+  },
+  "VH_F_left_ovary": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 252,
+   "sourceTriangles": 424,
+   "source": "HRA ovary-female-left v1.3"
+  },
+  "VH_F_right_ovary": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 248,
+   "sourceTriangles": 410,
+   "source": "HRA ovary-female-right v1.3"
+  },
+  "VH_F_areola_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1890,
+   "sourceTriangles": 23785,
+   "source": "HRA mammary-gland-female-left v1.1"
+  },
+  "VH_F_areolar_tubercles_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 831,
+   "sourceTriangles": 4621,
+   "source": "HRA mammary-gland-female-left v1.1"
+  },
+  "VH_F_fat_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 3160,
+   "sourceTriangles": 66420,
+   "source": "HRA mammary-gland-female-left v1.1"
+  },
+  "VH_F_main_lactiferous_ducts_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 2285,
+   "sourceTriangles": 34755,
+   "source": "HRA mammary-gland-female-left v1.1"
+  },
+  "VH_F_main_lactiferous_sinuses_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1312,
+   "sourceTriangles": 11456,
+   "source": "HRA mammary-gland-female-left v1.1"
+  },
+  "VH_F_mammary_lobes_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 3375,
+   "sourceTriangles": 75788,
+   "source": "HRA mammary-gland-female-left v1.1"
+  },
+  "VH_F_nipple_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1207,
+   "sourceTriangles": 9696,
+   "source": "HRA mammary-gland-female-left v1.1"
+  },
+  "VH_F_suspensory_ligaments_L": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 2580,
+   "sourceTriangles": 44278,
+   "source": "HRA mammary-gland-female-left v1.1"
+  },
+  "VH_F_areola_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1890,
+   "sourceTriangles": 23785,
+   "source": "HRA mammary-gland-female-right v1.1"
+  },
+  "VH_F_areolar_tubercles_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 832,
+   "sourceTriangles": 4621,
+   "source": "HRA mammary-gland-female-right v1.1"
+  },
+  "VH_F_fat_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 5999,
+   "sourceTriangles": 373649,
+   "source": "HRA mammary-gland-female-right v1.1"
+  },
+  "VH_F_main_lactiferous_ducts_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 2282,
+   "sourceTriangles": 34660,
+   "source": "HRA mammary-gland-female-right v1.1"
+  },
+  "VH_F_main_lactiferous_sinuses_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1311,
+   "sourceTriangles": 11449,
+   "source": "HRA mammary-gland-female-right v1.1"
+  },
+  "VH_F_mammary_lobes_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 3374,
+   "sourceTriangles": 75788,
+   "source": "HRA mammary-gland-female-right v1.1"
+  },
+  "VH_F_nipple_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 1207,
+   "sourceTriangles": 9696,
+   "source": "HRA mammary-gland-female-right v1.1"
+  },
+  "VH_F_suspensory_ligaments_R": {
+   "layer": "organs",
+   "sex": "female",
+   "triangles": 2788,
+   "sourceTriangles": 51682,
+   "source": "HRA mammary-gland-female-right v1.1"
   }
  }
 }

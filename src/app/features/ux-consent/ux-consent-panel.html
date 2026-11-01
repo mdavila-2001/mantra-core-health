@@ -1,0 +1,48 @@
+@if (consent.bloqueadaPorPrivacidad) {
+  <app-alert tone="info" data-testid="ux-consent-bloqueado">
+    Su navegador pide no ser rastreado («No rastrear» o Global Privacy Control), así que no medimos su uso del
+    portal. No hace falta que haga nada.
+  </app-alert>
+} @else if (consent.disponible()) {
+  <section class="ux-panel" data-testid="ux-consent-panel" aria-labelledby="ux-panel-titulo">
+    <div class="ux-panel__datos">
+      <h3 id="ux-panel-titulo" class="ux-panel__titulo">Medición de uso del portal</h3>
+      <p class="ux-panel__texto">
+        Medimos por dónde navega y dónde hace clic para mejorar las pantallas. No guardamos lo que usted
+        escribe ni datos de pacientes. Sin su permiso solo contamos pantallas visitadas, sin su identidad.
+      </p>
+      @if (consent.error(); as mensaje) {
+        <p class="ux-panel__error" data-testid="ux-consent-error" role="alert">{{ mensaje }}</p>
+      }
+    </div>
+    <app-badge
+      data-testid="ux-consent-status"
+      [variant]="consent.decision() === 'otorgada' ? 'success' : 'secondary'"
+      [value]="rotulo()"
+    />
+    @if (consent.decision() === 'otorgada') {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        data-testid="ux-consent-retirar"
+        [isLoading]="consent.ocupado()"
+        (click)="consent.retirar()"
+      >
+        Retirar permiso
+      </button>
+    } @else if (consent.decision() === 'ninguna' || consent.decision() === 'retirada') {
+      <button
+        app-button
+        size="sm"
+        type="button"
+        data-testid="ux-consent-otorgar"
+        [isLoading]="consent.ocupado()"
+        (click)="consent.otorgar()"
+      >
+        Permitir
+      </button>
+    }
+  </section>
+}

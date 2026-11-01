@@ -53,6 +53,8 @@ export function formatearValor(
       return `${formato(`p:${compacto}`, () =>
         new Intl.NumberFormat('es-BO', { maximumFractionDigits: 1, minimumFractionDigits: compacto ? 0 : 1 }),
       ).format(valor)} %`;
+    case 'duracion':
+      return formatearDuracion(valor);
     case 'razon':
       return `${formato('r', () => new Intl.NumberFormat('es-BO', { maximumFractionDigits: 2 })).format(valor)}${unidad.sufijo}`;
     case 'numero':
@@ -61,6 +63,21 @@ export function formatearValor(
       }
       return formato('n', () => new Intl.NumberFormat('es-BO', { maximumFractionDigits: 0 })).format(valor);
   }
+}
+
+/** Milisegundos legibles: «0,4 ms», «850 ms», «1,2 s», «2,5 min». Negativo no existe: un tiempo no baja de cero. */
+export function formatearDuracion(ms: number): string {
+  const nf = (max: number) => formato(`d:${max}`, () => new Intl.NumberFormat('es-BO', { maximumFractionDigits: max }));
+  if (ms < 1) {
+    return `${nf(2).format(ms)} ms`;
+  }
+  if (ms < 1000) {
+    return `${nf(ms < 10 ? 1 : 0).format(ms)} ms`;
+  }
+  if (ms < 60_000) {
+    return `${nf(1).format(ms / 1000)} s`;
+  }
+  return `${nf(1).format(ms / 60_000)} min`;
 }
 
 /** «+4,2 %» / «−1,0 %» con signo explícito; `null` → «Sin comparativo». */

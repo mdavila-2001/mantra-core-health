@@ -10,8 +10,11 @@ import {
 import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
 import { isTenantDenialReason, tenantDenialHint, tenantDenialText } from '../data-access/iam/tenant-denial';
 import { accessErrorText } from '../data-access/access-governance/access-errors';
-import { readApiError, readFieldViolations, type ApiErrorBody } from './api-error';
+import { safeReturnUrl } from '../auth/return-url';
+import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
+import { readApiError, type ApiErrorBody } from './api-error';
 import { explainFailure, explanationOf, isTimeout, type ErrorExplanation } from './error-explanation';
+import { issuesOf } from './validation-issues';
 
 /**
  * A dónde lleva la puerta cuando falta verificar la identidad.
@@ -32,6 +35,15 @@ import { explainFailure, explanationOf, isTimeout, type ErrorExplanation } from 
  * en `navigation.map.spec.ts` que lo impide.
  */
 export const IDENTITY_VERIFICATION_ROUTE = '/my-account/identity';
+
+/** `/auth/organization` con `returnUrl` a la pantalla actual (sólo en el navegador y sólo si es una ruta interna). */
+function tenantSelectionRoute(): string {
+  const place = (globalThis as { location?: { pathname: string; search: string } }).location;
+  const current = place === undefined ? null : safeReturnUrl(`${place.pathname}${place.search}`);
+  return current === null || current === '/' || current.startsWith('/auth/')
+    ? TENANT_SELECTION_ROUTE
+    : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(current)}`;
+}
 
 /**
  * Traduce un fallo de la API a uno de los 9 estados de UX del M34.
@@ -64,6 +76,17 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
   // Sólo el id que mandó la API: en S4 y S5 es opcional, así que no se inventa
   // un «sin-id» que nadie podría buscar.
   const requestId = body.correlationId;
+
+  // Falta fijar organización (403/412/422 con `details.reason`): no es un muro, es una puerta. Quien tiene alcance de
+  // plataforma no es redirigido por el interceptor; la pantalla lo dice (S5) y ofrece elegir, volviendo luego a ella.
+  const reason = body.details?.['reason'];
+  if (reason === 'TENANT_REQUIRED' || reason === 'TENANT_AMBIGUOUS') {
+    return forbidden({
+      message: 'Esta información pertenece a una organización. Elija cuál desea ver.',
+      nextAction: { label: 'Elegir organización', route: tenantSelectionRoute() },
+      ...(requestId === undefined ? {} : { requestId }),
+    });
+  }
 
   switch (body.code) {
     // --- S4 · validación o conflicto ---------------------------------------
@@ -179,91 +202,7 @@ function sentenceOf(explanation: ErrorExplanation): string {
   return `${explanation.cause} ${explanation.action}`;
 }
 
-/**
- * Convierte los detalles de validación en problemas por campo.
- *
- * El backend manda la lista en **`details.violations`** cuando el fallo viene del
- * `ValidationPipe` — lo arma `all-exceptions.filter.ts` con
- * `{ violations: obj.message }`. Si no está, el mensaje general es lo único que
- * hay.
- *
- * > **Corregido el 2026-08-04, verificado contra la API real.** Acá se leía
- * > `details.messages`, una clave que el backend no emite, así que **ningún
- * > mensaje por campo llegó nunca a la pantalla**: todos los 400 de validación
- * > se veían como el genérico «Error de validación», sin decir qué campo estaba
- * > mal. Se comprobó con
- * > `POST /iam/users/assisted-registration` sin `reason`, que responde
- * > `details.violations: ["reason must be a string", …]`.
- * >
- * > `messages` se sigue aceptando como reserva: no cuesta nada y cubre a
- * > cualquier endpoint que use esa forma.
- */
-function issuesOf(body: ApiErrorBody): readonly ViewStateIssue[] {
-  // Primero la forma estructurada (`details.fields`, desde el 2026-10-08): trae
-  // la ruta exacta del campo, incluidos los anidados, y no hay que adivinarla.
-  const fields = readFieldViolations(body);
-  if (fields.length > 0) {
-    return fields.flatMap(({ field, messages }) =>
-      (messages.length > 0 ? messages : [body.message]).map((message) => ({ field, message, code: body.code })),
-    );
-  }
 
-  const messages = body.details?.['violations'] ?? body.details?.['messages'];
-
-  if (Array.isArray(messages) && messages.length > 0) {
-    return messages
-      .filter((item): item is string => typeof item === 'string')
-      .map((message) => ({ ...fieldOf(message), message, code: body.code }));
-  }
-
-  // El `ValidationPipe` no fue: `details` puede traer el campo por su cuenta.
-  const field = typeof body.details?.['field'] === 'string' ? body.details['field'] : undefined;
-
-  return [
-    {
-      ...(field === undefined ? {} : { field }),
-      message: body.message,
-      code: body.code,
-    },
-  ];
-}
-
-/**
- * Deduce a qué campo se refiere un mensaje del `ValidationPipe`.
- *
- * `class-validator` compone sus mensajes empezando por el nombre de la
- * propiedad: `"nationalId must be longer than or equal to 4 characters"`,
- * `"email must be an email"`. Es una convención del backend, no un contrato, y
- * por eso el reconocimiento es **conservador**: solo se acepta si la primera
- * palabra es un identificador en `camelCase` y va seguida de otra.
- *
- * ## Por qué vale la pena aun siendo una heurística
- *
- * `ViewStateIssue` admite `field` y `ViewStateHost` lo pinta en negrita delante
- * del mensaje, pero **nada lo rellenaba**: los errores del servidor se mostraban
- * como una lista suelta arriba del formulario en vez de junto al campo que los
- * causó. Para quien usa lector de pantalla la diferencia es grande.
- *
- * Y el modo de fallo es benigno: si no reconoce el campo, el mensaje se muestra
- * igual, sin anclar — exactamente como antes. Nunca inventa un campo.
- */
-function fieldOf(message: string): { field?: string } {
-  const match = /^([a-z][A-Za-z0-9]*)\s+\S/.exec(message);
-  if (match === null) {
-    return {};
-  }
-
-  const candidato = match[1];
-
-  // Palabras corrientes que abren una frase en inglés y no son un campo. Sin
-  // esto, «each value must be…» anclaría al campo «each».
-  const PALABRAS_COMUNES = new Set([
-    'each', 'all', 'the', 'this', 'that', 'value', 'property', 'nested',
-    'must', 'should', 'cannot', 'unexpected', 'invalid',
-  ]);
-
-  return PALABRAS_COMUNES.has(candidato.toLowerCase()) ? {} : { field: candidato };
-}
 
 /** El identificador que conecta el reporte de la persona con los registros. */
 function correlationOf(error: HttpErrorResponse, body: ApiErrorBody | null): string {

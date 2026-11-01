@@ -15,6 +15,7 @@
   claim="Sume su farmacia a la red"
   tagline="Publique su catálogo, reciba pedidos con receta y atienda desde un solo lugar."
   contentWidth="full"
+  [scene]="registered() ? 'stage' : 'calm'"
   [plainSurface]="!registered()"
   [scene]="registered() ? 'stage' : 'split'"
 >
@@ -66,6 +67,7 @@
         }
 
         <div class="registro__body">
+          <app-account-exists-dialog />
           <app-paginated-form
             data-testid="registro-form-farmacia"
             [paginas]="paginas()"
@@ -204,6 +206,7 @@
                         placeholder="https://maps.google.com/…"
                         [value]="sucursal.urlUbicacion"
                         (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
+                        (blurred)="ubicarSucursalPorEnlace(sucursal.id)"
                       />
                     </app-form-field>
                   </section>

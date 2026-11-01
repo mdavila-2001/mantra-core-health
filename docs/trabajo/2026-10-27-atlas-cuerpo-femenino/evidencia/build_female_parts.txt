@@ -1,0 +1,5 @@
+pelvis: escala 0.8038, giro 3.64°, error medio 3.91 mm
+tórax: traslación [0.0019, 0.8909, 0.1533] (pelvis: [0.0075, 0.8057, 0.1437])
+skeleton.glb: 251 de referencia + 8 femeninas
+organs.glb: 78 de referencia + 37 femeninas
+45 piezas femeninas, 58447 triángulos

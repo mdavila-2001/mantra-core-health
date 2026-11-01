@@ -15,7 +15,7 @@ export const INVENTORY_STOCK_MAX = 1_000_000;
 export const INVENTORY_DEFAULT_MINIMUM = 5;
 
 /** Los encabezados que se entienden, ya normalizados (`Stock mínimo` → `stock_minimo`). */
-const HEADERS = {
+export const HEADERS = {
   code: ['codigo', 'sku', 'code', 'codigo_interno'],
   stock: ['existencias', 'stock', 'cantidad', 'unidades'],
   minimum: ['umbral', 'minimo', 'stock_minimo', 'umbral_de_alerta', 'alerta'],
@@ -185,7 +185,7 @@ function isSameAsCurrent(line: PharmacyInventoryLine, product: PharmacyProduct):
 }
 
 /** Un entero de 0 a {@link INVENTORY_STOCK_MAX}; `null` si la celda está vacía. */
-function wholeNumber(text: string): number | null | 'invalid' {
+export function wholeNumber(text: string): number | null | 'invalid' {
   if (text === '') {
     return null;
   }
@@ -197,7 +197,7 @@ function wholeNumber(text: string): number | null | 'invalid' {
 }
 
 /** Hay / no hay en cualquiera de sus grafías; `null` si la celda está vacía. */
-function availability(text: string): boolean | null | 'invalid' {
+export function availability(text: string): boolean | null | 'invalid' {
   const clean = withoutAccents(text.trim());
   if (clean === '') {
     return null;

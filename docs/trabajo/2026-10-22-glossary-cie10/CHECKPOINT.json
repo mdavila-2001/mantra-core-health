@@ -1,0 +1,15 @@
+{
+  "input": "../../../../../../private/tmp/claude-501/-Users-josejeremias-Desktop-Mantra-Core-Technologies-Mantra-Core-Health/9934874b-8898-4085-9ca8-5a8680dc2a56/scratchpad/cie10-https-b.ndjson",
+  "sourceSha256": "f77ddcb7767bcaa53e4f120a34349cb31e6fc210841e63c04c03addd7ad7069b",
+  "source": "docs/trabajo/2026-10-22-glossary-cie10/CIE10-POLICY.json",
+  "license": "según política por fuente",
+  "accepted": 5831,
+  "skippedNoSections": 631,
+  "omittedUnversionedSections": 0,
+  "existing": 5831,
+  "newArticles": 0,
+  "imagesHiddenPendingReview": 562,
+  "buckets": 256,
+  "outputSha256": "cb7f1be772e5f6617827c804789a4bcc64209d97df9812178fe2a1725c089847",
+  "dryRun": false
+}

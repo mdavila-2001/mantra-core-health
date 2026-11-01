@@ -36,9 +36,15 @@
             <img
               class="directories__photo"
               [src]="fotoDe(nodo.path)"
+              [attr.srcset]="srcsetDe(nodo.path)"
+              [attr.sizes]="
+                first
+                  ? '(min-width: 64rem) 45vw, 100vw'
+                  : '(min-width: 64rem) 25vw, (min-width: 40rem) 50vw, 100vw'
+              "
               alt=""
-              width="640"
-              height="360"
+              width="1600"
+              height="900"
               [attr.loading]="first ? 'eager' : 'lazy'"
             />
             <div class="directories__body">

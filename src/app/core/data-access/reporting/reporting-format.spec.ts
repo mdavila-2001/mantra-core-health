@@ -69,3 +69,17 @@ describe('formatDate', () => {
     }
   });
 });
+
+describe('formatearValor · duración', () => {
+  it('lee los milisegundos como una persona: ms, s o min', () => {
+    const d = { tipo: 'duracion' } as const;
+    expect(formatearValor(0.4, d)).toBe('0,4 ms');
+    expect(formatearValor(850, d)).toBe('850 ms');
+    expect(formatearValor(1234, d)).toBe('1,2 s');
+    expect(formatearValor(150_000, d)).toBe('2,5 min');
+  });
+
+  it('null no es cero: sin dato dice «Sin dato»', () => {
+    expect(formatearValor(null, { tipo: 'duracion' })).toBe(NO_DATA);
+  });
+});

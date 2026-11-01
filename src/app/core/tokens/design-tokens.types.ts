@@ -161,6 +161,17 @@ export const CHART = {
   seq3: '--chart-seq-3',
   seq4: '--chart-seq-4',
   seq5: '--chart-seq-5',
+  /** Ordinal de 4 pasos (alias de `--chart-seq-2..5`): etapas de embudo, cubos de latencia, niveles. */
+  ord1: '--chart-ord-1',
+  ord2: '--chart-ord-2',
+  ord3: '--chart-ord-3',
+  ord4: '--chart-ord-4',
+  /** Divergente de cinco puntos: polo frío, paso suave, neutro, paso suave, polo cálido. */
+  divNeg: '--chart-div-neg',
+  divNegSoft: '--chart-div-neg-soft',
+  divMid: '--chart-div-mid',
+  divPosSoft: '--chart-div-pos-soft',
+  divPos: '--chart-div-pos',
 } as const;
 export type ChartToken = (typeof CHART)[keyof typeof CHART];
 

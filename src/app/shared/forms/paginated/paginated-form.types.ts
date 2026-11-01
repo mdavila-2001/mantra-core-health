@@ -199,6 +199,14 @@ export interface CampoDeFormulario {
   readonly soloAlfanumerico?: boolean;
 
   /**
+   * Sólo para `text`: se llama con el valor del campo cada vez que la persona
+   * **sale** de él (`blur`). Sirve para verificaciones que no caben en un
+   * validador síncrono —por ejemplo, preguntarle a la API si el documento ya
+   * tiene cuenta—. El motor no espera el resultado ni lo interpreta.
+   */
+  readonly alSalir?: (valor: string) => void;
+
+  /**
    * El glifo que va **dentro** del campo, del set cerrado del nav.
    *
    * Opcional y sin defecto: un ícono por campo, puesto por costumbre, es ruido
@@ -285,7 +293,7 @@ export interface CampoDeFormulario {
    *
    * Ese reemplazo es sólo de los controles que caen en el `@default`, el
    * `textarea` y el `select`. En `tel`, `date` y `datetime` el placeholder es
-   * **el formato del dato** —«7001 2345», «DD/MM/AAAA»— y se conserva: es lo
+   * **el formato del dato** —«70012345», «DD/MM/AAAA»— y se conserva: es lo
    * que dice cómo escribirlo, que no es lo mismo que explicar para qué se pide.
    */
   readonly description?: string;

@@ -1,0 +1,986 @@
+{
+  "auditor": "literature-audit-r2-3",
+  "items": [
+    {
+      "id": "FMA:38563",
+      "sentence": 1,
+      "es": "En 54 miembros superiores disecados, el nervio mediano pasó entre las dos cabezas del pronador redondo en el 92,60 % y por debajo de la cabeza cubital en el 7,40 %.",
+      "cites": [
+        "PMID:35199666"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Out of 54 prosected specimens... 4 (7.40%) below the ulnar head... 50 (92.60%) between two heads'; reordenada. Muestra nepalí no mencionada, pero la cifra está acotada a 54 miembros."
+    },
+    {
+      "id": "FMA:38563",
+      "sentence": 2,
+      "es": "En 112 antebrazos de cadáver, la anchura media de la cabeza cubital fue de 16,3 ± 8,2 mm.",
+      "cites": [
+        "PMID:27843079"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'We dissected 112 forearms... The average ulnar head width was 16.3±8.2mm'; traducción literal con el marco muestral."
+    },
+    {
+      "id": "FMA:38563",
+      "sentence": 3,
+      "es": "Su morfología variaba: predominó la forma fibromuscular (53,6 %), seguida de la muscular (20,5 %) y de la banda fibrosa simple (16,1 %); en el 8 % no existía.",
+      "cites": [
+        "PMID:27843079"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Tipos 1-4: fibromuscular 53,6 %, muscular 20,5 %, 'just a fibrotic band' 16,1 %, ausente 8 %; omite el tipo 5 (dos arcos, 1,8 %), omisión aceptable."
+    },
+    {
+      "id": "FMA:38563",
+      "sentence": 4,
+      "es": "El nervio mediano pasaba por delante de ella a 50,4 ± 10,7 mm de la línea interepicondílea.",
+      "cites": [
+        "PMID:27843079"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The median nerve passed anterior to the ulnar head at a distance of 50.4±10.7mm from the interepicondylar line'; literal."
+    },
+    {
+      "id": "FMA:38563",
+      "sentence": 5,
+      "es": "De los compartimentos estudiados en 10 miembros, tuvo la menor área de sección fisiológica (0,67 ± 0,06 cm²) y la mayor relación entre longitud de fibra y de músculo (0,72 ± 0,05).",
+      "cites": [
+        "PMID:24836406"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'ulnar head of pronator teres had the smallest (0.67 ± 0.06 cm2)... the highest one (0.72 ± 0.05)'; 10 miembros para arquitectura: correcto."
+    },
+    {
+      "id": "FMA:38563",
+      "sentence": 6,
+      "es": "Aunque el síndrome del pronador es raro, se le atribuye a esta cabeza la mayoría de los atrapamientos del nervio mediano en esa enfermedad.",
+      "cites": [
+        "PMID:27843079"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Although the pronator syndrome is a rare compression syndrome, the ulnar head... is reported as the major cause of entrapment in the majority of the cases'; sigue la oración traducida."
+    },
+    {
+      "id": "FMA:55682",
+      "sentence": 1,
+      "es": "Con electrodos adheridos a la cara labial del diente, la estimulación de la pulpa en 15 participantes produjo sobre todo sensación aguda o dolorosa e inhibición refleja de los músculos de cierre mandibular, respuestas que faltaron en los tres dientes no vitales probados.",
+      "cites": [
+        "PMID:23640774"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Encadena en orden: carilla en 'labial surface', 'In 15 participants... sharp or painful sensations and reflex inhibitions', '3 non-vital teeth evoked no sensations or reflexes'."
+    },
+    {
+      "id": "FMA:55682",
+      "sentence": 2,
+      "es": "Rampas de fuerza de 1 N aplicadas a este diente en 19 sujetos evocaron en el masetero del mismo lado una inhibición refleja de corta latencia (unos 12 ms), que los autores atribuyen a los mecanorreceptores del ligamento periodontal.",
+      "cites": [
+        "PMID:8883855"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "19 sujetos, rampas de 1 N, masetero ipsilateral, 'short-latency (approximately 12 ms), inhibitory reflex', atribuido a mecanorreceptores del ligamento periodontal. Omite la condición 'rise time ≤20 ms' (menor)."
+    },
+    {
+      "id": "FMA:55682",
+      "sentence": 3,
+      "es": "En 315 pacientes con espondilosis cervical, la posición del punto anteroinferior del incisivo central superior se asoció de forma independiente con la laringoscopia difícil.",
+      "cites": [
+        "PMID:29388207"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "315 pacientes; 'anterior-inferior point of the upper central incisor tooth' entre los tres factores independientes (regresión multivariante)."
+    },
+    {
+      "id": "FMA:55682",
+      "sentence": 4,
+      "es": "En una serie de 73 niños con fisura alveolar tratados con gingivoperiostioplastia e injerto de cresta ilíaca en dentición temporal, mejoró de forma significativa la rotación axial de los incisivos centrales.",
+      "cites": [
+        "PMID:26004807"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "73 pacientes con fisura alveolar, edad media 5,5 años, dentición temporal; 'Axial rotation was significantly improved post-operatively (p = 0.004)', medida en incisivos centrales."
+    },
+    {
+      "id": "UBERON:0000002",
+      "sentence": 1,
+      "es": "Entre el 10 y el 20 % de las lesiones premalignas y malignas cervicales son adenocarcinomas, cuyo crecimiento hacia el endocérvix complica el diagnóstico.",
+      "cites": [
+        "PMID:22921356"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'accounts for 10 to 20% of the premalignant and malignant lesions'; el resumen habla de 'endocervical situation/development' (localización endocervical), no de 'crecimiento hacia el endocérvix': matiz alterado."
+    },
+    {
+      "id": "UBERON:0000002",
+      "sentence": 2,
+      "es": "En 1526 pacientes con carcinoma escamoso en estadio IB tratadas con radioterapia, el control tumoral y la supervivencia se correlacionaron fuertemente con el diámetro del tumor.",
+      "cites": [
+        "PMID:8175451"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'1526 patients... FIGO Stage IB squamous cell carcinoma'; 'CTC, PTC, and DSS rates correlated strongly with tumor diameter'; literal. 'supervivencia' por DSS (específica de enfermedad) es leve simplificación."
+    },
+    {
+      "id": "UBERON:0000002",
+      "sentence": 3,
+      "es": "En 53 adenocarcinomas mucinosos cervicales, los de tipo gástrico tuvieron una supervivencia específica a 5 años del 30 % frente al 77 % de los demás.",
+      "cites": [
+        "PMID:17460448"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Patients with gastric-type adenocarcinomas had a significantly decreased 5-year disease-specific survival rate (30 vs. 77%)'; casi literal."
+    },
+    {
+      "id": "UBERON:0000002",
+      "sentence": 4,
+      "es": "Sólo 8 de 1804 cánceres cervicales de una serie fueron sarcomas, en línea con su rareza (menos del 1 % de los tumores malignos del cuello); todas esas pacientes consultaron por sangrado y flujo vaginal.",
+      "cites": [
+        "PMID:22740005"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Of 1804 patients with cervical malignancies, 8 cervical sarcomas'; '<1% of all cervical malignancies'; 'All patients presented with vaginal bleeding and discharge'."
+    },
+    {
+      "id": "UBERON:0000002",
+      "sentence": 5,
+      "es": "El VPH 31, clonado a partir de una mujer con displasia cervical y emparentado con el VPH 16, faltó en los condilomas genitales pero apareció en alrededor de un 20 % de las displasias leves y moderadas y en un 6 % de los cánceres invasores.",
+      "cites": [
+        "PMID:3005652"
+      ],
+      "verdict": "parcial",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Cifras correctas ('absent from all genital condylomas studied... approximately 20% of the mild and moderate dysplasias and in 6% of the invasive cervical cancers'), última cláusula literal; pero pierde el alcance muestral (121 lesiones de EE. UU. y Sudamérica) y los porcentajes se leen como prevalencia general."
+    },
+    {
+      "id": "UBERON:0001106",
+      "sentence": 1,
+      "es": "Explorada con luz infrarroja en 438 personas (722 manos), la vena cefálica mostró cuatro sitios de formación distintos respecto de la tabaquera anatómica, pero en el 98 % de las manos la atravesaba.",
+      "cites": [
+        "PMID:32394420"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "438 sujetos, 722 manos, iluminación infrarroja; 'Four sites for the formation'; 'running in 98% of the examined hands in the anatomical snuffbox'. Omite población jordana (menor)."
+    },
+    {
+      "id": "UBERON:0001106",
+      "sentence": 2,
+      "es": "En 100 cadáveres faltaba en el 5 % de los lados; cuando estaba presente, en cuatro de cada cinco casos emergía superficial en la parte lateral del triángulo deltopectoral.",
+      "cites": [
+        "PMID:18335417"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'absent' 5 %; 'In 80% (152) of cases the cephalic vein was found emerging superficially in the lateral portion of the deltopectoral triangle' (152/190 = 80 %); casi literal."
+    },
+    {
+      "id": "UBERON:0001106",
+      "sentence": 3,
+      "es": "En esa serie recorría entre 3,5 y 8,2 cm dentro del triángulo (media 4,8 cm) y en casi dos tercios de los casos (65,2 %) iba junto a la rama deltoidea del tronco toracoacromial.",
+      "cites": [
+        "PMID:18335417"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'ranged from 3.5 cm to 8.2 cm with a mean of 4.8'; 'In 65.2% (124)... traveled with the deltoid branch of the thoracoacromial trunk'."
+    },
+    {
+      "id": "UBERON:0001106",
+      "sentence": 4,
+      "es": "Excepcionalmente, en 4 especímenes, pasaba por delante y por encima de la clavícula para terminar en la vena subclavia.",
+      "cites": [
+        "PMID:18335417"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'in 4 (0.2%) of the specimens the cephalic vein... ascended anterior and superior to the clavicle to drain into the subclavian vein'; traducción casi literal."
+    },
+    {
+      "id": "UBERON:0001106",
+      "sentence": 5,
+      "es": "Como vía de entrada y salida de flujo en colgajos y reimplantes, se la considera la más versátil de las grandes venas superficiales del miembro superior en microcirugía.",
+      "cites": [
+        "PMID:8271926"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'source for both afferent and efferent flow for flap transfers as well as in limb replantations'; 'the most versatile of the large superficial veins of the upper extremity'; 'se la considera' respeta que es opinión."
+    },
+    {
+      "id": "UBERON:0001106",
+      "sentence": 6,
+      "es": "En una revisión institucional de 71 transposiciones de la vena cefálica en el brazo para fístula arteriovenosa, la permeabilidad a 5 años fue del 40 % primaria y del 46 % secundaria, sin diferencia significativa con la transposición basílica.",
+      "cites": [
+        "PMID:17543490"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'71 CVT'; '40% and 46% at 5 years for CVT... (P = NS)' frente a BVT."
+    },
+    {
+      "id": "UBERON:0001371",
+      "sentence": 1,
+      "es": "Las lesiones de su tendón pueden afectar, aislada o conjuntamente, a cualquiera de sus dos bandas, la anterior y la posterior.",
+      "cites": [
+        "PMID:28039889"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": false,
+      "note": "'abnormalities may affect the anterior or posterior band in isolation or simultaneously'; literal. El contenido es patológico (clínico), no 'parts'."
+    },
+    {
+      "id": "UBERON:0001371",
+      "sentence": 2,
+      "es": "En la fase inicial del ciclo de la marcha, la estabilización de la cadera correría a cargo del glúteo medio, cuyas tres partes actúan de forma fásica, según un análisis funcional.",
+      "cites": [
+        "PMID:2621137"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Gluteus medius with its three parts and phasic functions is responsible for the stabilisation of the hip joint in the initial phase of the gait cycle'; traducida con condicional."
+    },
+    {
+      "id": "UBERON:0001371",
+      "sentence": 3,
+      "es": "Ese trabajo le atribuye también un papel en el inicio de la rotación pélvica durante la marcha.",
+      "cites": [
+        "PMID:2621137"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'It is important also in initiating the major gait determinant of pelvic rotation'; literal."
+    },
+    {
+      "id": "UBERON:0001371",
+      "sentence": 4,
+      "es": "Los trastornos de su tendón son la causa más habitual del síndrome doloroso del trocánter mayor.",
+      "cites": [
+        "PMID:28039889"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Greater trochanteric pain syndrome... most often results from disorders of the gluteus medius tendon'; invertida."
+    },
+    {
+      "id": "UBERON:0001371",
+      "sentence": 5,
+      "es": "De 250 resonancias de cadera solicitadas por dolor glúteo, lateral o inguinal, 35 mostraron como hallazgo principal tendinosis o roturas de los glúteos medio y menor.",
+      "cites": [
+        "PMID:10511191"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Two hundred fifty MR imaging examinations... buttock, lateral hip, or groin pain' + 'Thirty-five studies... tendinosis or tears... as the primary positive finding'; oración por oración."
+    },
+    {
+      "id": "UBERON:0001371",
+      "sentence": 6,
+      "es": "En un estudio en cadáveres (9 caderas por grupo), el fresado abierto para un clavo cefalomedular de fractura de cadera dañó de media el 15 % de la inserción tendinosa, frente al 3 % con un clavo de reconstrucción.",
+      "cites": [
+        "PMID:32584219"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "9 caderas por grupo (10 cadáveres, 1 excluido); 'average amount of tendon damaged was 3%... hip fracture nail group... 15%'. El resumen equipara hip fracture nail con cephalomedullary nail."
+    },
+    {
+      "id": "UBERON:0001904",
+      "sentence": 1,
+      "es": "Del tamaño de un guisante en el ser humano, la habénula debe su nombre al latín habena, «riendita», por su forma alargada.",
+      "cites": [
+        "PMID:27728786"
+      ],
+      "verdict": "parcial",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'the size of a pea in humans'; 'derived from the Latin word habena, meaning \"little rein\"... elongated shape'; literal. Error terminológico heredado: habena es 'rienda'; 'riendita' es habenula (diminutivo)."
+    },
+    {
+      "id": "UBERON:0001904",
+      "sentence": 2,
+      "es": "Por su vecindad con la glándula pineal, al principio se pensó que su función era regularla.",
+      "cites": [
+        "PMID:27728786"
+      ],
+      "verdict": "parcial",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Originally its function was thought to be related to the regulation of the nearby pineal gland'; añade causalidad ('Por su vecindad') que el resumen no afirma y endurece 'related to the regulation' a 'regularla'."
+    },
+    {
+      "id": "UBERON:0001904",
+      "sentence": 3,
+      "es": "Desde estructuras límbicas del prosencéfalo y de los ganglios basales llegan aferencias a la habénula lateral, que a su vez alcanza prácticamente todos los sistemas neuromoduladores mesencefálicos: dopaminérgico, serotoninérgico y noradrenérgico.",
+      "cites": [
+        "PMID:32269316"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'receives inputs from diverse limbic forebrain and basal ganglia structures, and targets essentially all midbrain neuromodulatory systems, including the noradrenergic, serotonergic and dopaminergic'; literal (los dos puntos convierten 'including' en lista, leve)."
+    },
+    {
+      "id": "UBERON:0001904",
+      "sentence": 4,
+      "es": "Datos recientes la presentan como un centro de enlace que coordina regiones encargadas de la motivación, la cognición y las decisiones.",
+      "cites": [
+        "PMID:27728786",
+        "PMID:20559337"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'critical neuroanatomical hub that connects and regulates brain regions important for divergent motivational states and cognition'; 'decision-making' (ambos resúmenes)."
+    },
+    {
+      "id": "UBERON:0001904",
+      "sentence": 5,
+      "es": "Estudios en roedores, primates no humanos y humanos vinculan la actividad aberrante de la habénula lateral con rasgos depresivos como la indefensión y la anhedonia.",
+      "cites": [
+        "PMID:29175713"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Increasing evidence from rodent, non-human primate and human studies indicates that the aberrant activity of the LHb is associated with depressive symptoms such as helplessness, anhedonia'; literal."
+    },
+    {
+      "id": "UBERON:0001904",
+      "sentence": 6,
+      "es": "En 80 pacientes con trastorno obsesivo-compulsivo frente a 85 controles, la resonancia mostró una habénula de menor volumen y una mayor conectividad funcional entre la habénula derecha y el hipocampo izquierdo.",
+      "cites": [
+        "PMID:38515276"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Eighty patients with OCD and 85 healthy controls'; 'smaller Hb volume and increased FC of right Hb-left hippocampus'; oración por oración."
+    },
+    {
+      "id": "UBERON:0002084",
+      "sentence": 1,
+      "es": "En las autopsias de 507 pacientes con cor pulmonale crónico se encontró hipertrofia del ventrículo izquierdo en el 62,6 %.",
+      "cites": [
+        "PMID:2963438"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'507 patients with chronic pulmonary heart disease... In 62.6% of them left ventricular hypertrophy was found'; literal."
+    },
+    {
+      "id": "UBERON:0002084",
+      "sentence": 2,
+      "es": "Por ecografía transvaginal se detectó un ventrículo izquierdo pequeño con tracto de salida normal en 16 fetos de 14 a 16 semanas, con alta frecuencia de anomalías asociadas como la coartación aórtica.",
+      "cites": [
+        "PMID:9110369"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'A small left heart ventricle with a normal outflow tract was detected by transvaginal ultrasound in 16 fetuses at 14-16 weeks'... 'high incidence of associated anomalies, namely coarctation of the aorta'; literal."
+    },
+    {
+      "id": "UBERON:0002084",
+      "sentence": 3,
+      "es": "Para calcular volúmenes ventriculares en la ventriculografía izquierda se ha propuesto un factor de corrección obtenido al filmar una esfera metálica de diámetro conocido.",
+      "cites": [
+        "PMID:2952086"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'after RAO left ventriculography... a metalic sphere, whose diameter is well known, is filmed' para obtener el factor de calibración."
+    },
+    {
+      "id": "UBERON:0002307",
+      "sentence": 1,
+      "es": "En un estudio morfométrico de personas de 22 a 89 años, las células epiteliales de las vellosidades coroideas alcanzaban su mayor altura y área citoplasmática en el plexo del ventrículo lateral, en comparación con los del tercero y el cuarto.",
+      "cites": [
+        "PMID:17201317"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'humans aged 22 to 89'; 'Epitheliocyte height, cytoplasmic and cell profile area were maximal in the choroid plexus of lateral ventricle' frente a III y IV."
+    },
+    {
+      "id": "UBERON:0002307",
+      "sentence": 2,
+      "es": "En ese mismo estudio, el tamaño de esas células epiteliales y de sus núcleos disminuía con la edad.",
+      "cites": [
+        "PMID:17201317"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'In the process of aging, the dimensions of epitheliocytes and their nuclei were found to decrease'; literal."
+    },
+    {
+      "id": "UBERON:0002307",
+      "sentence": 3,
+      "es": "Lo habitual es que un xantogranuloma del plexo coroideo no dé síntomas.",
+      "cites": [
+        "PMID:3267294"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Xanthogranulomas of the choroid plexus are usually asymptomatic'; literal."
+    },
+    {
+      "id": "UBERON:0002307",
+      "sentence": 4,
+      "es": "En un caso de metástasis de carcinoma renal en el plexo coroideo del ventrículo lateral, la angiografía mostró que el tumor recibía sangre de la arteria coroidea posterior izquierda.",
+      "cites": [
+        "PMID:1570073"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Left vertebral angiogram showed a tumor stain fed by the left posterior choroidal artery'; caso de carcinoma renal en el plexo del ventrículo lateral."
+    },
+    {
+      "id": "UBERON:0002307",
+      "sentence": 5,
+      "es": "El teratoma neonatal originado en el plexo coroideo del ventrículo lateral es una entidad extremadamente rara que puede presentarse con hidrocefalia congénita.",
+      "cites": [
+        "PMID:20422330"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "El resumen dice que 'neonatal intracranial teratoma of the lateral ventricle is an extremely rare entity' (sin precisar origen en el plexo); la hidrocefalia congénita es del caso único. Leve desplazamiento de alcance."
+    },
+    {
+      "id": "UBERON:0002307",
+      "sentence": 6,
+      "es": "En 142 embarazos evaluados con ecografía tridimensional entre las semanas 11 y 13, el cociente entre el volumen del plexo coroideo y el del ventrículo lateral fue menor en la trisomía 21 (0,317) y en la 18 (0,270) que en los fetos euploides (0,458).",
+      "cites": [
+        "PMID:42770039"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "142 embarazos, 3D, 11-13+6 semanas; 'CLVVR was significantly lower in trisomy 21 (0.317) and trisomy 18 (0.270) than in euploid fetuses (0.458)'; literal."
+    },
+    {
+      "id": "UBERON:0002688",
+      "sentence": 1,
+      "es": "Una resonancia funcional en 85 participantes sanos distinguió en la circunvolución supramarginal izquierda cuatro subregiones con funciones diferentes en el procesamiento de palabras, dos ventrales y dos dorsales.",
+      "cites": [
+        "PMID:27600852"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'fMRI in 85 healthy participants'; 'Four Functionally Distinct Regions in the Left Supramarginal Gyrus Support Word Processing'; dos ventrales y dos dorsales."
+    },
+    {
+      "id": "UBERON:0002688",
+      "sentence": 2,
+      "es": "En esa serie, la memoria auditiva a corto plazo se localizó en la parte ventral posterior y la secuenciación articulatoria en la ventral anterior.",
+      "cites": [
+        "PMID:27600852"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'In ventral SMG... anterior subregion associated with articulatory sequencing... posterior subregion associated with auditory short-term memory'."
+    },
+    {
+      "id": "UBERON:0002688",
+      "sentence": 3,
+      "es": "En voluntarios sanos, la estimulación magnética repetitiva de la supramarginal izquierda enlenteció solo los juicios sobre dónde apoyar pulgar e índice al usar un objeto, no los referidos a sus atributos.",
+      "cites": [
+        "PMID:29094500"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'rTMS over SMG slowed down judgements of finger positions but not judgements of object attributes'; literal."
+    },
+    {
+      "id": "UBERON:0002688",
+      "sentence": 4,
+      "es": "En diez sujetos sanos, pulsos únicos de estimulación magnética sobre esta circunvolución demoraron la preparación de agarres orientados a un objetivo, sin alterar luego la ejecución del movimiento.",
+      "cites": [
+        "PMID:19118175"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'10 healthy subjects'; single-pulse TMS a SMG 'caused a significant delay in planning goal-oriented actions'; 'movement execution was not affected'."
+    },
+    {
+      "id": "UBERON:0002688",
+      "sentence": 5,
+      "es": "En un estudio de resonancia funcional con 12 voluntarios sanos, la propiocepción de la muñeca activó la circunvolución supramarginal con predominio del hemisferio derecho.",
+      "cites": [
+        "PMID:26696951"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Twelve healthy'; propiocepción de muñeca activó 'supramarginal gyrus'; 'Right hemispheric dominance was observed in the SMG'."
+    },
+    {
+      "id": "UBERON:0002688",
+      "sentence": 6,
+      "es": "En 28 mujeres mayores de 75 años estudiadas tras la autopsia, la pérdida neuronal en la circunvolución supramarginal se relacionó con la densidad de ovillos neurofibrilares y predominó en las capas II y III.",
+      "cites": [
+        "PMID:9560018"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'28 women of over 75 years'; 'Neuronal loss appeared to be linked with the density of the NFT'; 'predominated in layers II and III (upper part)'."
+    },
+    {
+      "id": "UBERON:0006651",
+      "sentence": 1,
+      "es": "En el varón, el apéndice testicular persiste como resto fisiológico del conducto de Müller o paramesonéfrico.",
+      "cites": [
+        "PMID:23291863"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The physiological remnant of the Mullerian duct in males is the appendix testis'; literal."
+    },
+    {
+      "id": "UBERON:0006651",
+      "sentence": 2,
+      "es": "Aunque el apéndice testicular expresa el receptor tipo 2 de la hormona antimülleriana, esa expresión no varía con la edad ni con los trastornos urológicos analizados, de modo que su función sigue siendo oscura.",
+      "cites": [
+        "PMID:23291863"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'AMHR2 is expressed in the ATs'; 'correlated with neither the examined urological disorders nor the age... therefore, the function of the AT remains obscure'; literal ('no varía' por 'no se correlacionó', leve)."
+    },
+    {
+      "id": "UBERON:0006651",
+      "sentence": 3,
+      "es": "La ecografía de 51 pacientes consecutivos mostró el apéndice testicular en ocho de cada diez testículos explorados (80 %).",
+      "cites": [
+        "PMID:8641095"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'fifty-one consecutive patients'; 'The appendix testis was identified on 80% of testes examined by ultrasound'; literal."
+    },
+    {
+      "id": "UBERON:0006651",
+      "sentence": 4,
+      "es": "Entre 89 niños operados por 96 testículos no descendidos, el apéndice testicular apareció en el 57,1 % de los testículos próximos al anillo inguinal interno y en el 78,7 % de los próximos al externo, una diferencia significativa.",
+      "cites": [
+        "PMID:29850503"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "89 niños, 96 testículos; '57.1% (28 in 49)' cerca del anillo interno vs '78.7% (37 in 47)' del externo; 'p < 0.05'."
+    },
+    {
+      "id": "UBERON:0006651",
+      "sentence": 5,
+      "es": "Frente a los de hernia inguinal o hidrocele comunicante, los apéndices testiculares de niños con hidrocele no comunicante (11 de 26) perdían a menudo los receptores de andrógenos y estrógenos y mostraban el epitelio destruido.",
+      "cites": [
+        "PMID:19784005"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Grupo C n = 11 de 26; AR 2/11, ER 4/11, destrucción epitelial 8/11 frente a grupos A y B intactos."
+    },
+    {
+      "id": "UBERON:0007150",
+      "sentence": 1,
+      "es": "La glándula tiroides, la porción alta de la laringe y la región del cuello reciben de la arteria tiroidea superior su principal irrigación.",
+      "cites": [
+        "PMID:18754071"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The STA is the dominant arterial supply of the thyroid gland, upper larynx and the neck region'; literal."
+    },
+    {
+      "id": "UBERON:0007150",
+      "sentence": 2,
+      "es": "En una serie de 100 carótidas, sólo el 39 % de las tiroideas superiores salía de la carótida externa; el 61 % restante lo hacía a la altura de la bifurcación o de la carótida común.",
+      "cites": [
+        "PMID:21438023"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'100 carotids'; 'originated from the external carotid artery in 39% and at the level of carotid bifurcation and common carotid artery in 61%'; literal."
+    },
+    {
+      "id": "UBERON:0007150",
+      "sentence": 3,
+      "es": "Según un metaanálisis, el nacimiento en la carótida externa es más frecuente en caucasoides que en asiáticos orientales, mientras que en estos predomina más el nacimiento en la carótida común.",
+      "cites": [
+        "PMID:15255302"
+      ],
+      "verdict": "parcial",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'higher frequency of origin from ECA in Caucasoids than in East Asians... higher frequency of origin from common carotid artery... in East Asians'; 'predomina más' sugiere que el origen en la carótida común es el predominante en asiáticos, lo que el resumen no dice (sólo comparativo)."
+    },
+    {
+      "id": "UBERON:0007150",
+      "sentence": 4,
+      "es": "En una serie de 20 cadáveres adultos, la arteria medía en su origen 3,53 ± 1,17 mm de diámetro externo.",
+      "cites": [
+        "PMID:18754071"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'20 adult Anatolian preserved cadavers'; 'The outer diameter of the STA origin was observed to be 3.53 +/- 1.17 mm'; literal."
+    },
+    {
+      "id": "UBERON:0007150",
+      "sentence": 5,
+      "es": "De 32 ramos externos del nervio laríngeo superior disecados, ninguno pasaba lateral a la arteria: el 71,9 % quedaba medial y el 28,1 % entre sus ramas.",
+      "cites": [
+        "PMID:11732207"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'32 external branches'; '71.9% were medial... 28.1% were in between the branches. No nerve was found to be lateral'; reordenada."
+    },
+    {
+      "id": "UBERON:0007150",
+      "sentence": 6,
+      "es": "Revisadas 45 angiotomografías cervicales, la perforante cutánea dominante de la cara anterior del cuello dependía de la tiroidea superior en 89 de 90 lados.",
+      "cites": [
+        "PMID:22373971"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Forty-five consecutive computed tomographic angiograms'; 'superior thyroid artery perforator in 89 of 90 sides'."
+    },
+    {
+      "id": "UBERON:0008622",
+      "sentence": 1,
+      "es": "En un cadáver en que ambas arterias subclavias pasaban por delante de él, el músculo se extendía, a cada lado, desde los tubérculos anteriores de las apófisis transversas de C5 y C6 hasta el tubérculo escaleno de la primera costilla.",
+      "cites": [
+        "PMID:17867345"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Caso único bien acotado; 'originated from the anterior tubercle of the transverse processes of the fifth and sixth cervical vertebrae and inserted into the scalene tubercle of the first ribs'; literal."
+    },
+    {
+      "id": "UBERON:0008622",
+      "sentence": 2,
+      "es": "En ese mismo caso, los plexos braquiales discurrían entre este músculo y el escaleno medio.",
+      "cites": [
+        "PMID:17867345"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The bilateral brachial plexuses... passed between the scalenus anterior and the scalenus medius muscles'; literal."
+    },
+    {
+      "id": "UBERON:0008622",
+      "sentence": 3,
+      "es": "En 112 lados de 56 cadáveres, la arteria subclavia pasaba por detrás del músculo en 110 y por delante en 2.",
+      "cites": [
+        "PMID:20165936"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'56 cadavers (112 cases)'; 'In 110 of the 112 cases... behind'; 'remaining two cases... in front'; oración por oración."
+    },
+    {
+      "id": "UBERON:0008622",
+      "sentence": 4,
+      "es": "En dos casos de vértigo con estenosis de la arteria subclavia atribuida a su compresión, la resección del músculo resolvió la estenosis y el vértigo.",
+      "cites": [
+        "PMID:2192720"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Two cases of vertigo with subclavian artery stenosis'; 'After resection of the anterior scalene muscle, the stenosis and the vertigo resolved'; literal."
+    },
+    {
+      "id": "UBERON:0008622",
+      "sentence": 5,
+      "es": "Se ha comunicado un caso de ausencia del músculo derecho que se presentó como síndrome del desfiladero torácico.",
+      "cites": [
+        "PMID:24451700"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'rare anomaly of an absent right anterior scalene muscle presenting with the symptoms and signs of the thoracic outlet syndrome'; literal."
+    },
+    {
+      "id": "UBERON:0011907",
+      "sentence": 1,
+      "es": "La ecografía de 162 personas de entre 0 y 70 años mostró que el ángulo de peneación del gastrocnemio medial no es fijo: aumenta de forma continua desde el nacimiento, se estabiliza después del estirón puberal y guarda relación lineal con el grosor muscular.",
+      "cites": [
+        "PMID:11759268"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "162 sujetos, 0-70 años; 'increased monotonically starting from birth... stable value after the adolescent growth spurt'; 'linear relationship between F theta and muscle thickness'; 'not a constant parameter'. ('peneación': se usa más 'penación', aceptable)."
+    },
+    {
+      "id": "UBERON:0011907",
+      "sentence": 2,
+      "es": "Cargar transversalmente la pantorrilla redujo, en proporción al peso, la fuerza longitudinal de las sacudidas evocadas de sus músculos (9 %, 13 % y 16 % con 2, 4,5 y 10 kg), y bajo la carga el gastrocnemio medial perdió grosor y ángulo de peneación.",
+      "cites": [
+        "PMID:30792071"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'2, 4.5, and 10 kg... 9, 13, and 16% decrease in longitudinal force'; 'en proporción al peso' implica proporcionalidad que las cifras no muestran (el resumen sólo dice 'higher loads causing greater decreases'). Grosor y peneación bajo la carga: correcto."
+    },
+    {
+      "id": "UBERON:0011907",
+      "sentence": 3,
+      "es": "En diez varones en reposo, girar pasivamente el tobillo estiraba de forma apreciable la unidad musculotendinosa, en tanto que la rotación de la rodilla sólo modificaba la longitud fascicular y la peneación por encima de 144°.",
+      "cites": [
+        "PMID:16309922"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'Ten male subjects'; tobillo: 'considerable influence on the elongation'; rodilla: 'becomes relevant only at knee angles greater than 144 degrees'; 'sólo modificaba' pierde el matiz de 'relevante' (hay influencia menor por debajo)."
+    },
+    {
+      "id": "UBERON:0011907",
+      "sentence": 4,
+      "es": "Las unidades motoras que se activan al estar de pie podrían concentrarse más en la porción distal del músculo que las reclutadas por estimulación del nervio tibial.",
+      "cites": [
+        "PMID:22967836"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'units activated during standing may have a tendency to be more highly represented in the distal muscle portion' frente a la estimulación del nervio tibial; literal."
+    },
+    {
+      "id": "UBERON:0011907",
+      "sentence": 5,
+      "es": "Al correr con una entresuela más rígida a la flexión, sus fascículos se acortaron menos y con menor velocidad, y aumentó el retorno de energía estimado del tendón calcáneo.",
+      "cites": [
+        "PMID:33436965"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'less muscle fascicle shortening', 'slower average shortening velocity', 'greater estimated Achilles tendon energy return' con mayor MBS."
+    },
+    {
+      "id": "UBERON:0011907",
+      "sentence": 6,
+      "es": "Se ha descrito en una mujer de 55 años un quiste ganglionar intramuscular roto en este músculo, que en la ecografía se veía como una lesión hipoecoica mal delimitada.",
+      "cites": [
+        "PMID:19618443"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'55-year-old woman'; 'poorly defined hypoechoic lesion'; diagnóstico de 'ruptured intramuscular ganglion cyst'."
+    },
+    {
+      "id": "UBERON:0019202",
+      "sentence": 1,
+      "es": "En 60 miembros de 30 cadáveres centroeuropeos, el gemelo inferior estuvo presente en el 80 %; su forma más común (75 %) era un vientre único que iba de la parte alta de la tuberosidad isquiática a la fosa trocantérea.",
+      "cites": [
+        "PMID:42455141"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "60 miembros, 30 cadáveres centroeuropeos, presente en 80 %; pero el 75 % del tipo I es sobre el total de miembros (75+5+20 = 100), y la frase lo presenta como 'su forma más común' tras 'presente', invitando a leerlo como 75 % de los presentes."
+    },
+    {
+      "id": "UBERON:0019202",
+      "sentence": 2,
+      "es": "En otra serie de 20 piezas existía en todas, aunque en 3 estaba fusionado con el obturador interno.",
+      "cites": [
+        "PMID:9778919"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'13 human cadavers (20 specimens)'; 'The inferior gemellus muscle (Gi) was present in all, but fused with the Oi in 3 specimens'; literal."
+    },
+    {
+      "id": "UBERON:0019202",
+      "sentence": 3,
+      "es": "Su función, compartida con el gemelo superior, es la de rotar lateralmente la cadera y contribuir a estabilizarla.",
+      "cites": [
+        "PMID:42455141"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'contribute to lateral rotation and stabilization of the hip joint' (ambos gemelos); casi literal."
+    },
+    {
+      "id": "UBERON:0019202",
+      "sentence": 4,
+      "es": "En esa serie recibía siempre, por su cara anterior, ramos del nervio del cuadrado femoral.",
+      "cites": [
+        "PMID:9778919"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'The Gi always received branches from the QfN at its anterior surface'; literal."
+    },
+    {
+      "id": "UBERON:0019202",
+      "sentence": 5,
+      "es": "Un pequeño nervio sensitivo para el periostio y las bolsas del trocánter mayor, rama del nervio femoral, penetraba el periostio justo por debajo del tendón del gemelo inferior.",
+      "cites": [
+        "PMID:22374737"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'small sensory nerve supply to the periosteum and bursae of the greater trochanter. This nerve is a branch of the n. femoralis... enters the periosteum... directly caudal to the tendon of the inferior gemellus'; oración por oración."
+    },
+    {
+      "id": "UBERON:0019202",
+      "sentence": 6,
+      "es": "En un caso, la tumefacción del gemelo inferior con un hematoma simuló una ciática; la ecografía orientó el diagnóstico y la resonancia lo confirmó, y los autores advierten que en la ecografía el músculo es fácil de pasar por alto.",
+      "cites": [
+        "PMID:35626236"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'swollen inferior gemellus muscle with hematoma initially diagnosed with ultrasonography and later confirmed with MRI'; 'the muscle is easy to miss'; título 'Mimics Sciatica'."
+    },
+    {
+      "id": "UBERON:8920035",
+      "sentence": 1,
+      "es": "Entre 35 cadáveres adultos disecados, sólo 2 presentaban una arteria marginal incompleta, ambos con el patrón de ramificación mesentérica superior de tipo B.",
+      "cites": [
+        "PMID:33778940"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'35 embalmed adult human cadavers'; 'In 2 cases (both of type B), the marginal artery was incomplete'; literal."
+    },
+    {
+      "id": "UBERON:8920035",
+      "sentence": 2,
+      "es": "Al ligar la mesentérica inferior en la amputación abdominoperineal puede disminuir el flujo de la arteria marginal, lo que expondría el colon restante al daño isquémico.",
+      "cites": [
+        "PMID:4540295"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "'Ligation of the inferior mesenteric artery in the operation of abdomino-perineal excision... may reduce the blood flow through the marginal artery of Drummond rendering the remaining colon more liable to ischaemic damage'; literal."
+    },
+    {
+      "id": "UBERON:8920035",
+      "sentence": 3,
+      "es": "Los nombres históricos «arteria marginal de Drummond» y «arco de Riolan» son, según una revisión, fuente de confusión al describir las colaterales mesentéricas.",
+      "cites": [
+        "PMID:3554567"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": false,
+      "note": "'historical terms... traced herein with emphasis on the inherent confusion caused when these terms are used'. Es nomenclatura, no 'clinical'."
+    },
+    {
+      "id": "UBERON:8920035",
+      "sentence": 4,
+      "es": "Una hemorragia retroperitoneal potencialmente mortal durante el tratamiento con heparina tuvo su origen en esta arteria y se detuvo embolizándola con microespirales, sin isquemia en los 3 años siguientes.",
+      "cites": [
+        "PMID:8087834"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'life-threatening retroperitoneal hemorrhage complicated heparin therapy... originated from the marginal artery'; microcoils; 'no ischemic complications developed for 3 years'."
+    },
+    {
+      "id": "UBERON:8920035",
+      "sentence": 5,
+      "es": "Un seudoaneurisma de esta arteria, primer caso publicado según sus autores, siguió a la reparación abierta urgente de un aneurisma aórtico inflamatorio con ligadura de la mesentérica inferior y se resolvió con embolización sin isquemia intestinal.",
+      "cites": [
+        "PMID:39564072"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "'first published account of a pseudoaneurysm'; 'emergency open surgical repair of an inflammatory AAA, in which the IMA was ligated'; 'successful interventional embolization... no signs of bowel ischaemia'."
+    }
+  ],
+  "summary": {
+    "sentences": 81,
+    "fiel": 72,
+    "parcial": 9,
+    "infiel": 0,
+    "copied": 43,
+    "aspectWrong": 2
+  }
+}

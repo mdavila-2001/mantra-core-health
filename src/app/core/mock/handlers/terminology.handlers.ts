@@ -30,6 +30,8 @@ import {
   type FilaDeGlosario,
   type ManifiestoDelGlosario,
 } from '../glossary-shards';
+import { AlmacenConCapasDeLaMaqueta, type FuenteDeGlosario } from '../glossary-capa-de-equipos';
+import { FUENTE_DE_LA_CAPA } from '../fixtures/glosario-equipos';
 import {
   forbidden,
   notFound,
@@ -111,10 +113,7 @@ function pedidoDeVecindario(query: URLSearchParams): PedidoDeVecindario | string
  * fila (salientes) y las del índice inverso (entrantes). La categoría de un
  * destino saliente sale de `mock/ids`, sin abrir su shard.
  */
-async function vecinosDe(
-  glosario: Pick<AlmacenDeGlosario, 'categoriaDe' | 'entrantes'>,
-  fila: FilaDeGlosario,
-): Promise<VecinoSimulado[]> {
+async function vecinosDe(glosario: FuenteDeGlosario, fila: FilaDeGlosario): Promise<VecinoSimulado[]> {
   const [salientes, entrantes] = await Promise.all([
     Promise.all(
       fila.relations.map(async (relacion): Promise<VecinoSimulado> => ({
@@ -307,7 +306,9 @@ function campoDelFormulario(body: unknown, clave: string): string | null {
 
 export function registrarTerminologia(
   router: MockRouter,
-  glosario: AlmacenDeGlosario = new AlmacenDeGlosario(leerConFetch, raicesEsperadasDelGlosario()),
+  glosario: FuenteDeGlosario = new AlmacenConCapasDeLaMaqueta(
+    new AlmacenDeGlosario(leerConFetch, raicesEsperadasDelGlosario()),
+  ),
 ): void {
   router.get('/terminology/value-sets/$glossary-facets', async () => {
     try {
@@ -459,6 +460,62 @@ export function registrarTerminologia(
     return { items, count: items.length, limit };
   });
 
+  router.get('/terminology/concepts/glossary-graph', async () => {
+    const limit = 500;
+    try {
+      const manifiesto = await glosario.manifiesto();
+      const pagina = await glosario.pagina({ offset: 0, limit });
+      const total = pagina.total;
+      // Los destinos de la capa de equipos de la maqueta (los estudios
+      // curados que «Incluye» cada modalidad) casi nunca caen entre las
+      // primeras filas: se suman para que el mapa dibuje esas aristas.
+      const presentes = new Set(pagina.filas.map((f) => f.id));
+      const faltantes = [
+        ...new Set(
+          pagina.filas
+            .filter((f) => f.source === FUENTE_DE_LA_CAPA)
+            .flatMap((f) => f.relations.map((r) => r.targetId))
+            .filter((id) => !presentes.has(id)),
+        ),
+      ];
+      const sumadas = (await Promise.all(faltantes.map((id) => glosario.porId(id)))).filter(
+        (f): f is NonNullable<typeof f> => f !== null,
+      );
+      const filas = [...pagina.filas, ...sumadas];
+      const nodes = filas.map((fila) => {
+        const term = inlineTerm(fila, manifiesto);
+        return {
+          conceptId: term.conceptId,
+          slug: term.slug,
+          display: term.display,
+          category: term.category,
+          shortDefinition: term.shortDefinition ?? '',
+        };
+      });
+      const nodeIds = new Set(nodes.map((node) => node.conceptId));
+      const edges = filas.flatMap((fila) =>
+        fila.relations.flatMap((relation) =>
+          nodeIds.has(relation.targetId)
+            ? [{
+                sourceConceptId: fila.id,
+                targetConceptId: relation.targetId,
+                type: relation.type,
+              }]
+            : [],
+        ),
+      );
+      return {
+        nodes,
+        edges,
+        count: nodes.length,
+        limit,
+        possiblyTruncated: total > nodes.length,
+      };
+    } catch (error: unknown) {
+      return glosarioNoDisponible(error);
+    }
+  });
+
   router.get('/terminology/concepts/:id/glossary-neighborhood', async ({ params, query }) => {
     const pedido = pedidoDeVecindario(query);
     if (typeof pedido === 'string') return validationPipeRejected(pedido);
@@ -473,6 +530,16 @@ export function registrarTerminologia(
   });
 
   router.get('/terminology/concepts/:id/glossary-article', async ({ params }) => {
+    try {
+      const article = await glosario.articulo(params['id']!);
+      return article ?? notFound('El término no tiene artículo');
+    } catch (error: unknown) {
+      return glosarioNoDisponible(error);
+    }
+  });
+
+  // Alias de la ruta anterior (`/article`): la maqueta la sigue sirviendo.
+  router.get('/terminology/concepts/:id/article', async ({ params }) => {
     try {
       const article = await glosario.articulo(params['id']!);
       return article ?? notFound('El término no tiene artículo');

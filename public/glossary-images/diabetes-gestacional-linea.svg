@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-labelledby="t d">
+  <title id="t">Diabetes gestacional: cuándo aparece, cuándo se busca y qué seguimiento hace falta</title>
+  <desc id="d">Línea de tiempo en cuatro momentos. Antes del embarazo: control de la glucosa si ya hay diabetes y consulta de planificación. Hacia la semana 24: la diabetes gestacional suele aparecer porque el cuerpo no puede producir la insulina extra que necesita. Entre las semanas 24 y 28: prueba de detección con análisis de glucosa, y antes, en la primera visita prenatal, si el riesgo es mayor. Después del parto: análisis entre las 4 y 12 semanas y luego cada 1 a 3 años, porque aumenta el riesgo de diabetes tipo 2.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#1f6fb2; --a-l:#d6e6f5; --b:#b7791f; --b-l:#f7e4bf; --c:#c0392b; --c-l:#f6d5cf; --d:#1f8a5b; --d-l:#d7f0e4; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#6aa7e8; --a-l:#1f3347; --b:#e0b25a; --b-l:#4a3b1f; --c:#ef7467; --c-l:#4a2a27; --d:#4cc38a; --d-l:#1f4033; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .hd { font-size: 14px; font-weight: 700; }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="440" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="400" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Diabetes gestacional: de la planificación al seguimiento</text>
+
+  <rect x="40" y="78" width="160" height="200" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="120" y="102" text-anchor="middle" class="hd" style="fill:var(--a)">Antes</text>
+  <text x="120" y="130" text-anchor="middle" class="small">Si ya hay diabetes:</text>
+  <text x="120" y="146" text-anchor="middle" class="small">controlar la glucosa</text>
+  <text x="120" y="162" text-anchor="middle" class="small">antes de quedar</text>
+  <text x="120" y="178" text-anchor="middle" class="small">embarazada</text>
+  <text x="120" y="210" text-anchor="middle" class="small muted">Consulta de planificación:</text>
+  <text x="120" y="226" text-anchor="middle" class="small muted">qué medicamentos son</text>
+  <text x="120" y="242" text-anchor="middle" class="small muted">seguros en el embarazo</text>
+
+  <path d="M202 178 L 218 178" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <rect x="222" y="78" width="160" height="200" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="302" y="102" text-anchor="middle" class="hd" style="fill:var(--b)">Hacia la semana 24</text>
+  <text x="302" y="130" text-anchor="middle" class="small">Suele aparecer: el</text>
+  <text x="302" y="146" text-anchor="middle" class="small">cuerpo no puede hacer</text>
+  <text x="302" y="162" text-anchor="middle" class="small">la insulina extra que</text>
+  <text x="302" y="178" text-anchor="middle" class="small">necesita</text>
+  <text x="302" y="210" text-anchor="middle" class="small muted">Casi siempre sin síntomas;</text>
+  <text x="302" y="226" text-anchor="middle" class="small muted">a veces más sed y</text>
+  <text x="302" y="242" text-anchor="middle" class="small muted">orinar más</text>
+
+  <path d="M384 178 L 400 178" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <rect x="404" y="78" width="180" height="200" rx="10" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <text x="494" y="102" text-anchor="middle" class="hd" style="fill:var(--c)">Semanas 24 a 28</text>
+  <text x="494" y="130" text-anchor="middle" class="small">Prueba de detección:</text>
+  <text x="494" y="146" text-anchor="middle" class="small">análisis de glucosa en</text>
+  <text x="494" y="162" text-anchor="middle" class="small">sangre tras beber un</text>
+  <text x="494" y="178" text-anchor="middle" class="small">líquido azucarado</text>
+  <text x="494" y="210" text-anchor="middle" class="small muted">Con más riesgo: ya en la</text>
+  <text x="494" y="226" text-anchor="middle" class="small muted">primera visita prenatal</text>
+
+  <path d="M586 178 L 602 178" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <rect x="606" y="78" width="154" height="200" rx="10" fill="var(--d-l)" stroke="var(--d)" stroke-width="2"/>
+  <text x="683" y="102" text-anchor="middle" class="hd" style="fill:var(--d)">Después del parto</text>
+  <text x="683" y="130" text-anchor="middle" class="small">Suele desaparecer</text>
+  <text x="683" y="154" text-anchor="middle" class="small">Análisis entre las</text>
+  <text x="683" y="170" text-anchor="middle" class="small">4 y 12 semanas, y luego</text>
+  <text x="683" y="186" text-anchor="middle" class="small">cada 1 a 3 años</text>
+  <text x="683" y="218" text-anchor="middle" class="small muted">Más riesgo de</text>
+  <text x="683" y="234" text-anchor="middle" class="small muted">diabetes tipo 2</text>
+
+  <rect x="40" y="298" width="720" height="96" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="400" y="322" text-anchor="middle" class="hd">Durante el embarazo</text>
+  <text x="400" y="346" text-anchor="middle" class="lab">Controles prenatales · alimentación saludable y actividad física regular</text>
+  <text x="400" y="366" text-anchor="middle" class="lab">Medicamentos solo si hacen falta, indicados por el profesional</text>
+  <text x="400" y="384" text-anchor="middle" class="small muted">Sin alcohol, tabaco ni drogas</text>
+</svg>

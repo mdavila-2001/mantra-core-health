@@ -349,6 +349,9 @@ describe('NavigationService', () => {
         // clínico temporal—. Decisión a confirmar por el propietario en el PR: la
         // lista cerrada pasa de once a doce.
         'Mi equipo',
+        // «Facturación» entra el 31/10/2026: el médico cobra y factura SUS
+        // consultas (la API acota el alcance en `billing-simulated.access.ts`).
+        'Facturación',
         'Contabilidad',
       ]);
     });

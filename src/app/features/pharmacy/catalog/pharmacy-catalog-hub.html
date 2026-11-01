@@ -6,11 +6,11 @@
 <!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
      (`docs/components/composition-rules.md` §5). Cada pantalla se monta sólo
      mientras su pestaña está abierta. -->
-<app-card padding="lg" class="catalog__card" data-testid="pharmacy-catalog-card">
+<app-card padding="md" class="catalog__card" data-testid="pharmacy-catalog-card">
   <app-tabs
     appearance="browser"
     [selectedIndex]="selected()"
-    (selectedIndexChange)="select($event)"
+    (selectedIndexChange)="requestTab($event)"
     data-testid="pharmacy-catalog-tabs"
   >
     <app-tab [label]="labels[tabs[0]]">

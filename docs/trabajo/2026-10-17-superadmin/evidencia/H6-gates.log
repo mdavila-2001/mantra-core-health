@@ -1,0 +1,53 @@
+== check-form-pages
+
+✗ check-form-pages — 1 formulario(s) sin paginar
+
+  'app/features/auth/shared-registration/inline-name-fields/inline-name-fields.html' pide 6 campos de una vez en una sola pantalla y no usa <app-paginated-form>
+
+  Un formulario de este sistema se sirve de a una página, con un tope de
+  cuatro campos y una barra de avance. Eso lo da <app-paginated-form>:
+  se le pasan las páginas (paginarCampos() las arma) y el FormGroup de la
+  pantalla. Si de verdad no es un formulario, agregalo a EXCEPCIONES con
+  su motivo escrito.
+
+== check-max-lines
+
+✗ check-max-lines — 3 archivo(s) por encima de su techo
+
+  src/app/features/symptom-check/symptom-check.html: 899 líneas (techo 895)
+  src/app/features/symptom-check/corpus.fixture.ts: 696 líneas (techo 693)
+  src/app/features/public-profile/public-profile-card/public-profile-card.css: 680 líneas (techo 671)
+
+  Partilo: plantilla en .html, estilos en .css, lógica en servicios/ayudas. No subas el techo.
+
+== check-doc-coverage
+
+✗ check-doc-coverage — 71 hallazgo(s)
+
+  organismo sin mencionar: app-branch-bulk-import (BranchBulkImport)
+  organismo sin mencionar: app-promotion-rule-editor (PromotionRuleEditor)
+  organismo sin mencionar: app-registration-help (RegistrationHelp)
+  servicio sin mencionar: OrganizationLogoClient
+  servicio sin mencionar: PracticeLogoClient
+  servicio sin mencionar: SignatureAndSealClient
+  servicio sin mencionar: BoProfessionsCatalog
+  servicio sin mencionar: LanguagesCatalog
+  servicio sin mencionar: TrustedAmbulanceStore
+== check-architecture
+✓ check-architecture
+  2169 archivos · 10138 importaciones internas
+  sin ciclos · capas en una sola dirección · red confinada a core/data-access/ · faker confinado a core/mock/
+  excepción declarada: src/app/core/dev/ (herramienta de desarrollo, diferida)
+== check-api-contract-drift
+
+✗ check-api-contract-drift
+
+  19 operación(es) que el código llama y la documentación no declara:
+    GET /identity/verification-cases/:caseId
+    GET /insurance/my-claims
+    GET /insurance/patients/options
+    GET /pharmacy/catalog-products
+    GET /scheduling/service-availability
+    GET /scheduling/service-offerings
+    GET /tenants/:tenantId/logo
+    GET /tenants/:tenantId/logo/content

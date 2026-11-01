@@ -53,9 +53,13 @@ export function base(tema: ChartTheme): Record<string, unknown> {
   };
 }
 
-export function leyenda(tema: ChartTheme, nombres?: readonly string[]): Record<string, unknown> {
+/**
+ * La leyenda sólo existe para distinguir series: con UNA el título del panel ya la nombra y la caja
+ * es ruido (enmienda X-8 a ADR-0017, skill dataviz). `mostrar` es falso para una sola serie.
+ */
+export function leyenda(tema: ChartTheme, nombres?: readonly string[], mostrar = true): Record<string, unknown> {
   return {
-    show: true,
+    show: mostrar,
     type: 'plain',
     bottom: 0,
     left: 'center',

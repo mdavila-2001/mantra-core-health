@@ -1,0 +1,61 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.policy-sheet {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.policy-sheet__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+}
+
+.policy-sheet__subtitle {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.policy-sheet__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.policy-sheet__muted {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.policy-sheet__list,
+.policy-sheet__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  overflow-wrap: anywhere;
+}
+
+.policy-sheet__timeline {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.policy-sheet__timeline li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}

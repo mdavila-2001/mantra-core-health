@@ -8,13 +8,16 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import {
+  availabilityByMedication,
   DISPONIBILIDAD_FIXTURE,
   FIXTURE_IDS,
-  productosDelConcepto,
+  MEDICATION_AVAILABILITY_FIXTURE,
+  siteByMedication,
 } from '../../../../core/data-access/pharmacy/pharmacy.fixtures';
 import type {
   AvailabilityResult,
   AvailabilitySite,
+  MedicationAvailabilitySite,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import { CART_STORAGE, type CartStorage } from '../../../../core/data-access/pharmacy-cart/cart.storage';
 import type { CartState } from '../../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
@@ -125,10 +128,10 @@ const CONCEPTS = {
       codeSystemVersionId: 'v1',
     },
     // Los estados de un ítem de receta, con los códigos del catálogo de la API
-    // (`clinical.concepts.ts`): sólo `MR_ISSUED` se puede pedir (FAR-03).
-    { conceptId: 'st-activa', code: 'MR_ISSUED', display: 'Emitida', codeSystemVersionId: 'v1' },
-    { conceptId: 'st-borrador', code: 'MR_DRAFT', display: 'Borrador', codeSystemVersionId: 'v1' },
-    { conceptId: 'st-anulada', code: 'MR_INVALIDATED', display: 'Anulada', codeSystemVersionId: 'v1' },
+    // (`clinical.concepts.ts`): sólo `clinical:MEDICATION_REQUEST_ISSUED` se puede pedir (FAR-03).
+    { conceptId: 'st-activa', code: 'clinical:MEDICATION_REQUEST_ISSUED', display: 'Emitida', codeSystemVersionId: 'v1' },
+    { conceptId: 'st-borrador', code: 'clinical:MEDICATION_REQUEST_DRAFT', display: 'Borrador', codeSystemVersionId: 'v1' },
+    { conceptId: 'st-anulada', code: 'clinical:MEDICATION_REQUEST_INVALIDATED', display: 'Anulada', codeSystemVersionId: 'v1' },
   ],
   count: 5,
   limit: 200,
@@ -187,20 +190,18 @@ const AVAILABILITY_WITH_NORTH: AvailabilityResult = {
 };
 
 /** Los dos renglones del resumen, ya con su producto: el insumo de las funciones puras. */
-const QUERYABLE: readonly (PrescriptionItem & { productId: string })[] = [
+const QUERYABLE: readonly PrescriptionItem[] = [
   {
     conceptId: FIXTURE_IDS.conceptoAmoxicilina,
     medication: 'Amoxicilina',
     instructions: '500 mg · cada 8 horas',
     issued: true,
-    productId: FIXTURE_IDS.productoAmoxicilina,
   },
   {
     conceptId: FIXTURE_IDS.conceptoIbuprofeno,
     medication: 'Ibuprofeno',
     instructions: '400 mg',
     issued: true,
-    productId: FIXTURE_IDS.productoIbuprofeno,
   },
 ];
 
@@ -346,20 +347,9 @@ describe('WhereToBuy', () => {
   ): void {
     http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(SUMMARY);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTS);
-    http
-      .expectOne(
-        (r) =>
-          r.url === '/pharmacy/products' &&
-          r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
-      )
-      .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
-    http
-      .expectOne(
-        (r) =>
-          r.url === '/pharmacy/products' &&
-          r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
-      )
-      .flush(productosDelConcepto(FIXTURE_IDS.conceptoIbuprofeno));
+    // Sin búsqueda de un producto por medicamento: la disponibilidad pregunta
+    // por medicamento, una sola vez, a toda la red.
+    http.expectNone((r) => r.url === '/pharmacy/products');
     http.expectOne('/profiles/patients/me').flush(profileId);
     harness.detectChanges();
   }
@@ -378,8 +368,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     const tabs = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
@@ -444,7 +434,7 @@ describe('WhereToBuy', () => {
   it('abre la pestaña que pide la URL y busca todos los estudios de imagen en una sola consulta', async () => {
     await mount('m-1', '?tab=imaging');
     respondUntilProducts();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(MEDICATION_AVAILABILITY_FIXTURE);
     http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(OWN_ORDERS);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(ORDER_CONCEPTS);
     const search = http.expectOne((r) => r.url === '/diagnostic-units/search');
@@ -478,7 +468,7 @@ describe('WhereToBuy', () => {
   it('P-19-4: imagenología abre solo con los centros que tienen todos los estudios', async () => {
     await mount('m-1', '?tab=imaging');
     respondUntilProducts();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(MEDICATION_AVAILABILITY_FIXTURE);
     http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(OWN_ORDERS);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(ORDER_CONCEPTS);
     http.expectOne((r) => r.url === '/diagnostic-units/search').flush({
@@ -499,7 +489,7 @@ describe('WhereToBuy', () => {
   it('deja la pestaña elegida en la URL', async () => {
     await mount();
     respondUntilProducts();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
     const navigation = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
@@ -520,7 +510,7 @@ describe('WhereToBuy', () => {
   it('carril 19: Centros médicos abre por la URL y busca los centros de mis procedimientos', async () => {
     await mount('m-1', '?tab=medical-centers');
     respondUntilProducts();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     const lastQuery = http.expectOne((r) => r.url === '/clinical/me/procedure-centers');
@@ -543,7 +533,7 @@ describe('WhereToBuy', () => {
   it('en Centros médicos, sin procedimientos pendientes, lo dice y ofrece el directorio de clínicas', async () => {
     await mount();
     respondUntilProducts();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
@@ -564,7 +554,7 @@ describe('WhereToBuy', () => {
   it('con una sucursal que tiene todo, la propone sola y lo dice', async () => {
     await mount();
     respondUntilProducts();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     expect(
@@ -576,13 +566,15 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     const [first, second] = DISPONIBILIDAD_FIXTURE.items;
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush({
-      ...DISPONIBILIDAD_FIXTURE,
-      items: [
-        { ...first!, complete: false, missingProductIds: [FIXTURE_IDS.productoIbuprofeno] },
-        second!,
-      ],
-    });
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(
+      availabilityByMedication({
+        ...DISPONIBILIDAD_FIXTURE,
+        items: [
+          { ...first!, complete: false, missingProductIds: [FIXTURE_IDS.productoIbuprofeno] },
+          second!,
+        ],
+      }),
+    );
     harness.detectChanges();
 
     const stops = Array.from(
@@ -596,10 +588,30 @@ describe('WhereToBuy', () => {
     expect(stops[1]).toContain('Aquí: Ibuprofeno');
   });
 
+  it('la sede que tiene una parte dice por nombre qué tiene y qué le falta (B2)', async () => {
+    await mount();
+    respondUntilProducts();
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
+    harness.detectChanges();
+    showAll();
+
+    const partial = cardOf('Sucursal Plan Tres Mil');
+    expect(partial?.querySelector('[data-testid="where-to-buy-has"]')?.textContent).toContain(
+      'Tiene: Ibuprofeno',
+    );
+    expect(partial?.querySelector('[data-testid="where-to-buy-missing"]')?.textContent).toContain(
+      'Le falta: Amoxicilina',
+    );
+    // La que tiene todo no repite la lista.
+    expect(cardOf('Sucursal Centro')?.querySelector('[data-testid="where-to-buy-has"]')).toBeNull();
+  });
+
   it('muestra las campañas de la farmacia con su etiqueta y pliega las que sobran', async () => {
     await mount();
     respondUntilProducts();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     const branch = harness.routeNativeElement?.querySelector('.purchase__branch');
@@ -619,7 +631,7 @@ describe('WhereToBuy', () => {
   it('P-19-4: abre solo con las sucursales que tienen todo y muestra las demás a pedido', async () => {
     await mount();
     respondUntilProducts();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     const list = () => harness.routeNativeElement?.querySelectorAll('[data-testid="where-to-buy-branches"] > li') ?? [];
@@ -643,14 +655,16 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
 
-    const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
-    expect(lastQuery.request.params.get('products')).toBe(
-      `${FIXTURE_IDS.productoAmoxicilina},${FIXTURE_IDS.productoIbuprofeno}`,
+    const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
+    // Una sola consulta, por medicamento y no por producto (B2).
+    expect(lastQuery.request.params.has('products')).toBe(false);
+    expect(lastQuery.request.params.get('medications')).toBe(
+      `${FIXTURE_IDS.conceptoAmoxicilina},${FIXTURE_IDS.conceptoIbuprofeno}`,
     );
     // Nadie dio una ubicación: la consulta no puede llevarla.
     expect(lastQuery.request.params.has('lat')).toBe(false);
     expect(lastQuery.request.params.has('lng')).toBe(false);
-    lastQuery.flush(DISPONIBILIDAD_FIXTURE);
+    lastQuery.flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
     showAll();
 
@@ -675,10 +689,12 @@ describe('WhereToBuy', () => {
       const [complete, partial] = DISPONIBILIDAD_FIXTURE.items;
       const stockUpdatedAt =
         hours === null ? undefined : new Date(Date.now() - hours * 3_600_000).toISOString();
-      http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush({
-        ...DISPONIBILIDAD_FIXTURE,
-        items: [{ ...complete!, stockUpdatedAt }, partial!],
-      });
+      http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications').flush(
+        availabilityByMedication({
+          ...DISPONIBILIDAD_FIXTURE,
+          items: [{ ...complete!, stockUpdatedAt }, partial!],
+        }),
+      );
       harness.detectChanges();
     }
 
@@ -718,8 +734,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
     showAll();
     // El montaje de Leaflet es diferido: dos microtareas y otro render.
@@ -741,8 +757,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     expect(textOf()).not.toMatch(UUID);
@@ -752,8 +768,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
     showAll();
 
@@ -794,8 +810,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     const navigation = vi
@@ -815,8 +831,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
     showAll();
 
@@ -836,8 +852,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     const cart = TestBed.inject(CartStore);
@@ -884,8 +900,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     const cart = TestBed.inject(CartStore);
@@ -929,8 +945,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     // Entrar a la pantalla no dispara el diálogo de permisos del navegador.
@@ -946,10 +962,10 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
 
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
-    const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+    const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
     expect(lastQuery.request.params.get('lat')).toBe('-17.7833');
     expect(lastQuery.request.params.get('lng')).toBe('-63.1821');
-    lastQuery.flush(DISPONIBILIDAD_FIXTURE);
+    lastQuery.flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     expect(textOf()).toContain('Distancias medidas desde su ubicación actual');
@@ -973,8 +989,8 @@ describe('WhereToBuy', () => {
       await mount();
       respondUntilProducts();
       http
-        .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-        .flush(DISPONIBILIDAD_FIXTURE);
+        .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+        .flush(MEDICATION_AVAILABILITY_FIXTURE);
       harness.detectChanges();
     }
 
@@ -987,10 +1003,10 @@ describe('WhereToBuy', () => {
       city?.click();
       harness.detectChanges();
 
-      const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
       expect(query.request.params.get('lat')).toBe('-16.4957');
       expect(query.request.params.get('lng')).toBe('-68.1335');
-      query.flush(DISPONIBILIDAD_FIXTURE);
+      query.flush(MEDICATION_AVAILABILITY_FIXTURE);
       harness.detectChanges();
 
       expect(textOf()).toContain('Distancias medidas desde La Paz');
@@ -1013,7 +1029,7 @@ describe('WhereToBuy', () => {
         harness.routeNativeElement?.querySelector('[role="status"]')?.textContent,
       ).toContain('No pudimos leer su ubicación');
       // No position was obtained, so nothing re-queries availability.
-      http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+      http.expectNone((r) => r.url === '/pharmacy-inventory/availability/medications');
       expect(
         harness.routeNativeElement
           ?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-share-location'))
@@ -1034,7 +1050,7 @@ describe('WhereToBuy', () => {
 
       expect(getCurrentPosition).not.toHaveBeenCalled();
       expect(textOf()).toContain('No pudimos leer su ubicación');
-      http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+      http.expectNone((r) => r.url === '/pharmacy-inventory/availability/medications');
 
       expectCitiesStillUsable();
     });
@@ -1044,8 +1060,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
 
     const checkboxes =
@@ -1057,37 +1073,38 @@ describe('WhereToBuy', () => {
     checkboxes[1].dispatchEvent(new Event('change'));
     harness.detectChanges();
 
-    const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
-    expect(lastQuery.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
-    lastQuery.flush(DISPONIBILIDAD_FIXTURE);
+    const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
+    expect(lastQuery.request.params.get('medications')).toBe(FIXTURE_IDS.conceptoAmoxicilina);
+    lastQuery.flush(MEDICATION_AVAILABILITY_FIXTURE);
   });
 
   it('un medicamento sin producto publicado se dice, y ninguna sede queda completa', async () => {
     await mount();
     http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(SUMMARY);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTS);
-    http
-      .expectOne(
-        (r) =>
-          r.url === '/pharmacy/products' &&
-          r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
-      )
-      .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
-    // El directorio no publica nada para el ibuprofeno.
-    http
-      .expectOne(
-        (r) =>
-          r.url === '/pharmacy/products' &&
-          r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
-      )
-      .flush({ items: [], limit: 1, truncated: false });
     http.expectOne('/profiles/patients/me').flush(PROFILE_WITHOUT_PLACES);
     harness.detectChanges();
 
-    const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
-    // Sólo viaja lo consultable.
-    expect(lastQuery.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
-    lastQuery.flush(DISPONIBILIDAD_FIXTURE);
+    const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
+    // Ninguna farmacia de la red publica ibuprofeno: lo dice el backend.
+    const [complete] = DISPONIBILIDAD_FIXTURE.items;
+    lastQuery.flush(
+      availabilityByMedication(
+        {
+          requestedProductIds: [FIXTURE_IDS.productoAmoxicilina],
+          items: [
+            {
+              ...complete!,
+              products: complete!.products.filter(
+                (product) => product.productId === FIXTURE_IDS.productoAmoxicilina,
+              ),
+            },
+          ],
+          count: 1,
+        },
+        [FIXTURE_IDS.conceptoIbuprofeno],
+      ),
+    );
     harness.detectChanges();
     showAll();
 
@@ -1108,24 +1125,11 @@ describe('WhereToBuy', () => {
     expect(navigate).toHaveBeenCalled();
   });
 
-  it('un error HTTP de productos queda como error recuperable, no como ausencia', async () => {
+  it('un error HTTP de la disponibilidad queda como error recuperable, no como ausencia', async () => {
     await mount();
-    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(SUMMARY);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTS);
+    respondUntilProducts();
     http
-      .expectOne(
-        (r) =>
-          r.url === '/pharmacy/products' &&
-          r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
-      )
-      .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
-    http.expectOne('/profiles/patients/me').flush(PROFILE_WITHOUT_PLACES);
-    http
-      .expectOne(
-        (r) =>
-          r.url === '/pharmacy/products' &&
-          r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
-      )
+      .expectOne((request) => request.url === '/pharmacy-inventory/availability/medications')
       .flush(
         {
           code: 'DEPENDENCY_UNAVAILABLE',
@@ -1149,9 +1153,10 @@ describe('WhereToBuy', () => {
     expect(retry).toBeDefined();
     retry?.click();
     http
-      .expectOne((request) => request.url === '/clinical/patients/pp-1/summary')
-      .flush({ ...SUMMARY, medicationRequests: [] });
+      .expectOne((request) => request.url === '/pharmacy-inventory/availability/medications')
+      .flush(MEDICATION_AVAILABILITY_FIXTURE);
     harness.detectChanges();
+    expect(textOf()).toContain('Sucursal Centro');
   });
 
   it('una receta que no está en la historia no dispara ninguna consulta a farmacias', async () => {
@@ -1187,25 +1192,13 @@ describe('WhereToBuy', () => {
       // El medicamento y el estado de la fila: el código del estado dice si se puede pedir.
       expect(labels.request.params.get('ids')).toBe(`${FIXTURE_IDS.conceptoAmoxicilina},st-activa`);
       labels.flush(CONCEPTS);
-      http
-        .expectOne(
-          (r) =>
-            r.url === '/pharmacy/products' &&
-            r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
-        )
-        .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
-      // El ibuprofeno es de otra consulta: ni se busca su producto.
-      http.expectNone(
-        (r) =>
-          r.url === '/pharmacy/products' &&
-          r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
-      );
       http.expectOne('/profiles/patients/me').flush(PROFILE_WITHOUT_PLACES);
       harness.detectChanges();
 
-      const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
-      expect(query.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
-      query.flush(DISPONIBILIDAD_FIXTURE);
+      const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
+      // El ibuprofeno es de otra consulta: ni se pregunta por él.
+      expect(query.request.params.get('medications')).toBe(FIXTURE_IDS.conceptoAmoxicilina);
+      query.flush(MEDICATION_AVAILABILITY_FIXTURE);
       harness.detectChanges();
     }
 
@@ -1284,15 +1277,6 @@ describe('WhereToBuy', () => {
       } else {
         labels.flush(CONCEPTS);
       }
-      // Los productos se buscan en paralelo con las etiquetas, para toda la
-      // receta: lo que no se puede pedir se descarta después.
-      for (const conceptId of new Set(
-        (summary as typeof SUMMARY).medicationRequests.map((row) => row.medicationConceptId),
-      )) {
-        http
-          .expectOne((r) => r.url === '/pharmacy/products' && r.params.get('conceptId') === conceptId)
-          .flush(productosDelConcepto(conceptId));
-      }
       http.expectOne('/profiles/patients/me').flush(PROFILE_WITHOUT_PLACES);
       harness.detectChanges();
     }
@@ -1303,9 +1287,9 @@ describe('WhereToBuy', () => {
         await mount(chosen);
         respondWithStates(WITH_RENEWAL_AND_INVALIDATED);
 
-        const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
-        expect(query.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
-        query.flush(DISPONIBILIDAD_FIXTURE);
+        const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
+        expect(query.request.params.get('medications')).toBe(FIXTURE_IDS.conceptoAmoxicilina);
+        query.flush(MEDICATION_AVAILABILITY_FIXTURE);
         harness.detectChanges();
 
         const list = harness.routeNativeElement?.querySelector(byTestId('where-to-buy-items'));
@@ -1354,8 +1338,8 @@ describe('WhereToBuy', () => {
         true,
       );
       http
-        .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-        .flush(DISPONIBILIDAD_FIXTURE);
+        .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+        .flush(MEDICATION_AVAILABILITY_FIXTURE);
       harness.detectChanges();
 
       vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -1376,10 +1360,10 @@ describe('WhereToBuy', () => {
       await mount();
       respondUntilProducts(PROFILE_WITH_HOME);
 
-      const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
       expect(lastQuery.request.params.get('lat')).toBe('-17.78');
       expect(lastQuery.request.params.get('lng')).toBe('-63.18');
-      lastQuery.flush(DISPONIBILIDAD_FIXTURE);
+      lastQuery.flush(MEDICATION_AVAILABILITY_FIXTURE);
       harness.detectChanges();
 
       expect(textOf()).toContain('Distancias medidas desde su casa');
@@ -1395,9 +1379,9 @@ describe('WhereToBuy', () => {
       await mount();
       respondUntilProducts(PROFILE_WITHOUT_PLACES);
 
-      const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
       expect(lastQuery.request.params.has('lat')).toBe(false);
-      lastQuery.flush(DISPONIBILIDAD_FIXTURE);
+      lastQuery.flush(MEDICATION_AVAILABILITY_FIXTURE);
       harness.detectChanges();
 
       expect(
@@ -1414,27 +1398,13 @@ describe('WhereToBuy', () => {
       http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(SUMMARY);
       http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTS);
       http
-        .expectOne(
-          (r) =>
-            r.url === '/pharmacy/products' &&
-            r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
-        )
-        .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
-      http
-        .expectOne(
-          (r) =>
-            r.url === '/pharmacy/products' &&
-            r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
-        )
-        .flush(productosDelConcepto(FIXTURE_IDS.conceptoIbuprofeno));
-      http
         .expectOne('/profiles/patients/me')
         .error(new ProgressEvent('error'), { status: 500 });
       harness.detectChanges();
 
-      const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      const lastQuery = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
       expect(lastQuery.request.params.has('lat')).toBe(false);
-      lastQuery.flush(DISPONIBILIDAD_FIXTURE);
+      lastQuery.flush(MEDICATION_AVAILABILITY_FIXTURE);
       harness.detectChanges();
 
       expect(textOf()).toContain('Compartir mi ubicación');
@@ -1448,8 +1418,8 @@ describe('WhereToBuy', () => {
     await mount();
     respondUntilProducts();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(AVAILABILITY_WITH_NORTH);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(availabilityByMedication(AVAILABILITY_WITH_NORTH));
     harness.detectChanges();
     showAll();
   }
@@ -1546,7 +1516,7 @@ describe('WhereToBuy', () => {
       'Farmacia del Sur · Sucursal Norte',
     ]);
     // Ordenar es de la pantalla: no sale otra consulta.
-    http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+    http.expectNone((r) => r.url === '/pharmacy-inventory/availability/medications');
   });
 
   it('con seguro: cobertura de lo aprobado, desglose «aprobado / a su cargo» y renglones rotulados', async () => {
@@ -1585,7 +1555,7 @@ describe('WhereToBuy', () => {
     // El total de la sede no cambia: el desglose se suma, no lo reemplaza.
     expect(center?.textContent).toContain('Total estimado: 96.50 Bs');
     // Conmutar no consulta.
-    http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+    http.expectNone((r) => r.url === '/pharmacy-inventory/availability/medications');
 
     // Apagarlo devuelve la pantalla de siempre.
     toggleInsurance();
@@ -1640,8 +1610,8 @@ describe('WhereToBuy', () => {
     checkboxes[0].dispatchEvent(new Event('change'));
     harness.detectChanges();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(AVAILABILITY_WITH_NORTH);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(availabilityByMedication(AVAILABILITY_WITH_NORTH));
     harness.detectChanges();
 
     expect(textOf()).toContain('ninguno de los medicamentos que eligió está aprobado');
@@ -1652,7 +1622,7 @@ describe('WhereToBuy', () => {
 
     toggleInsurance();
     expect(queryAll('.purchase__branch')).toHaveLength(3);
-    http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
+    http.expectNone((r) => r.url === '/pharmacy-inventory/availability/medications');
   });
 
   it('con seguro, ninguna sede que confirme sigue siendo el vacío de siempre', async () => {
@@ -1660,8 +1630,8 @@ describe('WhereToBuy', () => {
     respondUntilProducts();
     toggleInsurance();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush({ requestedProductIds: [], items: [], count: 0 });
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(availabilityByMedication({ requestedProductIds: [], items: [], count: 0 }));
     harness.detectChanges();
 
     expect(textOf()).toContain(
@@ -1675,7 +1645,7 @@ describe('WhereToBuy', () => {
     respondUntilProducts();
     toggleInsurance();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
       .flush(
         {
           code: 'DEPENDENCY_UNAVAILABLE',
@@ -1695,8 +1665,8 @@ describe('WhereToBuy', () => {
     expect(retryButton).toBeDefined();
     retryButton?.click();
     http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(AVAILABILITY_WITH_NORTH);
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability/medications')
+      .flush(availabilityByMedication(AVAILABILITY_WITH_NORTH));
     harness.detectChanges();
 
     expect(cardOf('Sucursal Centro')?.textContent).toContain('Cobertura de lo aprobado: 1 de 1');
@@ -1724,13 +1694,26 @@ describe('WhereToBuy', () => {
     // La primera tarjeta con «Más barato» es la Norte: el borrador es el suyo,
     // idéntico al que arma la vista sin seguro — la variante no viaja.
     expect(ordersClient.borradorPreparado()).toEqual(
-      orderDraftOf('m-1', NORTH_SITE, QUERYABLE, []),
+      orderDraftOf('m-1', siteByMedication(NORTH_SITE), QUERYABLE, []),
     );
     expect(navigation).toHaveBeenCalledWith(['/my-account/pharmacy-orders/new']);
     expect(sendButton).not.toHaveBeenCalled();
     // Ni POST, ni PUT, ni PATCH: el pedido lo crea el checkout.
     http.expectNone((r) => r.method !== 'GET');
     http.expectNone((r) => r.url.startsWith('/pharmacy/orders'));
+  });
+});
+
+describe('orderDraftOf · cantidad declarada (B3)', () => {
+  it('lleva lo que declara la receta aparte de la cantidad del pedido', () => {
+    const [first, ...rest] = QUERYABLE;
+    const draft = orderDraftOf('m-1', siteByMedication(NORTH_SITE), [{ ...first, declaredQuantity: 4 }, ...rest], []);
+    expect(draft.lineas[0].cantidadDeclarada).toBe(4);
+    expect(draft.lineas[0].cantidad).toBe(1);
+  });
+
+  it('sin cantidad declarada, la línea no la inventa', () => {
+    expect(orderDraftOf('m-1', siteByMedication(NORTH_SITE), QUERYABLE, []).lineas[0].cantidadDeclarada).toBeUndefined();
   });
 });
 
@@ -1805,7 +1788,7 @@ describe('sortBranches (T-E2)', () => {
 });
 
 describe('insuredCoverageOf (T-E2)', () => {
-  const [COMPLETE_SITE, PARTIAL_SITE] = DISPONIBILIDAD_FIXTURE.items;
+  const [COMPLETE_SITE, PARTIAL_SITE] = MEDICATION_AVAILABILITY_FIXTURE.items;
   const amoxicillinOnly = new Set([FIXTURE_IDS.conceptoAmoxicilina]);
 
   it('parte el precio de lo disponible en aprobado y a su cargo', () => {
@@ -1843,7 +1826,6 @@ describe('insuredCoverageOf (T-E2)', () => {
       medication: 'Paracetamol',
       instructions: '',
       issued: true,
-      productId: null,
     };
     const coverage = insuredCoverageOf(
       COMPLETE_SITE,
@@ -1858,7 +1840,7 @@ describe('insuredCoverageOf (T-E2)', () => {
   });
 
   it('suma en centavos y no mezcla monedas', () => {
-    const withPrices = (prices: readonly [string, string, string]): AvailabilitySite => ({
+    const withPrices = (prices: readonly [string, string, string]): MedicationAvailabilitySite => ({
       ...COMPLETE_SITE,
       products: COMPLETE_SITE.products.map((product, index) => ({
         ...product,
@@ -1895,7 +1877,7 @@ describe('sampleInsuranceApprovals (T-E2, datos de ejemplo)', () => {
 
 describe('orderDraftOf (FAR-I2)', () => {
   it('con la sede completa: cada renglón con su presentación, su precio y su moneda', () => {
-    const orderDraft = orderDraftOf('m-1', DISPONIBILIDAD_FIXTURE.items[0], QUERYABLE, []);
+    const orderDraft = orderDraftOf('m-1', MEDICATION_AVAILABILITY_FIXTURE.items[0], QUERYABLE, []);
 
     expect(orderDraft.farmacia).toBe('Farmacia Andina');
     expect(orderDraft.sede).toBe('Sucursal Centro');
@@ -1915,7 +1897,7 @@ describe('orderDraftOf (FAR-I2)', () => {
   });
 
   it('con la sede parcial: lo que falta va igual, dicho claro y sin inventar precio', () => {
-    const orderDraft = orderDraftOf('m-1', DISPONIBILIDAD_FIXTURE.items[1], QUERYABLE, []);
+    const orderDraft = orderDraftOf('m-1', MEDICATION_AVAILABILITY_FIXTURE.items[1], QUERYABLE, []);
 
     // La amoxicilina está en `missingProductIds`: viaja como no disponible.
     const amoxicillin = orderDraft.lineas[0];
@@ -1929,7 +1911,7 @@ describe('orderDraftOf (FAR-I2)', () => {
   });
 
   it('un medicamento sin producto publicado entra como renglón no disponible', () => {
-    const orderDraft = orderDraftOf('m-1', DISPONIBILIDAD_FIXTURE.items[0], QUERYABLE, [
+    const orderDraft = orderDraftOf('m-1', MEDICATION_AVAILABILITY_FIXTURE.items[0], QUERYABLE, [
       'Paracetamol',
     ]);
 
@@ -1981,7 +1963,7 @@ describe('where-to-buy.css usa solo tokens declarados', () => {
 describe('cartLinesFromDraft (carril 43 · H5)', () => {
   it('deja afuera lo que la sede no puede confirmar y lo devuelve por su nombre', () => {
     // La sede parcial: la amoxicilina está en `missingProductIds`.
-    const orderDraft = orderDraftOf('m-1', DISPONIBILIDAD_FIXTURE.items[1], QUERYABLE, []);
+    const orderDraft = orderDraftOf('m-1', MEDICATION_AVAILABILITY_FIXTURE.items[1], QUERYABLE, []);
 
     const { lines, omitted } = cartLinesFromDraft(orderDraft);
 
@@ -1990,7 +1972,7 @@ describe('cartLinesFromDraft (carril 43 · H5)', () => {
   });
 
   it('deja afuera el medicamento sin producto publicado', () => {
-    const orderDraft = orderDraftOf('m-1', DISPONIBILIDAD_FIXTURE.items[0], QUERYABLE, [
+    const orderDraft = orderDraftOf('m-1', MEDICATION_AVAILABILITY_FIXTURE.items[0], QUERYABLE, [
       'Paracetamol',
     ]);
 
@@ -2003,7 +1985,7 @@ describe('cartLinesFromDraft (carril 43 · H5)', () => {
   });
 
   it('cada línea conserva precio, presentación y cantidad, y declara que exige receta', () => {
-    const orderDraft = orderDraftOf('m-1', DISPONIBILIDAD_FIXTURE.items[0], QUERYABLE, []);
+    const orderDraft = orderDraftOf('m-1', MEDICATION_AVAILABILITY_FIXTURE.items[0], QUERYABLE, []);
 
     const { lines } = cartLinesFromDraft(orderDraft);
 
@@ -2020,7 +2002,7 @@ describe('cartLinesFromDraft (carril 43 · H5)', () => {
   });
 
   it('una sede que no puede confirmar nada devuelve cero líneas', () => {
-    const orderDraft = orderDraftOf('m-1', DISPONIBILIDAD_FIXTURE.items[0], [], [
+    const orderDraft = orderDraftOf('m-1', MEDICATION_AVAILABILITY_FIXTURE.items[0], [], [
       'Paracetamol',
       'Amoxicilina',
     ]);
@@ -2043,7 +2025,7 @@ describe('cartLinesFromDraft (carril 43 · H5)', () => {
  */
 describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
   it('con `requestId`, el cuerpo del POST incluye `medicationRequestId`', () => {
-    const orderDraft = orderDraftOf('m-1', DISPONIBILIDAD_FIXTURE.items[0], QUERYABLE, []);
+    const orderDraft = orderDraftOf('m-1', MEDICATION_AVAILABILITY_FIXTURE.items[0], QUERYABLE, []);
 
     const body = createOrderRequest(
       { borrador: orderDraft, modalidad: 'RETIRO', direccionDeEntrega: null },
@@ -2054,7 +2036,7 @@ describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
   });
 
   it('sin receta detrás (carrito libre), la clave no viaja', () => {
-    const orderDraft = orderDraftOf('', DISPONIBILIDAD_FIXTURE.items[0], QUERYABLE, []);
+    const orderDraft = orderDraftOf('', MEDICATION_AVAILABILITY_FIXTURE.items[0], QUERYABLE, []);
 
     const body = createOrderRequest(
       { borrador: orderDraft, modalidad: 'RETIRO', direccionDeEntrega: null },
@@ -2069,6 +2051,35 @@ describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
 function byTestId(id: string): string {
   return `[data-testid="${id}"]`;
 }
+
+describe('pendingImagingStudies', () => {
+  const concept = (conceptId: string, code: string, display: string) =>
+    [conceptId, { conceptId, code, display, codeSystemVersionId: 'v1' }] as const;
+  const labels = new Map([
+    concept('c-eco', 'STUDY-ECO-ABD', 'Ecografía abdominal'),
+    concept('c-glu', 'STUDY-GLUCOSA', 'Glucosa'),
+  ]);
+  const sortOrder = (id: string, codeConceptId: string) => ({
+    id,
+    codeConceptId,
+    statusConceptId: 's-1',
+    createdAt: new Date('2026-10-01T10:00:00Z'),
+    hasReleasedResult: false,
+  });
+
+  it('sin categoría, un análisis de laboratorio no cuenta como imagen', () => {
+    expect(pendingImagingStudies([sortOrder('o-1', 'c-eco'), sortOrder('o-2', 'c-glu')], labels)).toEqual([
+      { conceptId: 'c-eco', name: 'Ecografía abdominal' },
+    ]);
+  });
+});
+
+describe('partialCountLabel', () => {
+  it('concuerda en singular y en plural', () => {
+    expect(partialCountLabel(1, 'la', 'las')).toBe('Ver la que tiene una parte');
+    expect(partialCountLabel(3, 'los', 'los')).toBe('Ver los 3 que tienen una parte');
+  });
+});
 
 describe('pendingImagingStudies con los códigos de la API', () => {
   const concept = (conceptId: string, code: string, display: string) =>

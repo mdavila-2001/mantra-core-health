@@ -3,7 +3,8 @@
  *
  * Copian las respuestas de `/pharmacies/:pharmacyId/integration-connections`
  * de la API: dos altas que ya existían (la conexión y el vínculo de un
- * producto) y las lecturas y la sincronización que agregó FAR-07. Los nombres
+ * producto), las lecturas y la sincronización que agregó FAR-07, y corregir y
+ * deshacer un vínculo con el detalle por sede de FAR-C8. Los nombres
  * de campo son los de la API, sin traducir.
  */
 
@@ -22,9 +23,53 @@ export interface IntegrationConnection {
   readonly integrationMode: IntegrationMode;
   readonly supportsStockQuery: boolean;
   readonly status: IntegrationConnectionStatus;
-  /** Si la API sabe dónde está el sistema de la farmacia. */
+  /**
+   * Si hay con quién sincronizar: el sistema propio de la farmacia o, si no
+   * tiene, el que configura el servidor.
+   */
   readonly providerConfigured: boolean;
+  /**
+   * El sistema propio de la farmacia (FAR-C9 · C9-3), sin la clave; `null` si
+   * la conexión usa el del servidor o trabaja en manual. Opcional: una API
+   * anterior a C9-3 no lo manda.
+   */
+  readonly system?: ExternalSystemSummary | null;
   readonly createdAt: string;
+}
+
+/** Formatos de sistema que la plataforma sabe leer. */
+export const EXTERNAL_SYSTEM_FORMATS = ['ALOVIDA_STANDARD', 'SIMULATED_CHAIN'] as const;
+
+export type ExternalSystemFormat = (typeof EXTERNAL_SYSTEM_FORMATS)[number];
+
+/** Lo que la API muestra del sistema de la farmacia. Nunca trae la clave. */
+export interface ExternalSystemSummary {
+  readonly format: ExternalSystemFormat;
+  readonly baseUrl: string;
+  readonly externalPharmacyCode: string;
+  /** Si hay una clave guardada. */
+  readonly apiKeyConfigured: boolean;
+  readonly configuredAt: string;
+}
+
+/** `PUT …/:connectionId/external-system`. La clave viaja solo acá. */
+export interface ExternalSystemDraft {
+  readonly format: ExternalSystemFormat;
+  readonly baseUrl: string;
+  readonly externalPharmacyCode: string;
+  readonly apiKey: string;
+}
+
+/** Respuesta del `PUT`: el sistema guardado y que respondió al probarlo. */
+export interface ExternalSystemSaved {
+  readonly system: ExternalSystemSummary;
+  readonly probe: 'OK';
+}
+
+/** `POST …/:connectionId/external-system/test`. */
+export interface ExternalSystemProbe {
+  readonly status: 'OK';
+  readonly source: 'PHARMACY' | 'SERVER';
 }
 
 /** `GET /pharmacies/:pharmacyId/integration-connections`. */
@@ -55,7 +100,32 @@ export interface ProductMapping {
   readonly pharmacyProductId: string;
   readonly productCode: string;
   readonly productName: string;
+  /**
+   * La unidad del sistema de la farmacia que equivale a una del producto, o
+   * `null` si el vínculo no la declara (entonces la sincronización no la mira).
+   * Opcional: una API anterior a FAR-C8 no la manda.
+   */
+  readonly externalUnitCode?: string | null;
   readonly createdAt: string;
+}
+
+/**
+ * La corrección de un vínculo (`PATCH …/product-mappings/:mappingId`): lo que
+ * no viaja no cambia, y al menos un campo. `externalUnitCode: null` borra la
+ * unidad. El vínculo vuelve a quedar sin verificar.
+ */
+export interface ProductMappingUpdate {
+  readonly pharmacyProductId?: string;
+  readonly externalProductCode?: string;
+  readonly externalUnitCode?: string | null;
+}
+
+/** Un vínculo tal como lo devuelve la API al corregirlo o deshacerlo (200). */
+export interface ProductMappingChanged {
+  readonly id: string;
+  readonly pharmacyProductId: string;
+  readonly externalProductCode: string;
+  readonly externalUnitCode?: string | null;
 }
 
 /** `GET …/:connectionId/product-mappings`. */
@@ -78,6 +148,12 @@ export interface ProductMappingCreated {
   readonly externalProductCode: string;
 }
 
+/**
+ * Cómo está vinculado un código del sistema de la farmacia: a un solo producto,
+ * a ninguno o a más de uno (`AMBIGUOUS`: la sincronización no lo aplica).
+ */
+export type ExternalMappingStatus = 'MAPPED' | 'UNMAPPED' | 'AMBIGUOUS';
+
 /** Un producto tal como lo nombra el sistema de la farmacia. */
 export interface ExternalProduct {
   readonly code: string;
@@ -86,6 +162,10 @@ export interface ExternalProduct {
   readonly unitCode: string | null;
   /** El producto del catálogo al que ya está vinculado, o `null`. */
   readonly mappedProductId: string | null;
+  /** Opcional: una API anterior a FAR-C8 sólo manda `mappedProductId`. */
+  readonly mappingStatus?: ExternalMappingStatus;
+  /** Todos los productos que nombran este código; más de uno con `AMBIGUOUS`. */
+  readonly mappedProductIds?: readonly string[];
 }
 
 /** `GET …/:connectionId/external-products`. */
@@ -116,18 +196,89 @@ export interface SyncBatchList {
 export interface UnmappedExternalProduct {
   readonly externalCode: string;
   readonly name: string;
+  /**
+   * `NO_MAPPING`: ningún vínculo lo nombra (se vincula). `AMBIGUOUS_MAPPING`:
+   * lo nombran vínculos a más de un producto (se deshacen los que sobran).
+   */
+  readonly reason?: UnmappedReason;
+  /** Los productos que se disputan el código; vacío con `NO_MAPPING`. */
+  readonly productIds?: readonly string[];
 }
 
-/** `POST …/:connectionId/sync` (200). */
+export type UnmappedReason = 'NO_MAPPING' | 'AMBIGUOUS_MAPPING';
+
+/** Las cuentas de una sede en una sincronización: `received = mapped + unmapped`. */
+export interface SyncSiteSummary {
+  readonly siteId: string;
+  readonly siteCode: string;
+  readonly siteName: string;
+  readonly received: number;
+  /** `applied + unchanged + skipped`. */
+  readonly mapped: number;
+  readonly unmapped: number;
+  readonly applied: number;
+  /** Líneas que llegaron con el mismo stock que ya había. */
+  readonly unchanged: number;
+  /** Líneas con vínculo que no se aplicaron (detalle en `skipped`). */
+  readonly skipped: number;
+}
+
+/** Por qué una línea con vínculo no se aplicó al stock de la sede. */
+export const SYNC_SKIP_REASONS = [
+  'PRODUCT_NOT_AVAILABLE',
+  'PRODUCT_NOT_PUBLISHED',
+  'PRODUCT_OUT_OF_STOCK_DECLARED',
+  'SITE_PRODUCT_KEPT_BY_LOTS',
+  'SITE_MARKED_NOT_AVAILABLE',
+  'UNIT_MISMATCH',
+  'UNIT_NOT_REPORTED',
+] as const;
+
+export type SyncSkipReason = (typeof SYNC_SKIP_REASONS)[number];
+
+/** Una línea con vínculo que no se aplicó: la sede conserva lo que tenía. */
+export interface SyncSkippedLine {
+  readonly siteId: string;
+  readonly siteCode: string;
+  readonly externalCode: string;
+  readonly productId: string;
+  readonly quantity: number;
+  readonly reason: SyncSkipReason;
+  /** Sólo con los motivos de unidad. */
+  readonly mappingUnitCode?: string | null;
+  readonly externalUnitCode?: string | null;
+}
+
+/** Un código vinculado que el sistema de la farmacia no mandó para una sede. */
+export interface SyncNotSentLine {
+  readonly siteId: string;
+  readonly siteCode: string;
+  readonly externalCode: string;
+  readonly productId: string;
+}
+
+/**
+ * `POST …/:connectionId/sync` (200).
+ *
+ * Las cuentas son **líneas**: un código en una sede. Con dos sedes, un producto
+ * cuenta dos veces, y `received = mapped + unmappedLines`. Los campos por sede
+ * son de FAR-C8 y opcionales: una API anterior no los manda.
+ */
 export interface SyncResult {
   readonly batchId: string;
-  /** Ítems que mandó el sistema de la farmacia. */
+  /** Líneas que mandó el sistema de la farmacia. */
   readonly received: number;
-  /** Ítems con producto vinculado. */
+  /** Líneas con un producto vinculado. */
   readonly mapped: number;
+  /** Líneas sin un vínculo único: `received - mapped`. */
+  readonly unmappedLines?: number;
+  /** Los códigos sin vínculo único, una vez cada uno. */
   readonly unmapped: readonly UnmappedExternalProduct[];
-  /** Existencias que cambiaron de verdad; `0` si ya estaban al día. */
+  /** Líneas que cambiaron el stock; `0` si ya estaban al día. */
   readonly applied: number;
+  readonly sites?: readonly SyncSiteSummary[];
+  readonly skipped?: readonly SyncSkippedLine[];
+  readonly notSent?: readonly SyncNotSentLine[];
 }
 
 /** Los `reason` de la API que la pestaña sabe decir. */
@@ -135,6 +286,11 @@ export const INTEGRATION_ERROR_REASONS = [
   'PHARMACY_INTEGRATION_NOT_CONFIGURED',
   'PHARMACY_INTEGRATION_CONNECTION_INACTIVE',
   'PHARMACY_INTEGRATION_UNAVAILABLE',
+  'PHARMACY_INTEGRATION_HOST_NOT_ALLOWED',
+  'PHARMACY_INTEGRATION_URL_INVALID',
+  'EXTERNAL_MAPPING_NOT_AVAILABLE',
+  'EXTERNAL_MAPPING_PRODUCT_TAKEN',
+  'EXTERNAL_MAPPING_EMPTY_UPDATE',
 ] as const;
 
 export type IntegrationErrorReason = (typeof INTEGRATION_ERROR_REASONS)[number];
