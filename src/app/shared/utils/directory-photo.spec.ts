@@ -2,6 +2,7 @@ import {
   directoryPhoto,
   specialtyPhoto,
   verticalPhoto,
+  verticalPhotoSrcset,
   diagnosisCenterTheme,
 } from './directory-photo';
 
@@ -55,5 +56,16 @@ describe('temas', () => {
       'insurers-directory',
     ];
     expect(new Set(rutas.map(verticalPhoto)).size).toBe(rutas.length);
+  });
+
+  it('la portada usa sus fotos en alta resolución, con los tres anchos (01/11/2026)', () => {
+    expect(verticalPhoto('/insurers-directory')).toBe(
+      '/alovida/directorio/portada/aseguradora-1600.jpg',
+    );
+    expect(verticalPhotoSrcset('/pharmacies-directory')).toBe(
+      '/alovida/directorio/portada/farmacia-960.jpg 960w, ' +
+        '/alovida/directorio/portada/farmacia-1600.jpg 1600w, ' +
+        '/alovida/directorio/portada/farmacia-2400.jpg 2400w',
+    );
   });
 });
