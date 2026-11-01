@@ -4,7 +4,7 @@ import type { Subscription } from 'rxjs';
 import { UiVisibilityAdminClient } from '../../../../core/data-access/ui-visibility/ui-visibility-admin.client';
 import type { UiElement } from '../../../../core/data-access/ui-visibility/ui-visibility.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { loading, ready } from '../../../../core/view-state/view-state';
+import { loading, ready, stale } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { pathText } from './visibility-labels';
@@ -61,9 +61,18 @@ export class UiElementIndex {
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
-  load(): void {
+  /**
+   * Vuelve a leer el catálogo sin vaciar lo que se ve: mientras llega, el índice queda «atrasado»
+   * (S7) con los datos anteriores, así las rutas legibles y las cifras no parpadean.
+   */
+  refresh(): void {
+    const s = this.state();
+    this.load(s.status === 'ready' || s.status === 'stale' ? stale(s.data, new Date()) : loading());
+  }
+
+  load(initial: ViewState<readonly UiElement[]> = loading()): void {
     this.pending?.unsubscribe();
-    this.state.set(loading());
+    this.state.set(initial);
     const all: UiElement[] = [];
     const next = (cursor: string | undefined, pages: number): void => {
       this.pending = this.client.listElements({ limit: PAGE, ...(cursor ? { cursor } : {}) }).subscribe({

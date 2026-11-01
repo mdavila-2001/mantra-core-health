@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import type { UiVisibilityRule } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
 import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
-import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
@@ -26,23 +25,17 @@ const FILTER_KEYS = ['element', 'subjectType', 'state'] as const;
  */
 @Component({
   selector: 'app-portal-ui-rules-page',
-  imports: [AppButton, Card, MetricCard, Tab, Tabs, PageHeader, VisibilityNotice, RulesPanel, RuleFormPanel],
+  imports: [Card, MetricCard, Tab, Tabs, PageHeader, VisibilityNotice, RulesPanel, RuleFormPanel],
   template: `
     <!-- Una sola cabecera sobre el lienzo; las migas viven en la barra superior del portal. -->
     <app-page-header
       title="Reglas de visibilidad"
       subtitle="Mostrar u ocultar un elemento de la interfaz para una persona, una organización, un rol, un tipo de organización o todos. Cada regla lleva su motivo y su vigencia; no se borran, se terminan."
-    >
-      @if (tabIndex() === 0) {
-        <button app-button page-actions variant="primary" data-testid="ui-rules-new" (clicked)="selectTab(1)">
-          Nueva regla
-        </button>
-      }
-    </app-page-header>
+    />
     <div class="rules-page">
       <app-visibility-notice />
       <section class="rules-page__metrics" aria-label="Resumen de las reglas" data-testid="ui-rules-metrics">
-        <app-metric-card label="Reglas vigentes" icon="sliders" [value]="metric(totals().rules)" hint="Según el catálogo, al abrir la pantalla" />
+        <app-metric-card label="Reglas vigentes" icon="sliders" [value]="metric(totals().rules)" hint="Según el catálogo; se actualiza con cada cambio" />
         <app-metric-card
           label="Elementos con reglas"
           icon="eye-off"
@@ -59,7 +52,7 @@ const FILTER_KEYS = ['element', 'subjectType', 'state'] as const;
       <app-card class="rules-page__card" variant="outlined" padding="md" data-testid="portal-ui-rules">
         <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
           <app-tab label="Reglas">
-            <app-visibility-rules-panel [values]="filters()" [notice]="notice()" />
+            <app-visibility-rules-panel [values]="filters()" [notice]="notice()" (changed)="index.refresh()" />
           </app-tab>
           <app-tab label="Nueva regla">
             @if (tabIndex() === 1) {
@@ -83,21 +76,21 @@ const FILTER_KEYS = ['element', 'subjectType', 'state'] as const;
       inline-size: 100%;
       margin-inline: auto;
     }
-    /* Teléfono y tableta: las cifras en un carril de una fila; desde escritorio, en rejilla. */
+    /* Tres cifras en dos columnas (la primera a lo ancho); desde escritorio, tres. */
     .rules-page__metrics {
       display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(15rem, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: var(--sp-3);
-      overflow-x: auto;
-      padding-block-end: var(--sp-1);
-      scrollbar-width: thin;
+    }
+    .rules-page__metrics > :first-child {
+      grid-column: 1 / -1;
     }
     @media (min-width: 1024px) {
       .rules-page__metrics {
-        grid-auto-flow: row;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        overflow-x: visible;
+      }
+      .rules-page__metrics > :first-child {
+        grid-column: auto;
       }
     }
     .rules-page__metrics app-metric-card {
@@ -153,6 +146,8 @@ export class UiRulesPage {
   protected created(rule: UiVisibilityRule): void {
     // La regla nueva puede tocar a quien la creó: su interfaz se pone al día sin recargar la página.
     this.visibility.refresh();
+    // Las cifras de la cabecera salen del índice del catálogo: se relee para que cuenten la regla nueva.
+    this.index.refresh();
     this.notice.set(
       `Se creó la regla: ${effectLabel(rule.effect).label.toLowerCase()} «${this.index.path(rule.elementKey)}» para ${rule.subjectLabel ?? 'todos'}.`,
     );

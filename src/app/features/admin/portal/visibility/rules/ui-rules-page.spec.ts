@@ -127,7 +127,12 @@ describe('UiRulesPage', () => {
       saving(): boolean;
     };
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // Las cifras de la cabecera releen el índice del catálogo tras cada cambio; esa relectura no es
+    // lo que prueba cada caso, así que se responde aquí (los casos que la prueban la piden antes).
+    http.match((r) => r.url === ELEMENTS).forEach((r) => r.flush({ items: ELEMENT_LIST, nextCursor: null, total: 3 }));
+    http.verify();
+  });
 
   describe('lista', () => {
     it('muestra cada regla con su efecto, la ruta del elemento, el sujeto, la vigencia y el motivo', async () => {
@@ -191,6 +196,17 @@ describe('UiRulesPage', () => {
       req.flush(rule('r1', { validTo: '2026-10-31T12:00:00.000Z', version: 2 }));
       harness.detectChanges();
       expect(byTestId('ui-rules-done')!.textContent).toContain('Quedó en el historial');
+      flush([ENDED]);
+    });
+
+    it('al terminarla, las cifras de la cabecera vuelven a leer el catálogo', async () => {
+      await open();
+      flush();
+      all('ui-rule-end')[0]!.click();
+      await harness.fixture.whenStable();
+      http.expectOne(`${RULES}/r1/end`).flush(rule('r1', { validTo: '2026-10-31T12:00:00.000Z', version: 2 }));
+      harness.detectChanges();
+      expect(http.match((r) => r.url === ELEMENTS).length).toBeGreaterThan(0);
       flush([ENDED]);
     });
 
