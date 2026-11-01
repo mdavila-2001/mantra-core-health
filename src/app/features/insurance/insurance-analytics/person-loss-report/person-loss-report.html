@@ -23,6 +23,7 @@
         {{ report() === null ? 'Generar informe' : 'Volver a generar' }}
       </button>
       <button
+        *appVisible="ui.personReportExport"
         app-button
         type="button"
         variant="outline"

@@ -117,13 +117,36 @@ export interface FitHistoryEntry {
   readonly blindSpots: readonly string[];
 }
 
+/** De dónde se leyó el resultado (`FitRetentionDto.kind` de la API, desde 4cd7edea). */
+export type FitRetentionKind = 'BASE_DE_DATOS' | 'MEMORIA_DEL_PROCESO';
+
+/** Desenlace de la última escritura en `data_catalog.catalog_fit_runs` que intentó el proceso de la API. */
+export type FitPersistenceState = 'GUARDADA' | 'CLAVE_REPETIDA' | 'NO_GUARDADA' | 'SIN_INTENTO';
+
+export interface FitPersistenceStatus {
+  readonly state: FitPersistenceState;
+  readonly runId: string | null;
+  readonly at: string | null;
+  /** La clase del error (p. ej. `QueryFailedError`), nunca el mensaje. */
+  readonly errorCode: string | null;
+}
+
 export interface FitRetention {
-  readonly kind: 'MEMORIA_DEL_PROCESO';
+  /**
+   * `BASE_DE_DATOS`: leído de `data_catalog.catalog_fit_runs` (sobrevive a un reinicio, lo ven todas las réplicas).
+   * `MEMORIA_DEL_PROCESO`: sin repositorio o con la base caída; `fallbackReason` dice por qué.
+   */
+  readonly kind: FitRetentionKind;
+  /** Por qué se cayó a memoria (`BD_NO_DISPONIBLE:Error`…), o `null` si se leyó de la base. */
+  readonly fallbackReason: string | null;
   readonly ttlSeconds: number;
   readonly historySize: number;
   readonly tickIntervalSeconds: number;
   /** Pasado esto el resultado se sirve como `ATRASADO`. */
   readonly staleAfterSeconds: number;
+  /** Cuánto guarda la base las corridas (purga a 30 días), o `null` si no hay repositorio. */
+  readonly storedForSeconds: number | null;
+  readonly lastWrite: FitPersistenceStatus;
   readonly note: string;
 }
 

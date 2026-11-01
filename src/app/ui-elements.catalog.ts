@@ -14,3 +14,4 @@
  * **Visibilidad, no seguridad:** catalogar un elemento no lo protege; la API autoriza cada petición.
  */
 import './features/dashboard/dashboard.ui-elements';
+import './features/insurance/insurance-analytics/insurance-analytics.ui-elements';

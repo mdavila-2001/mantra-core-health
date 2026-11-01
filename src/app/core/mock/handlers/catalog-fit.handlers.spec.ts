@@ -10,9 +10,9 @@ describe('sonda de ajuste simulada: mismo contrato que /admin/catalog/fit', () =
   const paciente = buscarUsuario('paciente')!;
   let ahora = Date.UTC(2026, 9, 31, 12, 0, 0);
 
-  function montar() {
+  function montar(fuente?: 'BASE_DE_DATOS' | 'MEMORIA_DEL_PROCESO') {
     const router = new MockRouter();
-    registrarSondaCatalogo(router, () => ahora);
+    registrarSondaCatalogo(router, () => ahora, fuente);
     function pedir(
       method: MockMethod,
       path: string,
@@ -64,6 +64,25 @@ describe('sonda de ajuste simulada: mismo contrato que /admin/catalog/fit', () =
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ids) expect(id).toMatch(/^FIT-[A-Z]{3}-\d{3}$/);
     expect(r.retention.kind).toBe('MEMORIA_DEL_PROCESO');
+  });
+
+  it('sin base declara la caída a memoria: motivo, sin plazo de guardado y sin escritura intentada', () => {
+    const { retention } = montar().leer();
+    expect(retention.kind).toBe('MEMORIA_DEL_PROCESO');
+    expect(retention.fallbackReason).toBe('SIMULADO_SIN_BASE');
+    expect(retention.storedForSeconds).toBeNull();
+    expect(retention.lastWrite).toEqual({ state: 'SIN_INTENTO', runId: null, at: null, errorCode: null });
+    expect(retention.note).toContain('memoria');
+  });
+
+  it('con base (como la API desde 4cd7edea) lee de catalog_fit_runs: sin motivo de caída, 30 días y la última escritura guardada', () => {
+    const r = montar('BASE_DE_DATOS').leer();
+    expect(r.retention.kind).toBe('BASE_DE_DATOS');
+    expect(r.retention.fallbackReason).toBeNull();
+    expect(r.retention.storedForSeconds).toBe(30 * 86_400);
+    expect(r.retention.lastWrite.state).toBe('GUARDADA');
+    expect(r.retention.lastWrite.runId).toBe(r.lastRun!.runId);
+    expect(r.retention.lastWrite.errorCode).toBeNull();
   });
 
   it('cubre los cinco estados de una comprobación y un veredicto DESAJUSTADA', () => {

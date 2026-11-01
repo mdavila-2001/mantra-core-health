@@ -2,64 +2,72 @@
  "comment": "Llamadas del front que el contrato de dev todavia no declara. Cada una lleva su motivo; el gate avisa si el contrato ya la declara (entrada vencida, se borra de aca).",
  "gaps": [
   {
-   "call": "GET /admin/analytics/onboarding/funnel",
-   "reason": "El controlador existe en la rama test de la API (telemetry-onboarding-analytics.controller.ts) y no en dev; la pantalla vino de test en 0f9c8b77c."
-  },
-  {
-   "call": "GET /admin/analytics/onboarding/heatmap",
-   "reason": "Igual que el embudo de altas: controlador solo en la rama test de la API."
-  },
-  {
-   "call": "GET /admin/ops/instances/liveness",
-   "reason": "Sonda de vida de instancias (doc 04-sonda-de-vida §2.4): la API la implementa en paralelo (31/10/2026) y el OpenAPI de dev todavia no la publica."
-  },
-  {
-   "call": "GET /admin/ops/tools",
-   "reason": "Herramientas de la plataforma (doc 03-herramientas-e-instancias §4.2): la API la implementa en paralelo (31/10/2026) y el OpenAPI de dev todavia no la publica."
-  },
-  {
-   "call": "GET /admin/analytics/devices",
-   "reason": "Desglose de dispositivos (misma franja): el DTO analytics-devices.dto.ts existe en la API en curso y aún no llegó al openapi de dev. Simulador alineado al contrato acordado; se borra de acá al refrescar el contrato."
-  },
-  {
-   "call": "GET /admin/analytics/money",
-   "reason": "Dinero por módulo, moneda y tipo de importe (franja 2026-10-30, «Medición por funcionalidad»): lo está implementando otro agente en la API y aún no está en el openapi de dev. El front lo consume con un simulador (marcado SIMULADO) alineado al contrato acordado: items[{module,moduleLabel,kind,currency,operations,amount:string}] + notMeasured; se borra de acá al ejecutar yarn contract:refresh con la API publicada."
-  },
-  {
-   "call": "GET /admin/bulk-imports/templates",
-   "reason": "Motor de cargas masivas (franja 2026-10-30, H6/H7): el módulo bulk_import está implementado en la API en curso (mantra-core-health-api/src/modules/bulk_import) y aún no llegó al openapi de dev. El front lo consume con un simulador declarado (SIMULADO) alineado a ese módulo; se borra de acá al ejecutar yarn contract:refresh con la API publicada."
-  },
-  {
-   "call": "GET /admin/bulk-imports/templates/{kind}",
-   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
-  },
-  {
-   "call": "GET /admin/bulk-imports",
-   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
-  },
-  {
-   "call": "POST /admin/bulk-imports",
-   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
-  },
-  {
-   "call": "POST /admin/bulk-imports/{id}/confirm",
-   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
-  },
-  {
-   "call": "GET /admin/bulk-imports/{id}",
-   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
-  },
-  {
-   "call": "GET /admin/bulk-imports/{id}/report",
-   "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
-  },
-  {
    "call": "GET /admin/catalog/fit",
    "reason": "Sonda de ajuste de la catalogación (franja 2026-10-31): la API la implementa en paralelo (mantra-core-health-api/src/modules/data_catalog/application/fit) y el OpenAPI de dev todavía no la publica. El front la consume con un simulador declarado (SIMULADO) alineado al DTO catalog-fit.dto.ts; se borra de acá al ejecutar yarn contract:refresh con la API publicada."
   },
   {
    "call": "POST /admin/catalog/fit/run",
    "reason": "Misma razón que GET /admin/catalog/fit: pedir una corrida de la sonda de ajuste (202, Idempotency-Key obligatoria), aún sin openapi en dev."
+  },
+  {
+   "call": "GET /admin/catalogs/services/scopes",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/billing/controllers/admin-service-catalog.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/governance/data-quality/issues",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/governance_admin/controllers/admin-data-quality.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/governance/data-quality/issues/{id}",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/governance_admin/controllers/admin-data-quality.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "POST /admin/governance/data-quality/issues/{id}/resolution",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/governance_admin/controllers/admin-data-quality.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/governance/data-quality/rules",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/governance_admin/controllers/admin-data-quality.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/governance/data-quality/rules/{id}",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/governance_admin/controllers/admin-data-quality.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/catalog/pii/reconciliation",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/data_catalog/presentation/controllers/admin-catalog.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/governance/mutability",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/system_ops/mutability/controllers/mutability.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/governance/mutability/summary",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/system_ops/mutability/controllers/mutability.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/governance/mutability/{schema}/{table}",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/system_ops/mutability/controllers/mutability.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /privacy/dsar",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/audit/controllers/privacy.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /privacy/dsar/{id}",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/audit/controllers/privacy.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/ops/runtime-pieces",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/platform_ops/runtime_pieces/runtime-pieces.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "GET /admin/ops/runtime-pieces/{id}",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/platform_ops/runtime_pieces/runtime-pieces.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
+  },
+  {
+   "call": "POST /admin/ops/runtime-pieces/discover",
+   "reason": "El controlador está en dev de la API (75b2a898, src/modules/platform_ops/runtime_pieces/runtime-pieces.controller.ts) pero openapi/openapi.json de dev no se regeneró desde que llegó (docs:openapi:generate exige yarn build de la API). Se borra de acá al regenerar el openapi y correr yarn contract:refresh."
   }
  ]
 }

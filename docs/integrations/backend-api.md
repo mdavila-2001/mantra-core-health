@@ -2237,3 +2237,126 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 |---|---|---|---|
 | `GET` | `/terminology/concepts/:conceptId/glossary-article` | `TerminologyClient` | No |
 | `GET` | `/terminology/concepts/:conceptId/glossary-neighborhood` | `TerminologyClient` | No |
+
+## Gobierno del portal admin y visibilidad de la interfaz (31/10/2026)
+
+Clientes que agregó la franja `docs/trabajo/2026-10-31-visibilidad-rbac/` (gobierno de permisos, matriz RBAC
+por módulo, mutabilidad, sondas, políticas y datos personales, privacidad, catálogos globales y visibilidad de la
+interfaz). Los controladores están en `dev` de la API; varios todavía no figuran en su `openapi.json` (brechas
+declaradas en `scripts/contracts/admin-portal-known-gaps.json`). La visibilidad la consumen `UiVisibilityClient`
+(`GET /me/ui-visibility`, sincronización del catálogo) y `UiVisibilityAdminClient` (portal); `UiElementIndex`
+(`features/admin/portal/visibility/element-index.ts`) es el índice en memoria del catálogo que usan sus pantallas y no
+hace peticiones propias: lee con `UiVisibilityAdminClient`.
+
+### `AuthzGovernanceClient` — 13 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/authz/access-reviews` | `AuthzGovernanceClient` | No |
+| `GET` | `/authz/access-reviews/due` | `AuthzGovernanceClient` | No |
+| `GET` | `/authz/permissions/:permissionId/holders` | `AuthzGovernanceClient` | No |
+| `GET` | `/authz/resource-scope-grants` | `AuthzGovernanceClient` | No |
+| `POST` | `/authz/resource-scope-grants` | `AuthzGovernanceClient` | No |
+| `GET` | `/authz/roles/:roleId/field-permissions` | `AuthzGovernanceClient` | No |
+| `PUT` | `/authz/roles/:roleId/field-permissions` | `AuthzGovernanceClient` | No |
+| `PUT` | `/authz/roles/:roleId/permissions` | `AuthzGovernanceClient` | No |
+| `POST` | `/authz/simulations` | `AuthzGovernanceClient` | No |
+| `GET` | `/authz/users/:userId/access-map` | `AuthzGovernanceClient` | No |
+| `POST` | `/authz/users/:userId/access-reviews` | `AuthzGovernanceClient` | No |
+| `POST` | `/iam/users/:userId/:action` | `AuthzGovernanceClient` | No |
+| `GET` | `/iam/users/:userId/lifecycle` | `AuthzGovernanceClient` | No |
+
+### `AuthzModulesCatalogClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/authz/catalog/modules` | `AuthzModulesCatalogClient` | No |
+
+### `CatalogEditorClient` — 13 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/catalogs/glossary` | `CatalogEditorClient` | No |
+| `POST` | `/admin/catalogs/glossary` | `CatalogEditorClient` | No |
+| `GET` | `/admin/catalogs/glossary/:conceptId` | `CatalogEditorClient` | No |
+| `PATCH` | `/admin/catalogs/glossary/:conceptId` | `CatalogEditorClient` | No |
+| `POST` | `/admin/catalogs/glossary/:conceptId/deactivate` | `CatalogEditorClient` | No |
+| `POST` | `/admin/catalogs/glossary/:conceptId/reactivate` | `CatalogEditorClient` | No |
+| `GET` | `/admin/catalogs/services` | `CatalogEditorClient` | No |
+| `POST` | `/admin/catalogs/services` | `CatalogEditorClient` | No |
+| `GET` | `/admin/catalogs/services/:id` | `CatalogEditorClient` | No |
+| `PATCH` | `/admin/catalogs/services/:id` | `CatalogEditorClient` | No |
+| `POST` | `/admin/catalogs/services/:id/deactivate` | `CatalogEditorClient` | No |
+| `POST` | `/admin/catalogs/services/:id/reactivate` | `CatalogEditorClient` | No |
+| `GET` | `/admin/catalogs/services/scopes` | `CatalogEditorClient` | No |
+
+### `CatalogFitClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/catalog/fit` | `CatalogFitClient` | No |
+| `POST` | `/admin/catalog/fit/run` | `CatalogFitClient` | No |
+
+### `DataQualityClient` — 5 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/governance/data-quality/issues` | `DataQualityClient` | No |
+| `GET` | `/admin/governance/data-quality/issues/:id` | `DataQualityClient` | No |
+| `POST` | `/admin/governance/data-quality/issues/:id/resolution` | `DataQualityClient` | No |
+| `GET` | `/admin/governance/data-quality/rules` | `DataQualityClient` | No |
+| `GET` | `/admin/governance/data-quality/rules/:id` | `DataQualityClient` | No |
+
+### `GovernancePoliciesClient` — 6 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/catalog/pii/columns` | `GovernancePoliciesClient` | No |
+| `GET` | `/admin/catalog/pii/reconciliation` | `GovernancePoliciesClient` | No |
+| `GET` | `/admin/catalog/pii/summary` | `GovernancePoliciesClient` | No |
+| `GET` | `/admin/governance/change-log` | `GovernancePoliciesClient` | No |
+| `GET` | `/admin/governance/policies` | `GovernancePoliciesClient` | No |
+| `GET` | `/admin/governance/policies/:type/:id` | `GovernancePoliciesClient` | No |
+
+### `MutabilityClient` — 3 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/governance/mutability` | `MutabilityClient` | No |
+| `GET` | `/admin/governance/mutability/:schema/:table` | `MutabilityClient` | No |
+| `GET` | `/admin/governance/mutability/summary` | `MutabilityClient` | No |
+
+### `PrivacyRequestsClient` — 3 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/privacy/dsar` | `PrivacyRequestsClient` | No |
+| `GET` | `/privacy/dsar/:id` | `PrivacyRequestsClient` | No |
+| `PATCH` | `/privacy/dsar/:id` | `PrivacyRequestsClient` | No |
+
+### `RuntimePiecesClient` — 3 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/ops/runtime-pieces` | `RuntimePiecesClient` | No |
+| `GET` | `/admin/ops/runtime-pieces/:id` | `RuntimePiecesClient` | No |
+| `POST` | `/admin/ops/runtime-pieces/discover` | `RuntimePiecesClient` | No |
+
+### `UiVisibilityAdminClient` — 8 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/ui-visibility/elements` | `UiVisibilityAdminClient` | No |
+| `POST` | `/admin/ui-visibility/elements` | `UiVisibilityAdminClient` | No |
+| `POST` | `/admin/ui-visibility/elements/sync` | `UiVisibilityAdminClient` | No |
+| `GET` | `/admin/ui-visibility/preview` | `UiVisibilityAdminClient` | No |
+| `GET` | `/admin/ui-visibility/rules` | `UiVisibilityAdminClient` | No |
+| `POST` | `/admin/ui-visibility/rules` | `UiVisibilityAdminClient` | No |
+| `PATCH` | `/admin/ui-visibility/rules/:id` | `UiVisibilityAdminClient` | No |
+| `POST` | `/admin/ui-visibility/rules/:id/end` | `UiVisibilityAdminClient` | No |
+
+### `UiVisibilityClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/me/ui-visibility` | `UiVisibilityClient` | No |

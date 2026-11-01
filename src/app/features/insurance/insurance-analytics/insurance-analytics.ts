@@ -23,6 +23,7 @@ import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { AppVisible } from '../../../core/visibility/visible.directive';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Progress } from '../../../shared/components/atoms/progress/progress';
@@ -51,6 +52,7 @@ import {
 } from './person-loss-report/person-loss-report.model';
 import { PersonLossReportStore } from './person-loss-report/person-loss-report.store';
 import { PersonLossReportView } from './person-loss-report/person-loss-report';
+import { INSURANCE_ANALYTICS_UI } from './insurance-analytics.ui-elements';
 
 /** Las cinco ventanas del filtro de periodo. `'all'` envía un `startDate` muy anterior. */
 type RangeOption = '30d' | '90d' | '180d' | '1y' | 'all';
@@ -145,6 +147,7 @@ interface FilaDeExportacion {
   imports: [
     Alert,
     AppButton,
+    AppVisible,
     Badge,
     Card,
     DataTable,
@@ -174,6 +177,8 @@ export class InsuranceAnalytics {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
+  /** Lo que esta pantalla puede ocultar por regla de visibilidad (`insurance-analytics.ui-elements.ts`). */
+  protected readonly ui = INSURANCE_ANALYTICS_UI;
   protected readonly rangeOptions = RANGE_OPTIONS;
 
   private readonly queryParams = toSignal(this.route.queryParamMap, {

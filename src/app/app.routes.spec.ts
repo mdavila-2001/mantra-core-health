@@ -20,7 +20,8 @@ import { tabIndex, TAB, PROFILE_TABS } from './features/account/my-profile/profi
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { ROLES_REPORTERIA } from './features/reporting/reporting-access';
 import { mockRoutes } from './features/reporting/reporting-mock.routes';
-import { routes, SECCIONES_CON_MARCO_PROPIO, SECCIONES_REDIRIGIDAS } from './app.routes';
+import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
+import { SECCIONES_CON_MARCO_PROPIO } from './app.routes.own-frame';
 import { mfaEnrollmentGuard } from './core/auth/mfa-enrollment.guard';
 import { visibilityChildGuard } from './core/visibility/visibility.guard';
 

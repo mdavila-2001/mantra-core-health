@@ -10,14 +10,8 @@ import type {
 } from '../../data-access/ui-visibility/ui-visibility.types';
 import { MockRouter, isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
-import {
-  SUJETOS_DE_LA_SEMILLA,
-  registrarVisibilidad,
-  reglaVigente,
-  reiniciarVisibilidad,
-  resolverVisibilidad,
-  type SujetoDeResolucion,
-} from './ui-visibility.handlers';
+import { SUJETOS_DE_LA_SEMILLA, registrarVisibilidad, reiniciarVisibilidad } from './ui-visibility.handlers';
+import { reglaVigente, resolverVisibilidad, type SujetoDeResolucion } from './ui-visibility.resolver';
 
 const router = new MockRouter();
 registrarVisibilidad(router);

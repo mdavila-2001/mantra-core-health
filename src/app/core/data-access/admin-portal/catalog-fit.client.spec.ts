@@ -18,10 +18,13 @@ const SIN_RESULTADO: CatalogFit = {
   history: [],
   retention: {
     kind: 'MEMORIA_DEL_PROCESO',
+    fallbackReason: 'BD_NO_DISPONIBLE:Error',
     ttlSeconds: 86_400,
     historySize: 48,
     tickIntervalSeconds: 300,
     staleAfterSeconds: 900,
+    storedForSeconds: null,
+    lastWrite: { state: 'NO_GUARDADA', runId: null, at: null, errorCode: 'Error' },
     note: 'Los resultados viven en la memoria de este proceso.',
   },
 };

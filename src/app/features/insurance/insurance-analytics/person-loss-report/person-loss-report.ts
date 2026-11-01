@@ -12,6 +12,7 @@ import { InsuranceClient } from '../../../../core/data-access/insurance/insuranc
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { AppVisible } from '../../../../core/visibility/visible.directive';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
@@ -27,6 +28,7 @@ import {
   type PersonLossRow,
   type PlanPremium,
 } from './person-loss-report.model';
+import { INSURANCE_ANALYTICS_UI } from '../insurance-analytics.ui-elements';
 import { PersonLossReportStore } from './person-loss-report.store';
 
 /** Una fila lista para la tabla: todo texto, salvo el semáforo que lleva su celda propia. */
@@ -63,7 +65,7 @@ const NOT_COMPUTABLE = '—';
  */
 @Component({
   selector: 'app-person-loss-report',
-  imports: [AppButton, Badge, DataTable, EmptyState, SearchField, ViewStateHost],
+  imports: [AppButton, AppVisible, Badge, DataTable, EmptyState, SearchField, ViewStateHost],
   templateUrl: './person-loss-report.html',
   styleUrl: './person-loss-report.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +74,8 @@ export class PersonLossReportView {
   private readonly insurance = inject(InsuranceClient);
   private readonly csv = inject(CsvExportService);
   private readonly store = inject(PersonLossReportStore);
+  /** Lo que el informe puede ocultar por regla de visibilidad (`insurance-analytics.ui-elements.ts`). */
+  protected readonly ui = INSURANCE_ANALYTICS_UI;
 
   /** `YYYY-MM-DD`; `null` = desde la primera solicitud. */
   readonly startDate = input.required<string | null>();

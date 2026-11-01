@@ -4,6 +4,7 @@
     subtitle="Tablero actuarial de siniestralidad, gasto per cápita y morbilidad de su aseguradora."
   >
     <button
+      *appVisible="ui.exportCsv"
       page-actions
       app-button
       type="button"
@@ -184,7 +185,7 @@
                   />
                 </section>
               </app-card>
-              <app-card variant="outlined" padding="lg" class="analytics__panel">
+              <app-card *appVisible="ui.topMedications" variant="outlined" padding="lg" class="analytics__panel">
                 <section class="analytics__panel-body" aria-labelledby="analytics-meds-title">
                   <h2 id="analytics-meds-title" class="analytics__section-title">
                     Top 10 medicamentos

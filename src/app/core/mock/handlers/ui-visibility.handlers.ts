@@ -4,18 +4,15 @@ import type {
   UiElementKind,
   UiElementSyncResult,
   UiPreview,
-  UiPreviewEntry,
   UiRuleEffect,
   UiRuleSubjectType,
   UiVisibilityRule,
 } from '../../data-access/ui-visibility/ui-visibility.types';
 import {
   MockRouter,
-  forbidden,
   reply,
   unauthorized,
   type MockReply,
-  type MockRequest,
 } from '../mock-router';
 import {
   IDS,
@@ -26,7 +23,25 @@ import {
   usuarioPorId,
   type MockUser,
 } from '../mock-session';
-import { Coleccion, iso, nuevoId, paginar, uuid } from '../mock-store';
+import { Coleccion, nuevoId, paginar } from '../mock-store';
+import {
+  ELEMENTOS_DE_FABRICA,
+  idElemento,
+  REGLAS_DE_FABRICA,
+  type FilaElemento,
+} from '../fixtures/ui-visibility';
+import { reglaVigente, resolverVisibilidad, type SujetoDeResolucion } from './ui-visibility.resolver';
+import {
+  type CampoRechazado,
+  claveDesconocida,
+  cuerpoObjeto,
+  esRespuesta,
+  exigirAdmin,
+  fallo,
+  invalido,
+  limiteDe,
+  normal,
+} from './ui-visibility.replies';
 
 /* ============================================================================
     Backend simulado de la visibilidad de la interfaz
@@ -55,9 +70,6 @@ import { Coleccion, iso, nuevoId, paginar, uuid } from '../mock-store';
     genérico de la API (`CONFLICT`, `NOT_FOUND`…), que es lo que `readApiError` sabe leer.
     ========================================================================== */
 
-const SIMULADO = ' (SIMULADO)';
-const MAX_LIMITE = 200;
-const LIMITE_POR_DEFECTO = 50;
 const MAX_ELEMENTOS_SYNC = 2000;
 
 const KINDS: readonly UiElementKind[] = [
@@ -72,240 +84,11 @@ const KINDS: readonly UiElementKind[] = [
 const EFFECTS: readonly UiRuleEffect[] = ['SHOW', 'HIDE'];
 const SUBJECT_TYPES: readonly UiRuleSubjectType[] = ['USER', 'TENANT', 'ROLE', 'ORG_TYPE', 'ALL'];
 
-/** Mayor número = más específica. El contrato: USER > TENANT > ROLE > ORG_TYPE > ALL. */
-const ESPECIFICIDAD: Readonly<Record<UiRuleSubjectType, number>> = {
-  USER: 5,
-  TENANT: 4,
-  ROLE: 3,
-  ORG_TYPE: 2,
-  ALL: 1,
-};
-
 const RE_KEY = /^[a-z][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)*$/;
 const RE_MODULO = /^[a-z][a-z0-9-]{1,39}$/;
 const RE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const RE_CODIGO = /^[A-Z][A-Z0-9_]{1,63}$/;
 
-/* ---- el resolutor ---------------------------------------------------------- */
-
-/** A quién se le resuelve: lo que la API sabe de la sesión (o de la persona elegida en «ver como»). */
-export interface SujetoDeResolucion {
-  readonly userId: string | null;
-  readonly tenantIds: readonly string[];
-  readonly roleCodes: readonly string[];
-  readonly orgTypes: readonly string[];
-}
-
-/** ¿La regla rige en `ahora`? Una terminada (`validTo` pasado) o programada (`validFrom` futuro) no. */
-export function reglaVigente(regla: UiVisibilityRule, ahora: Date): boolean {
-  const desde = regla.validFrom === null ? null : new Date(regla.validFrom).getTime();
-  const hasta = regla.validTo === null ? null : new Date(regla.validTo).getTime();
-  return (desde === null || desde <= ahora.getTime()) && (hasta === null || hasta > ahora.getTime());
-}
-
-function aplicaAlSujeto(regla: UiVisibilityRule, s: SujetoDeResolucion): boolean {
-  switch (regla.subjectType) {
-    case 'ALL':
-      return true;
-    case 'USER':
-      return regla.subjectId !== null && regla.subjectId === s.userId;
-    case 'TENANT':
-      return regla.subjectId !== null && s.tenantIds.includes(regla.subjectId);
-    case 'ROLE':
-      return regla.subjectId !== null && s.roleCodes.includes(regla.subjectId);
-    case 'ORG_TYPE':
-      return regla.subjectId !== null && s.orgTypes.includes(regla.subjectId);
-  }
-}
-
-/**
- * Resuelve la visibilidad de **todo** el catálogo para un sujeto (contrato, «Resolución»).
- *
- * 1. Reglas vigentes que aplican al sujeto. 2. Gana la más específica. 3. En el empate de
- * especificidad gana HIDE (también entre varios ROLE). 4. Sin regla, `defaultVisible`.
- * 5. Cascada: un ancestro oculto por sí mismo oculta al descendiente aunque tenga SHOW propio.
- *
- * Devuelve una entrada por elemento `ACTIVE`; los `RETIRED` no se presentan en ninguna parte.
- */
-export function resolverVisibilidad(
-  elementos: readonly UiElement[],
-  reglas: readonly UiVisibilityRule[],
-  sujeto: SujetoDeResolucion,
-  ahora: Date,
-): readonly UiPreviewEntry[] {
-  const porClave = new Map(elementos.map((e) => [e.key, e]));
-  const aplicables = reglas.filter((r) => reglaVigente(r, ahora) && aplicaAlSujeto(r, sujeto));
-
-  /** Resolución propia de cada elemento, sin mirar a sus ancestros. */
-  const propia = new Map<string, { hidden: boolean; rule: UiVisibilityRule | null }>();
-  for (const e of elementos) {
-    const suyas = aplicables.filter((r) => r.elementKey === e.key);
-    if (suyas.length === 0) {
-      propia.set(e.key, { hidden: !e.defaultVisible, rule: null });
-      continue;
-    }
-    const tope = Math.max(...suyas.map((r) => ESPECIFICIDAD[r.subjectType]));
-    const empatadas = suyas
-      .filter((r) => ESPECIFICIDAD[r.subjectType] === tope)
-      .sort((a, b) => a.id.localeCompare(b.id));
-    const ganadora = empatadas.find((r) => r.effect === 'HIDE') ?? empatadas[0]!;
-    propia.set(e.key, { hidden: ganadora.effect === 'HIDE', rule: ganadora });
-  }
-
-  /** El ancestro más alto cuya resolución propia es «oculto»; protege contra ciclos de `parentKey`. */
-  const ancestroOculto = (clave: string): string | null => {
-    const vistos = new Set<string>([clave]);
-    let causa: string | null = null;
-    let actual = porClave.get(clave)?.parentKey ?? null;
-    while (actual !== null && !vistos.has(actual)) {
-      vistos.add(actual);
-      if (propia.get(actual)?.hidden === true) causa = actual;
-      actual = porClave.get(actual)?.parentKey ?? null;
-    }
-    return causa;
-  };
-
-  return elementos
-    .filter((e) => e.status === 'ACTIVE')
-    .map((e): UiPreviewEntry => {
-      const causa = ancestroOculto(e.key);
-      if (causa !== null) {
-        return {
-          elementKey: e.key,
-          hidden: true,
-          winningRuleId: null,
-          reason: 'ANCESTOR_HIDDEN',
-          ancestorKey: causa,
-        };
-      }
-      const mia = propia.get(e.key)!;
-      return {
-        elementKey: e.key,
-        hidden: mia.hidden,
-        winningRuleId: mia.rule?.id ?? null,
-        reason: mia.rule === null ? 'DEFAULT' : 'RULE',
-        ancestorKey: null,
-      };
-    });
-}
-
-/* ---- datos de arranque ----------------------------------------------------- */
-
-interface FilaElemento extends UiElement {
-  /** Cuándo se creó, sólo para ordenar la auditoría simulada. */
-  readonly createdAt: string;
-}
-
-const idElemento = (clave: string): string => uuid(`ui-element-${clave}`);
-const idRegla = (n: number): string => uuid(`ui-rule-${n}`);
-
-type Semilla = readonly [
-  clave: string,
-  kind: UiElementKind,
-  etiqueta: string,
-  padre: string | null,
-  extra?: Partial<Pick<UiElement, 'source' | 'status' | 'defaultVisible' | 'description'>>,
-];
-
-const SEMILLA_ELEMENTOS: readonly Semilla[] = [
-  ['pharmacy', 'MODULE', 'Farmacia', null],
-  ['pharmacy.orders', 'SCREEN', 'Pedidos', 'pharmacy'],
-  ['pharmacy.orders.filters', 'SECTION', 'Filtros de pedidos', 'pharmacy.orders'],
-  ['pharmacy.orders.export-button', 'ACTION', 'Botón exportar pedidos', 'pharmacy.orders', {
-    description: 'Descarga los pedidos filtrados.',
-  }],
-  ['pharmacy.orders.patient-phone', 'FIELD', 'Teléfono del paciente', 'pharmacy.orders'],
-  ['pharmacy.catalog', 'SCREEN', 'Catálogo de productos', 'pharmacy'],
-  ['pharmacy.catalog.bulk-import', 'ACTION', 'Carga masiva', 'pharmacy.catalog'],
-  ['laboratory', 'MODULE', 'Laboratorio', null],
-  ['laboratory.results', 'SCREEN', 'Resultados', 'laboratory'],
-  ['laboratory.results.print-button', 'ACTION', 'Botón imprimir', 'laboratory.results'],
-  ['laboratory.results.trend-chart', 'WIDGET', 'Gráfico de tendencia', 'laboratory.results'],
-  ['agenda', 'MODULE', 'Agenda', null],
-  ['agenda.calendar', 'SCREEN', 'Calendario', 'agenda'],
-  ['agenda.calendar.new-booking', 'ACTION', 'Nueva reserva', 'agenda.calendar'],
-  ['billing', 'MODULE', 'Facturación', null],
-  ['billing.invoices', 'SCREEN', 'Facturas', 'billing'],
-  ['billing.invoices.void-button', 'ACTION', 'Botón anular factura', 'billing.invoices'],
-  ['billing.invoices.manual-note', 'FIELD', 'Nota manual', 'billing.invoices', {
-    source: 'ADMIN',
-    defaultVisible: false,
-    description: 'Alta manual de ejemplo: nace oculta por omisión.',
-  }],
-  ['billing.legacy-report', 'SCREEN', 'Reporte anterior', 'billing', { status: 'RETIRED' }],
-];
-
-const ELEMENTOS_DE_FABRICA: readonly FilaElemento[] = SEMILLA_ELEMENTOS.map(
-  ([key, kind, etiqueta, parentKey, extra]) => ({
-    id: idElemento(key),
-    key,
-    kind,
-    moduleCode: key.split('.')[0]!,
-    parentKey,
-    label: `${etiqueta}${SIMULADO}`,
-    description: extra?.description ?? null,
-    defaultVisible: extra?.defaultVisible ?? true,
-    source: extra?.source ?? 'CODE',
-    status: extra?.status ?? 'ACTIVE',
-    activeRuleCount: 0,
-    createdAt: iso(-30),
-  }),
-);
-
-const AUTOR_SEMILLA = `Soporte AloVida${SIMULADO}`;
-const regla = (
-  n: number,
-  r: Pick<UiVisibilityRule, 'elementKey' | 'effect' | 'subjectType' | 'subjectId' | 'reason'> &
-    Partial<Pick<UiVisibilityRule, 'validFrom' | 'validTo' | 'subjectLabel'>>,
-): UiVisibilityRule => ({
-  id: idRegla(n),
-  validFrom: null,
-  validTo: null,
-  subjectLabel: null,
-  version: 1,
-  createdAt: iso(-10 + n),
-  createdByLabel: AUTOR_SEMILLA,
-  ...r,
-});
-
-const REGLAS_DE_FABRICA: readonly UiVisibilityRule[] = [
-  regla(1, {
-    elementKey: 'pharmacy.orders.export-button',
-    effect: 'HIDE',
-    subjectType: 'ROLE',
-    subjectId: 'PHARMACY_STAFF',
-    reason: 'El personal de mostrador no exporta pedidos (regla sintética).',
-  }),
-  regla(2, {
-    elementKey: 'pharmacy.orders.export-button',
-    effect: 'SHOW',
-    subjectType: 'USER',
-    subjectId: IDS.farmacia.userId,
-    reason: 'La cuenta de Farmacia Vida sí exporta: USER gana a ROLE (regla sintética).',
-  }),
-  regla(3, {
-    elementKey: 'laboratory.results',
-    effect: 'HIDE',
-    subjectType: 'ORG_TYPE',
-    subjectId: 'PAYER',
-    reason: 'Las aseguradoras no presentan resultados; se oculta la pantalla entera (sintética).',
-  }),
-  regla(4, {
-    elementKey: 'billing.invoices.void-button',
-    effect: 'HIDE',
-    subjectType: 'ALL',
-    subjectId: null,
-    validTo: iso(-2),
-    reason: 'Se ocultó durante la migración y ya terminó (regla sintética, terminada).',
-  }),
-  regla(5, {
-    elementKey: 'agenda.calendar.new-booking',
-    effect: 'HIDE',
-    subjectType: 'TENANT',
-    subjectId: TENANT_FARMACIA,
-    reason: 'Farmacia Vida no agenda reservas (regla sintética).',
-  }),
-];
 
 const elementos = new Coleccion<FilaElemento>(ELEMENTOS_DE_FABRICA, 'mock-ui-visibility-elements');
 const reglas = new Coleccion<UiVisibilityRule>(REGLAS_DE_FABRICA, 'mock-ui-visibility-rules');
@@ -315,77 +98,6 @@ export function reiniciarVisibilidad(): void {
   elementos.reiniciar();
   reglas.reiniciar();
 }
-
-/* ---- ayudas de respuesta --------------------------------------------------- */
-
-type CodigoGenerico = 'VALIDATION_FAILED' | 'NOT_FOUND' | 'CONFLICT' | 'PRECONDITION_FAILED';
-const ERROR_HTTP: Readonly<Record<number, string>> = {
-  400: 'Bad Request',
-  404: 'Not Found',
-  409: 'Conflict',
-  422: 'Unprocessable Entity',
-  428: 'Precondition Required',
-};
-
-interface CampoRechazado {
-  readonly field: string;
-  readonly messages: readonly string[];
-}
-
-/** Un fallo con el `reason` estable del contrato y, si es de un campo, `details.fields`. */
-function fallo(
-  status: 400 | 404 | 409 | 422 | 428,
-  code: CodigoGenerico,
-  reason: string | null,
-  message: string,
-  fields: readonly CampoRechazado[] = [],
-  extra: Record<string, unknown> = {},
-): MockReply {
-  return reply(status, {
-    statusCode: status,
-    code,
-    message,
-    error: ERROR_HTTP[status],
-    ...(reason === null ? {} : { reason }),
-    details: { ...(reason === null ? {} : { reason }), ...(fields.length > 0 ? { fields } : {}), ...extra },
-  });
-}
-
-const invalido = (campo: string, mensaje: string): MockReply =>
-  fallo(400, 'VALIDATION_FAILED', null, 'Error de validación', [{ field: campo, messages: [mensaje] }]);
-
-function exigirAdmin(req: MockRequest): MockReply | null {
-  if (req.user === null) return unauthorized();
-  const ok = req.user.roles.some((r) => r === 'SECURITY_ADMIN' || r === 'SUPERADMIN');
-  return ok ? null : forbidden('Para administrar la visibilidad hace falta el rol de seguridad.');
-}
-
-function cuerpoObjeto(req: MockRequest): Record<string, unknown> | MockReply {
-  const b = req.body;
-  if (typeof b !== 'object' || b === null || Array.isArray(b)) {
-    return invalido('body', 'El cuerpo debe ser un objeto.');
-  }
-  return b as Record<string, unknown>;
-}
-
-const esRespuesta = (v: unknown): v is MockReply =>
-  typeof v === 'object' && v !== null && 'status' in v && 'body' in v;
-
-/** `forbidNonWhitelisted`: una clave que el DTO no declara es un 400, no se ignora. */
-function claveDesconocida(b: Record<string, unknown>, permitidas: readonly string[]): MockReply | null {
-  const extra = Object.keys(b).find((k) => !permitidas.includes(k));
-  return extra === undefined ? null : invalido(extra, `La propiedad ${extra} no debe existir.`);
-}
-
-function limiteDe(query: URLSearchParams): number | MockReply {
-  const crudo = query.get('limit');
-  if (crudo === null || crudo === '') return LIMITE_POR_DEFECTO;
-  const n = Number(crudo);
-  if (!Number.isInteger(n) || n < 1 || n > MAX_LIMITE) return invalido('limit', `limit debe estar entre 1 y ${MAX_LIMITE}.`);
-  return n;
-}
-
-const normal = (s: string): string => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 /* ---- elementos ------------------------------------------------------------- */
 

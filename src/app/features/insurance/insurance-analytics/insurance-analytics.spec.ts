@@ -1,11 +1,14 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { esperarSinViolaciones } from '../../../../testing/a11y';
+import { UiVisibilityService } from '../../../core/visibility/ui-visibility.service';
 import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
 import { InsuranceAnalytics } from './insurance-analytics';
+import { INSURANCE_ANALYTICS_UI } from './insurance-analytics.ui-elements';
 
 const CARRIER_ID = '11111111-1111-4111-8111-111111111111';
 const PLAN_ID = '22222222-2222-4222-8222-222222222222';
@@ -289,6 +292,59 @@ describe('InsuranceAnalytics', () => {
     expect(filas.length).toBeGreaterThan(0);
     expect(columnas.length).toBe(4);
     expect(nombre).toBe('siniestralidad-2025-09-14-2026-09-14');
+  });
+
+  describe('visibilidad por regla (*appVisible)', () => {
+    /** Un motor de visibilidad de mentira: oculta lo que diga la señal, sin red. */
+    const ocultas = signal<ReadonlySet<string>>(new Set());
+
+    beforeEach(() => {
+      ocultas.set(new Set());
+      vi.spyOn(TestBed.inject(UiVisibilityService), 'isVisible').mockImplementation(
+        (clave: string) => !ocultas().has(clave),
+      );
+    });
+
+    const exportar = (): HTMLElement | null =>
+      fixture.nativeElement.querySelector('[data-testid="btn-export-analytics"]');
+
+    it('sin reglas se ve todo: el botón de exportar y el top 10 de medicamentos', () => {
+      mount().flush(dashboardWire());
+      fixture.detectChanges();
+      abrirPestana('Gasto y farmacia');
+      expect(exportar()).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="table-top-medications"]')).not.toBeNull();
+    });
+
+    it('una regla que oculta el botón de exportar lo quita del encabezado, y vuelve si la regla deja de regir', () => {
+      ocultas.set(new Set([INSURANCE_ANALYTICS_UI.exportCsv]));
+      mount().flush(dashboardWire());
+      fixture.detectChanges();
+      expect(exportar()).toBeNull();
+      ocultas.set(new Set());
+      fixture.detectChanges();
+      expect(exportar()).not.toBeNull();
+    });
+
+    it('una regla que oculta el top 10 quita ese panel y deja el resto de la pestaña', () => {
+      ocultas.set(new Set([INSURANCE_ANALYTICS_UI.topMedications]));
+      mount().flush(dashboardWire());
+      fixture.detectChanges();
+      abrirPestana('Gasto y farmacia');
+      expect(fixture.nativeElement.querySelector('[data-testid="table-top-medications"]')).toBeNull();
+      expect(fixture.nativeElement.textContent).not.toContain('Top 10 medicamentos');
+      expect(exportar()).not.toBeNull();
+    });
+
+    it('una regla que oculta la exportación del informe por persona deja el botón de generarlo', () => {
+      ocultas.set(new Set([INSURANCE_ANALYTICS_UI.personReportExport]));
+      mount().flush(dashboardWire());
+      fixture.detectChanges();
+      abrirPestana('Por persona');
+      const informe: HTMLElement = fixture.nativeElement.querySelector('[data-testid="person-loss-report"]');
+      expect(informe.querySelector('[data-testid="btn-export-person-report"]')).toBeNull();
+      expect(informe.querySelector('[data-testid="btn-generate-person-report"]')).not.toBeNull();
+    });
   });
 
   it('semáforo: verde bajo 75, ámbar entre 75 y 85, rojo sobre 85', async () => {
