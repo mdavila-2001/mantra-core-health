@@ -30,13 +30,13 @@ import {
   type RuntimePiecesPage as Respuesta,
 } from '../../../../../core/data-access/admin-portal/runtime-pieces.types';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { empty, loading, ready, stale } from '../../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
@@ -106,6 +106,7 @@ interface Aviso {
     Badge,
     Alert,
     Card,
+    MetricCard,
     Tab,
     Tabs,
     DataTable,
@@ -124,7 +125,6 @@ export class RuntimePiecesPage {
   private readonly route = inject(ActivatedRoute);
   private readonly documento = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly valores = queryFilters(queryParamsSignal(this.route), CLAVES_URL);
   protected readonly pestana = computed(() => pestanaDe(this.valores()));
@@ -145,7 +145,9 @@ export class RuntimePiecesPage {
   protected readonly descubriendo = signal(false);
   private pendiente: Subscription | null = null;
 
+  /** Buscador y los dos selectores de uso diario en la fila; proceso y hallazgos, bajo «Más filtros». */
   protected readonly campos = computed<readonly FilterField[]>(() => [
+    { key: 'q', label: 'Buscar', kind: 'text', placeholder: 'Nombre, código o archivo' },
     {
       key: 'state',
       label: 'Estado',
@@ -166,20 +168,20 @@ export class RuntimePiecesPage {
     },
     {
       key: 'host',
-      label: 'Proceso',
+      label: 'Proceso que la aloja',
       kind: 'text',
-      placeholder: 'api, worker-messaging…',
-      hint: 'Nombre exacto del proceso que la aloja.',
+      placeholder: 'Nombre exacto: api, worker-…',
+      advanced: true,
     },
-    { key: 'q', label: 'Buscar', kind: 'text', placeholder: 'Nombre, código o archivo' },
     {
       key: 'withFindings',
       label: 'Hallazgos',
       kind: 'select',
       options: [
-        { value: '', label: 'Todas las piezas' },
-        { value: 'true', label: 'Sólo las que tienen algún hallazgo' },
+        { value: '', label: 'Todas' },
+        { value: 'true', label: 'Con algún hallazgo' },
       ],
+      advanced: true,
     },
   ]);
 

@@ -1,0 +1,38 @@
+[
+ {
+  "file": "despues-390-claro-ok.png",
+  "sw": 390,
+  "iw": 390,
+  "h": 3012,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-oscuro-ok.png",
+  "sw": 390,
+  "iw": 390,
+  "h": 3012,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-instancias.png",
+  "sw": 390,
+  "iw": 390,
+  "h": 2548,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]

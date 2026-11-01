@@ -1,0 +1,136 @@
+[
+ {
+  "file": "despues-390-claro-ok.png",
+  "sw": 390,
+  "iw": 390,
+  "h": 7310,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-oscuro-ok.png",
+  "sw": 390,
+  "iw": 390,
+  "h": 7310,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-claro-ok.png",
+  "sw": 768,
+  "iw": 768,
+  "h": 3311,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-oscuro-ok.png",
+  "sw": 768,
+  "iw": 768,
+  "h": 3311,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-ok.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 3142,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-oscuro-ok.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 3142,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-error.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": [
+   "[API] GET /admin/ops/runtime-pieces → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: m"
+  ]
+ },
+ {
+  "file": "despues-1440-claro-carga.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-vacio.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1225,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-hallazgos.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1604,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-instancias.png",
+  "sw": 390,
+  "iw": 390,
+  "h": 2548,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]

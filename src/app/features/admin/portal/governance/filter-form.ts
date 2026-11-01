@@ -42,7 +42,11 @@ export interface FilterField {
     <form class="filter-form" novalidate (submit)="$event.preventDefault(); apply()">
       <div class="filter-form__fields">
         @for (field of visibleFields(); track field.key) {
-          <app-form-field [label]="field.label" [hint]="field.hint ?? ''">
+          <app-form-field
+          [class.filter-form__wide]="field.kind === 'text'"
+          [label]="field.label"
+          [hint]="field.hint ?? ''"
+        >
             @if (field.kind === 'select') {
               <app-select
                 [ariaLabel]="field.label"
@@ -86,24 +90,34 @@ export interface FilterField {
     </form>
   `,
   styles: `
+    /* Una fila: los campos ocupan lo que haya y las acciones quedan a la derecha, alineadas
+       con los controles; en el teléfono los campos van de dos en dos y las acciones debajo. */
     .filter-form {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      align-items: flex-end;
       gap: var(--sp-3);
     }
     .filter-form__fields {
+      flex: 1 1 36rem;
+      min-inline-size: 0;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(9.5rem, 100%), 1fr));
+      align-items: start;
       gap: var(--sp-3);
+    }
+    /* El buscador ocupa dos columnas: su texto de ejemplo no se corta. */
+    .filter-form__wide {
+      grid-column: span 2;
     }
     .filter-form__actions {
       display: flex;
+      flex: 0 1 auto;
       flex-wrap: wrap;
+      min-inline-size: 0;
       justify-content: flex-end;
       gap: var(--sp-2);
-    }
-    .filter-form__more {
-      margin-inline-end: auto;
+      margin-inline-start: auto;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

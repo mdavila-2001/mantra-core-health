@@ -1,12 +1,12 @@
+<!-- Una sola cabecera, sobre el lienzo: las migas viven en la barra superior del portal. -->
 <app-page-header
   title="Piezas en ejecución"
   subtitle="Todo lo que el código puede tener corriendo: procesos, tareas programadas, consumidores de cola, endpoints internos, comprobaciones de salud y conectores. El servidor las descubre leyendo el código y las contrasta con el registro de herramientas y con los latidos; acá se muestra con su antigüedad."
-  [breadcrumbs]="breadcrumbs()"
 >
   <button
     app-button
     page-actions
-    variant="secondary"
+    variant="ghost"
     size="sm"
     (clicked)="cargar()"
     data-testid="rp-refresh"
@@ -23,7 +23,7 @@
     (clicked)="simular()"
     data-testid="rp-simulate"
   >
-    Simular descubrimiento
+    Vista previa (sin registrar)
   </button>
   <button
     app-button
@@ -38,16 +38,82 @@
   </button>
 </app-page-header>
 
-<div class="piezas">
-  <app-card variant="outlined" padding="md" data-testid="rp-card" [attr.aria-busy]="refrescando()">
-    @if (aviso(); as a) {
-      <app-alert [tone]="a.tono" data-testid="rp-notice">{{ a.texto }}</app-alert>
-    }
+<div class="piezas" [attr.aria-busy]="refrescando()">
+  @if (aviso(); as a) {
+    <app-alert [tone]="a.tono" data-testid="rp-notice">{{ a.texto }}</app-alert>
+  }
 
-    <app-view-state-host [state]="vista()" (retry)="cargar()" (refresh)="cargar()">
-      @if (vista(); as v) {
-        @if (v.status === 'ready' || v.status === 'stale') {
-          @let r = v.data;
+  <app-view-state-host [state]="vista()" (retry)="cargar()" (refresh)="cargar()">
+    @if (vista(); as v) {
+      @if (v.status === 'ready' || v.status === 'stale') {
+        @let r = v.data;
+        <div class="piezas__cuerpo">
+          <!-- Cifras: cuántas hay, cuántas viven, cuáles preocupan y la antigüedad del dato (S7). -->
+          <section class="piezas__metricas" aria-label="Resumen de las piezas">
+            <app-metric-card
+              label="Antigüedad del dato"
+              [value]="antiguedadDe(r.evaluatedAt)"
+              [hint]="'Evaluado el ' + (r.evaluatedAt | date: 'dd/MM/yyyy HH:mm') + '; se vuelve a pedir cada 30 s'"
+            />
+            <app-metric-card label="Piezas" [value]="r.summary.total" hint="Descubiertas en el código" />
+            <app-metric-card
+              label="Vivas"
+              [value]="r.summary.byState.VIVA + ' de ' + r.summary.total"
+              hint="Con prueba de vida dentro del umbral"
+            />
+            <app-metric-card
+              label="Sin latido"
+              [value]="r.summary.byState.SIN_LATIDO"
+              [hint]="'Más de ' + r.thresholds.downAfterSeconds + ' s sin latir: se dan por caídas'"
+            />
+            <app-metric-card
+              label="Fuera del registro"
+              [value]="r.summary.byState.NO_REGISTRADA + r.summary.byState.HUERFANA"
+              hint="No registradas en el código o huérfanas en el registro"
+            />
+          </section>
+
+          <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
+          <app-alert tone="info" data-testid="rp-honesty">
+            <details class="piezas__aviso">
+              <summary class="piezas__aviso-resumen" data-testid="rp-evaluated">
+                <strong
+                  >{{ r.summary.total }} {{ r.summary.total === 1 ? 'pieza' : 'piezas' }} en total,
+                  evaluado {{ antiguedadDe(r.evaluatedAt) }}.</strong
+                >
+                Lo que no se mide se declara aparte: no es que esté bien.
+              </summary>
+              <div class="piezas__aviso-texto">
+                <p>
+                  Evaluado por la API el {{ r.evaluatedAt | date: 'dd/MM/yyyy HH:mm:ss' }}. Un
+                  latido es fresco hasta {{ r.thresholds.degradedAfterSeconds }} s; pasados
+                  {{ r.thresholds.downAfterSeconds }} s el proceso se da por caído.
+                </p>
+                @if (r.scan.available) {
+                  <p data-testid="rp-source">
+                    Piezas descubiertas a partir del
+                    @if (r.scan.source === 'manifest' && r.scan.generatedAt) {
+                      manifiesto generado al compilar el
+                      {{ r.scan.generatedAt | date: 'dd/MM/yyyy HH:mm' }}: es el código que se
+                      desplegó, no una lectura de hoy.
+                    } @else {
+                      código fuente leído en el momento.
+                    }
+                  </p>
+                }
+                @if (r.notMeasured.length > 0) {
+                  <div data-testid="rp-not-measured">
+                    <strong>No se mide (no es que esté bien):</strong>
+                    <ul class="piezas__lista">
+                      @for (n of r.notMeasured; track n) {
+                        <li>{{ noMedido(n) }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            </details>
+          </app-alert>
 
           @if (!r.scan.available) {
             <app-alert
@@ -71,167 +137,130 @@
               {{ r.heartbeatStore.reason ?? 'no indicada' }}.
             </app-alert>
           }
-
-          <div class="piezas__cabecera" data-testid="rp-summary">
-            <ul class="piezas__estados" aria-label="Piezas por estado">
-              @for (e of estados; track e) {
-                <li>
-                  <app-badge [variant]="estadoDePieza[e].tono" [attr.data-testid]="'rp-count-' + e">
-                    {{ estadoDePieza[e].texto }}: {{ r.summary.byState[e] }}
-                  </app-badge>
-                </li>
-              }
-            </ul>
-            <p class="piezas__ayuda" data-testid="rp-evaluated">
-              {{ r.summary.total }} {{ r.summary.total === 1 ? 'pieza' : 'piezas' }} en total.
-              Evaluado por la API el {{ r.evaluatedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ({{
-                antiguedadDe(r.evaluatedAt)
-              }}). Un latido es fresco hasta {{ r.thresholds.degradedAfterSeconds }} s; pasados
-              {{ r.thresholds.downAfterSeconds }} s el proceso se da por caído. Se vuelve a pedir
-              cada 30 s.
-            </p>
-            @if (r.scan.available) {
-              <p class="piezas__ayuda" data-testid="rp-source">
-                Piezas descubiertas a partir del
-                @if (r.scan.source === 'manifest' && r.scan.generatedAt) {
-                  manifiesto generado al compilar el
-                  {{ r.scan.generatedAt | date: 'dd/MM/yyyy HH:mm' }}: es el código que se desplegó,
-                  no una lectura de hoy.
-                } @else {
-                  código fuente leído en el momento.
-                }
-              </p>
-            }
-          </div>
-
-          <app-tabs
-            [selectedIndex]="indicePestana()"
-            (selectedIndexChange)="elegirPestana($event)"
-            data-testid="rp-tabs"
-          >
-            <!-- ============================ Piezas ============================ -->
-            <app-tab label="Piezas">
-              @if (indicePestana() === 0) {
-                <div class="piezas__seccion">
-                  <app-governance-filter-form
-                    [fields]="campos()"
-                    [values]="valores()"
-                    (applied)="aplicar($event)"
-                    (cleared)="quitarFiltros()"
-                  />
-                  <app-data-table
-                    data-testid="rp-pieces-table"
-                    caption="Piezas ejecutables descubiertas en el código y su estado"
-                    [state]="filasDePiezas()"
-                    [columns]="columnasDePiezas()"
-                    [trackBy]="porId"
-                    [rowLabel]="nombreDePieza"
-                    [cursor]="cursor()"
-                    [totalCount]="r.meta.total"
-                    stackedOnMobile
-                    fitContainer
-                    (cursorChanged)="irAPagina($event)"
-                    (retry)="cargar()"
-                  />
-                </div>
-              }
-            </app-tab>
-
-            <!-- ============================ Instancias ============================ -->
-            <app-tab label="Instancias">
-              @if (indicePestana() === 1) {
-                <div class="piezas__seccion">
-                  <p class="piezas__ayuda">
-                    Las instancias que tienen latido (la API y cada worker), con las piezas que el
-                    código dice que corren dentro. El estado es el de la sonda de vida: acá no se
-                    calcula otro.
-                  </p>
-                  <app-data-table
-                    data-testid="rp-instances-table"
-                    caption="Instancias en ejecución y las piezas que aloja cada una"
-                    [state]="filasDeInstancias()"
-                    [columns]="columnasDeInstancias()"
-                    [trackBy]="porId"
-                    [rowLabel]="nombreDeInstancia"
-                    stackedOnMobile
-                    fitContainer
-                    (retry)="cargar()"
-                  />
-                </div>
-              }
-            </app-tab>
-
-            <!-- ============================ Hallazgos ============================ -->
-            <app-tab label="Hallazgos">
-              @if (indicePestana() === 2) {
-                <div class="piezas__seccion">
-                  <app-data-table
-                    data-testid="rp-findings-table"
-                    caption="Hallazgos del contraste entre el código, el registro y los latidos"
-                    [state]="filasDeHallazgos()"
-                    [columns]="columnasDeHallazgos()"
-                    [trackBy]="porId"
-                    [rowLabel]="nombreDeHallazgo"
-                    stackedOnMobile
-                    fitContainer
-                    (retry)="cargar()"
-                  />
-                </div>
-              }
-            </app-tab>
-          </app-tabs>
-
-          @if (r.notMeasured.length > 0) {
-            <app-alert
-              tone="info"
-              title="No se mide (no es que esté bien)"
-              data-testid="rp-not-measured"
-            >
-              <ul class="piezas__lista">
-                @for (n of r.notMeasured; track n) {
-                  <li>{{ noMedido(n) }}</li>
-                }
-              </ul>
-            </app-alert>
-          }
           @if (r.scan.warnings.length > 0) {
-            <app-alert
-              tone="warning"
-              title="El escáner no pudo resolver algunos argumentos"
-              data-testid="rp-scan-warnings"
-            >
-              <ul class="piezas__lista">
-                @for (w of r.scan.warnings; track w) {
-                  <li>{{ w }}</li>
-                }
-              </ul>
+            <app-alert tone="warning" data-testid="rp-scan-warnings">
+              <details class="piezas__aviso">
+                <summary class="piezas__aviso-resumen">
+                  <strong>El escáner no pudo resolver {{ r.scan.warnings.length }} argumento(s).</strong>
+                  Esas piezas pueden faltar o tener datos incompletos.
+                </summary>
+                <ul class="piezas__lista piezas__aviso-texto">
+                  @for (w of r.scan.warnings; track w) {
+                    <li>{{ w }}</li>
+                  }
+                </ul>
+              </details>
             </app-alert>
           }
-        }
+
+          <app-card variant="outlined" padding="md" class="piezas__tarjeta" data-testid="rp-card">
+            <app-tabs
+              [selectedIndex]="indicePestana()"
+              (selectedIndexChange)="elegirPestana($event)"
+              data-testid="rp-tabs"
+            >
+              <!-- ============================ Piezas ============================ -->
+              <app-tab [label]="'Piezas (' + r.summary.total + ')'">
+                @if (indicePestana() === 0) {
+                  <div class="piezas__seccion">
+                    <app-governance-filter-form
+                      [fields]="campos()"
+                      [values]="valores()"
+                      (applied)="aplicar($event)"
+                      (cleared)="quitarFiltros()"
+                    />
+                    <ul class="piezas__estados" aria-label="Piezas por estado" data-testid="rp-summary">
+                      <li class="piezas__total">{{ r.meta.total }} {{ r.meta.total === 1 ? 'pieza' : 'piezas' }} con estos filtros ·</li>
+                      @for (e of estados; track e) {
+                        <li>
+                          <app-badge
+                            size="sm"
+                            [variant]="estadoDePieza[e].tono"
+                            [attr.data-testid]="'rp-count-' + e"
+                          >
+                            {{ estadoDePieza[e].texto }}: {{ r.summary.byState[e] }}
+                          </app-badge>
+                        </li>
+                      }
+                    </ul>
+                    <app-data-table
+                      data-testid="rp-pieces-table"
+                      caption="Piezas ejecutables descubiertas en el código y su estado"
+                      [state]="filasDePiezas()"
+                      [columns]="columnasDePiezas()"
+                      [trackBy]="porId"
+                      [rowLabel]="nombreDePieza"
+                      [cursor]="cursor()"
+                      fitContainer
+                      (cursorChanged)="irAPagina($event)"
+                      (retry)="cargar()"
+                    />
+                  </div>
+                }
+              </app-tab>
+
+              <!-- ============================ Instancias ============================ -->
+              <app-tab [label]="'Instancias (' + r.instances.length + ')'">
+                @if (indicePestana() === 1) {
+                  <div class="piezas__seccion">
+                    <p class="piezas__ayuda">
+                      Las instancias que tienen latido (la API y cada worker), con las piezas que el
+                      código dice que corren dentro. El estado es el de la sonda de vida: acá no se
+                      calcula otro.
+                    </p>
+                    <app-data-table
+                      data-testid="rp-instances-table"
+                      caption="Instancias en ejecución y las piezas que aloja cada una"
+                      [state]="filasDeInstancias()"
+                      [columns]="columnasDeInstancias()"
+                      [trackBy]="porId"
+                      [rowLabel]="nombreDeInstancia"
+                      stackedOnMobile
+                      fitContainer
+                      (retry)="cargar()"
+                    />
+                  </div>
+                }
+              </app-tab>
+
+              <!-- ============================ Hallazgos ============================ -->
+              <app-tab [label]="'Hallazgos (' + r.findings.length + ')'">
+                @if (indicePestana() === 2) {
+                  <div class="piezas__seccion">
+                    <app-data-table
+                      data-testid="rp-findings-table"
+                      caption="Hallazgos del contraste entre el código, el registro y los latidos"
+                      [state]="filasDeHallazgos()"
+                      [columns]="columnasDeHallazgos()"
+                      [trackBy]="porId"
+                      [rowLabel]="nombreDeHallazgo"
+                      stackedOnMobile
+                      fitContainer
+                      (retry)="cargar()"
+                    />
+                  </div>
+                }
+              </app-tab>
+            </app-tabs>
+          </app-card>
+        </div>
       }
-    </app-view-state-host>
-  </app-card>
+    }
+  </app-view-state-host>
 </div>
 
 <!-- Celdas de la tabla de piezas. -->
 <ng-template #piezaCell let-fila>
   <div class="piezas__celda">
     <span class="piezas__nombre">{{ fila.name }}</span>
-    <span class="piezas__codigo">{{ fila.id }}</span>
     <span class="piezas__codigo">{{ tipoDe(fila.kind) }} · módulo {{ fila.module }}</span>
-    <span class="piezas__codigo">
-      Evidencia: <code>{{ fila.evidence.file }}:{{ fila.evidence.line }}</code>
-    </span>
+    <code class="piezas__id">{{ fila.id }}</code>
   </div>
 </ng-template>
 <ng-template #estadoCell let-fila>
   <div class="piezas__celda">
     <app-badge [variant]="chipDe(fila.state).tono">{{ chipDe(fila.state).texto }}</app-badge>
     <span class="piezas__causa">{{ causa(fila.cause) }}</span>
-    @if (fila.causeDetail) {
-      <span class="piezas__codigo">{{ fila.causeDetail }}</span>
-    }
-    <span class="piezas__codigo">Prueba de vida: {{ nivelDe(fila.evidenceLevel) }}</span>
   </div>
 </ng-template>
 <ng-template #comoCell let-fila>
@@ -244,24 +273,37 @@
           : 'Sin proceso anfitrión resuelto'
       }}
     </span>
-    <span class="piezas__codigo">{{ fila.enable.how }}</span>
-    @if (fila.enable.envVars.length > 0) {
-      <span class="piezas__codigo">Variables: {{ fila.enable.envVars.join(', ') }}</span>
-    }
-    <span class="piezas__codigo">{{ latido(fila.heartbeat.mode, fila.heartbeat.instanceId) }}</span>
     <span class="piezas__codigo">
       {{
         fila.registry.present
           ? 'Registrada' + (fila.registry.stale ? ' (el registro quedó atrás del código)' : '')
           : 'Fuera del registro'
       }}
-      @if (fila.registry.provenance; as p) {
-        · descubierta el {{ p.discoveredAt }}
-      }
     </span>
-    @if (fila.wired === false) {
-      <span class="piezas__codigo">Ningún módulo la registra como proveedor.</span>
-    }
+    <!-- El detalle técnico se despliega: la fila queda en tres renglones. -->
+    <details class="piezas__mas">
+      <summary class="piezas__mas-resumen">Detalle técnico</summary>
+      <span class="piezas__codigo piezas__solo-movil">{{ causa(fila.cause) }}</span>
+      <code class="piezas__id piezas__solo-movil">{{ fila.id }}</code>
+      @if (fila.causeDetail) {
+        <span class="piezas__codigo">{{ fila.causeDetail }}</span>
+      }
+      <span class="piezas__codigo">Prueba de vida: {{ nivelDe(fila.evidenceLevel) }}</span>
+      <span class="piezas__codigo">
+        Evidencia: <code>{{ fila.evidence.file }}:{{ fila.evidence.line }}</code>
+      </span>
+      <span class="piezas__codigo">{{ fila.enable.how }}</span>
+      @if (fila.enable.envVars.length > 0) {
+        <span class="piezas__codigo">Variables: {{ fila.enable.envVars.join(', ') }}</span>
+      }
+      <span class="piezas__codigo">{{ latido(fila.heartbeat.mode, fila.heartbeat.instanceId) }}</span>
+      @if (fila.registry.provenance; as p) {
+        <span class="piezas__codigo">Descubierta el {{ p.discoveredAt }}</span>
+      }
+      @if (fila.wired === false) {
+        <span class="piezas__codigo">Ningún módulo la registra como proveedor.</span>
+      }
+    </details>
   </div>
 </ng-template>
 

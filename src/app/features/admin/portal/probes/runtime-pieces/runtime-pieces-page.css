@@ -1,14 +1,80 @@
-.piezas {
-  display: block;
+.piezas,
+.piezas__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
   inline-size: 100%;
+  min-inline-size: 0;
   margin-inline: auto;
 }
 
-.piezas__cabecera {
+/* Cifras: la antigüedad a lo ancho en el teléfono y las otras cuatro de dos en dos; dos y tres
+   en tableta; cinco en una fila desde escritorio. Ninguna queda huérfana. */
+.piezas__metricas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.piezas__metricas > :first-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 650px) {
+  .piezas__metricas {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .piezas__metricas > * {
+    grid-column: span 2;
+  }
+
+  .piezas__metricas > :nth-child(-n + 2) {
+    grid-column: span 3;
+  }
+}
+
+@media (min-width: 1024px) {
+  .piezas__metricas {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .piezas__metricas > *,
+  .piezas__metricas > :nth-child(-n + 2) {
+    grid-column: auto;
+  }
+}
+
+.piezas__metricas app-metric-card {
+  min-inline-size: 0;
+}
+
+/* Avisos de honestidad: una línea, el detalle se despliega. */
+.piezas__aviso-resumen,
+.piezas__mas-resumen {
+  cursor: pointer;
+}
+
+.piezas__aviso-resumen:focus-visible,
+.piezas__mas-resumen:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.piezas__aviso-texto {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  margin-block: var(--sp-3) var(--sp-4);
+  margin-block-start: var(--sp-2);
+}
+
+.piezas__aviso-texto p {
+  margin: 0;
+}
+
+.piezas__tarjeta {
+  display: block;
+  inline-size: 100%;
 }
 
 .piezas__estados {
@@ -30,8 +96,9 @@
 .piezas__seccion {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
   padding-block: var(--sp-4);
+  min-inline-size: 0;
 }
 
 /* Varios renglones en una celda: el contenedor en columna sobrevive a la tabla
@@ -48,7 +115,11 @@
 .piezas__causa {
   display: block;
   color: var(--text-primary);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+}
+
+.piezas__nombre {
+  font-weight: 600;
 }
 
 .piezas__codigo {
@@ -56,11 +127,30 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+  overflow-wrap: break-word;
+}
+
+.piezas__id,
+.piezas__codigo code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 
-.piezas__codigo code {
-  font-family: var(--font-mono);
+.piezas__mas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.piezas__mas-resumen {
+  font-size: var(--fs-caption);
+  color: var(--text-link);
+}
+
+.piezas__mas[open] > .piezas__mas-resumen {
+  margin-block-end: var(--sp-1);
 }
 
 .piezas__lista {
@@ -68,13 +158,29 @@
   padding-inline-start: var(--sp-4);
 }
 
-app-alert,
 app-tabs {
   display: block;
 }
 
-app-alert + app-alert,
-app-view-state-host + app-tabs,
-app-tabs + app-alert {
-  margin-block-start: var(--sp-3);
+.piezas__total {
+  align-self: center;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.piezas__solo-movil {
+  display: none;
+}
+
+/* Teléfono: cada fila queda en nombre, tipo y estado; el motivo y el identificador técnico
+   pasan al detalle de la fila (nada se oculta: se pliega). */
+@media not all and (min-width: 40.0625rem) {
+  .piezas__celda > .piezas__id,
+  .piezas__celda > .piezas__causa {
+    display: none;
+  }
+
+  .piezas__solo-movil {
+    display: block;
+  }
 }

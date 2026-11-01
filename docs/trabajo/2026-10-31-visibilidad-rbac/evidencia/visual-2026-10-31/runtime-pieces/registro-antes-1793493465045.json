@@ -1,0 +1,24 @@
+[
+ {
+  "file": "antes-1440-claro.png",
+  "sw": 1440,
+  "iw": 1440,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "antes-390-claro.png",
+  "sw": 390,
+  "iw": 390,
+  "h1": [
+   "Piezas en ejecución"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]
