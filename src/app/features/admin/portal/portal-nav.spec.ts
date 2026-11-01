@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { PORTAL_NAV, groupOf, headerFor, isActive, portalCrumbs, portalUrl } from './portal-nav';
+import {
+  PORTAL_NAV,
+  groupOf,
+  headerFor,
+  isActive,
+  navEntries,
+  portalCrumbs,
+  portalUrl,
+  siblingTabs,
+} from './portal-nav';
 
 const item = (path: string) => PORTAL_NAV.flatMap((g) => g.items).find((i) => i.path === path)!;
 
@@ -111,5 +120,27 @@ describe('portal-nav', () => {
       expect(iconos.every(Boolean)).toBe(true);
       expect(new Set(iconos).size).toBe(iconos.length);
     }
+  });
+
+  it('un solo criterio: cada línea del lateral es una sección y sus hermanas son pestañas', () => {
+    const grupo = (id: string) => PORTAL_NAV.find((g) => g.id === id)!;
+    const lineas = (id: string) => navEntries(grupo(id)).map((e) => [e.label, e.items.length]);
+    expect(lineas('systems')).toEqual([['Inventario técnico', 6]]);
+    expect(lineas('catalog')).toEqual([['Catálogo de datos', 3]]);
+    // el ítem del lateral y las pestañas se nombran con coherencia
+    expect(lineas('data-quality')).toEqual([['Incidencias y reglas', 2]]);
+    expect(siblingTabs('/superadmin/portal/systems/runtime-pieces').map((t) => t.label)).toEqual([
+      'Operaciones',
+      'Mapa de rutas',
+      'Diagrama',
+      'Deriva',
+      'Revisión',
+      'Piezas en ejecución',
+    ]);
+    expect(siblingTabs('/superadmin/portal/catalog/fit')).toHaveLength(3);
+    expect(siblingTabs('/superadmin/portal/data-quality/rules').map((t) => t.label)).toEqual([
+      'Incidencias',
+      'Reglas',
+    ]);
   });
 });
