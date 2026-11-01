@@ -19,9 +19,6 @@
     "src/app/features/clinical-record/patient-chart/patient-chart.ts": {
       "lineas": 2672
     },
-    "src/app/app.routes.ts": {
-      "lineas": 2112
-    },
     "src/app/features/account/appointments/appointments.ts": {
       "lineas": 2302
     },
@@ -1097,7 +1094,7 @@
       "lineas": 423
     },
     "src/app/features/glossary/glossary-anatomy-atlas.ts": {
-      "lineas": 423
+      "lineas": 408
     },
     "src/app/shared/components/organisms/tutorial-overlay/tutorial-overlay.ts": {
       "lineas": 423
@@ -1229,7 +1226,7 @@
       "lineas": 399
     },
     "src/app/features/glossary/glossary-anatomy-atlas.html": {
-      "lineas": 399
+      "lineas": 396
     },
     "src/app/shared/components/organisms/department-map/bolivia-municipalities.geometry.ts": {
       "lineas": 398
@@ -1868,7 +1865,7 @@
       "lineas": 311
     },
     "src/app/features/dashboard/dashboard.ts": {
-      "lineas": 311
+      "lineas": 309
     },
     "src/app/core/mock/handlers/medical-notes.handlers.ts": {
       "lineas": 309
