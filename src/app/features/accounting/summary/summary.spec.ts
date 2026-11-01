@@ -460,7 +460,7 @@ describe('Resumen contable', () => {
 
       expect(avisos).toHaveBeenLastCalledWith({
         type: 'error',
-        message: 'No se pudo registrar el cobro de Seguros Andina. Intente de nuevo. (Código de soporte: corr-cobro)',
+        message: 'No se pudo registrar el cobro de Seguros Andina. Intente de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-cobro)',
       });
       // El botón vuelve a estar disponible y el tablero sigue como estaba.
       expect(c.settling()).toBeNull();

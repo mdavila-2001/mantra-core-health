@@ -132,10 +132,13 @@
   <!-- S8 · Sin conexión. -->
   @case ('offline') {
     <ng-content select="[vsh-offline]">
+      <!-- Sin red y tiempo agotado llegan los dos como S8, pero no dicen lo
+           mismo: en el segundo la petición pudo completarse, y repetir un
+           envío sin mirar puede duplicarlo. -->
       <app-empty-state
         variant="error"
-        title="Sin conexión"
-        description="No pudimos comunicarnos con el servidor. Revise su conexión."
+        [title]="offlineText().title"
+        [description]="offlineText().cause + ' ' + offlineText().action"
       >
         <button app-button empty-actions variant="outline" (clicked)="requestRetry()">
           Reintentar
@@ -149,8 +152,17 @@
   @case ('error') {
     @if (errorState(); as fallo) {
       <ng-content select="[vsh-error]">
-        <app-alert tone="error" title="Algo salió mal">
+        <!-- Qué pasó (título), por qué (mensaje) y qué hacer (pista). Título y
+             pista son textos fijos del catálogo (core/http/error-explanation):
+             nada técnico de la respuesta llega a la pantalla. -->
+        <app-alert tone="error" [title]="fallo.title ?? 'Algo salió mal'">
           {{ fallo.message ?? 'No pudimos completar la acción. Intente de nuevo en unos segundos. Si el problema persiste, repórtelo con este código.' }}
+          @if (fallo.hint) {
+            <p class="view-state-host__hint">
+              <span class="view-state-host__hint-label">Qué puede hacer:</span>
+              {{ fallo.hint }}
+            </p>
+          }
           <!-- «Copiar código» va en las acciones, junto a «Reintentar». -->
           <app-support-code class="view-state-host__request-id" [code]="fallo.requestId" [copyable]="false" />
           <div alert-actions>

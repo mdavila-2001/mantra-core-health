@@ -285,7 +285,7 @@ describe('PostCard', () => {
       );
     fixture.detectChanges();
 
-    expect(texto()).toContain('No pudimos guardar su reacción. (Código de soporte: corr-reac)');
+    expect(texto()).toContain('No pudimos guardar su reacción. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-reac)');
   });
 
   /**

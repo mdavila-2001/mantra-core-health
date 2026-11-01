@@ -336,7 +336,7 @@ describe('MeasurementGrid', () => {
     const aviso = (fixture.nativeElement as HTMLElement).querySelector(
       '[data-testid="cuadricula-error-guardar"]',
     );
-    expect(aviso?.textContent).toContain('No pudimos registrar la fila. (Código de soporte: corr-obs-1)');
+    expect(aviso?.textContent).toContain('No pudimos registrar la fila. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-obs-1)');
     expect(aviso?.textContent).toContain('sigue acá');
   });
 

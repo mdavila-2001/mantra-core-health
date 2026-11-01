@@ -140,7 +140,7 @@ describe('OrganizationLogo', () => {
     fixture.detectChanges();
 
     expect(el().querySelector('[data-testid="logo-organizacion-error"]')?.textContent).toContain(
-      'No se pudo quitar el logo. Pruebe de nuevo. (Código de soporte: c-quitar)',
+      'No se pudo quitar el logo. Pruebe de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: c-quitar)',
     );
     expect(imagen()).not.toBeNull();
   });

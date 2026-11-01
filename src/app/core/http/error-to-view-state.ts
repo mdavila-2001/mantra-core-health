@@ -7,12 +7,14 @@ import {
   unexpectedError,
   validation,
 } from '../view-state/view-state';
-import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
+import type { ViewState } from '../view-state/view-state.types';
 import { isTenantDenialReason, tenantDenialHint, tenantDenialText } from '../data-access/iam/tenant-denial';
 import { accessErrorText } from '../data-access/access-governance/access-errors';
 import { safeReturnUrl } from '../auth/return-url';
 import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
-import { readApiError, readFieldViolations, type ApiErrorBody } from './api-error';
+import { readApiError, type ApiErrorBody } from './api-error';
+import { explainFailure, explanationOf, isTimeout, type ErrorExplanation } from './error-explanation';
+import { issuesOf } from './validation-issues';
 
 /**
  * A dónde lleva la puerta cuando falta verificar la identidad.
@@ -55,19 +57,20 @@ function tenantSelectionRoute(): string {
  */
 export function errorToViewState<T>(error: unknown): ViewState<T> {
   if (!(error instanceof HttpErrorResponse)) {
-    return unexpectedError('sin-id', 'No pudimos completar la acción. Intente de nuevo en unos segundos.');
+    return explained('sin-id', explanationOf('client'));
   }
 
   // Estado 0 es «la petición no llegó»: sin conexión, DNS caído o CORS. Nunca
   // trae cuerpo de la API, así que se resuelve antes de intentar leerlo.
   if (error.status === 0) {
-    return offline();
+    return isTimeout(error) ? offline(undefined, { timedOut: true }) : offline();
   }
 
   const body = readApiError(error);
   if (body === null) {
     // Respuesta sin la forma del contrato: un proxy, un balanceador, un 502.
-    return unexpectedError(correlationOf(error, null), 'No pudimos completar la operación.');
+    // Lo que diga ese cuerpo no se muestra: la explicación sale del estado HTTP.
+    return explained(correlationOf(error, null), explainFailure(error, null));
   }
 
   // Sólo el id que mandó la API: en S4 y S5 es opcional, así que no se inventa
@@ -111,13 +114,17 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
 
     case 'PAYLOAD_TOO_LARGE':
       return validation(
-        [{ message: body.message || 'El archivo es demasiado grande.', code: body.code }],
+        [{ message: body.message || sentenceOf(explanationOf('too-large')), code: body.code }],
         undefined,
         requestId,
       );
 
     case 'RATE_LIMITED':
-      return validation([{ message: body.message, code: body.code }], retryAfterOf(error), requestId);
+      return validation(
+        [{ message: body.message || sentenceOf(explanationOf('rate-limited')), code: body.code }],
+        retryAfterOf(error),
+        requestId,
+      );
 
     // --- S5 · prohibido ----------------------------------------------------
     /**
@@ -164,108 +171,38 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
 
     // --- S9 · error inesperado ---------------------------------------------
     case 'DEPENDENCY_UNAVAILABLE':
-      return unexpectedError(
-        correlationOf(error, body),
-        'Un servicio no está disponible en este momento. Reintente en unos minutos.',
-      );
+      return explained(correlationOf(error, body), explanationOf('unavailable'));
 
     /**
      * `UNAUTHENTICATED` llega acá sólo si el interceptor de autenticación ya
      * agotó su intento de refresco: cuando eso pasa, la sesión ya se cerró y se
      * navegó al login, así que no hay nada que mostrar en la pantalla anterior.
+     *
+     * `body.message` **no** se muestra: en un 5xx la API ya lo censura a «Error
+     * interno del servidor», que no le dice nada a la persona, y si algún día
+     * un fallo se escapara sin censurar, el front no lo repetiría.
      */
     case 'UNAUTHENTICATED':
     case 'INTERNAL':
     default:
-      return unexpectedError(correlationOf(error, body), body.message);
+      return explained(correlationOf(error, body), explainFailure(error, body));
   }
 }
 
-/**
- * Convierte los detalles de validación en problemas por campo.
- *
- * El backend manda la lista en **`details.violations`** cuando el fallo viene del
- * `ValidationPipe` — lo arma `all-exceptions.filter.ts` con
- * `{ violations: obj.message }`. Si no está, el mensaje general es lo único que
- * hay.
- *
- * > **Corregido el 2026-08-04, verificado contra la API real.** Acá se leía
- * > `details.messages`, una clave que el backend no emite, así que **ningún
- * > mensaje por campo llegó nunca a la pantalla**: todos los 400 de validación
- * > se veían como el genérico «Error de validación», sin decir qué campo estaba
- * > mal. Se comprobó con
- * > `POST /iam/users/assisted-registration` sin `reason`, que responde
- * > `details.violations: ["reason must be a string", …]`.
- * >
- * > `messages` se sigue aceptando como reserva: no cuesta nada y cubre a
- * > cualquier endpoint que use esa forma.
- */
-function issuesOf(body: ApiErrorBody): readonly ViewStateIssue[] {
-  // Primero la forma estructurada (`details.fields`, desde el 2026-10-08): trae
-  // la ruta exacta del campo, incluidos los anidados, y no hay que adivinarla.
-  const fields = readFieldViolations(body);
-  if (fields.length > 0) {
-    return fields.flatMap(({ field, messages }) =>
-      (messages.length > 0 ? messages : [body.message]).map((message) => ({ field, message, code: body.code })),
-    );
-  }
-
-  const messages = body.details?.['violations'] ?? body.details?.['messages'];
-
-  if (Array.isArray(messages) && messages.length > 0) {
-    return messages
-      .filter((item): item is string => typeof item === 'string')
-      .map((message) => ({ ...fieldOf(message), message, code: body.code }));
-  }
-
-  // El `ValidationPipe` no fue: `details` puede traer el campo por su cuenta.
-  const field = typeof body.details?.['field'] === 'string' ? body.details['field'] : undefined;
-
-  return [
-    {
-      ...(field === undefined ? {} : { field }),
-      message: body.message,
-      code: body.code,
-    },
-  ];
+/** S9 con la explicación fija del catálogo: causa como mensaje, acción como pista. */
+function explained<T>(requestId: string, explanation: ErrorExplanation): ViewState<T> {
+  return unexpectedError(requestId, explanation.cause, {
+    title: explanation.title,
+    hint: explanation.action,
+  });
 }
 
-/**
- * Deduce a qué campo se refiere un mensaje del `ValidationPipe`.
- *
- * `class-validator` compone sus mensajes empezando por el nombre de la
- * propiedad: `"nationalId must be longer than or equal to 4 characters"`,
- * `"email must be an email"`. Es una convención del backend, no un contrato, y
- * por eso el reconocimiento es **conservador**: solo se acepta si la primera
- * palabra es un identificador en `camelCase` y va seguida de otra.
- *
- * ## Por qué vale la pena aun siendo una heurística
- *
- * `ViewStateIssue` admite `field` y `ViewStateHost` lo pinta en negrita delante
- * del mensaje, pero **nada lo rellenaba**: los errores del servidor se mostraban
- * como una lista suelta arriba del formulario en vez de junto al campo que los
- * causó. Para quien usa lector de pantalla la diferencia es grande.
- *
- * Y el modo de fallo es benigno: si no reconoce el campo, el mensaje se muestra
- * igual, sin anclar — exactamente como antes. Nunca inventa un campo.
- */
-function fieldOf(message: string): { field?: string } {
-  const match = /^([a-z][A-Za-z0-9]*)\s+\S/.exec(message);
-  if (match === null) {
-    return {};
-  }
-
-  const candidato = match[1];
-
-  // Palabras corrientes que abren una frase en inglés y no son un campo. Sin
-  // esto, «each value must be…» anclaría al campo «each».
-  const PALABRAS_COMUNES = new Set([
-    'each', 'all', 'the', 'this', 'that', 'value', 'property', 'nested',
-    'must', 'should', 'cannot', 'unexpected', 'invalid',
-  ]);
-
-  return PALABRAS_COMUNES.has(candidato.toLowerCase()) ? {} : { field: candidato };
+/** Causa y acción en un solo texto, para donde no hay título aparte. */
+function sentenceOf(explanation: ErrorExplanation): string {
+  return `${explanation.cause} ${explanation.action}`;
 }
+
+
 
 /** El identificador que conecta el reporte de la persona con los registros. */
 function correlationOf(error: HttpErrorResponse, body: ApiErrorBody | null): string {

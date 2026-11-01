@@ -839,7 +839,7 @@ describe('MedicalRecord', () => {
     expect(toasts.success).not.toHaveBeenCalled();
     expect(toasts.warning).toHaveBeenCalledWith(
       'Descargamos su historia, pero sin las órdenes de estudios ni los resultados de estudios. ' +
-        'No se pudieron traer. (Código de soporte: corr-ord-1)',
+        'No se pudieron traer. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-ord-1)',
       'Historia clínica incompleta',
     );
   });
@@ -894,7 +894,7 @@ describe('MedicalRecord', () => {
 
     expect(toasts.success).not.toHaveBeenCalled();
     expect(toasts.warning).toHaveBeenCalledWith(
-      'Descargamos su historia, pero sin los servicios recibidos. No se pudieron traer. (Código de soporte: corr-srv-1)',
+      'Descargamos su historia, pero sin los servicios recibidos. No se pudieron traer. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-srv-1)',
       'Historia clínica incompleta',
     );
   });

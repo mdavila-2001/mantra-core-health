@@ -1140,7 +1140,9 @@ describe('WhereToBuy', () => {
       );
     harness.detectChanges();
 
-    expect(textOf()).toContain('Un servicio no está disponible');
+    http.expectNone((request) => request.url === '/pharmacy-inventory/availability');
+    expect(textOf()).toContain('El servicio no está disponible en este momento');
+    expect(textOf()).toContain('Intente de nuevo en unos minutos');
     expect(textOf()).toContain('Reintentar');
     expect(textOf()).not.toContain('Sin producto publicado');
     expect(TestBed.inject(PharmacyOrdersClient).borradorPreparado()).toBeNull();
@@ -1654,7 +1656,8 @@ describe('WhereToBuy', () => {
       );
     harness.detectChanges();
 
-    expect(textOf()).toContain('Un servicio no está disponible');
+    expect(textOf()).toContain('El servicio no está disponible en este momento');
+    expect(textOf()).toContain('Intente de nuevo en unos minutos');
     expect(queryAll('.purchase__branch')).toHaveLength(0);
     const retryButton = (queryAll('button') as HTMLButtonElement[]).find((targetButton) =>
       targetButton.textContent?.includes('Reintentar'),

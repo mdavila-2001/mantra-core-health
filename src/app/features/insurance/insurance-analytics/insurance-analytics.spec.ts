@@ -153,7 +153,7 @@ describe('InsuranceAnalytics', () => {
 
     const aviso = fixture.nativeElement.querySelector('[data-testid="analytics-carrier-error"]') as HTMLElement;
     expect(aviso.textContent).toContain(
-      'No pudimos traer los planes de su aseguradora, así que no se puede filtrar por plan. (Código de soporte: corr-ins)',
+      'No pudimos traer los planes de su aseguradora, así que no se puede filtrar por plan. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-ins)',
     );
 
     aviso.querySelector<HTMLButtonElement>('button')?.click();

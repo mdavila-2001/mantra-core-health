@@ -277,7 +277,7 @@ describe('AgendaDeHoy', () => {
     expect(aviso).not.toBeNull();
     expect(aviso?.getAttribute('role')).toBe('alert');
     expect(aviso?.textContent).toContain(
-      'No se pudieron cargar las citas de Consultorio. (Código de soporte: corr-sede-2)',
+      'No se pudieron cargar las citas de Consultorio. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-sede-2)',
     );
   });
 
