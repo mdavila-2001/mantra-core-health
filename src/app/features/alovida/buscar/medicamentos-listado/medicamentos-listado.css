@@ -195,3 +195,49 @@
   justify-content: flex-end;
   margin-block-end: var(--sp-4);
 }
+
+/* ── Coincidencia educativa Marca ↔ Compuesto ─────────────────────────────── */
+
+.vitrina-coincidencia-marca {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  margin-block-end: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--c-aqua-500) 12%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--c-aqua-500) 35%, var(--border-default));
+  box-shadow: var(--shadow-sm);
+}
+
+.vitrina-coincidencia-marca__icono {
+  flex-shrink: 0;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  color: var(--c-aqua-600);
+}
+
+.vitrina-coincidencia-marca__icono svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.vitrina-coincidencia-marca__cuerpo {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.vitrina-coincidencia-marca__titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+}
+
+.vitrina-coincidencia-marca__bajada {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+

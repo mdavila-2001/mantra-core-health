@@ -22,6 +22,7 @@ import type { SegmentedOption } from '@shared/components/molecules/segmented-con
 
 import { CentroCard } from '../centro-card/centro-card';
 import { toMedicationCard, type MedicationCard } from './medication-card.mapper';
+import { MedicationGraph } from './medication-graph/medication-graph';
 import { MedicationTree } from './medication-tree/medication-tree';
 import { PharmacyAvailabilityDialog } from './pharmacy-availability-dialog/pharmacy-availability-dialog';
 
@@ -59,11 +60,12 @@ export interface PuntoDeReferencia {
 type Estado = 'carga' | 'datos' | 'vacio' | 'error';
 
 /** Cómo se dibujan los resultados. */
-type Vista = 'tarjetas' | 'arbol';
+type Vista = 'tarjetas' | 'grafo' | 'arbol';
 
 const VISTAS: readonly SegmentedOption<Vista>[] = [
   { value: 'tarjetas', label: 'Tarjetas' },
-  { value: 'arbol', label: 'Árbol' },
+  { value: 'grafo', label: 'Grafo visual' },
+  { value: 'arbol', label: 'Lista' },
 ];
 
 /**
@@ -127,6 +129,7 @@ const VISTAS: readonly SegmentedOption<Vista>[] = [
     CardDetailPanel,
     CentroCard,
     Chip,
+    MedicationGraph,
     MedicationTree,
     PharmacyAvailabilityDialog,
     SearchField,
@@ -171,6 +174,23 @@ export class BuscarMedicamentosListado {
   );
   protected readonly grupos = computed(() => this.pagina()?.groups ?? []);
   protected readonly total = computed(() => this.pagina()?.total ?? 0);
+
+  /**
+   * Cuando el paciente busca por marca comercial (ej. «Kitadol»), identifica
+   * la marca que coincidió y explica cuál es el compuesto químico activo concreto (ej. «Paracetamol»).
+   */
+  protected readonly coincidenciaMarca = computed<{ marca: string; compuesto: string } | null>(() => {
+    const q = this.texto().trim().toLowerCase();
+    if (q.length < 2) return null;
+    for (const med of this.medicamentos()) {
+      for (const brand of med.brands) {
+        if (brand.toLowerCase().includes(q)) {
+          return { marca: brand, compuesto: med.genericName };
+        }
+      }
+    }
+    return null;
+  });
 
   /* ---- el origen: se pide, no se toma ------------------------------------- */
 
