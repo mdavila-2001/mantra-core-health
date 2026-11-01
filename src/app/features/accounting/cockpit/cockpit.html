@@ -36,8 +36,8 @@
     @if (datos(); as tablero) {
       <app-form-field icon="calendar" label="Ejercicio">
         <p class="contexto__dato" data-testid="cockpit-ejercicio">
-          {{ tablero.ejercicio.name }}
-          <span class="contexto__rango">{{ tablero.ejercicio.startsOn }} → {{ tablero.ejercicio.endsOn }}</span>
+          {{ tablero.ejercicio?.name }}
+          <span class="contexto__rango">{{ tablero.ejercicio?.startsOn }} → {{ tablero.ejercicio?.endsOn }}</span>
         </p>
       </app-form-field>
 
@@ -166,77 +166,76 @@
           documento posteado no se edita: se revierte, y quedan los dos a la vista.
         </p>
 
-        @for (grupo of bandeja(); track grupo.estado) {
-          @if (grupo.documentos.length > 0) {
-            <section class="grupo" [attr.data-testid]="'grupo-' + grupo.estado">
-              <header class="grupo__cabecera">
-                <app-badge [variant]="grupo.tono">{{ grupo.etiqueta }}</app-badge>
-                <span class="grupo__cuenta">{{ grupo.total }}</span>
-              </header>
+        @if (bandeja().filas.length > 0) {
+          <section class="grupo" data-testid="grupo-documentos">
+            <header class="grupo__cabecera">
+              <h3 class="grupo__titulo">Documentos</h3>
+              <span class="grupo__cuenta">{{ bandeja().total }}</span>
+            </header>
 
-              <ul class="documentos">
-                @for (doc of grupo.documentos; track doc.id) {
-                  <li class="documento">
+            <ul class="documentos">
+              @for (fila of bandeja().filas; track fila.doc.id) {
+                <li class="documento">
+                  <app-badge [variant]="fila.tono">{{ fila.etiqueta }}</app-badge>
+                  <button
+                    type="button"
+                    class="documento__numero documento__numero--abrible"
+                    [attr.aria-expanded]="flujoAbierto() === fila.doc.id"
+                    [attr.data-testid]="'flujo-' + fila.doc.id"
+                    (click)="verFlujo(fila.doc.id)"
+                  >
+                    {{ fila.doc.transactionNumber }}
+                  </button>
+                  <span class="documento__fecha">{{ fila.doc.transactionDate | date: 'dd/MM/yyyy' }}</span>
+                  <span class="documento__importe">{{ importe(fila.doc.totalAmount ?? '0.00') }}</span>
+                  @if (fila.accion; as accion) {
                     <button
+                      app-button
                       type="button"
-                      class="documento__numero documento__numero--abrible"
-                      [attr.aria-expanded]="flujoAbierto() === doc.id"
-                      [attr.data-testid]="'flujo-' + doc.id"
-                      (click)="verFlujo(doc.id)"
+                      [variant]="accion.principal ? 'primary' : 'outline'"
+                      size="sm"
+                      [attr.data-testid]="'accion-' + accion.action"
+                      (clicked)="avanzar(fila.doc.id, fila.doc.transactionNumber ?? fila.doc.id, accion)"
                     >
-                      {{ doc.transactionNumber }}
+                      {{ accion.rotulo }}
                     </button>
-                    <span class="documento__fecha">{{ doc.transactionDate | date: 'dd/MM/yyyy' }}</span>
-                    <span class="documento__importe">{{ importe(doc.totalAmount ?? '0.00') }}</span>
-                    @if (grupo.accion; as accion) {
-                      <button
-                        app-button
-                        type="button"
-                        [variant]="accion.principal ? 'primary' : 'outline'"
-                        size="sm"
-                        [attr.data-testid]="'accion-' + accion.action"
-                        (clicked)="avanzar(doc.id, accion)"
-                      >
-                        {{ accion.rotulo }}
-                      </button>
-                    } @else {
-                      <span class="documento__final">Cerrado</span>
-                    }
+                  } @else {
+                    <span class="documento__final">Cerrado</span>
+                  }
 
-                    @if (flujoAbierto() === doc.id) {
-                      <ol class="flujo" [attr.data-testid]="'cadena-' + doc.id">
-                        @for (nodo of cadenaDelFlujo(); track nodo.id) {
-                          <li class="flujo__nodo" [class.flujo__nodo--actual]="nodo.role === 'ACTUAL'">
-                            <span class="flujo__papel">
-                              {{
-                                nodo.role === 'ORIGEN'
-                                  ? 'Origen'
-                                  : nodo.role === 'ACTUAL'
-                                    ? 'Este documento'
-                                    : 'Reversión'
-                              }}
-                            </span>
-                            <span class="flujo__numero">{{ nodo.transactionNumber }}</span>
-                            <span class="flujo__fecha">{{ nodo.transactionDate }}</span>
-                            <span class="flujo__importe">{{ importe(nodo.totalAmount) }}</span>
-                          </li>
-                        } @empty {
-                          <li class="flujo__nodo">Leyendo el flujo…</li>
-                        }
-                      </ol>
-                    }
-                  </li>
-                }
-              </ul>
-
-              @if (grupo.ocultos > 0) {
-                <p class="grupo__resto">
-                  y {{ grupo.ocultos }} más.
-                  <a app-link routerLink="/administration/accounting/libros">Verlos en el libro diario</a>
-                </p>
+                  @if (flujoAbierto() === fila.doc.id) {
+                    <ol class="flujo" [attr.data-testid]="'cadena-' + fila.doc.id">
+                      @for (nodo of cadenaDelFlujo(); track nodo.id) {
+                        <li class="flujo__nodo" [class.flujo__nodo--actual]="nodo.role === 'ACTUAL'">
+                          <span class="flujo__papel">
+                            {{
+                              nodo.role === 'ORIGEN'
+                                ? 'Origen'
+                                : nodo.role === 'ACTUAL'
+                                  ? 'Este documento'
+                                  : 'Reversión'
+                            }}
+                          </span>
+                          <span class="flujo__numero">{{ nodo.transactionNumber }}</span>
+                          <span class="flujo__fecha">{{ nodo.transactionDate }}</span>
+                          <span class="flujo__importe">{{ importe(nodo.totalAmount) }}</span>
+                        </li>
+                      } @empty {
+                        <li class="flujo__nodo">Leyendo el flujo…</li>
+                      }
+                    </ol>
+                  }
+                </li>
               }
-            </section>
-          }
+            </ul>
+
+            @if (bandeja().ocultos > 0) {
+              <p class="grupo__resto">
+                y {{ bandeja().ocultos }} más.
+                <a app-link routerLink="/administration/accounting/libros">Verlos en el libro diario</a>
+              </p>
+            }
+          </section>
         }
       </app-tab>
 
@@ -290,7 +289,7 @@
                 variant="outline"
                 size="sm"
                 [attr.data-testid]="'compensar-' + partida.id"
-                (clicked)="compensar(partida.id)"
+                (clicked)="compensar(partida)"
               >
                 Compensar
               </button>
