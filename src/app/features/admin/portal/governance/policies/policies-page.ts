@@ -31,7 +31,7 @@ import { portalUrl } from '../../portal-nav';
 import { pagedList } from '../../support/paged-list';
 import { patchQuery, queryFilters, queryParamsSignal } from '../../support/route-query';
 import { FilterForm, type FilterField } from '../filter-form';
-import { dateTime } from '../governance-labels';
+import { dateOnly, timeOnly } from '../governance-labels';
 import {
   POLICY_TYPE_INFO,
   POLICY_URL_KEYS,
@@ -66,7 +66,8 @@ export class PoliciesPage {
   protected readonly values = queryFilters(queryParamsSignal(this.route), POLICY_URL_KEYS);
   protected readonly type = policyType;
   protected readonly state = policyState;
-  protected readonly when = dateTime;
+  protected readonly day = dateOnly;
+  protected readonly hour = timeOnly;
 
   /** El tipo se elige con las pestañas (viven en la URL como `type`); el buscador queda en la fila. */
   protected readonly fields: readonly FilterField[] = [

@@ -1,0 +1,61 @@
+[
+ {
+  "file": "despues-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1220,
+  "h1": [
+   "Políticas de gobierno"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 2009,
+  "h1": [
+   "Políticas de gobierno"
+  ],
+  "cut": [
+   "a.portal__pestana",
+   "button.tabs__tab",
+   "span.tabs__rotulo",
+   "button.tabs__tab"
+  ],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-ficha-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "SIM-ANON-HASH"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-ficha-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 956,
+  "h1": [
+   "SIM-ANON-HASH"
+  ],
+  "cut": [
+   "a.portal__pestana"
+  ],
+  "overflow": false,
+  "errs": []
+ }
+]

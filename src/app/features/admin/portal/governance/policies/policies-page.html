@@ -83,10 +83,17 @@
 </ng-template>
 
 <ng-template #versionCell let-row>
-  <div class="policies__cell">
-    <span>Versión {{ row.version }}</span>
-    <span class="policies__secondary">
-      {{ row.updatedAt ? 'Cambió ' + when(row.updatedAt) : 'Sin fecha de cambio' }}
-    </span>
-  </div>
+  <span class="policies__version">
+    <span class="policies__nowrap">Versión {{ row.version }}</span>
+    @if (row.updatedAt) {
+      <span class="policies__secondary">
+        <span class="policies__nowrap">Cambió el {{ day(row.updatedAt) }},</span>&ngsp;<span
+          class="policies__nowrap"
+          >{{ hour(row.updatedAt) }}</span
+        >
+      </span>
+    } @else {
+      <span class="policies__secondary">Sin fecha de cambio</span>
+    }
+  </span>
 </ng-template>

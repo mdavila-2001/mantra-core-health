@@ -67,3 +67,15 @@
   line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
+
+/* Versión y fecha: cada una en su renglón, alineadas como el resto de la celda y sin partirse. */
+.policies__version {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  text-align: inherit;
+}
+
+.policies__nowrap {
+  white-space: nowrap;
+}
