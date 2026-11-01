@@ -1,0 +1,28 @@
+[
+ {
+  "file": "despues-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1383,
+  "h1": [
+   "Incidencias de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 2571,
+  "h1": [
+   "Incidencias de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]

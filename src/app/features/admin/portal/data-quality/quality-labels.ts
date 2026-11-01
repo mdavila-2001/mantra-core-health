@@ -21,7 +21,7 @@ const SEVERITY: Readonly<Record<QualitySeverity, Rotulo>> = {
 };
 
 const STATUS: Readonly<Record<QualityIssueStatus, Rotulo>> = {
-  OPEN: { label: 'Abierta', tone: 'warning' },
+  OPEN: { label: 'Abierta', tone: 'primary' },
   RESOLVED: { label: 'Resuelta', tone: 'success' },
   DISMISSED: { label: 'Descartada', tone: 'secondary' },
 };

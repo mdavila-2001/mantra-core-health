@@ -29,6 +29,7 @@ import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
@@ -83,7 +84,7 @@ const ACTIONS: Readonly<
  */
 @Component({
   selector: 'app-portal-quality-issues-page',
-  imports: [NgTemplateOutlet, RouterLink, AppButton, Badge, Link, Alert, Card, Tab, Tabs, DataTable, PageHeader, FilterForm],
+  imports: [NgTemplateOutlet, RouterLink, AppButton, Badge, Link, Alert, Card, MetricCard, Tab, Tabs, DataTable, PageHeader, FilterForm],
   templateUrl: './issues-page.html',
   styleUrl: './issues-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,6 +119,19 @@ export class IssuesPage {
     (cursor) => this.client.listIssues({ ...issueQuery(this.values()), limit: PAGE_SIZE, ...(cursor ? { cursor } : {}) }),
     () => this.whenEmpty(),
   );
+
+  /**
+   * Cifras de las abiertas: sólo en la pestaña «Abiertas», sin filtros y cuando la respuesta ya
+   * pedida las trae todas (una sola página). Si no, no se muestran: contar una página sería inventar.
+   */
+  protected readonly metrics = computed(() => {
+    const s = this.list.state();
+    const total = this.list.total();
+    if (this.tabIndex() !== 0 || hasIssueFilters(this.values())) return null;
+    if (s.status !== 'ready' || total === null || s.data.length !== total) return null;
+    const by = (sev: string) => s.data.filter((i) => i.severity === sev).length;
+    return { open: total, fatal: by('FATAL'), error: by('ERROR'), warning: by('WARNING') };
+  });
 
   private readonly severityCell = viewChild.required<TemplateRef<{ $implicit: QualityIssue }>>('severityCell');
   private readonly issueCell = viewChild.required<TemplateRef<{ $implicit: QualityIssue }>>('issueCell');

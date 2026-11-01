@@ -96,6 +96,24 @@
 }
 
 /* La fecha no se parte a mitad («2:00 p. / m.»). */
-.issues__when {
+.issues__when,
+.issues__nowrap {
   white-space: nowrap;
+}
+
+/* Cuatro cifras: de dos en dos en el teléfono y la tableta, en una fila desde escritorio. */
+.issues__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+@media (min-width: 1024px) {
+  .issues__metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.issues__metrics app-metric-card {
+  min-inline-size: 0;
 }

@@ -20,6 +20,15 @@
     </details>
   </app-alert>
 
+  @if (metrics(); as m) {
+    <section class="issues__metrics" aria-label="Incidencias abiertas" data-testid="portal-quality-metrics">
+      <app-metric-card label="Abiertas" icon="flag" [value]="m.open" hint="Esperan resolverse o descartarse" />
+      <app-metric-card label="Fatales" icon="shield" [value]="m.fatal" hint="Abiertas de severidad fatal" />
+      <app-metric-card label="Errores" icon="note" [value]="m.error" hint="Abiertas de severidad error" />
+      <app-metric-card label="Avisos" icon="bell" [value]="m.warning" hint="Abiertas de severidad aviso" />
+    </section>
+  }
+
   @if (notice(); as n) {
     <app-alert [tone]="n.tone" data-testid="portal-quality-notice">{{ n.text }}</app-alert>
   }
@@ -104,7 +113,7 @@
 <ng-template #outcomeCell let-row>
   <div class="issues__cell">
     @if (row.status === 'OPEN') {
-      <span class="issues__secondary">Esperando decisión</span>
+      <span class="issues__secondary issues__nowrap">Esperando decisión</span>
     } @else {
       <span>{{ when(row.resolvedAt) }}</span>
       @if (row.resolutionText) {
