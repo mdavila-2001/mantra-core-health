@@ -90,8 +90,8 @@ export interface FilterField {
     </form>
   `,
   styles: `
-    /* Una fila: los campos ocupan lo que haya y las acciones quedan a la derecha, alineadas
-       con los controles; en el teléfono los campos van de dos en dos y las acciones debajo. */
+    /* Los campos en una fila a todo el ancho (el buscador primero) y las acciones debajo, a
+       la derecha; en el teléfono los campos se apilan. */
     .filter-form {
       display: flex;
       flex-wrap: wrap;
@@ -99,16 +99,23 @@ export interface FilterField {
       gap: var(--sp-3);
     }
     .filter-form__fields {
-      flex: 1 1 36rem;
+      flex: 1 1 100%;
       min-inline-size: 0;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(9.5rem, 100%), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(11.5rem, 100%), 1fr));
       align-items: start;
       gap: var(--sp-3);
     }
-    /* El buscador ocupa dos columnas: su texto de ejemplo no se corta. */
+    /* El buscador va primero y ocupa dos columnas (la fila entera en el teléfono): su texto
+       de ejemplo no se corta. Los selectores tienen ancho para su opción más larga. */
     .filter-form__wide {
-      grid-column: span 2;
+      grid-column: 1 / -1;
+      order: -1;
+    }
+    @media (min-width: 40.0625rem) {
+      .filter-form__wide {
+        grid-column: span 2;
+      }
     }
     .filter-form__actions {
       display: flex;
