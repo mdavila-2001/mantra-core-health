@@ -19,6 +19,20 @@
   </details>
 </app-alert>
 
+@if (metrics(); as m) {
+  <section class="privacy__metrics" aria-label="Resumen de las solicitudes" data-testid="portal-privacy-metrics">
+    <app-metric-card label="Solicitudes" icon="mail" [value]="m.total" hint="Todas las recibidas" />
+    <app-metric-card label="Sin cerrar" icon="clock" [value]="m.open" hint="Recibidas o en curso" />
+    <app-metric-card
+      label="Vencidas"
+      icon="flag"
+      [value]="m.overdue"
+      hint="Pasaron los 30 días sin cerrarse"
+      [tone]="m.overdue > 0 ? 'error' : 'success'"
+    />
+  </section>
+}
+
 <app-card class="privacy__card" variant="outlined" padding="md">
   <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
     <app-tab [label]="tabLabels.all">

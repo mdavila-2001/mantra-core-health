@@ -17,6 +17,7 @@ import type { EmptyViewState } from '../../../../core/view-state/view-state.type
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { MetricCard } from '../../../../shared/components/molecules/metric-card/metric-card';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
@@ -53,7 +54,7 @@ const SCREEN = portalUrl('governance/privacy-requests');
  */
 @Component({
   selector: 'app-portal-privacy-requests-page',
-  imports: [NgTemplateOutlet, RouterLink, Badge, Link, Alert, Card, Tab, Tabs, DataTable, PageHeader, FilterForm],
+  imports: [NgTemplateOutlet, RouterLink, Badge, Link, Alert, Card, MetricCard, Tab, Tabs, DataTable, PageHeader, FilterForm],
   templateUrl: './privacy-requests-page.html',
   styleUrl: './privacy-requests-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +81,21 @@ export class PrivacyRequestsPage {
     (cursor) => this.client.list({ ...privacyQuery(this.values()), limit: PAGE_SIZE, ...(cursor ? { cursor } : {}) }),
     () => this.whenEmpty(),
   );
+
+  /**
+   * Cifras de arriba: sólo en «Todas», sin filtro y cuando la respuesta ya pedida trae todas las
+   * solicitudes (una sola página, sin cursor siguiente). Si no, no se muestran: la lectura no
+   * entrega conteos y contar una página sería inventar.
+   */
+  protected readonly metrics = computed(() => {
+    const s = this.list.state();
+    const c = this.list.cursor();
+    if (this.tabIndex() !== 0 || this.values().type !== '') return null;
+    if (s.status !== 'ready' || c.nextCursor !== null || c.prevCursor !== null) return null;
+    const rows = s.data;
+    const open = rows.filter((r) => r.status === 'RECEIVED' || r.status === 'IN_PROGRESS');
+    return { total: rows.length, open: open.length, overdue: rows.filter((r) => r.overdue).length };
+  });
 
   private readonly requestCell = viewChild.required<TemplateRef<{ $implicit: PrivacyRequest }>>('requestCell');
   private readonly stateCell = viewChild.required<TemplateRef<{ $implicit: PrivacyRequest }>>('stateCell');

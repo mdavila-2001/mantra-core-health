@@ -51,3 +51,28 @@
   flex-wrap: wrap;
   gap: var(--sp-1);
 }
+
+/* Tres cifras: la primera a lo ancho en el teléfono, en una fila desde la tableta. */
+.privacy__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.privacy__metrics > :first-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 650px) {
+  .privacy__metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .privacy__metrics > :first-child {
+    grid-column: auto;
+  }
+}
+
+.privacy__metrics app-metric-card {
+  min-inline-size: 0;
+}
