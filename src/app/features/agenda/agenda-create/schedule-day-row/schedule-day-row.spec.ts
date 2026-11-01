@@ -79,6 +79,7 @@ describe('ScheduleDayRow', () => {
 
   it('día flexible: sin duración ni descanso, «Sin citas de duración fija»', () => {
     pintar(dia({ flexible: true }));
+    expect(fila().classList.contains('schedule-day-row--flexible')).toBe(true);
     expect(fila().querySelector('.schedule-day-row__free')?.textContent).toBe('Sin citas de duración fija');
     expect(fila().querySelector('[data-testid="schedule-day-gap-1"]')).toBeNull();
   });

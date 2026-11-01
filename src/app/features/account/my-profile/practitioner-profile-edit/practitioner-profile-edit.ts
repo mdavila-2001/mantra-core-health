@@ -2460,9 +2460,6 @@ export class PractitionerProfileEdit {
     if (!original.acceptsNewPatients) {
       cambios.acceptsNewPatients = true;
     }
-    if (this.telemedicina() !== original.telehealthAvailable) {
-      cambios.telehealthAvailable = this.telemedicina();
-    }
     // Los personales viajan igual que los otros: sólo si cambiaron. Una cadena
     // vacía SÍ viaja —es cómo se borra un segundo nombre— y por eso se compara
     // contra el original en vez de descartar los vacíos.
