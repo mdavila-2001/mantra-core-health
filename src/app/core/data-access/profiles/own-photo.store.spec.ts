@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { signal } from '@angular/core';
+import { Subject, of, throwError } from 'rxjs';
+
+import { AuthService } from '../../auth/auth.service';
 
 import { FilesClient } from '../files/files.client';
 import { OwnPhotoStore } from './own-photo.store';
@@ -9,9 +12,12 @@ describe('OwnPhotoStore', () => {
   const getOwnPatientProfile = vi.fn();
   const imageDataUrl = vi.fn();
 
+  const userId = signal<string | null>('u1');
+
   function crear(): OwnPhotoStore {
     TestBed.configureTestingModule({
       providers: [
+        { provide: AuthService, useValue: { userId } },
         { provide: ProfilesClient, useValue: { getOwnPatientProfile } },
         { provide: FilesClient, useValue: { imageDataUrl } },
       ],
@@ -20,6 +26,7 @@ describe('OwnPhotoStore', () => {
   }
 
   beforeEach(() => {
+    userId.set('u1');
     getOwnPatientProfile.mockReset();
     imageDataUrl.mockReset();
   });
@@ -56,6 +63,33 @@ describe('OwnPhotoStore', () => {
     expect(store.url()).toBe('data:image/png;base64,BBB');
 
     store.reset();
+    expect(store.url()).toBeNull();
+  });
+
+  it('si cambia la sesión, borra la foto de la cuenta anterior', () => {
+    const store = crear();
+    TestBed.tick();
+    store.set('data:image/png;base64,AAA');
+
+    userId.set(null);
+    TestBed.tick();
+
+    expect(store.url()).toBeNull();
+  });
+
+  it('descarta una respuesta que llega después de cambiar de sesión', () => {
+    const respuesta = new Subject<{ photoFileId: string }>();
+    getOwnPatientProfile.mockReturnValue(respuesta);
+    imageDataUrl.mockReturnValue(of('data:image/png;base64,VIEJA'));
+    const store = crear();
+    TestBed.tick();
+
+    store.load();
+    userId.set('u2');
+    TestBed.tick();
+    respuesta.next({ photoFileId: 'f1' });
+    respuesta.complete();
+
     expect(store.url()).toBeNull();
   });
 });
