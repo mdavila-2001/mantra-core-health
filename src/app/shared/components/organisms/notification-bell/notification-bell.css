@@ -52,10 +52,19 @@
 
 .campana__badge {
   /* Sobre el borde del ícono, no dentro: con el número dentro del círculo el
-     conteo tapa la campana justo cuando hay algo que mirar. */
+     conteo tapa la campana justo cuando hay algo que mirar.
+
+     01/11/2026 (revisión visual T7): a 0,1rem del borde del botón la insignia
+     quedaba encima del hombro derecho de la campana. Ahora su borde izquierdo
+     arranca donde termina el dibujo (el ícono mide 20 px en un botón de 40, así
+     que termina al 75 %) y sube por encima de su punta; un anillo del color de
+     la barra la separa del trazo si el número crece. */
   position: absolute;
-  inset-block-start: 0.1rem;
-  inset-inline-end: 0.1rem;
+  inset-block-start: calc(var(--sp-1) * -1);
+  inset-inline-start: 62%;
+  border-radius: var(--r-full);
+  box-shadow: 0 0 0 2px var(--bg-surface);
+  pointer-events: none;
 }
 
 .campana__panel {

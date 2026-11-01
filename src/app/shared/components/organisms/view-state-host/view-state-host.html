@@ -25,30 +25,45 @@
   @case ('empty') {
     @if (emptyState(); as vacio) {
       <ng-content select="[vsh-empty]">
-        <app-empty-state
-          variant="empty"
-          title="Todavía no hay nada acá"
-          [description]="vacio.message ?? ''"
-        >
-          @if (vacio.nextAction.route) {
-            <a app-link empty-actions [routerLink]="enlace(vacio.nextAction.route, vacio.nextAction.queryParams)">
-              {{ vacio.nextAction.label }}
-            </a>
-          } @else {
-            <!-- La próxima acción SIN ruta no es un enlace: es una indicación
-                 («escribí para buscar»). Salía como texto pelado debajo del
-                 párrafo —indistinguible de la bajada, sin peso y sin forma— y
-                 el propietario lo bajó el 19/09/2026. Ahora va en cápsula
-                 punteada: se lee como instrucción y no como algo pulsable. -->
-            <span empty-actions class="view-state-host__next-action">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="4" y1="12" x2="19" y2="12" />
-                <polyline points="13 6 19 12 13 18" />
-              </svg>
-              {{ vacio.nextAction.label }}
-            </span>
-          }
-        </app-empty-state>
+        @if (filtered()) {
+          <!-- S3 filtrado: hay datos, pero ninguno cumple los filtros puestos. La
+               próxima acción es aflojarlos, no crear nada. -->
+          <app-empty-state
+            variant="no-results"
+            title="Ningún resultado con estos filtros"
+            [description]="vacio.message ?? 'Hay registros, pero ninguno cumple los filtros puestos.'"
+            data-testid="vsh-vacio-filtrado"
+          >
+            <button app-button empty-actions variant="outline" data-testid="vsh-quitar-filtros" (clicked)="clearFilters.emit()">
+              Quitar filtros
+            </button>
+          </app-empty-state>
+        } @else {
+          <app-empty-state
+            variant="empty"
+            title="Todavía no hay nada acá"
+            [description]="vacio.message ?? ''"
+          >
+            @if (vacio.nextAction.route) {
+              <a app-link empty-actions [routerLink]="enlace(vacio.nextAction.route, vacio.nextAction.queryParams)">
+                {{ vacio.nextAction.label }}
+              </a>
+            } @else {
+              <!-- La próxima acción SIN ruta no es un enlace: es una indicación
+                   («escribí para buscar»). Salía como texto pelado debajo del
+                   párrafo —indistinguible de la bajada, sin peso y sin forma— y
+                   el propietario lo bajó el 19/09/2026. Ahora va en cápsula
+                   punteada: se lee como instrucción y no como algo pulsable. -->
+              <span empty-actions class="view-state-host__next-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="4" y1="12" x2="19" y2="12" />
+                  <polyline points="13 6 19 12 13 18" />
+                </svg>
+                {{ vacio.nextAction.label }}
+              </span>
+            }
+          </app-empty-state>
+        }
       </ng-content>
     }
   }

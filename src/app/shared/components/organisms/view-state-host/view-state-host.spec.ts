@@ -22,8 +22,10 @@ import { ViewStateHost } from './view-state-host';
   template: `
     <app-view-state-host
       [state]="state()"
+      [filtered]="filtrado()"
       (retry)="retries.push(1)"
       (refresh)="refreshes.push(1)"
+      (clearFilters)="limpiezas.push(1)"
     >
       <div vsh-skeleton class="esqueleto-real">forma real del contenido</div>
       <p class="contenido">Listado de pacientes</p>
@@ -34,6 +36,8 @@ class HostComponent {
   readonly state = signal<ViewState<string[]>>(loading());
   readonly retries: number[] = [];
   readonly refreshes: number[] = [];
+  readonly filtrado = signal(false);
+  readonly limpiezas: number[] = [];
 }
 
 describe('ViewStateHost', () => {
@@ -99,6 +103,27 @@ describe('ViewStateHost', () => {
       const accion = root().querySelector<HTMLAnchorElement>('a[app-link]');
       expect(accion?.textContent?.trim()).toBe('Registrar el primer paciente');
       expect(accion?.getAttribute('href')).toBe('/pacientes/alta');
+    });
+
+    it('sin filtros dice que todavía no hay nada, no que no hubo resultados', async () => {
+      await conEstado(empty({ label: 'Registrar el primer paciente', route: '/pacientes/alta' }));
+
+      expect(textoVisible()).toContain('Todavía no hay nada acá');
+      expect(root().querySelector('[data-testid="vsh-quitar-filtros"]')).toBeNull();
+    });
+
+    it('con filtros puestos dice «Ningún resultado con estos filtros» y ofrece quitarlos', async () => {
+      host.filtrado.set(true);
+      await conEstado(empty({ label: 'Registrar el primer paciente', route: '/pacientes/alta' }));
+
+      expect(textoVisible()).toContain('Ningún resultado con estos filtros');
+      expect(textoVisible()).not.toContain('Todavía no hay nada acá');
+      expect(root().querySelector('app-empty-state')?.classList).toContain('empty-state--no-results');
+      const quitar = root().querySelector<HTMLButtonElement>('[data-testid="vsh-quitar-filtros"]');
+      expect(quitar?.textContent?.trim()).toBe('Quitar filtros');
+
+      quitar?.click();
+      expect(host.limpiezas).toHaveLength(1);
     });
   });
 

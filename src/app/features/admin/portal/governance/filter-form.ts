@@ -90,8 +90,8 @@ export interface FilterField {
     </form>
   `,
   styles: `
-    /* Los campos en una fila a todo el ancho (el buscador primero) y las acciones debajo, a
-       la derecha; en el teléfono los campos se apilan. */
+    /* Base (teléfono y tableta): los campos se apilan en una rejilla que se reparte
+       por ancho, y las acciones van debajo, a la derecha. */
     .filter-form {
       display: flex;
       flex-wrap: wrap;
@@ -125,6 +125,33 @@ export interface FilterField {
       justify-content: flex-end;
       gap: var(--sp-2);
       margin-inline-start: auto;
+    }
+    /* ≥ 1024 px (barra de filtros de AtlasAdminPortal): UNA fila. El buscador es
+       flexible, los selectores toman su parte y «Quitar» / «Aplicar» cierran la
+       MISMA fila, alineados abajo con los controles. Si hay tantos filtros que no
+       entran, se parten los campos —nunca las acciones, que no bajan solas. */
+    @media (min-width: 64rem) {
+      .filter-form {
+        flex-wrap: nowrap;
+      }
+      .filter-form__fields {
+        flex: 1 1 auto;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+      .filter-form__fields > * {
+        flex: 1 1 9.5rem;
+        min-inline-size: 0;
+      }
+      .filter-form__fields > .filter-form__wide {
+        flex: 2 1 15rem;
+      }
+      .filter-form__actions {
+        flex: none;
+        flex-wrap: nowrap;
+        margin-inline-start: 0;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

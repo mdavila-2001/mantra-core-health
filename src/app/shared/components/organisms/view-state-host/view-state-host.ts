@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -71,6 +72,19 @@ export class ViewStateHost<T> {
 
   /** S7: la persona pide datos frescos. */
   readonly refresh = output<void>();
+
+  /**
+   * S3 con filtros puestos. «No hay datos» y «ninguno cumple estos filtros» son
+   * dos vacíos distintos y piden dos salidas distintas: el primero, crear o
+   * esperar; el segundo, aflojar el filtro. Decir «Todavía no hay nada acá»
+   * cuando lo que hay está filtrado le hace creer a la persona que el sistema
+   * está vacío. Quien tiene los filtros (la pantalla) lo dice con esta entrada;
+   * el host cambia el título, el dibujo (la lupa) y ofrece «Quitar filtros».
+   */
+  readonly filtered = input(false, { transform: booleanAttribute });
+
+  /** «Quitar filtros» del vacío filtrado. La pantalla limpia sus filtros (la URL). */
+  readonly clearFilters = output<void>();
 
   protected readonly status = computed(() => this.state().status);
 
