@@ -1,4 +1,5 @@
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { TIMEOUT_MESSAGE } from '../../core/http/api-failure';
 
 /**
  * Cómo se llama, en palabras, lo que la escritura no pudo hacer.
@@ -58,11 +59,14 @@ export function writeFailureMessage(
       return textos.yaNoExiste ?? 'El expediente ya no existe. Recargue la pantalla.';
     case 'offline':
       // No falló el servidor: la petición no llegó, así que reintentar sirve.
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
+      // Con el límite de espera es distinto: pudo haberse guardado igual.
+      return estado.timedOut === true
+        ? TIMEOUT_MESSAGE
+        : 'No pudimos conectarnos. Revise su conexión y reintente.';
     case 'error':
       // El identificador de petición es obligatorio en S9: sin él, quien
       // reporta el problema y quien lo busca en los registros no se encuentran.
-      return `${unexpectedErrorText(estado.message)} (${estado.requestId})`;
+      return `${unexpectedErrorText(estado.message, estado.hint)} (${estado.requestId})`;
     default:
       // `ready`, `loading` y los demás no son fallos. `stale` y `empty` no
       // aplican a una escritura: no hay dato viejo que refrescar ni lista
@@ -94,9 +98,12 @@ export function writeMessage(
   return writeFailureMessage(estado, textos);
 }
 
-/** El texto de S9 sin el código: el del servidor, o el de respaldo. */
-function unexpectedErrorText(message: string | undefined): string {
-  return message || 'Ocurrió un error inesperado.';
+/**
+ * El texto de S9 sin el código: la causa del catálogo (o el respaldo) y, si el
+ * estado la trae, la pista de qué hacer. Ambos son textos fijos, nunca del servidor.
+ */
+function unexpectedErrorText(message: string | undefined, hint?: string): string {
+  return [message || 'Ocurrió un error inesperado.', hint].filter(Boolean).join(' ');
 }
 
 /** {@link writeFailureMessage} con el código de soporte aparte, para pintarlo con `app-support-code`. */
@@ -115,7 +122,7 @@ export interface FailureParts {
  */
 export function writeFailureParts(estado: ViewState<null>, textos: FailureTexts): FailureParts | null {
   if (estado.status === 'error') {
-    return { text: unexpectedErrorText(estado.message), code: estado.requestId };
+    return { text: unexpectedErrorText(estado.message, estado.hint), code: estado.requestId };
   }
   const text = writeFailureMessage(estado, textos);
   if (text === null) return null;

@@ -9,6 +9,7 @@ import {
   describeForConsole,
 } from './api-failure-log.interceptor';
 import { errorToViewState } from './error-to-view-state';
+import { explanationOf } from './error-explanation';
 
 const FALLBACK = 'No se pudo guardar la cita.';
 
@@ -49,9 +50,12 @@ describe('describeApiFailure', () => {
     );
   });
 
-  it('en un 500 conserva el texto de la pantalla, nunca «Error interno del servidor»', () => {
+  it('en un 500 conserva el texto de la pantalla y suma por qué y qué hacer, nunca «Error interno del servidor»', () => {
     const error = apiError(500, 'INTERNAL', 'Error interno del servidor', 'abc-500');
-    expect(describeApiFailure(error, FALLBACK)).toBe(`${FALLBACK} (Código de soporte: abc-500)`);
+    const { cause, action } = explanationOf('server');
+    const texto = describeApiFailure(error, FALLBACK);
+    expect(texto).toBe(`${FALLBACK} ${cause} ${action} (Código de soporte: abc-500)`);
+    expect(texto).not.toContain('Error interno del servidor');
   });
 
   it('en una validación no repite «Error de validación»: el detalle va por campo', () => {
@@ -70,7 +74,8 @@ describe('describeApiFailure', () => {
       error: '<html>Bad Gateway</html>',
       headers: new HttpHeaders({ 'x-request-id': 'nginx-77' }),
     });
-    expect(describeApiFailure(error, FALLBACK)).toBe(`${FALLBACK} (Código de soporte: nginx-77)`);
+    const { cause, action } = explanationOf('unavailable');
+    expect(describeApiFailure(error, FALLBACK)).toBe(`${FALLBACK} ${cause} ${action} (Código de soporte: nginx-77)`);
   });
 
   it('algo que no es un error HTTP deja el texto de la pantalla', () => {

@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { readApiError, readFieldViolations, type ApiErrorBody, type ApiErrorCode } from './api-error';
+import { classifyFailure, explanationOf, type ErrorKind } from './error-explanation';
 
 /**
  * Lo que una pantalla necesita para contar un fallo de la API sin perderlo.
@@ -43,14 +44,33 @@ const MESSAGE_FOR_PEOPLE: ReadonlySet<ApiErrorCode> = new Set<ApiErrorCode>([
 ]);
 
 /** Texto de un fallo de red: la petición no llegó al servidor. */
-export const OFFLINE_MESSAGE = 'No hay conexión con el servidor. Revise su conexión e intente de nuevo.';
+export const OFFLINE_MESSAGE = `${explanationOf('offline').title}. ${explanationOf('offline').cause} ${explanationOf('offline').action}`;
+
+/** Texto del límite de espera: la petición pudo haberse completado igual. */
+export const TIMEOUT_MESSAGE = `${explanationOf('timeout').title}. ${explanationOf('timeout').cause} ${explanationOf('timeout').action}`;
+
+/**
+ * Categorías cuya causa se suma al texto de la pantalla cuando la API no dio
+ * un motivo propio. `rejected` y `client` no: un 4xx sin motivo suele venir
+ * con el detalle por campo, y un error del cliente no es un fallo de la API.
+ */
+const CAUSE_WORTH_TELLING: ReadonlySet<ErrorKind> = new Set<ErrorKind>([
+  'session-expired',
+  'too-large',
+  'rate-limited',
+  'unavailable',
+  'server',
+  'timeout',
+]);
 
 /**
  * El mensaje para un toast o un aviso de formulario.
  *
  * - Si la API explicó el motivo con palabras para la persona, se usa eso.
  * - Si no, el texto de la pantalla (`fallback`), que es el que sabe qué se
- *   estaba haciendo.
+ *   estaba haciendo, seguido de la causa y la acción del catálogo
+ *   (`error-explanation.ts`) cuando el fallo es del servidor, de la sesión,
+ *   del tamaño, del límite de tasa o del tiempo de espera.
  * - Siempre que haya `correlationId`, se agrega como código de soporte: es lo
  *   que permite encontrar el fallo en el servidor a partir de una captura.
  *
@@ -62,14 +82,28 @@ export function describeApiFailure(error: unknown, fallback: string): string {
     return fallback;
   }
   if (error.status === 0) {
-    return OFFLINE_MESSAGE;
+    return error.statusText === 'Timeout' ? `${fallback} ${TIMEOUT_MESSAGE}` : OFFLINE_MESSAGE;
   }
 
   const body = readApiError(error);
-  const reason = body !== null && MESSAGE_FOR_PEOPLE.has(body.code) && body.message.trim() !== '' ? body.message : fallback;
+  const reason = body !== null && MESSAGE_FOR_PEOPLE.has(body.code) && body.message.trim() !== ''
+    ? body.message
+    : withCause(fallback, classifyFailure(error, body));
   const supportCode = supportCodeOf(error, body);
 
   return supportCode === null ? reason : `${reason} (Código de soporte: ${supportCode})`;
+}
+
+/**
+ * El texto de la pantalla seguido del porqué y del qué hacer, si la categoría
+ * lo amerita. Ningún dato de la respuesta entra: el texto es el del catálogo.
+ */
+function withCause(fallback: string, kind: ErrorKind): string {
+  if (!CAUSE_WORTH_TELLING.has(kind)) {
+    return fallback;
+  }
+  const { cause, action } = explanationOf(kind);
+  return `${fallback} ${cause} ${action}`;
 }
 
 /**
