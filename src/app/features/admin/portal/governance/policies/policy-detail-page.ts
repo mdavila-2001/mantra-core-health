@@ -17,7 +17,6 @@ import type {
   PolicyDetail,
 } from '../../../../../core/data-access/admin-portal/governance-policies.types';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { empty, loading, notFound, ready } from '../../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
 import { BackLink } from '../../../../../shared/components/atoms/back-link/back-link';
@@ -73,7 +72,6 @@ export class PolicyDetailPage {
   private readonly client = inject(GovernancePoliciesClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly listUrl = LIST_ROUTE;
   protected readonly type = policyType;

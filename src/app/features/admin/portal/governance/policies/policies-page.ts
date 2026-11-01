@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,12 +16,14 @@ import {
   POLICY_TYPES,
   type PolicySummary,
 } from '../../../../../core/data-access/admin-portal/governance-policies.types';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { empty } from '../../../../../core/view-state/view-state';
 import type { EmptyViewState } from '../../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../../shared/components/atoms/link/link';
+import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../../shared/components/organisms/page-header/page-header';
@@ -50,7 +53,7 @@ const SCREEN = portalUrl('governance/policies');
  */
 @Component({
   selector: 'app-portal-policies-page',
-  imports: [RouterLink, Badge, Link, Card, DataTable, PageHeader, FilterForm],
+  imports: [NgTemplateOutlet, RouterLink, Badge, Link, Alert, Card, Tab, Tabs, DataTable, PageHeader, FilterForm],
   templateUrl: './policies-page.html',
   styleUrl: './policies-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,25 +62,28 @@ export class PoliciesPage {
   private readonly client = inject(GovernancePoliciesClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly values = queryFilters(queryParamsSignal(this.route), POLICY_URL_KEYS);
   protected readonly type = policyType;
   protected readonly state = policyState;
   protected readonly when = dateTime;
 
+  /** El tipo se elige con las pestañas (viven en la URL como `type`); el buscador queda en la fila. */
   protected readonly fields: readonly FilterField[] = [
     { key: 'q', label: 'Buscar', kind: 'text', placeholder: 'Código o nombre' },
-    {
-      key: 'type',
-      label: 'Tipo',
-      kind: 'select',
-      options: [
-        { value: '', label: 'Todos los tipos' },
-        ...POLICY_TYPES.map((value) => ({ value, label: POLICY_TYPE_INFO[value].label })),
-      ],
-    },
   ];
+  protected readonly tabs = [
+    { type: '', label: 'Todas', hint: 'Las cuatro clases de política, en una sola lista.' },
+    ...POLICY_TYPES.map((type) => ({
+      type,
+      label: POLICY_TYPE_INFO[type].label,
+      hint: POLICY_TYPE_INFO[type].hint + '.',
+    })),
+  ];
+  protected readonly tabIndex = computed(() => {
+    const type: string = policyQuery(this.values()).type ?? '';
+    return Math.max(0, this.tabs.findIndex((t) => t.type === type));
+  });
 
   protected readonly list = pagedList<PolicySummary>(
     (cursor) =>
@@ -94,9 +100,16 @@ export class PoliciesPage {
   private readonly stateCell =
     viewChild.required<TemplateRef<{ $implicit: PolicySummary }>>('stateCell');
 
+  private readonly typeCell =
+    viewChild.required<TemplateRef<{ $implicit: PolicySummary }>>('typeCell');
+  private readonly versionCell =
+    viewChild.required<TemplateRef<{ $implicit: PolicySummary }>>('versionCell');
+
   protected readonly columns = computed<readonly ColumnDef<PolicySummary>[]>(() => [
     { key: 'code', header: 'Política', priority: 1, cell: this.codeCell() },
-    { key: 'state', header: 'Estado', priority: 2, cell: this.stateCell() },
+    { key: 'type', header: 'Tipo', priority: 2, cell: this.typeCell() },
+    { key: 'state', header: 'Estado', priority: 1, cell: this.stateCell() },
+    { key: 'version', header: 'Versión y último cambio', priority: 2, cell: this.versionCell() },
   ]);
 
   protected readonly byId = (row: PolicySummary): string => row.id;
@@ -116,16 +129,17 @@ export class PoliciesPage {
     });
   }
 
-  protected apply(filters: Readonly<Record<string, string>>): void {
-    void patchQuery(this.router, this.route, filters);
+  protected selectTab(index: number): void {
+    void patchQuery(this.router, this.route, { type: this.tabs[index]?.type || null });
   }
 
+  protected apply(filters: Readonly<Record<string, string>>): void {
+    void patchQuery(this.router, this.route, { q: filters['q'] || null });
+  }
+
+  /** Quita la búsqueda; la pestaña (el tipo) se queda. */
   protected clear(): void {
-    void patchQuery(
-      this.router,
-      this.route,
-      Object.fromEntries(POLICY_URL_KEYS.map((k) => [k, null])),
-    );
+    void patchQuery(this.router, this.route, { q: null });
   }
 
   private whenEmpty(): EmptyViewState {

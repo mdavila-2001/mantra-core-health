@@ -1,34 +1,62 @@
+<!-- Una sola cabecera, sobre el lienzo: las migas viven en la barra superior del portal. -->
 <app-page-header
   title="Políticas de gobierno"
-  subtitle="Escritura, retención, anonimización y residencia de los datos, en una sola lista. Cada código abre su ficha con lo que controla, a qué se aplica y cómo cambió."
-  [breadcrumbs]="breadcrumbs()"
+  subtitle="Escritura, retención, anonimización y residencia de los datos. Cada código abre su ficha con lo que controla, a qué se aplica y cómo cambió."
 />
 
 <div class="policies">
+  <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
+  <app-alert tone="info" data-testid="portal-policies-scope">
+    <details class="policies__fold">
+      <summary class="policies__fold-summary">
+        <strong>Sin totales a propósito:</strong> el servidor no cuenta las políticas, así que acá
+        tampoco.
+      </summary>
+      <p class="policies__fold-text">
+        Un conteo calculado sobre la página visible sería un número falso. «Sin estado» significa
+        que nadie declaró el estado de la política, no que esté inactiva. Lo que cada política
+        controla se ve en su ficha.
+      </p>
+    </details>
+  </app-alert>
+
   <app-card class="policies__card" variant="outlined" padding="md" data-testid="portal-policies">
-    <div class="policies__section">
-      <app-governance-filter-form
-        [fields]="fields"
-        [values]="values()"
-        (applied)="apply($event)"
-        (cleared)="clear()"
-      />
-      <app-data-table
-        data-testid="portal-policies-table"
-        caption="Políticas de gobierno de datos"
-        [state]="list.state()"
-        [columns]="columns()"
-        [trackBy]="byId"
-        [rowLabel]="rowName"
-        [cursor]="list.cursor()"
-        stackedOnMobile
-        fitContainer
-        (cursorChanged)="list.move($event)"
-        (retry)="list.reload()"
-      />
-    </div>
+    <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+      @for (t of tabs; track t.type; let i = $index) {
+        <app-tab [label]="t.label">
+          @if (tabIndex() === i) {
+            <ng-container [ngTemplateOutlet]="body" [ngTemplateOutletContext]="{ $implicit: t.hint }" />
+          }
+        </app-tab>
+      }
+    </app-tabs>
   </app-card>
 </div>
+
+<ng-template #body let-hint>
+  <div class="policies__section">
+    <p class="policies__hint">{{ hint }}</p>
+    <app-governance-filter-form
+      [fields]="fields"
+      [values]="values()"
+      (applied)="apply($event)"
+      (cleared)="clear()"
+    />
+    <app-data-table
+      data-testid="portal-policies-table"
+      caption="Políticas de gobierno de datos"
+      [state]="list.state()"
+      [columns]="columns()"
+      [trackBy]="byId"
+      [rowLabel]="rowName"
+      [cursor]="list.cursor()"
+      stackedOnMobile
+      fitContainer
+      (cursorChanged)="list.move($event)"
+      (retry)="list.reload()"
+    />
+  </div>
+</ng-template>
 
 <ng-template #codeCell let-row>
   <div class="policies__cell">
@@ -43,19 +71,21 @@
     @if (row.name) {
       <span class="policies__name">{{ row.name }}</span>
     }
-    <span class="policies__badges">
-      <app-badge size="sm" [variant]="type(row.policyType).tone">{{
-        type(row.policyType).label
-      }}</app-badge>
-    </span>
   </div>
 </ng-template>
 
+<ng-template #typeCell let-row>
+  <app-badge size="sm" [variant]="type(row.policyType).tone">{{ type(row.policyType).label }}</app-badge>
+</ng-template>
+
 <ng-template #stateCell let-row>
+  <app-badge size="sm" [variant]="state(row.state).tone">{{ state(row.state).label }}</app-badge>
+</ng-template>
+
+<ng-template #versionCell let-row>
   <div class="policies__cell">
-    <app-badge size="sm" [variant]="state(row.state).tone">{{ state(row.state).label }}</app-badge>
+    <span>Versión {{ row.version }}</span>
     <span class="policies__secondary">
-      Versión {{ row.version }} ·
       {{ row.updatedAt ? 'Cambió ' + when(row.updatedAt) : 'Sin fecha de cambio' }}
     </span>
   </div>
