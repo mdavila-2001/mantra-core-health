@@ -3,7 +3,6 @@
 <app-page-header
   [title]="title()"
   subtitle="Lo que comprueba la regla y cómo le fue en las últimas corridas. Lo que la corrida no informó se dice «no informado»."
-  [breadcrumbs]="breadcrumbs()"
 />
 
 <app-view-state-host [state]="detail()" (retry)="reload()">

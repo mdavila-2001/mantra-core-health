@@ -1,0 +1,93 @@
+[
+ {
+  "file": "despues-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 1746,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-oscuro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 1746,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-claro-ok.png",
+  "overlay": false,
+  "sw": 768,
+  "iw": 768,
+  "h": 1069,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-oscuro-ok.png",
+  "overlay": false,
+  "sw": 768,
+  "iw": 768,
+  "h": 1069,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-oscuro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-vacio.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]

@@ -16,11 +16,11 @@ import {
   type QualityRule,
   type QualityRulesQuery,
 } from '../../../../../core/data-access/admin-portal/data-quality.types';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { empty } from '../../../../../core/view-state/view-state';
 import type { EmptyViewState } from '../../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../../shared/components/atoms/link/link';
+import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
@@ -55,7 +55,7 @@ function rulesQuery(values: Readonly<Record<(typeof URL_KEYS)[number], string>>)
  */
 @Component({
   selector: 'app-portal-quality-rules-page',
-  imports: [RouterLink, Badge, Link, Card, DataTable, PageHeader, FilterForm],
+  imports: [RouterLink, Badge, Link, Alert, Card, DataTable, PageHeader, FilterForm],
   templateUrl: './rules-page.html',
   styleUrl: './rules-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,7 +64,6 @@ export class RulesPage {
   private readonly client = inject(DataQualityClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
   protected readonly severity = severityLabel;
@@ -82,13 +81,15 @@ export class RulesPage {
   );
 
   private readonly ruleCell = viewChild.required<TemplateRef<{ $implicit: QualityRule }>>('ruleCell');
+  private readonly severityCell = viewChild.required<TemplateRef<{ $implicit: QualityRule }>>('severityCell');
   private readonly kindCell = viewChild.required<TemplateRef<{ $implicit: QualityRule }>>('kindCell');
   private readonly issuesCell = viewChild.required<TemplateRef<{ $implicit: QualityRule }>>('issuesCell');
 
   protected readonly columns = computed<readonly ColumnDef<QualityRule>[]>(() => [
     { key: 'rule', header: 'Regla', priority: 1, cell: this.ruleCell() },
-    { key: 'kind', header: 'Severidad y dimensión', priority: 2, cell: this.kindCell() },
-    { key: 'issues', header: 'Incidencias', priority: 1, cell: this.issuesCell() },
+    { key: 'severity', header: 'Severidad', priority: 1, cell: this.severityCell() },
+    { key: 'kind', header: 'Dimensión y estado', priority: 2, cell: this.kindCell() },
+    { key: 'issues', header: 'Incidencias abiertas', priority: 1, cell: this.issuesCell() },
   ]);
 
   protected readonly byId = (row: QualityRule): string => row.id;
