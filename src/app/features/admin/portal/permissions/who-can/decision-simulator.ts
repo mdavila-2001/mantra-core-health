@@ -59,10 +59,7 @@ const PURPOSE_OPTIONS: readonly SelectOption<string>[] = [
   imports: [AppButton, Badge, Input, Select, Alert, FormField],
   template: `
     <div class="panel" data-testid="portal-simulator">
-      <p class="panel__note">
-        Pregúntele al motor de decisiones real qué haría. La respuesta es la del PDP, no una estimación de esta pantalla,
-        y la consulta queda en la bitácora.
-      </p>
+      <p class="panel__note">Elija persona, organización, acción y recurso, y pregúntele al motor qué decidiría.</p>
       @if (error(); as message) {
         <app-alert tone="error" data-testid="portal-simulator-error">{{ message }}</app-alert>
       }
@@ -73,7 +70,7 @@ const PURPOSE_OPTIONS: readonly SelectOption<string>[] = [
         </app-alert>
       }
       <form class="panel__form" novalidate (submit)="$event.preventDefault(); evaluate()">
-        <div class="panel__pair">
+        <div class="panel__pair panel__pair--four">
           <app-form-field label="Persona" [required]="true" [errorMessage]="problem('userId')">
             <app-select
               ariaLabel="Persona"
@@ -94,8 +91,6 @@ const PURPOSE_OPTIONS: readonly SelectOption<string>[] = [
               [(value)]="tenantId"
             />
           </app-form-field>
-        </div>
-        <div class="panel__pair">
           <app-form-field label="Acción" [required]="true">
             <app-select ariaLabel="Acción" data-testid="portal-simulator-action" [options]="actionOptions" [(value)]="action" />
           </app-form-field>

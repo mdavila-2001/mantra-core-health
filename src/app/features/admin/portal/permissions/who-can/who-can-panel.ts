@@ -61,28 +61,27 @@ const SOURCE_OPTIONS: readonly SelectOption<string>[] = [
   template: `
     <div class="panel" data-testid="portal-who-can">
       <p class="panel__note">
-        Elija un permiso para ver qué personas lo tienen y por qué camino. La vista es orientativa: no considera el
-        propósito de uso ni el alcance clínico por paciente. Para saber qué haría el motor ante un caso concreto, use el
-        simulador.
+        Qué personas tienen un permiso y por qué camino. Es orientativa: no considera el propósito de uso ni el alcance
+        clínico por paciente; para un caso concreto, use el simulador.
       </p>
       @if (catalogUnavailable()) {
         <app-alert tone="warning" data-testid="portal-who-can-catalog-error">
           No llegó el catálogo de permisos: no se puede elegir uno desde acá.
         </app-alert>
       }
-      <app-form-field label="Permiso" hint="El código o el nombre del permiso.">
-        <app-select
-          ariaLabel="Permiso"
-          placeholder="Elegir un permiso"
-          data-testid="portal-who-can-permission"
-          [searchable]="true"
-          [options]="permissionOptions()"
-          [value]="permissionId() || null"
-          (valueChange)="permissionChanged.emit($event ?? '')"
-        />
-      </app-form-field>
-      @if (permissionId() !== '') {
-        <div class="panel__toolbar">
+      <div class="panel__toolbar">
+        <app-form-field label="Permiso">
+          <app-select
+            ariaLabel="Permiso"
+            placeholder="Código o nombre del permiso"
+            data-testid="portal-who-can-permission"
+            [searchable]="true"
+            [options]="permissionOptions()"
+            [value]="permissionId() || null"
+            (valueChange)="permissionChanged.emit($event ?? '')"
+          />
+        </app-form-field>
+        @if (permissionId() !== '') {
           <app-form-field label="Camino">
             <app-select
               ariaLabel="Camino por el que tiene el permiso"
@@ -99,8 +98,8 @@ const SOURCE_OPTIONS: readonly SelectOption<string>[] = [
             (searched)="query.set($event)"
             [loading]="holders.state().status === 'loading'"
           />
-        </div>
-      }
+        }
+      </div>
       <app-data-table
         data-testid="portal-who-can-table"
         caption="Personas con el permiso elegido"
@@ -109,6 +108,7 @@ const SOURCE_OPTIONS: readonly SelectOption<string>[] = [
         [trackBy]="byId"
         [rowLabel]="rowName"
         [cursor]="holders.cursor()"
+        dense
         stackedOnMobile
         fitContainer
         (cursorChanged)="holders.move($event)"

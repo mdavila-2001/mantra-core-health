@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
+import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
@@ -22,46 +22,43 @@ const AUDIT_ACTIONS = ['ACCESS_DECISION_SIMULATED'] as const;
  */
 @Component({
   selector: 'app-portal-who-can-page',
-  imports: [Card, Tab, Tabs, PageHeader, DecisionSimulator, WhoCanPanel, AuditTrailPanel],
+  imports: [Alert, Card, Tab, Tabs, PageHeader, DecisionSimulator, WhoCanPanel, AuditTrailPanel],
   template: `
     <app-page-header
       title="Quién puede qué"
       subtitle="Simule una decisión contra el motor de autorización real y vea qué roles y personas tienen cada permiso."
-      [breadcrumbs]="breadcrumbs()"
     />
-    <app-card class="who-can-page" variant="outlined" padding="md" data-testid="portal-who-can-page">
-      <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
-        <app-tab label="Simulador de decisión">
-          @if (tabIndex() === 0) {
-            <app-portal-decision-simulator />
-          }
-        </app-tab>
-        <app-tab label="Quién puede qué">
-          @if (tabIndex() === 1) {
-            <app-portal-who-can-panel [permissionId]="values().permission" (permissionChanged)="selectPermission($event)" />
-          }
-        </app-tab>
-        <app-tab label="Simulaciones registradas">
-          @if (tabIndex() === 2) {
-            <app-portal-audit-trail-panel [actions]="auditActions" />
-          }
-        </app-tab>
-      </app-tabs>
-    </app-card>
+    <div class="perm-page" data-testid="portal-who-can-page">
+      <app-alert class="perm-honesty" tone="info" data-testid="portal-who-can-honesty">
+        La respuesta del simulador es la del motor de decisiones real, no una estimación de esta pantalla, y cada consulta queda en la bitácora. El mapa de quién tiene cada permiso muestra lo asignado, no lo que cada ruta exige.
+      </app-alert>
+      <app-card class="perm-card" variant="outlined" padding="md">
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Simulador">
+            @if (tabIndex() === 0) {
+              <app-portal-decision-simulator />
+            }
+          </app-tab>
+          <app-tab label="Quién lo tiene">
+            @if (tabIndex() === 1) {
+              <app-portal-who-can-panel [permissionId]="values().permission" (permissionChanged)="selectPermission($event)" />
+            }
+          </app-tab>
+          <app-tab label="Historial">
+            @if (tabIndex() === 2) {
+              <app-portal-audit-trail-panel [actions]="auditActions" />
+            }
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    </div>
   `,
-  styles: `
-    .who-can-page {
-      display: block;
-      inline-size: 100%;
-      margin-inline: auto;
-    }
-  `,
+  styleUrl: '../permissions-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WhoCanPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
   protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
   protected readonly tabIndex = computed(() =>
     Math.max(0, VIEWS.indexOf(this.values().view as (typeof VIEWS)[number])),
