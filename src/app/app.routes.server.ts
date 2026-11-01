@@ -46,6 +46,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
   },
   {
+    path: 'auth/register/organization-type',
+    renderMode: RenderMode.Prerender,
+  },
+  {
     // Consulta catálogos dinámicos por HTTP al montarse (departamentos, ocupaciones,
     // empleadores, municipios, parentescos): con mockBackend apagado necesitaría un
     // backend real disponible durante el build.
@@ -56,6 +60,11 @@ export const serverRoutes: ServerRoute[] = [
     // Consulta /system-context/dynamic-enums (tipo de credencial) al montarse: mismo
     // motivo que 'patient'.
     path: 'auth/register/practitioner',
+    renderMode: RenderMode.Client,
+  },
+  {
+    // Consulta el catálogo de departamentos al montarse: mismo motivo que 'patient'.
+    path: 'auth/register/support-staff',
     renderMode: RenderMode.Client,
   },
   {
@@ -87,9 +96,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
-    // Los dos portales de reportería. Tienen sesión, así que no se
-    // prerenderizan (ver la nota de arriba), y además sus gráficos (Apache
-    // ECharts) necesitan el DOM: el servidor solo manda el cascarón.
+    // La maqueta de reportería (`environment.reportingMockEnabled`). Apagada, estas dos rutas redirigen
+    // (`/portal-selector` a `/`, `/reports/**` a `/superadmin/observability`: ver `reporting-mock.routes.ts`);
+    // encendida, tienen sesión, así que no se prerenderizan (ver la nota de arriba), y sus gráficos (Apache
+    // ECharts) necesitan el DOM: el servidor solo manda el cascarón. En los dos casos resuelve el cliente.
     path: 'portal-selector',
     renderMode: RenderMode.Client,
   },

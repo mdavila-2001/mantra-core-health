@@ -871,6 +871,7 @@
       "rolesExclusivos": false,
       "componente": "Appointments",
       "apis": [
+        "BillingSimulatedClient",
         "SchedulingClient",
         "TerminologyClient"
       ],
@@ -894,6 +895,7 @@
         "PharmacyClient",
         "ProcedureCentersClient",
         "ProfilesClient",
+        "SchedulingClient",
         "ReceivedServicesClient",
         "SchedulingClient",
         "TerminologyClient"
@@ -924,6 +926,7 @@
       "rolesExclusivos": false,
       "componente": "DiagnosticOrders",
       "apis": [
+        "CenterScheduleClient",
         "DiagnosticsClient",
         "TerminologyClient"
       ],
@@ -1119,6 +1122,7 @@
       "componente": "OrganizationPanel",
       "apis": [
         "DirectoryClient",
+        "LogoDeOrganizacionClient",
         "OrganizationLogoClient",
         "HealthcareServicesClient",
         "PharmacyCampaignsClient",
@@ -1128,6 +1132,85 @@
         "ProfilesClient",
         "RoleAssignmentsClient",
         "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy",
+      "etiqueta": "Resumen",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacySummaryPage",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-catalog",
+      "etiqueta": "Productos",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyProducts",
+      "apis": [
+        "FilesClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-categories",
+      "etiqueta": "Categorías",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyCategories",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-import",
+      "etiqueta": "Importación masiva",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyImport",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-inventory",
+      "etiqueta": "Inventario",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyInventory",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-prices",
+      "etiqueta": "Precios",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyPrices",
+      "apis": [
+        "PharmacyClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -2603,6 +2686,7 @@
       "componente": "PatientChart",
       "apis": [
         "AccountingClient",
+        "BillingSimulatedClient",
         "AuthzClient",
         "BillingSimulatedClient",
         "ChartCarePlansClient",
@@ -2617,6 +2701,7 @@
         "PracticeSitesClient",
         "ProceduresClient",
         "ProfilesClient",
+        "SchedulingClient",
         "ReferralsClient",
         "SchedulingClient",
         "SystemContextClient",
@@ -2696,12 +2781,25 @@
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/diagnostic-orders/:orderId/book",
+      "seccion": "Mis órdenes",
+      "roles": [],
+      "componente": "OrderBooking",
+      "apis": [
+        "CenterScheduleClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
       "ruta": "/my-account/edit",
       "seccion": "Mi perfil",
       "roles": [],
       "componente": "PractitionerProfileEdit",
       "apis": [
         "FilesClient",
+        "LogoDelConsultorioClient",
+        "FirmaYSelloClient",
         "PracticeLogoClient",
         "ProfilesClient",
         "SignatureAndSealClient",
@@ -2806,6 +2904,34 @@
       "apis": [
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/pharmacy/cart",
+      "seccion": "Farmacia",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "CartPage",
+      "apis": [
+        "PharmacyOrdersClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/pharmacy/prescriptions",
+      "seccion": "Farmacia",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "PrescriptionsPage",
+      "apis": [
+        "ClinicalClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": false

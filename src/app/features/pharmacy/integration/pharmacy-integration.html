@@ -13,7 +13,7 @@
   }
 
   @if (scope.pharmacyId(); as pharmacyId) {
-    <app-card class="integration" padding="lg" data-testid="integration-card">
+    <div class="integration" data-testid="integration-card">
       <app-view-state-host [state]="connections()" (retry)="reload()" (refresh)="reload()">
         <!-- S2 · sin conexión: la próxima acción es conectarla, acá mismo. -->
         <section vsh-empty class="integration__connect" data-testid="integration-connect" aria-labelledby="integration-connect-title">
@@ -73,18 +73,25 @@
               </div>
               <app-fact-list disposicion="columnas" etiqueta="Datos de la conexión" [hechos]="facts()" />
               @if (!current.providerConfigured) {
-                <app-alert tone="warning" data-testid="integration-not-configured">{{ notConfiguredText }}</app-alert>
+                <app-alert tone="warning" data-testid="integration-not-configured">{{ missingSystemText }}</app-alert>
               } @else if (current.status !== 'ACTIVE' || !current.supportsStockQuery) {
                 <app-alert tone="warning" data-testid="integration-inactive">{{ inactiveText }}</app-alert>
               }
             </section>
 
-            <app-integration-sync [pharmacyId]="pharmacyId" [connection]="current" />
+            <app-integration-system [pharmacyId]="pharmacyId" [connection]="current" (changed)="reload()" />
 
-            <app-integration-mappings [pharmacyId]="pharmacyId" [connection]="current" />
+            <!-- «Vincular» sobre un código sin vínculo del resultado abre el alta de abajo con ese código. -->
+            <app-integration-sync
+              [pharmacyId]="pharmacyId"
+              [connection]="current"
+              (linkRequested)="links.startLink($event)"
+            />
+
+            <app-integration-mappings #links [pharmacyId]="pharmacyId" [connection]="current" />
           </div>
         }
       </app-view-state-host>
-    </app-card>
+    </div>
   }
 </app-view-state-host>

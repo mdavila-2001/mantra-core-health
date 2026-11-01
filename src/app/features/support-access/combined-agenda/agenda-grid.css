@@ -8,6 +8,8 @@
   position: relative;
   overflow: auto;
   max-block-size: min(72vh, 52rem);
+  /* `dvh` descuenta la barra de direcciones del navegador móvil; `vh` queda de respaldo. */
+  max-block-size: min(72dvh, 52rem);
   min-block-size: 18rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);

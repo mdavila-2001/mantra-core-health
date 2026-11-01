@@ -23,6 +23,8 @@ export interface ToastMessage {
    * que la persona lo cierre.
    */
   readonly durationMs: number | null;
+  /** El origen del aviso, si quien lo lanzó lo declaró (ver {@link ToastInput.key}). */
+  readonly key?: string;
 }
 
 /**
@@ -49,6 +51,22 @@ export interface ToastInput {
   readonly title?: string;
   readonly action?: ToastAction;
   readonly durationMs?: number | null;
+  /**
+   * El origen del aviso: una pantalla o una sección (`'farmacia.sistema'`).
+   * Un aviso nuevo con la misma clave **reemplaza** al que siga visible: el
+   * «Guardado» de hace dos segundos ya no aplica cuando llega «Quitado», y
+   * apilados tapaban la acción principal. Sin clave, los avisos se encolan
+   * como siempre.
+   *
+   * - Reemplaza **cualquier** tono, también un error fijo con su acción: quien
+   *   comparte la clave dice que el aviso nuevo es el estado que vale ahora.
+   *   Si un error tiene que quedar, no le pongan la misma clave.
+   * - Los atajos (`success`, `info`…) no la aceptan: se usa `show({ … })`.
+   * - El reemplazado se va con su animación de salida (`.toast-leaving`) y el
+   *   nuevo entra al final de su región; durante esos 140 ms la pila los
+   *   muestra a los dos. Se anuncia como cualquier aviso nuevo.
+   */
+  readonly key?: string;
 }
 
 /**

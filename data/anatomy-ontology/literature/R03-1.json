@@ -1,0 +1,920 @@
+{
+  "UBERON:0000946": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Bajo el endotelio de las válvulas fetales humanas reside un subtipo de célula intersticial especializado en sintetizar elastina, identificado mediante secuenciación de ARN unicelular.",
+        "cites": [
+          "PMID:39196035"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las prótesis mecánicas y biológicas, opciones habituales para reemplazar una válvula cardíaca, tienen limitaciones que la ingeniería tisular intenta superar.",
+        "cites": [
+          "PMID:26254880"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En las bioprótesis valvulares pretratadas con glutaraldehído, el principal motivo de fracaso es la calcificación.",
+        "cites": [
+          "PMID:3105321"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 483 pacientes con enfermedad renal crónica en estadios 3 a 5 sin diálisis, recién diagnosticados, se halló calcificación valvular en el 16,56 %, con mayor frecuencia limitada a la válvula aórtica.",
+        "cites": [
+          "PMID:35907060"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000948": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El plegamiento conocido como looping es el proceso por el que el tubo cardíaco lineal del embrión se convierte en un órgano de cuatro cavidades.",
+        "cites": [
+          "PMID:32673587"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Según la disección, solo los tabiques sinusal y auriculoventricular son tabiques verdaderos; el borde superior del foramen oval, en cambio, es un pliegue de la propia pared auricular.",
+        "cites": [
+          "PMID:8876818"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Más que un anillo, lo que define a las raíces arteriales es la fijación en media luna de sus valvas.",
+        "cites": [
+          "PMID:8876818"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "El sistema nervioso autónomo cardíaco, formado por neuronas y glía, sostiene un diálogo bidireccional entre corazón y encéfalo que le permite adaptarse a las demandas fisiológicas.",
+        "cites": [
+          "PMID:41107549"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Un corazón sano no late como un metrónomo: la variabilidad compleja de sus intervalos entre latidos le permite responder con rapidez a desafíos físicos y psicológicos.",
+        "cites": [
+          "PMID:29034226"
+        ]
+      }
+    ]
+  },
+  "UBERON:0000975": {
+    "sentences": [
+      {
+        "aspect": "relations",
+        "es": "El esternón se estudia junto con las costillas y los cartílagos costales, con los que se une mediante articulaciones para conformar la pared torácica.",
+        "cites": [
+          "PMID:18271162"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La hendidura esternal congénita se ha intentado explicar a partir de cómo se forma el esternón en el embrión.",
+        "cites": [
+          "PMID:5485011"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Un informe de caso aconseja operar la hendidura esternal completa en el período neonatal, haya o no síntomas, porque durante el primer mes de vida basta un cierre simple y se evitan las reconstrucciones complejas que requieren los niños mayores.",
+        "cites": [
+          "PMID:7434274"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "De 15 pacientes con tuberculosis de esternón y clavícula comprobada por anatomía patológica, cinco tenían afectación exclusiva del esternón; la resonancia fue útil para precisar la extensión de la lesión, sobre todo medular y de partes blandas.",
+        "cites": [
+          "PMID:11026712"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En medicina forense, la morfología del esternón se ha investigado como herramienta para estimar el sexo y la edad de personas no identificadas.",
+        "cites": [
+          "PMID:38887074"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001100": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Su inserción habitual es la parte anterior de la apófisis coracoides, en sus bordes medial y superior, y su origen suele estar en las costillas tercera a quinta.",
+        "cites": [
+          "PMID:30306210"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 74 lados de cadáveres coreanos y tailandeses se observaron patrones de inserción inusuales en cerca del 23 %; cuando el tendón sobrepasaba la coracoides, se fijaba sobre todo a la cápsula de la articulación glenohumeral.",
+        "cites": [
+          "PMID:30306210"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "En nueve especímenes cadavéricos, el pectoral menor se alargó durante todos los movimientos pasivos del hombro, con mayor elongación en la flexión y la escapción que en la rotación externa con 90° de abducción.",
+        "cites": [
+          "PMID:19246556"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito que quienes tienen un pectoral menor relativamente corto muestran cambios en el movimiento de la escápula, cambios que se asocian al pinzamiento del hombro.",
+        "cites": [
+          "PMID:18434665"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El síndrome venoso del pectoral menor es una forma rara del síndrome del desfiladero torácico; en una serie quirúrgica de seis pacientes se abordó por una incisión en el surco deltopectoral.",
+        "cites": [
+          "PMID:31873744"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001103": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Radiografía y fluoroscopia, así como TC y RM, sirven para examinar la posición, la movilidad y la forma, normales o patológicas, del diafragma.",
+        "cites": [
+          "PMID:20112626"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En cuidados intensivos, medir por ecografía el grosor del diafragma, su engrosamiento y su desplazamiento caudal parece factible y reproducible, aunque faltan estudios a gran escala en la práctica real.",
+        "cites": [
+          "PMID:31876624"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La debilidad diafragmática es frecuente en cuidados intensivos y la ventilación mecánica participa en su origen.",
+        "cites": [
+          "PMID:31876624",
+          "PMID:30453774"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Bajo el nombre de síndromes de diafragma poroso se agrupan cuadros dispares unidos por un defecto diafragmático, a través del cual suelen producirse derrame pleural, neumotórax, hemotórax o empiema.",
+        "cites": [
+          "PMID:9619316"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En pacientes seleccionados, la plicatura del diafragma alivia la disnea; la variante radial por toracoscopia coloca las suturas evitando las fibras del nervio frénico.",
+        "cites": [
+          "PMID:34951968"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001496": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En aortas ascendentes de donantes sanos, la actina de músculo liso alfa se detectó en todas las túnicas y la smoothelina en la mayoría de las células de la media.",
+        "cites": [
+          "PMID:22127602"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En ese mismo estudio no hubo diferencias de expresión génica entre la concavidad y la convexidad, aunque la convexidad de la mitad de las aortas mostró áreas de la media subadventicial con alteraciones compatibles con lesiones incipientes.",
+        "cites": [
+          "PMID:22127602"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Una aorta ascendente dilatada, que se califica de aneurismática cuando supera en un 50 % su diámetro normal, produce con frecuencia una insuficiencia aórtica significativa aunque la válvula sea normal.",
+        "cites": [
+          "PMID:10391320"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 4654 adultos no sindrómicos con aorta ascendente de 40 a 55 mm, el riesgo estimado de disección o rotura a 5 años fue del 0,4 %, 1,1 % y 2,9 % para diámetros basales de 45, 50 y 55 mm.",
+        "cites": [
+          "PMID:27609684"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una cohorte de 125 mujeres con síndrome de Turner, el 34 % presentaba dilatación aórtica según el índice de tamaño aórtico.",
+        "cites": [
+          "PMID:33132052"
+        ]
+      }
+    ]
+  },
+  "UBERON:0001508": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El tronco braquiocefálico, la carótida común izquierda y la subclavia izquierda son las tres ramas que el arco aórtico emite de forma habitual.",
+        "cites": [
+          "PMID:26393115"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Según la bibliografía, entre el 63,5 % y el 89,4 % de los casos presenta el patrón clásico; entre las variantes predomina el tronco común del braquiocefálico con la carótida común izquierda y, en segundo lugar, el nacimiento de la vertebral izquierda directamente del arco.",
+        "cites": [
+          "PMID:26393115"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 100 arcos aórticos de cadáveres de 40 a 70 años se hallaron tres ramas en el 77,0 %, dos en el 12,0 % y cuatro en el 11,0 %; en la mayoría de los patrones, el tronco braquiocefálico fue la rama de mayor calibre.",
+        "cites": [
+          "PMID:16295713"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 513 pacientes estudiados con tomografía con contraste se observaron variantes de las ramas del arco en el 13,45 %, con un origen común del tronco braquiocefálico y la carótida común izquierda en el 9,94 %.",
+        "cites": [
+          "PMID:39356866"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aunque suelen ser asintomáticas, estas variantes pueden causar disnea o disfagia, inducir errores en la lectura de estudios de imagen y complicar la cirugía de cuello y tórax.",
+        "cites": [
+          "PMID:21222403"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una muestra de 100 especímenes de 14 semanas de gestación a 85 años, el diámetro aórtico aumentó con la edad y las variantes del arco se asociaron significativamente con válvulas aórticas anómalas.",
+        "cites": [
+          "PMID:38758496"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002030": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 37 mujeres de 20 a 64 años, la relación de tamaño entre pezón y areola fue de 1:3 y la de areola y mama, de 1:3,4.",
+        "cites": [
+          "PMID:12792541"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Según la disección de 15 mamas de cadáver, los nervios destinados al pezón forman un plexo subareolar tras recorrer la fascia superficial y el tejido subdérmico de la areola.",
+        "cites": [
+          "PMID:8785595"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "En las 12 mamas femeninas de esa serie, el plexo subareolar recibía ramos de los nervios intercostales segundo a quinto, con una contribución variable de cada uno incluso entre ambos lados del mismo cadáver.",
+        "cites": [
+          "PMID:8785595"
+        ]
+      },
+      {
+        "aspect": "innervation",
+        "es": "Aunque a veces se lo presenta como el nervio del pezón, el ramo profundo de la división anterior del cuarto nervio cutáneo lateral, hallado en 11 de 12 mamas femeninas, comparte el plexo subareolar con otros aportes.",
+        "cites": [
+          "PMID:8785595"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La mayoría de las secreciones por el pezón, tercer motivo de consulta mamaria, son benignas, pero una secreción patológica puede ocultar un tumor maligno en el 5 %-12 % de los casos.",
+        "cites": [
+          "PMID:37460358"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La reconstrucción mamaria culmina con la del complejo areola-pezón.",
+        "cites": [
+          "PMID:32560062"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002048": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El desarrollo pulmonar arranca hacia la cuarta semana de gestación con la evaginación traqueal del intestino anterior y no concluye hasta la primera infancia.",
+        "cites": [
+          "PMID:26051046"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Del intercambio gaseoso, es decir, la captación de oxígeno y la eliminación de dióxido de carbono, se encarga la compleja arquitectura del pulmón.",
+        "cites": [
+          "PMID:32356715"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La formación de una capa fibrosa sobre la pleura visceral es el mecanismo principal del pulmón no expandible, que no alcanza la pared torácica y deja sin aposición normal las dos hojas pleurales.",
+        "cites": [
+          "PMID:22749682"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre los tipos histológicos de cáncer de pulmón, ninguno es tan común como el adenocarcinoma.",
+        "cites": [
+          "PMID:21252716"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Cuando se plantea un tratamiento curativo, quirúrgico o con radioterapia definitiva, la estadificación del cáncer de pulmón se apoya ante todo en la PET-TC con FDG.",
+        "cites": [
+          "PMID:25829084"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 18 pulmones de autopsia de pacientes con lupus eritematoso sistémico, el engrosamiento de la pleura visceral estuvo presente en todos los casos.",
+        "cites": [
+          "PMID:4017682"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002080": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "La correlación entre 28 corazones normales de recién nacidos y niños y 22 angiografías permitió reconocer en el ventrículo derecho sus porciones sinusal, trabecular y conal, los tractos de entrada y salida, la cresta supraventricular y la banda moderadora.",
+        "cites": [
+          "PMID:7162021"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002081": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Se han comunicado casos aislados de metástasis en la aurícula derecha, como las de un melanoma conjuntival o de un carcinoma anaplásico de tiroides.",
+        "cites": [
+          "PMID:36877542",
+          "PMID:21320341"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un caso publicado, un mixoma de la aurícula izquierda se manifestó con signos que sugerían estenosis mitral.",
+        "cites": [
+          "PMID:2631447"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002084": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En las autopsias de 507 pacientes con cor pulmonale crónico se encontró hipertrofia del ventrículo izquierdo en el 62,6 %.",
+        "cites": [
+          "PMID:2963438"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Por ecografía transvaginal se detectó un ventrículo izquierdo pequeño con tracto de salida normal en 16 fetos de 14 a 16 semanas, con alta frecuencia de anomalías asociadas como la coartación aórtica.",
+        "cites": [
+          "PMID:9110369"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Para calcular volúmenes ventriculares en la ventriculografía izquierda se ha propuesto un factor de corrección obtenido al filmar una esfera metálica de diámetro conocido.",
+        "cites": [
+          "PMID:2952086"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002098": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "En 156 tomografías de niños de 0 a 18 años, el vértice del corazón se proyectó en el quinto espacio intercostal en los grupos de 0-1 y de 12-18 años, y más arriba en las demás edades.",
+        "cites": [
+          "PMID:36088577"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En el situs inverso total el vértice cardíaco se dirige hacia la derecha (dextrocardia), como se describió en el cadáver de una mujer de 87 años.",
+        "cites": [
+          "PMID:22379754"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002134": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Entre la aurícula y el ventrículo derechos se interpone el aparato valvular tricuspídeo, una estructura compleja.",
+        "cites": [
+          "PMID:34838292"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Por lo general lo forman tres valvas, anterior, posterior y septal, que se anclan en el anillo fibroso y se conectan con los músculos papilares mediante cuerdas tendinosas.",
+        "cites": [
+          "PMID:34838292"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 51 pacientes operados de reparación tricuspídea y estudiados antes con ecocardiografía transesofágica tridimensional, el segmento anular de la valva posterior era mayor en las válvulas con dos valvas posteriores que en las de una sola (42,4 ± 13,5 frente a 30,7 ± 9,1 mm).",
+        "cites": [
+          "PMID:35640550"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La dilatación anular es el mecanismo predominante de la insuficiencia tricuspídea.",
+        "cites": [
+          "PMID:19470900"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La insuficiencia tricuspídea clínicamente relevante afecta a cerca del 4 % de quienes tienen 75 años o más; la primaria, por anomalía del propio aparato valvular, solo se observa en el 8 %-10 % de los pacientes con valvulopatía tricuspídea.",
+        "cites": [
+          "PMID:34796878"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Los cables de marcapasos y desfibriladores implantables pueden interferir en la movilidad o la coaptación de las valvas tricuspídeas.",
+        "cites": [
+          "PMID:28473139"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002135": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "El concepto de aparato mitral abarca, además de valvas y anillo, las cuerdas tendinosas, los músculos papilares, la pared auricular y la pared libre del ventrículo izquierdo.",
+        "cites": [
+          "PMID:31123911"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "A escala mundial, la estenosis mitral sigue debiéndose ante todo a la enfermedad reumática.",
+        "cites": [
+          "PMID:28688022"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Se distingue una insuficiencia mitral primaria, debida a lesiones del aparato mitral, de otra secundaria a la alteración geométrica del ventrículo izquierdo.",
+        "cites": [
+          "PMID:28688022"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Ninguna valvulopatía es tan común en los países desarrollados como la insuficiencia mitral.",
+        "cites": [
+          "PMID:31078185"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Según el estudio Global Burden of Disease, en 2017 había en el mundo 18,1 millones de casos prevalentes de valvulopatía mitral degenerativa.",
+        "cites": [
+          "PMID:32223336"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002146": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 160 casos de tetralogía de Fallot, la válvula pulmonar era bicúspide en el 73,7 %, tricúspide en el 17,5 % y unicúspide en el 8,8 %.",
+        "cites": [
+          "PMID:25983249"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Tras la reparación de la tetralogía de Fallot, la insuficiencia pulmonar grave impone una sobrecarga de volumen al ventrículo derecho, y la resonancia cardiovascular es la técnica de referencia para valorar sus secuelas.",
+        "cites": [
+          "PMID:21251297"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En pacientes seleccionados con insuficiencia pulmonar u obstrucción del tracto de salida del ventrículo derecho, el implante percutáneo de válvula pulmonar es una terapia emergente.",
+        "cites": [
+          "PMID:20644013"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Entre 404 pacientes evaluados para implante percutáneo, el 5 % mostró compresión coronaria durante la angioplastia de prueba, asociada sobre todo a anatomía coronaria anómala.",
+        "cites": [
+          "PMID:24065444"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "La endocarditis limitada a la válvula pulmonar, sin compromiso tricuspídeo, es poco frecuente incluso en usuarios de drogas intravenosas.",
+        "cites": [
+          "PMID:26571480"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002170": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "Se ha descrito un lactante con enfisema lobar congénito del lóbulo superior derecho cuyo bronquio nacía de la porción distal de la tráquea.",
+        "cites": [
+          "PMID:6668296"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002171": {
+    "sentences": []
+  },
+  "UBERON:0002174": {
+    "sentences": []
+  },
+  "UBERON:0002205": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Según el examen de 25 fetos de 6 a 9 semanas, el primer esbozo del manubrio es un mesénquima situado entre las clavículas en formación y continuo con ellas.",
+        "cites": [
+          "PMID:23165944"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Ese mesénquima se extendió hasta los extremos anteriores de las primeras costillas y luego incorporó el extremo superior de las bandas esternales para formar el manubrio primitivo.",
+        "cites": [
+          "PMID:23165944"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Durante ese proceso, los músculos infrahioideos y sus nervios mantuvieron una estrecha relación topográfica con el mesénquima precursor del manubrio.",
+        "cites": [
+          "PMID:23165944"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "Los autores proponen que en la formación del manubrio confluyen derivados de tres orígenes: cresta neural, placa lateral y somitas.",
+        "cites": [
+          "PMID:23165944"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002207": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Justo debajo del cuerpo esternal, en la pared torácica anterior, se encuentra la apófisis xifoides, un pequeño relieve óseo.",
+        "cites": [
+          "PMID:29098125"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 902 pacientes estudiados con tomografía multidetector, la xifoides era puntiaguda en el 44,75 %, ovalada en el 41,04 % y bífida en el 14,21 %, y presentaba agujero en el 57,69 %.",
+        "cites": [
+          "PMID:23839070"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 20 esternones de cadáver de 52 a 98 años, el 85 % de las apófisis xifoides conservaba una porción de cartílago.",
+        "cites": [
+          "PMID:39172258"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las variantes de la xifoides, que puede ser bífida, trífida, curvada o desviada, pueden confundirse con masas epigástricas.",
+        "cites": [
+          "PMID:29098125"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002228": {
+    "sentences": [
+      {
+        "aspect": "clinical",
+        "es": "En un cribado fluorográfico de 400 000 personas, la duplicación costal apareció en 3 casos (alrededor de 1 por 133 000) y la semiduplicación en 2 (1:200 000).",
+        "cites": [
+          "PMID:901230"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Costillas cortas con hipoplasia torácica caracterizan al síndrome de costillas cortas y polidactilia, una displasia esquelética letal que se hereda de forma autosómica recesiva.",
+        "cites": [
+          "PMID:15605271"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En dos familias, el mapeo por homocigosidad identificó mutaciones de NEK1 como una causa del tipo Majewski de ese síndrome.",
+        "cites": [
+          "PMID:21211617"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Para evitar deformidades torácicas, la técnica de Nagata de reconstrucción autóloga de la microtia exige extraer el cartílago costal sin su pericondrio.",
+        "cites": [
+          "PMID:29153188"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Raro en la práctica quirúrgica, el quiste óseo aneurismático de costilla es un tumor benigno originado en la pared torácica.",
+        "cites": [
+          "PMID:29424198"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002236": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En 25 muestras de cartílago costal humano de cadáver, la mediana del diámetro fue de 8,20 mm, con notable variación histológica y bioquímica entre especímenes.",
+        "cites": [
+          "PMID:36097422"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El cartílago costal humano se emplea ampliamente en cirugía reconstructiva, cada vez más como aloinjerto irradiado, y tanto la forma autóloga como la homóloga irradiada son opciones aceptadas en la rinoplastia de aumento.",
+        "cites": [
+          "PMID:36097422",
+          "PMID:32077916"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En injertos de cartílago costal de cadáver tomados de las costillas 3 a 9, el tallado excéntrico produjo más curvatura que el concéntrico (4,4° frente a 0,4° a la hora).",
+        "cites": [
+          "PMID:16415446"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 207 injertos obtenidos de 10 cadáveres, los cortes en el plano cefalocaudal fueron los que más se curvaron.",
+        "cites": [
+          "PMID:38616315"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002299": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Las células alveolares de tipo 2 aisladas de tejido pulmonar de pacientes se reconocen por el marcador HTII-280, por las proteínas del surfactante y por sus cuerpos lamelares.",
+        "cites": [
+          "PMID:35137633"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002350": {
+    "sentences": []
+  },
+  "UBERON:0002354": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "A diferencia del músculo ventricular, donde KChIP2 es esencial para la corriente Ito, las fibras de Purkinje humanas expresan poco esta subunidad y son ricas en DPP6 y frecuenina (NCS-1).",
+        "cites": [
+          "PMID:23532596"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En una serie de cinco casos de fibrilación ventricular idiopática, la clínica orientaba a un origen de la arritmia en la red de Purkinje.",
+        "cites": [
+          "PMID:23532596"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002403": {
+    "sentences": [
+      {
+        "aspect": "innervation",
+        "es": "En 70 fetos humanos, el ramo inferior del primer nervio intercostal se distribuyó en el estrato del músculo intercostal interno.",
+        "cites": [
+          "PMID:31658338"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Un estudio en 20 pacientes sometidos a toracotomía concluyó que existe un espacio anatómico potencial entre la pleura costal y el músculo intercostal interno, por donde difunde el anestésico de un bloqueo intercostal.",
+        "cites": [
+          "PMID:1510260"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En un cadáver adulto, los músculos intercostales externo e interno se adelgazaban hacia delante hasta convertirse en una capa membranosa en la pared torácica anterior.",
+        "cites": [
+          "PMID:32521300"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En biopsias de 22 pacientes operados del tórax, la atrofia de fibras fue más marcada en el intercostal interno y se relacionó con el grado de obstrucción de la vía aérea.",
+        "cites": [
+          "PMID:7447152"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002404": {
+    "sentences": [
+      {
+        "aspect": "situation",
+        "es": "Delgado y laminar, el transverso del tórax recubre por dentro la pared torácica anterior.",
+        "cites": [
+          "PMID:21272314"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "Su relación con la arteria torácica interna lo hace relevante durante la extracción de esa arteria para injerto.",
+        "cites": [
+          "PMID:21272314"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En 120 autopsias, su inserción superior más alta fue sobre todo en la segunda o tercera costilla y la más baja en la sexta (94,2 % a la izquierda y 89,2 % a la derecha), con cuatro o cinco fascículos en la mayoría.",
+        "cites": [
+          "PMID:21272314"
+        ]
+      },
+      {
+        "aspect": "relations",
+        "es": "En cinco bloqueos ecoguiados realizados en cuatro cadáveres, el colorante inyectado en el plano situado por debajo de los intercostales internos y por encima del transverso del tórax tiñó cuatro niveles de nervios intercostales.",
+        "cites": [
+          "PMID:37419507"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "El bloqueo del plano del transverso del tórax, una técnica regional reciente para la analgesia de la pared torácica anterior, parece eficaz en cirugía mamaria y cardíaca según la evidencia disponible.",
+        "cites": [
+          "PMID:31360703"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002406": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Mediante disecciones de 107 cadáveres adultos frescos se describió una variante en la que un pliegue del techo del seno oblicuo del pericardio parece contener una vena esofagoauricular permeable o un cordón fibroso.",
+        "cites": [
+          "PMID:15249984"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Según sus autores, esa vena podría facilitar la extensión de un carcinoma esofágico al pericardio o actuar como derivación portosistémica en la hipertensión portal.",
+        "cites": [
+          "PMID:15249984"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 52 pericardiocentesis, el diámetro anteroposterior del saco medido por ecocardiografía se correlacionó con el volumen del derrame; un valor de 12 cm o más tuvo un valor predictivo positivo del 88 % para volúmenes de 650 ml o más.",
+        "cites": [
+          "PMID:16153556"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Aunque la mayoría se descubre por azar, un teratoma quístico mediastínico grande puede dar síntomas al comprimir estructuras del mediastino o al romperse dentro del saco pericárdico.",
+        "cites": [
+          "PMID:23087278"
+        ]
+      }
+    ]
+  },
+  "UBERON:0002407": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "Dos capas forman el pericardio: el epicardio, monocapa mesotelial visceral que se refleja sobre los grandes vasos, y una capa parietal fibrosa externa, relativamente inextensible, de colágeno y elastina organizados.",
+        "cites": [
+          "PMID:29025540"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "El espacio virtual que las separa contiene normalmente hasta 50 ml de filtrado de plasma.",
+        "cites": [
+          "PMID:29025540"
+        ]
+      },
+      {
+        "aspect": "parts",
+        "es": "En resonancia de 18 sujetos sanos, el grosor pericárdico medido delante del ventrículo derecho fue de 1,2 ± 0,5 mm en diástole y 1,7 ± 0,5 mm en sístole, valores superiores a los 0,4-1,0 mm de las mediciones anatómicas.",
+        "cites": [
+          "PMID:3487935"
+        ]
+      },
+      {
+        "aspect": "function",
+        "es": "Aunque no es vital, el pericardio desempeña funciones sutiles, mecánicas, reflejas, membranosas, metabólicas y ligamentosas, que ganan peso cuando hay hipervolemia o el corazón se agranda de forma aguda.",
+        "cites": [
+          "PMID:29025540"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "Las anomalías congénitas del pericardio, como su ausencia, los quistes y los divertículos, son raras y a menudo se diagnostican de forma inadecuada.",
+        "cites": [
+          "PMID:29025550"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004292": {
+    "sentences": [
+      {
+        "aspect": "parts",
+        "es": "En el corazón humano, el esqueleto cardíaco forma parte, junto con el miocardio, las válvulas y el sistema de conducción, de la arquitectura que madura durante la vida intrauterina.",
+        "cites": [
+          "PMID:39324891"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En 678 pacientes operados por endocarditis infecciosa, el 14 % requirió reconstrucción con parche por afectación grave del esqueleto fibroso cardíaco.",
+        "cites": [
+          "PMID:41597319"
+        ]
+      },
+      {
+        "aspect": "clinical",
+        "es": "En un estudio de 13 corazones con bloqueo fascicular posterior izquierdo, tres de los cuatro casos crónicos presentaban calcificación intensa del lado izquierdo del esqueleto cardíaco.",
+        "cites": [
+          "PMID:495502"
+        ]
+      }
+    ]
+  },
+  "UBERON:0004601": {
+    "sentences": []
+  }
+}

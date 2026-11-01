@@ -112,3 +112,25 @@
   font-size: var(--fs-caption);
   color: var(--text-primary);
 }
+
+/* Las líneas no aplicadas llevan un motivo largo: una sola columna. */
+.sync__list--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.sync__site,
+.sync__reason {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.sync__reason {
+  flex-basis: 100%;
+}
+
+.sync__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}

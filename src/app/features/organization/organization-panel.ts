@@ -1,7 +1,15 @@
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  TemplateRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import { DirectoryClient } from '../../core/data-access/directory/directory.client';
 import type {
@@ -19,7 +27,13 @@ import { AppButtonLink } from '../../shared/components/atoms/button/button-link'
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Alert } from '../../shared/components/molecules/alert/alert';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../shared/components/molecules/card/card';
+import { Pagination } from '../../shared/components/molecules/pagination/pagination';
+import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../shared/components/molecules/tabs/tabs';
+import { DataTable } from '../../shared/components/organisms/data-table/data-table';
+import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
@@ -77,6 +91,19 @@ const CAMPOS_DEL_FORMULARIO: ReadonlySet<string> = new Set([
  * «Tu organización», nunca «tenant». La palabra es del modelo de datos y no
  * significa nada para quien la administra.
  */
+/** La página `pagina` de un estado de lista; los demás estados pasan tal cual. */
+function rebanar<T>(
+  estado: ViewState<readonly T[]>,
+  pagina: number,
+  tamano: number,
+): ViewState<readonly T[]> {
+  if (estado.status !== 'ready') return estado;
+  // Con menos filas que la página pedida (buscó, cambió de día) se queda en la última.
+  const ultima = Math.max(1, Math.ceil(estado.data.length / tamano));
+  const desde = (Math.min(ultima, Math.max(1, pagina)) - 1) * tamano;
+  return ready(estado.data.slice(desde, desde + tamano));
+}
+
 @Component({
   selector: 'app-organization-panel',
   imports: [
@@ -85,6 +112,7 @@ const CAMPOS_DEL_FORMULARIO: ReadonlySet<string> = new Set([
     AppButton,
     Badge,
     Card,
+    DataTable,
     DatePipe,
     FormsModule,
     EmptyState,
@@ -92,9 +120,13 @@ const CAMPOS_DEL_FORMULARIO: ReadonlySet<string> = new Set([
     FormField,
     Input,
     InsurerProfileCard,
+    NavIcon,
     OrganizationLogo,
     PageHeader,
+    Pagination,
     RouterLink,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './organization-panel.html',
@@ -102,6 +134,103 @@ const CAMPOS_DEL_FORMULARIO: ReadonlySet<string> = new Set([
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationPanel {
+  /** Pestaña abierta de la ficha: 0 Datos · 1 Su gente · 2 Agenda · 3 Solicitudes. */
+  protected readonly pestana = signal(0);
+
+  /** El lápiz abre el formulario de «Datos»; guardar o cancelar lo cierra. */
+  protected readonly editando = signal(false);
+
+  protected readonly opcionesDeTamano: readonly number[] = [10, 25, 50];
+
+  protected readonly pagGente = signal(1);
+  protected readonly tamGente = signal(10);
+  protected readonly pagAgenda = signal(1);
+  protected readonly tamAgenda = signal(10);
+  protected readonly pagSolicitudes = signal(1);
+  protected readonly tamSolicitudes = signal(10);
+
+  protected readonly porId = (fila: { readonly id: string }): string => fila.id;
+  protected readonly porCita = (cita: TenantAgendaItem): string => cita.bookingId;
+
+  private readonly celdaPersona =
+    viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaPersona');
+  private readonly celdaRolPersona =
+    viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaRolPersona');
+  private readonly celdaHora =
+    viewChild.required<TemplateRef<{ $implicit: TenantAgendaItem }>>('celdaHora');
+  private readonly celdaPaciente =
+    viewChild.required<TemplateRef<{ $implicit: TenantAgendaItem }>>('celdaPaciente');
+  private readonly celdaSedeDeCita =
+    viewChild.required<TemplateRef<{ $implicit: TenantAgendaItem }>>('celdaSedeDeCita');
+  private readonly celdaSolicitante =
+    viewChild.required<TemplateRef<{ $implicit: PractitionerRequest }>>('celdaSolicitante');
+  private readonly celdaDesde =
+    viewChild.required<TemplateRef<{ $implicit: PractitionerRequest }>>('celdaDesde');
+  private readonly celdaDecision =
+    viewChild.required<TemplateRef<{ $implicit: PractitionerRequest }>>('celdaDecision');
+
+  protected readonly columnasDeGente = computed<readonly ColumnDef<MembershipListItem>[]>(() => [
+    { key: 'userId', header: 'Persona', priority: 1, cell: this.celdaPersona() },
+    { key: 'role', header: 'Rol', priority: 1, cell: this.celdaRolPersona() },
+  ]);
+
+  protected readonly columnasDeAgenda = computed<readonly ColumnDef<TenantAgendaItem>[]>(() => [
+    { key: 'hora', header: 'Hora', priority: 1, cell: this.celdaHora() },
+    { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
+    { key: 'sede', header: 'Sede', priority: 2, cell: this.celdaSedeDeCita() },
+  ]);
+
+  protected readonly columnasDeSolicitudes = computed<readonly ColumnDef<PractitionerRequest>[]>(
+    () => [
+      { key: 'quien', header: 'Profesional', priority: 1, cell: this.celdaSolicitante() },
+      { key: 'desde', header: 'Institución y fecha', priority: 2, cell: this.celdaDesde() },
+      {
+        key: 'decision',
+        header: 'Decisión',
+        priority: 1,
+        align: 'end',
+        accion: true,
+        cell: this.celdaDecision(),
+      },
+    ],
+  );
+
+  protected readonly genteDePagina = computed(() =>
+    rebanar(this.gente(), this.pagGente(), this.tamGente()),
+  );
+  protected readonly agendaDePagina = computed(() =>
+    rebanar(
+      this.agenda().status === 'ready' ? ready(this.citasVisibles()) : this.agenda(),
+      this.pagAgenda(),
+      this.tamAgenda(),
+    ),
+  );
+  protected readonly solicitudesDePagina = computed(() =>
+    rebanar(this.solicitudes(), this.pagSolicitudes(), this.tamSolicitudes()),
+  );
+
+  /** El contador va en la etiqueta: una solicitud sin responder no debe pasar desapercibida. */
+  protected readonly etiquetaDeSolicitudes = computed(() =>
+    this.pedidos().length > 0
+      ? `Solicitudes de médicos (${this.pedidos().length})`
+      : 'Solicitudes de médicos',
+  );
+
+  protected alCambiarPestana(indice: number): void {
+    this.pestana.set(indice);
+    if (indice !== 0) this.editando.set(false);
+  }
+
+  protected editar(): void {
+    this.editando.set(true);
+  }
+
+  protected cancelarEdicion(): void {
+    const org = this.elegida();
+    if (org) this.sembrarFormulario(org);
+    this.editando.set(false);
+  }
+
   private readonly directory = inject(DirectoryClient);
   private readonly toasts = inject(ToastService);
 
@@ -216,6 +345,7 @@ export class OrganizationPanel {
       .subscribe({
         next: () => {
           this.guardando.set(false);
+          this.editando.set(false);
           this.toasts.success('Los datos de su organización quedaron guardados.');
           // Se recarga la lista y no sólo la ficha: el nombre que se acaba de
           // cambiar es el que rotula el selector de arriba.

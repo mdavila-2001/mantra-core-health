@@ -32,6 +32,16 @@ Reglas absolutas:
 - Usar las primitivas existentes antes de crear una nueva.
 - Las mutaciones se demuestran `UI → request → response → persistencia →
   recarga → UI`. Un toast no prueba nada.
+- `LEAN_CODE_MAX_300` — escribir **única y exclusivamente las líneas de código necesarias**
+  (cero sobre-ingeniería o boilerplate). Ningún archivo nuevo puede superar **300 líneas**.
+  Archivos existentes > 300 líneas están congelados en `scripts/baselines/max-lines.json`
+  y tienen prohibido crecer. Al tocarlos se descomponen en:
+  - Subcomponentes subatómicos (Container Smart ≤ 150 lín., subcomponentes Dumb ≤ 120 lín.).
+  - Plantilla `.html` y estilos `.css` separados.
+  - Rutas y menús modularizados por dominio (lazy loading por módulo).
+  - Orquestación en paralelo mediante la herramienta y skill `kman`.
+
+
 
 Skills locales que cargan estas reglas: `project-design-system`,
 `visual-quality-gate`, `frontend-production-gate`,
@@ -76,10 +86,11 @@ El merge a `dev` exige revisión humana: `gh pr merge` y el auto-merge están
 bloqueados. El flujo termina en **abrir el PR**. El CI propio está caído; los
 `check-*.mjs` se corren a mano.
 
-**Dos PRs por cambio terminado: uno hacia `dev` y otro hacia `test`** (pedido
-del usuario, 28/10/2026; ejemplo: #1526 y #1543). El de `test` sale de una rama
-propia creada desde `test` con solo los commits del cambio (cherry-pick); nunca
-desde la rama de `dev`, que arrastraría lo que `test` todavía no tiene.
+**Un PR por cambio terminado, hacia `dev`.** La rama `test` está dada de baja
+desde el 30/10/2026: no despliega nada y `test.alovidasalud.com` redirige a
+`dev`, así que no se le abren PR. Si el cambio también va a `mockup`, lleva su
+propio PR desde una rama creada sobre `mockup`, con solo los commits del cambio
+(cherry-pick).
 
 ## Trabajo en paralelo (autorización explícita)
 

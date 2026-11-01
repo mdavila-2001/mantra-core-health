@@ -147,12 +147,12 @@ describe('OrganizationDetail', () => {
   }
 
   describe('los nueve estados de la organización', () => {
-    it('S5: un 403 dice «no tenés acceso» y no queda cargando', async () => {
+    it('S5: un 403 dice «no tiene acceso» y no queda cargando', async () => {
       await abrir(['SECURITY_ADMIN']);
       responder({
         fichaError: {
           status: 403,
-          body: { statusCode: 403, code: 'FORBIDDEN', message: 'No pertenecés a esta organización' },
+          body: { statusCode: 403, code: 'FORBIDDEN', message: 'No pertenece a esta organización' },
         },
       });
 

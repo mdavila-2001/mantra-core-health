@@ -1,0 +1,20 @@
+<section class="ctx" aria-label="Ventana de análisis" data-testid="obs-context">
+  <div class="ctx__controles">
+    <app-segmented-control ariaLabel="Rango de tiempo" [options]="rangos" [value]="store.rango()" (valueChange)="store.rango.set($event)" />
+    <app-segmented-control ariaLabel="Zona horaria" [options]="zonas" [value]="store.zona()" (valueChange)="store.zona.set($event)" />
+    <button app-button variant="secondary" size="sm" (clicked)="actualizar()" data-testid="obs-refresh">Actualizar</button>
+  </div>
+  <p class="ctx__frescura" [attr.data-estado]="frescura().estado" role="status" data-testid="obs-freshness">
+    <span class="ctx__punto" aria-hidden="true"></span>
+    <span>{{ frescura().texto }}</span>
+    @if (frescura().estado === 'atrasado') {
+      <strong>Datos atrasados</strong>
+    }
+  </p>
+  <p class="ctx__ayuda">{{ ayudaRango() }} Zona: {{ zonaTexto() }}.</p>
+  @if (perdidos() > 0) {
+    <p class="ctx__alerta" role="alert" data-testid="obs-dropped">
+      La propia medición descartó {{ perdidos() }} volcado(s) tras reintentar: puede faltar tráfico. Ver «No medido».
+    </p>
+  }
+</section>

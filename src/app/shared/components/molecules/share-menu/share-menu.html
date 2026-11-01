@@ -1,0 +1,30 @@
+<button
+  app-button
+  variant="outline"
+  size="sm"
+  type="button"
+  [attr.aria-label]="label() + ': ' + title()"
+  [attr.data-testid]="testId() + '-abrir'"
+  [appMenuTrigger]="menu"
+>
+  <app-nav-icon name="share" />
+  <span>{{ label() }}</span>
+</button>
+
+<app-menu #menu>
+  @if (url() !== null) {
+    <app-menu-item [attr.data-testid]="testId() + '-enlace'" (selected)="shareLink()">
+      <app-nav-icon slot="icon" name="link" />
+      Enviar o copiar enlace
+    </app-menu-item>
+  }
+  @for (option of options(); track option.format) {
+    <app-menu-item
+      [attr.data-testid]="testId() + '-' + option.format"
+      (selected)="exported.emit(option.format)"
+    >
+      <app-nav-icon slot="icon" [name]="option.format === 'pdf' ? 'print' : 'download'" />
+      {{ option.title }}
+    </app-menu-item>
+  }
+</app-menu>

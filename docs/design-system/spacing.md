@@ -86,12 +86,15 @@ export const RADIUS_NAMES = ['xs','sm','md','lg','xl','2xl','full','signature'] 
 |---|---|---|
 | Grosores de borde | No hay `--bw-*` | Cada componente escribe `1px` o `2px` |
 | Anchos de contenedor | No hay `--container-*` | Cada layout fija el suyo |
-| Índices de apilamiento | No hay `--z-*` | Diálogos, menús y avisos fijan el suyo. **Es lo más riesgoso de la lista**: dos capas con el mismo z compiten por el orden de aparición en el DOM |
 | Alturas de control | No hay tokens | Se componen desde el espaciado y la tipografía |
 
-Los índices de apilamiento son la única de las cuatro que puede producir un
-defecto visible sin que nadie toque nada: basta con que dos capas coincidan.
-Anotado como brecha `MEDIUM`.
+**Los índices de apilamiento sí están tokenizados — esta tabla estaba
+desactualizada.** `--z-base/sticky/drawer/overlay/menu/tooltip/toast/dialog`
+están declarados en `src/styles.css` y tipados en `LAYER_NAMES`
+(`design-tokens.types.ts`). Un componente nuevo que necesite apilarse pide
+`cssVar(LAYER.dialog)` (o el que corresponda); escribir un `z-index` numérico
+suelto es exactamente la deriva que estos tokens cierran. Ver
+[Movimiento](motion.md) para el mismo patrón de verificación.
 
 ## Reglas prácticas
 

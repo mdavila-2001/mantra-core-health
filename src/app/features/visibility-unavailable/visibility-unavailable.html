@@ -1,0 +1,11 @@
+<!-- `role="alert"`: la persona esperaba una pantalla y llegó acá; el cambio es la noticia y hay que anunciarlo. -->
+<div class="no-disponible" role="alert" data-testid="no-disponible-para-su-perfil">
+  <app-empty-state
+    variant="no-results"
+    title="No disponible para su perfil"
+    description="Esta pantalla no está disponible para su perfil en esta organización. Si la necesita para su trabajo, pídale a quien administra su organización que revise su acceso."
+  >
+    <!-- Un enlace y no un botón: navega a otra ruta. -->
+    <a app-link empty-actions routerLink="/dashboard">Ir al inicio</a>
+  </app-empty-state>
+</div>

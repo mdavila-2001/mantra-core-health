@@ -295,7 +295,7 @@ describe('AgendaDeHoy', () => {
 
     expect(estado().status).toBe('empty');
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).not.toContain('Hoy no tiene ninguna consulta reservada.');
+    expect(texto).not.toContain('Hoy no tiene consultas reservadas.');
     expect(texto).toContain('en las agendas que se pudieron cargar');
     expect(texto).toContain('No se pudieron cargar las citas de Consultorio.');
   });

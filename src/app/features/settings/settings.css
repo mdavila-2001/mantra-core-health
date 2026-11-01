@@ -30,7 +30,7 @@
 
 .ajustes__titulo {
   margin: 0 0 var(--e3);
-  font-size: 1.05rem;
+  font-size: var(--fs-body-lg);
 }
 
 .ajustes__lista {
@@ -118,7 +118,7 @@
 
 .ajustes__detalle {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--fs-body);
 }
 
 .ajustes__pastilla {
@@ -126,7 +126,7 @@
   padding: 0.15rem var(--e2);
   border: 1px solid var(--border-default);
   border-radius: var(--r-full);
-  font-size: 0.8rem;
+  font-size: var(--fs-caption);
   white-space: nowrap;
 }
 
@@ -142,5 +142,5 @@
 .ajustes__nota {
   margin: var(--e3) 0 0;
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: var(--fs-body);
 }

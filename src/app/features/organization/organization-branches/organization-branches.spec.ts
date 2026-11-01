@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { signal } from '@angular/core';
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError, type Observable } from 'rxjs';
@@ -68,11 +68,13 @@ describe('OrganizationBranches', () => {
   let updates: { branchId: string; changes: BranchChanges }[];
   let updateReply: () => Observable<BranchListItem>;
   let listBranches: ReturnType<typeof vi.fn>;
+  let tenantType: WritableSignal<string | null>;
 
   const internal = (): Internal => fixture.componentInstance as unknown as Internal;
 
   beforeEach(() => {
     activeTenant = signal<string | null>(TENANT);
+    tenantType = signal<string | null>('LABORATORY');
     created = [];
     updates = [];
     createReply = (branch) => of({ ...CENTRAL, id: `b-${created.length + 1}`, ...branch });
@@ -82,7 +84,7 @@ describe('OrganizationBranches', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: SessionStore, useValue: { activeTenantId: activeTenant } },
+        { provide: SessionStore, useValue: { activeTenantId: activeTenant, activeTenantType: tenantType } },
         {
           provide: DirectoryClient,
           useValue: {
@@ -110,6 +112,18 @@ describe('OrganizationBranches', () => {
     expect(text).toContain('CENTRAL');
     expect(text).toContain('Frente a la plaza');
     expect(text).toContain('Ver en el mapa');
+  });
+
+  it('en una farmacia explica que las sedes de venta importadas no son estas sucursales', () => {
+    const note = () =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="branches-pharmacy-sites-note"]');
+    expect(note()).toBeNull();
+
+    tenantType.set('PHARMACY');
+    fixture.detectChanges();
+
+    expect(note()?.textContent).toContain('no aparecen acá');
+    expect(note()?.textContent).toContain('Horario y turnos');
   });
 
   it('sin organización activa no pide nada y dice qué falta', () => {

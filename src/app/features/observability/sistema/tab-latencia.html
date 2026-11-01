@@ -1,0 +1,48 @@
+<div class="obs-tab" data-testid="obs-tab-latencia">
+  <section class="obs-seccion" aria-labelledby="obs-lat-t">
+    <h2 class="obs-seccion__titulo" id="obs-lat-t">¿Se degradó la respuesta?</h2>
+    <app-view-state-host [state]="tiempo.state()" (retry)="cargar()" (refresh)="cargar()">
+      @if (specTiempo(); as spec) {
+        <app-chart-panel [spec]="spec" [plano]="true" [refrescando]="tiempo.refrescando()" />
+      }
+    </app-view-state-host>
+    <p class="obs-nota">La línea de referencia ({{ referencia }}) es el umbral de alerta propuesto para p95, no un objetivo de servicio medido. Los percentiles son estimaciones.</p>
+  </section>
+
+  <div class="obs-grid">
+    <section class="obs-seccion" aria-labelledby="obs-dist-t">
+      <h2 class="obs-seccion__titulo" id="obs-dist-t">¿Cuántas peticiones tardan?</h2>
+      <app-view-state-host [state]="distribucion.state()" (retry)="cargar()" (refresh)="cargar()">
+        @if (specHisto(); as spec) {
+          <app-chart-panel [spec]="spec" [plano]="true" [refrescando]="distribucion.refrescando()" />
+        }
+      </app-view-state-host>
+    </section>
+
+    <section class="obs-seccion" aria-labelledby="obs-op-t">
+      <h2 class="obs-seccion__titulo" id="obs-op-t">¿Dónde?</h2>
+      <app-view-state-host [state]="lentas.state()" (retry)="cargar()" (refresh)="cargar()">
+        @if (specLentas(); as spec) {
+          <app-chart-panel [spec]="spec" [plano]="true" [refrescando]="lentas.refrescando()" />
+        }
+      </app-view-state-host>
+    </section>
+  </div>
+
+  <section class="obs-seccion" aria-labelledby="obs-rec-t">
+    <h2 class="obs-seccion__titulo" id="obs-rec-t">¿Cuáles exactamente?</h2>
+    <p class="obs-seccion__sub">Peticiones lentas o con error que la API guardó como muestra, con el SQL que ejecutaron.</p>
+    <app-data-table
+      [state]="filas()"
+      [columns]="columnas"
+      [trackBy]="porId"
+      [rowLabel]="nombreDeFila"
+      stackedOnMobile
+      fitContainer
+      caption="Peticiones lentas recientes"
+      data-testid="obs-lentas-tabla"
+      (retry)="cargar()"
+      (refresh)="cargar()"
+    />
+  </section>
+</div>

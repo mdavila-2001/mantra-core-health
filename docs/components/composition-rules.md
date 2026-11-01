@@ -62,8 +62,8 @@ export interface FormControlContext {
 **El campo conoce label, hint y error, así que es quien genera el `id` y el
 `aria-describedby`. El control solo los consume.**
 
-Diecinueve archivos lo importan: es el nodo de mayor centralidad después del
-botón.
+Quince archivos lo importan (verificado 2026-10-04): es el nodo de mayor
+centralidad después del botón.
 
 ### Un control sin campo alrededor sigue funcionando
 
@@ -213,7 +213,7 @@ quien lo toca no acaba de elegir.
 | Forma de importar | Archivos |
 |---|---:|
 | `from '@shared'` (el barril) | **0** |
-| `from '@shared/…'` (alias, ruta profunda) | 21 |
+| `from '@shared/…'` (alias, ruta profunda) | 71 (verificado 2026-10-04) |
 | `from '../../shared/…'` (ruta relativa) | el resto |
 
 **El contrato existe y no se está ejerciendo.** Hoy nada impide importar algo
@@ -228,6 +228,9 @@ producto:
 2. **Reducirlo**: dejarlo solo para lo que de verdad es API pública y aceptar las
    rutas profundas para lo interno.
 3. **Quitarlo**: si nadie lo usa, mantenerlo es deuda documental.
+
+Registrado como brecha `MEDIUM` en
+[el análisis de brechas](../reports/documentation-gap-analysis.md).
 
 ## Detección de cambios
 

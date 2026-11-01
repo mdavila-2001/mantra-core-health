@@ -286,7 +286,13 @@
         />
       </app-form-field>
 
-      <app-form-field icon="package" label="Cantidad" hint="Opcional. Cuántas unidades se prescriben.">
+      <!-- Sin catálogo de unidades que ofrecer, la receta no lleva unidad y la
+           farmacia no puede descontar lo entregado: se dice, no se inventa una. -->
+      <app-form-field
+        icon="package"
+        label="Cantidad"
+        hint="Opcional. Cuántas unidades se prescriben. Sin control de cantidad: la receta no lleva unidad, así que la farmacia no descuenta lo entregado; la receta se puede retirar una sola vez."
+      >
         <app-input
           type="number"
           autocomplete="off"

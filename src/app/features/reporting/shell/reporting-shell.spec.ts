@@ -7,6 +7,14 @@ import { ETIQUETA_VERTICAL, VERTICALES } from '@core/data-access/reporting/repor
 import { AuthService } from '../../../core/auth/auth.service';
 import { ReportContextStore } from '../state/report-context.store';
 import { ReportingShell } from './reporting-shell';
+import { setReportingMock } from '../reporting-mock-flag.testing';
+
+// Estas pantallas son la maqueta de reportería: su comportamiento se fija con la bandera encendida.
+let restaurarMaqueta: () => void;
+beforeEach(() => {
+  restaurarMaqueta = setReportingMock(true);
+});
+afterEach(() => restaurarMaqueta());
 
 describe('ReportingShell', () => {
   let fixture: ComponentFixture<ReportingShell>;

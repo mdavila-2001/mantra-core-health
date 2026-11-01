@@ -29,6 +29,12 @@ const STATUS_COPY: Readonly<Record<PrescriptionShareStatus, { title: string; ton
   REVOKED: { title: 'El paciente dejó de compartir esta receta', tone: 'warning' },
 };
 
+/** El enlace terminó porque la receta dejó de valer antes de su plazo. */
+const NOT_ACTIVE_COPY: { title: string; tone: AlertTone } = {
+  title: 'Esta receta ya no está vigente',
+  tone: 'warning',
+};
+
 /**
  * `/rx/:token` — a donde lleva el enlace (y el QR) que comparte el paciente
  * (FAR-01, `CONTRATO.md` §1 y S-4).
@@ -92,7 +98,11 @@ export class PublicShare {
 
   protected readonly copy = computed(() => {
     const share = this.share();
-    return share === null ? null : STATUS_COPY[share.status];
+    if (share === null) {
+      return null;
+    }
+    // Una receta anulada, reemplazada o completada no «venció» (H12-09).
+    return share.endedReason === 'PRESCRIPTION_NOT_ACTIVE' ? NOT_ACTIVE_COPY : STATUS_COPY[share.status];
   });
 
   /** Vuelve a esta misma página después del login: sirve a la farmacia que escaneó sin sesión. */

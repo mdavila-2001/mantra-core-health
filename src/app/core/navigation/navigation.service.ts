@@ -4,6 +4,8 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
+import { navScreenKey } from '../visibility/ui-element-keys';
+import { UiVisibilityService } from '../visibility/ui-visibility.service';
 import { APP_SECTIONS } from './navigation.map';
 import { esPerfilDeGestion, seccionDeGestion } from './navigation.management';
 import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
@@ -42,6 +44,15 @@ import {
 export class NavigationService {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly visibility = inject(UiVisibilityService);
+
+  /**
+   * Si una regla de visibilidad (`GET /me/ui-visibility`) le oculta la sección a la sesión. Presentación, no
+   * seguridad: la API sigue autorizando. Falla abierto —sin reglas leídas no se oculta nada—. Un grupo oculto ya
+   * oculta a sus secciones: la cascada la resuelve el servidor, y un grupo sin ítems no se dibuja.
+   */
+  private readonly mostrar = (section: AppSection): boolean =>
+    this.visibility.isVisible(navScreenKey(section.path));
 
   /**
    * La URL actual como señal.
@@ -75,8 +86,9 @@ export class NavigationService {
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
     const accountKind = this.accountKind();
-    return APP_SECTIONS.filter((section) =>
-      isVisibleTo(section, roles, tenants, activeTenantType, accountKind),
+    return APP_SECTIONS.filter(
+      (section) =>
+        isVisibleTo(section, roles, tenants, activeTenantType, accountKind) && this.mostrar(section),
     );
   });
 
@@ -110,6 +122,7 @@ export class NavigationService {
     const enElMenu = APP_SECTIONS.filter(
       (section) =>
         apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind) &&
+        this.mostrar(section) &&
         section.pinnedTop !== true &&
         (!deGestion || seccionDeGestion(section)),
     );
@@ -148,7 +161,8 @@ export class NavigationService {
     return APP_SECTIONS.filter(
       (section) =>
         section.pinnedTop === true &&
-        apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind),
+        apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind) &&
+        this.mostrar(section),
     ).map(menuItemOf);
   });
 

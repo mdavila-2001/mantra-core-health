@@ -35,9 +35,27 @@
 }
 
 .organizacion__formulario {
-  display: flex;
-  flex-direction: column;
+  /* Los campos se reparten en columnas según el ancho (composition-rules §5):
+     una en móvil, dos desde 780 px, tres desde 1120 px. */
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--sp-4);
+}
+
+@media (min-width: 780px) {
+  .organizacion__formulario {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .organizacion__formulario {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.organizacion__acciones-formulario {
+  grid-column: 1 / -1;
 }
 
 .organizacion__datos {
@@ -240,4 +258,37 @@
   .organizacion__cita-sede {
     grid-column: 2;
   }
+}
+
+/* La ficha: UNA tarjeta centrada y a lo ancho (composition-rules §5). */
+.organizacion__ficha {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.organizacion__identidad,
+.organizacion__herramientas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.organizacion__acciones-formulario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.organizacion__solicitud-quien,
+.organizacion__solicitud-cargo {
+  display: block;
+}
+
+.organizacion__ficha app-organization-logo,
+.organizacion__ficha app-insurer-profile-card {
+  display: block;
+  margin-block-start: var(--sp-6);
 }

@@ -1,0 +1,54 @@
+<app-page-header [title]="title()" [subtitle]="subtitle()" [breadcrumbs]="breadcrumbs()">
+  <span page-meta class="case-detail__meta">
+    @if (surgicalCase(); as c) {
+      @if (statusLabel()) {
+        <app-badge variant="info" data-testid="case-status">{{ statusLabel() }}</app-badge>
+      }
+      @if (c.block; as b) {
+        <app-badge variant="secondary">Bloque {{ b.label }}</app-badge>
+      }
+    }
+  </span>
+  <div page-actions>
+    <a app-button variant="ghost" size="sm" [routerLink]="listRoute">Volver a la agenda</a>
+  </div>
+</app-page-header>
+
+<app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+  @if (detail(); as d) {
+    <!-- UNA tarjeta, centrada y a lo ancho, con las cinco pestañas (composition-rules §5). -->
+    <app-card class="case-detail" padding="lg" data-testid="case-detail">
+      <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="changeTab($event)">
+        <app-tab label="Resumen">
+          <div class="case-detail__panel">
+            <app-fact-list [hechos]="facts()" etiqueta="Resumen de la intervención" />
+          </div>
+        </app-tab>
+
+        <app-tab label="Equipo">
+          <div class="case-detail__panel">
+            <app-case-team [caseId]="d.case.id" />
+          </div>
+        </app-tab>
+
+        <app-tab label="Check-list OMS">
+          <div class="case-detail__panel">
+            <app-case-checklist [caseId]="d.case.id" [checklistId]="d.checklist?.id ?? null" [checklistReported]="d.checklistReported ?? false" (changed)="reload()" (phases)="phases.set($event)" />
+          </div>
+        </app-tab>
+
+        <app-tab label="Eventos de sala">
+          <div class="case-detail__panel">
+            <app-case-room-events [caseId]="d.case.id" [events]="d.roomEvents" [phases]="phases()" [turnover]="d.turnoverCleaning" (changed)="reload()" />
+          </div>
+        </app-tab>
+
+        <app-tab label="Cargos">
+          <div class="case-detail__panel">
+            <app-case-charges [caseId]="d.case.id" [encounterId]="d.case.encounterId ?? null" [roomLabel]="roomLabel()" />
+          </div>
+        </app-tab>
+      </app-tabs>
+    </app-card>
+  }
+</app-view-state-host>

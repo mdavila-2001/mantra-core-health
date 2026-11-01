@@ -77,6 +77,8 @@ import {
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 
 /* ============================================================================
@@ -94,7 +96,7 @@ import { addressFromPoint, pointLabel } from '../shared-registration/address-fro
 /**
  * Los ocho tipos societarios que el punto 1.1.1 del registro de procesos
  * pide elegir de una lista cerrada, restringidos a los ocho de Bolivia del
- * diccionario `VS_LEGAL_ENTITY_TYPE` (`core/mock/fixtures/concepts.ts`) —
+ * diccionario `VS_LEGAL_ENTITY_TYPE` (`mock/fixtures/concepts.ts` del simulador) —
  * el registro de procesos de farmacia no contempla otro país. Se duplican
  * acá y no se importan de `RegisterLaboratory`: el carril de farmacia no
  * toca el laboratorio más allá de lo que ya vive en `shared-registration/`
@@ -180,7 +182,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  */
 @Component({
   selector: 'app-register-pharmacy',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,
@@ -212,6 +214,7 @@ export class RegisterPharmacy {
   /** Resuelve del catálogo los conceptos de país y jurisdicción que la API exige. */
   private readonly alta = inject(DiagnosisCenterEnrollment);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
 
   readonly borradorDetectado = signal<OnboardingDraft | null>(null);
   readonly pasoGuardado = signal<number>(0);
@@ -332,6 +335,7 @@ export class RegisterPharmacy {
         campos: [
           {
             key: 'legalName',
+            alSalir: (valor: string) => this.cuentaExistente.verificar('ORG_NAME', valor),
             label: 'Nombre o razón social',
             control: 'text' as const,
             required: true,
@@ -768,6 +772,13 @@ export class RegisterPharmacy {
     this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
   }
 
+  /**
+   * Las sucursales cuyo pin salió del enlace y no de la mano: mientras sea
+   * así, corregir el enlace mueve el pin. En cuanto la persona confirma un
+   * punto en el mapa, el enlace deja de moverlo.
+   */
+  private readonly pinesDelEnlace = new Set<string>();
+
   escribirUrlDeSucursal(id: string, url: string | number | null): void {
     const enlace = url === null ? '' : String(url).trim();
     // Pegar el enlace es una de las dos maneras de ubicar la sucursal: si trae el
@@ -779,6 +790,23 @@ export class RegisterPharmacy {
       urlUbicacion: enlace,
       ...(punto === null || yaUbicada ? {} : { gps: { lat: punto.latitude, lng: punto.longitude } }),
     });
+  }
+
+  /**
+   * Al salir del campo del enlace: si trae el punto escrito (Google Maps,
+   * OpenStreetMap) y la sucursal no tiene un pin puesto a mano, el pin sale
+   * de ahí, igual que en la carga en lote. Al salir y no en cada tecla: a
+   * medio escribir «…q=-17.748,-6» ya es un punto legible —en medio del
+   * Atlántico—, y aparecer el pin mientras se escribe le quitaba el foco al
+   * campo y se comía el resto del enlace.
+   */
+  ubicarSucursalPorEnlace(id: string): void {
+    const actual = this.sucursales().find((sucursal) => sucursal.id === id);
+    if (actual === undefined) return;
+    const punto = coordinatesFromMapUrl(actual.urlUbicacion);
+    if (punto === null || (actual.gps !== null && !this.pinesDelEnlace.has(id))) return;
+    this.pinesDelEnlace.add(id);
+    this.actualizarSucursal(id, { gps: { lat: punto.latitude, lng: punto.longitude } });
   }
 
   /* --- carga en lote ------------------------------------------------------ */
@@ -850,6 +878,8 @@ export class RegisterPharmacy {
   });
 
   fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
+    // Un punto confirmado (o quitado) en el mapa manda sobre el enlace.
+    this.pinesDelEnlace.delete(id);
     this.actualizarSucursal(id, { gps });
   }
 

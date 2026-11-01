@@ -7,8 +7,17 @@
 }
 
 .verificacion__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-h3);
+}
+
+.verificacion__titulo app-nav-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--brand-primary);
 }
 
 .verificacion__estado {

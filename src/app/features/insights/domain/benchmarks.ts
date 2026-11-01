@@ -180,8 +180,8 @@ export function judge(
   }
   const ratio = def.goodWhen === 'up' ? kpi.value / reference.value : reference.value / kpi.value;
   const status = statusFromRatio(ratio);
-  const where = target ? 'el objetivo' : 'el benchmark';
-  return { status, reason: `${(ratio * 100).toFixed(0)} % de ${where} (${reference.note})` };
+  const where = target ? 'del objetivo' : 'del benchmark';
+  return { status, reason: `${(ratio * 100).toFixed(0)} % ${where} (${reference.note})` };
 }
 
 function judgePacing(kpi: KpiValue, filter: InsightsFilter): { status: HealthStatus; reason: string } {

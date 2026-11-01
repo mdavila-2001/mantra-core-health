@@ -1,0 +1,77 @@
+<div class="obs-tab" data-testid="obs-tab-sql">
+  <section class="obs-seccion" aria-labelledby="obs-sqlt-t">
+    <h2 class="obs-seccion__titulo" id="obs-sqlt-t">¿Sube el tiempo de base de datos?</h2>
+    <app-view-state-host [state]="tiempo.state()" (retry)="cargar()" (refresh)="cargar()">
+      @if (specTiempo(); as spec) {
+        <app-chart-panel [spec]="spec" [plano]="true" [refrescando]="tiempo.refrescando()" />
+      }
+    </app-view-state-host>
+  </section>
+
+  <section class="obs-seccion" aria-labelledby="obs-sqll-t">
+    <h2 class="obs-seccion__titulo" id="obs-sqll-t">¿Qué consulta pesa?</h2>
+    <p class="obs-seccion__sub">Sentencias normalizadas (sin valores), por su huella. Seleccione una fila para ver quién la dispara.</p>
+    <app-data-table
+      [state]="filas()"
+      [columns]="columnas"
+      [trackBy]="porId"
+      [rowLabel]="nombreDeFila"
+      [sort]="ordenActual()"
+      [rowNavigable]="true"
+      stackedOnMobile
+      fitContainer
+      caption="Consultas SQL por coste"
+      data-testid="obs-sql-tabla"
+      (sortChanged)="ordenar($event)"
+      (rowActivated)="abrir($event)"
+      (retry)="cargar()"
+      (refresh)="cargar()"
+    />
+  </section>
+
+  @if (elegida() !== '') {
+    <section class="obs-seccion" aria-labelledby="obs-sqld-t" data-testid="obs-sql-detalle">
+      <div class="obs-barra">
+        <h2 class="obs-seccion__titulo" id="obs-sqld-t">Detalle de la consulta {{ elegida() }}</h2>
+        <button app-button type="button" variant="ghost" size="sm" (clicked)="cerrar()">Cerrar detalle</button>
+      </div>
+      <app-view-state-host [state]="detalle.state()" (retry)="cargar()" (refresh)="cargar()">
+        @if (datos(); as d) {
+          @if (d.normalizedSql) {
+            <pre class="obs-sql" data-testid="obs-sql-texto">{{ d.normalizedSql }}</pre>
+            <div><button type="button" class="obs-copiar" (click)="copiar(d.normalizedSql)">Copiar SQL</button></div>
+          } @else {
+            <p class="obs-nota">La API no guardó el texto de esta sentencia.</p>
+          }
+          <dl class="obs-dl">
+            <dt>Clase</dt><dd>{{ d.statementClass }}</dd>
+            <dt>Tabla principal</dt><dd>{{ d.primaryTable ?? 'Sin dato' }}</dd>
+            <dt>Ejecuciones</dt><dd>{{ entero(d.executions) }} · {{ entero(d.slowCount) }} lentas · {{ entero(d.failedCount) }} fallidas</dd>
+            <dt>Tiempo total</dt><dd>{{ duracion(d.totalMs) }}</dd>
+            <dt>Latencia</dt><dd>p50 {{ p(d.latencyMs.p50) }} · p95 {{ p(d.latencyMs.p95) }} · p99 {{ p(d.latencyMs.p99) }} · máx. {{ duracion(d.latencyMs.max) }}</dd>
+            <dt>Vista por primera vez</dt><dd>{{ fecha(d.firstSeenAt) }}</dd>
+            <dt>Última vez</dt><dd>{{ fecha(d.lastSeenAt) }}</dd>
+          </dl>
+          <h3 class="obs-seccion__titulo">Quién la dispara</h3>
+          @if (d.operations.length === 0) {
+            <p class="obs-nota">Ninguna operación la ejecutó en la ventana.</p>
+          } @else {
+            <ul class="obs-lista">
+              @for (o of d.operations; track o.operationKey) {
+                <li><code class="obs-mono">{{ o.operationKey }}</code> · {{ o.moduleCode }} · {{ entero(o.executions) }} ejecuciones · {{ duracion(o.totalMs) }}</li>
+              }
+            </ul>
+          }
+          @if (d.slowSamples.length > 0) {
+            <h3 class="obs-seccion__titulo">Peticiones lentas que la ejecutaron</h3>
+            <ul class="obs-lista">
+              @for (s of d.slowSamples; track s.requestId) {
+                <li>{{ fecha(s.occurredAt) }} · {{ s.httpStatus }} · {{ duracion(s.durationMs) }} · <code class="obs-mono">{{ s.requestId }}</code></li>
+              }
+            </ul>
+          }
+        }
+      </app-view-state-host>
+    </section>
+  }
+</div>

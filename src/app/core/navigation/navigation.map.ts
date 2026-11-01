@@ -535,10 +535,65 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Intervenciones',
     group: 'Atención',
     icon: 'scalpel',
-    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN'],
+    // F4 (`CONTRATO-F2-F5.md` §F4.3): Facturación y la administración leen la
+    // agenda de quirófanos y la utilización. La API decide cada acción.
+    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN', 'BILLING', 'SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Mire las intervenciones programadas y confirme su participación.',
     module: 'M53 procedures_perioperative',
+  },
+  /* Internación (F2/F3, 31/10/2026). El permiso real no es un rol del token:
+     es una asignación operativa (enfermería, admisión, limpieza, mantenimiento)
+     que resuelve la API en `/practice/infrastructure-access/me`; por eso las
+     secciones existen sólo en un hospital y cada pantalla muestra S5 si la API
+     no le da a la persona la acción. La autoridad es la API. */
+  {
+    path: 'inpatient/bed-board',
+    label: 'Tablero de camas',
+    group: 'Atención',
+    icon: 'hospital',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    onlyForTenantTypes: ['HOSPITAL'],
+    availability: 'disponible',
+    summary: 'Mire el estado de cada cama por unidad, bloquéela, pídala limpiar o ingrese a un paciente.',
+    module: 'M14 practice · M08 clinical',
+  },
+  {
+    path: 'inpatient/cleaning',
+    label: 'Cola de limpieza',
+    group: 'Atención',
+    icon: 'shield',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    onlyForTenantTypes: ['HOSPITAL'],
+    availability: 'disponible',
+    summary: 'Tome, termine e inspeccione las limpiezas pendientes de camas y salas.',
+    module: 'M14 practice',
+  },
+  {
+    path: 'inpatient/census',
+    label: 'Censo diario',
+    group: 'Atención',
+    icon: 'clipboard',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    onlyForTenantTypes: ['HOSPITAL'],
+    availability: 'disponible',
+    summary: 'Revise y cierre el censo de camas del día; corrija con ajustes que conservan el original.',
+    module: 'M08 clinical',
+  },
+  {
+    path: 'inpatient/indicators',
+    label: 'Indicadores de internación',
+    group: 'Atención',
+    icon: 'chart',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    onlyForTenantTypes: ['HOSPITAL'],
+    availability: 'disponible',
+    summary: 'Ocupación, estancia media, giro y rotación de cama con las fórmulas de la OPS.',
+    module: 'M08 clinical',
   },
   {
     // Carril 17. La bandeja de visitas de laboratorio del doctor.
@@ -1115,7 +1170,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Catálogo de servicios',
     group: 'Administración',
     icon: 'tag',
-    roles: ['SECURITY_ADMIN'],
+    // F5e: Facturación carga las tarifas de espacios y revisa el día-cama.
+    roles: ['SECURITY_ADMIN', 'BILLING'],
     availability: 'disponible',
     summary: 'Mantenga la lista fija de servicios sobre la que se arman los presupuestos.',
     module: 'M17 billing',
@@ -1213,9 +1269,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Facturación',
     group: 'Facturación',
     icon: 'billing',
-    roles: ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN'],
+    // El médico entra para cobrar y facturar SUS consultas: la API
+    // (`billing-simulated.access.ts`) le acota los cobros y le niega anular,
+    // revertir, el correo y la bandeja.
+    roles: ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN', 'PRACTITIONER', 'CLINICIAN'],
     // FACT-SIAT-MOCK: la pantalla existe; lo fiscal va contra el SIAT SIMULADO
-    // y, sin `billingSiatDemo`, dice que la facturación no está conectada.
+    // y, sin `billingSimulatedApi` ni `billingSiatDemo`, dice que la
+    // facturación no está conectada.
     availability: 'disponible',
     summary: 'Emita comprobantes y siga los cobros de la organización.',
     module: 'M26 billing · M42 payments',

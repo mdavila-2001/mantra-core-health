@@ -1,0 +1,19 @@
+
+Running 14 tests using 1 worker
+
+  ok  1 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:98:9 › la médica cotiza el cobro · tema claro › REQ-16-026 · el reparto del cobro aparece en el bloque Pagos de la consulta (2.5s)
+  ok  2 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:104:9 › la médica cotiza el cobro · tema claro › REQ-16-024 · sin la aprobación previa, el envío queda deshabilitado y la alerta lo explica (1.4s)
+  ok  3 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:113:9 › la médica cotiza el cobro · tema claro › REQ-16-026 · con la aprobación, el reparto es el del servidor y el envío se habilita (497ms)
+  ok  4 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema claro › REQ-16-035 · el reparto se lee sin desborde en 375 px, tema claro (322ms)
+  ok  5 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema claro › REQ-16-035 · el reparto se lee sin desborde en 768 px, tema claro (309ms)
+  ok  6 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema claro › REQ-16-035 · el reparto se lee sin desborde en 1280 px, tema claro (477ms)
+  ok  7 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:134:9 › la médica cotiza el cobro · tema claro › la pantalla no lanza errores de ejecución durante el recorrido (2ms)
+  ok  8 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:98:9 › la médica cotiza el cobro · tema oscuro › REQ-16-026 · el reparto del cobro aparece en el bloque Pagos de la consulta (2.5s)
+  ok  9 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:104:9 › la médica cotiza el cobro · tema oscuro › REQ-16-024 · sin la aprobación previa, el envío queda deshabilitado y la alerta lo explica (1.0s)
+  ok 10 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:113:9 › la médica cotiza el cobro · tema oscuro › REQ-16-026 · con la aprobación, el reparto es el del servidor y el envío se habilita (495ms)
+  ok 11 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema oscuro › REQ-16-035 · el reparto se lee sin desborde en 375 px, tema oscuro (329ms)
+  ok 12 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema oscuro › REQ-16-035 · el reparto se lee sin desborde en 768 px, tema oscuro (1.5s)
+  ok 13 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema oscuro › REQ-16-035 · el reparto se lee sin desborde en 1280 px, tema oscuro (462ms)
+  ok 14 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:134:9 › la médica cotiza el cobro · tema oscuro › la pantalla no lanza errores de ejecución durante el recorrido (2ms)
+
+  14 passed (22.3s)

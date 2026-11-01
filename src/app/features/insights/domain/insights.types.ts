@@ -290,6 +290,7 @@ export interface TraceSource {
 }
 
 export type InsightModuleId =
+  | 'home'
   | 'campaigns'
   | 'funnel'
   | 'app'

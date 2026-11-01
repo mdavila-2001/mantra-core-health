@@ -1,0 +1,35 @@
+<app-ins-panel title="Explorador de comentarios" question="¿Qué dice la gente, exactamente? El sentimiento es una estimación: por debajo de 80 % de confianza pide revisión humana.">
+  <div class="cx__filters" role="search">
+    <label><span>Sentimiento</span>
+      <select [value]="sentiment()" (change)="setSentiment($event)"><option value="all">Todos</option>@for (t of tones; track t) { <option [value]="t">{{ sentimentLabels[t] }}</option> }</select></label>
+    <label><span>Tipo</span>
+      <select [value]="kind()" (change)="setKind($event)"><option value="all">Todos</option>@for (k of kinds; track k) { <option [value]="k">{{ kindLabels[k] }}</option> }</select></label>
+    <label><span>Departamento</span>
+      <select [value]="department()" (change)="setDepartment($event)"><option value="all">Todos</option>@for (d of departments; track d.id) { <option [value]="d.id">{{ d.label }}</option> }</select></label>
+    <label class="cx__q"><span>Buscar en el texto</span><input type="search" [value]="query()" (input)="search($event)" placeholder="Una palabra o frase" /></label>
+    <button type="button" class="cx__btn" (click)="reset()">Quitar filtros</button>
+  </div>
+
+  <p class="cx__count">{{ int(rows().length) }} comentarios · {{ int(review()) }} piden revisión humana</p>
+
+  @if (rows().length === 0) {
+    <p class="cx__none">Ningún comentario coincide con estos filtros. Quítelos para ver más.</p>
+  } @else {
+    <ul class="cx__list">
+      @for (r of visible(); track r.mention.id) {
+        <li class="cx__item">
+          <div class="cx__head">
+            <span class="cx__tone cx__tone--{{ r.mention.sentiment }}"><span aria-hidden="true">{{ r.mention.sentiment === 'negative' ? '▲' : r.mention.sentiment === 'positive' ? '●' : '◆' }}</span> {{ sentimentLabels[r.mention.sentiment] }}</span>
+            <span class="cx__kind">{{ kindLabels[r.mention.kind] }}</span>
+            <span class="cx__meta">{{ sourceNames[r.mention.source] }} · {{ deptName(r.mention.department) }} · {{ day(r.mention.date) }} · alcance {{ int(r.mention.reach) }}</span>
+          </div>
+          <p class="cx__text">«{{ r.mention.text }}»</p>
+          <p class="cx__conf">Confianza de la clasificación {{ (r.confidence * 100).toFixed(0) }} %@if (r.needsReview) { · <strong class="cx__review">Revisión humana</strong> }</p>
+        </li>
+      }
+    </ul>
+    @if (rows().length > visible().length) {
+      <button type="button" class="cx__btn" (click)="more()">Mostrar más ({{ int(rows().length - visible().length) }} restantes)</button>
+    }
+  }
+</app-ins-panel>

@@ -1,0 +1,30 @@
+<div class="catalogo" data-testid="catalog-accounting">
+  <app-alert tone="warning" title="Este catálogo todavía no existe en la API" data-testid="catalog-accounting-unavailable">
+    No hay un «reporte contable por tipo de usuario» que se pueda editar, y esta pantalla no simula uno: lo que viera acá no vendría de la API.
+  </app-alert>
+
+  <section aria-labelledby="catalogo-contable-que-hay">
+    <h3 id="catalogo-contable-que-hay" class="catalogo__subtitulo">Qué hay hoy</h3>
+    <ul class="catalogo__lista">
+      <li>
+        El <strong>plan de cuentas</strong> de cada práctica, que alimenta el balance, el estado de resultados y el mayor. Se consulta en
+        Contabilidad; no es un catálogo por tipo de usuario.
+      </li>
+      <li>
+        Cambiar el tipo o el saldo normal de una cuenta que ya tiene asientos altera el libro: eso no se hace desde un editor de catálogo.
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="catalogo-contable-que-falta">
+    <h3 id="catalogo-contable-que-falta" class="catalogo__subtitulo">Qué hay que decidir antes de construirlo</h3>
+    <ul class="catalogo__lista">
+      <li>Qué es el «reporte contable» editable: ¿una plantilla de plan de cuentas por tipo de organización, o la estructura de los reportes?</li>
+      <li>Si es una plantilla, hace falta su tabla en el modelo y un estado «inactiva» para las cuentas, que hoy no existe.</li>
+    </ul>
+    <p class="catalogo__ayuda">
+      Es una decisión de negocio, no un trabajo técnico pendiente: la persona responsable del producto debe confirmarla. El detalle está en el
+      contrato H3, sección 4.
+    </p>
+  </section>
+</div>

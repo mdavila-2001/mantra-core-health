@@ -5,8 +5,16 @@
     <app-select ariaLabel="Fuente de las menciones" [value]="source()" [options]="sourceOptions" (valueChange)="setSource($event ?? 'all')" />
   </div>
 
+  <app-segmented-control ariaLabel="Secciones de opinión pública" [options]="tabOptions" [value]="tab()" (valueChange)="setTab($event)" />
+
   <app-view-state-host [state]="state()">
-    @if (loaded()) {
+    @if (loaded() && tab() === 'comments') {
+      <app-ins-comments [filter]="filter()" />
+    } @else if (loaded() && tab() === 'environment') {
+      <app-ins-environment />
+    } @else if (loaded() && tab() === 'ideas') {
+      <app-ins-ideas [filter]="filter()" />
+    } @else if (loaded()) {
       <div class="op__stack">
         <section class="op__tiles" aria-label="Indicadores de opinión">
           @for (t of tiles(); track t.label) {

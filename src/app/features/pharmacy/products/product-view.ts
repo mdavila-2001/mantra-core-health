@@ -2,6 +2,7 @@ import type {
   PharmacyProduct,
   PharmacyProductStatus,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
+import type { SortAccessors } from '../catalog/catalog-sort';
 
 /** El nombre con que se lee un producto: marca, y si no, genérico, y si no, el código. */
 export function productName(product: PharmacyProduct): string {
@@ -40,3 +41,24 @@ export function isLowStock(product: PharmacyProduct): boolean {
   if (stock === undefined || stock === null) return false;
   return stock > 0 && stock <= (minimum ?? DEFAULT_MIN_STOCK);
 }
+
+/** Los números de un texto de precio, o `null` sin precio. */
+function priceNumber(product: PharmacyProduct): number | null {
+  return product.unitPrice ? Number(product.unitPrice) : null;
+}
+
+/**
+ * Qué ordena cada columna de las tablas del catálogo (`catalog-sort.ts`). El
+ * estado ordena por su rótulo, como se lee; la receta pone primero «Sí».
+ */
+export const PRODUCT_SORT_ACCESSORS: SortAccessors<PharmacyProduct> = {
+  name: productName,
+  code: (product) => product.productCode,
+  category: (product) => product.category,
+  price: priceNumber,
+  current: priceNumber,
+  stock: (product) => product.stock,
+  status: (product) => PRODUCT_STATUS_LABEL[productStatus(product)],
+  prescription: (product) =>
+    product.requiresPrescription === null ? null : product.requiresPrescription ? 0 : 1,
+};

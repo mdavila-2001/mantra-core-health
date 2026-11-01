@@ -374,6 +374,7 @@ function filtrosDeCola(filtros: LabWorkOrderQuery): HttpParams {
     'laboratoryAccessionId',
     'statusConceptId',
     'assignedProfileId',
+    'collectionCareSpaceId',
   ] as const) {
     const valor = filtros[clave];
     if (valor !== undefined && valor !== '') {

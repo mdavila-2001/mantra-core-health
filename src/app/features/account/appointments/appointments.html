@@ -236,6 +236,16 @@
                   </p>
                 }
                 <div class="turnos__acciones">
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    data-testid="mis-citas-ver-pago"
+                    (clicked)="alternarSesion(turno.id)"
+                  >
+                    {{ seleccionado() === turno.id ? 'Cerrar sesión' : 'Abrir sesión y ver pago' }}
+                  </button>
                   @if (esCancelable(turno)) {
                     <button
                       app-button
@@ -248,6 +258,9 @@
                     </button>
                   }
                 </div>
+                @if (seleccionado() === turno.id) {
+                  <app-session-payment [bookingId]="turno.id" />
+                }
                 <app-booking-payment-receipts [bookingId]="turno.id" [statusCode]="turno.codigo" [knownPaymentState]="turno.payment" />
               </article>
             }
@@ -341,6 +354,21 @@
                         }
                         @if (turno.motivo !== '') {
                           <p class="turnos__motivo">{{ turno.motivo }}</p>
+                        }
+                        <div class="turnos__acciones">
+                          <button
+                            app-button
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            data-testid="mis-citas-ver-pago"
+                            (clicked)="alternarSesion(turno.id)"
+                          >
+                            {{ seleccionado() === turno.id ? 'Cerrar sesión' : 'Abrir sesión y ver pago' }}
+                          </button>
+                        </div>
+                        @if (seleccionado() === turno.id) {
+                          <app-session-payment [bookingId]="turno.id" />
                         }
                         @if (turno.avisoDelCambio !== '') {
                           <!-- El motivo del último cambio (corrección #14): antes la cita

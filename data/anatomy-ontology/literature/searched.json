@@ -1,0 +1,6574 @@
+{
+ "tool": "tools/anatomy-atlas-3d/fetch_literature.py",
+ "retrievedAt": "2026-10-24",
+ "services": [
+  "PubMed E-utilities (esearch/efetch)",
+  "Europe PMC REST (search, resultType=core)"
+ ],
+ "notUsed": {
+  "OpenAlex": "HTTP 429: cupo diario agotado en la IP compartida (network-probe-4.txt)"
+ },
+ "criterion": "fichas con pieza 3D o con entrada de Netter cruzada",
+ "structures": [
+  {
+   "id": "BP3D:BP24",
+   "query": "costal cartilage",
+   "articlesFound": 7
+  },
+  {
+   "id": "BP3D:BP28",
+   "query": "costal cartilage",
+   "articlesFound": 7
+  },
+  {
+   "id": "BP3D:BP44",
+   "query": "humeral head of extensor carpi ulnaris",
+   "articlesFound": 0
+  },
+  {
+   "id": "BP3D:BP45",
+   "query": "humeral head of extensor carpi ulnaris",
+   "articlesFound": 0
+  },
+  {
+   "id": "BP3D:BP46",
+   "query": "ulnar head of extensor carpi ulnaris",
+   "articlesFound": 0
+  },
+  {
+   "id": "BP3D:BP47",
+   "query": "ulnar head of extensor carpi ulnaris",
+   "articlesFound": 0
+  },
+  {
+   "id": "BP3D:BP49",
+   "query": "superior parietal lobule precuneus",
+   "articlesFound": 5
+  },
+  {
+   "id": "BP3D:BP50",
+   "query": "superior parietal lobule precuneus",
+   "articlesFound": 5
+  },
+  {
+   "id": "BP3D:BP51",
+   "query": "orbital gyri straight gyrus",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:10458",
+   "query": "Intervertebral disk of first thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:11336",
+   "query": "Linea alba",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:13381",
+   "query": "rhomboid major",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:13382",
+   "query": "rhomboid major",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:13383",
+   "query": "rhomboid minor",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:13384",
+   "query": "rhomboid minor",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:13495",
+   "query": "Intervertebral disk of second thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13500",
+   "query": "Intervertebral disk of third thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13501",
+   "query": "Intervertebral disk of fourth thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13502",
+   "query": "Intervertebral disk of fifth thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13503",
+   "query": "Intervertebral disk of sixth thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13504",
+   "query": "Intervertebral disk of seventh thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13505",
+   "query": "Intervertebral disk of eighth thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13506",
+   "query": "Intervertebral disk of ninth thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13507",
+   "query": "Intervertebral disk of tenth thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13508",
+   "query": "Intervertebral disk of eleventh thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:13509",
+   "query": "Intervertebral disk of twelfth thoracic vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:16033",
+   "query": "Intervertebral disk of first lumbar vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:16034",
+   "query": "Intervertebral disk of second lumbar vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:16035",
+   "query": "Intervertebral disk of third lumbar vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:16036",
+   "query": "Intervertebral disk of fourth lumbar vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:16037",
+   "query": "Intervertebral disk of fifth lumbar vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:22546",
+   "query": "extensor hallucis longus",
+   "articlesFound": 8
+  },
+  {
+   "id": "FMA:22547",
+   "query": "extensor hallucis longus",
+   "articlesFound": 8
+  },
+  {
+   "id": "FMA:22878",
+   "query": "multifidus",
+   "articlesFound": 8
+  },
+  {
+   "id": "FMA:22879",
+   "query": "multifidus",
+   "articlesFound": 8
+  },
+  {
+   "id": "FMA:23083",
+   "query": "Thoracic rotator",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:23089",
+   "query": "lumbar rotator",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:23090",
+   "query": "lumbar rotator",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:23707",
+   "query": "Interosseous membrane of forearm",
+   "articlesFound": 3
+  },
+  {
+   "id": "FMA:23708",
+   "query": "Interosseous membrane of forearm",
+   "articlesFound": 3
+  },
+  {
+   "id": "FMA:258850",
+   "query": "intermediate tendon",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:264840",
+   "query": "intermediate tendon",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:32534",
+   "query": "obliquus capitis superior",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:32535",
+   "query": "obliquus capitis superior",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:32536",
+   "query": "obliquus capitis inferior",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:32537",
+   "query": "obliquus capitis inferior",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:33581",
+   "query": "Ascending part of trapezius",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:33583",
+   "query": "Ascending part of trapezius",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:33584",
+   "query": "Transverse part of trapezius",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:33585",
+   "query": "Transverse part of trapezius",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:33586",
+   "query": "Descending part of trapezius",
+   "articlesFound": 2
+  },
+  {
+   "id": "FMA:33587",
+   "query": "Descending part of trapezius",
+   "articlesFound": 2
+  },
+  {
+   "id": "FMA:34680",
+   "query": "Clavicular part of deltoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:34681",
+   "query": "Clavicular part of deltoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:34682",
+   "query": "Acromial part of deltoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:34683",
+   "query": "Acromial part of deltoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:34684",
+   "query": "Spinal part of deltoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:34685",
+   "query": "Spinal part of deltoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:34690",
+   "query": "Clavicular part of pectoralis major",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:34691",
+   "query": "Clavicular part of pectoralis major",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:35192",
+   "query": "Interosseous membrane of leg",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:35193",
+   "query": "Interosseous membrane of leg",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37390",
+   "query": "opponens pollicis",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:37391",
+   "query": "opponens pollicis",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:37463",
+   "query": "Abductor digiti minimi of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37464",
+   "query": "Abductor digiti minimi of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37465",
+   "query": "flexor accessorius",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:37466",
+   "query": "flexor accessorius",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:37471",
+   "query": "Flexor digiti minimi brevis of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37472",
+   "query": "Flexor digiti minimi brevis of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37483",
+   "query": "Fourth lumbrical of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37484",
+   "query": "Fourth lumbrical of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37485",
+   "query": "Third lumbrical of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37486",
+   "query": "Third lumbrical of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37695",
+   "query": "Medial head of triceps brachii",
+   "articlesFound": 3
+  },
+  {
+   "id": "FMA:37696",
+   "query": "Medial head of triceps brachii",
+   "articlesFound": 3
+  },
+  {
+   "id": "FMA:37697",
+   "query": "Lateral head of triceps brachii",
+   "articlesFound": 2
+  },
+  {
+   "id": "FMA:37698",
+   "query": "Lateral head of triceps brachii",
+   "articlesFound": 2
+  },
+  {
+   "id": "FMA:37699",
+   "query": "Long head of triceps brachii",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:37700",
+   "query": "Long head of triceps brachii",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:37717",
+   "query": "First lumbrical of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37718",
+   "query": "First lumbrical of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37719",
+   "query": "Second lumbrical of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37720",
+   "query": "Second lumbrical of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37741",
+   "query": "Third plantar interosseous of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37742",
+   "query": "Third plantar interosseous of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37743",
+   "query": "Second plantar interosseous of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37744",
+   "query": "Second plantar interosseous of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37745",
+   "query": "First plantar interosseous of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:37746",
+   "query": "First plantar interosseous of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:3802",
+   "query": "Trunk of coronary artery",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:3840",
+   "query": "Posterior interventricular branch of coronary artery",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:38454",
+   "query": "pronator quadratus",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:38455",
+   "query": "pronator quadratus",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:38525",
+   "query": "extensor indicis",
+   "articlesFound": 8
+  },
+  {
+   "id": "FMA:38526",
+   "query": "extensor indicis",
+   "articlesFound": 8
+  },
+  {
+   "id": "FMA:38560",
+   "query": "Humeral head of pronator teres",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:38561",
+   "query": "Humeral head of pronator teres",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:38562",
+   "query": "Ulnar head of pronator teres",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:38563",
+   "query": "Ulnar head of pronator teres",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:38617",
+   "query": "Humeral head of flexor carpi ulnaris",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:38618",
+   "query": "Humeral head of flexor carpi ulnaris",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:38619",
+   "query": "Ulnar head of flexor carpi ulnaris",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:38620",
+   "query": "Ulnar head of flexor carpi ulnaris",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:38638",
+   "query": "Humeroulnar head of flexor digitorum superficialis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:38639",
+   "query": "Humeroulnar head of flexor digitorum superficialis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:38640",
+   "query": "Radial head of flexor digitorum superficialis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:38641",
+   "query": "Radial head of flexor digitorum superficialis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:40120",
+   "query": "Flexor retinaculum of wrist",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:40121",
+   "query": "Flexor retinaculum of wrist",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:42398",
+   "query": "Set of lumbricals of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:42399",
+   "query": "Set of lumbricals of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:42402",
+   "query": "Set of palmar interossei of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:42403",
+   "query": "Set of palmar interossei of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:42404",
+   "query": "Set of dorsal interossei of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:42405",
+   "query": "Set of dorsal interossei of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:43886",
+   "query": "adductor minimus",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:43887",
+   "query": "adductor minimus",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:44249",
+   "query": "long plantar ligament",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:44250",
+   "query": "long plantar ligament",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:45874",
+   "query": "Abdominal part of pectoralis major",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:45875",
+   "query": "Abdominal part of pectoralis major",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:45888",
+   "query": "Long head of biceps femoris",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:45889",
+   "query": "Long head of biceps femoris",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:45891",
+   "query": "Short head of biceps femoris",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:45892",
+   "query": "Short head of biceps femoris",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:45971",
+   "query": "Medial head of flexor hallucis brevis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:45972",
+   "query": "Medial head of flexor hallucis brevis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:45973",
+   "query": "Lateral head of flexor hallucis brevis",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:45974",
+   "query": "Lateral head of flexor hallucis brevis",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:46018",
+   "query": "Oblique head of adductor hallucis",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:46019",
+   "query": "Oblique head of adductor hallucis",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:46020",
+   "query": "Transverse head of adductor hallucis",
+   "articlesFound": 3
+  },
+  {
+   "id": "FMA:46021",
+   "query": "Transverse head of adductor hallucis",
+   "articlesFound": 3
+  },
+  {
+   "id": "FMA:46110",
+   "query": "Deep head of flexor pollicis brevis",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:46111",
+   "query": "Deep head of flexor pollicis brevis",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:46121",
+   "query": "Oblique head of adductor pollicis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46122",
+   "query": "Oblique head of adductor pollicis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46123",
+   "query": "Transverse head of adductor pollicis",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:46124",
+   "query": "Transverse head of adductor pollicis",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:46283",
+   "query": "Superior oblique part of longus colli",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46284",
+   "query": "Superior oblique part of longus colli",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46285",
+   "query": "Vertical intermediate part of longus colli",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46286",
+   "query": "Vertical intermediate part of longus colli",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46287",
+   "query": "Inferior oblique part of longus colli",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46288",
+   "query": "Inferior oblique part of longus colli",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46442",
+   "query": "Tendinous arch of levator ani",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:46763",
+   "query": "temporoparietalis",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:46764",
+   "query": "temporoparietalis",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:46782",
+   "query": "Orbital part of orbicularis oculi",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46783",
+   "query": "Orbital part of orbicularis oculi",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46785",
+   "query": "Palpebral part of orbicularis oculi",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46786",
+   "query": "Palpebral part of orbicularis oculi",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:46796",
+   "query": "corrugator supercilii",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:46797",
+   "query": "corrugator supercilii",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:4685",
+   "query": "Stem of coronary artery",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:49022",
+   "query": "Lower head of lateral pterygoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:49023",
+   "query": "Lower head of lateral pterygoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:49024",
+   "query": "Upper head of lateral pterygoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:49025",
+   "query": "Upper head of lateral pterygoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:51144",
+   "query": "extensor hallucis brevis",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:51145",
+   "query": "extensor hallucis brevis",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:55680",
+   "query": "upper lateral incisor tooth",
+   "articlesFound": 2
+  },
+  {
+   "id": "FMA:55681",
+   "query": "upper central incisor tooth",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:55682",
+   "query": "upper central incisor tooth",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:55683",
+   "query": "upper lateral incisor tooth",
+   "articlesFound": 2
+  },
+  {
+   "id": "FMA:55686",
+   "query": "lower canine tooth",
+   "articlesFound": 3
+  },
+  {
+   "id": "FMA:55687",
+   "query": "lower canine tooth",
+   "articlesFound": 3
+  },
+  {
+   "id": "FMA:55688",
+   "query": "second upper premolar tooth",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:55689",
+   "query": "first upper premolar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55690",
+   "query": "first upper premolar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55691",
+   "query": "second upper premolar tooth",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:55692",
+   "query": "second lower premolar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55693",
+   "query": "first lower premolar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55694",
+   "query": "first lower premolar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55695",
+   "query": "second lower premolar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55697",
+   "query": "second upper molar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55698",
+   "query": "first upper molar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55699",
+   "query": "first upper molar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55700",
+   "query": "second upper molar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55703",
+   "query": "second lower molar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55704",
+   "query": "first lower molar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55705",
+   "query": "first lower molar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55706",
+   "query": "second lower molar tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:55798",
+   "query": "upper canine tooth",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:55799",
+   "query": "upper canine tooth",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:57140",
+   "query": "lower lateral incisor tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:57141",
+   "query": "lower lateral incisor tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:57142",
+   "query": "lower central incisor tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:57143",
+   "query": "lower central incisor tooth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:58776",
+   "query": "iliotibial tract",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:58777",
+   "query": "iliotibial tract",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:59815",
+   "query": "Labial part of mouth",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:65198",
+   "query": "Superficial head of flexor pollicis brevis",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:65199",
+   "query": "Superficial head of flexor pollicis brevis",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:71307",
+   "query": "Set of interspinales lumborum",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71308",
+   "query": "Set of interspinales thoracis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71309",
+   "query": "Set of interspinales cervicis",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71442",
+   "query": "Set of anterior cervical intertransversarii",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71443",
+   "query": "Set of posterior cervical intertransversarii",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71444",
+   "query": "Set of lateral lumbar intertransversarius muscles",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71567",
+   "query": "Set of anterior cardiac veins",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71669",
+   "query": "Set of interventricular septal branches of coronary artery",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71670",
+   "query": "Set of interventricular septal branches of coronary artery",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:71704",
+   "query": "Set of nasal cartilages",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:7260",
+   "query": "Anterior papillary muscle of ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:7261",
+   "query": "Posterior papillary muscle of ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:7262",
+   "query": "Septal papillary muscle of ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:7266",
+   "query": "Posterior papillary muscle of ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:72701",
+   "query": "accessory short gyrus",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:72702",
+   "query": "accessory short gyrus",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:72800",
+   "query": "Anterior part of superior temporal gyrus",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:72801",
+   "query": "Anterior part of superior temporal gyrus",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:72804",
+   "query": "Posterior part of superior temporal gyrus",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:72805",
+   "query": "Posterior part of superior temporal gyrus",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:74075",
+   "query": "Set of levatores costarum longi",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:74076",
+   "query": "Set of levatores costarum longi",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:74077",
+   "query": "Set of levatores costarum breves",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:74078",
+   "query": "Set of levatores costarum breves",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:74140",
+   "query": "Set of dorsal interossei of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:74141",
+   "query": "Set of dorsal interossei of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:76751",
+   "query": "Set of posterior veins of ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:76775",
+   "query": "Set of medial lumbar intertransversarius muscles",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:76891",
+   "query": "Mesocolic taenia",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:76892",
+   "query": "Omental taenia",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:76893",
+   "query": "Free taenia",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:76994",
+   "query": "posterolateral branch of coronary artery",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:7875",
+   "query": "first costal cartilage",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:7886",
+   "query": "second costal cartilage",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:7913",
+   "query": "third costal cartilage",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:7976",
+   "query": "fourth costal cartilage",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:79979",
+   "query": "Sternocostal part of pectoralis major",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:79980",
+   "query": "Sternocostal part of pectoralis major",
+   "articlesFound": 1
+  },
+  {
+   "id": "FMA:8005",
+   "query": "first costal cartilage",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:8031",
+   "query": "second costal cartilage",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:8058",
+   "query": "third costal cartilage",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:8070",
+   "query": "fifth costal cartilage",
+   "articlesFound": 2
+  },
+  {
+   "id": "FMA:8112",
+   "query": "fifth costal cartilage",
+   "articlesFound": 2
+  },
+  {
+   "id": "FMA:8167",
+   "query": "fourth costal cartilage",
+   "articlesFound": 6
+  },
+  {
+   "id": "FMA:81752",
+   "query": "cervical rotator",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:81753",
+   "query": "cervical rotator",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:8194",
+   "query": "sixth costal cartilage",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:8221",
+   "query": "sixth costal cartilage",
+   "articlesFound": 4
+  },
+  {
+   "id": "FMA:8248",
+   "query": "seventh costal cartilage",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:8275",
+   "query": "seventh costal cartilage",
+   "articlesFound": 5
+  },
+  {
+   "id": "FMA:83740",
+   "query": "Interpeduncular fossa",
+   "articlesFound": 7
+  },
+  {
+   "id": "FMA:86034",
+   "query": "Opponens digiti minimi of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "FMA:86035",
+   "query": "Opponens digiti minimi of foot",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0000002",
+   "query": "uterine cervix",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000007",
+   "query": "pituitary gland",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000019",
+   "query": "camera-type eye",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0000051",
+   "query": "fornix of vagina",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0000052",
+   "query": "fornix of brain",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0000053",
+   "query": "macula lutea",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0000056",
+   "query": "ureter",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000057",
+   "query": "urethra",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0000130",
+   "query": "transverse foramen",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000144",
+   "query": "trochlea of humerus",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0000159",
+   "query": "anal canal",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000160",
+   "query": "intestine",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000167",
+   "query": "oral cavity",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000209",
+   "query": "tetrapod frontal bone",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0000210",
+   "query": "tetrapod parietal bone",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0000303",
+   "query": "adductor longus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0000315",
+   "query": "subarachnoid space",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000320",
+   "query": "duodenal mucosa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000325",
+   "query": "gastric gland",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000333",
+   "query": "intestinal gland",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0000348",
+   "query": "ophthalmic nerve",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0000368",
+   "query": "adductor brevis",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0000370",
+   "query": "adductor magnus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000372",
+   "query": "extensor digitorum brevis pes",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0000378",
+   "query": "tongue muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000387",
+   "query": "meniscus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000388",
+   "query": "epiglottis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000389",
+   "query": "lens cortex",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000390",
+   "query": "lens nucleus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000391",
+   "query": "leptomeninx",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0000401",
+   "query": "mandibular ramus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000473",
+   "query": "testis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000642",
+   "query": "suspensory ligament of duodenum",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0000711",
+   "query": "splenius capitis",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0000908",
+   "query": "hippocampal commissure",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0000935",
+   "query": "anterior commissure",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000936",
+   "query": "posterior commissure",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0000941",
+   "query": "cranial nerve II",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0000942",
+   "query": "frontal nerve",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0000945",
+   "query": "stomach",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000946",
+   "query": "cardiac valve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000947",
+   "query": "aorta",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000948",
+   "query": "heart",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000950",
+   "query": "gracilis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000955",
+   "query": "brain",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000959",
+   "query": "optic chiasma",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0000962",
+   "query": "nerve of cervical vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0000964",
+   "query": "cornea",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0000966",
+   "query": "retina",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000975",
+   "query": "sternum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000976",
+   "query": "humerus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000977",
+   "query": "pleura",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000979",
+   "query": "tibia",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000981",
+   "query": "femur",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000985",
+   "query": "axillary vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000988",
+   "query": "pons",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000992",
+   "query": "ovary",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000995",
+   "query": "uterus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000996",
+   "query": "vagina",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0000998",
+   "query": "seminal vesicle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001000",
+   "query": "vas deferens",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001043",
+   "query": "esophagus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001051",
+   "query": "hypopharynx",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001052",
+   "query": "rectum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001063",
+   "query": "flocculus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001069",
+   "query": "head of pancreas",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001072",
+   "query": "inferior vena cava",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001075",
+   "query": "bony vertebral centrum",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001092",
+   "query": "vertebral bone 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001093",
+   "query": "vertebral bone 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001097",
+   "query": "axillary lymph node",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001100",
+   "query": "pectoralis minor",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001103",
+   "query": "diaphragm",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001105",
+   "query": "clavicle bone",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001106",
+   "query": "cephalic vein",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001107",
+   "query": "sternohyoid muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001108",
+   "query": "omohyoid muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001109",
+   "query": "sternothyroid muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001110",
+   "query": "thyrohyoid muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001112",
+   "query": "latissimus dorsi muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001113",
+   "query": "lobe of liver",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001116",
+   "query": "quadrate lobe of liver",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001117",
+   "query": "caudate lobe of liver",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001122",
+   "query": "scalenus medius",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001123",
+   "query": "scalenus posterior",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0001125",
+   "query": "serratus ventralis",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0001126",
+   "query": "serratus dorsalis superior muscle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001127",
+   "query": "serratus dorsalis inferior muscle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001128",
+   "query": "sternocleidomastoid",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001129",
+   "query": "subscapularis muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001132",
+   "query": "parathyroid gland",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001138",
+   "query": "superior mesenteric vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001139",
+   "query": "common iliac vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001141",
+   "query": "renal vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001142",
+   "query": "renal vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001143",
+   "query": "hepatic vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001148",
+   "query": "median nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001149",
+   "query": "bare area of liver",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0001150",
+   "query": "body of pancreas",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001152",
+   "query": "cystic duct",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001153",
+   "query": "caecum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001154",
+   "query": "vermiform appendix",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001155",
+   "query": "colon",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001160",
+   "query": "fundus of stomach",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001161",
+   "query": "body of stomach",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001162",
+   "query": "cardia of stomach",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001163",
+   "query": "lesser curvature of stomach",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001164",
+   "query": "greater curvature of stomach",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001166",
+   "query": "pylorus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001170",
+   "query": "mesentery of small intestine",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001174",
+   "query": "common bile duct",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001180",
+   "query": "superior recess of lesser sac",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001182",
+   "query": "superior mesenteric artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001183",
+   "query": "inferior mesenteric artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001184",
+   "query": "renal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001185",
+   "query": "renal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001186",
+   "query": "renal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001187",
+   "query": "testicular artery",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001192",
+   "query": "gastric artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001193",
+   "query": "hepatic artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001194",
+   "query": "splenic artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001199",
+   "query": "mucosa of stomach",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001200",
+   "query": "submucosa of stomach",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0001212",
+   "query": "duodenal gland",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001214",
+   "query": "pancreatic tributary of splenic vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001215",
+   "query": "inferior mesenteric vein",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001216",
+   "query": "jejunal vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001218",
+   "query": "middle colic vein",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001220",
+   "query": "quadratus lumborum",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001221",
+   "query": "transversus abdominis muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001222",
+   "query": "ureter",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001223",
+   "query": "ureter",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001226",
+   "query": "major calyx",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001233",
+   "query": "adrenal gland",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001234",
+   "query": "adrenal gland",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001245",
+   "query": "anus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001247",
+   "query": "falciform ligament",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001255",
+   "query": "urinary bladder",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001257",
+   "query": "trigone of urinary bladder",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0001258",
+   "query": "neck of urinary bladder",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001259",
+   "query": "mucosa of urinary bladder",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0001263",
+   "query": "pancreatic acinus",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0001264",
+   "query": "pancreas",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001267",
+   "query": "femoral nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001269",
+   "query": "acetabular part of hip bone",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001272",
+   "query": "innominate bone",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001279",
+   "query": "portal triad",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001282",
+   "query": "intralobular bile duct",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001296",
+   "query": "myometrium",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001298",
+   "query": "psoas major muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001299",
+   "query": "glans penis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001300",
+   "query": "scrotum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001301",
+   "query": "epididymis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001305",
+   "query": "ovarian follicle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001308",
+   "query": "external iliac artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001309",
+   "query": "internal iliac artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001315",
+   "query": "superior gluteal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001316",
+   "query": "external iliac vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001317",
+   "query": "internal iliac vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001321",
+   "query": "obturator vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001323",
+   "query": "tibial nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001327",
+   "query": "coccygeus muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001329",
+   "query": "prostate gland anterior lobe",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001330",
+   "query": "pampiniform plexus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001335",
+   "query": "prostatic urethra",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001339",
+   "query": "ischiocavernosus muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001342",
+   "query": "mesovarium",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001350",
+   "query": "coccyx",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001352",
+   "query": "external acoustic meatus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001355",
+   "query": "deep femoral artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001356",
+   "query": "medial circumflex femoral artery",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001357",
+   "query": "inferior rectal artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001362",
+   "query": "perineal vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001367",
+   "query": "external anal sphincter",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001368",
+   "query": "obturator externus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001369",
+   "query": "iliacus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001370",
+   "query": "gluteus maximus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001371",
+   "query": "gluteus medius",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001373",
+   "query": "sartorius muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001375",
+   "query": "semitendinosus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001376",
+   "query": "tensor fasciae latae muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001378",
+   "query": "rectus femoris",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001379",
+   "query": "vastus lateralis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001380",
+   "query": "vastus medialis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001381",
+   "query": "semimembranosus muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001382",
+   "query": "pectineus muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001385",
+   "query": "tibialis anterior",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001386",
+   "query": "extensor digitorum longus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001387",
+   "query": "fibularis longus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001389",
+   "query": "soleus muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001391",
+   "query": "popliteus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001392",
+   "query": "flexor hallucis longus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001394",
+   "query": "axillary artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001397",
+   "query": "subscapular artery",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001398",
+   "query": "brachial artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001400",
+   "query": "iliocostalis thoracis muscle",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001401",
+   "query": "longissimus thoracis muscle",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0001402",
+   "query": "longissimus cervicis muscle",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001403",
+   "query": "longissimus capitis",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001404",
+   "query": "radial artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001405",
+   "query": "spinalis thoracis muscle",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001407",
+   "query": "semispinalis thoracis",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0001408",
+   "query": "semispinalis cervicis",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001409",
+   "query": "semispinalis capitis",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001411",
+   "query": "basilic vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001413",
+   "query": "brachial vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001423",
+   "query": "radius bone",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001424",
+   "query": "ulna",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001427",
+   "query": "radiale",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001428",
+   "query": "intermedium",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001429",
+   "query": "pisiform",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001430",
+   "query": "distal carpal bone 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001431",
+   "query": "distal carpal bone 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001432",
+   "query": "distal carpal bone 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001433",
+   "query": "distal carpal bone 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001437",
+   "query": "epiphysis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001445",
+   "query": "skeleton of pes",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001446",
+   "query": "fibula",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001449",
+   "query": "phalanx of pes",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001450",
+   "query": "calcaneus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001451",
+   "query": "navicular bone of pes",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001452",
+   "query": "distal tarsal bone 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001453",
+   "query": "distal tarsal bone 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001454",
+   "query": "distal tarsal bone 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001455",
+   "query": "cuboid bone",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001468",
+   "query": "intervertebral joint",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001470",
+   "query": "glenohumeral joint",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001477",
+   "query": "infraspinatus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001478",
+   "query": "teres major muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001484",
+   "query": "articular capsule",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001494",
+   "query": "ulnar nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001496",
+   "query": "ascending aorta",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001505",
+   "query": "coracobrachialis muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001506",
+   "query": "brachialis muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001508",
+   "query": "arch of aorta",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001514",
+   "query": "descending aorta",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001521",
+   "query": "flexor carpi radialis muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001523",
+   "query": "flexor digitorum profundus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001524",
+   "query": "extensor carpi radialis longus muscle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001525",
+   "query": "extensor carpi radialis brevis muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001527",
+   "query": "abductor pollicis longus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001529",
+   "query": "brachiocephalic artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001530",
+   "query": "common carotid artery plus branches",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001531",
+   "query": "common carotid artery plus branches",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001533",
+   "query": "subclavian artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001534",
+   "query": "subclavian artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001536",
+   "query": "common carotid artery plus branches",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001538",
+   "query": "posterior tibial artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001543",
+   "query": "popliteal lymph node",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001544",
+   "query": "popliteal vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001549",
+   "query": "dorsal metatarsal vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001561",
+   "query": "subcostal artery",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0001563",
+   "query": "longus capitis muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001564",
+   "query": "mylohyoid muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001565",
+   "query": "geniohyoid muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001566",
+   "query": "cricothyroid muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001568",
+   "query": "muscle of larynx",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001570",
+   "query": "inferior pharyngeal constrictor",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0001571",
+   "query": "genioglossus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001572",
+   "query": "hyoglossus muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001574",
+   "query": "palatoglossus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001577",
+   "query": "facial muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001580",
+   "query": "levator labii superioris",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001581",
+   "query": "depressor labii inferioris",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001582",
+   "query": "buccinator muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001584",
+   "query": "subclavian artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001585",
+   "query": "anterior vena cava",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0001586",
+   "query": "internal jugular vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001587",
+   "query": "subclavian vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001594",
+   "query": "azygos vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001598",
+   "query": "temporalis muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001601",
+   "query": "extra-ocular muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001605",
+   "query": "ciliary muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001610",
+   "query": "lingual artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001611",
+   "query": "sublingual artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001616",
+   "query": "maxillary artery",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001617",
+   "query": "mental artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001618",
+   "query": "buccal artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001620",
+   "query": "central retinal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001622",
+   "query": "lacrimal artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001633",
+   "query": "basilar artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001640",
+   "query": "celiac artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001643",
+   "query": "oculomotor nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001644",
+   "query": "trochlear nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001645",
+   "query": "trigeminal nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001646",
+   "query": "abducens nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001647",
+   "query": "facial nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001648",
+   "query": "vestibulocochlear nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001649",
+   "query": "glossopharyngeal nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001650",
+   "query": "hypoglossal nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001666",
+   "query": "flexor digitorum longus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001667",
+   "query": "tibialis posterior",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001672",
+   "query": "anterior cerebral vein",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001676",
+   "query": "occipital bone",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001677",
+   "query": "sphenoid bone",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001678",
+   "query": "temporal bone",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001679",
+   "query": "ethmoid bone",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001680",
+   "query": "lacrimal bone",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001681",
+   "query": "nasal bone",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001682",
+   "query": "palatine bone",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001683",
+   "query": "jugal bone",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001684",
+   "query": "mandible",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001685",
+   "query": "hyoid bone",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001686",
+   "query": "auditory ossicle bone",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001689",
+   "query": "malleus bone",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0001690",
+   "query": "ear",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001698",
+   "query": "foramen ovale of skull",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001699",
+   "query": "sensory root of facial nerve",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001700",
+   "query": "geniculate ganglion",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001707",
+   "query": "nasal cavity",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001711",
+   "query": "eyelid",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001723",
+   "query": "tongue",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001724",
+   "query": "sphenoidal sinus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001727",
+   "query": "taste bud",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001728",
+   "query": "nasopharynx",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001729",
+   "query": "oropharynx",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001734",
+   "query": "palatine uvula",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001737",
+   "query": "larynx",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001738",
+   "query": "thyroid cartilage",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001739",
+   "query": "laryngeal cartilage",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001751",
+   "query": "dentine",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001757",
+   "query": "pinna",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001759",
+   "query": "vagus nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001764",
+   "query": "maxillary sinus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001769",
+   "query": "iris",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001773",
+   "query": "sclera",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001776",
+   "query": "optic choroid",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001782",
+   "query": "pigmented layer of retina",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001786",
+   "query": "fovea centralis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001804",
+   "query": "capsule of lens",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001811",
+   "query": "conjunctiva",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001817",
+   "query": "lacrimal gland",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001818",
+   "query": "tarsal gland",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001828",
+   "query": "gingiva",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001844",
+   "query": "cochlea",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001849",
+   "query": "membranous labyrinth",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001853",
+   "query": "utricle of membranous labyrinth",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001854",
+   "query": "saccule of membranous labyrinth",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001860",
+   "query": "endolymphatic duct",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001864",
+   "query": "scala tympani",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001873",
+   "query": "caudate nucleus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001874",
+   "query": "putamen",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001875",
+   "query": "globus pallidus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001876",
+   "query": "amygdala",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001884",
+   "query": "phrenic nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001886",
+   "query": "choroid plexus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001887",
+   "query": "internal capsule of telencephalon",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001891",
+   "query": "midbrain",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001896",
+   "query": "medulla oblongata",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001898",
+   "query": "hypothalamus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001904",
+   "query": "habenula",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001905",
+   "query": "pineal body",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001908",
+   "query": "optic tract",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001926",
+   "query": "lateral geniculate body",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001927",
+   "query": "medial geniculate body",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001929",
+   "query": "supraoptic nucleus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001930",
+   "query": "paraventricular nucleus of hypothalamus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001932",
+   "query": "arcuate nucleus of hypothalamus",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001934",
+   "query": "dorsomedial nucleus of hypothalamus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0001935",
+   "query": "ventromedial nucleus of hypothalamus",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001945",
+   "query": "superior colliculus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001946",
+   "query": "inferior colliculus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001954",
+   "query": "Ammon's horn",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0001972",
+   "query": "submucosa of esophagus",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0001989",
+   "query": "superior cervical ganglion",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0001990",
+   "query": "middle cervical ganglion",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0001998",
+   "query": "sternocostal joint",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0001999",
+   "query": "iliopsoas",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002002",
+   "query": "interchondral joint",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0002008",
+   "query": "cardiac nerve plexus",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0002009",
+   "query": "pulmonary nerve plexus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002010",
+   "query": "celiac nerve plexus",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0002012",
+   "query": "pulmonary artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002014",
+   "query": "inferior hypogastric nerve plexus",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002016",
+   "query": "pulmonary vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002019",
+   "query": "accessory XI nerve",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002022",
+   "query": "insula",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0002023",
+   "query": "claustrum of brain",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0002024",
+   "query": "internal carotid nerve plexus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002030",
+   "query": "nipple",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002032",
+   "query": "areola",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002033",
+   "query": "arrector muscle of hair",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002037",
+   "query": "cerebellum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002040",
+   "query": "bronchial artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002048",
+   "query": "lung",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002058",
+   "query": "main ciliary ganglion",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0002060",
+   "query": "femoral artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002080",
+   "query": "heart ventricle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002081",
+   "query": "cardiac atrium",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0002084",
+   "query": "heart ventricle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002098",
+   "query": "apex of heart",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002106",
+   "query": "spleen",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002107",
+   "query": "liver",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002110",
+   "query": "gallbladder",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002113",
+   "query": "kidney",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002114",
+   "query": "duodenum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002115",
+   "query": "jejunum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002116",
+   "query": "ileum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002131",
+   "query": "anterior lobe of cerebellum",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002132",
+   "query": "dentate nucleus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002134",
+   "query": "tricuspid valve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002135",
+   "query": "mitral valve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002146",
+   "query": "pulmonary valve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002148",
+   "query": "locus ceruleus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002152",
+   "query": "middle cerebellar peduncle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002170",
+   "query": "upper lobe of lung",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002171",
+   "query": "lower lobe of lung",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002173",
+   "query": "pulmonary alveolar duct",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002174",
+   "query": "middle lobe of lung",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0002185",
+   "query": "bronchus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002196",
+   "query": "adenohypophysis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002198",
+   "query": "neurohypophysis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002205",
+   "query": "manubrium of sternum",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0002206",
+   "query": "mammillary body",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002207",
+   "query": "xiphoid process",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002228",
+   "query": "rib",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002236",
+   "query": "costal cartilage",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002240",
+   "query": "spinal cord",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002251",
+   "query": "iliocostalis muscle",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0002252",
+   "query": "splenius",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002260",
+   "query": "ventral root of spinal cord",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0002261",
+   "query": "dorsal root of spinal cord",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0002262",
+   "query": "celiac ganglion",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002279",
+   "query": "vestibular aqueduct",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002283",
+   "query": "nail matrix",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002285",
+   "query": "telencephalic ventricle",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0002286",
+   "query": "third ventricle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002288",
+   "query": "choroid plexus of third ventricle",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0002289",
+   "query": "midbrain cerebral aqueduct",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002290",
+   "query": "choroid plexus of fourth ventricle",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0002291",
+   "query": "central canal of spinal cord",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002292",
+   "query": "costovertebral joint",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002293",
+   "query": "costochondral joint",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0002299",
+   "query": "alveolus of lung",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0002307",
+   "query": "choroid plexus of lateral ventricle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002310",
+   "query": "hippocampus fimbria",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0002333",
+   "query": "pulmonary trunk",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002336",
+   "query": "corpus callosum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002350",
+   "query": "conducting system of heart",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0002354",
+   "query": "cardiac Purkinje fiber",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0002355",
+   "query": "pelvic region of trunk",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002356",
+   "query": "perineum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002358",
+   "query": "peritoneum",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002361",
+   "query": "pia mater",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002362",
+   "query": "arachnoid mater",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0002363",
+   "query": "dura mater",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002364",
+   "query": "tympanic membrane",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002366",
+   "query": "bulbo-urethral gland",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0002367",
+   "query": "prostate gland",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002370",
+   "query": "thymus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002376",
+   "query": "cranial muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002377",
+   "query": "muscle of neck",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0002382",
+   "query": "rectus abdominis muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002383",
+   "query": "supraspinatus muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002395",
+   "query": "talus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002396",
+   "query": "vomer",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002397",
+   "query": "maxilla",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002403",
+   "query": "internal intercostal muscle",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0002404",
+   "query": "transversus thoracis",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002406",
+   "query": "pericardial sac",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002407",
+   "query": "pericardium",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002422",
+   "query": "fourth ventricle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002434",
+   "query": "pituitary stalk",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002435",
+   "query": "striatum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002437",
+   "query": "cerebral hemisphere white matter",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002439",
+   "query": "myenteric nerve plexus",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0002445",
+   "query": "ulnare",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0002446",
+   "query": "patella",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002455",
+   "query": "common plantar digital arteries",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002456",
+   "query": "internal thoracic artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002462",
+   "query": "erector spinae muscle group",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0002469",
+   "query": "esophagus mucosa",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002478",
+   "query": "orbitosphenoid",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002497",
+   "query": "acromion",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002502",
+   "query": "round window of inner ear",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002503",
+   "query": "greater trochanter",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002504",
+   "query": "lesser trochanter",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002508",
+   "query": "celiac lymph node",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002516",
+   "query": "epiphyseal plate",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002517",
+   "query": "basicranium",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002520",
+   "query": "submandibular lymph node",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002525",
+   "query": "brachial lymph node",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0002576",
+   "query": "temporal pole",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002580",
+   "query": "brachium of superior colliculus",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0002581",
+   "query": "postcentral gyrus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002620",
+   "query": "tuber cinereum",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002623",
+   "query": "cerebral peduncle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002651",
+   "query": "anterior horn of lateral ventricle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002655",
+   "query": "body of lateral ventricle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0002661",
+   "query": "superior frontal gyrus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002686",
+   "query": "angular gyrus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002688",
+   "query": "supramarginal gyrus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002702",
+   "query": "middle frontal gyrus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002703",
+   "query": "precentral gyrus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002751",
+   "query": "inferior temporal gyrus",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0002766",
+   "query": "fusiform gyrus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002771",
+   "query": "middle temporal gyrus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002795",
+   "query": "frontal pole",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002806",
+   "query": "occipital lobe",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002807",
+   "query": "occipital lobe",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002819",
+   "query": "apex of cochlea",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0002902",
+   "query": "occipital pole",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0002967",
+   "query": "cingulate gyrus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002973",
+   "query": "parahippocampal gyrus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002981",
+   "query": "pulvinar nucleus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0002989",
+   "query": "anconeus muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0003012",
+   "query": "flocculonodular lobe",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0003025",
+   "query": "brachium of inferior colliculus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003029",
+   "query": "stria terminalis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003126",
+   "query": "trachea",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003228",
+   "query": "supinator muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0003234",
+   "query": "extensor pollicis longus muscle",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0003250",
+   "query": "rectus capitis lateralis muscle",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0003369",
+   "query": "fossa ovalis of heart",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003454",
+   "query": "small intestine Peyer's patch",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003470",
+   "query": "artery of upper lip",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003604",
+   "query": "trachea cartilage",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0003645",
+   "query": "metacarpal bone of digit 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003646",
+   "query": "metacarpal bone of digit 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003647",
+   "query": "metacarpal bone of digit 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003648",
+   "query": "metacarpal bone of digit 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003649",
+   "query": "metacarpal bone of digit 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003650",
+   "query": "metatarsal bone of digit 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003651",
+   "query": "metatarsal bone of digit 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003652",
+   "query": "metatarsal bone of digit 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003653",
+   "query": "metatarsal bone of digit 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003654",
+   "query": "metatarsal bone of digit 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003672",
+   "query": "dentition",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003673",
+   "query": "ligamentum flavum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003676",
+   "query": "patellar ligament",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003682",
+   "query": "palatal muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0003687",
+   "query": "foramen magnum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003689",
+   "query": "sella turcica",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003690",
+   "query": "fused sacrum",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0003694",
+   "query": "atlanto-axial joint",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003695",
+   "query": "metacarpophalangeal joint",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003699",
+   "query": "pubic symphysis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003701",
+   "query": "calcaneal tendon",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0003703",
+   "query": "extrahepatic bile duct",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003709",
+   "query": "circle of Willis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003711",
+   "query": "brachiocephalic vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003713",
+   "query": "splenic vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003720",
+   "query": "anterior cranial fossa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003722",
+   "query": "middle cranial fossa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003723",
+   "query": "vestibular nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003724",
+   "query": "musculocutaneous nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003725",
+   "query": "cervical nerve plexus",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0003726",
+   "query": "thoracic nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003727",
+   "query": "intercostal nerve",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0003885",
+   "query": "mesometrium",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0003959",
+   "query": "rete testis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0003991",
+   "query": "fourth ventricle median aperture",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003992",
+   "query": "fourth ventricle lateral aperture",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003993",
+   "query": "interventricular foramen of CNS",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0003998",
+   "query": "hyoid bone lesser horn",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004074",
+   "query": "cerebellum vermis lobule I",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004080",
+   "query": "cerebellum vermis lobule VI",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004082",
+   "query": "cerebellum vermis lobule VIII",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004083",
+   "query": "cerebellum vermis lobule X",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004108",
+   "query": "clivus of occipital bone",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004292",
+   "query": "cardiac skeleton",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0004311",
+   "query": "distal phalanx of manual digit 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004312",
+   "query": "distal phalanx of manual digit 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004313",
+   "query": "distal phalanx of manual digit 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004314",
+   "query": "distal phalanx of manual digit 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004315",
+   "query": "distal phalanx of pedal digit 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004316",
+   "query": "distal phalanx of pedal digit 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004317",
+   "query": "distal phalanx of pedal digit 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004318",
+   "query": "distal phalanx of pedal digit 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004319",
+   "query": "distal phalanx of pedal digit 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004320",
+   "query": "middle phalanx of manual digit 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004321",
+   "query": "middle phalanx of manual digit 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004322",
+   "query": "middle phalanx of manual digit 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004323",
+   "query": "middle phalanx of manual digit 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004324",
+   "query": "middle phalanx of pedal digit 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004325",
+   "query": "middle phalanx of pedal digit 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004326",
+   "query": "middle phalanx of pedal digit 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004327",
+   "query": "middle phalanx of pedal digit 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004328",
+   "query": "proximal phalanx of manual digit 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004329",
+   "query": "proximal phalanx of manual digit 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004330",
+   "query": "proximal phalanx of manual digit 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004331",
+   "query": "proximal phalanx of manual digit 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004332",
+   "query": "proximal phalanx of pedal digit 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004333",
+   "query": "proximal phalanx of pedal digit 2",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004334",
+   "query": "proximal phalanx of pedal digit 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004335",
+   "query": "proximal phalanx of pedal digit 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004336",
+   "query": "proximal phalanx of pedal digit 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004337",
+   "query": "distal phalanx of manual digit 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004338",
+   "query": "proximal phalanx of manual digit 1",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004339",
+   "query": "vault of skull",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0004524",
+   "query": "papillary muscle of ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004527",
+   "query": "alveolar process of maxilla",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0004528",
+   "query": "alveolar ridge of mandible",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004533",
+   "query": "testis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004534",
+   "query": "testis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004538",
+   "query": "kidney",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004539",
+   "query": "kidney",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004601",
+   "query": "rib 1",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0004602",
+   "query": "rib 2",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0004603",
+   "query": "rib 3",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0004604",
+   "query": "rib 4",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0004605",
+   "query": "rib 5",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0004606",
+   "query": "rib 6",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0004607",
+   "query": "rib 7",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0004608",
+   "query": "rib 9",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004609",
+   "query": "rib 10",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0004610",
+   "query": "rib 11",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004611",
+   "query": "rib 12",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004612",
+   "query": "mammalian cervical vertebra 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004613",
+   "query": "mammalian cervical vertebra 4",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004614",
+   "query": "mammalian cervical vertebra 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004615",
+   "query": "mammalian cervical vertebra 6",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004616",
+   "query": "mammalian cervical vertebra 7",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004617",
+   "query": "lumbar vertebra 1",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0004618",
+   "query": "lumbar vertebra 2",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004619",
+   "query": "lumbar vertebra 3",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0004620",
+   "query": "lumbar vertebra 4",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004621",
+   "query": "lumbar vertebra 5",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0004626",
+   "query": "thoracic vertebra 1",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004627",
+   "query": "thoracic vertebra 2",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004628",
+   "query": "thoracic vertebra 3",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004629",
+   "query": "thoracic vertebra 4",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004630",
+   "query": "thoracic vertebra 5",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004631",
+   "query": "thoracic vertebra 6",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004632",
+   "query": "thoracic vertebra 7",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0004633",
+   "query": "thoracic vertebra 9",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004634",
+   "query": "thoracic vertebra 10",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0004635",
+   "query": "thoracic vertebra 11",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004636",
+   "query": "thoracic vertebra 12",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0004639",
+   "query": "renal afferent arteriole",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0004641",
+   "query": "spleen capsule",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0004649",
+   "query": "sphenoid bone pterygoid process",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004657",
+   "query": "mandible condylar process",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0004658",
+   "query": "mandible head",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004659",
+   "query": "mandible neck",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0004660",
+   "query": "mandible coronoid process",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0004666",
+   "query": "interventricular septum membranous part",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004670",
+   "query": "ependyma",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004672",
+   "query": "posterior horn lateral ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004689",
+   "query": "naso-frontal vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004703",
+   "query": "dorsal thalamus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004713",
+   "query": "corpus cavernosum penis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004714",
+   "query": "septum pellucidum",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0004719",
+   "query": "kidney arcuate vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004720",
+   "query": "cerebellar vermis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004727",
+   "query": "cochlear nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0004760",
+   "query": "gland of anal canal",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0004771",
+   "query": "posterior nasal aperture",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0004882",
+   "query": "eponychium",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0005050",
+   "query": "liver papillary process",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0005171",
+   "query": "hepatic duct",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005278",
+   "query": "nail bed of finger",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0005282",
+   "query": "ventricular system of brain",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0005283",
+   "query": "tela choroidea",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005303",
+   "query": "hypogastric nerve",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0005304",
+   "query": "submucous nerve plexus",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0005351",
+   "query": "paraflocculus",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0005402",
+   "query": "philtrum",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0005430",
+   "query": "ansa cervicalis",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0005431",
+   "query": "anterior spinal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005436",
+   "query": "common hepatic artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005438",
+   "query": "coronary sinus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005441",
+   "query": "external intercostal muscle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0005442",
+   "query": "abdominal external oblique muscle",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0005446",
+   "query": "foramen rotundum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005454",
+   "query": "abdominal internal oblique muscle",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0005456",
+   "query": "jugular foramen",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0005457",
+   "query": "thymus lobe",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0005461",
+   "query": "levator scapulae muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0005464",
+   "query": "median sacral artery",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0005465",
+   "query": "obturator nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005467",
+   "query": "platysma",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005469",
+   "query": "thymus lobe",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0005476",
+   "query": "spinal nerve trunk",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0005479",
+   "query": "superior mesenteric ganglion",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0005481",
+   "query": "tentorial sinus",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0005628",
+   "query": "ileal artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0005871",
+   "query": "palatine process of maxilla",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0005922",
+   "query": "inferior nasal concha",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0005928",
+   "query": "external naris",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0005969",
+   "query": "eye trabecular meshwork",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0005974",
+   "query": "posterior cerebellomedullary cistern",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0005980",
+   "query": "pectinate muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0006059",
+   "query": "falx cerebri",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006086",
+   "query": "stria medullaris",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0006091",
+   "query": "inferior horn of the lateral ventricle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0006092",
+   "query": "cuneus cortex",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0006093",
+   "query": "precuneus cortex",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0006121",
+   "query": "hemispheric lobule VIII",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006199",
+   "query": "posterior auricular vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0006204",
+   "query": "inguinal ligament",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0006328",
+   "query": "laryngeal intrinsic muscle",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0006497",
+   "query": "interosseous muscle of pes",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006587",
+   "query": "ligamentum venosum",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0006588",
+   "query": "round ligament of liver",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0006607",
+   "query": "medial umbilical ligament",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0006632",
+   "query": "musculo-phrenic artery",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006636",
+   "query": "lumbar artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006638",
+   "query": "remnant of urachus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006643",
+   "query": "tunica albuginea of testis",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0006651",
+   "query": "appendix testis",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0006656",
+   "query": "deep dorsal vein of penis",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0006657",
+   "query": "glenoid fossa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006658",
+   "query": "interphalangeal joint",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006661",
+   "query": "epicranial aponeurosis",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0006662",
+   "query": "musculo-phrenic vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006666",
+   "query": "great cerebral vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0006667",
+   "query": "pituitary fossa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006668",
+   "query": "carotid canal",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006676",
+   "query": "muscularis mucosa",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0006681",
+   "query": "interthalamic adhesion",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0006682",
+   "query": "hypoglossal canal",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006690",
+   "query": "deep dorsal vein of clitoris",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006691",
+   "query": "tentorium cerebelli",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0006718",
+   "query": "medial pterygoid muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006723",
+   "query": "cochlear modiolus",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0006729",
+   "query": "liver perisinusoidal space",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006762",
+   "query": "suspensory ligament of lens",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006767",
+   "query": "head of femur",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0006810",
+   "query": "olecranon",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006812",
+   "query": "mental foramen",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006820",
+   "query": "body of sternum",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0006837",
+   "query": "tegmen tympani",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0006838",
+   "query": "ventral ramus of spinal nerve",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006841",
+   "query": "central vein of liver",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0006849",
+   "query": "scapula",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0006862",
+   "query": "diaphysis of femur",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0006958",
+   "query": "great vein of heart",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007118",
+   "query": "umbilicus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007119",
+   "query": "neck of femur",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007120",
+   "query": "premolar tooth",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007136",
+   "query": "rectouterine fold",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007149",
+   "query": "inferior thyroid artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007150",
+   "query": "superior thyroid artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007153",
+   "query": "superior epigastric artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0007161",
+   "query": "medial arcuate ligament",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0007162",
+   "query": "lateral arcuate ligament",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0007164",
+   "query": "distal radio-ulnar joint",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0007168",
+   "query": "long head of biceps brachii",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0007169",
+   "query": "short head of biceps brachii",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0007260",
+   "query": "intervertebral disk of third cervical vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007261",
+   "query": "intervertebral disk of fourth cervical vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007262",
+   "query": "intervertebral disk of fifth cervical vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007263",
+   "query": "intervertebral disk of sixth cervical vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007264",
+   "query": "intervertebral disk of seventh cervical vertebra",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007265",
+   "query": "intervertebral disk of axis",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007315",
+   "query": "internal pudendal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007329",
+   "query": "pancreatic duct",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007354",
+   "query": "cartilage of pharyngotympanic tube",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007612",
+   "query": "extensor digitorum communis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007614",
+   "query": "extensor digiti minimi muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0007617",
+   "query": "synovial cavity of joint",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007642",
+   "query": "ligamentum arteriosum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007650",
+   "query": "esophagogastric junction",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0007656",
+   "query": "lateral recess of fourth ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007657",
+   "query": "anular ligament of radius",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007693",
+   "query": "caroticotympanic artery",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0007763",
+   "query": "cerebellum vermis culmen",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0007821",
+   "query": "lateral nasal cartilage",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008000",
+   "query": "sesamoid bone of pes",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008255",
+   "query": "clavicle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008256",
+   "query": "clavicle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008322",
+   "query": "deep artery of clitoris",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008323",
+   "query": "dorsal artery of clitoris",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0008330",
+   "query": "vestibule of vagina",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0008426",
+   "query": "transverse foramen of atlas",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0008446",
+   "query": "flexor pollicis longus muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008453",
+   "query": "rectus capitis anterior",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0008454",
+   "query": "rectus capitis posterior major",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008455",
+   "query": "rectus capitis posterior minor",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008464",
+   "query": "abductor hallucis muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0008465",
+   "query": "abductor pollicis brevis muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008488",
+   "query": "cremaster muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008521",
+   "query": "gluteus minimus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008523",
+   "query": "infrahyoid muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008529",
+   "query": "piriformis muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0008537",
+   "query": "quadratus femoris",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008544",
+   "query": "splenius cervicis",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0008546",
+   "query": "iliocostalis cervicis muscle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008573",
+   "query": "lateral crico-arytenoid",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0008582",
+   "query": "superior longitudinal muscle of tongue",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008588",
+   "query": "procerus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008589",
+   "query": "depressor septi nasi",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008592",
+   "query": "levator labii superioris alaeque nasi",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0008593",
+   "query": "zygomaticus major muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008594",
+   "query": "zygomaticus minor muscle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0008595",
+   "query": "levator anguli oris",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008596",
+   "query": "mentalis muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008597",
+   "query": "depressor anguli oris muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008598",
+   "query": "risorius muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0008617",
+   "query": "innermost intercostal muscle",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0008622",
+   "query": "scalenus anterior",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0008712",
+   "query": "stylohyoid muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0008775",
+   "query": "proximal epiphysis of fibula",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008779",
+   "query": "subclavius",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008788",
+   "query": "posterior cranial fossa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008810",
+   "query": "nasopalatine nerve",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008813",
+   "query": "helicotrema",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0008847",
+   "query": "ovarian ligament",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0008856",
+   "query": "stomach muscularis externa",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008857",
+   "query": "stomach smooth muscle circular layer",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008862",
+   "query": "stomach smooth muscle inner oblique layer",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008863",
+   "query": "stomach smooth muscle outer longitudinal layer",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0008874",
+   "query": "pulmonary acinus",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0008884",
+   "query": "putamen",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008885",
+   "query": "putamen",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008952",
+   "query": "upper lobe of lung",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0008953",
+   "query": "lower lobe of lung",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0008977",
+   "query": "pes anserinus of tibia",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0009566",
+   "query": "intestinal submucosa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0009629",
+   "query": "coccygeal nerve",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0009675",
+   "query": "chorda tympani branch of facial nerve",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0009687",
+   "query": "middle cardiac vein",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0009689",
+   "query": "anterior inferior cerebellar artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0009853",
+   "query": "body of uterus",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0009960",
+   "query": "esophagus smooth muscle circular layer",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0009961",
+   "query": "esophagus smooth muscle longitudinal layer",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0009984",
+   "query": "medial condyle of femur",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0009985",
+   "query": "lateral condyle of femur",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0009986",
+   "query": "lateral epicondyle of femur",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0009990",
+   "query": "medial condyle of tibia",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0010017",
+   "query": "spiral valve of cystic duct",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0010132",
+   "query": "gastroduodenal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0010230",
+   "query": "eyeball of camera-type eye",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0010234",
+   "query": "palatopharyngeus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0010249",
+   "query": "posterior meningeal artery",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0010270",
+   "query": "filum terminale externum",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0010372",
+   "query": "uncinate process of ethmoid",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0010408",
+   "query": "ocular angle artery",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0010496",
+   "query": "teres minor muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0010524",
+   "query": "fibularis tertius",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0010526",
+   "query": "fibularis brevis",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0010743",
+   "query": "meningeal cluster",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0010757",
+   "query": "rib 8",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0010853",
+   "query": "capitulum of humerus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0010928",
+   "query": "cricopharyngeus muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0010933",
+   "query": "orbicularis oris muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0010943",
+   "query": "anterior digastric muscle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0010944",
+   "query": "posterior digastric muscle",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0010947",
+   "query": "occipitalis",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0010952",
+   "query": "frontalis muscle belly",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0010953",
+   "query": "nasalis muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0010995",
+   "query": "deep part of masseter muscle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011011",
+   "query": "brachioradialis",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011013",
+   "query": "spinalis muscle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0011015",
+   "query": "iliac fossa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011016",
+   "query": "pyramidalis",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011025",
+   "query": "aryepiglotticus muscle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011048",
+   "query": "obturator internus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011049",
+   "query": "uterovesical pouch",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0011050",
+   "query": "thoracic vertebra 8",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011118",
+   "query": "tarsometatarsal joint",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011119",
+   "query": "carpometacarpal joint",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011121",
+   "query": "cricothyroid joint",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0011131",
+   "query": "intermetacarpal joint",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011140",
+   "query": "superficial part of masseter muscle",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0011165",
+   "query": "crico-esophageal tendon",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011183",
+   "query": "corpus spongiosum of penis",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011192",
+   "query": "superior ophthalmic vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011193",
+   "query": "inferior ophthalmic vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0011207",
+   "query": "iliocostalis lumborum",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011218",
+   "query": "spinalis cervicis muscle",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0011221",
+   "query": "ora serrata of retina",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011309",
+   "query": "body of mandible",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011322",
+   "query": "mylohyoid nerve",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0011325",
+   "query": "pharyngeal nerve plexus",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0011389",
+   "query": "bulbospongiosus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011390",
+   "query": "pudendal nerve",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011511",
+   "query": "iliococcygeus muscle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0011512",
+   "query": "puborectalis muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011528",
+   "query": "pubococcygeus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011601",
+   "query": "gingiva of upper jaw",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011602",
+   "query": "gingiva of lower jaw",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011640",
+   "query": "palatoglossal arch",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0011827",
+   "query": "areolar gland",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0011878",
+   "query": "muscle layer of esophagus",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0011905",
+   "query": "plantaris",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011907",
+   "query": "gastrocnemius medialis",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011908",
+   "query": "gastrocnemius lateralis",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011962",
+   "query": "transverse tarsal joint",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0011966",
+   "query": "manubriosternal joint",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0011968",
+   "query": "radio-carpal joint",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0011971",
+   "query": "calcaneofibular ligament",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0011972",
+   "query": "medial ligament of ankle joint",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0012078",
+   "query": "fovea capitis of femur",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0012103",
+   "query": "suspensory ligament of breast",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0012118",
+   "query": "infraspinatus tendon",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0012187",
+   "query": "frontal artery",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0012255",
+   "query": "inferior phrenic artery",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0012303",
+   "query": "ureteral orifice",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0012317",
+   "query": "vagina orifice",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0012318",
+   "query": "anterior ethmoidal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0012319",
+   "query": "posterior ethmoidal artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0012331",
+   "query": "mesosalpinx",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0012332",
+   "query": "broad ligament of uterus",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0012337",
+   "query": "cauda equina",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0012374",
+   "query": "subserosal plexus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0012488",
+   "query": "muscle layer of duodenum",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0012497",
+   "query": "muscularis mucosae of rectum",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0013069",
+   "query": "popliteal area",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0013138",
+   "query": "coronary ligament of liver",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0013161",
+   "query": "lateral ventricle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0013162",
+   "query": "lateral ventricle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0013165",
+   "query": "epiglottic vallecula",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0013168",
+   "query": "thyroepiglottic ligament",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0013248",
+   "query": "paradidymis",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0013406",
+   "query": "bregma",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0013422",
+   "query": "infratemporal fossa",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0013424",
+   "query": "anatomical point connecting sagittal and lambdoidal sutures",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0013491",
+   "query": "cervical fascia",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0013633",
+   "query": "intertrochanteric crest",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0013648",
+   "query": "masseteric artery",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0013683",
+   "query": "dorsal thalamus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0013684",
+   "query": "dorsal thalamus",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0013687",
+   "query": "pericranium",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0013725",
+   "query": "anterior talofibular ligament",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0013726",
+   "query": "posterior talofibular ligament",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0013760",
+   "query": "external cervical os",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0013761",
+   "query": "cervical cavity",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0013764",
+   "query": "common crus of semicircular duct",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0013767",
+   "query": "frontal process of maxilla",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0014380",
+   "query": "flexor digitorum brevis muscle",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0014445",
+   "query": "acetabular fossa",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0014526",
+   "query": "anterior limb of internal capsule",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0014685",
+   "query": "pterygoid plexus",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0014686",
+   "query": "angular vein",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0014694",
+   "query": "posterior auricular artery",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0014695",
+   "query": "deep auricular artery",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0014847",
+   "query": "vastus intermedius",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0014848",
+   "query": "tendon of quadriceps femoris",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0014915",
+   "query": "genu of facial nerve",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0015117",
+   "query": "lamina terminalis of cerebral hemisphere",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0015160",
+   "query": "supraorbital artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0015215",
+   "query": "median arcuate ligament",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0015350",
+   "query": "saphenous artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0015472",
+   "query": "tracheobronchial lymph node",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0015488",
+   "query": "sural nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0015708",
+   "query": "splenium of the corpus callosum",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0015866",
+   "query": "pyloric lymph node",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0015869",
+   "query": "retropharyngeal lymph node",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0015885",
+   "query": "cymba conchae of pinna",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0016397",
+   "query": "submental lymph node",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0016401",
+   "query": "pancreaticoduodenal lymph node",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0016440",
+   "query": "glabella region of bone",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0016442",
+   "query": "median palatine suture",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0016466",
+   "query": "antihelix",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0016477",
+   "query": "zygomatic process of maxilla",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0016492",
+   "query": "foramen spinosum of sphenoid bone",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0016493",
+   "query": "palmaris longus muscle",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0016496",
+   "query": "tendon of palmaris longus",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0017618",
+   "query": "extensor pollicis brevis muscle",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0018109",
+   "query": "anterior auricular muscle",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0018110",
+   "query": "posterior auricular muscle",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0018252",
+   "query": "internal pudendal vein",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0018255",
+   "query": "jejunal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0018398",
+   "query": "superior alveolar nerve",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0018405",
+   "query": "inferior alveolar nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0018406",
+   "query": "mental nerve",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0018407",
+   "query": "infra-orbital foramen of maxilla",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0018408",
+   "query": "infra-orbital nerve",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0018412",
+   "query": "vidian nerve",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0018651",
+   "query": "foramen lacerum",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0018653",
+   "query": "anterior ethmoidal foramen",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0018654",
+   "query": "posterior ethmoidal foramen",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0018673",
+   "query": "neck of fibula",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0019197",
+   "query": "dorsal nerve of penis",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0019198",
+   "query": "dorsal nerve of clitoris",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0019202",
+   "query": "inferior gemellus muscle",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0019203",
+   "query": "superior gemellus muscle",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0022264",
+   "query": "optic radiation",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0022273",
+   "query": "lacrimal lake",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0022300",
+   "query": "nasociliary nerve",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0022301",
+   "query": "long ciliary nerve",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0026584",
+   "query": "tympanic canal",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0034690",
+   "query": "external spermatic fascia",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0034773",
+   "query": "uncus of parahippocampal gyrus",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0034936",
+   "query": "pars plana of ciliary body",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0034986",
+   "query": "sacral nerve plexus",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0034987",
+   "query": "lumbar nerve plexus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0034988",
+   "query": "tendon of obturator internus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0035038",
+   "query": "carpal tunnel",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0035040",
+   "query": "superior rectal artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0035042",
+   "query": "middle temporal artery",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0035110",
+   "query": "lateral plantar nerve",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0035111",
+   "query": "medial plantar nerve",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0035120",
+   "query": "fauces",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0035139",
+   "query": "anterior nasal spine of maxilla",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0035171",
+   "query": "obturator lymph node",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0035180",
+   "query": "sigmoid artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0035183",
+   "query": "calcarine artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0035204",
+   "query": "occipital lymph node",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0035219",
+   "query": "parasternal lymph node",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0035231",
+   "query": "superficial middle cerebral vein",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0035316",
+   "query": "prostatic capsule",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0035322",
+   "query": "common iliac artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0035374",
+   "query": "small cardiac vein",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0035377",
+   "query": "transverse fold of rectum",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0035386",
+   "query": "space of Mall",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0035422",
+   "query": "circumflex branch of coronary artery",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0035425",
+   "query": "falx cerebelli",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0035444",
+   "query": "triangular ligament of liver",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0035450",
+   "query": "cervical part of esophagus",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0035468",
+   "query": "costodiaphragmatic recess",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0035529",
+   "query": "common iliac artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0035530",
+   "query": "basal vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0035539",
+   "query": "esophageal artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0035655",
+   "query": "paraumbilical vein",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0035764",
+   "query": "pulmonary lymph node",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:0035768",
+   "query": "coccygeal nerve plexus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0035770",
+   "query": "inferior mesenteric nerve plexus",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0035772",
+   "query": "aortic plexus",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0035829",
+   "query": "gastroepiploic artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0035830",
+   "query": "gastroepiploic artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0035964",
+   "query": "promontory of tympanic cavity",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0035970",
+   "query": "calcar avis of the lateral ventricle",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0036172",
+   "query": "palmaris brevis",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0036173",
+   "query": "abductor digiti minimi of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0036174",
+   "query": "flexor digiti minimi brevis of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0036176",
+   "query": "opponens digiti minimi of hand",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0036216",
+   "query": "tympanic nerve",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0036264",
+   "query": "zygomaticotemporal nerve",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0036292",
+   "query": "adnexa of uterus",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0036523",
+   "query": "wall of vagina",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0037144",
+   "query": "wall of heart",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0037500",
+   "query": "subscapular axillary lymph node",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0037501",
+   "query": "pectoral axillary lymph node",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0037502",
+   "query": "central axillary lymph node",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0037503",
+   "query": "apical axillary lymph node",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0037536",
+   "query": "promontory lymph node",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0037615",
+   "query": "pararectal lymph node",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0038037",
+   "query": "subclavian lymph node",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0038093",
+   "query": "jejunal lymph node",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:0038922",
+   "query": "nasolabial lymph node",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:0038932",
+   "query": "pretracheal lymph node",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:0038951",
+   "query": "suprapyloric lymph node",
+   "articlesFound": 2
+  },
+  {
+   "id": "UBERON:0038952",
+   "query": "subpyloric lymph node",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0038953",
+   "query": "retropyloric lymph node",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0039163",
+   "query": "lateral sacral lymph node",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:0039215",
+   "query": "appendicular artery",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0039261",
+   "query": "pancreatic artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:0039418",
+   "query": "Alcock's canal",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:0039847",
+   "query": "suprascapular artery",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:0039856",
+   "query": "ovarian vein",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:1000023",
+   "query": "spleen pulp",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:7770011",
+   "query": "episcleral vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:8410000",
+   "query": "duodeno-jejunal junction",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:8410017",
+   "query": "colic vein",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:8410018",
+   "query": "colic vein",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:8600048",
+   "query": "apex of urinary bladder",
+   "articlesFound": 1
+  },
+  {
+   "id": "UBERON:8600059",
+   "query": "deep cervical vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:8600066",
+   "query": "basivertebral vein",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:8600082",
+   "query": "superficial iliac circumflex vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:8600083",
+   "query": "fibular vein",
+   "articlesFound": 5
+  },
+  {
+   "id": "UBERON:8600087",
+   "query": "external nasal vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:8600091",
+   "query": "inferior anastomotic vein",
+   "articlesFound": 4
+  },
+  {
+   "id": "UBERON:8600096",
+   "query": "submental artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:8600102",
+   "query": "anterior descending artery",
+   "articlesFound": 8
+  },
+  {
+   "id": "UBERON:8920003",
+   "query": "marginal artery",
+   "articlesFound": 6
+  },
+  {
+   "id": "UBERON:8920013",
+   "query": "anterior ciliary vein",
+   "articlesFound": 0
+  },
+  {
+   "id": "UBERON:8920014",
+   "query": "bronchial vein",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:8920015",
+   "query": "bronchial vein",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:8920035",
+   "query": "marginal artery of Drummond",
+   "articlesFound": 7
+  },
+  {
+   "id": "UBERON:8920044",
+   "query": "supraduodenal artery",
+   "articlesFound": 3
+  },
+  {
+   "id": "UBERON:8920051",
+   "query": "posterior scrotal artery",
+   "articlesFound": 1
+  }
+ ]
+}

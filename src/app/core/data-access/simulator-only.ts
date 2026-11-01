@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { throwError, type Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { forcedRealApi } from '../mock/api-mode';
+import { forcedRealApi } from '../simulator/api-mode';
 
 /* ============================================================================
     Lo que sólo existe en el simulador, dicho en código y no sólo en un JSDoc.
@@ -20,7 +20,7 @@ import { forcedRealApi } from '../mock/api-mode';
        sólo a la maqueta y las quita del cuerpo que va a la API real.
 
     La maqueta, a su vez, rechaza con 400 toda clave que ni el contrato ni el
-    registro de extensiones declara (`core/mock/contract/`): la deriva se ve en
+    registro de extensiones declara (`mock/contract/` del simulador): la deriva se ve en
     `mockup`, no recién en producción.
     ========================================================================== */
 

@@ -1,3 +1,4 @@
+import type { OrderAppointment } from '../../../core/data-access/diagnostic-units/center-schedule.types';
 import type { PerformerSelectionCode } from '../../../core/data-access/diagnostics/service-request-performer.types';
 import type { PatientSettlementFields } from '../../../core/data-access/insurance/patient-insurance-settlement.types';
 
@@ -112,6 +113,10 @@ export interface PatientOrderRow extends PatientSettlementFields {
   readonly requestedAt: Date;
   /** Ayunas, horarios, qué llevar. `null` = ningún centro publicó preparación. */
   readonly preparation: string | null;
+  /** El turno reservado en un centro para hacer el estudio, o `null`. */
+  readonly appointment: OrderAppointment | null;
+  /** Se puede reservar: estudio de laboratorio o imagen, sin resultado y sin turno. */
+  readonly bookable: boolean;
   /**
    * El modo de ejecutor que eligió el médico, ya resuelto desde el código del concepto,
    * o `null` si la orden no lo trae (orden vieja o API sin extender): no se inventa nada.

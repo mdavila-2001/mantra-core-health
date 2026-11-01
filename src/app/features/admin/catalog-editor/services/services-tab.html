@@ -1,0 +1,85 @@
+<div class="catalogo" data-testid="catalog-services">
+  <app-view-state-host [state]="alcance()" (retry)="cargarAlcance()">
+    @if (alcance().status === 'ready') {
+      <p class="catalogo__ayuda">
+        El «tipo de usuario» de un servicio es el tipo de la organización que lo ofrece: clínica, consultorio, laboratorio…
+        Un paciente no tiene catálogo de servicios. El cambio vale para las prácticas de su organización.
+      </p>
+
+      <div class="catalogo__barra">
+        <app-segmented-control
+          ariaLabel="Tipo de organización"
+          [options]="opcionesTipo()"
+          [value]="tipo() ?? ''"
+          [wrap]="true"
+          (valueChange)="elegirTipo($event)"
+          data-testid="catalog-services-type"
+        />
+        <button app-button size="sm" (clicked)="abrirAlta()" data-testid="catalog-services-new">Nuevo servicio</button>
+      </div>
+
+      <div class="catalogo__filtros">
+        <app-search-field
+          class="catalogo__buscador"
+          label="Buscar servicios"
+          placeholder="Código o nombre del servicio"
+          [value]="busqueda()"
+          (searched)="buscar($event)"
+        />
+        <app-segmented-control
+          ariaLabel="Estado del servicio"
+          [options]="opcionesEstado"
+          [value]="filtroEstado()"
+          (valueChange)="elegirEstado($event)"
+          data-testid="catalog-services-status"
+        />
+      </div>
+
+      @if (aviso(); as nota) {
+        <app-alert [tone]="nota.tono" data-testid="catalog-services-notice" (dismissed)="aviso.set(null)" [dismissible]="true">{{ nota.texto }}</app-alert>
+      }
+
+      <app-data-table
+        [state]="lista()"
+        [columns]="columnas()"
+        [trackBy]="porId"
+        [rowLabel]="nombreDeFila"
+        stackedOnMobile
+        fitContainer
+        caption="Servicios del catálogo por tipo de organización"
+        [cursor]="paginador.cursor()"
+        data-testid="catalog-services-table"
+        (cursorChanged)="mover($event)"
+        (retry)="recargar()"
+      />
+    }
+  </app-view-state-host>
+</div>
+
+@if (dialogo(); as abierto) {
+  @if (alcance(); as estado) {
+    @if (estado.status === 'ready') {
+      <app-service-dialog
+        [scopes]="estado.data"
+        [servicio]="abierto.servicio"
+        [tipoInicial]="tipo()"
+        (saved)="guardado($event)"
+        (closed)="cerrarDialogo()"
+        (reloadRequested)="recargarTras409()"
+      />
+    }
+  }
+}
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaEstado let-fila>
+  @if (fila.item.isActive) {
+    <app-badge variant="success" value="Activo" />
+  } @else {
+    <app-badge variant="secondary" value="Desactivado" />
+  }
+</ng-template>
+
+<ng-template #celdaAcciones let-fila>
+  <app-row-actions [actions]="accionesDe(fila)" [fila]="nombreDeFila(fila)" [inline]="true" (actionSelected)="ejecutar(fila, $event)" />
+</ng-template>

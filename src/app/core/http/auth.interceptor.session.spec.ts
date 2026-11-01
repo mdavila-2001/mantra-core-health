@@ -21,6 +21,7 @@ const UN_TENANT = makeToken({ sub: 'u-1', roles: ['USER'], tenants: ['t-1'] });
 const VENCIDO = makeToken({ sub: 'u-1', roles: ['USER'], tenants: ['t-1'], exp: 1 });
 
 class RouterEspia {
+  url = '/';
   readonly navegaciones: string[] = [];
   navigateByUrl(url: string): Promise<boolean> {
     this.navegaciones.push(url);
@@ -93,6 +94,102 @@ describe('authInterceptor · sesión y tenant (BR-04)', () => {
 
     expect(router.navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
     backend.verify();
+  });
+
+  describe('alcance de plataforma (H1): no hay bucle con /auth/organization', () => {
+    const PLATAFORMA = makeToken({ sub: 'u-1', roles: ['PLATFORM_ADMIN'], tenants: ['t-1', 't-2'] });
+    const AMBITO = makeToken({
+      sub: 'u-1',
+      roles: ['PLATFORM_ADMIN'],
+      tenants: ['t-1', 't-2'],
+      scopedRoles: { 't-1': ['PLATFORM_ADMIN'] },
+    });
+
+    it.each([
+      [403, 'TENANT_AMBIGUOUS'],
+      [403, 'TENANT_REQUIRED'],
+      [412, 'TENANT_REQUIRED'],
+      [422, 'TENANT_REQUIRED'],
+    ])('alcance de plataforma: %s %s NO navega (el error sube para pintar S5) y la sesión sigue', (status, reason) => {
+      const { http, backend, session, router } = montar();
+      session.start({ accessToken: PLATAFORMA, refreshToken: 'r-1' });
+
+      let error: unknown;
+      http.get('/admin/analytics/overview').subscribe({ error: (e: unknown) => (error = e) });
+      backend.expectOne('/admin/analytics/overview').flush(
+        { code: 'FORBIDDEN', message: 'x', details: { reason } },
+        { status, statusText: 'x' },
+      );
+
+      expect(router.navegaciones).toEqual([]);
+      expect(error).toBeDefined();
+      expect(session.isAuthenticated()).toBe(true);
+      backend.verify();
+    });
+
+    it('sin organización fijada NO manda X-Tenant-Id; con una fijada sí', () => {
+      const { http, backend, session } = montar();
+      session.start({ accessToken: PLATAFORMA, refreshToken: 'r-1' });
+
+      http.get('/admin/ops/traffic').subscribe();
+      const withoutTenant = backend.expectOne('/admin/ops/traffic');
+      expect(withoutTenant.request.headers.has('X-Tenant-Id')).toBe(false);
+      withoutTenant.flush({});
+
+      session.selectTenant('t-2');
+      http.get('/admin/ops/traffic').subscribe();
+      const withTenant = backend.expectOne('/admin/ops/traffic');
+      expect(withTenant.request.headers.get('X-Tenant-Id')).toBe('t-2');
+      withTenant.flush({});
+
+      session.clearTenant();
+      http.get('/admin/ops/traffic').subscribe();
+      const otra = backend.expectOne('/admin/ops/traffic');
+      expect(otra.request.headers.has('X-Tenant-Id')).toBe(false);
+      otra.flush({});
+    });
+
+    it('NEGATIVO: sin alcance de plataforma el 412 TENANT_REQUIRED abre el selector, con returnUrl a donde estaba', () => {
+      const { http, backend, session, router } = montar();
+      router.url = '/superadmin/web-analytics?tab=uso';
+      session.start({ accessToken: DOS_TENANTS, refreshToken: 'r-1' });
+
+      http.get('/admin/analytics/overview').subscribe({ error: () => undefined });
+      backend.expectOne('/admin/analytics/overview').flush(
+        { code: 'PRECONDITION_FAILED', message: 'x', details: { reason: 'TENANT_REQUIRED' } },
+        { status: 412, statusText: 'Precondition Failed' },
+      );
+
+      expect(router.navegaciones).toEqual([
+        `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent('/superadmin/web-analytics?tab=uso')}`,
+      ]);
+      backend.verify();
+    });
+
+    it('NEGATIVO: PLATFORM_ADMIN con ámbito de organización sí es redirigido al selector', () => {
+      const { http, backend, session, router } = montar();
+      session.start({ accessToken: AMBITO, refreshToken: 'r-1' });
+
+      http.get('/admin/ops/traffic').subscribe({ error: () => undefined });
+      backend.expectOne('/admin/ops/traffic').flush(
+        { code: 'FORBIDDEN', message: 'x', details: { reason: 'TENANT_AMBIGUOUS' } },
+        { status: 403, statusText: 'Forbidden' },
+      );
+
+      expect(router.navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
+      backend.verify();
+    });
+
+    it('NEGATIVO: un 412 sin `reason` de tenant no navega ni se confunde con la elección de organización', () => {
+      const { http, backend, session, router } = montar();
+      session.start({ accessToken: DOS_TENANTS, refreshToken: 'r-1' });
+
+      http.get('/x').subscribe({ error: () => undefined });
+      backend.expectOne('/x').flush({ code: 'PRECONDITION_FAILED', message: 'x', details: { reason: 'OTRA' } }, { status: 412, statusText: 'x' });
+
+      expect(router.navegaciones).toEqual([]);
+      backend.verify();
+    });
   });
 
   it('un 403 común (rol insuficiente) NO abre el selector', () => {

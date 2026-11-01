@@ -1,0 +1,2 @@
+.err__campo-largo { flex: 1 1 24rem; max-inline-size: 40rem; }
+.err__traza { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); background: var(--bg-surface-alt); border-radius: var(--r-md); }

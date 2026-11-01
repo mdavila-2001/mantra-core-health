@@ -1,0 +1,162 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  634 componentes · 3 otros · 382 pantallas · 138 maquetas · 24 atomos · 48 moleculas · 39 organismos
+  207 con algo que mirar
+  relaciones: 2834 template-instantiates · 5 imports-available sin instanciar · 72 type-only · 237 dynamic-loads
+  nivel: 0 declarado · 634 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 634/634 · con escenario 3/634 · verificados visualmente 3/634 · bloqueados 87/634 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: C:\Alovida\wt-marcelo-front-lane16\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                                                                        [2m | [22m[1mNames[22m                                                                                                   [2m | [22m [1mRaw size[22m
+[32mchunk-EN2RNGBL.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m2.13 MB[39m[2m | [22m
+[32mchunk-6OCST33S.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m940.19 kB[39m[2m | [22m
+[32mspec-app-features-insurance-patient-campaigns-patient-campaigns-widget.js[39m                                  [2m | [22m[2mspec-app-features-insurance-patient-campaigns-patient-campaigns-widget[22m                                  [2m | [22m[36m381.31 kB[39m[2m | [22m
+[32mchunk-VYKQPLG6.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m236.00 kB[39m[2m | [22m
+[32mstyles.css[39m                                                                                                 [2m | [22m[2mstyles[22m                                                                                                  [2m | [22m[36m179.14 kB[39m[2m | [22m
+[32mspec-app-features-insurance-received-claims-received-claims.js[39m                                             [2m | [22m[2mspec-app-features-insurance-received-claims-received-claims[22m                                             [2m | [22m[36m128.26 kB[39m[2m | [22m
+[32mchunk-22UYGXAI.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m123.79 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-analytics-insurance-analytics.js[39m                                     [2m | [22m[2mspec-app-features-insurance-insurance-analytics-insurance-analytics[22m                                     [2m | [22m[36m122.72 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-payments-block-cobros-del-paciente-cobros-del-paciente.js[39m  [2m | [22m[2mspec-app-features-clinical-record-patient-chart-payments-block-cobros-del-paciente-cobros-del-paciente[22m  [2m | [22m[36m113.99 kB[39m[2m | [22m
+[32mchunk-CK5RNCFU.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m109.75 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-campaigns-insurance-campaigns.js[39m                                     [2m | [22m[2mspec-app-features-insurance-insurance-campaigns-insurance-campaigns[22m                                     [2m | [22m[36m103.95 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-catalog-insurance-catalog.js[39m                                         [2m | [22m[2mspec-app-features-insurance-insurance-catalog-insurance-catalog[22m                                         [2m | [22m[36m102.84 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-patients-insurance-patients.js[39m                                       [2m | [22m[2mspec-app-features-insurance-insurance-patients-insurance-patients[22m                                       [2m | [22m [36m83.59 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-claim-detail-insurance-claim-detail.js[39m                               [2m | [22m[2mspec-app-features-insurance-insurance-claim-detail-insurance-claim-detail[22m                               [2m | [22m [36m78.78 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance-portability.handlers.js[39m                                              [2m | [22m[2mspec-app-core-mock-handlers-insurance-portability.handlers[22m                                              [2m | [22m [36m77.68 kB[39m[2m | [22m
+[32mchunk-PIMRCKCT.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m77.35 kB[39m[2m | [22m
+[32mchunk-RQN36JA6.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m61.43 kB[39m[2m | [22m
+[32mspec-app-features-account-my-requests-my-requests.js[39m                                                       [2m | [22m[2mspec-app-features-account-my-requests-my-requests[22m                                                       [2m | [22m [36m54.61 kB[39m[2m | [22m
+[32mchunk-PUA4WLU6.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m53.31 kB[39m[2m | [22m
+[32mchunk-OE74HUYJ.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m53.04 kB[39m[2m | [22m
+[32mchunk-KY3YBUGS.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m52.16 kB[39m[2m | [22m
+[32mchunk-SR7FXUGS.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m49.97 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-payments-block-payments-block.js[39m                           [2m | [22m[2mspec-app-features-clinical-record-patient-chart-payments-block-payments-block[22m                           [2m | [22m [36m45.07 kB[39m[2m | [22m
+[32mchunk-O4YOCFD4.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m37.09 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-claims-insurance-claims.js[39m                                           [2m | [22m[2mspec-app-features-insurance-insurance-claims-insurance-claims[22m                                           [2m | [22m [36m36.05 kB[39m[2m | [22m
+[32mchunk-WNHPBRQR.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m35.14 kB[39m[2m | [22m
+[32mchunk-LB7GUTIC.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m33.79 kB[39m[2m | [22m
+[32mchunk-XRZO3YPX.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m31.68 kB[39m[2m | [22m
+[32mchunk-SVK5GHXM.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m30.61 kB[39m[2m | [22m
+[32mspec-app-features-insurance-broker-detail-broker-detail.js[39m                                                 [2m | [22m[2mspec-app-features-insurance-broker-detail-broker-detail[22m                                                 [2m | [22m [36m27.80 kB[39m[2m | [22m
+[32mchunk-R5S4HX6A.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m27.77 kB[39m[2m | [22m
+[32mchunk-S22NPWBS.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m26.96 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance-campaigns.handlers.js[39m                                                [2m | [22m[2mspec-app-core-mock-handlers-insurance-campaigns.handlers[22m                                                [2m | [22m [36m26.33 kB[39m[2m | [22m
+[32mchunk-PZ5GDL4L.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m26.16 kB[39m[2m | [22m
+[32mchunk-TSLIE63C.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m24.59 kB[39m[2m | [22m
+[32mchunk-HKKIJQPI.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m22.81 kB[39m[2m | [22m
+[32mchunk-WAPN2JEN.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m22.48 kB[39m[2m | [22m
+[32mchunk-R7AXCO3Q.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m21.25 kB[39m[2m | [22m
+[32mspec-app-features-insurance-portability-verify-portability-verify.js[39m                                       [2m | [22m[2mspec-app-features-insurance-portability-verify-portability-verify[22m                                       [2m | [22m [36m21.14 kB[39m[2m | [22m
+[32mchunk-5HSOQUEM.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m18.98 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurer-profile-card-insurer-profile-card.js[39m                                   [2m | [22m[2mspec-app-features-insurance-insurer-profile-card-insurer-profile-card[22m                                   [2m | [22m [36m18.76 kB[39m[2m | [22m
+[32mchunk-3G2CKEFM.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m18.66 kB[39m[2m | [22m
+[32mchunk-UK2K4HOS.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m18.58 kB[39m[2m | [22m
+[32mchunk-CJNQBPYJ.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m16.76 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance.handlers.js[39m                                                          [2m | [22m[2mspec-app-core-mock-handlers-insurance.handlers[22m                                                          [2m | [22m [36m16.42 kB[39m[2m | [22m
+[32mchunk-4VQGCA4I.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m15.46 kB[39m[2m | [22m
+[32mchunk-U5LVNETJ.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m15.34 kB[39m[2m | [22m
+[32mspec-app-features-insurance-broker-directory-broker-directory.js[39m                                           [2m | [22m[2mspec-app-features-insurance-broker-directory-broker-directory[22m                                           [2m | [22m [36m15.01 kB[39m[2m | [22m
+[32mchunk-BLLXTWUH.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m14.99 kB[39m[2m | [22m
+[32mchunk-BCOIL5F2.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m14.48 kB[39m[2m | [22m
+[32mchunk-GGWKJMOB.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m14.43 kB[39m[2m | [22m
+[32mchunk-WU4SJODB.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m12.68 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance-analytics.handlers.js[39m                                                [2m | [22m[2mspec-app-core-mock-handlers-insurance-analytics.handlers[22m                                                [2m | [22m [36m12.52 kB[39m[2m | [22m
+[32mchunk-3A75574K.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m12.47 kB[39m[2m | [22m
+[32mchunk-ULVLCA2E.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m12.09 kB[39m[2m | [22m
+[32mchunk-GLCSIFCO.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m11.10 kB[39m[2m | [22m
+[32mchunk-BEXDHJGI.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m [36m10.10 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-analytics-person-loss-report-person-loss-report.model.js[39m             [2m | [22m[2mspec-app-features-insurance-insurance-analytics-person-loss-report-person-loss-report.model[22m             [2m | [22m  [36m7.92 kB[39m[2m | [22m
+[32mchunk-EYPDXFLO.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m7.28 kB[39m[2m | [22m
+[32mchunk-6XZ7MQDS.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m7.01 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-claim-detail-insurance-contact-channels-insurance-contact-channels.js[39m[2m | [22m[2mspec-app-features-insurance-insurance-claim-detail-insurance-contact-channels-insurance-contact-channels[22m[2m | [22m  [36m6.63 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurer-received-claims.handlers.js[39m                                            [2m | [22m[2mspec-app-core-mock-handlers-insurer-received-claims.handlers[22m                                            [2m | [22m  [36m6.56 kB[39m[2m | [22m
+[32mchunk-A7EFQZ6G.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m6.47 kB[39m[2m | [22m
+[32mchunk-7E4YH232.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m5.76 kB[39m[2m | [22m
+[32mchunk-JBWBLPNK.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m5.19 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurer-received-claims.my-claims.js[39m                                           [2m | [22m[2mspec-app-core-mock-handlers-insurer-received-claims.my-claims[22m                                           [2m | [22m  [36m4.95 kB[39m[2m | [22m
+[32mchunk-ZFF22TBF.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m4.53 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-analytics-monthly-trend-chart-monthly-trend-chart.js[39m                 [2m | [22m[2mspec-app-features-insurance-insurance-analytics-monthly-trend-chart-monthly-trend-chart[22m                 [2m | [22m  [36m3.87 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-catalog-benefit-form-dialog.js[39m                                       [2m | [22m[2mspec-app-features-insurance-insurance-catalog-benefit-form-dialog[22m                                       [2m | [22m  [36m3.79 kB[39m[2m | [22m
+[32mspec-app-features-insurance-insurance-catalog-approval-rules-dialog.js[39m                                     [2m | [22m[2mspec-app-features-insurance-insurance-catalog-approval-rules-dialog[22m                                     [2m | [22m  [36m3.50 kB[39m[2m | [22m
+[32mchunk-QNKLL534.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m3.44 kB[39m[2m | [22m
+[32mchunk-BLSTNMGZ.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m3.40 kB[39m[2m | [22m
+[32mspec-app-features-insurance-money-format.js[39m                                                                [2m | [22m[2mspec-app-features-insurance-money-format[22m                                                                [2m | [22m  [36m3.02 kB[39m[2m | [22m
+[32mchunk-R7FUM6MS.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m2.94 kB[39m[2m | [22m
+[32mchunk-XSCRUL3Y.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m2.85 kB[39m[2m | [22m
+[32mchunk-ZKMGI2UU.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m1.75 kB[39m[2m | [22m
+[32mchunk-FZO4HYKI.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m1.37 kB[39m[2m | [22m
+[32mchunk-44EH2PNH.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m1.29 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                                                            [2m | [22m[2minit-testbed[22m                                                                                            [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mchunk-XRKEVUGW.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m1.14 kB[39m[2m | [22m
+[32mchunk-YG6AFG6T.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m  [36m1.07 kB[39m[2m | [22m
+[32mchunk-ZUB2YDBL.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m995 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                                                                        [2m | [22m[2msetup-test-setup[22m                                                                                        [2m | [22m[36m984 bytes[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                                                                       [2m | [22m[2mvitest-mock-patch[22m                                                                                       [2m | [22m[36m974 bytes[39m[2m | [22m
+[32mchunk-4JIX345O.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m886 bytes[39m[2m | [22m
+[32mchunk-4SD4475N.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m742 bytes[39m[2m | [22m
+[32mchunk-ZKWNHXXC.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m545 bytes[39m[2m | [22m
+[32mchunk-CEXMHGRY.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m524 bytes[39m[2m | [22m
+[32mchunk-RZMBRUBG.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m369 bytes[39m[2m | [22m
+[32mchunk-6FCVRO2E.js[39m                                                                                          [2m | [22m[2m-[22m                                                                                                       [2m | [22m[36m250 bytes[39m[2m | [22m
+
+[1m [22m                                                                                                          [2m | [22m[1mInitial total[22m                                                                                           [2m | [22m  [1m6.19 MB[22m
+
+[1mLazy chunk files[22m                                                                                           [2m | [22m[1mNames[22m                                                                                                   [2m | [22m [1mRaw size[22m
+[32mpaciente.css[39m                                                                                               [2m | [22m[2mpaciente[22m                                                                                                [2m | [22m [36m20.24 kB[39m[2m | [22m
+
+Application bundle generation complete. [61.568 seconds] - 2026-10-24T18:41:51.867Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+[37m      135 │ ..., AppButton, Badge, BodyMap, [32mCard[37m, Chip, EmergencyPanel, FormF...
+          ╵                                 [32m~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Alovida/wt-marcelo-front-lane16[39m
+
+(node:8292) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2m Test Files [22m [1m[32m27 passed[39m[22m[90m (27)[39m
+[2m      Tests [22m [1m[32m369 passed[39m[22m[90m (369)[39m
+[2m   Start at [22m 14:41:52
+[2m   Duration [22m 11.44s[2m (transform 2.50s, setup 447ms, import 3.64s, tests 6.06s, environment 1.05s)[22m
+

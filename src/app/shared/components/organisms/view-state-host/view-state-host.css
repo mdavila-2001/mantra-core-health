@@ -40,10 +40,6 @@
     font-weight: 600;
 }
 
-.view-state-host__request-id {
-    margin: var(--sp-2) 0 0;
-}
-
 /* S9 · qué hacer. Párrafo propio debajo de la causa: se lee como el paso
    siguiente y no se pierde dentro de la explicación. */
 .view-state-host__hint {
@@ -54,13 +50,7 @@
     font-weight: 600;
 }
 
-.view-state-host__request-id code {
-    /* el código se distingue y se selecciona fácil: es lo que se dicta por teléfono */
-    padding: 2px var(--sp-2);
-    border-radius: var(--r-xs);
-    background: color-mix(in srgb, var(--tone-fg) 12%, transparent);
-    user-select: all;
-}
+/* El código de soporte lo dibuja `app-support-code` (el mismo en toda la app). */
 
 /* El foco programático de S4 no debe dibujar el anillo de foco de teclado:
    llega por script, no por Tab. */

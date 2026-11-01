@@ -18,7 +18,29 @@ export const INTEGRATION_ERROR_TEXT: Readonly<Record<IntegrationErrorReason, str
     'La conexión no está activa o no permite consultar stock, así que no se puede sincronizar.',
   PHARMACY_INTEGRATION_UNAVAILABLE:
     'No pudimos hablar con el sistema de la farmacia. No se cambió ninguna existencia; pruebe de nuevo en unos minutos.',
+  PHARMACY_INTEGRATION_HOST_NOT_ALLOWED:
+    'La plataforma no tiene permitido llamar a esa dirección. Pídale a soporte que la habilite y vuelva a intentar.',
+  PHARMACY_INTEGRATION_URL_INVALID:
+    'La dirección no es válida. Escríbala completa, con http:// o https://, sin usuario ni contraseña.',
+  EXTERNAL_MAPPING_NOT_AVAILABLE: 'Ese vínculo ya no existe: alguien lo deshizo. La tabla ya muestra lo que hay ahora.',
+  EXTERNAL_MAPPING_PRODUCT_TAKEN:
+    'Ese producto ya está vinculado con otro código del sistema de la farmacia. Corrija ese vínculo o elija otro producto.',
+  EXTERNAL_MAPPING_EMPTY_UPDATE: 'No cambió nada del vínculo: modifique el producto, el código o la unidad.',
 };
+
+/**
+ * El vínculo que ya tiene el producto, en un 409 `EXTERNAL_MAPPING_PRODUCT_TAKEN`
+ * (`details.mappingId`), para ofrecer corregir ese en lugar de este; o `null`.
+ */
+export function takenMappingIdOf(error: unknown): string | null {
+  if (integrationReasonOf(error) !== 'EXTERNAL_MAPPING_PRODUCT_TAKEN' || !(error instanceof HttpErrorResponse)) {
+    return null;
+  }
+  const details = (error.error as Record<string, unknown>)['details'];
+  const mappingId =
+    typeof details === 'object' && details !== null ? (details as Record<string, unknown>)['mappingId'] : undefined;
+  return typeof mappingId === 'string' && mappingId !== '' ? mappingId : null;
+}
 
 /**
  * El `reason` de la integración que trae un error de la API, o `null`.
@@ -50,13 +72,21 @@ export function integrationReasonOf(error: unknown): IntegrationErrorReason | nu
  * El texto de un error de la integración, para la persona: el de su `reason`
  * si lo trae (con el identificador de la petición en un 5xx, para soporte), y
  * si no, el mismo que el resto del portal de la farmacia.
+ *
+ * `overrides` cambia el texto de algún `reason` para una pantalla que lo dice
+ * distinto (al configurar, un 502 no es «pruebe en unos minutos»), sin perder
+ * el identificador de la petición.
  */
-export function integrationErrorMessage(error: unknown, fallback: string): string {
+export function integrationErrorMessage(
+  error: unknown,
+  fallback: string,
+  overrides: Partial<Readonly<Record<IntegrationErrorReason, string>>> = {},
+): string {
   const reason = integrationReasonOf(error);
   if (reason === null) {
     return pharmacyErrorMessage(error, fallback);
   }
-  const text = INTEGRATION_ERROR_TEXT[reason];
+  const text = overrides[reason] ?? INTEGRATION_ERROR_TEXT[reason];
   const requestId = requestIdOf(error);
   return error instanceof HttpErrorResponse && error.status >= 500 && requestId !== null
     ? `${text} (petición ${requestId})`

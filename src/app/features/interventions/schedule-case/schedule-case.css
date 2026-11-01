@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+/* Regla 6: centrada, a lo ancho; columnas por ancho (1 / 2 desde 780 / 3 desde 1120). */
+.schedule-case {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.schedule-case__form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.schedule-case__grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: 1fr;
+}
+
+.schedule-case__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 780px) {
+  .schedule-case__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .schedule-case__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

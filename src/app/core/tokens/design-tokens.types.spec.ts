@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 import {
+  CHART,
   cssVar,
   DESIGN_TOKENS,
   isThemeMode,
@@ -81,6 +82,30 @@ describe('design tokens', () => {
       const catalogo = new Set<string>(DESIGN_TOKENS);
       const huerfanos = [...declaradosEnCss].filter((token) => !catalogo.has(token));
       expect(huerfanos).toEqual([]);
+    });
+  });
+
+  describe('paleta de gráficos (ADR-0017, frente 05 H1)', () => {
+    const css = readFileSync('src/styles.css', 'utf8');
+
+    it('cataloga el ordinal de 4 pasos y el divergente de 5 puntos', () => {
+      const valores = Object.values(CHART) as string[];
+      for (const n of [1, 2, 3, 4]) expect(valores).toContain(`--chart-ord-${n}`);
+      for (const t of ['neg', 'neg-soft', 'mid', 'pos-soft', 'pos']) {
+        expect(valores).toContain(`--chart-div-${t}`);
+      }
+    });
+
+    it('declara el ordinal como alias de seq-2..5 en los tres bloques de tema', () => {
+      for (const n of [1, 2, 3, 4]) {
+        const alias = new RegExp(`--chart-ord-${n}: var\\(--chart-seq-${n + 1}\\);`, 'g');
+        expect(css.match(alias)?.length).toBe(3);
+      }
+    });
+
+    it('el verde (slot 6) oscuro ya no es #008300 (2,98:1 sobre la superficie petróleo)', () => {
+      expect(css.match(/--chart-6: #0c960c;/g)?.length).toBe(2);
+      expect(css.match(/--chart-6: #008300;/g)?.length).toBe(1);
     });
   });
 });

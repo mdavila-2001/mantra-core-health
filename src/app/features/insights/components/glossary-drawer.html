@@ -1,0 +1,34 @@
+<dialog #dlg class="gl" aria-labelledby="gl-title" (close)="closed.emit()">
+  <header class="gl__head">
+    <h2 id="gl-title" class="gl__title">Glosario de métricas</h2>
+    <button type="button" class="gl__x" aria-label="Cerrar el glosario" (click)="closed.emit()">×</button>
+  </header>
+  <p class="gl__lead">Cada métrica dice qué mide, qué decisión permite y qué hacer si sube o baja.</p>
+  @for (g of groups; track g.kind) {
+    <section>
+      <h3 class="gl__group">{{ g.label }}</h3>
+      <dl class="gl__list">
+        @for (m of g.items; track m.id) {
+          <div class="gl__item">
+            <dt>{{ m.label }}</dt>
+            <dd>{{ m.definition }}</dd>
+            <dd class="gl__more"><strong>Decisión:</strong> {{ m.decision }}</dd>
+            <dd class="gl__more"><strong>Si sube:</strong> {{ m.ifUp }} <strong>Si baja:</strong> {{ m.ifDown }}</dd>
+          </div>
+        }
+      </dl>
+    </section>
+  }
+  @if (others.length) {
+    <section>
+      <h3 class="gl__group">Otras</h3>
+      <dl class="gl__list">
+        @for (m of others; track m.id) { <div class="gl__item"><dt>{{ m.label }}</dt><dd>{{ m.definition }}</dd></div> }
+      </dl>
+    </section>
+  }
+  <section>
+    <h3 class="gl__group">Estados</h3>
+    <p class="gl__more">«—» es un dato sin base suficiente o no medido; nunca equivale a cero. Los datos de esta demostración son ficticios.</p>
+  </section>
+</dialog>

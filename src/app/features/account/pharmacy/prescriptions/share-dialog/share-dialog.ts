@@ -13,7 +13,6 @@ import {
   PLATFORM_ID,
   signal,
   viewChild,
-  type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, map, of } from 'rxjs';
@@ -69,7 +68,7 @@ export const SHARE_QR_DRAWER = new InjectionToken<
   styleUrl: './share-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ShareDialog implements OnInit {
+export class ShareDialog {
   private readonly shares = inject(PrescriptionSharesClient);
   private readonly toasts = inject(ToastService);
   private readonly document = inject(DOCUMENT);
@@ -117,12 +116,16 @@ export class ShareDialog implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.create();
-  }
+  /**
+   * `false` hasta que la persona pide el enlace. Abrir el diálogo no crea nada:
+   * cada enlace es un token vivo hasta 30 días, y abrirlo «para ver» dejaba
+   * otro en la lista cada vez.
+   */
+  protected readonly requested = signal(false);
 
-  /** Crea el enlace. Se reintenta solo desde un estado de error. */
+  /** Crea el enlace, a pedido. Se reintenta solo desde un estado de error. */
   protected create(): void {
+    this.requested.set(true);
     this.state.set(loading());
     this.shares
       .create(this.target())

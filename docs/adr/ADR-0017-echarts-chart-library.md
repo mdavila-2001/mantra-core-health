@@ -61,3 +61,43 @@ Los puntos 5 a 7 son opcionales **sólo si el gráfico lo declara por escrito**
 - CSP del repo (`src/server/security-headers.ts`): `script-src 'self'` sin `eval`;
   `style-src 'unsafe-inline'` ya permitido. ECharts con SVG no necesita relajar nada
   (**a comprobar en navegador**: no se ha ejecutado todavía).
+
+## Adenda 2026-10-31 — paleta validada contra la superficie del proyecto y leyenda
+
+Frente 05 H1 del portal de observabilidad
+(`docs/trabajo/2026-10-31-portal-observabilidad-gobierno/05-frontend-dataviz-y-evidencia.md`).
+
+**Paleta, validada contra la superficie real del proyecto.** La paleta categórica
+de esta ADR se copió de la referencia de la skill `dataviz` sin revalidarla contra
+`--bg-surface`. Se corrió `validate_palette.js` con la superficie real (blanco en
+claro, `--c-petrol-800` = `#0A2B3D` en oscuro; salidas íntegras en
+[`evidencia-dataviz/`](../trabajo/2026-10-31-portal-observabilidad-gobierno/evidencia-dataviz/)):
+
+- Pasa en los dos modos (banda de luminosidad, croma, separación CVD, piso normal),
+  salvo **`--chart-6` en oscuro: `#008300` daba 2,98:1** (< 3:1). Se corrige a
+  **`#0c960c`** (3,78:1; mismo matiz, solo luminosidad; no cambia ΔE adyacente).
+- En claro, `--chart-3`, `-4` y `-5` quedan bajo 3:1 (2,82 · 2,17 · 2,69): es el
+  «relevo» legal de la skill, **solo con rótulo directo o tabla**, que `ChartPanel`
+  ya da. Está declarado en `RELEVO` de `scripts/check-chart-palette.mjs`.
+- Los gráficos van **siempre sobre `--bg-surface`**, nunca sobre `-alt` (cae un
+  slot más bajo 3:1). En dispersión y múltiplos pequeños (all-pairs) el tope es
+  de **3 series**: solo los tres primeros slots pasan.
+- Nuevos tokens: ordinal de 4 pasos `--chart-ord-1..4` (alias de `--chart-seq-2..5`,
+  validados con `--ordinal`; en oscuro son 4 pasos, no 5) y divergente de cinco
+  puntos `--chart-div-neg`, `-neg-soft`, `-mid` (`--bg-surface-alt`), `-pos-soft`,
+  `-pos` (cada brazo validado como ordinal). `chart-theme.ts` los lee en
+  `ordinal[]` y `divergente[]`.
+- Guardia permanente: `node scripts/check-chart-palette.mjs` (dentro de
+  `gates:diseno`) y los pares `--chart-*`/`--chart-ord-*`/`--chart-div-*` contra
+  `--bg-surface` en `scripts/check-contrast.mjs`.
+
+**Enmienda a «Leyenda siempre visible (aun con una serie)»** (contrato, punto 3):
+una serie **no lleva caja de leyenda** (decisión X-8 del `PLAN.md` del frente).
+Con una sola serie el título y el rótulo del eje ya dicen qué es, y la caja
+repite un dato sin añadir información (skill `dataviz`). Con dos o más series la
+leyenda sigue siendo obligatoria. El contrato de siete puntos se lee entonces:
+«leyenda visible cuando hay más de una serie».
+
+*Estado de la enmienda de leyenda:* queda **escrita aquí**; el cambio en
+`chart-option.common.ts` (`leyenda()`) y en el contrato `reporting-contract.ts`
+es parte de H2 del frente 05 y **no se ejecutó** en este cambio.

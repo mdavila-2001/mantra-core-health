@@ -1,6 +1,7 @@
 import type { GlossaryArticle } from '../../core/data-access/terminology/glossary-article.types';
 import type { GlossaryTermDetail } from '../../core/data-access/terminology/terminology.types';
 import { glossaryPdfBlocks } from './glossary-pdf.service';
+import { imagenAprobadaDelTermino } from './glossary-image.logic';
 
 const term: GlossaryTermDetail = {
   conceptId: '11111111-1111-4111-8111-111111111111',
@@ -86,5 +87,29 @@ describe('glossaryPdfBlocks', () => {
       .join('\n');
     expect(text).toContain('Definición clínica.');
     expect(text).toContain('Fuente del término: NLM · https://medlineplus.gov/spanish/');
+  });
+});
+
+describe('imagenAprobadaDelTermino', () => {
+  const image: NonNullable<GlossaryTermDetail['image']> = {
+    source: 'https://example.org/image.png',
+    alt: 'Esquema clínico',
+    attribution: 'Autor',
+    license: 'CC BY 4.0',
+    status: 'approved',
+  };
+
+  it('oculta imágenes con licencia pero sin revisión de pertinencia clínica', () => {
+    expect(imagenAprobadaDelTermino({ ...term, image })).toBeUndefined();
+  });
+
+  it('muestra la imagen cuando su revisión de pertinencia está aprobada', () => {
+    expect(
+      imagenAprobadaDelTermino({
+        ...term,
+        image,
+        properties: { ...term.properties, image_review_status: 'approved' },
+      }),
+    ).toBe(image);
   });
 });

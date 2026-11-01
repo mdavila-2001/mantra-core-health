@@ -206,7 +206,7 @@
                      `app-phone-input`. -->
                   <app-phone-input
                     [formControlName]="campo.key"
-                    [placeholder]="campo.placeholder ?? '7001 2345'"
+                    [placeholder]="campo.placeholder ?? '70012345'"
                     [hasError]="errorDe(campo) !== ''"
                     [testId]="campo.testId ?? 'campo-' + campo.key"
                   />
@@ -245,6 +245,7 @@
                     [placeholder]="campo.placeholder ?? campo.description ?? ''"
                     [hasError]="errorDe(campo) !== ''"
                     [testId]="campo.testId ?? 'campo-' + campo.key"
+                    (blurred)="alSalirDe(campo)"
                   >
                     <!-- El glifo del campo, cuando lo declara: dentro del control,
                        para que comparta su marco y su foco. Ver `icono` en el

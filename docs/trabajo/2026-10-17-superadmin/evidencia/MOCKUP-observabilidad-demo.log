@@ -1,0 +1,7 @@
+
+== escritorio-light
+  ✗ escritorio-light: errores de consola: Refused to execute inline script because it violates the following Content Security Policy directive: "script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE='". Either the 'unsafe-inli | Refused to execute inline script because it violates the following Content Security Policy directive: "script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE='". Either the 'unsafe-inli
+  (modo demo: el simulador responde sin red; no hay respuesta HTTP que contrastar)
+  ✗ escritorio-light
+
+1 fallo(s)

@@ -1,0 +1,226 @@
+:host {
+  display: block;
+}
+
+.mut {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.mut__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.mut__note {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.mut__card {
+  display: block;
+  inline-size: 100%;
+}
+
+.mut__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.mut__h {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.mut__help {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+p.mut__help {
+  margin: 0;
+}
+
+.mut__mono,
+.mut__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  overflow-wrap: anywhere;
+}
+
+.mut__code {
+  color: var(--text-secondary);
+}
+
+.mut__block {
+  display: block;
+}
+
+.mut__name {
+  color: var(--text-link);
+}
+
+.mut__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+  overflow-wrap: break-word;
+}
+
+.mut__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.mut__levels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mut__levels li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.mut__scroll {
+  overflow-x: auto;
+}
+
+.mut__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-data);
+}
+
+.mut__table th,
+.mut__table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+  vertical-align: top;
+}
+
+.mut__table thead th {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  border-block-end-color: var(--border-default);
+}
+
+.mut__table tbody th {
+  font-weight: inherit;
+}
+
+.mut__table tbody th > * + * {
+  margin-block-start: var(--sp-1);
+}
+
+.mut__num {
+  text-align: end !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mut__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.mut__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.mut__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.mut__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.mut__facts div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.mut__facts dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.mut__facts dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+}
+
+.mut__finding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-alt);
+}
+
+.mut__finding p {
+  margin: 0;
+}
+
+.mut__sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.mut__sides section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.mut__side {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

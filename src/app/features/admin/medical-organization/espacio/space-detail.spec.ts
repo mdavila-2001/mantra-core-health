@@ -62,12 +62,12 @@ describe('SpaceDetail', () => {
     return b;
   }
 
-  it('es UNA tarjeta con las cinco pestañas del contrato', async () => {
+  it('es UNA tarjeta con las cinco pestañas del contrato y la de Operación de F2', async () => {
     await abrir('301');
     const tarjetas = raiz().querySelectorAll('[data-testid=ficha-espacio]');
     expect(tarjetas).toHaveLength(1);
     const pestanas = Array.from(raiz().querySelectorAll('[role=tab]')).map((t) => t.textContent?.trim());
-    expect(pestanas).toEqual(['General', 'Atributos técnicos', 'Unidades', 'Hijos', 'Historial']);
+    expect(pestanas).toEqual(['General', 'Atributos técnicos', 'Unidades', 'Hijos', 'Historial', 'Operación']);
     expect(raiz().textContent).toContain('Habitación 301');
     expect(raiz().textContent).toContain('Edificio A › Pabellón Norte');
   });

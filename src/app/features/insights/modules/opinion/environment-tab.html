@@ -1,0 +1,36 @@
+<app-ins-panel title="Exposición de cada campaña al entorno" question="¿Qué campañas están más expuestas a lo que pasa afuera? Se toma el mayor riesgo de cada una.">
+  <ul class="en__expo">
+    @for (e of exposures; track e.campaignId) {
+      <li class="en__card">
+        <p class="en__name">{{ e.name }}</p>
+        <p class="en__risk en__risk--{{ e.risk }}"><span aria-hidden="true">{{ mark(e.risk) }}</span> {{ labels[e.risk] }}</p>
+        <p class="en__small">{{ e.affecting.length }} elementos la tocan. Primera acción: {{ e.firstAction }}</p>
+      </li>
+    }
+  </ul>
+</app-ins-panel>
+
+<app-ins-panel title="Qué pasa afuera" question="Elementos ilustrativos de salud y economía, ordenados por relevancia.">
+  <div class="en__filters">
+    <label><span>Área</span><select (change)="setArea($event)">@for (a of areas; track a) { <option [value]="a">{{ a === 'all' ? 'Todas' : a }}</option> }</select></label>
+    <label><span>Tipo</span><select (change)="setKind($event)">@for (k of kinds; track k) { <option [value]="k">{{ k === 'all' ? 'Todos' : k }}</option> }</select></label>
+  </div>
+  <ul class="en__feed">
+    @for (i of items(); track i.id) {
+      <li class="en__item">
+        <button type="button" class="en__open" [attr.aria-expanded]="openId() === i.id" (click)="toggle(i.id)">
+          <span class="en__kind en__kind--{{ i.kind }}">{{ i.kind }}</span>
+          <span class="en__title">{{ i.title }}</span>
+          <span class="en__small">{{ i.area }} · {{ day(i.date) }} · relevancia {{ i.relevance }}</span>
+        </button>
+        @if (openId() === i.id) {
+          <ol class="en__qa">
+            @for (q of questions; track q; let n = $index) { <li><strong>{{ q }}</strong> {{ answers(i)[n] }}</li> }
+          </ol>
+        }
+      </li>
+    } @empty {
+      <li class="en__small">Ningún elemento coincide con estos filtros.</li>
+    }
+  </ul>
+</app-ins-panel>

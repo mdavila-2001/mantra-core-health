@@ -7,6 +7,8 @@
     formatea, no interpreta cadenas.
     ========================================================================== */
 
+import type { TurnoverCleaning } from '../operating-rooms/operating-rooms.types';
+
 /** Cabecera de un caso quirúrgico, tal como sale de la agenda. */
 export interface SurgicalCase {
   readonly id: string;
@@ -17,6 +19,144 @@ export interface SurgicalCase {
   readonly statusConceptId: string;
   readonly scheduledStartAt?: Date;
   readonly scheduledEndAt?: Date;
+  /* ---- F4 · quirófanos (`CONTRATO-F2-F5.md` §F4.3), formas de `toSummary` +
+     `CaseOrViewBuilder.fields` (API `3036730d2`). Opcionales: una API sin
+     esos campos tiene que seguir pintándose, y nada se deriva de su ausencia. ---- */
+  /** La sala resuelta (`{id, code, name}`). Sin ella, la pantalla la resuelve por `operatingRoomId`. */
+  readonly operatingRoom?: CaseOperatingRoom;
+  /** Inicio de la ventana reservada (inicio − preparación). */
+  readonly reservedStartAt?: Date;
+  /** Fin de la ventana reservada (fin + limpieza). */
+  readonly reservedEndAt?: Date;
+  readonly prepMinutes?: number;
+  readonly cleanupMinutes?: number;
+  /** El bloque en el que cae el caso (`{id, label}`), o ausente si va en agenda abierta. */
+  readonly block?: CaseBlock;
+  readonly encounterId?: string;
+  /** Tipo de caso como concepto (`{code, display}`). */
+  readonly caseType?: { readonly code: string; readonly display: string };
+}
+
+/** La sala de un caso, como la devuelve la API desde F4 (sin ruta del árbol). */
+export interface CaseOperatingRoom {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  /** Sólo si alguna lectura la trae; la API de F4 no la manda. */
+  readonly path?: string;
+}
+
+/** El bloque de un caso, con el rótulo de su dueño resuelto por la API. */
+export interface CaseBlock {
+  readonly id: string;
+  readonly label: string;
+}
+
+/** Cuándo se completó cada fase del check-list (`CaseOrViewBuilder.detail`). */
+export interface CaseChecklistSummary {
+  readonly id: string;
+  readonly signIn: { readonly completedAt: string | null };
+  readonly timeOut: { readonly completedAt: string | null };
+  readonly signOut: { readonly completedAt: string | null };
+}
+
+/** Tipo de caso del DTO de programación. */
+export type SurgicalCaseType = 'ELECTIVE' | 'URGENT' | 'EMERGENCY';
+
+/** Prioridad del DTO de programación. */
+export type SurgicalCasePriority = 'ROUTINE' | 'URGENT' | 'STAT';
+
+/** `POST /procedure-cases` (`ScheduleCaseDto`). */
+export interface ScheduleCaseRequest {
+  readonly custodianTenantId: string;
+  readonly patientProfileId: string;
+  readonly caseType: SurgicalCaseType;
+  readonly priority: SurgicalCasePriority;
+  readonly primarySurgeonProfileId: string;
+  readonly practiceSiteId?: string;
+  readonly operatingRoomId: string;
+  readonly scheduledStartAt: string;
+  readonly scheduledEndAt: string;
+  readonly surgicalSpecialtyConceptId?: string;
+  readonly urgencyReasonText?: string;
+}
+
+/** Lo que devuelve programar (`CaseResponseDto` + la ventana de F4). */
+export interface ScheduledCase {
+  readonly id: string;
+  readonly caseNumber: string;
+  readonly statusConceptId: string;
+  readonly operatingRoomId: string;
+  readonly reservedStartAt?: string;
+  readonly reservedEndAt?: string;
+}
+
+/** Respuesta de un ítem del check-list, como se **manda** (`ChecklistResponseItemDto`). */
+export type ChecklistResponseStatus = 'CONFIRMED' | 'NOT_APPLICABLE' | 'EXCEPTION';
+
+/** Un ítem OMS con su respuesta, si ya la tiene (vista de `SafetyChecklistUseCases`). */
+export interface ChecklistItem {
+  readonly id: string;
+  readonly code?: string;
+  readonly prompt: string;
+  readonly mandatory: boolean;
+  /**
+   * `status` llega como **UUID de concepto** (`responseStatusConceptId`); se
+   * traduce con `checklistResponseCode` de `infra-concepts.ts`. La API no
+   * devuelve el motivo de la excepción en esta vista.
+   */
+  readonly response: {
+    readonly status: string;
+    readonly respondedAt: string;
+  } | null;
+}
+
+/** Una fase del check-list. */
+export interface ChecklistPhaseView {
+  readonly phase: 'SIGN_IN' | 'TIME_OUT' | 'SIGN_OUT';
+  readonly completedAt: string | null;
+  readonly items: readonly ChecklistItem[];
+}
+
+/** `POST /procedure-cases/:id/safety-checklists` y `GET …/:checklistId`. */
+export interface SafetyChecklist {
+  readonly id: string;
+  readonly version: string;
+  readonly phases: readonly ChecklistPhaseView[];
+}
+
+/** `POST …/safety-checklists/:checklistId/responses` (`SubmitChecklistPhaseDto`). */
+export interface ChecklistPhaseSubmission {
+  readonly phase: ChecklistPhaseView['phase'];
+  readonly respondedByProfileId: string;
+  readonly responses: readonly {
+    readonly itemId: string;
+    readonly status: ChecklistResponseStatus;
+    readonly exceptionReason?: string;
+  }[];
+}
+
+/** Lo que devuelve responder una fase. */
+export interface ChecklistPhaseResult {
+  readonly checklistId: string;
+  readonly recorded: number;
+  readonly phaseCompleted: boolean;
+}
+
+/** Un tiempo del caso ya registrado. */
+export interface RoomEvent {
+  readonly id: string;
+  readonly eventCode: string;
+  readonly occurredAt: string;
+  readonly recordedByUserId?: string | null;
+}
+
+/** Lo que devuelve `POST /procedure-cases/:id/room-events`. */
+export interface RoomEventResult {
+  readonly utilizationEventId: string;
+  readonly milestoneId: string | null;
+  /** La orden de recambio que abrió la salida de sala (sólo en `PATIENT_OUT_OF_ROOM`). */
+  readonly cleaningOrderId: string | null;
 }
 
 /** Un integrante del equipo del caso. */
@@ -101,11 +241,29 @@ export interface OperativeReport {
  */
 export interface SurgicalCaseDetail {
   readonly case: SurgicalCase;
+  /**
+   * ¿La cabecera trajo el campo `checklist` (aunque sea `null`)? Distingue
+   * «no tiene check-list» de «la API no lo informa» (pedido a A-F4).
+   */
+  readonly checklistReported?: boolean;
+  /** El check-list del caso (detalle, no cabecera); `null` = no tiene. */
+  readonly checklist?: CaseChecklistSummary | null;
   readonly team: readonly CaseTeamMember[];
   readonly operativeSteps: readonly OperativeStep[];
   readonly findings: readonly OperativeFinding[];
   readonly implants: readonly ProcedureImplant[];
   readonly operativeReports: readonly OperativeReport[];
+  /**
+   * Los tiempos de sala registrados (pedido a A-F4). **Ausente** = la API
+   * todavía no los informa: la ficha lo dice y no deriva compuertas de un
+   * arreglo vacío inventado.
+   */
+  readonly roomEvents?: readonly RoomEvent[];
+  /**
+   * La orden de recambio de la sala (pedido a A-F4). `null` = no hay;
+   * ausente = la API no lo informa.
+   */
+  readonly turnoverCleaning?: TurnoverCleaning | null;
 }
 
 /** Una página de la agenda quirúrgica, con su total sin paginar. */

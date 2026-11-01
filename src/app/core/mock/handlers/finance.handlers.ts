@@ -590,7 +590,7 @@ function periodoAbierto(): { id: string; name: string; status: string } | undefi
 export function consultasPagadas() {
   return reservas
     .filtrar((r) => r.paymentState?.state === 'PAID')
-    .map((r, i) => ({ reserva: r, paidTotal: i % 3 === 0 ? '180.00' : '250.00' }));
+    .map((r, i) => ({ reserva: r, paidTotal: r.paymentAmount ?? (i % 3 === 0 ? '180.00' : '250.00') }));
 }
 
 export function registrarFinanzas(router: MockRouter): void {
@@ -990,15 +990,14 @@ export function registrarFinanzas(router: MockRouter): void {
       .filter((a) => (from === null || a.transactionDate >= from) && (to === null || a.transactionDate <= to))
       .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
       .slice(0, limit)
-      .map(({ lines: _l, practiceId: _p, description: _d, ...a }) => a);
+      .map(({ lines: _l, practiceId: _p, ...a }) => a);
     return { items, count: items.length, limit };
   });
 
   router.get('/accounting/journal-transactions/:id', ({ params }) => {
     const a = asientos.get(params['id']!);
     if (a === undefined) return notFound('Asiento no encontrado');
-    const { description: _d, ...resto } = a;
-    return resto;
+    return a;
   });
 
   const publicar = (borrador: boolean) => (request: { body: unknown }) => {
@@ -1032,8 +1031,21 @@ export function registrarFinanzas(router: MockRouter): void {
   router.post('/accounting/journal-transactions/drafts', publicar(true));
 
   router.get('/accounting/practitioner/paid-consultations', () => {
-    const pagadas = consultasPagadas().slice(0, 8);
-    const items = pagadas.map(({ reserva: r, paidTotal }, i) => ({ invoiceId: uuid(`invoice-${r.id}`), invoiceNumber: `FAC-${2026}-${String(300 + i).padStart(4, '0')}`, encounterId: null, appointmentId: r.appointmentId, patientProfileId: r.patientProfileId, issueDate: r.startAt.slice(0, 10), paidTotal, currencyConceptId: MONEDA_BOB }));
+    const pagadas = consultasPagadas();
+    const semillas = pagadas.slice(0, 8);
+    const confirmadasAhora = pagadas.filter(({ reserva }) => reserva.paymentAmount !== undefined);
+    const ids = new Set(semillas.map(({ reserva }) => reserva.id));
+    const visibles = [...semillas, ...confirmadasAhora.filter(({ reserva }) => !ids.has(reserva.id))];
+    const items = visibles.map(({ reserva: r, paidTotal }, i) => ({
+      invoiceId: uuid(`invoice-${r.id}`),
+      invoiceNumber: `FAC-${2026}-${String(300 + i).padStart(4, '0')}`,
+      encounterId: null,
+      appointmentId: r.appointmentId,
+      patientProfileId: r.patientProfileId,
+      issueDate: r.paymentAmount === undefined ? r.startAt.slice(0, 10) : r.paymentState!.markedAt.slice(0, 10),
+      paidTotal,
+      currencyConceptId: MONEDA_BOB,
+    }));
     return { items, count: items.length };
   });
 

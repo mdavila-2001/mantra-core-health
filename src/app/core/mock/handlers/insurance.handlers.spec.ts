@@ -111,6 +111,10 @@ describe('handlers del catálogo administrativo de seguros', () => {
     expect(benefit.copayAmount).toBeNull();
     expect(benefit.approvalRules.requiredDocuments).toEqual(['ORDEN_MEDICA']);
     expect(benefit.approvalRules.exclusionNotes).toBe('Sin experimentales');
+
+    // El catálogo es del proceso, no del archivo: un plan sin prima que se queda
+    // acá le cambia las cuentas al tablero de siniestralidad de otro archivo.
+    call('DELETE', `/insurance-plans/${planId}`, null, owner);
   });
 
   it('corrige los datos generales del producto seguro y lo da de baja', () => {

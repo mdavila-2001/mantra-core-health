@@ -4,12 +4,14 @@
   <nav class="cm__drill" aria-label="Nivel de detalle">
     <span class="cm__drill-label">Nivel de detalle</span>
     <span>General</span>
-    @if (drillChannel()) {
+    @for (c of drillCrumbs(); track c.upTo) {
       <span aria-hidden="true">›</span>
-      <span class="cm__drill-now">Canal: {{ drillLabel() }}</span>
-      <button type="button" class="cm__drill-clear" (click)="clearDrill()">Volver a todos los canales</button>
+      <span class="cm__drill-now">{{ c.text }}</span>
+    }
+    @if (drill().length > 0) {
+      <button type="button" class="cm__drill-clear" (click)="clearDrill()">Volver a General</button>
     } @else {
-      <span class="cm__drill-hint">Haga clic en una barra de canal para profundizar sin perder el contexto.</span>
+      <span class="cm__drill-hint">Haga clic en una barra de canal, o en una fila del detalle, para profundizar sin perder el contexto.</span>
     }
   </nav>
 
@@ -42,6 +44,7 @@
 
       <app-ins-dimension-panel [filter]="filter()" />
       <app-ins-comparison-panel [channels]="filter().channels" [initial]="ctx.state().campaignIds" />
+      <app-ins-drill-panel />
       <app-ins-detail-table [filter]="filter()" />
       </div>
     }
