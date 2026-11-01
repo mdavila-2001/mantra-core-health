@@ -15,7 +15,7 @@ import type {
 } from '../../../core/data-access/pharmacy/pharmacy-integration.types';
 import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { IntegrationMappings } from './integration-mappings/integration-mappings';
-import { PharmacyIntegration } from './pharmacy-integration';
+import { MISSING_SYSTEM_TEXT, PharmacyIntegration } from './pharmacy-integration';
 
 /**
  * Pestaña «Integración» (FAR-07): sin conexión ofrece conectarla; con conexión
@@ -322,7 +322,8 @@ describe('PharmacyIntegration', () => {
       expectOne('GET', `${CONN}/product-mappings`).flush({ items: [] });
       fixture.detectChanges();
 
-      expect(text('integration-not-configured')).toContain('no está configurada');
+      // Con la conexión dada de alta, el aviso dice qué falta sin negar que está activa.
+      expect(text('integration-not-configured')).toContain(MISSING_SYSTEM_TEXT);
       expect(disabled('integration-sync-button')).toBe(true);
       http.expectNone(`${CONN}/external-products`);
     });
@@ -469,5 +470,40 @@ describe('PharmacyIntegration', () => {
     };
     expect(mappings.externalCode()).toBe('ERP-0003');
     expect((root().querySelector('input[data-testid="integration-link-unit"]') as HTMLInputElement).value).toBe('BOX');
+  });
+
+  describe('sistema de la farmacia (FAR-C9 · C9-4)', () => {
+    it('la sección está en la pestaña y, al guardar, la conexión se relee de la API', () => {
+      const withSystem: IntegrationConnection = {
+        ...CONNECTION,
+        system: {
+          format: 'ALOVIDA_STANDARD',
+          baseUrl: 'https://api.farmacia.bo/alovida-standard',
+          externalPharmacyCode: 'FC',
+          apiKeyConfigured: true,
+          configuredAt: '2026-11-01T04:19:57.180Z',
+        },
+      };
+      mount([withSystem]);
+      answerConnection();
+
+      expect(text('integration-system')).toContain('https://api.farmacia.bo/alovida-standard');
+
+      button('integration-system-edit').click();
+      fixture.detectChanges();
+      const key = root().querySelector('input[data-testid="integration-system-key"]') as HTMLInputElement;
+      key.value = 'otra-clave';
+      key.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      button('integration-system-save').click();
+      expectOne('PUT', `${CONN}/external-system`).flush({ system: withSystem.system, probe: 'OK' });
+      fixture.detectChanges();
+
+      // `changed` → la pestaña relee la lista: lo que se ve sale de la API.
+      expectOne('GET', BASE).flush({ providerConfigured: true, items: [withSystem] });
+      fixture.detectChanges();
+      answerConnection();
+      expect(byTestId('integration-system-form')).toBeNull();
+    });
   });
 });

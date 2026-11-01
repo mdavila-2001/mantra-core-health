@@ -1586,9 +1586,9 @@ Carga masiva del catálogo, con vista previa (`dryRun`); `:entity` es `categorie
 | `GET` | `/pharmacy/products` | `InboxOrder` y 3 pantallas más | No |
 | `POST` | `/pharmacies/:pharmacyId/products` | `PharmacyCatalog` | No |
 
-### `PharmacyIntegrationClient` — 7 operaciones
+### `PharmacyIntegrationClient` — 10 operaciones
 
-La pestaña Integración del catálogo: la conexión con el sistema de la farmacia, sus vínculos de productos y «Sincronizar ahora». `422 PHARMACY_INTEGRATION_NOT_CONFIGURED` y `502 PHARMACY_INTEGRATION_UNAVAILABLE` se dicen en pantalla por su `reason`.
+La pestaña Integración del catálogo: la conexión con el sistema de la farmacia, el sistema propio de cada conexión (FAR-C9: formato, dirección, código y clave; la clave viaja solo en el cuerpo del `PUT` y nunca vuelve), sus vínculos de productos y «Sincronizar ahora». `422 PHARMACY_INTEGRATION_NOT_CONFIGURED`, `422 PHARMACY_INTEGRATION_HOST_NOT_ALLOWED`, `400 PHARMACY_INTEGRATION_URL_INVALID` y `502 PHARMACY_INTEGRATION_UNAVAILABLE` se dicen en pantalla por su `reason`.
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -1599,6 +1599,9 @@ La pestaña Integración del catálogo: la conexión con el sistema de la farmac
 | `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-products` | `IntegrationMappings` | No |
 | `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync-batches` | `IntegrationSync` | No |
 | `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync` | `IntegrationSync` | No |
+| `PUT` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-system` | `IntegrationSystem` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-system/test` | `IntegrationSystem` | No |
+| `DELETE` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-system` | `IntegrationSystem` | No |
 
 ### `PharmacyOrdersClient` — 4 operaciones
 

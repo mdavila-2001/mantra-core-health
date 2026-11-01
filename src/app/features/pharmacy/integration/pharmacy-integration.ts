@@ -34,9 +34,14 @@ import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { INTEGRATION_ERROR_TEXT, integrationErrorMessage } from './integration-error-message';
 import { IntegrationMappings } from './integration-mappings/integration-mappings';
 import { IntegrationSync } from './integration-sync/integration-sync';
+import { IntegrationSystem } from './integration-system/integration-system';
 
 /** Valor del desplegable de sucursal que no manda ninguna: la conexión vale para todas. */
 export const ALL_SITES = 'ALL';
+
+/** Conexión activa sin sistema con quién sincronizar (FAR-C9 · C9-4). */
+export const MISSING_SYSTEM_TEXT =
+  'Falta cargar el sistema de la farmacia, abajo: sin él, la conexión no tiene con quién sincronizar. Mientras tanto, lleve las existencias en «Inventario».';
 
 /** El texto del botón que conecta, también la próxima acción del estado vacío. */
 export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
@@ -64,6 +69,7 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
     FormField,
     IntegrationMappings,
     IntegrationSync,
+    IntegrationSystem,
     Select,
     ViewStateHost,
   ],
@@ -92,6 +98,12 @@ export class PharmacyIntegration {
 
   protected readonly connectLabel = CONNECT_LABEL;
   protected readonly notConfiguredText = INTEGRATION_ERROR_TEXT.PHARMACY_INTEGRATION_NOT_CONFIGURED;
+  /**
+   * Con la conexión ya dada de alta, el aviso dice qué falta y dónde: lo que no
+   * hay es el sistema con quién sincronizar. (Si además está inactiva, el
+   * estado de arriba lo muestra.)
+   */
+  protected readonly missingSystemText = MISSING_SYSTEM_TEXT;
   protected readonly inactiveText = INTEGRATION_ERROR_TEXT.PHARMACY_INTEGRATION_CONNECTION_INACTIVE;
 
   /**

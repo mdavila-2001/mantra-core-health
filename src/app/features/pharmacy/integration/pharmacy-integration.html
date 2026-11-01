@@ -73,11 +73,13 @@
               </div>
               <app-fact-list disposicion="columnas" etiqueta="Datos de la conexión" [hechos]="facts()" />
               @if (!current.providerConfigured) {
-                <app-alert tone="warning" data-testid="integration-not-configured">{{ notConfiguredText }}</app-alert>
+                <app-alert tone="warning" data-testid="integration-not-configured">{{ missingSystemText }}</app-alert>
               } @else if (current.status !== 'ACTIVE' || !current.supportsStockQuery) {
                 <app-alert tone="warning" data-testid="integration-inactive">{{ inactiveText }}</app-alert>
               }
             </section>
+
+            <app-integration-system [pharmacyId]="pharmacyId" [connection]="current" (changed)="reload()" />
 
             <!-- «Vincular» sobre un código sin vínculo del resultado abre el alta de abajo con ese código. -->
             <app-integration-sync
