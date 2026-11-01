@@ -128,4 +128,41 @@ describe('errores del servidor de visibilidad', () => {
     expect(visibilityFieldErrors(fail(404, { code: 'NOT_FOUND', reason: 'UI_ELEMENT_NOT_FOUND' }))['elementKey']).toContain('catálogo');
     expect(visibilityFieldErrors(fail(500, { code: 'INTERNAL' }))).toEqual({});
   });
+
+  /*
+   * Los 16 sub-códigos de error de `UiVisibilityErrorReason` (API, `ui-visibility.error-reasons.ts`). Un código sin
+   * palabras caía al mensaje genérico de la pantalla y la persona no sabía qué corregir.
+   */
+  it.each([
+    'UI_ELEMENT_NOT_FOUND',
+    'UI_ELEMENT_RETIRED',
+    'UI_RULE_VERSION_MISMATCH',
+    'UI_RULE_DUPLICATE',
+    'UI_RULE_INVALID_SUBJECT',
+    'UI_RULE_NOT_FOUND',
+    'UI_RULE_ENDED',
+    'UI_RULE_IF_MATCH_REQUIRED',
+    'UI_RULE_INVALID_VALIDITY',
+    'UI_RULE_EMPTY_UPDATE',
+    'UI_ELEMENT_KEY_EXISTS',
+    'UI_ELEMENT_PARENT_NOT_FOUND',
+    'UI_ELEMENT_HIERARCHY_CYCLE',
+    'UI_ELEMENT_SYNC_INVALID',
+    'UI_PREVIEW_SUBJECT_NOT_FOUND',
+    'UI_PREVIEW_SUBJECT_REQUIRED',
+    'UI_RULE_PROTECTED_ELEMENT',
+  ])('%s tiene palabras propias, no el mensaje genérico de la pantalla', (reason) => {
+    const e = fail(422, { code: 'X', reason, message: 'crudo' });
+    expect(visibilityCode(e)).toBe(reason);
+    const text = visibilityFailure(e, 'GENERICO');
+    expect(text).not.toBe('GENERICO');
+    expect(text).not.toContain('crudo');
+  });
+
+  it('ocultar la pantalla de gobierno a los administradores se marca en el sujeto; la vigencia incoherente, en el fin', () => {
+    expect(visibilityFieldErrors(fail(422, { code: 'X', reason: 'UI_RULE_PROTECTED_ELEMENT' }))['subjectId']).toContain('administradores');
+    expect(visibilityFieldErrors(fail(422, { code: 'X', reason: 'UI_RULE_INVALID_VALIDITY' }))['validTo']).toContain('posterior');
+    expect(visibilityFieldErrors(fail(409, { code: 'X', reason: 'UI_ELEMENT_KEY_EXISTS' }))['key']).toContain('esa clave');
+    expect(visibilityFieldErrors(fail(422, { code: 'X', reason: 'UI_ELEMENT_HIERARCHY_CYCLE' }))['parentKey']).toContain('ciclo');
+  });
 });

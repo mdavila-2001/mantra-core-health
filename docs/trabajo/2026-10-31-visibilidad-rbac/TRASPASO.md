@@ -67,3 +67,15 @@ Retirado por ser duplicado de `dev` (auditoría `RECONCILIACION-DEV.md`): `admin
 - Contrato de visibilidad: `CONTRATO.md` (esta carpeta). Informes: `RBAC-POR-MODULO.md`, `RECONCILIACION-DEV.md`.
 - Catalogación: `docs/trabajo/2026-10-31-catalogacion/{BRECHAS,COBERTURA}.md`.
 - Plan original del perfil admin: `docs/trabajo/2026-10-30-perfil-admin-medicion-gobierno/PLAN.md`.
+
+## Avance 2026-11-01 (rama `claude-marcelo/brave-cray-boy4vl`, front y API)
+Los PR originales (front `#1838`, API `#1232`) ya están fusionados en `dev`. El modelo (`#103`) sigue abierto.
+
+| Pendiente | Qué se hizo | Evidencia |
+|---|---|---|
+| 10 (techo de 600) | Los **seis** handlers simulados que entraron con el portal pasaban de 600 líneas, no solo `mutability`: `ui-visibility` 836, `runtime-pieces` 705, `catalog-fit` 685, `permissions-admin` 676, `governance-policies` 671 y `mutability` 602. Los datos semilla pasaron a `*.seed.ts`, el resolutor de visibilidad a `ui-visibility.resolver.ts` y las validaciones de permisos a `permissions-admin.support.ts`. Sin cambios de comportamiento. | `check-max-lines`: ya no hay archivos «sin excepción» (quedan las 11 excepciones congeladas que crecieron en `dev`, ajenas a esto). `ng test` en verde en dos corridas: los 6 handlers + `core/visibility` + `features/admin/portal/visibility` (17 archivos, 224 pruebas), y `features/admin/portal/**` + `core/mock/*` + `authz-modules-catalog` (76 archivos, 699 pruebas). **La suite completa no se corrió.** |
+| 15 (visibilidad) | `UiRulesPage` llama `UiVisibilityService.refresh()` al crear, editar o terminar una regla: la sesión del admin recoge el cambio sin recargar la página. Los 16 códigos de error de `UiVisibilityErrorReason` tienen palabras propias; los de un campo se marcan en ese campo (`UI_RULE_PROTECTED_ELEMENT`→sujeto, `UI_RULE_INVALID_VALIDITY`→fin, `UI_ELEMENT_KEY_EXISTS`→clave, padre inexistente o ciclo→elemento superior). | Pruebas en `ui-rules-page.spec.ts` y `visibility-labels.spec.ts`. Mutación: sin la llamada a `refresh()` la prueba falla. **Sin evidencia de navegador.** |
+| 11 (Dockerfile, API) | La etapa `build` genera `dist/runtime-pieces.manifest.json`. | Fuera de Docker: el CLI genera 181 piezas y `discoverPieces()` las lee sin `src/`. **No se construyó la imagen.** |
+| 12 (alcance de calidad de datos, API) | **No había fuga.** La ruta es `@TenantAgnostic`: no resuelve tenant y `RolesGuard` no deja autorizar a un rol acotado sin tenant resuelto, ni siquiera mandando `X-Tenant-Id`, así que recibe 403. Se fijó con una prueba de regresión sobre la cadena real de guardas. | `admin-data-quality.controller.spec.ts`: sin `@TenantAgnostic`, 5 casos fallan. |
+
+**Hallazgo nuevo (decisión de dueños):** `GET /admin/ops/tools` está declarado en `platform_ops` (forma `health.state`, sin `@PlatformScopeOptional`, más `GET :code`) y en `ops_console` (forma `isHealthy`/`summary`, la que consume el front). `PlatformOpsModule` se registra antes en `app.module.ts`, así que lo más probable es que responda el de `platform_ops` y el front reciba una forma que no espera. **No se verificó arrancando Nest.** No se tocó: hay que elegir un contrato.

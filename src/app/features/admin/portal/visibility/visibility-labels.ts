@@ -158,6 +158,18 @@ const FAILURE_TEXT: Readonly<Record<string, string>> = {
   UI_RULE_DUPLICATE: 'Ya hay una regla vigente para ese elemento y ese sujeto. Edítela o termínela primero.',
   UI_RULE_INVALID_SUBJECT: 'El sujeto de la regla no es válido para el tipo elegido.',
   UI_RULE_ENDED: 'Esa regla ya terminó: cree una nueva en lugar de editarla.',
+  UI_RULE_NOT_FOUND: 'Esa regla ya no existe. Recargue la lista.',
+  UI_RULE_IF_MATCH_REQUIRED: 'No se pudo comprobar qué versión de la regla estaba editando. Recargue la lista y vuelva a intentarlo.',
+  UI_RULE_INVALID_VALIDITY: 'La fecha de fin tiene que ser posterior a la de inicio.',
+  UI_RULE_EMPTY_UPDATE: 'No cambió nada de la regla: no hay qué guardar.',
+  UI_RULE_PROTECTED_ELEMENT:
+    'No se puede ocultar esta pantalla a los administradores: es la que gobierna la visibilidad y quedarían sin acceso a ella. Elija un sujeto que no los incluya.',
+  UI_ELEMENT_KEY_EXISTS: 'Ya hay un elemento con esa clave en el catálogo.',
+  UI_ELEMENT_PARENT_NOT_FOUND: 'El elemento superior elegido no está en el catálogo.',
+  UI_ELEMENT_HIERARCHY_CYCLE: 'Ese elemento superior crearía un ciclo: un elemento no puede contenerse a sí mismo.',
+  UI_ELEMENT_SYNC_INVALID: 'El lote de elementos del código no es válido (claves repetidas con contenido distinto o demasiados elementos).',
+  UI_PREVIEW_SUBJECT_NOT_FOUND: 'Esa persona o ese rol no existe, o no está a su alcance.',
+  UI_PREVIEW_SUBJECT_REQUIRED: 'Elija una persona o un rol (uno solo) para ver la interfaz como lo vería.',
 };
 
 /** El campo del formulario al que pertenece cada código, cuando la API no marcó ninguno. */
@@ -166,6 +178,11 @@ const FIELD_OF_CODE: Readonly<Record<string, string>> = {
   UI_ELEMENT_RETIRED: 'elementKey',
   UI_RULE_INVALID_SUBJECT: 'subjectId',
   UI_RULE_DUPLICATE: 'subjectId',
+  UI_RULE_PROTECTED_ELEMENT: 'subjectId',
+  UI_RULE_INVALID_VALIDITY: 'validTo',
+  UI_ELEMENT_KEY_EXISTS: 'key',
+  UI_ELEMENT_PARENT_NOT_FOUND: 'parentKey',
+  UI_ELEMENT_HIERARCHY_CYCLE: 'parentKey',
 };
 
 /**

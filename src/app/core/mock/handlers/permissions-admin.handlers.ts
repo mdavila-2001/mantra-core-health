@@ -1,17 +1,14 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import {
-  conflict,
-  isMockReply,
-  notFound,
-  precondition,
-  reply,
-  validation,
-  type MockHandler,
-  type MockReply,
-  type MockRequest,
-  type MockRouter,
+  conflict, isMockReply, notFound, precondition, reply, validation, type MockHandler,
+  type MockReply, type MockRequest, type MockRouter,
 } from '../mock-router';
+import {
+  DAY_MS, ACTIONS, SCOPES, EFFECTS, MASKS, SUBJECTS, RESOURCES, PURPOSES, UUID, ACTION_OF_SUFFIX,
+  rejectWith, bodyOf, denyReason, lifecycleReason, type Binding, type FieldRule, type ScopeGrant,
+  type LifecycleEvent, type Review, type Page,
+} from './permissions-admin.support';
 
 /* ============================================================================
     Backend simulado del gobierno de permisos (H5): edición de permisos por
@@ -40,93 +37,6 @@ import {
     dice en su `reason`: no sustituye al PDP real.
     ========================================================================== */
 
-const DAY_MS = 86_400_000;
-const REASON_MIN = 10;
-const REASON_MAX = 500;
-/** Tope del motivo de una acción de ciclo de vida de `iam` (no tiene mínimo: sólo no vacío). */
-const LIFECYCLE_REASON_MAX = 500;
-const ACTIONS = new Set(['READ', 'WRITE', 'CREATE', 'DELETE', 'EXECUTE', 'APPROVE']);
-const SCOPES = new Set(['SELF', 'BRANCH', 'TENANT', 'GLOBAL']);
-const EFFECTS = new Set(['ALLOW', 'DENY']);
-const MASKS = new Set(['REDACT', 'HASH', 'PARTIAL', 'NULLIFY']);
-const SUBJECTS = new Set(['USER', 'ROLE', 'SERVICE']);
-const RESOURCES = new Set(['PATIENT', 'ENCOUNTER', 'DOCUMENT', 'RECORD']);
-const PURPOSES = new Set(['TREATMENT', 'PAYMENT', 'OPERATIONS', 'EMERGENCY']);
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-/** Acciones de los códigos de permiso de la maqueta que no son un verbo de la API. */
-const ACTION_OF_SUFFIX: Readonly<Record<string, string>> = { EXPORT: 'EXECUTE', ASSIGN: 'EXECUTE', REVIEW: 'APPROVE' };
-
-interface Binding {
-  readonly permissionId: string;
-  readonly effect: string;
-  readonly scope: string | null;
-}
-interface FieldRule {
-  entity: string;
-  columnName: string;
-  canRead: boolean;
-  canWrite: boolean;
-  maskStrategy: string | null;
-  conditionJson: Record<string, unknown> | null;
-}
-interface ScopeGrant {
-  readonly id: string;
-  readonly subjectId: string;
-  readonly permissionId: string;
-  readonly resourceId: string;
-  readonly tenantId: string | null;
-  readonly subjectType: string;
-  readonly resourceType: string;
-  readonly effect: string;
-  readonly validFrom: string | null;
-  validTo: string | null;
-  readonly createdAt: string;
-}
-interface LifecycleEvent {
-  readonly id: string;
-  readonly action: 'SUSPEND' | 'REACTIVATE' | 'DEACTIVATE';
-  readonly reason: string;
-  readonly recordedByUserId: string | null;
-  readonly recordedAt: string;
-}
-interface Review {
-  readonly id: string;
-  readonly userId: string;
-  readonly userDisplayName: string | null;
-  readonly reviewerUserId: string;
-  readonly reviewerDisplayName: string | null;
-  readonly reviewedAt: string;
-}
-
-interface Page<T> {
-  items: T[];
-  nextCursor: string | null;
-  limit: number;
-}
-
-const rejectWith = (base: MockReply, reason: string): MockReply =>
-  reply(base.status, { ...(base.body as Record<string, unknown>), reason });
-
-const bodyOf = (req: MockRequest): Record<string, unknown> =>
-  typeof req.body === 'object' && req.body !== null ? (req.body as Record<string, unknown>) : {};
-
-/** Motivo de terminar un permiso DENY: mínimo 10, como `EndResourceScopeGrantDto`. */
-function denyReason(req: MockRequest): string | MockReply {
-  const reason = bodyOf(req)['reason'];
-  if (typeof reason !== 'string' || reason.trim().length < REASON_MIN || reason.length > REASON_MAX) {
-    return precondition('Terminar un permiso de efecto DENY exige un motivo', 'RESOURCE_SCOPE_GRANT_DENY_REASON_REQUIRED');
-  }
-  return reason.trim();
-}
-
-/** Motivo de una acción de ciclo de vida (`UserLifecycleReasonDto`): texto no vacío de hasta 500. */
-function lifecycleReason(req: MockRequest): string | MockReply {
-  const reason = bodyOf(req)['reason'];
-  if (typeof reason !== 'string' || reason.trim() === '' || reason.length > LIFECYCLE_REASON_MAX) {
-    return validation('Error de validación', [{ field: 'reason', message: 'reason should not be empty' }]);
-  }
-  return reason.trim();
-}
 
 /** Registra el gobierno de permisos simulado. Llamar después de `registerGovernance`. */
 export function registerPermissionsAdmin(router: MockRouter): void {
