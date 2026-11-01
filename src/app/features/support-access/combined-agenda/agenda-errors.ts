@@ -17,8 +17,11 @@ export function failureMessage(error: unknown, fallback: string): string {
       return mensajes.length === 0 ? fallback : [...new Set(mensajes)].join(' ');
     }
     case 'forbidden':
-    case 'error':
       return state.message !== undefined && state.message !== '' ? state.message : fallback;
+    case 'error':
+      // S9: qué no se pudo hacer (la pantalla) y por qué (texto fijo del catálogo,
+      // nunca el `message` del servidor).
+      return state.message !== undefined && state.message !== '' ? `${fallback} ${state.message}` : fallback;
     case 'offline':
       return 'Sin conexión: revise su internet y vuelva a intentarlo.';
     default:
