@@ -47,7 +47,7 @@ describe('mock-backend.interceptor.disabled', () => {
     expect(codigo).not.toMatch(/import\(/);
   });
 
-  it('angular.json lo sustituye en TODAS las configuraciones reales y en NINGUNA de las de demostración', () => {
+  it('angular.json lo sustituye en TODAS las configuraciones reales y en NINGUNA de las de demostración (en mockup, `production` es la maqueta)', () => {
     const angular = JSON.parse(readFileSync('angular.json', 'utf8')) as {
       projects: Record<
         string,
@@ -70,8 +70,9 @@ describe('mock-backend.interceptor.disabled', () => {
           r.replace === 'src/app/core/mock/mock-backend.interceptor.ts' &&
           r.with === 'src/app/core/mock/mock-backend.interceptor.disabled.ts',
       );
-    for (const real of ['production', 'production-api', 'real-api', 'e2e-real'])
-      expect(sustituyen(real), real).toBe(true);
-    for (const demo of ['demo', 'development']) expect(sustituyen(demo), demo).toBe(false);
+    // En la rama `mockup`, `production` ES la maqueta: la despliega `docker-compose.yml` y su entorno trae
+    // `mockBackend: true`. Sustituirla dejaba la maqueta sin simulador: el login salía a la red y fallaba.
+    for (const real of ['production-api', 'real-api', 'e2e-real']) expect(sustituyen(real), real).toBe(true);
+    for (const demo of ['production', 'demo', 'development']) expect(sustituyen(demo), demo).toBe(false);
   });
 });

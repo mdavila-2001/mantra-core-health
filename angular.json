@@ -92,13 +92,7 @@
                 }
               ],
               "outputHashing": "all",
-              "prerender": false,
-              "fileReplacements": [
-                {
-                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
-                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
-                }
-              ]
+              "prerender": false
             },
             "development": {
               "optimization": false,
