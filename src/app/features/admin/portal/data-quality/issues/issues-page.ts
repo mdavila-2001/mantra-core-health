@@ -22,7 +22,6 @@ import {
   type QualityIssue,
   type QualityResolutionAction,
 } from '../../../../../core/data-access/admin-portal/data-quality.types';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { empty } from '../../../../../core/view-state/view-state';
 import type { EmptyViewState } from '../../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
@@ -95,7 +94,6 @@ export class IssuesPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly values = queryFilters(queryParamsSignal(this.route), ISSUE_URL_KEYS);
   protected readonly tab = computed(() => tabOf(this.values()));
@@ -121,13 +119,15 @@ export class IssuesPage {
     () => this.whenEmpty(),
   );
 
+  private readonly severityCell = viewChild.required<TemplateRef<{ $implicit: QualityIssue }>>('severityCell');
   private readonly issueCell = viewChild.required<TemplateRef<{ $implicit: QualityIssue }>>('issueCell');
   private readonly detectedCell = viewChild.required<TemplateRef<{ $implicit: QualityIssue }>>('detectedCell');
   private readonly outcomeCell = viewChild.required<TemplateRef<{ $implicit: QualityIssue }>>('outcomeCell');
   private readonly actionsCell = viewChild.required<TemplateRef<{ $implicit: QualityIssue }>>('actionsCell');
 
   protected readonly columns = computed<readonly ColumnDef<QualityIssue>[]>(() => [
-    { key: 'issue', header: 'Incidencia', priority: 1, cell: this.issueCell() },
+    { key: 'severity', header: 'Severidad y estado', priority: 1, cell: this.severityCell() },
+    { key: 'issue', header: 'Regla y campo', priority: 1, cell: this.issueCell() },
     { key: 'createdAt', header: 'Detectada', priority: 2, cell: this.detectedCell() },
     { key: 'outcome', header: 'Desenlace', priority: 2, cell: this.outcomeCell() },
     { key: 'actions', header: 'Acciones', priority: 1, accion: true, cell: this.actionsCell() },

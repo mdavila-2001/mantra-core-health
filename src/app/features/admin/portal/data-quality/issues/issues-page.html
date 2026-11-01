@@ -1,52 +1,71 @@
+<!-- Una sola cabecera, sobre el lienzo: las migas viven en la barra superior del portal. -->
 <app-page-header
-  title="Calidad de datos clínicos · Incidencias"
-  subtitle="Lo que el análisis de calidad detectó en los datos clínicos (esquema health_data); no es la calidad del catálogo de datos de la plataforma. Cada incidencia se resuelve o se descarta una sola vez, con su motivo."
-  [breadcrumbs]="breadcrumbs()"
+  title="Incidencias de calidad de datos clínicos"
+  subtitle="Lo que el análisis de calidad detectó en los datos clínicos (esquema health_data). Cada incidencia se resuelve o se descarta una sola vez, con su motivo."
 />
 
-<app-card class="issues" variant="outlined" padding="md" data-testid="portal-quality-issues">
+<div class="issues" data-testid="portal-quality-issues">
+  <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
+  <app-alert tone="info" data-testid="portal-quality-scope">
+    <details class="issues__fold">
+      <summary class="issues__fold-summary">
+        <strong>Calidad de los datos clínicos, no del catálogo de la plataforma.</strong>
+        Cerrar una incidencia no corrige el dato.
+      </summary>
+      <p class="issues__fold-text">
+        Resolver deja constancia de que el dato se corrigió en su origen; descartar, de que era un
+        falso positivo. Las dos cosas se hacen una sola vez, con un motivo que queda registrado. Si
+        el dato sigue mal, el próximo análisis abre otra incidencia.
+      </p>
+    </details>
+  </app-alert>
+
   @if (notice(); as n) {
     <app-alert [tone]="n.tone" data-testid="portal-quality-notice">{{ n.text }}</app-alert>
   }
 
-  <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
-    <app-tab label="Abiertas">
-      @if (tabIndex() === 0) {
-        <ng-container [ngTemplateOutlet]="body" />
-      }
-    </app-tab>
-    <app-tab label="Resueltas">
-      @if (tabIndex() === 1) {
-        <ng-container [ngTemplateOutlet]="body" />
-      }
-    </app-tab>
-    <app-tab label="Descartadas">
-      @if (tabIndex() === 2) {
-        <ng-container [ngTemplateOutlet]="body" />
-      }
-    </app-tab>
-    <app-tab label="Todas">
-      @if (tabIndex() === 3) {
-        <ng-container [ngTemplateOutlet]="body" />
-      }
-    </app-tab>
-  </app-tabs>
-</app-card>
+  <app-card class="issues__card" variant="outlined" padding="md">
+    <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+      <app-tab label="Abiertas">
+        @if (tabIndex() === 0) {
+          <ng-container [ngTemplateOutlet]="body" />
+        }
+      </app-tab>
+      <app-tab label="Resueltas">
+        @if (tabIndex() === 1) {
+          <ng-container [ngTemplateOutlet]="body" />
+        }
+      </app-tab>
+      <app-tab label="Descartadas">
+        @if (tabIndex() === 2) {
+          <ng-container [ngTemplateOutlet]="body" />
+        }
+      </app-tab>
+      <app-tab label="Todas">
+        @if (tabIndex() === 3) {
+          <ng-container [ngTemplateOutlet]="body" />
+        }
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>
 
 <ng-template #body>
   <div class="issues__section">
     <app-governance-filter-form [fields]="fields()" [values]="values()" (applied)="apply($event)" (cleared)="clear()" />
-    @if (values().ruleId !== '') {
-      <p class="issues__rule-filter" data-testid="portal-quality-rule-filter">
-        Mostrando sólo las incidencias de una regla.
-        <button app-button variant="ghost" size="sm" (clicked)="clearRule()">Ver las de todas</button>
-      </p>
-    }
-    @if (list.total(); as total) {
-      <p class="issues__total" data-testid="portal-quality-total">
-        {{ total }} {{ total === 1 ? 'incidencia' : 'incidencias' }} con estos filtros
-      </p>
-    }
+    <div class="issues__meta">
+      @if (list.total(); as total) {
+        <p class="issues__total" data-testid="portal-quality-total" aria-live="polite">
+          {{ total }} {{ total === 1 ? 'incidencia' : 'incidencias' }} con estos filtros
+        </p>
+      }
+      @if (values().ruleId !== '') {
+        <p class="issues__rule-filter" data-testid="portal-quality-rule-filter">
+          Sólo las de una regla.
+          <button app-button variant="ghost" size="sm" (clicked)="clearRule()">Ver las de todas</button>
+        </p>
+      }
+    </div>
     <app-data-table
       data-testid="portal-quality-issues-table"
       caption="Incidencias de calidad de datos clínicos"
@@ -63,12 +82,15 @@
   </div>
 </ng-template>
 
+<ng-template #severityCell let-row>
+  <span class="issues__badges">
+    <app-badge size="sm" [variant]="severity(row.severity).tone">{{ severity(row.severity).label }}</app-badge>
+    <app-badge size="sm" [variant]="status(row.status).tone">{{ status(row.status).label }}</app-badge>
+  </span>
+</ng-template>
+
 <ng-template #issueCell let-row>
   <div class="issues__cell">
-    <span class="issues__badges">
-      <app-badge size="sm" [variant]="severity(row.severity).tone">{{ severity(row.severity).label }}</app-badge>
-      <app-badge size="sm" [variant]="status(row.status).tone">{{ status(row.status).label }}</app-badge>
-    </span>
     <a app-link class="issues__rule" [routerLink]="ruleUrl(row.ruleId)">{{ row.ruleCode }}</a>
     <span class="issues__secondary">{{ row.ruleName }}</span>
     <span class="issues__field">Campo: <code>{{ row.fieldPath === '$' ? 'el recurso entero' : row.fieldPath }}</code></span>
@@ -76,7 +98,7 @@
 </ng-template>
 
 <ng-template #detectedCell let-row>
-  <span class="issues__cell">{{ when(row.createdAt) }}</span>
+  <span class="issues__cell issues__when">{{ when(row.createdAt) }}</span>
 </ng-template>
 
 <ng-template #outcomeCell let-row>
@@ -110,7 +132,7 @@
       </button>
       <button
         app-button
-        variant="ghost"
+        variant="outline"
         size="sm"
         data-testid="portal-quality-dismiss"
         [disabled]="closing() !== null"
