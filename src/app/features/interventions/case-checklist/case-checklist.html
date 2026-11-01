@@ -4,11 +4,7 @@
 
 <app-view-state-host [state]="state()" (retry)="create()">
   <app-empty-state vsh-empty variant="empty" title="Sin check-list" description="Esta intervención todavía no tiene check-list de cirugía segura.">
-    @if (canRecord()) {
-      <button app-button empty-actions size="sm" [isLoading]="sending()" (clicked)="create()" data-testid="checklist-create">Iniciar el check-list</button>
-    } @else {
-      <span empty-actions class="case-checklist__muted">Lo inicia enfermería quirúrgica o el equipo del caso.</span>
-    }
+    <button app-button empty-actions size="sm" [isLoading]="sending()" (clicked)="create()" data-testid="checklist-create">Iniciar el check-list</button>
   </app-empty-state>
 
   @if (shownPhase(); as phase) {
@@ -24,9 +20,7 @@
         }
       </div>
 
-      @if (!canRecord() && !phase.completedAt) {
-        <app-alert tone="info" title="Sólo lectura">El check-list lo registra enfermería quirúrgica o el equipo del caso.</app-alert>
-      } @else if (editable() && !hasProfile()) {
+      @if (editable() && !hasProfile()) {
         <app-alert tone="warning" title="Falta su perfil profesional">Para firmar una fase, su cuenta necesita un perfil profesional.</app-alert>
       }
 
@@ -41,12 +35,7 @@
               }
             </p>
             @if (item.response; as r) {
-              <p class="case-checklist__answer">
-                {{ answerLabels[r.status] }}
-                @if (r.exceptionReason) {
-                  · motivo: «{{ r.exceptionReason }}»
-                }
-              </p>
+              <p class="case-checklist__answer" data-testid="checklist-answer">{{ answerOf(r.status) }}</p>
             } @else if (editable()) {
               <app-segmented-control
                 [options]="answers"

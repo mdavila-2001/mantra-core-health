@@ -1,5 +1,6 @@
 import { CHECKLIST_PHASES, clippedMinutes, intervalOf, releaseAtOf, reservedWindow, type ChecklistPhaseCode } from '../../data-access/operating-rooms/operating-rooms.rules';
-import type { OrBlock, OrBlockOwner } from '../../data-access/operating-rooms/operating-rooms.types';
+import type { OrBlock, OrBlockOwner, OrBlockView } from '../../data-access/operating-rooms/operating-rooms.types';
+import { SPECIALTY } from '../fixtures/concepts';
 import { PROFESSIONALS } from '../fixtures/people';
 import { reply, type MockReply, type MockRequest } from '../mock-router';
 import { Coleccion, fecha, uuid } from '../mock-store';
@@ -178,13 +179,27 @@ const SPECIALTY_LABELS: Readonly<Record<string, string>> = {
   OTORRINOLARINGOLOGIA: 'Otorrinolaringología',
 };
 
+/** El código de especialidad de un concepto del catálogo (lo que manda la web). */
+export function specialtyCodeOfConcept(conceptId: string | null | undefined): string | null {
+  if (!conceptId) return null;
+  return Object.entries(SPECIALTY).find(([, id]) => id === conceptId)?.[0] ?? null;
+}
+
+/** El dueño como lo devuelve `blockView` de la API: ids y el rótulo que resuelve la API. */
 export function ownerOf(b: SimulatedBlock): OrBlockOwner {
+  return {
+    kind: b.ownerKind,
+    clinicalUnitId: b.clinicalUnitId,
+    specialtyConceptId: b.specialtyCode === null ? null : (SPECIALTY[b.specialtyCode] ?? null),
+    surgeonProfileId: b.surgeonProfileId,
+    label: ownerLabelOf(b),
+  };
+}
+
+/** Rótulo interno de la maqueta, sólo para los mensajes de error que arma ella. */
+export function ownerLabelOf(b: SimulatedBlock): string {
   const surgeon = PROFESSIONALS.find((p) => p.id === b.surgeonProfileId);
-  const label =
-    b.ownerKind === 'SURGEON'
-      ? (surgeon?.displayName ?? 'Cirujano')
-      : (SPECIALTY_LABELS[b.specialtyCode ?? ''] ?? b.specialtyCode ?? 'Servicio');
-  return { kind: b.ownerKind, clinicalUnitId: b.clinicalUnitId, specialtyCode: b.specialtyCode, surgeonProfileId: b.surgeonProfileId, label };
+  return b.ownerKind === 'SURGEON' ? (surgeon?.displayName ?? 'Cirujano') : (SPECIALTY_LABELS[b.specialtyCode ?? ''] ?? 'Servicio');
 }
 
 /** ¿El caso es del dueño del bloque? Servicio = especialidad; cirujano = el primario. */
@@ -327,9 +342,8 @@ export function touchMinutes(caseId: string, window: { start: number; end: numbe
 
 /* ---- vista de bloque ------------------------------------------------------------ */
 
-export function blockView(b: SimulatedBlock): OrBlock {
-  const window = intervalOf(b.startsAt, b.endsAt);
-  const linked = casesOfBlock(b);
+/** `blockView` de la API (`or.use-cases.ts`). */
+export function blockView(b: SimulatedBlock): OrBlockView {
   return {
     id: b.id,
     seriesId: b.seriesId,
@@ -343,9 +357,20 @@ export function blockView(b: SimulatedBlock): OrBlock {
     releasedByUserId: b.releasedByUserId,
     releaseReason: b.releaseReason,
     releasedMinutes: b.releasedMinutes,
-    usedMinutes: linked.reduce((sum, c) => sum + touchMinutes(c.id, window, 'PATIENT_IN_ROOM'), 0),
-    cases: linked.map((c) => ({ id: c.id, caseNumber: c.caseNumber })),
     rowVersion: b.rowVersion,
+  };
+}
+
+/**
+ * Una fila de `GET /sites/:siteId/or-blocks`: la vista, el uso (suma de las
+ * duraciones **programadas** de los casos ligados, como la API) y los ids.
+ */
+export function blockListRow(b: SimulatedBlock): OrBlock {
+  const linked = casesOfBlock(b);
+  return {
+    ...blockView(b),
+    usedMinutes: linked.reduce((sum, c) => sum + (Date.parse(c.scheduledEndAt) - Date.parse(c.scheduledStartAt)) / 60_000, 0),
+    cases: linked.map((c) => c.id),
   };
 }
 

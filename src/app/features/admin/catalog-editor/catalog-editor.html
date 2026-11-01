@@ -1,0 +1,32 @@
+<app-page-header
+  title="Catálogos globales"
+  subtitle="Servicios, glosarios y reporte contable por tipo de usuario. Cada cambio se guarda en la API con su versión y queda en la auditoría; nada se borra, se desactiva."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="editor-catalogos">
+  <app-card variant="outlined" padding="md">
+    <app-tabs [(selectedIndex)]="pestana" data-testid="catalog-editor-tabs">
+      <app-tab label="Servicios">
+        @if (abiertas().has(0)) {
+          <app-catalog-services-tab />
+        }
+      </app-tab>
+      <app-tab label="Glosarios">
+        @if (abiertas().has(1)) {
+          <app-catalog-glossary-tab />
+        }
+      </app-tab>
+      <app-tab label="Reporte contable">
+        @if (abiertas().has(2)) {
+          <app-catalog-accounting-tab />
+        }
+      </app-tab>
+      <app-tab label="Auditoría">
+        @if (abiertas().has(3)) {
+          <app-catalog-audit-tab />
+        }
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>

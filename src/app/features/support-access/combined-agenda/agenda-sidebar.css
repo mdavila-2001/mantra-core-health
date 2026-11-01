@@ -256,3 +256,37 @@ app-select {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
+
+/* Celular: cada fila del costado es un blanco de 44 px. */
+@media (max-width: 779px) {
+  .enlace {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: var(--sp-2);
+  }
+
+  .doctor {
+    min-block-size: 44px;
+  }
+
+  .abrir {
+    inline-size: 44px;
+    block-size: 44px;
+  }
+
+  .nodo {
+    min-block-size: 44px;
+  }
+
+  .interruptor {
+    align-items: center;
+    min-block-size: 44px;
+  }
+
+  .interruptor input {
+    inline-size: 20px;
+    block-size: 20px;
+    margin-block-start: 0;
+  }
+}

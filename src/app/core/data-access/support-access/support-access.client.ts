@@ -70,6 +70,7 @@ import type {
   SupportInboxQuery,
 } from './support-inbox.types';
 import { activityParams } from './support-activity';
+import type { NewSupportInvitation, SupportInvitationCreated } from './support-invite.types';
 import type { NewClinicalAccessRequest } from './support-inbox.types';
 import {
   fromWireSupportAgenda,
@@ -500,6 +501,22 @@ export class SupportAccessClient {
     return this.http
       .get<DoctorTeam>(this.url('/me/practitioner/support-team'))
       .pipe(map(fromWireTeam));
+  }
+
+  /**
+   * `POST /me/practitioner/support-invitations` — el doctor invita a una secretaria registrada (por su documento) a
+   * asistirlo en una de sus vinculaciones con un hospital. Roles de la API: `PRACTITIONER` y `CLINICIAN`.
+   *
+   * El vínculo nace **pendiente** (`awaiting: 'SUPPORT_STAFF'`): lo decide la secretaria y esto no concede nada. Los
+   * rechazos que la pantalla explica llegan con su `reason`: `SUPPORT_STAFF_NOT_FOUND` (404, no hay una secretaria con ese
+   * documento), `SUPPORT_TARGET_NOT_FOUND` (404, la vinculación no es suya) y `SUPPORT_LINK_DUPLICATE` (409, ya hay un
+   * vínculo vivo con ella).
+   */
+  inviteSupportStaff(invitation: NewSupportInvitation): Observable<SupportInvitationCreated> {
+    return this.http.post<SupportInvitationCreated>(
+      this.url('/me/practitioner/support-invitations'),
+      invitation,
+    );
   }
 
   /** `POST /practitioner-delegates/:id/accept` — el doctor acepta a esa persona. */

@@ -1,8 +1,14 @@
 /* ============================================================================
     Tipos de internación / ADT — franja F3 (`CONTRATO-F2-F5.md` §F3).
-    ========================================================================== */
 
-import type { BedBoardCell, OpsConcept } from '../infrastructure-ops/infrastructure-ops.types';
+    **La API manda las formas**: cada interfaz copia lo que devuelve
+    `mantra-core-health-api` (`clinical/dto/inpatient.dto.ts` y
+    `services/inpatient/*.use-cases.ts`). Los conceptos viajan como **código**
+    (`LOC_CARE_ICU`, `LOCATION_ACTIVE`, `ENCOUNTER_IN_PROGRESS`…) y la
+    etiqueta la pone `ops-labels.ts`. Las lecturas que la API no tipa en el
+    `openapi.json` (estancia, internados, censo, indicadores) se fijan contra
+    el código del use case, citado en cada interfaz.
+    ========================================================================== */
 
 export type LevelOfCareCode = 'LOC_CARE_GENERAL' | 'LOC_CARE_INTERMEDIATE' | 'LOC_CARE_ICU' | 'LOC_CARE_NEONATAL_ICU';
 
@@ -31,37 +37,50 @@ export type CompatibilityRule =
   | 'ISOLATION_COHORT'
   | 'LEVEL_OF_CARE';
 
+/** `Violation` de `clinical/domain/inpatient/bed-compatibility.ts`. */
 export interface CompatibilityViolation {
   readonly rule: CompatibilityRule;
   readonly severity: 'BLOCKING' | 'OVERRIDABLE';
   readonly detail: string;
 }
 
+/** `CompatibilityRuleDto`: una regla evaluada. */
+export interface CompatibilityRuleResult {
+  readonly code: string;
+  readonly severity: 'BLOCKING' | 'OVERRIDABLE';
+  readonly overridable: boolean;
+  readonly detail: string;
+}
+
+/** `CompatibilityResultDto` (con encuentro o prospectiva). `violations` es la forma anterior, que la web lee. */
 export interface BedCompatibility {
   readonly assignable: boolean;
+  readonly rules: readonly CompatibilityRuleResult[];
   readonly violations: readonly CompatibilityViolation[];
 }
 
-/** Compatibilidad **antes** de que exista el encuentro (desvío W-F2F3-4). */
+/** `ProspectiveCompatibilityDto` — `POST /clinical/bed-compatibility`, antes de que exista el encuentro. */
 export interface ProspectiveCompatibilityRequest {
   readonly careSpaceId: string;
   readonly patientProfileId: string;
-  readonly levelOfCareCode: LevelOfCareCode;
+  readonly levelOfCareCode?: LevelOfCareCode;
   readonly isolationPrecautionCode?: string;
   readonly isolationOrganismText?: string;
 }
 
+/** `PlacementOverrideDto`. */
 export interface PlacementOverride {
   readonly justification: string;
   readonly ruleCodes: readonly CompatibilityRule[];
 }
 
+/** `CreateAdmissionDto`. */
 export interface AdmissionRequest {
   readonly patientProfileId: string;
   readonly practiceSiteId: string;
   readonly episodeId?: string;
   readonly openEpisode?: boolean;
-  readonly attendingPractitionerId: string;
+  readonly attendingPractitionerId?: string;
   readonly levelOfCareCode: LevelOfCareCode;
   readonly admissionSourceCode: AdmissionSourceCode;
   readonly isolationPrecautionCode?: string;
@@ -72,36 +91,56 @@ export interface AdmissionRequest {
   readonly override?: PlacementOverride;
 }
 
-export interface AdmissionResult {
-  readonly episodeId: string;
-  readonly encounterId: string;
-  readonly encounterLocationId?: string;
-  readonly cell?: BedBoardCell;
-  readonly incidentId?: string;
-  readonly requestId: string;
-}
-
-export interface BedAssignmentResult {
-  readonly encounterLocationId: string;
-  readonly cell: BedBoardCell;
-  readonly incidentId?: string;
-  readonly requestId: string;
-}
-
-export interface TransferRequest {
-  readonly toCareSpaceId: string;
-  readonly occurredAt?: string;
-  readonly reasonCode: string;
+/** `BedAssignmentDto`. */
+export interface BedAssignmentRequest {
+  readonly careSpaceId: string;
+  readonly mode: 'ASSIGN' | 'RESERVE';
   readonly override?: PlacementOverride;
 }
 
-export interface TransferResult {
-  readonly fromLocationId: string;
-  readonly toLocationId: string;
-  readonly cleaningOrderId: string;
-  readonly requestId: string;
+/** `CareSpaceOperationalState` del puerto de F2: el `cell` de las respuestas ADT (desvío API-F2F5). */
+export interface CareSpaceOperationalState {
+  readonly careSpaceId: string;
+  readonly formCode: string | null;
+  readonly functionCode: string | null;
+  readonly lifecycle: string;
+  readonly availability: string;
+  readonly hygiene: string;
+  readonly isolation: string;
+  readonly occupancy: string;
+  readonly terminalCleaningRequired: boolean;
+  readonly v2Code: string;
+  readonly assignable: boolean;
+  readonly violations: readonly string[];
+  readonly opsVersion: number;
 }
 
+/**
+ * `AdtResultDto`: una sola forma para todo movimiento ADT; cada uno llena los
+ * campos que le corresponden. `requestId` lo agrega la API en F2–F5.
+ */
+export interface AdtResult {
+  readonly episodeId?: string;
+  readonly encounterId?: string;
+  readonly encounterLocationId?: string;
+  readonly fromLocationId?: string;
+  readonly toLocationId?: string;
+  readonly cleaningOrderId?: string | null;
+  readonly incidentId?: string;
+  readonly cell?: CareSpaceOperationalState;
+  readonly locations?: readonly EncounterLocation[];
+  readonly requestId?: string;
+}
+
+/** `TransferDto`. */
+export interface TransferRequest {
+  readonly toCareSpaceId: string;
+  readonly occurredAt?: string;
+  readonly reasonCode?: string;
+  readonly override?: PlacementOverride;
+}
+
+/** `BedSwapDto`. */
 export interface SwapRequest {
   readonly encounterAId: string;
   readonly encounterBId: string;
@@ -110,184 +149,142 @@ export interface SwapRequest {
   readonly override?: PlacementOverride;
 }
 
-export interface SwapResult {
-  readonly locations: readonly EncounterLocation[];
-  readonly requestId: string;
-}
-
+/** `DischargeDto`. */
 export interface DischargeRequest {
-  readonly dischargeDispositionCode: DischargeDispositionCode;
-  readonly occurredAt: string;
+  readonly dischargeDispositionCode?: DischargeDispositionCode;
+  readonly occurredAt?: string;
   readonly reasonText?: string;
   readonly closeEpisode?: boolean;
 }
 
-export interface DischargeResult {
-  readonly encounterId: string;
-  readonly cleaningOrderId: string;
-  readonly requestId: string;
-}
-
-export interface StayBed {
-  readonly careSpaceId: string;
-  readonly code: string;
-  readonly name: string;
-  readonly unitId: string | null;
-  readonly unitName: string | null;
-  readonly siteId: string;
-}
-
-/** Una fila de `encounter_locations` (= FHIR `Encounter.location`). */
+/** `locationView` de `adt.use-cases.ts`: una fila de `encounter_locations`. */
 export interface EncounterLocation {
   readonly id: string;
   readonly encounterId: string;
-  readonly bed: StayBed;
-  readonly movementType: OpsConcept & { readonly code: MovementTypeCode };
-  readonly status: OpsConcept & { readonly code: LocationStatusCode };
-  readonly periodStart: string;
+  readonly careSpaceId: string | null;
+  /** `LOCATION_ACTIVE | LOCATION_RESERVED | LOCATION_COMPLETED | LOCATION_CANCELLED`. */
+  readonly status: string | null;
+  /** `ADT_ADMIT | ADT_TRANSFER | ADT_SWAP | ADT_RESERVE`. */
+  readonly movement: string | null;
+  readonly endReason: string | null;
+  readonly periodStart: string | null;
   readonly periodEnd: string | null;
-  readonly endReason: OpsConcept | null;
   readonly previousEncounterLocationId: string | null;
   readonly placementIncidentId: string | null;
-  /** Reserva o traslado que todavía se puede cancelar (A11/A12). */
-  readonly cancellable: boolean;
-  /** Mensaje HL7 v2 equivalente (A01/A02/A17/A14), para la línea de tiempo. */
-  readonly hl7Event: string;
 }
 
+/** Un incidente de ubicación forzada, como lo arma `InpatientReadUseCases.stay`. */
 export interface PlacementIncident {
   readonly id: string;
-  readonly encounterId: string;
+  readonly encounterLocationId: string | null;
   readonly careSpaceId: string;
-  readonly bedCode: string;
-  readonly violations: readonly { readonly rule: CompatibilityRule; readonly detail: string }[];
-  readonly justification: string;
-  readonly authorizedByName: string | null;
-  readonly status: OpsConcept & { readonly code: 'PLC_INC_OPEN' | 'PLC_INC_REVIEWED' | 'PLC_INC_CLOSED' };
-  readonly reviewedByName: string | null;
+  readonly violations: readonly CompatibilityViolation[] | null;
+  /** `PLC_INC_OPEN | PLC_INC_REVIEWED | PLC_INC_CLOSED`. */
+  readonly status: string | null;
   readonly reviewedAt: string | null;
-  readonly reviewNote: string | null;
-  readonly createdAt: string;
 }
 
-export interface StayPatient {
+/** `encounterView` de `inpatient-read.use-cases.ts`. */
+export interface StayEncounter {
+  readonly id: string;
+  readonly episodeId: string | null;
   readonly patientProfileId: string;
-  readonly displayName: string;
-  readonly initials: string;
-  readonly sexCode: string;
-  readonly ageYears: number;
+  readonly class: string | null;
+  /** `ENCOUNTER_IN_PROGRESS | ENCOUNTER_FINISHED | …`. */
+  readonly status: string | null;
+  readonly levelOfCare: string | null;
+  readonly admissionSource: string | null;
+  readonly dischargeDisposition: string | null;
+  readonly startAt: string | null;
+  readonly endAt: string | null;
+  readonly expectedDischargeAt: string | null;
+  readonly rowVersion: number;
 }
 
-/** `GET /clinical/encounters/:id/stay`. */
+/** `GET /clinical/encounters/:id/stay` → `{encounter, movements, incidents}`. */
 export interface InpatientStay {
-  readonly encounterId: string;
-  readonly episodeId: string;
-  readonly siteId: string;
-  readonly status: 'IN_PROGRESS' | 'FINISHED';
-  readonly patient: StayPatient;
-  readonly attendingName: string | null;
-  readonly levelOfCare: OpsConcept;
-  readonly admissionSource: OpsConcept;
-  readonly isolation: OpsConcept;
-  readonly isolationOrganism: string | null;
-  readonly reasonText: string;
-  readonly startedAt: string;
-  readonly endedAt: string | null;
-  readonly expectedDischargeAt: string | null;
-  readonly disposition: OpsConcept | null;
-  readonly currentBed: StayBed | null;
-  readonly reservedBed: StayBed | null;
-  readonly losDays: number;
+  readonly encounter: StayEncounter;
   readonly movements: readonly EncounterLocation[];
   readonly incidents: readonly PlacementIncident[];
-  readonly rowVersion: number;
 }
 
-/** Fila del censo vivo (`GET /sites/:siteId/inpatients`). */
-export interface InpatientRow {
-  readonly encounterId: string;
-  readonly patient: StayPatient;
-  readonly bed: StayBed | null;
-  readonly since: string;
-  readonly levelOfCare: OpsConcept;
-  readonly isolation: OpsConcept;
-  readonly expectedDischargeAt: string | null;
-  readonly losDays: number;
-  readonly rowVersion: number;
-}
-
-/** Internación en curso de un paciente, para el expediente (desvío W-F2F3-5). */
-export interface PatientCurrentStay {
-  readonly encounterId: string;
-  readonly siteId: string;
-  readonly siteName: string;
-  readonly bed: StayBed | null;
-  readonly since: string;
-  readonly levelOfCare: OpsConcept;
-}
-
+/** `AttendingPractitionerDto` — `GET /sites/:siteId/attending-practitioners`. */
 export interface AttendingPractitioner {
-  readonly id: string;
+  readonly practitionerProfileId: string;
   readonly displayName: string;
+  readonly specialty: { readonly code: string; readonly display: string } | null;
+}
+
+/** `PATCH /clinical/placement-incidents/:id` (`ReviewIncidentDto`). */
+export interface ReviewIncidentRequest {
+  readonly status: 'REVIEWED' | 'CLOSED';
+  readonly reviewNote: string;
+}
+
+/** Respuesta de la revisión: `{id, status}`. */
+export interface ReviewIncidentResult {
+  readonly id: string;
+  readonly status: 'REVIEWED' | 'CLOSED';
+  readonly requestId?: string;
 }
 
 /* ---- censo ---------------------------------------------------------------- */
 
+/** `CENSUS_FIELDS` de `clinical/domain/inpatient/census.ts`, en camelCase. */
 export const CENSUS_FIELDS = [
-  'beds_censable',
-  'beds_available',
-  'beds_blocked',
-  'patients_at_cutoff',
+  'bedsCensable',
+  'bedsAvailable',
+  'bedsBlocked',
+  'patientsAtCutoff',
   'admissions',
   'discharges',
   'deaths',
-  'transfers_in',
-  'transfers_out',
-  'same_day_stays',
-  'patient_days',
-  'discharge_stay_days',
+  'transfersIn',
+  'transfersOut',
+  'sameDayStays',
+  'patientDays',
+  'dischargeStayDays',
 ] as const;
 export type CensusField = (typeof CENSUS_FIELDS)[number];
 
 export type CensusCounts = Readonly<Record<CensusField, number>>;
 
+/** `adjView` de `census.use-cases.ts`. `fieldCode` viaja en snake_case, como lo guarda el modelo. */
 export interface CensusAdjustment {
   readonly id: string;
-  readonly censusDayId: string;
-  readonly fieldCode: CensusField;
+  readonly fieldCode: string;
   readonly previousValue: number;
   readonly newValue: number;
   readonly reasonText: string;
-  readonly adjustedByName: string | null;
-  readonly requestId: string;
+  readonly adjustedByUserId: string | null;
   readonly createdAt: string;
 }
 
-export interface CensusDay {
+/** `CensusDayView` de `census.use-cases.ts`: una fila por unidad. */
+export interface CensusDayView {
   /** `null` mientras el día está abierto: la vista previa no se persiste. */
   readonly id: string | null;
-  readonly siteId: string;
-  readonly unitId: string;
-  readonly unitName: string;
-  readonly censusDate: string;
+  readonly unitId: string | null;
+  readonly date: string;
+  readonly status: 'OPEN' | 'CLOSED';
   readonly cutoffAt: string;
-  readonly status: 'CENSUS_OPEN' | 'CENSUS_CLOSED';
-  readonly closedAt: string | null;
-  readonly closedByName: string | null;
   readonly counts: CensusCounts;
   readonly adjustments: readonly CensusAdjustment[];
-  readonly adjustedCounts: CensusCounts;
+  readonly adjustedTotals: CensusCounts;
 }
 
-export interface CensusView {
-  readonly siteId: string;
-  readonly date: string;
-  readonly generatedAt: string;
-  /** Desde cuándo se puede cerrar (corte + gracia). */
-  readonly closableFrom: string;
-  readonly days: readonly CensusDay[];
+/** `CloseCensusDto`. */
+export interface CloseCensusRequest {
+  readonly unitIds?: readonly string[];
 }
 
+/** `POST /sites/:siteId/census/:date/close` → `{closed}`. */
+export interface CloseCensusResult {
+  readonly closed: readonly CensusDayView[];
+  readonly requestId?: string;
+}
+
+/** `CensusAdjustmentDto`. */
 export interface CensusAdjustmentRequest {
   readonly fieldCode: CensusField;
   readonly newValue: number;
@@ -297,6 +294,7 @@ export interface CensusAdjustmentRequest {
 
 /* ---- indicadores ---------------------------------------------------------- */
 
+/** `computeIndicators` de `census.ts`, **sin redondear**. */
 export interface IndicatorTotals {
   readonly days: number;
   readonly bedDaysAvailable: number;
@@ -304,15 +302,16 @@ export interface IndicatorTotals {
   readonly admissions: number;
   readonly discharges: number;
   readonly dischargeStayDays: number;
-  readonly avgBeds: number | null;
+  readonly avgBeds: number;
   readonly occupancyPct: number | null;
   readonly alos: number | null;
   readonly bedTurnover: number | null;
   readonly turnoverInterval: number | null;
+  /** `deltaPct` en puntos porcentuales: |ocupación − estimada|. */
+  readonly crossCheck: { readonly occupancyFromAlos: number | null; readonly deltaPct: number | null };
 }
 
 export interface BedTurnaround {
-  readonly samples: number;
   readonly p50: number | null;
   readonly p90: number | null;
   readonly waitToStart: number | null;
@@ -320,13 +319,9 @@ export interface BedTurnaround {
   readonly inspection: number | null;
 }
 
+/** `GET /sites/:siteId/inpatient-indicators` tal como viene. */
 export interface InpatientIndicators extends IndicatorTotals {
-  readonly siteId: string;
   readonly period: { readonly from: string; readonly to: string };
   readonly bedTurnaroundMinutes: BedTurnaround;
-  readonly crossCheck: { readonly occupancyFromAlos: number | null; readonly deltaPct: number | null };
   readonly coverage: { readonly daysClosed: number; readonly daysMissing: readonly string[] };
-  /** Desglose por unidad (desvío W-F2F3-6). */
-  readonly byUnit: readonly (IndicatorTotals & { readonly unitId: string; readonly unitName: string })[];
-  readonly generatedAt: string;
 }

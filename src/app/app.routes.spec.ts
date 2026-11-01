@@ -3,6 +3,7 @@ import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { authGuard } from './core/auth/auth.guard';
 import { SessionStore } from './core/auth/session.store';
 import { LOGIN_ROUTE } from './core/http/auth.interceptor';
 import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
@@ -17,6 +18,8 @@ import {
 } from './core/navigation/navigation.types';
 import { tabIndex, TAB, PROFILE_TABS } from './features/account/my-profile/profile-tabs';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
+import { ROLES_REPORTERIA } from './features/reporting/reporting-access';
+import { mockRoutes } from './features/reporting/reporting-mock.routes';
 import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
 /**
@@ -118,6 +121,9 @@ describe('rutas del armazón', () => {
       // llega desde el tablero, el expediente o la cola; quién puede lo dice la API.
       'inpatient/admissions/new',
       'inpatient/stays/:encounterId',
+      // «No disponible para su perfil»: adonde la guarda de visibilidad manda a quien abre una pantalla que una regla
+      // le oculta. No es una sección porque no es un lugar al que se vaya: se llega rebotando, nunca por el menú.
+      'unavailable',
     ];
 
     const huerfanas = hijas.filter((r) => {
@@ -1020,5 +1026,57 @@ describe('la mudanza del portal de plataforma a «Superadministración»', () =>
       expect(ruta?.redirectTo, path).toBeDefined();
       expect(ruta?.canActivate, path).toBeUndefined();
     }
+  });
+});
+
+describe('la maqueta de reportería detrás de su bandera (H4)', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  it.each([
+    '/reports',
+    '/reports/commercial/resumen',
+    '/reports/commercial/resumen?alcance=plataforma',
+    '/reports/lo/que/sea',
+  ])('con la bandera apagada (por defecto) %s redirige al panel de observabilidad', async (url) => {
+    expect(await router.navigateByUrl(url), url).not.toBe(false);
+    expect(location.path().split('?')[0]).toBe('/superadmin/observability');
+  });
+
+  it('con la bandera apagada /portal-selector redirige a la raíz y no queda ruta registrada', async () => {
+    await router.navigateByUrl('/portal-selector');
+    expect(location.path()).not.toContain('portal-selector');
+    expect(routes.some((r) => r.path === 'portal-selector' && r.loadComponent !== undefined)).toBe(false);
+    expect(routes.some((r) => r.path === 'reports' && r.loadChildren !== undefined)).toBe(false);
+  });
+
+  it('apagada, las rutas de la maqueta son sólo redirecciones: sin componente, sin hijas, sin guard que eludir', () => {
+    const rutas = mockRoutes(() => SectionPlaceholder, false);
+    expect(rutas.map((r) => [r.path, ...(r.children ?? []).map((h) => h.redirectTo)])).toEqual([
+      ['portal-selector', '/', '/'],
+      ['reports', '/superadmin/observability', '/superadmin/observability'],
+    ]);
+    for (const r of rutas) {
+      expect(r.loadComponent).toBeUndefined();
+      expect(r.loadChildren).toBeUndefined();
+      expect(r.canActivate).toBeUndefined();
+    }
+  });
+
+  it('encendida, conserva las rutas de siempre con authGuard y seccionRolesGuard y los roles de cada portal', () => {
+    const rutas = mockRoutes(() => SectionPlaceholder, true);
+    expect(rutas.map((r) => r.path)).toEqual(['portal-selector', 'reports']);
+    for (const r of rutas) {
+      expect(r.redirectTo).toBeUndefined();
+      expect(r.canActivate).toContain(authGuard);
+      expect(r.canActivate).toContain(seccionRolesGuard);
+    }
+    expect((rutas[1]?.data ?? {})[ROLES_ROUTE_DATA]).toEqual(ROLES_REPORTERIA);
   });
 });

@@ -16,10 +16,12 @@
           <span class="resource-timeline__resource-desc">{{ row.description }}</span>
         }
       </div>
-      <ul class="resource-timeline__lane" [attr.aria-label]="row.label">
+      <!-- Las líneas de la grilla quedan fuera de la lista: el lector anuncia sólo los segmentos. -->
+      <div class="resource-timeline__lane">
         @for (hour of hours(); track hour.label) {
-          <li class="resource-timeline__gridline" aria-hidden="true" [style.left.%]="hour.left"></li>
+          <span class="resource-timeline__gridline" aria-hidden="true" [style.left.%]="hour.left"></span>
         }
+        <ul class="resource-timeline__segments" [attr.aria-label]="row.label">
         @for (p of segmentsOf(row.id); track p.segment.id) {
           <li
             class="resource-timeline__segment"
@@ -43,7 +45,8 @@
             }
           </li>
         }
-      </ul>
+        </ul>
+      </div>
     </div>
   }
 </div>

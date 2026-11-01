@@ -5,7 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { AdtClient } from '../../../core/data-access/adt/adt.client';
 import type { AdmissionSourceCode, AttendingPractitioner, LevelOfCareCode, PlacementOverride } from '../../../core/data-access/adt/adt.types';
-import { RULE_LABEL } from '../../../core/data-access/adt/bed-compatibility';
+import { ruleLabel } from '../../../core/data-access/adt/bed-compatibility';
+import { opsLabel } from '../../../core/data-access/infrastructure-ops/ops-labels';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -27,19 +28,9 @@ import { InpatientAccessStore } from '../inpatient-access.store';
 import { BED_BOARD_ROUTE, stayRoute } from '../inpatient-presentation';
 import { BedPicker, type BedMode } from './bed-picker';
 
-const LEVELS = [
-  { value: 'LOC_CARE_GENERAL', label: 'General' },
-  { value: 'LOC_CARE_INTERMEDIATE', label: 'Cuidados intermedios' },
-  { value: 'LOC_CARE_ICU', label: 'Terapia intensiva' },
-  { value: 'LOC_CARE_NEONATAL_ICU', label: 'Terapia intensiva neonatal' },
-];
-const SOURCES = [
-  { value: 'ADM_SRC_EMERGENCY', label: 'Emergencias' },
-  { value: 'ADM_SRC_OUTPATIENT', label: 'Consulta externa' },
-  { value: 'ADM_SRC_REFERRAL', label: 'Referencia' },
-  { value: 'ADM_SRC_BIRTH', label: 'Nacimiento' },
-  { value: 'ADM_SRC_TRANSFER_IN', label: 'Traslado desde otro establecimiento' },
-];
+const opts = (codes: readonly string[]) => codes.map((value) => ({ value, label: opsLabel(value) }));
+const LEVELS = opts(['LOC_CARE_GENERAL', 'LOC_CARE_INTERMEDIATE', 'LOC_CARE_ICU', 'LOC_CARE_NEONATAL_ICU']);
+const SOURCES = opts(['ADM_SRC_EMERGENCY', 'ADM_SRC_OUTPATIENT', 'ADM_SRC_REFERRAL', 'ADM_SRC_BIRTH', 'ADM_SRC_TRANSFER_IN']);
 const ISOLATIONS = [
   { value: 'ISO_NONE', label: 'Sin precaución' },
   { value: 'ISO_CONTACT', label: 'Contacto' },
@@ -47,6 +38,11 @@ const ISOLATIONS = [
   { value: 'ISO_AIRBORNE', label: 'Aérea (sólo en AIIR)' },
   { value: 'ISO_PROTECTIVE', label: 'Ambiente protector' },
 ];
+
+/** `?mode` de la URL: sólo los tres modos conocidos; cualquier otro valor es «asignar» (LOW). */
+export function bedModeOf(value: string | null): BedMode {
+  return value === 'RESERVE' || value === 'NONE' || value === 'ASSIGN' ? value : 'ASSIGN';
+}
 
 /**
  * **Nuevo ingreso** — `/inpatient/admissions/new` (F3.4).
@@ -71,7 +67,7 @@ export class AdmissionNew {
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
-  protected readonly site = computed(() => this.access.pickSite(this.query().get('site'), 'adt.admit'));
+  protected readonly site = computed(() => this.access.pickSite(this.query().get('site'), 'f3.adt.place'));
   protected readonly siteId = computed(() => this.site()?.siteId ?? null);
 
   protected readonly gate = computed<ViewState<string>>(() => {
@@ -83,7 +79,7 @@ export class AdmissionNew {
       : ready(s.siteId);
   });
 
-  protected readonly bedMode = signal<BedMode>((this.route.snapshot.queryParamMap.get('mode') as BedMode | null) ?? 'ASSIGN');
+  protected readonly bedMode = signal<BedMode>(bedModeOf(this.route.snapshot.queryParamMap.get('mode')));
   protected readonly bedId = signal<string | null>(this.route.snapshot.queryParamMap.get('bed') || null);
   protected readonly override = signal<PlacementOverride | null>(null);
   protected readonly bedCode = signal<string | null>(null);
@@ -91,7 +87,7 @@ export class AdmissionNew {
 
   readonly form = new FormGroup({
     patient: new FormControl<ReferenceOption | null>(null, { validators: [Validators.required] }),
-    attending: new FormControl<string | null>(null, { validators: [Validators.required] }),
+    attending: new FormControl<string | null>(null),
     isolation: new FormControl<string>('ISO_NONE', { nonNullable: true }),
     organism: new FormControl<string>('', { nonNullable: true }),
     level: new FormControl<string | null>('LOC_CARE_GENERAL', { validators: [Validators.required] }),
@@ -122,7 +118,7 @@ export class AdmissionNew {
       disposicion: 'dos-columnas',
       campos: [
         { key: 'patient', label: 'Paciente', hint: 'Busque por nombre, código o documento.', control: 'custom', required: true, mensajeDeError: 'Elija a quién se interna.' },
-        { key: 'attending', label: 'Profesional a cargo', control: 'select', required: true, options: this.attendings().map((p) => ({ value: p.id, label: p.displayName })), mensajeDeError: 'Elija quién queda a cargo.' },
+        { key: 'attending', label: 'Profesional a cargo', hint: 'Opcional: se puede indicar después.', control: 'select', options: this.attendings().map((p) => ({ value: p.practitionerProfileId, label: p.specialty ? `${p.displayName} · ${p.specialty.display}` : p.displayName })) },
         { key: 'isolation', label: 'Precaución de aislamiento', control: 'select', options: ISOLATIONS },
         { key: 'organism', label: 'Organismo', hint: 'Para cohortes hace falta el mismo organismo.', control: 'text', showWhen: { key: 'isolation', equals: ['ISO_CONTACT', 'ISO_DROPLET', 'ISO_AIRBORNE', 'ISO_PROTECTIVE'] } },
       ],
@@ -159,13 +155,13 @@ export class AdmissionNew {
     const o = this.override();
     return [
       { etiqueta: 'Paciente', valor: v.patient?.label ?? null },
-      { etiqueta: 'Profesional a cargo', valor: this.attendings().find((p) => p.id === v.attending)?.displayName ?? null },
+      { etiqueta: 'Profesional a cargo', valor: this.attendings().find((p) => p.practitionerProfileId === v.attending)?.displayName ?? null },
       { etiqueta: 'Nivel de cuidado', valor: LEVELS.find((l) => l.value === v.level)?.label ?? null },
       { etiqueta: 'Origen', valor: SOURCES.find((s) => s.value === v.source)?.label ?? null },
       { etiqueta: 'Precaución', valor: ISOLATIONS.find((i) => i.value === v.isolation)?.label ?? null },
       { etiqueta: 'Motivo', valor: v.reason || null },
       { etiqueta: 'Cama', valor: this.bedMode() === 'NONE' ? 'Pendiente de cama' : `${this.bedMode() === 'RESERVE' ? 'Reserva' : 'Asignación'} · ${this.bedCode() ?? 'sin elegir'}` },
-      { etiqueta: 'Forzado', valor: o === null ? null : `${o.ruleCodes.map((r) => RULE_LABEL[r]).join(', ')} — «${o.justification}»`, tono: o === null ? 'neutro' : 'aviso' },
+      { etiqueta: 'Forzado', valor: o === null ? null : `${o.ruleCodes.map((r) => ruleLabel(r)).join(', ')} — «${o.justification}»`, tono: o === null ? 'neutro' : 'aviso' },
     ];
   });
 
@@ -219,7 +215,7 @@ export class AdmissionNew {
   protected submit(): void {
     const v = this.form.getRawValue();
     const site = this.siteId();
-    if (site === null || v.patient === null || v.attending === null || v.level === null || v.source === null) return;
+    if (site === null || v.patient === null || v.level === null || v.source === null) return;
     const bed = this.bedMode() === 'NONE' || this.bedId() === null ? undefined : { careSpaceId: this.bedId()!, mode: this.bedMode() as 'ASSIGN' | 'RESERVE' };
     const o = this.override();
     this.sending.set(true);
@@ -229,7 +225,7 @@ export class AdmissionNew {
         patientProfileId: v.patient.value,
         practiceSiteId: site,
         openEpisode: true,
-        attendingPractitionerId: v.attending,
+        ...(v.attending ? { attendingPractitionerId: v.attending } : {}),
         levelOfCareCode: v.level as LevelOfCareCode,
         admissionSourceCode: v.source as AdmissionSourceCode,
         reasonText: v.reason.trim(),
@@ -242,7 +238,7 @@ export class AdmissionNew {
       .subscribe({
         next: (r) => {
           this.sending.set(false);
-          void this.router.navigateByUrl(stayRoute(r.encounterId));
+          if (r.encounterId) void this.router.navigateByUrl(stayRoute(r.encounterId));
         },
         error: (e: unknown) => {
           this.sending.set(false);
@@ -251,7 +247,7 @@ export class AdmissionNew {
           const state = errorToViewState<never>(e);
           this.failure.set(
             state.status === 'validation' && v2.length > 0
-              ? { ...state, issues: v2.map((x) => ({ field: RULE_LABEL[x.rule], message: x.detail, code: x.rule })) }
+              ? { ...state, issues: v2.map((x) => ({ field: ruleLabel(x.rule), message: x.detail, code: x.rule })) }
               : state,
           );
         },

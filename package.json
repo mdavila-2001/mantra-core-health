@@ -32,7 +32,7 @@
     "test:correcciones": "node --test scripts/lib/correcciones-gate.test.mjs",
     "check:admin-portal-contract": "node scripts/check-admin-portal-contract.mjs && node --test scripts/lib/admin-portal-contract.test.mjs",
     "contract:refresh": "node scripts/refresh-api-contract.mjs",
-    "gates:diseno": "node scripts/check-tokens.mjs; node scripts/check-css-tokens.mjs; node scripts/check-contrast.mjs; node scripts/check-colores-sueltos.mjs; node scripts/check-max-lines.mjs; node scripts/check-verification-badge.mjs",
+    "gates:diseno": "node scripts/check-tokens.mjs; node scripts/check-css-tokens.mjs; node scripts/check-contrast.mjs; node scripts/check-chart-palette.mjs; node scripts/check-colores-sueltos.mjs; node scripts/check-max-lines.mjs; node scripts/check-verification-badge.mjs",
     "hooks:instalar": "sh scripts/instalar-hooks.sh",
     "mock-contract:check": "node scripts/gen-mock-contract.mjs --check",
     "typecheck": "node scripts/generate-component-index.mjs && tsc -p tsconfig.app.json --noEmit && tsc -p cypress/tsconfig.json --noEmit && tsc -p playwright/tsconfig.json --noEmit",

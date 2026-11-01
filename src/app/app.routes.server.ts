@@ -96,9 +96,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
-    // Los dos portales de reportería. Tienen sesión, así que no se
-    // prerenderizan (ver la nota de arriba), y además sus gráficos (Apache
-    // ECharts) necesitan el DOM: el servidor solo manda el cascarón.
+    // La maqueta de reportería (`environment.reportingMockEnabled`). Apagada, estas dos rutas redirigen
+    // (`/portal-selector` a `/`, `/reports/**` a `/superadmin/observability`: ver `reporting-mock.routes.ts`);
+    // encendida, tienen sesión, así que no se prerenderizan (ver la nota de arriba), y sus gráficos (Apache
+    // ECharts) necesitan el DOM: el servidor solo manda el cascarón. En los dos casos resuelve el cliente.
     path: 'portal-selector',
     renderMode: RenderMode.Client,
   },

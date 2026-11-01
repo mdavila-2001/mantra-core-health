@@ -1,7 +1,7 @@
 import type {
   CensusAdjustment,
   CensusCounts,
-  CensusDay,
+  CensusDayView,
   CensusField,
   CompatibilityRule,
   CompatibilityViolation,
@@ -12,25 +12,21 @@ import type {
   MovementTypeCode,
   PlacementIncident,
   PlacementOverride,
-  StayBed,
-  StayPatient,
 } from '../../data-access/adt/adt.types';
 import { CENSUS_FIELDS } from '../../data-access/adt/adt.types';
-import { evaluateCompatibility, overrideProblem } from '../../data-access/adt/bed-compatibility';
-import { bedTurnaround, crossCheck, daysBetween, indicatorTotals, stayDays, type TurnaroundSample } from '../../data-access/adt/inpatient-indicators';
 import type { OccupancyCode } from '../../data-access/infrastructure-ops/infrastructure-ops.types';
 import type { EspacioSimulado, SitioSimulado } from '../fixtures/infraestructura';
-import { actionsOf, cutoffOf, INFRA_SETTINGS, opsConcept, shiftDate, siteDate } from '../fixtures/inpatient';
+import { cutoffOf, INFRA_SETTINGS, shiftDate, siteDate } from '../fixtures/inpatient';
 import { patientById, PROFESSIONALS } from '../fixtures/people';
 import type { MockReply, MockRequest, MockRouter } from '../mock-router';
 import { reply } from '../mock-router';
-import { MOCK_USERS } from '../mock-session';
 import { Coleccion, cuerpo, nuevoId, uuid } from '../mock-store';
+import { evaluateCompatibility, overrideProblem } from '../rules/bed-compatibility';
+import { bedTurnaround, daysBetween, indicatorTotals, stayDays } from '../rules/inpatient-indicators';
 import { espacios, sitiosInfra, unidades } from './infrastructure.handlers';
 import {
   axesOf,
   blocks,
-  buildCell,
   can,
   cleaningOrders,
   conflictReply,
@@ -40,10 +36,10 @@ import {
   markDirtyFromSource,
   newRequestId,
   notFoundReply,
+  portState,
   precondition,
   recordOccupancyChange,
   registerOccupancyProvider,
-  rolesIn,
   siblingBeds,
   siteVisible,
   spaceVisible,
@@ -54,12 +50,12 @@ import {
 /* ============================================================================
     Internación / ADT — franja F3 (§F3.3 de `CONTRATO-F2-F5.md`).
 
-    Lo que el simulador hace igual que locA API:
+    Lo que el simulador hace igual que la API (y con sus mismas formas de respuesta):
 
-    - locA **ocupación se deriva** de `encounter_locations` y se le presta a F2
-      (`registerOccupancyProvider`): nadie locA escribe a mano;
+    - la **ocupación se deriva** de `encounter_locations` y se le presta a F2
+      (`registerOccupancyProvider`): nadie la escribe a mano;
     - **una cama, un paciente** y **un paciente, una cama**: se valida antes de
-      escribir (en locA API además lo garantizan los `EXCLUDE`);
+      escribir (en la API además lo garantizan los `EXCLUDE`);
     - **traslado e intercambio atómicos**: se valida todo y recién después se
       escribe; el origen queda sucio con su orden de limpieza (puerto de F2);
     - **compatibilidad**: bloqueantes nunca se fuerzan; forzables con
@@ -81,7 +77,7 @@ export interface EncounterRow {
   readonly isolationCode: string;
   readonly isolationOrganism: string | null;
   readonly reasonText: string;
-  readonly attendingPractitionerId: string;
+  readonly attendingPractitionerId: string | null;
   readonly expectedDischargeAt: string | null;
   readonly startedAt: string;
   readonly endedAt: string | null;
@@ -139,6 +135,7 @@ interface AdjustmentRow {
   readonly id: string;
   readonly tenantId: string;
   readonly censusDayId: string;
+  /** El campo, en camelCase (`CensusCounts`); la vista lo devuelve en snake_case, como el modelo. */
   readonly fieldCode: CensusField;
   readonly previousValue: number;
   readonly newValue: number;
@@ -203,7 +200,7 @@ function seedCensus(): CensusDayRow[] {
     return {
       id: `cen-seed-${day}`, tenantId: s.tenantId, siteId: s.id, unitId: unidad.id, censusDate: day, cutoffAt: cutoffOf(day),
       closedAt: new Date(Date.parse(cutoffOf(day)) + 15 * 60_000).toISOString(), closedByUserId: null,
-      counts: counts({ beds_censable: 4, beds_available: disponibles, beds_blocked: 4 - disponibles, patients_at_cutoff: dp, admissions: ing, discharges: egr, patient_days: dp, discharge_stay_days: est }),
+      counts: counts({ bedsCensable: 4, bedsAvailable: disponibles, bedsBlocked: 4 - disponibles, patientsAtCutoff: dp, admissions: ing, discharges: egr, patientDays: dp, dischargeStayDays: est }),
     };
   });
 }
@@ -218,12 +215,20 @@ const incidents = new Coleccion<IncidentRow>([]);
 const censusDays = new Coleccion<CensusDayRow>(seedCensus());
 const adjustments = new Coleccion<AdjustmentRow>([]);
 
-/* ---- ocupación derivada (se locA presta a F2) ------------------------------ */
+/* ---- ocupación derivada (se la presta a F2) ------------------------------ */
 
 const bedRowsOf = (careSpaceId: string) =>
   locations.filtrar((l) => l.careSpaceId === careSpaceId && l.isBedAssignment && (l.statusCode === 'LOCATION_ACTIVE' || l.statusCode === 'LOCATION_RESERVED') && l.periodEnd === null);
 
-function patientOf(id: string): StayPatient {
+interface MockPatient {
+  readonly patientProfileId: string;
+  readonly displayName: string;
+  readonly initials: string;
+  readonly sexCode: string;
+  readonly ageYears: number;
+}
+
+function patientOf(id: string): MockPatient {
   const p = patientById(id);
   const fullName = p?.displayName ?? 'Paciente';
   const nacimiento = p?.birthDate ?? '1980-01-01';
@@ -268,7 +273,7 @@ interface Prospect {
   readonly organism: string | null;
   /** Encuentros que no cuentan como vecinos (el propio, o el del intercambio). */
   readonly ignoreEncounters?: readonly string[];
-  /** Al intercambiar, locA cama destino locA deja libre el otro paciente. */
+  /** Al intercambiar, la cama destino la deja libre el otro paciente. */
   readonly treatAsFree?: boolean;
 }
 
@@ -281,7 +286,7 @@ function compatibility(bed: EspacioSimulado, p: Prospect): CompatibilityViolatio
   const roommates = (local === undefined ? [] : siblingBeds(bed))
     .map((x) => occupancyOf(x.id))
     .filter((o) => o.code !== 'OCC_FREE' && o.encounterId !== undefined && !ignorar.has(o.encounterId))
-    .map((o) => ({ sexCode: o.patient!.sexCode, isolationCode: o.patient!.isolationCode ?? 'ISO_NONE', organism: o.patient!.organism ?? null }));
+    .map((o) => ({ sexCode: o.patient!.sexCode ?? '', isolationCode: o.patient!.isolationCode ?? 'ISO_NONE', organism: o.patient!.organism ?? null }));
   const hygieneReady = d.axes.hygieneCode === 'HYG_INSPECTED' || (d.axes.hygieneCode === 'HYG_CLEAN' && !INFRA_SETTINGS.inspectionRequired);
   const patient = patientOf(p.patientProfileId);
   return evaluateCompatibility({
@@ -306,7 +311,7 @@ function compatibility(bed: EspacioSimulado, p: Prospect): CompatibilityViolatio
   });
 }
 
-/** El veredicto de locA API sobre un forzado: 409/422/403, o `null` para seguir. */
+/** El veredicto de la API sobre un forzado: 409/422/403, o `null` para seguir. */
 function placementReply(request: MockRequest, site: SitioSimulado, violations: readonly CompatibilityViolation[], override: PlacementOverride | undefined): MockReply | null {
   const problema = overrideProblem(violations, override);
   if (problema === 'BED_NOT_ASSIGNABLE') {
@@ -320,89 +325,64 @@ function placementReply(request: MockRequest, site: SitioSimulado, violations: r
     } as const;
     return precondition(problema, mensajes[problema], { violations });
   }
-  if (override !== undefined && !can(request, site, 'adt.override')) return forbiddenAction('adt.override');
+  if (override !== undefined && !can(request, site, 'f3.adt.override')) return forbiddenAction('f3.adt.override');
   return null;
 }
 
 /* ---- vistas --------------------------------------------------------------- */
 
-const userNameOf = (id: string | null) => (id === null ? null : (MOCK_USERS.find((u) => u.id === id)?.displayName ?? null));
+const ENCOUNTER_STATUS = { IN_PROGRESS: 'ENCOUNTER_IN_PROGRESS', FINISHED: 'ENCOUNTER_FINISHED' } as const;
 
-function bedOf(careSpaceId: string): StayBed {
-  const e = espacios.get(careSpaceId)!;
-  const u = e.clinicalUnitId === null ? undefined : unidades.get(e.clinicalUnitId);
-  return { careSpaceId: e.id, code: e.code, name: e.name, unitId: e.clinicalUnitId, unitName: u?.name ?? null, siteId: e.siteId };
-}
-
-const HL7: Readonly<Record<MovementTypeCode, string>> = { ADT_ADMIT: 'A01', ADT_TRANSFER: 'A02', ADT_SWAP: 'A17', ADT_RESERVE: 'A14' };
-
+/** `locationView` de `adt.use-cases.ts`. */
 function locationView(l: LocationRow): EncounterLocation {
-  const insideWindow = Date.now() - Date.parse(l.createdAt) <= INFRA_SETTINGS.adtCancelWindowMinutes * 60_000;
-  const cancelable =
-    l.statusCode === 'LOCATION_RESERVED' ||
-    (l.statusCode === 'LOCATION_ACTIVE' && l.movementTypeCode === 'ADT_TRANSFER' && insideWindow);
   return {
     id: l.id,
     encounterId: l.encounterId,
-    bed: bedOf(l.careSpaceId),
-    movementType: { code: l.movementTypeCode, display: opsConcept(l.movementTypeCode).display },
-    status: { code: l.statusCode, display: opsConcept(l.statusCode).display },
+    careSpaceId: l.careSpaceId,
+    status: l.statusCode,
+    movement: l.movementTypeCode,
+    endReason: l.endReasonCode,
     periodStart: l.periodStart,
     periodEnd: l.periodEnd,
-    endReason: l.endReasonCode === null ? null : opsConcept(l.endReasonCode),
     previousEncounterLocationId: l.previousLocationId,
     placementIncidentId: l.placementIncidentId,
-    cancellable: cancelable,
-    hl7Event: l.endReasonCode === 'ADT_END_DISCHARGE' ? `${HL7[l.movementTypeCode]} · A03` : HL7[l.movementTypeCode],
   };
 }
 
+/** El incidente como lo devuelve `InpatientReadUseCases.stay`. */
 function incidentView(i: IncidentRow): PlacementIncident {
   return {
     id: i.id,
-    encounterId: i.encounterId,
+    encounterLocationId: i.encounterLocationId,
     careSpaceId: i.careSpaceId,
-    bedCode: espacios.get(i.careSpaceId)?.code ?? '',
-    violations: i.violations,
-    justification: i.justification,
-    authorizedByName: userNameOf(i.authorizedByUserId),
-    status: { code: i.statusCode, display: opsConcept(i.statusCode).display },
-    reviewedByName: userNameOf(i.reviewedByUserId),
+    violations: i.violations.map((v) => ({ rule: v.rule, severity: 'OVERRIDABLE' as const, detail: v.detail })),
+    status: i.statusCode,
     reviewedAt: i.reviewedAt,
-    reviewNote: i.reviewNote,
-    createdAt: i.createdAt,
   };
 }
 
 const lengthOfStay = (enc: EncounterRow) => stayDays(siteDate(enc.startedAt), siteDate(enc.endedAt ?? Date.now()));
 
+/** `GET /clinical/encounters/:id/stay` → `{encounter, movements, incidents}` (`encounterView`). */
 function stayView(enc: EncounterRow): InpatientStay {
-  const movs = locations.filtrar((l) => l.encounterId === enc.id).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  const actual = movs.find((l) => l.statusCode === 'LOCATION_ACTIVE' && l.periodEnd === null);
-  const reserva = movs.find((l) => l.statusCode === 'LOCATION_RESERVED');
-  const attending = PROFESSIONALS.find((p) => p.id === enc.attendingPractitionerId);
+  const movs = locations.filtrar((l) => l.encounterId === enc.id).sort((a, b) => a.periodStart.localeCompare(b.periodStart) || a.createdAt.localeCompare(b.createdAt));
   return {
-    encounterId: enc.id,
-    episodeId: enc.episodeId,
-    siteId: enc.siteId,
-    status: enc.statusCode,
-    patient: patientOf(enc.patientProfileId),
-    attendingName: attending?.displayName ?? null,
-    levelOfCare: opsConcept(enc.levelOfCareCode),
-    admissionSource: opsConcept(enc.admissionSourceCode),
-    isolation: opsConcept(enc.isolationCode),
-    isolationOrganism: enc.isolationOrganism,
-    reasonText: enc.reasonText,
-    startedAt: enc.startedAt,
-    endedAt: enc.endedAt,
-    expectedDischargeAt: enc.expectedDischargeAt,
-    disposition: enc.dispositionCode === null ? null : opsConcept(enc.dispositionCode),
-    currentBed: actual === undefined ? null : bedOf(actual.careSpaceId),
-    reservedBed: reserva === undefined ? null : bedOf(reserva.careSpaceId),
-    losDays: lengthOfStay(enc),
+    encounter: {
+      id: enc.id,
+      episodeId: enc.episodeId,
+      patientProfileId: enc.patientProfileId,
+      class: 'ENCOUNTER_CLASS_INPATIENT',
+      status: ENCOUNTER_STATUS[enc.statusCode],
+      levelOfCare: enc.levelOfCareCode,
+      admissionSource: enc.admissionSourceCode,
+      dischargeDisposition: enc.dispositionCode,
+      startAt: enc.startedAt,
+      endAt: enc.endedAt,
+      expectedDischargeAt: enc.expectedDischargeAt,
+      rowVersion: enc.rowVersion,
+    },
     movements: movs.map(locationView),
     incidents: incidents.filtrar((i) => i.encounterId === enc.id).map(incidentView),
-    rowVersion: enc.rowVersion,
   };
 }
 
@@ -427,7 +407,7 @@ const activeBedOf = (encounterId: string) =>
   locations.filtrar((l) => l.encounterId === encounterId && l.isBedAssignment && l.statusCode === 'LOCATION_ACTIVE' && l.periodEnd === null)[0];
 
 const ctxOf = (request: MockRequest, requestId: string, sourceRefId: string, at?: string): EventContext => ({
-  request, requestId, source: 'SRC_ADT', sourceRefId, ...(at === undefined ? {} : { at }),
+  request, requestId, source: 'ADT', sourceRefId, ...(at === undefined ? {} : { at }),
 });
 
 function openLocation(enc: EncounterRow, bed: EspacioSimulado, movement: MovementTypeCode, status: LocationStatusCode, at: string, previous: string | null, incidentId: string | null): LocationRow {
@@ -475,18 +455,18 @@ export function previewCensus(siteId: string, unitId: string, date: string): Cen
   const mismoDia = egresos.filter((l) => dentro(encounters.get(l.encounterId)?.startedAt ?? null));
   const disponibles = camas.filter((c) => !blockedAt(c.id, corte)).length;
   return counts({
-    beds_censable: camas.length,
-    beds_available: disponibles,
-    beds_blocked: camas.length - disponibles,
-    patients_at_cutoff: presentes.length,
+    bedsCensable: camas.length,
+    bedsAvailable: disponibles,
+    bedsBlocked: camas.length - disponibles,
+    patientsAtCutoff: presentes.length,
     admissions: filas.filter((l) => l.movementTypeCode === 'ADT_ADMIT' && dentro(l.periodStart)).length,
     discharges: egresos.length,
     deaths: egresos.filter((l) => encounters.get(l.encounterId)?.dispositionCode === 'DISP_DEATH').length,
-    transfers_in: filas.filter((l) => (l.movementTypeCode === 'ADT_TRANSFER' || l.movementTypeCode === 'ADT_SWAP') && dentro(l.periodStart)).length,
-    transfers_out: filas.filter((l) => (l.endReasonCode === 'ADT_END_TRANSFER_OUT' || l.endReasonCode === 'ADT_END_SWAP') && dentro(l.periodEnd)).length,
-    same_day_stays: mismoDia.length,
-    patient_days: presentes.length + mismoDia.length,
-    discharge_stay_days: egresos.reduce((acc, l) => acc + stayDays(siteDate(encounters.get(l.encounterId)!.startedAt), siteDate(l.periodEnd!)), 0),
+    transfersIn: filas.filter((l) => (l.movementTypeCode === 'ADT_TRANSFER' || l.movementTypeCode === 'ADT_SWAP') && dentro(l.periodStart)).length,
+    transfersOut: filas.filter((l) => (l.endReasonCode === 'ADT_END_TRANSFER_OUT' || l.endReasonCode === 'ADT_END_SWAP') && dentro(l.periodEnd)).length,
+    sameDayStays: mismoDia.length,
+    patientDays: presentes.length + mismoDia.length,
+    dischargeStayDays: egresos.reduce((acc, l) => acc + stayDays(siteDate(encounters.get(l.encounterId)!.startedAt), siteDate(l.periodEnd!)), 0),
   });
 }
 
@@ -495,8 +475,12 @@ function adjusted(day: CensusDayRow): CensusCounts {
   return propios.reduce<CensusCounts>((acc, a) => ({ ...acc, [a.fieldCode]: a.newValue }), day.counts);
 }
 
+const snake = (f: string) => f.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+const camel = (f: string) => f.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+
+/** `adjView` de la API: `fieldCode` en snake_case, como lo guarda el modelo. */
 function adjustmentView(a: AdjustmentRow): CensusAdjustment {
-  return { ...a, adjustedByName: userNameOf(a.adjustedByUserId) };
+  return { id: a.id, fieldCode: snake(a.fieldCode), previousValue: a.previousValue, newValue: a.newValue, reasonText: a.reasonText, adjustedByUserId: a.adjustedByUserId, createdAt: a.createdAt };
 }
 
 function censusUnits(siteId: string, unitId: string | null) {
@@ -505,28 +489,33 @@ function censusUnits(siteId: string, unitId: string | null) {
     .filter((u) => censableBeds(siteId, u.id).length > 0 || censusDays.todos().some((d) => d.unitId === u.id));
 }
 
-function censusDayView(siteId: string, unit: { id: string; name: string }, date: string): CensusDay {
+/** `CensusDayView`: cerrado (foto + ajustes) o abierto (vista previa, `id: null`). */
+function censusDayView(siteId: string, unit: { id: string }, date: string): CensusDayView {
   const cerrado = censusDays.todos().find((d) => d.siteId === siteId && d.unitId === unit.id && d.censusDate === date);
   if (cerrado === undefined) {
     const previa = previewCensus(siteId, unit.id, date);
-    return { id: null, siteId, unitId: unit.id, unitName: unit.name, censusDate: date, cutoffAt: cutoffOf(date), status: 'CENSUS_OPEN', closedAt: null, closedByName: null, counts: previa, adjustments: [], adjustedCounts: previa };
+    return { id: null, unitId: unit.id, date, status: 'OPEN', cutoffAt: cutoffOf(date), counts: previa, adjustments: [], adjustedTotals: previa };
   }
   return {
-    id: cerrado.id, siteId, unitId: unit.id, unitName: unit.name, censusDate: date, cutoffAt: cerrado.cutoffAt, status: 'CENSUS_CLOSED',
-    closedAt: cerrado.closedAt, closedByName: cerrado.closedByUserId === null ? 'Cierre automático' : userNameOf(cerrado.closedByUserId),
-    counts: cerrado.counts, adjustments: adjustments.filtrar((a) => a.censusDayId === cerrado.id).map(adjustmentView), adjustedCounts: adjusted(cerrado),
+    id: cerrado.id, unitId: unit.id, date, status: 'CLOSED', cutoffAt: cerrado.cutoffAt, counts: cerrado.counts,
+    adjustments: adjustments.filtrar((a) => a.censusDayId === cerrado.id).map(adjustmentView), adjustedTotals: adjusted(cerrado),
   };
 }
 
-function turnaroundSamples(siteId: string, from: string, to: string): TurnaroundSample[] {
-  const min = (a: string | null, b: string | null) => (a === null || b === null ? 0 : Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / 60_000)));
+function turnaroundSamples(siteId: string, from: string, to: string) {
   return cleaningOrders
-    .filtrar((o) => o.siteId === siteId && o.triggerCode === 'CLN_TRG_DISCHARGE' && (o.statusCode === 'CLN_INSPECTED' || o.statusCode === 'CLN_DONE'))
+    .filtrar((o) => o.siteId === siteId && o.triggerCode === 'CLN_TRG_DISCHARGE')
     .filter((o) => siteDate(o.requestedAt) >= from && siteDate(o.requestedAt) <= to)
-    .map((o) => {
-      const lista = o.inspectedAt ?? o.finishedAt;
-      return { total: min(o.requestedAt, lista), waitToStart: min(o.requestedAt, o.startedAt), cleaning: min(o.startedAt, o.finishedAt), inspection: min(o.finishedAt, o.inspectedAt) };
-    });
+    .map((o) => ({ requestedAt: o.requestedAt, startedAt: o.startedAt, finishedAt: o.finishedAt, inspectedAt: o.inspectedAt }));
+}
+
+/** `CompatibilityResultDto`: `rules` nuevas y `violations` en la forma anterior. */
+function compatibilityView(v: readonly CompatibilityViolation[]) {
+  return {
+    assignable: v.length === 0,
+    rules: v.map((x) => ({ code: x.rule, severity: x.severity, overridable: x.severity === 'OVERRIDABLE', detail: x.detail })),
+    violations: v,
+  };
 }
 
 /* ---- rutas ---------------------------------------------------------------- */
@@ -545,9 +534,9 @@ export function registerAdt(router: MockRouter): void {
     const bed = spaceVisible(request, datos.careSpaceId);
     if (bed === null || patientById(datos.patientProfileId ?? '') === undefined) return notFoundReply();
     const sitio = sitiosInfra.get(bed.siteId)!;
-    if (!can(request, sitio, 'adt.admit')) return forbiddenAction('adt.admit');
+    if (!can(request, sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
     const v = compatibility(bed, { patientProfileId: datos.patientProfileId!, levelOfCareCode: datos.levelOfCareCode ?? 'LOC_CARE_GENERAL', isolationCode: datos.isolationPrecautionCode ?? 'ISO_NONE', organism: datos.isolationOrganismText ?? null });
-    return { assignable: v.length === 0, violations: v };
+    return compatibilityView(v);
   });
 
   router.post('/clinical/encounters/:id/bed-compatibility', (request) => {
@@ -555,9 +544,9 @@ export function registerAdt(router: MockRouter): void {
     const datos = cuerpo<{ careSpaceId: string }>(request);
     const bed = spaceVisible(request, datos.careSpaceId);
     if (g === null || bed === null) return notFoundReply();
-    if (!can(request, g.sitio, 'adt.transfer')) return forbiddenAction('adt.transfer');
+    if (!can(request, g.sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
     const v = compatibility(bed, { patientProfileId: g.enc.patientProfileId, levelOfCareCode: g.enc.levelOfCareCode, isolationCode: g.enc.isolationCode, organism: g.enc.isolationOrganism, ignoreEncounters: [g.enc.id] });
-    return { assignable: v.length === 0, violations: v };
+    return compatibilityView(v);
   });
 
   router.post('/clinical/admissions', (request) => {
@@ -568,10 +557,9 @@ export function registerAdt(router: MockRouter): void {
     }>(request);
     const sitio = siteVisible(request, d.practiceSiteId);
     if (sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'adt.admit')) return forbiddenAction('adt.admit');
+    if (!can(request, sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
     const faltan: string[] = [];
     if (!d.patientProfileId) faltan.push('patientProfileId should not be empty');
-    if (!d.attendingPractitionerId) faltan.push('attendingPractitionerId should not be empty');
     if (!d.levelOfCareCode || !(VALID.levels as readonly string[]).includes(d.levelOfCareCode)) faltan.push('levelOfCareCode must be one of the catalog codes');
     if (!d.admissionSourceCode || !(VALID.sources as readonly string[]).includes(d.admissionSourceCode)) faltan.push('admissionSourceCode must be one of the catalog codes');
     if (typeof d.reasonText !== 'string' || d.reasonText.trim() === '') faltan.push('reasonText should not be empty');
@@ -596,7 +584,7 @@ export function registerAdt(router: MockRouter): void {
     const enc = encounters.agregar({
       id: nuevoId('enc'), tenantId: sitio.tenantId, siteId: sitio.id, patientProfileId: d.patientProfileId!, episodeId: d.episodeId ?? nuevoId('epi'),
       statusCode: 'IN_PROGRESS', levelOfCareCode: d.levelOfCareCode!, admissionSourceCode: d.admissionSourceCode!, isolationCode: isolation,
-      isolationOrganism: d.isolationOrganismText?.trim() || null, reasonText: d.reasonText!.trim(), attendingPractitionerId: d.attendingPractitionerId!,
+      isolationOrganism: d.isolationOrganismText?.trim() || null, reasonText: d.reasonText!.trim(), attendingPractitionerId: d.attendingPractitionerId ?? null,
       expectedDischargeAt: d.expectedDischargeAt ?? null, startedAt: at, endedAt: null, dispositionCode: null, rowVersion: 1,
     });
     if (bed === null) return reply(201, { episodeId: enc.episodeId, encounterId: enc.id, requestId });
@@ -605,7 +593,7 @@ export function registerAdt(router: MockRouter): void {
     const incidente = override !== undefined && violations.length > 0 ? recordIncident(request, enc, loc, violations, override) : null;
     recordOccupancyChange(bed.id, 'OCC_FREE', reserva ? 'OCC_RESERVED' : 'OCC_OCCUPIED', ctxOf(request, requestId, loc.id));
     return reply(201, {
-      episodeId: enc.episodeId, encounterId: enc.id, encounterLocationId: loc.id, cell: buildCell(espacios.get(bed.id)!, actionsOf(rolesIn(request, sitio))),
+      episodeId: enc.episodeId, encounterId: enc.id, encounterLocationId: loc.id, cell: portState(espacios.get(bed.id)!),
       ...(incidente === null ? {} : { incidentId: incidente.id }), requestId,
     });
   });
@@ -614,7 +602,7 @@ export function registerAdt(router: MockRouter): void {
     const g = encounterVisible(request, request.params['id']);
     if (g === null) return notFoundReply();
     const { enc, sitio } = g;
-    if (!can(request, sitio, 'adt.admit')) return forbiddenAction('adt.admit');
+    if (!can(request, sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
     const version = ifMatchEncounter(request, enc);
     if (version !== null) return version;
     if (enc.statusCode !== 'IN_PROGRESS') return conflictReply('ENCOUNTER_NOT_IN_PROGRESS', 'La internación ya terminó.');
@@ -643,14 +631,14 @@ export function registerAdt(router: MockRouter): void {
     const antes: OccupancyCode = reservaPropia?.careSpaceId === bed.id ? 'OCC_RESERVED' : 'OCC_FREE';
     recordOccupancyChange(bed.id, antes, reserva ? 'OCC_RESERVED' : 'OCC_OCCUPIED', ctxOf(request, requestId, loc.id));
     encounters.actualizar(enc.id, { rowVersion: enc.rowVersion + 1 });
-    return { encounterLocationId: loc.id, cell: buildCell(espacios.get(bed.id)!, actionsOf(rolesIn(request, sitio))), ...(incidente === null ? {} : { incidentId: incidente.id }), requestId };
+    return { encounterId: enc.id, encounterLocationId: loc.id, cell: portState(espacios.get(bed.id)!), ...(incidente === null ? {} : { incidentId: incidente.id }), requestId };
   });
 
   router.post('/clinical/encounters/:id/transfer', (request) => {
     const g = encounterVisible(request, request.params['id']);
     if (g === null) return notFoundReply();
     const { enc, sitio } = g;
-    if (!can(request, sitio, 'adt.transfer')) return forbiddenAction('adt.transfer');
+    if (!can(request, sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
     const version = ifMatchEncounter(request, enc);
     if (version !== null) return version;
     const d = cuerpo<{ toCareSpaceId: string; occurredAt: string; reasonCode: string; override: unknown }>(request);
@@ -667,7 +655,7 @@ export function registerAdt(router: MockRouter): void {
     const violations = compatibility(destino, { patientProfileId: enc.patientProfileId, levelOfCareCode: enc.levelOfCareCode, isolationCode: enc.isolationCode, organism: enc.isolationOrganism, ignoreEncounters: [enc.id] });
     const veredicto = placementReply(request, sitio, violations, override);
     if (veredicto !== null) return veredicto;
-    // Validado todo: recién ahora se escribe, todo junto (en locA API, una transacción).
+    // Validado todo: recién ahora se escribe, todo junto (en la API, una transacción).
     const requestId = newRequestId();
     locations.actualizar(origen.id, { statusCode: 'LOCATION_COMPLETED', periodEnd: t, endReasonCode: 'ADT_END_TRANSFER_OUT' });
     const created = openLocation(enc, destino, 'ADT_TRANSFER', 'LOCATION_ACTIVE', t, origen.id, null);
@@ -677,7 +665,7 @@ export function registerAdt(router: MockRouter): void {
     recordOccupancyChange(destino.id, 'OCC_FREE', 'OCC_OCCUPIED', ctx);
     const orden = markDirtyFromSource(origen.careSpaceId, { trigger: 'CLN_TRG_TRANSFER', sourceRefId: origen.id, terminal: enc.isolationCode !== 'ISO_NONE', ctx });
     encounters.actualizar(enc.id, { rowVersion: enc.rowVersion + 1 });
-    return { fromLocationId: origen.id, toLocationId: created.id, cleaningOrderId: orden, requestId };
+    return { encounterId: enc.id, fromLocationId: origen.id, toLocationId: created.id, cleaningOrderId: orden, requestId };
   });
 
   router.post('/clinical/bed-swaps', (request) => {
@@ -685,7 +673,7 @@ export function registerAdt(router: MockRouter): void {
     const a = encounterVisible(request, d.encounterAId);
     const b = encounterVisible(request, d.encounterBId);
     if (a === null || b === null) return notFoundReply();
-    if (!can(request, a.sitio, 'adt.transfer')) return forbiddenAction('adt.transfer');
+    if (!can(request, a.sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
     if (a.enc.id === b.enc.id) return conflictReply('SWAP_SAME_ENCOUNTER', 'Elija dos internaciones distintas.');
     const locA = activeBedOf(a.enc.id);
     const locB = activeBedOf(b.enc.id);
@@ -724,7 +712,7 @@ export function registerAdt(router: MockRouter): void {
     const g = encounterVisible(request, request.params['id']);
     if (g === null) return notFoundReply();
     const { enc, sitio } = g;
-    if (!can(request, sitio, 'adt.discharge')) return forbiddenAction('adt.discharge');
+    if (!can(request, sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
     const version = ifMatchEncounter(request, enc);
     if (version !== null) return version;
     if (enc.statusCode !== 'IN_PROGRESS') return conflictReply('ENCOUNTER_NOT_IN_PROGRESS', 'La internación ya terminó.');
@@ -755,7 +743,7 @@ export function registerAdt(router: MockRouter): void {
     const loc = locations.get(request.params['id']!);
     const g = loc === undefined ? null : encounterVisible(request, loc.encounterId);
     if (loc === undefined || g === null) return notFoundReply();
-    if (!can(request, g.sitio, 'adt.cancel')) return forbiddenAction('adt.cancel');
+    if (!can(request, g.sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
     const d = cuerpo<{ reasonText: string }>(request);
     if (typeof d.reasonText !== 'string' || d.reasonText.trim() === '') return validationFailed(['reasonText should not be empty']);
     const requestId = newRequestId();
@@ -763,7 +751,7 @@ export function registerAdt(router: MockRouter): void {
     if (loc.statusCode === 'LOCATION_RESERVED') {
       locations.actualizar(loc.id, { statusCode: 'LOCATION_CANCELLED', periodEnd: at, endReasonCode: 'ADT_END_RESERVATION_CANCELLED' });
       recordOccupancyChange(loc.careSpaceId, 'OCC_RESERVED', 'OCC_FREE', ctxOf(request, requestId, loc.id));
-      return { requestId };
+      return { encounterId: g.enc.id, encounterLocationId: loc.id, requestId };
     }
     if (loc.statusCode !== 'LOCATION_ACTIVE' || loc.movementTypeCode !== 'ADT_TRANSFER' || loc.previousLocationId === null) {
       return conflictReply('LOCATION_NOT_CANCELLABLE', 'Sólo se cancela una reserva o un traslado reciente.');
@@ -782,29 +770,35 @@ export function registerAdt(router: MockRouter): void {
     recordOccupancyChange(loc.careSpaceId, 'OCC_OCCUPIED', 'OCC_FREE', ctxOf(request, requestId, loc.id));
     recordOccupancyChange(previa.careSpaceId, 'OCC_FREE', 'OCC_OCCUPIED', ctxOf(request, requestId, previa.id));
     encounters.actualizar(g.enc.id, { rowVersion: g.enc.rowVersion + 1 });
-    return { requestId };
+    return { encounterId: g.enc.id, encounterLocationId: previa.id, requestId };
   });
 
+  /** Censo vivo (`InpatientReadUseCases.inpatients`): un arreglo, sin página. */
   router.get('/sites/:siteId/inpatients', (request) => {
     const sitio = siteVisible(request, request.params['siteId']);
     if (sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'board.view-patient')) return forbiddenAction('board.view-patient');
+    if (!can(request, sitio, 'f3.adt.read')) return forbiddenAction('f3.adt.read');
     const unidad = request.query.get('unitId');
-    const items = encounters
+    return encounters
       .filtrar((e) => e.siteId === sitio.id && e.statusCode === 'IN_PROGRESS')
       .map((e) => ({ e, l: activeBedOf(e.id) }))
-      .filter(({ l }) => unidad === null || unidad === '' || (l !== undefined && espacios.get(l.careSpaceId)?.clinicalUnitId === unidad))
+      .filter((x): x is { e: EncounterRow; l: LocationRow } => x.l !== undefined)
+      .filter(({ l }) => unidad === null || unidad === '' || espacios.get(l.careSpaceId)?.clinicalUnitId === unidad)
       .map(({ e, l }) => ({
-        encounterId: e.id, patient: patientOf(e.patientProfileId), bed: l === undefined ? null : bedOf(l.careSpaceId), since: l?.periodStart ?? e.startedAt,
-        levelOfCare: opsConcept(e.levelOfCareCode), isolation: opsConcept(e.isolationCode), expectedDischargeAt: e.expectedDischargeAt, losDays: lengthOfStay(e), rowVersion: e.rowVersion,
+        encounterId: e.id,
+        patientProfileId: e.patientProfileId,
+        bed: { careSpaceId: l.careSpaceId, clinicalUnitId: espacios.get(l.careSpaceId)?.clinicalUnitId ?? null },
+        since: l.periodStart,
+        levelOfCare: e.levelOfCareCode,
+        expectedDischargeAt: e.expectedDischargeAt,
+        losDays: lengthOfStay(e),
       }));
-    return { items, nextCursor: null };
   });
 
   router.get('/clinical/encounters/:id/stay', (request) => {
     const g = encounterVisible(request, request.params['id']);
     if (g === null) return notFoundReply();
-    if (!can(request, g.sitio, 'board.view-patient')) return forbiddenAction('board.view-patient');
+    if (!can(request, g.sitio, 'f3.adt.read')) return forbiddenAction('f3.adt.read');
     return stayView(g.enc);
   });
 
@@ -812,54 +806,55 @@ export function registerAdt(router: MockRouter): void {
     const inc = incidents.get(request.params['id']!);
     const g = inc === undefined ? null : encounterVisible(request, inc.encounterId);
     if (inc === undefined || g === null) return notFoundReply();
-    if (!can(request, g.sitio, 'incident.review')) return forbiddenAction('incident.review');
-    const d = cuerpo<{ status: 'PLC_INC_REVIEWED' | 'PLC_INC_CLOSED'; reviewNote: string }>(request);
-    if (d.status !== 'PLC_INC_REVIEWED' && d.status !== 'PLC_INC_CLOSED') return validationFailed(['status must be PLC_INC_REVIEWED or PLC_INC_CLOSED']);
-    if (typeof d.reviewNote !== 'string' || d.reviewNote.trim() === '') return validationFailed(['reviewNote should not be empty']);
-    return incidentView(incidents.actualizar(inc.id, { statusCode: d.status, reviewNote: d.reviewNote.trim(), reviewedByUserId: request.user?.id ?? null, reviewedAt: new Date().toISOString() })!);
+    if (!can(request, g.sitio, 'f3.incident.review')) return forbiddenAction('f3.incident.review');
+    const d = cuerpo<{ status: 'REVIEWED' | 'CLOSED'; reviewNote: string }>(request);
+    if (d.status !== 'REVIEWED' && d.status !== 'CLOSED') return validationFailed(['status must be one of the following values: REVIEWED, CLOSED']);
+    if (typeof d.reviewNote !== 'string' || d.reviewNote.trim() === '') return validationFailed(['reviewNote must be a string']);
+    incidents.actualizar(inc.id, { statusCode: d.status === 'REVIEWED' ? 'PLC_INC_REVIEWED' : 'PLC_INC_CLOSED', reviewNote: d.reviewNote.trim(), reviewedByUserId: request.user?.id ?? null, reviewedAt: new Date().toISOString() });
+    return { id: inc.id, status: d.status, requestId: newRequestId() };
   });
 
+  /** La estancia vigente con la forma de `/stay`; **404** uniforme si no está internado o no hay permiso. */
   router.get('/clinical/patients/:id/inpatient-stay', (request) => {
     const tenant = request.headers.get('X-Tenant-Id');
     const enc = encounters.todos().find((e) => e.patientProfileId === request.params['id'] && e.statusCode === 'IN_PROGRESS' && (tenant === null || e.tenantId === tenant));
-    if (enc === undefined) return null;
-    const sitio = sitiosInfra.get(enc.siteId)!;
-    const l = activeBedOf(enc.id);
-    return { encounterId: enc.id, siteId: sitio.id, siteName: sitio.name, bed: l === undefined ? null : bedOf(l.careSpaceId), since: l?.periodStart ?? enc.startedAt, levelOfCare: opsConcept(enc.levelOfCareCode) };
+    if (enc === undefined) return notFoundReply();
+    const sitio = siteVisible(request, enc.siteId);
+    // 404 uniforme («Estancia no encontrada»): sin permiso es lo mismo que sin estancia.
+    if (sitio === null || !can(request, sitio, 'f3.adt.read')) return notFoundReply();
+    return stayView(enc);
   });
 
   router.get('/sites/:siteId/attending-practitioners', (request) => {
     const sitio = siteVisible(request, request.params['siteId']);
     if (sitio === null) return notFoundReply();
-    return PROFESSIONALS.slice(0, 6).map((p) => ({ id: p.id, displayName: p.displayName }));
+    if (!can(request, sitio, 'f3.adt.place')) return forbiddenAction('f3.adt.place');
+    return PROFESSIONALS.slice(0, 6).map((p) => ({ practitionerProfileId: p.id, displayName: p.displayName, specialty: null }));
   });
 
+  /** `InpatientCensusUseCases.view`: un arreglo de `CensusDayView`, una fila por unidad. */
   router.get('/sites/:siteId/census', (request) => {
     const sitio = siteVisible(request, request.params['siteId']);
     if (sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'census.view')) return forbiddenAction('census.view');
-    const day = request.query.get('date') ?? shiftDate(siteDate(Date.now()), -1);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return validationFailed(['date must be YYYY-MM-DD']);
-    return {
-      siteId: sitio.id,
-      date: day,
-      generatedAt: new Date().toISOString(),
-      closableFrom: new Date(Date.parse(cutoffOf(day)) + INFRA_SETTINGS.censusCloseGraceMinutes * 60_000).toISOString(),
-      days: censusUnits(sitio.id, request.query.get('unitId')).map((u) => censusDayView(sitio.id, u, day)),
-    };
+    if (!can(request, sitio, 'f3.census.read')) return forbiddenAction('f3.census.read');
+    const day = request.query.get('date') ?? '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return precondition('INDICATOR_RANGE_TOO_LONG', 'Fecha inválida.', { date: day });
+    return censusUnits(sitio.id, request.query.get('unitId')).map((u) => censusDayView(sitio.id, u, day));
   });
 
   router.post('/sites/:siteId/census/:date/close', (request) => {
     const sitio = siteVisible(request, request.params['siteId']);
     if (sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'census.close')) return forbiddenAction('census.close');
+    if (!can(request, sitio, 'f3.census.close')) return forbiddenAction('f3.census.close');
     const day = request.params['date']!;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return validationFailed(['date must be YYYY-MM-DD']);
     if (Date.now() < Date.parse(cutoffOf(day)) + INFRA_SETTINGS.censusCloseGraceMinutes * 60_000) {
       return precondition('CENSUS_DATE_NOT_ENDED', 'El día todavía no terminó: se cierra después del corte de medianoche.');
     }
     const d = cuerpo<{ unitIds: string[] }>(request);
-    const objetivo = censusUnits(sitio.id, null).filter((u) => d.unitIds === undefined || d.unitIds.includes(u.id));
+    const todas = censusUnits(sitio.id, null);
+    if (d.unitIds !== undefined && d.unitIds.some((id) => !todas.some((u) => u.id === id))) return notFoundReply();
+    const objetivo = todas.filter((u) => d.unitIds === undefined || d.unitIds.includes(u.id));
     const abiertas = objetivo.filter((u) => !censusDays.todos().some((x) => x.unitId === u.id && x.censusDate === day));
     if (abiertas.length === 0) return conflictReply('CENSUS_ALREADY_CLOSED', 'El censo de ese día ya está cerrado.');
     const requestId = newRequestId();
@@ -876,55 +871,45 @@ export function registerAdt(router: MockRouter): void {
     const dia = censusDays.get(request.params['id']!);
     const sitio = dia === undefined ? null : siteVisible(request, dia.siteId);
     if (dia === undefined || sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'census.adjust')) return forbiddenAction('census.adjust');
-    const d = cuerpo<{ fieldCode: CensusField; newValue: number; reasonText: string; entryRefId: string }>(request);
-    if (!d.fieldCode || !(CENSUS_FIELDS as readonly string[]).includes(d.fieldCode)) return precondition('ADJUSTMENT_FIELD_INVALID', 'Ese campo del censo no se puede ajustar.', { field: 'fieldCode' });
+    if (!can(request, sitio, 'f3.census.adjust')) return forbiddenAction('f3.census.adjust');
+    const d = cuerpo<{ fieldCode: string; newValue: number; reasonText: string; entryRefId: string }>(request);
+    const campo = camel(d.fieldCode ?? '') as CensusField;
+    if (!campo || !(CENSUS_FIELDS as readonly string[]).includes(campo)) return precondition('ADJUSTMENT_FIELD_INVALID', 'Ese campo del censo no se puede ajustar.', { field: 'fieldCode' });
     if (typeof d.newValue !== 'number' || !Number.isInteger(d.newValue) || d.newValue < 0) return validationFailed(['newValue must be a non-negative integer']);
     if (typeof d.reasonText !== 'string' || d.reasonText.trim() === '') return precondition('ADJUSTMENT_REASON_REQUIRED', 'Todo ajuste exige un motivo.', { field: 'reasonText' });
     const requestId = newRequestId();
     const fila = adjustments.agregar({
-      id: nuevoId('adj'), tenantId: dia.tenantId, censusDayId: dia.id, fieldCode: d.fieldCode, previousValue: adjusted(dia)[d.fieldCode],
+      id: nuevoId('adj'), tenantId: dia.tenantId, censusDayId: dia.id, fieldCode: campo, previousValue: adjusted(dia)[campo],
       newValue: d.newValue, reasonText: d.reasonText.trim(), adjustedByUserId: request.user?.id ?? null, requestId, createdAt: new Date().toISOString(),
     });
-    return reply(201, adjustmentView(fila));
+    return reply(201, { ...adjustmentView(fila), requestId });
   });
 
+  /** `InpatientCensusUseCases.indicators`: tal como lo devuelve la API, sin desglose por unidad. */
   router.get('/sites/:siteId/inpatient-indicators', (request) => {
     const sitio = siteVisible(request, request.params['siteId']);
     if (sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'indicators.view')) return forbiddenAction('indicators.view');
-    const hoy = siteDate(Date.now());
-    const to = request.query.get('to') ?? shiftDate(hoy, -1);
-    const from = request.query.get('from') ?? shiftDate(to, -6);
+    if (!can(request, sitio, 'f3.indicators.read')) return forbiddenAction('f3.indicators.read');
+    const from = request.query.get('from') ?? '';
+    const to = request.query.get('to') ?? '';
     const dias = daysBetween(from, to);
-    if (dias.length === 0) return validationFailed(['from must be before to']);
-    if (dias.length > 366) return precondition('INDICATOR_RANGE_TOO_LONG', 'El rango no puede superar los 366 días.');
-    const siteUnits = censusUnits(sitio.id, request.query.get('unitId'));
-    const cerrados = (unitId: string) => censusDays.filtrar((x) => x.unitId === unitId && dias.includes(x.censusDate));
-    const byUnit = siteUnits.map((u) => ({ unitId: u.id, unitName: u.name, ...indicatorTotals(cerrados(u.id).map(adjusted)) }));
-    const todos = siteUnits.flatMap((u) => cerrados(u.id));
-    // Por día del sitio: se suman las unidades de ese día.
-    const byDay = dias
-      .map((f) => todos.filter((x) => x.censusDate === f).map(adjusted))
-      .filter((l) => l.length > 0)
-      .map((l) => l.reduce<CensusCounts>((acc, c) => counts(Object.fromEntries(CENSUS_FIELDS.map((k) => [k, acc[k] + c[k]])) as Partial<CensusCounts>), counts({})));
-    const faltan = dias.filter((f) => f < hoy && siteUnits.some((u) => !cerrados(u.id).some((x) => x.censusDate === f)));
+    if (dias.length === 0 || dias.length > 366) return precondition('INDICATOR_RANGE_TOO_LONG', 'El rango no puede superar los 366 días.', { maxDays: 366 });
+    const unidad = request.query.get('unitId');
+    if (unidad !== null && unidad !== '' && !censusUnits(sitio.id, null).some((u) => u.id === unidad)) return notFoundReply();
+    const filas = censusDays.filtrar((x) => x.siteId === sitio.id && dias.includes(x.censusDate) && (unidad === null || unidad === '' || x.unitId === unidad));
+    const cerrados = new Set(filas.map((x) => x.censusDate));
     return {
-      siteId: sitio.id,
       period: { from, to },
-      ...indicatorTotals(byDay),
+      ...indicatorTotals(filas.map(adjusted), dias.length),
       bedTurnaroundMinutes: bedTurnaround(turnaroundSamples(sitio.id, from, to)),
-      crossCheck: crossCheck(byDay),
-      coverage: { daysClosed: byDay.length, daysMissing: faltan },
-      byUnit: byUnit,
-      generatedAt: new Date().toISOString(),
+      coverage: { daysClosed: cerrados.size, daysMissing: dias.filter((f) => !cerrados.has(f)) },
     };
   });
 }
 
-encounters.persistirEn('mock.adt.encuentros');
-locations.persistirEn('mock.adt.ubicaciones');
-incidents.persistirEn('mock.adt.incidentes');
-censusDays.persistirEn('mock.adt.censo');
-adjustments.persistirEn('mock.adt.ajustes');
+encounters.persistirEn('mock.adt.encuentros.v2');
+locations.persistirEn('mock.adt.ubicaciones.v2');
+incidents.persistirEn('mock.adt.incidentes.v2');
+censusDays.persistirEn('mock.adt.censo.v2');
+adjustments.persistirEn('mock.adt.ajustes.v2');
 

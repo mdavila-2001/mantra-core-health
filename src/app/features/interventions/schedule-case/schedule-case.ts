@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { catchError, filter, map, of, startWith, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { leerErrorDeInfraestructura } from '../../../core/data-access/infrastructure/infrastructure.rules';
 import { OperatingRoomsClient } from '../../../core/data-access/operating-rooms/operating-rooms.client';
-import { canScheduleCases, reservedWindow } from '../../../core/data-access/operating-rooms/operating-rooms.rules';
+import { reservedWindow } from '../../../core/data-access/operating-rooms/operating-rooms.rules';
 import type { OperatingRoomSummary } from '../../../core/data-access/operating-rooms/operating-rooms.types';
 import { SiteContextStore } from '../../../core/data-access/operating-rooms/site-context.store';
 import { ProceduresClient } from '../../../core/data-access/procedures/procedures.client';
@@ -13,7 +15,7 @@ import { ProfilesClient } from '../../../core/data-access/profiles/profiles.clie
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, forbidden, loading, mapData, ready } from '../../../core/view-state/view-state';
+import { dataOf, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
@@ -31,6 +33,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { localDay, timeOf, toIso } from '../interventions.presentation';
 import { caseRoute, INTERVENTIONS_ROUTE } from '../interventions.routes';
+import { SiteSwitch } from '../site-switch/site-switch';
 
 const CASE_TYPES: readonly SegmentedOption<SurgicalCaseType>[] = [
   { value: 'ELECTIVE', label: 'Electiva' },
@@ -49,7 +52,7 @@ const CASE_TYPES: readonly SegmentedOption<SurgicalCaseType>[] = [
  */
 @Component({
   selector: 'app-schedule-case',
-  imports: [Alert, AppButton, Card, FormField, Input, PageHeader, ReferenceCombobox, SegmentedControl, Select, Textarea, ViewStateHost],
+  imports: [Alert, AppButton, Card, FormField, Input, PageHeader, ReferenceCombobox, SegmentedControl, Select, SiteSwitch, Textarea, ViewStateHost],
   templateUrl: './schedule-case.html',
   styleUrl: './schedule-case.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,21 +90,20 @@ export class ScheduleCase {
   protected readonly failure = signal<ViewState<never> | null>(null);
   protected readonly nextFree = signal<string | null>(null);
 
-  private readonly siteId = computed(() => dataOf(this.siteContext.state())?.sites[0]?.id ?? null);
-  protected readonly allowed = computed(() => canScheduleCases(this.session.roles()));
+  private readonly siteId = this.siteContext.siteId;
 
+  /** Sin compuerta por rol: si no puede programar, la API responde 403 al enviar (S5). */
   protected readonly page = computed<ViewState<readonly OperatingRoomSummary[]>>(() => {
-    if (!this.allowed()) return forbidden({ message: 'Su rol no programa intervenciones: lo hacen la jefatura de quirófano, la programación quirúrgica y los cirujanos.' });
     const ctx = this.siteContext.state();
     return ctx.status === 'ready' || ctx.status === 'stale' ? this.rooms() : mapData(ctx, () => [] as readonly OperatingRoomSummary[]);
   });
 
   protected readonly roomOptions = computed<readonly SelectOption<string>[]>(() =>
-    (dataOf(this.rooms()) ?? []).map((r) => ({ value: r.careSpace.id, label: `${r.careSpace.code} · ${r.careSpace.name}`, description: `${r.careSpace.path} · +${r.prepMinutes} prep / +${r.cleanupMinutes} limpieza` })),
+    (dataOf(this.rooms()) ?? []).map((r) => ({ value: r.careSpace.id, label: `${r.careSpace.code} · ${r.careSpace.name}`, description: `+${r.prepMinutes} prep / +${r.cleanupMinutes} limpieza` })),
   );
 
   protected readonly surgeonOptions = computed<readonly SelectOption<string>[]>(() =>
-    (dataOf(this.siteContext.state())?.staff ?? []).map((s) => ({ value: s.practitionerProfileId, label: s.practitionerName ?? 'Profesional sin nombre', description: s.specialty?.display })),
+    (dataOf(this.siteContext.directory())?.staff ?? []).map((s) => ({ value: s.practitionerProfileId, label: s.practitionerName ?? 'Profesional sin nombre', description: s.specialty?.display })),
   );
 
   private readonly room = computed(() => (dataOf(this.rooms()) ?? []).find((r) => r.careSpace.id === this.roomId()) ?? null);
@@ -133,21 +135,30 @@ export class ScheduleCase {
   );
 
   constructor() {
-    this.siteContext.ensure();
+    this.siteContext.ensureDirectory();
     const q = this.route.snapshot.queryParamMap;
     if (q.get('room')) this.roomId.set(q.get('room'));
     if (q.get('day')) this.day.set(q.get('day')!);
     if (q.get('time')) this.startTime.set(q.get('time')!);
-    effect(() => {
-      const siteId = this.siteId();
-      if (siteId === null) return;
-      untracked(() =>
-        this.operatingRooms.listOperatingRooms(siteId).subscribe({
-          next: (rooms) => this.rooms.set(ready(rooms)),
-          error: (error: unknown) => this.rooms.set(errorToViewState<readonly OperatingRoomSummary[]>(error)),
-        }),
-      );
-    });
+    // Las salas de la sede elegida; cambiar de sede cancela la lectura anterior.
+    toObservable(this.siteId)
+      .pipe(
+        filter((id): id is string => id !== null),
+        switchMap((siteId) =>
+          this.operatingRooms.listOperatingRooms(siteId).pipe(
+            map((rooms) => ready(rooms) as ViewState<readonly OperatingRoomSummary[]>),
+            catchError((e: unknown) => of(errorToViewState<readonly OperatingRoomSummary[]>(e))),
+            startWith(loading() as ViewState<readonly OperatingRoomSummary[]>),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((s) => {
+        this.rooms.set(s);
+        // Una sala de otra sede no queda elegida.
+        const list = dataOf(s);
+        if (list !== null && !list.some((r) => r.careSpace.id === this.roomId())) this.roomId.set(null);
+      });
     this.specialtiesCatalog.listar().subscribe({
       next: (list) => this.specialties.set(list.filter((s) => s.selectable !== false).map((s) => ({ value: s.conceptId, label: s.display }))),
       error: () => this.specialties.set([]),

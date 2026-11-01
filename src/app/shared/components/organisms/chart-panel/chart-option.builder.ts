@@ -4,6 +4,8 @@ import { formatDate, formatearValor, NO_DATA } from '@core/data-access/reporting
 import type { ConfigFiltro, DatosGrafico } from '@core/data-access/reporting/reporting.types';
 import { rampColorAt, readableOn } from './chart-color';
 import { construirCascada, construirVelas } from './chart-option.cascada';
+import { construirHistograma } from './chart-option.histograma';
+import { coloresDeSeries, colorDeCategoria } from './chart-option.paleta';
 import { ajusteEtiquetas, base, escapar, leyenda, type OpcionesBuild, type ParamEje, readValue, tooltipBase, unitOf } from './chart-option.common';
 
 export { escapar, type ModoGrafico, type OpcionesBuild } from './chart-option.common';
@@ -24,17 +26,45 @@ function construirCartesiano(
   const bySeries = spec.filtro?.valorDe === 'serie';
   const idxSel = seleccion === null || bySeries ? -1 : d.categorias.indexOf(seleccion);
 
-  const series = d.series.map((s) => {
+  const colores = coloresDeSeries(d, tema);
+  // Marcas (dataviz `marks-and-anatomy.md`): línea de 2 px, marcador de 8 px con anillo de superficie de 2 px,
+  // barra de a lo sumo 24 px y 2 px de brecha de superficie entre segmentos contiguos.
+  const marcas: unknown[] = [];
+  if (d.objetivo !== undefined) {
+    marcas.push({
+      [horizontal ? 'xAxis' : 'yAxis']: d.objetivo.valor,
+      label: { show: true, formatter: d.objetivo.etiqueta, color: tema.texto, position: 'insideEndTop' },
+      lineStyle: { color: tema.aviso ?? tema.texto, type: 'solid', width: 1.5 },
+    });
+  }
+  for (const a of d.anotaciones ?? []) {
+    marcas.push({
+      xAxis: a.en,
+      label: { show: true, formatter: a.etiqueta, color: tema.textoSuave, position: 'insideEndTop', rotate: 90 },
+      lineStyle: { color: tema.linea, type: 'solid', width: 1 },
+    });
+  }
+  const series = d.series.map((s, serieIdx) => {
     // Filtro por serie: las demás series se atenúan, como las demás barras cuando se filtra por categoría.
     const atenuada = bySeries && seleccion !== null && s.nombre !== seleccion;
     const tipo = s.forma === 'barra' ? 'bar' : 'line';
-    const datos = s.valores.map((v, i) =>
-      v === null
-        ? null
-        : s.forma === 'barra' && idxSel >= 0 && i !== idxSel
-          ? { value: v, itemStyle: { opacity: 0.35 } }
-          : v,
-    );
+    const color = colores[serieIdx] ?? tema.serie[0] ?? 'currentColor';
+    const datos = s.valores.map((v, i) => {
+      if (v === null) {
+        return null;
+      }
+      const cat = d.categorias[i] ?? '';
+      const colorBarra = colorDeCategoria(d, tema, color, cat);
+      const sinAtenuar = colorBarra === color;
+      if (s.forma === 'barra' && idxSel >= 0 && i !== idxSel) {
+        return { value: v, itemStyle: { opacity: 0.35, color: colorBarra } };
+      }
+      return s.forma === 'barra' && !sinAtenuar ? { value: v, itemStyle: { color: colorBarra } } : v;
+    });
+    const marcasDeEstaSerie = serieIdx === 0 ? marcas : [];
+    const lineaSeleccion =
+      tipo === 'line' && idxSel >= 0 ? [{ xAxis: idxSel, lineStyle: { color: tema.texto, type: 'dashed', width: 1 }, label: { show: false } }] : [];
+    const dataMarks = [...marcasDeEstaSerie, ...lineaSeleccion];
     return {
       name: s.nombre,
       type: tipo,
@@ -43,24 +73,22 @@ function construirCartesiano(
       smooth: false,
       connectNulls: false,
       showSymbol: d.categorias.length <= 14,
-      symbolSize: 7,
-      areaStyle: s.forma === 'area' ? { opacity: 0.14 } : undefined,
-      lineStyle: tipo === 'line' ? { width: 2, ...(atenuada ? { opacity: 0.35 } : {}) } : undefined,
-      ...(atenuada && tipo === 'bar' && s.apilar !== undefined ? { itemStyle: { opacity: 0.35 } } : {}),
-      barMaxWidth: 28,
-      ...(tipo === 'bar' && s.apilar === undefined
-        ? { itemStyle: { borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0], ...(atenuada ? { opacity: 0.35 } : {}) } }
-        : {}),
+      symbolSize: 8,
+      areaStyle: s.forma === 'area' ? { opacity: 0.1, color } : undefined,
+      lineStyle: tipo === 'line' ? { width: 2, color, ...(atenuada ? { opacity: 0.35 } : {}) } : undefined,
+      barMaxWidth: 24,
+      itemStyle: {
+        color,
+        borderColor: tema.superficie,
+        // El anillo del marcador de línea es de 2 px; la brecha de una barra, de 1 px por lado (= 2 px entre vecinas).
+        borderWidth: tipo === 'line' ? 2 : 1,
+        ...(tipo === 'bar' && s.apilar === undefined ? { borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] } : {}),
+        ...(atenuada ? { opacity: 0.35 } : {}),
+      },
       emphasis: { focus: 'series' },
       markLine:
-        tipo === 'line' && idxSel >= 0
-          ? {
-              silent: true,
-              symbol: 'none',
-              lineStyle: { color: tema.texto, type: 'dashed', width: 1 },
-              label: { show: false },
-              data: [{ xAxis: idxSel }],
-            }
+        dataMarks.length > 0
+          ? { silent: true, symbol: 'none', label: { show: false }, data: dataMarks }
           : undefined,
     };
   });
@@ -109,8 +137,11 @@ function construirCartesiano(
     scale: d.series.every((s) => s.forma === 'linea'),
     // En porcentajes, un eje que se aclara a 0,05 repetiría «1,9 % · 1,9 % · 1,8 %…» con un decimal.
     ...(spec.unidad.tipo === 'porcentaje' ? { minInterval: 0.1 } : {}),
-    splitLine: { lineStyle: { color: tema.rejilla, type: 'dashed', opacity: 0.7 } },
+    // Rejilla hairline SÓLIDA: la punteada es ruido (anti-patrón de dataviz).
+    splitLine: { lineStyle: { color: tema.rejilla, type: 'solid' } },
     axisLine: { show: false },
+    // Una línea de objetivo fuera del rango de los datos no se vería: el eje la incluye.
+    ...(d.objetivo === undefined ? {} : { max: (v: { max: number }) => Math.max(v.max, d.objetivo?.valor ?? 0) * 1.08 }),
     axisLabel: {
       color: tema.textoSuave,
       fontSize: 11,
@@ -121,7 +152,9 @@ function construirCartesiano(
 
   return {
     ...base(tema),
-    legend: leyenda(tema),
+    color: colores,
+    // Con una sola serie no hay nada que distinguir: el título la nombra (enmienda X-8 a ADR-0017).
+    legend: leyenda(tema, undefined, d.series.length > 1),
     tooltip: {
       ...tooltipBase(tema),
       trigger: 'axis',
@@ -413,6 +446,8 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
       return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: d.columnas.length > 8, overflow: 'none' } } });
     case 'medidor':
       return construirMedidor(o, d);
+    case 'histograma':
+      return withNarrow(construirHistograma(o, d), { xAxis: { axisLabel: { rotate: 35, width: 80, overflow: 'none', hideOverlap: false } }, grid: { left: 28, bottom: 64 } });
     case 'cascada':
       return withNarrow(construirCascada(o, d), {
         xAxis: {
@@ -445,6 +480,7 @@ export function clickedValue(
       return fila ?? null;
     }
     case 'medidor':
+    case 'histograma':
       return null;
   }
 }

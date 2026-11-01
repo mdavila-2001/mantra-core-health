@@ -1,3 +1,9 @@
+import { registrarCalidadYPrivacidad } from './governance-data.handlers';
+import { registrarEditorDeCatalogos } from './catalog-editor.handlers';
+import { registrarVisibilidad } from './ui-visibility.handlers';
+import { registrarMutabilidad } from './mutability.handlers';
+import { registrarPiezasVivas } from './runtime-pieces.handlers';
+import { registrarPoliticasGobierno } from './governance-policies.handlers';
 import { MockRouter } from '../mock-router';
 import { activarAceptacionDeDemostracion, registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
@@ -52,6 +58,7 @@ import { registerSpaceBilling } from './space-billing.handlers';
 import { registerInfraF5Ops } from './infra-f5-ops.handlers';
 import { registerSampleCollection } from './sample-collection.handlers';
 import { registerInfraAccounting } from './infra-accounting.handlers';
+import { registerSiteAccess } from './site-access.handlers';
 import { registerTreatmentInformedConsents } from './treatment-informed-consents.handlers';
 import { registrarPublico } from './public.handlers';
 import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
@@ -64,11 +71,14 @@ import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
+import { registrarCatalogoDeModulos } from './authz-modules-catalog.handlers';
+import { registerPermissionsAdmin } from './permissions-admin.handlers';
 import { registerGovernance } from './governance.handlers';
 import { registrarAltaDeMedicoAsistida } from './assisted-practitioner.handlers';
 import { registrarFlujos } from './flows.handlers';
 import { registrarTrafico } from './ops-traffic.handlers';
 import { registrarSondaDeVida } from './ops-liveness.handlers';
+import { registrarSondaCatalogo } from './catalog-fit.handlers';
 import { registrarHerramientas } from './ops-tools.handlers';
 import { registrarDispositivos } from './analytics-devices.handlers';
 import { registrarDinero } from './analytics-money.handlers';
@@ -83,8 +93,10 @@ import { registerRegistrationLogo } from './registration-logo.handlers';
 import { registrarAdmisiones } from './admissions.handlers';
 import { registrarCargasMasivas } from './bulk-imports.handlers';
 import { registerPrescriptionShares } from './prescription-shares.handlers';
+import { registerPharmacyMedicationAvailability } from './pharmacy-medication-availability.handlers';
 import { registerPharmacyPrescriptionShares } from './pharmacy-prescription-shares.handlers';
 import { registrarInsights } from './insights.handlers';
+import { registrarInsightsWorkspace } from './insights-workspace.handlers';
 import { registrarReporteria } from './reporting.handlers';
 import { registrarApoyo } from './support-access.handlers';
 
@@ -154,6 +166,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarContabilidadSimple(router);
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
+  registerPharmacyMedicationAvailability(router);
   registrarDiagnostico(router);
   registrarOrdenesDeLaboratorio(router, {
     laboratorioDe,
@@ -174,6 +187,8 @@ export function crearRouterSimulado(): MockRouter {
   registerSampleCollection(router);
   // F5f · activos y centros de costo por espacio y unidad.
   registerInfraAccounting(router);
+  // Sedes y acciones del actor (§0.3), para elegir sede en F4/F5.
+  registerSiteAccess(router);
   registerTreatmentInformedConsents(router);
   registrarLaboratorioFarmaceutico(router);
   registerLoyalty(router);
@@ -181,8 +196,11 @@ export function crearRouterSimulado(): MockRouter {
   registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
   registerGovernance(router);
+  registerPermissionsAdmin(router);
+  registrarCatalogoDeModulos(router);
   registrarTrafico(router);
   registrarSondaDeVida(router);
+  registrarSondaCatalogo(router);
   registrarHerramientas(router);
   registrarDispositivos(router);
   registrarDinero(router);
@@ -191,7 +209,14 @@ export function crearRouterSimulado(): MockRouter {
   registrarAdmisiones(router);
   registrarReporteria(router);
   registrarInsights(router);
+  registrarInsightsWorkspace(router);
   registrarCargasMasivas(router);
+  registrarPoliticasGobierno(router);
+  registrarPiezasVivas(router);
+  registrarMutabilidad(router);
+  registrarVisibilidad(router);
+  registrarCalidadYPrivacidad(router);
+  registrarEditorDeCatalogos(router);
   registerPromotions(router);
   registerPatientSpending(router);
   registerPortalInventory(router);

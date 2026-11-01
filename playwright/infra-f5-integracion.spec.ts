@@ -224,18 +224,20 @@ for (const w of WIDTHS) {
   test.describe(`F5b · F5d · F5f a ${w.name}`, () => {
     test.use({ viewport: { width: w.width, height: w.height } });
 
-    test('cola del laboratorio con punto de toma y su filtro', async ({ page }) => {
+    // H6: la API todavía no acepta `collectionCareSpaceId` ni manda `collectionPoint`:
+    // con la bandera apagada no hay columna ni filtro, y la cola no manda la clave.
+    test('cola del laboratorio sin punto de toma (bandera F5b apagada)', async ({ page }) => {
       test.setTimeout(300_000);
       await login(page, 'medica@alovida.mock');
+      const sent: string[] = [];
+      page.on('request', (r) => sent.push(r.url()));
       await page.goto('/diagnostics', { waitUntil: 'domcontentloaded' });
-      await expect(page.getByTestId('diagnostics-point').first()).toBeVisible({ timeout: 60_000 });
-      log.push({ what: `cola ${w.name}`, data: { overflow: await overflow(page), points: await page.getByTestId('diagnostics-point').allTextContents() } });
-      await shot(page, '01-cola-punto-de-toma', w.name);
-      await choose(page, 'diagnostics-point-filter', /LAB-TM1/);
-      await expect(page.getByTestId('diagnostics-point').first()).toContainText('LAB-TM1', { timeout: 60_000 });
-      // La cola se relee con el filtro: se espera a que quede sólo ese punto.
-      await expect.poll(async () => (await page.getByTestId('diagnostics-point').allTextContents()).every((t) => t.includes('LAB-TM1')), { timeout: 30_000 }).toBe(true);
-      await shot(page, '02-cola-filtrada', w.name);
+      await expect(page.getByRole('columnheader').first()).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByRole('columnheader', { name: 'Punto de toma' })).toHaveCount(0);
+      await expect(page.getByTestId('diagnostics-point-filter')).toHaveCount(0);
+      expect(sent.some((u) => u.includes('collectionCareSpaceId'))).toBe(false);
+      log.push({ what: `cola ${w.name}`, data: { overflow: await overflow(page) } });
+      await shot(page, '01-cola-sin-punto-de-toma', w.name);
     });
 
     test('activos y centros de costo, y el consultorio de la agenda', async ({ page }) => {
@@ -258,16 +260,15 @@ for (const w of WIDTHS) {
       await fail(page, null);
     });
 
-    test('consultorio de la agenda (alta de horario)', async ({ page }) => {
+    // H6: la API todavía no acepta `careSpaceId` en la plantilla: sin bloque de consultorio.
+    test('alta de horario sin consultorio (bandera F5d apagada)', async ({ page }) => {
       test.setTimeout(300_000);
       await login(page, 'medica@alovida.mock', 'Clínica Los Olivos');
       await page.goto('/schedule/edit', { waitUntil: 'domcontentloaded' });
-      await expect(page.getByTestId('agenda-create-room-open')).toBeVisible({ timeout: 60_000 });
-      await page.getByTestId('agenda-create-room-open').click();
-      await expect(page.getByTestId('agenda-create-room')).toBeVisible({ timeout: 60_000 });
-      await page.getByTestId('agenda-create-room-block').scrollIntoViewIfNeeded();
+      await expect(page.getByRole('heading', { name: '¿Qué días atiende?' })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByTestId('agenda-create-room-block')).toHaveCount(0);
       log.push({ what: `consultorio ${w.name}`, data: { overflow: await overflow(page) } });
-      await shot(page, '20-agenda-consultorio', w.name);
+      await shot(page, '20-agenda-sin-consultorio', w.name);
     });
   });
 }
@@ -277,27 +278,26 @@ for (const w of WIDTHS) {
 test.describe('Cadenas de integración a 1440', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('F5b · pedir un laboratorio con punto de toma y verlo tras recargar', async ({ page }) => {
+  test('F5b (H6) · pedir un laboratorio: la orden no lleva suggestedCareSpaceId y se ve tras recargar', async ({ page }) => {
     test.setTimeout(600_000);
     await login(page, 'medica@alovida.mock');
     await openConsultation(page);
     await submitMedicalForm(page);
     let modal = await openOrders(page);
     await pick(modal, modal.getByRole('combobox', { name: /^Estudio\b/ }), (l) => l.getByRole('option', { name: /Glucosa/ }));
-    // El tipo sólo se pregunta cuando el estudio no lo trae fijado.
     const kind = modal.getByRole('combobox', { name: /^Tipo\b/ });
     if ((await kind.count()) > 0) await pick(modal, kind, (l) => l.getByRole('option', { name: 'Laboratorio', exact: true }));
-    await choose(page, 'order-collection-point', /LAB-TM2/);
-    await shot(page, '30-orden-punto-de-toma', '1440');
+    await expect(page.getByTestId('order-collection-point')).toHaveCount(0);
+    await shot(page, '30-orden-sin-punto-de-toma', '1440');
     await modal.getByRole('button', { name: 'Pedir estudio' }).click();
-    const w = await record(page, 'pedir laboratorio con punto de toma', 'POST', /^\/clinical\/service-requests$/);
+    const w = await record(page, 'pedir laboratorio sin punto de toma', 'POST', /^\/clinical\/service-requests$/);
     expect(w.status).toBe(201);
-    expect((w.body as { suggestedCareSpaceId?: string }).suggestedCareSpaceId).toBeTruthy();
+    expect(w.body as object).not.toHaveProperty('suggestedCareSpaceId');
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('consulta-rejilla')).toBeVisible({ timeout: 60_000 });
     modal = await openOrders(page);
-    await expect(modal.getByTestId('study-collection-point').first()).toContainText('LAB-TM2', { timeout: 60_000 });
-    await shot(page, '31-orden-punto-tras-recarga', '1440');
+    await expect(modal.getByText('Glucosa').first()).toBeVisible({ timeout: 60_000 });
+    await shot(page, '31-orden-tras-recarga', '1440');
   });
 
   test('F5f · ubicar un activo con el árbol y ligar un centro de costo', async ({ page }) => {

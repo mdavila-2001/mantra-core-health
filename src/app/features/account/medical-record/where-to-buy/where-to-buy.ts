@@ -9,7 +9,7 @@ import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.c
 import { DiagnosticUnitsClient } from '../../../../core/data-access/diagnostic-units/diagnostic-units.client';
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
-import type { AvailabilityResult } from '../../../../core/data-access/pharmacy/pharmacy.types';
+import type { MedicationAvailabilityResult } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import {
   PharmacyCampaignsClient,
   etiquetaDeCampana,
@@ -18,7 +18,7 @@ import type { CampanaDeFarmacia } from '../../../../core/data-access/pharmacy-ca
 import { CartStore } from '../../../../core/data-access/pharmacy-cart/cart.store';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/simulator/sample-data';
 import { NO_SAVED_PLACES, savedPlacesOf, type SavedPlaces } from '../../../../core/data-access/profiles/saved-places';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
@@ -64,6 +64,7 @@ import {
   rowsOfPrescription,
   SORT_OPTIONS,
   sortBranches,
+  splitByPublication,
   uniqueByMedication,
   type BranchResult,
   type BranchSortOrder,
@@ -146,9 +147,11 @@ const CITIES: readonly ReferencePoint[] = [
  * ## El puente receta → producto
  *
  * La receta trae el medicamento del vademécum (`medicationConceptId`); el
- * directorio publica **productos**. `GET /pharmacy/products?conceptId=` es el
- * puente, con un representante por medicamento (ver {@link PrescriptionItem}).
- * Un medicamento sin producto publicado no puede consultarse: se dice
+ * directorio publica **productos**, y cada uno es de una sola farmacia.
+ * `GET /pharmacy-inventory/availability/medications` es el puente: una sola
+ * consulta por receta, con los medicamentos, que mira todos los productos de
+ * todas las farmacias de la red y devuelve cada sede con un producto suyo por
+ * medicamento. Un medicamento que ninguna farmacia publica se dice
  * abiertamente y ninguna sede se declara «completa» mientras tanto.
  *
  * ## Cero identificadores visibles
@@ -249,7 +252,7 @@ export class WhereToBuy {
    * demostración sobre un dato que ningún contrato publica —qué renglón
    * aprueba el seguro antes de que exista el pedido—, así que contra la API
    * real no se ofrece: `withInsurance` queda apagado y la lista es la de la
-   * consulta, sin más. Ver `core/mock/sample-data.ts`.
+   * consulta, sin más. Ver `core/simulator/sample-data.ts`.
    */
   protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
@@ -262,8 +265,8 @@ export class WhereToBuy {
 
   /** La última respuesta cruda: el borrador necesita los precios por línea. */
   private lastQuery: {
-    readonly response: AvailabilityResult;
-    readonly queryable: readonly (PrescriptionItem & { productId: string })[];
+    readonly response: MedicationAvailabilityResult;
+    readonly queryable: readonly PrescriptionItem[];
     readonly withoutProduct: readonly string[];
   } | null = null;
 
@@ -396,8 +399,9 @@ export class WhereToBuy {
     if (this.withInsurance() || branches.length === 0) {
       return null;
     }
+    const withoutProduct = new Set(this.result()?.withoutProductConceptIds ?? []);
     const needed = this.items()
-      .filter((item) => item.productId !== null && this.included().has(item.conceptId))
+      .filter((item) => !withoutProduct.has(item.conceptId) && this.included().has(item.conceptId))
       .map((item) => item.conceptId);
     if (needed.length === 0) {
       return null;
@@ -593,7 +597,6 @@ export class WhereToBuy {
             labels: this.terminology
               .readConceptLabels([...conceptIds, ...rows.map((row) => row.statusConceptId)])
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
-            products: this.productsOf(conceptIds),
             // Domicilio y trabajo del paciente, para ofrecerlos como puntos
             // de referencia sin pedirle el GPS (subtarea B.2). Un fallo acá
             // no puede tumbar la consulta de disponibilidad: se degrada a
@@ -632,7 +635,7 @@ export class WhereToBuy {
           }
           this.orderRequestId = orderable.requestId;
           const items = uniqueByMedication(orderable.rows).map((row) =>
-            prescriptionItemOf(row, loaded.labels, loaded.products),
+            prescriptionItemOf(row, loaded.labels),
           );
           // Entran a la consulta la receta que se tocó y las ya emitidas: son
           // las que la persona puede efectivamente ir a comprar.
@@ -656,21 +659,15 @@ export class WhereToBuy {
       });
   }
 
-  /** El producto representante de cada medicamento, en paralelo. */
-  private productsOf(conceptIds: readonly string[]) {
-    return forkJoin(
-      conceptIds.map((conceptId) =>
-        this.pharmacy
-          .searchProducts({ conceptId, limit: 1 })
-          .pipe(map((page) => [conceptId, page.items[0]?.id ?? null] as const)),
-      ),
-    ).pipe(map((pairs) => new Map<string, string | null>(pairs)));
-  }
-
   /* ---- la selección ------------------------------------------------------- */
 
   protected isIncluded(item: PrescriptionItem): boolean {
     return this.included().has(item.conceptId);
+  }
+
+  /** Ninguna farmacia de la red publica un producto de este medicamento. */
+  protected isUnpublished(item: PrescriptionItem): boolean {
+    return this.result()?.withoutProductConceptIds.includes(item.conceptId) ?? false;
   }
 
   /** Si el seguro aprueba el renglón, de ejemplo (T-E2). */
@@ -709,38 +706,33 @@ export class WhereToBuy {
       return;
     }
 
-    const withoutProduct = included
-      .filter((item) => item.productId === null)
-      .map((item) => item.medication);
-    const queryable = included.filter(
-      (item): item is PrescriptionItem & { productId: string } => item.productId !== null,
-    );
-
-    if (queryable.length === 0) {
-      this.results.set(
-        empty(
-          { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
-          `No hay un producto publicado para: ${withoutProduct.join(', ')}. El pedido completo no se puede enviar.`,
-        ),
-      );
-      return;
-    }
-
     // Con seguro se evalúa sobre lo aprobado: lo que no tiene producto también
     // cuenta, porque ninguna sede puede confirmarlo.
     const approved = this.insuranceApprovals();
-    const withoutProductItems = included.filter((item) => item.productId === null);
 
     this.results.set(loading());
     const origin = this.origin();
+    // Una sola consulta por receta, por medicamento: el backend mira todos los
+    // productos de todas las farmacias de la red.
     this.pharmacy
-      .availability({
-        productIds: queryable.map((item) => item.productId),
+      .availabilityByMedication({
+        medicationConceptIds: included.map((item) => item.conceptId),
         origin: origin === null ? undefined : geoPointOf(origin),
         limit: BRANCH_LIMIT,
       })
       .subscribe({
         next: (response) => {
+          const { queryable, withoutProductItems } = splitByPublication(response, included);
+          const withoutProduct = withoutProductItems.map((item) => item.medication);
+          if (queryable.length === 0) {
+            this.results.set(
+              empty(
+                { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
+                `No hay un producto publicado para: ${withoutProduct.join(', ')}. El pedido completo no se puede enviar.`,
+              ),
+            );
+            return;
+          }
           if (response.items.length === 0) {
             this.results.set(
               empty(
@@ -753,7 +745,7 @@ export class WhereToBuy {
           this.lastQuery = { response, queryable, withoutProduct };
           this.seedPromotions(response);
           this.results.set(
-            ready(evaluateBranches(response, queryable, withoutProduct, withoutProductItems, approved)),
+            ready(evaluateBranches(response, included, approved)),
           );
         },
         error: (error: unknown) => this.results.set(errorToViewState<BranchResult>(error)),
@@ -771,7 +763,7 @@ export class WhereToBuy {
    * promoción de demostración anuncie un producto inventado. Es idempotente:
    * cada farmacia se siembra una sola vez por sesión.
    */
-  private seedPromotions(response: AvailabilityResult): void {
+  private seedPromotions(response: MedicationAvailabilityResult): void {
     for (const branch of response.items) {
       // `flatMap` y no `filter` + `map`: el filtro no estrecha el tipo de
       // `price` y obligaría a una aserción por cada uso.

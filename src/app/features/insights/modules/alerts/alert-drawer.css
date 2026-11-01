@@ -1,0 +1,18 @@
+.ad { display: grid; gap: var(--sp-4); }
+.ad__meta { margin: 0; color: var(--text-secondary); font-size: var(--fs-caption); }
+.ad__title { margin: 0; font-family: var(--font-display); font-size: var(--fs-h3); }
+.ad__facts { display: grid; gap: var(--sp-3); margin: 0; }
+.ad__facts dt { font-size: var(--fs-caption); font-weight: 600; color: var(--text-secondary); }
+.ad__facts dd { margin: var(--sp-1) 0 0; }
+.ad__facts ul { margin: 0; padding-inline-start: var(--sp-5); }
+.ad__owner { display: grid; gap: var(--sp-1); font-size: var(--fs-caption); color: var(--text-secondary); }
+.ad__owner select { font: inherit; padding: var(--sp-2) var(--sp-3); color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-sm); }
+.ad__actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.ad__btn { font: inherit; padding: var(--sp-2) var(--sp-4); color: var(--text-primary); text-decoration: none; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-sm); cursor: pointer; }
+.ad__btn--main { color: var(--text-inverse); background: var(--brand-primary); border-color: var(--brand-primary); }
+.ad__btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.ad__btn:focus-visible, .ad__owner select:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ad__h4 { margin: 0 0 var(--sp-2); font-size: var(--fs-body); }
+.ad__hist { margin: 0; padding-inline-start: var(--sp-5); color: var(--text-secondary); font-size: var(--fs-caption); }
+.ad__status { font-weight: 600; }
+.ad__status--resolved { color: var(--st-success-fg); }

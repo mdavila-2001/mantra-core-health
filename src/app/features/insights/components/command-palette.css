@@ -1,0 +1,10 @@
+.cp { inline-size: min(560px, calc(100vw - 2 * var(--sp-4))); margin: 12vh auto 0; padding: var(--sp-3); color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-md); }
+.cp::backdrop { background: color-mix(in srgb, var(--text-primary) 40%, transparent); }
+.cp__input { inline-size: 100%; box-sizing: border-box; font: inherit; padding: var(--sp-3); color: inherit; background: var(--bg-base); border: 1px solid var(--border-default); border-radius: var(--r-sm); }
+.cp__input:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.cp__list { margin: var(--sp-2) 0 0; padding: 0; list-style: none; max-block-size: 50vh; overflow-y: auto; }
+.cp__item { display: flex; gap: var(--sp-3); align-items: baseline; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); cursor: pointer; min-block-size: 44px; box-sizing: border-box; }
+.cp__item--active { background: var(--bg-active); }
+.cp__kind { flex: none; inline-size: 72px; font-size: var(--fs-caption); color: var(--text-secondary); }
+.cp__label { min-inline-size: 0; overflow-wrap: anywhere; }
+.cp__none, .cp__foot { margin: var(--sp-2) 0 0; padding: var(--sp-2) var(--sp-3); color: var(--text-secondary); font-size: var(--fs-caption); }

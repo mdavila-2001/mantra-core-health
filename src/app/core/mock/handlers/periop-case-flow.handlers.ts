@@ -17,7 +17,6 @@ import type { ChecklistPhaseSubmission, ScheduleCaseRequest } from '../../data-a
 import { SPECIALTY } from '../fixtures/concepts';
 import type { MockRequest, MockRouter } from '../mock-router';
 import { cuerpo, nuevoId, uuid } from '../mock-store';
-import { transitionCleaningOrder } from './infrastructure-ops.handlers';
 import {
   blocks,
   CHECKLIST_ITEMS,
@@ -30,7 +29,7 @@ import {
   isLive,
   notFoundReply,
   OPERATING_ROOM_FUNCTION,
-  ownerOf,
+  ownerLabelOf,
   ownsBlock,
   preconditionReply,
   roomEvents,
@@ -43,6 +42,7 @@ import {
   type SimulatedChecklist,
 } from './operating-rooms.state';
 import { createOrTimeCharge } from './space-billing.handlers';
+import { transitionCleaningOrder } from './infrastructure-ops.handlers';
 import { SITIOS_INFRA } from '../fixtures/infraestructura';
 import { PATIENTS } from '../fixtures/people';
 import { CASE_STATUS, MEMBER_STATUS, periopCases, TEAM_ROLE, type SimulatedCase } from './procedures.handlers';
@@ -118,7 +118,7 @@ function scheduleCase(request: MockRequest) {
     if (ownsBlock(inBlock, probe)) {
       blockId = inBlock.id;
     } else if (body.caseType === undefined || body.caseType === 'ELECTIVE') {
-      return conflictReply('OR_BLOCK_OWNED_BY_OTHER', `Ese horario es del bloque de ${ownerOf(inBlock).label}.`, { blockId: inBlock.id, owner: ownerOf(inBlock).label });
+      return conflictReply('OR_BLOCK_OWNED_BY_OTHER', `Ese horario es del bloque de ${ownerLabelOf(inBlock)}.`, { blockId: inBlock.id });
     }
   }
   // 7. Solape con ventanas reservadas (la EXCLUDE es la red).
@@ -263,7 +263,9 @@ function recordRoomEvent(request: MockRequest) {
   const created = roomEvents.agregar({ id: nuevoId('room-event'), caseId: c.id, eventCode: code, occurredAt: new Date(occurredAt).toISOString(), recordedAt: new Date().toISOString() });
   if (code === 'PATIENT_IN_ROOM') periopCases.actualizar(c.id, { statusConceptId: CASE_STATUS.EN_CURSO });
   if (code === 'PATIENT_OUT_OF_ROOM') closeRoom(c, created.occurredAt);
-  return { status: 201, body: { utilizationEventId: created.id, milestoneId: nuevoId('milestone') } };
+  // Forma de `RecordRoomEventUseCase`: la salida de sala informa la orden de recambio.
+  const cleaningOrderId = code === 'PATIENT_OUT_OF_ROOM' ? (turnoverOfCase(c.id)?.id ?? null) : null;
+  return { status: 201, body: { utilizationEventId: created.id, milestoneId: nuevoId('milestone'), cleaningOrderId } };
 }
 
 /* ---- salida de sala: recambio (F2) y cierre con cargo de quirófano (F5e) ------- */
@@ -308,7 +310,8 @@ const TURNOVER_STEPS = {
 /** `POST /cleaning-orders/:id/{start|finish|inspect}` para las órdenes de recambio de quirófano. */
 function turnoverStep(request: MockRequest, step: keyof typeof TURNOVER_STEPS) {
   const t = turnovers.get(request.params['id']!);
-  // No es un recambio de quirófano: es una orden de la cola de limpieza de F2.
+  // Las órdenes de limpieza de camas (F2) comparten el prefijo `/cleaning-orders` y
+  // estas rutas, más específicas, ganan: lo que no es un recambio de quirófano va a F2.
   if (t === undefined) return transitionCleaningOrder(request, step);
   const room = roomOf(t?.operatingRoomId);
   const tenant = tenantOf(request);
@@ -326,7 +329,9 @@ function turnoverStep(request: MockRequest, step: keyof typeof TURNOVER_STEPS) {
   const updated = turnovers.actualizar(t.id, { status: rule.to, rowVersion: t.rowVersion + 1 })!;
   const now = new Date().toISOString();
   roomEvents.agregar({ id: nuevoId('room-event'), caseId: t.caseId, eventCode: rule.event, occurredAt: now, recordedAt: now });
-  return { id: updated.id, status: updated.status, rowVersion: updated.rowVersion };
+  // `CleaningOrderDto` de F2; `inspect` lo envuelve en `{order, nextOrderId}`.
+  const order = { id: updated.id, careSpaceId: updated.operatingRoomId, careSpaceCode: room.code, careSpaceName: room.name, typeCode: 'CLEAN_OR_TURNOVER', statusCode: updated.status, rowVersion: updated.rowVersion };
+  return step === 'inspect' ? { order, nextOrderId: null } : order;
 }
 
 export function registerCaseFlow(router: MockRouter): void {

@@ -46,3 +46,7 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+
+.bed-day__site {
+  margin-block-end: var(--sp-3);
+}

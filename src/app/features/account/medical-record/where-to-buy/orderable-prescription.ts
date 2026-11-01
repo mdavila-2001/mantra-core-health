@@ -74,7 +74,15 @@ function isExpiredRow(row: MedicationRequest, now: Date): boolean {
  * si alguna de sus filas se puede pedir hoy; si no, por qué no.
  */
 export type PrescriptionStanding =
-  'orderable' | 'expired' | 'draft' | 'invalidated' | 'replaced' | 'completed' | 'unknown';
+  | 'orderable'
+  | 'ordered'
+  | 'collected'
+  | 'expired'
+  | 'draft'
+  | 'invalidated'
+  | 'replaced'
+  | 'completed'
+  | 'unknown';
 
 /**
  * El estado de una receta (sus filas de una misma consulta) para el paciente.
@@ -140,4 +148,50 @@ export function orderablePrescriptionOf(
   const orderable = rows.filter((row) => isOrderableRow(row, labels, now));
   const requestId = orderable.find((row) => row.id === chosenId)?.id ?? orderable[0]?.id ?? null;
   return { rows: orderable, requestId };
+}
+
+/** Lo que se necesita de un pedido del paciente para cruzarlo con su receta. */
+export interface PrescriptionOrderRef {
+  /** El ítem de receta con que se hizo el pedido, o `null` si fue de venta libre. */
+  readonly requestId: string | null;
+  readonly estado: string;
+}
+
+/** Los estados de un pedido vivo: todavía reserva o se está preparando. */
+const LIVE_ORDER_STATES: ReadonlySet<string> = new Set([
+  'ENVIADO',
+  'EN_REVISION',
+  'CONFIRMADO',
+  'ACEPTACION_PENDIENTE',
+  'ACEPTADO',
+  'LISTO_PARA_RETIRO',
+]);
+
+/**
+ * El estado de una receta vigente, cruzado con los pedidos del paciente
+ * (`GET /pharmacy/orders/me`). La API no deja pedir otra vez un ítem con un
+ * pedido vivo o ya retirado; cancelar o rechazar lo libera. Así la pantalla
+ * dice «Ya tiene un pedido» o «Retirada» en vez de ofrecer un pedido que la API
+ * va a rechazar. El estado clínico de la receta no cambia.
+ *
+ * Se cruza por el ítem con que viajó el pedido, contra todas las filas de la
+ * receta (una consulta).
+ */
+export function standingWithOrders(
+  standing: PrescriptionStanding,
+  rows: readonly MedicationRequest[],
+  orders: readonly PrescriptionOrderRef[],
+): PrescriptionStanding {
+  if (standing !== 'orderable') {
+    return standing;
+  }
+  const ids = new Set(rows.map((row) => row.id));
+  const own = orders.filter((order) => order.requestId !== null && ids.has(order.requestId));
+  if (own.some((order) => LIVE_ORDER_STATES.has(order.estado))) {
+    return 'ordered';
+  }
+  if (own.some((order) => order.estado === 'RETIRADO')) {
+    return 'collected';
+  }
+  return standing;
 }

@@ -24,45 +24,6 @@ del cuerpo y «Listo» a la izquierda: pasan al pie (`antes-despues-editar-pregu
 teléfono «Cancelar» y «Listo» bajan juntos. Medidas de los tres usuarios antes/después: sólo
 cambian los modales ya corregidos. `ng test` de encuestas: 144/144. Capturas: `capturas/antes/modales-2026-10-28/` y
 `capturas/despues/modales-2026-10-28/antes-despues-*.png`.
-## Exploración de `/schedule` y menú móvil · 2026-10-05
-
-Entorno: Windows, Chromium, `http://localhost:3012`, sesión médica simulada. Recorrido manual con Playwright CLI; no equivale a una suite automatizada ni cubre permisos/API reales.
-
-| Vista/acción | Resultado observado |
-|---|---|
-| Agenda del día, claro, 390×844 y 1280×900 | Abre y se lee en ambos tamaños. |
-| Agenda del día, oscuro, 390×844 | Abre y se lee. |
-| Agenda de semana, oscuro, 390×844 y 320×720 | Se lee; presenta dos columnas en ambos anchos. |
-| Grilla y preview del horario anterior, «Mis horarios», 320×720 | Se abre; la grilla del modal se desplaza horizontalmente dentro de su contenedor. |
-| «Más accesos» móvil, 390 px | Snapshot accesible enumera Red social, Tutoriales, Chats (4 no leídos), facturas, solicitudes y ajustes. «Tutoriales» navega a `/tutorials` y cierra el menú; Escape lo cierra y devuelve el foco al botón. El menú abierto mide 252×269 px. |
-| Ancho del documento con viewport de 390 y 320 px | `documentElement.scrollWidth` y `body.scrollWidth` coinciden con el viewport (390/390 y 320/320); sin overflow horizontal del documento. |
-
-Capturas en `capturas/despues/`: `schedule-dia-claro-movil-390.png`, `schedule-dia-claro-escritorio-1280.png`, `schedule-dia-oscuro-movil-390.png`, `schedule-semana-oscuro-movil-390.png`, `schedule-semana-oscuro-movil-320.png`, `schedule-mis-horarios-preview-320.png` y `header-mas-accesos-oscuro-movil-390.png` (menú abierto).
-
-En la vista mensual oscura a 320×720, la primera pasada reveló que los textos «X cupos disponibles» se superponían en varias celdas. Evidencia previa: `capturas/despues/schedule-mes-oscuro-movil-320-antes-ajuste.png`. Tras compactar los conteos (`N libres`/`Bloq.`) y conservar las causas completas en los nombres accesibles, la revisión posterior a 320×720 y 390×844 no mostró solapamientos ni overflow horizontal del documento (root/body 320/320 y 390/390). Capturas: `capturas/despues/schedule-mes-oscuro-movil-320.png` y `schedule-mes-oscuro-movil-390.png`.
-
-También se recorrieron día, semana, mes e histórico del 3 de octubre con reservas/estados. La cobertura es manual, con rol médico simulado y Chromium; no incluye otros navegadores, roles ni backend real. La compilación de desarrollo inicialmente informó incompatibilidad entre `Event` y `KeyboardEvent`; se corrigió a `Event` y la reconstrucción posterior terminó sin errores. yarn typecheck y yarn build finalizaron con exit 0 en el cierre del 2026-10-05; el build conserva avisos existentes de presupuesto CSS y dependencias CommonJS. La prueba unitaria enfocada de la vista mensual finalizo con 29/29 pruebas aprobadas. El log del navegador registra dos errores CSP de scripts inline en `/auth` durante desarrollo, ajenos a `/schedule`.
-
-## Piloto del panel principal · 2026-10-05
-
-Entorno: Windows, rama `master`, `ng serve` en `http://localhost:4200`, datos simulados y Chromium. Alcance: `/dashboard` para personal, administración y paciente. Las evidencias anteriores de este archivo pertenecen a otra iteración.
-
-| Comprobación | Resultado |
-|---|---|
-| `yarn pw playwright/panel-hoy.spec.ts --reporter=list` | 2/2; roles, navegación y anchos 390/768/1024/1440/1920 |
-| `yarn pw playwright/panel-refactor-visual.spec.ts --reporter=list` | 2/2; paciente/personal, 320 px, foco y Escape, tema oscuro, movimiento reducido y contraste de matriz |
-| `yarn typecheck` | exit 0 |
-| `yarn eslint playwright/panel-refactor-visual.spec.ts` | exit 0 |
-| `yarn build` | exit 0; mantiene avisos de presupuesto CSS y CommonJS de otras áreas |
-| `yarn lint` | exit 1: 256 errores distribuidos en el repositorio, principalmente `prefer-on-push-component-change-detection`; el archivo nuevo pasa el lint aislado |
-
-La tabla de intensidad tenía una regla de oscuro dentro de una hoja CSS encapsulada que no alcanzaba a `:root`. Se sustituyó por tokens semánticos globales; la prueba mide el color computado de cada celda con datos y exige al menos 4,5:1 en ambos temas. El mínimo de los pares definidos es 4,97:1. En 320 px la tabla se desplaza dentro de su contenedor y la página conserva su ancho.
-
-Capturas: `capturas/despues/panel-personal-320.png`, `panel-personal-movil-oscuro.png`, `panel-personal-escritorio-oscuro.png`, `panel-paciente-movil.png`, `panel-paciente-movil-oscuro.png`, `panel-paciente-escritorio-oscuro.png`. La prueba de jornada también actualizó `docs/frontend/evidence/panel-hoy/` en cinco anchos, oscuro y administración.
-
-No se midió rendimiento de campo ni se probaron estados de error/vacío mediante fallos inyectados; sus ramas se inspeccionaron en los componentes y plantillas. Estas capturas usan el simulador y no demuestran comportamiento de la API real.
-
----
 
 ## Modales de la consulta: tarjeta doble, título repetido y tres columnas · 2026-10-27
 
@@ -456,53 +417,6 @@ Las cifras de arriba son del árbol `4a7ad084`. Después, `origin/infra-f1-web` 
 Navegador: **no se re-ejecutó** `infra-f1-infraestructura.spec.ts` tras el merge (se actualizaron dos
 textos al «usted» de `dev`). Los textos propios de F1 siguen en voseo: pendiente pasarlos.
 
-## Infraestructura F2 + F3 (web): camas, limpieza, internación/ADT, censo e indicadores — 2026-10-31
-
-Entorno: contenedor Linux · Node 22 · Yarn 4.18 · `ng serve --configuration development,demo --port 4380
---watch=false` (maqueta) · Chromium 1243 del sistema (`PW_CHROMIUM_PATH`) · rama local `infra-f2f3-web`
-desde `origin/dev` (`7159f4dd4`). Contrato: `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md`
-§F2.4/F2.5 y §F3.4/F3.5; desvíos anotados allí bajo «W-F2F3».
-
-| Comando / prueba | Resultado |
-|---|---|
-| `yarn lint` | exit 0 |
-| `yarn typecheck` | exit 0 |
-| `ng test` de lo tocado, en 4 tramos (el `ng test` de un solo golpe muere con el *deadlock* de esbuild de este contenedor) | maqueta (82 + 28 archivos), navegación/rutas/armazón (16), F1 + expediente (46): **172 archivos · 2 635 pruebas verdes**. Antes, 4 rojos propios (secciones nuevas sin subgrupo ni lista de tipos, rutas hijas sin sección, pestaña nueva en la ficha) corregidos actualizando el registro, no la regla. No se corrió la suite completa |
-| `yarn build` | exit 0 · avisos de presupuesto previos, ninguno de archivos de F2/F3 |
-| `E2E_BASE_URL=… yarn pw infra-f2f3-camas-adt --workers=1` | **10/10** (5,4 min, sobre el código final) · cadena a 1440 + estados a 1440 / 768 / 390 |
-| `check-client-prefixes` | los 4 prefijos nuevos ruteados en las tres declaraciones; los 14 rojos restantes son previos (`AdmissionsClient`, `InsightsClient`) |
-| `check-api-prefixes` | rojo previo ajeno (`/practice/infrastructure-catalog` sin espacio en nginx), igual en `origin/dev` |
-| `check-route-prefixes` · `check-english-identifiers` · `check-usted` (archivos tocados) | verdes |
-
-**Cadena de mutaciones** (`evidencias/infra-f2f3/resultados.json`, corrida final): la maqueta anota cada escritura
-(método, ruta, `If-Match`, `If-Match-Ops`, cuerpo, estado, `requestId`) y la prueba lee las filas persistidas
-(`sessionStorage`, lo que en la API sería el `SELECT`) antes de recargar.
-
-| Paso (cuenta) | Petición → respuesta | Persistencia leída | Tras recarga |
-|---|---|---|---|
-| Ingreso con cama (admisión) | `POST /clinical/admissions` → 201 `req-ops-…` | `encounter_locations` ACTIVE en 301-B + evento A20 `AXIS_OCCUPANCY → OCC_OCCUPIED` con el mismo `requestId` | ficha «Cama 301-B»; tablero 301-B = **O** con iniciales |
-| Traslado 301-B → 303-A (enfermería) | `POST …/transfer` `If-Match: 1` → 200 | origen COMPLETED/`TRANSFER_OUT`, destino ACTIVE con `previous_encounter_location_id` | 301-B = **H**, 303-A = **O** |
-| Limpieza (limpieza) | `start` `If-Match: 1` → 200 · `finish` `If-Match: 2` → 200 | orden `CLN_DONE` | cola «Terminada · falta inspección»; sin datos de paciente |
-| Inspección (otra persona) | `inspect` `If-Match: 3` → 200 | orden INSPECTED, `inspected_by ≠ finished_by` | 301-B = **U** (asignable) |
-| Egreso (enfermería) | `POST …/discharge` `If-Match: 2` → 200 | encuentro FINISHED, orden `CLN_TRG_DISCHARGE` | ficha «Egresada», movimientos A01/A02·A03; 303-A = **H** |
-| Cierre del censo de ayer (supervisión) | `POST …/census/<ayer>/close` → 200 · ajuste → 201 | día CLOSED; ajuste aparte | «Cerrado», ajuste «0 → 2»; el número original se conserva |
-
-Mediciones: regla 6 (tablero, ingreso, ficha de internación) holgura 0/0 y 100 % en los tres anchos; desborde
-horizontal 0 en cada pantalla capturada. S1 y S2 se congelaron con el reloj de Playwright a 1440 (tablero y cola);
-a 768/390 el menú es un cajón animado y no se congelaron (anotado en `resultados.json`).
-
-Capturas (`evidencias/infra-f2f3/`, 114, nombres en inglés): cadena 10–52 (1440); tablero grilla/lista/panel y S1, S2, S3 («Crear
-camas» en el anexo sin camas), S4 (bloqueo rechazado), S5 (médica sin rol operativo), S6, S7 (sondeo fallido con
-datos previos), S8, S9 con código; cola y sus estados (S1, S2 a 1440; S3 «mías» vacía, S4, S5 mantenimiento, S6–S9);
-ingreso con cama incompatible forzable y forzado con justificación, ficha en sus 4 pestañas, S6 de ficha, S5 del
-ingreso para limpieza, censo abierto, indicadores con días faltantes (S7) y sin días cerrados (S3), y la pestaña
-«Operación» de la ficha de espacio de F1. 1440/768/390.
-
-No ejecutado / pendiente: **contra la API real** (otra franja); captura del `admission-block` en pantalla — el
-bloque no está montado en ninguna ruta de `dev` (sólo en la vitrina), su integración se prueba en
-`admission-block.spec.ts`. Revisión independiente (`visual-reviewer`, `frontend-reviewer`,
-`regression-auditor`): **pendiente** — quien implementa no aprueba.
-
 ## Infraestructura F4/F5 (web) — 2026-10-31
 
 Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · backend simulado (`ng build --configuration
@@ -624,3 +538,120 @@ Capturas (`evidencias/infra-f5-integracion/`, 29 + `resultados.json`): 01–02 c
 1440.
 
 **Contra la API real no se ejecutó.** Revisión independiente: **pendiente** — quien implementa no aprueba.
+
+## Infraestructura F4/F5 — tercera pasada: las formas de la API (web) — 2026-10-31
+
+La revisión `frontend-reviewer` de `infra-f4f5-web` dio **CAMBIOS REQUERIDOS**: la web y la maqueta tenían la forma
+de la web, no la de la API. Decisión del orquestador: **la API manda las formas**. Se reescribieron tipos, clientes y
+maqueta contra `origin/claude/trusting-hawking-q3p12v` (hasta `37c3c6648`, que incluye `3036730d2` F4 y `e46739aaa`
+F5a), y se corrió Playwright **contra la API real** (`:3000`, copia `/home/user/api-run`).
+
+| Hallazgo | Arreglo | Prueba |
+|---|---|---|
+| B1 ficha del caso | Cabecera `toSummary` + `CaseOrViewBuilder` (`operatingRoom`, `block {id,label}`, `caseType {code,display}`); `checklist`, `roomEvents`, `turnoverCleaning` del detalle; ausente ≠ vacío (`checklistReported`); el check-list se lee con el alta idempotente si no viene; la sala se resuelve por `operatingRoomId` | `procedures.client.f4.spec` (formas literales vieja y `3036730d2`), `interventions.f4.spec` «con la API de hoy» ×2, Playwright real |
+| B2 utilización | Tipada contra `rooms[]`; `withTotals` usa los `totals`/`asOf` de la API y completa recambio y asignado/liberado | `operating-rooms.rules.spec`, `operating-rooms.client.contract.spec` (con y sin totals) |
+| B3 tarifas | `tariffKind`, `currencyConceptId`; `tariffView` resuelto con catálogos; estado por vigencia | `space-billing.client.contract.spec` |
+| B4 día-cama | `pending-charges` arreglo, `run → {created[], skipped}`; encuentro elegido de `GET /sites/:siteId/inpatients` o `?encounter=` | `bed-day-charges.spec` (3 pruebas), contrato |
+| B5 ficha de equipo | `GET /diagnostic-equipment/:id`, `/resource`, `/mwl-station` (F5a); relee tras el `PATCH` plano; MWL con su estado (no se traga el error) | `bed-day-charges.spec` «ficha de equipo (B5)», contrato |
+| H1 bloques | `specialtyConceptId`; rótulo de la API (`owner.label`) o armado con catálogos; `cases` como ids | `operating-rooms.handlers.spec`, `interventions.f4.spec`, contrato |
+| H2 `/interventions` | Sala resuelta contra `rooms()` | `interventions.f4.spec` «H2» |
+| H3 autorización simulada | Sin compuertas por rol (`canManageBlocks` y demás eliminadas): se pide y el 403 pinta S5 | `interventions.f4.spec` (facturación → S5 desde el 403 en bloques y programar) |
+| H4 contexto de sede | `SiteContextStore` con clave `userId|tenant`, `switchMap`, `SESSION_CLEANERS`, 403 → S5, `/practice/infrastructure-access/me` con caída a consolas, selector de sede (`app-site-switch`), personal sólo con `ensureDirectory` | `site-context.store.spec` (5) |
+| H5 carreras | `switchMap` por clave en agenda, bloques, utilización, programar, ficha, día-cama, contabilidad, equipo; día-cama compara el encuentro | `bed-day-charges.spec` «H5» |
+| H6 claves que la API rechaza | `INFRA_INTEGRATION_FLAGS` apagada: no se manda `suggestedCareSpaceId`, `collectionCareSpaceId` ni `careSpaceId`; el punto de toma se ata a la sede del ejecutante; sin consola por médico | `collection-point-select.spec` (3), `infrastructure-accounting.spec` «H6», Playwright mock F5 (3) |
+| M1 If-Match en bloques | Se manda; la API lo acepta desde `3036730d2` (412) | contrato |
+| M2 ubicar activo | `If-Match` con `rowVersion` | contrato F5f |
+| M3 respuesta del check-list | UUID de concepto → código (`infra-concepts.ts`, UUID v5 recalculados en la prueba) | `infra-concepts.spec` |
+| M4 índice de pestañas | `fixedTabCount = PESTANAS_DE_LA_FICHA.length` | `space-detail.spec` |
+| M5 stock | `create → {id}`, `relocate → {id, careSpaceId, previousCareSpaceId}`; relee; escritura atenuada a `SECURITY_ADMIN` | contrato |
+| M6 F5g | La actualización no ofrece «Espacio» | `org-assignment-update.spec` «M6» |
+| M7 pruebas tautológicas | Fixtures literales de las vistas de la API, una spec de contrato por cliente | `*.contract.spec.ts` (3 archivos) |
+| M8 `effect` innecesario | Lecturas con `toObservable` + `switchMap` | — |
+| LOW | `backend-api.md` con las 33 operaciones; `or-agenda` → `or-schedule`; grilla fuera de la `<ul>` | `check-api-contract-drift` sin hallazgos de esta rama, `resource-timeline.spec` |
+
+| Gate | Resultado |
+|---|---|
+| `yarn lint` · `yarn typecheck` | exit 0 · exit 0 |
+| `yarn build` (`flock`, `NODE_OPTIONS=--max-old-space-size=6144`) | exit 0 (96 s) · `dist/` borrado |
+| `ng test` de lo tocado (4 tandas, `flock`) | 22 archivos · **346/346** (52 · 95 · 35 · 164) |
+| Playwright maqueta `infra-f4f5.spec.ts` | **12/12** (4,1 min) |
+| Playwright maqueta `infra-f5-integracion.spec.ts` | **12/12** (2,4 min) |
+| Playwright **API real** `infra-f4f5-real-api.spec.ts` | **2/2** (41 s) |
+| `check-route-prefixes`, `check-css-tokens` | exit 0 |
+| `check-client-prefixes`, `check-usted`, `check-max-lines`, `check-architecture`, `check-colores-sueltos`, `check-api-contract-drift` | exit 1 **previos**: ningún hallazgo en archivos de esta pasada (los 14 de prefijos son `AdmissionsClient`/`InsightsClient`) |
+
+### Contra la API real (`evidencias/infra-f4f5/real-api/`)
+
+Semilla **sólo por la API**, con nombres F4W: organización `Hospital F4WBDA842` (`register-organization`), práctica,
+sede, quirófano `QX-F4W` (prep 20, limpieza 30) y su recurso R0, paciente (`register-patient`), dos profesionales
+(`register-practitioner`) con plantilla, membresía, asignaciones F5g y roles, y **relación asistencial aceptada por el
+paciente** (es lo que deja programar a un paciente que no tiene huella propia en el tenant). Build
+`development,real-api` servido estático con proxy a `:3000`, bajo `flock` y el lock de navegador compartido.
+
+| Paso (UI) | Petición → respuesta | SELECT en Postgres | Tras recarga |
+|---|---|---|---|
+| Programar CQ-000007 (QX-F4W, 10:00–11:30) | `POST /procedure-cases` → 201 | `reserved 13:40–16:00 UTC`, prep 20, limpieza 30 | cabecera «QX-F4W · Quirófano F4W» (`02`) |
+| Check-list: alta + Entrada + Pausa + Salida | `POST …/safety-checklists` → 201; 3 × `…/responses` → 201 | `sign_in/time_out/sign_out_completed_at` = `t t t` | fases completas (`03`) |
+| Cinco tiempos de sala, en orden | 5 × `POST …/room-events` → 201; la salida trae `cleaningOrderId` | `OR_RESERVED` + los cinco `OR_EVENT_*`, en orden | línea de tiempo (`04`) |
+| Recambio: iniciar, terminar (enfermería) | `POST /cleaning-orders/:id/start|finish` con `If-Match` «1», «2» → 200 | — | `05` |
+| Inspeccionar quien limpió | `…/inspect` `If-Match` «3» → **422** `INSPECTION_BY_CLEANER_NOT_ALLOWED` | — | S4 en la ficha (`06`) |
+| Inspeccionar otra cuenta (supervisión) | `…/inspect` → 200 `{order, nextOrderId}` | `row_version 4`, `CLN_INSPECTED` | «Lista para el próximo caso», `CLEANUP_START/END`, `ROOM_READY` (`07`) |
+| Día-cama | `GET /sites/:siteId/inpatients` → `[]` | — | S3 «La sede no tiene personas internadas ahora» (`08`) |
+
+**No ejecutado contra la API real**: el día-cama idempotente. `POST /clinical/admissions` exige la huella del paciente
+en el tenant (membresía propia o una cita que reservó él) y no acepta la relación asistencial; sin SQL no hubo
+internación que devengar. Tampoco el cargo de quirófano por tiempo (lo devenga el worker al cerrar el caso con el
+informe firmado, que la web no tiene) ni tarifas (no hay ítem de catálogo sembrado por la API en esa práctica).
+
+Hallazgo para A-F4: la sala tiene una orden de recambio abierta a la vez; si quedó la de un caso anterior, la salida de
+sala del siguiente devuelve esa `cleaningOrderId` y su detalle trae `turnoverCleaning: null` (se vio en una corrida
+previa; la spec opera la orden en la ficha del caso dueño). Consola: sólo los dos errores del 422 provocado.
+
+Revisión independiente: **pendiente** — quien implementa no aprueba.
+
+## Infraestructura F2 + F3 (web): camas, limpieza, internación/ADT, censo e indicadores — 2026-10-31
+
+Entorno: contenedor Linux · Node 22 · Yarn 4.18 · `ng serve --configuration development,demo --port 4380
+--watch=false` (maqueta) · Chromium 1243 del sistema (`PW_CHROMIUM_PATH`) · rama local `infra-f2f3-web`
+desde `origin/dev` (`7159f4dd4`). Contrato: `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md`
+§F2.4/F2.5 y §F3.4/F3.5; desvíos anotados allí bajo «W-F2F3».
+
+| Comando / prueba | Resultado |
+|---|---|
+| `yarn lint` | exit 0 |
+| `yarn typecheck` | exit 0 |
+| `ng test` de lo tocado, en 4 tramos (el `ng test` de un solo golpe muere con el *deadlock* de esbuild de este contenedor) | maqueta (82 + 28 archivos), navegación/rutas/armazón (16), F1 + expediente (46): **172 archivos · 2 635 pruebas verdes**. Antes, 4 rojos propios (secciones nuevas sin subgrupo ni lista de tipos, rutas hijas sin sección, pestaña nueva en la ficha) corregidos actualizando el registro, no la regla. No se corrió la suite completa |
+| `yarn build` | exit 0 · avisos de presupuesto previos, ninguno de archivos de F2/F3 |
+| `E2E_BASE_URL=… yarn pw infra-f2f3-camas-adt --workers=1` | **10/10** (5,4 min, sobre el código final) · cadena a 1440 + estados a 1440 / 768 / 390 |
+| `check-client-prefixes` | los 4 prefijos nuevos ruteados en las tres declaraciones; los 14 rojos restantes son previos (`AdmissionsClient`, `InsightsClient`) |
+| `check-api-prefixes` | rojo previo ajeno (`/practice/infrastructure-catalog` sin espacio en nginx), igual en `origin/dev` |
+| `check-route-prefixes` · `check-english-identifiers` · `check-usted` (archivos tocados) | verdes |
+
+**Cadena de mutaciones** (`evidencias/infra-f2f3/resultados.json`, corrida final): la maqueta anota cada escritura
+(método, ruta, `If-Match`, `If-Match-Ops`, cuerpo, estado, `requestId`) y la prueba lee las filas persistidas
+(`sessionStorage`, lo que en la API sería el `SELECT`) antes de recargar.
+
+| Paso (cuenta) | Petición → respuesta | Persistencia leída | Tras recarga |
+|---|---|---|---|
+| Ingreso con cama (admisión) | `POST /clinical/admissions` → 201 `req-ops-…` | `encounter_locations` ACTIVE en 301-B + evento A20 `AXIS_OCCUPANCY → OCC_OCCUPIED` con el mismo `requestId` | ficha «Cama 301-B»; tablero 301-B = **O** con iniciales |
+| Traslado 301-B → 303-A (enfermería) | `POST …/transfer` `If-Match: 1` → 200 | origen COMPLETED/`TRANSFER_OUT`, destino ACTIVE con `previous_encounter_location_id` | 301-B = **H**, 303-A = **O** |
+| Limpieza (limpieza) | `start` `If-Match: 1` → 200 · `finish` `If-Match: 2` → 200 | orden `CLN_DONE` | cola «Terminada · falta inspección»; sin datos de paciente |
+| Inspección (otra persona) | `inspect` `If-Match: 3` → 200 | orden INSPECTED, `inspected_by ≠ finished_by` | 301-B = **U** (asignable) |
+| Egreso (enfermería) | `POST …/discharge` `If-Match: 2` → 200 | encuentro FINISHED, orden `CLN_TRG_DISCHARGE` | ficha «Egresada», movimientos A01/A02·A03; 303-A = **H** |
+| Cierre del censo de ayer (supervisión) | `POST …/census/<ayer>/close` → 200 · ajuste → 201 | día CLOSED; ajuste aparte | «Cerrado», ajuste «0 → 2»; el número original se conserva |
+
+Mediciones: regla 6 (tablero, ingreso, ficha de internación) holgura 0/0 y 100 % en los tres anchos; desborde
+horizontal 0 en cada pantalla capturada. S1 y S2 se congelaron con el reloj de Playwright a 1440 (tablero y cola);
+a 768/390 el menú es un cajón animado y no se congelaron (anotado en `resultados.json`).
+
+Capturas (`evidencias/infra-f2f3/`, 114, nombres en inglés): cadena 10–52 (1440); tablero grilla/lista/panel y S1, S2, S3 («Crear
+camas» en el anexo sin camas), S4 (bloqueo rechazado), S5 (médica sin rol operativo), S6, S7 (sondeo fallido con
+datos previos), S8, S9 con código; cola y sus estados (S1, S2 a 1440; S3 «mías» vacía, S4, S5 mantenimiento, S6–S9);
+ingreso con cama incompatible forzable y forzado con justificación, ficha en sus 4 pestañas, S6 de ficha, S5 del
+ingreso para limpieza, censo abierto, indicadores con días faltantes (S7) y sin días cerrados (S3), y la pestaña
+«Operación» de la ficha de espacio de F1. 1440/768/390.
+
+No ejecutado / pendiente: **contra la API real** (otra franja); captura del `admission-block` en pantalla — el
+bloque no está montado en ninguna ruta de `dev` (sólo en la vitrina), su integración se prueba en
+`admission-block.spec.ts`. Revisión independiente (`visual-reviewer`, `frontend-reviewer`,
+`regression-auditor`): **pendiente** — quien implementa no aprueba.

@@ -1,0 +1,44 @@
+# Contraste de texto sobre cada paso del heatmap, escala --heat-*, estado y divergente propuesta
+# script: scratchpad/heatmap-text-contrast.mjs (usa contrast()/apca() de validate_palette.js) · fecha: 2026-10-31T06:53:53Z
+
+== --chart-seq-1..5 claro: --text-primary neutral-500 / --bg-surface #FFFFFF ==
+paso   relleno   texto-primary  superficie   negro    blanco   mejor(readableOn)  AA4.5?  APCA(mejor)
+seq-1  #cde2fb   11.26          1.32         15.87    1.32     text-primary       sí     83
+seq-2  #86b6ef   7.06           2.11         9.95     2.11     text-primary       sí     58
+seq-3  #3987e5   4.10           3.64         5.77     3.64     #000               sí     40
+seq-4  #1c5cab   2.25           6.63         3.17     6.63     surface            sí     -87
+seq-5  #0d366b   1.25           11.95        1.76     11.95    surface            sí     -101
+
+== --heat-1..4 (bg/fg declarados en styles.css) light ==
+heat-1  bg #C2D5DF fg #0A1C27  WCAG 11.48  APCA 78  AA4.5? sí  · marca vs superficie 1.51 (≥3:1? NO)
+heat-2  bg #95B5C7 fg #0A1C27  WCAG 8.04  APCA 60  AA4.5? sí  · marca vs superficie 2.16 (≥3:1? NO)
+heat-3  bg #397596 fg #FEFDFC  WCAG 4.97  APCA -79  AA4.5? sí  · marca vs superficie 5.05 (≥3:1? sí)
+heat-4  bg #0B4768 fg #FEFDFC  WCAG 9.77  APCA -96  AA4.5? sí  · marca vs superficie 9.93 (≥3:1? sí)
+
+== --chart-seq-1..5 oscuro: --text-primary ivory-500 / --bg-surface petrol-800 ==
+paso   relleno   texto-primary  superficie   negro    blanco   mejor(readableOn)  AA4.5?  APCA(mejor)
+seq-1  #184f95   7.32           1.82         2.59     8.10     text-primary       sí     -85
+seq-2  #1c5cab   5.98           2.22         3.17     6.63     text-primary       sí     -80
+seq-3  #3987e5   3.29           4.05         5.77     3.64     #000               sí     40
+seq-4  #6da7ec   2.26           5.88         8.39     2.50     surface            sí     50
+seq-5  #9ec5f4   1.61           8.24         11.75    1.79     surface            sí     66
+
+== --heat-1..4 (bg/fg declarados en styles.css) dark ==
+heat-1  bg #0A2B3D fg #FEFDFC  WCAG 14.50  APCA -103  AA4.5? sí  · marca vs superficie 1.00 (≥3:1? NO)
+heat-2  bg #0B3953 fg #FEFDFC  WCAG 11.99  APCA -100  AA4.5? sí  · marca vs superficie 1.21 (≥3:1? NO)
+heat-3  bg #6795AF fg #0A1C27  WCAG 5.38  APCA 43  AA4.5? sí  · marca vs superficie 4.56 (≥3:1? sí)
+heat-4  bg #95B5C7 fg #0A1C27  WCAG 8.04  APCA 60  AA4.5? sí  · marca vs superficie 6.81 (≥3:1? sí)
+
+== Estado (--st-*-fg sobre --bg-surface), icono+rótulo obligatorios ==
+light st-success  #1F5949  texto/superficie WCAG 8.13  APCA 88
+light st-warning  #8B6A47  texto/superficie WCAG 4.94  APCA 74
+light st-error    #6F382C  texto/superficie WCAG 9.22  APCA 91
+light st-info     #33706C  texto/superficie WCAG 5.71  APCA 78
+dark  st-success  #A4CCC0  texto/superficie WCAG 8.40  APCA -67
+dark  st-warning  #F3DABE  texto/superficie WCAG 10.93  APCA -83
+dark  st-error    #DFB4AA  texto/superficie WCAG 7.89  APCA -64
+dark  st-info     #B2DEDA  texto/superficie WCAG 10.07  APCA -78
+
+== Divergente propuesta: polo frío --chart-1 ↔ polo cálido --chart-8, punto medio neutro --bg-surface-alt ==
+light #2a78d6:4.42  #86b6ef:2.11  #F8F5F0:1.09  #eda0a0:2.07  #e34948:3.95
+dark #3987e5:4.05  #6da7ec:5.88  #0B3953:1.21  #e8a0a0:6.99  #e66767:4.56

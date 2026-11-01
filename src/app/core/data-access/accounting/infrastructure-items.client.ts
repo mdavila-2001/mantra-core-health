@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
@@ -23,9 +23,12 @@ export class InfrastructureItemsClient {
     return this.http.get<readonly InfrastructureItem[]>(this.url('/accounting/infrastructure-items'), { params: new HttpParams().set('practiceId', practiceId) });
   }
 
-  /** `PATCH /accounting/infrastructure-items/:id {careSpaceId}`. */
-  locateItem(id: string, careSpaceId: string | null): Observable<InfrastructureItem> {
-    return this.http.patch<InfrastructureItem>(this.url(`/accounting/infrastructure-items/${encodeURIComponent(id)}`), { careSpaceId });
+  /**
+   * `PATCH /accounting/infrastructure-items/:id {careSpaceId}` con `If-Match`
+   * de la versión leída: dos ubicaciones simultáneas no se pisan (412).
+   */
+  locateItem(id: string, careSpaceId: string | null, rowVersion: number): Observable<InfrastructureItem> {
+    return this.http.patch<InfrastructureItem>(this.url(`/accounting/infrastructure-items/${encodeURIComponent(id)}`), { careSpaceId }, { headers: new HttpHeaders({ 'If-Match': `"${rowVersion}"` }) });
   }
 
   /** `GET /accounting/cost-centers?practiceId` — desvío anotado: la lista. */

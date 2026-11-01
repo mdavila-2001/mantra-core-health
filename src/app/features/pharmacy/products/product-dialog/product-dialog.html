@@ -276,6 +276,15 @@
             />
           </app-form-field>
         }
+        @if (product(); as editing) {
+          <app-medication-link
+            class="product-dialog__wide"
+            [current]="editing.medication"
+            [requiresPrescription]="editing.requiresPrescription === true"
+            [locked]="isLinked() && editing.medication !== null"
+            (chosen)="medicationChoice.set($event)"
+          />
+        }
         <app-form-field
           label="Código de barras (GTIN)"
           hint="Opcional. Los 8, 12, 13 o 14 dígitos impresos bajo las barras."

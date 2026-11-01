@@ -1,0 +1,12 @@
+.det { display: flex; flex-direction: column; gap: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--border-default); min-width: 0; }
+.det__cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.det__cuerpo { display: flex; flex-direction: column; gap: var(--sp-6); min-width: 0; }
+.det__resumen { display: flex; flex-direction: column; gap: var(--sp-3); }
+.det__titulo { margin: 0; font-size: var(--fs-body-lg, 1.125rem); font-weight: 600; overflow-wrap: anywhere; }
+.det__heroe { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-3); }
+.det__cifra { font-family: var(--font-body); font-size: 3rem; line-height: 1.05; font-weight: 600; letter-spacing: -0.01em; }
+.det__tabla { overflow: auto; max-block-size: 24rem; border: 1px solid var(--border-default); border-radius: var(--r-md); }
+.det__t { inline-size: 100%; border-collapse: collapse; font-size: var(--fs-caption); }
+.det__t th, .det__t td { padding: var(--sp-2) var(--sp-3); text-align: left; border-bottom: 1px solid var(--border-default); vertical-align: middle; }
+.det__t thead th { position: sticky; top: 0; background: var(--bg-surface-alt); }
+.det__motivo { flex: 1 1 18rem; }

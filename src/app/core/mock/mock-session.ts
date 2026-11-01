@@ -1,5 +1,6 @@
 import { uuid } from './mock-store';
 import type { TenantTypeCode } from '../data-access/directory/directory.types';
+import type { MockUser } from '../simulator/simulator.types';
 
 /* ============================================================================
     Las cuentas del backend simulado y sus tokens.
@@ -10,32 +11,8 @@ import type { TenantTypeCode } from '../data-access/directory/directory.types';
     decorativa: nadie la verifica en esta rama.
     ========================================================================== */
 
-export interface MockUser {
-  /** La clave con la que se identifica en el login (correo) y dentro del token. */
-  readonly key: string;
-  readonly id: string;
-  readonly email: string;
-  readonly nationalId: string;
-  readonly displayName: string;
-  readonly roles: readonly string[];
-  readonly tenants: readonly string[];
-  readonly tenantNames: Readonly<Record<string, string>>;
-  /**
-   * Roles con ámbito de organización, por tenant: el claim `scopedRoles` que firma
-   * la API (un código que figura acá sólo vale en esos tenants; uno que no, es
-   * global). El simulador firma exactamente las claves de la API: no hay
-   * `ownTenantId`.
-   */
-  readonly scopedRoles?: Readonly<Record<string, readonly string[]>>;
-  readonly patientProfileId?: string;
-  readonly practitionerProfileId?: string;
-  readonly personId: string;
-  /**
-   * Clase de cuenta que firmaría la API. Sin valor, el token no trae el claim y
-   * la sesión lo deduce (cuentas de paciente, que no pasan por esta lista).
-   */
-  readonly accountKind?: 'PERSON' | 'ORGANIZATION';
-}
+/** La forma de una cuenta de prueba vive fuera del simulador (O3-4). */
+export type { MockUser };
 
 export const TENANT_CLINICA = uuid('tenant-clinica-los-olivos');
 export const TENANT_HOSPITAL = uuid('tenant-hospital-san-lucas');
@@ -161,6 +138,18 @@ export const IDS = {
     personId: uuid('person-sinespecialidad'),
     practitionerProfileId: uuid('hpid-sinespecialidad'),
   },
+  orManager: {
+    userId: uuid('user-jefe-quirofano'),
+    personId: uuid('person-jefe-quirofano'),
+    // Un perfil profesional real del padrón de San Lucas (el demo 02, de
+    // `PROFESSIONALS_REGISTERED_DEMO`): firma las fases del check-list y el
+    // armazón encuentra su resumen, en vez de un 404 en cada pantalla.
+    practitionerProfileId: uuid('hpid-demo-registered-practitioner-02'),
+  },
+  billingClerk: {
+    userId: uuid('user-facturacion-hospital'),
+    personId: uuid('person-facturacion-hospital'),
+  },
   // Hospital Piloto Mantra (personal de apoyo): la cuenta de la organización,
   // las cuatro personas de apoyo y dos doctores del hospital.
   hospitalPiloto: {
@@ -184,18 +173,6 @@ export const IDS = {
     userId: uuid('user-martin-suarez'),
     personId: uuid('person-martin-suarez'),
     practitionerProfileId: uuid('hpid-martin-suarez'),
-  },
-  orManager: {
-    userId: uuid('user-jefe-quirofano'),
-    personId: uuid('person-jefe-quirofano'),
-    // Un perfil profesional real del padrón de San Lucas (el demo 02, de
-    // `PROFESSIONALS_REGISTERED_DEMO`): firma las fases del check-list y el
-    // armazón encuentra su resumen, en vez de un 404 en cada pantalla.
-    practitionerProfileId: uuid('hpid-demo-registered-practitioner-02'),
-  },
-  billingClerk: {
-    userId: uuid('user-facturacion-hospital'),
-    personId: uuid('person-facturacion-hospital'),
   },
 } as const;
 
@@ -404,6 +381,35 @@ export const MOCK_USERS: readonly MockUser[] = [
     accountKind: 'ORGANIZATION',
   },
   {
+    // Infraestructura hospitalaria F4: la jefatura del bloque quirúrgico de San
+    // Lucas. Asigna y libera bloques, programa y registra el día del caso.
+    key: 'quirofano',
+    id: IDS.orManager.userId,
+    email: 'quirofano@alovida.mock',
+    nationalId: '7007001',
+    displayName: 'Lic. Patricia Vargas · Jefatura de quirófano',
+    roles: ['PERIOP_ADMIN', 'SURGERY_SCHEDULER', 'PERIOP_NURSE'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.orManager.practitionerProfileId,
+    personId: IDS.orManager.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Infraestructura hospitalaria F5e: facturación de San Lucas (tarifas de
+    // espacios y cargos de día-cama). Ve la utilización, no opera la sala.
+    key: 'facturacion',
+    id: IDS.billingClerk.userId,
+    email: 'facturacion@alovida.mock',
+    nationalId: '7007002',
+    displayName: 'Rodrigo Suárez · Facturación',
+    roles: ['BILLING'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.billingClerk.personId,
+    accountKind: 'PERSON',
+  },
+  {
     // Hospital Piloto Mantra como **cuenta de organización**: quien entra es el
     // hospital, no una persona que lo administra. Su rol de token es `USER` más
     // `SECURITY_ADMIN`
@@ -574,35 +580,7 @@ export const MOCK_USERS: readonly MockUser[] = [
     personId: IDS.suarez.personId,
     accountKind: 'PERSON',
   },
-  {
-    // Infraestructura hospitalaria F4: la jefatura del bloque quirúrgico de San
-    // Lucas. Asigna y libera bloques, programa y registra el día del caso.
-    key: 'quirofano',
-    id: IDS.orManager.userId,
-    email: 'quirofano@alovida.mock',
-    nationalId: '7007001',
-    displayName: 'Lic. Patricia Vargas · Jefatura de quirófano',
-    roles: ['PERIOP_ADMIN', 'SURGERY_SCHEDULER', 'PERIOP_NURSE'],
-    tenants: [TENANT_HOSPITAL],
-    tenantNames: TENANT_NAMES,
-    practitionerProfileId: IDS.orManager.practitionerProfileId,
-    personId: IDS.orManager.personId,
-    accountKind: 'PERSON',
-  },
-  {
-    // Infraestructura hospitalaria F5e: facturación de San Lucas (tarifas de
-    // espacios y cargos de día-cama). Ve la utilización, no opera la sala.
-    key: 'facturacion',
-    id: IDS.billingClerk.userId,
-    email: 'facturacion@alovida.mock',
-    nationalId: '7007002',
-    displayName: 'Rodrigo Suárez · Facturación',
-    roles: ['BILLING'],
-    tenants: [TENANT_HOSPITAL],
-    tenantNames: TENANT_NAMES,
-    personId: IDS.billingClerk.personId,
-    accountKind: 'PERSON',
-  },
+
   // Infraestructura F2/F3 (31/10/2026): el personal del Hospital San Lucas, una
   // cuenta por rol operativo. El token no trae el rol —es una fila de
   // `organization_user_assignments` que resuelve la API (`fixtures/inpatient.ts`)—.

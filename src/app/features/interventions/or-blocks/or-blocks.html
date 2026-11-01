@@ -4,8 +4,8 @@
   <app-view-state-host class="or-blocks__failure" [state]="f" data-testid="or-blocks-failure" />
 }
 
-<app-view-state-host [state]="pageState()">
-  <app-card class="or-blocks" padding="lg" data-testid="or-blocks">
+<app-card class="or-blocks" padding="lg" data-testid="or-blocks">
+    <app-site-switch class="or-blocks__site" />
     <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="changeTab($event)">
       <app-tab label="Bloques de la semana">
         <div class="or-blocks__panel">
@@ -26,7 +26,6 @@
       </app-tab>
     </app-tabs>
   </app-card>
-</app-view-state-host>
 
 <ng-template #whenCell let-b>
   <span class="or-blocks__when">{{ shortDateOf(b.startsAt) }} · {{ timeOf(b.startsAt) }}–{{ timeOf(b.endsAt) }}</span>
@@ -38,7 +37,7 @@
 <ng-template #roomCell let-b>{{ roomLabel(b.operatingRoomId) }}</ng-template>
 
 <ng-template #useCell let-b>
-  <span class="or-blocks__owner">{{ b.owner.label }}</span>
+  <span class="or-blocks__owner">{{ ownerOf(b) }}</span>
   <span class="or-blocks__muted">{{ b.cases.length }} casos · {{ durationOf(b.usedMinutes) }} usados</span>
 </ng-template>
 

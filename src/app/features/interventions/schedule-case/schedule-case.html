@@ -3,6 +3,7 @@
 <app-view-state-host [state]="page()">
   <app-card class="schedule-case" padding="lg" data-testid="schedule-case">
     <form class="schedule-case__form" (submit)="$event.preventDefault(); submit()" novalidate>
+      <app-site-switch />
       <div class="schedule-case__grid">
         <app-form-field label="Quirófano" [required]="true" hint="Sólo los espacios con función quirófano de la sede.">
           <app-select [options]="roomOptions()" [value]="roomId()" placeholder="Elija un quirófano" ariaLabel="Quirófano" data-testid="schedule-room" (valueChange)="roomId.set($event)" />

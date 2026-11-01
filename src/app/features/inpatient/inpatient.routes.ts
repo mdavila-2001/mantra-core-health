@@ -1,8 +1,24 @@
-import type { Type } from '@angular/core';
-import type { Routes } from '@angular/router';
+import { inject, type Type } from '@angular/core';
+import { Router, type CanActivateFn, type Routes } from '@angular/router';
 
-import { seccionRolesGuard } from '../../core/navigation/section-roles.guard';
-import { APP_TITLE } from '../../core/navigation/navigation.types';
+import { SessionStore } from '../../core/auth/session.store';
+import { APP_SECTIONS } from '../../core/navigation/navigation.map';
+import { SECCION_DENEGADA_ROUTE, seccionRolesGuard } from '../../core/navigation/section-roles.guard';
+import { APP_TITLE, isVisibleTo } from '../../core/navigation/navigation.types';
+
+/**
+ * Las pantallas hijas (ingreso, ficha) no cuelgan del prefijo de ninguna
+ * sección, así que `seccionRolesGuard` las dejaba pasar sin mirar
+ * `onlyForTenantTypes`. Este guard les aplica **la misma regla** que a
+ * «Tablero de camas»: sólo en un hospital, con los mismos roles. No es la
+ * autoridad (la API decide en cada pedido); evita la pantalla intermedia.
+ */
+export const inpatientChildGuard: CanActivateFn = () => {
+  const session = inject(SessionStore);
+  const seccion = APP_SECTIONS.find((s) => s.path === 'inpatient/bed-board');
+  if (seccion !== undefined && isVisibleTo(seccion, session.roles(), session.tenants(), session.activeTenantType())) return true;
+  return inject(Router).createUrlTree([SECCION_DENEGADA_ROUTE]);
+};
 
 /* ============================================================================
     Las rutas de internación (F2/F3), en un solo lugar.
@@ -27,13 +43,13 @@ export function inpatientRoutes(options: { readonly chunkFailed: () => Type<unkn
     {
       path: 'inpatient/admissions/new',
       title: `${APP_TITLE} - Nuevo ingreso`,
-      canActivate: [seccionRolesGuard],
+      canActivate: [seccionRolesGuard, inpatientChildGuard],
       loadComponent: () => import('./admission-new/admission-new').then((m) => m.AdmissionNew).catch(() => options.chunkFailed()),
     },
     {
       path: 'inpatient/stays/:encounterId',
       title: `${APP_TITLE} - Internación`,
-      canActivate: [seccionRolesGuard],
+      canActivate: [seccionRolesGuard, inpatientChildGuard],
       loadComponent: () => import('./stay/stay').then((m) => m.Stay).catch(() => options.chunkFailed()),
     },
   ];

@@ -1,0 +1,47 @@
+/* Estilos comunes de las pestañas del panel «Sistema». Todo con tokens; sin tarjetas propias: la ÚNICA tarjeta elevada es la de la página. */
+:host { display: block; min-width: 0; }
+
+.obs-tab { display: flex; flex-direction: column; gap: var(--sp-6); min-width: 0; }
+.obs-seccion { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.obs-seccion__titulo { margin: 0; font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; color: var(--text-primary); }
+.obs-seccion__sub { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+
+/* Fila de tarjetas (KPI): la cifra héroe ocupa más. */
+.obs-tiles { display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)); }
+.obs-tiles > .obs-tiles__hero { grid-column: span 2; }
+@media (max-width: 520px) { .obs-tiles > .obs-tiles__hero { grid-column: span 1; } }
+
+/* Cuadrícula de gráficos: 1 columna en móvil, 2 en tablet, hasta 3 en escritorio. Un huérfano toma el ancho completo. */
+.obs-grid { display: grid; gap: var(--sp-6) var(--sp-8); grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); }
+.obs-grid > .obs-grid__completo { grid-column: 1 / -1; }
+
+.obs-nota { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+.obs-nota strong { color: var(--text-primary); }
+.obs-mono { font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--fs-caption); overflow-wrap: anywhere; }
+.obs-sql {
+  margin: 0; padding: var(--sp-3); max-height: 16rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  background: var(--bg-surface-alt); border-radius: var(--r-md); font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--fs-caption); line-height: 1.5; color: var(--text-primary);
+}
+.obs-barra { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-3); }
+.obs-barra > * { min-width: 0; }
+.obs-chip {
+  display: inline-flex; align-items: center; gap: var(--sp-1); padding: 1px var(--sp-2); border-radius: var(--r-full);
+  border: 1px solid var(--border-strong); background: var(--bg-surface); color: var(--text-primary);
+  font-size: var(--fs-caption); font-weight: 600; white-space: nowrap;
+}
+.obs-chip[data-tono='success'] { background: var(--st-success-bg); color: var(--st-success-fg); border-color: var(--st-success-bd); }
+.obs-chip[data-tono='warning'] { background: var(--st-warning-bg); color: var(--st-warning-fg); border-color: var(--st-warning-bd); }
+.obs-chip[data-tono='error'] { background: var(--st-error-bg); color: var(--st-error-fg); border-color: var(--st-error-bd); }
+.obs-chip[data-tono='info'] { background: var(--st-info-bg); color: var(--st-info-fg); border-color: var(--st-info-bd); }
+.obs-copiar {
+  display: inline-flex; align-items: center; min-height: 1.75rem; padding: 0 var(--sp-2); border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm); background: var(--bg-surface); color: var(--text-primary); font: inherit; font-size: var(--fs-caption); cursor: pointer;
+}
+.obs-copiar:hover { background: var(--bg-surface-alt); }
+.obs-copiar:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+.obs-lista { margin: 0; padding-left: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-2); }
+.obs-dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-1) var(--sp-4); margin: 0; font-size: var(--fs-caption); }
+.obs-dl dt { font-weight: 600; color: var(--text-secondary); }
+.obs-dl dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .obs-dl { grid-template-columns: 1fr; } }

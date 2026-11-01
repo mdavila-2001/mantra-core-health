@@ -10,6 +10,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 
 import { isAccessTokenExpired } from '../auth/access-token';
 import { RefreshTokenStorage } from '../auth/refresh-token.storage';
+import { safeReturnUrl } from '../auth/return-url';
 import { SessionStore } from '../auth/session.store';
 import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
 import { readApiError } from './api-error';
@@ -143,8 +144,16 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       // Falta elegir organización: no es un muro, es una puerta. La API lo dice
       // con `details.reason` sin cambiar el status (403 o 422), y la respuesta es
       // abrir el selector, no pintar «sin permiso».
+      // Con alcance de plataforma no se navega: la pantalla que pidió el dato lo dice (S5 «Elegir organización») y
+      // evita el bucle /dashboard <-> /auth/organization. Quien no lo tiene sigue eligiendo, y vuelve adonde estaba.
       if (isTenantRequired(error) && session.tenants().length > 1) {
-        void router.navigateByUrl(TENANT_SELECTION_ROUTE);
+        if (!session.hasPlatformScope()) {
+          const actual = safeReturnUrl(router.url);
+          const destino = actual === null || actual === '/' || actual.startsWith('/auth/')
+            ? TENANT_SELECTION_ROUTE
+            : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(actual)}`;
+          void router.navigateByUrl(destino);
+        }
         return throwError(() => error);
       }
 
@@ -254,7 +263,7 @@ function failedRefresh(
 
 /** `details.reason` de la API cuando hay que elegir organización. */
 function isTenantRequired(error: unknown): boolean {
-  if (!(error instanceof HttpErrorResponse) || ![403, 422].includes(error.status)) {
+  if (!(error instanceof HttpErrorResponse) || ![403, 412, 422].includes(error.status)) {
     return false;
   }
   const reason = readApiError(error)?.details?.['reason'];

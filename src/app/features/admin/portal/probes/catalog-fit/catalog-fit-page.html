@@ -1,0 +1,285 @@
+<app-page-header
+  title="Sonda de catalogación"
+  subtitle="Comprueba si el catálogo sigue ajustado a la realidad: las rutas del código, el esquema de la base, el inventario importado, las fichas y la sensibilidad de los datos. Lo decide la API; acá se muestra con su antigüedad."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <button
+    app-button
+    page-actions
+    variant="primary"
+    size="sm"
+    [isLoading]="enCurso()"
+    [disabled]="enCurso()"
+    (clicked)="ejecutar()"
+    data-testid="catalog-fit-run"
+  >
+    {{ enCurso() ? 'Ejecutando…' : 'Ejecutar ahora' }}
+  </button>
+</app-page-header>
+
+<div class="fit" data-testid="catalog-fit">
+  @if (falloAlEjecutar(); as fallo) {
+    <app-alert
+      tone="error"
+      title="No se pudo pedir la corrida"
+      data-testid="catalog-fit-run-error"
+      >{{ fallo }}</app-alert
+    >
+  }
+
+  <app-view-state-host [state]="estado()" (retry)="cargar()" (refresh)="cargar()">
+    <div vsh-empty class="fit__vacio" data-testid="catalog-fit-empty">
+      @if (estado().status === 'empty') {
+        <p class="fit__nota">{{ $any(estado()).message }}</p>
+      }
+      <button
+        app-button
+        variant="primary"
+        [isLoading]="enCurso()"
+        [disabled]="enCurso()"
+        (clicked)="ejecutar()"
+      >
+        Ejecutar la sonda
+      </button>
+    </div>
+
+    @if (respuesta(); as r) {
+      @if (informe(); as i) {
+        @let veredicto = rotuloVeredicto(i.verdict);
+
+        <section class="fit__cabecera" aria-label="Veredicto" data-testid="catalog-fit-verdict">
+          <app-badge [variant]="veredicto.tone" size="lg">{{ veredicto.label }}</app-badge>
+          <p class="fit__nota">
+            Evaluada el {{ cuando(i.evaluatedAt) }} ({{ antiguedad(r.ageSeconds) }}).
+            @if (r.state === 'ATRASADO') {
+              <strong>Atrasada:</strong> pasó más de
+              {{ cifra(r.retention.staleAfterSeconds / 60) }} min sin renovarse.
+            }
+            Versión desplegada: <code>{{ i.deployment.commit }}</code
+            >.
+          </p>
+        </section>
+
+        @if (falloReciente(); as f) {
+          <app-alert
+            tone="warning"
+            title="La última corrida falló"
+            data-testid="catalog-fit-last-failure"
+          >
+            La corrida del {{ cuando(f.finishedAt) }} terminó con el error
+            <code>{{ f.errorCode ?? 'desconocido' }}</code
+            >. Lo que se muestra es el informe anterior.
+          </app-alert>
+        }
+
+        @if (i.blindSpots.length > 0) {
+          <app-alert
+            tone="info"
+            title="Hay comprobaciones que no pudieron medir"
+            data-testid="catalog-fit-blind-spots"
+          >
+            No saber no es estar bien: {{ i.blindSpots.join(', ') }}. El veredicto no cuenta como
+            cumplido lo que no se midió.
+          </app-alert>
+        }
+
+        <app-card variant="outlined" padding="md" class="fit__tarjeta">
+          <app-tabs [(selectedIndex)]="pestana" data-testid="catalog-fit-tabs">
+            <!-- ===================== Resumen por dimensión ===================== -->
+            <app-tab label="Resumen por dimensión">
+              <div class="fit__seccion">
+                <p class="fit__nota">
+                  Cada puntaje es ítems que cumplen sobre ítems comprobados. Sin base no hay
+                  porcentaje: una dimensión que no se pudo medir dice por qué, nunca 0 % ni 100 %.
+                </p>
+                <section
+                  class="fit__dimensiones"
+                  aria-label="Puntaje por dimensión"
+                  data-testid="catalog-fit-dimensions"
+                >
+                  @for (d of i.dimensions; track d.dimension) {
+                    <app-metric-card
+                      [label]="etiquetaDimension(d.dimension)"
+                      [value]="texto(d)"
+                      [hint]="pista(d)"
+                      [tone]="tono(d, i.checks)"
+                      [attr.data-testid]="'catalog-fit-dimension-' + d.dimension"
+                    />
+                  }
+                </section>
+                <dl class="fit__preguntas">
+                  @for (d of i.dimensions; track d.dimension) {
+                    <div>
+                      <dt>{{ etiquetaDimension(d.dimension) }}</dt>
+                      <dd>{{ dimensiones[d.dimension].question }}</dd>
+                    </div>
+                  }
+                </dl>
+                <dl class="fit__huellas" data-testid="catalog-fit-fingerprints">
+                  <div>
+                    <dt>Huella de las rutas del código</dt>
+                    <dd>
+                      <code>{{ i.fingerprints.routesInCode ?? 'sin dato' }}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Huella del inventario generado</dt>
+                    <dd>
+                      <code>{{ i.fingerprints.routesInInventory ?? 'sin dato' }}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Huella de lo importado</dt>
+                    <dd>
+                      <code>{{ i.fingerprints.routesImported ?? 'sin dato' }}</code>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </app-tab>
+
+            <!-- ============================ Hallazgos ============================ -->
+            <app-tab [label]="'Hallazgos (' + i.checks.length + ')'">
+              <div class="fit__seccion">
+                <app-segmented-control
+                  ariaLabel="Qué comprobaciones ver"
+                  [options]="opcionesFiltro"
+                  [value]="filtro()"
+                  (valueChange)="cambiarFiltro($event)"
+                />
+                <app-data-table
+                  data-testid="catalog-fit-checks"
+                  caption="Comprobaciones de la sonda de ajuste"
+                  [state]="estadoComprobaciones()"
+                  [columns]="columnas()"
+                  [trackBy]="porId"
+                  [rowLabel]="nombreFila"
+                  stackedOnMobile
+                  fitContainer
+                  rowNavigable
+                  (rowActivated)="seleccionar($event)"
+                  (retry)="cargar()"
+                />
+
+                @if (detalle(); as c) {
+                  @let st = rotuloEstado(c.status);
+                  <section class="fit__detalle" aria-live="polite" data-testid="catalog-fit-detail">
+                    <h3 class="fit__titulo">
+                      <code>{{ c.id }}</code> · {{ c.title }}
+                    </h3>
+                    <p class="fit__fila">
+                      <app-badge size="sm" [variant]="st.tone">{{ st.label }}</app-badge>
+                      <span
+                        >Si falla, severidad
+                        {{ rotuloSeveridad(c.severity).label.toLowerCase() }}.</span
+                      >
+                      <span>{{ c.summary }}</span>
+                    </p>
+                    @if (c.reason) {
+                      <p class="fit__nota" data-testid="catalog-fit-reason">{{ c.reason }}</p>
+                    }
+                    <h4 class="fit__subtitulo">Cómo corregirlo</h4>
+                    <p class="fit__nota">{{ c.remediation }}</p>
+                    @if (evidencia().length > 0) {
+                      <h4 class="fit__subtitulo">Evidencia</h4>
+                      <dl class="fit__evidencia">
+                        @for (e of evidencia(); track e.key) {
+                          <div>
+                            <dt>{{ e.key }}</dt>
+                            <dd>
+                              <code>{{ e.value }}</code>
+                            </dd>
+                          </div>
+                        }
+                      </dl>
+                    }
+                    @if (c.findings.length > 0) {
+                      <h4 class="fit__subtitulo">
+                        Hallazgos
+                        @if (c.findingsTruncated) {
+                          (primeros {{ c.findings.length }} de {{ cifra(c.findingsTotal) }})
+                        } @else {
+                          ({{ cifra(c.findingsTotal) }})
+                        }
+                      </h4>
+                      <ul class="fit__hallazgos" data-testid="catalog-fit-findings">
+                        @for (h of c.findings; track h.subject + h.detail) {
+                          <li>
+                            <code>{{ h.subject }}</code> — {{ h.detail }}
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </section>
+                } @else {
+                  <p class="fit__nota">
+                    Elija una comprobación de la tabla para ver su evidencia, sus hallazgos y cómo
+                    corregirla.
+                  </p>
+                }
+              </div>
+            </app-tab>
+
+            <!-- ============================ Historial ============================ -->
+            <app-tab label="Historial">
+              <div class="fit__seccion">
+                <p class="fit__nota" data-testid="catalog-fit-retention">{{ r.retention.note }}</p>
+                <app-data-table
+                  data-testid="catalog-fit-history"
+                  caption="Corridas de la sonda de ajuste"
+                  [state]="historial()"
+                  [columns]="columnasHistorial()"
+                  [trackBy]="porCorrida"
+                  [rowLabel]="nombreCorrida"
+                  stackedOnMobile
+                  fitContainer
+                  (retry)="cargar()"
+                />
+              </div>
+            </app-tab>
+          </app-tabs>
+        </app-card>
+      }
+    }
+  </app-view-state-host>
+</div>
+
+<ng-template #celdaId let-fila>
+  <button
+    type="button"
+    class="fit__enlace"
+    [attr.aria-pressed]="seleccionada() === fila.id"
+    [attr.aria-label]="'Ver el detalle de ' + fila.id"
+    [attr.data-testid]="'catalog-fit-open-' + fila.id"
+    (click)="seleccionar(fila)"
+  >
+    {{ fila.id }}
+  </button>
+</ng-template>
+
+<ng-template #celdaTitulo let-fila>
+  <span>{{ fila.check.title }}</span>
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  @let st = rotuloEstado(fila.check.status);
+  <app-badge size="sm" [variant]="st.tone">{{ st.label }}</app-badge>
+</ng-template>
+
+<ng-template #celdaSeveridad let-fila>
+  @let sv = rotuloSeveridad(fila.check.severity);
+  <app-badge size="sm" [variant]="sv.tone">{{ sv.label }}</app-badge>
+</ng-template>
+
+<ng-template #celdaFecha let-fila>
+  <span>{{ cuando(fila.entry.evaluatedAt) }}</span>
+</ng-template>
+
+<ng-template #celdaVeredicto let-fila>
+  @let v = rotuloVeredicto(fila.entry.verdict);
+  <app-badge size="sm" [variant]="v.tone">{{ v.label }}</app-badge>
+</ng-template>
+
+<ng-template #celdaOrigen let-fila>
+  <span>{{ disparador(fila.entry.trigger) }}</span>
+</ng-template>

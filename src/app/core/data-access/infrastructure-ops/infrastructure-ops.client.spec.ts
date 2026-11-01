@@ -48,10 +48,10 @@ describe('InfrastructureOpsClient', () => {
     req.flush({});
   });
 
-  it('la cola filtra por estado, «mías» y prioridad', () => {
-    client.listCleaningOrders('s1', { status: ['CLN_PENDING', 'CLN_DONE'], assignedTo: 'me', priority: 'CLN_PRIO_STAT' }).subscribe();
+  it('la cola filtra por estado (un valor, como `CleaningOrderQueryDto`), «mías» y prioridad', () => {
+    client.listCleaningOrders('s1', { status: 'CLN_DONE', assignedTo: 'me', priority: 'CLN_PRIO_STAT' }).subscribe();
     const req = http.expectOne((r) => r.url === '/sites/s1/cleaning-orders');
-    expect(req.request.params.get('status')).toBe('CLN_PENDING,CLN_DONE');
+    expect(req.request.params.get('status')).toBe('CLN_DONE');
     expect(req.request.params.get('assignedTo')).toBe('me');
     expect(req.request.params.get('priority')).toBe('CLN_PRIO_STAT');
     req.flush({});
@@ -60,8 +60,10 @@ describe('InfrastructureOpsClient', () => {
   it('el fin de un bloqueo y el historial A20 usan las rutas del contrato', () => {
     client.endBlock('b1', 'listo').subscribe();
     expect(http.expectOne('/care-space-blocks/b1/end').request.body).toEqual({ note: 'listo' });
-    client.listStatusEvents('c1', 'AXIS_HYGIENE').subscribe();
-    expect(http.expectOne((r) => r.url === '/care-spaces/c1/status-events').request.params.get('axis')).toBe('AXIS_HYGIENE');
+    client.listStatusEvents('c1', 'HYGIENE').subscribe();
+    expect(http.expectOne((r) => r.url === '/care-spaces/c1/status-events').request.params.get('axis')).toBe('HYGIENE');
+    client.createCleaningOrder('s1', { careSpaceId: 'c1', typeCode: 'CLEAN_ROUTINE' }).subscribe();
+    expect(http.expectOne('/sites/s1/cleaning-orders').request.body).toEqual({ careSpaceId: 'c1', typeCode: 'CLEAN_ROUTINE' });
     client.getAccess().subscribe();
     http.expectOne('/practice/infrastructure-access/me').flush({});
   });

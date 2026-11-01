@@ -10,6 +10,8 @@ import {
 import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
 import { isTenantDenialReason, tenantDenialHint, tenantDenialText } from '../data-access/iam/tenant-denial';
 import { accessErrorText } from '../data-access/access-governance/access-errors';
+import { safeReturnUrl } from '../auth/return-url';
+import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
 import { readApiError, readFieldViolations, type ApiErrorBody } from './api-error';
 
 /**
@@ -31,6 +33,15 @@ import { readApiError, readFieldViolations, type ApiErrorBody } from './api-erro
  * en `navigation.map.spec.ts` que lo impide.
  */
 export const IDENTITY_VERIFICATION_ROUTE = '/my-account/identity';
+
+/** `/auth/organization` con `returnUrl` a la pantalla actual (sólo en el navegador y sólo si es una ruta interna). */
+function tenantSelectionRoute(): string {
+  const place = (globalThis as { location?: { pathname: string; search: string } }).location;
+  const current = place === undefined ? null : safeReturnUrl(`${place.pathname}${place.search}`);
+  return current === null || current === '/' || current.startsWith('/auth/')
+    ? TENANT_SELECTION_ROUTE
+    : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(current)}`;
+}
 
 /**
  * Traduce un fallo de la API a uno de los 9 estados de UX del M34.
@@ -62,6 +73,17 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
   // Sólo el id que mandó la API: en S4 y S5 es opcional, así que no se inventa
   // un «sin-id» que nadie podría buscar.
   const requestId = body.correlationId;
+
+  // Falta fijar organización (403/412/422 con `details.reason`): no es un muro, es una puerta. Quien tiene alcance de
+  // plataforma no es redirigido por el interceptor; la pantalla lo dice (S5) y ofrece elegir, volviendo luego a ella.
+  const reason = body.details?.['reason'];
+  if (reason === 'TENANT_REQUIRED' || reason === 'TENANT_AMBIGUOUS') {
+    return forbidden({
+      message: 'Esta información pertenece a una organización. Elija cuál desea ver.',
+      nextAction: { label: 'Elegir organización', route: tenantSelectionRoute() },
+      ...(requestId === undefined ? {} : { requestId }),
+    });
+  }
 
   switch (body.code) {
     // --- S4 · validación o conflicto ---------------------------------------

@@ -86,7 +86,8 @@ describe('handlers de quirófanos (F4)', () => {
       expect(rooms.map((r) => r.careSpace.code)).toEqual(['QX-01', 'QX-02']);
       expect(rooms[0]!.prepMinutes).toBe(20);
       expect(rooms[0]!.cleanupMinutes).toBe(30);
-      expect(rooms[0]!.careSpace.path).toContain('Bloque quirúrgico');
+      // Forma de `OperatingRoomsReadUseCases.list`: la sala sin ruta ni estado.
+      expect(Object.keys(rooms[0]!.careSpace).sort()).toEqual(['code', 'id', 'name']);
     });
 
     it('una sede de otro tenant responde 404, igual que una inexistente', () => {
@@ -154,35 +155,40 @@ describe('handlers de quirófanos (F4)', () => {
       const propio = schedule(QUIROFANO_1, monday, 9, 0, 60, { surgicalSpecialtyConceptId: SPECIALTY['TRAUMATOLOGIA'] });
       expect(propio.status).toBe(201);
       const caso = call('GET', `/procedure-cases/${(propio.body as { id: string }).id}`).body as SurgicalCaseDetail;
-      expect(caso.case.block?.owner).toContain('Traumatología');
+      expect(caso.case.block?.label).toContain('Traumatología');
     });
 
     it('liberar un bloque con casos → 422 OR_BLOCK_HAS_CASES; con versión vieja → 412', () => {
       const lista = call('GET', `/sites/${SITE}/or-blocks`, { query: { from: fecha(monday, 0).toISOString(), to: fecha(monday, 23).toISOString(), operatingRoomId: QUIROFANO_1 } }).body as OrBlock[];
       const bloque = lista[0]!;
       expect(bloque.cases.length).toBeGreaterThan(0);
+      // `blockView` + uso: el dueño como ids con el rótulo de la API y los casos como ids.
+      expect(bloque.owner).toEqual({ kind: 'SERVICE', clinicalUnitId: null, specialtyConceptId: SPECIALTY['TRAUMATOLOGIA'], surgeonProfileId: null, label: 'Traumatología y Ortopedia' });
+      expect(bloque.cases.every((c) => typeof c === 'string')).toBe(true);
       expect(reason(call('POST', `/or-blocks/${bloque.id}/release`, { body: { reasonText: 'x' }, ifMatch: bloque.rowVersion }))).toBe('OR_BLOCK_HAS_CASES');
       expect(call('POST', `/or-blocks/${bloque.id}/release`, { body: { reasonText: 'x' }, ifMatch: bloque.rowVersion + 5 }).status).toBe(412);
     });
 
     it('alta: superpuesto → 409 OR_BLOCK_OVERLAP; en el pasado → 422; sin dueño → 422; facturación → 403', () => {
-      const base = { operatingRoomId: QUIROFANO_1, ownerKind: 'SERVICE', specialtyCode: 'UROLOGIA', startsAt: fecha(monday, 9).toISOString(), endsAt: fecha(monday, 11).toISOString() };
+      const base = { operatingRoomId: QUIROFANO_1, ownerKind: 'SERVICE', specialtyConceptId: SPECIALTY['UROLOGIA'], startsAt: fecha(monday, 9).toISOString(), endsAt: fecha(monday, 11).toISOString() };
       expect(reason(call('POST', `/sites/${SITE}/or-blocks`, { body: base }))).toBe('OR_BLOCK_OVERLAP');
       expect(reason(call('POST', `/sites/${SITE}/or-blocks`, { body: { ...base, startsAt: fecha(-3, 9).toISOString(), endsAt: fecha(-3, 11).toISOString() } }))).toBe('OR_BLOCK_IN_PAST');
-      expect(reason(call('POST', `/sites/${SITE}/or-blocks`, { body: { ...base, specialtyCode: undefined } }))).toBe('OR_BLOCK_OWNER_REQUIRED');
+      expect(reason(call('POST', `/sites/${SITE}/or-blocks`, { body: { ...base, specialtyConceptId: undefined } }))).toBe('OR_BLOCK_OWNER_REQUIRED');
       expect(call('POST', `/sites/${SITE}/or-blocks`, { body: base, user: facturacion }).status).toBe(403);
     });
 
     it('una serie semanal crea una instancia por día elegido, y se libera con motivo', () => {
       const sunday = nextWeekday(0, 3);
       const r = call('POST', `/sites/${SITE}/or-blocks`, {
-        body: { operatingRoomId: QUIROFANO_2, ownerKind: 'SERVICE', specialtyCode: 'UROLOGIA', startsAt: fecha(sunday, 8).toISOString(), endsAt: fecha(sunday, 12).toISOString(), recurrence: { weekdays: [7], until: fecha(sunday + 14, 8).toISOString().slice(0, 10) } },
+        body: { operatingRoomId: QUIROFANO_2, ownerKind: 'SERVICE', specialtyConceptId: SPECIALTY['UROLOGIA'], startsAt: fecha(sunday, 8).toISOString(), endsAt: fecha(sunday, 12).toISOString(), recurrence: { weekdays: [7], until: fecha(sunday + 14, 8).toISOString().slice(0, 10) } },
       });
       expect(r.status).toBe(201);
       const created = (r.body as { seriesId: string; blocks: OrBlock[] }).blocks;
       expect(created.length).toBe(3);
       const released = call('POST', `/or-blocks/${created[2]!.id}/release`, { body: { reasonText: 'Vacaciones' }, ifMatch: 1 }).body as OrBlock;
       expect(released.status).toBe('ORB_RELEASED');
+      // La liberación devuelve `blockView`, sin uso ni casos.
+      expect('cases' in released).toBe(false);
       expect(released.releaseReason).toBe('Vacaciones');
       expect(released.releasedMinutes).toBe(240);
     });
@@ -224,8 +230,9 @@ describe('handlers de quirófanos (F4)', () => {
       expect(event('PATIENT_OUT_OF_ROOM').status).toBe(201);
 
       const detail = call('GET', `/procedure-cases/${id}`).body as SurgicalCaseDetail;
-      expect(detail.roomEvents.map((e) => e.eventCode)).toEqual(['PATIENT_IN_ROOM', 'ANESTHESIA_START', 'INCISION', 'CLOSURE', 'PATIENT_OUT_OF_ROOM']);
-      expect(detail.case.checklist?.signOut).not.toBeNull();
+      expect(detail.roomEvents!.map((e) => e.eventCode)).toEqual(['PATIENT_IN_ROOM', 'ANESTHESIA_START', 'INCISION', 'CLOSURE', 'PATIENT_OUT_OF_ROOM']);
+      // El check-list va en el detalle (`CaseOrViewBuilder.detail`), con la fecha por fase.
+      expect(detail.checklist?.signOut.completedAt).not.toBeNull();
     });
 
     it('un evento con hora futura → 422 OCCURRED_AT_IN_FUTURE', () => {
@@ -239,24 +246,26 @@ describe('handlers de quirófanos (F4)', () => {
   describe('utilización (§F4.5 criterio 6)', () => {
     const range = { from: fecha(-14).toISOString().slice(0, 10), to: fecha(0).toISOString().slice(0, 10) };
 
-    it('los totales salen de las filas con las fórmulas del contrato', () => {
+    it('por sala y en total, con las fórmulas de la API (asOf y totals del servidor)', () => {
       const u = call('GET', `/sites/${SITE}/or-utilization`, { query: range }).body as OrUtilization;
       expect(u.rooms.length).toBeGreaterThan(0);
-      const session = u.rooms.reduce((s, r) => s + r.sessionMinutes, 0);
-      const touch = u.rooms.reduce((s, r) => s + r.touchMinutes, 0);
-      expect(u.totals.roomUtilizationPct).toBe(Math.round((touch / session) * 1000) / 10);
-      for (const b of u.blocks) {
-        const denominador = b.allocatedMinutes - b.releasedMinutes;
-        expect(b.blockUtilizationPct).toBe(denominador <= 0 ? null : Math.round(((b.usedInBlockMinutes + b.turnoverInBlockMinutes) / denominador) * 1000) / 10);
+      expect(typeof u.asOf).toBe('string');
+      const session = u.rooms.reduce((a, r) => a + r.sessionMinutes, 0);
+      const touch = u.rooms.reduce((a, r) => a + r.touchMinutes, 0);
+      const available = u.rooms.reduce((a, r) => a + r.blocks.allocated - r.blocks.released, 0);
+      expect(u.totals).toEqual({ sessionMinutes: session, touchMinutes: touch, roomUtilizationPct: session > 0 ? (touch / session) * 100 : null, blockUtilizationPct: available > 0 ? (touch / available) * 100 : null });
+      for (const r of u.rooms) {
+        expect(Object.keys(r).sort()).toEqual(['blocks', 'code', 'operatingRoomId', 'roomUtilizationPct', 'sessionMinutes', 'touchMinutes', 'turnoverMinutesP50']);
+        expect(r.roomUtilizationPct).toBe(r.sessionMinutes > 0 ? (r.touchMinutes / r.sessionMinutes) * 100 : null);
+        const denominador = r.blocks.allocated - r.blocks.released;
+        expect(r.blocks.blockUtilizationPct).toBe(denominador > 0 ? (r.touchMinutes / denominador) * 100 : null);
       }
-      // El recambio del día con dos casos en la misma sala existe.
-      expect(u.totals.turnoverMinutes).not.toBeNull();
+      // Hay salas con dos casos en el período: el recambio existe.
+      expect(u.rooms.some((r) => r.turnoverMinutesP50 !== null)).toBe(true);
     });
 
-    it('el bloque liberado entero no tiene utilización (sin denominador)', () => {
-      const u = call('GET', `/sites/${SITE}/or-utilization`, { query: range }).body as OrUtilization;
-      const liberado = u.blocks.find((b) => b.releasedMinutes === b.allocatedMinutes && b.allocatedMinutes > 0);
-      expect(liberado?.blockUtilizationPct ?? null).toBeNull();
+    it('una sala de otra sede o inexistente → 404', () => {
+      expect(call('GET', `/sites/${SITE}/or-utilization`, { query: { ...range, operatingRoomId: 'no-existe' } }).status).toBe(404);
     });
 
     it('más de 366 días → 422 INDICATOR_RANGE_TOO_LONG', () => {

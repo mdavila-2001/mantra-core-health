@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of, type Observable } from 'rxjs';
 
 import { InfrastructureClient } from '../../../../../core/data-access/infrastructure/infrastructure.client';
 import type { CareSpaceDetail, CareSpaceNode } from '../../../../../core/data-access/infrastructure/infrastructure.types';
@@ -97,7 +97,7 @@ export class SpaceStockTab {
     });
   }
 
-  private run(call: ReturnType<InventoryLocationsClient['relocate']>, done: () => void): void {
+  private run(call: Observable<unknown>, done: () => void): void {
     this.saving.set(true);
     this.failure.set(null);
     call.subscribe({

@@ -16,6 +16,10 @@ import type { HttpInterceptorFn } from '@angular/common/http';
     `development,demo` (los que usan los e2e con el simulador) NO sustituyen nada y siguen con el interceptor completo.
 
     Debe exportar lo mismo que usa `app.config.ts`: `mockBackendInterceptor`. Lo fija `mock-backend.interceptor.disabled.spec.ts`.
+
+    Desde O3-4 es la segunda barrera: `app.config.ts` ya no importa este interceptor, sino
+    `core/simulator/simulator.ts`, cuya versión neutra (la de las configuraciones reales) no trae ninguno. La sustitución
+    de acá queda por si algo del simulador vuelve a alcanzarlo; `scripts/check-no-mock-in-dist.mjs` lo mide en `dist/`.
    ========================================================================== */
 
 /** Deja pasar toda petición a la red: en un build real no hay respuesta simulada que dar. */

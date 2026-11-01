@@ -1,3 +1,4 @@
+import { CATALOG_EDITOR_LOADER, CATALOG_EDITOR_PATH } from './features/admin/catalog-editor/catalog-editor.routes';
 import { inject, type Type } from '@angular/core';
 import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { Dashboard } from './features/dashboard/dashboard';
@@ -34,8 +35,13 @@ import {
 } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
+import { simulatorRoutes } from './simulator-routes';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import { mfaEnrollmentGuard } from './core/auth/mfa-enrollment.guard';
+import {
+  PANTALLA_NO_DISPONIBLE_ROUTE,
+  visibilityChildGuard,
+} from './core/visibility/visibility.guard';
 import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from './core/navigation/navigation.map';
 import {
   RUTAS_HEREDADAS_CON_PARAMETRO,
@@ -43,11 +49,9 @@ import {
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
-import {
-  ROLES_ADMINISTRACION,
-  ROLES_REPORTERIA,
-} from './features/reporting/reporting-access';
+import { mockRoutes } from './features/reporting/reporting-mock.routes';
 import { RUTAS_DE_GOBIERNO } from './app.routes.governance';
+import { cargarSistema } from './features/observability/observability.routes';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
@@ -233,8 +237,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
   // vivían bajo `administration/*`; esas direcciones redirigen (ver
   // `SECCIONES_REDIRIGIDAS`).
-  'superadmin/observability': () =>
-    import('./features/admin/observability/observability').then((m) => m.Observability),
+  'superadmin/observability': cargarSistema,
   'superadmin/measurement': () =>
     import('./features/admin/measurement/measurement').then((m) => m.Measurement),
   'superadmin/data-catalog': () =>
@@ -250,6 +253,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   'superadmin/instances': () =>
     import('./features/admin/instances/instances').then((m) => m.Instances),
+  [CATALOG_EDITOR_PATH]: CATALOG_EDITOR_LOADER,
   'superadmin/bulk-imports': () =>
     import('./features/admin/bulk-imports/bulk-imports').then((m) => m.BulkImports),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
@@ -1835,39 +1839,9 @@ export const routes: Routes = [
   // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
   // es de otra clase en vez de redirigir.
   ...rutasDeFichasPublicas(),
-  // Los dos portales a los que entra quien administra y consulta reportes
-  // (30/10/2026). Van **fuera** del armazón de administración, cada uno con su
-  // propio marco, y delante del comodín: ninguno cuelga de una sección del
-  // registro, así que no hay menú que los filtre.
-  //
-  // Los dos llevan `authGuard` y `seccionRolesGuard` con los roles escritos en
-  // `data`: ocultar una tarjeta del selector no es seguridad, y quien escriba la
-  // dirección a mano se topa con este guard primero y con la API después. El
-  // guard mira `ROLES_ROUTE_DATA` antes que cualquier sección, con la misma
-  // regla del comodín `SUPERADMIN`.
-  {
-    path: 'portal-selector',
-    title: `${APP_TITLE} - Elegir portal`,
-    canActivate: [authGuard, seccionRolesGuard],
-    // La unión de los dos: el selector decide por sí mismo si hay algo que
-    // elegir, y a quien solo tiene un acceso lo redirige directo.
-    data: { [ROLES_ROUTE_DATA]: [...ROLES_ADMINISTRACION, ...ROLES_REPORTERIA] },
-    loadComponent: () =>
-      import('./features/portal-selector/portal-selector')
-        .then((m) => m.PortalSelector)
-        .catch(() => chunkFallido()),
-  },
-  {
-    path: 'reports',
-    canActivate: [authGuard, seccionRolesGuard],
-    data: { [ROLES_ROUTE_DATA]: ROLES_REPORTERIA },
-    loadChildren: () =>
-      import('./features/reporting/reporting.routes')
-        .then((m) => m.REPORTING_ROUTES)
-        // Un fragmento que ya no existe tras un despliegue: la misma pantalla de
-        // recuperación que el resto, en vez de una navegación muerta.
-        .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
-  },
+  // La maqueta de reportería (`/portal-selector`, `/reports`) detrás de `environment.reportingMockEnabled`: apagada,
+  // redirige al panel de observabilidad y a la raíz (ver `reporting-mock.routes.ts`).
+  ...mockRoutes(chunkFallido, environment.reportingMockEnabled),
   insightsPortalRoute(chunkFallido),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
   // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos
@@ -1890,10 +1864,19 @@ export const routes: Routes = [
     canActivate: [authGuard],
     // Quien entró sin el segundo paso que su organización exige no usa el resto de
     // la aplicación hasta darlo de alta: la API lo deja entrar y lo cumple el cliente.
-    canActivateChild: [mfaEnrollmentGuard],
+    // Después, las reglas de visibilidad: lo que el menú ya no ofrece tampoco se abre por enlace. Presentación, no
+    // seguridad —la API sigue autorizando— y falla abierto si las reglas no se pudieron leer.
+    canActivateChild: [mfaEnrollmentGuard, visibilityChildGuard],
     children: [
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      {
+        // A donde la guarda de visibilidad manda a quien abre una pantalla que se le oculta (S3 con próxima acción).
+        path: PANTALLA_NO_DISPONIBLE_ROUTE.slice(1),
+        title: `${APP_TITLE} - No disponible para su perfil`,
+        loadComponent: () =>
+          import('./features/visibility-unavailable/visibility-unavailable').then((m) => m.VisibilityUnavailable),
+      },
       {
         // El muro profesional, **sin entrada de menú**.
         //
@@ -1989,7 +1972,7 @@ export const routes: Routes = [
         import('./features/interventions/schedule-case/schedule-case').then((m) => m.ScheduleCase),
       ),
       pantallaDeOperacion('interventions', 'operating-rooms', 'Agenda de quirófanos', () =>
-        import('./features/interventions/or-agenda/or-agenda').then((m) => m.OrAgenda),
+        import('./features/interventions/or-schedule/or-schedule').then((m) => m.OrSchedule),
       ),
       pantallaDeOperacion('interventions', 'blocks', 'Bloques de quirófano', () =>
         import('./features/interventions/or-blocks/or-blocks').then((m) => m.OrBlocks),
@@ -2382,40 +2365,7 @@ export const routes: Routes = [
         .catch(() => chunkFallido()),
     title: 'AloVida - Vitrina de Diseño',
   },
-  {
-    /* El stock de componentes: la lista de todo lo que existe, sacada del
-       código, con cada pieza montada con datos de prueba.
-
-       `canMatch` y no `canActivate`: con `canMatch` la ruta **no existe** allí
-       donde no hay backend simulado —o sea, en cualquier rama que no sea
-       `mockup`—, así que cae en el comodín y da 404 como cualquier dirección
-       inventada. Con `canActivate` existiría y sólo estaría prohibida, que es
-       otra cosa: anuncia que hay algo detrás.
-
-       Va fuera del armazón, como la vitrina: no pide sesión, porque montar un
-       componente suelto no la necesita y pedirla obligaría a entrar sólo para
-       mirar un botón. */
-    path: 'design-system/stock',
-    canMatch: [() => environment.mockBackend],
-    loadComponent: () =>
-      import('./features/component-stock/component-stock')
-        .then((m) => m.ComponentStock)
-        .catch(() => chunkFallido()),
-    title: 'AloVida - Stock de componentes',
-  },
-  {
-    /* Comodín y no `:clave`: la clave de un componente es su ruta de archivo
-       —`shared/components/atoms/badge/badge`— y lleva barras, que un parámetro
-       de un solo segmento no captura. Con `**` la URL sigue siendo legible y
-       se puede copiar y pegar. */
-    path: 'design-system/stock/**',
-    canMatch: [() => environment.mockBackend],
-    loadComponent: () =>
-      import('./features/component-stock/component-stock')
-        .then((m) => m.ComponentStock)
-        .catch(() => chunkFallido()),
-    title: 'AloVida - Stock de componentes',
-  },
+  ...simulatorRoutes(chunkFallido),
   {
     // Verificación pública del certificado de portabilidad de póliza y
     // siniestralidad (subtarea 3.3): a donde apunta el código QR del PDF.

@@ -25,13 +25,14 @@ import { AuthService } from './core/auth/auth.service';
 import { SESSION_CLEANERS } from './core/auth/session-cleanup';
 import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
+import { UiVisibilityService } from './core/visibility/ui-visibility.service';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
 import { AccessChallengeService } from './features/access-governance/access-challenge/access-challenge.service';
 import { provideDependentLinkNotificationActions } from './features/account/dependents/dependent-link-notification-actions';
 import { provideUxAnalytics } from './core/observability/ux/ux-analytics.providers';
-import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
+import { simulatorInterceptors } from './core/simulator/simulator';
 import { environment } from '../environments/environment';
 import { ROUTE_VIEW_TRANSITION_OPTIONS } from './shared/motion/route-transition';
 
@@ -111,9 +112,12 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       // El simulado va último: la petición ya lleva trazas, tiempo de espera y
       // credenciales cuando llega a él, igual que si fuera la red. Con la
-      // configuración real (`production-api`, `real-api`, `e2e-real`) no se
-      // registra: la petición sale a la red desde el interceptor anterior, sin
-      // pasar por un interceptor que existe sólo para la maqueta (H1.S2.M2).
+      // configuración real (`production`, `production-api`, `real-api`,
+      // `e2e-real`) no se registra: la petición sale a la red desde el
+      // interceptor anterior, sin pasar por un interceptor que existe sólo para
+      // la maqueta (H1.S2.M2). En esas compilaciones `simulatorInterceptors`
+      // viene vacío de la versión neutra de `core/simulator/simulator.ts`, así
+      // que el simulador ni siquiera entra al paquete (O3-4).
       withInterceptors([
         apiFailureLogInterceptor,
         tracingInterceptor,
@@ -123,7 +127,7 @@ export const appConfig: ApplicationConfig = {
         // `withAccessChallenge()`. Va **dentro** de `authInterceptor` (el reintento ya lleva la sesión) y **fuera** del
         // simulado, para que vea también los 403/422 del mock.
         accessChallengeInterceptor,
-        ...(environment.mockBackend ? [mockBackendInterceptor] : []),
+        ...(environment.mockBackend ? simulatorInterceptors : []),
       ]),
     ),
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
@@ -154,6 +158,19 @@ export const appConfig: ApplicationConfig = {
             .then((m) => m.olvidarLoSensibleDelNavegador(injector))
             // Sin red o con un despliegue nuevo el chunk puede no cargar: la sesión ya se cerró, y un rechazo
             // sin capturar solo ensuciaría la consola de quien se va.
+            .catch(() => undefined);
+      },
+    },
+    // Las sedes y el personal que leyeron las pantallas de quirófano y
+    // facturación de espacios (F4/F5) no pasan a la cuenta siguiente.
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () =>
+          void import('./core/data-access/operating-rooms/site-context.store')
+            .then((m) => injector.get(m.SiteContextStore).clear())
             .catch(() => undefined);
       },
     },
@@ -198,6 +215,12 @@ export const appConfig: ApplicationConfig = {
     // pantalla quedaba en pie sin token y ninguna acción funcionaba.
     provideAppInitializer(() => {
       inject(SessionEndedRedirect);
+    }),
+    // Las reglas de visibilidad de la interfaz (`GET /me/ui-visibility`) siguen a la sesión: se piden al abrirla y se
+    // vuelven a pedir si cambia la persona o la organización. Presentación, no seguridad: la API autoriza igual. No
+    // bloquea el arranque —es un seguimiento reactivo— y, si el pedido falla, no se oculta nada.
+    provideAppInitializer(() => {
+      inject(UiVisibilityService).start();
     }),
   ],
 };

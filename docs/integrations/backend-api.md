@@ -1,6 +1,6 @@
 # API de backend
 
-Las 784 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 785 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -1319,6 +1319,58 @@ Entradas sueltas que amplían clientes ya documentados más arriba.
 
 ---
 
+### Infraestructura hospitalaria F4/F5 (`infra-f4f5-web`) — 33 operaciones
+
+Formas verificadas contra la API (`origin/claude/trusting-hawking-q3p12v`,
+`periop-or.controller.ts`, `billing-space-charges.controller.ts`,
+`accounting-space.controller.ts`, `space-assets.controller.ts`,
+`diagnostic-equipment.controller.ts`) y fijadas por las specs
+`*.contract.spec.ts` de cada cliente. Lo que la API todavía no tiene se marca
+**Pedida**: la web la trata como opcional o la deja detrás de una bandera.
+
+| Método | Ruta | Cliente | Estado en la API |
+|---|---|---|---|
+| `GET` | `/practice/infrastructure-access/me` | `SiteAccessClient` | Pedida (W-F2F3); sin ella, 404 → consola de la organización |
+| `GET` | `/sites/:siteId/operating-rooms` | `OperatingRoomsClient` | Sí |
+| `GET` | `/sites/:siteId/or-blocks` | `OperatingRoomsClient` | Sí (`owner` sin rótulo, `cases` como ids) |
+| `POST` | `/sites/:siteId/or-blocks` | `OperatingRoomsClient` | Sí (`specialtyConceptId`) |
+| `POST` | `/or-blocks/:id/release` | `OperatingRoomsClient` | Sí (`If-Match` pedido; hoy se ignora) |
+| `POST` | `/or-blocks/:id/cancel` | `OperatingRoomsClient` | Sí (ídem) |
+| `GET` | `/sites/:siteId/or-utilization` | `OperatingRoomsClient` | Sí (`rooms[]`; `asOf`/`totals` pedidos, el cliente suma) |
+| `POST` | `/procedure-cases` | `ProceduresClient` | Sí |
+| `POST` | `/procedure-cases/:caseId/safety-checklists` | `ProceduresClient` | Sí (201/200, idempotente) |
+| `GET` | `/procedure-cases/:caseId/safety-checklists/:checklistId` | `ProceduresClient` | Sí (`response.status` es concepto) |
+| `POST` | `/procedure-cases/:caseId/safety-checklists/:checklistId/responses` | `ProceduresClient` | Sí |
+| `POST` | `/procedure-cases/:caseId/room-events` | `ProceduresClient` | Sí (`cleaningOrderId` en la salida) |
+| `GET` | `/sites/:siteId/diagnostic-equipment` | `EquipmentLocationClient` | Sí |
+| `GET` | `/care-spaces/:careSpaceId/equipment` | `EquipmentLocationClient` | Sí |
+| `GET` | `/diagnostic-equipment/:id` | `EquipmentLocationClient` | Sí (F5a, `e46739aaa`) |
+| `PATCH` | `/diagnostic-equipment/:id` | `EquipmentLocationClient` | Sí (respuesta plana: la ficha relee) |
+| `POST` | `/diagnostic-equipment/:id/resource` | `EquipmentLocationClient` | Sí (`{equipmentId, resourceId}`) |
+| `GET` | `/diagnostic-equipment/:id/mwl-station` | `EquipmentLocationClient` | Sí |
+| `GET` | `/care-spaces/:careSpaceId/stock` | `InventoryLocationsClient` | Sí |
+| `POST` | `/pharmacy/:pharmacySiteId/inventory-locations` | `InventoryLocationsClient` | Sí (`{id}`) |
+| `POST` | `/pharmacy/inventory-locations/:id/relocate` | `InventoryLocationsClient` | Sí (`{id, careSpaceId, previousCareSpaceId}`) |
+| `GET` | `/sites/:siteId/sample-collection-points` | `SampleCollectionClient` | Pedida (A-F5b); detrás de `collectionPoints` |
+| `GET` | `/billing/space-tariffs` | `SpaceBillingClient` | Sí (`tariffView`) |
+| `POST` | `/billing/space-tariffs` | `SpaceBillingClient` | Sí (`tariffKind`, `currencyConceptId`) |
+| `POST` | `/billing/space-tariffs/:id/close` | `SpaceBillingClient` | Sí |
+| `GET` | `/billing/encounters/:encounterId/pending-charges` | `SpaceBillingClient` | Sí (arreglo de `chargeView`) |
+| `POST` | `/billing/encounters/:encounterId/bed-day-charges/run` | `SpaceBillingClient` | Sí (`{created[], skipped}`) |
+| `POST` | `/billing/charge-captures/:id/void` | `SpaceBillingClient` | Sí |
+| `GET` | `/sites/:siteId/inpatients` | `SpaceBillingClient` | Sí (F3; de ahí se elige el encuentro) |
+| `GET` | `/accounting/infrastructure-items` | `InfrastructureItemsClient` | Sí |
+| `PATCH` | `/accounting/infrastructure-items/:id` | `InfrastructureItemsClient` | Sí (`If-Match`) |
+| `GET` | `/accounting/cost-centers` | `InfrastructureItemsClient` | Sí |
+| `POST` | `/accounting/cost-centers/:id/unit-link` | `InfrastructureItemsClient` | Sí |
+
+Las órdenes de recambio usan `POST /cleaning-orders/:id/{start,finish,inspect}`
+de F2 (`If-Match` obligatorio). Claves pedidas y **no enviadas** mientras su
+bandera esté apagada (`INFRA_INTEGRATION_FLAGS`): `suggestedCareSpaceId` en
+`POST /clinical/service-requests`, `collectionCareSpaceId` en
+`GET /diagnostics/work-orders` y `careSpaceId` en
+`POST /scheduling/resources/:id/templates`.
+
 ## Modelo de error
 
 Copiado de `src/common/errors/error-codes.ts` del backend, que los declara parte
@@ -1803,6 +1855,20 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `POST` | `/loyalty/me/points/redeem` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/marketing/insights/campaign-facts` | [`InsightsClient`](../../src/app/core/data-access/insights/insights.client.ts) | Fuente frontend; no certifica API real. Hechos diarios de campañas por canal (ventana ≤ 92 días). |
 | `GET` | `/marketing/insights/catalog` | [`InsightsClient`](../../src/app/core/data-access/insights/insights.client.ts) | Fuente frontend; no certifica API real. Campañas, canales e hitos. |
+| `GET` | `/marketing/insights/alert-workflow` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Estado y responsable guardados de las alertas. |
+| `PUT` | `/marketing/insights/alert-workflow/:fingerprint` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Cambia estado o responsable (If-Match). |
+| `GET` | `/marketing/insights/alert-rules` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Reglas de alerta. |
+| `PATCH` | `/marketing/insights/alert-rules/:code` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Umbral o activación de una regla (If-Match; solo roles de plataforma). |
+| `GET` | `/marketing/insights/notification-preferences` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Preferencias de aviso. |
+| `PUT` | `/marketing/insights/notification-preferences` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Guarda preferencias de aviso (If-Match). |
+| `GET` | `/marketing/insights/user-preferences` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Densidad y tema del usuario. |
+| `PUT` | `/marketing/insights/user-preferences` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Guarda densidad y tema (If-Match). |
+| `GET` | `/marketing/insights/saved-views` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Vistas guardadas del usuario. |
+| `PUT` | `/marketing/insights/saved-views/:id` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Crea o actualiza una vista (409 si el nombre se repite). |
+| `DELETE` | `/marketing/insights/saved-views/:id` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Elimina una vista. |
+| `GET` | `/marketing/insights/reports` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Historial de informes (máximo 12). |
+| `PUT` | `/marketing/insights/reports/:id` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Guarda un informe; el 13.º expulsa el más viejo. |
+| `DELETE` | `/marketing/insights/reports/:id` | [`InsightsWorkspaceClient`](../../src/app/core/data-access/insights/insights-workspace.client.ts) | Fuente frontend; no certifica API real. Elimina un informe. |
 | `GET` | `/patient-spending/me` | [`PatientSpendingClient`](../../src/app/core/data-access/patient-spending/patient-spending.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/patients/me/reviews` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/pharmacy/pharmacies/:id` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
@@ -1970,7 +2036,7 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 |---|---|---|---|
 | `GET` | `/admin/catalog/permission-drift` | `DataCatalogClient` | No |
 
-### `SupportAccessClient` — 35 operaciones
+### `SupportAccessClient` — 36 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -1978,6 +2044,7 @@ Las que el código llama y el catálogo de arriba aún no listaba; las leyó `sc
 | `POST` | `/community/conversations/:conversationId/assignment` | `SupportAccessClient` | No |
 | `POST` | `/community/conversations/:conversationId/internal-notes` | `SupportAccessClient` | No |
 | `GET` | `/me/practitioner/support-activity` | `SupportAccessClient` | No |
+| `POST` | `/me/practitioner/support-invitations` | `SupportAccessClient` | No |
 | `GET` | `/me/practitioner/support-team` | `SupportAccessClient` | No |
 | `POST` | `/me/support-access-requests` | `SupportAccessClient` | No |
 | `GET` | `/me/support-activity` | `SupportAccessClient` | No |

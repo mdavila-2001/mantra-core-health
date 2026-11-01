@@ -5,12 +5,13 @@
 </app-page-header>
 
 <app-card class="bed-day" padding="lg" data-testid="bed-day">
+  <app-site-switch class="bed-day__site" />
   <app-view-state-host [state]="stays()" (retry)="reload()">
     <div class="bed-day__bar">
-      <app-form-field label="Estancia" class="bed-day__stay">
-        <app-select [options]="stayOptions()" [value]="encounterId()" placeholder="Elija una estancia" ariaLabel="Estancia" data-testid="bed-day-stay" (valueChange)="chooseStay($event)" />
+      <app-form-field label="Internación" class="bed-day__stay">
+        <app-select [options]="stayOptions()" [value]="encounterId()" placeholder="Elija una internación" ariaLabel="Internación" data-testid="bed-day-stay" (valueChange)="chooseStay($event)" />
       </app-form-field>
-      @if (encounterId() && canRun()) {
+      @if (encounterId()) {
         <button app-button [isLoading]="running()" (clicked)="run()" data-testid="bed-day-run">Devengar hasta hoy</button>
       }
     </div>
@@ -28,25 +29,25 @@
     }
 
     @if (asOf(); as at) {
-      <p class="bed-day__muted" data-testid="bed-day-as-of">Datos de las {{ timeOf(at) }} · los cargos llegan con el cierre del censo.</p>
+      <p class="bed-day__muted" data-testid="bed-day-as-of">Datos de las {{ timeOf(at) }} · se muestran los cargos pendientes de revisión.</p>
     }
 
     <app-data-table [state]="charges()" [columns]="columns()" [trackBy]="byId" caption="Cargos de la estancia" data-testid="bed-day-table" (retry)="reload()" />
 
     @if (encounterId() && total() !== '0.00') {
-      <p class="bed-day__total" data-testid="bed-day-total">Total pendiente: {{ total() }} BOB</p>
+      <p class="bed-day__total" data-testid="bed-day-total">Total pendiente: {{ total() }}</p>
     }
   </app-view-state-host>
 </app-card>
 
 <ng-template #dateCell let-c>
   <span class="bed-day__strong">{{ c.serviceDate }}</span>
-  <span class="bed-day__muted">{{ c.sourceKind.display }} · {{ c.idempotencyKey }}</span>
+  <span class="bed-day__muted">Día-cama · {{ c.idempotencyKey }}</span>
 </ng-template>
 
 <ng-template #bedCell let-c>
-  <span class="bed-day__strong">{{ c.careSpace.code }} · {{ c.careSpace.name }}</span>
-  <span class="bed-day__muted">{{ c.bedCategory?.display ?? 'Sin categoría' }}</span>
+  <span class="bed-day__strong">{{ bedOf(c.careSpaceId) }}</span>
+  <span class="bed-day__muted">{{ categoryOf(c) }}</span>
 </ng-template>
 
 <ng-template #priceCell let-c>
@@ -54,12 +55,12 @@
 </ng-template>
 
 <ng-template #statusCell let-c>
-  <app-badge [variant]="c.status.code === 'CHG_VOIDED' ? 'error' : c.status.code === 'CHG_INVOICED' ? 'success' : 'warning'" size="sm">{{ c.status.display }}</app-badge>
-  <span class="bed-day__muted">{{ c.costCenter?.name ?? 'Sin centro de costo' }}</span>
+  <app-badge [variant]="statusOf(c).variant" size="sm">{{ statusOf(c).label }}</app-badge>
+  <span class="bed-day__muted">{{ costCenterOf(c) }}</span>
 </ng-template>
 
 <ng-template #actionsCell let-c>
-  @if (c.status.code === 'CHG_PENDING') {
+  @if (c.status === 'CHG_PENDING') {
     <button app-button variant="ghost" size="sm" (clicked)="voidCharge(c)">Anular</button>
   }
 </ng-template>

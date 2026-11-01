@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { INFRA_INTEGRATION_FLAGS } from '../../../core/data-access/infra-flags';
 import { buscarUsuario, TENANT_CLINICA, TENANT_HOSPITAL, type MockUser } from '../../../core/mock/mock-session';
 import { FullMockBackend } from '../../../../testing/full-mock-backend';
 import { Diagnostics } from '../../diagnostics/diagnostics';
@@ -17,9 +18,10 @@ describe('Integración F5b · F5f · pantallas', () => {
   let http: HttpTestingController;
   let backend: FullMockBackend;
 
-  async function setup(user: MockUser, tenant = TENANT_HOSPITAL): Promise<void> {
+  async function setup(user: MockUser, tenant = TENANT_HOSPITAL, collectionPoints = false): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        { provide: INFRA_INTEGRATION_FLAGS, useValue: { collectionPoints, consultingRoomTemplates: false } },
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([
@@ -47,13 +49,27 @@ describe('Integración F5b · F5f · pantallas', () => {
     }
   }
 
-  it('la cola del laboratorio suma «Punto de toma» y su filtro', async () => {
-    await setup(buscarUsuario('medica')!);
+  it('con la bandera de F5b encendida, la cola suma «Punto de toma» y su filtro', async () => {
+    await setup(buscarUsuario('medica')!, TENANT_HOSPITAL, true);
     await open('/diagnostics', Diagnostics);
     expect(root().textContent).toContain('Punto de toma');
     const points = Array.from(root().querySelectorAll('[data-testid=diagnostics-point]')).map((e) => e.textContent?.trim());
     expect(points.some((p) => p?.startsWith('LAB-TM'))).toBe(true);
     expect(root().querySelector('[data-testid=diagnostics-point-filter]')).not.toBeNull();
+  });
+
+  it('H6: con la bandera apagada (la API no acepta collectionCareSpaceId) no hay columna, ni filtro, ni clave', async () => {
+    await setup(buscarUsuario('medica')!);
+    const sent: string[] = [];
+    const original = backend.respondAll.bind(backend);
+    backend.respondAll = (h, cd) => {
+      for (const req of h.match(() => true)) sent.push(req.request.urlWithParams);
+      original(h, cd);
+    };
+    await open('/diagnostics', Diagnostics);
+    expect(root().textContent).not.toContain('Punto de toma');
+    expect(root().querySelector('[data-testid=diagnostics-point-filter]')).toBeNull();
+    expect(sent.some((u) => u.includes('collectionCareSpaceId'))).toBe(false);
   });
 
   it('activos y centros de costo: una tarjeta con dos pestañas y la ruta del espacio', async () => {

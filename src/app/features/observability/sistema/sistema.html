@@ -1,0 +1,29 @@
+<app-page-header
+  title="Observabilidad del sistema"
+  subtitle="Cómo está la API: tráfico, errores agrupados, latencia, consultas a la base de datos y lo que no se mide. Cada cifra la calcula el servidor sobre una ventana acotada."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card variant="outlined" padding="md" class="obs-pagina" data-testid="obs-card">
+  <app-obs-context-bar />
+  <app-tabs [selectedIndex]="indice()" (selectedIndexChange)="elegir($event)" data-testid="obs-tabs">
+    @if (se('resumen')) {
+      <app-tab [label]="etiqueta['resumen']"><app-obs-tab-resumen /></app-tab>
+    }
+    @if (se('errores')) {
+      <app-tab [label]="etiqueta['errores']"><app-obs-tab-errores /></app-tab>
+    }
+    @if (se('latencia')) {
+      <app-tab [label]="etiqueta['latencia']"><app-obs-tab-latencia /></app-tab>
+    }
+    @if (se('sql')) {
+      <app-tab [label]="etiqueta['sql']"><app-obs-tab-sql /></app-tab>
+    }
+    @if (se('endpoints')) {
+      <app-tab [label]="etiqueta['endpoints']"><app-obs-tab-endpoints /></app-tab>
+    }
+    @if (se('no-medido')) {
+      <app-tab [label]="etiqueta['no-medido']"><app-obs-tab-no-medido /></app-tab>
+    }
+  </app-tabs>
+</app-card>

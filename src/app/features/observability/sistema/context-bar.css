@@ -1,0 +1,10 @@
+:host { display: block; }
+.ctx { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); padding-bottom: var(--sp-4); }
+.ctx__controles { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); min-width: 0; }
+.ctx__frescura { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+.ctx__frescura strong { color: var(--st-warning-fg); }
+.ctx__punto { inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--r-full); background: var(--text-muted); }
+.ctx__frescura[data-estado='al-dia'] .ctx__punto { background: var(--st-success-fg); }
+.ctx__frescura[data-estado='atrasado'] .ctx__punto { background: var(--st-warning-fg); }
+.ctx__ayuda { flex-basis: 100%; margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+.ctx__alerta { flex-basis: 100%; margin: 0; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); background: var(--st-warning-bg); color: var(--st-warning-fg); border: 1px solid var(--st-warning-bd); font-size: var(--fs-caption); }

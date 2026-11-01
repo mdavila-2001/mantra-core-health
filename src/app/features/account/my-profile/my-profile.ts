@@ -1,9 +1,19 @@
+import { OwnPhotoStore } from '../../../core/data-access/profiles/own-photo.store';
+import { personInitials } from '../../../shared/text/initials';
 import { PatientCampaignsWidget } from '../../insurance/patient-campaigns/patient-campaigns-widget';
 import { InsurancePortabilityCard } from './insurance-portability-card/insurance-portability-card';
 import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
@@ -152,6 +162,9 @@ export class MyProfile {
   private readonly terminology = inject(TerminologyClient);
   private readonly identity = inject(IdentityClient);
   private readonly files = inject(FilesClient);
+  private readonly fotoPropia = inject(OwnPhotoStore);
+  private readonly entradaDeFoto = viewChild<ElementRef<HTMLInputElement>>('dropInput1');
+  protected readonly personInitials = personInitials;
   // Declara que esta pantalla necesita los estados de caso resueltos contra
   // terminología: al inyectarlo se resuelven, y `toCaseStatusPresentation` los
   // encuentra. Sin esto los sellos se verían en neutro.
@@ -520,7 +533,10 @@ export class MyProfile {
           this.files
             .imageDataUrl(p.photoFileId)
             .pipe(catchError(() => of<string | null>(null)))
-            .subscribe((url) => this.fotoUrl.set(url));
+            .subscribe((url) => {
+              this.fotoUrl.set(url);
+              this.fotoPropia.set(url);
+            });
         }
         const uuids = [
           p.issuerAdministrativeAreaConceptId,
@@ -655,6 +671,11 @@ export class MyProfile {
    * paridad con el perfil profesional; el cliente ya tiene el método
    * (`removeOwnPatientPhoto`) para cuando haga falta.
    */
+  /** El botón «Agregar foto» abre el mismo selector que el retrato. */
+  protected abrirSelectorDeFoto(): void {
+    this.entradaDeFoto()?.nativeElement.click();
+  }
+
   protected alElegirFoto(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
     const archivo = entrada.files?.[0];
@@ -682,6 +703,7 @@ export class MyProfile {
         next: (url) => {
           this.subiendoFoto.set(false);
           this.fotoUrl.set(url);
+          this.fotoPropia.set(url);
         },
         error: (error: unknown) => {
           this.subiendoFoto.set(false);

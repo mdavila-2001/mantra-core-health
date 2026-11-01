@@ -220,4 +220,55 @@ describe('ChartPanel · menú Más', () => {
       expect((withCandles.nativeElement as HTMLElement).querySelector('[data-testid="chart-no-candles"]')).toBeNull();
     });
   });
+
+  describe('modo plano, recarga y contrato de color', () => {
+    it('plano: la clase que quita borde, sombra y radio para vivir dentro de la tarjeta con pestañas', async () => {
+      const fixture = TestBed.createComponent(ChartPanel);
+      fixture.componentRef.setInput('spec', SPEC);
+      fixture.componentRef.setInput('plano', true);
+      await fixture.whenStable();
+      expect((fixture.nativeElement as HTMLElement).querySelector('section.gp')?.classList.contains('gp--plano')).toBe(true);
+    });
+
+    it('refrescando: conserva el dibujo y avisa con aria-busy en vez de poner un esqueleto', async () => {
+      const fixture = TestBed.createComponent(ChartPanel);
+      fixture.componentRef.setInput('spec', SPEC);
+      fixture.componentRef.setInput('refrescando', true);
+      await fixture.whenStable();
+      const sec = (fixture.nativeElement as HTMLElement).querySelector('section.gp');
+      expect(sec?.getAttribute('aria-busy')).toBe('true');
+      expect(sec?.classList.contains('gp--refrescando')).toBe(true);
+    });
+
+    it('paleta de estado con una serie sin rol: el contrato lo rechaza y no dibuja', async () => {
+      const fixture = TestBed.createComponent(ChartPanel);
+      fixture.componentRef.setInput('spec', {
+        ...SPEC,
+        datos: { tipo: 'cartesiano', categorias: ['A'], paleta: 'estado', series: [{ nombre: 'S', valores: [1], forma: 'barra' }] },
+      });
+      await fixture.whenStable();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('[data-testid="chart-contract-violated"]')?.textContent).toContain('falta el rol de S');
+    });
+
+    it('un rol fuera de la paleta de estado tampoco se dibuja (no se mezclan familias de color)', async () => {
+      const fixture = TestBed.createComponent(ChartPanel);
+      fixture.componentRef.setInput('spec', {
+        ...SPEC,
+        datos: { tipo: 'cartesiano', categorias: ['A'], series: [{ nombre: 'S', valores: [1], forma: 'barra', rol: 'error' }] },
+      });
+      await fixture.whenStable();
+      expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="chart-contract-violated"]')).not.toBeNull();
+    });
+
+    it('histograma con los bordes mal contados no se dibuja', async () => {
+      const fixture = TestBed.createComponent(ChartPanel);
+      fixture.componentRef.setInput('spec', {
+        ...SPEC,
+        datos: { tipo: 'histograma', bordes: [0, 5], conteos: [1, 2], unidadBorde: { tipo: 'duracion' }, nombreValor: 'N' },
+      });
+      await fixture.whenStable();
+      expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="chart-contract-violated"]')?.textContent).toContain('un borde más');
+    });
+  });
 });

@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   untracked,
   viewChild,
@@ -23,12 +24,14 @@ import type {
   IntegrationConnection,
   SyncBatch,
   SyncResult,
+  SyncSiteSummary,
 } from '../../../../core/data-access/pharmacy/pharmacy-integration.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 
 import { integrationErrorMessage } from '../integration-error-message';
+import { syncSkipMessage } from './sync-skip-message';
 
 /** Cuántos lotes se muestran: los últimos. */
 const BATCH_LIMIT = 5;
@@ -40,8 +43,12 @@ const BATCH_LIMIT = 5;
  * - El botón no deja salir dos sincronizaciones: queda deshabilitado mientras
  *   una viaja, y también si la conexión no puede sincronizar (inactiva, sin
  *   consulta de stock o sin el sistema configurado en la API).
- * - El resumen es el de la respuesta: recibidos, vinculados, aplicados y los
- *   códigos sin vínculo con su nombre. La lista de lotes se relee después.
+ * - El resumen es el de la respuesta, en líneas (un código en una sede):
+ *   recibidas = vinculadas + sin vínculo, una fila por sede, las líneas que no
+ *   se aplicaron con su motivo, los códigos que el sistema dejó de mandar y
+ *   los códigos sin vínculo único. Un código sin vínculo ofrece vincularlo
+ *   ({@link linkRequested}); uno ambiguo manda a deshacer los que sobran. La
+ *   lista de lotes se relee después.
  * - Un 422 o un 502 se dicen en castellano y no dejan un resumen viejo a la
  *   vista: no hay datos a medias.
  */
@@ -55,6 +62,9 @@ const BATCH_LIMIT = 5;
 export class IntegrationSync {
   readonly pharmacyId = input.required<string>();
   readonly connection = input.required<IntegrationConnection>();
+
+  /** «Vincular» sobre un código sin vínculo: lo atiende «Productos vinculados». */
+  readonly linkRequested = output<string>();
 
   private readonly integration = inject(PharmacyIntegrationClient);
 
@@ -71,6 +81,48 @@ export class IntegrationSync {
     const connection = this.connection();
     return connection.status === 'ACTIVE' && connection.supportsStockQuery && connection.providerConfigured;
   });
+
+  /** Líneas sin vínculo único; una API anterior a FAR-C8 no las manda y se deducen. */
+  protected readonly unmappedLines = computed(() => {
+    const result = this.result();
+    return result === null ? 0 : (result.unmappedLines ?? Math.max(0, result.received - result.mapped));
+  });
+
+  protected readonly sites = computed<ViewState<readonly SyncSiteSummary[]>>(() =>
+    ready(this.result()?.sites ?? []),
+  );
+  protected readonly hasSites = computed(() => (this.result()?.sites ?? []).length > 0);
+  protected readonly skipped = computed(() => this.result()?.skipped ?? []);
+  protected readonly notSent = computed(() => this.result()?.notSent ?? []);
+  protected readonly ambiguousCount = computed(
+    () => (this.result()?.unmapped ?? []).filter((item) => item.reason === 'AMBIGUOUS_MAPPING').length,
+  );
+
+  /** El nombre de cada sede de la corrida, para las listas que sólo traen el código. */
+  private readonly siteNames = computed(
+    () => new Map((this.result()?.sites ?? []).map((site) => [site.siteId, site.siteName])),
+  );
+
+  protected readonly skipMessage = syncSkipMessage;
+
+  protected siteLabel(line: { readonly siteId: string; readonly siteCode: string }): string {
+    return this.siteNames().get(line.siteId) ?? line.siteCode;
+  }
+
+  protected readonly siteRowId = (site: SyncSiteSummary): string => site.siteId;
+  protected readonly siteRowLabel = (site: SyncSiteSummary): string => site.siteName;
+
+  private readonly siteCell = viewChild.required<TemplateRef<{ $implicit: SyncSiteSummary }>>('siteCell');
+
+  protected readonly siteColumns = computed<readonly ColumnDef<SyncSiteSummary>[]>(() => [
+    { key: 'siteName', header: 'Sede', priority: 1, cell: this.siteCell() },
+    { key: 'received', header: 'Recibidas', priority: 1, align: 'end' },
+    { key: 'mapped', header: 'Vinculadas', priority: 2, align: 'end' },
+    { key: 'unmapped', header: 'Sin vínculo', priority: 2, align: 'end' },
+    { key: 'applied', header: 'Aplicadas', priority: 1, align: 'end' },
+    { key: 'unchanged', header: 'Sin cambios', priority: 2, align: 'end' },
+    { key: 'skipped', header: 'No aplicadas', priority: 2, align: 'end' },
+  ]);
 
   private readonly dateCell = viewChild.required<TemplateRef<{ $implicit: SyncBatch }>>('dateCell');
   private readonly statusCell = viewChild.required<TemplateRef<{ $implicit: SyncBatch }>>('statusCell');

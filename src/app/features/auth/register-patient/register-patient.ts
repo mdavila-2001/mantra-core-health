@@ -105,6 +105,8 @@ import { OnboardingDraftBanner } from '../../../shared/components/molecules/onbo
 import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
 import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -576,7 +578,7 @@ interface BorradorLocal {
 
 @Component({
   selector: 'app-register-patient',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     RouterLink,
     AppButton,
     NavIcon,
@@ -611,6 +613,7 @@ export class RegisterPatient {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
   private readonly draftService = inject(OnboardingDraftService);
   private readonly dialogs = inject(DialogService);
@@ -1461,6 +1464,7 @@ export class RegisterPatient {
         },
         {
           key: 'nationalId',
+          alSalir: (valor: string) => this.cuentaExistente.verificar('NATIONAL_ID', valor),
           label: 'Documento de identidad',
           hint: 'Con este número va a iniciar sesión.',
           description:

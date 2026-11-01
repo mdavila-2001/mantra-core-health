@@ -182,6 +182,9 @@ export class ProceduresClient {
       .pipe(
         map((body) => ({
           case: toCase(body.case),
+          // El check-list va en el detalle (no en la cabecera): presente con `null` = no tiene.
+          checklistReported: Object.prototype.hasOwnProperty.call(body, 'checklist'),
+          ...(body.checklist === undefined ? {} : { checklist: body.checklist }),
           team: (body.team ?? []).map((integrante) =>
             sinNulos<SurgicalCaseDetail['team'][number]>(integrante),
           ),
@@ -194,8 +197,9 @@ export class ProceduresClient {
               ...opcional('signedAt', signedAt),
             }),
           ),
-          roomEvents: body.roomEvents ?? [],
-          turnoverCleaning: body.turnoverCleaning ?? null,
+          // Lo que la API todavía no informa queda **ausente**, no vacío.
+          ...(body.roomEvents === undefined || body.roomEvents === null ? {} : { roomEvents: body.roomEvents }),
+          ...(body.turnoverCleaning === undefined ? {} : { turnoverCleaning: turnoverOf(body.turnoverCleaning) }),
         })),
       );
   }
@@ -374,7 +378,9 @@ interface WireCaseDetail {
   readonly findings?: readonly WireFinding[] | null;
   readonly implants?: readonly WireImplant[] | null;
   readonly roomEvents?: readonly RoomEvent[] | null;
-  readonly turnoverCleaning?: SurgicalCaseDetail['turnoverCleaning'];
+  readonly checklist?: SurgicalCaseDetail['checklist'];
+  /** Forma de F2 (`statusCode`); se acepta `status` por si A-F4 lo nombra así. */
+  readonly turnoverCleaning?: { readonly id: string; readonly statusCode?: string; readonly status?: string | null; readonly rowVersion: number; readonly allowedTransitions?: readonly string[] } | null;
   readonly operativeReports?:
     | readonly {
         readonly id: string;
@@ -408,6 +414,16 @@ function toCase({ scheduledStartAt, scheduledEndAt, reservedStartAt, reservedEnd
     ...opcional('scheduledEndAt', scheduledEndAt),
     ...opcional('reservedStartAt', reservedStartAt),
     ...opcional('reservedEndAt', reservedEndAt),
+  };
+}
+
+function turnoverOf(t: WireCaseDetail['turnoverCleaning']): SurgicalCaseDetail['turnoverCleaning'] {
+  if (t === null || t === undefined) return null;
+  return {
+    id: t.id,
+    statusCode: (t.statusCode ?? t.status ?? 'CLN_PENDING') as NonNullable<SurgicalCaseDetail['turnoverCleaning']>['statusCode'],
+    rowVersion: t.rowVersion,
+    ...(t.allowedTransitions === undefined ? {} : { allowedTransitions: t.allowedTransitions }),
   };
 }
 

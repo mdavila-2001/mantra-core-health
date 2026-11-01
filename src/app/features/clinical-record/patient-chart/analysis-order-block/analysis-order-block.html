@@ -86,7 +86,7 @@
         />
       }
 
-      <app-collection-point-select class="app-form-grid__ancho" />
+      <app-collection-point-select class="app-form-grid__ancho" [siteId]="performer.choice().siteId" />
 
       @if (checkingDuplicate()) {
         <!-- Corta a propósito: alimentar `[pending]` acá correría el foco

@@ -77,6 +77,8 @@ import {
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 
 /* ============================================================================
@@ -94,7 +96,7 @@ import { addressFromPoint, pointLabel } from '../shared-registration/address-fro
 /**
  * Los ocho tipos societarios que el punto 1.1.1 del registro de procesos
  * pide elegir de una lista cerrada, restringidos a los ocho de Bolivia del
- * diccionario `VS_LEGAL_ENTITY_TYPE` (`core/mock/fixtures/concepts.ts`) —
+ * diccionario `VS_LEGAL_ENTITY_TYPE` (`mock/fixtures/concepts.ts` del simulador) —
  * el registro de procesos de farmacia no contempla otro país. Se duplican
  * acá y no se importan de `RegisterLaboratory`: el carril de farmacia no
  * toca el laboratorio más allá de lo que ya vive en `shared-registration/`
@@ -180,7 +182,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  */
 @Component({
   selector: 'app-register-pharmacy',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,
@@ -212,6 +214,7 @@ export class RegisterPharmacy {
   /** Resuelve del catálogo los conceptos de país y jurisdicción que la API exige. */
   private readonly alta = inject(DiagnosisCenterEnrollment);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
 
   readonly borradorDetectado = signal<OnboardingDraft | null>(null);
   readonly pasoGuardado = signal<number>(0);
@@ -332,6 +335,7 @@ export class RegisterPharmacy {
         campos: [
           {
             key: 'legalName',
+            alSalir: (valor: string) => this.cuentaExistente.verificar('ORG_NAME', valor),
             label: 'Nombre o razón social',
             control: 'text' as const,
             required: true,

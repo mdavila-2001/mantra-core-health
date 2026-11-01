@@ -71,6 +71,18 @@ describe('portal-nav', () => {
       'governance/audit',
       'governance/users',
       'governance/permission-drift',
+      'governance/roles',
+      'governance/field-permissions',
+      'governance/who-can',
+      'governance/access-reviews',
+      'governance/rbac-matrix',
+      'governance/ui-catalog',
+      'governance/ui-rules',
+      'governance/ui-preview',
+      'governance/mutability',
+      'governance/policies',
+      'governance/pii',
+      'governance/privacy-requests',
     ]);
     expect(groupOf('/superadmin/portal/governance/users?user=x')?.id).toBe('governance');
     expect(portalCrumbs('/superadmin/portal/governance/audit?view=data-access').map((c) => c.label)).toEqual([

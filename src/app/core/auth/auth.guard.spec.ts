@@ -53,6 +53,27 @@ describe('authGuard · el estado S1 del M34', () => {
     expect(router.serializeUrl(resultado as UrlTree)).toBe(TENANT_SELECTION_ROUTE);
   });
 
+  it('alcance de plataforma con 3 organizaciones sin elegir: deja pasar (no va al selector)', () => {
+    const plataforma = makeToken({ sub: 'u-1', sid: 's-1', roles: ['PLATFORM_ADMIN'], tenants: ['t-1', 't-2', 't-3'] });
+    session.start({ accessToken: plataforma, refreshToken: 'r-1' });
+
+    expect(ejecutar()).toBe(true);
+  });
+
+  it('NEGATIVO: PLATFORM_ADMIN con ámbito de organización y 3 organizaciones sí va al selector', () => {
+    const scoped = makeToken({
+      sub: 'u-1',
+      sid: 's-1',
+      roles: ['PLATFORM_ADMIN'],
+      tenants: ['t-1', 't-2', 't-3'],
+      scopedRoles: { 't-1': ['PLATFORM_ADMIN'] },
+    });
+    session.start({ accessToken: scoped, refreshToken: 'r-1' });
+
+    const resultado = ejecutar();
+    expect(router.serializeUrl(resultado as UrlTree)).toBe(TENANT_SELECTION_ROUTE);
+  });
+
   it('con la organización ya elegida deja pasar', () => {
     session.start({ accessToken: DOS_TENANTS, refreshToken: 'r-1' });
     session.selectTenant('t-2');

@@ -54,8 +54,17 @@ describe('AdtClient', () => {
     expect(lectura.request.params.get('unitId')).toBe('u1');
     client.closeCensus('s1', '2026-10-30').subscribe();
     expect(http.expectOne('/sites/s1/census/2026-10-30/close').request.body).toEqual({});
+    client.closeCensus('s1', '2026-10-30', ['u1', 'u2']).subscribe();
+    expect(http.expectOne('/sites/s1/census/2026-10-30/close').request.body).toEqual({ unitIds: ['u1', 'u2'] });
     client.adjustCensus('d1', { fieldCode: 'admissions', newValue: 2, reasonText: 'Ingreso sin registrar' }).subscribe();
     expect(http.expectOne('/census-days/d1/adjustments').request.body.fieldCode).toBe('admissions');
+  });
+
+  it('la revisión de un incidente manda REVIEWED o CLOSED (ReviewIncidentDto)', () => {
+    client.reviewIncident('i1', { status: 'REVIEWED', reviewNote: 'Revisado con supervisión' }).subscribe();
+    const req = http.expectOne('/clinical/placement-incidents/i1');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ status: 'REVIEWED', reviewNote: 'Revisado con supervisión' });
   });
 
   it('indicadores con rango', () => {

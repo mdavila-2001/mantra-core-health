@@ -155,8 +155,9 @@ export class Checkout {
 
   /** Lo que la farmacia no puede recibir: bloquea la confirmación, como en E. */
   protected readonly productosSinPublicar =
-    this.borrador?.lineas.filter((linea) => linea.productId === null).map((l) => l.medicamento) ??
-    [];
+    this.borrador?.lineas
+      .filter((linea) => linea.productId === null && linea.missingAtSite !== true)
+      .map((l) => l.medicamento) ?? [];
 
   /**
    * El borrador que se envía: el vivo, con las cantidades elegidas en la orden

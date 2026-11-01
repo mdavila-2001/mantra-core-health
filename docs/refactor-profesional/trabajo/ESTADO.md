@@ -1,8 +1,9 @@
 # Estado
 
 **Última tarea verificada:** rama `infra-f4f5-web` · 2026-10-31 · **Infraestructura hospitalaria F4 (quirófanos) y F5
-(integración, web)**, primera y segunda pasada (la segunda: F5b, F5d, F5f, cargo de quirófano por tiempo y recambio
-`CLEANUP_*`) (contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md` §F4.4, §F5).
+(integración, web)**, tres pasadas. La tercera reescribe tipos, clientes y maqueta con **las formas reales de la API**
+tras la revisión `frontend-reviewer` (CAMBIOS REQUERIDOS) y suma la primera evidencia **contra la API real**
+(`EVIDENCIAS.md` § «Infraestructura F4/F5 — tercera pasada») (contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md` §F4.4, §F5).
 Detalle en `EVIDENCIAS.md` § «Infraestructura F4/F5». Revisión independiente (`visual-reviewer`,
 `frontend-reviewer`, `regression-auditor`): **pendiente** — quien implementa no aprueba.
 

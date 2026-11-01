@@ -195,12 +195,12 @@ test('F2/F3 · cadena completa a 1440 (ingreso → traslado → limpieza → ins
 
   const alta = await ultimaEscritura(page, 'POST', /^\/clinical\/admissions$/);
   expect(alta.status).toBe(201);
-  const ubicaciones = await persistido<{ careSpaceId: string; statusCode: string; encounterId: string }>(page, 'mock.adt.ubicaciones');
-  const eventos = await persistido<{ axisCode: string; toCode: string; requestId: string }>(page, 'mock.ops.eventos-a20');
+  const ubicaciones = await persistido<{ careSpaceId: string; statusCode: string; encounterId: string }>(page, 'mock.adt.ubicaciones.v2');
+  const eventos = await persistido<{ axisCode: string; toCode: string; requestId: string }>(page, 'mock.ops.eventos-a20.v2');
   registro.push({ que: 'ingreso · petición y respuesta', datos: alta });
   registro.push({ que: 'ingreso · encounter_locations ACTIVE', datos: ubicaciones.filter((u) => u.statusCode === 'LOCATION_ACTIVE') });
   registro.push({ que: 'ingreso · A20 ocupación', datos: eventos.filter((e) => e.requestId === alta.requestId) });
-  expect(eventos.some((e) => e.requestId === alta.requestId && e.axisCode === 'AXIS_OCCUPANCY' && e.toCode === 'OCC_OCCUPIED')).toBe(true);
+  expect(eventos.some((e) => e.requestId === alta.requestId && e.axisCode === 'OCCUPANCY' && e.toCode === 'OCC_OCCUPIED')).toBe(true);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('stay')).toContainText('301-B');
   await captura(page, '14-stay-after-reload', '1440');
@@ -222,7 +222,7 @@ test('F2/F3 · cadena completa a 1440 (ingreso → traslado → limpieza → ins
   expect(traslado.status).toBe(200);
   expect(traslado.ifMatch).not.toBeNull();
   registro.push({ que: 'traslado · petición y respuesta (If-Match del encuentro)', datos: traslado });
-  const tras = await persistido<{ careSpaceId: string; statusCode: string; endReasonCode: string | null; periodEnd: string | null }>(page, 'mock.adt.ubicaciones');
+  const tras = await persistido<{ careSpaceId: string; statusCode: string; endReasonCode: string | null; periodEnd: string | null }>(page, 'mock.adt.ubicaciones.v2');
   registro.push({ que: 'traslado · origen COMPLETED / destino ACTIVE', datos: tras.slice(-2) });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('bed-board')).toBeVisible({ timeout: 60_000 });
@@ -253,12 +253,12 @@ test('F2/F3 · cadena completa a 1440 (ingreso → traslado → limpieza → ins
   await entrar(page, 'supervisora.limpieza@alovida.mock');
   await page.goto('/inpatient/cleaning', { waitUntil: 'domcontentloaded' });
   const filaSup = page.locator('tr, [role=row]', { hasText: '301-B' }).first();
-  await rowAction(page, filaSup, 'Inspeccionar');
+  await rowAction(page, filaSup, 'Aprobar inspección');
   await page.locator('dialog[open]').last().getByRole('button', { name: 'Aprobar' }).click();
   const inspeccion = await ultimaEscritura(page, 'POST', /\/inspect$/);
   expect(inspeccion.status).toBe(200);
   registro.push({ que: 'limpieza · inspección por otra persona', datos: inspeccion });
-  const ordenes = await persistido<{ careSpaceId: string; statusCode: string; finishedByUserId: string; inspectedByUserId: string }>(page, 'mock.ops.limpiezas');
+  const ordenes = await persistido<{ careSpaceId: string; statusCode: string; finishedByUserId: string; inspectedByUserId: string }>(page, 'mock.ops.limpiezas.v2');
   registro.push({ que: 'limpieza · fila de cleaning_orders INSPECTED', datos: ordenes.filter((o) => o.statusCode === 'CLN_INSPECTED').slice(-1) });
   await tablero(page);
   await expect(tile(page, '301-B')).toHaveAttribute('data-v2', 'U');
@@ -268,11 +268,9 @@ test('F2/F3 · cadena completa a 1440 (ingreso → traslado → limpieza → ins
   await entrar(page, 'enfermeria@alovida.mock');
   await page.goto(`${fichaUrl.split('?')[0]}?tab=discharge`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('stay')).toBeVisible({ timeout: 60_000 });
-  await elegir(page, page.getByTestId('stay-disposition'), 'Alta a domicilio');
+  await elegir(page, page.getByTestId('discharge-disposition'), 'Alta a domicilio');
   await captura(page, '40-stay-discharge', '1440');
-  await page.getByRole('button', { name: 'Dar de alta' }).click();
-  const confirmar = page.locator('dialog[open]').last().getByRole('button', { name: /Dar de alta|Confirmar/ });
-  if (await confirmar.isVisible().catch(() => false)) await confirmar.click();
+  await page.getByTestId('discharge-submit').click();
   const egreso = await ultimaEscritura(page, 'POST', /\/discharge$/);
   expect(egreso.status).toBe(200);
   registro.push({ que: 'egreso · petición y respuesta', datos: egreso });
@@ -306,7 +304,7 @@ test('F2/F3 · cadena completa a 1440 (ingreso → traslado → limpieza → ins
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('census-adjustments')).toContainText('→ 2');
   await captura(page, '51-census-closed-adjusted', '1440');
-  registro.push({ que: 'censo · cierre y ajuste', datos: [cierre, ajuste, (await persistido(page, 'mock.adt.ajustes')).slice(-1)] });
+  registro.push({ que: 'censo · cierre y ajuste', datos: [cierre, ajuste, (await persistido(page, 'mock.adt.ajustes.v2')).slice(-1)] });
 
   await page.goto('/inpatient/indicators', { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('indicators-kpis')).toBeVisible({ timeout: 60_000 });
@@ -324,35 +322,35 @@ test('F2/F3 · cadena completa a 1440 (ingreso → traslado → limpieza → ins
  * queda cargando (S2). Si no se logra, se anota y no se inventa la captura.
  */
 async function congelarNavegacion(page: Page, enlace: string, nombre: string, ancho: string): Promise<void> {
-  try {
-    const link = page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: enlace });
-    // Por debajo de 1024 px el menú es un cajón animado: con el reloj detenido no
-    // termina de abrirse. S1 y S2 se capturan sólo en el ancho de escritorio.
-    if ((page.viewportSize()?.width ?? 0) < 1024 || !(await link.isVisible().catch(() => false))) {
-      registro.push({ que: `${nombre} · S1/S2 a ${ancho}`, datos: 'menú lateral plegado en este ancho: no se congeló' });
-      return;
-    }
-    await page.clock.pauseAt(new Date(Date.now() + 1000));
-    await link.click();
-    // El router también agenda temporizadores: se avanza de a 10 ms hasta ver cada estado.
-    const stepUntil = async (visible: () => Promise<boolean>): Promise<boolean> => {
-      for (let i = 0; i < 40; i++) {
-        if (await visible()) return true;
-        await page.clock.runFor(10);
-      }
-      return visible();
-    };
-    const s1 = await stepUntil(() => page.getByText('Verificando permisos').first().isVisible().catch(() => false));
-    registro.push({ que: `${nombre} · S1 congelado a ${ancho}`, datos: s1 });
-    if (s1) await page.screenshot({ path: join(SALIDA, `${nombre}-s1-auth-pending-${ancho}.png`), fullPage: true });
-    const s2 = await stepUntil(() => page.locator('.view-state-host__loading').first().isVisible().catch(() => false));
-    registro.push({ que: `${nombre} · S2 congelado a ${ancho}`, datos: s2 });
-    if (s2) await page.screenshot({ path: join(SALIDA, `${nombre}-s2-loading-${ancho}.png`), fullPage: true });
-    await page.clock.resume();
-  } catch (e) {
-    registro.push({ que: `${nombre} · S1/S2 no se pudieron congelar a ${ancho}`, datos: String(e) });
-    await page.clock.resume().catch(() => undefined);
+  const nav = page.getByRole('navigation', { name: 'Navegación principal' });
+  const link = nav.getByRole('link', { name: enlace });
+  // Por debajo de 1024 px el menú es un cajón animado: se abre ANTES de detener
+  // el reloj, para que termine su animación.
+  if (!(await link.isVisible().catch(() => false))) {
+    await page.getByRole('button', { name: 'Abrir la navegación' }).first().click();
+    await expect(link).toBeVisible({ timeout: 10_000 });
   }
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await link.click();
+  // El router también agenda temporizadores: se avanza de a 10 ms hasta ver cada estado.
+  const stepUntil = async (visible: () => Promise<boolean>): Promise<boolean> => {
+    for (let i = 0; i < 60; i++) {
+      if (await visible()) return true;
+      await page.clock.runFor(10);
+    }
+    return visible();
+  };
+  // Aserciones duras: si S1 o S2 no aparecen, la prueba falla (no se anota y se sigue).
+  const s1 = await stepUntil(() => page.getByText('Verificando permisos').first().isVisible().catch(() => false));
+  registro.push({ que: `${nombre} · S1 congelado a ${ancho}`, datos: s1 });
+  expect(s1, `S1 «Verificando permisos» en ${nombre} a ${ancho}`).toBe(true);
+  await page.screenshot({ path: join(SALIDA, `${nombre}-s1-auth-pending-${ancho}.png`), fullPage: true });
+  const s2 = await stepUntil(() => page.locator('.view-state-host__loading').first().isVisible().catch(() => false));
+  registro.push({ que: `${nombre} · S2 congelado a ${ancho}`, datos: s2 });
+  expect(s2, `S2 (esqueleto) en ${nombre} a ${ancho}`).toBe(true);
+  expect(await page.getByText('Verificando permisos').first().isVisible().catch(() => false), 'S2 ≠ S1').toBe(false);
+  await page.screenshot({ path: join(SALIDA, `${nombre}-s2-loading-${ancho}.png`), fullPage: true });
+  await page.clock.resume();
 }
 
 for (const ancho of ANCHOS) {
@@ -439,6 +437,14 @@ for (const ancho of ANCHOS) {
       await page.clock.install();
       await page.goto('/auth', { waitUntil: 'domcontentloaded', timeout: 120_000 });
       await entrar(page, 'limpieza@alovida.mock');
+      // Limpieza ve el tablero sin un solo dato de paciente (ni iniciales, ni sexo, ni edad).
+      await tablero(page);
+      await expect(page.getByTestId('bed-board')).not.toContainText(/ · [MFO] · \d+ a| · sin dato · /);
+      await tile(page, '301-A').click();
+      await expect(page.getByTestId('bed-panel')).toBeVisible();
+      await expect(page.getByTestId('bed-panel')).not.toContainText(/masculino|femenino/);
+      await expect(page.getByTestId('bed-actions')).toHaveCount(0);
+      await page.getByTestId('cajon-cerrar').click();
       await congelarNavegacion(page, 'Cola de limpieza', '77-queue', ancho.nombre);
       await page.goto('/inpatient/cleaning', { waitUntil: 'domcontentloaded' });
       await expect(page.getByTestId('queue-table')).toContainText('REC-1', { timeout: 60_000 });

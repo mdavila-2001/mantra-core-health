@@ -2,21 +2,18 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   signal,
-  untracked,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, startWith, switchMap } from 'rxjs/operators';
 
-import { SessionStore } from '../../core/auth/session.store';
 import { OperatingRoomsClient } from '../../core/data-access/operating-rooms/operating-rooms.client';
-import { canManageBlocks, canScheduleCases, canSeeUtilization } from '../../core/data-access/operating-rooms/operating-rooms.rules';
 import type { OperatingRoomSummary } from '../../core/data-access/operating-rooms/operating-rooms.types';
 import { SiteContextStore } from '../../core/data-access/operating-rooms/site-context.store';
 import { ProceduresClient } from '../../core/data-access/procedures/procedures.client';
@@ -25,7 +22,7 @@ import { TerminologyClient } from '../../core/data-access/terminology/terminolog
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
-import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
+import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
@@ -38,9 +35,9 @@ import { Card } from '../../shared/components/molecules/card/card';
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { CLINICAL_RECORD_ROUTE } from '../clinical-record/clinical-record.routes';
 import { CaseTeam } from './case-team/case-team';
 import { timeOf } from './interventions.presentation';
+import { SiteSwitch } from './site-switch/site-switch';
 import {
   caseRoute,
   OPERATING_ROOMS_ROUTE,
@@ -93,7 +90,7 @@ const ALL_ROOMS = '';
  */
 @Component({
   selector: 'app-interventions',
-  imports: [Alert, AppButton, AppButtonLink, Badge, Card, CaseTeam, DataTable, DatePipe, PageHeader, RouterLink, Select, Tooltip],
+  imports: [Alert, AppButton, AppButtonLink, Badge, Card, CaseTeam, DataTable, DatePipe, PageHeader, RouterLink, Select, SiteSwitch, Tooltip],
   templateUrl: './interventions.html',
   styleUrl: './interventions.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,7 +99,6 @@ export class Interventions {
   private readonly procedures = inject(ProceduresClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
-  private readonly session = inject(SessionStore);
   private readonly siteContext = inject(SiteContextStore);
   private readonly operatingRooms = inject(OperatingRoomsClient);
 
@@ -113,10 +109,6 @@ export class Interventions {
   protected readonly roomsRoute = OPERATING_ROOMS_ROUTE;
   protected readonly blocksRoute = OR_BLOCKS_ROUTE;
   protected readonly utilizationRoute = OR_UTILIZATION_ROUTE;
-
-  protected readonly canSchedule = computed(() => canScheduleCases(this.session.roles()));
-  protected readonly canManage = computed(() => canManageBlocks(this.session.roles()));
-  protected readonly canMeasure = computed(() => canSeeUtilization(this.session.roles()));
 
   private readonly celdaCaso = viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('celdaCaso');
   private readonly celdaEstado = viewChild.required<TemplateRef<{ $implicit: SurgicalCase }>>('celdaEstado');
@@ -133,6 +125,7 @@ export class Interventions {
   /** Las salas de la sede, para el filtro. Vacío = sin filtro que ofrecer. */
   private readonly rooms = signal<readonly OperatingRoomSummary[]>([]);
   protected readonly roomFilter = signal<string>(ALL_ROOMS);
+  private readonly reloads = signal(0);
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
@@ -156,22 +149,31 @@ export class Interventions {
 
   constructor() {
     this.siteContext.ensure();
-    effect(() => {
-      untracked(() => this.cargar());
-    });
-    // Las salas salen de la primera sede de la organización activa.
-    effect(() => {
-      const context = dataOf(this.siteContext.state());
-      const site = context?.sites[0];
-      if (site === undefined) return;
-      untracked(() =>
-        this.operatingRooms.listOperatingRooms(site.id).subscribe({
-          next: (rooms) => this.rooms.set(rooms),
-          // Sin filtro no se pierde la agenda: se muestra entera.
-          error: () => this.rooms.set([]),
-        }),
-      );
-    });
+    // Las salas de la sede elegida: alimentan el filtro y el nombre de la sala
+    // de cada caso (la API manda `operatingRoomId`, no la sala resuelta).
+    toObservable(this.siteContext.siteId)
+      .pipe(
+        filter((id): id is string => id !== null),
+        // Sin salas no se pierde la agenda: se muestra entera, sin filtro.
+        switchMap((siteId) => this.operatingRooms.listOperatingRooms(siteId).pipe(catchError(() => of([] as readonly OperatingRoomSummary[])))),
+        takeUntilDestroyed(),
+      )
+      .subscribe((rooms) => this.rooms.set(rooms));
+    // La agenda por clave (filtro, reintento): `switchMap` cancela la lectura
+    // anterior, así el filtro viejo nunca pisa al elegido.
+    toObservable(computed(() => ({ room: this.roomFilter(), n: this.reloads() })))
+      .pipe(
+        switchMap(({ room }) => this.read(room).pipe(startWith(loading() as ViewState<readonly SurgicalCase[]>))),
+        takeUntilDestroyed(),
+      )
+      .subscribe((s) => this.agenda.set(s));
+  }
+
+  /** La sala del caso: la que manda la API o, si no, la de la sede por su id. */
+  protected roomOf(caso: SurgicalCase): { code: string; name: string; path?: string } | null {
+    if (caso.operatingRoom) return caso.operatingRoom;
+    const r = this.rooms().find((x) => x.careSpace.id === caso.operatingRoomId);
+    return r === undefined ? null : { code: r.careSpace.code, name: r.careSpace.name, path: '' };
   }
 
   /** La etiqueta de un concepto, o el guion si el catálogo no la tiene. */
@@ -188,11 +190,10 @@ export class Interventions {
 
   protected chooseRoom(value: string | null): void {
     this.roomFilter.set(value ?? ALL_ROOMS);
-    this.cargar();
   }
 
   protected recargar(): void {
-    this.cargar();
+    this.reloads.update((n) => n + 1);
   }
 
   protected abrir(caso: SurgicalCase): void {
@@ -203,46 +204,26 @@ export class Interventions {
     this.casoAbierto.set(null);
   }
 
-  private cargar(): void {
-    this.agenda.set(loading());
-    const room = this.roomFilter();
-
-    this.procedures
-      .listAgenda({ limit: TOPE, ...(room === ALL_ROOMS ? {} : { operatingRoomId: room }) })
-      .pipe(
-        switchMap((pagina) =>
-          forkJoin({
-            pagina: of(pagina),
-            etiquetas: this.terminology
-              .readConceptLabels(pagina.items.map((caso) => caso.statusConceptId))
-              .pipe(catchError(() => of(new Map() as ConceptLabels))),
-          }),
-        ),
-      )
-      .subscribe({
-        next: ({ pagina, etiquetas }) => {
-          this.etiquetas.update((previas) => new Map([...previas, ...etiquetas]));
-
-          if (pagina.items.length === 0) {
-            // Con permiso de programar, la salida es programar; si no, la
-            // ficha de la persona que se va a operar.
-            this.agenda.set(
-              empty(
-                this.canSchedule()
-                  ? { label: 'Programar una intervención', route: SCHEDULE_CASE_ROUTE }
-                  : { label: 'Ir al archivo clínico', route: CLINICAL_RECORD_ROUTE },
-                room === ALL_ROOMS
-                  ? 'No hay intervenciones programadas en la organización.'
-                  : 'No hay intervenciones en este quirófano.',
-              ),
-            );
-            return;
-          }
-
-          this.agenda.set(ready(pagina.items));
-        },
-        error: (error: unknown) =>
-          this.agenda.set(errorToViewState<readonly SurgicalCase[]>(error)),
-      });
+  private read(room: string) {
+    return this.procedures.listAgenda({ limit: TOPE, ...(room === ALL_ROOMS ? {} : { operatingRoomId: room }) }).pipe(
+      switchMap((pagina) =>
+        forkJoin({
+          pagina: of(pagina),
+          etiquetas: this.terminology
+            .readConceptLabels(pagina.items.map((caso) => caso.statusConceptId))
+            .pipe(catchError(() => of(new Map() as ConceptLabels))),
+        }),
+      ),
+      map(({ pagina, etiquetas }): ViewState<readonly SurgicalCase[]> => {
+        this.etiquetas.update((previas) => new Map([...previas, ...etiquetas]));
+        if (pagina.items.length > 0) return ready(pagina.items);
+        // La salida es programar: si el rol no alcanza, la API lo dice ahí (S5).
+        return empty(
+          { label: 'Programar una intervención', route: SCHEDULE_CASE_ROUTE },
+          room === ALL_ROOMS ? 'No hay intervenciones programadas en la organización.' : 'No hay intervenciones en este quirófano.',
+        );
+      }),
+      catchError((error: unknown) => of(errorToViewState<readonly SurgicalCase[]>(error))),
+    );
   }
 }

@@ -131,6 +131,15 @@ export class RefreshTokenStorage {
     }
   }
 
+  /** Olvida la organización recordada (volver a «toda la plataforma»). */
+  clearSelectedTenant(): void {
+    try {
+      this.storage()?.removeItem(SELECTED_TENANT_STORAGE_KEY);
+    } catch {
+      // Sin almacenamiento no hay nada que olvidar.
+    }
+  }
+
   /**
    * Guarda la organización elegida, atada a la persona cuando se la conoce.
    *

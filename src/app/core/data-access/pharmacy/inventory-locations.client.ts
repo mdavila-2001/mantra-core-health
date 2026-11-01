@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type { CreateInventoryLocationRequest, InventoryLocation, SpaceStock } from './inventory-locations.types';
+import type { CreateInventoryLocationRequest, CreatedInventoryLocation, RelocatedInventoryLocation, SpaceStock } from './inventory-locations.types';
 
 /**
  * Cliente del botiquín por unidad — franja F5c.
@@ -23,13 +23,13 @@ export class InventoryLocationsClient {
   }
 
   /** `POST /pharmacy/:siteId/inventory-locations` — 409 `WARD_STOCK_ALREADY_EXISTS`, 422 `SPACE_NOT_STOCK_POINT`. */
-  create(pharmacySiteId: string, body: CreateInventoryLocationRequest): Observable<InventoryLocation> {
-    return this.http.post<InventoryLocation>(this.url(`/pharmacy/${encodeURIComponent(pharmacySiteId)}/inventory-locations`), body);
+  create(pharmacySiteId: string, body: CreateInventoryLocationRequest): Observable<CreatedInventoryLocation> {
+    return this.http.post<CreatedInventoryLocation>(this.url(`/pharmacy/${encodeURIComponent(pharmacySiteId)}/inventory-locations`), body);
   }
 
   /** `POST /pharmacy/inventory-locations/:id/relocate {careSpaceId}`. */
-  relocate(id: string, careSpaceId: string): Observable<InventoryLocation> {
-    return this.http.post<InventoryLocation>(this.url(`/pharmacy/inventory-locations/${encodeURIComponent(id)}/relocate`), { careSpaceId });
+  relocate(id: string, careSpaceId: string): Observable<RelocatedInventoryLocation> {
+    return this.http.post<RelocatedInventoryLocation>(this.url(`/pharmacy/inventory-locations/${encodeURIComponent(id)}/relocate`), { careSpaceId });
   }
 
   private url(path: string): string {

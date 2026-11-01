@@ -2,7 +2,6 @@ import type {
   AvailabilityCode,
   BedBoardCell,
   BedBoardCounts,
-  BedPatient,
   BlockKindCode,
   CareSpaceBlock,
   CareSpaceStatusEvent,
@@ -22,22 +21,21 @@ import type {
   StatusSourceCode,
   V2Code,
 } from '../../data-access/infrastructure-ops/infrastructure-ops.types';
-import { bedStatusV2, isAssignable } from '../../data-access/infrastructure-ops/bed-status-v2';
+import { bedStatusV2, isAssignable } from '../rules/bed-status-v2';
 import { descendientesDe } from '../../data-access/infrastructure/infrastructure.rules';
 import type { EspacioSimulado, SitioSimulado } from '../fixtures/infraestructura';
-import { conceptoDe } from '../fixtures/infraestructura';
 import {
   actionsOf,
   BLOCK_REASONS,
   INFRA_POLICY,
   INFRA_SETTINGS,
   INPATIENT_USERS,
-  opsConcept,
+  PATIENT_VIEWERS,
+  REASON_REQUIRING_TEXT,
   seedAssignments,
   type InfraAssignment,
 } from '../fixtures/inpatient';
 import { reply, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
-import { MOCK_USERS } from '../mock-session';
 import { Coleccion, cuerpo, nuevoId } from '../mock-store';
 import { espacios, sitiosInfra, unidades } from './infrastructure.handlers';
 import { casosFuturosEnQuirofano } from './procedures.handlers';
@@ -100,6 +98,7 @@ export interface BlockRow {
   readonly workOrderRef: string | null;
   /** Bloqueo de cohorte puesto por el aislamiento de otra cama (para levantarlo con ella). */
   readonly cohortSourceId: string | null;
+  readonly rowVersion?: number;
 }
 
 export interface CleaningRow {
@@ -156,7 +155,8 @@ export interface OccupancyView {
   readonly since: string | null;
   readonly encounterId?: string;
   readonly encounterLocationId?: string;
-  readonly patient?: BedPatient & { readonly isolationCode?: string; readonly organism?: string | null };
+  /** Datos del paciente para el tablero y la compatibilidad (`MALE`/`FEMALE` internos). */
+  readonly patient?: { readonly initials: string; readonly sexCode: string | null; readonly ageYears: number | null; readonly isolationCode?: string; readonly organism?: string | null };
 }
 
 const FREE: OccupancyView = { code: 'OCC_FREE', since: null };
@@ -407,72 +407,85 @@ export function openOrderOf(careSpaceId: string): CleaningRow | undefined {
   return cleaningOrders.todos().find((o) => o.careSpaceId === careSpaceId && ['CLN_PENDING', 'CLN_IN_PROGRESS', 'CLN_DONE'].includes(o.statusCode));
 }
 
-/** Qué acciones del actor aplican a esta celda ahora (desvío W-F2F3-2). */
-function cellActions(viewer: readonly InfraAction[], e: EspacioSimulado, d: ReturnType<typeof axesOf>): InfraAction[] {
-  const libre = d.occ.code === 'OCC_FREE';
-  const activa = e.statusCode === 'SPACE_ACTIVE';
-  const disp = d.axes.availabilityCode;
-  const aplica: Partial<Record<InfraAction, boolean>> = {
-    'block.clinical': (activa && libre && disp === 'SPACE_OP_AVAILABLE') || disp === 'SPACE_OP_BLOCKED_CLINICAL',
-    'block.admin': (activa && libre && disp === 'SPACE_OP_AVAILABLE') || disp === 'SPACE_OP_BLOCKED_ADMIN' || disp === 'SPACE_OP_CLOSED',
-    maintenance: (activa && libre && disp === 'SPACE_OP_AVAILABLE') || disp === 'SPACE_OP_MAINTENANCE',
-    'hygiene.mark-dirty': openOrderOf(e.id) === undefined && ['HYG_CLEAN', 'HYG_INSPECTED'].includes(d.ops.hygieneCode),
-    'hygiene.mark-contaminated': d.ops.hygieneCode !== 'HYG_CONTAMINATED',
-    isolation: activa,
-    'adt.admit': d.assignable,
-    'adt.transfer': d.occ.code === 'OCC_OCCUPIED',
-    'adt.discharge': d.occ.code === 'OCC_OCCUPIED',
-    'adt.cancel': d.occ.code === 'OCC_RESERVED',
-  };
-  return viewer.filter((a) => aplica[a] ?? true);
+/** Quién mira: las acciones de su rol en la sede y si ve al paciente (`PATIENT_VIEWERS`). */
+export interface Viewer {
+  readonly actions: readonly InfraAction[];
+  readonly showPatient: boolean;
 }
 
-export function buildCell(e: EspacioSimulado, viewer: readonly InfraAction[]): BedBoardCell {
+export function viewerOf(request: MockRequest, site: SitioSimulado): Viewer {
+  const roles = rolesIn(request, site);
+  return { actions: actionsOf(roles), showPatient: roles.some((r) => PATIENT_VIEWERS.includes(r)) };
+}
+
+/** `lifecycleStateOf`: `SPACE_ACTIVE` → `ACTIVE`. */
+export const lifecycleOf = (e: EspacioSimulado): string => e.statusCode.replace(/^SPACE_/, '');
+
+const SEX_CODE: Readonly<Record<string, string>> = { MALE: 'M', FEMALE: 'F' };
+
+/**
+ * `BedBoardCellDto` como lo arma `OpsCellBuilder.cell` de la API: códigos sin
+ * texto, `reasonText` siempre `null` en la celda (el texto vive en el
+ * bloqueo), camino sin el propio espacio, y `patient`/`encounterId`/
+ * `encounterLocationId` sólo para quien ve al paciente. `actions` son las de
+ * la política para ese rol (la API no las filtra por estado: eso lo hace la
+ * pantalla).
+ */
+export function buildCell(e: EspacioSimulado, viewer: Viewer): BedBoardCell {
   const d = axesOf(e);
-  const disponibilidad = d.axes.availabilityCode;
-  const showPatient = viewer.includes('board.view-patient');
-  const patientView = showPatient && d.occ.patient !== undefined
-    ? { initials: d.occ.patient.initials, sexCode: d.occ.patient.sexCode, ageYears: d.occ.patient.ageYears }
-    : undefined;
+  const p = viewer.showPatient ? d.occ.patient : undefined;
   return {
     id: e.id,
     code: e.code,
     name: e.name,
-    path: pathOf(e),
-    form: conceptoDe(e.formCode),
-    function: conceptoDe(e.functionCode),
-    lifecycle: conceptoDe(e.statusCode),
-    unitId: e.clinicalUnitId,
+    path: pathOf(e).slice(0, -1),
+    form: e.formCode,
+    function: e.functionCode,
+    lifecycle: lifecycleOf(e),
     availability: {
-      code: disponibilidad,
-      display: opsConcept(disponibilidad).display,
+      code: d.axes.availabilityCode,
       reasonCode: d.ops.availabilityReasonCode,
-      reasonText: d.ops.availabilityReasonCode === null ? null : (d.ops.availabilityReasonText ?? opsConcept(d.ops.availabilityReasonCode).display),
+      reasonText: null,
       expectedUntil: d.ops.availabilityExpectedUntil,
       since: d.ops.availabilityChangedAt,
     },
-    hygiene: { code: d.ops.hygieneCode, display: opsConcept(d.ops.hygieneCode).display, since: d.ops.hygieneChangedAt, terminalRequired: d.ops.terminalCleaningRequired },
-    isolation: { code: d.ops.isolationCode, display: opsConcept(d.ops.isolationCode).display, organism: d.ops.isolationOrganism, since: d.ops.isolationChangedAt },
+    hygiene: { code: d.ops.hygieneCode, since: d.ops.hygieneChangedAt, terminalRequired: d.ops.terminalCleaningRequired },
+    isolation: { code: d.ops.isolationCode, organism: d.ops.isolationOrganism, since: d.ops.isolationChangedAt },
     occupancy: {
       code: d.occ.code,
-      display: opsConcept(d.occ.code).display,
       since: d.occ.since,
-      // Sin el rol clínico tampoco viaja a qué encuentro pertenece la cama.
-      ...(showPatient && d.occ.encounterId !== undefined ? { encounterId: d.occ.encounterId } : {}),
-      ...(showPatient && d.occ.encounterLocationId !== undefined ? { encounterLocationId: d.occ.encounterLocationId } : {}),
-      ...(patientView === undefined ? {} : { patient: patientView }),
+      encounterId: p !== undefined ? (d.occ.encounterId ?? null) : null,
+      ...(p !== undefined ? { encounterLocationId: d.occ.encounterLocationId ?? null } : {}),
+      ...(p === undefined ? {} : { patient: { initials: p.initials, sexCode: p.sexCode === null ? null : (SEX_CODE[p.sexCode] ?? 'O'), ageYears: p.ageYears } }),
     },
     v2Code: d.v2Code,
     assignable: d.assignable,
     openCleaningOrderId: openOrderOf(e.id)?.id ?? null,
     lastEventAt: d.ops.lastEventAt,
     opsVersion: d.ops.opsVersion,
-    actions: cellActions(viewer, e, d),
+    unitId: e.clinicalUnitId,
+    actions: viewer.actions,
   };
 }
 
-function viewerActions(request: MockRequest, site: SitioSimulado): InfraAction[] {
-  return actionsOf(rolesIn(request, site));
+/** `CareSpaceOperationalState` del puerto: el `cell` de las respuestas ADT. */
+export function portState(e: EspacioSimulado) {
+  const d = axesOf(e);
+  return {
+    careSpaceId: e.id,
+    formCode: e.formCode,
+    functionCode: e.functionCode,
+    lifecycle: lifecycleOf(e),
+    availability: d.axes.availabilityCode,
+    hygiene: d.ops.hygieneCode,
+    isolation: d.ops.isolationCode,
+    occupancy: d.occ.code,
+    terminalCleaningRequired: d.ops.terminalCleaningRequired,
+    v2Code: d.v2Code,
+    assignable: d.assignable,
+    violations: [] as string[],
+    opsVersion: d.ops.opsVersion,
+  };
 }
 
 /* ---- A20 ------------------------------------------------------------------ */
@@ -506,7 +519,7 @@ export function recordEvent(e: EspacioSimulado, axis: StatusAxisCode, from: stri
 function setHygiene(e: EspacioSimulado, to: HygieneCode, ctx: EventContext, cambios: Partial<OpsRow> = {}): void {
   const antes = opsOf(e).hygieneCode;
   opsRows.actualizar(e.id, { hygieneCode: to, hygieneChangedAt: ctx.at ?? new Date().toISOString(), ...cambios });
-  recordEvent(e, 'AXIS_HYGIENE', antes, to, ctx);
+  recordEvent(e, 'HYGIENE', antes, to, ctx);
 }
 
 /* ---- puerto para F3 (`CareSpaceOpsPort`) ---------------------------------- */
@@ -536,7 +549,7 @@ export function markDirtyFromSource(
     requestedAt: opts.ctx.at ?? new Date().toISOString(),
   }));
   if (ops.hygieneCode !== 'HYG_CONTAMINATED') {
-    setHygiene(e, 'HYG_DIRTY', { ...opts.ctx, source: 'SRC_ADT', sourceRefId: opts.sourceRefId }, terminal ? { terminalCleaningRequired: true } : {});
+    setHygiene(e, 'HYG_DIRTY', { ...opts.ctx, source: 'ADT', sourceRefId: opts.sourceRefId }, terminal ? { terminalCleaningRequired: true } : {});
   } else if (terminal) {
     opsRows.actualizar(e.id, { terminalCleaningRequired: true });
   }
@@ -546,7 +559,7 @@ export function markDirtyFromSource(
 /** `recordOccupancyChange`: el evento A20 del eje derivado (F3 ya cambió la fila). */
 export function recordOccupancyChange(careSpaceId: string, from: OccupancyCode, to: OccupancyCode, ctx: EventContext): void {
   const e = espacios.get(careSpaceId);
-  if (e !== undefined) recordEvent(e, 'AXIS_OCCUPANCY', from, to, { ...ctx, source: 'SRC_ADT' });
+  if (e !== undefined) recordEvent(e, 'OCCUPANCY', from, to, { ...ctx, source: 'ADT' });
 }
 
 function newOrder(e: EspacioSimulado, cambios: Partial<CleaningRow>): CleaningRow {
@@ -562,7 +575,6 @@ function newOrder(e: EspacioSimulado, cambios: Partial<CleaningRow>): CleaningRo
 
 /* ---- vistas --------------------------------------------------------------- */
 
-const nameOf = (userId: string | null): string | null => (userId === null ? null : (MOCK_USERS.find((u) => u.id === userId)?.displayName ?? null));
 
 function inspectionRequired(o: CleaningRow): boolean {
   return INFRA_SETTINGS.inspectionRequired || o.typeCode === 'CLEAN_TERMINAL';
@@ -578,81 +590,76 @@ const TRANSITIONS: Readonly<Record<CleaningStatusCode, readonly CleaningTransiti
 };
 
 const ACTION_OF: Readonly<Record<CleaningTransition, InfraAction>> = {
-  assign: 'cleaning.assign',
-  start: 'cleaning.work',
-  finish: 'cleaning.work',
-  inspect: 'cleaning.inspect',
-  cancel: 'cleaning.create',
+  assign: 'f2.cleaning.assign',
+  start: 'f2.cleaning.work',
+  finish: 'f2.cleaning.work',
+  inspect: 'f2.cleaning.inspect',
+  cancel: 'f2.cleaning.cancel',
 };
 
-export function orderView(o: CleaningRow, viewer: readonly InfraAction[]): CleaningOrder {
+/** `CleaningOrderDto` + `allowedTransitions` e `inspectionRequired` (lo que la API agrega en F2–F5). */
+export function orderView(o: CleaningRow, viewer: Viewer): CleaningOrder {
   const e = espacios.get(o.careSpaceId);
-  const unidad = o.clinicalUnitId === null ? undefined : unidades.get(o.clinicalUnitId);
   return {
     id: o.id,
-    siteId: o.siteId,
     careSpaceId: o.careSpaceId,
     careSpaceCode: e?.code ?? '',
     careSpaceName: e?.name ?? '',
     clinicalUnitId: o.clinicalUnitId,
-    unitName: unidad?.name ?? null,
-    type: { code: o.typeCode, display: opsConcept(o.typeCode).display },
-    trigger: { code: o.triggerCode, display: opsConcept(o.triggerCode).display },
-    priority: { code: o.priorityCode, display: opsConcept(o.priorityCode).display },
-    status: { code: o.statusCode, display: opsConcept(o.statusCode).display },
-    previousOrderId: o.previousOrderId,
+    typeCode: o.typeCode,
+    triggerCode: o.triggerCode,
+    priorityCode: o.priorityCode,
+    statusCode: o.statusCode,
     requestedAt: o.requestedAt,
     dueAt: o.dueAt,
     assignedUserId: o.assignedUserId,
-    assignedName: nameOf(o.assignedUserId),
     startedAt: o.startedAt,
-    startedByName: nameOf(o.startedByUserId),
     finishedAt: o.finishedAt,
     finishedByUserId: o.finishedByUserId,
-    finishedByName: nameOf(o.finishedByUserId),
     inspectedAt: o.inspectedAt,
-    inspectedByName: nameOf(o.inspectedByUserId),
     inspectionResult: o.inspectionResult,
     rejectionReason: o.rejectionReason,
-    cancelReason: o.cancelReason,
-    inspectionRequired: inspectionRequired(o),
+    previousOrderId: o.previousOrderId,
+    ageMinutes: Math.max(0, Math.floor((Date.now() - Date.parse(o.requestedAt)) / 60_000)),
     rowVersion: o.rowVersion,
-    allowedTransitions: TRANSITIONS[o.statusCode].filter((t) => viewer.includes(ACTION_OF[t])),
+    allowedTransitions: TRANSITIONS[o.statusCode].filter((t) => viewer.actions.includes(ACTION_OF[t])),
+    inspectionRequired: inspectionRequired(o),
   };
 }
 
+/** `CareSpaceBlockDto`. */
 function blockView(b: BlockRow): CareSpaceBlock {
   return {
     id: b.id,
     careSpaceId: b.careSpaceId,
-    kind: opsConcept(b.kindCode),
-    reason: opsConcept(b.reasonCode),
+    kindCode: b.kindCode,
+    reasonCode: b.reasonCode,
     reasonText: b.reasonText,
     startsAt: b.startsAt,
     expectedEndAt: b.expectedEndAt,
     endedAt: b.endedAt,
-    endNote: b.endNote,
     cancelledAt: b.cancelledAt,
+    endNote: b.endNote,
     cancelReason: b.cancelReason,
-    createdByName: b.createdByName,
-    workOrderRef: b.workOrderRef,
+    rowVersion: b.rowVersion ?? 1,
   };
 }
 
+/** `StatusEventDto`. */
 function eventView(x: StatusEventRow): CareSpaceStatusEvent {
   return {
     id: x.id,
-    careSpaceId: x.careSpaceId,
-    axis: { code: x.axisCode, display: opsConcept(x.axisCode).display },
-    from: x.fromCode === null ? null : opsConcept(x.fromCode),
-    to: opsConcept(x.toCode),
+    axis: x.axisCode,
+    from: x.fromCode,
+    to: x.toCode,
+    v2Code: x.v2Code,
     reasonCode: x.reasonCode,
     reasonText: x.reasonText,
     expectedUntil: x.expectedUntil,
-    v2Code: x.v2Code,
-    source: { code: x.sourceCode, display: opsConcept(x.sourceCode).display },
+    source: x.sourceCode,
+    sourceRefId: x.sourceRefId,
     occurredAt: x.occurredAt,
-    recordedByName: x.recordedByName,
+    recordedByUserId: x.recordedByUserId,
     requestId: x.requestId,
   };
 }
@@ -668,10 +675,10 @@ const AVAILABILITY_OF_KIND: Readonly<Record<BlockKindCode, AvailabilityCode>> = 
 };
 
 const ACTION_OF_KIND: Readonly<Record<BlockKindCode, InfraAction>> = {
-  BLOCK_CLINICAL: 'block.clinical',
-  BLOCK_ADMIN: 'block.admin',
-  BLOCK_MAINTENANCE: 'maintenance',
-  BLOCK_CLOSURE: 'block.admin',
+  BLOCK_CLINICAL: 'f2.availability.clinical',
+  BLOCK_ADMIN: 'f2.availability.admin',
+  BLOCK_MAINTENANCE: 'f2.availability.maintenance',
+  BLOCK_CLOSURE: 'f2.availability.admin',
 };
 
 function futureCommitments(e: EspacioSimulado): FutureCommitmentConflict[] {
@@ -689,9 +696,9 @@ function endBlock(b: BlockRow, request: MockRequest, requestId: string, note: st
   const antes = availabilityOf(e);
   espacios.actualizar(e.id, { operationalStatusCode: 'SPACE_OP_AVAILABLE', updatedAt: at });
   opsRows.actualizar(e.id, { availabilityReasonCode: null, availabilityReasonText: null, availabilityExpectedUntil: null, availabilityChangedAt: at });
-  recordEvent(e, 'AXIS_AVAILABILITY', antes, 'SPACE_OP_AVAILABLE', { request, requestId, source: 'SRC_BLOCK', sourceRefId: b.id, reasonText: note ?? cancel });
+  recordEvent(e, 'AVAILABILITY', antes, 'SPACE_OP_AVAILABLE', { request, requestId, source: 'BLOCK', sourceRefId: b.id, reasonText: note ?? cancel });
   if (b.kindCode === 'BLOCK_MAINTENANCE' && cancel === null) {
-    markDirtyFromSource(e.id, { trigger: 'CLN_TRG_MAINTENANCE_END', sourceRefId: b.id, terminal: false, ctx: { request, requestId, source: 'SRC_BLOCK' } });
+    markDirtyFromSource(e.id, { trigger: 'CLN_TRG_MAINTENANCE_END', sourceRefId: b.id, terminal: false, ctx: { request, requestId, source: 'BLOCK' } });
   }
 }
 
@@ -708,7 +715,7 @@ function startBlock(e: EspacioSimulado, kind: BlockKindCode, datos: { reasonCode
     const destino = AVAILABILITY_OF_KIND[kind];
     espacios.actualizar(e.id, { operationalStatusCode: destino, updatedAt: ahora });
     opsRows.actualizar(e.id, { availabilityReasonCode: datos.reasonCode, availabilityReasonText: datos.reasonText, availabilityExpectedUntil: datos.expectedEndAt, availabilityChangedAt: ahora });
-    recordEvent(e, 'AXIS_AVAILABILITY', antes, destino, { request, requestId, source: 'SRC_BLOCK', sourceRefId: fila.id, reasonCode: datos.reasonCode, reasonText: datos.reasonText, expectedUntil: datos.expectedEndAt });
+    recordEvent(e, 'AVAILABILITY', antes, destino, { request, requestId, source: 'BLOCK', sourceRefId: fila.id, reasonCode: datos.reasonCode, reasonText: datos.reasonText, expectedUntil: datos.expectedEndAt });
   }
   return fila;
 }
@@ -746,14 +753,94 @@ export function siblingBeds(e: EspacioSimulado): EspacioSimulado[] {
 
 const PRIORIDAD: Readonly<Record<CleaningPriorityCode, number>> = { CLN_PRIO_STAT: 0, CLN_PRIO_URGENT: 1, CLN_PRIO_ROUTINE: 2 };
 
+/**
+ * `POST /cleaning-orders/:id/:action` de F2 (cola de limpieza de camas). Exportada para que
+ * el recambio de quirófano de F4 (`periop-case-flow.handlers.ts`), que registra rutas más
+ * específicas (`/cleaning-orders/:id/start|finish|inspect`), le delegue las órdenes que no son suyas.
+ */
+export function transitionCleaningOrder(request: MockRequest, action: string): unknown {
+  const orden = cleaningOrders.get(request.params['id']!);
+  const espacio = orden === undefined ? null : spaceVisible(request, orden.careSpaceId);
+  if (orden === undefined || espacio === null) return notFoundReply();
+  const sitio = sitiosInfra.get(espacio.siteId)!;
+  const accion = action as CleaningTransition;
+  if (!(accion in ACTION_OF)) return notFoundReply();
+  if (!can(request, sitio, ACTION_OF[accion])) return forbiddenAction(ACTION_OF[accion]);
+  const enviada = request.headers.get('If-Match');
+  if (enviada === null) return failure(428, 'PRECONDITION_FAILED', 'IF_MATCH_REQUIRED', 'Falta la cabecera If-Match.');
+  if (Number(enviada.replace(/"/g, '')) !== orden.rowVersion) {
+    return failure(412, 'CONCURRENCY_CONFLICT', 'ROW_VERSION_MISMATCH', 'Otra persona movió esta orden mientras la miraba. Actualice la cola.', { currentRowVersion: orden.rowVersion });
+  }
+  if (!TRANSITIONS[orden.statusCode].includes(accion)) {
+    return conflictReply('CLEANING_ORDER_INVALID_TRANSITION', 'La orden no admite ese paso en su estado actual.', { from: orden.statusCode, to: accion });
+  }
+  const datos = cuerpo<{ userId: string | null; note: string; result: 'PASS' | 'FAIL'; reasonText: string; reason: string }>(request);
+  const requestId = newRequestId();
+  const yo = request.user?.id ?? null;
+  const at = new Date().toISOString();
+  const ctx: EventContext = { request, requestId, source: 'CLEANING', sourceRefId: orden.id };
+  const sube = { rowVersion: orden.rowVersion + 1 };
+  let resultado: CleaningRow = orden;
+  switch (accion) {
+    case 'assign':
+      resultado = cleaningOrders.actualizar(orden.id, { assignedUserId: datos.userId ?? null, ...sube })!;
+      break;
+    case 'start':
+      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_IN_PROGRESS', startedAt: at, startedByUserId: yo, assignedUserId: orden.assignedUserId ?? yo, ...sube })!;
+      setHygiene(espacio, 'HYG_CLEANING', ctx);
+      break;
+    case 'finish': {
+      const withoutInspection = !inspectionRequired(orden);
+      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_DONE', finishedAt: at, finishedByUserId: yo, note: datos.note ?? orden.note, ...sube })!;
+      setHygiene(espacio, 'HYG_CLEAN', ctx);
+      if (withoutInspection) resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_INSPECTED', inspectedAt: at, inspectionResult: 'PASS' })!;
+      break;
+    }
+    case 'inspect': {
+      if (datos.result !== 'PASS' && datos.result !== 'FAIL') {
+        return failure(422, 'VALIDATION_FAILED', 'VALIDATION_FAILED', 'Indique el resultado de la inspección.', { violations: ['result must be PASS or FAIL'] });
+      }
+      if (yo !== null && yo === orden.finishedByUserId) {
+        return precondition('INSPECTION_BY_CLEANER_NOT_ALLOWED', 'Quien terminó la limpieza no puede inspeccionarla: la inspecciona otra persona.');
+      }
+      const supervisor = rolesIn(request, sitio).some((r) => r === 'NURSE_SUPERVISOR' || r === 'HOUSEKEEPING_SUPERVISOR');
+      if (orden.typeCode === 'CLEAN_TERMINAL' && !supervisor) return forbiddenAction('f2.cleaning.inspect', 'TERMINAL_INSPECTION_REQUIRES_SUPERVISOR');
+      if (datos.result === 'FAIL') {
+        const reasonRow = typeof datos.reasonText === 'string' ? datos.reasonText.trim() : '';
+        if (reasonRow === '') return precondition('INSPECTION_REASON_REQUIRED', 'Una inspección rechazada exige el motivo.', { field: 'reasonText' });
+        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_REJECTED', inspectedAt: at, inspectedByUserId: yo, inspectionResult: 'FAIL', rejectionReason: reasonRow, ...sube })!;
+        cleaningOrders.agregar(newOrder(espacio, { typeCode: orden.typeCode, triggerCode: 'CLN_TRG_INSPECTION_FAILED', previousOrderId: orden.id, priorityCode: 'CLN_PRIO_URGENT', sourceRefId: orden.id, note: reasonRow }));
+        setHygiene(espacio, 'HYG_DIRTY', { ...ctx, reasonText: reasonRow });
+      } else {
+        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_INSPECTED', inspectedAt: at, inspectedByUserId: yo, inspectionResult: 'PASS', ...sube })!;
+        const apaga = orden.typeCode === 'CLEAN_TERMINAL' ? { terminalCleaningRequired: false } : {};
+        setHygiene(espacio, 'HYG_INSPECTED', ctx, apaga);
+      }
+      break;
+    }
+    case 'cancel': {
+      const reasonRow = typeof datos.reason === 'string' ? datos.reason.trim() : '';
+      if (reasonRow === '') return precondition('CANCEL_REASON_REQUIRED', 'Indique por qué se cancela.', { field: 'reason' });
+      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_CANCELLED', cancelReason: reasonRow, ...sube })!;
+      break;
+    }
+  }
+  return { ...orderView(resultado, viewerOf(request, sitio)), requestId };
+}
+
 export function registerInfrastructureOps(router: MockRouter): void {
+  /** `InfraAccessMeDto`: sedes del tenant donde el actor tiene rol (la maqueta asigna a nivel sede). */
   router.get('/practice/infrastructure-access/me', (request) => {
     const tenant = request.headers.get('X-Tenant-Id');
     const sitios = sitiosInfra.filtrar((s) => tenant === null || s.tenantId === tenant);
     return {
       userId: request.user?.id ?? '',
+      tenantId: tenant ?? '',
       sites: sitios
-        .map((s) => ({ siteId: s.id, code: s.code, name: s.name, timeZone: s.timeZone, roles: rolesIn(request, s), actions: viewerActions(request, s) }))
+        .map((s) => ({
+          siteId: s.id, practiceId: s.practiceId, code: s.code, name: s.name, timeZone: s.timeZone ?? null,
+          roles: rolesIn(request, s), globalRoles: [] as string[], actions: viewerOf(request, s).actions, grants: [],
+        }))
         .filter((s) => s.roles.length > 0),
     };
   });
@@ -761,8 +848,8 @@ export function registerInfrastructureOps(router: MockRouter): void {
   router.get('/sites/:siteId/bed-board', (request) => {
     const sitio = siteVisible(request, request.params['siteId']);
     if (sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'board.view')) return forbiddenAction('board.view');
-    const viewer = viewerActions(request, sitio);
+    if (!can(request, sitio, 'f2.board.read')) return forbiddenAction('f2.board.read');
+    const viewer = viewerOf(request, sitio);
     const q = request.query;
     const unitId = q.get('unitId');
     const parent = q.get('parentSpaceId');
@@ -805,11 +892,11 @@ export function registerInfrastructureOps(router: MockRouter): void {
     const espacio = spaceVisible(request, request.params['id']);
     if (espacio === null) return notFoundReply();
     const sitio = sitiosInfra.get(espacio.siteId)!;
-    if (!can(request, sitio, 'board.view') && !can(request, sitio, 'cleaning.view')) return forbiddenAction('board.view');
-    const viewer = viewerActions(request, sitio);
+    if (!can(request, sitio, 'f2.board.read')) return forbiddenAction('f2.board.read');
+    const viewer = viewerOf(request, sitio);
     const orden = openOrderOf(espacio.id);
     return {
-      cell: buildCell(espacio, viewer),
+      ...buildCell(espacio, viewer),
       openBlocks: blocks.filtrar((b) => b.careSpaceId === espacio.id && b.endedAt === null && b.cancelledAt === null).map(blockView),
       openCleaningOrder: orden === undefined ? null : orderView(orden, viewer),
     };
@@ -836,7 +923,7 @@ export function registerInfrastructureOps(router: MockRouter): void {
 
     if (accion === 'unblock' || accion === 'reopen') {
       endBlock(abierto!, request, requestId, datos.reasonText ?? null, null);
-      return { cell: buildCell(espacios.get(espacio.id)!, viewerActions(request, sitio)), blockId: abierto!.id, requestId };
+      return { cell: buildCell(espacios.get(espacio.id)!, viewerOf(request, sitio)), blockId: abierto!.id, requestId };
     }
 
     if (espacio.statusCode !== 'SPACE_ACTIVE') return precondition('SPACE_NOT_ACTIVE', 'Sólo se bloquea un espacio activo.');
@@ -846,7 +933,7 @@ export function registerInfrastructureOps(router: MockRouter): void {
       return precondition('BLOCK_REASON_KIND_MISMATCH', 'Ese motivo no corresponde a este tipo de bloqueo.', { field: 'reasonCode' });
     }
     const texto = typeof datos.reasonText === 'string' ? datos.reasonText.trim() : '';
-    if (reasonRow.requiresText && texto === '') return precondition('BLOCK_REASON_TEXT_REQUIRED', 'El motivo «Otro» exige describirlo.', { field: 'reasonText' });
+    if (reasonRow.code === REASON_REQUIRING_TEXT && texto === '') return precondition('BLOCK_REASON_TEXT_REQUIRED', 'El motivo «Otro» exige describirlo.', { field: 'reasonText' });
     const fin = typeof datos.expectedEndAt === 'string' && datos.expectedEndAt !== '' ? datos.expectedEndAt : null;
     if (kind === 'BLOCK_MAINTENANCE' && fin === null) return precondition('BLOCK_EXPECTED_END_REQUIRED', 'El mantenimiento exige una fecha estimada de fin.', { field: 'expectedEndAt' });
     if (fin !== null && Date.parse(fin) <= Date.now()) return precondition('BLOCK_EXPECTED_END_IN_PAST', 'La fecha estimada tiene que ser futura.', { field: 'expectedEndAt' });
@@ -857,11 +944,11 @@ export function registerInfrastructureOps(router: MockRouter): void {
       return conflictReply('FUTURE_COMMITMENTS_CONFLICT', 'Hay compromisos en la ventana del bloqueo. Reprográmelos o confirme que los conoce.', { conflicts: conflictos });
     }
     const fila = startBlock(espacio, kind, { reasonCode: reasonRow.code, reasonText: texto === '' ? null : texto, expectedEndAt: fin, startsAt: typeof datos.startsAt === 'string' && datos.startsAt !== '' ? datos.startsAt : null }, request, requestId);
-    return { cell: buildCell(espacios.get(espacio.id)!, viewerActions(request, sitio)), blockId: fila.id, requestId, conflicts: conflictos };
+    return { cell: buildCell(espacios.get(espacio.id)!, viewerOf(request, sitio)), blockId: fila.id, requestId, conflicts: conflictos };
   });
 
   router.get('/care-spaces/:id/blocks', (request) => {
-    const g = guardSpace(request, request.params['id'], 'history.view');
+    const g = guardSpace(request, request.params['id'], 'f2.events.read');
     if (isReply(g)) return g;
     const todos = request.query.get('includeEnded') === 'true';
     return blocks
@@ -879,38 +966,41 @@ export function registerInfrastructureOps(router: MockRouter): void {
     if (b.endedAt !== null || b.cancelledAt !== null) return conflictReply('BLOCK_ALREADY_ENDED', 'Ese bloqueo ya terminó.');
     const datos = cuerpo<{ note: string; reason: string }>(request);
     const requestId = newRequestId();
-    endBlock(b, request, requestId, cancelar ? null : (datos.note ?? null), cancelar ? (datos.reason ?? 'Cancelado') : null);
-    return { cell: buildCell(espacios.get(espacio.id)!, viewerActions(request, sitio)), requestId };
+    if (cancelar && (typeof datos.reason !== 'string' || datos.reason.trim() === '')) {
+      return failure(400, 'VALIDATION_FAILED', 'VALIDATION_FAILED', 'Error de validación', { violations: ['reason must be longer than or equal to 1 characters'] });
+    }
+    endBlock(b, request, requestId, cancelar ? null : (datos.note ?? null), cancelar ? (datos.reason ?? '').trim() : null);
+    return { ...blockView(blocks.get(b.id)!), requestId };
   };
   router.post('/care-space-blocks/:id/end', terminarBloqueo(false));
   router.post('/care-space-blocks/:id/cancel', terminarBloqueo(true));
 
   router.post('/care-spaces/:id/hygiene', (request) => {
     const datos = cuerpo<{ action: 'mark-dirty' | 'mark-contaminated'; reasonText: string }>(request);
-    const accion: InfraAction = datos.action === 'mark-contaminated' ? 'hygiene.mark-contaminated' : 'hygiene.mark-dirty';
+    const accion: InfraAction = datos.action === 'mark-contaminated' ? 'f2.hygiene.mark-contaminated' : 'f2.hygiene.mark-dirty';
     const g = guardSpace(request, request.params['id'], accion);
     if (isReply(g)) return g;
     const { espacio, sitio } = g;
     const version = opsVersionMismatch(request, opsOf(espacio));
     if (version !== null) return version;
     const requestId = newRequestId();
-    const ctx: EventContext = { request, requestId, source: 'SRC_MANUAL', reasonText: datos.reasonText ?? null };
+    const ctx: EventContext = { request, requestId, source: 'MANUAL', reasonText: datos.reasonText ?? null };
     const abierta = openOrderOf(espacio.id);
     if (datos.action === 'mark-contaminated') {
       if (abierta !== undefined) cleaningOrders.actualizar(abierta.id, { typeCode: 'CLEAN_TERMINAL', priorityCode: 'CLN_PRIO_URGENT', rowVersion: abierta.rowVersion + 1 });
       const orden = abierta ?? cleaningOrders.agregar(newOrder(espacio, { typeCode: 'CLEAN_TERMINAL', triggerCode: 'CLN_TRG_CONTAMINATION', priorityCode: 'CLN_PRIO_URGENT' }));
       setHygiene(espacio, 'HYG_CONTAMINATED', ctx, { terminalCleaningRequired: true });
-      return { cell: buildCell(espacios.get(espacio.id)!, viewerActions(request, sitio)), cleaningOrderId: orden.id, requestId };
+      return { cell: buildCell(espacios.get(espacio.id)!, viewerOf(request, sitio)), cleaningOrderId: orden.id, requestId };
     }
     if (abierta !== undefined) return conflictReply('CLEANING_ORDER_ALREADY_OPEN', 'Ya hay una orden de limpieza abierta para este espacio.', { cleaningOrderId: abierta.id });
     const ops = opsOf(espacio);
     const orden = cleaningOrders.agregar(newOrder(espacio, { typeCode: ops.terminalCleaningRequired ? 'CLEAN_TERMINAL' : 'CLEAN_ROUTINE', note: datos.reasonText ?? null }));
     setHygiene(espacio, 'HYG_DIRTY', ctx);
-    return { cell: buildCell(espacios.get(espacio.id)!, viewerActions(request, sitio)), cleaningOrderId: orden.id, requestId };
+    return { cell: buildCell(espacios.get(espacio.id)!, viewerOf(request, sitio)), cleaningOrderId: orden.id, requestId };
   });
 
   router.post('/care-spaces/:id/isolation', (request) => {
-    const g = guardSpace(request, request.params['id'], 'isolation');
+    const g = guardSpace(request, request.params['id'], 'f2.isolation.set');
     if (isReply(g)) return g;
     const { espacio, sitio } = g;
     const datos = cuerpo<{ isolationCode: IsolationCode; organismText: string; reasonText: string; cohortApproved: boolean }>(request);
@@ -926,20 +1016,20 @@ export function registerInfrastructureOps(router: MockRouter): void {
     const version = opsVersionMismatch(request, opsOf(espacio));
     if (version !== null) return version;
     const requestId = newRequestId();
-    const ctx: EventContext = { request, requestId, source: 'SRC_MANUAL', reasonText: datos.reasonText };
+    const ctx: EventContext = { request, requestId, source: 'MANUAL', reasonText: datos.reasonText };
     const antes = opsOf(espacio).isolationCode;
     const at = new Date().toISOString();
     const companeros: { careSpaceId: string; blockId: string }[] = [];
     if (code === 'ISO_NONE') {
       opsRows.actualizar(espacio.id, { isolationCode: 'ISO_NONE', isolationOrganism: null, isolationChangedAt: at, terminalCleaningRequired: true });
-      recordEvent(espacio, 'AXIS_ISOLATION', antes, 'ISO_NONE', ctx);
+      recordEvent(espacio, 'ISOLATION', antes, 'ISO_NONE', ctx);
       if (antes !== 'ISO_NONE') markDirtyFromSource(espacio.id, { trigger: 'CLN_TRG_ISOLATION_END', sourceRefId: espacio.id, terminal: true, ctx });
       for (const b of blocks.filtrar((x) => x.cohortSourceId === espacio.id && x.endedAt === null && x.cancelledAt === null)) {
         endBlock(b, request, requestId, 'Fin del aislamiento de la cama vecina', null);
       }
     } else {
       opsRows.actualizar(espacio.id, { isolationCode: code, isolationOrganism: datos.organismText?.trim() || null, isolationChangedAt: at });
-      recordEvent(espacio, 'AXIS_ISOLATION', antes, code, ctx);
+      recordEvent(espacio, 'ISOLATION', antes, code, ctx);
       for (const hermana of siblingBeds(espacio)) {
         if (occupancyProvider(hermana.id).code === 'OCC_FREE' && openBlockOf(hermana.id) === undefined && hermana.statusCode === 'SPACE_ACTIVE') {
           const b = startBlock(hermana, 'BLOCK_CLINICAL', { reasonCode: 'BLOCK_RSN_ISOLATION_COHORT', reasonText: `Aislamiento en ${espacio.code}`, expectedEndAt: null, startsAt: null, cohortSourceId: espacio.id }, request, requestId);
@@ -947,16 +1037,17 @@ export function registerInfrastructureOps(router: MockRouter): void {
         }
       }
     }
-    return { cell: buildCell(espacios.get(espacio.id)!, viewerActions(request, sitio)), companionBlocks: companeros, requestId };
+    return { cell: buildCell(espacios.get(espacio.id)!, viewerOf(request, sitio)), companionBlocks: companeros, requestId };
   });
 
   router.get('/sites/:siteId/cleaning-orders', (request) => {
     const sitio = siteVisible(request, request.params['siteId']);
     if (sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'cleaning.view')) return forbiddenAction('cleaning.view');
-    const viewer = viewerActions(request, sitio);
+    if (!can(request, sitio, 'f2.cleaning.read')) return forbiddenAction('f2.cleaning.read');
+    const viewer = viewerOf(request, sitio);
     const q = request.query;
-    const estados = (q.get('status') ?? 'CLN_PENDING,CLN_IN_PROGRESS,CLN_DONE').split(',').filter(Boolean);
+    const estado = q.get('status');
+    const estados = estado === null || estado === '' ? ['CLN_PENDING', 'CLN_IN_PROGRESS', 'CLN_DONE'] : [estado];
     const unidad = q.get('unitId');
     const prioridad = q.get('priority');
     const mias = q.get('assignedTo') === 'me';
@@ -973,7 +1064,7 @@ export function registerInfrastructureOps(router: MockRouter): void {
   router.post('/sites/:siteId/cleaning-orders', (request) => {
     const sitio = siteVisible(request, request.params['siteId']);
     if (sitio === null) return notFoundReply();
-    if (!can(request, sitio, 'cleaning.create')) return forbiddenAction('cleaning.create');
+    if (!can(request, sitio, 'f2.cleaning.create')) return forbiddenAction('f2.cleaning.create');
     const datos = cuerpo<{ careSpaceId: string; typeCode: CleaningTypeCode; priorityCode: CleaningPriorityCode; note: string }>(request);
     const espacio = spaceVisible(request, datos.careSpaceId);
     if (espacio === null || espacio.siteId !== sitio.id) return notFoundReply();
@@ -985,14 +1076,14 @@ export function registerInfrastructureOps(router: MockRouter): void {
     }
     const requestId = newRequestId();
     const orden = cleaningOrders.agregar(newOrder(espacio, { typeCode: datos.typeCode ?? 'CLEAN_ROUTINE', priorityCode: datos.priorityCode ?? 'CLN_PRIO_ROUTINE', note: datos.note ?? null }));
-    if (ops.hygieneCode !== 'HYG_DIRTY' && ops.hygieneCode !== 'HYG_CONTAMINATED') setHygiene(espacio, 'HYG_DIRTY', { request, requestId, source: 'SRC_CLEANING', sourceRefId: orden.id });
-    return reply(201, { order: orderView(orden, viewerActions(request, sitio)), requestId });
+    if (ops.hygieneCode !== 'HYG_DIRTY' && ops.hygieneCode !== 'HYG_CONTAMINATED') setHygiene(espacio, 'HYG_DIRTY', { request, requestId, source: 'CLEANING', sourceRefId: orden.id });
+    return reply(201, { ...orderView(orden, viewerOf(request, sitio)), requestId });
   });
 
   router.post('/cleaning-orders/:id/:action', (request) => transitionCleaningOrder(request, request.params['action']!));
 
   router.get('/care-spaces/:id/status-events', (request) => {
-    const g = guardSpace(request, request.params['id'], 'history.view');
+    const g = guardSpace(request, request.params['id'], 'f2.events.read');
     if (isReply(g)) return g;
     const eje = request.query.get('axis');
     // Más reciente primero; a igual instante, el último escrito (append-only).
@@ -1005,82 +1096,6 @@ export function registerInfrastructureOps(router: MockRouter): void {
       .map(eventView);
     return { items, nextCursor: null };
   });
-}
-
-/**
- * `POST /cleaning-orders/:id/{assign|start|finish|inspect|cancel}` de la cola de limpieza (F2).
- * Exportada porque F4 registra `/cleaning-orders/:id/{start|finish|inspect}` para el recambio de
- * quirófano y el `MockRouter` elige esas rutas (más literales): cuando la orden no es un recambio,
- * el handler de F4 delega acá.
- */
-export function transitionCleaningOrder(request: MockRequest, action: string) {
-  const orden = cleaningOrders.get(request.params['id']!);
-  const espacio = orden === undefined ? null : spaceVisible(request, orden.careSpaceId);
-  if (orden === undefined || espacio === null) return notFoundReply();
-  const sitio = sitiosInfra.get(espacio.siteId)!;
-  const accion = action as CleaningTransition;
-  if (!(accion in ACTION_OF)) return notFoundReply();
-  if (!can(request, sitio, ACTION_OF[accion])) return forbiddenAction(ACTION_OF[accion]);
-  const enviada = request.headers.get('If-Match');
-  if (enviada === null) return failure(428, 'PRECONDITION_FAILED', 'IF_MATCH_REQUIRED', 'Falta la cabecera If-Match.');
-  if (Number(enviada.replace(/"/g, '')) !== orden.rowVersion) {
-    return failure(412, 'CONCURRENCY_CONFLICT', 'ROW_VERSION_MISMATCH', 'Otra persona movió esta orden mientras la miraba. Actualice la cola.', { currentRowVersion: orden.rowVersion });
-  }
-  if (!TRANSITIONS[orden.statusCode].includes(accion)) {
-    return conflictReply('CLEANING_ORDER_INVALID_TRANSITION', 'La orden no admite ese paso en su estado actual.', { from: orden.statusCode, to: accion });
-  }
-  const datos = cuerpo<{ userId: string | null; note: string; result: 'PASS' | 'FAIL'; reasonText: string; reason: string }>(request);
-  const requestId = newRequestId();
-  const yo = request.user?.id ?? null;
-  const at = new Date().toISOString();
-  const ctx: EventContext = { request, requestId, source: 'SRC_CLEANING', sourceRefId: orden.id };
-  const sube = { rowVersion: orden.rowVersion + 1 };
-  let resultado: CleaningRow = orden;
-  switch (accion) {
-    case 'assign':
-      resultado = cleaningOrders.actualizar(orden.id, { assignedUserId: datos.userId ?? null, ...sube })!;
-      break;
-    case 'start':
-      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_IN_PROGRESS', startedAt: at, startedByUserId: yo, assignedUserId: orden.assignedUserId ?? yo, ...sube })!;
-      setHygiene(espacio, 'HYG_CLEANING', ctx);
-      break;
-    case 'finish': {
-      const withoutInspection = !inspectionRequired(orden);
-      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_DONE', finishedAt: at, finishedByUserId: yo, note: datos.note ?? orden.note, ...sube })!;
-      setHygiene(espacio, 'HYG_CLEAN', ctx);
-      if (withoutInspection) resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_INSPECTED', inspectedAt: at, inspectionResult: 'PASS' })!;
-      break;
-    }
-    case 'inspect': {
-      if (datos.result !== 'PASS' && datos.result !== 'FAIL') {
-        return failure(422, 'VALIDATION_FAILED', 'VALIDATION_FAILED', 'Indique el resultado de la inspección.', { violations: ['result must be PASS or FAIL'] });
-      }
-      if (yo !== null && yo === orden.finishedByUserId) {
-        return precondition('INSPECTION_BY_CLEANER_NOT_ALLOWED', 'Quien terminó la limpieza no puede inspeccionarla: la inspecciona otra persona.');
-      }
-      const supervisor = rolesIn(request, sitio).some((r) => r === 'NURSE_SUPERVISOR' || r === 'HOUSEKEEPING_SUPERVISOR');
-      if (orden.typeCode === 'CLEAN_TERMINAL' && !supervisor) return forbiddenAction('cleaning.inspect', 'TERMINAL_INSPECTION_REQUIRES_SUPERVISOR');
-      if (datos.result === 'FAIL') {
-        const reasonRow = typeof datos.reasonText === 'string' ? datos.reasonText.trim() : '';
-        if (reasonRow === '') return precondition('INSPECTION_REASON_REQUIRED', 'Una inspección rechazada exige el motivo.', { field: 'reasonText' });
-        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_REJECTED', inspectedAt: at, inspectedByUserId: yo, inspectionResult: 'FAIL', rejectionReason: reasonRow, ...sube })!;
-        cleaningOrders.agregar(newOrder(espacio, { typeCode: orden.typeCode, triggerCode: 'CLN_TRG_INSPECTION_FAILED', previousOrderId: orden.id, priorityCode: 'CLN_PRIO_URGENT', sourceRefId: orden.id, note: reasonRow }));
-        setHygiene(espacio, 'HYG_DIRTY', { ...ctx, reasonText: reasonRow });
-      } else {
-        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_INSPECTED', inspectedAt: at, inspectedByUserId: yo, inspectionResult: 'PASS', ...sube })!;
-        const apaga = orden.typeCode === 'CLEAN_TERMINAL' ? { terminalCleaningRequired: false } : {};
-        setHygiene(espacio, 'HYG_INSPECTED', ctx, apaga);
-      }
-      break;
-    }
-    case 'cancel': {
-      const reasonRow = typeof datos.reason === 'string' ? datos.reason.trim() : '';
-      if (reasonRow === '') return precondition('CANCEL_REASON_REQUIRED', 'Indique por qué se cancela.', { field: 'reason' });
-      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_CANCELLED', cancelReason: reasonRow, ...sube })!;
-      break;
-    }
-  }
-  return { order: orderView(resultado, viewerActions(request, sitio)), requestId };
 }
 
 export function countsOf(cells: readonly BedBoardCell[]): BedBoardCounts {
@@ -1100,8 +1115,8 @@ export function countsOf(cells: readonly BedBoardCell[]): BedBoardCounts {
 }
 
 /* Sobreviven a F5 dentro de la pestaña: UI → petición → persistencia → recarga → UI. */
-opsRows.persistirEn('mock.ops.estados');
-blocks.persistirEn('mock.ops.bloqueos');
-cleaningOrders.persistirEn('mock.ops.limpiezas');
-statusEvents.persistirEn('mock.ops.eventos-a20');
-infraAssignments.persistirEn('mock.ops.asignaciones');
+opsRows.persistirEn('mock.ops.estados.v2');
+blocks.persistirEn('mock.ops.bloqueos.v2');
+cleaningOrders.persistirEn('mock.ops.limpiezas.v2');
+statusEvents.persistirEn('mock.ops.eventos-a20.v2');
+infraAssignments.persistirEn('mock.ops.asignaciones.v2');

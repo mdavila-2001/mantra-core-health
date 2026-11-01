@@ -1,62 +1,31 @@
-import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { AccountIcon } from './account-icon';
-import {
-  ACCOUNT_ICON_NAMES,
-  type AccountIconName,
-} from './account-icon.types';
+import { ACCOUNT_ICON_NAMES, type AccountIconName } from './account-icon.types';
 
 /**
- * El set es cerrado y cada nombre tiene su alta detrás: lo que se prueba es que
- * ninguno quede mudo y que cada tipo traiga el accesorio que lo distingue, que
- * es lo que la animación de juego mueve.
+ * Los íconos de tipo de cuenta del alta (paciente, médico, aseguradora…). Son
+ * decorativos —el tipo se dice en texto— y cada uno tiene su dibujo: el que
+ * elige su cuenta lo reconoce sin leer.
  */
+function dibujo(name: AccountIconName): SVGElement | null {
+  const fixture = TestBed.createComponent(AccountIcon);
+  fixture.componentRef.setInput('name', name);
+  fixture.detectChanges();
+  return (fixture.nativeElement as HTMLElement).querySelector('svg');
+}
+
 describe('AccountIcon', () => {
-  let fixture: ComponentFixture<AccountIcon>;
-
-  function render(name: AccountIconName): HTMLElement {
-    fixture = TestBed.createComponent(AccountIcon);
-    fixture.componentRef.setInput('name', name);
-    fixture.detectChanges();
-    return fixture.nativeElement as HTMLElement;
-  }
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [AccountIcon] }).compileComponents();
+  it.each(ACCOUNT_ICON_NAMES)('%s dibuja un SVG decorativo', (name) => {
+    const svg = dibujo(name)!;
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('aria-hidden')).toBe('true');
+    expect(svg.getAttribute('focusable')).toBe('false');
+    expect(svg.children.length).toBeGreaterThan(0);
   });
 
-  it.each(ACCOUNT_ICON_NAMES)('«%s» dibuja un contorno', (name) => {
-    expect(render(name).querySelectorAll('svg .draw').length).toBeGreaterThan(0);
-  });
-
-  const ACCESORIO: Record<AccountIconName, string> = {
-    patient: '.cross',
-    practitioner: '.bell',
-    insurer: '.heart',
-    laboratory: '.sample',
-    imaging: '.sweep',
-    pharmacy: '.pharmacy-cross',
-    clinic: '.cross',
-    support: '.person',
-  };
-
-  it.each(Object.entries(ACCESORIO))('«%s» trae su accesorio animable (%s)', (name, selector) => {
-    expect(render(name as AccountIconName).querySelector(`svg ${selector}`)).not.toBeNull();
-  });
-
-  it('es siempre decorativo: nunca se anuncia como «imagen»', () => {
-    expect(render('patient').querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
-  });
-
-  it('el juego responde a un contenedor marcado, no a un estado propio', () => {
-    // El contrato con las pantallas: marcar el contenedor interactivo con
-    // `data-icon-play`. Si el nombre del atributo cambia en la hoja y no en las
-    // pantallas, los íconos dejan de jugar sin que nada falle.
-    render('patient');
-    const hojas = Array.from(document.querySelectorAll('style'))
-      .map((estilo) => estilo.textContent ?? '')
-      .join('\n');
-
-    expect(hojas).toContain('data-icon-play');
+  it('cada tipo de cuenta tiene un dibujo propio', () => {
+    const dibujos = ACCOUNT_ICON_NAMES.map((n) => dibujo(n)!.innerHTML.replace(/<!--[\s\S]*?-->/g, ''));
+    expect(new Set(dibujos).size).toBe(ACCOUNT_ICON_NAMES.length);
   });
 });

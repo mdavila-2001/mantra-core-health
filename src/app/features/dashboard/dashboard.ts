@@ -17,6 +17,8 @@ import { StaggerList } from '../../shared/motion/stagger-list.directive';
 import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { AppVisible } from '../../core/visibility/visible.directive';
+import { DASHBOARD_UI } from './dashboard.ui-elements';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { AdmissionStatusCard } from '../account/admission-status-card/admission-status-card';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
@@ -97,6 +99,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     PlatformHome,
     SetupNotice,
     AdmissionStatusCard,
+    AppVisible,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -105,6 +108,9 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 export class Dashboard {
   private readonly auth = inject(AuthService);
   private readonly profiles = inject(ProfilesClient);
+
+  /** Las claves de visibilidad de lo que este panel puede ocultar por regla (`dashboard.ui-elements.ts`). */
+  protected readonly ui = DASHBOARD_UI;
 
   protected readonly roles = this.auth.roles;
   protected readonly activeTenantId = this.auth.activeTenantId;

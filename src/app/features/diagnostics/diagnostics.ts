@@ -24,6 +24,7 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import type { CollectionPointRef } from '../../core/data-access/diagnostics/sample-collection.types';
+import { INFRA_INTEGRATION_FLAGS } from '../../core/data-access/infra-flags';
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Alert } from '../../shared/components/molecules/alert/alert';
@@ -115,17 +116,26 @@ export class Diagnostics {
     { key: 'workOrderNumber', header: 'Orden', priority: 1, cell: this.celdaOrden() },
     { key: 'statusConceptId', header: 'Estado', priority: 1, cell: this.celdaEstado() },
     { key: 'scheduledAt', header: 'Programada', priority: 2, cell: this.celdaCuando() },
-    { key: 'collectionPoint', header: 'Punto de toma', priority: 1, cell: this.pointCell() },
+    // F5b detrás de la bandera: la API todavía no manda `collectionPoint`.
+    ...(this.pointsEnabled ? [{ key: 'collectionPoint' as const, header: 'Punto de toma', priority: 1, cell: this.pointCell() }] : []),
   ]);
 
   /* ---- F5b · punto de toma (`CONTRATO-F2-F5.md` §F5b) ------------------- */
 
   private readonly pointCell = viewChild.required<TemplateRef<{ $implicit: LabWorkOrder }>>('pointCell');
 
+  /**
+   * Apagada mientras la API no acepte `collectionCareSpaceId` (400 con
+   * `forbidNonWhitelisted`) ni mande `collectionPoint`: sin columna ni filtro.
+   */
+  protected readonly pointsEnabled = inject(INFRA_INTEGRATION_FLAGS).collectionPoints;
+  /** Cada lectura lleva su número: una respuesta vieja (otro filtro) no pisa la nueva. */
+  private lectura = 0;
+
   /** Los puntos que aparecen en la cola sin filtrar: de ahí sale el filtro. */
   private readonly knownPoints = signal<readonly CollectionPointRef[]>([]);
   protected readonly pointFilter = signal<string>('');
-  protected readonly pointOptions = computed<readonly SelectOption<string>[]>(() => [
+  protected readonly pointOptions = computed<readonly SelectOption<string>[]>(() => !this.pointsEnabled ? [] : [
     { value: '', label: 'Todos los puntos de toma' },
     ...this.knownPoints().map((p) => ({ value: p.careSpaceId, label: `${p.code} · ${p.name}` })),
   ]);
@@ -160,9 +170,11 @@ export class Diagnostics {
 
   private cargar(): void {
     this.cola.set(loading());
+    const esta = ++this.lectura;
+    const point = this.pointsEnabled ? this.pointFilter() : '';
 
     this.diagnostics
-      .listWorkOrders({ limit: TOPE, ...(this.pointFilter() === '' ? {} : { collectionCareSpaceId: this.pointFilter() }) })
+      .listWorkOrders({ limit: TOPE, ...(point === '' ? {} : { collectionCareSpaceId: point }) })
       .pipe(
         switchMap((filas) =>
           forkJoin({
@@ -175,8 +187,9 @@ export class Diagnostics {
       )
       .subscribe({
         next: ({ filas, etiquetas }) => {
+          if (esta !== this.lectura) return;
           this.etiquetas.set(etiquetas);
-          if (this.pointFilter() === '') this.knownPoints.set(pointsOf(filas));
+          if (point === '') this.knownPoints.set(pointsOf(filas));
 
           if (filas.length === 0) {
             // La salida no es «crear una orden»: la orden de trabajo nace de
@@ -197,8 +210,9 @@ export class Diagnostics {
 
           this.cola.set(ready(filas));
         },
-        error: (error: unknown) =>
-          this.cola.set(errorToViewState<readonly LabWorkOrder[]>(error)),
+        error: (error: unknown) => {
+          if (esta === this.lectura) this.cola.set(errorToViewState<readonly LabWorkOrder[]>(error));
+        },
       });
   }
 }

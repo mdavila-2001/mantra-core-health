@@ -1,15 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, linkedSignal, signal, untracked, viewChild, type TemplateRef } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal, viewChild, type TemplateRef } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, filter, map, of, startWith, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { SessionStore } from '../../../core/auth/session.store';
 import { OperatingRoomsClient } from '../../../core/data-access/operating-rooms/operating-rooms.client';
-import { canManageBlocks } from '../../../core/data-access/operating-rooms/operating-rooms.rules';
+import { blockOwnerLabel, type OwnerDirectory } from '../../../core/data-access/operating-rooms/operating-rooms.rules';
 import type { OperatingRoomSummary, OrBlock } from '../../../core/data-access/operating-rooms/operating-rooms.types';
 import { SiteContextStore } from '../../../core/data-access/operating-rooms/site-context.store';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, empty, forbidden, loading, mapData, ready } from '../../../core/view-state/view-state';
+import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
+import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -22,6 +23,7 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { dateTimeOf, durationOf, localDay, shiftDay, shortDateOf, timeOf } from '../interventions.presentation';
+import { SiteSwitch } from '../site-switch/site-switch';
 import { BlockForm } from './block-form';
 
 const TABS = ['week', 'new'] as const;
@@ -45,15 +47,17 @@ function mondayOf(day: string): string {
  * Una tarjeta con dos pestañas: los bloques de la semana (con su uso, su
  * plazo de liberación y sus casos) y el alta de un bloque o de una serie
  * semanal. Liberar o cancelar pide motivo (`confirmWithReason`) y viaja con
- * `If-Match`: si alguien programó un caso en el medio, la API responde 422
- * `OR_BLOCK_HAS_CASES` o 412, y se muestra.
+ * la versión leída: si alguien programó un caso en el medio, la API responde
+ * 422 `OR_BLOCK_HAS_CASES`, y se muestra.
  *
- * Sólo la jefatura de quirófano gestiona bloques; quien no lo es ve S5. La
- * API decide igual.
+ * Quién gestiona bloques lo decide la API (§0.3, `f4.or-block.manage`: jefe de
+ * quirófano asignado o admin de la sede): la pantalla pide siempre y un 403 se
+ * pinta como S5. El dueño viene como ids (`blockView`): el rótulo se arma con
+ * el catálogo de especialidades, las unidades y el personal de la sede.
  */
 @Component({
   selector: 'app-or-blocks',
-  imports: [AppButton, Badge, BlockForm, Card, DataTable, PageHeader, Tab, Tabs, ViewStateHost],
+  imports: [AppButton, Badge, BlockForm, Card, DataTable, PageHeader, SiteSwitch, Tab, Tabs, ViewStateHost],
   templateUrl: './or-blocks.html',
   styleUrl: './or-blocks.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,7 +65,7 @@ function mondayOf(day: string): string {
 export class OrBlocks {
   private readonly operatingRooms = inject(OperatingRoomsClient);
   private readonly siteContext = inject(SiteContextStore);
-  private readonly session = inject(SessionStore);
+  private readonly specialtiesCatalog = inject(MedicalSpecialtiesCatalog);
   private readonly dialogs = inject(DialogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -78,18 +82,22 @@ export class OrBlocks {
 
   protected readonly rooms = signal<readonly OperatingRoomSummary[]>([]);
   private readonly loaded = signal<ViewState<readonly OrBlock[]>>(loading());
+  private readonly reloads = signal(0);
+  private readonly specialties = signal<ReadonlyMap<string, string>>(new Map());
   protected readonly failure = signal<ViewState<never> | null>(null);
   protected readonly working = signal<string | null>(null);
 
-  protected readonly allowed = computed(() => canManageBlocks(this.session.roles()));
-  protected readonly siteId = computed(() => dataOf(this.siteContext.state())?.sites[0]?.id ?? null);
-  protected readonly staff = computed(() => dataOf(this.siteContext.state())?.staff ?? []);
+  protected readonly siteId = this.siteContext.siteId;
+  protected readonly staff = computed(() => dataOf(this.siteContext.directory())?.staff ?? []);
+  private readonly ownerDirectory = computed<OwnerDirectory>(() => {
+    const dir = dataOf(this.siteContext.directory());
+    return {
+      specialties: this.specialties(),
+      units: new Map((dir?.clinicalUnits ?? []).map((u) => [u.id, u.name])),
+      surgeons: new Map((dir?.staff ?? []).flatMap((m) => (m.practitionerName === null ? [] : [[m.practitionerProfileId, m.practitionerName] as const]))),
+    };
+  });
   protected readonly weekLabel = computed(() => `Semana del ${shortDateOf(`${this.week()}T12:00:00`)} al ${shortDateOf(`${shiftDay(this.week(), 6)}T12:00:00`)}`);
-
-  /** S5 para la página entera: sin rol no se pide nada. */
-  protected readonly pageState = computed<ViewState<null>>(() =>
-    this.allowed() ? ready(null) : forbidden({ message: 'Los bloques de quirófano los gestiona la jefatura de quirófano.' }),
-  );
 
   protected readonly state = computed<ViewState<readonly OrBlock[]>>(() => {
     const ctx = this.siteContext.state();
@@ -117,13 +125,39 @@ export class OrBlocks {
   protected readonly byId = (row: OrBlock): string => row.id;
 
   constructor() {
-    this.siteContext.ensure();
-    effect(() => {
-      const siteId = this.siteId();
-      const week = this.week();
-      if (siteId === null || !this.allowed()) return;
-      untracked(() => this.load(siteId, week));
+    this.siteContext.ensureDirectory();
+    this.specialtiesCatalog.listar().subscribe({
+      next: (list) => this.specialties.set(new Map(list.map((s) => [s.conceptId, s.display]))),
+      error: () => this.specialties.set(new Map()),
     });
+    // Salas y bloques por clave (sede, semana, reintento), con `switchMap`: la
+    // semana vieja nunca pisa a la elegida.
+    const key$ = toObservable(computed(() => ({ siteId: this.siteId(), week: this.week(), n: this.reloads() }))).pipe(
+      filter((k): k is { siteId: string; week: string; n: number } => k.siteId !== null),
+    );
+    key$
+      .pipe(
+        switchMap(({ siteId }) => this.operatingRooms.listOperatingRooms(siteId).pipe(catchError(() => of([] as readonly OperatingRoomSummary[])))),
+        takeUntilDestroyed(),
+      )
+      .subscribe((r) => this.rooms.set(r));
+    key$
+      .pipe(
+        switchMap(({ siteId, week }) =>
+          this.operatingRooms.listBlocks(siteId, { from: new Date(`${week}T00:00:00`).toISOString(), to: new Date(`${shiftDay(week, 7)}T00:00:00`).toISOString() }).pipe(
+            map((blocks) => ready(blocks) as ViewState<readonly OrBlock[]>),
+            catchError((e: unknown) => of(errorToViewState<readonly OrBlock[]>(e))),
+            startWith(loading() as ViewState<readonly OrBlock[]>),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((s) => this.loaded.set(s));
+  }
+
+  /** El dueño, con su rótulo armado en el cliente. */
+  protected ownerOf(block: OrBlock): string {
+    return blockOwnerLabel(block.owner, this.ownerDirectory());
   }
 
   protected statusOf(block: OrBlock): { label: string; variant: 'success' | 'secondary' | 'error' } {
@@ -145,8 +179,8 @@ export class OrBlocks {
   }
 
   protected reload(): void {
-    const siteId = this.siteId();
-    if (siteId !== null) this.load(siteId, this.week());
+    if (this.siteContext.state().status !== 'ready') this.siteContext.reload();
+    this.reloads.update((n) => n + 1);
   }
 
   protected created(): void {
@@ -160,8 +194,8 @@ export class OrBlocks {
       {
         title: releasing ? 'Liberar el bloque' : 'Cancelar el bloque',
         message: releasing
-          ? `El tiempo de ${block.owner.label} del ${shortDateOf(block.startsAt)} (${timeOf(block.startsAt)}–${timeOf(block.endsAt)}) vuelve a la agenda abierta. Cuenta como liberado en la utilización.`
-          : `El bloque de ${block.owner.label} del ${shortDateOf(block.startsAt)} deja de existir.`,
+          ? `El tiempo de ${this.ownerOf(block)} del ${shortDateOf(block.startsAt)} (${timeOf(block.startsAt)}–${timeOf(block.endsAt)}) vuelve a la agenda abierta. Cuenta como liberado en la utilización.`
+          : `El bloque de ${this.ownerOf(block)} del ${shortDateOf(block.startsAt)} deja de existir.`,
         confirmLabel: releasing ? 'Liberar' : 'Cancelar el bloque',
         destructive: !releasing,
       },
@@ -180,17 +214,6 @@ export class OrBlocks {
         this.working.set(null);
         this.failure.set(errorToViewState<never>(error));
       },
-    });
-  }
-
-  private load(siteId: string, week: string): void {
-    this.loaded.set(loading());
-    this.operatingRooms.listOperatingRooms(siteId).subscribe({ next: (r) => this.rooms.set(r), error: () => this.rooms.set([]) });
-    const from = new Date(`${week}T00:00:00`).toISOString();
-    const to = new Date(`${shiftDay(week, 7)}T00:00:00`).toISOString();
-    this.operatingRooms.listBlocks(siteId, { from, to }).subscribe({
-      next: (blocks) => this.loaded.set(ready(blocks)),
-      error: (error: unknown) => this.loaded.set(errorToViewState<readonly OrBlock[]>(error)),
     });
   }
 }

@@ -25,6 +25,21 @@ export interface LocatedEquipment {
   readonly aeTitle: string | null;
   readonly stationName: string | null;
   readonly schedulableResourceId: string | null;
+  /** Versión de la fila (la trae `GET /diagnostic-equipment/:id`). */
+  readonly rowVersion?: number;
+}
+
+/** `POST /diagnostic-equipment/:id/resource`. */
+export interface EquipmentResourceResult {
+  readonly equipmentId: string;
+  readonly resourceId: string;
+}
+
+/** `GET /diagnostic-equipment/:id/mwl-station`. */
+export interface MwlStation {
+  readonly scheduledStationAETitle: string | null;
+  readonly scheduledStationName: string | null;
+  readonly spsLocation: string | null;
 }
 
 /** `PATCH /diagnostic-equipment/:id` (claves de F5a). */
@@ -34,11 +49,17 @@ export interface UpdateEquipmentLocation {
   readonly stationName?: string | null;
 }
 
-/** `GET /diagnostic-equipment/:id/mwl-station`. */
-export interface MwlStation {
-  readonly scheduledStationAETitle: string | null;
-  readonly scheduledStationName: string | null;
-  readonly spsLocation: string | null;
+/**
+ * Lo que devuelve `PATCH /diagnostic-equipment/:id` (`EquipmentResponseDto`,
+ * plano): **no** es la vista de la sede. La ficha relee después de guardar.
+ */
+export interface EquipmentPatchResult {
+  readonly id: string;
+  readonly diagnosticUnitSiteId: string;
+  readonly operationalStatus: string;
+  readonly careSpaceId?: string | null;
+  readonly aeTitle?: string | null;
+  readonly stationName?: string | null;
 }
 
 /**

@@ -170,9 +170,7 @@ describe('MedicalLaboratory', () => {
   }
 
   function cargar(datos: object = ficha(), catalogo: object | null = CATALOGO): void {
-    http
-      .expectOne('/diagnostic-units/administration')
-      .flush({ items: [RESUMEN], count: 1 });
+    http.expectOne('/diagnostic-units/administration').flush({ items: [RESUMEN], count: 1 });
     harness.detectChanges();
     responderCatalogo(catalogo);
     http.expectOne('/diagnostic-units/unit-1/administration').flush(datos);
@@ -413,9 +411,7 @@ describe('MedicalLaboratory', () => {
   });
 
   it('un fallo de la ficha se puede reintentar sin recargar la página', () => {
-    http
-      .expectOne('/diagnostic-units/administration')
-      .flush({ items: [RESUMEN], count: 1 });
+    http.expectOne('/diagnostic-units/administration').flush({ items: [RESUMEN], count: 1 });
     harness.detectChanges();
     responderCatalogo();
     http
@@ -684,10 +680,7 @@ describe('MedicalLaboratory', () => {
 
     // No hay lectura de tarifarios en la API: los que existen se deducen de los
     // precios de cada estudio.
-    expect(componente['tarifarios']().map((fila) => fila.code)).toEqual([
-      'CONVENIO-A',
-      'PUBLICO',
-    ]);
+    expect(componente['tarifarios']().map((fila) => fila.code)).toEqual(['CONVENIO-A', 'PUBLICO']);
 
     abrirPestana('Tarifarios');
     expect(harness.routeNativeElement?.textContent).toContain('CONVENIO-A');
@@ -775,9 +768,7 @@ describe('MedicalLaboratory', () => {
     const tarjetas = [
       ...(harness.routeNativeElement?.querySelectorAll('[data-testid="lab-study-item"]') ?? []),
     ];
-    const conDistintivo = tarjetas.filter(
-      (tarjeta) => tarjeta.querySelector('app-badge') !== null,
-    );
+    const conDistintivo = tarjetas.filter((tarjeta) => tarjeta.querySelector('app-badge') !== null);
     expect(conDistintivo).toHaveLength(2);
     expect(conDistintivo.map((t) => t.textContent)).toEqual([
       expect.stringContaining('Borrador'),
@@ -809,5 +800,97 @@ describe('MedicalLaboratory', () => {
     harness.detectChanges();
 
     expect(componente['tarifarios']()).toHaveLength(0);
+  });
+
+  /* -- Una sola tarjeta, paginado y edición de sucursal ---------------------- */
+
+  function sucursal(n: number, overrides: Record<string, unknown> = {}) {
+    const concepto = { id: `c-${n}`, code: 'DU_SITE_ACTIVE', display: 'Activa' };
+    return {
+      id: `site-${n}`,
+      practiceSiteId: `ps-${n}`,
+      code: `S${n}`,
+      name: `Sucursal ${n}`,
+      role: concepto,
+      accessionPrefix: 'LAB',
+      sampleCollectionAvailable: true,
+      imagingAvailable: false,
+      status: concepto,
+      ...overrides,
+    };
+  }
+
+  it('no dibuja el recuadro «Qué administra esta pantalla y qué no» ni avisos de dependencia', () => {
+    cargar();
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    expect(texto).not.toContain('Qué administra esta pantalla');
+    expect(texto).not.toContain('depende de');
+  });
+
+  it('las pestañas viven dentro de la tarjeta de la ficha', () => {
+    cargar();
+    const tarjeta = harness.routeNativeElement?.querySelector('app-card.laboratorio__ficha');
+    expect(tarjeta?.querySelector('[role="tab"]')).not.toBeNull();
+    expect(
+      harness.routeNativeElement?.querySelectorAll('app-card.laboratorio__ficha'),
+    ).toHaveLength(1);
+  });
+
+  it('pagina las sucursales de a diez y deja pasar de página', () => {
+    cargar(ficha({ sites: Array.from({ length: 12 }, (_, i) => sucursal(i + 1)) }));
+    const filas = () => harness.routeNativeElement?.querySelectorAll('tbody tr').length;
+    expect(filas()).toBe(10);
+
+    const siguiente = [
+      ...(harness.routeNativeElement?.querySelectorAll('app-pagination button') ?? []),
+    ].find((b) => /siguiente/i.test(b.getAttribute('aria-label') ?? b.textContent ?? '')) as
+      HTMLButtonElement | undefined;
+    expect(siguiente, 'botón «siguiente» del paginador').toBeDefined();
+    siguiente!.click();
+    harness.detectChanges();
+
+    expect(filas()).toBe(2);
+  });
+
+  it('editar una sucursal manda sólo sus campos y relee la ficha', () => {
+    cargar(ficha({ sites: [sucursal(1)] }));
+
+    botonesRotulados('Editar')[0].click();
+    harness.detectChanges();
+    expect(harness.routeNativeElement?.textContent).toContain('Editar «Sucursal 1»');
+
+    botonesRotulados('Guardar los cambios')[0].click();
+    const pedido = http.expectOne('/diagnostic-unit-sites/site-1');
+    expect(pedido.request.method).toBe('PATCH');
+    expect(pedido.request.body).toEqual({
+      accessionPrefix: 'LAB',
+      sampleCollectionAvailable: true,
+      imagingAvailable: false,
+    });
+    pedido.flush({ id: 'site-1' });
+
+    http
+      .expectOne('/diagnostic-units/unit-1/administration')
+      .flush(ficha({ sites: [sucursal(1)] }));
+  });
+
+  it('si el servidor rechaza el cambio de la sucursal lo dice y deja el formulario abierto', () => {
+    cargar(ficha({ sites: [sucursal(1)] }));
+    botonesRotulados('Editar')[0].click();
+    harness.detectChanges();
+    botonesRotulados('Guardar los cambios')[0].click();
+    http.expectOne('/diagnostic-unit-sites/site-1').flush(
+      {
+        code: 'FORBIDDEN',
+        message: 'No tiene permiso.',
+        timestamp: '2026-08-29T00:00:00.000Z',
+        path: '/diagnostic-unit-sites/site-1',
+      },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.textContent).toContain('No tiene permiso.');
+    expect(harness.routeNativeElement?.textContent).toContain('Editar «Sucursal 1»');
   });
 });

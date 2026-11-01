@@ -4,6 +4,7 @@ import { SessionStore } from '../../../core/auth/session.store';
 import { CHECKLIST_PHASES, currentPhase, PHASE_LABELS, type ChecklistPhaseCode } from '../../../core/data-access/operating-rooms/operating-rooms.rules';
 import { ProceduresClient } from '../../../core/data-access/procedures/procedures.client';
 import type { ChecklistResponseStatus, SafetyChecklist } from '../../../core/data-access/procedures/procedures.types';
+import { checklistResponseCode } from '../../../core/data-access/infra-concepts';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready, dataOf } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -41,7 +42,15 @@ interface Draft {
  * (`CHECKLIST_PHASE_OUT_OF_ORDER`, `CHECKLIST_EXCEPTION_REASON_REQUIRED`), y
  * su rechazo se muestra tal cual (S4 con el código de la petición).
  *
- * Las respuestas son inmutables: una fase completa se muestra en lectura.
+ * Las respuestas son inmutables: una fase completa se muestra en lectura. La
+ * API devuelve el estado de cada respuesta como **concepto** (UUID): se
+ * traduce con `checklistResponseCode`.
+ *
+ * Si el detalle del caso no informa el check-list (`checklistReported` falso),
+ * se lee con `POST …/safety-checklists`, que es idempotente (200 si ya existe):
+ * nunca se da por «sin check-list» un dato que la API no mandó. Las fases
+ * completas se emiten (`phases`) para que la botonera de sala explique sus
+ * compuertas con el dato leído. Quién responde lo decide la API (403 → S5).
  */
 @Component({
   selector: 'app-case-checklist',
@@ -55,15 +64,16 @@ export class CaseChecklist {
   private readonly session = inject(SessionStore);
 
   readonly caseId = input.required<string>();
-  /** El check-list del caso, si ya se creó. */
+  /** El check-list del caso, si el detalle lo informa y existe. */
   readonly checklistId = input<string | null>(null);
-  /** Si el rol registra en sala (reflejo de la API, no autorización). */
-  readonly canRecord = input(false);
+  /** ¿El detalle del caso trae el campo `checklist`? Si no, se lee de la API. */
+  readonly checklistReported = input(true);
   /** Se emite al crear el check-list o completar una fase: la ficha se relee. */
   readonly changed = output<void>();
+  /** Las fases completas según el check-list leído. */
+  readonly phases = output<Readonly<Record<ChecklistPhaseCode, boolean>>>();
 
   protected readonly answers = ANSWERS;
-  protected readonly answerLabels = ANSWER_LABELS;
   protected readonly phaseLabels = PHASE_LABELS;
   protected readonly dateTimeOf = dateTimeOf;
 
@@ -107,7 +117,7 @@ export class CaseChecklist {
   /** ¿Se puede responder la fase que se está mirando? */
   protected readonly editable = computed(() => {
     const shown = this.shownPhase();
-    return this.canRecord() && shown !== null && shown.completedAt === null && shown.phase === this.current();
+    return shown !== null && shown.completedAt === null && shown.phase === this.current();
   });
 
   protected readonly missing = computed(() => {
@@ -127,8 +137,15 @@ export class CaseChecklist {
     effect(() => {
       const caseId = this.caseId();
       const id = this.checklistId();
-      untracked(() => this.load(caseId, id));
+      const reported = this.checklistReported();
+      untracked(() => this.load(caseId, id, reported));
     });
+  }
+
+  /** La respuesta registrada, en palabras. */
+  protected answerOf(status: string): string {
+    const code = checklistResponseCode(status);
+    return code === null ? 'Respondido' : ANSWER_LABELS[code];
   }
 
   protected selectStep(index: number): void {
@@ -162,7 +179,7 @@ export class CaseChecklist {
     this.procedures.createChecklist(this.caseId()).subscribe({
       next: (k) => {
         this.sending.set(false);
-        this.state.set(ready(k));
+        this.show(k);
         this.changed.emit();
       },
       error: (error: unknown) => {
@@ -195,7 +212,7 @@ export class CaseChecklist {
         next: () => {
           this.sending.set(false);
           this.selectedPhase.set(null);
-          this.load(this.caseId(), k.id);
+          this.load(this.caseId(), k.id, true);
           this.changed.emit();
         },
         error: (error: unknown) => {
@@ -209,20 +226,27 @@ export class CaseChecklist {
     return this.session.practitionerProfileId() !== null;
   }
 
-  private load(caseId: string, checklistId: string | null): void {
-    if (checklistId === null) {
-      this.state.set(
-        empty(
-          { label: this.canRecord() ? 'Iniciar el check-list' : 'Volver al resumen' },
-          'Esta intervención todavía no tiene check-list de cirugía segura.',
-        ),
-      );
+  private load(caseId: string, checklistId: string | null, reported: boolean): void {
+    if (checklistId === null && reported) {
+      this.state.set(empty({ label: 'Iniciar el check-list' }, 'Esta intervención todavía no tiene check-list de cirugía segura.'));
+      this.emitPhases();
       return;
     }
     this.state.set(loading());
-    this.procedures.getChecklist(caseId, checklistId).subscribe({
-      next: (k) => this.state.set(ready(k)),
+    // Sin id informado se lee con el alta idempotente (200 si ya existía).
+    const read = checklistId === null ? this.procedures.createChecklist(caseId) : this.procedures.getChecklist(caseId, checklistId);
+    read.subscribe({
+      next: (k) => this.show(k),
       error: (error: unknown) => this.state.set(errorToViewState<SafetyChecklist>(error)),
     });
+  }
+
+  private show(k: SafetyChecklist): void {
+    this.state.set(ready(k));
+    this.emitPhases();
+  }
+
+  private emitPhases(): void {
+    this.phases.emit(this.completed());
   }
 }

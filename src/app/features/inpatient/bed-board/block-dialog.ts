@@ -19,7 +19,11 @@ import { ContentDialog } from '../../../shared/components/organisms/content-dial
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { apiReason } from '../api-reason';
+import { DEFAULT_TIME_ZONE, shortDateTime } from '../inpatient-presentation';
 import { OpsCatalogStore } from '../ops-catalog.store';
+
+/** El motivo que exige describirse (`BLOCK_RSN_OTHER` de la API). */
+export const REASON_REQUIRING_TEXT = 'BLOCK_RSN_OTHER';
 
 const TITLE: Readonly<Record<BlockKindCode, string>> = {
   BLOCK_CLINICAL: 'Bloqueo clínico',
@@ -74,7 +78,7 @@ const TITLE: Readonly<Record<BlockKindCode, string>> = {
             <p>Hay {{ lista.length }} compromiso(s) en la ventana del bloqueo:</p>
             <ul>
               @for (c of lista; track c.id) {
-                <li>{{ c.kind === 'PROCEDURE_CASE' ? 'Intervención' : 'Turno' }} {{ c.id.slice(0, 8) }} — {{ c.nextAction }}</li>
+                <li>{{ c.kind === 'PROCEDURE_CASE' ? 'Intervención' : 'Turno' }} {{ c.id.slice(0, 8) }}@if (c.startsAt) { · {{ when(c.startsAt) }} } — {{ c.nextAction }}</li>
               }
             </ul>
             <app-checkbox [(checked)]="acknowledge" label="Conozco estos compromisos y bloqueo igual" />
@@ -100,6 +104,7 @@ export class BlockDialog {
 
   readonly cell = input.required<BedBoardCell>();
   readonly kind = input.required<BlockKindCode>();
+  readonly timeZone = input(DEFAULT_TIME_ZONE);
   readonly saved = output<string>();
   readonly closed = output<void>();
 
@@ -113,6 +118,7 @@ export class BlockDialog {
   protected readonly conflicts = signal<readonly FutureCommitmentConflict[] | null>(null);
 
   protected readonly title = computed(() => TITLE[this.kind()]);
+  protected readonly when = (iso: string) => shortDateTime(iso, this.timeZone());
 
   protected readonly reasons = computed<SelectOption<string>[]>(() =>
     (this.catalog.catalog()?.blockReasons ?? [])
@@ -120,9 +126,8 @@ export class BlockDialog {
       .map((r) => ({ value: r.code, label: r.display })),
   );
 
-  protected readonly needsText = computed(
-    () => this.catalog.catalog()?.blockReasons.find((r) => r.code === this.reasonCode())?.requiresText === true,
-  );
+  /** Sólo «Otro» exige texto (`BLOCK_REASON_TEXT_REQUIRED`); el catálogo de la API no trae la bandera. */
+  protected readonly needsText = computed(() => this.reasonCode() === REASON_REQUIRING_TEXT);
 
   constructor() {
     this.catalog.ensure();
@@ -146,7 +151,7 @@ export class BlockDialog {
     this.client.changeAvailability(this.cell().id, this.cell().opsVersion, body).subscribe({
       next: (r) => {
         this.sending.set(false);
-        this.saved.emit(r.requestId);
+        this.saved.emit(r.requestId ?? '');
       },
       error: (e: unknown) => {
         this.sending.set(false);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { etiquetaUnidad, tableToCsv, type ChartTableData } from './chart-table';
+import { buildChartTable, etiquetaUnidad, tableToCsv, type ChartTableData } from './chart-table';
 
 const TABLA: ChartTableData = {
   columnas: ['Categoría', 'Ingreso'],
@@ -39,5 +39,27 @@ describe('etiquetaUnidad', () => {
     expect(etiquetaUnidad({ tipo: 'porcentaje' })).toBe('%');
     expect(etiquetaUnidad({ tipo: 'razon', sufijo: '×' })).toBe('×');
     expect(etiquetaUnidad({ tipo: 'numero' })).toBe('cantidad');
+  });
+});
+
+describe('buildChartTable · histograma', () => {
+  it('una fila por cubo con su rango dicho con todas las letras; un cubo null es «Sin dato»', () => {
+    const t = buildChartTable(
+      {
+        id: 'h',
+        titulo: 'H',
+        unidad: { tipo: 'numero' },
+        datos: { tipo: 'histograma', bordes: [0, 5, 10, null], conteos: [4, null, 1], unidadBorde: { tipo: 'duracion' }, nombreValor: 'Peticiones' },
+        resumenAccesible: 'r',
+        filtro: null,
+        info: null,
+        velas: null,
+      },
+      'normal',
+    );
+    expect(t.columnas).toEqual(['Rango', 'Peticiones']);
+    expect(t.filas.map((f) => f[0])).toEqual(['< 5 ms', '≥ 5 ms y < 10 ms', '≥ 10 ms']);
+    expect(t.filas[1]?.[1]).toBe('Sin dato');
+    expect(t.crudo[1]?.[1]).toBeNull();
   });
 });

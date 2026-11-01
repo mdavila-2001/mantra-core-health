@@ -12,7 +12,7 @@
 </th>
 
 @if (value().activo) {
-  <td>
+  <td data-label="Desde">
     <app-input
       type="time"
       [step]="timeStep"
@@ -22,7 +22,7 @@
       (valueChange)="setTime('desde', $event)"
     />
   </td>
-  <td>
+  <td data-label="Hasta">
     <app-input
       type="time"
       [step]="timeStep"
@@ -32,7 +32,7 @@
       (valueChange)="setTime('hasta', $event)"
     />
   </td>
-  <td>
+  <td data-label="Atiendo">
     <!-- Qué admite esta franja: consultas (la grilla de siempre), servicios
          (turnos de largo variable que nacen al reservar) o ambos, que
          comparten el tiempo del médico. -->
@@ -44,7 +44,7 @@
       (valueChange)="set('modo', $event)"
     />
   </td>
-  <td class="schedule-day-row__switch">
+  <td class="schedule-day-row__switch" data-label="Telemedicina">
     <!-- Si en esta franja también atiende por videollamada. Apagado por
          omisión: sólo viaja si el médico lo enciende (o lo apaga donde ya
          estaba). La API rechaza la teleconsulta fuera de una franja con esto
@@ -57,7 +57,7 @@
     />
   </td>
   @if (!weekFlexible()) {
-    <td class="schedule-day-row__switch">
+    <td class="schedule-day-row__switch" data-label="Horario flexible">
       <app-switch
         [checked]="value().flexible"
         [ariaLabel]="'Horario flexible, ' + dayName()"
@@ -70,7 +70,7 @@
            contar. El paciente pide la hora dentro de la franja. -->
       <td colspan="3" class="schedule-day-row__free">Sin citas de duración fija</td>
     } @else {
-      <td class="schedule-day-row__choice">
+      <td class="schedule-day-row__choice" data-label="Dura">
         <app-select
           [options]="durationOptions"
           [value]="value().duracion"
@@ -78,7 +78,7 @@
           (valueChange)="set('duracion', $event)"
         />
       </td>
-      <td class="schedule-day-row__choice">
+      <td class="schedule-day-row__choice" data-label="Descanso">
         <app-select
           [options]="gapOptions"
           [value]="value().respiro"
@@ -89,7 +89,7 @@
       </td>
       <!-- El costo, en la misma fila: elegir descanso sobre una franja corta
            quita turnos, y ese número no se deduce. -->
-      <td class="schedule-day-row__slots" aria-live="polite">
+      <td class="schedule-day-row__slots" data-label="Horarios" aria-live="polite">
         @if (servicesOnly()) {
           <!-- Sin turnos fijos: cada servicio dura lo que declaró su
                profesional y el turno nace al reservarlo. -->

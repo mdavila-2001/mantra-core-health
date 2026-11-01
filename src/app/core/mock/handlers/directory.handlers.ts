@@ -1,3 +1,4 @@
+import type { TenantSimulado } from '../fixtures/directory.types';
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, STATUS, ORGANIZATION_TYPE } from '../fixtures/concepts';
 import { ALCANCE_ACCESO, INVITACIONES_PENDIENTES, MEMBRESIAS_DEL_APOYO, ROL_TENANT, TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
@@ -44,18 +45,7 @@ import {
 
 export { ALCANCE_ACCESO, ROL_TENANT };
 
-export interface TenantSimulado {
-  readonly id: string;
-  readonly code: string;
-  readonly legalName: string;
-  readonly tradeName: string;
-  readonly tenantTypeConceptId: string;
-  readonly statusConceptId: string;
-  readonly verificationStatusConceptId: string;
-  readonly parentTenantId: string | null;
-  readonly createdAt: string;
-  readonly timeZone: string;
-}
+export type { TenantSimulado } from '../fixtures/directory.types';
 
 const TIPO_SUCURSAL = {
   CLINIC: uuid('concept-branch-clinic'),
@@ -919,7 +909,9 @@ export function registrarDirectorio(router: MockRouter): void {
 
   router.get('/tenants/:id/practitioner-requests', ({ params }) => {
     const nombre = TENANT_NAMES[params['id']!] ?? '';
-    return affiliationList
+    // `{ items }`, como lo lee `listPractitionerRequests`: con el arreglo pelado la
+    // bandeja caía entera en «Algo salió mal».
+    const items = affiliationList
       .filtrar((a) => a.organizationName === nombre && a.statusKind === 'pendiente')
       .concat(
         params['id'] === TENANT_CLINICA
@@ -972,6 +964,7 @@ export function registrarDirectorio(router: MockRouter): void {
           createdAt: a.createdAt,
         };
       });
+    return { items };
   });
 
   router.post('/tenants/:id/practitioner-requests/:affiliationId/approve', ({ params }) => {

@@ -14,6 +14,7 @@ import { of, type Observable } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { listFreeStarts } from '../../../../core/data-access/scheduling/free-starts';
 import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import {
   motivoDeReconsulta,
@@ -352,16 +353,16 @@ export class FollowUpBlock {
         if (resourceId === null || yaAgendada !== null) {
           return of(ready<readonly AgendaSlot[]>([]));
         }
-        return this.agenda
-          .listSlots({
-            resourceId,
-            from: mes,
-            to: mesSiguiente(mes),
-            onlyAvailable: true,
-            limit: CUPOS_POR_MES,
-          })
+        // Cupos fijos y horas del horario flexible (P36): un día «Horario
+        // flexible» no tiene cupos y antes salía en rojo aunque atendiera.
+        return listFreeStarts(this.agenda, {
+          resourceId,
+          from: mes,
+          to: mesSiguiente(mes),
+          limit: CUPOS_POR_MES,
+        })
           .pipe(
-            map((pagina) => ready<readonly AgendaSlot[]>(pagina.items)),
+            map((libres) => ready<readonly AgendaSlot[]>(libres)),
             startWith(loading()),
             catchError((error: unknown) => of(errorToViewState<readonly AgendaSlot[]>(error))),
           );
