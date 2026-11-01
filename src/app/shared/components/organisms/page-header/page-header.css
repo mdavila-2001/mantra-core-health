@@ -143,3 +143,36 @@
         display: none;
     }
 }
+
+/* ---- dentro del portal de inventario ----------------------------------------
+   La cabecera de página de AtlasAdminPortal: sobre el lienzo, sin filete ni
+   tarjeta, título en el color de marca y descripción con medida de lectura.
+   Las migas no se dibujan acá: viven sólo en la barra superior del portal.
+   Fuera del portal nada cambia. */
+:host-context(app-portal-shell) {
+    padding-bottom: 0;
+    border-bottom: none;
+    margin-bottom: var(--sp-5);
+}
+
+:host-context(app-portal-shell) .page-header__title {
+    color: var(--brand-primary);
+    font-size: var(--fs-h2);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+:host-context(app-portal-shell) .page-header__subtitle {
+    max-inline-size: 48rem;
+    font-size: var(--fs-caption);
+}
+
+@media (min-width: 64rem) {
+    :host-context(app-portal-shell) .page-header__title {
+        font-size: var(--fs-h1);
+    }
+
+    :host-context(app-portal-shell) .page-header__subtitle {
+        font-size: var(--fs-body);
+    }
+}

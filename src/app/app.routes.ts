@@ -1315,8 +1315,38 @@ const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
   ],
 };
 
+/**
+ * Secciones con marco propio: se montan FUERA del armazón (`ShellLayout`),
+ * como `/insights`, porque traen su barra lateral y su barra superior.
+ *
+ * El portal de inventario estaba colgado del armazón y dibujaba un segundo
+ * marco completo dentro del primero: dos menús a la vez y un hueco en blanco
+ * bajo la barra superior (31/10/2026). La dirección no cambia
+ * (`/superadmin/portal/...`), la sección sigue en el registro —el menú global la
+ * ofrece igual— y conserva cada guarda que heredaba del armazón: sesión, alta
+ * del segundo factor, reglas de visibilidad y roles de la sección.
+ */
+export const SECCIONES_CON_MARCO_PROPIO: readonly string[] = ['superadmin/portal'];
+
+function rutasConMarcoPropio(): Routes {
+  return APP_SECTIONS.filter((section) => SECCIONES_CON_MARCO_PROPIO.includes(section.path)).map(
+    (section) => ({
+      path: section.path,
+      title: titleOf(section),
+      // Lo que antes ponía el armazón (`authGuard`; `mfaEnrollmentGuard` y
+      // `visibilityChildGuard` como `canActivateChild`) más lo que pone a toda
+      // sección (`seccionRolesGuard`). Sesión primero: S1 del M34.
+      canActivate: [authGuard, mfaEnrollmentGuard, visibilityChildGuard, seccionRolesGuard],
+      canActivateChild: [mfaEnrollmentGuard, visibilityChildGuard],
+      data: { [SECTION_ROUTE_DATA]: section },
+      ...(RUTAS_ANIDADAS[section.path] === undefined ? {} : { children: RUTAS_ANIDADAS[section.path] }),
+      ...componenteDe(section),
+    }),
+  );
+}
+
 function rutasDeSecciones(): Routes {
-  return APP_SECTIONS.flatMap((section) => {
+  return APP_SECTIONS.filter((section) => !SECCIONES_CON_MARCO_PROPIO.includes(section.path)).flatMap((section) => {
     const ruta: Routes[number] = {
       path: section.path,
       title: titleOf(section),
@@ -1818,6 +1848,7 @@ export const routes: Routes = [
   // redirige al panel de observabilidad y a la raíz (ver `reporting-mock.routes.ts`).
   ...mockRoutes(chunkFallido, environment.reportingMockEnabled),
   insightsPortalRoute(chunkFallido),
+  ...rutasConMarcoPropio(),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
   // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos
   // salen del propio `homeGuard` (un `UrlTree`, nunca `true`) porque Angular no

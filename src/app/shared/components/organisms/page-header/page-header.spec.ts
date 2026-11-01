@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import type { BreadcrumbItem } from '../../molecules/breadcrumb/breadcrumb.types';
-import { PageHeader, type PageHeaderAction } from './page-header';
+import { PAGE_HEADER_MIGAS_EN_EL_MARCO, PageHeader, type PageHeaderAction } from './page-header';
 
 const PAGE_HEADER_CSS = 'src/app/shared/components/organisms/page-header/page-header.css';
 
@@ -87,6 +87,22 @@ describe('PageHeader', () => {
       await fixture.whenStable();
 
       expect(root().querySelector('app-breadcrumb')).not.toBeNull();
+    });
+
+    it('dentro de un marco que ya pinta las migas, no repite las suyas', async () => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [HostComponent],
+        providers: [provideRouter([]), { provide: PAGE_HEADER_MIGAS_EN_EL_MARCO, useValue: true }],
+      }).compileComponents();
+      fixture = TestBed.createComponent(HostComponent);
+      host = fixture.componentInstance;
+      host.breadcrumbs.set([{ label: 'Panel', routerLink: '/' }, { label: 'Portal' }]);
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-breadcrumb')).toBeNull();
+      // El título no se pierde: sólo las migas.
+      expect(root().querySelectorAll('h1')).toHaveLength(1);
     });
   });
 

@@ -20,7 +20,9 @@ import { tabIndex, TAB, PROFILE_TABS } from './features/account/my-profile/profi
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { ROLES_REPORTERIA } from './features/reporting/reporting-access';
 import { mockRoutes } from './features/reporting/reporting-mock.routes';
-import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
+import { routes, SECCIONES_CON_MARCO_PROPIO, SECCIONES_REDIRIGIDAS } from './app.routes';
+import { mfaEnrollmentGuard } from './core/auth/mfa-enrollment.guard';
+import { visibilityChildGuard } from './core/visibility/visibility.guard';
 
 /**
  * La promesa del armazón: **el menú nunca ofrece un destino que el router no
@@ -37,6 +39,15 @@ describe('rutas del armazón', () => {
     (route) => route.path === '' && route.component !== undefined && route.children !== undefined,
   );
   const hijas = armazon?.children ?? [];
+  /**
+   * La ruta de una sección: hija del armazón, o de primer nivel si la sección
+   * trae marco propio (`SECCIONES_CON_MARCO_PROPIO`, como el portal de
+   * inventario). Lo que se exige de la ruta es lo mismo en los dos casos.
+   */
+  const rutaDeSeccion = (path: string) =>
+    SECCIONES_CON_MARCO_PROPIO.includes(path)
+      ? routes.find((route) => route.path === path)
+      : hijas.find((route) => route.path === path);
 
   it('el armazón existe y está detrás del guard', () => {
     // S1 del M34: autorizar antes de pedir datos, y en el padre para que cubra
@@ -65,9 +76,31 @@ describe('rutas del armazón', () => {
     expect(raiz?.redirectTo).toBeUndefined();
   });
 
+  it('una sección con marco propio sale del armazón sin perder ninguna de sus guardas', () => {
+    expect(SECCIONES_CON_MARCO_PROPIO).toContain('superadmin/portal');
+    for (const path of SECCIONES_CON_MARCO_PROPIO) {
+      // Ni dentro del armazón (dos marcos anidados = dos menús) ni ausente.
+      expect(hijas.find((route) => route.path === path), path).toBeUndefined();
+      const ruta = routes.find((route) => route.path === path);
+      expect(ruta, path).toBeDefined();
+      // Lo que heredaba del armazón y lo que el armazón pone a toda sección.
+      expect(ruta?.canActivate, path).toEqual(
+        expect.arrayContaining([authGuard, mfaEnrollmentGuard, visibilityChildGuard, seccionRolesGuard]),
+      );
+      expect(ruta?.canActivate?.[0], path).toBe(authGuard);
+      expect(ruta?.canActivateChild, path).toEqual(
+        expect.arrayContaining([mfaEnrollmentGuard, visibilityChildGuard]),
+      );
+      // Antes del armazón: si no, `path: ''` del armazón se la tragaría.
+      const indice = routes.indexOf(ruta!);
+      const indiceArmazon = routes.indexOf(armazon!);
+      expect(indice, path).toBeLessThan(indiceArmazon);
+    }
+  });
+
   it('cada sección del registro tiene su ruta, con su título y su sección en `data`', () => {
     for (const section of APP_SECTIONS) {
-      const ruta = hijas.find((route) => route.path === section.path);
+      const ruta = rutaDeSeccion(section.path);
 
       expect(ruta, section.path).toBeDefined();
       expect(ruta?.title, section.path).toBe(titleOf(section));
@@ -451,7 +484,7 @@ describe('rutas del armazón', () => {
       if (SECCIONES_REDIRIGIDAS[section.path] !== undefined) {
         continue;
       }
-      const ruta = hijas.find((route) => route.path === section.path);
+      const ruta = rutaDeSeccion(section.path);
 
       expect(ruta?.component ?? ruta?.loadComponent, section.path).toBeDefined();
     }
@@ -477,7 +510,7 @@ describe('rutas del armazón', () => {
     );
     await Promise.all(
       sections.map(async (section) => {
-        const ruta = hijas.find((route) => route.path === section.path);
+        const ruta = rutaDeSeccion(section.path);
         const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
         expect(componente, section.path).toBeDefined();
@@ -491,7 +524,7 @@ describe('rutas del armazón', () => {
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
     for (const section of APP_SECTIONS.filter((s) => s.availability === 'planificada')) {
-      const ruta = hijas.find((route) => route.path === section.path);
+      const ruta = rutaDeSeccion(section.path);
 
       // Se difiere porque es el caso mayoritario: no se descarga hasta que
       // alguien entra a una sección que todavía no existe.

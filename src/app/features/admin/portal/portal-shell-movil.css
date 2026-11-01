@@ -1,0 +1,93 @@
+/* ============================================================================
+    Marco del portal · lo que sólo existe por debajo de 64 rem: la barra
+    inferior (cuatro destinos y «Más») y el cajón que «Más» abre. Aparte de
+    `portal-shell.css` para que ninguna de las dos hojas pase el techo de
+    líneas. El foco de estos controles vive en la hoja principal.
+    ========================================================================== */
+
+/* ---- barra inferior (teléfono y tableta) -------------------------------- */
+
+.portal__inferior {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: var(--z-sticky);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-block-size: var(--portal-inferior);
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.portal__inferior-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-inline-size: 0;
+  padding: var(--sp-1);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-overline);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.portal__inferior-item--activo {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+/* ---- cajón del teléfono --------------------------------------------------- */
+
+.portal__movil {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  inline-size: min(20rem, 86vw);
+  max-inline-size: 100%;
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+}
+
+.portal__movil::backdrop {
+  background: rgb(10 28 39 / 55%);
+}
+
+.portal__movil-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  block-size: 100%;
+  overflow-y: auto;
+  padding: var(--sp-4) var(--sp-3);
+  background: var(--nav-carril);
+}
+
+.portal__movil-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.portal__cerrar {
+  flex: none;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--nav-control-borde);
+  border-radius: var(--r-md);
+  background: var(--nav-control-fondo);
+  color: var(--nav-tinta);
+  cursor: pointer;
+}
+
+@media (min-width: 64rem) {
+  .portal__inferior {
+    display: none;
+  }
+}

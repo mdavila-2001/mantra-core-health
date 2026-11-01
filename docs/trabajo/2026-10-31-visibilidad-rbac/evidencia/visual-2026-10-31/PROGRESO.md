@@ -1,0 +1,13 @@
+# Progreso visual — 31/10/2026 (agente MARCO)
+
+| Hora | Pantalla / pieza | Captura | Estado |
+|---|---|---|---|
+| T0 | marco antes (doble menú + hueco 136 px) | marco/antes-1440-claro.png, marco/antes-390-claro.png | medido: lateral global 240 px + lateral portal 238 px; contenido empezaba en y=192 con header en 56; 390 px con desborde horizontal (scrollWidth 447) |
+| T1 | rbac-matrix: aviso de límites plegado | commit ba4e155b | hecho (rbac-matrix-page.ts/.css) |
+| T2 | marco: portal fuera del armazón global (ruta de primer nivel, mismas guardas) + PortalShell único estilo Atlas | (en curso) | compilando; ng serve se cae por OOM del cgroup compartido (14,3 GB) durante recompilaciones — reiniciado con heap 4500 y sin HMR |
+| rbac-matrix | antes: rbac-matrix/antes-{1440,390}-claro.png | después: rbac-matrix/despues-{390,768,1440}-{claro,oscuro}-ok(.png,-vista.png), despues-1440-claro-{vacio,error,carga}.png, tab-gaps/, tab-coverage/, vista-rol/ | commit e36d99dd | specs 30/30; scrollWidth 390 = 390; abiertos: KPIs apretados a 390 (dos columnas con loseta de icono), sublista lateral ilegible en oscuro (MARCO), cabecera sin eyebrow/icono (page-header es del MARCO) |
+| T3 | marco: PortalShell único (lateral 268 px fija con tokens `--nav-*` fijos en los dos temas, topbar 64 px con migas+ambiente+buscador+campana+tema+cuenta, pestañas entre hermanas, explicador plegado, barra inferior + «Más» en <1024) | marco/despues2-1440-claro.png, marco/despues2-1440-oscuro.png, marco/despues2-390-claro.png, marco/despues2-390-oscuro.png (+ `-completa`) | medido en Auditoría: sin `.app-side-nav` ni `.app-header`; lateral 268×900, barra 64, h1 a y=162; 390 sin desborde (sw 390); contraste mínimo de textos de la lateral 13,99:1 contra #072F45 en claro y oscuro |
+| T3 | migas duplicadas en pantallas reutilizadas | — | corregido en `page-header` con el token `PAGE_HEADER_MIGAS_EN_EL_MARCO` que PortalShell provee; falta repetir el barrido (el servidor se cayó por OOM a mitad) |
+| T3 | inputs de fecha «mm/dd/yyyy» | — | `src/index.html` YA tiene `lang="es"`; el formato del input nativo lo pone la configuración regional del navegador (Chromium headless = en-US), no el `lang`. Las capturas nuevas usan `locale: 'es-PE'`. No es defecto del código. |
+| T3 | pestaña «Huecos (13)» con icono apilado a 390 | — | NO es del marco: es `app-tabs` (shared/molecules) o el panel de rbac-matrix; queda anotado para el agente de pantallas |
+| T3 | infraestructura | — | ng serve + ng test no caben juntos en el cgroup (14,3 GB): ng test llegó a 7 GB y ng serve a 4,4–6 GB; los OOM matan uno u otro. Mientras corre un ng test el servidor puede caerse. |

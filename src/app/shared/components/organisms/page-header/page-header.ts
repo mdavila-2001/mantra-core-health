@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  InjectionToken,
+  computed,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
 import { Breadcrumb } from '../../molecules/breadcrumb/breadcrumb';
@@ -8,6 +16,14 @@ import { MenuItem } from '../../molecules/menu/menu-item/menu-item';
 import { MenuTrigger } from '../../molecules/menu/menu-trigger/menu-trigger';
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
+
+/**
+ * Lo provee un marco que ya dibuja las migas en su barra superior (el portal de
+ * inventario, con la estructura de AtlasAdminPortal): ahí cada cabecera de
+ * página repetía su propia miga debajo de la del marco. Con el token en `true`
+ * la cabecera no dibuja migas, sea cual sea la pantalla que la use.
+ */
+export const PAGE_HEADER_MIGAS_EN_EL_MARCO = new InjectionToken<boolean>('PAGE_HEADER_MIGAS_EN_EL_MARCO');
 
 /**
  * Una acción secundaria del encabezado. Van por datos y no por proyección
@@ -60,7 +76,11 @@ export class PageHeader {
   /** Emite el `code` de la secundaria elegida, venga del botón o del menú. */
   readonly actionSelected = output<string>();
 
-  protected readonly hasBreadcrumbs = computed(() => this.breadcrumbs().length > 0);
+  private readonly migasEnElMarco = inject(PAGE_HEADER_MIGAS_EN_EL_MARCO, { optional: true }) ?? false;
+
+  protected readonly hasBreadcrumbs = computed(
+    () => !this.migasEnElMarco && this.breadcrumbs().length > 0,
+  );
   protected readonly hasSecondaryActions = computed(() => this.secondaryActions().length > 0);
 
   /**

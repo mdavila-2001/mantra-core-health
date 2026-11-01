@@ -1,3 +1,4 @@
+<!-- La navegación: la misma en la barra lateral y en el cajón del teléfono. -->
 <ng-template #navegacion>
   <nav class="portal__nav" aria-label="Secciones del portal">
     @for (grupo of grupos; track grupo.id) {
@@ -12,22 +13,33 @@
         >
           <app-nav-icon class="portal__grupo-icono" [name]="grupo.icon" />
           <span class="portal__grupo-nombre">{{ grupo.label }}</span>
-          <span class="portal__grupo-flecha" aria-hidden="true">{{
-            estaAbierto(grupo) ? '▾' : '▸'
-          }}</span>
+          <svg
+            class="portal__grupo-flecha"
+            [class.portal__grupo-flecha--abierta]="estaAbierto(grupo)"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
         </button>
         @if (estaAbierto(grupo)) {
           <ul class="portal__items" [id]="'portal-grupo-' + grupo.id">
-            @for (item of grupo.items; track item.path) {
+            @for (entrada of navEntries(grupo); track entrada.label) {
+              @let primera = entrada.items[0]!;
               <li>
                 <a
                   class="portal__item"
-                  [class.portal__item--activo]="isActive(item, url())"
-                  [routerLink]="portalUrl(item.path)"
-                  [attr.aria-current]="isActive(item, url()) ? 'page' : null"
-                  [attr.data-testid]="'portal-item-' + (item.path || 'centro')"
+                  [class.portal__item--activo]="entradaActiva(entrada)"
+                  [routerLink]="portalUrl(primera.path)"
+                  [attr.aria-current]="entradaActiva(entrada) ? 'page' : null"
+                  [attr.data-testid]="'portal-item-' + (primera.path || 'centro')"
                 >
-                  {{ item.label }}
+                  {{ entrada.label }}
                 </a>
               </li>
             }
@@ -38,75 +50,160 @@
   </nav>
 </ng-template>
 
+<ng-template #marca>
+  <a class="portal__marca" routerLink="/superadmin/portal" aria-label="AloVida · Portal de inventario, ir al centro">
+    <span class="portal__marca-logo" aria-hidden="true">A</span>
+    <span class="portal__marca-texto">
+      <span class="portal__marca-nombre">AloVida</span>
+      <span class="portal__marca-sub">Portal de inventario</span>
+    </span>
+  </a>
+</ng-template>
+
+<!-- La salida al resto de AloVida: al pie de la barra, como en Atlas. -->
+<ng-template #salida>
+  <a class="portal__salida" routerLink="/dashboard" data-testid="portal-salir">
+    <app-nav-icon name="arrow-left" />
+    Volver a administración
+  </a>
+</ng-template>
+
 <div class="portal" data-testid="portal-shell">
   <aside class="portal__lateral" aria-label="Navegación del portal">
-    <p class="portal__marca">
-      <span class="portal__marca-nombre">Portal de inventario</span>
-      <span class="portal__marca-sub">AloVida · catálogo del sistema</span>
-    </p>
-    <ng-container [ngTemplateOutlet]="navegacion" />
+    <div class="portal__lateral-cabecera">
+      <ng-container [ngTemplateOutlet]="marca" />
+    </div>
+    <div class="portal__lateral-cuerpo">
+      <ng-container [ngTemplateOutlet]="navegacion" />
+    </div>
+    <div class="portal__lateral-pie">
+      <ng-container [ngTemplateOutlet]="salida" />
+    </div>
   </aside>
 
   <div class="portal__principal">
-    <header class="portal__cabecera">
-      <button
-        type="button"
-        class="portal__hamburguesa"
-        data-testid="portal-menu"
-        aria-label="Abrir el menú del portal"
-        (click)="abrirMenuMovil()"
-      >
-        <span aria-hidden="true">☰</span>
-      </button>
+    <header class="portal__barra">
+      <div class="portal__ubicacion">
+        <ol class="portal__migas" aria-label="Dónde está">
+          @for (miga of migas(); track miga.label; let ultima = $last) {
+            <li class="portal__miga" [attr.aria-current]="ultima ? 'page' : null">
+              @if (miga.url && !ultima) {
+                <a [routerLink]="miga.url">{{ miga.label }}</a>
+              } @else {
+                {{ miga.label }}
+              }
+            </li>
+          }
+        </ol>
+        <p class="portal__ambiente">
+          <span class="portal__ambiente-punto" aria-hidden="true"></span>
+          Ambiente: {{ ambiente }}
+        </p>
+      </div>
 
-      <ol class="portal__migas" aria-label="Dónde está">
-        @for (miga of migas(); track miga.label; let ultima = $last) {
-          <li class="portal__miga" [attr.aria-current]="ultima ? 'page' : null">
-            @if (miga.url && !ultima) {
-              <a [routerLink]="miga.url">{{ miga.label }}</a>
-            } @else {
-              {{ miga.label }}
-            }
-          </li>
-        }
-      </ol>
-
-      <app-portal-search class="portal__busqueda" />
+      <div class="portal__acciones">
+        <app-portal-search class="portal__busqueda" />
+        <app-notification-bell class="portal__campana" />
+        <button
+          class="app-theme-toggle"
+          app-theme-toggle
+          data-testid="portal-theme-toggle"
+        >
+          <span class="app-theme-toggle__pista">
+            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+          </span>
+        </button>
+        <details class="portal__cuenta">
+          <summary class="portal__avatar" [attr.aria-label]="'Cuenta de ' + nombre()" [title]="nombre()">
+            {{ iniciales() }}
+          </summary>
+          <div class="portal__cuenta-menu">
+            <p class="portal__cuenta-nombre">{{ nombre() }}</p>
+            <a class="portal__cuenta-item" routerLink="/my-account/security">Seguridad de la cuenta</a>
+            <button type="button" class="portal__cuenta-item" data-testid="portal-cerrar-sesion" (click)="cerrarSesion()">
+              Cerrar sesión
+            </button>
+          </div>
+        </details>
+      </div>
     </header>
 
-    @if (pantallaActiva(); as pantalla) {
-      <div class="portal__explicador">
-        <button
-          type="button"
-          class="portal__explicador-boton"
-          data-testid="portal-explicador"
-          [attr.aria-expanded]="explicadorAbierto()"
-          aria-controls="portal-explicacion"
-          (click)="alternarExplicador()"
-        >
-          <span aria-hidden="true">💡</span>
-          {{ explicadorAbierto() ? 'Ocultar qué muestra esta vista' : 'Qué muestra esta vista' }}
-        </button>
-        @if (explicadorAbierto()) {
-          <p class="portal__explicacion" id="portal-explicacion">
-            <strong>{{ pantalla.label }}.</strong> {{ pantalla.summary }}. Todo viene del inventario
-            que la API generó leyendo el código, el contrato y el modelo; lo que no se pudo
-            determinar se dice «sin dato» en lugar de suponerse.
-          </p>
-        }
-      </div>
-    }
+    <main class="portal__lienzo" id="portal-contenido">
+      @if (pestanas().length > 0) {
+        <nav class="portal__pestanas" [attr.aria-label]="pantallaActiva()?.section ?? 'Pantallas de la sección'">
+          @for (tab of pestanas(); track tab.path) {
+            <a
+              class="portal__pestana"
+              [class.portal__pestana--activa]="isActive(tab, url())"
+              [routerLink]="portalUrl(tab.path)"
+              [attr.aria-current]="isActive(tab, url()) ? 'page' : null"
+              >{{ tab.label }}</a
+            >
+          }
+        </nav>
+      }
 
-    <main class="portal__contenido" id="portal-contenido">
+      @if (pantallaActiva(); as pantalla) {
+        <div class="portal__explicador">
+          <button
+            type="button"
+            class="portal__explicador-boton"
+            data-testid="portal-explicador"
+            [attr.aria-expanded]="explicadorAbierto()"
+            aria-controls="portal-explicacion"
+            (click)="alternarExplicador()"
+          >
+            Qué muestra esta vista
+            <span class="portal__explicador-flecha" [class.portal__explicador-flecha--abierta]="explicadorAbierto()" aria-hidden="true">▸</span>
+          </button>
+          @if (explicadorAbierto()) {
+            <p class="portal__explicacion" id="portal-explicacion">
+              <strong>{{ pantalla.label }}.</strong> {{ pantalla.summary }}. Todo viene del inventario
+              que la API generó leyendo el código, el contrato y el modelo; lo que no se pudo
+              determinar se dice «sin dato» en lugar de suponerse.
+            </p>
+          }
+        </div>
+      }
+
       <router-outlet />
     </main>
   </div>
+
+  <!-- Teléfono y tableta: cuatro destinos y «Más», que abre la misma navegación. -->
+  <nav class="portal__inferior" aria-label="Accesos del portal">
+    @for (destino of destinos; track destino.path) {
+      <a
+        class="portal__inferior-item"
+        [class.portal__inferior-item--activo]="destinoActivo(destino)"
+        [routerLink]="portalUrl(destino.path)"
+        [attr.aria-current]="destinoActivo(destino) ? 'page' : null"
+      >
+        <app-nav-icon [name]="destino.icon" />
+        <span>{{ destino.label }}</span>
+      </a>
+    }
+    <button
+      type="button"
+      class="portal__inferior-item"
+      data-testid="portal-menu"
+      aria-controls="portal-menu-movil"
+      [attr.aria-expanded]="menuMovilAbierto()"
+      (click)="abrirMenuMovil()"
+    >
+      <app-nav-icon name="grid" />
+      <span>Más</span>
+    </button>
+  </nav>
 </div>
 
-<!-- El menú en pantallas estrechas: un <dialog> modal, así el foco queda atrapado y se devuelve. -->
+<!-- El cajón: un <dialog> modal, así el foco queda atrapado y se devuelve. -->
 <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
 <dialog
   #dialogoMovil
+  id="portal-menu-movil"
   class="portal__movil"
   aria-label="Menú del portal"
   data-testid="portal-menu-movil"
@@ -115,11 +212,13 @@
 >
   <div class="portal__movil-panel">
     <div class="portal__movil-cabecera">
-      <span class="portal__marca-nombre">Portal de inventario</span>
+      <ng-container [ngTemplateOutlet]="marca" />
       <button type="button" class="portal__cerrar" (click)="cerrarMenuMovil()">Cerrar</button>
     </div>
     @if (menuMovilAbierto()) {
+      <app-portal-search class="portal__movil-busqueda" />
       <ng-container [ngTemplateOutlet]="navegacion" />
+      <ng-container [ngTemplateOutlet]="salida" />
     }
   </div>
 </dialog>

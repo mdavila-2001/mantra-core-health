@@ -1,163 +1,109 @@
 /* ============================================================================
-    Marco del portal de inventario. Dos columnas desde 64 rem: barra lateral
-    oscura y contenido; debajo, el menú es un <dialog> modal. Todo por tokens.
+    Marco del portal de inventario, con la estructura de AtlasAdminPortal
+    (`docs/trabajo/2026-10-31-visibilidad-rbac/ESTRUCTURA-ATLAS.md`). Es el
+    ÚNICO marco: se monta fuera del armazón global.
+
+    ≥ 64 rem: barra lateral oscura fija (16.75 rem ≈ 268 px) + columna con la
+    barra superior pegajosa y el lienzo. Debajo: sin barra lateral, barra
+    inferior con cuatro destinos y «Más», que abre la misma navegación en un
+    <dialog>. Todo por tokens.
     ========================================================================== */
 
 :host {
+  /* Las medidas del marco de Atlas: barra lateral de 268 px y barra superior de
+     64 px. La raíz de AloVida es de 14 px, así que en `rem` salían 235 y 56. */
+  --portal-lateral: calc(var(--sp-16) * 4 + var(--sp-3));
+  --portal-barra: var(--sp-16);
+  --portal-inferior: var(--sp-12);
+
   display: block;
+  min-block-size: 100dvh;
+  background: var(--bg-base);
+  color: var(--text-primary);
   font-family: var(--font-body);
-}
-
-.portal {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-4);
-  align-items: start;
-}
-
-.portal__lateral {
-  display: none;
 }
 
 .portal__principal {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  min-block-size: 100dvh;
   min-inline-size: 0;
 }
 
-.portal__cabecera {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: var(--z-sticky);
+/* ---- barra lateral ------------------------------------------------------ */
+
+.portal__lateral {
+  display: none;
+}
+
+.portal__lateral-cabecera {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-lg);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
+  block-size: var(--portal-barra);
+  padding-inline: var(--sp-4);
+  border-block-end: 1px solid var(--nav-filete);
+  flex: none;
 }
 
-.portal__hamburguesa {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: var(--h-ctrl, 2.5rem);
-  block-size: var(--h-ctrl, 2.5rem);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  font-size: var(--fs-body-lg);
-  cursor: pointer;
+.portal__lateral-cuerpo {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  padding: var(--sp-4) var(--sp-3);
 }
 
-.portal__hamburguesa:focus-visible,
-.portal__cerrar:focus-visible,
-.portal__grupo-titulo:focus-visible,
-.portal__item:focus-visible,
-.portal__explicador-boton:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+.portal__lateral-pie {
+  flex: none;
+  padding: var(--sp-3);
+  border-block-start: 1px solid var(--nav-filete);
 }
-
-.portal__migas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
-.portal__miga + .portal__miga::before {
-  content: '›';
-  margin-inline-end: var(--sp-1);
-  color: var(--text-muted);
-}
-
-.portal__miga[aria-current='page'] {
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.portal__miga a {
-  color: var(--text-link);
-}
-
-.portal__busqueda {
-  flex: 1 1 14rem;
-  min-inline-size: 0;
-  margin-inline-start: auto;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.portal__explicador {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.portal__explicador-boton {
-  align-self: flex-start;
-  padding: var(--sp-1) var(--sp-3);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--r-pill, 999px);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  cursor: pointer;
-}
-
-.portal__explicacion {
-  margin: 0;
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--st-info-bg);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-primary);
-}
-
-.portal__contenido {
-  display: block;
-  min-inline-size: 0;
-}
-
-/* ---- navegación (la comparten la barra lateral y el cajón móvil) ---------- */
 
 .portal__marca {
   display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+  color: var(--nav-palabra);
+  text-decoration: none;
+  border-radius: var(--r-md);
+}
+
+.portal__marca-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: var(--sp-10);
+  block-size: var(--sp-10);
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--c-aqua-300), var(--brand-primary));
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--nav-tinta);
+}
+
+.portal__marca-texto {
+  display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
-  margin: 0 0 var(--sp-4);
-  padding-block-end: var(--sp-3);
-  border-block-end: 1px solid var(--c-petrol-600);
+  min-inline-size: 0;
 }
 
 .portal__marca-nombre {
   font-family: var(--font-display);
-  font-size: var(--fs-body-lg);
+  font-size: var(--fs-body);
   font-weight: 700;
-  color: var(--text-inverse);
+  line-height: 1.2;
 }
 
 .portal__marca-sub {
   font-size: var(--fs-caption);
-  color: var(--c-aqua-300);
+  color: var(--nav-item-sub);
 }
 
 .portal__nav {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
 }
 
 .portal__grupo-titulo {
@@ -165,11 +111,12 @@
   align-items: center;
   gap: var(--sp-2);
   inline-size: 100%;
+  min-block-size: var(--h-ctrl, 2.5rem);
   padding: var(--sp-2) var(--sp-3);
   border: none;
   border-radius: var(--r-md);
   background: transparent;
-  color: var(--c-aqua-300);
+  color: var(--nav-grupo-fuerte);
   font-size: var(--fs-overline);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -179,107 +126,411 @@
 }
 
 .portal__grupo-titulo:hover {
-  background: var(--c-petrol-600);
+  color: var(--nav-item-fuerte);
 }
 
 .portal__grupo-icono {
   inline-size: var(--sp-4);
   block-size: var(--sp-4);
-  flex-shrink: 0;
+  flex: none;
 }
 
 .portal__grupo-nombre {
   flex: 1;
+  min-inline-size: 0;
+}
+
+.portal__grupo-flecha {
+  inline-size: var(--sp-4);
+  block-size: var(--sp-4);
+  flex: none;
+  stroke-width: 2;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.portal__grupo-flecha--abierta {
+  transform: rotate(180deg);
 }
 
 .portal__items {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
-  margin: var(--sp-1) 0 0;
+  gap: 2px;
+  margin: 0 0 var(--sp-2);
   padding: 0;
   list-style: none;
 }
 
+/* Ítem activo como en Atlas: fondo blanco al 9 %, barra de acento de 2 px. */
 .portal__item {
+  position: relative;
   display: block;
-  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-6);
-  border-inline-start: 3px solid transparent;
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-8);
   border-radius: var(--r-md);
-  color: var(--text-inverse);
-  font-size: var(--fs-body);
+  color: var(--nav-item);
+  font-size: var(--fs-caption);
+  line-height: 1.35;
   text-decoration: none;
 }
 
 .portal__item:hover {
-  background: var(--c-petrol-600);
+  background: var(--nav-item-hover-bg);
+  color: var(--nav-item-fuerte);
 }
 
 .portal__item--activo {
-  border-inline-start-color: var(--c-aqua-300);
-  background: var(--c-petrol-600);
+  background: var(--nav-item-activo-bg);
+  color: var(--nav-item-fuerte);
   font-weight: 600;
 }
 
-/* ---- menú móvil ------------------------------------------------------------ */
-
-.portal__movil {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  inline-size: min(20rem, 100%);
-  max-inline-size: 100%;
-  block-size: 100dvh;
-  max-block-size: 100dvh;
+.portal__item--activo::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--sp-2);
+  inset-inline-start: 0;
+  inline-size: 2px;
+  border-radius: var(--r-full);
+  background: var(--c-aqua-300);
 }
 
-.portal__movil::backdrop {
-  background: rgb(10 28 39 / 55%);
-}
-
-.portal__movil-panel {
-  block-size: 100%;
-  overflow-y: auto;
-  padding: var(--sp-4);
-  background: linear-gradient(180deg, var(--c-petrol-900), var(--c-petrol-600));
-}
-
-.portal__movil-cabecera {
+.portal__salida {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-block-end: var(--sp-4);
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  color: var(--nav-item);
+  font-size: var(--fs-caption);
+  text-decoration: none;
 }
 
-.portal__cerrar {
-  padding: var(--sp-1) var(--sp-3);
-  border: 1px solid var(--c-aqua-300);
-  border-radius: var(--r-md);
-  background: transparent;
+.portal__salida:hover {
+  background: var(--nav-item-hover-bg);
+  color: var(--nav-item-fuerte);
+}
+
+/* ---- barra superior ----------------------------------------------------- */
+
+.portal__barra {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  block-size: var(--portal-barra);
+  padding-inline: var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.portal__ubicacion {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.portal__migas {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.portal__miga {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.portal__miga + .portal__miga::before {
+  content: '›';
+  margin-inline-end: var(--sp-1);
+  color: var(--text-muted);
+}
+
+.portal__miga[aria-current='page'] {
+  flex: 0 1 auto;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.portal__miga a {
+  color: var(--text-link);
+}
+
+/* En el teléfono sólo la pantalla: el camino entero no entra en 390 px. */
+.portal__miga:not([aria-current='page']) {
+  display: none;
+}
+
+.portal__miga[aria-current='page']::before {
+  display: none;
+}
+
+.portal__ambiente {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 2px 0 0;
+  overflow: hidden;
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.portal__ambiente-punto {
+  inline-size: 6px;
+  block-size: 6px;
+  flex: none;
+  border-radius: var(--r-full);
+  background: var(--st-success-fg);
+}
+
+.portal__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+.portal__busqueda {
+  display: none;
+}
+
+.portal__cuenta {
+  position: relative;
+}
+
+.portal__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--h-ctrl, 2.5rem);
+  block-size: var(--h-ctrl, 2.5rem);
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
   color: var(--text-inverse);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  list-style: none;
   cursor: pointer;
 }
 
+.portal__avatar::-webkit-details-marker {
+  display: none;
+}
+
+.portal__cuenta-menu {
+  position: absolute;
+  inset-block-start: calc(100% + var(--sp-2));
+  inset-inline-end: 0;
+  z-index: var(--z-menu);
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 14rem;
+  padding: var(--sp-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.portal__cuenta-nombre {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.portal__cuenta-item {
+  display: block;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.portal__cuenta-item:hover {
+  background: var(--bg-hover);
+}
+
+/* ---- lienzo ------------------------------------------------------------- */
+
+/* Relleno 12/16/24 px como el `main` de Atlas, sin hueco arriba ni tarjeta
+   que lo envuelva. El de abajo deja sitio a la barra inferior del teléfono. */
+.portal__lienzo {
+  display: block;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding: var(--sp-5) var(--sp-3)
+    calc(var(--portal-inferior) + var(--sp-8) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Pestañas-enlace entre pantallas hermanas (`SectionTabs` de Atlas). */
+.portal__pestanas {
+  display: flex;
+  gap: var(--sp-1);
+  margin-block-end: var(--sp-4);
+  overflow-x: auto;
+  border-block-end: 1px solid var(--border-subtle);
+  scrollbar-width: thin;
+}
+
+.portal__pestana {
+  display: flex;
+  align-items: center;
+  flex: none;
+  min-block-size: var(--h-ctrl, 2.5rem);
+  margin-block-end: -1px;
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.portal__pestana:hover {
+  color: var(--text-primary);
+}
+
+.portal__pestana--activa {
+  border-block-end-color: var(--brand-primary);
+  color: var(--text-primary);
+}
+
+/* La explicación de la vista, plegada en una línea. */
+.portal__explicador {
+  margin-block-end: var(--sp-4);
+}
+
+.portal__explicador-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  cursor: pointer;
+}
+
+.portal__explicador-boton:hover {
+  color: var(--text-primary);
+}
+
+.portal__explicador-flecha {
+  display: inline-block;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.portal__explicador-flecha--abierta {
+  transform: rotate(90deg);
+}
+
+.portal__explicacion {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--st-info-bg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-primary);
+}
+
+/* ---- foco ---------------------------------------------------------------- */
+
+.portal__marca:focus-visible,
+.portal__grupo-titulo:focus-visible,
+.portal__item:focus-visible,
+.portal__salida:focus-visible,
+.portal__avatar:focus-visible,
+.portal__cuenta-item:focus-visible,
+.portal__pestana:focus-visible,
+.portal__explicador-boton:focus-visible,
+.portal__inferior-item:focus-visible,
+.portal__cerrar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- tableta: más aire, buscador a la vista ------------------------------ */
+
+@media (min-width: 48rem) {
+  .portal__barra {
+    padding-inline: var(--sp-4);
+  }
+
+  .portal__lienzo {
+    padding-inline: var(--sp-4);
+  }
+
+  .portal__busqueda {
+    display: block;
+    inline-size: clamp(12rem, 28vw, 22rem);
+  }
+
+  .portal__miga:not([aria-current='page']) {
+    display: list-item;
+  }
+
+  .portal__miga[aria-current='page']::before {
+    display: inline;
+  }
+}
+
+/* ---- escritorio: barra lateral fija, sin barra inferior ------------------ */
+
 @media (min-width: 64rem) {
+  /* El carril se pinta también en el contenedor: la barra es `fixed` y mide
+     la ventana, así que en una captura de página entera (o al imprimir)
+     debajo de ella quedaba blanco. Mismo recurso que `.app-shell`. */
   .portal {
-    grid-template-columns: 17rem minmax(0, 1fr);
+    padding-inline-start: var(--portal-lateral);
+    background: linear-gradient(90deg, var(--nav-carril) 0 var(--portal-lateral), transparent var(--portal-lateral));
   }
 
   .portal__lateral {
-    position: sticky;
-    inset-block-start: var(--sp-4);
-    display: block;
-    max-block-size: calc(100dvh - var(--sp-8));
-    overflow-y: auto;
-    padding: var(--sp-4);
-    border-radius: var(--r-lg);
-    background: linear-gradient(180deg, var(--c-petrol-900), var(--c-petrol-600));
-    box-shadow: var(--shadow-md);
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-drawer);
+    display: flex;
+    flex-direction: column;
+    inline-size: var(--portal-lateral);
+    background: var(--nav-carril);
   }
 
-  .portal__hamburguesa {
-    display: none;
+  .portal__barra {
+    padding-inline: var(--sp-6);
+  }
+
+  .portal__lienzo {
+    padding: var(--sp-6) var(--sp-6) var(--sp-10);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal__grupo-flecha,
+  .portal__explicador-flecha {
+    transition: none;
   }
 }

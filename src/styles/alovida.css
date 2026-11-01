@@ -1091,6 +1091,22 @@ app-shell-layout { display: block; }
 .app-main__inner:focus,
 .app-main__inner:focus-visible { outline: none; box-shadow: none; }
 
+/* Los tres avisos del marco (dispositivo nuevo, organizaciones negadas,
+   medición de uso) son anfitriones que existen siempre y sólo dibujan algo
+   cuando hay que avisar. Callados quedan vacíos, pero siguen siendo ítems de
+   la columna flex: cada uno sumaba un `gap` de 32 px, y entre los tres abrían
+   96 px en blanco entre el header y el título de CADA pantalla. Medido el
+   31/10/2026: el contenido empezaba en y=192 con el header terminando en 56.
+   Mismo arreglo que el de `router-outlet`: fuera del flujo mientras callan. */
+.app-main__inner > :is(app-new-device-banner, app-denied-tenants-banner, app-ux-consent-notice):empty {
+  display: none;
+}
+
+/* El portal de inventario se monta fuera del armazón y pinta su propio fondo:
+   el relleno inferior que el cuerpo reserva para la barra de la maqueta
+   quedaba como una franja blanca bajo la barra lateral. */
+body:has(app-portal-shell) { padding-bottom: 0; }
+
 /* --- 4 · Cabecera de página --------------------------------------------- */
 
 /* Este bloque va directo sobre el fondo celeste, así que su tinta sube de

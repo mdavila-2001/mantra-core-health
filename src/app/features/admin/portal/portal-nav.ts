@@ -8,6 +8,20 @@ export interface PortalNavItem {
   readonly exact?: boolean;
   /** Dice en una línea qué responde la pantalla; alimenta el buscador global. */
   readonly summary: string;
+  /**
+   * La entrada del menú a la que pertenece, cuando varias pantallas hermanas
+   * comparten una (como `tabs` en AtlasAdminPortal): la barra enseña UNA línea
+   * con este rótulo y cada pantalla pinta arriba las pestañas-enlace entre
+   * hermanas. Cada pantalla conserva su ruta. Sin él, la pantalla es su propia
+   * entrada.
+   */
+  readonly section?: string;
+}
+
+/** Una línea de la barra lateral: una pantalla sola o una sección de hermanas. */
+export interface PortalNavEntry {
+  readonly label: string;
+  readonly items: readonly PortalNavItem[];
 }
 
 export interface PortalNavGroup {
@@ -50,11 +64,13 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Mapa de rutas',
         path: 'systems/flows',
+        section: 'Mapa de rutas',
         summary: 'Rutas por flujo, quién las llama y qué señales tienen',
       },
       {
         label: 'Diagrama',
         path: 'systems/flows/diagram',
+        section: 'Mapa de rutas',
         summary: 'El grafo de un proceso o módulo',
       },
       {
@@ -145,71 +161,85 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Usuarios y roles',
         path: 'governance/users',
+        section: 'Usuarios y accesos',
         summary: 'Usuarios internos, sus roles y los permisos de cada rol',
       },
       {
         label: 'Deriva de permisos',
         path: 'governance/permission-drift',
+        section: 'Permisos por módulo',
         summary: 'Roles que las rutas exigen y nadie siembra, y rutas sin roles',
       },
       {
         label: 'Roles y permisos',
         path: 'governance/roles',
+        section: 'Usuarios y accesos',
         summary: 'Qué permite y qué niega cada rol, con edición',
       },
       {
         label: 'Permisos por campo y alcance',
         path: 'governance/field-permissions',
+        section: 'Usuarios y accesos',
         summary: 'Reglas por columna y permisos sobre un recurso concreto',
       },
       {
         label: 'Quién puede qué',
         path: 'governance/who-can',
+        section: 'Usuarios y accesos',
         summary: 'Simulador de decisión del PDP y mapa permiso → roles → personas',
       },
       {
         label: 'Ciclo de vida y accesos',
         path: 'governance/access-reviews',
+        section: 'Usuarios y accesos',
         summary: 'Suspender, reactivar, dar de baja y revisar accesos',
       },
       {
         label: 'Matriz RBAC por módulo',
         path: 'governance/rbac-matrix',
+        section: 'Permisos por módulo',
         summary: 'Qué rol puede qué acción en cada módulo, huecos de permisos finos y cobertura',
       },
       {
         label: 'Catálogo de visibilidad',
         path: 'governance/ui-catalog',
+        section: 'Visibilidad de la interfaz',
         summary: 'Cada elemento de la interfaz que puede mostrarse u ocultarse, por módulo y con su jerarquía',
       },
       {
         label: 'Reglas de visibilidad',
         path: 'governance/ui-rules',
+        section: 'Visibilidad de la interfaz',
         summary: 'Mostrar u ocultar elementos por persona, organización, rol o tipo de organización, con vigencia y motivo',
       },
       {
         label: 'Ver como',
         path: 'governance/ui-preview',
+        section: 'Visibilidad de la interfaz',
         summary: 'Previsualiza qué se oculta a una persona o a un rol y qué regla lo decide',
       },
       {
         label: 'Mutabilidad de datos',
         path: 'governance/mutability',
+        section: 'Gobierno de datos',
         summary: 'Qué tabla es append-only, cuál se actualiza o se borra, y con qué evidencia',
       },
       {
         label: 'Políticas',
         path: 'governance/policies',
+        section: 'Gobierno de datos',
         summary: 'Escritura, retención, anonimización, clasificación y residencia de los datos',
       },
       {
         label: 'Datos personales',
         path: 'governance/pii',
+        section: 'Gobierno de datos',
         summary: 'Campos con datos personales, de salud o credenciales, y cómo se protegen',
       },
       {
         label: 'Solicitudes de privacidad',
         path: 'governance/privacy-requests',
+        section: 'Gobierno de datos',
         summary: 'Solicitudes de acceso, rectificación y supresión de los titulares',
       },
     ],
@@ -222,11 +252,13 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Incidencias',
         path: 'data-quality/issues',
+        section: 'Calidad de datos',
         summary: 'Datos de salud (health_data) que incumplen una regla, con su estado y cómo cerrarlos',
       },
       {
         label: 'Reglas',
         path: 'data-quality/rules',
+        section: 'Calidad de datos',
         summary: 'Las reglas de calidad de los datos clínicos, su expresión y sus últimas corridas',
       },
     ],
@@ -284,4 +316,45 @@ export function portalCrumbs(url: string): readonly PortalCrumb[] {
 /** El grupo que contiene `url`, o `null`. */
 export function groupOf(url: string): PortalNavGroup | null {
   return PORTAL_NAV.find((g) => g.items.some((i) => isActive(i, url))) ?? null;
+}
+
+/**
+ * Las líneas de la barra para un grupo: las hermanas de una misma `section` se
+ * juntan en una sola entrada, en el lugar de la primera.
+ */
+export function navEntries(group: PortalNavGroup): readonly PortalNavEntry[] {
+  const entradas: { label: string; items: PortalNavItem[] }[] = [];
+  const porSeccion = new Map<string, { label: string; items: PortalNavItem[] }>();
+  for (const item of group.items) {
+    if (!item.section) {
+      entradas.push({ label: item.label, items: [item] });
+      continue;
+    }
+    const existente = porSeccion.get(item.section);
+    if (existente) {
+      existente.items.push(item);
+    } else {
+      const nueva = { label: item.section, items: [item] };
+      porSeccion.set(item.section, nueva);
+      entradas.push(nueva);
+    }
+  }
+  return entradas;
+}
+
+/** La pantalla activa para `url`, o `null`. */
+export function activeItem(url: string): PortalNavItem | null {
+  for (const grupo of PORTAL_NAV) {
+    const item = grupo.items.find((i) => isActive(i, url));
+    if (item) return item;
+  }
+  return null;
+}
+
+/** Las pestañas-enlace de la pantalla activa: sus hermanas de sección, sólo si son dos o más. */
+export function siblingTabs(url: string): readonly PortalNavItem[] {
+  const item = activeItem(url);
+  if (!item?.section) return [];
+  const hermanas = PORTAL_NAV.flatMap((g) => g.items).filter((i) => i.section === item.section);
+  return hermanas.length >= 2 ? hermanas : [];
 }
