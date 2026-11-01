@@ -5,7 +5,13 @@ import { provideRouter } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import type { BreadcrumbItem } from '../../molecules/breadcrumb/breadcrumb.types';
-import { PAGE_HEADER_MIGAS_EN_EL_MARCO, PageHeader, type PageHeaderAction } from './page-header';
+import {
+  PAGE_HEADER_MIGAS_EN_EL_MARCO,
+  PAGE_HEADER_PREDETERMINADOS,
+  PageHeader,
+  type PageHeaderAction,
+} from './page-header';
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 
 const PAGE_HEADER_CSS = 'src/app/shared/components/organisms/page-header/page-header.css';
 
@@ -16,6 +22,8 @@ const PAGE_HEADER_CSS = 'src/app/shared/components/organisms/page-header/page-he
       [title]="title()"
       [subtitle]="subtitle()"
       [breadcrumbs]="breadcrumbs()"
+      [icon]="icono()"
+      [eyebrow]="eyebrow()"
       [secondaryActions]="secundarias()"
       (actionSelected)="elegidas.push($event)"
     >
@@ -28,6 +36,8 @@ class HostComponent {
   readonly title = signal('Juan Pérez');
   readonly subtitle = signal('HC 00123 · 54 años');
   readonly breadcrumbs = signal<readonly BreadcrumbItem[]>([]);
+  readonly icono = signal<NavIconName | null>(null);
+  readonly eyebrow = signal('');
   readonly secundarias = signal<readonly PageHeaderAction[]>([]);
   readonly elegidas: string[] = [];
 }
@@ -71,6 +81,59 @@ describe('PageHeader', () => {
       expect(root().querySelector('.page-header__meta')?.textContent).toContain(
         'Última atención',
       );
+    });
+  });
+
+  describe('icono y eyebrow', () => {
+    it('sin icono ni eyebrow ni marco que los proponga, la cabecera queda como siempre', () => {
+      expect(root().querySelector('.page-header__icono')).toBeNull();
+      expect(root().querySelector('.page-header__eyebrow')).toBeNull();
+    });
+
+    it('con icono dibuja la loseta (decorativa) y con eyebrow la línea sobre el título', async () => {
+      host.icono.set('shield');
+      host.eyebrow.set('Gobierno y acceso');
+      await fixture.whenStable();
+
+      const loseta = root().querySelector('.page-header__icono');
+      expect(loseta?.getAttribute('aria-hidden')).toBe('true');
+      expect(loseta?.querySelector('app-nav-icon')).not.toBeNull();
+      expect(root().querySelector('.page-header__eyebrow')?.textContent?.trim()).toBe('Gobierno y acceso');
+      // el eyebrow va ANTES del h1, y sigue habiendo un solo h1
+      const textos = root().querySelector('.page-header__textos');
+      expect(textos?.firstElementChild?.classList).toContain('page-header__eyebrow');
+      expect(root().querySelectorAll('h1')).toHaveLength(1);
+    });
+
+    it('dentro de un marco que los propone, los toma sin que la pantalla diga nada', async () => {
+      const iconoMarco = signal<NavIconName | null>('key');
+      const eyebrowMarco = signal('Gobierno y acceso');
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [HostComponent],
+        providers: [
+          provideRouter([]),
+          { provide: PAGE_HEADER_PREDETERMINADOS, useValue: { icon: iconoMarco, eyebrow: eyebrowMarco } },
+        ],
+      }).compileComponents();
+      fixture = TestBed.createComponent(HostComponent);
+      host = fixture.componentInstance;
+      await fixture.whenStable();
+
+      expect(root().querySelector('.page-header__icono app-nav-icon')).not.toBeNull();
+      expect(root().querySelector('.page-header__eyebrow')?.textContent?.trim()).toBe('Gobierno y acceso');
+
+      // al navegar el marco cambia sus señales y la cabecera las sigue
+      eyebrowMarco.set('Calidad de datos clínicos');
+      await fixture.whenStable();
+      expect(root().querySelector('.page-header__eyebrow')?.textContent?.trim()).toBe(
+        'Calidad de datos clínicos',
+      );
+
+      // lo que la pantalla dice manda sobre lo que el marco propone
+      host.eyebrow.set('Propio');
+      await fixture.whenStable();
+      expect(root().querySelector('.page-header__eyebrow')?.textContent?.trim()).toBe('Propio');
     });
   });
 

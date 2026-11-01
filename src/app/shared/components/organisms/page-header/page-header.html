@@ -4,13 +4,23 @@
 
 <div class="page-header__row">
   <div class="page-header__heading">
-    <!-- El único h1 de la página: lo garantiza este organismo y lo verifica su spec. -->
-    <h1 class="page-header__title">{{ title() }}</h1>
-    @if (subtitle()) {
-      <p class="page-header__subtitle">{{ subtitle() }}</p>
+    @if (iconoEfectivo(); as icono) {
+      <span class="page-header__icono" aria-hidden="true">
+        <app-nav-icon [name]="icono" />
+      </span>
     }
-    <div class="page-header__meta">
-      <ng-content select="[page-meta]" />
+    <div class="page-header__textos">
+      @if (eyebrowEfectivo()) {
+        <p class="page-header__eyebrow">{{ eyebrowEfectivo() }}</p>
+      }
+      <!-- El único h1 de la página: lo garantiza este organismo y lo verifica su spec. -->
+      <h1 class="page-header__title">{{ title() }}</h1>
+      @if (subtitle()) {
+        <p class="page-header__subtitle">{{ subtitle() }}</p>
+      }
+      <div class="page-header__meta">
+        <ng-content select="[page-meta]" />
+      </div>
     </div>
   </div>
 

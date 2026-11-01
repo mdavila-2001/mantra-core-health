@@ -2,8 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  afterRenderEffect,
   computed,
   effect,
+  forwardRef,
   inject,
   signal,
   viewChild,
@@ -20,11 +22,16 @@ import { LOGIN_ROUTE } from '../../../core/http/auth.interceptor';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { NotificationBell } from '../../../shared/components/organisms/notification-bell/notification-bell';
-import { PAGE_HEADER_MIGAS_EN_EL_MARCO } from '../../../shared/components/organisms/page-header/page-header';
+import {
+  PAGE_HEADER_MIGAS_EN_EL_MARCO,
+  PAGE_HEADER_PREDETERMINADOS,
+  type PageHeaderPredeterminados,
+} from '../../../shared/components/organisms/page-header/page-header';
 import {
   PORTAL_NAV,
   activeItem,
   groupOf,
+  headerFor,
   isActive,
   navEntries,
   portalCrumbs,
@@ -96,15 +103,21 @@ const DESTINOS_INFERIORES: readonly DestinoInferior[] = [
   ],
   // Las migas viven sólo en la barra superior del portal: ninguna pantalla
   // (nueva o reutilizada) pinta las suyas en su cabecera.
-  providers: [{ provide: PAGE_HEADER_MIGAS_EN_EL_MARCO, useValue: true }],
+  // Y todas reciben el icono y el eyebrow de su pantalla desde `portal-nav`
+  // (cabecera de AtlasAdminPortal) sin tocar su plantilla.
+  providers: [
+    { provide: PAGE_HEADER_MIGAS_EN_EL_MARCO, useValue: true },
+    { provide: PAGE_HEADER_PREDETERMINADOS, useExisting: forwardRef(() => PortalShell) },
+  ],
   templateUrl: './portal-shell.html',
   styleUrls: ['./portal-shell.css', './portal-shell-movil.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PortalShell {
+export class PortalShell implements PageHeaderPredeterminados {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly dialogoMovil = viewChild<ElementRef<HTMLDialogElement>>('dialogoMovil');
+  private readonly tiraPestanas = viewChild<ElementRef<HTMLElement>>('tiraPestanas');
 
   protected readonly grupos = PORTAL_NAV;
   protected readonly destinos = DESTINOS_INFERIORES;
@@ -122,6 +135,11 @@ export class PortalShell {
   protected readonly grupoActivo = computed(() => groupOf(this.url()));
   protected readonly pantallaActiva = computed(() => activeItem(this.url()));
   protected readonly pestanas = computed(() => siblingTabs(this.url()));
+  private readonly cabecera = computed(() => headerFor(this.url()));
+  /** Para `PAGE_HEADER_PREDETERMINADOS`: el icono de la pantalla activa. */
+  readonly icon = computed(() => this.cabecera().icon);
+  /** Para `PAGE_HEADER_PREDETERMINADOS`: el grupo de la pantalla activa. */
+  readonly eyebrow = computed(() => this.cabecera().eyebrow);
   protected readonly menuMovilAbierto = signal(false);
   protected readonly explicadorAbierto = signal(false);
 
@@ -143,6 +161,25 @@ export class PortalShell {
   protected readonly portalUrl = portalUrl;
   protected readonly isActive = isActive;
   protected readonly navEntries = navEntries;
+
+  /**
+   * A 390 px la tira de pestañas de sección no entra entera: al montar y en
+   * cada navegación la pestaña activa se lleva al centro de la tira (el
+   * `scrollIntoView({ inline: 'center', block: 'nearest' })` de la tira, hecho
+   * a mano para no mover la ventana). Los bordes se desvanecen en CSS cuando
+   * queda tira de ese lado.
+   */
+  private readonly centrarPestana = afterRenderEffect(() => {
+    this.url();
+    const tira = this.tiraPestanas()?.nativeElement;
+    if (!tira || tira.scrollWidth - tira.clientWidth <= 1) return;
+    const activa = tira.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!activa) return;
+    const caja = tira.getBoundingClientRect();
+    const pestana = activa.getBoundingClientRect();
+    const desplazamiento = pestana.left + pestana.width / 2 - (caja.left + caja.width / 2);
+    if (Math.abs(desplazamiento) > 1) tira.scrollBy?.({ left: desplazamiento });
+  });
 
   constructor() {
     // al navegar, el cajón se cierra y la explicación vuelve a plegarse

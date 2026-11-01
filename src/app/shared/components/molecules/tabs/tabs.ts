@@ -272,23 +272,29 @@ export class Tabs implements TabsHost {
     tira.scrollBy?.({ left: direccion * tira.clientWidth * 0.8, behavior: 'smooth' });
   }
 
-  /** Trae una pestaña a la vista sin mover el resto de la página. */
+  /**
+   * Trae una pestaña al CENTRO de la tira sin mover el resto de la página (el
+   * `scrollIntoView({ inline: 'center', block: 'nearest' })` de la tira, hecho
+   * a mano: el nativo también desplaza a los ancestros y en una página larga
+   * movía la ventana). Centrada, a 390 px se ve la activa y un trozo de cada
+   * vecina, que es lo que dice que hay más a los dos lados. Si la tira entra
+   * entera no se mueve nada.
+   */
   private traerALaVista(index: number): void {
     const boton = this.tabButtons()[index]?.nativeElement;
     const tira = this.tablist()?.nativeElement;
     if (boton === undefined || tira === undefined) {
       return;
     }
+    if (tira.scrollWidth - tira.clientWidth <= 1) {
+      return;
+    }
 
     const visible = tira.getBoundingClientRect();
     const pestaña = boton.getBoundingClientRect();
     const desplazamiento =
-      pestaña.left < visible.left
-        ? pestaña.left - visible.left
-        : pestaña.right > visible.right
-          ? pestaña.right - visible.right
-          : 0;
-    if (desplazamiento !== 0) {
+      pestaña.left + pestaña.width / 2 - (visible.left + visible.width / 2);
+    if (Math.abs(desplazamiento) > 1) {
       tira.scrollBy?.({ left: desplazamiento, behavior: 'smooth' });
     }
   }

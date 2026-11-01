@@ -6,6 +6,7 @@ import {
   inject,
   input,
   output,
+  type Signal,
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
@@ -24,6 +25,24 @@ import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
  * la cabecera no dibuja migas, sea cual sea la pantalla que la use.
  */
 export const PAGE_HEADER_MIGAS_EN_EL_MARCO = new InjectionToken<boolean>('PAGE_HEADER_MIGAS_EN_EL_MARCO');
+
+/**
+ * Lo que un marco le propone a TODAS las cabeceras de su lienzo cuando la
+ * pantalla no dice otra cosa: el icono del módulo (loseta de 40 px) y el
+ * eyebrow (la línea en mayúsculas pequeñas sobre el título). Así el portal de
+ * inventario da a sus treinta pantallas la cabecera de AtlasAdminPortal sin que
+ * ninguna tenga que tocar su plantilla. Son señales porque cambian al navegar
+ * sin que el marco se vuelva a crear. Las entradas `icon` y `eyebrow` de la
+ * cabecera mandan sobre esto; fuera de un marco que lo provea, nada cambia.
+ */
+export interface PageHeaderPredeterminados {
+  readonly icon: Signal<NavIconName | null>;
+  readonly eyebrow: Signal<string>;
+}
+
+export const PAGE_HEADER_PREDETERMINADOS = new InjectionToken<PageHeaderPredeterminados>(
+  'PAGE_HEADER_PREDETERMINADOS',
+);
 
 /**
  * Una acción secundaria del encabezado. Van por datos y no por proyección
@@ -70,6 +89,10 @@ export interface PageHeaderAction {
 export class PageHeader {
   readonly title = input.required<string>();
   readonly subtitle = input<string>('');
+  /** Icono del módulo, en loseta suave. Sin él (y sin marco que lo proponga) no hay loseta. */
+  readonly icon = input<NavIconName | null>(null);
+  /** Línea corta en mayúsculas pequeñas sobre el título: el grupo o módulo de la pantalla. */
+  readonly eyebrow = input<string>('');
   readonly breadcrumbs = input<readonly BreadcrumbItem[]>([]);
   readonly secondaryActions = input<readonly PageHeaderAction[]>([]);
 
@@ -77,6 +100,15 @@ export class PageHeader {
   readonly actionSelected = output<string>();
 
   private readonly migasEnElMarco = inject(PAGE_HEADER_MIGAS_EN_EL_MARCO, { optional: true }) ?? false;
+
+  private readonly predeterminados = inject(PAGE_HEADER_PREDETERMINADOS, { optional: true });
+
+  protected readonly iconoEfectivo = computed(
+    () => this.icon() ?? this.predeterminados?.icon() ?? null,
+  );
+  protected readonly eyebrowEfectivo = computed(
+    () => this.eyebrow() || this.predeterminados?.eyebrow() || '',
+  );
 
   protected readonly hasBreadcrumbs = computed(
     () => !this.migasEnElMarco && this.breadcrumbs().length > 0,

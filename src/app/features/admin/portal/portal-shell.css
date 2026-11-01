@@ -387,7 +387,62 @@
   margin-block-end: var(--sp-4);
   overflow-x: auto;
   border-block-end: 1px solid var(--border-subtle);
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.portal__pestanas::-webkit-scrollbar {
+  display: none;
+}
+
+/* Que hay más tira: el borde por el que queda algo se desvanece, y cada
+   desvanecido se retira al llegar a su punta (misma receta que `app-tabs`).
+   Sin desborde la línea de tiempo no existe y no hay máscara. */
+@property --pestanas-ini {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0rem;
+}
+
+@property --pestanas-fin {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0rem;
+}
+
+@keyframes pestanas-ini {
+  from { --pestanas-ini: 0rem; }
+  to { --pestanas-ini: 2.5rem; }
+}
+
+@keyframes pestanas-fin {
+  from { --pestanas-fin: 2.5rem; }
+  to { --pestanas-fin: 0rem; }
+}
+
+@supports (animation-timeline: scroll()) {
+  .portal__pestanas {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      black var(--pestanas-ini),
+      black calc(100% - var(--pestanas-fin)),
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black var(--pestanas-ini),
+      black calc(100% - var(--pestanas-fin)),
+      transparent
+    );
+    animation:
+      pestanas-ini linear both,
+      pestanas-fin linear both;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range:
+      0 3rem,
+      calc(100% - 3rem) 100%;
+  }
 }
 
 .portal__pestana {

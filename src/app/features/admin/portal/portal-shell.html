@@ -132,7 +132,7 @@
 
     <main class="portal__lienzo" id="portal-contenido">
       @if (pestanas().length > 0) {
-        <nav class="portal__pestanas" [attr.aria-label]="pantallaActiva()?.section ?? 'Pantallas de la sección'">
+        <nav #tiraPestanas class="portal__pestanas" data-testid="portal-pestanas" [attr.aria-label]="pantallaActiva()?.section ?? 'Pantallas de la sección'">
           @for (tab of pestanas(); track tab.path) {
             <a
               class="portal__pestana"

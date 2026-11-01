@@ -329,11 +329,19 @@
     }
 }
 
-/* Cuando la tira se desplaza, su borde derecho se desvanece en vez de cortar una
-   pestaña a secas, y el desvanecido se retira al llegar al final. Con valor
-   inicial 0: sin desborde la animación no se aplica. Sólo con
-   `animation-timeline: scroll()`; sin ella, queda como estaba. */
+/* Cuando la tira se desplaza, el borde por el que queda más tira se desvanece
+   en vez de cortar una pestaña a secas: el derecho mientras quede algo a la
+   derecha, el izquierdo en cuanto se dejó algo atrás. Cada desvanecido se
+   retira al llegar a su punta. Con valor inicial 0: sin desborde la animación
+   no se aplica. Sólo con `animation-timeline: scroll()`; sin ella, queda como
+   estaba (las flechas siguen diciendo que hay más). */
 @property --tabs-fin {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0rem;
+}
+
+@property --tabs-ini {
     syntax: '<length>';
     inherits: false;
     initial-value: 0rem;
@@ -349,13 +357,39 @@
     }
 }
 
+@keyframes tabs-ini {
+    from {
+        --tabs-ini: 0rem;
+    }
+
+    to {
+        --tabs-ini: 1.75rem;
+    }
+}
+
 @supports (animation-timeline: scroll()) {
     .tabs__list {
-        -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--tabs-fin)), transparent);
-        mask-image: linear-gradient(to right, black calc(100% - var(--tabs-fin)), transparent);
-        animation: tabs-fin linear both;
-        animation-timeline: scroll(self inline);
-        animation-range: calc(100% - 3rem) 100%;
+        -webkit-mask-image: linear-gradient(
+            to right,
+            transparent,
+            black var(--tabs-ini),
+            black calc(100% - var(--tabs-fin)),
+            transparent
+        );
+        mask-image: linear-gradient(
+            to right,
+            transparent,
+            black var(--tabs-ini),
+            black calc(100% - var(--tabs-fin)),
+            transparent
+        );
+        animation:
+            tabs-ini linear both,
+            tabs-fin linear both;
+        animation-timeline: scroll(self inline), scroll(self inline);
+        animation-range:
+            0 3rem,
+            calc(100% - 3rem) 100%;
     }
 }
 

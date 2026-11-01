@@ -25,6 +25,46 @@
     margin-top: 0;
 }
 
+.page-header__heading {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+}
+
+.page-header__textos {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Loseta del icono del módulo (AtlasAdminPortal): 40 px, fondo suave de marca
+   e icono de acento. No es adorno: en un portal de treinta pantallas con la
+   misma tipografía es lo que distingue una de otra antes de leerla. Sólo
+   existe si la pantalla —o el marco— nombra un icono. */
+.page-header__icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    inline-size: var(--sp-10);
+    block-size: var(--sp-10);
+    margin-block-start: 2px;
+    border-radius: var(--r-md);
+    background: var(--st-primary-bg);
+    color: var(--brand-primary);
+    /* el átomo mide 1.25em: 16 px → icono de 20 px, como el `h-5` de Atlas */
+    font-size: var(--fs-body-lg);
+}
+
+.page-header__eyebrow {
+    margin: 0 0 var(--sp-1);
+    font-size: var(--fs-overline);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
 .page-header__title {
     margin: 0;
     /* Un título sin espacios (un nombre calificado como `esquema.tabla`) no

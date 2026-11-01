@@ -16,6 +16,11 @@ export interface PortalNavItem {
    * entrada.
    */
   readonly section?: string;
+  /**
+   * El icono de la pantalla en la loseta de su cabecera. Sin él, el del grupo.
+   * Que dos pantallas del mismo grupo no compartan icono es lo que lo hace útil.
+   */
+  readonly icon?: NavIconName;
 }
 
 /** Una línea de la barra lateral: una pantalla sola o una sección de hermanas. */
@@ -46,6 +51,7 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Centro interno',
         path: '',
+        icon: 'home',
         exact: true,
         summary: 'Cifras del inventario y postura del catálogo',
       },
@@ -59,33 +65,39 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Operaciones',
         path: 'systems/operations',
+        icon: 'network',
         summary: 'Todos los endpoints, con riesgo, tablas y pruebas',
       },
       {
         label: 'Mapa de rutas',
         path: 'systems/flows',
+        icon: 'route',
         section: 'Mapa de rutas',
         summary: 'Rutas por flujo, quién las llama y qué señales tienen',
       },
       {
         label: 'Diagrama',
         path: 'systems/flows/diagram',
+        icon: 'merge',
         section: 'Mapa de rutas',
         summary: 'El grafo de un proceso o módulo',
       },
       {
         label: 'Deriva',
         path: 'systems/drift',
+        icon: 'sliders',
         summary: 'Dónde el frontend, la API y el contrato no coinciden',
       },
       {
         label: 'Revisión',
         path: 'systems/review',
+        icon: 'clipboard',
         summary: 'Fichas del catálogo esperando una decisión',
       },
       {
         label: 'Piezas en ejecución',
         path: 'systems/runtime-pieces',
+        icon: 'monitor',
         summary: 'Workers, crons, consumidores y procesos detectados en el código, y si están vivos',
       },
     ],
@@ -98,6 +110,7 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Procesos',
         path: 'processes',
+        icon: 'orders',
         summary: 'Qué hace el sistema, paso a paso y por quién',
       },
     ],
@@ -110,16 +123,19 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Tablas',
         path: 'catalog/tables',
+        icon: 'table',
         summary: 'Las 1 230 tablas del modelo, con su ficha',
       },
       {
         label: 'Dominios y glosario',
         path: 'catalog/domains',
+        icon: 'book',
         summary: 'Dominios de negocio y términos del glosario',
       },
       {
         label: 'Sonda de catalogación',
         path: 'catalog/fit',
+        icon: 'scan',
         summary: 'Si el catálogo sigue ajustado a las rutas del código, la base, el inventario y las fichas',
       },
     ],
@@ -132,6 +148,7 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Linaje',
         path: 'lineage',
+        icon: 'link',
         summary: 'Qué operación toca qué tabla, y qué tabla depende de cuál',
       },
     ],
@@ -144,6 +161,7 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Esquema',
         path: 'schemas',
+        icon: 'cube',
         summary: 'Schemas, versión del modelo y deriva con la base',
       },
     ],
@@ -156,89 +174,104 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Auditoría',
         path: 'governance/audit',
+        icon: 'history',
         summary: 'Quién hizo qué y cuándo, y quién leyó datos sensibles',
       },
       {
         label: 'Usuarios y roles',
         path: 'governance/users',
+        icon: 'people',
         section: 'Usuarios y accesos',
         summary: 'Usuarios internos, sus roles y los permisos de cada rol',
       },
       {
         label: 'Deriva de permisos',
         path: 'governance/permission-drift',
+        icon: 'flag',
         section: 'Permisos por módulo',
         summary: 'Roles que las rutas exigen y nadie siembra, y rutas sin roles',
       },
       {
         label: 'Roles y permisos',
         path: 'governance/roles',
+        icon: 'key',
         section: 'Usuarios y accesos',
         summary: 'Qué permite y qué niega cada rol, con edición',
       },
       {
         label: 'Permisos por campo y alcance',
         path: 'governance/field-permissions',
+        icon: 'lock',
         section: 'Usuarios y accesos',
         summary: 'Reglas por columna y permisos sobre un recurso concreto',
       },
       {
         label: 'Quién puede qué',
         path: 'governance/who-can',
+        icon: 'shield',
         section: 'Usuarios y accesos',
         summary: 'Simulador de decisión del PDP y mapa permiso → roles → personas',
       },
       {
         label: 'Ciclo de vida y accesos',
         path: 'governance/access-reviews',
+        icon: 'refresh',
         section: 'Usuarios y accesos',
         summary: 'Suspender, reactivar, dar de baja y revisar accesos',
       },
       {
         label: 'Matriz RBAC por módulo',
         path: 'governance/rbac-matrix',
+        icon: 'grid',
         section: 'Permisos por módulo',
         summary: 'Qué rol puede qué acción en cada módulo, huecos de permisos finos y cobertura',
       },
       {
         label: 'Catálogo de visibilidad',
         path: 'governance/ui-catalog',
+        icon: 'eye',
         section: 'Visibilidad de la interfaz',
         summary: 'Cada elemento de la interfaz que puede mostrarse u ocultarse, por módulo y con su jerarquía',
       },
       {
         label: 'Reglas de visibilidad',
         path: 'governance/ui-rules',
+        icon: 'eye-off',
         section: 'Visibilidad de la interfaz',
         summary: 'Mostrar u ocultar elementos por persona, organización, rol o tipo de organización, con vigencia y motivo',
       },
       {
         label: 'Ver como',
         path: 'governance/ui-preview',
+        icon: 'monitor',
         section: 'Visibilidad de la interfaz',
         summary: 'Previsualiza qué se oculta a una persona o a un rol y qué regla lo decide',
       },
       {
         label: 'Mutabilidad de datos',
         path: 'governance/mutability',
+        icon: 'edit',
         section: 'Gobierno de datos',
         summary: 'Qué tabla es append-only, cuál se actualiza o se borra, y con qué evidencia',
       },
       {
         label: 'Políticas',
         path: 'governance/policies',
+        icon: 'survey',
         section: 'Gobierno de datos',
         summary: 'Escritura, retención, anonimización, clasificación y residencia de los datos',
       },
       {
         label: 'Datos personales',
         path: 'governance/pii',
+        icon: 'patients',
         section: 'Gobierno de datos',
         summary: 'Campos con datos personales, de salud o credenciales, y cómo se protegen',
       },
       {
         label: 'Solicitudes de privacidad',
         path: 'governance/privacy-requests',
+        icon: 'mail',
         section: 'Gobierno de datos',
         summary: 'Solicitudes de acceso, rectificación y supresión de los titulares',
       },
@@ -252,12 +285,14 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       {
         label: 'Incidencias',
         path: 'data-quality/issues',
+        icon: 'flag',
         section: 'Calidad de datos',
         summary: 'Datos de salud (health_data) que incumplen una regla, con su estado y cómo cerrarlos',
       },
       {
         label: 'Reglas',
         path: 'data-quality/rules',
+        icon: 'check-circle',
         section: 'Calidad de datos',
         summary: 'Las reglas de calidad de los datos clínicos, su expresión y sus últimas corridas',
       },
@@ -357,4 +392,23 @@ export function siblingTabs(url: string): readonly PortalNavItem[] {
   if (!item?.section) return [];
   const hermanas = PORTAL_NAV.flatMap((g) => g.items).filter((i) => i.section === item.section);
   return hermanas.length >= 2 ? hermanas : [];
+}
+
+/** Lo que la cabecera de la pantalla activa muestra sin que la pantalla lo diga. */
+export interface PortalHeader {
+  readonly icon: NavIconName | null;
+  /** El nombre del grupo de la barra lateral («Gobierno y acceso»). */
+  readonly eyebrow: string;
+}
+
+/**
+ * Icono y eyebrow de la cabecera para `url`: el icono propio de la pantalla (o
+ * el de su grupo) y el nombre del grupo. Fuera de cualquier pantalla conocida,
+ * nada: la cabecera se queda como la escribió la pantalla.
+ */
+export function headerFor(url: string): PortalHeader {
+  const grupo = groupOf(url);
+  const item = activeItem(url);
+  if (!grupo || !item) return { icon: null, eyebrow: '' };
+  return { icon: item.icon ?? grupo.icon, eyebrow: grupo.label };
 }

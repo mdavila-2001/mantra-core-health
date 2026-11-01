@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { PORTAL_NAV, groupOf, isActive, portalCrumbs, portalUrl } from './portal-nav';
+import { PORTAL_NAV, groupOf, headerFor, isActive, portalCrumbs, portalUrl } from './portal-nav';
 
 const item = (path: string) => PORTAL_NAV.flatMap((g) => g.items).find((i) => i.path === path)!;
 
@@ -90,5 +90,26 @@ describe('portal-nav', () => {
       'Gobierno y acceso',
       'Auditoría',
     ]);
+  });
+
+  it('la cabecera de cada pantalla trae su icono y, de eyebrow, el grupo', () => {
+    expect(headerFor('/superadmin/portal/governance/roles')).toEqual({
+      icon: 'key',
+      eyebrow: 'Gobierno y acceso',
+    });
+    // una ficha hereda la cabecera de la pantalla de la que cuelga
+    expect(headerFor('/superadmin/portal/data-quality/rules/r-1').eyebrow).toBe(
+      'Calidad de datos clínicos',
+    );
+    // fuera del portal no propone nada
+    expect(headerFor('/dashboard')).toEqual({ icon: null, eyebrow: '' });
+  });
+
+  it('todas las pantallas tienen icono propio y no se repite dentro de un grupo', () => {
+    for (const grupo of PORTAL_NAV) {
+      const iconos = grupo.items.map((i) => i.icon);
+      expect(iconos.every(Boolean)).toBe(true);
+      expect(new Set(iconos).size).toBe(iconos.length);
+    }
   });
 });

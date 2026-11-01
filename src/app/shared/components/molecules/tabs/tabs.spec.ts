@@ -121,23 +121,44 @@ describe('Tabs', () => {
       expect(botones().map((boton) => boton.getAttribute('tabindex'))).toEqual(['-1', '-1', '0']);
     });
 
-    it('lleva a la vista una pestaña seleccionada por URL fuera de la franja visible', async () => {
+    function tiraDesbordada(): { tira: HTMLElement; scrollBy: ReturnType<typeof vi.fn> } {
       const tira = root().querySelector('.tabs__list') as HTMLElement;
       const scrollBy = vi.fn();
+      Object.defineProperty(tira, 'scrollWidth', { configurable: true, value: 300 });
+      Object.defineProperty(tira, 'clientWidth', { configurable: true, value: 100 });
       Object.defineProperty(tira, 'getBoundingClientRect', {
         configurable: true,
-        value: () => ({ left: 0, right: 100 }),
+        value: () => ({ left: 0, right: 100, width: 100 }),
       });
       Object.defineProperty(tira, 'scrollBy', { configurable: true, value: scrollBy });
+      return { tira, scrollBy };
+    }
+
+    it('lleva al CENTRO de la tira una pestaña seleccionada por URL fuera de la franja visible', async () => {
+      const { scrollBy } = tiraDesbordada();
       Object.defineProperty(botones()[2], 'getBoundingClientRect', {
         configurable: true,
-        value: () => ({ left: 60, right: 150 }),
+        value: () => ({ left: 60, right: 150, width: 90 }),
       });
 
       host.seccion.set(2);
       await fixture.whenStable();
 
-      expect(scrollBy).toHaveBeenCalledWith({ left: 50, behavior: 'smooth' });
+      // centro de la pestaña (105) menos centro de la tira (50)
+      expect(scrollBy).toHaveBeenCalledWith({ left: 55, behavior: 'smooth' });
+    });
+
+    it('si la tira entra entera no desplaza nada', async () => {
+      const tira = root().querySelector('.tabs__list') as HTMLElement;
+      const scrollBy = vi.fn();
+      Object.defineProperty(tira, 'scrollWidth', { configurable: true, value: 100 });
+      Object.defineProperty(tira, 'clientWidth', { configurable: true, value: 100 });
+      Object.defineProperty(tira, 'scrollBy', { configurable: true, value: scrollBy });
+
+      host.seccion.set(2);
+      await fixture.whenStable();
+
+      expect(scrollBy).not.toHaveBeenCalled();
     });
   });
 
