@@ -1,4 +1,5 @@
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { TIMEOUT_MESSAGE } from '../../core/http/api-failure';
 
 /**
  * Cómo se llama, en palabras, lo que la escritura no pudo hacer.
@@ -58,11 +59,15 @@ export function writeFailureMessage(
       return textos.yaNoExiste ?? 'El expediente ya no existe. Recargue la pantalla.';
     case 'offline':
       // No falló el servidor: la petición no llegó, así que reintentar sirve.
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
+      // Con el límite de espera es distinto: pudo haberse guardado igual.
+      return estado.timedOut === true
+        ? TIMEOUT_MESSAGE
+        : 'No pudimos conectarnos. Revise su conexión y reintente.';
     case 'error':
       // El identificador de petición es obligatorio en S9: sin él, quien
       // reporta el problema y quien lo busca en los registros no se encuentran.
-      return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;
+      // La pista (qué hacer) es texto fijo del catálogo, nunca del servidor.
+      return `${[estado.message || 'Ocurrió un error inesperado.', estado.hint].filter(Boolean).join(' ')} (${estado.requestId})`;
     default:
       // `ready`, `loading` y los demás no son fallos. `stale` y `empty` no
       // aplican a una escritura: no hay dato viejo que refrescar ni lista

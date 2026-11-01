@@ -11,6 +11,7 @@ import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
 import { isTenantDenialReason, tenantDenialHint, tenantDenialText } from '../data-access/iam/tenant-denial';
 import { accessErrorText } from '../data-access/access-governance/access-errors';
 import { readApiError, readFieldViolations, type ApiErrorBody } from './api-error';
+import { explainFailure, explanationOf, isTimeout, type ErrorExplanation } from './error-explanation';
 
 /**
  * A dónde lleva la puerta cuando falta verificar la identidad.
@@ -44,19 +45,20 @@ export const IDENTITY_VERIFICATION_ROUTE = '/my-account/identity';
  */
 export function errorToViewState<T>(error: unknown): ViewState<T> {
   if (!(error instanceof HttpErrorResponse)) {
-    return unexpectedError('sin-id', 'Ocurrió un error inesperado.');
+    return explained('sin-id', explanationOf('client'));
   }
 
   // Estado 0 es «la petición no llegó»: sin conexión, DNS caído o CORS. Nunca
   // trae cuerpo de la API, así que se resuelve antes de intentar leerlo.
   if (error.status === 0) {
-    return offline();
+    return isTimeout(error) ? offline(undefined, { timedOut: true }) : offline();
   }
 
   const body = readApiError(error);
   if (body === null) {
     // Respuesta sin la forma del contrato: un proxy, un balanceador, un 502.
-    return unexpectedError(correlationOf(error, null), 'No pudimos completar la operación.');
+    // Lo que diga ese cuerpo no se muestra: la explicación sale del estado HTTP.
+    return explained(correlationOf(error, null), explainFailure(error, null));
   }
 
   // Sólo el id que mandó la API: en S4 y S5 es opcional, así que no se inventa
@@ -89,13 +91,17 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
 
     case 'PAYLOAD_TOO_LARGE':
       return validation(
-        [{ message: body.message || 'El archivo es demasiado grande.', code: body.code }],
+        [{ message: body.message || sentenceOf(explanationOf('too-large')), code: body.code }],
         undefined,
         requestId,
       );
 
     case 'RATE_LIMITED':
-      return validation([{ message: body.message, code: body.code }], retryAfterOf(error), requestId);
+      return validation(
+        [{ message: body.message || sentenceOf(explanationOf('rate-limited')), code: body.code }],
+        retryAfterOf(error),
+        requestId,
+      );
 
     // --- S5 · prohibido ----------------------------------------------------
     /**
@@ -142,21 +148,35 @@ export function errorToViewState<T>(error: unknown): ViewState<T> {
 
     // --- S9 · error inesperado ---------------------------------------------
     case 'DEPENDENCY_UNAVAILABLE':
-      return unexpectedError(
-        correlationOf(error, body),
-        'Un servicio no está disponible en este momento. Reintente en unos minutos.',
-      );
+      return explained(correlationOf(error, body), explanationOf('unavailable'));
 
     /**
      * `UNAUTHENTICATED` llega acá sólo si el interceptor de autenticación ya
      * agotó su intento de refresco: cuando eso pasa, la sesión ya se cerró y se
      * navegó al login, así que no hay nada que mostrar en la pantalla anterior.
+     *
+     * `body.message` **no** se muestra: en un 5xx la API ya lo censura a «Error
+     * interno del servidor», que no le dice nada a la persona, y si algún día
+     * un fallo se escapara sin censurar, el front no lo repetiría.
      */
     case 'UNAUTHENTICATED':
     case 'INTERNAL':
     default:
-      return unexpectedError(correlationOf(error, body), body.message);
+      return explained(correlationOf(error, body), explainFailure(error, body));
   }
+}
+
+/** S9 con la explicación fija del catálogo: causa como mensaje, acción como pista. */
+function explained<T>(requestId: string, explanation: ErrorExplanation): ViewState<T> {
+  return unexpectedError(requestId, explanation.cause, {
+    title: explanation.title,
+    hint: explanation.action,
+  });
+}
+
+/** Causa y acción en un solo texto, para donde no hay título aparte. */
+function sentenceOf(explanation: ErrorExplanation): string {
+  return `${explanation.cause} ${explanation.action}`;
 }
 
 /**

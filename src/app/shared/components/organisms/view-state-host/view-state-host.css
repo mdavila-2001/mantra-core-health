@@ -44,6 +44,16 @@
     margin: var(--sp-2) 0 0;
 }
 
+/* S9 · qué hacer. Párrafo propio debajo de la causa: se lee como el paso
+   siguiente y no se pierde dentro de la explicación. */
+.view-state-host__hint {
+    margin: var(--sp-2) 0 0;
+}
+
+.view-state-host__hint-label {
+    font-weight: 600;
+}
+
 .view-state-host__request-id code {
     /* el código se distingue y se selecciona fácil: es lo que se dicta por teléfono */
     padding: 2px var(--sp-2);

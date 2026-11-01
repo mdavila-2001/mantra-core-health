@@ -99,3 +99,73 @@
     width: var(--sp-4);
     height: var(--sp-4);
 }
+
+/* ─── entrada de los avisos de error y advertencia ──────────────────────────
+   Responde «¿de dónde salió esto?»: un error casi siempre aparece después de
+   un clic o de una carga, y sin transición se lee como un parpadeo. Tres
+   gestos, una sola vez y en ≤ 320 ms en total, sólo `opacity`/`transform`:
+
+   1. el aviso se posa (sube 4 px y aparece, `--dur-base`);
+   2. una línea de acento a la izquierda se traza de arriba hacia abajo
+      (`scaleY`, `--dur-slow`): marca el borde de lo que hay que leer;
+   3. el ícono se asienta (de 0,9 a 1, tras `--dur-fast`).
+
+   Nada rebota ni se repite: `--ease-out` y no `--ease-spring`, que es para
+   confirmar gestos. Con movimiento reducido no corre nada y el aviso queda
+   completo, línea incluida. El info y el éxito no se tocan: suelen estar en
+   la página desde el principio y no son una reacción. */
+:host(.alert--error),
+:host(.alert--warning) {
+    position: relative;
+}
+
+:host(.alert--error)::before,
+:host(.alert--warning)::before {
+    content: '';
+    position: absolute;
+    inset-block: -1px;
+    inset-inline-start: -1px;
+    width: 3px;
+    border-start-start-radius: var(--r-md);
+    border-end-start-radius: var(--r-md);
+    background: var(--tone-fg, currentColor);
+    transform-origin: top;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    :host(.alert--error),
+    :host(.alert--warning) {
+        animation: alert-se-posa var(--dur-base) var(--ease-out) both;
+    }
+
+    :host(.alert--error)::before,
+    :host(.alert--warning)::before {
+        animation: alert-traza var(--dur-slow) var(--ease-out) both;
+    }
+
+    :host(.alert--error) .alert__icon,
+    :host(.alert--warning) .alert__icon {
+        animation: alert-asienta var(--dur-base) var(--ease-out) var(--dur-fast) both;
+    }
+}
+
+@keyframes alert-se-posa {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+}
+
+@keyframes alert-traza {
+    from {
+        transform: scaleY(0);
+    }
+}
+
+@keyframes alert-asienta {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
