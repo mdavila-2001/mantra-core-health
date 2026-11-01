@@ -42,13 +42,8 @@ import { FieldRuleDialog } from './field-rule-dialog';
       @if (notice(); as message) {
         <app-alert tone="success" dismissible (dismissed)="notice.set(null)">{{ message }}</app-alert>
       }
-      <p class="panel__note">
-        Una columna sin regla se rige por los permisos del rol. Con regla, el rol sólo lee y escribe lo que ella dice y
-        el valor se enmascara como se indica. La API guarda reglas nuevas o cambiadas; quitar una regla no está
-        expuesto todavía.
-      </p>
-      <div class="panel__toolbar">
-        <app-form-field label="Rol" [hint]="rolesUnavailable() ? 'No llegó la lista de roles.' : 'Elija el rol cuyos campos quiere ver.'">
+      <div class="panel__toolbar panel__toolbar--action">
+        <app-form-field label="Rol" [errorMessage]="rolesUnavailable() ? 'No llegó la lista de roles.' : ''">
           <app-select
             ariaLabel="Rol"
             placeholder="Elegir un rol"
@@ -70,19 +65,42 @@ import { FieldRuleDialog } from './field-rule-dialog';
           </button>
         </div>
       </div>
-      <app-data-table
-        data-testid="portal-role-fields-table"
-        caption="Reglas de campo del rol elegido"
-        [state]="rules()"
-        [columns]="columns()"
-        [trackBy]="byKey"
-        [rowLabel]="rowName"
-        rowNavigable
-        stackedOnMobile
-        fitContainer
-        (rowActivated)="openDialog($event)"
-        (retry)="reload()"
-      />
+      <p class="panel__note">
+        Una columna sin regla se rige por los permisos del rol. Con regla, el rol sólo lee y escribe lo que ella dice y
+        el valor se enmascara como se indica.
+      </p>
+      @if (roleId() === '') {
+        <section class="panel__pick" aria-labelledby="fields-pick-title">
+          <h2 class="panel__pick-title" id="fields-pick-title">Elija un rol para ver sus reglas de campo.</h2>
+          @if (roles().length > 0) {
+            <ul class="panel__pick-list">
+              @for (r of roles(); track r.id) {
+                <li>
+                  <button type="button" class="panel__pick-item" (click)="roleChanged.emit(r.id)">
+                    <span class="panel__name">{{ r.name }}</span>
+                    <code class="panel__code">{{ r.code }}</code>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      } @else {
+        <app-data-table
+          data-testid="portal-role-fields-table"
+          caption="Reglas de campo del rol elegido"
+          [state]="rules()"
+          [columns]="columns()"
+          [trackBy]="byKey"
+          [rowLabel]="rowName"
+          rowNavigable
+          dense
+          stackedOnMobile
+          fitContainer
+          (rowActivated)="openDialog($event)"
+          (retry)="reload()"
+        />
+      }
     </div>
 
     <ng-template #fieldCell let-row>
@@ -132,7 +150,7 @@ export class RoleFieldsPanel {
   protected readonly editing = signal<FieldPermission | null>(null);
   protected readonly rolesUnavailable = signal(false);
   protected readonly mask = maskLabel;
-  private readonly roles = signal<readonly AssignableRole[]>([]);
+  protected readonly roles = signal<readonly AssignableRole[]>([]);
 
   protected readonly roleOptions = computed<readonly SelectOption<string>[]>(() =>
     this.roles().map((r) => ({ value: r.id, label: `${r.name} · ${r.code}` })),

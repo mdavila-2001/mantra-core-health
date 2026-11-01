@@ -56,16 +56,12 @@ const ANY_PERMISSION = '';
       @if (error(); as message) {
         <app-alert tone="error" dismissible (dismissed)="error.set(null)" data-testid="portal-scope-grants-error">{{ message }}</app-alert>
       }
-      <app-alert tone="info">
-        Las restricciones por dirección IP y por horario existen en el modelo de datos pero la API todavía no las expone:
-        no se pueden ver ni editar desde acá.
-      </app-alert>
-      <div class="panel__toolbar">
-        <app-form-field label="Sujeto" [errorMessage]="uuidProblem(subjectId())" hint="UUID de la persona, el rol o el servicio.">
-          <app-input ariaLabel="Filtrar por sujeto" data-testid="portal-scope-subject" [(value)]="subjectId" />
+      <div class="panel__toolbar panel__toolbar--action">
+        <app-form-field label="Sujeto" [errorMessage]="uuidProblem(subjectId())">
+          <app-input ariaLabel="Filtrar por sujeto" placeholder="UUID de persona, rol o servicio" data-testid="portal-scope-subject" [(value)]="subjectId" />
         </app-form-field>
-        <app-form-field label="Recurso" [errorMessage]="uuidProblem(resourceId())" hint="UUID del recurso concreto.">
-          <app-input ariaLabel="Filtrar por recurso" data-testid="portal-scope-resource" [(value)]="resourceId" />
+        <app-form-field label="Recurso" [errorMessage]="uuidProblem(resourceId())">
+          <app-input ariaLabel="Filtrar por recurso" placeholder="UUID del recurso" data-testid="portal-scope-resource" [(value)]="resourceId" />
         </app-form-field>
         <app-form-field label="Permiso">
           <app-select
@@ -75,11 +71,11 @@ const ANY_PERMISSION = '';
             [(value)]="permissionId"
           />
         </app-form-field>
-      </div>
-      <div class="panel__actions">
-        <button app-button variant="primary" data-testid="portal-scope-add" (clicked)="creating.set(true)">
-          Nuevo permiso por alcance
-        </button>
+        <div class="panel__actions">
+          <button app-button variant="primary" data-testid="portal-scope-add" (clicked)="creating.set(true)">
+            Nuevo permiso por alcance
+          </button>
+        </div>
       </div>
       <app-data-table
         data-testid="portal-scope-table"
@@ -89,6 +85,7 @@ const ANY_PERMISSION = '';
         [trackBy]="byId"
         [rowLabel]="rowName"
         [cursor]="grants.cursor()"
+        dense
         stackedOnMobile
         fitContainer
         (cursorChanged)="grants.move($event)"
