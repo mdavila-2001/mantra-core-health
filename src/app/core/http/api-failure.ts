@@ -82,7 +82,7 @@ export function describeApiFailure(error: unknown, fallback: string): string {
     return fallback;
   }
   if (error.status === 0) {
-    return error.statusText === 'Timeout' ? `${fallback} ${TIMEOUT_MESSAGE}` : OFFLINE_MESSAGE;
+    return error.statusText === 'Timeout' ? `${fallback} ${explanationOf('timeout').brief}` : OFFLINE_MESSAGE;
   }
 
   const body = readApiError(error);
@@ -102,8 +102,7 @@ function withCause(fallback: string, kind: ErrorKind): string {
   if (!CAUSE_WORTH_TELLING.has(kind)) {
     return fallback;
   }
-  const { cause, action } = explanationOf(kind);
-  return `${fallback} ${cause} ${action}`;
+  return `${fallback} ${explanationOf(kind).brief}`;
 }
 
 /**

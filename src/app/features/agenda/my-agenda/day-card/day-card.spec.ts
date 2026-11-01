@@ -1208,7 +1208,7 @@ describe('TarjetaDelDia', () => {
 
     expect(api().candidates()).toEqual([]);
     expect(api().failedSearch()).toBe(
-      'No se pudo buscar pacientes. (Código de soporte: corr-busca-1)',
+      'No se pudo buscar pacientes. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-busca-1)',
     );
     http.verify();
   });
