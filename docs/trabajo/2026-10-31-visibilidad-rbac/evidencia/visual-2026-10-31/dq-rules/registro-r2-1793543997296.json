@@ -1,0 +1,56 @@
+[
+ {
+  "file": "despues-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 978,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 1746,
+  "h1": [
+   "Reglas de calidad de datos clínicos"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-ficha-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "DQ-ENC-014"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-ficha-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 1127,
+  "h1": [
+   "DQ-ENC-014"
+  ],
+  "cut": [
+   "button.tabs__tab"
+  ],
+  "overflow": false,
+  "errs": []
+ }
+]

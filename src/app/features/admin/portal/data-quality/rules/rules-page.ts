@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -22,6 +23,9 @@ import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
+import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../../shared/components/organisms/page-header/page-header';
@@ -30,7 +34,7 @@ import { dateOnly } from '../../governance/governance-labels';
 import { portalUrl } from '../../portal-nav';
 import { pagedList } from '../../support/paged-list';
 import { patchQuery, queryFilters, queryParamsSignal } from '../../support/route-query';
-import { SEVERITY_OPTIONS, conceptText, severityLabel } from '../quality-labels';
+import { conceptText, severityLabel } from '../quality-labels';
 
 const PAGE_SIZE = 25;
 const SCREEN = portalUrl('data-quality/rules');
@@ -55,7 +59,7 @@ function rulesQuery(values: Readonly<Record<(typeof URL_KEYS)[number], string>>)
  */
 @Component({
   selector: 'app-portal-quality-rules-page',
-  imports: [RouterLink, Badge, Link, Alert, Card, DataTable, PageHeader, FilterForm],
+  imports: [NgTemplateOutlet, RouterLink, Badge, Link, Alert, Card, MetricCard, Tab, Tabs, DataTable, PageHeader, FilterForm],
   templateUrl: './rules-page.html',
   styleUrl: './rules-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,11 +71,18 @@ export class RulesPage {
 
   protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
   protected readonly severity = severityLabel;
+  /** La severidad se elige con las pestañas (viven en la URL como `severity`). */
+  protected readonly tabs = [
+    { value: '', label: 'Todas' },
+    ...QUALITY_SEVERITIES.map((value) => ({ value, label: severityLabel(value).label })),
+  ];
+  protected readonly tabIndex = computed(() =>
+    Math.max(0, this.tabs.findIndex((t) => t.value === (rulesQuery(this.values()).severity ?? ''))),
+  );
   protected readonly concept = conceptText;
   protected readonly day = dateOnly;
 
   protected readonly fields = computed<readonly FilterField[]>(() => [
-    { key: 'severity', label: 'Severidad', kind: 'select', options: SEVERITY_OPTIONS },
     { key: 'q', label: 'Buscar', kind: 'text', placeholder: 'Código o nombre de la regla' },
   ]);
 
@@ -79,6 +90,25 @@ export class RulesPage {
     (cursor) => this.client.listRules({ ...rulesQuery(this.values()), limit: PAGE_SIZE, ...(cursor ? { cursor } : {}) }),
     () => this.whenEmpty(),
   );
+
+  /**
+   * Cifras de arriba: sólo cuando la respuesta ya pedida trae TODAS las reglas (sin búsqueda ni
+   * pestaña, una sola página). Si no, no se muestran: contar sobre una página sería inventar.
+   */
+  protected readonly metrics = computed(() => {
+    const s = this.list.state();
+    const total = this.list.total();
+    const v = this.values();
+    if (s.status !== 'ready' || total === null || s.data.length !== total) return null;
+    if (v.q.trim() !== '' || this.tabIndex() !== 0) return null;
+    const rows = s.data;
+    return {
+      total,
+      withOpen: rows.filter((r) => r.openIssues > 0).length,
+      open: rows.reduce((n, r) => n + r.openIssues, 0),
+      serious: rows.filter((r) => r.severity === 'FATAL' || r.severity === 'ERROR').length,
+    };
+  });
 
   private readonly ruleCell = viewChild.required<TemplateRef<{ $implicit: QualityRule }>>('ruleCell');
   private readonly severityCell = viewChild.required<TemplateRef<{ $implicit: QualityRule }>>('severityCell');
@@ -104,12 +134,17 @@ export class RulesPage {
     });
   }
 
-  protected apply(filters: Readonly<Record<string, string>>): void {
-    void patchQuery(this.router, this.route, filters);
+  protected selectTab(index: number): void {
+    void patchQuery(this.router, this.route, { severity: this.tabs[index]?.value || null });
   }
 
+  protected apply(filters: Readonly<Record<string, string>>): void {
+    void patchQuery(this.router, this.route, { q: filters['q'] || null });
+  }
+
+  /** Quita la búsqueda; la pestaña (la severidad) se queda. */
   protected clear(): void {
-    void patchQuery(this.router, this.route, { severity: null, q: null });
+    void patchQuery(this.router, this.route, { q: null });
   }
 
   private whenEmpty(): EmptyViewState {

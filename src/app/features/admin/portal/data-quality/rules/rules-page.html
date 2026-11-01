@@ -18,30 +18,51 @@
     </details>
   </app-alert>
 
+  @if (metrics(); as m) {
+    <section class="rules__metrics" aria-label="Resumen de las reglas" data-testid="portal-quality-rules-metrics">
+      <app-metric-card label="Reglas" icon="clipboard" [value]="m.total" hint="Todas las cargadas" />
+      <app-metric-card label="Fatales o de error" icon="shield" [value]="m.serious" hint="Las de severidad más alta" />
+      <app-metric-card label="Con incidencias abiertas" icon="flag" [value]="m.withOpen + ' de ' + m.total" hint="Reglas que hoy detectan algo" />
+      <app-metric-card label="Incidencias abiertas" icon="note" [value]="m.open" hint="Suma de todas las reglas" />
+    </section>
+  }
+
   <app-card class="rules__card" variant="outlined" padding="md">
-    <div class="rules__section">
-      <app-governance-filter-form [fields]="fields()" [values]="values()" (applied)="apply($event)" (cleared)="clear()" />
-      @if (list.total(); as total) {
-        <p class="rules__total" data-testid="portal-quality-rules-total" aria-live="polite">
-          {{ total }} {{ total === 1 ? 'regla' : 'reglas' }} con estos filtros
-        </p>
+    <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+      @for (t of tabs; track t.value; let i = $index) {
+        <app-tab [label]="t.label">
+          @if (tabIndex() === i) {
+            <ng-container [ngTemplateOutlet]="body" />
+          }
+        </app-tab>
       }
-      <app-data-table
-        data-testid="portal-quality-rules-table"
-        caption="Reglas de calidad de datos clínicos"
-        [state]="list.state()"
-        [columns]="columns()"
-        [trackBy]="byId"
-        [rowLabel]="rowName"
-        [cursor]="list.cursor()"
-        stackedOnMobile
-        fitContainer
-        (cursorChanged)="list.move($event)"
-        (retry)="list.reload()"
-      />
-    </div>
+    </app-tabs>
   </app-card>
 </div>
+
+<ng-template #body>
+  <div class="rules__section">
+    <app-governance-filter-form [fields]="fields()" [values]="values()" (applied)="apply($event)" (cleared)="clear()" />
+    @if (list.total(); as total) {
+      <p class="rules__total" data-testid="portal-quality-rules-total" aria-live="polite">
+        {{ total }} {{ total === 1 ? 'regla' : 'reglas' }} con estos filtros
+      </p>
+    }
+    <app-data-table
+      data-testid="portal-quality-rules-table"
+      caption="Reglas de calidad de datos clínicos"
+      [state]="list.state()"
+      [columns]="columns()"
+      [trackBy]="byId"
+      [rowLabel]="rowName"
+      [cursor]="list.cursor()"
+      stackedOnMobile
+      fitContainer
+      (cursorChanged)="list.move($event)"
+      (retry)="list.reload()"
+    />
+  </div>
+</ng-template>
 
 <ng-template #ruleCell let-row>
   <div class="rules__cell">

@@ -30,6 +30,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  padding-block: var(--sp-4);
   min-inline-size: 0;
 }
 
@@ -56,4 +57,21 @@
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-data);
+}
+
+/* Cuatro cifras: de dos en dos en el teléfono y la tableta, en una fila desde escritorio. */
+.rules__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+@media (min-width: 1024px) {
+  .rules__metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.rules__metrics app-metric-card {
+  min-inline-size: 0;
 }
