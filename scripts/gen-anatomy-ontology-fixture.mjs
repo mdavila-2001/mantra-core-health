@@ -15,8 +15,12 @@
  * - `data/anatomy-ontology/es/*.json`: nombre y definición en castellano. Son
  *   **traducción automática sin revisión humana** de lo que dice UBERON, y
  *   viajan rotuladas así; el texto inglés de la ontología va siempre al lado.
+ * - `data/anatomy-ontology/hra-female-parts.json`: las piezas femeninas del
+ *   Human Reference Atlas de HuBMAP (CC BY 4.0), con la ficha que abre cada
+ *   una y el órgano del que forma parte (lo escribe `build_female_parts.py`).
  * - `public/anatomy-atlas-3d/models/parts-manifest.json`: qué malla está en qué
- *   capa y si es exclusiva de un sexo (lo escribe `build_models.py`).
+ *   capa y en qué cuerpo se dibuja (lo escriben `build_models.py` y
+ *   `build_female_parts.py`).
  *
  * ## Lo que NO trae, y por qué
  *
@@ -60,6 +64,21 @@ const SHARDS = 32;
 const MAX_MALLAS_COMPUESTAS = 120;
 
 const leerJson = (ruta) => JSON.parse(readFileSync(ruta, 'utf8'));
+
+/** La relación «forma parte de» que declara la tabla de cruce de HRA, si la pieza no es el órgano entero. */
+function organoHra(pieza, structureId) {
+  if (!pieza.hraPartOf || pieza.hraPartOf === structureId) return [];
+  return [
+    {
+      type: 'hra_part_of',
+      name: 'forma parte de (Human Reference Atlas)',
+      target: pieza.hraPartOf,
+      labelEn: pieza.hraPartOfLabel,
+      labelEs: null,
+      inCatalog: true,
+    },
+  ];
+}
 
 /** Lo mismo que `normalizar` de `uberon_lookup.py`: sin mayúsculas, tildes, guiones ni comas. */
 function normalizar(texto) {
@@ -131,7 +150,8 @@ function clasificarReferencia(ref) {
 
 function main() {
   const uberon = leerJson(join(DATOS, 'uberon-human.json'));
-  const piezas = leerJson(join(DATOS, 'bodyparts3d-parts.json'));
+  const piezasHra = existsSync(join(DATOS, 'hra-female-parts.json')) ? leerJson(join(DATOS, 'hra-female-parts.json')) : [];
+  const piezas = [...leerJson(join(DATOS, 'bodyparts3d-parts.json')), ...piezasHra];
   const procedencia = leerJson(join(DATOS, 'provenance.json'));
   const mallas = leerJson(MANIFIESTO_DE_MALLAS);
   const mapeo = leerCarpeta('netter-mapping', []);
@@ -178,7 +198,7 @@ function main() {
   const partes = [];
   for (const [meshId, malla] of Object.entries(mallas.parts)) {
     const pieza = piezaPorMalla.get(meshId);
-    const structureId = pieza.uberon[0] ?? (pieza.fma ? `FMA:${pieza.fma}` : `BP3D:${meshId}`);
+    const structureId = pieza.structureId ?? pieza.uberon[0] ?? (pieza.fma ? `FMA:${pieza.fma}` : `BP3D:${meshId}`);
     const lado = /\bright\b/i.test(pieza.label) ? 'right' : /\bleft\b/i.test(pieza.label) ? 'left' : null;
     partes.push({
       meshId,
@@ -261,17 +281,43 @@ function main() {
       regions: [],
       definition: null,
       isA: [],
-      relations: pieza.conventionalPartOf.map((padre) => ({
-        type: 'bp3d_part_of',
-        name: 'forma parte de (partonomía de BodyParts3D)',
-        target: padre,
-        labelEn: piezaPorMalla.get(padre)?.label ?? null,
-        labelEs: null,
-        inCatalog: false,
-      })),
+      relations: [
+        ...pieza.conventionalPartOf.map((padre) => ({
+          type: 'bp3d_part_of',
+          name: 'forma parte de (partonomía de BodyParts3D)',
+          target: padre,
+          labelEn: piezaPorMalla.get(padre)?.label ?? null,
+          labelEs: null,
+          inCatalog: false,
+        })),
+        ...organoHra(pieza, p.structureId),
+      ],
       incoming: [],
       netter: [],
       meshes: mallasPorEstructura.get(p.structureId) ?? [],
+      extendedDescription: null,
+      images: [],
+    });
+  }
+
+  // El órgano entero de HRA que el catálogo no trae (la mama izquierda es
+  // `FMA:57991`): ficha mínima con el nombre de la tabla de cruce de HRA.
+  for (const pieza of piezasHra) {
+    const id = pieza.hraPartOf;
+    if (porId.has(id) || fichas.some((f) => f.id === id)) continue;
+    fichas.push({
+      id,
+      labelEn: pieza.hraPartOfLabel,
+      labelEs: castellano[id]?.labelEs ?? null,
+      synonymsEn: [],
+      fma: id.startsWith('FMA:') ? [id.slice(4)] : [],
+      regions: [],
+      definition: null,
+      isA: [],
+      relations: [],
+      incoming: [],
+      netter: [],
+      meshes: mallasPorEstructura.get(id) ?? [],
       extendedDescription: null,
       images: [],
     });
@@ -297,6 +343,18 @@ function main() {
       else if (r.type === 'has_part') agregarHijo(t.id, r.target);
     }
   }
+  // El órgano de HRA se dibuja con todas sus piezas: la tabla de cruce dice de
+  // qué órgano es cada nodo, aunque UBERON no declare la parte (la pared
+  // anterior del útero es sólo FMA).
+  const piezasDeOrgano = new Map();
+  for (const pieza of piezasHra) {
+    const ficha = partes.find((p) => p.meshId === pieza.meshId).structureId;
+    if (ficha === pieza.hraPartOf) continue;
+    const lista = piezasDeOrgano.get(pieza.hraPartOf) ?? new Set();
+    lista.add(ficha);
+    piezasDeOrgano.set(pieza.hraPartOf, lista);
+  }
+  const sexoDeMalla = new Map(partes.map((p) => [p.meshId, p.sex]));
   const compuestas = {};
   for (const t of uberon) {
     if (mallasPorEstructura.has(t.id)) continue;
@@ -309,9 +367,22 @@ function main() {
         pila.push(hijo);
       }
     }
-    const miembros = [...vistos].filter((id) => mallasPorEstructura.has(id)).sort();
-    const nMallas = miembros.reduce((n, id) => n + mallasPorEstructura.get(id).length, 0);
-    if (nMallas > 0 && nMallas <= MAX_MALLAS_COMPUESTAS) compuestas[t.id] = miembros;
+    // Un órgano de HRA sin malla propia (la trompa izquierda) aporta sus
+    // piezas: «trompa uterina» llega así a las dos trompas.
+    const miembros = [
+      ...new Set([...vistos].flatMap((id) => (mallasPorEstructura.has(id) ? [id] : [...(piezasDeOrgano.get(id) ?? [])]))),
+    ].sort();
+    // El tope se mide por cuerpo —«Hombre» y «Mujer» nunca dibujan a la vez la
+    // pelvis masculina y la femenina— y alcanza con que un cuerpo que la dibuja
+    // quede dentro: así «tronco» sigue siendo compuesta aunque «Mujer» sume
+    // sus 45 piezas.
+    const mallasDe = (otroSexo) =>
+      miembros.reduce((n, id) => n + mallasPorEstructura.get(id).filter((m) => sexoDeMalla.get(m) !== otroSexo).length, 0);
+    const porCuerpo = [mallasDe('female'), mallasDe('male')].filter((n) => n > 0);
+    if (porCuerpo.some((n) => n <= MAX_MALLAS_COMPUESTAS)) compuestas[t.id] = miembros;
+  }
+  for (const [organo, miembros] of piezasDeOrgano) {
+    if (!mallasPorEstructura.has(organo)) compuestas[organo] = [...new Set([...(compuestas[organo] ?? []), ...miembros])].sort();
   }
 
   /* ---- escritura --------------------------------------------------------- */
@@ -368,14 +439,15 @@ function main() {
     labelsEs: fichas.filter((f) => f.labelEs).length,
     meshes: partes.length,
     compositeStructures: Object.keys(compuestas).length,
-    meshesMappedToUberon: partes.filter((p) => p.match !== 'fma_only').length,
+    meshesMappedToUberon: partes.filter((p) => p.match !== 'fma_only' && p.match !== 'hra_only').length,
     netterEntries: cruce.total,
     netterMapped: cruce.aceptadas,
     netterUnmapped: cruce.sinCruce.length,
     netterRejected: cruce.rechazadas.length,
     netterNotReviewed: sinRevisar.length,
     femaleOnlyStructures: femeninas.length,
-    femaleOnlyWithMesh: femeninas.filter((id) => mallasPorEstructura.has(id)).length,
+    femaleOnlyWithMesh: femeninas.filter((id) => mallasPorEstructura.has(id) || id in compuestas).length,
+    femaleMeshes: piezasHra.length,
   };
 
   const ts = `/* ============================================================================
@@ -426,12 +498,27 @@ export const ATLAS_3D_SOURCES: readonly FuenteDelAtlas3d[] = ${JSON.stringify(
         attribution: procedencia.fma.citation,
         citationDoi: procedencia.fma.citationDoi,
       },
+      ...(procedencia.hra
+        ? [
+            {
+              name: 'HuBMAP Human Reference Atlas (Visible Human Female)',
+              license: procedencia.hra.license,
+              licenseUrl: procedencia.hra.licenseUrl,
+              attribution: procedencia.hra.attribution,
+              citationDoi: procedencia.hra.citationDoi,
+            },
+          ]
+        : []),
     ],
     null,
     2,
   )};
 
-/** Estructuras femeninas que el modelo no tiene: no existe malla libre para ellas. */
+/**
+ * Estructuras exclusivamente femeninas del catálogo. Las que tienen pieza 3D
+ * (útero, trompas, ovarios…) vienen del Human Reference Atlas; el resto —la
+ * vagina, la vulva— no tiene malla libre y queda como ficha.
+ */
 export const ATLAS_3D_FEMALE_ONLY_IDS: readonly string[] = ${JSON.stringify(femeninas)};
 `;
   writeFileSync(FIXTURE, ts);

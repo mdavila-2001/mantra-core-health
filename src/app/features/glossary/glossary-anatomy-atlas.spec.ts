@@ -62,14 +62,68 @@ describe('GlossaryAnatomyAtlas', () => {
     http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [[UTERO, 'útero', 'uterus', 0]] });
   }
 
-  it('la vista «Mujer» dice que no hay modelo femenino libre y qué muestra en su lugar', async () => {
+  it('la vista «Mujer» dice de dónde salen las piezas femeninas y qué sigue siendo del cuerpo de referencia', async () => {
     await harness.navigateByUrl('/glossary/anatomy-atlas?sex=female');
     responderCatalogo();
     harness.detectChanges();
-    const aviso = html().querySelector('[data-testid="atlas3d-aviso-mujer"]');
-    expect(aviso?.textContent).toContain('No existe un modelo 3D femenino libre');
-    expect(aviso?.textContent).toContain('la pelvis y las proporciones siguen siendo masculinas');
+    const aviso = html().querySelector('[data-testid="atlas3d-aviso-mujer"]')?.textContent ?? '';
+    expect(aviso).toContain('Cuerpo femenino de referencia');
+    expect(aviso).toContain('Visible Human Female');
+    expect(aviso).toContain('HuBMAP');
+    expect(aviso).toContain('que es masculino');
+    expect(aviso).toContain('La vagina, la vulva');
+    expect(html().textContent).toContain('Piezas femeninas del modelo');
     expect(html().textContent).toContain('Estructuras femeninas sin pieza 3D');
+  });
+
+  it('en «Mujer» separa las estructuras femeninas con pieza 3D de las que no tienen', async () => {
+    const VAGINA = 'UBERON:0000996';
+    await harness.navigateByUrl('/glossary/anatomy-atlas?sex=female');
+    http
+      .expectOne('/anatomy-atlas-3d/catalog/parts.json')
+      .flush([
+        { meshId: 'VH_F_body_of_uterus', layer: 'organs', sex: 'female', structureId: 'UBERON:0009853', shard: 0, side: null, labelEn: 'body of uterus', match: 'hra_exact' },
+        { meshId: 'VH_F_fat_L', layer: 'organs', sex: 'female', structureId: 'FMA:73166', shard: 0, side: 'left', labelEn: 'left mammary fat', match: 'hra_only' },
+      ]);
+    http.expectOne('/anatomy-atlas-3d/catalog/composites.json').flush({ [UTERO]: ['UBERON:0009853'], 'FMA:57991': ['FMA:73166'] });
+    http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({
+      shards: 32,
+      entries: [
+        [UTERO, 'útero', 'uterus', 1],
+        ['UBERON:0009853', 'cuerpo del útero', 'body of uterus', 1],
+        ['FMA:57991', 'glándula mamaria izquierda', 'left mammary gland', 1],
+        ['FMA:73166', 'tejido adiposo interlobular de la glándula mamaria izquierda', 'x', 1],
+        [VAGINA, 'vagina', 'vagina', 0],
+      ],
+    });
+    harness.detectChanges();
+    const conPieza = html().querySelector('[data-testid="atlas3d-femeninas-modelo"]')?.textContent ?? '';
+    const sinPieza = html().querySelector('[data-testid="atlas3d-femeninas-sin-pieza"]')?.textContent ?? '';
+    expect(conPieza).toContain('útero');
+    expect(conPieza).toContain('cuerpo del útero');
+    expect(conPieza).toContain('glándula mamaria izquierda');
+    expect(conPieza).not.toContain('vagina');
+    expect(sinPieza).toContain('vagina');
+    expect(sinPieza).not.toContain('útero');
+  });
+
+  it('en «Mujer» el útero resalta las piezas femeninas que lo forman, y en «Hombre» ninguna', async () => {
+    const partes: AnatomyPart[] = [
+      { meshId: 'VH_F_body_of_uterus', layer: 'organs', sex: 'female', structureId: 'UBERON:0009853', shard: 0, side: null, labelEn: 'body of uterus', match: 'hra_exact' },
+      { meshId: 'VH_F_cervix', layer: 'organs', sex: 'female', structureId: 'UBERON:0000002', shard: 0, side: null, labelEn: 'uterine cervix', match: 'hra_exact' },
+    ];
+    const compuestas = { [UTERO]: ['UBERON:0000002', 'UBERON:0009853'] };
+    const shard = String(anatomyShardOf(UTERO, 32)).padStart(2, '0');
+
+    const mujer = await harness.navigateByUrl(`/glossary/anatomy-atlas?sex=female&structure=${encodeURIComponent(UTERO)}`, GlossaryAnatomyAtlas);
+    responderCatalogo(partes, compuestas);
+    http.expectOne(`/anatomy-atlas-3d/catalog/structures-${shard}.json`).flush({ [UTERO]: FICHA_SIN_DEFINICION });
+    harness.detectChanges();
+    expect(seleccion(mujer).sort()).toEqual(['VH_F_body_of_uterus', 'VH_F_cervix']);
+
+    const hombre = await harness.navigateByUrl(`/glossary/anatomy-atlas?structure=${encodeURIComponent(UTERO)}`, GlossaryAnatomyAtlas);
+    harness.detectChanges();
+    expect(seleccion(hombre)).toEqual([]);
   });
 
   it('con «Hombre» no muestra el aviso', async () => {
@@ -102,11 +156,11 @@ describe('GlossaryAnatomyAtlas', () => {
       'Cita',
       'DOI',
     ]);
-    expect(tabla?.querySelectorAll('tbody tr').length).toBe(3);
+    expect(tabla?.querySelectorAll('tbody tr').length).toBe(4);
     expect(tabla?.querySelector('a[href^="https://doi.org/"]')).not.toBeNull();
   });
 
-  it('muestra los créditos y las licencias de las tres fuentes', async () => {
+  it('muestra los créditos y las licencias de las cuatro fuentes', async () => {
     await harness.navigateByUrl('/glossary/anatomy-atlas');
     responderCatalogo();
     harness.detectChanges();
@@ -115,6 +169,8 @@ describe('GlossaryAnatomyAtlas', () => {
     expect(creditos).toContain('CC-BY-SA 2.1 JP');
     expect(creditos).toContain('UBERON');
     expect(creditos).toContain('Foundational Model of Anatomy');
+    expect(creditos).toContain('HuBMAP');
+    expect(creditos).toContain('CC BY 4.0');
   });
 
   it('la lista femenina incluye útero, cuello uterino y ovario, y no la mama, que existe en los dos sexos', () => {

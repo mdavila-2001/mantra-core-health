@@ -140,11 +140,11 @@ for (const caso of CASOS) {
 
       await esperarModelo(page);
       if (sexo === 'female') {
-        await expect(page.getByTestId('atlas3d-aviso-mujer')).toContainText('No existe un modelo 3D femenino libre');
+        await expect(page.getByTestId('atlas3d-aviso-mujer')).toContainText('Cuerpo femenino de referencia');
       }
       await page.getByTestId('anatomy-viewer-canvas').scrollIntoViewIfNeeded();
       const estructura = await tocarUnaPieza(page);
-      expect(estructura).toMatch(/^(UBERON|FMA|BP3D):/);
+      expect(estructura).toMatch(/^(UBERON|FMA|BP3D|HRA):/);
       await comprobarFicha(page);
 
       const dibujo = await lienzoConDibujo(page);
@@ -159,19 +159,43 @@ for (const caso of CASOS) {
   }
 }
 
-test('la vista «Mujer» lista las estructuras femeninas como fichas sin pieza y abre la del útero', async ({ page }) => {
+test('la vista «Mujer» abre el útero desde la lista y lo resalta en el modelo', async ({ page }) => {
   await entrarComoMedica(page);
   await page.goto(`${RUTA}?sex=female`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
   await esperarModelo(page);
-  await page.getByText(/Estructuras femeninas sin pieza 3D/).click();
-  await page.getByRole('button', { name: /^uterus$|^útero$/i }).first().click();
+  const modelo = page.getByTestId('atlas3d-femeninas-modelo');
+  await modelo.getByText(/Piezas femeninas del modelo/).click();
+  // La lista está paginada y en orden alfabético: «útero» va al final.
+  const utero = modelo.getByRole('button', { name: /^útero$/i });
+  for (let i = 0; i < 12 && (await utero.count()) === 0; i++) {
+    await modelo.getByRole('button', { name: /siguiente/i }).click();
+  }
+  await utero.click();
   await expect(page).toHaveURL(/structure=UBERON%3A0000995|structure=UBERON:0000995/);
   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeInViewport();
   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeFocused();
-  await expect(page.getByTestId('atlas3d-sin-pieza')).toBeVisible();
+  await expect(page.getByTestId('atlas3d-sin-pieza')).toHaveCount(0);
+  const dibujo = await lienzoConDibujo(page);
+  expect(dibujo.verdes, 'el útero elegido se ve en verde').toBeGreaterThan(20);
   await page.mouse.move(0, 0);
-  await page.locator('.atlas3d__trabajo').screenshot({ path: `${CAPTURAS}/female-utero-sin-pieza.png` });
+  await page.locator('.atlas3d__trabajo').screenshot({ path: `${CAPTURAS}/female-utero.png` });
+});
+
+test('la vista «Mujer» lista la vagina como ficha sin pieza 3D', async ({ page }) => {
+  await entrarComoMedica(page);
+  await page.goto(`${RUTA}?sex=female`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  await esperarModelo(page);
+  const sinPieza = page.getByTestId('atlas3d-femeninas-sin-pieza');
+  await sinPieza.getByText(/Estructuras femeninas sin pieza 3D/).click();
+  // La lista está paginada y en orden alfabético: se busca hasta dar con ella.
+  const vagina = sinPieza.getByRole('button', { name: /^vagina$/i });
+  for (let i = 0; i < 12 && (await vagina.count()) === 0; i++) {
+    await sinPieza.getByRole('button', { name: /siguiente/i }).click();
+  }
+  await vagina.click();
+  await expect(page).toHaveURL(/structure=UBERON%3A0000996|structure=UBERON:0000996/);
+  await expect(page.getByTestId('atlas3d-sin-pieza')).toBeVisible({ timeout: 30_000 });
 });
 
 test('se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas', async ({ page }) => {

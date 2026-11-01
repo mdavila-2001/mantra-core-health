@@ -31,10 +31,11 @@
 
     @if (sex() === 'female') {
       <p class="atlas3d__aviso" role="note" data-testid="atlas3d-aviso-mujer">
-        <strong>No existe un modelo 3D femenino libre.</strong> Las mallas abiertas disponibles (BodyParts3D y
-        Z-Anatomy) provienen de un único cuerpo masculino. Esta vista muestra ese mismo cuerpo sin sus órganos
-        genitales masculinos —la pelvis y las proporciones siguen siendo masculinas— y lista las
-        {{ femaleOnly().length }} estructuras femeninas del catálogo como fichas sin pieza 3D.
+        <strong>Cuerpo femenino de referencia.</strong> La pelvis, el útero con su cuello, las trompas, los ovarios y
+        las mamas son piezas del Visible Human Female que publica el Human Reference Atlas de HuBMAP, alineadas a este
+        modelo y llevadas a su tamaño. Los músculos, los vasos, los nervios y el resto de los órganos son los del cuerpo
+        de referencia de BodyParts3D, que es masculino. La vagina, la vulva y el resto de las
+        {{ femaleMissing().length }} estructuras femeninas sin malla libre quedan como fichas sin pieza 3D, al pie del panel.
       </p>
     }
 
@@ -334,8 +335,8 @@
         }
 
         @if (sex() === 'female') {
-          <details class="atlas3d__femeninas">
-            <summary>Estructuras femeninas sin pieza 3D ({{ femaleOnly().length }})</summary>
+          <details class="atlas3d__femeninas" data-testid="atlas3d-femeninas-modelo">
+            <summary>Piezas femeninas del modelo ({{ femaleModel().length }})</summary>
             <ul class="atlas3d__lista atlas3d__lista--larga">
               @for (entrada of femaleShown(); track entrada[0]) {
                 <li>
@@ -347,9 +348,29 @@
             </ul>
             <app-pagination
               class="atlas3d__paginas"
-              [totalItems]="femaleOnly().length"
+              [totalItems]="femaleModel().length"
               [(page)]="femalePage"
               [pageSize]="pageSize.female"
+              [showPageSize]="false"
+              [showPageJump]="false"
+            />
+          </details>
+          <details class="atlas3d__femeninas" data-testid="atlas3d-femeninas-sin-pieza">
+            <summary>Estructuras femeninas sin pieza 3D ({{ femaleMissing().length }})</summary>
+            <ul class="atlas3d__lista atlas3d__lista--larga">
+              @for (entrada of femaleMissingShown(); track entrada[0]) {
+                <li>
+                  <button type="button" class="atlas3d__opcion" (click)="openStructure(entrada[0])">
+                    {{ displayName(entrada[1], entrada[2], entrada[0]) }}
+                  </button>
+                </li>
+              }
+            </ul>
+            <app-pagination
+              class="atlas3d__paginas"
+              [totalItems]="femaleMissing().length"
+              [(page)]="femaleMissingPage"
+              [pageSize]="pageSize.femaleMissing"
               [showPageSize]="false"
               [showPageJump]="false"
             />
