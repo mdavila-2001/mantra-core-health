@@ -4,6 +4,7 @@ import type { UiElement, UiPreviewEntry } from '../../../../core/data-access/ui-
 import {
   dayToIso,
   effectLabel,
+  isStaleRule,
   isVersionMismatch,
   isoToDay,
   kindLabel,
@@ -127,5 +128,48 @@ describe('errores del servidor de visibilidad', () => {
     expect(visibilityFieldErrors(fail(409, { code: 'CONFLICT', reason: 'UI_RULE_DUPLICATE' }))['subjectId']).toContain('regla vigente');
     expect(visibilityFieldErrors(fail(404, { code: 'NOT_FOUND', reason: 'UI_ELEMENT_NOT_FOUND' }))['elementKey']).toContain('catálogo');
     expect(visibilityFieldErrors(fail(500, { code: 'INTERNAL' }))).toEqual({});
+  });
+
+  it('los códigos que agrega la API además del contrato tienen su mensaje en palabras, nunca el crudo', () => {
+    const cases: readonly [number, string, string][] = [
+      [422, 'UI_RULE_PROTECTED_ELEMENT', 'no se puede ocultar a quienes la administran'],
+      [404, 'UI_RULE_NOT_FOUND', 'ya no existe'],
+      [409, 'UI_RULE_ENDED', 'ya terminó'],
+      [400, 'UI_RULE_IF_MATCH_REQUIRED', 'qué versión'],
+      [422, 'UI_RULE_INVALID_VALIDITY', 'posterior al inicio'],
+      [422, 'UI_RULE_EMPTY_UPDATE', 'No hay cambios'],
+      [409, 'UI_ELEMENT_KEY_EXISTS', 'esa clave'],
+      [422, 'UI_ELEMENT_PARENT_NOT_FOUND', 'elemento superior'],
+      [422, 'UI_ELEMENT_HIERARCHY_CYCLE', 'dentro de sí mismo'],
+      [422, 'UI_ELEMENT_SYNC_INVALID', 'no se sincronizó nada'],
+      [404, 'UI_PREVIEW_SUBJECT_NOT_FOUND', 'No se encontró'],
+      [400, 'UI_PREVIEW_SUBJECT_REQUIRED', 'uno solo'],
+    ];
+    for (const [status, reason, words] of cases) {
+      // La API los manda como `reason` o, con `PreconditionFailedException`, en `details.reason`.
+      const e = fail(status, { code: 'X', message: 'mensaje crudo', details: { reason } });
+      expect(visibilityCode(e)).toBe(reason);
+      const text = visibilityFailure(e, 'No se pudo');
+      expect(text).toContain(words);
+      expect(text).not.toContain('mensaje crudo');
+    }
+  });
+
+  it('cada código nuevo con campo propio vuelve a ese campo del formulario', () => {
+    const field = (reason: string) => visibilityFieldErrors(fail(422, { code: 'X', reason }));
+    expect(Object.keys(field('UI_RULE_PROTECTED_ELEMENT'))).toEqual(['subjectId']);
+    expect(Object.keys(field('UI_RULE_INVALID_VALIDITY'))).toEqual(['validTo']);
+    expect(Object.keys(field('UI_ELEMENT_KEY_EXISTS'))).toEqual(['key']);
+    expect(Object.keys(field('UI_ELEMENT_PARENT_NOT_FOUND'))).toEqual(['parentKey']);
+    expect(Object.keys(field('UI_ELEMENT_HIERARCHY_CYCLE'))).toEqual(['parentKey']);
+    // Sin campo propio: el aviso general basta.
+    expect(field('UI_RULE_IF_MATCH_REQUIRED')).toEqual({});
+  });
+
+  it('una regla terminada o inexistente marca la lista como vieja; otro fallo no', () => {
+    expect(isStaleRule(fail(409, { code: 'CONFLICT', reason: 'UI_RULE_ENDED' }))).toBe(true);
+    expect(isStaleRule(fail(404, { code: 'NOT_FOUND', reason: 'UI_RULE_NOT_FOUND' }))).toBe(true);
+    expect(isStaleRule(fail(409, { code: 'CONFLICT', reason: 'UI_RULE_DUPLICATE' }))).toBe(false);
+    expect(isStaleRule(fail(500, { code: 'INTERNAL' }))).toBe(false);
   });
 });

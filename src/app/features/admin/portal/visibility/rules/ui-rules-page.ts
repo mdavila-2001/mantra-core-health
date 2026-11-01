@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import type { UiVisibilityRule } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
 import { NavigationService } from '../../../../../core/navigation/navigation.service';
+import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
@@ -74,6 +75,7 @@ export class UiRulesPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly index = inject(UiElementIndex);
+  private readonly visibility = inject(UiVisibilityService);
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   private readonly params = queryParamsSignal(this.route);
@@ -93,6 +95,8 @@ export class UiRulesPage {
   }
 
   protected created(rule: UiVisibilityRule): void {
+    // La regla nueva puede tocar a quien la creó: su interfaz se pone al día sin recargar la página.
+    this.visibility.refresh();
     this.notice.set(
       `Se creó la regla: ${effectLabel(rule.effect).label.toLowerCase()} «${this.index.path(rule.elementKey)}» para ${rule.subjectLabel ?? 'todos'}.`,
     );

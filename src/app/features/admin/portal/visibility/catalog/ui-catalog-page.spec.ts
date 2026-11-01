@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import type { UiElement, UiElementDraft } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
+import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { UI_ELEMENT_DRAFTS } from '../ui-element-drafts.token';
 import { ElementFormPanel } from './element-form-panel';
@@ -210,15 +211,19 @@ describe('UiCatalogPage', () => {
 
     it('confirma, envía { elements } y muestra lo que pasó; después recarga el catálogo', async () => {
       await open(SCREEN, [DRAFT]);
+      const refresh = vi.spyOn(TestBed.inject(UiVisibilityService), 'refresh');
       flush();
       byTestId('ui-catalog-sync')!.click();
       await harness.fixture.whenStable();
       const req = http.expectOne(`${URL}/sync`);
+      expect(refresh).not.toHaveBeenCalled();
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ elements: [DRAFT] });
       req.flush({ created: 1, updated: 2, retired: 3, unchanged: 4 });
       harness.detectChanges();
       expect(byTestId('ui-catalog-sync-result')!.textContent).toContain('1 nuevos · 2 actualizados · 3 retirados · 4 sin cambios');
+      // Un retirado o uno nuevo oculto por omisión cambia lo que ve esta misma sesión.
+      expect(refresh).toHaveBeenCalledTimes(1);
       flush(); // recarga del índice y de la tabla
     });
 
@@ -288,6 +293,7 @@ describe('UiCatalogPage', () => {
 
     it('manda el borrador, bloquea el doble envío y, al guardar, avisa y muestra el elemento nuevo', async () => {
       const f = await openForm();
+      const refresh = vi.spyOn(TestBed.inject(UiVisibilityService), 'refresh');
       fill(f);
       f.save();
       f.save(); // segundo clic mientras envía
@@ -307,6 +313,7 @@ describe('UiCatalogPage', () => {
       await harness.fixture.whenStable();
       harness.detectChanges();
       expect(byTestId('ui-catalog-notice')!.textContent).toContain('Se agregó «Nota del pedido»');
+      expect(refresh).toHaveBeenCalledTimes(1);
       // La lista vuelve a "Elementos" filtrada por la clave nueva.
       const reload = http.match((r) => r.url === URL && r.params.get('q') === 'pharmacy.orders.note');
       expect(reload.length).toBeGreaterThan(0);

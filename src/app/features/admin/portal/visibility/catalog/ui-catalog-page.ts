@@ -23,6 +23,7 @@ import type {
 import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { empty } from '../../../../../core/view-state/view-state';
 import type { EmptyViewState } from '../../../../../core/view-state/view-state.types';
+import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
@@ -89,6 +90,8 @@ export class UiCatalogPage {
   private readonly route = inject(ActivatedRoute);
   private readonly drafts = inject(UI_ELEMENT_DRAFTS);
   protected readonly index = inject(UiElementIndex);
+  /** El motor de visibilidad de esta sesión: un elemento oculto por omisión o retirado cambia lo que se ve. */
+  private readonly visibility = inject(UiVisibilityService);
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   private readonly params = queryParamsSignal(this.route);
@@ -203,6 +206,7 @@ export class UiCatalogPage {
   protected created(element: UiElement): void {
     this.notice.set(`Se agregó «${element.label}» (${element.key}). Ya se le pueden crear reglas.`);
     this.index.load();
+    this.visibility.refresh();
     void patchQuery(this.router, this.route, { view: null, q: element.key, module: null, kind: null, status: null });
   }
 
@@ -232,6 +236,7 @@ export class UiCatalogPage {
         this.syncResult.set(result);
         this.index.load();
         this.list.restart();
+        this.visibility.refresh();
       },
       error: (error: unknown) => {
         this.syncing.set(false);

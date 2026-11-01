@@ -22,6 +22,7 @@ import type {
 } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
 import { empty } from '../../../../../core/view-state/view-state';
 import type { EmptyViewState } from '../../../../../core/view-state/view-state.types';
+import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
@@ -36,6 +37,7 @@ import { UiElementIndex } from '../element-index';
 import {
   SUBJECT_TYPES,
   effectLabel,
+  isStaleRule,
   optionsOf,
   ruleState,
   subjectTypeLabel,
@@ -66,6 +68,8 @@ export class RulesPanel {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly index = inject(UiElementIndex);
+  /** El motor de visibilidad de esta misma sesión: se recarga tras cada cambio de reglas. */
+  private readonly visibility = inject(UiVisibilityService);
 
   /** Los filtros de la URL (los lee la página, que es quien la tiene). */
   readonly values = input.required<Readonly<Record<(typeof FILTER_KEYS)[number], string>>>();
@@ -170,6 +174,8 @@ export class RulesPanel {
     this.editing.set(null);
     this.done.set(`Se guardó la regla sobre «${this.pathOf(rule.elementKey)}» (versión ${rule.version}).`);
     this.list.reload();
+    // Lo que ve quien edita también cambia: sin esto, su propia interfaz seguiría con las reglas viejas.
+    this.visibility.refresh();
     this.changed.emit();
   }
 
@@ -196,11 +202,14 @@ export class RulesPanel {
         this.working.set(null);
         this.done.set(`Se terminó la regla sobre «${this.pathOf(rule.elementKey)}». Quedó en el historial.`);
         this.list.reload();
+        this.visibility.refresh();
         this.changed.emit();
       },
       error: (e: unknown) => {
         this.working.set(null);
         this.failure.set(visibilityFailure(e, 'No se pudo terminar la regla.'));
+        // Si ya estaba terminada o ya no existe, la lista que se ve está vieja: se pone al día.
+        if (isStaleRule(e)) this.list.reload();
       },
     });
   }

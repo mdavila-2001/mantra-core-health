@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import type { UiElement, UiVisibilityRule } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
+import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { RuleEditDialog } from './rule-edit-dialog';
 import { RuleFormPanel } from './rule-form-panel';
@@ -193,6 +194,35 @@ describe('UiRulesPage', () => {
       flush([ENDED]);
     });
 
+    it('al terminarla, la interfaz de quien la terminó se pone al día (refresh del motor de visibilidad)', async () => {
+      await open();
+      const refresh = vi.spyOn(TestBed.inject(UiVisibilityService), 'refresh');
+      flush();
+      all('ui-rule-end')[0]!.click();
+      await harness.fixture.whenStable();
+      expect(refresh).not.toHaveBeenCalled();
+      http.expectOne(`${RULES}/r1/end`).flush(rule('r1', { validTo: '2026-10-31T12:00:00.000Z', version: 2 }));
+      harness.detectChanges();
+      expect(refresh).toHaveBeenCalledTimes(1);
+      flush([ENDED]);
+    });
+
+    it('si ya estaba terminada (UI_RULE_ENDED) lo dice en palabras, recarga la lista y no refresca la visibilidad', async () => {
+      await open();
+      const refresh = vi.spyOn(TestBed.inject(UiVisibilityService), 'refresh');
+      flush();
+      all('ui-rule-end')[0]!.click();
+      await harness.fixture.whenStable();
+      http
+        .expectOne(`${RULES}/r1/end`)
+        .flush({ code: 'CONFLICT', message: 'crudo', details: { reason: 'UI_RULE_ENDED' } }, { status: 409, statusText: 'Conflict' });
+      harness.detectChanges();
+      expect(byTestId('ui-rules-failure')!.textContent).toContain('Esa regla ya terminó');
+      expect(byTestId('ui-rules-failure')!.textContent).not.toContain('crudo');
+      expect(refresh).not.toHaveBeenCalled();
+      flush([ENDED]); // la recarga de la tabla
+    });
+
     it('si se arrepiente no sale ninguna petición', async () => {
       await open();
       flush();
@@ -235,6 +265,24 @@ describe('UiRulesPage', () => {
       req.flush(rule('r1', { effect: 'SHOW', version: 2 }));
       harness.detectChanges();
       expect(byTestId('ui-rules-done')!.textContent).toContain('versión 2');
+      flush();
+    });
+
+    it('al guardar, refresca la visibilidad de esta sesión; si falla, no', async () => {
+      const d = await openDialog();
+      const refresh = vi.spyOn(TestBed.inject(UiVisibilityService), 'refresh');
+      d.reason.set('Se ajusta el motivo de la regla de exportar.');
+      d.save();
+      http
+        .expectOne(`${RULES}/r1`)
+        .flush({ code: 'X', message: 'x', details: { reason: 'UI_RULE_PROTECTED_ELEMENT' } }, { status: 422, statusText: 'Unprocessable' });
+      harness.detectChanges();
+      expect(refresh).not.toHaveBeenCalled();
+      expect(dialog().problem('subjectId')).toContain('no se puede ocultar a quienes la administran');
+      d.save();
+      http.expectOne(`${RULES}/r1`).flush(rule('r1', { reason: 'Se ajusta el motivo de la regla de exportar.', version: 2 }));
+      harness.detectChanges();
+      expect(refresh).toHaveBeenCalledTimes(1);
       flush();
     });
 
@@ -349,6 +397,7 @@ describe('UiRulesPage', () => {
 
     it('crea la regla con sus fechas como instantes, avisa y vuelve a la lista filtrada por el elemento', async () => {
       const f = await openForm();
+      const refresh = vi.spyOn(TestBed.inject(UiVisibilityService), 'refresh');
       f.elementKey.set('pharmacy.orders.export');
       f.effect.set('HIDE');
       f.subjectType.set('USER');
@@ -373,6 +422,7 @@ describe('UiRulesPage', () => {
       await harness.fixture.whenStable();
       harness.detectChanges();
       expect(byTestId('ui-rules-notice')!.textContent).toContain('Se creó la regla: oculta');
+      expect(refresh).toHaveBeenCalledTimes(1);
       const list = http.match((r) => r.url === RULES && r.method === 'GET');
       expect(list.length).toBeGreaterThan(0);
       expect(list.some((r) => r.request.params.get('elementKey') === 'pharmacy.orders.export')).toBe(true);

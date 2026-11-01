@@ -158,6 +158,19 @@ const FAILURE_TEXT: Readonly<Record<string, string>> = {
   UI_RULE_DUPLICATE: 'Ya hay una regla vigente para ese elemento y ese sujeto. Edítela o termínela primero.',
   UI_RULE_INVALID_SUBJECT: 'El sujeto de la regla no es válido para el tipo elegido.',
   UI_RULE_ENDED: 'Esa regla ya terminó: cree una nueva en lugar de editarla.',
+  // Los que agrega el módulo `ui_visibility` de la API (`ui-visibility.error-reasons.ts`) además de los del contrato.
+  UI_RULE_NOT_FOUND: 'Esa regla ya no existe o no es de su organización. Recargue la lista.',
+  UI_RULE_IF_MATCH_REQUIRED: 'No se pudo confirmar qué versión de la regla estaba editando. Cierre el diálogo, recargue la lista y vuelva a intentarlo.',
+  UI_RULE_INVALID_VALIDITY: 'La vigencia no es coherente: el fin tiene que ser posterior al inicio.',
+  UI_RULE_EMPTY_UPDATE: 'No hay cambios para guardar.',
+  UI_RULE_PROTECTED_ELEMENT:
+    'Esa pantalla gobierna la propia visibilidad: no se puede ocultar a quienes la administran. Elija un sujeto más acotado (un rol o una persona que no sea administradora).',
+  UI_ELEMENT_KEY_EXISTS: 'Ya hay un elemento con esa clave en el catálogo. Elija otra clave.',
+  UI_ELEMENT_PARENT_NOT_FOUND: 'El elemento superior elegido ya no está en el catálogo. Recargue el catálogo y elija otro.',
+  UI_ELEMENT_HIERARCHY_CYCLE: 'Ese elemento superior quedaría dentro de sí mismo. Elija otro.',
+  UI_ELEMENT_SYNC_INVALID: 'El registro de la interfaz tiene claves repetidas con contenido distinto o demasiados elementos: no se sincronizó nada.',
+  UI_PREVIEW_SUBJECT_NOT_FOUND: 'No se encontró a esa persona o ese rol, o no está a su alcance.',
+  UI_PREVIEW_SUBJECT_REQUIRED: 'Indique una persona o un rol (uno solo) para ver la interfaz como ellos.',
 };
 
 /** El campo del formulario al que pertenece cada código, cuando la API no marcó ninguno. */
@@ -166,6 +179,11 @@ const FIELD_OF_CODE: Readonly<Record<string, string>> = {
   UI_ELEMENT_RETIRED: 'elementKey',
   UI_RULE_INVALID_SUBJECT: 'subjectId',
   UI_RULE_DUPLICATE: 'subjectId',
+  UI_RULE_PROTECTED_ELEMENT: 'subjectId',
+  UI_RULE_INVALID_VALIDITY: 'validTo',
+  UI_ELEMENT_KEY_EXISTS: 'key',
+  UI_ELEMENT_PARENT_NOT_FOUND: 'parentKey',
+  UI_ELEMENT_HIERARCHY_CYCLE: 'parentKey',
 };
 
 /**
@@ -206,3 +224,9 @@ export function visibilityFieldErrors(error: unknown): Readonly<Record<string, s
 }
 
 export const isVersionMismatch = (error: unknown): boolean => visibilityCode(error) === 'UI_RULE_VERSION_MISMATCH';
+
+/** La regla que se quiso tocar ya terminó o ya no existe: la lista en pantalla está vieja. */
+export const isStaleRule = (error: unknown): boolean => {
+  const code = visibilityCode(error);
+  return code === 'UI_RULE_ENDED' || code === 'UI_RULE_NOT_FOUND';
+};
