@@ -71,8 +71,10 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
       />
     </div>
     <ng-template #actionCell let-row>
-      <span class="panel__name">{{ actionText(row.action) }}</span>
-      <code class="panel__code">{{ row.action }}</code>
+      <div class="panel__cell">
+        <span class="panel__name">{{ actionText(row.action) }}</span>
+        <code class="panel__code">{{ row.action }}</code>
+      </div>
     </ng-template>
     <ng-template #resultCell let-row>
       <app-badge size="sm" [variant]="result(row.result).tone">{{ result(row.result).label }}</app-badge>

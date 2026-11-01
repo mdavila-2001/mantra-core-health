@@ -7,6 +7,7 @@ import { empty } from '../../../../../core/view-state/view-state';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { SearchField } from '../../../../../shared/components/molecules/search-field/search-field';
+import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { roleCodesOf } from '../../governance/access/access.model';
@@ -26,7 +27,7 @@ const URL_KEYS = ['user'] as const;
  */
 @Component({
   selector: 'app-portal-lifecycle-panel',
-  imports: [Badge, Alert, SearchField, DataTable, LifecycleDrawer],
+  imports: [Badge, Alert, SearchField, DataTable, NavIcon, LifecycleDrawer],
   template: `
     <div class="panel" data-testid="portal-lifecycle-panel">
       @if (notice(); as message) {
@@ -60,19 +61,24 @@ const URL_KEYS = ['user'] as const;
       <span class="panel__name">{{ row.displayName }}</span>
     </ng-template>
     <ng-template #rolesCell let-row>
-      @let codes = roleCodes(row);
-      @if (codes.length === 0) {
-        <span class="panel__secondary">Sin roles activos</span>
-      } @else {
-        <span class="panel__badges">
-          @for (code of codes; track code) {
-            <app-badge size="sm" variant="secondary">{{ code }}</app-badge>
-          }
-        </span>
-      }
+      <div class="panel__cell">
+        @let codes = roleCodes(row);
+        @if (codes.length === 0) {
+          <span class="panel__secondary">Sin roles activos</span>
+        } @else {
+          <span class="panel__badges">
+            @for (code of codes; track code) {
+              <app-badge size="sm" variant="secondary">{{ code }}</app-badge>
+            }
+          </span>
+        }
+      </div>
     </ng-template>
     <ng-template #loginCell let-row>
       <span class="panel__secondary">{{ row.lastLoginAt ? when(row.lastLoginAt) : 'Nunca ingresó' }}</span>
+    </ng-template>
+    <ng-template #openCell>
+      <span class="panel__open" aria-hidden="true">Ver estado <app-nav-icon name="arrow-right" /></span>
     </ng-template>
     <app-portal-lifecycle-drawer [userId]="values().user" (closed)="close()" (changed)="changed($event)" />
   `,
@@ -109,6 +115,7 @@ export class LifecyclePanel {
   );
 
   private readonly nameCell = viewChild.required<TemplateRef<{ $implicit: InternalUser }>>('nameCell');
+  private readonly openCell = viewChild.required<TemplateRef<{ $implicit: InternalUser }>>('openCell');
   private readonly rolesCell = viewChild.required<TemplateRef<{ $implicit: InternalUser }>>('rolesCell');
   private readonly loginCell = viewChild.required<TemplateRef<{ $implicit: InternalUser }>>('loginCell');
 
@@ -116,6 +123,7 @@ export class LifecyclePanel {
     { key: 'displayName', header: 'Persona', priority: 1, cell: this.nameCell() },
     { key: 'roles', header: 'Roles', priority: 1, cell: this.rolesCell() },
     { key: 'lastLoginAt', header: 'Último ingreso', priority: 2, cell: this.loginCell() },
+    { key: 'open', header: 'Acción', priority: 1, cell: this.openCell() },
   ]);
   protected readonly byId = (row: InternalUser): string => row.id;
   protected readonly rowName = (row: InternalUser): string => row.displayName;

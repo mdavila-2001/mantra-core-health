@@ -9,6 +9,7 @@ import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Input } from '../../../../../shared/components/atoms/input/input';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
+import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { dateOnly } from '../../governance/governance-labels';
@@ -29,7 +30,7 @@ const URL_KEYS = ['review'] as const;
  */
 @Component({
   selector: 'app-portal-reviews-panel',
-  imports: [Badge, Input, Alert, FormField, DataTable, ReviewDrawer],
+  imports: [Badge, Input, Alert, FormField, DataTable, NavIcon, ReviewDrawer],
   template: `
     <div class="panel" data-testid="portal-reviews-panel">
       @if (notice(); as message) {
@@ -80,6 +81,9 @@ const URL_KEYS = ['review'] as const;
         <app-badge size="sm" variant="warning">Nunca revisada</app-badge>
       }
     </ng-template>
+    <ng-template #openCell>
+      <span class="panel__open" aria-hidden="true">Revisar <app-nav-icon name="arrow-right" /></span>
+    </ng-template>
     <app-portal-review-drawer [userId]="values().review" (closed)="close()" (changed)="changed($event)" />
   `,
   styleUrl: '../permissions-panel.css',
@@ -106,6 +110,7 @@ export class ReviewsPanel {
   protected readonly daysProblem = computed(() => (this.days() === 'invalid' ? 'Escriba un número entero de 1 a 3650.' : ''));
 
   private readonly nameCell = viewChild.required<TemplateRef<{ $implicit: AccessReviewDue }>>('nameCell');
+  private readonly openCell = viewChild.required<TemplateRef<{ $implicit: AccessReviewDue }>>('openCell');
   private readonly statusCell = viewChild.required<TemplateRef<{ $implicit: AccessReviewDue }>>('statusCell');
   private readonly lastCell = viewChild.required<TemplateRef<{ $implicit: AccessReviewDue }>>('lastCell');
 
@@ -113,6 +118,7 @@ export class ReviewsPanel {
     { key: 'displayName', header: 'Persona', priority: 1, cell: this.nameCell() },
     { key: 'accountStatus', header: 'Estado de la cuenta', priority: 2, cell: this.statusCell() },
     { key: 'lastReviewedAt', header: 'Última revisión', priority: 1, cell: this.lastCell() },
+    { key: 'open', header: 'Acción', priority: 1, cell: this.openCell() },
   ]);
   protected readonly byId = (row: AccessReviewDue): string => row.userId;
   protected readonly rowName = (row: AccessReviewDue): string => row.displayName;
