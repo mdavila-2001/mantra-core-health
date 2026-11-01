@@ -1,14 +1,37 @@
 .privacy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  min-inline-size: 0;
+  margin-inline: auto;
+}
+
+.privacy__card {
   display: block;
   inline-size: 100%;
-  margin-inline: auto;
+}
+
+/* Aviso de honestidad: una línea, el detalle se despliega. */
+.privacy__fold-summary {
+  cursor: pointer;
+}
+
+.privacy__fold-summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.privacy__fold-text {
+  margin: var(--sp-2) 0 0;
 }
 
 .privacy__section {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
   padding-block: var(--sp-4);
+  min-inline-size: 0;
 }
 
 .privacy__cell {

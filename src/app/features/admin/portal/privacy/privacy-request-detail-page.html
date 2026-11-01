@@ -3,7 +3,6 @@
 <app-page-header
   [title]="title()"
   subtitle="Qué pidió la persona, desde cuándo espera y a qué estados puede pasar la solicitud."
-  [breadcrumbs]="breadcrumbs()"
 />
 
 <app-view-state-host [state]="detail()" (retry)="reload()">

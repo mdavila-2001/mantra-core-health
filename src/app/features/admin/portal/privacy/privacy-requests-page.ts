@@ -12,11 +12,11 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PrivacyRequestsClient } from '../../../../core/data-access/admin-portal/privacy-requests.client';
 import type { PrivacyRequest } from '../../../../core/data-access/admin-portal/privacy-requests.types';
-import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { empty } from '../../../../core/view-state/view-state';
 import type { EmptyViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../shared/components/atoms/link/link';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
@@ -53,7 +53,7 @@ const SCREEN = portalUrl('governance/privacy-requests');
  */
 @Component({
   selector: 'app-portal-privacy-requests-page',
-  imports: [NgTemplateOutlet, RouterLink, Badge, Link, Card, Tab, Tabs, DataTable, PageHeader, FilterForm],
+  imports: [NgTemplateOutlet, RouterLink, Badge, Link, Alert, Card, Tab, Tabs, DataTable, PageHeader, FilterForm],
   templateUrl: './privacy-requests-page.html',
   styleUrl: './privacy-requests-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,7 +62,6 @@ export class PrivacyRequestsPage {
   private readonly client = inject(PrivacyRequestsClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly values = queryFilters(queryParamsSignal(this.route), PRIVACY_URL_KEYS);
   protected readonly tabIndex = computed(() => tabIndexOf(this.values()));
@@ -84,12 +83,14 @@ export class PrivacyRequestsPage {
 
   private readonly requestCell = viewChild.required<TemplateRef<{ $implicit: PrivacyRequest }>>('requestCell');
   private readonly stateCell = viewChild.required<TemplateRef<{ $implicit: PrivacyRequest }>>('stateCell');
+  private readonly receivedCell = viewChild.required<TemplateRef<{ $implicit: PrivacyRequest }>>('receivedCell');
   private readonly whenCell = viewChild.required<TemplateRef<{ $implicit: PrivacyRequest }>>('whenCell');
 
   protected readonly columns = computed<readonly ColumnDef<PrivacyRequest>[]>(() => [
     { key: 'request', header: 'Solicitud', priority: 1, cell: this.requestCell() },
     { key: 'status', header: 'Estado', priority: 1, cell: this.stateCell() },
-    { key: 'requestedAt', header: 'Recibida', priority: 2, cell: this.whenCell() },
+    { key: 'requestedAt', header: 'Recibida', priority: 2, cell: this.receivedCell() },
+    { key: 'dueAt', header: 'Plazo', priority: 1, cell: this.whenCell() },
   ]);
 
   protected readonly tabLabels = {

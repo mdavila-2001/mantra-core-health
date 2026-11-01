@@ -1,10 +1,25 @@
+<!-- Una sola cabecera, sobre el lienzo: las migas viven en la barra superior del portal. -->
 <app-page-header
   title="Solicitudes de privacidad"
   subtitle="Pedidos de las personas sobre sus datos: acceso, supresión, rectificación, portabilidad y oposición. Las más recientes primero; las que pasaron su plazo se marcan vencidas."
-  [breadcrumbs]="breadcrumbs()"
 />
 
-<app-card class="privacy" variant="outlined" padding="md" data-testid="portal-privacy-requests">
+<div class="privacy" data-testid="portal-privacy-requests">
+<!-- Aviso de honestidad en una línea; el detalle se despliega. -->
+<app-alert tone="info" data-testid="portal-privacy-scope">
+  <details class="privacy__fold">
+    <summary class="privacy__fold-summary">
+      <strong>El vencimiento es orientativo:</strong> se cuentan 30 días desde la solicitud, no el
+      plazo legal de cada jurisdicción.
+    </summary>
+    <p class="privacy__fold-text">
+      La plataforma no guarda un plazo por jurisdicción. Una solicitud completada o rechazada ya
+      no admite cambios; el paso de un estado a otro se hace desde su ficha.
+    </p>
+  </details>
+</app-alert>
+
+<app-card class="privacy__card" variant="outlined" padding="md">
   <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
     <app-tab [label]="tabLabels.all">
       @if (tabIndex() === 0) {
@@ -33,6 +48,7 @@
     </app-tab>
   </app-tabs>
 </app-card>
+</div>
 
 <ng-template #body>
   <div class="privacy__section">
@@ -69,15 +85,21 @@
   </div>
 </ng-template>
 
+<ng-template #receivedCell let-row>
+  <span class="privacy__cell">{{ when(row.requestedAt) }}</span>
+</ng-template>
+
 <ng-template #whenCell let-row>
   <div class="privacy__cell">
-    <span>{{ when(row.requestedAt) }}</span>
     @if (row.status === 'RECEIVED' || row.status === 'IN_PROGRESS') {
+      <span>vence el {{ when(row.dueAt) }}</span>
       <span class="privacy__secondary"
-        >Sin cerrar hace {{ waiting(row) }} {{ waiting(row) === 1 ? 'día' : 'días' }} · vence el {{ when(row.dueAt) }}</span
+        >Sin cerrar hace {{ waiting(row) }} {{ waiting(row) === 1 ? 'día' : 'días' }}</span
       >
     } @else if (row.completedAt) {
       <span class="privacy__secondary">Cerrada el {{ when(row.completedAt) }}</span>
+    } @else {
+      <span class="privacy__secondary">Cerrada</span>
     }
   </div>
 </ng-template>

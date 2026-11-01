@@ -20,7 +20,6 @@ import type {
   PrivacyTransition,
 } from '../../../../core/data-access/admin-portal/privacy-requests.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -69,7 +68,6 @@ export class PrivacyRequestDetailPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly listUrl = LIST_URL;
   protected readonly status = privacyStatusLabel;
