@@ -71,6 +71,16 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/simulator/simulator.ts",
+                  "with": "src/app/core/mock/simulator.enabled.ts"
+                },
+                {
+                  "replace": "src/app/simulator-routes.ts",
+                  "with": "src/app/simulator-routes.enabled.ts"
+                }
+              ],
               "optimization": {
                 "scripts": true,
                 "fonts": true,
@@ -83,7 +93,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "620kB",
-                  "maximumError": "1.5MB"
+                  "maximumError": "3MB"
                 },
                 {
                   "type": "anyComponentStyle",
