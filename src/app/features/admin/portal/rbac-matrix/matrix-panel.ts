@@ -4,6 +4,7 @@ import type {
   ModuleEntry,
   ModulesCatalog,
 } from '../../../../core/data-access/authz-governance/authz-modules-catalog.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
@@ -26,11 +27,11 @@ export type MatrixMode = (typeof MATRIX_MODES)[number];
  */
 @Component({
   selector: 'app-portal-rbac-matrix-panel',
-  imports: [Badge, Select, SegmentedControl, FormField, SearchField, RoleViewEditor],
+  imports: [AppButton, Badge, Select, SegmentedControl, FormField, SearchField, RoleViewEditor],
   template: `
     <div class="rbac__stack" data-testid="rbac-matrix-panel">
-      <div class="rbac__toolbar">
-        <app-form-field label="Módulo" [hint]="moduleHint()">
+      <div class="rbac__toolbar" [class.rbac__toolbar--two]="mode() === 'role'">
+        <app-form-field label="Módulo">
           <app-select
             ariaLabel="Módulo"
             data-testid="rbac-module-select"
@@ -57,6 +58,10 @@ export type MatrixMode = (typeof MATRIX_MODES)[number];
         }
       </div>
 
+      <p class="rbac__meta" aria-live="polite">
+        <strong>{{ label(module().key) }}</strong> · {{ moduleHint() }}
+      </p>
+
       @if (mode() === 'role') {
         <app-portal-rbac-role-view
           [catalog]="catalog()"
@@ -67,14 +72,37 @@ export type MatrixMode = (typeof MATRIX_MODES)[number];
           (saved)="saved.emit()"
         />
       } @else {
+        <ul class="rbac-legend" aria-label="Cómo leer la matriz">
+          <li>
+            <app-badge size="sm" variant="success">ROL</app-badge>
+            <span>El rol tiene el permiso</span>
+          </li>
+          <li>
+            <app-badge size="sm" variant="error">Niega ROL</app-badge>
+            <span>El rol lo tiene negado</span>
+          </li>
+          <li>
+            <app-badge size="sm" variant="warning">Sólo por rol</app-badge>
+            <span>Sin permiso fino: decide el rol de la ruta</span>
+          </li>
+          <li>
+            <span class="rbac__route">Rutas exigen: ROL</span>
+            <span>Rol que la ruta pide hoy (lo que autoriza de verdad)</span>
+          </li>
+          <li>
+            <span class="rbac__none" aria-hidden="true">—</span>
+            <span>El recurso no ofrece esa acción</span>
+          </li>
+        </ul>
+
         <div
           class="rbac__scroll"
           role="region"
           tabindex="0"
           [attr.aria-label]="'Matriz de ' + label(module().key)"
         >
-          <table class="rbac__table" data-testid="rbac-matrix-table">
-            <caption class="rbac__caption">
+          <table class="rbac__table rbac__table--matrix" data-testid="rbac-matrix-table">
+            <caption class="rbac__sr">
               Qué roles tienen cada permiso fino en
               {{
                 label(module().key)
@@ -91,11 +119,13 @@ export type MatrixMode = (typeof MATRIX_MODES)[number];
             <tbody>
               @for (row of matrix().rows; track row.resource) {
                 <tr>
-                  <th scope="row">{{ row.resource }}</th>
+                  <th scope="row">
+                    <span class="rbac__resource">{{ row.resource }}</span>
+                  </th>
                   @for (cell of row.cells; track $index) {
                     <td>
                       @if (cell === null) {
-                        <span class="rbac__none" aria-hidden="true">·</span>
+                        <span class="rbac__none" aria-hidden="true">—</span>
                         <span class="rbac__sr">No ofrece esta acción</span>
                       } @else {
                         @let roles = rolesOf(cell, row.permissions);
@@ -113,18 +143,20 @@ export type MatrixMode = (typeof MATRIX_MODES)[number];
                               }
                             </span>
                           } @else {
-                            <app-badge size="sm" [variant]="coverageTone(cell.coverage)">{{
-                              coverage(cell.coverage)
-                            }}</app-badge>
+                            <span class="rbac__badges">
+                              <app-badge size="sm" [variant]="coverageTone(cell.coverage)">{{
+                                coverage(cell.coverage)
+                              }}</app-badge>
+                            </span>
                           }
                           @if (cell.routeRoles.length > 0) {
-                            <span class="rbac__secondary" [attr.title]="cell.proposedCode ?? null">
+                            <span class="rbac__route" [attr.title]="cell.proposedCode ?? null">
                               Rutas exigen: {{ cell.routeRoles.join(', ') }}
                             </span>
                           } @else if (
                             cell.routeCount > 0 && cell.publicRouteCount === cell.routeCount
                           ) {
-                            <span class="rbac__secondary">Pública</span>
+                            <span class="rbac__route">Pública</span>
                           }
                         </div>
                       }
@@ -133,18 +165,17 @@ export type MatrixMode = (typeof MATRIX_MODES)[number];
                 </tr>
               } @empty {
                 <tr>
-                  <td [attr.colspan]="matrix().columns.length + 1">
-                    Ningún recurso coincide con la búsqueda.
+                  <td class="rbac__empty-row" [attr.colspan]="matrix().columns.length + 1">
+                    <span>Ningún recurso coincide con «{{ query() }}».</span>
+                    <button app-button variant="ghost" size="sm" (clicked)="query.set('')">
+                      Limpiar búsqueda
+                    </button>
                   </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-        <p class="rbac__note">
-          «Rutas exigen» es el <code>&#64;Roles</code> real de los controladores. Un permiso fino
-          sólo vale donde el PDP o la capa de vistas lo evalúa.
-        </p>
       }
     </div>
   `,
@@ -170,14 +201,14 @@ export class MatrixPanel {
   protected readonly moduleOptions = computed<readonly SelectOption<string>[]>(() =>
     this.catalog().modules.map((m) => ({
       value: m.key,
-      label: `${nombreDeModulo(m.key)} · ${m.permissionCount} permisos · ${m.gaps.length} huecos`,
+      label: `${nombreDeModulo(m.key)} · ${plural(m.permissionCount, 'permiso', 'permisos')} · ${plural(m.gaps.length, 'hueco', 'huecos')}`,
     })),
   );
   protected readonly moduleHint = computed(() => {
     const m = this.module();
     return m.permissionCount === 0
-      ? 'Este módulo no tiene ningún permiso fino: lo autorizan sólo los roles de sus rutas.'
-      : `${m.routes.total} rutas, ${m.permissionCount} permisos finos.`;
+      ? `${m.routes.total} rutas. Este módulo no tiene ningún permiso fino: lo autorizan sólo los roles de sus rutas.`
+      : `${m.routes.total} rutas · ${m.permissionCount} permisos finos · ${m.gaps.length} ${m.gaps.length === 1 ? 'hueco' : 'huecos'}`;
   });
   protected readonly matrix = computed(() => buildMatrix(this.module(), this.query()));
 
@@ -196,3 +227,5 @@ export class MatrixPanel {
     return coberturaDeCelda(code).tone;
   }
 }
+
+const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;

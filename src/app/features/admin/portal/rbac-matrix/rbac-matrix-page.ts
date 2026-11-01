@@ -12,11 +12,11 @@ import type { Subscription } from 'rxjs';
 import { AuthzModulesCatalogClient } from '../../../../core/data-access/authz-governance/authz-modules-catalog.client';
 import type { ModulesCatalog } from '../../../../core/data-access/authz-governance/authz-modules-catalog.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
+import { MetricCard } from '../../../../shared/components/molecules/metric-card/metric-card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
@@ -42,6 +42,7 @@ const URL_KEYS = ['view', 'module', 'mode', 'role'] as const;
   imports: [
     Alert,
     Card,
+    MetricCard,
     Tab,
     Tabs,
     PageHeader,
@@ -53,63 +54,99 @@ const URL_KEYS = ['view', 'module', 'mode', 'role'] as const;
   template: `
     <app-page-header
       title="Matriz RBAC por módulo"
-      subtitle="Qué roles tienen cada permiso fino de cada módulo, qué rutas siguen protegidas sólo por un rol grueso y cuánto del catálogo está definido."
-      [breadcrumbs]="breadcrumbs()"
+      subtitle="Qué roles tienen cada permiso fino de cada módulo, qué rutas se autorizan sólo por el rol que exigen y cuánto del catálogo está definido."
     />
-    <app-card class="rbac-page" variant="outlined" padding="md" data-testid="portal-rbac-matrix">
-      <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
-        @if (catalog(); as data) {
-          <!-- Plegado: la honestidad se queda, pero en una línea y no media pantalla. -->
-          <app-alert tone="info" data-testid="rbac-notes">
-            <details class="rbac__limits">
-              <summary class="rbac__limits-summary">
-                <strong>Qué no demuestra esta pantalla</strong> · {{ data.notes.length }} límites
-              </summary>
-              <ul class="rbac__notes">
-                @for (note of data.notes; track note) {
-                  <li>{{ note }}</li>
-                }
-              </ul>
-            </details>
-          </app-alert>
-          @if (refreshError(); as message) {
-            <app-alert tone="warning" data-testid="rbac-refresh-error">{{ message }}</app-alert>
+    <div class="rbac-page" data-testid="portal-rbac-matrix">
+      @if (catalog(); as data) {
+        <app-alert class="rbac-honesty" tone="info" data-testid="rbac-notes">
+          <p class="rbac-honesty__line">
+            Un permiso fino sólo se aplica donde el sistema lo evalúa; en el resto de las rutas
+            decide el rol que la ruta exige. Esta vista muestra lo definido, no lo que está en vigor.
+          </p>
+          <details class="rbac-honesty__more">
+            <summary>Ver los {{ data.notes.length }} límites de esta lectura</summary>
+            <ul class="rbac__notes">
+              @for (note of data.notes; track note) {
+                <li>{{ note }}</li>
+              }
+            </ul>
+          </details>
+        </app-alert>
+
+        <section class="rbac-kpis" aria-label="Resumen del catálogo">
+          <app-metric-card
+            label="Módulos"
+            icon="grid"
+            tone="primary"
+            [value]="data.summary.modules"
+            [hint]="data.summary.modulesWithoutFinePermissions + ' sin permisos finos'"
+          />
+          <app-metric-card
+            label="Permisos finos"
+            icon="key"
+            tone="success"
+            [value]="data.summary.permissions"
+            [hint]="'En ' + data.roles.length + ' roles'"
+          />
+          <app-metric-card
+            label="Sólo por rol"
+            icon="shield"
+            tone="warning"
+            [value]="data.summary.roleOnlyRoutes"
+            [hint]="'De ' + data.summary.routes + ' rutas'"
+          />
+          <app-metric-card
+            label="Huecos"
+            icon="flag"
+            tone="error"
+            [value]="data.summary.gaps"
+            [hint]="data.summary.undeclaredAuthRoutes + ' rutas sin autorización declarada'"
+          />
+        </section>
+      }
+
+      <app-card class="rbac-card" variant="outlined" padding="md">
+        <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+          @if (catalog(); as data) {
+            @if (refreshError(); as message) {
+              <app-alert tone="warning" data-testid="rbac-refresh-error">{{ message }}</app-alert>
+            }
+            @if (module(); as current) {
+              <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+                <app-tab label="Matriz">
+                  @if (tabIndex() === 0) {
+                    <app-portal-rbac-matrix-panel
+                      [catalog]="data"
+                      [module]="current"
+                      [mode]="mode()"
+                      [roleId]="values().role"
+                      (moduleChanged)="selectModule($event)"
+                      (modeChanged)="selectMode($event)"
+                      (roleChanged)="selectRole($event)"
+                      (saved)="reload()"
+                    />
+                  }
+                </app-tab>
+                <app-tab [label]="'Huecos (' + data.summary.gaps + ')'">
+                  @if (tabIndex() === 1) {
+                    <app-portal-rbac-gaps-panel
+                      [catalog]="data"
+                      [module]="values().module"
+                      (moduleChanged)="selectModule($event)"
+                    />
+                  }
+                </app-tab>
+                <app-tab label="Cobertura">
+                  @if (tabIndex() === 2) {
+                    <app-portal-rbac-coverage-panel [catalog]="data" (openGaps)="openGaps($event)" />
+                  }
+                </app-tab>
+              </app-tabs>
+            }
           }
-          @if (module(); as current) {
-            <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
-              <app-tab label="Matriz">
-                @if (tabIndex() === 0) {
-                  <app-portal-rbac-matrix-panel
-                    [catalog]="data"
-                    [module]="current"
-                    [mode]="mode()"
-                    [roleId]="values().role"
-                    (moduleChanged)="selectModule($event)"
-                    (modeChanged)="selectMode($event)"
-                    (roleChanged)="selectRole($event)"
-                    (saved)="reload()"
-                  />
-                }
-              </app-tab>
-              <app-tab label="Huecos">
-                @if (tabIndex() === 1) {
-                  <app-portal-rbac-gaps-panel
-                    [catalog]="data"
-                    [module]="values().module"
-                    (moduleChanged)="selectModule($event)"
-                  />
-                }
-              </app-tab>
-              <app-tab label="Cobertura">
-                @if (tabIndex() === 2) {
-                  <app-portal-rbac-coverage-panel [catalog]="data" (openGaps)="openGaps($event)" />
-                }
-              </app-tab>
-            </app-tabs>
-          }
-        }
-      </app-view-state-host>
-    </app-card>
+        </app-view-state-host>
+      </app-card>
+    </div>
   `,
   styleUrl: './rbac-matrix.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,7 +155,6 @@ export class RbacMatrixPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly client = inject(AuthzModulesCatalogClient);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
   protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
 
   protected readonly state = signal<ViewState<ModulesCatalog>>(loading());

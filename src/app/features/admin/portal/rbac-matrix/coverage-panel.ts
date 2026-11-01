@@ -16,39 +16,22 @@ import { coverageRows } from './rbac-matrix-model';
   imports: [AppButton],
   template: `
     <div class="rbac__stack" data-testid="rbac-coverage-panel">
-      <ul class="rbac__stats" aria-label="Resumen">
-        <li>
-          <strong>{{ catalog().summary.modules }}</strong> módulos
-        </li>
-        <li>
-          <strong>{{ catalog().summary.permissions }}</strong> permisos finos
-        </li>
-        <li>
-          <strong>{{ catalog().summary.routes }}</strong> rutas
-        </li>
-        <li>
-          <strong>{{ catalog().summary.roleOnlyRoutes }}</strong> sólo por rol
-        </li>
-        <li>
-          <strong>{{ catalog().summary.undeclaredAuthRoutes }}</strong> sin autorización declarada
-        </li>
-        <li>
-          <strong>{{ catalog().summary.modulesWithoutFinePermissions }}</strong> módulos sin
-          permisos finos
-        </li>
-      </ul>
+      <p class="rbac__meta">
+        Cuántas rutas que autorizan algo tienen ya un permiso fino definido. Mide lo definido en el
+        catálogo, no lo que está en vigor.
+      </p>
       <div class="rbac__scroll" role="region" tabindex="0" aria-label="Cobertura por módulo">
-        <table class="rbac__table" data-testid="rbac-coverage-table">
-          <caption class="rbac__caption">
+        <table class="rbac__table rbac__table--coverage" data-testid="rbac-coverage-table">
+          <caption class="rbac__sr">
             Cobertura de permisos finos por módulo, de más a menos huecos
           </caption>
           <thead>
             <tr>
               <th scope="col">Módulo</th>
-              <th scope="col">Rutas</th>
-              <th scope="col">Sólo rol</th>
-              <th scope="col">Sin declarar</th>
-              <th scope="col">Permisos</th>
+              <th scope="col" class="rbac__num">Rutas</th>
+              <th scope="col" class="rbac__num">Sólo rol</th>
+              <th scope="col" class="rbac__num">Sin declarar</th>
+              <th scope="col" class="rbac__num">Permisos</th>
               <th scope="col">Cobertura fina</th>
               <th scope="col">Huecos</th>
             </tr>
@@ -57,21 +40,23 @@ import { coverageRows } from './rbac-matrix-model';
             @for (r of rows(); track r.module) {
               <tr>
                 <th scope="row">{{ label(r.module) }}</th>
-                <td>{{ r.total }}</td>
-                <td>{{ r.roleOnly }}</td>
-                <td>{{ r.undeclared }}</td>
-                <td>{{ r.permissions }}</td>
+                <td class="rbac__num">{{ r.total }}</td>
+                <td class="rbac__num">{{ r.roleOnly }}</td>
+                <td class="rbac__num">{{ r.undeclared }}</td>
+                <td class="rbac__num">{{ r.permissions }}</td>
                 <td>
                   @if (r.finePercent === null) {
                     <span class="rbac__none">No aplica</span>
                   } @else {
+                    <span class="rbac__bar">
                     <progress
                       class="rbac__progress"
                       max="100"
                       [value]="r.finePercent"
                       [attr.aria-label]="'Cobertura fina de ' + label(r.module)"
                     ></progress>
-                    <span class="rbac__secondary">{{ r.finePercent }} %</span>
+                    <span class="rbac__pct">{{ r.finePercent }} %</span>
+                    </span>
                   }
                 </td>
                 <td>

@@ -29,7 +29,7 @@ const ALL = '';
   imports: [AppButton, Badge, Select, FormField, SearchField],
   template: `
     <div class="rbac__stack" data-testid="rbac-gaps-panel">
-      <div class="rbac__toolbar">
+      <div class="rbac__toolbar rbac__toolbar--gaps">
         <app-form-field label="Módulo">
           <app-select
             ariaLabel="Módulo"
@@ -57,69 +57,103 @@ const ALL = '';
         <app-search-field label="Buscar" placeholder="Recurso, código o rol" [(value)]="query" />
       </div>
 
-      <p class="rbac__secondary" aria-live="polite" data-testid="rbac-gaps-count">
+      <p class="rbac__meta" aria-live="polite" data-testid="rbac-gaps-count">
         {{ filtered().length }} {{ filtered().length === 1 ? 'hueco' : 'huecos' }} de {{ total() }}.
       </p>
 
       @if (filtered().length === 0) {
-        <p class="rbac__note" data-testid="rbac-gaps-empty">
+        <div class="rbac__empty" data-testid="rbac-gaps-empty">
           @if (total() === 0) {
-            No se detectó ningún hueco en lo que el servidor devolvió.
+            <p>No se detectó ningún hueco en lo que el servidor devolvió.</p>
           } @else {
-            Ningún hueco coincide con los filtros. Quite alguno para ver el resto.
+            <p>Ningún hueco coincide con los filtros.</p>
+            <button app-button variant="secondary" size="sm" (clicked)="clearFilters()">
+              Quitar filtros
+            </button>
           }
-        </p>
+        </div>
       } @else {
-        <ul class="rbac__list">
-          @for (g of visible(); track $index) {
-            <li class="rbac__item" data-testid="rbac-gap">
-              <div class="rbac__item-head">
-                <app-badge size="sm" [variant]="severityLabel(g.severity).tone">{{
-                  severityLabel(g.severity).label
-                }}</app-badge>
-                <app-badge size="sm" [variant]="kindLabel(g.kind).tone">{{
-                  kindLabel(g.kind).label
-                }}</app-badge>
-                <strong>{{ label(g.module) }}</strong>
-                @if (g.resource) {
-                  <span class="rbac__secondary">· {{ g.resource }}</span>
-                }
-              </div>
-              @if (g.proposedCode) {
-                <p class="rbac__row">
-                  Código propuesto: <code class="rbac__code">{{ g.proposedCode }}</code>
-                </p>
-              } @else {
-                <p class="rbac__row">
-                  Ninguna ruta de este módulo está respaldada por un permiso fino. Proponga el
-                  catálogo por recurso y acción.
-                </p>
-              }
-              <p class="rbac__secondary">
-                {{ g.routeCount }} {{ g.routeCount === 1 ? 'ruta' : 'rutas' }}
-                @if (g.roles.length > 0) {
-                  · Hoy las autoriza: {{ g.roles.join(', ') }}
-                } @else if (g.kind === 'UNDECLARED_AUTH') {
-                  · Ningún rol declarado: puede autorizarse en el servicio por pertenencia o
-                  propiedad
-                }
-              </p>
-              @if (g.sampleRoutes.length > 0) {
-                <details>
-                  <summary>Rutas de ejemplo ({{ g.sampleRoutes.length }})</summary>
-                  <ul class="rbac__routes">
-                    @for (r of g.sampleRoutes; track r.template + r.method) {
-                      <li>
-                        <code>{{ r.method }} {{ r.template }}</code>
-                        <span class="rbac__secondary">{{ r.controller }}.{{ r.handler }}</span>
-                      </li>
+        <div class="rbac__scroll" role="region" tabindex="0" aria-label="Huecos de autorización">
+          <table class="rbac__table rbac__table--gaps">
+            <caption class="rbac__sr">
+              Rutas sin permiso fino, con el código que se propone
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Módulo y recurso</th>
+                <th scope="col">Prioridad</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Código propuesto</th>
+                <th scope="col" class="rbac__num">Rutas</th>
+                <th scope="col">Hoy la autoriza</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (g of visible(); track $index) {
+                <tr data-testid="rbac-gap">
+                  <th scope="row">
+                    <span class="rbac__resource-name">{{ label(g.module) }}</span>
+                    @if (g.resource) {
+                      <span class="rbac__resource">{{ g.resource }}</span>
                     }
-                  </ul>
-                </details>
+                  </th>
+                  <td>
+                    <app-badge size="sm" [variant]="severityLabel(g.severity).tone">{{
+                      severityLabel(g.severity).label
+                    }}</app-badge>
+                  </td>
+                  <td>
+                    <app-badge size="sm" [variant]="kindLabel(g.kind).tone">{{
+                      kindLabel(g.kind).label
+                    }}</app-badge>
+                  </td>
+                  <td>
+                    @if (g.proposedCode) {
+                      <code class="rbac__code">{{ g.proposedCode }}</code>
+                    } @else {
+                      <span class="rbac__secondary"
+                        >Todo el módulo: proponga el catálogo por recurso y acción.</span
+                      >
+                    }
+                  </td>
+                  <td class="rbac__num">
+                    @if (g.sampleRoutes.length > 0) {
+                      <details class="rbac__routes-more">
+                        <summary>{{ g.routeCount }}</summary>
+                        <ul class="rbac__routes">
+                          @for (r of g.sampleRoutes; track r.template + r.method) {
+                            <li>
+                              <code>{{ r.method }} {{ r.template }}</code>
+                              <span class="rbac__secondary">{{ r.controller }}.{{ r.handler }}</span>
+                            </li>
+                          }
+                        </ul>
+                      </details>
+                    } @else {
+                      {{ g.routeCount }}
+                    }
+                  </td>
+                  <td>
+                    @if (g.roles.length > 0) {
+                      <span class="rbac__badges">
+                        @for (code of g.roles; track code) {
+                          <app-badge size="sm" variant="secondary">{{ code }}</app-badge>
+                        }
+                      </span>
+                    } @else if (g.kind === 'UNDECLARED_AUTH') {
+                      <span class="rbac__secondary"
+                        >Ningún rol declarado: puede decidirse en el servicio por pertenencia o
+                        propiedad</span
+                      >
+                    } @else {
+                      <span class="rbac__none">—</span>
+                    }
+                  </td>
+                </tr>
               }
-            </li>
-          }
-        </ul>
+            </tbody>
+          </table>
+        </div>
         @if (visible().length < filtered().length) {
           <div class="rbac__actions">
             <button
@@ -180,6 +214,12 @@ export class GapsPanel {
   protected setModule(key: string): void {
     this.shown.set(PAGE);
     this.moduleChanged.emit(key);
+  }
+  protected clearFilters(): void {
+    this.severity.set(ALL);
+    this.kind.set(ALL);
+    this.query.set('');
+    this.setModule(ALL);
   }
   protected resetPage(): void {
     this.shown.set(PAGE);

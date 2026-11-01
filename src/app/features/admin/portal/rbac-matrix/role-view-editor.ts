@@ -77,11 +77,7 @@ const EFFECT_OPTIONS: readonly SelectOption<string>[] = [
       }
       <app-form-field
         label="Rol"
-        [hint]="
-          locked()
-            ? 'Guarde o descarte los cambios para elegir otro rol.'
-            : 'Elija el rol cuyos permisos quiere ver y editar.'
-        "
+        [hint]="locked() ? 'Guarde o descarte los cambios para elegir otro rol.' : ''"
       >
         <app-select
           ariaLabel="Rol"
@@ -95,9 +91,9 @@ const EFFECT_OPTIONS: readonly SelectOption<string>[] = [
       </app-form-field>
 
       @if (roleId() === '') {
-        <p class="rbac__note">
-          Elija un rol para ver todo lo que puede hacer en cada módulo y editarlo.
-        </p>
+        <div class="rbac__empty">
+          <p>Elija un rol para ver todo lo que puede hacer en cada módulo y editarlo.</p>
+        </div>
       } @else {
         <section aria-label="Permisos del rol por módulo">
           <h3 class="rbac__subtitle">Permisos finos del rol, por módulo</h3>
@@ -129,7 +125,7 @@ const EFFECT_OPTIONS: readonly SelectOption<string>[] = [
           [attr.aria-label]="'Permisos del rol en ' + label(module().key)"
         >
           <table class="rbac__table" data-testid="rbac-role-table">
-            <caption class="rbac__caption">
+            <caption class="rbac__sr">
               Permisos del rol
               {{
                 role()?.name

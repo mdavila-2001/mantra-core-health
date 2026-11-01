@@ -1,61 +1,116 @@
-/* Estilos de la matriz RBAC por módulo. Sólo tokens. */
+/* Matriz RBAC por módulo. Sólo tokens. Móvil primero: cada corte agrega. */
 :host {
   display: block;
+  min-inline-size: 0;
 }
 
+/* ---- Página: aviso → KPIs → UNA tarjeta con pestañas ---------------------- */
 .rbac-page {
-  display: block;
-  inline-size: 100%;
-  margin-inline: auto;
-}
-
-.rbac__stack {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  padding-block: var(--sp-4);
+  inline-size: 100%;
+  min-inline-size: 0;
 }
 
-.rbac__toolbar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
-  gap: var(--sp-3);
-  align-items: end;
+.rbac-honesty {
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
-.rbac__limits-summary {
+.rbac-honesty__line {
+  margin: 0;
+}
+
+.rbac-honesty__more summary {
   cursor: pointer;
+  font-weight: 600;
+  inline-size: fit-content;
 }
 
-.rbac__limits-summary:focus-visible {
+.rbac-honesty__more summary:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
 .rbac__notes {
-  margin: var(--sp-2) 0 0;
+  margin: var(--sp-1) 0 0;
   padding-inline-start: var(--sp-5);
 }
 
-.rbac__note,
-.rbac__none {
-  margin: 0;
-  color: var(--text-secondary);
+.rbac-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
 }
 
-.rbac__secondary {
+.rbac-card {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+/* ---- Contenido de cada pestaña -------------------------------------------- */
+.rbac__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+  min-inline-size: 0;
+}
+
+/* Filtros en una fila desde tableta; en móvil se apilan. */
+.rbac__toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: end;
+}
+
+.rbac__meta {
+  margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
 
-.rbac__subtitle {
-  margin: 0 0 var(--sp-2);
-  font-size: var(--fs-h3);
+.rbac__meta strong {
+  color: var(--text-primary);
+  text-transform: capitalize;
 }
 
+/* Leyenda: cada muestra es el mismo chip que va en la tabla. */
+.rbac-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  list-style: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.rbac-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+/* ---- Tabla densa: cabecera pegajosa y primera columna fija ----------------- */
 .rbac__scroll {
-  overflow-x: auto;
+  /* Ancla de los textos sólo para lector (`.rbac__sr`): sin ella, su posición absoluta se mide
+     contra la página y ensancha el documento en móvil. */
+  position: relative;
+  max-block-size: min(70vh, 44rem);
+  overflow: auto;
+  overscroll-behavior-inline: contain;
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: var(--bg-surface);
@@ -68,45 +123,92 @@
 
 .rbac__table {
   inline-size: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: var(--fs-data);
-}
-
-.rbac__caption {
-  padding: var(--sp-3);
-  text-align: start;
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
 }
 
 .rbac__table th,
 .rbac__table td {
   padding: var(--sp-2) var(--sp-3);
-  border-block-start: 1px solid var(--border-subtle);
+  border-block-end: 1px solid var(--border-subtle);
   text-align: start;
   vertical-align: top;
 }
 
+.rbac__table tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
 .rbac__table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
   background: var(--bg-surface-alt);
-  color: var(--text-primary);
+  border-block-end-color: var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .rbac__table tbody th {
-  font-family: var(--font-mono);
-  font-weight: inherit;
-  white-space: nowrap;
   position: sticky;
   inset-inline-start: 0;
+  z-index: 1;
   background: var(--bg-surface);
+  border-inline-end: 1px solid var(--border-subtle);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rbac__table thead th:first-child {
+  inset-inline-start: 0;
+  z-index: 3;
+  border-inline-end: 1px solid var(--border-subtle);
+}
+
+.rbac__table tbody tr:hover > td,
+.rbac__table tbody tr:hover > th {
+  background: var(--bg-surface-alt);
+}
+
+.rbac__table--matrix td {
+  min-inline-size: 10rem;
+}
+
+.rbac__table .rbac__num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rbac__resource {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rbac__resource-name {
+  display: block;
+  text-transform: capitalize;
+}
+
+.rbac__table--matrix tbody th {
+  min-inline-size: 8rem;
+  max-inline-size: 14rem;
 }
 
 .rbac__cell {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--sp-1);
-  min-inline-size: 9rem;
 }
 
 .rbac__badges {
@@ -115,19 +217,133 @@
   gap: var(--sp-1);
 }
 
+.rbac__route {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.rbac__none {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.rbac__note {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.rbac__secondary {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.rbac__table .rbac__empty-row {
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.rbac__empty-row > span {
+  display: block;
+  margin-block-end: var(--sp-2);
+}
+
+.rbac__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8) var(--sp-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.rbac__empty p {
+  margin: 0;
+}
+
+.rbac__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.rbac__table--gaps td:nth-child(4) {
+  min-inline-size: 14rem;
+}
+
+.rbac__table--gaps tbody th {
+  min-inline-size: 9rem;
+}
+
+.rbac__routes-more summary {
+  cursor: pointer;
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.rbac__routes-more summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.rbac__routes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-2) 0 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  text-align: start;
+  white-space: normal;
+  min-inline-size: 16rem;
+  overflow-wrap: anywhere;
+}
+
+.rbac__bar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.rbac__progress {
+  inline-size: 7rem;
+  max-inline-size: 100%;
+  accent-color: var(--brand-primary);
+}
+
+.rbac__pct {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+  min-inline-size: 3.5em;
+}
+
+/* ---- Vista por rol --------------------------------------------------------- */
+.rbac__subtitle {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
 .rbac__perm {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
   min-inline-size: 11rem;
   padding-block-end: var(--sp-2);
-}
-
-.rbac__code {
-  font-family: var(--font-mono);
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-  overflow-wrap: anywhere;
 }
 
 .rbac__chips {
@@ -150,6 +366,7 @@
   background: var(--bg-surface);
   color: var(--text-primary);
   font: inherit;
+  text-transform: capitalize;
   cursor: pointer;
 }
 
@@ -160,6 +377,7 @@
 
 .rbac__chip--on {
   border-color: var(--brand-primary);
+  background: var(--st-primary-bg);
   font-weight: 600;
 }
 
@@ -167,6 +385,7 @@
   font-size: var(--fs-caption);
   color: var(--text-secondary);
   font-weight: 400;
+  text-transform: none;
 }
 
 .rbac__actions {
@@ -177,66 +396,6 @@
   gap: var(--sp-2);
 }
 
-.rbac__list,
-.rbac__routes {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.rbac__item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-}
-
-.rbac__item-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
-.rbac__row {
-  margin: 0;
-}
-
-.rbac__routes {
-  gap: var(--sp-1);
-  padding-block-start: var(--sp-2);
-  font-family: var(--font-mono);
-  font-size: var(--fs-caption);
-  overflow-wrap: anywhere;
-}
-
-.rbac__stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--text-secondary);
-}
-
-.rbac__stats strong {
-  color: var(--text-primary);
-}
-
-.rbac__progress {
-  inline-size: 8rem;
-  max-inline-size: 100%;
-  vertical-align: middle;
-  accent-color: var(--brand-primary);
-}
-
 .rbac__sr {
   position: absolute;
   inline-size: 1px;
@@ -244,4 +403,32 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* Tableta: filtros en una fila, KPIs en cuatro. */
+@media (min-width: 780px) {
+  .rbac-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .rbac__toolbar {
+    grid-template-columns: minmax(14rem, 1.2fr) auto minmax(12rem, 1fr);
+  }
+
+  .rbac__toolbar--two {
+    grid-template-columns: minmax(14rem, 1fr) auto;
+  }
+
+  .rbac__toolbar--gaps {
+    grid-template-columns: minmax(10rem, 1fr) minmax(10rem, 1fr) minmax(10rem, 1fr) minmax(12rem, 1.4fr);
+  }
+}
+
+.rbac__table--coverage td,
+.rbac__table--coverage th {
+  vertical-align: middle;
+}
+
+.rbac__table--coverage tbody th {
+  text-transform: capitalize;
 }

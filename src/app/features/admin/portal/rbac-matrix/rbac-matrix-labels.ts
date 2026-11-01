@@ -43,7 +43,7 @@ export const coberturaDeCelda = tabla({
 
 export const tipoDeHueco = tabla({
   MODULE_WITHOUT_FINE_PERMISSIONS: { label: 'Módulo sin permisos finos', tone: 'warning' },
-  ROLE_ONLY: { label: 'Sólo @Roles', tone: 'warning' },
+  ROLE_ONLY: { label: 'Sólo por rol', tone: 'warning' },
   GUARD_ONLY: { label: 'Sólo guard', tone: 'info' },
   UNDECLARED_AUTH: { label: 'Autorización no declarada', tone: 'error' },
 } satisfies Record<GapKind, Rotulo>);
