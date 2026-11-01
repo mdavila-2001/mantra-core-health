@@ -24,7 +24,6 @@ import type {
   AnatomyIndexEntry,
   AnatomyLayer,
   AnatomyPart,
-  AnatomyReference,
   AnatomySex,
   AnatomyStructure,
 } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
@@ -59,6 +58,10 @@ import {
   ontologyUrl,
   pageOf,
   pageRelationGroups,
+  referenceLabel,
+  referenceUrl,
+  femaleMissingEntries,
+  femaleModelEntries,
   relatedMeshes,
   searchIndex,
   sideLabel,
@@ -93,16 +96,19 @@ const REGION_NAMES: Readonly<Record<string, string>> = {
  *
  * ## De dónde sale lo que se ve
  *
- * Las mallas son BodyParts3D (CC-BY-SA 2.1 JP); las fichas, UBERON y el FMA
+ * Las mallas son BodyParts3D (CC-BY-SA 2.1 JP) y, para «Mujer», el Human
+ * Reference Atlas de HuBMAP (CC BY 4.0); las fichas, UBERON y el FMA
  * (CC-BY 3.0). Nada se completa a mano: lo que la ontología no declara no se
  * muestra, y lo que se tradujo al castellano dice que es una traducción.
  *
  * ## «Mujer»
  *
- * No existe un modelo 3D femenino completo con licencia libre: BodyParts3D y
- * Z-Anatomy son un único cuerpo masculino. La vista «Mujer» quita las piezas
- * exclusivas de ese cuerpo y lista las estructuras femeninas como fichas sin
- * pieza. Lo dice en pantalla; no se presenta como un modelo femenino.
+ * BodyParts3D es un único cuerpo masculino. La vista «Mujer» cambia su pelvis
+ * y sus genitales por los del Visible Human Female que publica HuBMAP: pelvis
+ * ósea, útero con su cuello, trompas, ovarios y mamas con sus partes,
+ * alineados al cuerpo de referencia (`tools/anatomy-atlas-3d/build_female_parts.py`).
+ * Músculos, vasos y nervios siguen siendo los de referencia, y la vagina y la
+ * vulva no tienen malla libre: la pantalla dice las dos cosas.
  *
  * El estado —sexo y estructura elegida— vive en la URL: una ficha abierta se
  * comparte con un enlace.
@@ -128,6 +134,9 @@ export class GlossaryAnatomyAtlas {
   protected readonly layerLabels = LAYER_LABELS;
   protected readonly displayName = displayName;
   protected readonly ontologyUrl = ontologyUrl;
+  protected readonly referenceUrl = referenceUrl;
+  protected readonly referenceLabel = referenceLabel;
+  protected readonly pageOf = pageOf;
   protected readonly modelUrls: Readonly<Record<AnatomyLayer, string>> = {
     skeleton: this.atlas.modelUrl('skeleton.glb'),
     muscles: this.atlas.modelUrl('muscles.glb'),
@@ -150,6 +159,7 @@ export class GlossaryAnatomyAtlas {
   protected readonly relationsPage = signal(1);
   protected readonly referencesPage = signal(1);
   protected readonly femalePage = signal(1);
+  protected readonly femaleMissingPage = signal(1);
 
   protected readonly partsState = signal<ViewState<readonly AnatomyPart[]>>(loading());
   private readonly indexState = signal<ViewState<AnatomyIndex>>(loading());
@@ -223,13 +233,16 @@ export class GlossaryAnatomyAtlas {
     pageOf(this.structure()?.definition?.refs ?? [], this.referencesPage(), PAGE_SIZE.references),
   );
 
-  protected readonly femaleOnly = computed(() =>
-    ATLAS_3D_FEMALE_ONLY_IDS.map((id) => this.entryById().get(id))
-      .filter((e): e is AnatomyIndexEntry => e !== undefined)
-      .sort((a, b) => displayName(a[1], a[2], a[0]).localeCompare(displayName(b[1], b[2], b[0]), 'es')),
+  protected readonly femaleModel = computed(() =>
+    femaleModelEntries(this.parts(), this.composites(), ATLAS_3D_FEMALE_ONLY_IDS, this.entryById()),
   );
+  protected readonly femaleMissing = computed(() => femaleMissingEntries(ATLAS_3D_FEMALE_ONLY_IDS, this.entryById()));
 
-  protected readonly femaleShown = computed(() => pageOf(this.femaleOnly(), this.femalePage(), PAGE_SIZE.female));
+  /** Las dos listas de «Mujer»: con pieza en el modelo y sin malla libre. */
+  protected readonly femaleGroups = computed(() => [
+    { id: 'modelo', title: 'Piezas femeninas del modelo', entries: this.femaleModel(), page: this.femalePage },
+    { id: 'sin-pieza', title: 'Estructuras femeninas sin pieza 3D', entries: this.femaleMissing(), page: this.femaleMissingPage },
+  ]);
 
   protected readonly viewerLabel = computed(() => {
     const visibles = this.layers().map((c) => LAYER_LABELS[c].toLowerCase()).join(', ');
@@ -237,7 +250,7 @@ export class GlossaryAnatomyAtlas {
     const foco = ficha === null ? '' : `. Pieza resaltada: ${displayName(ficha.labelEs, ficha.labelEn, ficha.id)}`;
     const cuerpo =
       this.sex() === 'female'
-        ? 'cuerpo masculino de referencia sin sus órganos genitales (vista «Mujer»; no existe un modelo femenino libre)'
+        ? 'vista «Mujer»: pelvis, útero, trompas, ovarios y mamas del cuerpo femenino de referencia (Visible Human Female, HuBMAP) sobre los músculos, vasos y nervios del cuerpo de referencia'
         : 'cuerpo masculino de referencia';
     return `Modelo anatómico 3D, ${cuerpo}; capas: ${visibles}${foco}`;
   });
@@ -390,33 +403,5 @@ export class GlossaryAnatomyAtlas {
     return entry[3] === 1;
   }
 
-  /** El enlace de una referencia, si es de un tipo que se puede abrir. */
-  protected referenceUrl(ref: AnatomyReference): string | null {
-    switch (ref.kind) {
-      case 'pmid':
-        return `https://pubmed.ncbi.nlm.nih.gov/${ref.value}/`;
-      case 'doi':
-        return `https://doi.org/${ref.value}`;
-      case 'wikipedia':
-        return `https://en.wikipedia.org/wiki/${encodeURIComponent(ref.value)}`;
-      case 'url':
-      case 'curator':
-        return ref.value;
-      default:
-        return null;
-    }
-  }
-
-  protected referenceLabel(ref: AnatomyReference): string {
-    const nombres: Record<AnatomyReference['kind'], string> = {
-      pmid: 'PubMed',
-      doi: 'DOI',
-      isbn: 'ISBN',
-      wikipedia: 'Wikipedia (en)',
-      url: 'Enlace',
-      curator: 'Curador (ORCID)',
-      xref: 'Referencia cruzada',
-    };
-    return `${nombres[ref.kind]}: ${ref.value}`;
-  }
 }
+

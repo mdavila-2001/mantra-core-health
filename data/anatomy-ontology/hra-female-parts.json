@@ -1,0 +1,627 @@
+[
+ {
+  "meshId": "VH_F_coccyx",
+  "structureId": "UBERON:0001350",
+  "label": "coccyx",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0001350"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0001270",
+  "hraPartOfLabel": "bony pelvis",
+  "conventionalPartOf": [],
+  "source": "HRA pelvis-female v1.3"
+ },
+ {
+  "meshId": "VH_F_ilium_compact_bone_L",
+  "structureId": "UBERON:0001273",
+  "label": "left ilium",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0001273"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0001270",
+  "hraPartOfLabel": "bony pelvis",
+  "conventionalPartOf": [],
+  "source": "HRA pelvis-female v1.3"
+ },
+ {
+  "meshId": "VH_F_ilium_compact_bone_R",
+  "structureId": "UBERON:0001273",
+  "label": "right ilium",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0001273"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0001270",
+  "hraPartOfLabel": "bony pelvis",
+  "conventionalPartOf": [],
+  "source": "HRA pelvis-female v1.3"
+ },
+ {
+  "meshId": "VH_F_ischium_compact_bone_L",
+  "structureId": "UBERON:0001274",
+  "label": "left ischium",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0001274"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0001270",
+  "hraPartOfLabel": "bony pelvis",
+  "conventionalPartOf": [],
+  "source": "HRA pelvis-female v1.3"
+ },
+ {
+  "meshId": "VH_F_ischium_compact_bone_R",
+  "structureId": "UBERON:0001274",
+  "label": "right ischium",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0001274"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0001270",
+  "hraPartOfLabel": "bony pelvis",
+  "conventionalPartOf": [],
+  "source": "HRA pelvis-female v1.3"
+ },
+ {
+  "meshId": "VH_F_pubis_compact_bone_L",
+  "structureId": "UBERON:0001275",
+  "label": "left pubis",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0001275"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0001270",
+  "hraPartOfLabel": "bony pelvis",
+  "conventionalPartOf": [],
+  "source": "HRA pelvis-female v1.3"
+ },
+ {
+  "meshId": "VH_F_pubis_compact_bone_R",
+  "structureId": "UBERON:0001275",
+  "label": "right pubis",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0001275"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0001270",
+  "hraPartOfLabel": "bony pelvis",
+  "conventionalPartOf": [],
+  "source": "HRA pelvis-female v1.3"
+ },
+ {
+  "meshId": "VH_F_sacrum",
+  "structureId": "UBERON:0003690",
+  "label": "fused sacrum",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0003690"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0001270",
+  "hraPartOfLabel": "bony pelvis",
+  "conventionalPartOf": [],
+  "source": "HRA pelvis-female v1.3"
+ },
+ {
+  "meshId": "VH_F_abdominal_ostium_of_uterine_tube",
+  "structureId": "FMA:77049",
+  "label": "abdominal ostium of uterine tube",
+  "fmaLabel": "abdominal ostium of uterine tube",
+  "fma": "77049",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_anterior_wall_of_uterus",
+  "structureId": "FMA:224876",
+  "label": "anterior wall of uterus",
+  "fmaLabel": "anterior wall of uterus",
+  "fma": "224876",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_body_of_uterus",
+  "structureId": "UBERON:0009853",
+  "label": "body of uterus",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0009853"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_cervicovaginal_junction",
+  "structureId": "HRA:VH_F_cervicovaginal_junction",
+  "label": "cervicovaginal junction (uterus)",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_cervix",
+  "structureId": "UBERON:0000002",
+  "label": "uterine cervix",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0000002"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_cornua",
+  "structureId": "HRA:VH_F_cornua",
+  "label": "cornua (uterus)",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_external_cervical_os",
+  "structureId": "UBERON:0013760",
+  "label": "external cervical os",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0013760"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_fundus_of_uterus",
+  "structureId": "FMA:17561",
+  "label": "fundus of uterus",
+  "fmaLabel": "fundus of uterus",
+  "fma": "17561",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_internal_cervical_os",
+  "structureId": "UBERON:0013759",
+  "label": "internal cervical os",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0013759"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_lower_uterine_segment",
+  "structureId": "FMA:17752",
+  "label": "lower uterine segment",
+  "fmaLabel": "lower uterine segment",
+  "fma": "17752",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_posterior_wall_of_uterus",
+  "structureId": "FMA:224878",
+  "label": "posterior wall of uterus",
+  "fmaLabel": "posterior wall of uterus",
+  "fma": "224878",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0000995",
+  "hraPartOfLabel": "uterus",
+  "conventionalPartOf": [],
+  "source": "HRA uterus-female v1.2"
+ },
+ {
+  "meshId": "VH_F_ampulla_of_uterine_tube_L",
+  "structureId": "FMA:18492",
+  "label": "ampulla of left uterine tube",
+  "fmaLabel": "ampulla of left uterine tube",
+  "fma": "18492",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0001303",
+  "hraPartOfLabel": "left uterine tube",
+  "conventionalPartOf": [],
+  "source": "HRA fallopian-tube-female-left v1.2"
+ },
+ {
+  "meshId": "VH_F_fibria_of_uterine_tube_L",
+  "structureId": "FMA:18498",
+  "label": "fimbria of left uterine tube",
+  "fmaLabel": "fimbria of left uterine tube",
+  "fma": "18498",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0001303",
+  "hraPartOfLabel": "left uterine tube",
+  "conventionalPartOf": [],
+  "source": "HRA fallopian-tube-female-left v1.2"
+ },
+ {
+  "meshId": "VH_F_isthmus_of_fallopian_tube_L",
+  "structureId": "FMA:18494",
+  "label": "isthmus of left uterine tube",
+  "fmaLabel": "isthmus of left uterine tube",
+  "fma": "18494",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0001303",
+  "hraPartOfLabel": "left uterine tube",
+  "conventionalPartOf": [],
+  "source": "HRA fallopian-tube-female-left v1.2"
+ },
+ {
+  "meshId": "VH_F_uterine_tube_infundibulum_L",
+  "structureId": "FMA:18490",
+  "label": "infundibulum of left uterine tube",
+  "fmaLabel": "infundibulum of left uterine tube",
+  "fma": "18490",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0001303",
+  "hraPartOfLabel": "left uterine tube",
+  "conventionalPartOf": [],
+  "source": "HRA fallopian-tube-female-left v1.2"
+ },
+ {
+  "meshId": "VH_F_ampulla_of_uterine_tube_R",
+  "structureId": "FMA:18491",
+  "label": "ampulla of right uterine tube",
+  "fmaLabel": "ampulla of right uterine tube",
+  "fma": "18491",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0001302",
+  "hraPartOfLabel": "right uterine tube",
+  "conventionalPartOf": [],
+  "source": "HRA fallopian-tube-female-right v1.2"
+ },
+ {
+  "meshId": "VH_F_fibria_of_uterine_tube_R",
+  "structureId": "FMA:18497",
+  "label": "fimbria of right uterine tube",
+  "fmaLabel": "fimbria of right uterine tube",
+  "fma": "18497",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0001302",
+  "hraPartOfLabel": "right uterine tube",
+  "conventionalPartOf": [],
+  "source": "HRA fallopian-tube-female-right v1.2"
+ },
+ {
+  "meshId": "VH_F_isthmus_of_fallopian_tube_R",
+  "structureId": "FMA:18493",
+  "label": "isthmus of right uterine tube",
+  "fmaLabel": "isthmus of right uterine tube",
+  "fma": "18493",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0001302",
+  "hraPartOfLabel": "right uterine tube",
+  "conventionalPartOf": [],
+  "source": "HRA fallopian-tube-female-right v1.2"
+ },
+ {
+  "meshId": "VH_F_uterine_tube_infundibulum_R",
+  "structureId": "FMA:18489",
+  "label": "infundibulum of right uterine tube",
+  "fmaLabel": "infundibulum of right uterine tube",
+  "fma": "18489",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "UBERON:0001302",
+  "hraPartOfLabel": "right uterine tube",
+  "conventionalPartOf": [],
+  "source": "HRA fallopian-tube-female-right v1.2"
+ },
+ {
+  "meshId": "VH_F_left_ovary",
+  "structureId": "UBERON:0002119",
+  "label": "left ovary",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0002119"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0002119",
+  "hraPartOfLabel": "left ovary",
+  "conventionalPartOf": [],
+  "source": "HRA ovary-female-left v1.3"
+ },
+ {
+  "meshId": "VH_F_right_ovary",
+  "structureId": "UBERON:0002118",
+  "label": "right ovary",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0002118"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "UBERON:0002118",
+  "hraPartOfLabel": "right ovary",
+  "conventionalPartOf": [],
+  "source": "HRA ovary-female-right v1.3"
+ },
+ {
+  "meshId": "VH_F_areola_L",
+  "structureId": "FMA:223679",
+  "label": "left female areola",
+  "fmaLabel": "left female areola",
+  "fma": "223679",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57991",
+  "hraPartOfLabel": "left mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-left v1.1"
+ },
+ {
+  "meshId": "VH_F_areolar_tubercles_L",
+  "structureId": "UBERON:0011828",
+  "label": "left areolar tubercle",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0011828"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "FMA:57991",
+  "hraPartOfLabel": "left mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-left v1.1"
+ },
+ {
+  "meshId": "VH_F_fat_L",
+  "structureId": "FMA:73166",
+  "label": "interlobar adipose tissue of left mammary gland",
+  "fmaLabel": "interlobar adipose tissue of left mammary gland",
+  "fma": "73166",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57991",
+  "hraPartOfLabel": "left mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-left v1.1"
+ },
+ {
+  "meshId": "VH_F_main_lactiferous_ducts_L",
+  "structureId": "UBERON:0015134",
+  "label": "left main lactiferous duct",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0015134"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "FMA:57991",
+  "hraPartOfLabel": "left mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-left v1.1"
+ },
+ {
+  "meshId": "VH_F_main_lactiferous_sinuses_L",
+  "structureId": "FMA:58088",
+  "label": "left lactiferous sinus",
+  "fmaLabel": "lactiferous sinus",
+  "fma": "58088",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57991",
+  "hraPartOfLabel": "left mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-left v1.1"
+ },
+ {
+  "meshId": "VH_F_mammary_lobes_L",
+  "structureId": "UBERON:0018140",
+  "label": "left mammary lobe",
+  "fmaLabel": "mammary lobe",
+  "fma": null,
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57991",
+  "hraPartOfLabel": "left mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-left v1.1"
+ },
+ {
+  "meshId": "VH_F_nipple_L",
+  "structureId": "UBERON:0013772",
+  "label": "left nipple",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0013772"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "FMA:57991",
+  "hraPartOfLabel": "left mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-left v1.1"
+ },
+ {
+  "meshId": "VH_F_suspensory_ligaments_L",
+  "structureId": "FMA:73119",
+  "label": "suspensory ligament of left breast",
+  "fmaLabel": "suspensory ligament of left breast",
+  "fma": "73119",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57991",
+  "hraPartOfLabel": "left mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-left v1.1"
+ },
+ {
+  "meshId": "VH_F_areola_R",
+  "structureId": "FMA:223677",
+  "label": "right female areola",
+  "fmaLabel": "right female areola",
+  "fma": "223677",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57987",
+  "hraPartOfLabel": "right mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-right v1.1"
+ },
+ {
+  "meshId": "VH_F_areolar_tubercles_R",
+  "structureId": "UBERON:0011828",
+  "label": "right areolar tubercle",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0011828"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "FMA:57987",
+  "hraPartOfLabel": "right mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-right v1.1"
+ },
+ {
+  "meshId": "VH_F_fat_R",
+  "structureId": "FMA:73165",
+  "label": "interlobar adipose tissue of right mammary gland",
+  "fmaLabel": "interlobar adipose tissue of right mammary gland",
+  "fma": "73165",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57987",
+  "hraPartOfLabel": "right mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-right v1.1"
+ },
+ {
+  "meshId": "VH_F_main_lactiferous_ducts_R",
+  "structureId": "UBERON:0015134",
+  "label": "right main lactiferous duct",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0015134"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "FMA:57987",
+  "hraPartOfLabel": "right mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-right v1.1"
+ },
+ {
+  "meshId": "VH_F_main_lactiferous_sinuses_R",
+  "structureId": "FMA:58088",
+  "label": "right lactiferous sinus",
+  "fmaLabel": "lactiferous sinus",
+  "fma": "58088",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57987",
+  "hraPartOfLabel": "right mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-right v1.1"
+ },
+ {
+  "meshId": "VH_F_mammary_lobes_R",
+  "structureId": "UBERON:0018140",
+  "label": "right mammary lobe",
+  "fmaLabel": "mammary lobe",
+  "fma": null,
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57987",
+  "hraPartOfLabel": "right mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-right v1.1"
+ },
+ {
+  "meshId": "VH_F_nipple_R",
+  "structureId": "UBERON:0013773",
+  "label": "right nipple",
+  "fmaLabel": null,
+  "fma": null,
+  "uberon": [
+   "UBERON:0013773"
+  ],
+  "uberonMatch": "hra_exact",
+  "hraPartOf": "FMA:57987",
+  "hraPartOfLabel": "right mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-right v1.1"
+ },
+ {
+  "meshId": "VH_F_suspensory_ligaments_R",
+  "structureId": "FMA:73118",
+  "label": "suspensory ligament of right breast",
+  "fmaLabel": "suspensory ligament of right breast",
+  "fma": "73118",
+  "uberon": [],
+  "uberonMatch": "hra_only",
+  "hraPartOf": "FMA:57987",
+  "hraPartOfLabel": "right mammary gland",
+  "conventionalPartOf": [],
+  "source": "HRA mammary-gland-female-right v1.1"
+ }
+]
