@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import type { UiElement, UiVisibilityRule } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
+import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { RuleEditDialog } from './rule-edit-dialog';
 import { RuleFormPanel } from './rule-form-panel';
@@ -70,15 +71,19 @@ describe('UiRulesPage', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let confirmed: boolean;
+  /** Cuántas veces la pantalla pidió a la sesión que recargue sus propias reglas de visibilidad. */
+  let refreshes: number;
 
   async function open(url = SCREEN): Promise<void> {
     confirmed = true;
+    refreshes = 0;
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'superadmin/portal/governance/ui-rules', component: UiRulesPage }]),
         { provide: DialogService, useValue: { confirm: () => Promise.resolve(confirmed) } },
+        { provide: UiVisibilityService, useValue: { refresh: () => (refreshes += 1) } },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -190,6 +195,7 @@ describe('UiRulesPage', () => {
       req.flush(rule('r1', { validTo: '2026-10-31T12:00:00.000Z', version: 2 }));
       harness.detectChanges();
       expect(byTestId('ui-rules-done')!.textContent).toContain('Quedó en el historial');
+      expect(refreshes).toBe(1); // la sesión del admin recoge el cambio sin recargar la página
       flush([ENDED]);
     });
 
@@ -200,6 +206,7 @@ describe('UiRulesPage', () => {
       all('ui-rule-end')[0]!.click();
       await harness.fixture.whenStable();
       http.expectNone((r) => r.url.endsWith('/end'));
+      expect(refreshes).toBe(0);
     });
 
     it('si la API lo rechaza lo dice y la regla sigue en la lista', async () => {
@@ -211,6 +218,7 @@ describe('UiRulesPage', () => {
       harness.detectChanges();
       expect(byTestId('ui-rules-failure')!.textContent).toContain('Sin permiso');
       expect(all('ui-rule-end')).toHaveLength(1);
+      expect(refreshes).toBe(0); // un rechazo no cambia las reglas: no se vuelve a pedir nada
     });
   });
 
@@ -235,6 +243,7 @@ describe('UiRulesPage', () => {
       req.flush(rule('r1', { effect: 'SHOW', version: 2 }));
       harness.detectChanges();
       expect(byTestId('ui-rules-done')!.textContent).toContain('versión 2');
+      expect(refreshes).toBe(1);
       flush();
     });
 
@@ -373,6 +382,7 @@ describe('UiRulesPage', () => {
       await harness.fixture.whenStable();
       harness.detectChanges();
       expect(byTestId('ui-rules-notice')!.textContent).toContain('Se creó la regla: oculta');
+      expect(refreshes).toBe(1);
       const list = http.match((r) => r.url === RULES && r.method === 'GET');
       expect(list.length).toBeGreaterThan(0);
       expect(list.some((r) => r.request.params.get('elementKey') === 'pharmacy.orders.export')).toBe(true);

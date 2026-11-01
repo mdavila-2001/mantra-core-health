@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import type { UiVisibilityRule } from '../../../../../core/data-access/ui-visibility/ui-visibility.types';
 import { NavigationService } from '../../../../../core/navigation/navigation.service';
+import { UiVisibilityService } from '../../../../../core/visibility/ui-visibility.service';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
@@ -36,7 +37,7 @@ const FILTER_KEYS = ['element', 'subjectType', 'state'] as const;
       <app-card class="rules-page__card" variant="outlined" padding="md" data-testid="portal-ui-rules">
         <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
           <app-tab label="Reglas">
-            <app-visibility-rules-panel [values]="filters()" [notice]="notice()" />
+            <app-visibility-rules-panel [values]="filters()" [notice]="notice()" (changed)="rulesChanged()" />
           </app-tab>
           <app-tab label="Nueva regla">
             @if (tabIndex() === 1) {
@@ -75,6 +76,7 @@ export class UiRulesPage {
   private readonly route = inject(ActivatedRoute);
   private readonly index = inject(UiElementIndex);
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
+  private readonly visibility = inject(UiVisibilityService);
 
   private readonly params = queryParamsSignal(this.route);
   protected readonly filters = queryFilters(this.params, FILTER_KEYS);
@@ -92,7 +94,17 @@ export class UiRulesPage {
     void patchQuery(this.router, this.route, { view: index === 0 ? null : VIEWS[index]! });
   }
 
+  /**
+   * Tras crear, editar o terminar una regla, la sesión de quien la editó vuelve a pedir sus propias reglas: si la
+   * regla lo alcanza, el menú y las pantallas cambian sin recargar la página. Las sesiones de las demás personas
+   * las recogen en su próximo pedido (la API es la autoridad, esto es sólo presentación).
+   */
+  protected rulesChanged(): void {
+    this.visibility.refresh();
+  }
+
   protected created(rule: UiVisibilityRule): void {
+    this.rulesChanged();
     this.notice.set(
       `Se creó la regla: ${effectLabel(rule.effect).label.toLowerCase()} «${this.index.path(rule.elementKey)}» para ${rule.subjectLabel ?? 'todos'}.`,
     );
