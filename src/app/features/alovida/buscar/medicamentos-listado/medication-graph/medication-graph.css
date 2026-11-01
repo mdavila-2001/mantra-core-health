@@ -1,0 +1,406 @@
+:host {
+  display: block;
+  inline-size: 100%;
+}
+
+.med-grafo {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
+  background: var(--bg-surface);
+  container-type: inline-size;
+  min-inline-size: 0;
+}
+
+/* ─── Selector de compuestos encontrados ─────────────────────────────────── */
+
+.med-grafo__selector-compuestos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.med-grafo__selector-etiqueta {
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+}
+
+.med-grafo__selector-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.med-grafo__chip-compuesto {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.med-grafo__chip-compuesto:hover {
+  border-color: var(--c-aqua-500);
+  background: color-mix(in srgb, var(--c-aqua-500) 8%, var(--bg-surface-alt));
+}
+
+.med-grafo__chip-compuesto--activo {
+  border-color: var(--c-aqua-600);
+  background: color-mix(in srgb, var(--c-aqua-600) 15%, var(--bg-surface));
+  font-weight: var(--fw-bold);
+  box-shadow: 0 0 0 1px var(--c-aqua-600);
+}
+
+.med-grafo__chip-atc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Herramientas ──────────────────────────────────────────────────────── */
+
+.med-grafo__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.med-grafo__herramientas-derecha {
+  margin-inline-start: auto;
+}
+
+.med-grafo__zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.med-grafo__zoom-valor {
+  min-inline-size: 3.5rem;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.med-grafo__resumen {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* ─── Cuerpo principal: Lienzo y Ficha ──────────────────────────────────── */
+
+.med-grafo__cuerpo {
+  display: grid;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+@container (min-width: 56rem) {
+  .med-grafo__cuerpo {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: start;
+  }
+}
+
+.med-grafo__lienzo-caja {
+  min-inline-size: 0;
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
+  overflow: hidden;
+}
+
+.med-grafo__lienzo-caja[hidden] {
+  display: none;
+}
+
+.med-grafo__lienzo {
+  display: block;
+  inline-size: 100%;
+  block-size: clamp(24rem, 64dvh, 46rem);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.med-grafo__lienzo:active {
+  cursor: grabbing;
+}
+
+.med-grafo__enlace {
+  fill: none;
+  stroke: var(--border-default);
+  stroke-width: 1.6;
+}
+
+/* ─── Nodos SVG ─────────────────────────────────────────────────────────── */
+
+.med-grafo__nodo {
+  --tono: var(--c-neutral-600);
+  cursor: pointer;
+  outline: none;
+}
+
+.med-grafo__nodo--aqua {
+  --tono: var(--c-aqua-600);
+}
+
+.med-grafo__nodo--petrol {
+  --tono: var(--c-petrol-600);
+}
+
+.med-grafo__nodo--mint {
+  --tono: var(--c-mint-600);
+}
+
+.med-grafo__nodo--sage {
+  --tono: var(--c-sage-600);
+}
+
+.med-grafo__nodo--neutral {
+  --tono: var(--c-neutral-600);
+}
+
+.med-grafo__nodo--group {
+  cursor: default;
+}
+
+.med-grafo__caja {
+  fill: color-mix(in srgb, var(--tono) 10%, var(--bg-surface));
+  stroke: var(--tono);
+  stroke-width: 1.4;
+  transition: stroke-width var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+}
+
+.med-grafo__nodo--group .med-grafo__caja {
+  fill: color-mix(in srgb, var(--tono) 20%, var(--bg-surface));
+}
+
+.med-grafo__nodo:hover .med-grafo__caja {
+  stroke-width: 2.2;
+}
+
+.med-grafo__nodo--elegido .med-grafo__caja {
+  stroke-width: 2.8;
+  filter: drop-shadow(0 2px 8px color-mix(in srgb, var(--tono) 35%, transparent));
+}
+
+.med-grafo__texto {
+  font-family: inherit;
+  pointer-events: none;
+}
+
+.med-grafo__texto--label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.med-grafo__texto--sub {
+  font-size: 10px;
+  fill: var(--text-secondary);
+}
+
+.med-grafo__texto--definition {
+  font-size: 9.5px;
+  fill: var(--text-tertiary);
+}
+
+.med-grafo__raya {
+  stroke: var(--border-default);
+  stroke-width: 1;
+}
+
+/* ─── Ficha lateral inspectora ─────────────────────────────────────────── */
+
+.med-grafo__ficha {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.med-grafo__ficha-tarjeta {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.med-grafo__ficha-cabecera {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.med-grafo__ficha-insignia-caja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.med-grafo__ficha-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+  font-weight: var(--fw-bold);
+}
+
+.med-grafo__ficha-subtitulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.med-grafo__ficha-cuerpo {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.med-grafo__ficha-explicacion {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+}
+
+.med-grafo__ficha-datos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+}
+
+.med-grafo__ficha-datos > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block: var(--sp-1);
+  border-block-end: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.med-grafo__ficha-datos dt {
+  color: var(--text-secondary);
+}
+
+.med-grafo__ficha-datos dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+
+.med-grafo__ficha-destacado {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--c-aqua-500) 10%, var(--bg-surface-alt));
+  border: 1px solid color-mix(in srgb, var(--c-aqua-500) 25%, transparent);
+}
+
+.med-grafo__ficha-destacado p {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-primary);
+}
+
+.med-grafo__ficha-icono-info {
+  font-size: 1.1rem;
+}
+
+.med-grafo__ficha-pie {
+  display: flex;
+  justify-content: flex-end;
+  padding-block-start: var(--sp-2);
+}
+
+.med-grafo__ficha-vacia {
+  margin: 0;
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ─── Vista de lista alternativa ────────────────────────────────────────── */
+
+.med-grafo__lista {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3);
+  background: var(--bg-surface-alt);
+}
+
+.med-grafo__rama {
+  list-style: none;
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.med-grafo__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  text-align: start;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.med-grafo__item:hover {
+  border-color: var(--c-aqua-500);
+}
+
+.med-grafo__item--elegido {
+  border-color: var(--c-aqua-600);
+  background: color-mix(in srgb, var(--c-aqua-600) 10%, var(--bg-surface));
+}
+
+.med-grafo__item-texto {
+  display: grid;
+  gap: 2px;
+}
+
+.med-grafo__item-sub {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.med-grafo__item-def {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.med-grafo__grupo {
+  margin: var(--sp-2) 0 var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-weight: var(--fw-bold);
+}
