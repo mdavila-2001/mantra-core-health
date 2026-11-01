@@ -56,7 +56,7 @@
 }
 
 .portal__movil::backdrop {
-  background: rgb(10 28 39 / 55%);
+  background: var(--velo);
 }
 
 .portal__movil-panel {
