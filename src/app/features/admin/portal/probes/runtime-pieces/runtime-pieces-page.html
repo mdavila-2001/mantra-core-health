@@ -6,7 +6,7 @@
   <button
     app-button
     page-actions
-    variant="ghost"
+    variant="secondary"
     size="sm"
     (clicked)="cargar()"
     data-testid="rp-refresh"
@@ -48,31 +48,6 @@
       @if (v.status === 'ready' || v.status === 'stale') {
         @let r = v.data;
         <div class="piezas__cuerpo">
-          <!-- Cifras: cuántas hay, cuántas viven, cuáles preocupan y la antigüedad del dato (S7). -->
-          <section class="piezas__metricas" aria-label="Resumen de las piezas">
-            <app-metric-card
-              label="Antigüedad del dato"
-              [value]="antiguedadDe(r.evaluatedAt)"
-              [hint]="'Evaluado el ' + (r.evaluatedAt | date: 'dd/MM/yyyy HH:mm') + '; se vuelve a pedir cada 30 s'"
-            />
-            <app-metric-card label="Piezas" [value]="r.summary.total" hint="Descubiertas en el código" />
-            <app-metric-card
-              label="Vivas"
-              [value]="r.summary.byState.VIVA + ' de ' + r.summary.total"
-              hint="Con prueba de vida dentro del umbral"
-            />
-            <app-metric-card
-              label="Sin latido"
-              [value]="r.summary.byState.SIN_LATIDO"
-              [hint]="'Más de ' + r.thresholds.downAfterSeconds + ' s sin latir: se dan por caídas'"
-            />
-            <app-metric-card
-              label="Fuera del registro"
-              [value]="r.summary.byState.NO_REGISTRADA + r.summary.byState.HUERFANA"
-              hint="No registradas en el código o huérfanas en el registro"
-            />
-          </section>
-
           <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
           <app-alert tone="info" data-testid="rp-honesty">
             <details class="piezas__aviso">
@@ -114,6 +89,35 @@
               </div>
             </details>
           </app-alert>
+
+          <!-- Cifras: cuántas hay, cuántas viven, cuáles preocupan y la antigüedad del dato (S7). -->
+          <section class="piezas__metricas" aria-label="Resumen de las piezas">
+            <app-metric-card
+              label="Antigüedad del dato"
+              icon="clock"
+              [value]="antiguedadDe(r.evaluatedAt)"
+              [hint]="'Evaluado el ' + (r.evaluatedAt | date: 'dd/MM/yyyy HH:mm') + '; se vuelve a pedir cada 30 s'"
+            />
+            <app-metric-card label="Piezas" icon="cube" [value]="r.summary.total" hint="Descubiertas en el código" />
+            <app-metric-card
+              label="Vivas"
+              icon="check-circle"
+              [value]="r.summary.byState.VIVA + ' de ' + r.summary.total"
+              hint="Con prueba de vida dentro del umbral"
+            />
+            <app-metric-card
+              label="Sin latido"
+              icon="heart"
+              [value]="r.summary.byState.SIN_LATIDO"
+              [hint]="'Más de ' + r.thresholds.downAfterSeconds + ' s sin latir: se dan por caídas'"
+            />
+            <app-metric-card
+              label="Fuera del registro"
+              icon="flag"
+              [value]="r.summary.byState.NO_REGISTRADA + r.summary.byState.HUERFANA"
+              hint="No registradas en el código o huérfanas en el registro"
+            />
+          </section>
 
           @if (!r.scan.available) {
             <app-alert

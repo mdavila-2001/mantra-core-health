@@ -227,7 +227,7 @@ describe('RuntimePiecesPage', () => {
     const req = lista();
     expect(req.request.method).toBe('GET');
     expect(req.request.params.keys().sort()).toEqual(['page', 'pageSize']);
-    expect(req.request.params.get('pageSize')).toBe('25');
+    expect(req.request.params.get('pageSize')).toBe('10');
     req.flush(respuesta());
   });
 

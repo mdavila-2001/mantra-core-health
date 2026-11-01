@@ -116,7 +116,7 @@ describe('etiquetas de las piezas en ejecución (funciones puras)', () => {
 
 describe('la consulta que sale de la URL', () => {
   it('por omisión pide la primera página, sin filtros', () => {
-    expect(consultaDe(valores())).toEqual({ page: 1, pageSize: 25 });
+    expect(consultaDe(valores())).toEqual({ page: 1, pageSize: 10 });
   });
 
   it('manda lo válido y descarta lo que la API rechazaría con 400', () => {
@@ -132,7 +132,7 @@ describe('la consulta que sale de la URL', () => {
     );
     expect(q).toEqual({
       page: 3,
-      pageSize: 25,
+      pageSize: 10,
       state: 'SIN_LATIDO',
       host: 'worker-a',
       q: 'outbox',
@@ -145,7 +145,7 @@ describe('la consulta que sale de la URL', () => {
     const q = consultaDe(
       valores({ q: 'x'.repeat(101), host: 'y'.repeat(101), withFindings: 'si' }),
     );
-    expect(q).toEqual({ page: 1, pageSize: 25 });
+    expect(q).toEqual({ page: 1, pageSize: 10 });
   });
 
   it.each([

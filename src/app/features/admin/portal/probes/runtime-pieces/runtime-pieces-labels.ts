@@ -160,7 +160,7 @@ export type ValoresUrl = Readonly<Record<(typeof CLAVES_URL)[number], string>>;
 /** Los filtros que «Quitar filtros» limpia; la pestaña y la página no son filtros. */
 export const CLAVES_DE_FILTRO = ['state', 'kind', 'host', 'q', 'withFindings'] as const;
 
-export const TAMANO_DE_PAGINA = 25;
+export const TAMANO_DE_PAGINA = 10;
 const MAXIMO_DE_TEXTO = 100;
 
 export function pestanaDe(valores: Pick<ValoresUrl, 'vista'>): Pestana {
