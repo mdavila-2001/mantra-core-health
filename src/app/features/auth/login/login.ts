@@ -16,9 +16,7 @@ import { safeReturnUrl } from '../../../core/auth/return-url';
 import { MFA_ENROLLMENT_ROUTE } from '../../../core/auth/mfa-enrollment-route';
 import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
 import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
-import {
-  entryDestination,
-} from '../../reporting/reporting-access';
+import { entryDestination, PORTAL_ADMINISTRACION_ROUTE } from '../../reporting/reporting-access';
 import type { LoginCredentials } from '../../../core/data-access/iam/iam.types';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -27,17 +25,29 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { FormTracing } from '../../../core/observability/business/form-tracing';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { AccountIcon } from '../../../shared/components/atoms/account-icon/account-icon';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 import { localLoginHint, type LocalLoginHint } from './local-login-hint';
 import { loginPolicyOutcome } from './login-policy-reasons';
 import { markPageAsNoIndex } from '../../prescription-share/no-index';
 import { isShareTokenRoute } from '../../prescription-share/share-return-url';
+
+/** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
+const HOME_ROUTE = '/';
+/**
+ * El inicio de las cuentas de organización que tienen un panel propio: la
+ * farmacia y el centro de diagnóstico empiezan en su «Resumen», no en el
+ * panel general («Pacientes y equipo», «Directorios»).
+ */
+const INICIO_POR_TIPO: Readonly<Record<string, string>> = {
+  PHARMACY: '/administration/pharmacy',
+  DIAGNOSTIC_CENTER: '/administration/laboratory',
+};
 
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
@@ -74,11 +84,11 @@ const MY_ORGANIZATIONS_ROUTE = '/administration/medical-organization?tab=members
     Input,
     Link,
     FormField,
+    AccountIcon,
     NavIcon,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
-    PointerScene,
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',
@@ -248,7 +258,18 @@ export class Login {
     }
     // El alcance de plataforma no pasa por la elección de organización (arriba, `needsTenantSelection`). Ver
     // `entryDestination`: sin la maqueta de reportería todos entran a `/` (el Centro de la plataforma), salvo marketing puro.
-    return entryDestination(this.auth.roles());
+    // Quien entraría al panel general entra al inicio de su tipo de cuenta (ver `inicioDeLaCuenta`).
+    const entrada = entryDestination(this.auth.roles());
+    return entrada === PORTAL_ADMINISTRACION_ROUTE ? this.inicioDeLaCuenta() : entrada;
+  }
+
+  /**
+   * Dónde empieza el día cada cuenta. La farmacia y el laboratorio entraban
+   * al «Panel» general, que no les dice nada de su trabajo; su inicio es su
+   * «Resumen». Ver {@link INICIO_POR_TIPO}.
+   */
+  private inicioDeLaCuenta(): string {
+    return INICIO_POR_TIPO[this.auth.activeTenantType() ?? ''] ?? HOME_ROUTE;
   }
 
   /**
