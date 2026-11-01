@@ -701,8 +701,13 @@
               aria-controls="menu-cuenta"
               [title]="persona.displayName"
               [attr.aria-label]="'Cuenta de ' + persona.displayName"
-              >{{ iniciales() }}</button
             >
+              @if (fotoDePerfil(); as foto) {
+                <img class="app-header__foto" [src]="foto" alt="" />
+              } @else {
+                {{ iniciales() }}
+              }
+            </button>
             <!-- El marco de la bóveda pone iniciales, no el nombre completo: en
                  un header de 320 px el nombre no entra. Pero quién tiene la
                  sesión no puede quedar sólo insinuado por dos letras, así que el

@@ -1,3 +1,5 @@
+import { OwnPhotoStore } from '../../core/data-access/profiles/own-photo.store';
+import { personInitials } from '../../shared/text/initials';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -383,6 +385,12 @@ export class ShellLayout {
        inicio le muestre el avance. Sólo para el paciente —a quien atiende no se
        le ofrece la lista— y sólo en el navegador, donde hay dónde guardarlo. */
     const destroyRef = inject(DestroyRef);
+    const fotoPropia = this.fotoPropia;
+    effect(() => {
+      if (this.esPacienteDelCarrito()) {
+        untracked(() => fotoPropia.load());
+      }
+    });
     effect(() => {
       if (this.esPacienteDelCarrito()) {
         untracked(() => this.firstSteps.track(this.router, destroyRef));
@@ -734,14 +742,23 @@ export class ShellLayout {
   });
 
   /** Iniciales para el avatar: dos, que es lo que entra en el círculo. */
-  protected readonly iniciales = computed(() =>
-    (this.user()?.displayName ?? '')
-      .trim()
+  protected readonly iniciales = computed(() => {
+    const nombre = (this.user()?.displayName ?? '').trim();
+    // Una persona: primer nombre y primer apellido, igual que en su perfil. Una
+    // organización conserva las dos primeras palabras de su nombre.
+    if (!this.auth.isOrganizationAccount()) {
+      return personInitials(nombre);
+    }
+    return nombre
       .split(/\s+/)
       .slice(0, 2)
       .map((parte) => parte[0]?.toUpperCase() ?? '')
-      .join(''),
-  );
+      .join('');
+  });
+
+  /** La foto de perfil de la persona, si la tiene; ver `OwnPhotoStore`. */
+  private readonly fotoPropia = inject(OwnPhotoStore);
+  protected readonly fotoDePerfil = this.fotoPropia.url;
 
   /**
    * Los roles del token, en una línea legible para el menú de la cuenta.
@@ -778,6 +795,7 @@ export class ShellLayout {
   }
 
   protected logout(): void {
+    this.fotoPropia.reset();
     this.auth.logout();
     void this.router.navigateByUrl(LOGIN_ROUTE);
   }
