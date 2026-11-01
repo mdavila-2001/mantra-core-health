@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
@@ -65,5 +67,14 @@ describe('MetricCard', () => {
     fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
     expect(el.querySelector('.metric-card__value')?.textContent?.trim()).toBe('0');
+  });
+
+  it('la cifra nunca se parte y las cifras de una fila comparten línea (rótulo de dos renglones)', () => {
+    const css = readFileSync('src/app/shared/components/molecules/metric-card/metric-card.css', 'utf8');
+    expect(css).toMatch(/\.metric-card__value \{[^}]*white-space: nowrap;/);
+    expect(css).not.toMatch(/\.metric-card__value \{[^}]*overflow-wrap: anywhere/);
+    expect(css).toMatch(/\.metric-card__label \{[^}]*min-block-size: calc\(2em \* 1\.3\);/);
+    // en una tarjeta angosta el cuerpo baja bajo la loseta en vez de quedar en 90 px
+    expect(css).toMatch(/:host \{[^}]*flex-wrap: wrap;/);
   });
 });

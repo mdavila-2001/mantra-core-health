@@ -6,6 +6,11 @@
 :host {
   display: flex;
   align-items: flex-start;
+  /* En una tarjeta angosta (dos por fila a 390 px) la loseta sube y el cuerpo
+     toma el ancho entero, en vez de dejar una columna de 90 px donde la cifra
+     y la pista se partían en cinco renglones. Sin consultas: el cuerpo pide
+     7 rem y, si no caben junto a la loseta, baja. */
+  flex-wrap: wrap;
   gap: var(--sp-3);
   min-inline-size: 0;
   padding: var(--sp-4);
@@ -56,12 +61,18 @@
 
 .metric-card__body {
   display: flex;
+  flex: 1 1 7rem;
   flex-direction: column;
   gap: var(--sp-1);
   min-inline-size: 0;
 }
 
 .metric-card__label {
+  /* Siempre el alto de DOS renglones: con un rótulo partido («CON MODO /
+     DECIDIDO») y otro entero en la misma fila, las cifras quedaban a alturas
+     distintas. Así todas las cifras de una fila comparten línea. */
+  min-block-size: calc(2em * 1.3);
+  line-height: 1.3;
   font-size: var(--fs-overline);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -70,12 +81,22 @@
 }
 
 .metric-card__value {
-  font-size: var(--fs-h2);
-  line-height: var(--lh-h2);
+  /* Una cifra es UN dato: «11 de 13», «10 de 18» o «hace 2 min» nunca se
+     parten en dos renglones (se leían como dos valores). En el teléfono la
+     cifra baja un escalón para que entre en la tarjeta angosta. */
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+
+@media (min-width: 48rem) {
+  .metric-card__value {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+  }
 }
 
 .metric-card__value--empty {
