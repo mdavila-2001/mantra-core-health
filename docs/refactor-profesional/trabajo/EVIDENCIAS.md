@@ -1,5 +1,24 @@
 # Evidencias
 
+## Portada del médico y «Mis verificaciones» · 2026-11-01
+
+Rama `claude/dazzling-shannon-cl1uug`. Maqueta (`ng serve --configuration development,demo`), Chromium,
+cuentas `medico.nuevo@alovida.mock` (alta a medias) y `medica@alovida.mock` (alta completa).
+Capturas en `evidencias/portada-medico/` (oscuro y claro a 1440, oscuro a 390).
+
+| Qué se midió | Resultado |
+|---|---|
+| Portada con alta a medias | Anillo «2/5», «Complete su perfil para recibir pacientes», botón «Completar mi perfil» → `/onboarding` |
+| Portada con alta completa | Sello de AloVida en lugar del anillo; sin aviso |
+| Atajos | 4 (`schedule`, `medical-records`, `my-primary-patients`, `messaging`), 2×2 desde 40rem, 1 columna a 390 |
+| «Mis verificaciones» | Clic en la portada → `/my-account/verifications`; hoja de ruta con barra de avance e íconos en los botones |
+| Desborde a 390 px | `scrollWidth` = 390 en las dos cuentas |
+| Errores de página | Ninguno |
+
+Pruebas: `ng test` sobre `dashboard/**`, `my-verifications/**` y `admission-status-card/**` → 15 archivos,
+162 pruebas en verde (las dos `adt/*.spec.ts` que ya no compilan en `dev` se apartaron sólo para la corrida).
+Contra la API real no se ejecutó. Revisión independiente: **pendiente** — quien implementa no aprueba.
+
 ## Modales fuera de la consulta: pie, fechas y campos sueltos · 2026-10-30
 
 Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, Chromium, base `dev` en `c5f2363f2`.

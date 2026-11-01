@@ -21,6 +21,7 @@
       [routerLink]="agendaPath"
     >
       Ver agenda completa
+      <app-nav-icon name="arrow-right" />
     </a>
   </header>
 
@@ -49,6 +50,7 @@
           data-testid="panel-hoy-reintentar-sedes"
           (clicked)="load()"
         >
+          <app-nav-icon name="refresh" />
           Volver a cargar
         </button>
       </div>
@@ -209,7 +211,7 @@
          en blanco, peor. -->
     @if (finishedWorkday()) {
       <p class="hoy__cierre" data-testid="panel-hoy-terminada">
-        Terminó la jornada. Mañana le espera en la agenda.
+        Jornada terminada. Gracias por cuidar a sus pacientes hoy; mañana sigue en su agenda.
       </p>
     }
 

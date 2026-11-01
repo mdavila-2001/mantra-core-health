@@ -118,7 +118,13 @@
   line-height: var(--lh-caption);
 }
 
-/* La puerta a «Mis verificaciones»: una franja, no una tarjeta más. */
+/* El estado de la verificación, separado de la portada que tiene encima. */
+.panel__verificacion {
+  display: block;
+  margin-block-start: var(--sp-6);
+}
+
+/* La puerta de la aseguradora: una franja, no una tarjeta más. */
 .panel__verificaciones {
   display: flex;
   flex-wrap: wrap;

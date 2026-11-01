@@ -12,6 +12,7 @@ import {
   requirementStatusLabel,
 } from '@shared/admissions/admission-presentation';
 import { AppButton } from '@shared/components/atoms/button/button';
+import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { Checkbox } from '@shared/components/atoms/checkbox/checkbox';
 import { Skeleton } from '@shared/components/atoms/skeleton/skeleton';
@@ -40,7 +41,7 @@ type CardState = 'loading' | 'none' | 'ready' | 'error';
  */
 @Component({
   selector: 'app-admission-status-card',
-  imports: [Alert, AppButton, Badge, Card, Checkbox, DatePipe, RouterLink, Skeleton],
+  imports: [Alert, AppButton, Badge, Card, Checkbox, DatePipe, NavIcon, RouterLink, Skeleton],
   templateUrl: './admission-status-card.html',
   styleUrl: './admission-status-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
