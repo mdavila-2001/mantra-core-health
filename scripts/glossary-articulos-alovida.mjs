@@ -53,6 +53,8 @@ const API = resolve(opcion('--api') ?? join(RAIZ, '..', 'mantra-core-health-api'
 const SOLO = opcion('--only')?.split(',').filter(Boolean);
 const SIN_IMAGEN = process.argv.includes('--sin-imagen');
 const TERMINOS = join(RAIZ, 'data', 'glossary', 'articulos-terminos.json');
+/** Palabras desde las que el artículo de otra fuente que ya tiene un término se respeta. */
+const PISO_AJENO = 1000;
 const SHARDS = join(RAIZ, 'public', 'glossary-seed', 'shards');
 
 /** Los slugs de todos los términos visibles de la maqueta (los shards por categoría). */
@@ -277,6 +279,8 @@ function main() {
   const cubetas = new Map();
   const paraLaApi = {};
   let enTerminos = 0;
+  /** Ids escritos sólo por la tabla de términos: no pisan el artículo de otra fuente que ya tengan. */
+  const prestados = new Map();
   let total = 0;
   const cortos = [];
   for (const nombre of archivos) {
@@ -289,6 +293,7 @@ function main() {
     const destinos = new Set([articulo.conceptRef.slug, ...(porArticulo.get(articulo.conceptRef.slug) ?? [])]);
     for (const destino of destinos) {
       const id = conceptIdOf(destino);
+      if (destino !== articulo.conceptRef.slug) prestados.set(id, destino);
       const hh = id.slice(0, 2).toLowerCase();
       if (!cubetas.has(hh)) cubetas.set(hh, {});
       cubetas.get(hh)[id] = articulo;
@@ -307,12 +312,30 @@ function main() {
     return;
   }
   mkdirSync(DESTINO, { recursive: true });
+  let ajenos = 0;
   for (const [hh, nuevos] of cubetas) {
     const ruta = join(DESTINO, `${hh}.json`);
     const existentes = existsSync(ruta) ? JSON.parse(readFileSync(ruta, 'utf8')) : {};
+    for (const id of Object.keys(nuevos)) {
+      const previo = existentes[id];
+      // Un término que ya muestra un artículo largo de otra fuente (Wikipedia, MedlinePlus…) lo
+      // conserva; uno corto (una definición de pocas líneas, casi siempre sin imagen) se reemplaza.
+      if (
+        prestados.has(id) &&
+        previo !== undefined &&
+        previo.conceptRef?.system !== FUENTE &&
+        palabrasDelArticulo({ sections: (previo.sections ?? []).map((sec) => ({ text: String(sec.text ?? '') })) }) >=
+          PISO_AJENO
+      ) {
+        delete nuevos[id];
+        delete alias[prestados.get(id)];
+        ajenos += 1;
+      }
+    }
     writeFileSync(ruta, JSON.stringify({ ...existentes, ...nuevos }));
   }
   console.log(`glossary-articulos-alovida: ${archivos.length} artículos (${enTerminos} términos visibles más vía articulos-terminos.json) en ${cubetas.size} cubetas → ${DESTINO}`);
+  if (ajenos > 0) console.log(`glossary-articulos-alovida: ${ajenos} términos conservan el artículo largo de otra fuente que ya tenían.`);
   if (SOLO === undefined) escribirParaLaApi(paraLaApi, alias);
   else console.log('glossary-articulos-alovida: con --only no se regenera el archivo del API.');
 }
