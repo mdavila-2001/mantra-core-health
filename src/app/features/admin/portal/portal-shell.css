@@ -555,23 +555,41 @@
 /* ---- escritorio: barra lateral fija, sin barra inferior ------------------ */
 
 @media (min-width: 64rem) {
-  /* El carril se pinta también en el contenedor: la barra es `fixed` y mide
-     la ventana, así que en una captura de página entera (o al imprimir)
-     debajo de ella quedaba blanco. Mismo recurso que `.app-shell`. */
+  /* Dos columnas: el carril y el contenido. La barra lateral es `sticky` (no
+     `fixed`) dentro de SU columna, y el fondo oscuro lo pone la columna, que
+     se estira a todo el alto de la página: en una captura de página entera o
+     al imprimir el carril llega hasta el pie, sin franja de otro color debajo
+     (revisión visual 1, T2). El degradado del contenedor queda de respaldo. */
   .portal {
-    padding-inline-start: var(--portal-lateral);
+    display: grid;
+    grid-template-columns: var(--portal-lateral) minmax(0, 1fr);
+    min-block-size: 100dvh;
     background: linear-gradient(90deg, var(--nav-carril) 0 var(--portal-lateral), transparent var(--portal-lateral));
   }
 
   .portal__lateral {
-    position: fixed;
-    inset-block: 0;
-    inset-inline-start: 0;
+    position: sticky;
+    inset-block-start: 0;
     z-index: var(--z-drawer);
     display: flex;
     flex-direction: column;
+    align-self: start;
     inline-size: var(--portal-lateral);
+    block-size: 100dvh;
     background: var(--nav-carril);
+  }
+
+  /* Lo que la aplicación pinta DESPUÉS del marco (en la maqueta, la franja de
+     las píldoras de demo, que es un bloque estático) caía sobre el fondo del
+     `body` y cortaba el carril en las capturas de página entera. El carril se
+     pinta también en el `body` mientras el portal está montado. */
+  ::ng-deep body:has(app-portal-shell) {
+    background: linear-gradient(
+        90deg,
+        var(--nav-carril) 0 calc(var(--sp-16) * 4 + var(--sp-3)),
+        transparent calc(var(--sp-16) * 4 + var(--sp-3))
+      ),
+      var(--bg-base);
   }
 
   .portal__barra {

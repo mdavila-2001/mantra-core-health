@@ -131,6 +131,12 @@
     </header>
 
     <main class="portal__lienzo" id="portal-contenido">
+      <!-- Los mismos avisos de cuenta que el armazón global (ShellLayout), que este
+           marco reemplaza: dispositivo nuevo, organizaciones que niegan y el
+           consentimiento de medición. Cada uno decide solo si se muestra. -->
+      <app-new-device-banner />
+      <app-denied-tenants-banner />
+      <app-ux-consent-notice />
       @if (pestanas().length > 0) {
         <nav #tiraPestanas class="portal__pestanas" data-testid="portal-pestanas" [attr.aria-label]="pantallaActiva()?.section ?? 'Pantallas de la sección'">
           @for (tab of pestanas(); track tab.path) {

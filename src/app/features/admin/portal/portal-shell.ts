@@ -41,6 +41,9 @@ import {
   type PortalNavGroup,
 } from './portal-nav';
 import { PortalSearch } from './portal-search';
+import { DeniedTenantsBanner } from '../../shell-layout/denied-tenants-banner/denied-tenants-banner';
+import { NewDeviceBanner } from '../../shell-layout/new-device-banner/new-device-banner';
+import { UxConsentNotice } from '../../ux-consent/ux-consent-notice';
 
 const CLAVE_ABIERTOS = 'portal.nav.abiertos';
 
@@ -100,6 +103,9 @@ const DESTINOS_INFERIORES: readonly DestinoInferior[] = [
     PortalSearch,
     NotificationBell,
     AlovidaThemeToggleDirective,
+    NewDeviceBanner,
+    DeniedTenantsBanner,
+    UxConsentNotice,
   ],
   // Las migas viven sólo en la barra superior del portal: ninguna pantalla
   // (nueva o reutilizada) pinta las suyas en su cabecera.

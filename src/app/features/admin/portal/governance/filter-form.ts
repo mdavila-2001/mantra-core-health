@@ -43,7 +43,7 @@ export interface FilterField {
       <div class="filter-form__fields">
         @for (field of visibleFields(); track field.key) {
           <app-form-field
-          [class.filter-form__wide]="field.kind === 'text'"
+          [class.filter-form__wide]="esBuscador(field)"
           [label]="field.label"
           [hint]="field.hint ?? ''"
         >
@@ -106,11 +106,12 @@ export interface FilterField {
       align-items: start;
       gap: var(--sp-3);
     }
-    /* El buscador va primero y ocupa dos columnas (la fila entera en el teléfono): su texto
-       de ejemplo no se corta. Los selectores tienen ancho para su opción más larga. */
+    /* El buscador principal (el primer campo de texto que no es avanzado) ocupa dos
+       columnas (la fila entera en el teléfono): su texto de ejemplo no se corta. Va
+       primero en el DOM (ver «visibleFields»), no por «order»: el orden de foco
+       tiene que ser el orden visual (WCAG 1.3.2 / 2.4.3). */
     .filter-form__wide {
       grid-column: 1 / -1;
-      order: -1;
     }
     @media (min-width: 40.0625rem) {
       .filter-form__wide {
@@ -125,6 +126,10 @@ export interface FilterField {
       justify-content: flex-end;
       gap: var(--sp-2);
       margin-inline-start: auto;
+    }
+    /* «Más filtros» abre campos, no aplica nada: separado de Quitar / Aplicar. */
+    .filter-form__more {
+      margin-inline-end: var(--sp-4);
     }
     /* ≥ 1024 px (barra de filtros de AtlasAdminPortal): UNA fila. El buscador es
        flexible, los selectores toman su parte y «Quitar» / «Aplicar» cierran la
@@ -169,9 +174,23 @@ export class FilterForm {
     this.fields().some((f) => f.advanced === true && (this.values()[f.key] ?? '') !== ''),
   );
   protected readonly advancedCount = computed(() => this.fields().filter((f) => f.advanced === true).length);
-  protected readonly visibleFields = computed(() =>
-    this.expanded() ? this.fields() : this.fields().filter((f) => f.advanced !== true),
+  /** El buscador principal: el primer campo de texto que no es avanzado. */
+  private readonly buscador = computed(() =>
+    this.fields().find((f) => f.kind === 'text' && f.advanced !== true) ?? null,
   );
+  /**
+   * En el orden en que se dibujan Y se recorren con el teclado: el buscador
+   * principal primero, el resto en el orden declarado.
+   */
+  protected readonly visibleFields = computed(() => {
+    const visibles = this.expanded() ? this.fields() : this.fields().filter((f) => f.advanced !== true);
+    const buscador = this.buscador();
+    return buscador ? [buscador, ...visibles.filter((f) => f !== buscador)] : visibles;
+  });
+
+  protected esBuscador(field: FilterField): boolean {
+    return field === this.buscador();
+  }
   protected readonly String = String;
 
   protected set(key: string, value: string): void {
