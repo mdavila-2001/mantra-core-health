@@ -41,8 +41,15 @@
 
 .rbac-kpis {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
+}
+
+/* Dos por fila sólo cuando la loseta del icono deja sitio al rótulo entero. */
+@media (min-width: 560px) {
+  .rbac-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .rbac-card {
@@ -406,10 +413,13 @@
 }
 
 /* Tableta: filtros en una fila, KPIs en cuatro. */
-@media (min-width: 780px) {
+@media (min-width: 1280px) {
   .rbac-kpis {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+@media (min-width: 780px) {
 
   .rbac__toolbar {
     grid-template-columns: minmax(14rem, 1.2fr) auto minmax(12rem, 1fr);
