@@ -1,6 +1,7 @@
 import { DatePipe, NgTemplateOutlet, formatDate } from '@angular/common';
 import {
   ChangeDetectionStrategy,
+  DestroyRef,
   Component,
   computed,
   effect,
@@ -11,7 +12,7 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -434,6 +435,7 @@ export interface CupoVisible {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Agenda {
+  private readonly destroyRef = inject(DestroyRef);
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
@@ -990,7 +992,7 @@ export class Agenda {
             ...(mensaje === '' ? {} : { message: mensaje }),
           });
 
-    peticion.subscribe({
+    peticion.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (resultado) => {
         this.avisandoDemora.set(false);
         this.demoraDe.set(undefined);
@@ -1196,7 +1198,7 @@ export class Agenda {
     }
     this.operando.set(cita.id);
 
-    this.scheduling.checkInBooking(cita.id).subscribe({
+    this.scheduling.checkInBooking(cita.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.operando.set(null);
         this.toast.success('La llegada quedó registrada.', 'Check-in');
@@ -1242,7 +1244,7 @@ export class Agenda {
     this.operando.set(cita.id);
     this.scheduling
       .cancelBooking(cita.id, { cancelledBy: 'PROVIDER', reasonText: motivo })
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (resultado) => {
           this.operando.set(null);
           this.toast.success(
@@ -1364,7 +1366,7 @@ export class Agenda {
 
     this.operando.set(origenId);
     this.cupoDestino.set(cupo.id);
-    this.scheduling.rescheduleBooking(origenId, { toSlotId: cupo.id, reasonText: motivo }).subscribe({
+    this.scheduling.rescheduleBooking(origenId, { toSlotId: cupo.id, reasonText: motivo }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.operando.set(null);
         this.cupoDestino.set(null);
@@ -1440,7 +1442,7 @@ export class Agenda {
     }
     this.operando.set(cita.id);
 
-    this.scheduling.setPaymentState(cita.id, cambio).subscribe({
+    this.scheduling.setPaymentState(cita.id, cambio).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (estado) => {
         this.operando.set(null);
         this.toast.success(
@@ -1472,7 +1474,7 @@ export class Agenda {
     }
     this.operando.set(cita.id);
 
-    this.scheduling.acceptBooking(cita.id).subscribe({
+    this.scheduling.acceptBooking(cita.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.operando.set(null);
         this.toast.success('La cita quedó confirmada.', 'Solicitud aceptada');
@@ -1610,7 +1612,7 @@ export class Agenda {
           );
         }),
       )
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (citas) => this.guardarHistorial(paciente, citas),
         error: () => this.guardarHistorial(paciente, 'error'),
       });
@@ -1669,7 +1671,7 @@ export class Agenda {
 
     this.scheduling
       .searchBookings({ patientProfileId: paciente, includeCancelled: true, limit: 50 })
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (pagina) => {
           this.operando.set(null);
           void this.mostrarHistorial(cita, pagina.items);
@@ -1742,7 +1744,7 @@ export class Agenda {
     }
 
     this.operando.set(cita.id);
-    this.scheduling.rejectBooking(cita.id, motivo).subscribe({
+    this.scheduling.rejectBooking(cita.id, motivo).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.operando.set(null);
         this.toast.success('La solicitud se rechazó y el cupo volvió a la agenda.', 'Solicitud');
@@ -1771,7 +1773,7 @@ export class Agenda {
     }
     this.operando.set(cita.id);
 
-    this.scheduling.startBooking(cita.id).subscribe({
+    this.scheduling.startBooking(cita.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.operando.set(null);
         this.irAAtender(cita);
@@ -1815,7 +1817,7 @@ export class Agenda {
     }
     this.operando.set(cita.id);
 
-    this.scheduling.completeBooking(cita.id).subscribe({
+    this.scheduling.completeBooking(cita.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.operando.set(null);
         this.toast.success('La cita quedó completada.', 'Consulta');
@@ -1896,7 +1898,7 @@ export class Agenda {
       return;
     }
 
-    this.scheduling.listResources({ tenantId }).subscribe({
+    this.scheduling.listResources({ tenantId }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (pagina) => {
         this.recursos.set(pagina.items);
         this.recursosLeidos.set(true);
@@ -1981,7 +1983,7 @@ export class Agenda {
       cupos: this.scheduling
         .listSlots({ ...recurso, from: desde, to: hasta, limit: TOPE })
         .pipe(catchError((error: unknown) => of({ error }))),
-    }).subscribe(({ citas, cupos }) => {
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ citas, cupos }) => {
       const conceptos = [
         ...('error' in citas ? [] : citas.items.map((cita) => cita.statusConceptId)),
         ...('error' in cupos ? [] : cupos.items.map((cupo) => cupo.statusConceptId)),
@@ -1990,7 +1992,7 @@ export class Agenda {
       this.terminology
         .readConceptLabels(conceptos)
         .pipe(catchError(() => of<ConceptLabels>(new Map())))
-        .subscribe((etiquetas) => {
+        .pipe(takeUntilDestroyed(this.destroyRef)).subscribe((etiquetas) => {
           this.etiquetas.set(etiquetas);
           this.aplicarCitas(citas);
           this.aplicarCupos(cupos);
