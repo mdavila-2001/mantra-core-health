@@ -1,0 +1,166 @@
+[
+ {
+  "file": "despues-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 1562,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [
+   "a.portal__pestana"
+  ],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-oscuro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 1562,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [
+   "a.portal__pestana"
+  ],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-claro-ok.png",
+  "overlay": false,
+  "sw": 768,
+  "iw": 768,
+  "h": 1389,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-oscuro-ok.png",
+  "overlay": false,
+  "sw": 768,
+  "iw": 768,
+  "h": 1389,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1070,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-oscuro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1070,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-error.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": [
+   "[API] GET /admin/catalog/pii/summary → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: "
+  ]
+ },
+ {
+  "file": "despues-1440-claro-carga.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 945,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-columnas.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1568,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-columnas.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 2706,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [
+   "a.portal__pestana"
+  ],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-conciliacion.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1321,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-vacio.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1100,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]

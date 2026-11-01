@@ -22,7 +22,6 @@ import type {
   PiiSummary,
 } from '../../../../../core/data-access/admin-portal/governance-policies.types';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
-import { NavigationService } from '../../../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../../../core/view-state/view-state';
 import type { EmptyViewState, ViewState } from '../../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
@@ -89,7 +88,6 @@ export class PiiPage {
   private readonly client = inject(GovernancePoliciesClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly values = queryFilters(queryParamsSignal(this.route), PII_URL_KEYS);
   private readonly view = paramValue(queryParamsSignal(this.route), 'vista');
@@ -106,6 +104,11 @@ export class PiiPage {
   /** El resumen: lo mide el servidor. Un fallo suyo no impide ver las pestañas de abajo. */
   protected readonly summary = signal<ViewState<PiiSummary>>(loading());
   private readonly summaryData = signal<PiiSummary | null>(null);
+  /** El resumen ya cargado, para la pestaña «Resumen» (su fallo se dice arriba, una sola vez). */
+  protected readonly summaryReady = computed(() => {
+    const s = this.summary();
+    return s.status === 'ready' ? s.data : null;
+  });
   protected readonly reconciliationSummary = signal<PiiReconciliationSummary | null>(null);
   protected readonly reconciliationNotMeasured = signal<
     readonly { field: string; reason: string }[]

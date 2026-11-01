@@ -2,23 +2,133 @@
   display: block;
 }
 
-.pii {
+.pii,
+.pii__top {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
   inline-size: 100%;
+  min-inline-size: 0;
   margin-inline: auto;
 }
 
+/* Cuatro cifras: de dos en dos en el teléfono y la tableta, las cuatro en una fila desde escritorio. */
 .pii__metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3);
+}
+
+@media (min-width: 1024px) {
+  .pii__metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* La conciliación trae tres cifras: tres columnas desde la tableta, ningún hueco al final. */
+.pii__metrics--3 > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 650px) {
+  .pii__metrics--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pii__metrics--3 > :last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pii__metrics--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.pii__metrics app-metric-card {
+  min-inline-size: 0;
+}
+
+/* Aviso de honestidad: una línea, el detalle se despliega. */
+.pii__fold-summary {
+  cursor: pointer;
+}
+
+.pii__fold-summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.pii__fold-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.pii__fold-list code {
+  font-family: var(--font-mono);
+}
+
+.pii__card {
+  display: block;
+  inline-size: 100%;
+}
+
+.pii__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+  min-inline-size: 0;
+}
+
+/* Resumen: la tabla de niveles a lo ancho y el registro debajo; dos columnas desde escritorio. */
+.pii__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .pii__grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.pii__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pii__panel > p {
+  margin: 0;
+}
+
+@media (min-width: 650px) {
+  .pii__panel {
+    padding: var(--sp-4);
+  }
 }
 
 .pii__subtitle {
   margin: 0;
   font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pii__scroll {
+  overflow-x: auto;
+  min-inline-size: 0;
 }
 
 .pii__caption {
@@ -31,6 +141,7 @@
 .pii__levels {
   inline-size: 100%;
   border-collapse: collapse;
+  font-size: var(--fs-data);
 }
 
 .pii__levels th,
@@ -38,23 +149,51 @@
   padding: var(--sp-2) var(--sp-3);
   text-align: start;
   border-block-end: 1px solid var(--border-subtle);
+  white-space: nowrap;
 }
 
 .pii__levels thead th {
+  position: sticky;
+  inset-block-start: 0;
+  background: var(--bg-surface-alt);
   font-size: var(--fs-caption);
+  font-weight: 600;
   color: var(--text-secondary);
 }
 
-.pii__card {
-  display: block;
-  inline-size: 100%;
+.pii__levels tbody th {
+  font-weight: inherit;
 }
 
-.pii__section {
+.pii__num {
+  text-align: end !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.pii__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.pii__facts dt {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pii__facts dd {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
-  padding-block: var(--sp-2);
+  gap: var(--sp-1);
+  margin: 0;
+}
+
+.pii__facts strong {
+  font-size: var(--fs-h3);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
 .pii__cell {

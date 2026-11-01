@@ -1,0 +1,97 @@
+[
+ {
+  "file": "despues-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 1562,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [
+   "a.portal__pestana"
+  ],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-oscuro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 1562,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [
+   "a.portal__pestana"
+  ],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-claro-ok.png",
+  "overlay": false,
+  "sw": 768,
+  "iw": 768,
+  "h": 1389,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-oscuro-ok.png",
+  "overlay": false,
+  "sw": 768,
+  "iw": 768,
+  "h": 1389,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1070,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-oscuro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1070,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-1440-claro-vacio.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1179,
+  "h1": [
+   "Datos personales"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]
