@@ -1,0 +1,8 @@
+
+Running 2 tests using 1 worker
+
+  ✓  1 [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» abre el útero desde la lista y lo resalta en el modelo (16.6s)
+  ✓  2 [chromium] › playwright/atlas-anatomico-3d.spec.ts:185:5 › la vista «Mujer» lista la vagina como ficha sin pieza 3D (12.6s)
+
+  2 passed (30.5s)
+exit=0

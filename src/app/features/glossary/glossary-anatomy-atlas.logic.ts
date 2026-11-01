@@ -34,9 +34,9 @@ export function ontologyUrl(id: string): string | null {
   return null;
 }
 
-/** ¿La pieza se dibuja con este sexo? «Mujer» sólo quita lo exclusivo del cuerpo masculino. */
+/** ¿La pieza se dibuja con este sexo? Las compartidas siempre; las de un cuerpo, sólo en ese. */
 export function partVisibleFor(part: AnatomyPart, sex: AnatomySex): boolean {
-  return !(sex === 'female' && part.sex === 'male');
+  return part.sex === 'shared' || part.sex === sex;
 }
 
 /**
