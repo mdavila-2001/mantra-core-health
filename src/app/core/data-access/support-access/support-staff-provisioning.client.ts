@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { apiUrl } from '../api';
+import { environment } from '../../../../environments/environment';
+import { API_BASE_URL, apiUrl } from '../api';
 import type {
   CreateOrgSecretaryPayload,
   CreatePractitionerSecretaryPayload,
@@ -15,13 +16,18 @@ import type {
 @Injectable({ providedIn: 'root' })
 export class SupportStaffProvisioningClient {
   private readonly http = inject(HttpClient);
+  private readonly baseUrl = inject(API_BASE_URL, { optional: true }) ?? environment.apiBaseUrl;
+
+  private url(path: string): string {
+    return apiUrl(this.baseUrl, path);
+  }
 
   /** El doctor crea una cuenta de secretaria y la vincula de inmediato a su práctica. */
   createPractitionerSecretary(
     payload: CreatePractitionerSecretaryPayload,
   ): Observable<CreatedSupportStaffResponse> {
     return this.http.post<CreatedSupportStaffResponse>(
-      apiUrl('/me/practitioner/support-staff'),
+      this.url('/me/practitioner/support-staff'),
       payload,
     );
   }
@@ -31,7 +37,7 @@ export class SupportStaffProvisioningClient {
     payload: CreateOrgSecretaryPayload,
   ): Observable<CreatedSupportStaffResponse> {
     return this.http.post<CreatedSupportStaffResponse>(
-      apiUrl('/org/support-staff'),
+      this.url('/org/support-staff'),
       payload,
     );
   }
