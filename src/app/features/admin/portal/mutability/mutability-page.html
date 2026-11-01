@@ -36,23 +36,27 @@
         />
         <app-metric-card
           label="Con modo decidido"
+          icon="check-circle"
           [value]="ratio(s.decided)"
           hint="El resto está «sin evidencia»: no se sabe"
         />
         <app-metric-card
           label="Impuesto por la base"
+          icon="lock"
           [value]="ratio(s.enforcedByDatabase)"
           hint="Un disparador o un privilegio lo impide"
           tone="success"
         />
         <app-metric-card
           label="Con contradicciones"
+          icon="flag"
           [value]="ratio(s.withContradictions)"
           hint="Fuentes que se contradicen; no se resuelven aquí"
           [tone]="contradictionTone()"
         />
         <app-metric-card
           label="Retención pendiente"
+          icon="clock"
           [value]="s.pendingCompliance"
           hint="Sin base legal ni confirmación de cumplimiento"
           [tone]="s.pendingCompliance > 0 ? 'warning' : 'success'"

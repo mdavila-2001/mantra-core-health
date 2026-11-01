@@ -12,20 +12,22 @@
 
 .mut__metrics {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(11rem, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3);
-  /* Teléfono y tableta: las cinco cifras en un carril desplazable, una sola fila; la tabla queda a la vista. */
-  overflow-x: auto;
-  padding-block-end: var(--sp-1);
-  scrollbar-width: thin;
+}
+
+/* Cinco cifras en dos columnas: la primera a lo ancho (1 + 2 + 2), sin huérfana ni carrusel. */
+.mut__metrics > :first-child {
+  grid-column: 1 / -1;
 }
 
 @media (min-width: 1024px) {
   .mut__metrics {
-    grid-auto-flow: row;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    overflow-x: visible;
+  }
+
+  .mut__metrics > :first-child {
+    grid-column: auto;
   }
 }
 
@@ -65,27 +67,27 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
+  column-gap: var(--sp-8);
 }
 
+/* Secciones del resumen: sin caja propia (nada de tarjeta dentro de la tarjeta); las separa
+   una línea y el aire. */
 .mut__panel {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
   min-inline-size: 0;
-  padding: var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.mut__grid > .mut__panel:first-child {
+  padding-block-start: 0;
+  border-block-start: 0;
 }
 
 .mut__panel > p {
   margin: 0;
-}
-
-@media (min-width: 650px) {
-  .mut__panel {
-    padding: var(--sp-4);
-  }
 }
 
 @media (min-width: 1024px) {
@@ -406,10 +408,13 @@ p.mut__help {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface-alt);
+  padding-block: var(--sp-1);
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 3px solid var(--st-warning-bd);
+}
+
+.mut__finding[data-kind='CONTRADICTION'] {
+  border-inline-start-color: var(--st-error-bd);
 }
 
 .mut__finding p {
