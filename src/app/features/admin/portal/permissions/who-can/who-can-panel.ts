@@ -116,19 +116,23 @@ const SOURCE_OPTIONS: readonly SelectOption<string>[] = [
       />
     </div>
     <ng-template #personCell let-row>
-      <span class="panel__name">{{ row.displayName }}</span>
-      <app-badge size="sm" [variant]="status(row.accountStatus).tone">{{ status(row.accountStatus).label }}</app-badge>
+      <div class="panel__cell">
+        <span class="panel__name">{{ row.displayName }}</span>
+        <app-badge size="sm" [variant]="status(row.accountStatus).tone">{{ status(row.accountStatus).label }}</app-badge>
+      </div>
     </ng-template>
     <ng-template #pathCell let-row>
-      <ul class="panel__list" [attr.aria-label]="'Caminos de ' + row.displayName">
-        @for (s of row.sources; track $index) {
-          <li class="panel__badges" data-testid="portal-who-can-source-row">
-            <app-badge size="sm" [variant]="effect(s.effect).tone">{{ effect(s.effect).label }}</app-badge>
-            <app-badge size="sm" [variant]="path(s.source).tone">{{ path(s.source).label }}</app-badge>
-            <span class="panel__secondary">{{ detail(s) }}</span>
-          </li>
-        }
-      </ul>
+      <div class="panel__cell">
+        <ul class="panel__list" [attr.aria-label]="'Caminos de ' + row.displayName">
+          @for (s of row.sources; track $index) {
+            <li class="panel__badges" data-testid="portal-who-can-source-row">
+              <app-badge size="sm" [variant]="effect(s.effect).tone">{{ effect(s.effect).label }}</app-badge>
+              <app-badge size="sm" [variant]="path(s.source).tone">{{ path(s.source).label }}</app-badge>
+              <span class="panel__secondary">{{ detail(s) }}</span>
+            </li>
+          }
+        </ul>
+      </div>
     </ng-template>
   `,
   styleUrl: '../permissions-panel.css',
