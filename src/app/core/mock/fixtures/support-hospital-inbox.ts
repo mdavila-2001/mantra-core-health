@@ -395,6 +395,24 @@ const NOTA_DE_SEMILLA: FilaNota = {
 };
 if (!notasInternas.has(NOTA_DE_SEMILLA.id)) notasInternas.agregar(NOTA_DE_SEMILLA);
 
+/**
+ * Para las pruebas: deja la bandeja del piloto como la siembra este módulo al cargarse —conversaciones de semilla con sus
+ * mensajes, asignaciones, autorías y la nota de Ana—. El corredor no aísla los módulos entre archivos de un mismo worker
+ * (`isolate: false`): una conversación que otro archivo tomó, resolvió o respondió llegaba así al siguiente, y cuál llegaba
+ * cambiada dependía del reparto de archivos entre workers. Las conversaciones que no son de la semilla no se tocan.
+ */
+export function reiniciarLaBandeja(): void {
+  const deSemilla = new Set(CONVERSACIONES_DE_SEMILLA.map((c) => conversacionId(c.clave)));
+  for (const m of messageList.filtrar((m) => deSemilla.has(m.conversationId))) messageList.borrar(m.id);
+  for (const id of deSemilla) conversationList.borrar(id);
+  // Estas tres solo reciben filas de este módulo al cargarse (nacen vacías): vuelven a vacías y se resiembran abajo.
+  asignaciones.reiniciar();
+  autorias.reiniciar();
+  notasInternas.reiniciar();
+  for (const c of CONVERSACIONES_DE_SEMILLA) sembrar(c);
+  notasInternas.agregar(NOTA_DE_SEMILLA);
+}
+
 /** Los datos de partida de una conversación (el motivo de consulta, por ejemplo). */
 export function semillaDe(conversationId: string): ConversacionDeSemilla | undefined {
   return CONVERSACIONES_DE_SEMILLA.find((c) => conversacionId(c.clave) === conversationId);

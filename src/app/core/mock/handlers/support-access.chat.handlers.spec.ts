@@ -7,6 +7,7 @@ import { patientList } from '../fixtures/people';
 import { ROJAS, PEREZ, CESPEDES } from '../fixtures/support-hospital';
 import { conversacionId, esMensajeClinico, perfilDeChatDe } from '../fixtures/support-hospital-inbox';
 import { crearRouterSimulado } from './index';
+import { reiniciarElGobiernoDeAccesos, reiniciarLaBandejaDeApoyo, reiniciarLaSesionDelSimulador } from './mock-reset';
 import { isMockReply, type MockMethod, type MockRouter } from '../mock-router';
 import { buscarUsuario, TENANT_CESPEDES, TENANT_HOSPITAL_PILOTO, type MockUser } from '../mock-session';
 
@@ -61,6 +62,10 @@ const responder = (user: MockUser, clave: string, doctor: Parameters<typeof perf
 const motivo = (respuesta: Respuesta): unknown => (respuesta.body as { reason?: string; details?: { reason?: string } }).details?.reason;
 
 beforeAll(() => {
+  // El corredor no aísla los módulos entre archivos de un mismo worker: la bandeja, los vínculos y la sesión, como de fábrica.
+  reiniciarLaSesionDelSimulador();
+  reiniciarElGobiernoDeAccesos();
+  reiniciarLaBandejaDeApoyo();
   router = crearRouterSimulado();
 });
 

@@ -1,6 +1,9 @@
-import { ajustesDeAgenda, permisos, vinculos } from '../fixtures/support-hospital';
+import { ajustesDeAgenda, bitacora, delegados, permisos, vinculos } from '../fixtures/support-hospital';
 import { reiniciarGobierno } from '../fixtures/support-hospital-governance';
-import { registrarLaOtraSecretaria } from '../fixtures/support-hospital-inbox';
+import { registrarLaOtraSecretaria, reiniciarLaBandeja } from '../fixtures/support-hospital-inbox';
+import { reiniciarTablasDeAdt } from './adt.handlers';
+import { reiniciarTablasDeInfraestructura } from './infrastructure.handlers';
+import { reiniciarTablasDeOperacion } from './infrastructure-ops.handlers';
 import { factores } from './iam-mfa.store';
 import { redesDeLaOrganizacion } from './iam-security.handlers';
 import { olvidarPasosExtra } from './support-access.governance.core';
@@ -37,13 +40,16 @@ export function reiniciarLaSesionDelSimulador(): void {
 
 /**
  * Deja el **gobierno de accesos** como lo trae de fábrica: reglas, ajustes, SoD, banderas, aprobaciones, campañas, anomalías,
- * casos de ciclo de vida, pasos extra y simulaciones, **y** los vínculos y permisos del piloto (que el gobierno cambia al
+ * casos de ciclo de vida, pasos extra y simulaciones, **y** los vínculos, permisos y delegaciones del piloto (que el gobierno cambia al
  * dar de baja, suspender o mover). Solo lo usan las pruebas, por lo mismo que la función de arriba.
  */
 export function reiniciarElGobiernoDeAccesos(): void {
   reiniciarGobierno();
   vinculos.reiniciar();
   permisos.reiniciar();
+  // Las delegaciones («responder en nombre de») también las revoca el gobierno al dar de baja o mover: sin volverlas a la
+  // semilla, una secretaria con vínculo y permiso de fábrica seguía sin poder atender al doctor.
+  delegados.reiniciar();
   // Mariela no está en la semilla de `vinculos` ni de `permisos`: la registra el módulo de la bandeja al cargarse.
   registrarLaOtraSecretaria();
   olvidarPasosExtra();
@@ -52,4 +58,33 @@ export function reiniciarElGobiernoDeAccesos(): void {
   // El tope de búsquedas por persona es memoria pura (no tiene filas de fábrica): se vacía. Las tablas de la bandeja (asignaciones, notas,
   // autorías…) reciben filas de los módulos de chat al cargarse: reiniciarlas las dejaría sin ellas, así que NO se tocan acá.
   reiniciarTopeDeBusquedas();
+}
+
+/**
+ * Deja la **bandeja compartida** del piloto (conversaciones de semilla, mensajes, asignaciones, autorías y notas) como la trae
+ * de fábrica. Solo lo usan las pruebas, por lo mismo que las de arriba: una conversación que otro archivo del mismo worker
+ * tomó, resolvió o respondió llegaba así al siguiente.
+ */
+export function reiniciarLaBandejaDeApoyo(): void {
+  reiniciarLaBandeja();
+}
+
+/**
+ * Deja la **bitácora** del personal de apoyo con sus asientos de fábrica. Solo lo usan las pruebas: los asientos que
+ * escribía otro archivo del mismo worker cambiaban la cuenta y la paginación del siguiente.
+ */
+export function reiniciarLaBitacoraDeApoyo(): void {
+  bitacora.reiniciar();
+}
+
+/**
+ * Deja la **infraestructura** del simulador (sitios, espacios, unidades, licencias, historial), su **operación** (estados
+ * operativos, bloqueos, órdenes de limpieza, eventos, asignaciones por sitio) y la **internación** (encuentros, ubicaciones,
+ * censo) como las trae de fábrica. Solo lo usan las pruebas: una cama que otro archivo del mismo worker dejó sucia, ocupada o
+ * en mantenimiento cambiaba los recuentos del tablero del siguiente.
+ */
+export function reiniciarLaInfraestructuraDelSimulador(): void {
+  reiniciarTablasDeInfraestructura();
+  reiniciarTablasDeOperacion();
+  reiniciarTablasDeAdt();
 }

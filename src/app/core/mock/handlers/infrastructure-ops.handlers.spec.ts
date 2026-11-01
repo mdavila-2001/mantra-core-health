@@ -13,6 +13,7 @@ import { SITIOS_INFRA } from '../fixtures/infraestructura';
 import { isMockReply, MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, TENANT_CLINICA, TENANT_HOSPITAL, type MockUser } from '../mock-session';
 import { registerAdt } from './adt.handlers';
+import { reiniciarLaInfraestructuraDelSimulador } from './mock-reset';
 import { registrarInfraestructura } from './infrastructure.handlers';
 import { registerInfrastructureOps } from './infrastructure-ops.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
@@ -27,6 +28,8 @@ describe('handlers de operación de camas (F2)', () => {
   registrarInfraestructura(router);
   registerInfrastructureOps(router);
   registerAdt(router);
+  // El corredor no aísla los módulos entre archivos de un mismo worker: las camas parten de las de fábrica.
+  beforeAll(() => reiniciarLaInfraestructuraDelSimulador());
   const SITIO = SITIOS_INFRA[0]!.id;
   const u = (k: string): MockUser => buscarUsuario(k)!;
   const enfermeria = u('enfermeria');

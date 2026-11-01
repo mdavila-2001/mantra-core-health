@@ -4,7 +4,7 @@ import type { SessionPolicies, SessionPolicy, SupportActivityPage, SupportEngage
 import { weekdayAndMinutes } from '../../data-access/support-access/session-policy';
 import { VINCULO_ANA, vinculos } from '../fixtures/support-hospital';
 import { VINCULOS_PARA_REVISION } from '../fixtures/support-hospital-review';
-import { reiniciarLaSesionDelSimulador } from './mock-reset';
+import { reiniciarLaBitacoraDeApoyo, reiniciarLaSesionDelSimulador } from './mock-reset';
 import { crearRouterSimulado } from './index';
 import { CODIGO_DE_DISPOSITIVO } from './support-access.session.handlers';
 import { isMockReply, type MockMethod, type MockRouter } from '../mock-router';
@@ -67,6 +67,7 @@ describe('administración y seguridad en el simulador', () => {
   beforeAll(() => {
     // El corredor no aísla los módulos entre archivos de un mismo worker: Ana y la sesión parten de los datos de fábrica.
     reiniciarLaSesionDelSimulador();
+    reiniciarLaBitacoraDeApoyo();
     vinculos.agregar(VINCULO_ANA);
     router = crearRouterSimulado();
   });

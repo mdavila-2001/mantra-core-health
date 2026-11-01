@@ -7,6 +7,7 @@ import { permisos, PEREZ, ROJAS } from '../fixtures/support-hospital';
 import { isMockReply, type MockMethod, type MockRouter } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { crearRouterSimulado } from './index';
+import { reiniciarElGobiernoDeAccesos } from './mock-reset';
 import { invitacionesDelDoctor } from './support-access.doctor-invitations.handlers';
 
 /**
@@ -48,6 +49,8 @@ const MARCOS = '7005003';
 
 describe('invitar a una secretaria (simulador)', () => {
   beforeAll(() => {
+    // El corredor no aísla los módulos entre archivos de un mismo worker: Ana y su vínculo con Pérez, como de fábrica.
+    reiniciarElGobiernoDeAccesos();
     router = crearRouterSimulado();
   });
   beforeEach(() => {

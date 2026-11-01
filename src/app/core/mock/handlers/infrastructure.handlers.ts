@@ -124,6 +124,10 @@ const historial = new Coleccion<EventoSimulado>(
     rowVersion: 1,
   })),
 );
+/** Solo pruebas (`isolate: false`): estas tablas a sus filas de arranque. Lo junta `reiniciarLaInfraestructuraDelSimulador`. */
+export function reiniciarTablasDeInfraestructura(): void {
+  for (const tabla of [sitiosInfra, espacios, unidades, licencias, capacidades, asignaciones, historial]) tabla.reiniciar();
+}
 
 /* ---- errores con el cuerpo común de DomainException ---------------------- */
 

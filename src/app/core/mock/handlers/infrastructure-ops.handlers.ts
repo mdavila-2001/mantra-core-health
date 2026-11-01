@@ -271,6 +271,10 @@ export const statusEvents = new Coleccion<StatusEventRow>([]);
 export const infraAssignments = new Coleccion<InfraAssignment & { readonly id: string }>(
   seedAssignments(sitiosInfra.todos().find((s) => s.code === 'SANLUCAS')!.id).map((a) => ({ ...a, id: `asg-${a.userId}` })),
 );
+/** Solo pruebas (`isolate: false`): estas tablas a sus filas de arranque. Lo junta `reiniciarLaInfraestructuraDelSimulador`. */
+export function reiniciarTablasDeOperacion(): void {
+  for (const tabla of [opsRows, blocks, cleaningOrders, statusEvents, infraAssignments]) tabla.reiniciar();
+}
 
 /* ---- errores (cuerpo común de DomainException + requestId) --------------- */
 

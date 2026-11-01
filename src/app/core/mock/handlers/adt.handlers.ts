@@ -214,6 +214,10 @@ export const locations = new Coleccion<LocationRow>(seedLocations(encounters.tod
 const incidents = new Coleccion<IncidentRow>([]);
 const censusDays = new Coleccion<CensusDayRow>(seedCensus());
 const adjustments = new Coleccion<AdjustmentRow>([]);
+/** Solo pruebas (`isolate: false`): estas tablas a sus filas de arranque. Lo junta `reiniciarLaInfraestructuraDelSimulador`. */
+export function reiniciarTablasDeAdt(): void {
+  for (const tabla of [encounters, locations, incidents, censusDays, adjustments]) tabla.reiniciar();
+}
 
 /* ---- ocupación derivada (se la presta a F2) ------------------------------ */
 

@@ -10,6 +10,7 @@ import { uuid } from '../mock-store';
 import { registerAdt } from './adt.handlers';
 import { registrarInfraestructura } from './infrastructure.handlers';
 import { registerInfrastructureOps } from './infrastructure-ops.handlers';
+import { reiniciarLaInfraestructuraDelSimulador } from './mock-reset';
 import { registrarProcedimientos } from './procedures.handlers';
 
 /** El simulador de F3 contra los criterios de aceptación de §F3.5. */
@@ -19,6 +20,8 @@ describe('handlers de internación / ADT (F3)', () => {
   registrarInfraestructura(router);
   registerInfrastructureOps(router);
   registerAdt(router);
+  // El corredor no aísla los módulos entre archivos de un mismo worker: camas y estancias parten de las de fábrica.
+  beforeAll(() => reiniciarLaInfraestructuraDelSimulador());
   const SITIO = SITIOS_INFRA[0]!.id;
   const u = (k: string): MockUser => buscarUsuario(k)!;
   const enfermeria = u('enfermeria');
