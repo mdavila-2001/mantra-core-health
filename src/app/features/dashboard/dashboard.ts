@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
-import { Alert } from '../../shared/components/molecules/alert/alert';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
@@ -26,6 +26,7 @@ import { TodayAgenda } from './today-agenda/today-agenda';
 import { SummaryConsultations } from './consultations-summary/consultations-summary';
 import { PatientHome } from './patient-home/patient-home';
 import { PlatformHome } from './platform-home/platform-home';
+import { type OnboardingProgress, PractitionerWelcome } from './practitioner-welcome/practitioner-welcome';
 
 /**
  * Los roles con los que se viene a trabajar, no a atenderse.
@@ -81,18 +82,15 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     TodayAgenda,
     Card,
     SummaryConsultations,
-    Alert,
+    NavIcon,
+    PractitionerWelcome,
     AppButtonLink,
     PageHeader,
     RouterLink,
     Skeleton,
     StaggerList,
-    // Faltaba de la lista aunque la plantilla lo usa en dos elementos: el
-    // atributo `appTutorialTarget` se renderizaba como un atributo cualquiera,
-    // la directiva no aplicaba, y el tutorial del panel no encontraba ni el
-    // título ni la rejilla de accesos —se salteaba los pasos en silencio, que
-    // es justo lo que la directiva existe para evitar—. `yarn lint` lo venía
-    // reportando como import sin usar desde antes de este carril.
+    // Sin él, `appTutorialTarget` es un atributo cualquiera y el tutorial
+    // del panel se saltea sus pasos en silencio.
     TutorialTarget,
     ViewStateHost,
     PatientHome,
@@ -165,6 +163,11 @@ export class Dashboard {
     return nombre === '' ? 'Panel' : `Hola, ${nombre}`;
   });
 
+  /** Quien atiende entra por su portada; el resto, por el encabezado de siempre. */
+  protected readonly veBienvenida = computed(
+    () => this.esProfesional() || this.veMisVerificaciones(),
+  );
+
   /** El subtítulo dice lo que la pantalla trae, y eso depende de quién entró. */
   protected readonly subtituloDelPanel = computed(() =>
     this.atiendePacientes()
@@ -217,12 +220,7 @@ export class Dashboard {
    * lectura falló. En los tres casos el aviso no se muestra — un banner que
    * aparece por un error de red sería peor que no avisar.
    */
-  protected readonly altaPendiente = signal<{
-    /** Cuántas etapas cumplió. */
-    readonly cumplidas: number;
-    /** De cuántas. */
-    readonly total: number;
-  } | null>(null);
+  protected readonly altaPendiente = signal<OnboardingProgress | null>(null);
 
   protected readonly pacientes = signal<ViewState<PatientPageResumen>>(loading());
 
@@ -260,7 +258,7 @@ export class Dashboard {
       next: (avance) => {
         if (avance.firstIncomplete === 'done') return;
         this.altaPendiente.set({
-          cumplidas: avance.steps.filter((paso) => paso.complete).length,
+          completed: avance.steps.filter((paso) => paso.complete).length,
           total: avance.steps.length,
         });
       },
