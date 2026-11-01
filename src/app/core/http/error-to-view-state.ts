@@ -7,7 +7,7 @@ import {
   unexpectedError,
   validation,
 } from '../view-state/view-state';
-import type { ViewState, ViewStateIssue } from '../view-state/view-state.types';
+import type { ViewState } from '../view-state/view-state.types';
 import { isTenantDenialReason, tenantDenialHint, tenantDenialText } from '../data-access/iam/tenant-denial';
 import { accessErrorText } from '../data-access/access-governance/access-errors';
 import { safeReturnUrl } from '../auth/return-url';
