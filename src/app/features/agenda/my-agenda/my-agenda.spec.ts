@@ -349,7 +349,7 @@ describe('MyAgenda', () => {
         expect(aviso?.textContent).toContain('Parte de su agenda no se pudo cargar');
         expect(aviso?.textContent).toContain('un día sin citas aquí no significa que esté libre');
         expect(aviso?.textContent).toContain(
-          'No se pudieron cargar las citas del día. (Código de soporte: corr-dia-1)',
+          'No se pudieron cargar las citas del día. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-dia-1)',
         );
         // Lo que sí se leyó sigue a la vista.
         expect($('app-day-view')).not.toBeNull();

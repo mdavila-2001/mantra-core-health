@@ -32,6 +32,11 @@ export interface ErrorExplanation {
   readonly cause: string;
   /** Qué puede hacer la persona ahora. */
   readonly action: string;
+  /**
+   * Causa y acción en una frase, para sumar al texto de un toast sin repetir
+   * lo que la pantalla ya dice («No se pudo guardar. Intente de nuevo.»).
+   */
+  readonly brief: string;
 }
 
 export type ErrorKind =
@@ -51,54 +56,63 @@ const EXPLANATIONS: Readonly<Record<ErrorKind, ErrorExplanation>> = {
     title: 'Sin conexión con el servidor',
     cause: 'La solicitud no llegó al servidor: su equipo perdió la conexión a internet o la red en la que está bloquea el acceso.',
     action: 'Revise el wifi, los datos móviles o la VPN y vuelva a intentarlo.',
+    brief: 'Su equipo no tiene conexión con el servidor; revise la red.',
   },
   timeout: {
     kind: 'timeout',
     title: 'El servidor tardó demasiado en responder',
     cause: 'La operación no terminó dentro del tiempo de espera, por una conexión lenta o porque el servidor está muy ocupado.',
     action: 'Si estaba guardando algo, actualice la pantalla para confirmar si quedó registrado antes de repetirlo.',
+    brief: 'El servidor tardó demasiado en responder; actualice para ver si quedó registrado antes de repetirlo.',
   },
   'session-expired': {
     kind: 'session-expired',
     title: 'Su sesión terminó',
     cause: 'Por seguridad, las sesiones vencen después de un tiempo.',
     action: 'Vuelva a ingresar para continuar.',
+    brief: 'Su sesión venció; vuelva a ingresar.',
   },
   'too-large': {
     kind: 'too-large',
     title: 'El envío supera el tamaño permitido',
     cause: 'El archivo o los datos enviados son más grandes de lo que el sistema acepta en una sola operación.',
     action: 'Reduzca el tamaño del archivo o divida la carga en partes y vuelva a intentarlo.',
+    brief: 'El envío supera el tamaño permitido; reduzca el archivo o divídalo.',
   },
   'rate-limited': {
     kind: 'rate-limited',
     title: 'Demasiados intentos seguidos',
     cause: 'Por protección, el sistema pausa por un momento las solicitudes repetidas.',
     action: 'Espere unos segundos y vuelva a intentarlo.',
+    brief: 'Hubo demasiados intentos seguidos; espere unos segundos.',
   },
   unavailable: {
     kind: 'unavailable',
     title: 'El servicio no está disponible en este momento',
     cause: 'Uno de los servicios que necesita esta operación no responde o está en mantenimiento. No es un problema de sus datos.',
     action: 'Intente de nuevo en unos minutos.',
+    brief: 'Un servicio necesario no está disponible ahora; intente en unos minutos.',
   },
   server: {
     kind: 'server',
     title: 'No pudimos completar la operación',
     cause: 'El servidor encontró un problema inesperado al procesarla. El fallo no está en lo que usted ingresó.',
     action: 'Intente de nuevo en unos segundos. Si vuelve a pasar, comparta el código de soporte con el equipo de ayuda: con él se encuentra el detalle.',
+    brief: 'El problema fue del servidor, no de lo que usted ingresó.',
   },
   rejected: {
     kind: 'rejected',
     title: 'La solicitud no pudo procesarse',
     cause: 'El servidor no aceptó la solicitud tal como se envió.',
     action: 'Actualice la pantalla y vuelva a intentarlo. Si se repite, comparta el código de soporte con el equipo de ayuda.',
+    brief: 'El servidor no aceptó la solicitud tal como se envió.',
   },
   client: {
     kind: 'client',
     title: 'Esta pantalla tuvo un problema',
     cause: 'El fallo ocurrió en el navegador al procesar la información, no en el servidor.',
     action: 'Recargue la página. Si se repite, avise al equipo de ayuda.',
+    brief: 'Hubo un fallo en esta pantalla; recargue la página.',
   },
 };
 

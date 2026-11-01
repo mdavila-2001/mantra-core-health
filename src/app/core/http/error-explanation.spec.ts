@@ -49,6 +49,7 @@ describe('las explicaciones dicen qué pasó, por qué y qué hacer', () => {
     expect(title.trim().length).toBeGreaterThan(0);
     expect(cause.trim().length).toBeGreaterThan(20);
     expect(action.trim().length).toBeGreaterThan(10);
+    expect(explanationOf(kind).brief.trim().length).toBeGreaterThan(10);
   });
 
   it('el tiempo agotado avisa que el envío pudo haberse guardado', () => {
@@ -109,7 +110,8 @@ describe('S8 distingue sin red de tiempo agotado', () => {
 
   it('describeApiFailure dice cuál de los dos fue', () => {
     expect(describeApiFailure(OFFLINE, 'No se pudo guardar.')).toBe(OFFLINE_MESSAGE);
-    expect(describeApiFailure(TIMEOUT, 'No se pudo guardar.')).toBe(`No se pudo guardar. ${TIMEOUT_MESSAGE}`);
+    expect(describeApiFailure(TIMEOUT, 'No se pudo guardar.')).toBe(`No se pudo guardar. ${explanationOf('timeout').brief}`);
+    expect(TIMEOUT_MESSAGE).toContain('quedó registrado');
   });
 });
 
