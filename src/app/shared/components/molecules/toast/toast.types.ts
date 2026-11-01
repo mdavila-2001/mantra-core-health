@@ -23,6 +23,8 @@ export interface ToastMessage {
    * que la persona lo cierre.
    */
   readonly durationMs: number | null;
+  /** El origen del aviso, si quien lo lanzó lo declaró (ver {@link ToastInput.key}). */
+  readonly key?: string;
 }
 
 /**
@@ -49,6 +51,14 @@ export interface ToastInput {
   readonly title?: string;
   readonly action?: ToastAction;
   readonly durationMs?: number | null;
+  /**
+   * El origen del aviso: una pantalla o una sección (`'farmacia.sistema'`).
+   * Un aviso nuevo con la misma clave **reemplaza** al que siga visible: el
+   * «Guardado» de hace dos segundos ya no aplica cuando llega «Quitado», y
+   * apilados tapaban la acción principal. Sin clave, los avisos se encolan
+   * como siempre.
+   */
+  readonly key?: string;
 }
 
 /**

@@ -153,4 +153,42 @@ describe('ToastService', () => {
       expect(service.toasts()).toEqual([]);
     });
   });
+
+  describe('reemplazo por origen (#1866)', () => {
+    it('un aviso con la misma clave reemplaza al visible', () => {
+      service.show({ type: 'success', message: 'guardado', key: 'farmacia.sistema' });
+      service.show({ type: 'success', message: 'quitado', key: 'farmacia.sistema' });
+
+      expect(service.toasts().map((toast) => toast.message)).toEqual(['quitado']);
+    });
+
+    it('el temporizador del reemplazado no se lleva al nuevo', () => {
+      service.show({ type: 'info', message: 'viejo', key: 'k' });
+      vi.advanceTimersByTime(INFO_MS - 100);
+      service.show({ type: 'info', message: 'nuevo', key: 'k' });
+
+      // El viejo vencería acá; el nuevo tiene que seguir.
+      vi.advanceTimersByTime(200);
+      expect(service.toasts().map((toast) => toast.message)).toEqual(['nuevo']);
+
+      vi.advanceTimersByTime(INFO_MS);
+      expect(service.toasts()).toEqual([]);
+    });
+
+    it('claves distintas, y avisos sin clave, se siguen encolando', () => {
+      service.show({ type: 'success', message: 'a', key: 'uno' });
+      service.show({ type: 'success', message: 'b', key: 'dos' });
+      service.info('sin clave');
+      service.info('sin clave');
+
+      expect(service.toasts().map((toast) => toast.message)).toEqual(['a', 'b', 'sin clave', 'sin clave']);
+    });
+
+    it('reemplaza también un error de la misma clave: el nuevo dice lo que vale ahora', () => {
+      service.show({ type: 'error', message: 'falló', key: 'k' });
+      service.show({ type: 'success', message: 'listo', key: 'k' });
+
+      expect(service.toasts().map((toast) => toast.type)).toEqual(['success']);
+    });
+  });
 });
