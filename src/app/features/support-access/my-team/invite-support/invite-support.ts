@@ -29,6 +29,8 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { formatDateTime } from '../../support-labels';
+import { CreateSecretaryForm } from './create-secretary/create-secretary-form';
+import type { CreatedSupportStaffResponse } from '../../../../core/data-access/support-access/support-provisioning.types';
 import {
   claveDeInvitacion,
   documentoParaEnviar,
@@ -45,19 +47,14 @@ const DOCUMENTO = 'input[data-testid="invitar-documento"]';
 const TOPE_DE_ESPERA_SEGUNDOS = 120;
 
 /**
- * **Invitar a una secretaria** desde «Mi equipo».
+ * **Invitar o crear una secretaria** desde «Mi equipo».
  *
- * El doctor escribe el documento de identidad de una secretaria ya registrada y elige en cuál de sus vinculaciones
- * con un hospital quiere que lo asista. La invitación queda **pendiente**: la decide ella después. Esta pantalla no
- * concede ningún permiso ni activa a nadie, y no es ella la que autoriza: lo hace la API.
- *
- * Las vinculaciones salen de `GET /practitioners/me/role-assignments` (la lista que ya usa el resto de la
- * aplicación); no hay un endpoint propio. Con el envío hecho, avisa por `invited` para que «Mi equipo» vuelva a leer
- * y muestre lo que quedó guardado, no lo que se tocó.
+ * El doctor puede invitar a una secretaria ya registrada o crear su cuenta
+ * directamente para vincularla de inmediato a su práctica.
  */
 @Component({
   selector: 'app-invite-support',
-  imports: [Alert, AppButton, Badge, Card, FormField, Input, Select, ViewStateHost],
+  imports: [Alert, AppButton, Badge, Card, CreateSecretaryForm, FormField, Input, Select, ViewStateHost],
   templateUrl: './invite-support.html',
   styleUrl: './invite-support.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -125,8 +122,11 @@ export class InviteSupport {
     inject(DestroyRef).onDestroy(() => this.detenerEspera());
   }
 
+  protected readonly modo = signal<'invitar' | 'crear'>('invitar');
+
   /** No se pide nada hasta que el doctor abre el formulario: la lista de vinculaciones solo sirve ahí. */
-  protected abrir(): void {
+  protected abrir(modo: 'invitar' | 'crear' = 'invitar'): void {
+    this.modo.set(modo);
     this.abierto.set(true);
     this.exito.set(null);
     this.focoPendiente = true;
@@ -140,6 +140,30 @@ export class InviteSupport {
     this.focoPendiente = false;
     this.limpiar();
     this.enfocar('[data-testid="invitar-abrir"]');
+  }
+
+  protected onSecretariaCreada(creada: CreatedSupportStaffResponse): void {
+    this.cerrar();
+    this.invited.emit({
+      items: [
+        {
+          id: creada.linkId,
+          nationalId: '',
+          personName: creada.organizationName ?? 'Secretaria vinculada',
+          roleTemplate: 'RECEPTION',
+          status: 'ACTIVE',
+          mayReplyOnBehalf: true,
+          replyDisclosure: 'SHOW',
+          coverageSummary: 'Vinculación activa creada de inmediato',
+          actions: [],
+          grants: [],
+          lastActivityAt: null,
+          acceptedAt: new Date().toISOString(),
+          origin: 'DOCTOR_ACCEPTED',
+          pendingClinicalRequests: [],
+        },
+      ],
+    });
   }
 
   protected otra(): void {
