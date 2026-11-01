@@ -49,49 +49,6 @@
         @let cuenta = conteo();
 
         <div class="fit__cuerpo">
-          <!-- Cifras de la última corrida: veredicto, antigüedad del dato (S7) y lo que falla. -->
-          <section
-            class="fit__metricas"
-            aria-label="Resultado de la última corrida"
-            data-testid="catalog-fit-verdict"
-          >
-            <!-- El veredicto es un estado, no una cifra: va como indicador, sin partirse. -->
-            <div class="fit__kpi">
-              <span class="fit__kpi-rotulo">Veredicto</span>
-              <app-badge size="lg" [variant]="veredicto.tone">{{ veredicto.label }}</app-badge>
-              <span class="fit__ayuda">Evaluada el {{ cuando(i.evaluatedAt) }}</span>
-            </div>
-            <app-metric-card
-              label="Antigüedad del dato"
-              [value]="antiguedad(r.ageSeconds)"
-              [hint]="
-                r.state === 'ATRASADO'
-                  ? 'Atrasada: pasó más de ' +
-                    cifra(r.retention.staleAfterSeconds / 60) +
-                    ' min sin renovarse'
-                  : 'Vigente: el worker la renueva cada pocos minutos'
-              "
-              [tone]="r.state === 'ATRASADO' ? 'warning' : 'success'"
-            />
-            <app-metric-card
-              label="Fallan"
-              [value]="cuenta.fallan + ' de ' + cuenta.total"
-              [hint]="'Comprobaciones; ' + cuenta.altas + ' de severidad alta'"
-              [tone]="cuenta.altas > 0 ? 'error' : cuenta.fallan > 0 ? 'warning' : 'success'"
-            />
-            <app-metric-card
-              label="Sin medir"
-              [value]="cuenta.ciegas"
-              hint="No cuentan como cumplidas"
-              [tone]="cuenta.ciegas > 0 ? 'info' : 'success'"
-            />
-            <app-metric-card
-              label="Versión evaluada"
-              [value]="i.deployment.commit.slice(0, 12)"
-              hint="Código desplegado al correr"
-            />
-          </section>
-
           @if (falloReciente(); as f) {
             <app-alert tone="warning" data-testid="catalog-fit-last-failure">
               <strong>La última corrida falló.</strong>
@@ -120,16 +77,66 @@
             </app-alert>
           }
 
+          <!-- Cifras de la última corrida: veredicto, antigüedad del dato (S7) y lo que falla. -->
+          <section
+            class="fit__metricas"
+            aria-label="Resultado de la última corrida"
+            data-testid="catalog-fit-verdict"
+          >
+            <!-- El veredicto es un estado, no una cifra: va como indicador, sin partirse. -->
+            <div class="fit__kpi">
+              <span class="fit__kpi-icono" aria-hidden="true"><app-nav-icon name="check-circle" /></span>
+              <span class="fit__kpi-cuerpo">
+                <span class="fit__kpi-rotulo">Veredicto</span>
+                <app-badge size="lg" [variant]="veredicto.tone">{{ veredicto.label }}</app-badge>
+                <span class="fit__ayuda">Evaluada el {{ cuando(i.evaluatedAt) }}</span>
+              </span>
+            </div>
+            <app-metric-card
+              label="Antigüedad del dato"
+              icon="clock"
+              [value]="antiguedad(r.ageSeconds)"
+              [hint]="
+                r.state === 'ATRASADO'
+                  ? 'Atrasada: pasó más de ' +
+                    cifra(r.retention.staleAfterSeconds / 60) +
+                    ' min sin renovarse'
+                  : 'Vigente: el worker la renueva cada pocos minutos'
+              "
+              [tone]="r.state === 'ATRASADO' ? 'warning' : 'success'"
+            />
+            <app-metric-card
+              label="Fallan"
+              icon="flag"
+              [value]="cuenta.fallan + ' de ' + cuenta.total"
+              [hint]="'Comprobaciones; ' + cuenta.altas + ' de severidad alta'"
+              [tone]="cuenta.altas > 0 ? 'error' : cuenta.fallan > 0 ? 'warning' : 'success'"
+            />
+            <app-metric-card
+              label="Sin medir"
+              icon="eye-off"
+              [value]="cuenta.ciegas"
+              hint="No cuentan como cumplidas"
+              [tone]="cuenta.ciegas > 0 ? 'info' : 'success'"
+            />
+            <app-metric-card
+              label="Versión evaluada"
+              icon="tag"
+              [value]="i.deployment.commit.slice(0, 12)"
+              hint="Código desplegado al correr"
+            />
+          </section>
+
           <app-card variant="outlined" padding="md" class="fit__tarjeta">
             <app-tabs [(selectedIndex)]="pestana" data-testid="catalog-fit-tabs">
               <!-- ===================== Resumen por dimensión ===================== -->
               <app-tab label="Resumen">
                 <div class="fit__seccion">
                   <p class="fit__nota">
-                    Cada puntaje es ítems que cumplen sobre ítems comprobados; sin base no hay
-                    porcentaje (nunca 0 % ni 100 %). El estado no es un umbral del puntaje: sale de
-                    las comprobaciones de la dimensión — «Falla grave» si falla una de severidad
-                    alta, «Con fallas» si falla otra, «Sin medir» si no se pudo medir.
+                    Dos medidas distintas: los <strong>ítems que cumplen</strong> (rutas, tablas,
+                    columnas) sobre los comprobados —sin base no hay porcentaje— y las
+                    <strong>comprobaciones</strong> de la dimensión. Una dimensión puede tener casi
+                    todos sus ítems bien y aun así una comprobación grave que falla.
                   </p>
                   <div class="fit__scroll">
                     <table class="fit__tabla" data-testid="catalog-fit-dimensions">
@@ -137,9 +144,8 @@
                       <thead>
                         <tr>
                           <th scope="col">Dimensión</th>
-                          <th scope="col">Puntaje</th>
-                          <th scope="col">Estado</th>
-                          <th scope="col">Base y comprobaciones</th>
+                          <th scope="col">Ítems que cumplen</th>
+                          <th scope="col">Comprobaciones</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -151,12 +157,15 @@
                                 dimensiones[d.dimension].question
                               }}</span>
                             </th>
-                            <td class="fit__puntaje">{{ texto(d) }}</td>
+                            <td>
+                              <span class="fit__puntaje">{{ texto(d) }}</span>
+                              <span class="fit__ayuda fit__bloque">{{ base(d) }}</span>
+                            </td>
                             <td>
                               @let ed = estadoDimension(d, i.checks);
                               <app-badge size="sm" [variant]="ed.tone">{{ ed.label }}</app-badge>
+                              <span class="fit__ayuda fit__bloque">{{ pista(d) }}</span>
                             </td>
-                            <td class="fit__ayuda">{{ pista(d) }}</td>
                           </tr>
                         }
                       </tbody>
@@ -218,12 +227,23 @@
                     [columns]="columnas()"
                     [trackBy]="porId"
                     [rowLabel]="nombreFila"
-                    stackedOnMobile
                     fitContainer
                     rowNavigable
                     (rowActivated)="seleccionar($event)"
                     (retry)="cargar()"
                   />
+                  @if (filas().length > limite()) {
+                    <button
+                      app-button
+                      variant="secondary"
+                      size="sm"
+                      class="fit__mas"
+                      data-testid="catalog-fit-more"
+                      (clicked)="verMas()"
+                    >
+                      Ver {{ restantes() }} más
+                    </button>
+                  }
                 </div>
               </app-tab>
 

@@ -1,0 +1,54 @@
+[
+ {
+  "file": "despues-1440-claro-ok.png",
+  "overlay": false,
+  "sw": 1440,
+  "iw": 1440,
+  "h": 1315,
+  "h1": [
+   "Sonda de catalogación"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-ok.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 2490,
+  "h1": [
+   "Sonda de catalogación"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-390-claro-hallazgos.png",
+  "overlay": false,
+  "sw": 390,
+  "iw": 390,
+  "h": 2735,
+  "h1": [
+   "Sonda de catalogación"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ },
+ {
+  "file": "despues-768-oscuro-ok.png",
+  "overlay": false,
+  "sw": 768,
+  "iw": 768,
+  "h": 1589,
+  "h1": [
+   "Sonda de catalogación"
+  ],
+  "cut": [],
+  "overflow": false,
+  "errs": []
+ }
+]

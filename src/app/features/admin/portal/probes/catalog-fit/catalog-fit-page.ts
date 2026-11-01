@@ -8,6 +8,7 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import type { Subscription } from 'rxjs';
 
 import { CatalogFitClient } from '../../../../../core/data-access/admin-portal/catalog-fit.client';
@@ -22,6 +23,7 @@ import { empty, loading, ready, stale } from '../../../../../core/view-state/vie
 import type { ViewState } from '../../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
+import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { MetricCard } from '../../../../../shared/components/molecules/metric-card/metric-card';
@@ -37,9 +39,10 @@ import { PageHeader } from '../../../../../shared/components/organisms/page-head
 import { ViewStateHost } from '../../../../../shared/components/organisms/view-state-host/view-state-host';
 import {
   ageText,
+  checksText,
+  itemsText,
   checkStatus,
   dateTime,
-  dimensionHint,
   dimensionLabel,
   dimensionTone,
   entero,
@@ -56,6 +59,10 @@ import {
   type FilaHistorial,
   type FiltroComprobaciones,
 } from './catalog-fit-labels';
+
+/** Filas de comprobaciones por tanda: diez en pantallas anchas, cinco en el teléfono. */
+const TANDA_ANCHA = 10;
+const TANDA_TELEFONO = 5;
 
 /** Cada cuánto se vuelve a pedir el resultado mientras una corrida está en vuelo. */
 export const INTERVALO_DE_ESPERA_MS = 1_500;
@@ -104,6 +111,7 @@ export function estadoDe(respuesta: CatalogFit): ViewState<CatalogFit> {
     DataTable,
     DrawerPanel,
     MetricCard,
+    NavIcon,
     PageHeader,
     SegmentedControl,
     Tab,
@@ -161,9 +169,18 @@ export class CatalogFitPage {
   protected readonly filas = computed<readonly FilaComprobacion[]>(() =>
     ordenarComprobaciones(this.informe()?.checks ?? [], this.filtro()).map(filaDeComprobacion),
   );
+  /** Cuántas filas se ven; «Ver más» agrega otra tanda (la tabla no se vuelve kilométrica). */
+  private readonly tanda =
+    inject(DOCUMENT).defaultView?.matchMedia?.('(min-width: 40.0625rem)').matches === false
+      ? TANDA_TELEFONO
+      : TANDA_ANCHA;
+  protected readonly limite = signal(this.tanda);
+  protected readonly restantes = computed(() =>
+    Math.min(this.tanda, this.filas().length - this.limite()),
+  );
   protected readonly estadoComprobaciones = computed<ViewState<readonly FilaComprobacion[]>>(() => {
     const filas = this.filas();
-    if (filas.length > 0) return ready(filas);
+    if (filas.length > 0) return ready(filas.slice(0, this.limite()));
     const f = this.filtro();
     return empty(
       { label: 'Ver todas las comprobaciones' },
@@ -197,7 +214,8 @@ export class CatalogFitPage {
   protected readonly rotuloSeveridad = severity;
   protected readonly etiquetaDimension = dimensionLabel;
   protected readonly texto = ratioText;
-  protected readonly pista = dimensionHint;
+  protected readonly pista = checksText;
+  protected readonly base = itemsText;
   protected readonly cuando = dateTime;
   protected readonly antiguedad = ageText;
   protected readonly disparador = trigger;
@@ -327,8 +345,13 @@ export class CatalogFitPage {
     }
   }
 
+  protected verMas(): void {
+    this.limite.update((n) => n + this.tanda);
+  }
+
   protected cambiarFiltro(valor: FiltroComprobaciones): void {
     this.filtro.set(valor);
+    this.limite.set(this.tanda);
     this.seleccionada.set(null);
   }
 }

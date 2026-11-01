@@ -8,15 +8,19 @@
   margin-inline: auto;
 }
 
-/* Cifras de la última corrida. Teléfono: el veredicto a lo ancho y las otras cuatro de dos en
-   dos; tableta: dos arriba y tres abajo; escritorio: las cinco en una fila. Ninguna queda huérfana. */
+/* Cifras de la última corrida. Tableta: dos arriba y tres abajo; escritorio: las cinco en una
+   fila. Ninguna queda huérfana. */
 .fit__metricas {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3);
 }
 
-.fit__metricas > :first-child {
+/* Teléfono: veredicto, antigüedad y versión a lo ancho (sus textos no caben a media fila);
+   las dos cifras cortas, juntas. */
+.fit__metricas > :nth-child(1),
+.fit__metricas > :nth-child(2),
+.fit__metricas > :nth-child(5) {
   grid-column: 1 / -1;
 }
 
@@ -25,7 +29,8 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .fit__metricas > * {
+  .fit__metricas > *,
+  .fit__metricas > :nth-child(5) {
     grid-column: span 2;
   }
 
@@ -40,22 +45,48 @@
   }
 
   .fit__metricas > *,
-  .fit__metricas > :nth-child(-n + 2) {
+  .fit__metricas > :nth-child(-n + 2),
+  .fit__metricas > :nth-child(5) {
     grid-column: auto;
   }
 }
 
 .fit__kpi {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
   min-inline-size: 0;
   padding: var(--sp-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-lg);
   background: var(--bg-surface);
   box-shadow: var(--shadow-sm);
+}
+
+.fit__kpi-cuerpo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+/* La loseta del icono, igual que la de las otras cifras. */
+.fit__kpi-icono {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--sp-10);
+  block-size: var(--sp-10);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+}
+
+.fit__kpi-icono app-nav-icon {
+  inline-size: var(--sp-5);
+  block-size: var(--sp-5);
 }
 
 .fit__kpi app-badge {
@@ -383,4 +414,20 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
+}
+
+.fit__bloque {
+  display: block;
+  margin-block-start: var(--sp-1);
+}
+
+.fit__mas {
+  align-self: flex-start;
+}
+
+/* En el teléfono el selector de comprobaciones ocupa la fila: sus tres opciones no se cortan. */
+@media not all and (min-width: 40.0625rem) {
+  .fit__filtros app-segmented-control {
+    flex: 1 1 100%;
+  }
 }

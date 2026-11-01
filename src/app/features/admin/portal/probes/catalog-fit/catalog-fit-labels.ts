@@ -116,6 +116,25 @@ export function dimensionHint(d: FitDimensionScore): string {
   return partes.join(' · ');
 }
 
+/** Los ítems de una dimensión: «6.457 de 6.563 ítems», o por qué no hay base. */
+export function itemsText(d: FitDimensionScore): string {
+  return d.status === 'MEDIDA' ? `${baseText(d.covered, d.denominator)} ítems` : 'Sin base para medir';
+}
+
+/** Las comprobaciones de una dimensión: cuántas fallan y cuántas no se midieron. */
+export function checksText(d: FitDimensionScore): string {
+  const partes: string[] = [];
+  if (d.status === 'MEDIDA') {
+    partes.push(
+      d.checksFailed > 0
+        ? `${d.checksFailed} de ${d.checksMeasured} fallan`
+        : `las ${d.checksMeasured} medidas cumplen`,
+    );
+  }
+  if (d.checksUnmeasured > 0) partes.push(`${d.checksUnmeasured} sin medir`);
+  return partes.join(' · ');
+}
+
 /**
  * El tono de la tarjeta de una dimensión: error si falla una comprobación de severidad alta,
  * aviso si falla otra, neutro si no se pudo medir. Siempre acompañado del texto del puntaje.
