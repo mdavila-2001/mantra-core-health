@@ -65,4 +65,23 @@ describe('FilterForm', () => {
     expect(estilos).toContain('.filter-form__more');
     expect(estilos).not.toMatch(/\border\s*:/);
   });
+
+  it('las fechas usan el selector del sistema (DD/MM/AAAA), no el «type=date» del navegador', () => {
+    expect(root().querySelector('input[type="date"]')).toBeNull();
+    expect(root().querySelector('.filter-form__campo--date app-date-picker')).not.toBeNull();
+  });
+
+  it('una fecha de la URL (AAAA-MM-DD) llega al selector y vuelve igual, sin correrse de día', async () => {
+    fixture.componentInstance.valores.set({ from: '2026-11-01' });
+    await fixture.whenStable();
+    const form = fixture.debugElement.children[0].componentInstance as unknown as {
+      aFecha(v: string): Date | null;
+      deFecha(d: Date | null): string;
+    };
+    const fecha = form.aFecha('2026-11-01');
+    expect(fecha?.getDate()).toBe(1);
+    expect(form.deFecha(fecha)).toBe('2026-11-01');
+    expect(form.aFecha('')).toBeNull();
+    expect(form.deFecha(null)).toBe('');
+  });
 });

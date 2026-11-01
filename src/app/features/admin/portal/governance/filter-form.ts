@@ -12,6 +12,7 @@ import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 
 /** Un filtro de la consulta. Los códigos se eligen de una lista; el texto libre es sólo para valores exactos. */
 export interface FilterField {
@@ -37,12 +38,13 @@ export interface FilterField {
  */
 @Component({
   selector: 'app-governance-filter-form',
-  imports: [AppButton, Input, Select, FormField],
+  imports: [AppButton, Input, Select, FormField, DatePicker],
   template: `
     <form class="filter-form" novalidate (submit)="$event.preventDefault(); apply()">
       <div class="filter-form__fields">
         @for (field of visibleFields(); track field.key) {
           <app-form-field
+          [class]="'filter-form__campo filter-form__campo--' + field.kind"
           [class.filter-form__wide]="esBuscador(field)"
           [label]="field.label"
           [hint]="field.hint ?? ''"
@@ -54,9 +56,17 @@ export interface FilterField {
                 [value]="draft()[field.key] ?? ''"
                 (valueChange)="set(field.key, $event ?? '')"
               />
+            } @else if (field.kind === 'date') {
+              <!-- El selector de fecha del sistema (DD/MM/AAAA): el «type=date»
+                   nativo pinta el formato del idioma del navegador (mm/dd/yyyy en
+                   uno en inglés). Lo que viaja sigue siendo AAAA-MM-DD. -->
+              <app-date-picker
+                [value]="aFecha(draft()[field.key])"
+                (valueChange)="set(field.key, deFecha($event))"
+              />
             } @else {
               <app-input
-                [type]="field.kind === 'date' ? 'date' : 'text'"
+                type="text"
                 [ariaLabel]="field.label"
                 [placeholder]="field.placeholder ?? ''"
                 [value]="draft()[field.key] ?? ''"
@@ -145,9 +155,18 @@ export interface FilterField {
         flex-wrap: wrap;
         align-items: flex-end;
       }
+      /* Cada campo pide el ancho de lo que muestra: un select, su opción
+         «Cualquier …» entera (no «Cualquier per…»); una fecha, DD/MM/AAAA y su
+         botón. Si no entran todos, los CAMPOS pasan a otra fila. */
       .filter-form__fields > * {
-        flex: 1 1 9.5rem;
+        flex: 1 1 11rem;
         min-inline-size: 0;
+      }
+      .filter-form__fields > .filter-form__campo--select {
+        flex: 1 0 13.5rem;
+      }
+      .filter-form__fields > .filter-form__campo--date {
+        flex: 1 0 11rem;
       }
       .filter-form__fields > .filter-form__wide {
         flex: 2 1 15rem;
@@ -187,6 +206,19 @@ export class FilterForm {
     const buscador = this.buscador();
     return buscador ? [buscador, ...visibles.filter((f) => f !== buscador)] : visibles;
   });
+
+  /** «AAAA-MM-DD» (el valor de la URL) → fecha local, o `null`. */
+  protected aFecha(valor: string | undefined): Date | null {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor ?? '');
+    return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+  }
+
+  /** Fecha elegida → «AAAA-MM-DD», sin pasar por UTC (sin corrimiento de día). */
+  protected deFecha(fecha: Date | null): string {
+    if (!fecha) return '';
+    const dos = (n: number) => String(n).padStart(2, '0');
+    return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
+  }
 
   protected esBuscador(field: FilterField): boolean {
     return field === this.buscador();
