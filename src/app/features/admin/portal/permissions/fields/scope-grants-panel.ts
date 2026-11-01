@@ -94,26 +94,34 @@ const ANY_PERMISSION = '';
     </div>
 
     <ng-template #subjectCell let-row>
-      <app-badge size="sm" variant="secondary">{{ subject(row.subjectType).label }}</app-badge>
-      <code class="panel__code" [title]="row.subjectId">{{ short(row.subjectId) }}</code>
+      <div class="panel__cell">
+        <app-badge size="sm" variant="secondary">{{ subject(row.subjectType).label }}</app-badge>
+        <code class="panel__code" [title]="row.subjectId">{{ short(row.subjectId) }}</code>
+      </div>
     </ng-template>
     <ng-template #permissionCell let-row>
-      <span class="panel__name">{{ permissionName(row.permissionId) }}</span>
-      <app-badge size="sm" [variant]="effect(row.effect).tone">{{ effect(row.effect).label }}</app-badge>
+      <div class="panel__cell">
+        <span class="panel__name">{{ permissionName(row.permissionId) }}</span>
+        <app-badge size="sm" [variant]="effect(row.effect).tone">{{ effect(row.effect).label }}</app-badge>
+      </div>
     </ng-template>
     <ng-template #resourceCell let-row>
-      <app-badge size="sm" variant="secondary">{{ kind(row.resourceType).label }}</app-badge>
-      <code class="panel__code" [title]="row.resourceId">{{ short(row.resourceId) }}</code>
+      <div class="panel__cell">
+        <app-badge size="sm" variant="secondary">{{ kind(row.resourceType).label }}</app-badge>
+        <code class="panel__code" [title]="row.resourceId">{{ short(row.resourceId) }}</code>
+      </div>
     </ng-template>
     <ng-template #validityCell let-row>
-      <app-badge size="sm" [variant]="row.isEffective ? 'success' : 'secondary'">
-        {{ row.isEffective ? 'Vigente' : 'Terminado o aún no vigente' }}
-      </app-badge>
-      <span class="panel__secondary">
-        @if (row.validFrom) { desde {{ day(row.validFrom) }} }
-        @if (row.validTo) { hasta {{ day(row.validTo) }} }
-        @if (!row.validFrom && !row.validTo) { sin fechas }
-      </span>
+      <div class="panel__cell">
+        <app-badge size="sm" [variant]="row.isEffective ? 'success' : 'secondary'">
+          {{ row.isEffective ? 'Vigente' : 'Terminado o aún no vigente' }}
+        </app-badge>
+        <span class="panel__secondary">
+          @if (row.validFrom) { desde {{ day(row.validFrom) }} }
+          @if (row.validTo) { hasta {{ day(row.validTo) }} }
+          @if (!row.validFrom && !row.validTo) { sin fechas }
+        </span>
+      </div>
     </ng-template>
     <ng-template #actionCell let-row>
       @if (row.isEffective) {

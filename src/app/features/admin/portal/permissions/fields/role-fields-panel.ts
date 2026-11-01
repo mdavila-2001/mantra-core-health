@@ -104,8 +104,10 @@ import { FieldRuleDialog } from './field-rule-dialog';
     </div>
 
     <ng-template #fieldCell let-row>
-      <span class="panel__name">{{ row.columnName }}</span>
-      <code class="panel__code">{{ row.entity }}</code>
+      <div class="panel__cell">
+        <span class="panel__name">{{ row.columnName }}</span>
+        <code class="panel__code">{{ row.entity }}</code>
+      </div>
     </ng-template>
     <ng-template #readCell let-row>
       <app-badge size="sm" [variant]="row.canRead ? 'success' : 'error'">{{ row.canRead ? 'Lee' : 'No lee' }}</app-badge>
@@ -114,14 +116,16 @@ import { FieldRuleDialog } from './field-rule-dialog';
       <app-badge size="sm" [variant]="row.canWrite ? 'warning' : 'secondary'">{{ row.canWrite ? 'Escribe' : 'No escribe' }}</app-badge>
     </ng-template>
     <ng-template #maskCell let-row>
-      @if (row.maskStrategy) {
-        <app-badge size="sm" [variant]="mask(row.maskStrategy).tone">{{ mask(row.maskStrategy).label }}</app-badge>
-      } @else {
-        <span class="panel__secondary">Sin enmascarar</span>
-      }
-      @if (row.conditionJson) {
-        <app-badge size="sm" variant="info">Con condición</app-badge>
-      }
+      <div class="panel__cell">
+        @if (row.maskStrategy) {
+          <app-badge size="sm" [variant]="mask(row.maskStrategy).tone">{{ mask(row.maskStrategy).label }}</app-badge>
+        } @else {
+          <span class="panel__secondary">Sin enmascarar</span>
+        }
+        @if (row.conditionJson) {
+          <app-badge size="sm" variant="info">Con condición</app-badge>
+        }
+      </div>
     </ng-template>
 
     @if (dialogOpen() && roleId() !== '') {
