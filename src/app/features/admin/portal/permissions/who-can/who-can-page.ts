@@ -29,7 +29,7 @@ const AUDIT_ACTIONS = ['ACCESS_DECISION_SIMULATED'] as const;
       subtitle="Simule una decisión contra el motor de autorización real y vea qué roles y personas tienen cada permiso."
     />
     <div class="perm-page" data-testid="portal-who-can-page">
-      <app-alert class="perm-honesty" tone="info" data-testid="portal-who-can-honesty">
+      <app-alert tone="info" title="El simulador responde con el motor de decisiones real." collapsible data-testid="portal-who-can-honesty">
         La respuesta del simulador es la del motor de decisiones real, no una estimación de esta pantalla, y cada consulta queda en la bitácora. El mapa de quién tiene cada permiso muestra lo asignado, no lo que cada ruta exige.
       </app-alert>
       <app-card class="perm-card" variant="outlined" padding="md">

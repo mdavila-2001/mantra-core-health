@@ -91,13 +91,15 @@ const SOURCE_OPTIONS: readonly SelectOption<string>[] = [
               (valueChange)="source.set($event ?? '')"
             />
           </app-form-field>
-          <app-search-field
-            label="Buscar personas"
-            placeholder="Nombre visible"
-            [value]="query()"
-            (searched)="query.set($event)"
-            [loading]="holders.state().status === 'loading'"
-          />
+          <app-form-field label="Buscar personas">
+            <app-search-field
+              label="Buscar personas"
+              placeholder="Nombre visible"
+              [value]="query()"
+              (searched)="query.set($event)"
+              [loading]="holders.state().status === 'loading'"
+            />
+          </app-form-field>
         }
       </div>
       <app-data-table
