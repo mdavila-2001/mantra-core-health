@@ -12,6 +12,7 @@ import {
   signal,
 } from '@angular/core';
 
+import { HttpErrorResponse } from '@angular/common/http';
 import type { MyRoleAssignment } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import { SupportAccessClient } from '../../../../core/data-access/support-access/support-access.client';
@@ -203,7 +204,19 @@ export class InviteSupport {
           activas.length === 1 ? activas[0]!.id : activas.some((v) => v.id === actual) ? actual : null,
         );
       },
-      error: (fallo: unknown) => this.vinculaciones.set(errorToViewState<readonly MyRoleAssignment[]>(fallo)),
+      error: (fallo: unknown) => {
+        if (fallo instanceof HttpErrorResponse && (fallo.status === 404 || fallo.status === 0)) {
+          this.vinculaciones.set(
+            empty(
+              { label: 'Pida su vinculación a un hospital en «Mis procedimientos»', route: '/my-account/my-procedures' },
+              'Todavía no tiene una vinculación activa con un hospital. Sin ella, una secretaria no tiene dónde asistirlo.',
+            ),
+          );
+          this.vinculacionId.set(null);
+        } else {
+          this.vinculaciones.set(errorToViewState<readonly MyRoleAssignment[]>(fallo));
+        }
+      },
     });
   }
 

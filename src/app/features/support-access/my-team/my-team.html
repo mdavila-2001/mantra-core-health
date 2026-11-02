@@ -1,201 +1,244 @@
 <app-page-header
   title="Mi equipo"
   subtitle="Quienes le ayudan con su agenda y sus mensajes. Usted decide qué pueden hacer en su nombre y puede retirar a cualquiera cuando quiera."
-/>
-
-<app-invite-support [sent]="invitaciones()" (invited)="cargar()" />
-
-<app-team-attention [members]="miembros()" />
-
-<app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
-  <ul class="equipo" role="list" data-testid="mi-equipo">
-    @for (m of miembros(); track m.delegateId) {
-      <li class="persona" [attr.data-testid]="'miembro-' + m.delegateId">
-        <app-card padding="lg">
-          <header class="persona__cabeza">
-            <div>
-              <h2 class="persona__nombre">{{ m.personName }}</h2>
-              <p class="persona__sub">{{ rol(m) }} · {{ m.organizationName }}</p>
-            </div>
-            <app-badge
-              [variant]="estadoTono(m)"
-              [attr.data-testid]="'miembro-estado-' + m.delegateId"
-              >{{ estadoTexto(m) }}</app-badge
-            >
-          </header>
-
-          <p class="persona__cobertura">{{ m.coverageSummary }}</p>
-          @if (m.status !== 'REVOKED' && m.actions.length > 0) {
-            <p class="persona__sub" [attr.data-testid]="'miembro-acciones-' + m.delegateId">
-              Puede: {{ acciones(m) }}
-            </p>
-          }
-          @if (m.acceptedAt) {
-            <p class="persona__sub">La aceptó el {{ fecha(m.acceptedAt) }}.</p>
-          }
-          @if (motivoDeBaja(m); as motivo) {
-            <app-alert
-              [tone]="m.delegateStatus === 'SUSPENDED' ? 'warning' : 'info'"
-              [attr.data-testid]="'miembro-baja-' + m.delegateId"
-              >{{ motivo }}</app-alert
-            >
-          }
-          @if (m.lastActivityAt) {
-            <p class="persona__sub">Última actividad: {{ fecha(m.lastActivityAt) }}</p>
-          }
-
-          @if (m.status === 'PENDING_ACCEPTANCE') {
-            <app-alert tone="info" title="Falta que la acepte">
-              La organización le dio acceso a su agenda. Hasta que usted la acepte, no puede actuar
-              sobre ella.
-            </app-alert>
-            <app-switch
-              [checked]="respondeAlAceptar(m)"
-              (checkedChange)="alternarRespuestaAlAceptar(m, $event)"
-              label="Puede responder en mi nombre"
-              [attr.data-testid]="'aceptar-responder-' + m.delegateId"
-            />
-            <div class="persona__acciones">
-              <button
-                app-button
-                type="button"
-                [disabled]="ocupado() !== null"
-                (clicked)="aceptar(m)"
-                [attr.aria-label]="'Aceptar a ' + m.personName"
-                [attr.data-testid]="'aceptar-' + m.delegateId"
-              >
-                Aceptar
-              </button>
-            </div>
-          } @else if (m.status === 'ACTIVE') {
-            <div class="persona__ajustes">
-              <app-switch
-                [checked]="m.mayReplyOnBehalf"
-                [disabled]="ocupado() !== null"
-                (checkedChange)="cambiarRespuesta(m, $event)"
-                label="Puede responder en mi nombre"
-                [attr.data-testid]="'responder-' + m.delegateId"
-              />
-              <app-switch
-                [checked]="m.replyDisclosure === 'SHOW'"
-                [disabled]="ocupado() !== null || !m.mayReplyOnBehalf"
-                (checkedChange)="cambiarAviso(m, $event)"
-                label="Mostrar «respondido por su equipo»"
-                [attr.data-testid]="'aviso-' + m.delegateId"
-              />
-              @if (!m.mayReplyOnBehalf) {
-                <p class="persona__sub">
-                  Active «Puede responder en mi nombre» para decidir si el paciente ve el aviso.
-                </p>
-              }
-            </div>
-
-            @if (m.pendingClinicalRequests.length > 0) {
-              <section class="clinico" aria-label="Accesos clínicos que piden">
-                <h3 class="clinico__titulo">Accesos clínicos temporales que piden</h3>
-                <p class="persona__sub">
-                  Por defecto solo ven el motivo de consulta. Más que eso lo decide usted, paciente
-                  por paciente.
-                </p>
-                <ul class="clinico__lista" role="list">
-                  @for (p of m.pendingClinicalRequests; track p.requestId) {
-                    <li class="clinico__pedido" [attr.data-testid]="'acceso-' + p.requestId">
-                      <p class="clinico__paciente">
-                        {{ p.patientLabel }} · {{ p.requestedHours }} horas
-                      </p>
-                      <p class="persona__sub">{{ p.reasonText }}</p>
-                      <div class="persona__acciones">
-                        <button
-                          app-button
-                          size="sm"
-                          type="button"
-                          [disabled]="ocupado() !== null"
-                          (clicked)="decidirAcceso(p, true)"
-                          [attr.data-testid]="'acceso-aprobar-' + p.requestId"
-                          [attr.aria-label]="'Autorizar el acceso a ' + p.patientLabel"
-                        >
-                          Autorizar
-                        </button>
-                        <button
-                          app-button
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                          [disabled]="ocupado() !== null"
-                          (clicked)="decidirAcceso(p, false)"
-                          [attr.data-testid]="'acceso-negar-' + p.requestId"
-                          [attr.aria-label]="'Negar el acceso a ' + p.patientLabel"
-                        >
-                          Negar
-                        </button>
-                      </div>
-                    </li>
-                  }
-                </ul>
-              </section>
-            }
-
-            <div class="persona__acciones">
-              @if (m.engagementId) {
-                <button
-                  app-button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  (clicked)="preguntandoPor.set(m)"
-                  [attr.aria-label]="'¿Por qué ' + m.personName + ' pudo o no pudo hacer algo?'"
-                  [attr.data-testid]="'porque-miembro-' + m.delegateId"
-                >
-                  ¿Por qué pudo o no pudo…?
-                </button>
-              }
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                [disabled]="ocupado() !== null"
-                (clicked)="retirar(m)"
-                [attr.aria-label]="'Retirar a ' + m.personName + ' de mi equipo'"
-                [attr.data-testid]="'retirar-' + m.delegateId"
-              >
-                Retirar de mi equipo
-              </button>
-            </div>
-          }
-        </app-card>
-      </li>
-    }
-  </ul>
-</app-view-state-host>
-
-<app-card padding="lg" class="actividad" data-testid="mi-equipo-actividad">
-  <h2 class="actividad__titulo">Qué hizo su equipo</h2>
-  <p class="actividad__todo">
-    <a
+>
+  <div page-actions class="cabecera-acciones">
+    <button
       app-button
+      type="button"
       variant="outline"
       size="sm"
-      routerLink="/my-team/activity"
-      data-testid="mi-equipo-ver-actividad"
-      >Ver toda la actividad</a
+      (clicked)="alternarQr()"
+      data-testid="boton-toggle-qr"
     >
-    <span class="persona__sub">Con filtros por persona, acción y fecha, y exportación a CSV.</span>
-  </p>
-  @if (actividad().length === 0) {
-    <p class="persona__sub">Todavía no hay actividad para mostrar.</p>
-  } @else {
-    <ul class="actividad__lista" role="list">
-      @for (a of actividad(); track a.id) {
-        <li class="actividad__fila">
-          <span class="actividad__texto">{{ a.summary }}</span>
-          <time class="persona__sub" [attr.datetime]="a.createdAt">{{ fecha(a.createdAt) }}</time>
-        </li>
-      }
-    </ul>
-  }
-</app-card>
+      {{ mostrarQr() ? 'Cerrar QR' : 'QR Chat / Solicitud' }}
+    </button>
+  </div>
+</app-page-header>
 
-@if (preguntandoPor(); as persona) {
-  <app-team-explain [member]="persona" (closed)="preguntandoPor.set(null)" />
+<div class="navegacion-seccion">
+  <app-segmented-control
+    [options]="tabOpciones"
+    [value]="pestana()"
+    (valueChange)="cambiarPestana($event)"
+    ariaLabel="Elegir entre Mi equipo y Mis accesos"
+    size="md"
+  />
+</div>
+
+@if (mostrarQr()) {
+  <app-team-qr-tool [codigo]="qrInicial()" (scanned)="alEscanearQr($event)" />
+}
+
+@if (pestana() === 'accesos') {
+  <app-my-support [embedded]="true" />
+} @else {
+  <div class="barra-busqueda">
+    <app-search-field
+      label="Buscar en mi equipo"
+      placeholder="Buscar por nombre, organización o función…"
+      [(value)]="busqueda"
+    />
+  </div>
+
+  <app-invite-support [sent]="invitacionesFiltradas()" (invited)="cargar()" />
+
+  <app-team-attention [members]="miembrosFiltrados()" />
+
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (miembrosFiltrados().length === 0 && busqueda().trim()) {
+      <app-card padding="lg" class="sin-resultados">
+        <p class="persona__sub">No se encontraron miembros para «{{ busqueda() }}».</p>
+      </app-card>
+    } @else {
+      <ul class="equipo" role="list" data-testid="mi-equipo">
+        @for (m of miembrosFiltrados(); track m.delegateId) {
+          <li class="persona" [attr.data-testid]="'miembro-' + m.delegateId">
+            <app-card padding="lg">
+              <header class="persona__cabeza">
+                <div>
+                  <h2 class="persona__nombre">{{ m.personName }}</h2>
+                  <p class="persona__sub">{{ rol(m) }} · {{ m.organizationName }}</p>
+                </div>
+                <app-badge
+                  [variant]="estadoTono(m)"
+                  [attr.data-testid]="'miembro-estado-' + m.delegateId"
+                  >{{ estadoTexto(m) }}</app-badge
+                >
+              </header>
+
+              <p class="persona__cobertura">{{ m.coverageSummary }}</p>
+              @if (m.status !== 'REVOKED' && m.actions.length > 0) {
+                <p class="persona__sub" [attr.data-testid]="'miembro-acciones-' + m.delegateId">
+                  Puede: {{ acciones(m) }}
+                </p>
+              }
+              @if (m.acceptedAt) {
+                <p class="persona__sub">La aceptó el {{ fecha(m.acceptedAt) }}.</p>
+              }
+              @if (motivoDeBaja(m); as motivo) {
+                <app-alert
+                  [tone]="m.delegateStatus === 'SUSPENDED' ? 'warning' : 'info'"
+                  [attr.data-testid]="'miembro-baja-' + m.delegateId"
+                  >{{ motivo }}</app-alert
+                >
+              }
+              @if (m.lastActivityAt) {
+                <p class="persona__sub">Última actividad: {{ fecha(m.lastActivityAt) }}</p>
+              }
+
+              @if (m.status === 'PENDING_ACCEPTANCE') {
+                <app-alert tone="info" title="Falta que la acepte">
+                  La organización le dio acceso a su agenda. Hasta que usted la acepte, no puede actuar sobre ella.
+                </app-alert>
+                <app-switch
+                  [checked]="respondeAlAceptar(m)"
+                  (checkedChange)="alternarRespuestaAlAceptar(m, $event)"
+                  label="Puede responder en mi nombre"
+                  [attr.data-testid]="'aceptar-responder-' + m.delegateId"
+                />
+                <div class="persona__acciones">
+                  <button
+                    app-button
+                    type="button"
+                    [disabled]="ocupado() !== null"
+                    (clicked)="aceptar(m)"
+                    [attr.aria-label]="'Aceptar a ' + m.personName"
+                    [attr.data-testid]="'aceptar-' + m.delegateId"
+                  >
+                    Aceptar
+                  </button>
+                </div>
+              } @else if (m.status === 'ACTIVE') {
+                <div class="persona__ajustes">
+                  <app-switch
+                    [checked]="m.mayReplyOnBehalf"
+                    [disabled]="ocupado() !== null"
+                    (checkedChange)="cambiarRespuesta(m, $event)"
+                    label="Puede responder en mi nombre"
+                    [attr.data-testid]="'responder-' + m.delegateId"
+                  />
+                  <app-switch
+                    [checked]="m.replyDisclosure === 'SHOW'"
+                    [disabled]="ocupado() !== null || !m.mayReplyOnBehalf"
+                    (checkedChange)="cambiarAviso(m, $event)"
+                    label="Mostrar «respondido por su equipo»"
+                    [attr.data-testid]="'aviso-' + m.delegateId"
+                  />
+                  @if (!m.mayReplyOnBehalf) {
+                    <p class="persona__sub">
+                      Active «Puede responder en mi nombre» para decidir si el paciente ve el aviso.
+                    </p>
+                  }
+                </div>
+
+                @if (m.pendingClinicalRequests.length > 0) {
+                  <section class="clinico" aria-label="Accesos clínicos que piden">
+                    <h3 class="clinico__titulo">Accesos clínicos temporales que piden</h3>
+                    <p class="persona__sub">
+                      Por defecto solo ven el motivo de consulta. Más que eso lo decide usted, paciente por paciente.
+                    </p>
+                    <ul class="clinico__lista" role="list">
+                      @for (p of m.pendingClinicalRequests; track p.requestId) {
+                        <li class="clinico__pedido" [attr.data-testid]="'acceso-' + p.requestId">
+                          <p class="clinico__paciente">
+                            {{ p.patientLabel }} · {{ p.requestedHours }} horas
+                          </p>
+                          <p class="persona__sub">{{ p.reasonText }}</p>
+                          <div class="persona__acciones">
+                            <button
+                              app-button
+                              size="sm"
+                              type="button"
+                              [disabled]="ocupado() !== null"
+                              (clicked)="decidirAcceso(p, true)"
+                              [attr.data-testid]="'acceso-aprobar-' + p.requestId"
+                              [attr.aria-label]="'Autorizar el acceso a ' + p.patientLabel"
+                            >
+                              Autorizar
+                            </button>
+                            <button
+                              app-button
+                              size="sm"
+                              variant="outline"
+                              type="button"
+                              [disabled]="ocupado() !== null"
+                              (clicked)="decidirAcceso(p, false)"
+                              [attr.data-testid]="'acceso-negar-' + p.requestId"
+                              [attr.aria-label]="'Negar el acceso a ' + p.patientLabel"
+                            >
+                              Negar
+                            </button>
+                          </div>
+                        </li>
+                      }
+                    </ul>
+                  </section>
+                }
+
+                <div class="persona__acciones">
+                  @if (m.engagementId) {
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      (clicked)="preguntandoPor.set(m)"
+                      [attr.aria-label]="'¿Por qué ' + m.personName + ' pudo o no pudo hacer algo?'"
+                      [attr.data-testid]="'porque-miembro-' + m.delegateId"
+                    >
+                      ¿Por qué pudo o no pudo…?
+                    </button>
+                  }
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    [disabled]="ocupado() !== null"
+                    (clicked)="retirar(m)"
+                    [attr.aria-label]="'Retirar a ' + m.personName + ' de mi equipo'"
+                    [attr.data-testid]="'retirar-' + m.delegateId"
+                  >
+                    Retirar de mi equipo
+                  </button>
+                </div>
+              }
+            </app-card>
+          </li>
+        }
+      </ul>
+    }
+  </app-view-state-host>
+
+  <app-card padding="lg" class="actividad" data-testid="mi-equipo-actividad">
+    <h2 class="actividad__titulo">Qué hizo su equipo</h2>
+    <p class="actividad__todo">
+      <a
+        app-button
+        variant="outline"
+        size="sm"
+        routerLink="/my-team/activity"
+        data-testid="mi-equipo-ver-actividad"
+        >Ver toda la actividad</a
+      >
+      <span class="persona__sub">Con filtros por persona, acción y fecha, y exportación a CSV.</span>
+    </p>
+    @if (actividad().length === 0) {
+      <p class="persona__sub">Todavía no hay actividad para mostrar.</p>
+    } @else {
+      <ul class="actividad__lista" role="list">
+        @for (a of actividad(); track a.id) {
+          <li class="actividad__fila">
+            <span class="actividad__texto">{{ a.summary }}</span>
+            <time class="persona__sub" [attr.datetime]="a.createdAt">{{ fecha(a.createdAt) }}</time>
+          </li>
+        }
+      </ul>
+    }
+  </app-card>
+
+  @if (preguntandoPor(); as persona) {
+    <app-team-explain [member]="persona" (closed)="preguntandoPor.set(null)" />
+  }
 }

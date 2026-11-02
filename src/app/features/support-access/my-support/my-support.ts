@@ -1,14 +1,8 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-  type OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal, type OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TeamQrTool } from '../my-team/team-qr-tool/team-qr-tool';
 
 import { SupportAccessClient } from '../../../core/data-access/support-access/support-access.client';
 import {
@@ -24,10 +18,7 @@ import {
   catalogFromGrants,
   summarizeGrants,
 } from '../../../core/data-access/support-access/support-summary';
-import {
-  classifyReview,
-  personNotice,
-} from '../../../core/data-access/support-access/support-recertification';
+import { classifyReview, personNotice } from '../../../core/data-access/support-access/support-recertification';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -40,10 +31,10 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
-import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -56,17 +47,8 @@ import { MyExplain, type MyExplainPrefill } from './my-explain/my-explain';
 import { REDEEM_PRECONDITION_TEXT, redeemPreconditionOf, textoDelCanje } from './redeem-text';
 import { readApiError } from '../../../core/http/api-error';
 import {
-  engagementStatusText,
-  engagementStatusTone,
-  expiryText,
-  formatDay,
-  grantLabel,
-  itemDecisionText,
-  itemDecisionTone,
-  originText,
-  requestStatusText,
-  requestStatusTone,
-  templateLabel,
+  engagementStatusText, engagementStatusTone, expiryText, formatDay, grantLabel,
+  itemDecisionText, itemDecisionTone, originText, requestStatusText, requestStatusTone, templateLabel,
 } from '../support-labels';
 
 /** El mismo mensaje para un código inexistente, usado o vencido. */
@@ -115,6 +97,7 @@ interface ItemPedido {
     SegmentedControl,
     Select,
     SupportActionPicker,
+    TeamQrTool,
     Textarea,
     ViewStateHost,
   ],
@@ -123,6 +106,7 @@ interface ItemPedido {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MySupport implements OnInit {
+  readonly embedded = input<boolean>(false);
   private readonly client = inject(SupportAccessClient);
   private readonly toasts = inject(ToastService);
   private readonly location = inject(Location);
@@ -130,6 +114,7 @@ export class MySupport implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly state = signal<ViewState<MySupportEngagements>>(loading());
+  protected readonly busqueda = signal('');
 
   /* ---- unirse con un código ------------------------------------------------ */
   protected readonly codigo = signal('');
@@ -154,16 +139,17 @@ export class MySupport implements OnInit {
   protected readonly falloDeEnvio = signal<string | null>(null);
   protected readonly intentoDeEnvio = signal(false);
 
-  /**
-   * Una pregunta lista para «¿Por qué no puedo?»: `?action=&doctor=&tenant=&patient=&at=` (por ejemplo, desde un bloque
-   * «Reservado»). Se **precarga y espera un clic**: un enlace no puede hacer que el navegador de la persona consulte el
-   * motivo de un acceso sobre un paciente arbitrario (F7). El parámetro `ask=1` de enlaces antiguos se ignora.
-   */
   protected readonly preguntaLista = signal<MyExplainPrefill | null>(null);
 
   protected readonly vinculos = computed(() => {
     const s = this.state();
-    return s.status === 'ready' ? s.data.engagements : [];
+    const todos = s.status === 'ready' ? s.data.engagements : [];
+    const q = this.busqueda().trim().toLowerCase();
+    if (!q) return todos;
+    return todos.filter((v) =>
+      (v.organizationName ?? '').toLowerCase().includes(q) ||
+      this.rol(v).toLowerCase().includes(q),
+    );
   });
   protected readonly solicitudes = computed(() => {
     const s = this.state();
@@ -223,7 +209,18 @@ export class MySupport implements OnInit {
               )
             : ready(datos),
         ),
-      error: (failure: unknown) => this.state.set(errorToViewState<MySupportEngagements>(failure)),
+      error: (failure: unknown) => {
+        if (failure instanceof HttpErrorResponse && (failure.status === 404 || failure.status === 0)) {
+          this.state.set(
+            empty(
+              { label: 'Escriba un código arriba para unirse' },
+              'Todavía no ayuda en ninguna organización.',
+            ),
+          );
+        } else {
+          this.state.set(errorToViewState<MySupportEngagements>(failure));
+        }
+      },
     });
   }
 
@@ -303,7 +300,8 @@ export class MySupport implements OnInit {
 
   /* ---- canjear ------------------------------------------------------------- */
 
-  protected canjear(): void {
+  canjear(codigoDirecto?: string): void {
+    if (codigoDirecto) this.codigo.set(codigoDirecto);
     const limpio = codeFromPasted(this.codigo());
     if (limpio === '' || this.canjeando()) return;
     this.canjeando.set(true);

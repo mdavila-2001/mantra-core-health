@@ -1,15 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import {
-  catchError,
-  EMPTY,
-  expand,
-  forkJoin,
-  map,
-  of,
-  reduce,
-  switchMap,
-  type Observable,
+  catchError, EMPTY, expand, forkJoin, map, of, reduce, switchMap, type Observable,
 } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
@@ -496,11 +488,12 @@ export class SupportAccessClient {
 
   /* ---- doctor -------------------------------------------------------------- */
 
-  /** `GET /me/practitioner/support-team` — «Mi equipo». */
+  /** `GET /me/practitioner/support-team` — «Mi equipo». Devuelve lista vacía en 404/0. */
   getMyTeam(): Observable<DoctorTeam> {
-    return this.http
-      .get<DoctorTeam>(this.url('/me/practitioner/support-team'))
-      .pipe(map(fromWireTeam));
+    return this.http.get<DoctorTeam>(this.url('/me/practitioner/support-team')).pipe(
+      map(fromWireTeam),
+      catchError(() => of({ items: [] })),
+    );
   }
 
   /**
@@ -552,7 +545,10 @@ export class SupportAccessClient {
       .get<SupportActivityPage>(this.url('/me/practitioner/support-activity'), {
         params: new HttpParams({ fromObject: { ...activityParams(query) } }),
       })
-      .pipe(map(fromWireActivityPage));
+      .pipe(
+        map(fromWireActivityPage),
+        catchError(() => of({ items: [], count: 0, nextCursor: null })),
+      );
   }
 
   /* ---- chat ---------------------------------------------------------------- */

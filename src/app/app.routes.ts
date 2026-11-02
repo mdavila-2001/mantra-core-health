@@ -155,6 +155,7 @@ function rutasDeSecciones(): Routes {
 
 /** Secciones que siguen registradas pero cuya pantalla se retiró. */
 export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> = {
+  'my-support': { ruta: '/my-team', query: { tab: 'mis-accesos' } },
   'my-account/loyalty': { ruta: '/my-account', query: { pestana: 'puntos' } },
   'my-account/clinical-access': { ruta: '/my-account/privacy', query: { ver: 'historia' } },
   'administration/pharmacy-profile': { ruta: '/my-account' },
