@@ -1,3 +1,6 @@
+import { By } from '@angular/platform-browser';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { TeamQrTool } from './team-qr-tool/team-qr-tool';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
@@ -164,8 +167,8 @@ describe('MyTeam', () => {
 
   it('una persona que ya no está activa dice por qué: suspendida por su organización, retirada o vencida', () => {
     expect(byId('miembro-estado-dl-silvia')!.textContent).toContain('Suspendida');
-    expect(byId('miembro-baja-dl-silvia')!.textContent).toContain('lo renueve');
-    expect(byId('miembro-baja-dl-silvia')!.textContent).toContain('usted no tiene que hacer nada');
+    expect(byId('miembro-baja-dl-silvia')!.textContent).toContain('no renovarlo a tiempo');
+    expect(byId('miembro-baja-dl-silvia')!.textContent).toContain('Su organización suspendió el vínculo de esta persona');
     expect(byId('miembro-estado-dl-pedro')!.textContent).toContain('Retirada');
     expect(byId('miembro-baja-dl-pedro')!.textContent).toContain('ya no forma parte de su equipo');
     expect(byId('miembro-estado-dl-gabriel')!.textContent).toContain('Vencida');
@@ -181,5 +184,13 @@ describe('MyTeam', () => {
     const enlace = byId('mi-equipo-ver-actividad') as HTMLAnchorElement;
     expect(enlace.getAttribute('href')).toBe('/my-team/activity');
     expect(byId('mi-equipo-actividad')!.textContent).toContain('exportación a CSV');
+  });
+
+  it('el output real codeScanned llega al handler sin inventar un input de precarga', () => {
+    const notice = vi.spyOn(TestBed.inject(ToastService), 'info');
+    clic(byId('boton-toggle-qr')); fixture.detectChanges();
+    fixture.debugElement.query(By.directive(TeamQrTool)).injector.get(TeamQrTool)
+      .codeScanned.emit('SYNTHETIC-CODE');
+    expect(notice).toHaveBeenCalledWith('Código detectado: SYNTHETIC-CODE');
   });
 });

@@ -1,4 +1,5 @@
 <section class="system" aria-labelledby="integration-system-title" data-testid="integration-system">
+  <app-view-state-host [state]="accessState()">
   <div class="system__heading">
     <h2 class="system__title" id="integration-system-title">Sistema de la farmacia</h2>
     @if (system() !== null && !editing()) {
@@ -8,7 +9,7 @@
           type="button"
           variant="secondary"
           [isLoading]="probing()"
-          [disabled]="probing() || removing()"
+            [disabled]="busy()"
           (clicked)="probe()"
           data-testid="integration-system-probe"
         >
@@ -18,7 +19,7 @@
           app-button
           type="button"
           variant="outline"
-          [disabled]="probing() || removing()"
+            [disabled]="busy()"
           (clicked)="startEdit()"
           data-testid="integration-system-edit"
         >
@@ -29,7 +30,7 @@
           type="button"
           variant="danger"
           [isLoading]="removing()"
-          [disabled]="probing() || removing()"
+            [disabled]="busy()"
           (clicked)="remove()"
           data-testid="integration-system-remove"
         >
@@ -41,6 +42,7 @@
 
   @if (showForm() && system() === null) {
     <p class="system__lead" data-testid="integration-system-none">{{ serverText() }}</p>
+    <p class="system__lead" data-testid="integration-system-manual">Sin sistema propio, los pedidos requieren confirmación manual de disponibilidad por la sucursal.</p>
   }
 
   @if (error(); as message) {
@@ -50,10 +52,12 @@
     <app-alert tone="success" data-testid="integration-system-probe-ok">{{ message }}</app-alert>
   }
 
-  @if (!showForm()) {
+  @if (system() !== null) {
     <!-- En filas: la dirección es larga y en columnas se partía a mitad de palabra. -->
     <app-fact-list disposicion="filas" etiqueta="Datos del sistema de la farmacia" [hechos]="facts()" />
-  } @else {
+    <p class="system__lead" data-testid="integration-system-last-check">Última comprobación guardada: {{ lastCheckText() }}</p>
+  }
+  @if (showForm()) {
     <form class="system__form" (submit)="$event.preventDefault(); save()" novalidate data-testid="integration-system-form">
       <app-form-field label="Formato" hint="Cómo habla el sistema de su farmacia.">
         <app-select
@@ -68,14 +72,14 @@
         label="Dirección"
         [hint]="formatHint()"
         [required]="true"
-        [errorMessage]="submitted() && missing().baseUrl ? 'Escriba la dirección del sistema.' : ''"
+        [errorMessage]="submitted() && missing().baseUrl ? 'Escriba la dirección del sistema.' : submitted() && invalidUrl() ? 'Use http:// o https://, sin credenciales, consulta ni fragmento.' : ''"
       >
         <app-input
           type="url"
           autocomplete="off"
           [value]="baseUrl()"
           (valueChange)="baseUrl.set(textOf($event))"
-          [hasError]="submitted() && missing().baseUrl"
+          [hasError]="submitted() && (missing().baseUrl || invalidUrl())"
           placeholder="https://"
           testId="integration-system-url"
         />
@@ -119,7 +123,7 @@
             app-button
             type="button"
             variant="ghost"
-            [disabled]="saving()"
+            [disabled]="busy()"
             (clicked)="cancelEdit()"
             data-testid="integration-system-cancel"
           >
@@ -130,7 +134,7 @@
           app-button
           type="submit"
           [isLoading]="saving()"
-          [disabled]="saving()"
+          [disabled]="busy()"
           data-testid="integration-system-save"
         >
           Guardar y probar
@@ -138,4 +142,5 @@
       </div>
     </form>
   }
+  </app-view-state-host>
 </section>

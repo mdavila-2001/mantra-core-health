@@ -55,21 +55,26 @@
           </div>
         </section>
 
+        @if (connectionOptions().length > 1) {
+          <app-form-field label="Conexión" hint="Elija la conexión que quiere configurar, sincronizar o vincular.">
+            <app-select
+              class="integration__chooser"
+              [options]="connectionOptions()"
+              [value]="connection()?.id ?? null"
+              placeholder="Elija una conexión"
+              (valueChange)="chooseConnection($event)"
+              data-testid="integration-connection-chooser"
+            />
+          </app-form-field>
+          @if (!connection()) {
+            <p class="integration__lead" data-testid="integration-choose-connection">Elija una conexión para ver sus datos y configurar su sistema.</p>
+          }
+        }
         @if (connection(); as current) {
           <div class="integration__panel">
             <section class="integration__section" aria-labelledby="integration-connection-title" data-testid="integration-connection">
               <div class="integration__heading">
                 <h2 class="integration__title" id="integration-connection-title">Conexión con el sistema de la farmacia</h2>
-                @if (connectionOptions().length > 1) {
-                  <app-select
-                    class="integration__chooser"
-                    ariaLabel="Conexión"
-                    [options]="connectionOptions()"
-                    [value]="current.id"
-                    (valueChange)="chooseConnection($event)"
-                    data-testid="integration-connection-chooser"
-                  />
-                }
               </div>
               <app-fact-list disposicion="columnas" etiqueta="Datos de la conexión" [hechos]="facts()" />
               @if (!current.providerConfigured) {
@@ -79,7 +84,7 @@
               }
             </section>
 
-            <app-integration-system [pharmacyId]="pharmacyId" [connection]="current" (changed)="reload()" />
+            <app-integration-system [pharmacyId]="pharmacyId" [connection]="current" (changed)="reload(true)" (checked)="reload(true)" />
 
             <!-- «Vincular» sobre un código sin vínculo del resultado abre el alta de abajo con ese código. -->
             <app-integration-sync

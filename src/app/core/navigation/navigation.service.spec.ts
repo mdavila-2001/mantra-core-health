@@ -102,10 +102,11 @@ describe('NavigationService', () => {
       expect(enGrupos).not.toContain('/notification-center');
     });
 
-    it('al médico le desaparece «Mi cuenta», porque se queda sin secciones', () => {
+    it('al médico Mi cuenta conserva sólo el Buzón común de solicitudes', () => {
       abrirSesion(['PRACTITIONER'], ['t-1']);
 
-      expect(service.menu().map((g) => g.label)).not.toContain('Mi cuenta');
+      expect(service.menu().find((g) => g.label === 'Mi cuenta')?.items.map((item) => item.route))
+        .toEqual(['/my-account/access-requests']);
     });
 
     it('un destino fijo no nombra su grupo en la ruta de navegación', async () => {
@@ -176,6 +177,7 @@ describe('NavigationService', () => {
         // perfil de paciente, que no es un rol sino un dato de la cuenta, y la
         // pantalla lo dice cuando falta. Mismo criterio que «Mis citas».
         '/my-account/dependents',
+        '/my-account/access-requests', // ANY_ROLE en el dev9ad vigente.
         '/my-account/appointments',
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
         // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
@@ -829,11 +831,10 @@ describe('NavigationService', () => {
         // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
         '/administration/insurance-campaigns',
         '/administration/my-organization',
+        '/my-account/access-requests',
       ]);
-      // Un solo dominio: sin «General» (Directorios, Chats) ni «Mi cuenta»
-      // (el autoservicio del paciente), que es justo lo que la captura del
-      // pedido mostraba de más.
-      expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración']);
+      // Conserva el dominio de Administración y el nuevo Buzón común de ANY_ROLE.
+      expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración', 'Mi cuenta']);
       expect(service.menu()[0]?.blocks.map((bloque) => bloque.label)).toEqual([
         'Seguros',
         'Organizaciones',
@@ -846,6 +847,7 @@ describe('NavigationService', () => {
       // El armazón dibuja sin `<details>` todo grupo con `aplanado`.
       expect(service.menu().map((grupo) => [grupo.label, grupo.aplanado])).toEqual([
         ['Administración', true],
+        ['Mi cuenta', true],
       ]);
     });
 

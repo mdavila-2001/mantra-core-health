@@ -27,7 +27,7 @@
 </div>
 
 @if (mostrarQr()) {
-  <app-team-qr-tool [codigo]="qrInicial()" (scanned)="alEscanearQr($event)" />
+  <app-team-qr-tool (codeScanned)="alEscanearQr($event)" />
 }
 
 @if (pestana() === 'accesos') {

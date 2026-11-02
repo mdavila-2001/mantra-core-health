@@ -24,7 +24,7 @@
     </app-form-field>
 
     <app-form-field
-      icon="category"
+      icon="tag"
       label="Tema o especialidad"
       hint="Clasificación temática en el directorio"
     >
@@ -39,7 +39,7 @@
       <app-select
         [options]="typeOptions"
         [value]="groupType()"
-        (valueChange)="groupType.set($event)"
+        (valueChange)="chooseType($event)"
       />
     </app-form-field>
 
@@ -51,7 +51,7 @@
       <app-select
         [options]="visibilityOptions()"
         [value]="visibility()"
-        (valueChange)="visibility.set($event)"
+        (valueChange)="chooseVisibility($event)"
       />
     </app-form-field>
 
@@ -85,7 +85,7 @@
   }
 
   <div class="group-form__actions">
-    <button app-button variant="outline" type="button" (clicked)="cancel.emit()">
+    <button app-button variant="outline" type="button" (clicked)="cancelled.emit()">
       Cancelar
     </button>
     <button

@@ -42,8 +42,6 @@ import { Input } from '../../../../shared/components/atoms/input/input';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../../shared/components/molecules/radio-group/radio-group';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -58,8 +56,11 @@ import {
   type RenglonCubierto,
 } from '../pharmacy-inbox.fixtures';
 import { InvoiceSummary } from './invoice-summary/invoice-summary';
+import { StockDecision } from './stock-decision/stock-decision';
+import { StockConfirmationNotice } from './stock-confirmation-notice';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { lineAmount } from './line-amount';
+import { canConfirmLines, stockConfirmationError, type InboxLineAdjustment as AjusteEnEdicion } from './stock-confirmation';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
 const BANDEJA_ROUTE = '/administration/pharmacy-orders';
@@ -91,15 +92,6 @@ export function motivoDeChatNoAbierto(error: unknown): string {
   return 'No pudimos abrir el chat con el paciente. Intente de nuevo en un momento.';
 }
 
-/** Lo que el mostrador edita de un renglón antes de confirmar. */
-interface AjusteEnEdicion {
-  readonly decision: DecisionDeLinea;
-  readonly propuesta?: {
-    readonly productId: string;
-    readonly nombre: string;
-    readonly precio: null;
-  };
-}
 
 interface SubstituteSearch {
   readonly status: 'idle' | 'loading' | 'ready' | 'error' | 'missing-concept';
@@ -148,9 +140,9 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
     FormField,
     Input,
     PageHeader,
-    Radio,
-    RadioGroup,
     InvoiceSummary,
+    StockDecision,
+    StockConfirmationNotice,
     RouterLink,
     Select,
     ViewStateHost,
@@ -160,6 +152,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InboxOrder {
+  protected readonly confirmationError = signal<string | null>(null);
 
   /**
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
@@ -397,17 +390,7 @@ export class InboxOrder {
    * Confirmar exige que cada genérico tenga nombre y que quede al menos un
    * renglón en pie — un pedido sin nada que preparar se rechaza con motivo.
    */
-  protected readonly puedeConfirmar = computed(() => {
-    const ajustes = this.ajustes();
-    if (ajustes.length === 0) {
-      return false;
-    }
-    const todoCaido = ajustes.every((ajuste) => ajuste.decision === 'NO_DISPONIBLE');
-    const hasUnresolvedSubstitute = ajustes.some(
-      (ajuste) => ajuste.decision === 'PROPONER_GENERICO' && ajuste.propuesta === undefined,
-    );
-    return !todoCaido && !hasUnresolvedSubstitute;
-  });
+  protected readonly puedeConfirmar = computed(() => canConfirmLines(this.ajustes()));
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -480,10 +463,17 @@ export class InboxOrder {
 
   protected cambiarDecision(indice: number, decision: unknown): void {
     const nextDecision = decision as DecisionDeLinea;
+    if (this.pedido()?.lineas[indice]?.porConfirmar && nextDecision === 'TAL_CUAL') return;
+    if (!this.pedido()?.lineas[indice]?.porConfirmar && nextDecision === 'CONFIRMAR_STOCK') return;
     this.actualizarAjuste(indice, () => ({ decision: nextDecision }));
     if (nextDecision === 'PROPONER_GENERICO') {
       this.loadSubstitutes(indice);
     }
+  }
+
+  protected setConfirmedQuantity(index: number, value: string | number | null): void {
+    const quantity = value === null || value === '' ? undefined : Number(value);
+    this.actualizarAjuste(index, (adjustment) => ({ ...adjustment, quantity }));
   }
 
   protected selectSubstitute(indice: number, productId: string | null): void {
@@ -512,12 +502,13 @@ export class InboxOrder {
 
   protected confirmar(): void {
     const abierto = this.pedido();
-    if (abierto === null || !this.puedeConfirmar()) {
+    if (abierto === null || !this.puedeConfirmar() || this.ocupado()) {
       return;
     }
     const ajustes: readonly AjusteDeLinea[] = this.ajustes().map((ajuste, indice) => ({
       indice,
       decision: ajuste.decision,
+      ...(ajuste.quantity === undefined ? {} : { quantity: ajuste.quantity }),
       ...(ajuste.propuesta === undefined ? {} : { propuesta: ajuste.propuesta }),
     }));
     this.ejecutar(this.ordersClient.confirmarPedido(abierto, ajustes));
@@ -609,6 +600,7 @@ export class InboxOrder {
   }
 
   private aplicar(pedido: PedidoFarmacia): void {
+    this.confirmationError.set(null);
     this.state.set(ready(pedido));
     this.reiniciarAjustes(pedido);
     this.reiniciarRetiro(pedido);
@@ -618,7 +610,7 @@ export class InboxOrder {
     this.substituteSearches.set({});
     this.ajustes.set(
       pedido.lineas.map((linea) => ({
-        decision: linea.disponible ? 'TAL_CUAL' : 'NO_DISPONIBLE',
+        decision: !linea.disponible ? 'NO_DISPONIBLE' : linea.porConfirmar ? 'CONFIRMAR_STOCK' : 'TAL_CUAL',
       })),
     );
   }
@@ -687,13 +679,19 @@ export class InboxOrder {
 
   private ejecutar(operacion: Observable<unknown>): void {
     this.ocupado.set(true);
-    operacion.subscribe({
+    this.confirmationError.set(null);
+    operacion.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.ocupado.set(false);
         this.cargar();
       },
       error: (error: unknown) => {
         this.ocupado.set(false);
+        const confirmationProblem = stockConfirmationError(error);
+        if (confirmationProblem !== null) {
+          this.confirmationError.set(confirmationProblem);
+          return;
+        }
         this.state.set(errorToViewState<PedidoFarmacia>(error));
       },
     });
