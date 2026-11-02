@@ -1,6 +1,8 @@
+import '@angular/compiler';
 import { HttpHeaders } from '@angular/common/http';
 
 import { registrarPracticas } from './practice.handlers';
+import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS } from '../fixtures/agenda';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
@@ -41,5 +43,36 @@ describe('handlers de consultorios y arancel', () => {
       specialty: expect.any(String),
       count: expect.any(Number),
     });
+  });
+
+  it('GET /billing/service-catalog asegura CITA_MEDICA por defecto en cualquier práctica', () => {
+    const practiceId = 'practica-arbitraria-nueva';
+    const params = new URLSearchParams({ practiceId });
+    const respuesta = call<{ items: readonly { code: string; name: string; defaultPrice: string; isActive: boolean }[] }>(
+      'GET',
+      '/billing/service-catalog',
+      params,
+    );
+
+    const citaMedica = respuesta.items.find((s) => s.code === 'CITA_MEDICA');
+    expect(citaMedica).toBeDefined();
+    expect(citaMedica?.name).toBe('Cita médica');
+    expect(citaMedica?.defaultPrice).toBe('0.00');
+    expect(citaMedica?.isActive).toBe(true);
+  });
+
+  it('PRACTICE_CONSULTORIO y PRACTICE_OLIVOS tienen CITA_MEDICA garantizada', () => {
+    for (const practiceId of [PRACTICE_CONSULTORIO, PRACTICE_OLIVOS]) {
+      const params = new URLSearchParams({ practiceId });
+      const respuesta = call<{ items: readonly { code: string; defaultPrice: string; isActive: boolean }[] }>(
+        'GET',
+        '/billing/service-catalog',
+        params,
+      );
+      const cita = respuesta.items.find((s) => s.code === 'CITA_MEDICA');
+      expect(cita).toBeDefined();
+      expect(cita?.defaultPrice).toBe('0.00');
+      expect(cita?.isActive).toBe(true);
+    }
   });
 });

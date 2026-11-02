@@ -23,48 +23,8 @@ export const PRACTICAS = [
   { id: PRACTICE_CONSULTORIO, code: 'ROJAS', name: 'Consultorio Dra. Rojas', status: 'ACTIVE', typeConceptId: TIPO_PRACTICA.OFFICE, statusConceptId: STATUS['ST-ACTIVE']!, currencyConceptId: uuid('concept-currency-bob'), timeZone: 'America/La_Paz' },
 ];
 
-interface ServicioSimulado {
-  readonly id: string;
-  readonly practiceId: string;
-  readonly code: string;
-  readonly name: string;
-  readonly serviceConceptId?: string;
-  readonly defaultPrice: string;
-  readonly currencyConceptId: string;
-  readonly currencyCode: string;
-  readonly taxCodeId?: string;
-  readonly incomeAccountId?: string;
-  readonly isActive: boolean;
-  readonly descriptionText?: string;
-  readonly imageFileId?: string;
-}
-
-const MONEDA_BOB = uuid('concept-currency-bob');
-
-export const servicios = new Coleccion<ServicioSimulado>([
-  ['CONS-CARDIO', 'Consulta cardiológica', '250.00', 'Consulta de primera vez o control con la Dra. Rojas. Incluye electrocardiograma de reposo.'],
-  ['CONS-CONTROL', 'Control cardiológico', '180.00', 'Control de seguimiento de pacientes en tratamiento.'],
-  ['ECG', 'Electrocardiograma', '120.00', 'Registro de la actividad eléctrica del corazón, 12 derivaciones.'],
-  ['ECO-DOPPLER', 'Ecocardiograma Doppler', '480.00', 'Ecografía cardíaca con Doppler color.'],
-  ['HOLTER', 'Holter de 24 horas', '350.00', 'Registro continuo del ritmo cardíaco durante un día.'],
-  ['MAPA', 'Monitoreo ambulatorio de presión (MAPA)', '320.00', 'Presión arterial medida cada 20 minutos durante 24 horas.'],
-  ['TELE-CARDIO', 'Teleconsulta cardiológica', '200.00', 'Consulta por videollamada para controles y lectura de resultados.'],
-  ['CERT-APTITUD', 'Certificado de aptitud cardiovascular', '150.00', 'Evaluación para actividad deportiva o laboral.'],
-  ['ERGO', 'Prueba de esfuerzo', '520.00', 'Ergometría en cinta con monitoreo continuo.'],
-  ['PAQ-PREV', 'Paquete de prevención cardiovascular', '890.00', 'Consulta + ECG + perfil lipídico + ecocardiograma. Se paga en cuotas.'],
-].map(([code, name, defaultPrice, descriptionText], i) => ({
-  id: uuid(`service-${code}`),
-  practiceId: i < 8 ? PRACTICE_OLIVOS : PRACTICE_CONSULTORIO,
-  code: code!,
-  name: name!,
-  serviceConceptId: i === 2 ? PROCEDIMIENTO['PROC-ENDOSCOPIA'] : undefined,
-  defaultPrice: defaultPrice!,
-  currencyConceptId: MONEDA_BOB,
-  currencyCode: 'BOB',
-  isActive: i !== 7,
-  descriptionText: descriptionText!,
-  ...(i % 3 === 0 ? { imageFileId: uuid(`service-image-${code}`) } : {}),
-})));
+export { servicios, asegurarCitaMedica, type ServicioSimulado } from './practice-services.mock';
+import { servicios, asegurarCitaMedica, MONEDA_BOB, type ServicioSimulado } from './practice-services.mock';
 
 /* El nomenclador son los dos aranceles reales que entregó el propietario: el
    de honorarios médicos del Colegio Médico de Santa Cruz (en UMA) y el
@@ -325,6 +285,7 @@ export function registrarPracticas(router: MockRouter): void {
 
   router.get('/billing/service-catalog', ({ query }) => {
     const practiceId = texto(query, 'practiceId');
+    if (practiceId !== null) asegurarCitaMedica(practiceId);
     const q = texto(query, 'query') ?? texto(query, 'q');
     const isActive = query.get('isActive');
     const todos = servicios
@@ -421,6 +382,7 @@ export function registrarPracticas(router: MockRouter): void {
   });
 
   router.post('/practitioners/me/sites', (request) => {
+    asegurarCitaMedica(PRACTICE_CONSULTORIO);
     const datos = cuerpo<{ name: string; timeZone?: string; contactPhone?: string; address?: { lines: string[]; city?: string; latitude?: number; longitude?: number } }>(request);
     const nuevo = sitiosPropios.agregar({
       id: nuevoId('site'),

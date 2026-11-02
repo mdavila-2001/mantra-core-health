@@ -1,0 +1,24 @@
+<app-page-header
+  title="Grupos y foros"
+  subtitle="Comunidades de su organización y equipos médicos de atención, en un solo lugar."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-tabs
+  class="groups-hub__tabs"
+  data-testid="grupos-tabs"
+  [selectedIndex]="activa()"
+  (selectedIndexChange)="elegir($event)"
+>
+  @for (pestana of pestanas(); track pestana.ruta) {
+    <app-tab [label]="pestana.label">
+      @if (pestanas()[activa()]?.ruta === pestana.ruta) {
+        @if (pestana.ruta === '/groups') {
+          <app-groups [embedded]="true" />
+        } @else {
+          <app-medical-group-list [embedded]="true" />
+        }
+      }
+    </app-tab>
+  }
+</app-tabs>

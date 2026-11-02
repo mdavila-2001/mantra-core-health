@@ -1,0 +1,5 @@
+/* El centro ocupa todo el ancho: una sola tarjeta con pestañas, centrada y a lo ancho. */
+.groups-hub__tabs {
+  display: block;
+  inline-size: 100%;
+}

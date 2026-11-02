@@ -410,8 +410,9 @@ function conversacion(c: { id: string; conversationTypeConceptId: string; groupI
       .filter((p) => p !== yo)
       .map((p) => {
         if (p === SUPPORT_ID) return { profileId: p, displayName: 'Soporte AloVida', avatarUrl: null };
-        const v = showcases.get(p);
-        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null, ...(v === undefined ? {} : showcaseVerification(v)) };
+        const v = showcases.get(p) ?? showcaseOf(p);
+        const avatarUrl = (v?.avatarFileId ? urlDeArchivoSimulado(v.avatarFileId) : null) ?? v?.avatarUrl ?? null;
+        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl, ...(v === undefined ? {} : showcaseVerification(v)) };
       }),
   };
 }
@@ -470,12 +471,7 @@ export function registrarComunidad(router: MockRouter): void {
       kind: user.practitionerProfileId !== undefined ? 'PRACTITIONER' : 'PATIENT',
       slug: datos.slug ?? user.key,
       displayName: datos.displayName ?? user.displayName,
-      headline: '',
-      biography: '',
-      avatarUrl: '',
-      coverUrl: '',
-      avatarFileId: '',
-      coverFileId: '',
+      headline: '', biography: '', avatarUrl: '', coverUrl: '', avatarFileId: '', coverFileId: '',
       verified: false,
       acceptsReviews: false,
       visibility: 'PUBLIC',
@@ -487,11 +483,11 @@ export function registrarComunidad(router: MockRouter): void {
       ratingAverage: null,
       ratingCount: 0,
       hasPublishedAgenda: false,
-      // Una vitrina recién creada desde «mi perfil» es de un profesional o de
-      // un paciente: ninguno de los dos lleva chip de categoría.
       categoria: null,
       seguidores: 0,
     };
+    const avatarFileId = datos.avatarFileId === null ? '' : (datos.avatarFileId ?? base.avatarFileId);
+    const avatarUrl = avatarFileId ? (urlDeArchivoSimulado(avatarFileId) ?? (base.avatarUrl || `/public/media/${avatarFileId}`)) : '';
     const actualizada: SimulatedShowcase = {
       ...base,
       slug: datos.slug ?? base.slug,
@@ -500,7 +496,8 @@ export function registrarComunidad(router: MockRouter): void {
       biography: datos.biography ?? base.biography,
       acceptsReviews: datos.acceptsReviews ?? base.acceptsReviews,
       visibility: datos.visibility ?? base.visibility,
-      avatarFileId: datos.avatarFileId === null ? '' : (datos.avatarFileId ?? base.avatarFileId),
+      avatarFileId,
+      avatarUrl,
       coverFileId: datos.coverFileId === null ? '' : (datos.coverFileId ?? base.coverFileId),
     };
     showcases.agregar(actualizada);

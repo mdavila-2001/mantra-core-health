@@ -7,7 +7,9 @@ import {
   LINK_TYPE,
   displayOf,
 } from '../fixtures/concepts';
+import { showcases } from '../fixtures/community';
 import { contactChannelsOfCarrier } from './insurance.handlers';
+import { urlDeArchivoSimulado } from './files.handlers';
 import {
   affiliationList,
   DOCTOR_CATEGORY,
@@ -529,22 +531,11 @@ interface IdiomaDeclarado {
 }
 
 /** Lo que el `PATCH` puede anotar: textos, interruptores y la lista de idiomas. */
-type CambioDeProfesional = string | boolean | readonly IdiomaDeclarado[];
+type CambioDeProfesional = string | boolean | readonly IdiomaDeclarado[] | undefined;
 
 type EdicionDeProfesional = { readonly id: string } & Record<string, CambioDeProfesional>;
 
-/**
- * Lo que se editó del perfil profesional, por perfil.
- *
- * `PROFESIONALES` es un arreglo de fixture, no una `Coleccion`: no tiene dónde
- * guardar una corrección. Hasta el 19/09/2026 el `PATCH` devolvía el cuerpo
- * mezclado y no lo anotaba en ningún lado, así que editar el título —o el NIT—
- * «funcionaba» hasta la siguiente lectura, que es el defecto que este archivo
- * ya documenta para la dirección de trabajo del paciente.
- *
- * Con clave, como las otras dos tablas de este módulo: así sobrevive a la
- * recarga, que es donde el defecto se notaba.
- */
+/** Ediciones del perfil profesional persistidas en sessionStorage. */
 const edicionesDeProfesional = new Coleccion<EdicionDeProfesional>(
   [],
   'mock.perfil-medico.ediciones',
@@ -570,11 +561,7 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     personalEmail: `${p.slug}@gmail.mock`,
     mobilePhone: p.phone,
     workMobilePhone: p.phone.replace(/\d$/, '9'),
-    // Sin el espacio interno: `esTelefonoCompleto` pide «+591 » + OCHO dígitos
-    // seguidos. Con `'+591 3 3456789'` el editor del médico nacía con el fijo
-    // del trabajo en rojo y **se negaba a guardar cualquier cosa** —«Hay un
-    // teléfono incompleto. Revisalo en Contacto»—, aunque nadie hubiera tocado
-    // ese campo. Medido el 19/09/2026 al intentar cargar un NIT.
+    // Formato '+591 ' + 8 dígitos exigido por esTelefonoCompleto
     workLandline: '+591 33456789',
     name: p.name,
     lastName: p.lastName,
@@ -611,21 +598,7 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     licenses: visiblesDelPerfil(matriculasPropiasDe(p)),
     languages: languagesOf(p),
     affiliations: affiliationList.filtrar((a) => a.practitionerProfileId === p.id),
-    // Un médico real de la red de una aseguradora no atendió a nadie en
-    // AloVida: su actividad en la plataforma es cero, no una cifra de ejemplo.
-    // Y sin actividad tampoco hay serie ni indicadores: un gráfico de doce
-    // meses en cero dice menos que no dibujarlo.
-    activity:
-      p.origen !== undefined
-        ? cuentasDeActividad(p)
-        : {
-            ...cuentasDeActividad(p),
-            // Datos sinteticos solo en demo explicita. ID-14 conserva el
-            // estado vacio cuando se inspecciona el contrato de API real.
-            ...(environment.mockBackend
-              ? { monthlyEncounters: serieMensualDemo(), quality: CALIDAD_DEMO }
-              : {}),
-          },
+    activity: p.origen !== undefined ? cuentasDeActividad(p) : { ...cuentasDeActividad(p), ...(environment.mockBackend ? { monthlyEncounters: serieMensualDemo(), quality: CALIDAD_DEMO } : {}) },
     createdAt: iso(-500),
   };
 }
@@ -646,15 +619,7 @@ function itemDeGuia(p: ProfesionalSimulado) {
       specialtyConceptId,
       isPrimary: i === 0,
     })),
-    // Para los de la red, el consultorio es la dirección que publica la
-    // aseguradora: «Consultorio Al» (de «Al Hamss») no existe en ningún lado.
-    workplaces:
-      p.origen !== undefined
-        ? [p.organizacion, p.direccion].filter((x) => x !== '')
-        : [p.organizacion, `Consultorio ${p.lastName}`],
-    // Las mismas cuentas que la ficha simulada (más abajo): la guía ordena por
-    // ellas, y el primero de «más encuentros» tiene que decir lo mismo al
-    // abrirlo.
+    workplaces: p.origen !== undefined ? [p.organizacion, p.direccion].filter((x) => x !== '') : [p.organizacion, `Consultorio ${p.lastName}`],
     activity: cuentasDeActividad(p),
   };
 }
@@ -678,21 +643,8 @@ interface ApoderamientoSimulado {
   readonly relationshipConceptId: string;
 }
 
-/*
- * Persistido para que aceptar una solicitud sobreviva al cambio de cuenta, que
- * recarga la aplicación. Un apoderamiento cuyo dependiente ya no existe —el
- * alta sin cuenta crea pacientes que no se persisten— se ignora al leer.
- */
-const apoderamientos = new Coleccion<ApoderamientoSimulado>([]).persistirEn(
-  'mock.profiles.apoderamientos',
-);
+const apoderamientos = new Coleccion<ApoderamientoSimulado>([]).persistirEn('mock.profiles.apoderamientos');
 
-/**
- * Un pedido de representar a alguien que ya tiene cuenta.
- *
- * Se persiste como las notificaciones: el aviso sobrevive a F5 y, si la
- * solicitud no, tocarlo llevaría a una bandeja vacía.
- */
 interface SolicitudDeVinculo {
   readonly id: string;
   readonly titularId: string;
@@ -934,7 +886,12 @@ export function registrarPerfiles(router: MockRouter): void {
     const p = pacienteDeSesion(request);
     if (p === undefined) return notFound();
     const { fileId } = cuerpo<{ fileId: string }>(request);
-    patientList.actualizar(p.id, { photoFileId: fileId ?? uuid('foto-nueva') });
+    const photoFileId = fileId ?? uuid('foto-nueva');
+    patientList.actualizar(p.id, { photoFileId });
+    const vitrina = showcases.todos().find((v) => v.targetId === p.id);
+    if (vitrina !== undefined) {
+      showcases.actualizar(vitrina.id, { avatarFileId: photoFileId, avatarUrl: urlDeArchivoSimulado(photoFileId) ?? vitrina.avatarUrl });
+    }
     return perfilPropioDe(patientList.get(p.id)!);
   });
 
@@ -943,6 +900,10 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const { photoFileId: _quitada, ...resto } = patientList.get(p.id)!;
     patientList.agregar(resto as PacienteSimulado);
+    const vitrina = showcases.todos().find((v) => v.targetId === p.id);
+    if (vitrina !== undefined) {
+      showcases.actualizar(vitrina.id, { avatarFileId: '', avatarUrl: '' });
+    }
     return perfilPropioDe(patientList.get(p.id)!);
   });
 
@@ -1651,9 +1612,36 @@ export function registrarPerfiles(router: MockRouter): void {
     return p === undefined ? notFound('Profesional no encontrado') : perfilProfesionalDe(p);
   });
 
-  router.put('/profiles/practitioners/:id/photo', ({ params }) => {
+  router.put('/profiles/practitioners/:id/photo', (request) => {
+    const p = professionalById(request.params['id']!);
+    if (p === undefined) return notFound();
+    const { fileId } = cuerpo<{ fileId: string }>(request);
+    if (edicionesDeProfesional.has(p.id)) {
+      edicionesDeProfesional.actualizar(p.id, { photoFileId: fileId });
+    } else {
+      edicionesDeProfesional.agregar({ id: p.id, photoFileId: fileId });
+    }
+    const vitrina = showcases.todos().find((v) => v.targetId === p.id);
+    if (vitrina !== undefined) {
+      const avatarUrl = (fileId ? urlDeArchivoSimulado(fileId) : null) ?? vitrina.avatarUrl;
+      showcases.actualizar(vitrina.id, { avatarFileId: fileId, avatarUrl });
+    }
+    return perfilProfesionalDe(p);
+  });
+
+  router.delete('/profiles/practitioners/:id/photo', ({ params }) => {
     const p = professionalById(params['id']!);
-    return p === undefined ? notFound() : perfilProfesionalDe(p);
+    if (p === undefined) return notFound();
+    if (edicionesDeProfesional.has(p.id)) {
+      edicionesDeProfesional.actualizar(p.id, { photoFileId: undefined });
+    } else {
+      edicionesDeProfesional.agregar({ id: p.id, photoFileId: undefined });
+    }
+    const vitrina = showcases.todos().find((v) => v.targetId === p.id);
+    if (vitrina !== undefined) {
+      showcases.actualizar(vitrina.id, { avatarFileId: '', avatarUrl: '' });
+    }
+    return perfilProfesionalDe(p);
   });
 
   router.post('/profiles/practitioners/:id/specialties', (request) => {
