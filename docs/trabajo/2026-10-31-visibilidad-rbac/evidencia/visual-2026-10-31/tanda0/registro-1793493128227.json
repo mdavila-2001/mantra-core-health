@@ -1,0 +1,62 @@
+[
+ {
+  "file": "ui-catalog-390-claro-ok.png",
+  "sw": 390,
+  "iw": 390,
+  "theme": "light",
+  "cont": [
+   0,
+   0
+  ],
+  "h1": "Catálogo de visibilidad",
+  "states": [],
+  "overflow": false,
+  "errs": [],
+  "fails": []
+ },
+ {
+  "file": "rbac-matrix-390-claro-ok.png",
+  "sw": 447,
+  "iw": 390,
+  "theme": "light",
+  "cont": [
+   0,
+   0
+  ],
+  "h1": "Matriz RBAC por módulo",
+  "states": [],
+  "overflow": true,
+  "errs": [],
+  "fails": []
+ },
+ {
+  "file": "ui-catalog-1440-claro-ok.png",
+  "sw": 1440,
+  "iw": 1440,
+  "theme": "light",
+  "cont": [
+   238,
+   0
+  ],
+  "h1": "Catálogo de visibilidad",
+  "states": [],
+  "overflow": false,
+  "errs": [],
+  "fails": []
+ },
+ {
+  "file": "rbac-matrix-1440-claro-ok.png",
+  "sw": 1440,
+  "iw": 1440,
+  "theme": "light",
+  "cont": [
+   238,
+   0
+  ],
+  "h1": "Matriz RBAC por módulo",
+  "states": [],
+  "overflow": false,
+  "errs": [],
+  "fails": []
+ }
+]
