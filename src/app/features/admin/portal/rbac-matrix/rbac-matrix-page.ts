@@ -58,19 +58,21 @@ const URL_KEYS = ['view', 'module', 'mode', 'role'] as const;
     />
     <div class="rbac-page" data-testid="portal-rbac-matrix">
       @if (catalog(); as data) {
-        <app-alert class="rbac-honesty" tone="info" data-testid="rbac-notes">
+        <app-alert
+          tone="info"
+          title="Esta vista muestra lo definido, no lo que está en vigor."
+          collapsible
+          data-testid="rbac-notes"
+        >
           <p class="rbac-honesty__line">
-            Un permiso fino sólo se aplica donde el sistema lo evalúa; en el resto de las rutas
-            decide el rol que la ruta exige. Esta vista muestra lo definido, no lo que está en vigor.
+            Un permiso fino sólo se aplica donde el sistema lo evalúa; en el resto de las rutas decide el rol que la
+            ruta exige. Límites de esta lectura:
           </p>
-          <details class="rbac-honesty__more">
-            <summary>Ver los {{ data.notes.length }} límites de esta lectura</summary>
-            <ul class="rbac__notes">
-              @for (note of data.notes; track note) {
-                <li>{{ note }}</li>
-              }
-            </ul>
-          </details>
+          <ul class="rbac__notes">
+            @for (note of data.notes; track note) {
+              <li>{{ note }}</li>
+            }
+          </ul>
         </app-alert>
 
         <section class="rbac-kpis" aria-label="Resumen del catálogo">
@@ -79,17 +81,17 @@ const URL_KEYS = ['view', 'module', 'mode', 'role'] as const;
             icon="grid"
             tone="primary"
             [value]="data.summary.modules"
-            [hint]="data.summary.modulesWithoutFinePermissions + ' sin permisos finos'"
+            [hint]="data.summary.modulesWithoutFinePermissions + ' sin finos'"
           />
           <app-metric-card
-            label="Permisos finos"
+            label="Permisos"
             icon="key"
             tone="success"
             [value]="data.summary.permissions"
-            [hint]="'En ' + data.roles.length + ' roles'"
+            [hint]="'Finos, en ' + data.roles.length + ' roles'"
           />
           <app-metric-card
-            label="Sólo por rol"
+            label="Sólo rol"
             icon="shield"
             tone="warning"
             [value]="data.summary.roleOnlyRoutes"
@@ -100,7 +102,7 @@ const URL_KEYS = ['view', 'module', 'mode', 'role'] as const;
             icon="flag"
             tone="error"
             [value]="data.summary.gaps"
-            [hint]="data.summary.undeclaredAuthRoutes + ' rutas sin autorización declarada'"
+            [hint]="data.summary.undeclaredAuthRoutes + ' sin autorización'"
           />
         </section>
       }

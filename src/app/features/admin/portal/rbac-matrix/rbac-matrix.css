@@ -13,25 +13,8 @@
   min-inline-size: 0;
 }
 
-.rbac-honesty {
-  padding: var(--sp-2) var(--sp-3);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-}
-
 .rbac-honesty__line {
   margin: 0;
-}
-
-.rbac-honesty__more summary {
-  cursor: pointer;
-  font-weight: 600;
-  inline-size: fit-content;
-}
-
-.rbac-honesty__more summary:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
 }
 
 .rbac__notes {
@@ -41,15 +24,8 @@
 
 .rbac-kpis {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3);
-}
-
-/* Dos por fila sólo cuando la loseta del icono deja sitio al rótulo entero. */
-@media (min-width: 560px) {
-  .rbac-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 .rbac-card {

@@ -54,7 +54,9 @@ const ALL = '';
             (valueChange)="kind.set($event ?? ''); resetPage()"
           />
         </app-form-field>
-        <app-search-field label="Buscar" placeholder="Recurso, código o rol" [(value)]="query" />
+        <app-form-field label="Buscar">
+          <app-search-field label="Buscar" placeholder="Recurso, código o rol" [(value)]="query" />
+        </app-form-field>
       </div>
 
       <p class="rbac__meta" aria-live="polite" data-testid="rbac-gaps-count">

@@ -50,11 +50,13 @@ export type MatrixMode = (typeof MATRIX_MODES)[number];
           />
         </app-form-field>
         @if (mode() === 'action') {
-          <app-search-field
-            label="Buscar recursos"
-            placeholder="Nombre del recurso"
-            [(value)]="query"
-          />
+          <app-form-field label="Buscar recurso">
+            <app-search-field
+              label="Buscar recursos"
+              placeholder="Nombre del recurso"
+              [(value)]="query"
+            />
+          </app-form-field>
         }
       </div>
 
