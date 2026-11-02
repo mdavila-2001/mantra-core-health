@@ -144,7 +144,7 @@ export const SECCIONES_DE_APOYO: readonly AppSection[] = [
     label: 'Mi equipo',
     group: 'Atención',
     icon: 'people',
-    roles: ['PRACTITIONER'],
+    roles: ['PRACTITIONER', 'SUPPORT_STAFF'],
     hiddenFor: ['PATIENT'],
     availability: 'disponible',
     summary: 'Quién le ayuda con su agenda y sus mensajes, y qué puede hacer en su nombre.',

@@ -1,18 +1,9 @@
-<app-page-header
-  title="Mis accesos"
-  subtitle="En qué organizaciones ayuda y qué puede hacer en cada una. Si necesita más, pídalo desde acá: lo decide la organización."
-/>
-
-<div class="mi-actividad">
-  <a
-    app-button
-    variant="outline"
-    size="sm"
-    routerLink="/my-support/activity"
-    data-testid="mi-actividad-enlace"
-    >Ver mi actividad</a
-  >
-</div>
+@if (!embedded()) {
+  <app-page-header title="Mis accesos" subtitle="En qué organizaciones ayuda y qué puede hacer en cada una. Si necesita más, pídalo desde acá: lo decide la organización." />
+  <div class="mi-actividad">
+    <a app-button variant="outline" size="sm" routerLink="/my-support/activity" data-testid="mi-actividad-enlace">Ver mi actividad</a>
+  </div>
+}
 
 <app-card class="canje" padding="lg" data-testid="canje-card">
   <h2 class="seccion__titulo">Unirme con un código o QR</h2>

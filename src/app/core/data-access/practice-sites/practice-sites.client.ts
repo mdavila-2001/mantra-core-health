@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { catchError, map, of, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
@@ -72,7 +72,15 @@ export class PracticeSitesClient {
   listMyRoleAssignments(): Observable<readonly MyRoleAssignment[]> {
     return this.http
       .get<readonly ConNulos<WireRoleAssignment>[]>(this.url('/practitioners/me/role-assignments'))
-      .pipe(map((items) => items.map(aVinculacion)));
+      .pipe(
+        map((items) => items.map(aVinculacion)),
+        catchError((err: unknown) => {
+          if (err instanceof HttpErrorResponse && (err.status === 404 || err.status === 0)) {
+            return of([]);
+          }
+          return of([]);
+        }),
+      );
   }
 
   /**
