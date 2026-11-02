@@ -30,7 +30,7 @@ import { DialogService } from '../../../../../shared/components/molecules/dialog
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
-import { dateOnly } from '../../governance/governance-labels';
+import { fecha } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import { pagedList } from '../../support/paged-list';
 import { effectLabel, governanceFailure, resourceKindLabel, staleAfter, subjectLabel } from '../permissions-labels';
 import { readWholeCatalog } from '../common/permission-catalog-source';
@@ -167,7 +167,7 @@ export class ScopeGrantsPanel {
   protected readonly subject = subjectLabel;
   protected readonly kind = resourceKindLabel;
   protected readonly effect = effectLabel;
-  protected readonly day = dateOnly;
+  protected readonly day = fecha;
 
   protected readonly permissionOptions = computed<readonly SelectOption<string>[]>(() => [
     { value: ANY_PERMISSION, label: 'Cualquier permiso' },

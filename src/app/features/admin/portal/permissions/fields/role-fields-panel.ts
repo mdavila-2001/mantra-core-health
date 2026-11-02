@@ -73,7 +73,7 @@ import { FieldRuleDialog } from './field-rule-dialog';
         <section class="panel__pick" aria-labelledby="fields-pick-title">
           <h2 class="panel__pick-title" id="fields-pick-title">Elija un rol para ver sus reglas de campo.</h2>
           @if (roles().length > 0) {
-            <ul class="panel__pick-list">
+            <ul class="panel__pick-list" [style.--pick-cols]="pickCols()">
               @for (r of roles(); track r.id) {
                 <li>
                   <button type="button" class="panel__pick-item" (click)="roleChanged.emit(r.id)">
@@ -155,6 +155,11 @@ export class RoleFieldsPanel {
   protected readonly rolesUnavailable = signal(false);
   protected readonly mask = maskLabel;
   protected readonly roles = signal<readonly AssignableRole[]>([]);
+  /** Columnas que reparten los roles parejo (5 → 3 + 2, nunca 4 + 1), con un máximo de cuatro. */
+  protected readonly pickCols = computed(() => {
+    const n = this.roles().length;
+    return n === 0 ? 1 : Math.ceil(n / Math.ceil(n / 4));
+  });
 
   protected readonly roleOptions = computed<readonly SelectOption<string>[]>(() =>
     this.roles().map((r) => ({ value: r.id, label: `${r.name} · ${r.code}` })),

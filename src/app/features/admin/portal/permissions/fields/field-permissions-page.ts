@@ -29,7 +29,7 @@ const AUDIT_ACTIONS = ['ROLE_FIELD_PERMISSIONS_SET', 'RESOURCE_SCOPE_GRANTED', '
       subtitle="Qué columnas ve o escribe cada rol y cómo se le enmascaran, y los permisos que valen sobre un recurso concreto."
     />
     <div class="perm-page" data-testid="portal-field-permissions">
-      <app-alert class="perm-honesty" tone="info" data-testid="portal-field-permissions-honesty">
+      <app-alert tone="info" title="Quitar una regla de campo todavía no está disponible." collapsible data-testid="portal-field-permissions-honesty">
         La API guarda reglas de campo nuevas o cambiadas; quitar una regla no está expuesto todavía. Las restricciones por dirección IP y por horario existen en el modelo de datos pero todavía no se pueden ver ni editar.
       </app-alert>
       <app-card class="perm-card" variant="outlined" padding="md">
