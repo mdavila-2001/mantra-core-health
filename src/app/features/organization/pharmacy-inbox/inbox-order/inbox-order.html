@@ -95,16 +95,13 @@
                 </div>
                 @if (ajustes()[i]; as ajuste) {
                   <div class="mostrador__ajuste">
-                    <app-radio-group
-                      [attr.aria-label]="'Decisión para ' + linea.medicamento"
-                      [attr.data-testid]="'mostrador-decision-' + i"
-                      [value]="ajuste.decision"
-                      (valueChange)="cambiarDecision(i, $event)"
-                    >
-                      <app-radio value="TAL_CUAL" label="Tal cual" />
-                      <app-radio value="PROPONER_GENERICO" label="Proponer sustituto" />
-                      <app-radio value="NO_DISPONIBLE" label="No disponible" />
-                    </app-radio-group>
+                    <app-stock-decision
+                      [index]="i"
+                      [line]="linea"
+                      [adjustment]="ajuste"
+                      (decisionChange)="cambiarDecision(i, $event)"
+                      (quantityChange)="setConfirmedQuantity(i, $event)"
+                    />
                     @if (ajuste.decision === 'PROPONER_GENERICO') {
                       @if (substituteSearchAt(i); as search) {
                         @switch (search.status) {
@@ -163,6 +160,7 @@
               Total no disponible: falta algún precio.
             }
           </p>
+          <app-stock-confirmation-notice [message]="confirmationError()" />
           <div class="mostrador__acciones">
             <button
               app-button

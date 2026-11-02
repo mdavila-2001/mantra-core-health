@@ -1,18 +1,32 @@
-<app-page-header
-  title="Grupos médicos"
-  subtitle="Arme el equipo de un servicio, con el cargo y el pago de cada integrante, y siga sus solicitudes."
-  [breadcrumbs]="breadcrumbs()"
->
-  <a
-    app-button
-    page-actions
-    variant="primary"
-    data-testid="medical-group-list-new"
-    [routerLink]="newGroupRoute"
+@if (embedded()) {
+  <div class="grupos-medicos__cabecera">
+    <p class="grupos-medicos__bajada">Arme el equipo de un servicio, con el cargo y el pago de cada integrante, y siga sus solicitudes.</p>
+    <a
+      app-button
+      variant="primary"
+      data-testid="medical-group-list-new"
+      [routerLink]="newGroupRoute"
+    >
+      Crear grupo médico
+    </a>
+  </div>
+} @else {
+  <app-page-header
+    title="Grupos médicos"
+    subtitle="Arme el equipo de un servicio, con el cargo y el pago de cada integrante, y siga sus solicitudes."
+    [breadcrumbs]="breadcrumbs()"
   >
-    Crear grupo médico
-  </a>
-</app-page-header>
+    <a
+      app-button
+      page-actions
+      variant="primary"
+      data-testid="medical-group-list-new"
+      [routerLink]="newGroupRoute"
+    >
+      Crear grupo médico
+    </a>
+  </app-page-header>
+}
 
 <div class="grupos">
   @if (deleteError(); as error) {

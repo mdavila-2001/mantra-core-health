@@ -7,26 +7,13 @@
 }
 
 @if (abierta(); as plantilla) {
-  <!-- ─── Un formulario abierto ─────────────────────────────────────────────
-       Tres cosas a la vez y en este orden: qué trae el estándar (no se toca),
-       qué agregó esta organización, y cómo se va a ver servido. -->
   <div class="constructor constructor--abierto">
-    <!-- La cabecera del formulario, como la tarjeta de título de Google
-         Forms: una banda de color arriba, el nombre grande, y las acciones a
-         la derecha. Es lo primero que se ve y lo que dice en qué formulario
-         se está. -->
     <header class="constructor__encabezado">
       <div class="constructor__encabezado-texto">
         <h2 class="constructor__titulo">{{ plantilla.name }}</h2>
         <p class="constructor__codigo">{{ plantilla.code }} · versión {{ plantilla.version }}</p>
       </div>
       <div class="constructor__encabezado-acciones">
-        <!-- El formulario en papel, en blanco y listo para completar a mano.
-             Sale por el mismo maquetador que la receta y la historia clínica,
-             así que la hoja se reconoce como de AloVida. Está en el
-             encabezado y no dentro de la vista previa a propósito: se baja
-             igual mientras se edita, que es cuando hace falta imprimir lo que
-             se acaba de armar. -->
         <button
           app-button
           type="button"
@@ -71,11 +58,6 @@
     }
 
     @if (enPrevia()) {
-      <!-- ─── Vista previa ────────────────────────────────────────────────────
-           Sólo cuando se pide. Es el mismo motor que sirve el formulario de
-           verdad, con los campos reales: el número de páginas que muestra es el
-           que se va a ver. Tenerla siempre al lado partía la pantalla en dos y
-           dejaba el editor en media columna. -->
       <section class="constructor__previa">
         <p class="constructor__previa-nota">
           Así lo va a ver quien complete el formulario: de a una página, con un tope de cuatro
@@ -102,12 +84,6 @@
       <section class="constructor__campos">
         <h3 class="constructor__subtitulo">Campos del formulario estándar</h3>
 
-        <!-- ─── Por qué estos no se tocan ───────────────────────────────────
-           Arriba de los campos y no dentro de cada tarjeta: es una sola razón
-           para todo el bloque, y repetirla veinte veces la vuelve ruido. Los
-           campos **se siguen mostrando enteros** —con su tipo y sus opciones—
-           porque esconderlos dejaría al doctor sin saber qué pregunta ya está
-           cubierta antes de agregar la suya. -->
         <div class="constructor__bloqueado" data-testid="aviso-estandar">
           <span class="constructor__bloqueado-icono" aria-hidden="true">
             <app-nav-icon name="lock" />
@@ -117,9 +93,6 @@
               No puede modificar esto: es un formulario estándar internacional.
             </p>
             @if (procedencia(); as origen) {
-              <!-- La procedencia no es un adorno legal: muchos de estos
-                 formularios tienen derechos de autor, y de quién es y bajo qué
-                 licencia se usa tiene que estar en pantalla, no en un chat. -->
               <p class="constructor__bloqueado-fuente">
                 {{ origen.sourceTitle }} · {{ origen.organization }} · {{ origen.license }}
               </p>
@@ -137,9 +110,6 @@
           <ul class="constructor__lista">
             @for (campo of camposEstandar(); track porCampo(campo)) {
               <li data-testid="campo-estandar">
-                <!-- `editable` en falso: se ven y no se tocan. Son la parte que
-                   hace comparable una ficha entre consultorios, y el backend
-                   los rechaza igual. -->
                 <app-field-editor [campo]="campo" [editable]="false" />
               </li>
             }
@@ -209,15 +179,10 @@
     }
   </div>
 } @else if (vista() === 'catalog') {
-  <!-- ─── Cargar un formulario: el catálogo estándar por especialidad ───────
-       REQ-27-008/009/010. La anatomía —buscador, filtros y grilla agrupada—
-       la pone `app-specialty-browser`, el mismo organismo del catálogo de
-       procedimientos; esta pantalla aporta los grupos y la tarjeta. -->
   <div class="constructor">
     <div class="constructor__barra">
       <p class="constructor__nota">
-        Elija un formulario estándar para cargarlo y agregarle sus campos. Los campos del estándar
-        no se modifican: son la parte que hace comparable una ficha entre consultorios.
+        Elija un formulario estándar de sus especialidades para cargarlo y agregarle sus campos.
       </p>
       <button
         app-button
@@ -232,13 +197,9 @@
     </div>
 
     @if (especialidadFiltrada(); as rotulo) {
-      <!-- El filtro por especialidad arranca puesto en la del médico: se dice
-           en palabras qué se está viendo y cómo salir, para que nadie crea que
-           el catálogo tiene sólo esto. -->
       <p class="constructor__filtro-especialidad" role="status" data-testid="filtro-especialidad">
         <span>
-          Mostrando los formularios de <strong>{{ rotulo }}</strong> y los generales de toda
-          consulta.
+          Mostrando los formularios de <strong>{{ rotulo }}</strong> y los generales de toda consulta.
         </span>
         <button
           app-button
@@ -248,7 +209,7 @@
           (clicked)="verTodasLasEspecialidades()"
           data-testid="ver-todas-especialidades"
         >
-          Ver todas las especialidades
+          Ver todas mis especialidades
         </button>
       </p>
     }
@@ -286,8 +247,6 @@
 
             <span class="rejilla__nombre">{{ plantilla.name }}</span>
 
-            <!-- `span` y no `p`: el contenido de un `button` es contenido de
-                 frase, y un párrafo adentro es HTML inválido. -->
             <span class="rejilla__dato constructor__codigo-ficha" [attr.title]="plantilla.code">
               {{ plantilla.code }} · versión {{ plantilla.version }}
             </span>
@@ -301,6 +260,20 @@
                   {{ cuantosPropios(plantilla) === 1 ? 'propio' : 'propios' }}
                 }
               </span>
+              @if (estaCargado(plantilla)) {
+                <app-badge variant="info" size="sm" data-testid="plantilla-cargada">Cargado</app-badge>
+              } @else {
+                <button
+                  app-button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  (clicked)="cargarFormularioAceptado(plantilla, $event)"
+                  data-testid="cargar-esta-plantilla"
+                >
+                  Cargar
+                </button>
+              }
               <span class="constructor__flecha" aria-hidden="true">
                 <app-nav-icon name="arrow-right" />
               </span>
@@ -317,21 +290,17 @@
     }
   </div>
 } @else {
-  <!-- ─── Mis formularios (REQ-27-001/002) ─────────────────────────────────
-       Lo primero que se ve: los formularios que su organización ya extendió,
-       en filas, con versión y especialidad. Toda la fila abre la edición. -->
   <div class="constructor">
     <div class="constructor__barra">
       <h2 class="constructor__grupo-titulo">Mis formularios</h2>
-      <button
-        app-button
-        type="button"
-        variant="primary"
-        (clicked)="cargarFormulario()"
-        data-testid="cargar-formulario"
-      >
-        Cargar formulario
-      </button>
+      <div class="constructor__acciones-barra">
+        <button app-button type="button" variant="secondary" (clicked)="abrirModalCrear()" data-testid="crear-formulario">
+          + Crear formulario
+        </button>
+        <button app-button type="button" variant="primary" (clicked)="cargarFormulario()" data-testid="cargar-formulario">
+          Cargar formulario
+        </button>
+      </div>
     </div>
 
     @if (cargandoListado()) {
@@ -377,8 +346,12 @@
                     <app-badge variant="info" size="sm" data-testid="mi-formulario-por-defecto">
                       Por defecto
                     </app-badge>
+                  } @else {
+                    <button app-button type="button" variant="ghost" size="sm" (clicked)="retirarFormulario(plantilla, $event)" data-testid="retirar-formulario">
+                      Retirar
+                    </button>
                   }
-                  @if (!esPorDefecto(plantilla) || cuantosPropios(plantilla) > 0) {
+                  @if (cuantosPropios(plantilla) > 0) {
                     {{ cuantosPropios(plantilla) }}
                     {{ cuantosPropios(plantilla) === 1 ? 'campo propio' : 'campos propios' }}
                   }
@@ -400,4 +373,13 @@
       </app-alert>
     }
   </div>
+}
+
+@if (mostrandoModalCrear()) {
+  <app-create-form-modal
+    [especialidades]="opcionesEspecialidadCreacion()"
+    [creando]="creandoNuevoFormulario()"
+    (crear)="crearFormulario($event)"
+    (cerrar)="cerrarModalCrear()"
+  />
 }

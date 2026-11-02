@@ -30,6 +30,10 @@ export class CreateSecretaryForm {
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
+  protected textOf(value: string | number | null): string {
+    return value === null ? '' : String(value);
+  }
+
   protected isValid(): boolean {
     return (
       this.nationalId().trim().length >= 5 &&

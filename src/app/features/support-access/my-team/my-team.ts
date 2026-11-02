@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal, type OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, type OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { DelegatedAccessClient } from '../../../core/data-access/delegated-access/delegated-access.client';
 import { SupportAccessClient } from '../../../core/data-access/support-access/support-access.client';
@@ -21,42 +21,28 @@ import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { formatDateTime, templateLabel } from '../support-labels';
+import { MySupport } from '../my-support/my-support';
 import { InviteSupport } from './invite-support/invite-support';
 import { esInvitacionSinResponder } from './invite-support/invite-support.rules';
 import { TeamAttention } from './team-attention/team-attention';
 import { TeamExplain } from './team-explain/team-explain';
+import { TeamQrTool } from './team-qr-tool/team-qr-tool';
 
 /**
- * **Mi equipo**: las personas que ayudan a un doctor con su agenda y sus
- * mensajes, y lo que el doctor decide sobre cada una.
- *
- * El doctor acepta a cada persona **una vez**; después decide si puede responder
- * en su nombre y si el paciente ve «respondido por su equipo». También aprueba o
- * niega los accesos clínicos temporales que pide el equipo (por paciente) y puede
- * retirar a alguien: deja de tener acceso de inmediato.
- *
- * Los interruptores piden el cambio a la API y vuelven a leer: lo que se ve es lo
- * que quedó guardado, no lo que se tocó.
+ * **Mi equipo y Mis accesos**: Gestión integral de equipo de apoyo y accesos delegados.
  */
 @Component({
   selector: 'app-my-team',
   imports: [
-    Alert,
-    AppButton,
-    AppButtonLink,
-    Badge,
-    Card,
-    InviteSupport,
-    PageHeader,
-    RouterLink,
-    Switch,
-    TeamAttention,
-    TeamExplain,
-    ViewStateHost,
+    Alert, AppButton, AppButtonLink, Badge, Card, InviteSupport, MySupport, PageHeader,
+    RouterLink, SearchField, SegmentedControl, Switch, TeamAttention, TeamExplain, TeamQrTool, ViewStateHost,
   ],
   templateUrl: './my-team.html',
   styleUrl: './my-team.css',
@@ -67,19 +53,79 @@ export class MyTeam implements OnInit {
   private readonly delegated = inject(DelegatedAccessClient);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly state = signal<ViewState<readonly DoctorTeamMember[]>>(loading());
-  /** Lo que el doctor ofreció y la secretaria todavía no respondió: no es su equipo hasta que ella acepte. */
   protected readonly invitaciones = signal<readonly DoctorTeamMember[]>([]);
   protected readonly actividad = signal<readonly SupportActivityEntry[]>([]);
   protected readonly ocupado = signal<string | null>(null);
-  /** La persona sobre la que el doctor pregunta «¿por qué pudo o no pudo…?». */
   protected readonly preguntandoPor = signal<DoctorTeamMember | null>(null);
-  /** Lo que se está decidiendo al aceptar a alguien que todavía no se aceptó. */
   protected readonly responderAlAceptar = signal<Readonly<Record<string, boolean>>>({});
 
+  protected readonly pestana = signal<'equipo' | 'accesos'>(
+    ['mis-accesos', 'accesos'].includes(this.route.snapshot.queryParamMap.get('tab') ?? '') ? 'accesos' : 'equipo',
+  );
+  protected readonly tabOpciones: readonly SegmentedOption<'equipo' | 'accesos'>[] = [
+    { value: 'equipo', label: 'Mi equipo' },
+    { value: 'accesos', label: 'Mis accesos' },
+  ];
+  protected readonly busqueda = signal('');
+  protected readonly mostrarQr = signal(false);
+  protected readonly qrInicial = signal<string | null>(null);
+
+  protected readonly miembrosFiltrados = computed(() => {
+    const q = this.busqueda().trim().toLowerCase();
+    const items = this.miembros();
+    if (!q) return items;
+    return items.filter((m) =>
+      m.personName.toLowerCase().includes(q) ||
+      m.organizationName.toLowerCase().includes(q) ||
+      m.coverageSummary.toLowerCase().includes(q) ||
+      this.rol(m).toLowerCase().includes(q),
+    );
+  });
+
+  protected readonly invitacionesFiltradas = computed(() => {
+    const q = this.busqueda().trim().toLowerCase();
+    const items = this.invitaciones();
+    if (!q) return items;
+    return items.filter((m) =>
+      m.personName.toLowerCase().includes(q) ||
+      m.organizationName.toLowerCase().includes(q) ||
+      m.coverageSummary.toLowerCase().includes(q),
+    );
+  });
+
   ngOnInit(): void {
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (hash.includes('code=')) {
+      const match = hash.match(/code=([^&]+)/);
+      if (match) {
+        this.qrInicial.set(decodeURIComponent(match[1]));
+        this.mostrarQr.set(true);
+      }
+    }
     this.cargar();
+  }
+
+  protected cambiarPestana(p: 'equipo' | 'accesos'): void {
+    this.pestana.set(p);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: p === 'accesos' ? 'mis-accesos' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected alternarQr(): void {
+    this.mostrarQr.update((v) => !v);
+  }
+
+  protected alEscanearQr(codigo: string): void {
+    this.toasts.info(`Código detectado: ${codigo}`);
+    if (codigo.includes('REQ-')) this.cambiarPestana('accesos');
   }
 
   protected cargar(): void {
@@ -90,16 +136,18 @@ export class MyTeam implements OnInit {
         this.invitaciones.set(items.filter(esInvitacionSinResponder));
         this.state.set(
           equipo.length === 0
-            ? empty(
-                { label: 'Cuando la organización le asigne a alguien, aparecerá acá' },
-                'Todavía no tiene equipo de apoyo.',
-              )
+            ? empty({ label: 'Cuando la organización le asigne a alguien, aparecerá acá' }, 'Todavía no tiene equipo de apoyo.')
             : ready(equipo),
         );
       },
       error: (failure: unknown) => {
         this.invitaciones.set([]);
-        this.state.set(errorToViewState<readonly DoctorTeamMember[]>(failure));
+        const status = (failure as { status?: number })?.status;
+        if (status === 404 || status === 0) {
+          this.state.set(empty({ label: 'Cuando la organización le asigne a alguien, aparecerá acá' }, 'Todavía no tiene equipo de apoyo.'));
+        } else {
+          this.state.set(errorToViewState<readonly DoctorTeamMember[]>(failure));
+        }
       },
     });
     this.support.getMyTeamActivity().subscribe({
@@ -116,40 +164,26 @@ export class MyTeam implements OnInit {
   protected rol = (m: DoctorTeamMember): string => templateLabel(m.roleTemplate);
   protected fecha = formatDateTime;
 
-  /**
-   * El estado para el doctor: la API lo reduce a `PENDING_ACCEPTANCE | ACTIVE | REVOKED`
-   * y deja en `delegateStatus` por qué una persona ya no está activa (retirada, suspendida
-   * por su organización o vencida): acá se dice cuál.
-   */
   protected estadoTexto(m: DoctorTeamMember): string {
-    if (m.status === 'REVOKED')
-      return {
-        ACTIVE: 'Retirada',
-        SUSPENDED: 'Suspendida',
-        REVOKED: 'Retirada',
-        EXPIRED: 'Vencida',
-      }[m.delegateStatus];
-    return { PENDING_ACCEPTANCE: 'Espera su aceptación', ACTIVE: 'Activa' }[m.status];
+    if (m.status === 'REVOKED') {
+      const mapa: Record<string, string> = { SUSPENDED: 'Suspendida', EXPIRED: 'Vencida' };
+      return mapa[m.delegateStatus] ?? 'Retirada';
+    }
+    return m.status === 'PENDING_ACCEPTANCE' ? 'Espera su aceptación' : 'Activa';
   }
+
   protected estadoTono(m: DoctorTeamMember): BadgeVariant {
     if (m.status === 'REVOKED') return m.delegateStatus === 'SUSPENDED' ? 'warning' : 'secondary';
-    return ({ PENDING_ACCEPTANCE: 'warning', ACTIVE: 'success' } as const)[m.status];
+    return m.status === 'PENDING_ACCEPTANCE' ? 'warning' : 'success';
   }
 
-  /** Por qué ya no puede actuar, en palabras; `null` si está activa o esperando su aceptación. */
   protected motivoDeBaja(m: DoctorTeamMember): string | null {
     if (m.status !== 'REVOKED') return null;
-    switch (m.delegateStatus) {
-      case 'SUSPENDED':
-        return 'Su organización suspendió el vínculo de esta persona por no renovarlo a tiempo. No puede actuar sobre su agenda hasta que la organización lo renueve; usted no tiene que hacer nada.';
-      case 'EXPIRED':
-        return 'El vínculo de esta persona venció. Ya no puede actuar sobre su agenda.';
-      default:
-        return 'Esta persona ya no forma parte de su equipo: no puede actuar sobre su agenda ni sus mensajes.';
-    }
+    if (m.delegateStatus === 'SUSPENDED') return 'Su organización suspendió el vínculo de esta persona por no renovarlo a tiempo.';
+    if (m.delegateStatus === 'EXPIRED') return 'El vínculo de esta persona venció.';
+    return 'Esta persona ya no forma parte de su equipo.';
   }
 
-  /** Lo que puede hacer sobre su agenda, en palabras. */
   protected acciones(m: DoctorTeamMember): string {
     return m.actions.map((a) => SUPPORT_ACTION_LABELS[a] ?? a).join(' · ');
   }
@@ -160,8 +194,6 @@ export class MyTeam implements OnInit {
   protected alternarRespuestaAlAceptar(m: DoctorTeamMember, valor: boolean): void {
     this.responderAlAceptar.update((actual) => ({ ...actual, [m.delegateId]: valor }));
   }
-
-  /* ---- acciones ------------------------------------------------------------ */
 
   protected aceptar(m: DoctorTeamMember): void {
     this.ejecutar(
@@ -176,9 +208,7 @@ export class MyTeam implements OnInit {
     this.ejecutar(
       m.delegateId,
       this.support.setReplySettings(m.delegateId, { mayReplyOnBehalf: puede }),
-      puede
-        ? `${m.personName} puede responder en su nombre.`
-        : `${m.personName} ya no responde en su nombre.`,
+      puede ? `${m.personName} puede responder en su nombre.` : `${m.personName} ya no responde en su nombre.`,
     );
   }
 
@@ -188,9 +218,7 @@ export class MyTeam implements OnInit {
     this.ejecutar(
       m.delegateId,
       this.support.setReplySettings(m.delegateId, { replyDisclosure: valor }),
-      mostrar
-        ? 'El paciente verá «respondido por su equipo».'
-        : 'El paciente ya no verá «respondido por su equipo».',
+      mostrar ? 'El paciente verá «respondido por su equipo».' : 'El paciente ya no verá «respondido por su equipo».',
     );
   }
 
@@ -210,8 +238,7 @@ export class MyTeam implements OnInit {
     const motivo = await this.dialogs.confirmWithReason(
       {
         title: `Retirar a ${m.personName}`,
-        message:
-          'Deja de tener acceso a su agenda y a sus mensajes ahora mismo. Las citas que creó se mantienen.',
+        message: 'Deja de tener acceso a su agenda y mensajes. Las citas creadas se mantienen.',
         confirmLabel: 'Retirar de mi equipo',
         destructive: true,
       },

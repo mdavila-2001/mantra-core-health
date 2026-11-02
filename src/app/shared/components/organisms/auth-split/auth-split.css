@@ -838,7 +838,7 @@
   /* El logotipo late con el monitor: lub-dub, en el mismo 33 % del ciclo en
      que el cometa pasa por el pico. */
   .auth-split--stage .auth-split__wordmark img {
-    animation: auth-marca-late var(--beat) var(--ease-out) var(--beat-start) infinite;
+    animation: auth-marca-late var(--beat) cubic-bezier(0.45, 0, 0.25, 1) var(--beat-start) infinite;
   }
 
   @keyframes auth-marca-late {
@@ -847,16 +847,16 @@
     100% {
       transform: scale(1);
     }
-    34.5% {
-      transform: scale(1.14);
+    35.5% {
+      transform: scale(1.1);
     }
-    38% {
+    39.5% {
       transform: scale(1);
     }
-    41% {
-      transform: scale(1.07);
+    42.5% {
+      transform: scale(1.05);
     }
-    45% {
+    47% {
       transform: scale(1);
     }
   }

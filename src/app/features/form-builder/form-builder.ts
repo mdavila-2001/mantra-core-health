@@ -50,6 +50,16 @@ import {
   type CambiosDelCampo,
   type TipoDeCampo,
 } from './field-editor/field-editor';
+import {
+  CreateFormModal,
+  type NuevoFormularioDatos,
+  type OpcionEspecialidadFormulario,
+} from './create-form-modal/create-form-modal';
+import {
+  guardarFormulariosCargados,
+  leerFormulariosCargados,
+  resolverEspecialidadesValidas,
+} from './form-builder-storage';
 import { type FilterDef } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { SpecialtyBrowser } from '../../shared/components/organisms/specialty-browser/specialty-browser';
 import type { SpecialtyGroup } from '../../shared/components/organisms/specialty-browser/specialty-browser.types';
@@ -68,95 +78,31 @@ import {
 import { FORM_TEMPLATE_PDF_DOWNLOADER } from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 /**
- * Los formularios que «Mis formularios» muestra siempre, aunque la
- * organización no les haya agregado campos: la ficha estándar de la cita
+ * Los formularios que «Mis formularios» muestra siempre: la ficha estándar de la cita
  * médica (`TRANSV_CITA_MEDICA`, del catálogo que siembra la API).
  */
 const FORMULARIOS_POR_DEFECTO: readonly string[] = ['TRANSV_CITA_MEDICA'];
 
-/**
- * Cómo se dibuja cada tipo de dato cuando el formulario se sirve.
- *
- * La clave es el tipo **ya normalizado** por `aTipoDeCampo`, no el `dataType`
- * crudo: los campos del estándar vienen en el vocabulario del seed clínico
- * (`NUMBER`, `TEXT`) y buscarlos así no acertaba ninguno, con lo que la presión
- * sistólica se servía como caja de texto libre y aceptaba letras.
- */
+/** Cómo se dibuja cada tipo de dato cuando el formulario se sirve. */
 const CONTROL_POR_TIPO: Readonly<Record<TipoDeCampo, TipoDeControl>> = {
   string: 'text',
   text: 'textarea',
   integer: 'number',
   decimal: 'number',
-  // Dos botones y no una casilla: ver `TipoDeControl.'yes-no'`. Lo pidió el
-  // propietario, y es la misma corrección que ya se hizo en el alta de agenda.
   boolean: 'yes-no',
   date: 'date',
-  // Los de elección no llegan acá: `aCampoDelMotor` los resuelve antes, porque
-  // su control depende de cuántas opciones tienen y de si admiten varias.
   choice: 'radio',
   checkboxes: 'checkboxes',
   choiceGrid: 'grid-radio',
   checkboxGrid: 'grid-checkboxes',
 };
 
-/**
- * A partir de cuántas opciones un campo de una sola respuesta se despliega.
- *
- * Es la regla de siempre de las pantallas migradas —hasta cuatro se ven, más
- * de cuatro se despliegan—, la misma que documenta `CampoDeFormulario.options`.
- */
 const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
 
 /**
- * **Formularios** — el generador con el que un doctor extiende un formulario
- * estándar con los campos de su consultorio.
- *
- * ## Qué es, y qué no
- *
- * No es un constructor de formularios en blanco. El catálogo de formularios
- * clínicos estándar por especialidad ya existe y está sembrado
- * (`chart.specialty_chart_templates`); lo que faltaba es que quien atiende
- * pueda **agregarle lo suyo** —«¿fuma?», «peso al ingreso»— sin pedirle a un
- * administrador que le arme una plantilla paralela. Los campos del estándar se
- * ven y no se tocan: son la parte que hace comparable una ficha entre
- * consultorios.
- *
- * ## Por qué hay un presupuesto a la vista
- *
- * La gobernanza de extensibilidad del backend (`extension_target_policies`)
- * declara cuántos campos propios admite el target. Se pregunta **antes** de
- * ofrecer el alta y se muestra siempre: sin eso la pantalla ofrece un botón y
- * el techo aparece como un error del servidor cuando la persona ya escribió el
- * campo. Un formulario que no admite extensión lo dice de entrada, en vez de
- * dejar probar.
- *
- * ## La vista previa no es un adorno
- *
- * Los campos que se agregan acá los sirve el mismo motor que sirve todo lo
- * demás: **de a una página, con tope de cuatro y barra de avance**. La vista
- * previa es ese motor, con los campos reales, así que el número de páginas que
- * muestra es el que va a ver el paciente. Es la única forma de que quien agrega
- * el quinto campo vea, en el momento, que acaba de abrir una página nueva.
- *
- * ## Dos llamadas, no una
- *
- * Declarar el campo (`POST /forms/field-definitions`) y colgarlo del formulario
- * (`POST /forms/assignments`) son dos permisos distintos del backend. Se hacen
- * en ese orden y se informan por separado: si la segunda falla, el campo quedó
- * declarado y sin colgar, y decir «no se pudo crear el campo» sería mentir.
- *
- * ## Guardar no relee, y nada se pierde por escribir rápido
- *
- * Cada cambio de una tarjeta se aplica **primero en la pantalla** y después se
- * manda. Antes se releía la plantilla entera tras cada guardado, y como el
- * editor se reseteaba con lo que volvía, escribir una opción de tres letras
- * con la pausa de guardado en el medio borraba las dos primeras. Y si había un
- * guardado en vuelo, el cambio siguiente se descartaba en silencio: elegir
- * «Opción múltiple» y escribir sus opciones era, literalmente, imposible.
- *
- * Ahora la tarjeta manda, la pantalla aplica y encola: un cambio que llega
- * mientras el anterior viaja espera su turno y sale cuando aquél vuelve. Sólo
- * un error relee del servidor, porque ahí la pantalla ya no sabe qué quedó.
+ * **Formularios** — gestión de formularios estándar y creación de formularios propios.
+ * Permite extender formularios estándar con campos de la organización, cargar formularios
+ * de las especialidades del profesional y crear nuevos formularios propios desde cero.
  */
 @Component({
   selector: 'app-form-builder',
@@ -165,6 +111,7 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
     AppButton,
     Badge,
     Card,
+    CreateFormModal,
     EmptyState,
     FieldEditor,
     NavIcon,
@@ -175,10 +122,6 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
     SpecialtyIcon,
   ],
   templateUrl: './form-builder.html',
-  // La hoja compartida va **primera**: Angular concatena en este orden y lo de
-  // `form-builder.css` son los ajustes de esta pantalla sobre esa base. Al
-  // revés, `.rejilla` le ganaría por posición a `.catalogo__rejilla` —misma
-  // especificidad— y el ancho de columna de acá no se aplicaría.
   styleUrls: ['../../shared/styles/card-grid.css', './form-builder.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -239,21 +182,53 @@ export class FormBuilder {
     });
   }
 
-  /** La especialidad con la que se presenta quien entra, o `null`. */
+  /** La especialidad primaria con la que se presenta quien entra, o `null`. */
   protected readonly especialidadPropia = signal<string | null>(null);
+
+  /** Todas las especialidades vigentes del profesional (en plural). */
+  protected readonly especialidadesPropias = signal<readonly string[]>([]);
+
+  /** Formularios cargados por el usuario a «Mis formularios». */
+  protected readonly formulariosCargados = signal<ReadonlySet<string>>(leerFormulariosCargados());
+
+  /** Formularios creados desde cero por el profesional. */
+  protected readonly creadasPorUsuario = signal<ReadonlySet<string>>(new Set());
+
+  /** Control del diálogo de alta de formulario desde cero. */
+  protected readonly mostrandoModalCrear = signal(false);
+  protected readonly creandoNuevoFormulario = signal(false);
 
   private preseleccionPendiente = true;
 
   /**
-   * Pregunta la especialidad del perfil profesional. Falla en silencio: una
-   * cuenta sin perfil —administración— ve el catálogo entero, como antes.
+   * Pregunta las especialidades del perfil profesional. Falla en silencio: una
+   * cuenta sin perfil ve el catálogo entero.
    */
   private resolverEspecialidadPropia(): void {
     this.profiles.getOwnPractitionerProfile().subscribe({
-      next: (perfil) => this.especialidadPropia.set(currentSpecialty(perfil.specialties)),
-      error: () => this.especialidadPropia.set(null),
+      next: (perfil) => {
+        const primaria = currentSpecialty(perfil.specialties);
+        this.especialidadPropia.set(primaria);
+        const validas = resolverEspecialidadesValidas(perfil.specialties);
+        this.especialidadesPropias.set(validas.length > 0 ? validas : primaria ? [primaria] : []);
+      },
+      error: () => {
+        this.especialidadPropia.set(null);
+        this.especialidadesPropias.set([]);
+      },
     });
   }
+
+  /** Opciones de especialidad disponibles para crear un formulario propio. */
+  protected readonly opcionesEspecialidadCreacion = computed<readonly OpcionEspecialidadFormulario[]>(() => {
+    const rotulos = this.especialidades();
+    const propias = this.especialidadesPropias();
+    if (propias.length === 0) {
+      const p = this.especialidadPropia();
+      return p ? [{ id: p, label: rotulos.get(p) ?? p }] : [];
+    }
+    return propias.map((id) => ({ id, label: rotulos.get(id) ?? id }));
+  });
 
   /**
    * El concepto del que cuelgan las fichas transversales (anamnesis, examen
@@ -273,7 +248,7 @@ export class FormBuilder {
     return this.especialidades().get(id) ?? 'su especialidad';
   });
 
-  /** «Todas las especialidades»: quita el filtro. */
+  /** «Todas mis especialidades»: quita el filtro para ver todas sus especialidades. */
   protected verTodasLasEspecialidades(): void {
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -282,36 +257,120 @@ export class FormBuilder {
     });
   }
 
-  /* -- Mis formularios y el catálogo para cargar uno (carril 27) -----------
-
-     Se entra a **los formularios propios** (REQ-27-001): los que su
-     organización ya extendió con campos suyos. El catálogo estándar entero es
-     el paso de «Cargar formulario» (REQ-27-008), agrupado por especialidad con
-     el mismo organismo que el catálogo de procedimientos (REQ-27-009). La
-     vista vive en la URL (`?view=catalog`), como el resto de los filtros:
-     recargar o compartir el enlace deja a la persona donde estaba. */
-
   /** Qué se ve con ningún formulario abierto. */
   protected readonly vista = computed<'mine' | 'catalog'>(() =>
     this.criterios()['view'] === 'catalog' ? 'catalog' : 'mine',
   );
 
   /**
-   * Los formularios que su organización ya extendió, por nombre.
-   *
-   * «Mío» es lo único que la pantalla puede afirmar sin inventar una
-   * asignación nueva: que la organización le agregó al menos un campo propio.
-   * Cargar un formulario y no agregarle nada no lo vuelve suyo.
+   * Los formularios en «Mis formularios»: por defecto, con campos propios,
+   * cargados expresamente o creados por el profesional, acotados a sus especialidades.
    */
   protected readonly misFormularios = computed<readonly ChartTemplate[] | null>(() => {
     const lista = this.listado();
     if (lista === null) return null;
-    const porDefecto = lista.filter((plantilla) => this.esPorDefecto(plantilla));
+    const cargados = this.formulariosCargados();
+    const creados = this.creadasPorUsuario();
+    const propias = this.especialidadesPropias();
+    const transversal = this.conceptoTransversal();
+
+    const aplicaEspecialidad = (p: ChartTemplate) => {
+      if (propias.length === 0) return true;
+      if (this.esPorDefecto(p)) return true;
+      if (p.specialtyConceptId === transversal) return true;
+      return propias.includes(p.specialtyConceptId);
+    };
+
+    const porDefecto = lista.filter((plantilla) => this.esPorDefecto(plantilla) && aplicaEspecialidad(plantilla));
     const propios = lista
-      .filter((plantilla) => !this.esPorDefecto(plantilla) && this.cuantosPropios(plantilla) > 0)
+      .filter(
+        (plantilla) =>
+          !this.esPorDefecto(plantilla) &&
+          (this.cuantosPropios(plantilla) > 0 || cargados.has(plantilla.id) || creados.has(plantilla.id)) &&
+          aplicaEspecialidad(plantilla),
+      )
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));
     return [...porDefecto, ...propios];
   });
+
+  /** Si el formulario ya forma parte de «Mis formularios». */
+  protected estaCargado(plantilla: ChartTemplate): boolean {
+    return (
+      this.esPorDefecto(plantilla) ||
+      this.cuantosPropios(plantilla) > 0 ||
+      this.formulariosCargados().has(plantilla.id) ||
+      this.creadasPorUsuario().has(plantilla.id)
+    );
+  }
+
+  /** Agrega un formulario estándar del catálogo a «Mis formularios». */
+  protected cargarFormularioAceptado(plantilla: ChartTemplate, evento?: Event): void {
+    evento?.stopPropagation();
+    const nuevo = new Set(this.formulariosCargados());
+    nuevo.add(plantilla.id);
+    this.formulariosCargados.set(nuevo);
+    guardarFormulariosCargados(nuevo);
+    this.toasts.info(`Formulario «${plantilla.name}» agregado a sus formularios.`);
+  }
+
+  /** Retira un formulario de «Mis formularios». */
+  protected retirarFormulario(plantilla: ChartTemplate, evento?: Event): void {
+    evento?.stopPropagation();
+    const nuevo = new Set(this.formulariosCargados());
+    nuevo.delete(plantilla.id);
+    this.formulariosCargados.set(nuevo);
+    guardarFormulariosCargados(nuevo);
+    this.toasts.info(`Formulario «${plantilla.name}» retirado de sus formularios.`);
+  }
+
+  protected abrirModalCrear(): void {
+    this.mostrandoModalCrear.set(true);
+  }
+
+  protected cerrarModalCrear(): void {
+    this.mostrandoModalCrear.set(false);
+  }
+
+  protected crearFormulario(datos: NuevoFormularioDatos): void {
+    this.creandoNuevoFormulario.set(true);
+    this.chartTemplates
+      .createTemplate({
+        name: datos.name,
+        code: datos.code,
+        specialtyConceptId: datos.specialtyConceptId,
+        fields: [],
+      })
+      .subscribe({
+        next: (creada) => {
+          this.creandoNuevoFormulario.set(false);
+          this.mostrandoModalCrear.set(false);
+
+          const cargados = new Set(this.formulariosCargados());
+          cargados.add(creada.id);
+          this.formulariosCargados.set(cargados);
+          guardarFormulariosCargados(cargados);
+
+          const creados = new Set(this.creadasPorUsuario());
+          creados.add(creada.id);
+          this.creadasPorUsuario.set(creados);
+
+          const actual = this.listado() ?? [];
+          this.plantillas.set(ready([...actual, creada]));
+
+          this.toasts.success(`Formulario «${creada.name}» creado con éxito.`);
+          this.abrir(creada);
+        },
+        error: (error: unknown) => {
+          this.creandoNuevoFormulario.set(false);
+          const vs = errorToViewState<null>(error);
+          const mensaje =
+            vs.status === 'validation'
+              ? vs.issues.map((i) => i.message).join(' ')
+              : 'No pudimos crear el formulario. Verifique el código y reintente.';
+          this.toasts.error(mensaje);
+        },
+      });
+  }
 
   /**
    * Si es uno de los formularios que toda organización tiene por defecto: la
@@ -394,19 +453,7 @@ export class FormBuilder {
     () => this.plantillas().status === 'loading',
   );
 
-  /* -- Buscador y filtros del catálogo --------------------------------------
-
-     El catálogo pasó de un puñado de formularios a más de cuarenta: una
-     rejilla de cuarenta y tantas tarjetas sin buscador obliga a leerlas todas
-     para encontrar la de uno. La lectura ya trae la lista entera —`GET
-     /charts/templates` no pagina—, así que acotar es filtrar lo que ya está en
-     memoria: ni una petición más por tecla.
-
-     El estado vive en la URL y no en una señal propia, que es la disciplina de
-     `app-filter-bar`: recargar o compartir el enlace reproduce el filtrado
-     exacto. Se lee de `queryParams` en vez de escuchar `filtersChanged` porque
-     la barra sólo avisa cuando **ella** cambia algo, y con eso un enlace con
-     `?q=` entraría sin filtrar. */
+  /* -- Buscador y filtros del catálogo -------------------------------------- */
 
   /** El rótulo de cada `specialtyConceptId` presente en el listado. */
   private readonly especialidades = signal<ReadonlyMap<string, string>>(new Map());
@@ -418,11 +465,12 @@ export class FormBuilder {
 
   protected readonly filtros = computed<readonly FilterDef[]>(() => {
     const rotulos = this.especialidades();
+    const propias = this.especialidadesPropias();
 
-    // Sólo las especialidades que de verdad tienen un formulario: ofrecer una
-    // opción que no deja nada es prometer un filtro vacío.
+    // Sólo las especialidades del profesional con formularios:
     const presentes = new Map<string, string>();
     for (const plantilla of this.listado() ?? []) {
+      if (propias.length > 0 && !propias.includes(plantilla.specialtyConceptId)) continue;
       const rotulo = rotulos.get(plantilla.specialtyConceptId);
       if (rotulo !== undefined) presentes.set(plantilla.specialtyConceptId, rotulo);
     }
@@ -431,7 +479,7 @@ export class FormBuilder {
       {
         key: 'especialidad',
         label: 'Especialidad',
-        placeholder: 'Todas las especialidades',
+        placeholder: propias.length > 0 ? 'Todas mis especialidades' : 'Todas las especialidades',
         options: [...presentes]
           .map(([value, label]) => ({ value, label }))
           .sort((a, b) => a.label.localeCompare(b.label, 'es')),
@@ -472,16 +520,23 @@ export class FormBuilder {
     const extension = criterios['extension'] ?? '';
     const clase = criterios['clase'] ?? '';
     const rotulos = this.especialidades();
+    const propias = this.especialidadesPropias();
+    const transversal = this.conceptoTransversal();
     const palabras = texto === '' ? [] : texto.split(/\s+/);
 
     return lista.filter((plantilla) => {
-      // Filtrar por una especialidad deja también las transversales: la
-      // anamnesis o el consentimiento son de toda consulta, y esconderlas
-      // obligaría a cambiar de filtro a mitad de la atención.
+      // Acotar a las especialidades del profesional y las transversales:
+      if (propias.length > 0) {
+        const pertenece =
+          propias.includes(plantilla.specialtyConceptId) ||
+          plantilla.specialtyConceptId === transversal;
+        if (!pertenece) return false;
+      }
+
       if (
         especialidad !== '' &&
         plantilla.specialtyConceptId !== especialidad &&
-        plantilla.specialtyConceptId !== this.conceptoTransversal()
+        plantilla.specialtyConceptId !== transversal
       ) {
         return false;
       }
@@ -493,9 +548,6 @@ export class FormBuilder {
       if (extension === 'sin' && propios > 0) return false;
 
       if (palabras.length === 0) return true;
-      // Nombre, código, especialidad y organismo de origen: son los cuatro
-      // datos que la tarjeta muestra, así que buscar por cualquiera de ellos
-      // encuentra lo que se está mirando.
       const pajar = normalizar(
         [
           plantilla.name,
@@ -582,20 +634,7 @@ export class FormBuilder {
     });
   }
 
-  /**
-   * Los nombres de las especialidades a las que cuelgan las plantillas.
-   *
-   * La plantilla trae el `specialtyConceptId` y nada más: un uuid no se puede
-   * mostrar en una tarjeta ni ofrecer como filtro. Se resuelven **en una sola
-   * lectura** con los ids que de verdad aparecen en el listado, y no pidiendo
-   * el catálogo entero de especialidades, porque así también quedan cubiertos
-   * los formularios transversales —anamnesis, examen físico, epicrisis—, cuyo
-   * concepto existe pero no es miembro de `VS_MEDICAL_SPECIALTY`.
-   *
-   * Un fallo acá **no rompe la pantalla**: las tarjetas pierden el rótulo de
-   * especialidad y el filtro se ofrece deshabilitado con su motivo, que es lo
-   * que el listado de formularios necesita para seguir sirviendo.
-   */
+  /** Los nombres de las especialidades a las que cuelgan las plantillas. */
   private cargarEspecialidades(lista: readonly ChartTemplate[]): void {
     const ids = lista.map((plantilla) => plantilla.specialtyConceptId).filter((id) => !!id);
     if (ids.length === 0) {
@@ -641,8 +680,6 @@ export class FormBuilder {
   private cargarPresupuesto(plantilla: ChartTemplate): void {
     this.forms.getExtensionBudget(plantilla.fieldTargetConceptId).subscribe({
       next: (budget) => this.presupuesto.set(budget),
-      // Un presupuesto que no se pudo leer se muestra como desconocido, no como
-      // cero: bloquear el alta por un fallo de lectura sería inventar una regla.
       error: () => this.presupuesto.set(null),
     });
   }
@@ -657,14 +694,7 @@ export class FormBuilder {
     () => (this.abierta()?.fields ?? []).filter((campo) => campo.own),
   );
 
-  /**
-   * De dónde salió el formulario abierto, si vino del catálogo sembrado.
-   *
-   * Se muestra junto al aviso de que no se puede modificar porque es la mitad
-   * que lo explica: no es una regla del producto, es que el documento es de un
-   * organismo y se usa bajo una licencia. Ausente en las plantillas que un
-   * administrador armó a mano — ahí el aviso va solo.
-   */
+  /** De dónde salió el formulario abierto, si vino del catálogo sembrado. */
   protected readonly procedencia = computed<ChartTemplateProvenance | null>(
     () => this.abierta()?.provenance ?? null,
   );
@@ -711,34 +741,16 @@ export class FormBuilder {
   protected readonly creando = signal(false);
   protected readonly alta = signal<ViewState<null>>(ready(null));
 
-  /**
-   * Si la pantalla está mostrando la vista previa en vez del editor.
-   *
-   * Una a la vez y no las dos en paralelo: la previa al lado partía la pantalla
-   * en dos columnas y dejaba el editor en media, que es donde se trabaja.
-   */
+  /** Si la pantalla está mostrando la vista previa en vez del editor. */
   protected readonly enPrevia = signal(false);
 
   /** Los campos con una petición en vuelo, para su acuse de «Guardando…». */
   protected readonly guardandoCampos = signal<ReadonlySet<string>>(new Set());
 
-  /**
-   * El cambio que llegó mientras el anterior viajaba, por campo.
-   *
-   * Uno solo y no una lista: si mientras viaja el primero llegan tres más, lo
-   * que hay que mandar es el último, que ya incluye a los otros dos —cada
-   * emisión trae el campo entero—.
-   */
+  /** El cambio que llegó mientras el anterior viajaba, por campo. */
   private readonly pendientes = new Map<string, CambiosDelCampo>();
 
-  /**
-   * Lo último que se le mandó al servidor de cada campo.
-   *
-   * Es contra lo que se compara el cambio siguiente: el campo abierto ya tiene
-   * aplicado lo que está viajando, así que compararlo con él diría «nada
-   * cambió» y el pendiente no saldría nunca. Se vacía al releer: ahí la verdad
-   * vuelve a ser la del servidor.
-   */
+  /** Lo último que se le mandó al servidor de cada campo para comparar cambios. */
   private readonly enviados = new Map<string, ChartTemplateField>();
 
   protected readonly puedeCrear = computed(
@@ -774,14 +786,7 @@ export class FormBuilder {
     this.enPrevia.update((activa) => !activa);
   }
 
-  /**
-   * Agrega un campo vacío **y lo abre**.
-   *
-   * Vacío y no con un formulario aparte que lo componga: es lo que hace un
-   * editor —aparece la fila y se escribe encima— y lo que deja agregarlo sin
-   * decidir de antemano su tipo. El nombre provisional lo pide el backend, que
-   * no acepta uno vacío; se reemplaza en cuanto se escribe el de verdad.
-   */
+  /** Agrega un campo vacío y lo abre para edición. */
   protected agregarCampo(): void {
     const plantilla = this.abierta();
     if (plantilla === null || this.creando()) {
@@ -794,15 +799,7 @@ export class FormBuilder {
     });
   }
 
-  /**
-   * Duplica un campo propio: la misma pregunta, con todo lo que trae, debajo.
-   *
-   * Es el botón de copiar de cualquier editor de formularios, y lo que evita
-   * escribir cinco veces las mismas cuatro opciones para cinco preguntas
-   * parecidas. Se declara una definición **nueva** y no se cuelga dos veces
-   * la misma: son dos preguntas que van a divergir, y una definición
-   * compartida haría que corregir una corrigiera la otra.
-   */
+  /** Duplica un campo propio: la misma pregunta, con todo lo que trae, debajo. */
   protected duplicarCampo(campo: ChartTemplateField): void {
     const plantilla = this.abierta();
     if (plantilla === null || this.creando()) {
