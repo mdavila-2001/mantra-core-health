@@ -44,9 +44,11 @@ const ROTULO_DE_ESTADO: Readonly<Record<AccessState, string>> = {
  * Una sola tarjeta con pestañas (regla del cliente §5). La autoridad es la API:
  * ocultar un botón no es seguridad.
  */
+import { RouterLink } from '@angular/router';
+
 @Component({
   selector: 'app-account-clinical-access',
-  imports: [AppButton, Alert, Badge, Card, DatePipe, EmptyState, PageHeader, Tab, Tabs, LoadingState],
+  imports: [AppButton, Alert, Badge, Card, DatePipe, EmptyState, PageHeader, RouterLink, Tab, Tabs, LoadingState],
   templateUrl: './clinical-access.html',
   styleUrl: './clinical-access.css',
   host: { '[class.is-incrustada]': 'incrustada()' },

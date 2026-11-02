@@ -1390,13 +1390,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M07 consent',
   },
   {
-    // BR-20 · CV-19: quién ve la historia del paciente y la revocación. Reemplaza
-    // a las maquetas estáticas de `features/alovida/accesos`, que quedan fuera de
-    // este menú (DECISIONES.md, BR-20).
     path: 'my-account/clinical-access',
-    // Sin renglón propio desde el 27/10/2026: es la vista `?ver=historia` de
-    // «Mi privacidad». La ruta redirige (`SECCIONES_REDIRIGIDAS`) y la sección
-    // queda registrada para que los enlaces guardados sigan resolviendo.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Quién ve mi historia',
     group: 'Mi cuenta',
@@ -1407,11 +1401,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M06 authz',
   },
   {
-    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones. De
-    // cualquier persona con sesión (`ANY_ROLE`); la API no exige rol y resuelve
-    // todo por el `id` del token. Fuera del menú lateral —al médico le
-    // desaparece «Mi cuenta» a propósito, y una entrada más lo traería de
-    // vuelta—: se entra por el menú de la cuenta, en el encabezado.
+    path: 'my-account/access-requests',
+    label: 'Buzón de solicitudes',
+    group: 'Mi cuenta',
+    icon: 'mail',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Solicitudes de vínculo asistencial.',
+    module: 'M06 authz',
+  },
+  {
+    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones.
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/security',
     label: 'Seguridad',

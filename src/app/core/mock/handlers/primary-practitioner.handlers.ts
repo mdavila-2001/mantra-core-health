@@ -1,6 +1,7 @@
 import { patientById, professionalById } from '../fixtures/people';
 import { notFound, preconditionFailed, reply, validation, type MockRouter } from '../mock-router';
-import { Coleccion, ahora, cuerpo, nuevoId } from '../mock-store';
+import { Coleccion, ahora, cuerpo, nuevoId, uuid } from '../mock-store';
+import { IDS } from '../mock-session';
 import { pacienteDeSesion } from './profiles.handlers';
 
 /* ============================================================================
@@ -21,7 +22,10 @@ interface EleccionSimulada {
   readonly hasta?: string;
 }
 
-const elecciones = new Coleccion<EleccionSimulada>([], 'primary-practitioner');
+const elecciones = new Coleccion<EleccionSimulada>([
+  { id: uuid('eleccion-ana'), pacienteId: IDS.paciente.patientProfileId, profesionalId: IDS.medica.practitionerProfileId, desde: '2026-01-15T08:00:00Z' },
+  { id: uuid('eleccion-mamani'), pacienteId: uuid('pid-p-mamani'), profesionalId: IDS.medica.practitionerProfileId, desde: '2026-03-10T14:30:00Z' },
+], 'primary-practitioner');
 
 const currentOf = (pacienteId: string) =>
   elecciones.todos().find((e) => e.pacienteId === pacienteId && e.hasta === undefined);
