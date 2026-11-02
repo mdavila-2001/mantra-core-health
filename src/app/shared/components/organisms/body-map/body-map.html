@@ -137,7 +137,7 @@
              decorativo: el nombre de cada parte llega por su zona. -->
           <image
             class="body-map__render"
-            [attr.href]="actual.vista.image"
+            [attr.href]="imagenes.fuente(actual.vista.image)"
             x="0"
             y="0"
             [attr.width]="caja()[0]"
@@ -166,7 +166,7 @@
                   [attr.aria-pressed]="zona.id === value()"
                   [attr.aria-label]="nombreAccesible(zona)"
                   [attr.data-testid]="testId() + '-' + zona.id"
-                  (click)="clicEnZona(zona)"
+                  (click)="clicEnZona(zona, $event)"
                   (keydown.enter)="elegir(zona)"
                   (keydown.space)="elegirConBarra($event, zona)"
                   (pointerenter)="apuntar(zona.id)"
@@ -198,13 +198,27 @@
     <!-- La tercera señal de lo elegido, además del relleno y del trazo: en
          palabras. Es la que sirve cuando no se distinguen los colores y la que
          un lector de pantalla anuncia al cambiar. -->
-    <p class="body-map__elegida" aria-live="polite" [attr.data-testid]="testId() + '-elegida'">
-      @if (nombreElegido(); as nombre) {
-        Zona elegida: <strong>{{ nombre }}</strong>
-      } @else {
-        Toque una parte del cuerpo.
+    <div class="body-map__estado">
+      <p class="body-map__elegida" aria-live="polite" [attr.data-testid]="testId() + '-elegida'">
+        @if (nombreElegido(); as nombre) {
+          Zona elegida: <strong>{{ nombre }}</strong>. Toque otro lugar de la zona para mover el punto.
+        } @else {
+          Toque una parte del cuerpo.
+        }
+      </p>
+      @if (nombreElegido()) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          [attr.data-testid]="testId() + '-quitar'"
+          (click)="quitar()"
+        >
+          Quitar
+        </button>
       }
-    </p>
+    </div>
 
     <!-- Lo que se ilumina por lo que la persona escribió o dictó, dicho en
          palabras: el color solo no alcanza, y además nombra las zonas que no

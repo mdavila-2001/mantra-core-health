@@ -79,7 +79,7 @@
   background: repeating-conic-gradient(
     from 0deg at 50% 50%,
     transparent 0deg 14deg,
-    color-mix(in srgb, var(--c-aqua-200) 13%, transparent) 18deg,
+    color-mix(in srgb, var(--c-aqua-200) 5%, transparent) 18deg,
     transparent 24deg 40deg
   );
   mix-blend-mode: screen;

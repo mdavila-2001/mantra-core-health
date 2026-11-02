@@ -1,14 +1,6 @@
-/* La silueta del cuerpo. Sólo tokens ALOVIDA; el molde es `department-map.css`.
-
-   La regla que gobierna esta hoja: **ningún estado se dice sólo con color**.
-   La zona elegida cambia de relleno, de trazo y se nombra abajo; la marcada
-   por lo que se contó lleva un trazo punteado y también se nombra abajo.
-   Quitá el color y el control sigue siendo usable. */
-
+/* Interactive body silhouette styles using ALOVIDA tokens. */
 :host {
   display: block;
-  /* El ancho máximo de la figura entera. Quien monta el organismo puede
-     cambiarlo; 20 rem la deja a unos 590 px de alto, un 25 % mayor que antes. */
   --body-map-ancho: 20rem;
 }
 
@@ -19,29 +11,19 @@
   gap: var(--sp-3);
 }
 
-/* En angosto el selector de vista reparte la fila entera (así lo hace
-   `app-segmented-control` por debajo de 30rem); centrado, la columna lo
-   encogía hasta cortar «Frente» en «Fren…». */
 @media (max-width: 30rem) {
-  .body-map__vistas {
-    align-self: stretch;
-  }
+  .body-map__vistas { align-self: stretch; }
 }
 
-/* ─── El escenario ──────────────────────────────────────────────────────────
-   Un panel con el centro apenas más claro y una sombra de piso bajo los pies:
-   la figura queda parada en un lugar, no recortada sobre la página. */
 
+/* Stage container with subtle radial surface and floor shadow */
 .body-map__escenario {
   position: relative;
   display: flex;
   justify-content: center;
   inline-size: 100%;
-  /* Para medir el marco en unidades del propio escenario (`cqi`). */
   container-type: inline-size;
   padding: var(--sp-5) var(--sp-4) var(--sp-6);
-  /* Superficie tonal sin trazo ni sombra: va dentro de una tarjeta, y una caja
-     con borde dentro de otra caja con borde era «caja dentro de caja». */
   border: 0;
   border-radius: var(--r-xl);
   background: radial-gradient(
@@ -51,8 +33,6 @@
   );
 }
 
-/* La sombra de piso: una elipse difusa bajo los pies. En la cara no va (es un
-   busto, no hay piso). */
 .body-map__escenario::after {
   content: '';
   position: absolute;
@@ -70,11 +50,9 @@
   pointer-events: none;
 }
 
-.body-map__escenario--cara::after {
-  content: none;
-}
+.body-map__escenario--cara::after { content: none; }
 
-/* El nombre de lo que se va a tocar, flotando arriba del escenario. */
+/* Floating tooltip displaying target zone before click */
 .body-map__pista {
   position: absolute;
   inset-block-start: var(--sp-3);
@@ -93,9 +71,7 @@
   pointer-events: none;
 }
 
-/* El marco reserva el alto de la figura entera (240 × 440 de `viewBox`, a lo
-   sumo `--body-map-ancho` de ancho): la cara es más baja y se centra adentro. Así el paso
-   entre vistas no corre lo que hay debajo. */
+/* Frame reserving viewport height to avoid layout shift between views */
 .body-map__marco {
   display: flex;
   align-items: center;
@@ -104,19 +80,6 @@
   min-block-size: calc(min(100cqi, var(--body-map-ancho)) * 440 / 240);
 }
 
-/* Mientras llega la imagen de la vista pedida se sigue viendo la anterior,
-   apenas apagada: es la señal de que el toque se recibió. */
-.body-map__lienzo {
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
-
-.body-map__escenario--cambiando .body-map__lienzo {
-  opacity: 0.55;
-}
-
-/* Una figura humana es vertical: 20 rem de ancho la deja en unos 35rem de alto
-   en escritorio. A 375 px ocupa la columna; el `viewBox` conserva la
-   proporción. */
 .body-map__lienzo {
   position: relative;
   display: block;
@@ -124,38 +87,23 @@
   max-width: var(--body-map-ancho);
   height: auto;
   overflow: visible;
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
 
-/* Acercada, lo que sale del cuadro se recorta: sin esto el render se
-   desbordaba sobre el resto de la página. Y el dedo arrastra la figura en vez
-   de desplazar la página. */
+.body-map__escenario--cambiando .body-map__lienzo { opacity: 0.55; }
+
 .body-map__lienzo--acercado {
   overflow: hidden;
   cursor: grab;
   touch-action: none;
 }
 
-.body-map__lienzo--acercado:active {
-  cursor: grabbing;
-}
+.body-map__lienzo--acercado:active { cursor: grabbing; }
+.body-map__lienzo--cara { max-width: calc(var(--body-map-ancho) * 1.19); }
 
-/* La cara es un busto apaisado: más ancha, para que ojos, nariz y boca sean
-   objetivos cómodos para el dedo. */
-.body-map__lienzo--cara {
-  max-width: calc(var(--body-map-ancho) * 1.19);
-}
-
-/* ─── La figura ─────────────────────────────────────────────────────────── */
-
-/* El maniquí renderizado: decorativo y sin clic (lo reciben las zonas). En
-   oscuro se apaga apenas: el yeso claro a pleno brillo sobre la superficie
-   oscura encandilaba y se comía las zonas. */
+/* Rendered clinical mannequin layer */
 .body-map__render {
   pointer-events: none;
-  /* Yeso claro sobre fondo claro pierde el volumen: un contorno finísimo y una
-     sombra de contacto separan la figura del escenario y dejan leer cintura,
-     cadera y hombros (lo que distingue una silueta de otra). Sólo el `<image>`,
-     que no recibe clics: un `filter` sobre las zonas se tragaba los toques. */
   filter: contrast(1.07)
     drop-shadow(0 0 0.5px color-mix(in srgb, var(--text-primary) 55%, transparent))
     drop-shadow(0 1.5px 2.5px color-mix(in srgb, var(--text-primary) 16%, transparent));
@@ -166,40 +114,27 @@
     drop-shadow(0 0 0.5px color-mix(in srgb, var(--text-primary) 40%, transparent));
 }
 
-/* Las zonas son transparentes: el maniquí se ve a través. La costura entre
-   ellas es un hilo tenue: se adivina dónde termina cada parte sin cortar la
-   figura en pedazos. */
+/* Interactive SVG path geometries */
 .body-map__forma {
   fill: transparent;
   stroke: color-mix(in srgb, var(--text-secondary) 30%, transparent);
   stroke-width: 0.7;
-  /* Punteada, como una marca de sastre: se lee como «división» y no como un
-     contorno duro dibujado sobre el cuerpo. */
   stroke-dasharray: 0.1 2.6;
   stroke-linejoin: round;
   stroke-linecap: round;
-  /* Una zona con hueco (la cara sin ojos, nariz ni boca) no lo rellena: el
-     clic en el hueco llega a la zona de adentro. */
   fill-rule: evenodd;
   cursor: pointer;
-  transition:
-    fill var(--dur-fast) var(--ease-out),
+  transition: fill var(--dur-fast) var(--ease-out),
     stroke var(--dur-fast) var(--ease-out),
     stroke-width var(--dur-fast) var(--ease-out);
 }
 
-/* La costura se insinúa en reposo y se revela cuando se mira de cerca: al pasar
-   el puntero por la figura, las divisiones suben de tono para que se vea qué
-   se puede tocar sin que el maniquí parezca un plano. */
 :where(.body-map__escenario:hover, .body-map__escenario:focus-within) .body-map__forma {
   stroke: color-mix(in srgb, var(--text-secondary) 62%, transparent);
   stroke-dasharray: 2.4 1.8;
 }
 
-/* ─── Estados ───────────────────────────────────────────────────────────── */
-
-/* Marcada por lo que se contó: un tinte del color secundario y un trazo
-   punteado, que es la seña que no depende del color. */
+/* State: Highlighted via text extraction */
 .body-map__zona--marcada .body-map__forma {
   fill: color-mix(in srgb, var(--brand-secondary) 34%, transparent);
   stroke: var(--brand-secondary);
@@ -209,13 +144,10 @@
 }
 
 @keyframes body-map-latido {
-  50% {
-    fill: color-mix(in srgb, var(--brand-secondary) 60%, transparent);
-  }
+  50% { fill: color-mix(in srgb, var(--brand-secondary) 60%, transparent); }
 }
 
-/* El puntero sólo insinúa: el estado de verdad es `--elegida`, y sobre la
-   elegida el puntero no la hace parecer suelta. */
+/* Hover state */
 .body-map__zona:not(.body-map__zona--elegida):hover .body-map__forma {
   fill: color-mix(in srgb, var(--brand-primary) 22%, transparent);
   stroke: color-mix(in srgb, var(--brand-primary) 75%, var(--bg-surface));
@@ -223,63 +155,33 @@
   stroke-dasharray: none;
 }
 
-/* El foco del teclado se ve **sobre el trazo**, no con un `outline` del
-   navegador: un `outline` rectangular sobre una forma irregular marca el
-   rectángulo que la contiene, que en los brazos es media figura. */
-.body-map__forma:focus {
-  outline: none;
-}
-
-/* Sin `filter` por lo mismo que la elegida (ver abajo): el halo se hace con
-   el trazo, que no cambia la forma que recibe el clic. */
+.body-map__forma:focus { outline: none; }
 .body-map__forma:focus-visible {
   stroke: var(--focus-ring);
   stroke-width: 3;
   stroke-dasharray: none;
 }
 
-/* Las señas de la elegida: el relleno en degradado para quien ve color, el
-   trazo marcado para quien no, y el marcador de abajo. Gana sobre la marcada.
-
-   Sin `filter`: con una sombra, el navegador toma la caja entera de la forma
-   para el clic, y la cabeza de la vista «Cara» —que tiene huecos donde van
-   ojos, nariz y boca— se tragaba los clics de esas zonas. */
+/* State: Active selection */
 .body-map__zona--elegida .body-map__forma {
   fill: var(--body-map-relleno-elegida, var(--brand-primary));
-  /* Translúcido: debajo hay un cuerpo, y la parte elegida tiene que seguir
-     viéndose como cuerpo, no como un recorte de color. */
   fill-opacity: 0.62;
   stroke: color-mix(in srgb, var(--brand-primary) 55%, var(--text-primary));
   stroke-width: 1.8;
   stroke-dasharray: none;
 }
 
-.body-map__elegida-arriba {
-  stop-color: color-mix(in srgb, var(--brand-primary) 72%, var(--bg-surface));
-}
+.body-map__elegida-arriba { stop-color: color-mix(in srgb, var(--brand-primary) 72%, var(--bg-surface)); }
+.body-map__elegida-abajo { stop-color: var(--brand-primary-active); }
 
-.body-map__elegida-abajo {
-  stop-color: var(--brand-primary-active);
-}
-
-/* ─── El marcador de la elegida ───────────────────────────────────────────
-   Un punto de la marca dentro de un halo claro, y una onda que se expande y
-   se apaga dos veces al elegir: lo que se ve primero cuando se mira la figura. */
-
-.body-map__marcador {
-  pointer-events: none;
-}
-
+/* Marker pinpoint for active selection */
+.body-map__marcador { pointer-events: none; }
 .body-map__marcador-halo {
   fill: var(--bg-surface);
   stroke: var(--brand-primary-active);
   stroke-width: 1.2;
 }
-
-.body-map__marcador-punto {
-  fill: var(--brand-primary-active);
-}
-
+.body-map__marcador-punto { fill: var(--brand-primary-active); }
 .body-map__marcador-onda {
   fill: none;
   stroke: var(--bg-surface);
@@ -291,18 +193,18 @@
 }
 
 @keyframes body-map-onda {
-  0% {
-    opacity: 0.9;
-    scale: 0.8;
-  }
-
-  100% {
-    opacity: 0;
-    scale: 2.4;
-  }
+  0% { opacity: 0.9; scale: 0.8; }
+  100% { opacity: 0; scale: 2.4; }
 }
 
-/* ─── Las líneas de abajo ───────────────────────────────────────────────── */
+/* Status captions */
+.body-map__estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+}
 
 .body-map__elegida,
 .body-map__marcadas {
@@ -326,7 +228,6 @@
   color: var(--text-primary);
 }
 
-/* La misma seña que en la figura, para que se lea como su leyenda. */
 .body-map__marca {
   display: inline-block;
   inline-size: var(--sp-3);
@@ -336,23 +237,14 @@
   background: color-mix(in srgb, var(--brand-secondary) 34%, transparent);
 }
 
-/* Quien pidió menos movimiento no recibe transiciones ni latido. El estado
-   sigue cambiando: lo que se apaga es la animación, no la información. */
 @media (prefers-reduced-motion: reduce) {
   .body-map__forma,
-  .body-map__lienzo {
-    transition: none;
-  }
-
+  .body-map__lienzo { transition: none; }
   .body-map__zona--marcada .body-map__forma,
-  .body-map__marcador-onda {
-    animation: none;
-  }
+  .body-map__marcador-onda { animation: none; }
 }
 
-/* ─── Herramientas ──────────────────────────────────────────────────────────
-   Acercar, ver entera, ampliar y compartir, en una fila que se parte si no cabe. */
-
+/* Toolbar controls */
 .body-map__herramientas {
   display: flex;
   flex-wrap: wrap;
@@ -377,10 +269,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Ampliada ──────────────────────────────────────────────────────────────
-   La figura ocupa la pantalla entera, para mirarla con el paciente al lado.
-   Por debajo del menú (z 1000): «Compartir» sigue abriéndose encima. */
-
+/* Fullscreen expanded view */
 .body-map--ampliado {
   position: fixed;
   inset: 0;
@@ -408,6 +297,4 @@
   max-block-size: none;
 }
 
-.body-map--ampliado .body-map__lienzo--cara {
-  max-inline-size: 100%;
-}
+.body-map--ampliado .body-map__lienzo--cara { max-inline-size: 100%; }
