@@ -75,7 +75,8 @@ export class PracticeSitesClient {
       .pipe(
         map((items) => items.map(aVinculacion)),
         catchError((err: unknown) => {
-          if (err instanceof HttpErrorResponse && (err.status === 404 || err.status === 0)) {
+          if (err instanceof HttpErrorResponse && err.status === 0) throw err;
+          if (err instanceof HttpErrorResponse && err.status === 404) {
             return of([]);
           }
           return of([]);

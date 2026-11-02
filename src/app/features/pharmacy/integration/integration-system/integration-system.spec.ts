@@ -49,7 +49,7 @@ describe('IntegrationSystem · cargar el sistema', () => {
     expect(h.value('integration-system-key')).toBe('');
   });
 
-  it('si el sistema no responde con esa clave, lo dice y conserva lo escrito', () => {
+  it('si el sistema no responde, conserva dirección y código pero limpia la clave', () => {
     h.mount(BASE);
     h.fill();
     h.button('integration-system-save').click();
@@ -63,8 +63,10 @@ describe('IntegrationSystem · cargar el sistema', () => {
     expect(h.text('integration-system-error')).toContain(SAVE_UNAVAILABLE_TEXT);
     expect(h.text('integration-system-error')).toContain('(petición req-9)');
     expect((h.root().querySelector('input[data-testid="integration-system-key"]') as HTMLInputElement).value).toBe(
-      'k-secreta',
+      '',
     );
+    expect(h.value('integration-system-url')).toContain('simulador:4100');
+    expect(h.value('integration-system-code')).toBe('FARM-1');
     expect(h.changed).toBe(0);
   });
 

@@ -67,20 +67,21 @@ export class CreateFormModal {
     );
   });
 
-  protected onNombreInput(valor: string): void {
-    this.nombre.set(valor);
+  protected onNombreInput(valor: string | number | null): void {
+    const nombre = valor === null ? '' : String(valor);
+    this.nombre.set(nombre);
     if (!this.codigoTocado()) {
-      this.codigo.set(sugerirCodigoFormulario(valor));
+      this.codigo.set(sugerirCodigoFormulario(nombre));
     }
   }
 
-  protected onCodigoInput(valor: string): void {
+  protected onCodigoInput(valor: string | number | null): void {
     this.codigoTocado.set(true);
-    this.codigo.set(valor);
+    this.codigo.set(valor === null ? '' : String(valor));
   }
 
-  protected onEspecialidadChange(valor: string): void {
-    this.especialidadId.set(valor);
+  protected onEspecialidadChange(valor: string | null): void {
+    if (valor !== null) this.especialidadId.set(valor);
   }
 
   protected enviar(): void {

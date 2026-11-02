@@ -205,7 +205,7 @@ export class InviteSupport {
         );
       },
       error: (fallo: unknown) => {
-        if (fallo instanceof HttpErrorResponse && (fallo.status === 404 || fallo.status === 0)) {
+        if (fallo instanceof HttpErrorResponse && fallo.status === 404) {
           this.vinculaciones.set(
             empty(
               { label: 'Pida su vinculación a un hospital en «Mis procedimientos»', route: '/my-account/my-procedures' },

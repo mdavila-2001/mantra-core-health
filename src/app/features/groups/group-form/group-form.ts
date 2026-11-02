@@ -48,7 +48,7 @@ export class GroupForm {
   readonly guardando = input<boolean>(false);
 
   readonly submitForm = output<GroupFormData>();
-  readonly cancel = output<void>();
+  readonly cancelled = output<void>();
   readonly showcaseCreated = output<OwnPublicProfile>();
 
   protected readonly name = signal('');
@@ -88,6 +88,14 @@ export class GroupForm {
       },
     ];
   });
+
+  protected chooseType(value: GroupFormData['groupType'] | null): void {
+    if (value !== null) this.groupType.set(value);
+  }
+
+  protected chooseVisibility(value: GroupFormData['visibility'] | null): void {
+    if (value !== null) this.visibility.set(value);
+  }
 
   protected onSubmit(): void {
     if (!this.canSubmit()) return;

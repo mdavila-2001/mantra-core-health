@@ -52,4 +52,22 @@ describe('CreateFormModal', () => {
     component['onClosed']();
     expect(cerrado).toBe(true);
   });
+
+  it('normaliza entradas nullable y numéricas conservando validación y código manual', () => {
+    component['onNombreInput'](123);
+    expect(component['nombre']()).toBe('123');
+    component['onCodigoInput'](42);
+    expect(component['codigo']()).toBe('42');
+    component['onNombreInput'](null);
+    expect(component['nombre']()).toBe('');
+    expect(component['puedeCrear']()).toBe(false);
+    component['onCodigoInput'](null);
+    expect(component['codigo']()).toBe('');
+  });
+
+  it('un evento null no reemplaza una especialidad elegida ni inventa otra', () => {
+    component['onEspecialidadChange']('esp-neuro');
+    component['onEspecialidadChange'](null);
+    expect(component['especialidadId']()).toBe('esp-neuro');
+  });
 });

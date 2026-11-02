@@ -54,7 +54,7 @@
     [perfilListo]="perfilListoParaPublico()"
     [guardando]="guardando()"
     (submitForm)="crear($event)"
-    (cancel)="alternarAlta()"
+    (cancelled)="alternarAlta()"
     (showcaseCreated)="alCrearLaVitrina($event)"
   />
 }
@@ -139,7 +139,7 @@
 </ng-template>
 
 <ng-template #topicCell let-group>
-  <app-badge variant="neutral" [value]="temaNombre(group.topicId)" />
+  <app-badge variant="secondary" [value]="temaNombre(group.topicId)" />
 </ng-template>
 
 <ng-template #typeCell let-group>
@@ -148,7 +148,7 @@
 
 <ng-template #visibilityCell let-group>
   <app-badge
-    [variant]="group.visibilityConceptId === 'c-publico' || group.visibility === 'PUBLIC' ? 'info' : 'outline'"
+    [variant]="group.visibilityConceptId === 'c-publico' || group.visibility === 'PUBLIC' ? 'info' : 'secondary'"
     [value]="group.visibilityConceptId === 'c-publico' || group.visibility === 'PUBLIC' ? 'Público' : 'Privado'"
   />
 </ng-template>

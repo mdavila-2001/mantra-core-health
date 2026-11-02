@@ -126,6 +126,15 @@ describe('IntegrationSync · resultado por sede', () => {
     expect(lines[1]).toContain('Unidad del vínculo BOX / del sistema TAB');
   });
 
+  it('producto por lotes conserva el motivo y dirige a Inventario sin afirmar cambio de stock', () => {
+    sync({ ...RESULT, skipped: [{
+      siteId: 's-1', siteCode: 'CEN', externalCode: 'ERP-0001', productId: 'p-a',
+      quantity: 5, reason: 'SITE_PRODUCT_KEPT_BY_LOTS',
+    }] });
+    expect(all('integration-sync-skipped-line')[0]).toContain('por lotes');
+    expect(all('integration-sync-skipped-line')[0]).toContain('Inventario');
+  });
+
   it('un código vinculado que el sistema dejó de mandar conserva su stock y se avisa', () => {
     sync(RESULT);
 

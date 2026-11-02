@@ -56,7 +56,13 @@ export function integrationSystemHarness() {
     confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    try {
+      http.verify();
+    } finally {
+      TestBed.resetTestingModule();
+    }
+  });
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byTestId = (id: string): HTMLElement | null => root().querySelector(`[data-testid="${id}"]`);

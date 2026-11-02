@@ -95,12 +95,35 @@ describe('Login', () => {
   });
 
   afterEach(() => {
-    http.verify();
+    try {
+      http.verify();
+    } finally {
+      TestBed.resetTestingModule();
+    }
   });
 
   function completar(identifier: string, password = 'secreto'): void {
     component.form.setValue({ identifier, password, mfaCode: '' });
   }
+
+  it('los enlaces de alta conservan destino y dibujan sus glifos decorativos', () => {
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    for (const [testId, destination, name] of [
+      ['login-registro', '/auth/register', 'patient'],
+      ['login-registro-organizacion', '/auth/register/organization-type', 'insurer'],
+    ]) {
+      const link = root.querySelector<HTMLAnchorElement>(`[data-testid="${testId}"]`);
+      expect(link?.getAttribute('href')).toBe(destination);
+      const icon = link?.querySelector('app-account-icon');
+      expect(icon?.getAttribute('name')).toBe(name);
+      const svg = icon?.querySelector('svg');
+      expect(svg).not.toBeNull();
+      expect(svg?.getAttribute('aria-hidden')).toBe('true');
+      expect(svg?.getAttribute('focusable')).toBe('false');
+      expect(svg?.children.length).toBeGreaterThan(0);
+    }
+  });
 
   describe('cuenta de administración local (sólo desarrollo)', () => {
     /** El recuadro se decide tras el primer render, en el navegador. */
