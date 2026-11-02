@@ -304,6 +304,14 @@
 
 /* ─── Las líneas de abajo ───────────────────────────────────────────────── */
 
+.body-map__estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
 .body-map__elegida,
 .body-map__marcadas {
   margin: 0;

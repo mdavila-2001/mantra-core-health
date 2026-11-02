@@ -371,6 +371,102 @@ describe('BodyMap', () => {
     expect(component.value()).toBeNull();
   });
 
+  /* ---- El punto exacto: el lugar que se tocó dentro de la zona ---- */
+
+  /**
+   * A pointer click on `id` at drawing coordinates (x, y). jsdom has no layout,
+   * so the canvas is given a box the size of its viewBox: client px equal
+   * drawing units.
+   */
+  function tocarEn(id: string, x: number, y: number): void {
+    const lienzo = html.querySelector('svg[data-testid^="body-map-vista-"]') as SVGSVGElement;
+    const [, , ancho, alto] = (lienzo.getAttribute('viewBox') ?? '').split(' ').map(Number);
+    lienzo.getBoundingClientRect = () => new DOMRect(0, 0, ancho, alto);
+    formaDe(id).dispatchEvent(new MouseEvent('click', { detail: 1, clientX: x, clientY: y }));
+    fixture.detectChanges();
+  }
+
+  function marcadores(): string[] {
+    return Array.from(html.querySelectorAll('.body-map__marcador')).map(
+      (marcador) => marcador.getAttribute('transform') ?? '',
+    );
+  }
+
+  it('un clic de puntero deja el punto donde se tocó, no en el centro de la zona', () => {
+    tocarEn('pecho', 100, 110);
+
+    expect(component.value()).toBe('pecho');
+    expect(marcadores()).toEqual(['translate(100 110)']);
+  });
+
+  it('tocar otro lugar de la zona elegida mueve el punto y no la suelta', () => {
+    tocarEn('pecho', 100, 110);
+    tocarEn('pecho', 108, 118);
+
+    expect(component.value()).toBe('pecho');
+    expect(marcadores()).toEqual(['translate(108 118)']);
+  });
+
+  it('«Quitar» suelta la zona y el punto', () => {
+    tocarEn('pecho', 100, 110);
+    html.querySelector<HTMLElement>('[data-testid="body-map-quitar"]')?.click();
+    fixture.detectChanges();
+
+    expect(component.value()).toBeNull();
+    expect(marcadores()).toEqual([]);
+    expect(html.querySelector('[data-testid="body-map-quitar"]')).toBeNull();
+  });
+
+  it('sin zona elegida no hay «Quitar»', () => {
+    expect(html.querySelector('[data-testid="body-map-quitar"]')).toBeNull();
+  });
+
+  it('elegir otra zona con el puntero lleva el punto a la nueva', () => {
+    tocarEn('pecho', 100, 110);
+    tocarEn('estomago', 118, 150);
+
+    expect(component.value()).toBe('estomago');
+    expect(marcadores()).toEqual(['translate(118 150)']);
+  });
+
+  it('con el teclado el punto queda en el centro de la zona, y no hereda el de antes', () => {
+    tocarEn('pecho', 100, 110);
+    formaDe('pecho').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    formaDe('pecho').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+
+    expect(component.value()).toBe('pecho');
+    expect(marcadores()).not.toContain('translate(100 110)');
+    expect(marcadores()).toHaveLength(1);
+  });
+
+  it('un punto de antes no vuelve cuando la zona se elige de nuevo desde afuera', () => {
+    tocarEn('pecho', 100, 110);
+    fixture.componentRef.setInput('value', 'hombros');
+    fixture.detectChanges();
+    fixture.componentRef.setInput('value', 'pecho');
+    fixture.detectChanges();
+
+    expect(marcadores()).not.toContain('translate(100 110)');
+  });
+
+  it('la cabeza de frente sigue acercando la cara, sin dejar un punto de otra vista', () => {
+    tocarEn('cabeza', 120, 36);
+
+    expect(vistaPuesta()).toBe('cara');
+    expect(component.value()).toBe('cabeza');
+    expect(marcadores()).not.toContain('translate(120 36)');
+  });
+
+  it('en la cara se puede señalar el lugar exacto de la cabeza', () => {
+    formaDe('cabeza').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    tocarEn('cabeza', 60, 40);
+
+    expect(vistaPuesta()).toBe('cara');
+    expect(marcadores()).toEqual(['translate(60 40)']);
+  });
+
   /**
    * WCAG 2.2 AA: lo elegido no se comunica sólo por color. Además del relleno
    * y del trazo grueso, el nombre se dice con palabras en una región viva.

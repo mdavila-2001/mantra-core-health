@@ -63,6 +63,14 @@ interface ZonaDibujable extends ZonaElegible {
   readonly acercaA?: IdDeVista;
 }
 
+/** The exact spot tapped inside a zone, in the drawing units of the view it was tapped on. */
+interface PuntoTocado {
+  readonly zona: string;
+  readonly vista: IdDeVista;
+  readonly x: number;
+  readonly y: number;
+}
+
 /** Una vista con las zonas recibidas que tienen forma en ella. */
 interface VistaDibujable {
   readonly vista: VistaDelCuerpo;
@@ -302,14 +310,29 @@ export class BodyMap {
     return objetivo !== null && objetivo !== this.vistaVisible();
   });
 
+  /** The spot the person tapped inside the chosen zone, if they tapped one. */
+  private readonly puntoTocado = signal<PuntoTocado | null>(null);
+
+  /** The tapped spot, only while it still belongs to the chosen zone and the view on screen. */
+  private readonly puntoDeLaElegida = computed<readonly [number, number] | null>(() => {
+    const punto = this.puntoTocado();
+    const vista = this.vistaVisible();
+    if (punto === null || vista === null) return null;
+    if (punto.zona !== this.value() || punto.vista !== vista.vista.id) return null;
+    return [punto.x, punto.y];
+  });
+
   /**
-   * Dónde va el marcador de la elegida: un punto por cada parte de la zona en
-   * la vista puesta (las dos manos llevan dos). Vacío si no hay elegida o si
-   * no está en esta vista.
+   * Dónde va el marcador de la elegida: el punto que la persona tocó dentro de
+   * la zona o, si no tocó ninguno (teclado, pastilla), un punto por cada parte
+   * de la zona en la vista puesta (las dos manos llevan dos). Vacío si no hay
+   * elegida o si no está en esta vista.
    */
   protected readonly centrosDeLaElegida = computed<readonly (readonly [number, number])[]>(() => {
     const elegida = this.value();
     if (elegida === null) return [];
+    const tocado = this.puntoDeLaElegida();
+    if (tocado !== null) return [tocado];
     return this.vistaVisible()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
   });
 
@@ -419,6 +442,15 @@ export class BodyMap {
       untracked(() => this.abrirDesdeElEnlace(zonas));
     });
 
+    // A tapped spot belongs to one zone: when the chosen zone changes (a chip,
+    // the parent), the old spot must not come back if that zone is chosen again.
+    effect(() => {
+      const elegida = this.value();
+      untracked(() => {
+        if (this.puntoTocado()?.zona !== elegida) this.puntoTocado.set(null);
+      });
+    });
+
     // Ampliada, la página de atrás no se desplaza.
     effect((alLimpiar) => {
       if (!this.ampliado() || !this.navegador) return;
@@ -442,10 +474,47 @@ export class BodyMap {
     }
   }
 
-  /** Un clic sobre una zona elige; el que cierra un arrastre no. */
-  protected clicEnZona(zona: ZonaDibujable): void {
+  /**
+   * Un clic sobre una zona elige; el que cierra un arrastre no.
+   *
+   * Con puntero, además, **fija el punto exacto** donde se tocó: tocar otro
+   * lugar de la zona ya elegida mueve el punto en vez de soltarla (para soltar
+   * está «Quitar»). Sin coordenadas —teclado, lector de pantalla— se comporta
+   * como Enter: elige con el punto en el centro, y volver a pulsar suelta.
+   */
+  protected clicEnZona(zona: ZonaDibujable, evento: MouseEvent): void {
     if (this.visor.consumirArrastre()) return;
-    this.elegir(zona);
+    const vista = this.vistaVisible();
+    const lienzo = (evento.currentTarget as SVGElement | null)?.ownerSVGElement;
+    // A click with detail 0 is not a pointer click: it has no position to pin.
+    if (evento.detail === 0 || vista === null || !lienzo || this.acercaOtraVista(zona)) {
+      this.elegir(zona);
+      return;
+    }
+    const punto = this.visor.puntoEnElDibujo(lienzo, evento.clientX, evento.clientY);
+    if (punto === undefined) {
+      this.elegir(zona);
+      return;
+    }
+    this.apuntada.set(null);
+    this.puntoTocado.set({
+      zona: zona.id,
+      vista: vista.vista.id,
+      x: Math.round(punto[0] * 10) / 10,
+      y: Math.round(punto[1] * 10) / 10,
+    });
+    this.value.set(zona.id);
+  }
+
+  /** Suelta la zona elegida y su punto, sin tener que buscar otra para cambiar de idea. */
+  protected quitar(): void {
+    this.puntoTocado.set(null);
+    this.value.set(null);
+  }
+
+  /** La cabeza de frente no fija punto: acerca la cara, y allí se toca el lugar exacto. */
+  private acercaOtraVista(zona: ZonaDibujable): boolean {
+    return zona.acercaA !== undefined && this.vistas().some((v) => v.vista.id === zona.acercaA);
   }
 
   protected alternarAmpliado(): void {
@@ -490,7 +559,7 @@ export class BodyMap {
       viewName: vista.vista.nombre,
       zoneName: zona?.nombre ?? null,
       zonePath: zona?.d ?? null,
-      zoneCenters: zona?.centros ?? [],
+      zoneCenters: zona === undefined ? [] : this.centrosDeLaElegida(),
       colors: readBodyMapColors(this.host.nativeElement),
     };
   }
@@ -541,9 +610,11 @@ export class BodyMap {
    * queda elegida, que es lo que se quiso al tocarla.
    */
   protected elegir(zona: ZonaDibujable): void {
-    if (zona.acercaA !== undefined && this.vistas().some((v) => v.vista.id === zona.acercaA)) {
+    this.puntoTocado.set(null);
+    const destino = zona.acercaA;
+    if (destino !== undefined && this.acercaOtraVista(zona)) {
       this.apuntada.set(null);
-      this.vistaPedida.set(zona.acercaA);
+      this.vistaPedida.set(destino);
       this.value.set(zona.id);
       this.elegidaAlPedirVista.set(zona.id);
       return;
