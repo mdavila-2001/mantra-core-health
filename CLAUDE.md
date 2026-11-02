@@ -39,6 +39,7 @@ Reglas absolutas:
   - Subcomponentes subatómicos (Container Smart ≤ 150 lín., subcomponentes Dumb ≤ 120 lín.).
   - Plantilla `.html` y estilos `.css` separados.
   - Rutas y menús modularizados por dominio (lazy loading por módulo).
+  - Comentarios de código e inline comments: OBLIGATORIAMENTE en inglés (All inline comments in English).
   - Orquestación en paralelo mediante la herramienta y skill `kman`.
 - `PR_MANDATORY_ON_FINISH` — **Orden de Pablo (02/11/2026): Toda sesión que termine su tarea y valide sus gates debe empujar a remoto y ABRIR PULL REQUEST a `dev`. Prohibido dejar cambios pendientes en local o ramas sin PR.**
 
