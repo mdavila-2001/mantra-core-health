@@ -1,0 +1,3 @@
+:host { display: block; min-width: 0; }
+/* Una tarjeta a lo ancho (composition-rules §5): sin medida de formulario ni columna vacía al lado. */
+.obs-pagina { display: block; inline-size: 100%; }

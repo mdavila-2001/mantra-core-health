@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Medición de la glucosa capilar</title>
+  <desc id="d">Secuencia de cuatro pasos: lavar y secar las manos, pinchar el lateral de la yema del dedo con una lanceta, depositar la gota en la tira reactiva y leer el resultado en el glucómetro. Debajo, sus usos en el autocontrol de la diabetes y la detección de hipoglucemia, y advertencias sobre su interpretación.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Cómo se mide la glucosa en una gota</text>
+  <text x="110" y="80" text-anchor="middle" class="step">1 · Lavar y secar</text>
+  <text x="300" y="80" text-anchor="middle" class="step">2 · Pinchar el lateral</text>
+  <text x="490" y="80" text-anchor="middle" class="step">3 · Gota a la tira</text>
+  <text x="680" y="80" text-anchor="middle" class="step">4 · Leer y anotar</text>
+  <line x1="180" y1="180" x2="230" y2="180" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="370" y1="180" x2="420" y2="180" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="560" y1="180" x2="610" y2="180" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="80" y="140" width="60" height="90" rx="26" fill="var(--skin)" stroke="var(--line)"/>
+  <path d="M70 104 C74.8 110.4 76.4 113.6 76.4 116.8 a16 16 0 0 1 -12.8 0 C63.6 113.6 65.2 110.4 70 104 Z" fill="var(--accent)"/>
+  <path d="M92 104 C96.8 110.4 98.4 113.6 98.4 116.8 a16 16 0 0 1 -12.8 0 C85.6 113.6 87.2 110.4 92 104 Z" fill="var(--accent)"/>
+  <path d="M114 104 C118.8 110.4 120.4 113.6 120.4 116.8 a16 16 0 0 1 -12.8 0 C107.6 113.6 109.2 110.4 114 104 Z" fill="var(--accent)"/>
+  <path d="M136 104 C140.8 110.4 142.4 113.6 142.4 116.8 a16 16 0 0 1 -12.8 0 C129.6 113.6 131.2 110.4 136 104 Z" fill="var(--accent)"/>
+  <rect x="270" y="150" width="60" height="100" rx="28" fill="var(--skin)" stroke="var(--line)"/>
+  <rect x="320" y="120" width="16" height="52" rx="5" fill="var(--accent)"/>
+  <path d="M328 172 L326 186" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <text x="300" y="270" text-anchor="middle" class="small muted">Lanceta</text>
+  <rect x="456" y="160" width="60" height="100" rx="28" fill="var(--skin)" stroke="var(--line)"/>
+  <path d="M486 134 C492.0 142.0 494.0 146.0 494.0 150.0 a16 16 0 0 1 -16.0 0 C478.0 146.0 480.0 142.0 486 134 Z" fill="var(--vessel)"/>
+  <rect x="470" y="200" width="90" height="18" rx="3" fill="var(--nerve)" transform="rotate(-20 515 209)"/>
+  <text x="490" y="270" text-anchor="middle" class="small muted">Tira reactiva</text>
+  <rect x="640" y="120" width="84" height="130" rx="14" fill="var(--accent)"/>
+  <rect x="652" y="136" width="60" height="44" rx="6" fill="var(--panel)"/>
+  <text x="682" y="165" text-anchor="middle" class="small muted">mg/dL</text>
+  <circle cx="682" cy="214" r="14" fill="var(--accent-l)"/>
+  <text x="682" y="270" text-anchor="middle" class="small muted">Glucómetro</text>
+  <text x="400" y="304" text-anchor="middle" class="lab">El resultado aparece en segundos</text>
+  <rect x="20" y="336" width="370" height="110" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="366" text-anchor="middle" class="title">Para qué se usa</text>
+  <text x="40" y="392" class="lab">• Autocontrol de la diabetes</text>
+  <text x="40" y="416" class="lab">• Detectar a tiempo una hipoglucemia</text>
+  <rect x="410" y="336" width="370" height="110" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595.0" y="366" text-anchor="middle" class="title">A tener en cuenta</text>
+  <text x="430" y="392" class="lab">• Manos sucias falsean el resultado</text>
+  <text x="430" y="416" class="lab">• No sustituye siempre al análisis venoso</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

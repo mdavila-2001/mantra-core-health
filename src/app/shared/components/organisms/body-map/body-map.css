@@ -7,6 +7,9 @@
 
 :host {
   display: block;
+  /* El ancho máximo de la figura entera. Quien monta el organismo puede
+     cambiarlo; 20 rem la deja a unos 590 px de alto, un 25 % mayor que antes. */
+  --body-map-ancho: 20rem;
 }
 
 .body-map {
@@ -91,14 +94,14 @@
 }
 
 /* El marco reserva el alto de la figura entera (240 × 440 de `viewBox`, a lo
-   sumo 16rem de ancho): la cara es más baja y se centra adentro. Así el paso
+   sumo `--body-map-ancho` de ancho): la cara es más baja y se centra adentro. Así el paso
    entre vistas no corre lo que hay debajo. */
 .body-map__marco {
   display: flex;
   align-items: center;
   justify-content: center;
   inline-size: 100%;
-  min-block-size: calc(min(100cqi, 16rem) * 440 / 240);
+  min-block-size: calc(min(100cqi, var(--body-map-ancho)) * 440 / 240);
 }
 
 /* Mientras llega la imagen de la vista pedida se sigue viendo la anterior,
@@ -111,22 +114,35 @@
   opacity: 0.55;
 }
 
-/* Una figura humana es vertical: 16rem de ancho la deja en unos 35rem de alto
+/* Una figura humana es vertical: 20 rem de ancho la deja en unos 35rem de alto
    en escritorio. A 375 px ocupa la columna; el `viewBox` conserva la
    proporción. */
 .body-map__lienzo {
   position: relative;
   display: block;
   width: 100%;
-  max-width: 16rem;
+  max-width: var(--body-map-ancho);
   height: auto;
   overflow: visible;
+}
+
+/* Acercada, lo que sale del cuadro se recorta: sin esto el render se
+   desbordaba sobre el resto de la página. Y el dedo arrastra la figura en vez
+   de desplazar la página. */
+.body-map__lienzo--acercado {
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.body-map__lienzo--acercado:active {
+  cursor: grabbing;
 }
 
 /* La cara es un busto apaisado: más ancha, para que ojos, nariz y boca sean
    objetivos cómodos para el dedo. */
 .body-map__lienzo--cara {
-  max-width: 19rem;
+  max-width: calc(var(--body-map-ancho) * 1.19);
 }
 
 /* ─── La figura ─────────────────────────────────────────────────────────── */
@@ -332,4 +348,66 @@
   .body-map__marcador-onda {
     animation: none;
   }
+}
+
+/* ─── Herramientas ──────────────────────────────────────────────────────────
+   Acercar, ver entera, ampliar y compartir, en una fila que se parte si no cabe. */
+
+.body-map__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+.body-map__grupo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.body-map__zoom {
+  min-inline-size: 3.5rem;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Ampliada ──────────────────────────────────────────────────────────────
+   La figura ocupa la pantalla entera, para mirarla con el paciente al lado.
+   Por debajo del menú (z 1000): «Compartir» sigue abriéndose encima. */
+
+.body-map--ampliado {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  justify-content: flex-start;
+  padding: var(--sp-4);
+  overflow: auto;
+  background: var(--bg-surface);
+}
+
+.body-map--ampliado .body-map__escenario {
+  flex: 1;
+  align-items: center;
+}
+
+.body-map--ampliado .body-map__marco {
+  min-block-size: 0;
+  block-size: 100%;
+}
+
+.body-map--ampliado .body-map__lienzo {
+  inline-size: auto;
+  max-inline-size: 100%;
+  block-size: calc(100dvh - 12.5rem);
+  max-block-size: none;
+}
+
+.body-map--ampliado .body-map__lienzo--cara {
+  max-inline-size: 100%;
 }

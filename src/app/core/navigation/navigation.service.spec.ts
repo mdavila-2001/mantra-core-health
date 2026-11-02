@@ -102,10 +102,11 @@ describe('NavigationService', () => {
       expect(enGrupos).not.toContain('/notification-center');
     });
 
-    it('al médico le desaparece «Mi cuenta», porque se queda sin secciones', () => {
+    it('al médico Mi cuenta conserva sólo el Buzón común de solicitudes', () => {
       abrirSesion(['PRACTITIONER'], ['t-1']);
 
-      expect(service.menu().map((g) => g.label)).not.toContain('Mi cuenta');
+      expect(service.menu().find((g) => g.label === 'Mi cuenta')?.items.map((item) => item.route))
+        .toEqual(['/my-account/access-requests']);
     });
 
     it('un destino fijo no nombra su grupo en la ruta de navegación', async () => {
@@ -176,6 +177,7 @@ describe('NavigationService', () => {
         // perfil de paciente, que no es un rol sino un dato de la cuenta, y la
         // pantalla lo dice cuando falta. Mismo criterio que «Mis citas».
         '/my-account/dependents',
+        '/my-account/access-requests', // ANY_ROLE en el dev9ad vigente.
         '/my-account/appointments',
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
         // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
@@ -337,18 +339,17 @@ describe('NavigationService', () => {
         'Formularios',
         'Mis servicios',
         'Cotizaciones',
-        // «Grupos médicos» entra el 25/10/2026 con el carril 21 (FT-21): la
-        // ficha pide la pantalla con sus tres pestañas y «Crear grupo médico»,
-        // y responder invitaciones o cargar las notas del ejercicio es un
-        // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
-        // por el propietario en el PR.
-        'Grupos médicos',
+        // «Grupos médicos» pasa a ser pestaña de «Grupos y foros» el 01/11/2026
+        // (pedido del propietario): se unifican las comunidades y los equipos médicos.
         // «Mi equipo» entra con el personal de apoyo (2026-10): es la única
         // puerta del doctor a quienes le ayudan con su agenda y sus mensajes —
         // aceptarlos una vez, decidir si responden en su nombre, aprobar el acceso
         // clínico temporal—. Decisión a confirmar por el propietario en el PR: la
         // lista cerrada pasa de once a doce.
         'Mi equipo',
+        // «Facturación» entra el 31/10/2026: el médico cobra y factura SUS
+        // consultas (la API acota el alcance en `billing-simulated.access.ts`).
+        'Facturación',
         'Contabilidad',
       ]);
     });
@@ -702,8 +703,6 @@ describe('NavigationService', () => {
         '/form-builder',
         '/my-services',
         '/my-quotations',
-        // Carril 21: los grupos médicos se arman sobre el mismo catálogo.
-        '/my-medical-groups',
       ]);
     });
 
@@ -832,11 +831,10 @@ describe('NavigationService', () => {
         // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
         '/administration/insurance-campaigns',
         '/administration/my-organization',
+        '/my-account/access-requests',
       ]);
-      // Un solo dominio: sin «General» (Directorios, Chats) ni «Mi cuenta»
-      // (el autoservicio del paciente), que es justo lo que la captura del
-      // pedido mostraba de más.
-      expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración']);
+      // Conserva el dominio de Administración y el nuevo Buzón común de ANY_ROLE.
+      expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración', 'Mi cuenta']);
       expect(service.menu()[0]?.blocks.map((bloque) => bloque.label)).toEqual([
         'Seguros',
         'Organizaciones',
@@ -849,6 +847,7 @@ describe('NavigationService', () => {
       // El armazón dibuja sin `<details>` todo grupo con `aplanado`.
       expect(service.menu().map((grupo) => [grupo.label, grupo.aplanado])).toEqual([
         ['Administración', true],
+        ['Mi cuenta', true],
       ]);
     });
 

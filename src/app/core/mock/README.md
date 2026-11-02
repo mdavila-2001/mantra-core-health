@@ -26,12 +26,13 @@ las lista y permite copiarlas.
 | Médica | `medica@alovida.mock` | Dra. Valeria Rojas Mendoza. Cardióloga con agenda, pacientes, historias clínicas, recetas, vitrina, artículos, contabilidad, visitas de laboratorio. Dos organizaciones. |
 | Paciente | `paciente@alovida.mock` | Ana Lucía Pérez Quiroga. Citas pasadas y futuras, historia clínica, resultados de laboratorio, recetas, pedidos de farmacia, seguros, comunidad. |
 | Administradora | `admin@alovida.mock` | Todos los roles administrativos: organizaciones, personas, identidad, terminología, moderación, geolocalización, contabilidad, activos, cotizaciones, laboratorio farmacéutico. |
-| Superadmin | `superadmin@alovida.mock` | Comodín: entra a todo. Tres organizaciones. |
+| Superadmin | `superadmin@alovida.mock` (también `admin@alovidasalud.com`, el superadministrador local) | Comodín: entra a todo. Tres organizaciones. Incluye «Superadministración» y «Registrar médico». |
 | Visitador | `visitador@alovida.mock` | Carla Fernández Ríos, visitadora médica de Laboratorios Inti. Solicitudes de visita, agenda de visitas, registros. |
 | Farmacia | `farmacia@alovida.mock` | Mariela Céspedes, encargada de Farmacia Vida (`PHARMACY_STAFF`). Catálogo de productos (alta, carga masiva por CSV, «sin stock», edición y retiro), pedidos del mostrador (sólo los de su farmacia) y promociones. Chatea con los pacientes **como la farmacia** («Escribiendo como» en Chats, «Chatear con el paciente» en cada pedido). |
+| Centro de imagen | `imagen@alovida.mock` | Personal del Centro de Imagen Sur (`DIAGNOSTIC_CENTER`). «Horarios y equipos»: horario general («Resto de servicios» en cuanto una modalidad tiene horario propio), horarios por modalidad, excepciones por estudio y estado de cada equipo, que es el cupo de cada turno. |
 
 También entran por número de documento (`4567890`, `7654321`, `1112223`,
-`9998887`, `5556667`).
+`9998887`, `5556667`, `7002002`).
 
 ## Qué hay adentro
 

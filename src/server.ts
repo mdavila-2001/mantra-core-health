@@ -15,6 +15,7 @@ import {
   securityHeaders,
   sourceIndexScriptHashes,
 } from './server/security-headers';
+import { shareTokenPageHeaders } from './server/share-token-page-headers';
 import { OTEL_TRACES_PATH, otelGateway } from './server/telemetry/otel-gateway';
 import { serverTelemetryConfig } from './server/telemetry/server-telemetry.config';
 import { serverTracingMiddleware } from './server/telemetry/server-tracing.middleware';
@@ -117,7 +118,8 @@ function vieneCifrada(request: express.Request): boolean {
 
 app.use((request, response, next) => {
   const headers = vieneCifrada(request) ? headersHttps : headersHttp;
-  for (const [name, value] of Object.entries(headers)) {
+  // Las páginas con el token de una receta compartida pisan `Referrer-Policy`.
+  for (const [name, value] of Object.entries({ ...headers, ...shareTokenPageHeaders(request.originalUrl) })) {
     response.setHeader(name, value);
   }
   next();

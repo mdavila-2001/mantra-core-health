@@ -1,5 +1,6 @@
 ---
 slug: absceso-dental
+image: absceso-dental.svg | La infección baja por la pulpa y forma pus en la punta de la raíz. | Corte de un diente con caries, pulpa infectada y una bolsa de pus en la punta de la raíz dentro del hueso, con los síntomas y las señales de urgencia.
 ---
 
 ## [definition] Introducción

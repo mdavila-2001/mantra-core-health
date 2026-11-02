@@ -1,5 +1,6 @@
 ---
 slug: ck-total
+image: ck-total.svg | La creatina cinasa sale a la sangre cuando se dañan las fibras musculares. | Músculo esquelético y corazón liberando creatina cinasa a la sangre, un tubo de muestra y la lista de situaciones que ayuda a valorar, como el ejercicio intenso o la rabdomiólisis.
 ---
 
 ## [definition] Introducción

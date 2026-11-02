@@ -1,5 +1,6 @@
 ---
 slug: acne
+image: acne.svg | El acné nace en el folículo pilosebáceo: exceso de sebo, tapón, bacterias e inflamación. | Corte de la piel con dos folículos pilosebáceos: uno normal por donde sale el sebo y otro obstruido por un tapón, con bacterias e inflamación alrededor. A la derecha, los cuatro factores que causan el acné y los tipos de lesiones.
 ---
 
 ## [definition] Introducción

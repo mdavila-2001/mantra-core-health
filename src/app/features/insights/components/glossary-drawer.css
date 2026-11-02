@@ -1,0 +1,12 @@
+.gl { inline-size: min(560px, 100vw); max-inline-size: 100vw; block-size: 100dvh; max-block-size: 100dvh; margin: 0 0 0 auto; padding: var(--sp-5); color: var(--text-primary); background: var(--bg-surface); border: 0; border-inline-start: 1px solid var(--border-default); overflow-y: auto; }
+.gl::backdrop { background: color-mix(in srgb, var(--text-primary) 40%, transparent); }
+.gl__head { display: flex; justify-content: space-between; align-items: center; }
+.gl__title { margin: 0; font-family: var(--font-display); font-size: var(--fs-h3); }
+.gl__x { font: inherit; font-size: 1.5rem; line-height: 1; color: inherit; background: none; border: 0; cursor: pointer; min-inline-size: 44px; min-block-size: 44px; }
+.gl__x:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.gl__lead, .gl__more { color: var(--text-secondary); font-size: var(--fs-caption); }
+.gl__group { margin: var(--sp-5) 0 var(--sp-2); font-size: var(--fs-body); }
+.gl__list { display: grid; gap: var(--sp-3); margin: 0; }
+.gl__item { padding-block-end: var(--sp-3); border-block-end: 1px solid var(--border-default); }
+.gl__item dt { font-weight: 600; }
+.gl__item dd { margin: var(--sp-1) 0 0; }

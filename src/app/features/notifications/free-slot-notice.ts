@@ -42,7 +42,7 @@ const NOTICE_CLASS = 'SLOT_RELEASED';
 /**
  * Vigila la campana y levanta un toast cuando se libera un horario.
  *
- * ## Por qué está en `features/` y no en `core/mock/`
+ * ## Por qué está en `features/` y no en el simulador (`mock/`)
  *
  * Porque necesita el `ToastService`, que vive en `shared/`, y `core/` no puede
  * importar de `shared/` —la dirección de las capas es `features → shared →

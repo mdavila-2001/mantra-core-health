@@ -144,6 +144,9 @@ export const CICLO_DE_UNIDAD: readonly InfraConcept[] = [
 
 export const DISPONIBILIDAD: readonly InfraConcept[] = [
   c('SPACE_OP_AVAILABLE', 'Disponible'),
+  // F2: los dos bloqueos del eje de disponibilidad (la columna es la misma).
+  c('SPACE_OP_BLOCKED_CLINICAL', 'Bloqueado (clínico)'),
+  c('SPACE_OP_BLOCKED_ADMIN', 'Bloqueado (administrativo)'),
   c('SPACE_OP_MAINTENANCE', 'En mantenimiento'),
   c('SPACE_OP_CLOSED', 'Cerrado'),
 ];

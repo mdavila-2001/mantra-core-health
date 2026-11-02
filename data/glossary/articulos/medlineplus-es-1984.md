@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1984
+image: medlineplus-es-1984.svg | Los islotes se separan de un páncreas donante y se infunden en el hígado, donde fabrican insulina. | Un páncreas donante del que se aíslan los islotes en el laboratorio; los islotes se infunden por la vena porta en el hígado del receptor, donde producen insulina. Abajo, a quién se ofrece y qué implica.
 ---
 
 ## [definition] Introducción

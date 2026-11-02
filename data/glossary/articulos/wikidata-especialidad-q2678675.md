@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2678675
+image: wikidata-especialidad-q2678675.svg | La fisiatría trabaja en ciclos para recuperar la función y la autonomía. | Ciclo de evaluar, fijar objetivos, aplicar terapias y reevaluar alrededor de la autonomía, junto a los recursos de la rehabilitación como fisioterapia, terapia ocupacional y ortesis.
 ---
 
 ## [definition] Introducción

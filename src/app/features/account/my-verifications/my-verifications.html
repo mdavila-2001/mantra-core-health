@@ -1,6 +1,6 @@
 <app-page-header
   title="Mis verificaciones"
-  subtitle="Lo que AloVida, las instituciones y las aseguradoras ya confirmaron de usted, y lo que falta."
+  subtitle="Cada sello le muestra a sus pacientes que AloVida, sus instituciones o sus aseguradoras confirmaron sus datos. Acá ve cuáles tiene y cómo sumar los que faltan."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -31,6 +31,7 @@
                 data-testid="verif-etiquetas-reintentar"
                 (clicked)="cargar()"
               >
+                <app-nav-icon name="refresh" />
                 Reintentar
               </button>
             </app-alert>
@@ -39,7 +40,8 @@
           <div class="verif__resumen" data-testid="verif-resumen">
             <!-- Una sola frase: como ítems sueltos del flex se partía en tres renglones. -->
             <p class="verif__resumen-texto">
-              <strong>{{ verificados() }} de {{ pasos().length }}</strong> tramos con sello.
+              <strong>{{ verificados() }} de {{ pasos().length }}</strong> etapas con sello de
+              verificación.
               @if (pendientes() > 0) {
                 Tiene {{ pendientes() }}
                 {{
@@ -58,12 +60,17 @@
                 data-testid="verif-ir-bandeja"
                 (clicked)="irABandeja()"
               >
+                <app-nav-icon name="mail" />
                 Ver solicitudes
               </button>
             }
+            <!-- La barra repite la cifra de la frase: decorativa para el lector. -->
+            <span class="verif__barra" aria-hidden="true">
+              <span [style.inline-size.%]="(verificados() / (pasos().length || 1)) * 100"></span>
+            </span>
           </div>
 
-          <ol class="verif__ruta" aria-label="Tramos de su verificación">
+          <ol class="verif__ruta" aria-label="Etapas de su verificación">
             @for (paso of pasos(); track paso.key; let i = $index) {
               <li
                 class="verif__tramo verif__tramo--{{ paso.state }}"
@@ -75,7 +82,7 @@
                 <div class="verif__tramo-cuerpo">
                   <div class="verif__tramo-cabeza">
                     <h2 class="verif__tramo-titulo">
-                      <span class="sr-only">Tramo {{ i + 1 }}: </span>{{ paso.title }}
+                      <span class="sr-only">Etapa {{ i + 1 }}: </span>{{ paso.title }}
                       @if (paso.optional) {
                         <span class="verif__opcional">Opcional</span>
                       }
@@ -90,6 +97,7 @@
                   @if (paso.action; as accion) {
                     <a app-button variant="secondary" size="sm" [routerLink]="accion.route">
                       {{ accion.label }}
+                      <app-nav-icon name="arrow-right" />
                     </a>
                   }
                 </div>
@@ -117,6 +125,7 @@
                 data-testid="verif-seguros-reintentar"
                 (clicked)="cargar()"
               >
+                <app-nav-icon name="refresh" />
                 Reintentar
               </button>
             </app-alert>
@@ -141,6 +150,7 @@
               [disabled]="aseguradoraNueva() === null || enviando()"
               (clicked)="pedirAseguradora()"
             >
+              <app-nav-icon name="mail" />
               Enviar solicitud
             </button>
           </div>
@@ -158,7 +168,7 @@
               description="Pida trabajar con una aseguradora con el campo de arriba, o declare la institución donde atiende desde su perfil."
             >
               <a empty-actions app-button variant="secondary" size="sm" routerLink="/my-account"
-                >Ir a mi perfil</a
+                ><app-nav-icon name="edit" /> Ir a mi perfil</a
               >
             </app-empty-state>
           } @else {

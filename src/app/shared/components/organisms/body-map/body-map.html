@@ -1,7 +1,13 @@
 <!-- Sin zonas no hay silueta: las formas están, pero sin `id` no hay nada que
      elegir, y un dibujo que no se puede pulsar es peor que su ausencia. -->
 @if (vistaVisible(); as actual) {
-  <div class="body-map">
+  <div
+    class="body-map"
+    [class.body-map--ampliado]="ampliado()"
+    [attr.role]="ampliado() ? 'dialog' : null"
+    [attr.aria-modal]="ampliado() ? 'true' : null"
+    [attr.aria-label]="ampliado() ? 'Figura ampliada' : null"
+  >
     <!-- Con una sola vista no hay nada que elegir: el selector sobra. -->
     @if (opcionesDeVista().length > 1) {
       <app-segmented-control
@@ -12,6 +18,75 @@
         (valueChange)="cambiarVista($event)"
       />
     }
+
+    <!-- Lo que se hace con la figura: verla de cerca, ocuparla toda la pantalla y
+         llevarse lo que se señaló. Los botones llevan su nombre en `aria-label`
+         porque el ícono solo no se lee; el aumento se dice con palabras. -->
+    <div class="body-map__herramientas" role="toolbar" aria-label="Herramientas de la figura">
+      <div class="body-map__grupo">
+        <button
+          app-button
+          iconOnly
+          variant="outline"
+          size="sm"
+          type="button"
+          aria-label="Alejar"
+          [disabled]="!visor.puedeAlejar()"
+          data-testid="body-map-alejar"
+          (click)="visor.alejar()"
+        >
+          <span aria-hidden="true">−</span>
+        </button>
+        <span class="body-map__zoom" aria-live="polite" data-testid="body-map-zoom">
+          <span class="body-map__zoom-numero">{{ visor.zoomEnTexto() }}</span>
+        </span>
+        <button
+          app-button
+          iconOnly
+          variant="outline"
+          size="sm"
+          type="button"
+          aria-label="Acercar"
+          [disabled]="!visor.puedeAcercar()"
+          data-testid="body-map-acercar"
+          (click)="visor.acercar()"
+        >
+          <span aria-hidden="true">+</span>
+        </button>
+        @if (visor.puedeAlejar()) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="body-map-restablecer"
+            (click)="visor.restablecer()"
+          >
+            Ver entera
+          </button>
+        }
+      </div>
+      <div class="body-map__grupo">
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-action="ampliar"
+          data-testid="body-map-ampliar"
+          [attr.aria-pressed]="ampliado()"
+          (click)="alternarAmpliado()"
+        >
+          {{ ampliado() ? 'Cerrar' : 'Ampliar' }}
+        </button>
+        <app-share-menu
+          testId="body-map-share"
+          [title]="tituloParaCompartir()"
+          [url]="enlaceParaCompartir()"
+          (exported)="exportar($event)"
+        />
+      </div>
+    </div>
 
     <!-- El escenario: un fondo apenas más claro al centro y una sombra de
          piso. Es lo que hace que el maniquí se lea parado en un lugar y no
@@ -36,11 +111,17 @@
         <svg
           class="body-map__lienzo"
           [class.body-map__lienzo--cara]="actual.vista.id === 'cara'"
-          [attr.viewBox]="actual.vista.viewBox"
+          [class.body-map__lienzo--acercado]="visor.zoom() > 1"
+          [attr.viewBox]="visor.viewBox()"
           role="group"
           [attr.aria-label]="etiqueta() + ' (' + actual.vista.nombre + ')'"
           [attr.data-testid]="testId() + '-vista-' + actual.vista.id"
           focusable="false"
+          (wheel)="visor.alGirarLaRueda($event)"
+          (pointerdown)="visor.empezarArrastre($event)"
+          (pointermove)="visor.arrastrar($event)"
+          (pointerup)="visor.terminarArrastre()"
+          (pointercancel)="visor.terminarArrastre()"
         >
           <!-- El relleno de la zona elegida, por instancia (dos siluetas en la
              misma página no se pisan). Los colores salen de tokens: ver la hoja. -->
@@ -59,8 +140,8 @@
             [attr.href]="actual.vista.image"
             x="0"
             y="0"
-            width="100%"
-            height="100%"
+            [attr.width]="caja()[0]"
+            [attr.height]="caja()[1]"
             preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
             [attr.data-testid]="testId() + '-render'"
@@ -85,12 +166,12 @@
                   [attr.aria-pressed]="zona.id === value()"
                   [attr.aria-label]="nombreAccesible(zona)"
                   [attr.data-testid]="testId() + '-' + zona.id"
-                  (click)="elegir(zona)"
+                  (click)="clicEnZona(zona)"
                   (keydown.enter)="elegir(zona)"
                   (keydown.space)="elegirConBarra($event, zona)"
                   (pointerenter)="apuntar(zona.id)"
                   (pointerleave)="apuntar(null)"
-                  (focus)="apuntar(zona.id)"
+                  (focus)="apuntar(zona.id); visor.centrarEn(zona.centros, $event)"
                   (blur)="apuntar(null)"
                 />
               </g>

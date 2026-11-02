@@ -1,5 +1,6 @@
 ---
 slug: dermatitis-atopica
+image: dermatitis-atopica.svg | En la dermatitis atópica la barrera de la piel tiene huecos que dejan salir agua y entrar irritantes. | Comparación de la capa externa de la piel sana como un muro compacto y de la piel atópica con huecos, y una silueta con las zonas habituales de los brotes.
 ---
 
 ## [definition] Introducción

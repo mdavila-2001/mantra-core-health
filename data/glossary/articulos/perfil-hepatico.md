@@ -1,5 +1,6 @@
 ---
 slug: perfil-hepatico
+image: perfil-hepatico.svg | El perfil hepático combina pruebas de daño celular, flujo biliar y función de síntesis. | Hígado con vesícula y vía biliar unido a tres recuadros que agrupan las pruebas del perfil hepático según reflejen daño celular, flujo de la bilis o capacidad de fabricar proteínas.
 ---
 
 ## [definition] Introducción

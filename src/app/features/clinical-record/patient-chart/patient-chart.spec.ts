@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
@@ -19,6 +20,11 @@ import {
   recetaDesdeResumen,
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
+import { requestAccessRoute } from '../clinical-record.routes';
+import {
+  CHART_FORBIDDEN_MESSAGE,
+  REQUEST_ACCESS_LABEL,
+} from '../consultation/consultation-forbidden';
 import { PatientChart } from './patient-chart';
 
 /**
@@ -1051,6 +1057,45 @@ describe('PatientChart', () => {
 
     expect(estado().status).toBe('forbidden');
     http.expectOne((r) => r.url === '/charts/patients/p-1/chart');
+  });
+
+  it('el 403 le habla a quien atiende, ofrece pedir acceso y no ofrece exportar', () => {
+    responderNombre(true);
+    http
+      .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+      .flush(
+        {
+          code: 'FORBIDDEN',
+          message: 'Sólo puede consultar su propia historia clínica.',
+          correlationId: 'req-403',
+          timestamp: '',
+          path: '',
+        },
+        { status: 403, statusText: 'Forbidden' },
+      );
+    http.expectOne((r) => r.url === '/charts/patients/p-1/chart');
+    harness.detectChanges();
+
+    const s = interno<() => ViewState<unknown>>('expediente')();
+    expect(s.status === 'forbidden' && s.message).toBe(CHART_FORBIDDEN_MESSAGE);
+    expect(s.status === 'forbidden' && s.nextAction).toEqual({
+      label: REQUEST_ACCESS_LABEL,
+      route: requestAccessRoute('p-1'),
+    });
+    expect(s.status === 'forbidden' && s.requestId).toBe('req-403');
+
+    const raiz = harness.routeNativeElement!;
+    expect(raiz.textContent).not.toContain('Sólo puede consultar su propia historia');
+    expect(raiz.textContent).toContain(REQUEST_ACCESS_LABEL);
+    expect(raiz.querySelector('app-pdf-export-button')).toBeNull();
+  });
+
+  it('con el expediente leído, sí ofrece exportar', () => {
+    responderNombre();
+    responderExpediente();
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement!.querySelector('app-pdf-export-button')).not.toBeNull();
   });
 
   it('nombra en palabras los bloques que quedaron recortados', () => {

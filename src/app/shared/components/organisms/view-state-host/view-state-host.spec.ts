@@ -16,6 +16,7 @@ import {
 } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { ViewStateHost } from './view-state-host';
+import { explanationOf } from '../../../../core/http/error-explanation';
 
 @Component({
   imports: [ViewStateHost],
@@ -235,9 +236,39 @@ describe('ViewStateHost', () => {
 
       expect(host.retries).toHaveLength(1);
     });
+
+    it('sin red dice por qué y qué revisar', async () => {
+      await conEstado(offline());
+      const { title, cause, action } = explanationOf('offline');
+      expect(textoVisible()).toContain(title);
+      expect(textoVisible()).toContain(cause);
+      expect(textoVisible()).toContain(action);
+    });
+
+    it('el tiempo agotado no se presenta como «sin conexión»: pudo haberse guardado', async () => {
+      await conEstado(offline(undefined, { timedOut: true }));
+      expect(textoVisible()).toContain(explanationOf('timeout').title);
+      expect(textoVisible()).toContain('quedó registrado');
+      expect(textoVisible()).not.toContain(explanationOf('offline').title);
+    });
   });
 
   describe('S9 · error inesperado', () => {
+    it('muestra qué pasó, por qué y qué hacer cuando el estado lo trae', async () => {
+      await conEstado(unexpectedError('req-1', 'La causa en palabras.', { title: 'Qué pasó', hint: 'Qué hacer.' }));
+
+      expect(root().querySelector('.alert__title')?.textContent?.trim()).toBe('Qué pasó');
+      expect(textoVisible()).toContain('La causa en palabras.');
+      expect(root().querySelector('.view-state-host__hint')?.textContent).toContain('Qué hacer.');
+    });
+
+    it('sin título ni pista conserva el texto de siempre y no pinta un párrafo vacío', async () => {
+      await conEstado(unexpectedError('req-1'));
+
+      expect(root().querySelector('.alert__title')?.textContent?.trim()).toBe('Algo salió mal');
+      expect(root().querySelector('.view-state-host__hint')).toBeNull();
+    });
+
     it('el requestId está visible y es seleccionable', async () => {
       await conEstado(unexpectedError('req-7f3a-0042'));
 

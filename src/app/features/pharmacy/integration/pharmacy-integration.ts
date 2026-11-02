@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   LOCALE_ID,
@@ -9,12 +10,13 @@ import {
   untracked,
 } from '@angular/core';
 import { formatDate } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { Subscription } from 'rxjs';
 
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -31,13 +33,18 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { INTEGRATION_ERROR_TEXT, integrationErrorMessage } from './integration-error-message';
 import { IntegrationMappings } from './integration-mappings/integration-mappings';
 import { IntegrationSync } from './integration-sync/integration-sync';
+import { IntegrationSystem } from './integration-system/integration-system';
 
 /** Valor del desplegable de sucursal que no manda ninguna: la conexión vale para todas. */
 export const ALL_SITES = 'ALL';
+
+/** Conexión activa sin sistema con quién sincronizar (FAR-C9 · C9-4). */
+export const MISSING_SYSTEM_TEXT =
+  'Falta cargar el sistema de la farmacia, abajo: sin él, la conexión no tiene con quién sincronizar. Mientras tanto, lleve las existencias en «Inventario».';
 
 /** El texto del botón que conecta, también la próxima acción del estado vacío. */
 export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
@@ -61,15 +68,15 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
   imports: [
     Alert,
     AppButton,
-    Card,
     FactList,
     FormField,
     IntegrationMappings,
     IntegrationSync,
+    IntegrationSystem,
     Select,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-integration.html',
   styleUrl: './pharmacy-integration.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +87,10 @@ export class PharmacyIntegration {
   private readonly pharmacy = inject(PharmacyClient);
   private readonly toasts = inject(ToastService);
   private readonly locale = inject(LOCALE_ID);
+  private readonly destroyRef = inject(DestroyRef);
+  private listRequest?: Subscription;
+  private sitesRequest?: Subscription;
+  private reloadVersion = 0;
 
   protected readonly connections = signal<ViewState<IntegrationConnectionList>>(loading());
   /** La conexión elegida cuando hay más de una. */
@@ -94,6 +105,12 @@ export class PharmacyIntegration {
 
   protected readonly connectLabel = CONNECT_LABEL;
   protected readonly notConfiguredText = INTEGRATION_ERROR_TEXT.PHARMACY_INTEGRATION_NOT_CONFIGURED;
+  /**
+   * Con la conexión ya dada de alta, el aviso dice qué falta y dónde: lo que no
+   * hay es el sistema con quién sincronizar. (Si además está inactiva, el
+   * estado de arriba lo muestra.)
+   */
+  protected readonly missingSystemText = MISSING_SYSTEM_TEXT;
   protected readonly inactiveText = INTEGRATION_ERROR_TEXT.PHARMACY_INTEGRATION_CONNECTION_INACTIVE;
 
   /**
@@ -112,13 +129,12 @@ export class PharmacyIntegration {
     })),
   );
 
-  /** La conexión que se muestra: la elegida, si no la primera activa, si no la primera. */
+  /** Con varias conexiones, la persona elige; no se infiere precedencia. */
   protected readonly connection = computed<IntegrationConnection | null>(() => {
     const items = this.items();
     return (
       items.find((item) => item.id === this.chosenId()) ??
-      items.find((item) => item.status === 'ACTIVE') ??
-      items[0] ??
+      (items.length === 1 ? items[0] : null) ??
       null
     );
   });
@@ -144,6 +160,7 @@ export class PharmacyIntegration {
       if (pharmacyId !== null) {
         untracked(() => {
           this.chosenId.set(null);
+          this.connecting.set(false);
           this.connectError.set(null);
           this.reload();
           this.loadSites(pharmacyId);
@@ -152,14 +169,17 @@ export class PharmacyIntegration {
     });
   }
 
-  protected reload(): void {
+  protected reload(preserveVisible = false): void {
     const pharmacyId = this.scope.pharmacyId();
     if (pharmacyId === null) {
       return;
     }
-    this.connections.set(loading());
-    this.integration.listConnections(pharmacyId).subscribe({
+    const version = ++this.reloadVersion;
+    this.listRequest?.unsubscribe();
+    if (!preserveVisible) this.connections.set(loading());
+    this.listRequest = this.integration.listConnections(pharmacyId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (list) => {
+        if (version !== this.reloadVersion || pharmacyId !== this.scope.pharmacyId()) return;
         this.providerConfigured.set(list.providerConfigured);
         this.connections.set(
           list.items.length > 0
@@ -167,7 +187,11 @@ export class PharmacyIntegration {
             : empty({ label: CONNECT_LABEL }, 'Su farmacia todavía no está conectada con su sistema.'),
         );
       },
-      error: (error: unknown) => this.connections.set(errorToViewState<IntegrationConnectionList>(error)),
+      error: (error: unknown) => {
+        if (version === this.reloadVersion && pharmacyId === this.scope.pharmacyId()) {
+          this.connections.set(errorToViewState<IntegrationConnectionList>(error));
+        }
+      },
     });
   }
 
@@ -194,14 +218,17 @@ export class PharmacyIntegration {
         supportsStockQuery: true,
         ...(siteId === ALL_SITES ? {} : { pharmacySiteId: siteId }),
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (created) => {
+          if (pharmacyId !== this.scope.pharmacyId()) return;
           this.connecting.set(false);
           this.chosenId.set(created.id);
           this.toasts.success('La farmacia quedó conectada con su sistema.');
           this.reload();
         },
         error: (error: unknown) => {
+          if (pharmacyId !== this.scope.pharmacyId()) return;
           this.connecting.set(false);
           this.connectError.set(integrationErrorMessage(error, 'No se pudo conectar el sistema de la farmacia.'));
         },
@@ -214,13 +241,20 @@ export class PharmacyIntegration {
    */
   private loadSites(pharmacyId: string): void {
     this.siteId.set(ALL_SITES);
-    this.pharmacy.getOpeningHours(pharmacyId).subscribe({
-      next: (hours) =>
+    this.sitesRequest?.unsubscribe();
+    this.sitesRequest = this.pharmacy.getOpeningHours(pharmacyId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (hours) => {
+        if (pharmacyId !== this.scope.pharmacyId()) return;
         this.siteOptions.set([
           { value: ALL_SITES, label: 'Todas las sucursales' },
           ...hours.sites.map((site) => ({ value: site.siteId, label: site.siteName })),
-        ]),
-      error: () => this.siteOptions.set([{ value: ALL_SITES, label: 'Todas las sucursales' }]),
+        ]);
+      },
+      error: () => {
+        if (pharmacyId === this.scope.pharmacyId()) {
+          this.siteOptions.set([{ value: ALL_SITES, label: 'Todas las sucursales' }]);
+        }
+      },
     });
   }
 }

@@ -1,5 +1,6 @@
 ---
 slug: alopecia-areata
+image: alopecia-areata.svg | En la alopecia areata el sistema inmunitario ataca el folículo sin destruirlo. | Cabeza con dos placas redondas sin pelo y comparación de un folículo sano con otro rodeado de linfocitos que detienen el crecimiento del pelo, con la nota de que no deja cicatriz.
 ---
 
 ## [definition] Introducción

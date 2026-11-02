@@ -1,6 +1,8 @@
 import type {
   AvailabilityResult,
   AvailabilitySite,
+  MedicationAvailabilityResult,
+  MedicationAvailabilitySite,
   PharmacyContacts,
   PharmacyDetail,
   PharmacyLicensePage,
@@ -166,6 +168,49 @@ export const DISPONIBILIDAD_FIXTURE: AvailabilityResult = {
   items: [SEDE_COMPLETA, SEDE_PARCIAL],
   count: 2,
 };
+
+/** El medicamento del vademécum al que responde cada producto de prueba. */
+const CONCEPT_OF_PRODUCT: Readonly<Record<string, string>> = {
+  [FIXTURE_IDS.productoAmoxicilina]: FIXTURE_IDS.conceptoAmoxicilina,
+  [FIXTURE_IDS.productoIbuprofeno]: FIXTURE_IDS.conceptoIbuprofeno,
+};
+
+/**
+ * Una sede de la lectura por producto, tal como la devuelve la lectura por
+ * medicamento (`GET /pharmacy-inventory/availability/medications`): cada
+ * producto dice a qué medicamento responde, y los faltantes son medicamentos.
+ */
+export function siteByMedication(site: AvailabilitySite): MedicationAvailabilitySite {
+  const { missingProductIds, products, ...rest } = site;
+  return {
+    ...rest,
+    missingMedicationConceptIds: missingProductIds.map((id) => CONCEPT_OF_PRODUCT[id] ?? id),
+    products: products.map((product) => ({
+      ...product,
+      medicationConceptId: CONCEPT_OF_PRODUCT[product.productId] ?? product.productId,
+    })),
+  };
+}
+
+/** La misma disponibilidad, por medicamento; `unpublished` sin producto en la red. */
+export function availabilityByMedication(
+  result: AvailabilityResult,
+  unpublished: readonly string[] = [],
+): MedicationAvailabilityResult {
+  return {
+    requestedMedicationConceptIds: [
+      ...result.requestedProductIds.map((id) => CONCEPT_OF_PRODUCT[id] ?? id),
+      ...unpublished,
+    ],
+    unpublishedMedicationConceptIds: unpublished,
+    items: result.items.map(siteByMedication),
+    count: result.count,
+  };
+}
+
+/** {@link DISPONIBILIDAD_FIXTURE}, por medicamento. */
+export const MEDICATION_AVAILABILITY_FIXTURE: MedicationAvailabilityResult =
+  availabilityByMedication(DISPONIBILIDAD_FIXTURE);
 
 /**
  * El perfil de una farmacia (carril A, H3): la misma `Farmacia Andina` y

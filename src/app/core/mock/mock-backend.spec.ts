@@ -161,6 +161,20 @@ describe('backend simulado', () => {
     }
   });
 
+  it('el superadministrador local entra por su correo propio y es la cuenta superadmin del simulador', () => {
+    const login = router.match('POST', '/iam/auth/login')!;
+    const respuesta = login.handler({
+      ...peticion('POST', '/iam/auth/login', null),
+      body: { email: ' Admin@AloVidaSalud.com ', password: '12345678' },
+    }) as { accessToken: string };
+    expect(respuesta.accessToken).toBeTypeOf('string');
+    const cuenta = buscarUsuario('admin@alovidasalud.com');
+    expect(cuenta?.key).toBe('superadmin');
+    expect(cuenta?.roles).toContain('SUPERADMIN');
+    // El alias no se vuelve una puerta para otras cuentas: un correo parecido no entra.
+    expect(buscarUsuario('admin@alovidasalud.net')?.key).not.toBe('superadmin');
+  });
+
   it('el token dice de qué tipo es cada organización de la cuenta (tenantTypes)', () => {
     const aseguradora = MOCK_USERS.find((u) => u.key === 'aseguradora')!;
     const claimsAseguradora = decodeAccessToken(emitirAccessToken(aseguradora));

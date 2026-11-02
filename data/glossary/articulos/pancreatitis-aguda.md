@@ -1,5 +1,6 @@
 ---
 slug: pancreatitis-aguda
+image: pancreatitis-aguda.svg | Páncreas inflamado, causas y síntomas | Esquema del páncreas inflamado detrás del estómago con un cálculo biliar que bloquea el conducto, junto a las causas, el dolor irradiado a la espalda y las pruebas diagnósticas
 ---
 
 ## [definition] Introducción

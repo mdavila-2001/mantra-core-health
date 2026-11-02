@@ -274,7 +274,7 @@ describe('PublicPostCard — «Recomendar» que falla', () => {
 
     expect(root.querySelector('[data-testid="post-action-like"]')?.getAttribute('aria-pressed')).toBe('false');
     expect(root.querySelector('[data-testid="post-action-like-error"]')?.textContent).toBe(
-      'No pudimos guardar su recomendación. (Código de soporte: corr-like)',
+      'No pudimos guardar su recomendación. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-like)',
     );
     fixture.destroy();
   });

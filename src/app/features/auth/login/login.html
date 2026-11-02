@@ -133,8 +133,8 @@
 
       <!-- Los dos accesos de alta van con su glifo: son dos caminos distintos y
            el ícono es lo que los distingue de un vistazo, antes de leerlos. -->
-      <a class="login__anexo" routerLink="/auth/register" data-testid="login-registro">
-        <app-nav-icon name="patients" class="login__anexo-icono" />
+      <a class="login__anexo" routerLink="/auth/register" data-testid="login-registro" data-icon-play>
+        <span class="login__anexo-icono" aria-hidden="true"><app-account-icon name="patient" /></span>
         <span class="login__anexo-texto">
           <span class="login__anexo-titulo">Cree su cuenta</span>
           <span class="login__anexo-detalle">Paciente o profesional</span>
@@ -158,8 +158,9 @@
         class="login__anexo"
         routerLink="/auth/register/organization-type"
         data-testid="login-registro-organizacion"
+        data-icon-play
       >
-        <app-nav-icon name="umbrella" class="login__anexo-icono" />
+        <span class="login__anexo-icono" aria-hidden="true"><app-account-icon name="insurer" /></span>
         <span class="login__anexo-texto">
           <span class="login__anexo-titulo">Registre su organización</span>
           <span class="login__anexo-detalle">Aseguradoras</span>

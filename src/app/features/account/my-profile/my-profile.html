@@ -75,6 +75,7 @@
                   size="lg"
                   [src]="fotoUrl()"
                   [name]="resumen.displayName ?? ''"
+                  [initials]="personInitials(resumen.displayName ?? '')"
                   [alt]="'Foto de ' + (resumen.displayName ?? 'su perfil')"
                 />
                 <span class="solo-lectores">
@@ -97,6 +98,26 @@
                 <p class="mi-perfil__nombre">
                   {{ resumen.displayName ?? 'Sin nombre registrado' }}
                 </p>
+              }
+              @if (datos() !== null) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  class="mi-perfil__foto-boton"
+                  data-testid="mi-perfil-foto-boton"
+                  [disabled]="subiendoFoto()"
+                  (clicked)="abrirSelectorDeFoto()"
+                >
+                  {{
+                    subiendoFoto()
+                      ? 'Subiendo…'
+                      : fotoUrl() === null
+                        ? 'Agregar foto de perfil'
+                        : 'Cambiar foto'
+                  }}
+                </button>
               }
               @if (errorDeFoto(); as fallo) {
                 <p class="mi-perfil__foto-error" role="alert">{{ fallo }}</p>

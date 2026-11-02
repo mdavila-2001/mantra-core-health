@@ -1,5 +1,6 @@
 ---
 slug: accidente-cerebrovascular-isquemico
+image: accidente-cerebrovascular-isquemico.svg | Un coágulo tapa una arteria del cerebro y la zona que esta riega queda sin oxígeno. | Cerebro de perfil con una arteria obstruida por un coágulo, el núcleo del infarto y la penumbra rescatable, junto a las señales de alarma BE-FAST: equilibrio, ojos, cara, brazo, habla y tiempo.
 ---
 
 ## [definition] Introducción

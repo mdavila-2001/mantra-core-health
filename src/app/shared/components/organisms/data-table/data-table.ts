@@ -67,6 +67,7 @@ import {
     '[class.data-table--wrap-headers]': 'wrapHeaders()',
     '[class.data-table--fit-container]': 'fitContainer()',
     '[class.data-table--apilada]': 'stackedOnMobile()',
+    '[class.data-table--dense]': 'dense()',
   },
 })
 export class DataTable<Row> {
@@ -163,6 +164,13 @@ export class DataTable<Row> {
    * columnas de comparación siguen desplazándose.
    */
   readonly stackedOnMobile = input(false, { transform: booleanAttribute });
+
+  /**
+   * Filas compactas: menos relleno en cada celda, para las tablas de trabajo
+   * que se recorren de a decenas (el catálogo de una farmacia). Opt-in: las
+   * demás siguen con el aire de siempre.
+   */
+  readonly dense = input(false, { transform: booleanAttribute });
 
   /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
   protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);

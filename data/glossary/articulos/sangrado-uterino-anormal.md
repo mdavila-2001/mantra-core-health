@@ -1,5 +1,6 @@
 ---
 slug: sangrado-uterino-anormal
+image: sangrado-uterino-anormal.svg | Clasificación PALM-COEIN de las causas del sangrado uterino anormal. | Útero con un pólipo y un mioma señalados y dos columnas con las causas estructurales y no estructurales del sistema PALM-COEIN, con un aviso para consultar.
 ---
 
 ## [definition] Introducción

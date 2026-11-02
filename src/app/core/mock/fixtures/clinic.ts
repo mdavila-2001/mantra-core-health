@@ -209,7 +209,7 @@ const CLINICAL_PROFILES: readonly {
     keyof typeof MEDICAMENTO,
     string,
     string,
-    'MR_ISSUED' | 'MR_COMPLETED',
+    'clinical:MEDICATION_REQUEST_ISSUED' | 'clinical:MEDICATION_REQUEST_COMPLETED',
   ])[];
 }[] = [
   {
@@ -223,9 +223,9 @@ const CLINICAL_PROFILES: readonly {
       ['POLVO', 'CRIT-LOW'],
     ],
     recetas: [
-      ['MED-ENALAPRIL', '10 mg', 'Una vez al día por la mañana', 'MR_ISSUED'],
-      ['MED-ATORVASTATINA', '20 mg', 'Una vez al día por la noche', 'MR_ISSUED'],
-      ['MED-PARACETAMOL', '500 mg', 'Cada 8 horas si hay dolor, máximo 3 días', 'MR_COMPLETED'],
+      ['MED-ENALAPRIL', '10 mg', 'Una vez al día por la mañana', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-ATORVASTATINA', '20 mg', 'Una vez al día por la noche', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-PARACETAMOL', '500 mg', 'Cada 8 horas si hay dolor, máximo 3 días', 'clinical:MEDICATION_REQUEST_COMPLETED'],
     ],
   },
   {
@@ -236,8 +236,8 @@ const CLINICAL_PROFILES: readonly {
     ],
     alergias: [],
     recetas: [
-      ['MED-METFORMINA', '850 mg', 'Con el desayuno y la cena', 'MR_ISSUED'],
-      ['MED-LOSARTAN', '50 mg', 'Una vez al día', 'MR_ISSUED'],
+      ['MED-METFORMINA', '850 mg', 'Con el desayuno y la cena', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-LOSARTAN', '50 mg', 'Una vez al día', 'clinical:MEDICATION_REQUEST_ISSUED'],
     ],
   },
   {
@@ -247,14 +247,14 @@ const CLINICAL_PROFILES: readonly {
     ],
     alergias: [['ALIMENTO-MANI', 'CRIT-HIGH']],
     recetas: [
-      ['MED-SALBUTAMOL', '100 mcg', 'Dos inhalaciones a demanda', 'MR_ISSUED'],
-      ['MED-LORATADINA', '10 mg', 'Una vez al día en época de polen', 'MR_COMPLETED'],
+      ['MED-SALBUTAMOL', '100 mcg', 'Dos inhalaciones a demanda', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-LORATADINA', '10 mg', 'Una vez al día en época de polen', 'clinical:MEDICATION_REQUEST_COMPLETED'],
     ],
   },
   {
     dx: [['J06.9', 'COND_RESOLVED', 'Resfrío común.']],
     alergias: [],
-    recetas: [['MED-PARACETAMOL', '250 mg', 'Cada 8 horas por 3 días', 'MR_COMPLETED']],
+    recetas: [['MED-PARACETAMOL', '250 mg', 'Cada 8 horas por 3 días', 'clinical:MEDICATION_REQUEST_COMPLETED']],
   },
   {
     dx: [
@@ -263,8 +263,8 @@ const CLINICAL_PROFILES: readonly {
     ],
     alergias: [['MED-IBUPROFENO', 'CRIT-LOW']],
     recetas: [
-      ['MED-LEVOTIROXINA', '50 mcg', 'En ayunas, 30 minutos antes del desayuno', 'MR_ISSUED'],
-      ['MED-SULFATO-FERROSO', '300 mg', 'Una vez al día con jugo de naranja', 'MR_ISSUED'],
+      ['MED-LEVOTIROXINA', '50 mcg', 'En ayunas, 30 minutos antes del desayuno', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-SULFATO-FERROSO', '300 mg', 'Una vez al día con jugo de naranja', 'clinical:MEDICATION_REQUEST_ISSUED'],
     ],
   },
   {
@@ -273,12 +273,12 @@ const CLINICAL_PROFILES: readonly {
       ['G43', 'COND_ACTIVE', 'Migraña sin aura, 2 episodios al mes.'],
     ],
     alergias: [],
-    recetas: [['MED-IBUPROFENO', '400 mg', 'Cada 8 horas con comida, 5 días', 'MR_ISSUED']],
+    recetas: [['MED-IBUPROFENO', '400 mg', 'Cada 8 horas con comida, 5 días', 'clinical:MEDICATION_REQUEST_ISSUED']],
   },
   {
     dx: [['F41.1', 'COND_ACTIVE', 'En tratamiento con sertralina y psicoterapia.']],
     alergias: [],
-    recetas: [['MED-SERTRALINA', '50 mg', 'Una vez al día por la mañana', 'MR_ISSUED']],
+    recetas: [['MED-SERTRALINA', '50 mg', 'Una vez al día por la mañana', 'clinical:MEDICATION_REQUEST_ISSUED']],
   },
   {
     dx: [
@@ -288,20 +288,20 @@ const CLINICAL_PROFILES: readonly {
     ],
     alergias: [['MED-CIPROFLOXACINO', 'CRIT-HIGH']],
     recetas: [
-      ['MED-ENALAPRIL', '10 mg', 'Dos veces al día', 'MR_ISSUED'],
-      ['MED-METFORMINA', '850 mg', 'Con las comidas', 'MR_ISSUED'],
-      ['MED-INSULINA-NPH', '12 UI', 'Por la noche, subcutánea', 'MR_ISSUED'],
+      ['MED-ENALAPRIL', '10 mg', 'Dos veces al día', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-METFORMINA', '850 mg', 'Con las comidas', 'clinical:MEDICATION_REQUEST_ISSUED'],
+      ['MED-INSULINA-NPH', '12 UI', 'Por la noche, subcutánea', 'clinical:MEDICATION_REQUEST_ISSUED'],
     ],
   },
   {
     dx: [['K21.0', 'COND_ACTIVE', 'Reflujo con pirosis nocturna.']],
     alergias: [],
-    recetas: [['MED-OMEPRAZOL', '20 mg', 'En ayunas por 8 semanas', 'MR_ISSUED']],
+    recetas: [['MED-OMEPRAZOL', '20 mg', 'En ayunas por 8 semanas', 'clinical:MEDICATION_REQUEST_ISSUED']],
   },
   {
     dx: [['N39.0', 'COND_RESOLVED', 'Tratada con ciprofloxacino.']],
     alergias: [],
-    recetas: [['MED-CIPROFLOXACINO', '500 mg', 'Cada 12 horas por 7 días', 'MR_COMPLETED']],
+    recetas: [['MED-CIPROFLOXACINO', '500 mg', 'Cada 12 horas por 7 días', 'clinical:MEDICATION_REQUEST_COMPLETED']],
   },
 ];
 
@@ -378,12 +378,12 @@ export const prescriptionList = new Coleccion<SimulatedPrescription>(
         : { indicationText: 'Control sintomático' }),
       doseText: dosis,
       frequencyText: frecuencia,
-      validFrom: isoDia(estado === 'MR_ISSUED' ? -20 - i * 3 : -120),
-      validTo: isoDia(estado === 'MR_ISSUED' ? 70 - i * 3 : -90),
+      validFrom: isoDia(estado === 'clinical:MEDICATION_REQUEST_ISSUED' ? -20 - i * 3 : -120),
+      validTo: isoDia(estado === 'clinical:MEDICATION_REQUEST_ISSUED' ? 70 - i * 3 : -90),
       patientInstructionsText: `Tomar ${dosis} — ${frecuencia.toLowerCase()}. Consultar ante cualquier molestia.`,
-      signedAt: iso(estado === 'MR_ISSUED' ? -20 - i * 3 : -120, 10),
-      issuedAt: iso(estado === 'MR_ISSUED' ? -20 - i * 3 : -120, 10, 15),
-      createdAt: iso(estado === 'MR_ISSUED' ? -20 - i * 3 : -120, 9, 50),
+      signedAt: iso(estado === 'clinical:MEDICATION_REQUEST_ISSUED' ? -20 - i * 3 : -120, 10),
+      issuedAt: iso(estado === 'clinical:MEDICATION_REQUEST_ISSUED' ? -20 - i * 3 : -120, 10, 15),
+      createdAt: iso(estado === 'clinical:MEDICATION_REQUEST_ISSUED' ? -20 - i * 3 : -120, 9, 50),
     })),
   ),
 );
@@ -713,6 +713,10 @@ export interface SimulatedOrder {
    */
   readonly previousDiagnosticReportId?: string;
   readonly duplicateOverrideReason?: string;
+  /** Quién ejecuta el procedimiento, según el médico (CONTRATO §3, centros médicos). */
+  readonly performerSelectionConceptId?: string;
+  readonly performerPractitionerProfileId?: string;
+  readonly suggestedPracticeSiteId?: string;
   /** P40 (C2): las notas médicas que motivan la orden, en el orden citado. */
   readonly basedOnNoteIds?: readonly string[];
 }

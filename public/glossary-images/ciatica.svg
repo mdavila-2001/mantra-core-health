@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ciática</title>
+  <desc id="d">A la izquierda, una silueta humana con el nervio ciático que baja desde la zona lumbar por detrás de la pierna y una raíz nerviosa comprimida en la columna. A la derecha, las causas habituales, cómo se siente el dolor y los signos de alarma que requieren atención urgente.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">El recorrido del dolor</text>
+  <circle cx="200" cy="89.9" r="27.599999999999998" fill="var(--tissue)" stroke="var(--line)" stroke-width="1"/>
+  <path d="M151.7 131.3 Q200 117.5 248.3 131.3 L255.2 255.49999999999997 L234.5 262.4 L234.5 405.0 L206.9 405.0 L200 278.5 L193.1 405.0 L165.5 405.0 L165.5 262.4 L144.8 255.49999999999997 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M151.7 133.6 L124.10000000000001 255.49999999999997 L137.9 257.79999999999995 L156.3 175.0 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M248.3 133.6 L275.9 255.49999999999997 L262.1 257.79999999999995 L243.7 175.0 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M196 252 C186 260 176 270 176 290 V430" fill="none" stroke="var(--nerve)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M182 200 C188 220 194 236 196 252" fill="none" stroke="var(--nerve)" stroke-width="4"/>
+  <circle cx="196" cy="236" r="10" fill="var(--warn)" stroke="var(--ink)" stroke-width="1.5"/>
+  <text x="250" y="240" class="small" style="fill:var(--warn)">Raíz comprimida</text>
+  <path d="M246 236 L208 236" fill="none" stroke="var(--muted)" stroke-width="1"/>
+  <text x="60" y="330" class="step" style="fill:var(--nerve)">Nervio</text>
+  <text x="60" y="348" class="step" style="fill:var(--nerve)">ciático</text>
+  <path d="M114 336 L170 330" fill="none" stroke="var(--muted)" stroke-width="1"/>
+  <text x="250" y="380" class="small">Dolor que baja</text>
+  <text x="250" y="396" class="small">por detrás de</text>
+  <text x="250" y="412" class="small">la pierna</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Un síntoma, no una enfermedad</text>
+  <text x="436" y="70" class="step">Causas habituales</text>
+  <text x="440" y="96" class="lab">• Hernia de disco lumbar</text>
+  <text x="440" y="120" class="lab">• Estrechez del canal (estenosis)</text>
+  <text x="440" y="144" class="lab">• Desgaste de las vértebras</text>
+  <text x="436" y="186" class="step">Cómo se siente</text>
+  <text x="440" y="212" class="lab">• Punzante o quemante, en un lado</text>
+  <text x="440" y="236" class="lab">• Hormigueo o adormecimiento</text>
+  <text x="440" y="260" class="lab">• Empeora al estar sentado o toser</text>
+  <rect x="436" y="300" width="324" height="124" rx="10" fill="var(--warn-l)"/>
+  <text x="452" y="324" class="step" style="fill:var(--warn)">Urgente si aparece</text>
+  <text x="456" y="350" class="small">• Pérdida de control de orina o heces</text>
+  <text x="456" y="372" class="small">• Adormecimiento en la zona genital</text>
+  <text x="456" y="394" class="small">• Debilidad que progresa en la pierna</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

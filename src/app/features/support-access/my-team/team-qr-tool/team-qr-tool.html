@@ -1,0 +1,135 @@
+<app-card padding="lg" class="qr-tool" data-testid="qr-tool-card">
+  <header class="qr-tool__cabeza">
+    <div>
+      <h2 class="qr-tool__titulo">Código QR para Solicitudes y Chat</h2>
+      <p class="qr-tool__bajada">
+        Genere un QR para compartir con su equipo o lea un QR para procesar solicitudes.
+      </p>
+    </div>
+    <app-segmented-control
+      [options]="modos"
+      [value]="modo()"
+      (valueChange)="cambiarModo($event)"
+      ariaLabel="Modo de herramienta QR"
+    />
+  </header>
+
+  @if (modo() === 'generar') {
+    <div class="qr-tool__generar" data-testid="qr-generar-panel">
+      <div class="qr-tool__proposito">
+        <label class="qr-tool__etiqueta">Propósito del código:</label>
+        <div class="qr-tool__botones-opciones">
+          <button
+            app-button
+            size="sm"
+            [variant]="proposito() === 'chat' ? 'primary' : 'outline'"
+            type="button"
+            (clicked)="proposito.set('chat'); generarQr()"
+          >
+            Chat y equipo de apoyo
+          </button>
+          <button
+            app-button
+            size="sm"
+            [variant]="proposito() === 'solicitud' ? 'primary' : 'outline'"
+            type="button"
+            (clicked)="proposito.set('solicitud'); generarQr()"
+          >
+            Creación de solicitud de acceso
+          </button>
+        </div>
+      </div>
+
+      <div class="qr-tool__visualizador">
+        <canvas #qrCanvas class="qr-tool__canvas" width="192" height="192" role="img" aria-label="Código QR generado"></canvas>
+        <div class="qr-tool__info">
+          <p class="qr-tool__instruccion">
+            Cualquiera que escanee este código o abra el enlace podrá acceder de inmediato:
+          </p>
+          <div class="qr-tool__enlace-caja">
+            <code class="qr-tool__url">{{ urlGenerada() }}</code>
+          </div>
+          <div class="qr-tool__acciones">
+            <button app-button size="sm" type="button" (clicked)="copiarEnlace()" data-testid="qr-copiar-enlace">
+              Copiar enlace
+            </button>
+            <button app-button size="sm" variant="outline" type="button" (clicked)="generarQr()">
+              Regenerar código
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="qr-tool__leer" data-testid="qr-leer-panel">
+      <div class="qr-tool__leer-controles">
+        <button
+          app-button
+          size="sm"
+          [variant]="camaraActiva() ? 'danger' : 'outline'"
+          type="button"
+          (clicked)="alternarCamara()"
+          data-testid="qr-camara-boton"
+        >
+          {{ camaraActiva() ? 'Detener cámara' : 'Escanear con cámara' }}
+        </button>
+
+        <label class="qr-tool__archivo-label">
+          <span class="sr-only">Subir imagen con código QR</span>
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            class="sr-only"
+            (change)="leerDesdeArchivo($event)"
+            data-testid="qr-archivo-input"
+          />
+          <button
+            app-button
+            size="sm"
+            variant="outline"
+            type="button"
+            (clicked)="fileInput.click()"
+            [isLoading]="leyendoImagen()"
+          >
+            Subir imagen con QR
+          </button>
+        </label>
+      </div>
+
+      @if (camaraActiva()) {
+        <div class="qr-tool__camara-vista">
+          <video #videoCamara class="qr-tool__video" playsinline muted></video>
+          <p class="qr-tool__camara-guia">Apunte la cámara hacia el código QR...</p>
+        </div>
+      }
+
+      @if (errorCamara(); as err) {
+        <app-alert tone="warning" title="Cámara no disponible">
+          {{ err }} Puede subir una foto o pegar el código directamente abajo.
+        </app-alert>
+      }
+
+      <div class="qr-tool__pegar-bloque">
+        <app-form-field label="O pegue el código o enlace del QR aquí">
+          <app-input
+            [value]="textoPegado()"
+            (valueChange)="textoPegado.set('' + ($event ?? ''))"
+            placeholder="Pegue aquí el texto, código o enlace"
+            testId="qr-input-texto"
+          />
+        </app-form-field>
+        <button
+          app-button
+          size="sm"
+          type="button"
+          [disabled]="textoPegado().trim() === ''"
+          (clicked)="procesarTextoPegado()"
+          data-testid="qr-procesar-btn"
+        >
+          Aplicar código
+        </button>
+      </div>
+    </div>
+  }
+</app-card>

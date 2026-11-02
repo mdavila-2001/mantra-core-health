@@ -14,7 +14,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="entity-import" padding="lg" [attr.data-testid]="'entity-import-' + entity()">
+    <div class="entity-import" [attr.data-testid]="'entity-import-' + entity()">
       <div class="entity-import__panel">
         <div class="entity-import__upload">
           <div class="entity-import__main">
@@ -159,7 +159,7 @@
           </section>
         }
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

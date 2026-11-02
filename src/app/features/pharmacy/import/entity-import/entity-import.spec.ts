@@ -107,19 +107,20 @@ describe('EntityImport', () => {
 
   it('subir el archivo pide la vista previa con dryRun y muestra el resultado y el motivo de cada fila', async () => {
     mount('categories');
-    await upload('nombre;nota\nVitaminas;\n;vacía\nvitaminas;\n');
+    await upload('nombre;nota\nVitaminas;\n;vacía\nTercera;\nvitaminas;\nOtra;\n');
 
+    // «Vitaminas» y «vitaminas» son la misma clave: no viaja ninguna de las dos.
     const preview = http.expectOne(bulkUrl('categories'));
     expect(preview.request.method).toBe('POST');
     expect(preview.request.body).toEqual({
       mode: 'UPSERT',
       dryRun: true,
-      rows: [{ name: 'Vitaminas' }, { name: '' }, { name: 'vitaminas' }],
+      rows: [{ name: '' }, { name: 'Tercera' }, { name: 'Otra' }],
     });
     answer(preview, (index) =>
-      index === 1
+      index === 0
         ? { outcome: 'REJECTED', errors: [{ field: 'name', reason: 'REQUIRED', message: 'El nombre es obligatorio' }] }
-        : index === 2
+        : index === 1
           ? { outcome: 'REJECTED', errors: [{ field: 'name', reason: 'DUPLICATE_IN_FILE' }] }
           : {},
     );
@@ -130,6 +131,7 @@ describe('EntityImport', () => {
     expect(table).toContain('Creado');
     expect(table).toContain('El nombre es obligatorio');
     expect(table).toContain('La clave aparece más de una vez en el archivo.');
+    expect(table).toContain('La misma clave está en las líneas 2, 5: no se envía ninguna.');
     expect(textOf('entity-import-ignored')).toContain('nota');
   });
 

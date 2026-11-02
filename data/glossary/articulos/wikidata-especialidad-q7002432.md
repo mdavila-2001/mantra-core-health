@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q7002432
+image: wikidata-especialidad-q7002432.svg | Niveles del sistema neuromuscular y sus enfermedades | Cinco pasos de la orden de movimiento, desde la neurona motora hasta el músculo, con un ejemplo de enfermedad en cada nivel, junto a los síntomas típicos y las pruebas
 ---
 
 ## [definition] Introducción

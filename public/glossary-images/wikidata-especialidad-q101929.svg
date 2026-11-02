@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Sistema inmunitario e inmunología</title>
+  <desc id="d">Silueta humana con los órganos del sistema inmunitario: amígdalas y ganglios, timo, bazo y médula ósea. A la derecha, la inmunidad innata y la adaptativa y las áreas que atiende la especialidad.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="210.0" y="50" text-anchor="middle" class="title">Órganos del sistema inmunitario</text>
+<path d="M148.0,136.6 Q109.0,139.2 103.8,179.5 L90.8,329.0 Q96.0,344.6 109.0,331.6 L119.4,199.0 L122.0,355.0 Q122.0,396.6 142.8,409.6 L257.2,409.6 Q278.0,396.6 278.0,355.0 L280.6,199.0 L291.0,331.6 Q304.0,344.6 309.2,329.0 L296.2,179.5 Q291.0,139.2 252.0,136.6 L215.6,131.4 L215.6,115.8 L184.4,115.8 L184.4,131.4 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="200" cy="87.2" r="31.2" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+<circle cx="200" cy="148" r="8" fill="var(--purple)" stroke="var(--ink)" stroke-width="1"/>
+<text x="40" y="100" class="small">Amígdalas y ganglios</text>
+<line x1="160" y1="96" x2="192" y2="148" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="200" cy="180" r="12" fill="var(--ok)" stroke="var(--ink)" stroke-width="1"/>
+<text x="320" y="170" class="small">Timo</text>
+<line x1="316" y1="166" x2="212" y2="180" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="236" cy="240" r="12" fill="var(--purple)" stroke="var(--ink)" stroke-width="1"/>
+<text x="320" y="240" class="small">Bazo</text>
+<line x1="316" y1="236" x2="248" y2="240" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="176" cy="330" r="10" fill="var(--bone)" stroke="var(--ink)" stroke-width="1"/>
+<text x="40" y="330" class="small">Médula ósea</text>
+<line x1="106" y1="326" x2="166" y2="330" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="176" cy="134" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="224" cy="134" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="150" cy="180" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="250" cy="180" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="160" cy="300" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="240" cy="300" r="5" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<text x="200" y="430" text-anchor="middle" class="small" style="fill:var(--muted)">Puntos morados: ganglios linfáticos</text>
+<rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="598.0" y="50" text-anchor="middle" class="title">Dos líneas de defensa</text>
+<rect x="436" y="58" width="324" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="598.0" y="89.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Innata: rápida e inespecífica</text>
+<text x="598.0" y="105.5" text-anchor="middle" class="lab" style="fill:var(--ink)">piel, mucosas, fagocitos, inflamación</text>
+<rect x="436" y="140" width="324" height="70" rx="8" fill="var(--purple-l)" stroke-width="1"/>
+<text x="598.0" y="171.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Adaptativa: específica y con memoria</text>
+<text x="598.0" y="187.6" text-anchor="middle" class="lab" style="fill:var(--ink)">linfocitos T y B, anticuerpos</text>
+<rect x="436" y="226" width="324" height="130" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="448" y="248" class="step">Qué atiende la especialidad</text>
+<text x="448" y="274" class="lab">• Alergias</text>
+<text x="448" y="298" class="lab">• Enfermedades autoinmunes</text>
+<text x="448" y="322" class="lab">• Inmunodeficiencias</text>
+<text x="448" y="346" class="lab">• Vacunas y trasplantes</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

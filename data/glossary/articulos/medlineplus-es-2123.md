@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2123
+image: medlineplus-es-2123.svg | El ciclo de la rehabilitación y quién participa | Ciclo de cuatro pasos alrededor de una persona: valoración, objetivos, intervención y reevaluación, rodeado de las disciplinas de fisioterapia, terapia ocupacional, logopedia y otras
 ---
 
 ## [definition] Introducción

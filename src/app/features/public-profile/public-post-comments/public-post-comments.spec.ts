@@ -316,7 +316,7 @@ describe('PublicPostComments', () => {
         })) });
 
       expect(root().querySelector('[role="alert"]')?.textContent).toContain(
-        'Vuelva a intentarlo en un momento. (Código de soporte: corr-pub)',
+        'Vuelva a intentarlo en un momento. Un servicio necesario no está disponible ahora; intente en unos minutos. (Código de soporte: corr-pub)',
       );
     });
 

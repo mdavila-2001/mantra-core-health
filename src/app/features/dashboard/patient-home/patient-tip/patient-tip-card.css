@@ -23,7 +23,7 @@
   block-size: 3rem;
   border-radius: var(--r-full);
   background: var(--c-amber-400);
-  color: var(--c-amber-900, #312c24);
+  color: var(--c-amber-900);
 }
 
 .consejo__foco svg {

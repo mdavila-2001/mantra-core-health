@@ -1,0 +1,25 @@
+<app-ins-panel title="Campañas que se pueden hacer hoy" question="Seis ideas ordenadas por qué tan pronto conviene hacerlas. Son propuestas, no resultados: cada una trae su evidencia y su límite.">
+  <p class="id__warn" role="note">Las ideas salen de una conversación de demostración y de reglas del equipo; hay que validarlas antes de invertir.</p>
+  <ul class="id__list">
+    @for (i of list(); track i.id) {
+      <li class="id__card">
+        <div class="id__top">
+          <span class="id__prio">{{ mark[i.priority] }} {{ i.priority }}</span>
+          <span class="id__conf">Confianza {{ i.confidence }}</span>
+        </div>
+        <h3 class="id__title">{{ i.title }}</h3>
+        <dl class="id__facts">
+          <div><dt>Por qué ahora</dt><dd><ul>@for (e of i.evidence; track e) { <li>{{ e }}</li> } @for (e of env(i.environment); track e) { <li>Entorno: {{ e }}.</li> }</ul></dd></div>
+          <div><dt>Para quién</dt><dd>{{ i.who }}</dd></div>
+          <div><dt>Dónde</dt><dd>{{ i.channel }}</dd></div>
+          <div><dt>Idea de mensaje</dt><dd>«{{ i.angle }}»</dd></div>
+          <div><dt>Cómo medirla</dt><dd>{{ i.measure }}</dd></div>
+          <div><dt>Límite</dt><dd>🛡 {{ i.guard }}</dd></div>
+        </dl>
+        <p class="id__foot">
+          @if (campaign(i.campaignId); as c) { Se suma a «{{ c }}». <a [routerLink]="campaignsLink" [queryParams]="{ c: i.campaignId }">Ver la campaña</a> } @else { <span class="id__new">Campaña nueva</span> }
+        </p>
+      </li>
+    }
+  </ul>
+</app-ins-panel>

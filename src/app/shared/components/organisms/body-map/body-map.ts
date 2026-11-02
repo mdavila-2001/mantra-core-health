@@ -1,7 +1,8 @@
-import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   InjectionToken,
   PLATFORM_ID,
   computed,
@@ -11,10 +12,21 @@ import {
   linkedSignal,
   model,
   signal,
+  untracked,
 } from '@angular/core';
 
+import { ShareService } from '../../../utils/share/share.service';
+import { AppButton } from '../../atoms/button/button';
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
+import { ShareMenu, type ShareFormat } from '../../molecules/share-menu/share-menu';
+import { ToastService } from '../../molecules/toast/toast.service';
+import {
+  deliverBodyMap,
+  readBodyMapColors,
+  type BodyMapSnapshot,
+} from './body-map.export';
+import { VisorDelCuerpo } from './body-map.viewer';
 import {
   VISTAS_DEL_CUERPO,
   VISTAS_DEL_CUERPO_FEMENINA,
@@ -67,6 +79,10 @@ export const ESPERAR_IMAGEN_DE_VISTA = new InjectionToken<boolean>('ESPERAR_IMAG
 
 /** Cuánto se espera una imagen antes de darla por perdida y mostrar la vista igual. */
 const ESPERA_MAXIMA_DE_IMAGEN_MS = 4000;
+
+/** Los parámetros del enlace que reabre la misma zona y vista. */
+const PARAMETRO_ZONA = 'zona';
+const PARAMETRO_VISTA = 'vista';
 
 /** Para que cada silueta tenga su propio degradado aunque haya dos en la página. */
 let siguienteSilueta = 0;
@@ -152,10 +168,14 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  */
 @Component({
   selector: 'app-body-map',
-  imports: [SegmentedControl],
+  imports: [AppButton, SegmentedControl, ShareMenu],
   templateUrl: './body-map.html',
   styleUrl: './body-map.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Los atajos (+, −, 0, Escape) escuchan desde el host: los `keydown` de las
+  // zonas y de los botones suben hasta acá, y un `div` con oyente pero sin foco
+  // propio no pasa el control de accesibilidad de las plantillas.
+  host: { '(keydown)': 'alPresionar($event)' },
 })
 export class BodyMap {
   /** Las zonas que se pueden elegir. Vacío no dibuja nada: ver la plantilla. */
@@ -300,6 +320,52 @@ export class BodyMap {
     this.vistas().map(({ vista }) => ({ value: vista.id, label: vista.nombre })),
   );
 
+  /* ---- ver de cerca: acercar muestra más píxeles reales del render, no estira nada. */
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly document = inject(DOCUMENT);
+  private readonly navegador = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly compartir = inject(ShareService);
+  private readonly avisos = inject(ToastService);
+
+  /** La figura ocupa toda la pantalla (para mirarla con el paciente al lado). */
+  protected readonly ampliado = signal(false);
+
+  /** Se está armando un archivo para compartir. */
+  protected readonly exportando = signal(false);
+
+  /** Ancho y alto del dibujo de la vista que se ve: lo que el `viewBox` base dice. */
+  protected readonly caja = computed<readonly [number, number]>(() => {
+    const [, , ancho, alto] = (this.vistaVisible()?.vista.viewBox ?? '0 0 240 440')
+      .split(' ')
+      .map(Number);
+    return [ancho, alto];
+  });
+
+  /** El acercamiento y el arrastre; ver {@link VisorDelCuerpo}. */
+  protected readonly visor = new VisorDelCuerpo({
+    caja: () => this.caja(),
+    viewBoxBase: () => this.vistaVisible()?.vista.viewBox ?? '0 0 240 440',
+    centroDeLaElegida: () => this.centrosDeLaElegida()[0],
+  });
+
+  /** El enlace que reabre esta zona y esta vista; `null` en el servidor. */
+  protected readonly enlaceParaCompartir = computed<string | null>(() => {
+    const vista = this.vista();
+    if (!this.navegador || vista === null) return null;
+    return this.compartir.linkWith({
+      [PARAMETRO_ZONA]: this.value(),
+      [PARAMETRO_VISTA]: vista.vista.id,
+    });
+  });
+
+  protected readonly tituloParaCompartir = computed(() => {
+    const vista = this.vistaVisible();
+    const zona = this.nombreElegido();
+    if (vista === null) return 'Mapa corporal';
+    return zona === null ? `Mapa corporal · ${vista.vista.nombre}` : `Mapa corporal · ${zona}`;
+  });
+
   private readonly marcadasPorId = computed(() => new Set(this.marcadas()));
 
   /** Las marcadas, en palabras y en el orden de la tabla: «Espalda y Piel y pelo». */
@@ -344,6 +410,116 @@ export class BodyMap {
         enReposo(() => otras.forEach((v) => void this.precargar(v.vista.image)));
       });
     });
+
+    // Cada vista se mira entera al llegar: el acercamiento de la espalda no
+    // tiene sentido sobre el frente.
+    effect(() => {
+      const vista = this.vistaVisible()?.vista.id;
+      untracked(() => {
+        if (vista !== undefined) this.visor.restablecer();
+      });
+    });
+
+    // El enlace compartido: si la dirección trae `?zona=…&vista=…`, la figura
+    // abre ahí. Se lee una sola vez, cuando ya hay zonas que pueden nombrarse.
+    let enlaceLeido = false;
+    effect(() => {
+      const zonas = this.zonas();
+      if (enlaceLeido || !this.navegador || zonas.length === 0) return;
+      enlaceLeido = true;
+      untracked(() => this.abrirDesdeElEnlace(zonas));
+    });
+
+    // Ampliada, la página de atrás no se desplaza.
+    effect((alLimpiar) => {
+      if (!this.ampliado() || !this.navegador) return;
+      const cuerpo = this.document.body;
+      const anterior = cuerpo.style.overflow;
+      cuerpo.style.overflow = 'hidden';
+      alLimpiar(() => (cuerpo.style.overflow = anterior));
+    });
+  }
+
+  private abrirDesdeElEnlace(zonas: readonly ZonaElegible[]): void {
+    const params = new URLSearchParams(this.document.location.search);
+    const zona = params.get(PARAMETRO_ZONA);
+    const vista = params.get(PARAMETRO_VISTA);
+    if (vista !== null && this.vistas().some((v) => v.vista.id === vista)) {
+      this.vistaPedida.set(vista as IdDeVista);
+    }
+    if (zona !== null && this.value() === null && zonas.some((z) => z.id === zona)) {
+      this.value.set(zona);
+      this.elegidaAlPedirVista.set(zona);
+    }
+  }
+
+  /** Un clic sobre una zona elige; el que cierra un arrastre no. */
+  protected clicEnZona(zona: ZonaDibujable): void {
+    if (this.visor.consumirArrastre()) return;
+    this.elegir(zona);
+  }
+
+  protected alternarAmpliado(): void {
+    // El mismo botón abre y cierra, así que el foco no se mueve: queda donde
+    // estaba y Escape lo devuelve a la figura de siempre.
+    this.ampliado.update((abierto) => !abierto);
+  }
+
+  /** Atajos: + y − acercan y alejan, 0 vuelve a la figura entera, Escape cierra la ampliación. */
+  protected alPresionar(evento: KeyboardEvent): void {
+    switch (evento.key) {
+      case '+':
+      case '=':
+        evento.preventDefault();
+        this.visor.acercar();
+        break;
+      case '-':
+        evento.preventDefault();
+        this.visor.alejar();
+        break;
+      case '0':
+        this.visor.restablecer();
+        break;
+      case 'Escape':
+        if (this.ampliado()) {
+          evento.preventDefault();
+          this.alternarAmpliado();
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  /* ---- compartir ------------------------------------------------------------- */
+
+  private instantanea(vista: VistaDibujable): BodyMapSnapshot {
+    const zona = vista.zonas.find((candidata) => candidata.id === this.value());
+    return {
+      image: vista.vista.image,
+      box: this.caja(),
+      viewName: vista.vista.nombre,
+      zoneName: zona?.nombre ?? null,
+      zonePath: zona?.d ?? null,
+      zoneCenters: zona?.centros ?? [],
+      colors: readBodyMapColors(this.host.nativeElement),
+    };
+  }
+
+  protected async exportar(formato: ShareFormat): Promise<void> {
+    const vista = this.vistaVisible();
+    if (vista === null || this.exportando()) return;
+    this.exportando.set(true);
+    try {
+      await deliverBodyMap(formato, this.instantanea(vista), this.compartir);
+    } catch {
+      this.avisos.show({
+        type: 'error',
+        message: 'No pudimos preparar el archivo. Intente de nuevo en unos segundos.',
+      });
+    } finally {
+      this.exportando.set(false);
+    }
   }
 
   /** Descarga y decodifica una imagen una sola vez; resuelve también si falla. */

@@ -1,5 +1,6 @@
 ---
 slug: neuropatia-diabetica
+image: neuropatia-diabetica.svg | La neuropatía diabética empieza en los pies y sube en forma de calcetín. | Piernas con los pies sombreados en distribución de calcetín, un nervio dañado por la glucosa alta y una lista de cuidados de los pies y señales para consultar.
 ---
 
 ## [definition] Introducción

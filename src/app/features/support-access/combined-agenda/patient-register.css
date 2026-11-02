@@ -86,3 +86,17 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
+
+/* Celular: la casilla de invitar es un blanco de 44 px. */
+@media (max-width: 779px) {
+  .invitar {
+    align-items: center;
+    min-block-size: 44px;
+  }
+
+  .invitar input {
+    inline-size: 20px;
+    block-size: 20px;
+    margin-block-start: 0;
+  }
+}

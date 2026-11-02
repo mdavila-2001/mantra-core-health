@@ -507,6 +507,11 @@ export class Summary {
         if (estado.status === 'ready' && estado.data.length === 0) {
           this.dinero.set(NO_ACTIVE_PRACTICE);
         }
+        // Sin una práctica activa no hay qué leer: es S3 con la próxima acción,
+        // no un esqueleto de carga que nunca termina.
+        if (estado.status === 'ready' && estado.data.length === 0) {
+          this.dinero.set(NO_ACTIVE_PRACTICE);
+        }
       });
 
     toObservable(computed(() => ({ practiceId: this.chosenPractice(), intento: this.reload() })))

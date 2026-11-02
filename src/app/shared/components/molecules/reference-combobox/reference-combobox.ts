@@ -150,6 +150,15 @@ export class ReferenceCombobox implements FormControlContext {
    */
   readonly searched = output<string>();
 
+  /**
+   * Lo escrito dejó de valer como búsqueda: quedó por debajo de
+   * `minQueryLength` (se borró) o se descartó al cerrar (Escape, Tab o salir
+   * del campo devuelven el texto a lo elegido). Quien consulta la red puede
+   * descartar la búsqueda en vuelo, para que una respuesta tardía no llene la
+   * lista. Opcional: quien no lo escucha sigue igual que antes.
+   */
+  readonly queryCleared = output<void>();
+
   /** La opción completa que se eligió, para quien necesite el rótulo. */
   readonly selectionChange = output<ReferenceOption | null>();
 
@@ -413,6 +422,8 @@ export class ReferenceCombobox implements FormControlContext {
     if (this.query() !== rotulo) {
       this.query.set(rotulo);
       this.emitted.set(rotulo);
+      // Lo escrito se descartó: una búsqueda en vuelo ya no es de nadie.
+      this.queryCleared.emit();
     }
   }
 
@@ -486,6 +497,7 @@ export class ReferenceCombobox implements FormControlContext {
 
     if (texto.trim().length < this.minQueryLength()) {
       this.activeIndex.set(-1);
+      this.queryCleared.emit();
       return;
     }
 

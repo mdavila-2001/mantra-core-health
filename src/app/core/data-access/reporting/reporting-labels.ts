@@ -12,6 +12,14 @@ export const ETIQUETA_DIMENSION: Readonly<Record<DimensionFiltro, string>> = {
   'metodo-pago': 'método de pago',
   estado: 'estado',
   mes: 'mes',
+  endpoint: 'operación',
+  pantalla: 'pantalla',
+  funcionalidad: 'funcionalidad',
+  dominio: 'dominio',
+  codigo: 'código',
+  metodo: 'método',
+  modulo: 'módulo',
+  hora: 'hora',
 };
 
 export const ETIQUETA_VERTICAL: Readonly<Record<CategoriaReporte, string>> = {

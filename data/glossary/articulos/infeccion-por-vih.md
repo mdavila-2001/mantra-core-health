@@ -1,5 +1,6 @@
 ---
 slug: infeccion-por-vih
+image: infeccion-por-vih.svg | El VIH destruye linfocitos CD4; el tratamiento antirretroviral frena al virus. | Virus del VIH que ataca a un linfocito CD4, una curva de linfocitos con y sin tratamiento y una lista de vías de transmisión, tratamiento y prevención.
 ---
 
 ## [definition] Introducción

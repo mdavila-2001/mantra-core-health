@@ -1,5 +1,6 @@
 ---
 slug: ttpa
+image: ttpa.svg | Qué vías de la coagulación explora el TTPa | Cascada de la coagulación con la vía intrínseca y la común resaltadas frente a la extrínseca, junto a los pasos del análisis y sus usos principales
 ---
 
 ## [definition] Introducción

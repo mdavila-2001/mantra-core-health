@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2440756
+image: wikidata-especialidad-q2440756.svg | Válvulas venosas sanas frente a insuficientes en las piernas. | Dos venas con válvulas, una sana con la sangre que sube y otra insuficiente con reflujo, junto a las enfermedades venosas que atiende la flebología y sus tratamientos.
 ---
 
 ## [definition] Introducción

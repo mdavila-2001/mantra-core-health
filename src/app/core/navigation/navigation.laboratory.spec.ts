@@ -31,6 +31,7 @@ const MENU_DEL_LABORATORIO = [
   '/administration/laboratory',
   '/administration/laboratory-orders',
   '/administration/laboratory-prices',
+  '/administration/center-schedule',
   '/administration/laboratory-branches',
 ];
 
@@ -98,6 +99,7 @@ describe('Menú de la cuenta de laboratorio', () => {
       'Resumen',
       'Órdenes',
       'Precios',
+      'Horarios y equipos',
       'Sucursales',
     ]);
   });

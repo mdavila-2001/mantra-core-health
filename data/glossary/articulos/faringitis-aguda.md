@@ -1,5 +1,6 @@
 ---
 slug: faringitis-aguda
+image: faringitis-aguda.svg | En la faringitis se inflama la garganta; casi siempre la causa un virus. | Garganta vista con la boca abierta, con la faringe roja y las amígdalas inflamadas, junto a la comparación entre faringitis viral y por estreptococo y una lista de signos de alarma.
 ---
 
 ## [definition] Introducción

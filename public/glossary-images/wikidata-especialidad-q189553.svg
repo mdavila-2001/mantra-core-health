@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Otorrinolaringología: oído, nariz y garganta</title>
+  <desc id="d">A la izquierda, una cabeza de perfil con el oído, los senos paranasales, la nariz, la garganta y la laringe señalados en colores. A la derecha, las enfermedades que atiende la otorrinolaringología en cada zona, como otitis, sinusitis, problemas de las amígdalas, ronquera y tumores de cabeza y cuello, y sus herramientas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Oído, nariz y garganta</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Qué atiende</text>
+<path d="M103.0 340.5 L103.0 268.0 C59.5 210 74.0 94.0 190 79.5 C277.0 79.5 306.0 152.0 303.1 195.5 L323.4 233.2 L300.2 241.9 L303.1 273.8 C291.5 297.0 248.0 291.2 233.5 297.0 L233.5 340.5 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M120 196 C106 180 110 160 126 160 C142 160 146 180 136 196 C132 206 136 214 128 216" fill="var(--skin)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M140 186 C160 186 170 196 176 206" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M178 200 c6 -8 14 -8 14 0 c0 8 -8 10 -14 4" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="238" cy="168" rx="18" ry="12" fill="var(--yellow)" opacity=".5"/>
+<ellipse cx="250" cy="200" rx="16" ry="14" fill="var(--yellow)" opacity=".5"/>
+<path d="M240 210 C256 216 278 220 300 232" fill="none" stroke="var(--ok)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M250 250 C232 262 222 280 220 340" fill="none" stroke="var(--organ)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="212" y="300" width="20" height="24" rx="5" fill="var(--purple)"/>
+<text x="40" y="140" class="step" style="fill:var(--accent)">Oído</text>
+<text x="286" y="140" class="step" style="fill:var(--warn)">Senos</text>
+<text x="302" y="220" class="step" style="fill:var(--ok)">Nariz</text>
+<text x="248" y="320" class="step" style="fill:var(--purple)">Laringe</text>
+<text x="248" y="272" class="step" style="fill:var(--organ)">Garganta</text>
+<text x="200" y="396" text-anchor="middle" class="small" style="fill:var(--muted)">Atiende a todas las edades, también</text>
+<text x="200" y="412" text-anchor="middle" class="small" style="fill:var(--muted)">cirugía de cabeza y cuello.</text>
+<rect x="416" y="70" width="8" height="48" rx="3" fill="var(--accent)"/>
+<text x="436" y="90" class="step" style="fill:var(--accent)">Oído</text>
+<text x="436" y="110" class="small">Otitis, sordera, vértigo, acúfenos</text>
+<rect x="416" y="132" width="8" height="48" rx="3" fill="var(--ok)"/>
+<text x="436" y="152" class="step" style="fill:var(--ok)">Nariz y senos</text>
+<text x="436" y="172" class="small">Sinusitis, rinitis, desviación del tabique</text>
+<rect x="416" y="194" width="8" height="48" rx="3" fill="var(--organ)"/>
+<text x="436" y="214" class="step" style="fill:var(--organ)">Garganta</text>
+<text x="436" y="234" class="small">Amígdalas, ronquido, apnea del sueño</text>
+<rect x="416" y="256" width="8" height="48" rx="3" fill="var(--purple)"/>
+<text x="436" y="276" class="step" style="fill:var(--purple)">Laringe</text>
+<text x="436" y="296" class="small">Ronquera y alteraciones de la voz</text>
+<rect x="416" y="318" width="8" height="48" rx="3" fill="var(--vessel)"/>
+<text x="436" y="338" class="step" style="fill:var(--vessel)">Cuello</text>
+<text x="436" y="358" class="small">Tumores de cabeza y cuello</text>
+<text x="416" y="396" class="small" style="fill:var(--muted)">Herramientas: otoscopio, endoscopio,</text>
+<text x="416" y="412" class="small" style="fill:var(--muted)">audiometría, implante coclear.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

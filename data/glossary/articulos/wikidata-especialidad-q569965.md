@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q569965
+image: wikidata-especialidad-q569965.svg | La audiología estudia la audición y el equilibrio y rehabilita sus trastornos. | Corte del oído con el oído externo, el tímpano, los huesecillos, la cóclea, los canales del equilibrio y el nervio auditivo, y una gráfica de audiometría, junto a problemas atendidos y soluciones.
 ---
 
 ## [definition] Introducción

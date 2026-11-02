@@ -451,7 +451,7 @@ describe('PatientHome', () => {
     const aviso = html.querySelector('[data-testid="mi-salud-cita-error"]');
     expect(aviso?.getAttribute('role')).toBe('alert');
     expect(aviso?.textContent).toContain(
-      'No pudimos traer su próxima cita. (Código de soporte: corr-citas-1)',
+      'No pudimos traer su próxima cita. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-citas-1)',
     );
   });
 
@@ -492,7 +492,7 @@ describe('PatientHome', () => {
 
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('[data-testid="mi-salud-error"]')?.textContent).toContain(
-      'No pudimos cargar su información en este momento. (Código de soporte: corr-panel-1)',
+      'No pudimos cargar su información en este momento. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-panel-1)',
     );
 
     (html.querySelector('[data-testid="mi-salud-reintentar"]') as HTMLButtonElement).click();

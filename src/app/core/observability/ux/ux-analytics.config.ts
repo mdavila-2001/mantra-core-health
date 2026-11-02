@@ -2,10 +2,26 @@ import { InjectionToken } from '@angular/core';
 
 import { environment } from '../../../../environments/environment';
 
+/**
+ * Ids deterministas del catálogo de telemetría (iguales en todos los entornos;
+ * `CONTRATO-ingesta-ux.md` §2). El esquema con consentimiento sí se configura
+ * (`PUBLIC_UX_ANALYTICS_EVENT_SCHEMA_ID`); estos dos son constantes.
+ */
+export const ESQUEMA_VISTA_ANONIMA_ID = 'df630ae0-3bf4-567d-97f3-5b75ea77bc94';
+/** Propósito `PORTAL_UX_HEATMAP`: el que pide consentimiento. */
+export const PROPOSITO_UX_HEATMAP_ID = '9889b3b6-4293-5266-bba2-b27fa26bec2e';
+/** Versión del texto del aviso que la persona aceptó; viaja con el consentimiento. */
+export const VERSION_CONSENTIMIENTO_UX = 'ux-heatmap-2026-10';
+
 export interface UxAnalyticsConfig {
   /** Encendida **y** con esquema: las dos cosas, o nada. */
   readonly active: boolean;
+  /** Esquema `ux_interaccion` v2: exige consentimiento `GRANTED`. */
   readonly eventSchemaDefinitionId: string;
+  /** Esquema `pagina_vista_anonima`: solo `pagina_vista`, sin identidad ni propiedades. */
+  readonly anonymousSchemaDefinitionId: string;
+  /** Propósito cuyo consentimiento decide si se mandan clics. */
+  readonly consentPurposeDefinitionId: string;
   readonly sampleRatio: number;
   /** Cada cuánto se manda lo acumulado. */
   readonly flushIntervalMs: number;
@@ -33,6 +49,8 @@ export const UX_ANALYTICS_CONFIG = new InjectionToken<UxAnalyticsConfig>('UX_ANA
     return {
       active: enabled && eventSchemaDefinitionId !== '',
       eventSchemaDefinitionId,
+      anonymousSchemaDefinitionId: ESQUEMA_VISTA_ANONIMA_ID,
+      consentPurposeDefinitionId: PROPOSITO_UX_HEATMAP_ID,
       sampleRatio,
       flushIntervalMs: 10_000,
       maxBatch: 50,

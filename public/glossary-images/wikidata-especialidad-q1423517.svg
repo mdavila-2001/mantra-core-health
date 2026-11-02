@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Medicina subacuática e hiperbárica</title>
+  <desc id="d">A la izquierda, una columna de agua con la profundidad y la presión: 1 atmósfera en superficie, 2 a 10 metros, 3 a 20 y 4 a 30, y un globo de aire que se comprime al bajar y se expande al subir. A la derecha, los problemas que atiende, como barotrauma o enfermedad descompresiva, y la cámara hiperbárica.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Presión y profundidad</text>
+  <rect x="40" y="70" width="340" height="350" rx="10" fill="var(--accent-l)"/>
+  <path d="M40 96 q20 -10 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t20 0" fill="none" stroke="var(--accent)" stroke-width="3"/>
+  <line x1="40" y1="100" x2="380" y2="100" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 4"/>
+  <text x="56" y="122" class="step">0 m</text>
+  <text x="56" y="140" class="small muted">1 atm</text>
+  <circle cx="290" cy="140" r="30.0" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <line x1="40" y1="180" x2="380" y2="180" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 4"/>
+  <text x="56" y="202" class="step">10 m</text>
+  <text x="56" y="220" class="small muted">2 atm</text>
+  <circle cx="290" cy="220" r="21.213203435596423" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <line x1="40" y1="260" x2="380" y2="260" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 4"/>
+  <text x="56" y="282" class="step">20 m</text>
+  <text x="56" y="300" class="small muted">3 atm</text>
+  <circle cx="290" cy="300" r="17.320508075688775" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <line x1="40" y1="340" x2="380" y2="340" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 4"/>
+  <text x="56" y="362" class="step">30 m</text>
+  <text x="56" y="380" class="small muted">4 atm</text>
+  <circle cx="290" cy="380" r="15.0" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="200" y="140" text-anchor="middle" class="small">Globo de aire</text>
+  <text x="200" y="156" text-anchor="middle" class="small">se comprime</text>
+  <text x="210" y="410" text-anchor="middle" class="small">Al subir, el gas se expande</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Qué atiende</text>
+  <rect x="436" y="66" width="324" height="48" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="87" class="step">Barotrauma</text>
+  <text x="452" y="105" class="small muted">oído, senos, pulmón</text>
+  <rect x="436" y="124" width="324" height="48" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="145" class="step">Descompresión</text>
+  <text x="452" y="163" class="small muted">burbujas al subir rápido</text>
+  <rect x="436" y="182" width="324" height="48" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="203" class="step">Embolia gaseosa</text>
+  <text x="452" y="221" class="small muted">aire en la circulación</text>
+  <rect x="436" y="240" width="324" height="48" rx="10" fill="var(--tissue)"/>
+  <text x="452" y="261" class="step">Aptitud para bucear</text>
+  <text x="452" y="279" class="small muted">revisión médica</text>
+  <rect x="436" y="304" width="324" height="116" rx="10" fill="var(--ok-l)"/>
+  <rect x="456" y="324" width="120" height="50" rx="25" fill="var(--accent)"/>
+  <text x="516" y="354" text-anchor="middle" class="small" style="fill:var(--on)">Cámara</text>
+  <text x="590" y="336" class="small">Oxígeno a más</text>
+  <text x="590" y="354" class="small">presión: trata la</text>
+  <text x="590" y="372" class="small">descompresión</text>
+  <text x="598" y="404" text-anchor="middle" class="step" style="fill:var(--ok)">Medicina hiperbárica</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -115,6 +115,18 @@ describe('MedicalGroupForm', () => {
     }
   });
 
+  it('lista el catálogo de la práctica al abrir, sin pedir que se escriba antes', async () => {
+    await settle();
+
+    expect(el.textContent).toContain('Colecistectomía');
+    // Ese texto vacío es el del catálogo; el del paciente (opcional) sigue pidiendo buscar.
+    expect(el.textContent).not.toContain('Busque el servicio de salud por código o nombre.');
+    const elegir = Array.from(el.querySelectorAll('button')).filter(
+      (b) => b.textContent?.trim() === 'Elegir',
+    );
+    expect(elegir.length).toBeGreaterThan(0);
+  });
+
   it('cada pestaña dibuja sus campos y los valores sobreviven a cerrarla', () => {
     pestana('Fecha y lugar');
     const lugar = () => el.querySelector<HTMLInputElement>('[data-testid="medical-group-form-location"]');

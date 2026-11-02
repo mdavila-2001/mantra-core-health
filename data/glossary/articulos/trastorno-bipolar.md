@@ -1,5 +1,6 @@
 ---
 slug: trastorno-bipolar
+image: trastorno-bipolar.svg | El trastorno bipolar alterna episodios de manía o hipomanía y de depresión. | Línea del estado de ánimo a lo largo del tiempo con un pico de manía, un valle de depresión y un pico de hipomanía, y recuadros con síntomas y tratamiento.
 ---
 
 ## [definition] Introducción

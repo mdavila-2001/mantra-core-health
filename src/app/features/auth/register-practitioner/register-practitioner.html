@@ -67,6 +67,7 @@
            con búsqueda— y el aviso del departamento, sólo cuando su lectura
            falló, que es cuando el campo deja de ser un `select`. -->
         <div class="registro__body">
+          <app-account-exists-dialog />
           <app-paginated-form
             data-testid="registro-form-profesional"
             [paginas]="paginasProfesional()"

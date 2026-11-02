@@ -1,5 +1,6 @@
 ---
 slug: dimero-d
+image: dimero-d.svg | El dímero D es un fragmento que se libera cuando el organismo disuelve un coágulo. | Esquema de un coágulo de fibrina que la plasmina rompe en fragmentos de dímero D que pasan a la sangre, junto a su utilidad para descartar trombos y las causas de elevación sin trombo.
 ---
 
 ## [definition] Introducción

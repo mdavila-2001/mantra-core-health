@@ -1,5 +1,6 @@
 ---
 slug: varices
+image: varices.svg | Cuando las válvulas de las venas fallan, la sangre se acumula y la vena se dilata. | Pierna con una vena dilatada y tortuosa y la comparación entre una vena con válvula sana y otra con válvula dañada donde la sangre se acumula.
 ---
 
 ## [definition] Introducción

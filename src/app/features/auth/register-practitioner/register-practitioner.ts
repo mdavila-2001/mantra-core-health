@@ -124,6 +124,8 @@ import type {
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { BoProfessionsCatalog } from '../../../core/data-access/terminology/bo-professions.service';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 import { OfficeLogoField } from './office-logo/office-logo-field';
 import { OfficeLogoSelection } from './office-logo/office-logo-selection';
 import { ownSiteFromAnswers } from './own-site';
@@ -710,7 +712,7 @@ function sinTildes(texto: string): string {
 
 @Component({
   selector: 'app-register-practitioner',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     FileDropTarget,
     FileInput,
     DatePicker,
@@ -747,6 +749,7 @@ export class RegisterPractitioner {
   private readonly iam = inject(IamClient);
   private readonly officeLogo = inject(OfficeLogoSelection);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly systemContext = inject(SystemContextClient);
   private readonly draftService = inject(OnboardingDraftService);
 
@@ -2546,6 +2549,7 @@ export class RegisterPractitioner {
     practitionerFields({
       professionalTitle: this.tituloProfesionalElegido(),
       departmentIssuerField: (testId) => this.campoDepartamentoEmisor(testId),
+      alSalirCorreoPersonal: (valor) => this.cuentaExistente.verificar('EMAIL', valor),
     }),
   );
 

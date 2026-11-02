@@ -67,7 +67,30 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   // Su médico la derivó (24/10/2026): el aviso abre la ficha del profesional
   // recomendado, donde reserva la cita de siempre.
   PRACTITIONER_PROFILE: (id) => `/directory/${id}`,
+  // ORGANIZATION_PROFILE (derivación a una organización, 31/10/2026) no está
+  // acá: su ruta no se arma con el id (el tenant) sino que la manda la API en
+  // `payloadJson.route` — ver `organizationRoute`.
 };
+
+/**
+ * La única forma de ruta que se acepta del aviso de una organización: su ficha
+ * pública por slug (`/o/:slug`, `rutasDeFichasPublicas` en `app.routes.ts`).
+ */
+const ORGANIZATION_ROUTE = /^\/o\/[a-z0-9-]+$/;
+
+/**
+ * La ficha pública de la organización a la que derivaron a la persona.
+ *
+ * La API manda `payloadJson.route = '/o/{slug}'` sólo si la organización tiene
+ * ficha pública activa. Se navega **únicamente** si la ruta tiene esa forma:
+ * un `route` arbitrario en el payload no puede convertir la campana en un
+ * redirector a cualquier lado.
+ */
+function organizationRoute(payloadJson: unknown): string | null {
+  if (typeof payloadJson !== 'object' || payloadJson === null) return null;
+  const route = (payloadJson as Record<string, unknown>)['route'];
+  return typeof route === 'string' && ORGANIZATION_ROUTE.test(route) ? route : null;
+}
 
 /**
  * La ruta que abre una notificación, o `null` si no abre nada.
@@ -78,13 +101,19 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
  * producto se rompió.
  *
  * @param destination - El par `(tipo, id)` que mandó el backend.
+ * @param payloadJson - El payload del aviso: sólo lo lee un destino cuya ruta
+ *   la manda la API (`ORGANIZATION_PROFILE`), y siempre contra una forma fija.
  * @returns La ruta absoluta, o `null`.
  */
 export function rutaDeNotificacion(
   destination: NotificationDestination | undefined,
+  payloadJson?: unknown,
 ): string | null {
   if (!destination) {
     return null;
+  }
+  if (destination.type === 'ORGANIZATION_PROFILE') {
+    return organizationRoute(payloadJson);
   }
   const constructor = RUTAS[destination.type];
   return constructor ? constructor(destination.id) : null;

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Varicela</title>
+  <desc id="d">Arriba, la evolución de cada lesión de la piel en cuatro fases: mancha roja, pápula abultada, vesícula con líquido y costra. Abajo a la izquierda, claves de la enfermedad: la causa el virus varicela-zóster, se contagia por el aire, produce fiebre y picor y las lesiones conviven en distintas fases. Abajo a la derecha, el virus que queda latente en un nervio y puede reactivarse como herpes zóster, la vacuna y los casos en que hay que consultar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="190" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Evolución de las lesiones en la piel</text>
+  <rect x="50" y="70" width="120" height="70" rx="10" fill="var(--skin)"/>
+  <ellipse cx="110" cy="105" rx="18" ry="12" fill="var(--bad)" opacity=".45"/>
+  <text x="110" y="164" text-anchor="middle" class="step">Mancha</text>
+  <text x="110" y="182" text-anchor="middle" class="small">roja</text>
+  <path d="M174 105 L236 105" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="240" y="70" width="120" height="70" rx="10" fill="var(--skin)"/>
+  <ellipse cx="300" cy="105" rx="18" ry="12" fill="var(--bad)" opacity=".45"/><circle cx="300" cy="104" r="8" fill="var(--bad)" opacity=".6"/>
+  <text x="300" y="164" text-anchor="middle" class="step">Pápula</text>
+  <text x="300" y="182" text-anchor="middle" class="small">abultada</text>
+  <path d="M364 105 L426 105" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="430" y="70" width="120" height="70" rx="10" fill="var(--skin)"/>
+  <ellipse cx="490" cy="108" rx="20" ry="12" fill="var(--bad)" opacity=".4"/><circle cx="490" cy="102" r="10" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="490" y="164" text-anchor="middle" class="step">Vesícula</text>
+  <text x="490" y="182" text-anchor="middle" class="small">con líquido</text>
+  <path d="M554 105 L616 105" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="620" y="70" width="120" height="70" rx="10" fill="var(--skin)"/>
+  <ellipse cx="680" cy="105" rx="13" ry="9" fill="var(--warn)" opacity=".9"/>
+  <text x="680" y="164" text-anchor="middle" class="step">Costra</text>
+  <text x="680" y="182" text-anchor="middle" class="small">se seca</text>
+  <rect x="20" y="224" width="330" height="226" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="185.0" y="254" text-anchor="middle" class="title">Claves</text>
+  <text x="40" y="268" class="small">• Virus varicela-zóster</text>
+  <text x="40" y="294" class="small">• Se contagia por el aire</text>
+  <text x="40" y="320" class="small">• Fiebre y mucho picor</text>
+  <text x="40" y="346" class="small">• Lesiones en varias fases</text>
+  <text x="40" y="372" class="small">• a la vez, sobre todo en tronco</text>
+  <text x="40" y="398" class="small">• Contagia hasta que hay costras</text>
+  <rect x="370" y="224" width="410" height="226" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="575.0" y="254" text-anchor="middle" class="title">Después y prevención</text>
+  <path d="M400 330 C430 300 460 300 490 320" fill="none" stroke="var(--purple)" stroke-width="5"/>
+  <circle cx="490" cy="320" r="8" fill="var(--purple)"/>
+  <text x="390" y="290" class="small">El virus queda latente en</text>
+  <text x="390" y="306" class="small">un nervio</text>
+  <text x="390" y="360" class="small">Años después puede reactivarse</text>
+  <text x="390" y="376" class="small">como herpes zóster</text>
+  <rect x="600" y="270" width="164" height="76" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="682" y="298" text-anchor="middle" class="step">Vacuna</text>
+  <text x="682" y="318" text-anchor="middle" class="small">previene la</text>
+  <text x="682" y="334" text-anchor="middle" class="small">enfermedad</text>
+  <rect x="600" y="356" width="164" height="80" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="682" y="380" text-anchor="middle" class="step">Consultar si</text>
+  <text x="682" y="400" text-anchor="middle" class="small">embarazo, bebé o</text>
+  <text x="682" y="416" text-anchor="middle" class="small">defensas bajas</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

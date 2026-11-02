@@ -1,5 +1,6 @@
 ---
 slug: hierro-serico
+image: hierro-serico.svg | El hierro sérico es el que circula unido a la transferrina. | Ciclo del hierro entre el intestino, la transferrina de la sangre, la médula ósea, los glóbulos rojos y los depósitos de ferritina, con un tubo de sangre y las pruebas complementarias.
 ---
 
 ## [definition] Introducción

@@ -35,6 +35,24 @@
   margin: 0;
 }
 
+/* El avance a lo ancho: se lee de un vistazo cuánto falta. */
+.verif__barra {
+  display: block;
+  flex: 1 1 100%;
+  block-size: 6px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--filete);
+}
+
+.verif__barra span {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--ok-tinta);
+  transition: inline-size var(--dur-base) var(--ease-standard);
+}
+
 .verif__ruta {
   display: grid;
   gap: 0;

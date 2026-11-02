@@ -1,0 +1,28 @@
+{
+  "before": {
+    "sum": "Hoy hay 5 alertas abiertas, 0 críticas. Resueltas hasta ahora: 0.",
+    "first": "Nuevo · Sin asignar"
+  },
+  "afterChange": {
+    "drawerStatus": "En revisión",
+    "hist": [
+      "31 oct de 2026, 2:41 p. m. · Nuevo → En revisión · Marketing ",
+      "31 oct de 2026, 2:41 p. m. · Alta → Nuevo · Marketing "
+    ]
+  },
+  "requests1": [],
+  "afterReload": {
+    "sum": "Hoy hay 5 alertas abiertas, 0 críticas. Resueltas hasta ahora: 0.",
+    "states": [
+      "En revisión · Marketing",
+      "Nuevo · Sin asignar",
+      "Nuevo · Sin asignar",
+      "Nuevo · Sin asignar",
+      "Nuevo · Sin asignar"
+    ]
+  },
+  "conflict": {
+    "notice": "Otra persona cambió esto antes que usted. Se cargó el estado vigente: revíselo y vuelva a intentar.\nEntendido"
+  },
+  "errors": []
+}

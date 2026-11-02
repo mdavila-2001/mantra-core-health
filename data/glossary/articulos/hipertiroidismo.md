@@ -1,5 +1,6 @@
 ---
 slug: hipertiroidismo
+image: hipertiroidismo.svg | El exceso de hormona tiroidea acelera muchas funciones del cuerpo. | Silueta humana con la glándula tiroides en el cuello y síntomas distribuidos alrededor: nerviosismo, palpitaciones, pérdida de peso, temblor, calor, bocio. Abajo, las causas principales, los análisis y los tratamientos.
 ---
 
 ## [definition] Introducción

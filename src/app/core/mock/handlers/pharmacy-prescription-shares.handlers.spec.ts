@@ -48,7 +48,7 @@ describe('receta compartida abierta por la farmacia en el mock', () => {
 
   /** Un ítem emitido y vigente del paciente cuyo fármaco tiene la farmacia. */
   const item = prescriptionList
-    .filtrar((row) => row.patientProfileId === PACIENTE.id && row.statusConceptId === PRESCRIPTION_STATUS['MR_ISSUED'])
+    .filtrar((row) => row.patientProfileId === PACIENTE.id && row.statusConceptId === PRESCRIPTION_STATUS['clinical:MEDICATION_REQUEST_ISSUED'])
     .find((row) => {
       const products = send('GET', `/pharmacy/products?pharmacyId=${TENANT_FARMACIA}&conceptId=${row.medicationConceptId}`);
       return (products.body as { items: unknown[] }).items.length > 0 && activeItemsOfItem(row.id).length > 0;

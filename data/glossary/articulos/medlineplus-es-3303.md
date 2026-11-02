@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-3303
+image: medlineplus-es-3303.svg | Las dos técnicas más usadas reducen el estómago y, en el bypass, también la absorción. | Dos esquemas del estómago: en la manga queda un tubo estrecho y la parte extirpada en línea discontinua; en el bypass, una bolsa pequeña unida al intestino en forma de Y.
 ---
 
 ## [definition] Introducción

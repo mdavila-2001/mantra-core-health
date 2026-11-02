@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q162606
+image: wikidata-especialidad-q162606.svg | La endocrinología estudia las glándulas que fabrican hormonas y sus trastornos. | Silueta humana con las glándulas endocrinas: hipófisis, tiroides, paratiroides, suprarrenales, páncreas y ovarios o testículos. A la derecha, las áreas que atiende la especialidad y un esquema de retroalimentación entre la hipófisis y una glándula.
 ---
 
 ## [definition] Introducción

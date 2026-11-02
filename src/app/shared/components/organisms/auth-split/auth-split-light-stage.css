@@ -41,7 +41,7 @@
 :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__slot::before {
   background: radial-gradient(
     closest-side,
-    color-mix(in srgb, var(--c-mint-300) 45%, transparent),
+    color-mix(in srgb, var(--c-aqua-300) 50%, transparent),
     transparent
   );
 }
@@ -60,7 +60,7 @@
   :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__brand::before {
     background: radial-gradient(
       85% 50% at 0% 100%,
-      color-mix(in srgb, var(--bg-surface) 80%, transparent),
+      color-mix(in srgb, var(--c-mint-100) 80%, transparent),
       transparent 72%
     );
   }

@@ -1,5 +1,6 @@
 import { ajustesDeAgenda, permisos, vinculos } from '../fixtures/support-hospital';
 import { reiniciarGobierno } from '../fixtures/support-hospital-governance';
+import { registrarLaOtraSecretaria } from '../fixtures/support-hospital-inbox';
 import { factores } from './iam-mfa.store';
 import { redesDeLaOrganizacion } from './iam-security.handlers';
 import { olvidarPasosExtra } from './support-access.governance.core';
@@ -43,6 +44,8 @@ export function reiniciarElGobiernoDeAccesos(): void {
   reiniciarGobierno();
   vinculos.reiniciar();
   permisos.reiniciar();
+  // Mariela no está en la semilla de `vinculos` ni de `permisos`: la registra el módulo de la bandeja al cargarse.
+  registrarLaOtraSecretaria();
   olvidarPasosExtra();
   olvidarSimulaciones();
   olvidarLotesDeNormalizacion();

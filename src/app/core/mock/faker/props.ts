@@ -1,8 +1,21 @@
 import { avatarSvg, imagenSvg, iso, isoDia } from '../mock-store';
 
 import { withSeed } from './seed';
+import type {
+  EntradaAGenerar,
+  EntradasGeneradas,
+  ValorGenerado,
+} from '../../simulator/simulator.types';
 import * as bo from './bolivia';
 import * as cl from './clinical';
+
+/** Los tipos viven fuera del simulador (O3-4); se reexportan con su nombre. */
+export type {
+  EntradaAGenerar,
+  EntradasGeneradas,
+  ProcedenciaDelValor,
+  ValorGenerado,
+} from '../../simulator/simulator.types';
 
 /* ============================================================================
     Valores de prueba para las entradas de un componente.
@@ -24,11 +37,6 @@ import * as cl from './clinical';
     ve igual, y el botón «otros datos» cambia la semilla a propósito.
     ========================================================================== */
 
-export interface EntradaAGenerar {
-  readonly nombre: string;
-  readonly tipo: string;
-  readonly requerido: boolean;
-}
 
 const ETIQUETAS = [
   'Guardar cambios',
@@ -88,14 +96,7 @@ function esOpcion(tipo: string): boolean {
  *     adivinado por el nombre). Montar así NO acredita el contrato.
  *   - `por-omision`: no se pasa nada; el componente usa su valor por omisión.
  */
-export type ProcedenciaDelValor = 'del-tipo' | 'sin-verificar' | 'por-omision';
 
-export interface ValorGenerado {
-  readonly valor: unknown;
-  readonly procedencia: ProcedenciaDelValor;
-  /** Por qué no es `del-tipo`, en una línea legible. `null` si lo es. */
-  readonly motivo: string | null;
-}
 
 /** El tipo declarado admite un texto (`string`, `string | null`, uniones con `string`). */
 function admiteTexto(tipo: string): boolean {
@@ -248,14 +249,6 @@ export function valoresParaEntradas(
   return generarEntradas(entradas, semilla).valores;
 }
 
-export interface EntradasGeneradas {
-  /** Lo que se le pasa al componente: sin las que quedan por omisión. */
-  readonly valores: Record<string, unknown>;
-  /** La procedencia de cada entrada, incluidas las que no se pasaron. */
-  readonly procedencias: Readonly<Record<string, Omit<ValorGenerado, 'valor'>>>;
-  /** Las que se pasaron sin poder verificar el contrato, con su motivo. */
-  readonly sinVerificar: readonly { readonly nombre: string; readonly motivo: string }[];
-}
 
 /** Todos los valores de un componente, con la procedencia de cada uno. */
 export function generarEntradas(entradas: readonly EntradaAGenerar[], semilla: string): EntradasGeneradas {

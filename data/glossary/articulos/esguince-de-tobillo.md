@@ -1,5 +1,6 @@
 ---
 slug: esguince-de-tobillo
+image: esguince-de-tobillo.svg | El esguince típico daña los ligamentos del lado externo del tobillo. | Tobillo con tibia, peroné y pie, un ligamento externo roto por un giro hacia dentro, y los tres grados del esguince con los cuidados iniciales.
 ---
 
 ## [definition] Introducción

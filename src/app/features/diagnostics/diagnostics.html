@@ -5,6 +5,11 @@
 />
 
 <div class="laboratorio">
+  @if (pointOptions().length > 1) {
+    <div class="laboratorio__filtro">
+      <app-select [options]="pointOptions()" [value]="pointFilter()" ariaLabel="Filtrar por punto de toma" data-testid="diagnostics-point-filter" (valueChange)="choosePoint($event)" />
+    </div>
+  }
   <app-data-table
     [state]="cola()"
     [columns]="columnas()"
@@ -64,5 +69,13 @@
     {{ orden.scheduledAt | date: 'short' }}
   } @else {
     <span class="laboratorio__sin-fecha">Sin programar</span>
+  }
+</ng-template>
+
+<ng-template #pointCell let-orden>
+  @if (orden.collectionPoint; as punto) {
+    <span data-testid="diagnostics-point">{{ punto.code }} · {{ punto.name }}</span>
+  } @else {
+    <span class="laboratorio__sin-fecha">Sin registrar</span>
   }
 </ng-template>

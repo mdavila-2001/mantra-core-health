@@ -1,9 +1,11 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, type HttpErrorResponse } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { environment } from '../../../../environments/environment';
 import { SupportAccessClient } from './support-access.client';
 import type { SupportAgenda } from './support-agenda.types';
+import type { SupportInvitationCreated } from './support-invite.types';
 
 /**
  * Lo que fijan estas pruebas es el contrato con la API: verbo, ruta exacta y
@@ -11,6 +13,12 @@ import type { SupportAgenda } from './support-agenda.types';
  * (ronda «personal de apoyo»); las tres marcadas «propuesta» en el cliente se
  * prueban igual, porque la pantalla depende de ellas.
  */
+// Estas pruebas fijan el contrato con la API real, no con el simulador: en la rama
+// de la maqueta `mockBackend` viene encendido y el cliente lee de otra fuente.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: false }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
+
 describe('SupportAccessClient', () => {
   let client: SupportAccessClient;
   let http: HttpTestingController;
@@ -559,6 +567,41 @@ describe('SupportAccessClient', () => {
       const patch = http.expectOne('/practitioner-delegates/dl-1/reply-settings');
       expect(patch.request.method).toBe('PATCH');
       expect(patch.request.body).toEqual({ replyDisclosure: 'HIDE' });
+    });
+
+    it('invita a una secretaria con POST /me/practitioner/support-invitations y solo las dos claves del DTO', () => {
+      let creada: SupportInvitationCreated | undefined;
+      client
+        .inviteSupportStaff({ nationalId: '7005002', practitionerRoleAssignmentId: 'pra-1' })
+        .subscribe((respuesta) => (creada = respuesta));
+      const req = http.expectOne('/me/practitioner/support-invitations');
+      expect(req.request.method).toBe('POST');
+      // `PractitionerInviteSupportDto`: la API rechaza (400) cualquier otra clave.
+      expect(req.request.body).toEqual({ nationalId: '7005002', practitionerRoleAssignmentId: 'pra-1' });
+      req.flush({
+        id: 'link-1',
+        tenantId: 't-1',
+        items: [{ id: 'link-1', status: 'PENDING', initiatedBy: 'PRACTITIONER', awaiting: 'SUPPORT_STAFF' }],
+      });
+      // El vínculo nace pendiente y espera a la secretaria: se lee tal cual lo manda la API.
+      expect(creada?.id).toBe('link-1');
+      expect(creada?.items[0]?.status).toBe('PENDING');
+      expect(creada?.items[0]?.awaiting).toBe('SUPPORT_STAFF');
+    });
+
+    it('un rechazo de la invitación llega al suscriptor con su `reason`', () => {
+      let falla: HttpErrorResponse | undefined;
+      client
+        .inviteSupportStaff({ nationalId: '7005002', practitionerRoleAssignmentId: 'pra-1' })
+        .subscribe({ error: (e: HttpErrorResponse) => (falla = e) });
+      http
+        .expectOne('/me/practitioner/support-invitations')
+        .flush(
+          { statusCode: 409, code: 'CONFLICT', reason: 'SUPPORT_LINK_DUPLICATE', message: 'Ya hay un vínculo vivo' },
+          { status: 409, statusText: 'Conflict' },
+        );
+      expect(falla?.status).toBe(409);
+      expect((falla?.error as { reason: string }).reason).toBe('SUPPORT_LINK_DUPLICATE');
     });
   });
 

@@ -1,5 +1,6 @@
 ---
 slug: psoriasis
+image: psoriasis.svg | En la psoriasis las células de la piel se acumulan y forman placas con escamas. | Comparación entre piel normal y una placa de psoriasis engrosada con escamas, y una silueta con las zonas donde suele aparecer.
 ---
 
 ## [definition] Introducción

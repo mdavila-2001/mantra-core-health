@@ -1,0 +1,79 @@
+<app-content-dialog
+  size="lg"
+  [heading]="titulo()"
+  [description]="editando() ? 'El código y la práctica identifican al servicio y no se editan. Cada guardado sube la versión y queda en la auditoría.' : 'El servicio nace en la práctica que elija. Repetir el mismo código con otros datos no se permite.'"
+  [dismissible]="!guardando()"
+  (closed)="closed.emit()"
+>
+  @if (aviso(); as mensaje) {
+    <app-alert [tone]="conflicto() ? 'warning' : 'error'" data-testid="service-dialog-error">
+      {{ mensaje }}
+      @if (conflicto()) {
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" (clicked)="reloadRequested.emit()" data-testid="service-dialog-reload">Recargar la lista</button>
+        </div>
+      }
+    </app-alert>
+  }
+
+  <div class="servicio-form" data-testid="service-dialog-form">
+    <app-form-field label="Práctica" [required]="!editando()" [errorMessage]="errores()['practiceId']" hint="Su tipo define a qué «tipo de usuario» pertenece el servicio.">
+      <app-select
+        data-testid="service-field-practice"
+        [value]="practiceId()"
+        (valueChange)="practiceId.set($event ?? '')"
+        [options]="opcionesPractica()"
+        [disabled]="editando() || guardando()"
+        placeholder="Elija una práctica"
+      />
+    </app-form-field>
+
+    <app-form-field label="Código" [required]="!editando()" [errorMessage]="errores()['code']" hint="Único dentro de la práctica. No se cambia después.">
+      <app-input data-testid="service-field-code" [(value)]="code" [readonly]="editando()" [disabled]="guardando()" [hasError]="!!errores()['code']" />
+    </app-form-field>
+
+    <app-form-field class="servicio-form__ancho" label="Nombre" [required]="true" [errorMessage]="errores()['name']">
+      <app-input data-testid="service-field-name" [(value)]="name" [disabled]="guardando()" [hasError]="!!errores()['name']" />
+    </app-form-field>
+
+    <app-form-field label="Precio" [required]="true" [errorMessage]="errores()['defaultPrice']" hint="Con punto y dos decimales, por ejemplo 150.00.">
+      <app-input
+        data-testid="service-field-price"
+        inputMode="decimal"
+        [(value)]="defaultPrice"
+        [disabled]="guardando()"
+        [hasError]="!!errores()['defaultPrice']"
+      />
+    </app-form-field>
+
+    <app-form-field label="Moneda" [errorMessage]="errores()['currencyConceptId']">
+      <app-select
+        data-testid="service-field-currency"
+        [value]="currencyConceptId()"
+        (valueChange)="currencyConceptId.set($event ?? '')"
+        [options]="opcionesMoneda()"
+        [disabled]="guardando()"
+        placeholder="Elija una moneda"
+      />
+    </app-form-field>
+
+    <app-form-field class="servicio-form__ancho" label="Descripción" [errorMessage]="errores()['descriptionText']" hint="Hasta 2000 caracteres. Vacío la quita.">
+      <app-textarea data-testid="service-field-description" [rows]="3" [(value)]="descriptionText" [disabled]="guardando()" [hasError]="!!errores()['descriptionText']" />
+    </app-form-field>
+
+    @if (editando()) {
+      <app-form-field class="servicio-form__ancho" label="Condiciones" [errorMessage]="errores()['termsText']" hint="Se muestran junto a la cotización. Vacío las quita.">
+        <app-textarea data-testid="service-field-terms" [rows]="3" [(value)]="termsText" [disabled]="guardando()" [hasError]="!!errores()['termsText']" />
+      </app-form-field>
+    } @else {
+      <app-switch label="Disponible desde el alta" [(checked)]="isActive" [disabled]="guardando()" />
+    }
+  </div>
+
+  <div dialog-actions class="servicio-form__acciones">
+    <button app-button variant="secondary" [disabled]="guardando()" (clicked)="closed.emit()">Cancelar</button>
+    <button app-button [isLoading]="guardando()" [disabled]="guardando()" (clicked)="guardar()" data-testid="service-dialog-save">
+      {{ editando() ? 'Guardar cambios' : 'Crear servicio' }}
+    </button>
+  </div>
+</app-content-dialog>

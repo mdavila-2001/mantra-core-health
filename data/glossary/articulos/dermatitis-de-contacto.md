@@ -1,5 +1,6 @@
 ---
 slug: dermatitis-de-contacto
+image: dermatitis-de-contacto.svg | La piel se inflama por daño directo de una sustancia o por una reacción alérgica. | Dos cortes de piel: en la irritativa la sustancia daña directamente la superficie; en la alérgica el sistema inmune reacciona tras uno a tres días. Abajo, cómo se ve la lesión y qué ayuda a tratarla.
 ---
 
 ## [definition] Introducción

@@ -4,6 +4,7 @@ import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { reemplazarAnimate } from '../../../../../testing/animate';
 import { AttachmentDialog } from './attachment-dialog';
 
 /**
@@ -98,22 +99,21 @@ describe('AttachmentDialog', () => {
     // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
     // atrás está inerte. Adjuntar el lote es confirmar: termina y libera en el
     // acto; descartar sí anima (#1432, mismo criterio que `app-content-dialog`).
-    let animarOriginal: typeof HTMLElement.prototype.animate;
+    let restaurarAnimate: () => void;
     let terminarSalida: () => void;
 
     beforeEach(() => {
-      animarOriginal = HTMLElement.prototype.animate;
       terminarSalida = () => undefined;
-      HTMLElement.prototype.animate = (() => ({
+      restaurarAnimate = reemplazarAnimate(() => ({
         finished: new Promise<void>((resolve) => {
           terminarSalida = resolve;
         }),
         cancel: () => undefined,
-      })) as unknown as typeof HTMLElement.prototype.animate;
+      }));
     });
 
     afterEach(() => {
-      HTMLElement.prototype.animate = animarOriginal;
+      restaurarAnimate();
     });
 
     it('adjuntar el lote libera la página en el acto, sin esperar la salida del panel', async () => {

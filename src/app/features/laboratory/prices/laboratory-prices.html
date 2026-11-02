@@ -1,7 +1,22 @@
 <app-page-header
   title="Precios"
   subtitle="El precio de lista de cada servicio y el descuento para usuarios de AloVida, tal como los ven los pacientes en la plataforma."
-/>
+>
+  <button
+    app-button
+    page-actions
+    type="button"
+    variant="secondary"
+    data-testid="lab-prices-import"
+    (clicked)="importOpen.set(true)"
+  >
+    Importar análisis (CSV)
+  </button>
+</app-page-header>
+
+@if (importOpen()) {
+  <app-lab-services-import (closed)="importClosed($event)" />
+}
 
 <app-card class="prices" padding="lg" data-testid="lab-prices-card">
   <div class="prices__panel">

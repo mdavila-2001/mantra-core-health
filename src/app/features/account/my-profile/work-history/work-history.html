@@ -27,7 +27,12 @@
       <p class="historial__intro">
         Los lugares donde atiende hoy: su consultorio, una clínica, un hospital o donde haga
         cualquiera de sus servicios. Es lo que ve un paciente al reservar y lo que la agenda usa
-        para decir dónde es la atención.
+        para decir dónde es la atención. Cada lugar lleva su dirección, su punto en el mapa y su QR
+        de cobro.
+      </p>
+      <p class="historial__intro" data-testid="sedes-no-es-trayectoria">
+        No es lo mismo que «Trayectoria»: aquella es su currículum y no le dice a un paciente dónde
+        atenderse. Si atiende en un lugar que ya figura en su trayectoria, cárguelo también acá.
       </p>
 
       <!-- Barra: sólo el buscador (nombre + dirección, normalizado). Sin
@@ -67,7 +72,7 @@
       @if (sedes().length === 0) {
         <p class="historial__vacio" data-testid="sedes-vacio">
           Todavía no cargó ningún lugar de atención. Sin uno, su ficha no dice dónde
-          encontrarle.
+          encontrarle, aunque el lugar figure en su trayectoria.
         </p>
       } @else if (sedesFiltradas().length === 0) {
         <p class="historial__vacio" data-testid="sedes-sin-resultados">
@@ -94,7 +99,8 @@
           <h3 class="historial__subtitulo">Agregar lugar de atención</h3>
           <p class="historial__intro">
             Búsquelo por su nombre en el padrón oficial de salud: clínicas, hospitales, consultorios y
-            laboratorios ya están cargados. Si es su consultorio y no aparece, cárguelo usted.
+            laboratorios ya están cargados. Al elegirlo se abre el formulario con el nombre puesto;
+            usted marca la puerta en el mapa. Si no aparece, cárguelo usted.
           </p>
           <app-form-field
             label="Buscar el establecimiento"
@@ -118,7 +124,6 @@
                 size="sm"
                 type="button"
                 data-testid="sede-padron-confirmar"
-                [isLoading]="vinculandoLugar()"
                 (clicked)="atiendoAca()"
               >
                 Atiendo en {{ lugar.label }}
@@ -165,6 +170,12 @@
           (dismissAttempt)="intentarCerrarAltaDeSede()"
           (closed)="intentarCerrarAltaDeSede()"
         >
+          @if (referenciaDelPadron(); as referencia) {
+            <p class="historial__intro" data-testid="sede-referencia-padron">
+              Según el padrón: {{ referencia }}. Marque la puerta en el mapa para que el paciente la
+              encuentre.
+            </p>
+          }
           @if (sedeEnEdicion()) {
             <p class="historial__intro" data-testid="sede-edicion-aviso">
               Los campos vienen con lo que ya tenía cargado: corrija lo que haga falta. Para
@@ -340,8 +351,12 @@
     @if (layout() === 'flat' || layout() === 'tabla') {
       <h2 class="historial__titulo">Historial laboral</h2>
       <p class="historial__intro">
-        Los hospitales y entidades médicas donde ejerció. Lo administra usted: es su trayectoria,
-        no un dato que cargue la organización.
+        Los hospitales y entidades médicas donde ejerció o ejerce. Lo administra usted: es su
+        trayectoria, no un dato que cargue la organización.
+      </p>
+      <p class="historial__intro" data-testid="historial-no-es-donde-atiendo">
+        Es su currículum: no le dice a un paciente dónde atenderse ni lleva dirección o QR de cobro.
+        Eso se carga en «Dónde atiendo».
       </p>
     }
 
@@ -453,6 +468,10 @@
                 </button>
               }
             </div>
+            <ng-container
+              [ngTemplateOutlet]="llevarADondeAtiendoTpl"
+              [ngTemplateOutletContext]="{ $implicit: afiliacion }"
+            />
           </li>
         }
       </ul>
@@ -796,6 +815,32 @@
   </div>
   @if (avisoDelVinculo(afiliacion); as aviso) {
     <p class="historial__estado">{{ aviso }}</p>
+  }
+  <ng-container
+    [ngTemplateOutlet]="llevarADondeAtiendoTpl"
+    [ngTemplateOutletContext]="{ $implicit: afiliacion }"
+  />
+</ng-template>
+
+<!-- «¿Atiende acá?»: el paso de la trayectoria a «Dónde atiendo». Va como
+     pregunta junto al período, y no como una acción más de la fila: es otra
+     clase de cosa —no corrige ni retira el vínculo— y en el menú quedaría
+     escondida justo para quien no sabe que las dos pestañas son distintas. -->
+<ng-template #llevarADondeAtiendoTpl let-afiliacion>
+  @if (puedeLlevarseADondeAtiendo(afiliacion)) {
+    <p class="historial__donde-atiende" data-testid="vinculo-donde-atiende">
+      <span>¿Atiende acá?</span>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        [attr.aria-label]="'Agregar ' + afiliacion.organizationName + ' a Dónde atiendo'"
+        (clicked)="llevarADondeAtiendo.emit(afiliacion.organizationName)"
+      >
+        Agregar a Dónde atiendo
+      </button>
+    </p>
   }
 </ng-template>
 

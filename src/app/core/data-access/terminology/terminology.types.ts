@@ -269,6 +269,18 @@ export const GLOSSARY_RELATION_TYPES = [
   'COMPLICATION',
   'RISK_FACTOR',
   'REFERRAL_CRITERION',
+  // Capa de equipos de la maqueta (2026-10-06), pendiente en la API: una
+  // modalidad «incluye» estudios, un equipo «realiza» una modalidad y cada
+  // eslabón de datos «envía datos a» el siguiente.
+  'INCLUDES',
+  'PERFORMS',
+  'SENDS_DATA_TO',
+  // Capa normativa NNAC (TAREA-41 F2): relaciones con evidencia T1 de la norma.
+  'DIAGNOSTIC_CRITERION',
+  'REQUIRED_TEST',
+  'COMPLICATION',
+  'RISK_FACTOR',
+  'REFERRAL_CRITERION',
 ] as const;
 export type GlossaryRelationType = (typeof GLOSSARY_RELATION_TYPES)[number];
 
@@ -439,6 +451,20 @@ export interface GlossaryImage {
   readonly sourcePage?: string;
 }
 
+/** Fuente editorial citada por la API para una ficha del glosario. */
+export interface GlossarySourceReference {
+  readonly source: string;
+  readonly recordId: string;
+  readonly url: string;
+  readonly language: 'es' | 'en';
+  readonly version: string;
+  readonly retrievedAt: string;
+  readonly role: 'concept_match' | 'related_context' | 'editorial_reference';
+  readonly matchBasis?: 'title' | 'also_called';
+  readonly attribution: string;
+  readonly rights: string;
+}
+
 /** Identidad compartida entre el resultado de búsqueda y la ficha completa. */
 interface GlossaryTermBase {
   readonly conceptId: string;
@@ -470,6 +496,8 @@ export interface GlossaryTerm extends GlossaryTermBase {
   readonly status: GlossaryTermStatus;
   /** Miniatura de la imagen del término, si tiene una. El crédito viaja en la ficha. */
   readonly imageThumbnailUrl?: string;
+  /** La pertinencia clínica de la imagen fue aprobada de forma explícita. */
+  readonly imageReviewStatus?: 'approved';
 }
 
 /**

@@ -28,6 +28,7 @@ import type { SegmentedOption } from '../../../shared/components/molecules/segme
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AccountClinicalAccess } from '../clinical-access/clinical-access';
 import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
+import { UxConsentPanel } from '../../ux-consent/ux-consent-panel';
 
 /** Qué se ve mientras se leen las cuatro listas. */
 type Estado =
@@ -98,6 +99,7 @@ const ROTULO_DE_ESTADO: Readonly<Record<ConsentRecordState, string>> = {
     Tab,
     Tabs,
     LoadingState,
+    UxConsentPanel,
   ],
   templateUrl: './privacy.html',
   styleUrl: './privacy.css',

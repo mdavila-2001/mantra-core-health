@@ -344,6 +344,8 @@ export class SchedulingClient {
         ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
         // P36: sólo si el médico lo eligió. Ausente ≡ turnos fijos.
         ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
+        // F5d: el consultorio, sólo si se eligió uno.
+        ...(template.careSpaceId === undefined ? {} : { careSpaceId: template.careSpaceId }),
       },
       tenantOptions(scope),
     );
@@ -663,6 +665,7 @@ export class SchedulingClient {
       ...(turno.reasonText === undefined ? {} : { reasonText: turno.reasonText }),
       // Ausente = presencial: no se manda un valor que nadie eligió.
       ...(turno.channel === undefined ? {} : { channel: turno.channel }),
+      ...(turno.startAttention === undefined ? {} : { startAttention: turno.startAttention }),
     };
     return sendIdempotent(this.submissionKeys, 'walk-in', body, (headers) =>
       this.http.post<WalkInAppointmentCreated>(this.url('/scheduling/appointments/walk-in'), body, {

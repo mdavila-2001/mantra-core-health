@@ -51,6 +51,7 @@ const FILAS_CON_HUECO: readonly Paciente[] = [
       [maxHeight]="maxHeight()"
       [fitContainer]="fitContainer()"
       [stackedOnMobile]="apilada()"
+      [dense]="dense()"
       [heading]="encabezado()"
       [totalCount]="total()"
       [pageSummary]="resumen()"
@@ -74,6 +75,7 @@ class HostComponent {
   readonly maxHeight = signal<string | null>(null);
   readonly fitContainer = signal(false);
   readonly apilada = signal(false);
+  readonly dense = signal(false);
   readonly encabezado = signal('');
   readonly total = signal<number | null>(null);
   readonly resumen = signal('');
@@ -617,6 +619,22 @@ describe('DataTable', () => {
       expect(css).toContain('@media not all and (min-width: 40.0625rem)');
       expect(css).toContain(':host(.data-table--apilada) .data-table__row > td::before');
       expect(css).toContain('content: attr(data-label)');
+    });
+  });
+
+  describe('filas compactas (dense)', () => {
+    it('no marca el host si no se pide', () => {
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--dense')).toBe(false);
+    });
+
+    it('marca el host y el CSS le quita relleno a cada celda, también en escritorio', async () => {
+      host.dense.set(true);
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--dense')).toBe(true);
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain(':host(.data-table--dense) .data-table__cell');
+      expect(css).toMatch(/:host\(\.data-table--dense\) \.data-table__cell \{\s+padding: var\(--sp-1\) var\(--sp-2\);/);
     });
   });
 });

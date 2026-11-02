@@ -1,5 +1,6 @@
 ---
 slug: pielonefritis-aguda
+image: pielonefritis-aguda.svg | La pielonefritis es una infección del riñón por bacterias que suben desde la vejiga. | Aparato urinario con la vejiga, dos uréteres y un riñón sano junto a otro inflamado, con bacterias que ascienden por el uréter, y la lista de síntomas, diagnóstico, tratamiento y signos de urgencia.
 ---
 
 ## [definition] Introducción

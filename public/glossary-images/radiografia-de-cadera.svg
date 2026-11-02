@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Radiografía de cadera</title>
+  <desc id="d">A la izquierda, una radiografía frontal esquemática de la pelvis con el hueso ilíaco, la cabeza y el cuello del fémur encajados en la articulación de la cadera, en blanco sobre fondo oscuro. A la derecha, lo que permite ver y cómo se realiza la prueba.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">Proyección frontal de la pelvis</text>
+  <rect x="40" y="60" width="380" height="330" rx="8" fill="var(--ink)" stroke="none" stroke-width="2" opacity=".9"/>
+  <path d="M230 120 C170 90 90 100 80 170 C76 220 110 250 150 260 C180 266 200 290 210 310 L250 310 C260 290 280 266 310 260 C350 250 384 220 380 170 C370 100 290 90 230 120 Z" fill="var(--bone)" stroke="var(--bone)" stroke-width="1"/>
+  <ellipse cx="230" cy="200" rx="30" ry="40" fill="var(--ink)" stroke="none" stroke-width="2"/>
+  <circle cx="140" cy="238" r="26" fill="var(--panel)" stroke="none" stroke-width="2"/>
+  <circle cx="320" cy="238" r="26" fill="var(--panel)" stroke="none" stroke-width="2"/>
+  <path d="M152 258 L196 300 L186 380 L156 380 L148 290 Z M308 258 L264 300 L274 380 L304 380 L312 290 Z" fill="var(--panel)" stroke="none" stroke-width="2"/>
+  <path d="M118 220 C130 206 152 206 164 220" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <path d="M342 220 C330 206 308 206 296 220" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <text x="230" y="106" text-anchor="middle" class="small" style="fill:var(--on)">Hueso ilíaco</text>
+  <text x="110" y="300" text-anchor="end" class="small" style="fill:var(--on)">Cabeza del</text>
+  <text x="110" y="316" text-anchor="end" class="small" style="fill:var(--on)">fémur</text>
+  <text x="318" y="334" class="small" style="fill:var(--on)">Cuello femoral</text>
+  <text x="230" y="414" text-anchor="middle" class="small" style="fill:var(--muted)">Los huesos se ven blancos</text>
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="50" text-anchor="middle" class="title">Qué permite ver</text>
+  <text x="476" y="80" class="small">• Fracturas, sobre todo del cuello</text>
+  <text x="476" y="102" class="small">• del fémur tras una caída</text>
+  <text x="476" y="124" class="small">• Artrosis: espacio articular estrecho</text>
+  <text x="476" y="146" class="small">• Displasia y posición de la cadera</text>
+  <text x="476" y="168" class="small">• Estado de una prótesis</text>
+  <text x="476" y="206" class="step">Cómo es la prueba</text>
+  <text x="484" y="230" class="small">• Tumbado boca arriba</text>
+  <text x="484" y="252" class="small">• Piernas algo giradas hacia dentro</text>
+  <text x="484" y="274" class="small">• Quedarse quieto unos segundos</text>
+  <text x="484" y="296" class="small">• A veces una vista lateral</text>
+  <rect x="476" y="330" width="284" height="92" rx="10" fill="var(--accent-l)" stroke="none" stroke-width="2"/>
+  <text x="618" y="356" text-anchor="middle" class="small">Dosis de radiación baja.</text>
+  <text x="618" y="376" text-anchor="middle" class="small">Avisar si hay posibilidad</text>
+  <text x="618" y="396" text-anchor="middle" class="small">de embarazo.</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

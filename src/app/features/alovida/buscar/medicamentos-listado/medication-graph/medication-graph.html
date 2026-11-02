@@ -1,0 +1,324 @@
+<section class="med-grafo" aria-label="Grafo interactivo de medicamentos">
+  @if (medications().length === 0) {
+    <app-empty-state
+      title="No hay medicamentos para mostrar"
+      description="Realice una búsqueda por principio activo o marca comercial para ver su mapa de relaciones."
+    />
+  } @else {
+    <!-- Barra superior de compuestos si hay más de uno -->
+    @if (medications().length > 1) {
+      <div class="med-grafo__selector-compuestos" role="tablist" aria-label="Compuestos encontrados">
+        <span class="med-grafo__selector-etiqueta">Compuestos encontrados:</span>
+        <div class="med-grafo__selector-chips">
+          @for (med of medications(); track med.conceptId) {
+            <button
+              type="button"
+              class="med-grafo__chip-compuesto"
+              [class.med-grafo__chip-compuesto--activo]="currentMedication()?.conceptId === med.conceptId"
+              (click)="selectMedication(med.conceptId)"
+            >
+              <span class="med-grafo__chip-nombre">{{ med.genericName }}</span>
+              <span class="med-grafo__chip-atc">ATC {{ med.atcCode }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Herramientas del grafo -->
+    <div class="med-grafo__herramientas" role="toolbar" aria-label="Controles del grafo">
+      <app-segmented-control
+        ariaLabel="Cómo ver el grafo"
+        [options]="modeOptions"
+        [value]="mode()"
+        (valueChange)="setMode($event)"
+      />
+
+      @if (mode() === 'graph') {
+        <span class="med-grafo__zoom">
+          <button
+            app-button
+            iconOnly
+            variant="outline"
+            size="sm"
+            type="button"
+            aria-label="Alejar"
+            data-testid="med-grafo-alejar"
+            (click)="viewport.zoomOut()"
+          >
+            <span aria-hidden="true">−</span>
+          </button>
+          <span class="med-grafo__zoom-valor" aria-live="polite" data-testid="med-grafo-zoom">
+            {{ viewport.zoomText() }}
+          </span>
+          <button
+            app-button
+            iconOnly
+            variant="outline"
+            size="sm"
+            type="button"
+            aria-label="Acercar"
+            data-testid="med-grafo-acercar"
+            (click)="viewport.zoomIn()"
+          >
+            <span aria-hidden="true">+</span>
+          </button>
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="med-grafo-ajustar"
+            (click)="fit()"
+          >
+            Ajustar
+          </button>
+        </span>
+      }
+
+      <div class="med-grafo__herramientas-derecha">
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="med-grafo-ver-farmacias"
+          (clicked)="verFarmacias()"
+        >
+          Ver farmacias y mapa
+        </button>
+      </div>
+    </div>
+
+    <p class="med-grafo__resumen" aria-live="polite">
+      Mostrando el mapa de <strong>{{ currentMedication()?.genericName }}</strong>.
+      Haga clic en el compuesto, en una marca o en una farmacia para ver su detalle completo.
+    </p>
+
+    <!-- Cuerpo principal: Lienzo visual + Ficha inspectora -->
+    <div class="med-grafo__cuerpo">
+      <div class="med-grafo__lienzo-caja" [hidden]="mode() !== 'graph'">
+        @if (placed(); as placed) {
+          <svg
+            #canvas
+            class="med-grafo__lienzo"
+            role="tree"
+            aria-label="Grafo visual de medicamentos: use la vista Lista para recorrerlo con lector de pantalla"
+            data-testid="med-grafo-lienzo"
+            (wheel)="viewport.onWheel($event)"
+            (pointerdown)="viewport.onPointerDown($event)"
+            (pointermove)="viewport.onPointerMove($event)"
+            (pointerup)="viewport.onPointerUp()"
+            (pointercancel)="viewport.onPointerUp()"
+          >
+            <g [attr.transform]="viewport.transform()">
+              <!-- Curvas de enlace Bézier -->
+              <g aria-hidden="true">
+                @for (link of placed.links; track link.to) {
+                  <path class="med-grafo__enlace" [attr.d]="link.d" />
+                }
+              </g>
+
+              <!-- Nodos del grafo -->
+              @for (entry of placed.nodes; track entry.node.key) {
+                <g
+                  class="med-grafo__nodo"
+                  [class]="'med-grafo__nodo med-grafo__nodo--' + entry.node.kind + ' med-grafo__nodo--' + entry.node.tone"
+                  [class.med-grafo__nodo--elegido]="isSelected(entry.node)"
+                  [attr.role]="entry.node.kind === 'group' ? 'group' : 'treeitem'"
+                  [attr.tabindex]="entry.node.kind === 'group' ? null : 0"
+                  [attr.aria-label]="ariaLabelOf(entry.node)"
+                  [attr.data-testid]="'med-grafo-nodo-' + entry.node.kind"
+                  (click)="activate(entry.node)"
+                  (keydown.enter)="activate(entry.node)"
+                  (keydown.space)="activate(entry.node); $event.preventDefault()"
+                >
+                  <rect
+                    class="med-grafo__caja"
+                    [attr.x]="entry.x"
+                    [attr.y]="entry.y"
+                    [attr.width]="entry.width"
+                    [attr.height]="entry.height"
+                    [attr.rx]="entry.node.kind === 'term' ? 10 : entry.height / 2"
+                  />
+                  @for (line of entry.lines; track $index) {
+                    <text
+                      [class]="'med-grafo__texto med-grafo__texto--' + line.role"
+                      [attr.x]="centerX(entry)"
+                      [attr.y]="entry.y + line.dy"
+                      [attr.text-anchor]="entry.node.kind === 'term' ? 'start' : 'middle'"
+                    >{{ line.text }}</text>
+                  }
+                  @if (entry.separatorDy !== null) {
+                    <line
+                      class="med-grafo__raya"
+                      [attr.x1]="entry.x + 14"
+                      [attr.x2]="entry.x + entry.width - 14"
+                      [attr.y1]="entry.y + entry.separatorDy"
+                      [attr.y2]="entry.y + entry.separatorDy"
+                    />
+                  }
+                </g>
+              }
+            </g>
+          </svg>
+        }
+      </div>
+
+      <!-- Vista de lista alternativa (accesible y mobile-friendly) -->
+      @if (mode() === 'list') {
+        <nav class="med-grafo__lista" aria-label="Grafo de medicamentos en lista" data-testid="med-grafo-lista">
+          <ul class="med-grafo__rama">
+            <ng-container *ngTemplateOutlet="ramaTemplate; context: { $implicit: tree() }" />
+          </ul>
+        </nav>
+      }
+
+      <!-- Ficha lateral didáctica para el paciente -->
+      <aside class="med-grafo__ficha" aria-label="Detalle del nodo seleccionado" data-testid="med-grafo-ficha">
+        @if (selectedNode(); as detail) {
+          <article class="med-grafo__ficha-tarjeta">
+            <header class="med-grafo__ficha-cabecera">
+              <div class="med-grafo__ficha-insignia-caja">
+                @switch (detail.type) {
+                  @case ('compound') {
+                    <app-badge variant="info" size="sm">Compuesto Químico (Principio Activo)</app-badge>
+                  }
+                  @case ('brand') {
+                    <app-badge variant="secondary" size="sm">Marca Comercial Equivalente</app-badge>
+                  }
+                  @case ('pharmacy') {
+                    <app-badge [variant]="detail.inStock ? 'success' : 'warning'" size="sm">
+                      {{ detail.inStock ? 'Farmacia con stock hoy' : 'Farmacia sin stock' }}
+                    </app-badge>
+                  }
+                  @case ('use') {
+                    <app-badge variant="secondary" size="sm">Indicación Terapéutica</app-badge>
+                  }
+                }
+              </div>
+
+              <h3 class="med-grafo__ficha-titulo">{{ detail.title }}</h3>
+              @if (detail.subtitle) {
+                <p class="med-grafo__ficha-subtitulo">{{ detail.subtitle }}</p>
+              }
+            </header>
+
+            <div class="med-grafo__ficha-cuerpo">
+              <p class="med-grafo__ficha-explicacion">{{ detail.explanation }}</p>
+
+              @if (detail.type === 'compound') {
+                <dl class="med-grafo__ficha-datos">
+                  <div>
+                    <dt>Condición de venta:</dt>
+                    <dd>
+                      <app-badge [variant]="detail.requiresPrescription ? 'warning' : 'success'" size="sm">
+                        {{ detail.requiresPrescription ? 'Bajo receta médica' : 'Venta libre' }}
+                      </app-badge>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Marcas registradas:</dt>
+                    <dd>{{ detail.brands?.join(', ') || 'Genéricos' }}</dd>
+                  </div>
+                  @if (currentMedication(); as med) {
+                    <div>
+                      <dt>Rango de precios en red:</dt>
+                      <dd class="tabular-nums">
+                        Desde {{ med.priceFrom }} hasta {{ med.priceTo }} {{ med.currency }}
+                      </dd>
+                    </div>
+                  }
+                </dl>
+              }
+
+              @if (detail.type === 'brand') {
+                <div class="med-grafo__ficha-destacado">
+                  <span class="med-grafo__ficha-icono-info" aria-hidden="true">💡</span>
+                  <p>
+                    Si no consigue <strong>{{ detail.brandName }}</strong>, puede solicitar en farmacia
+                    cualquier otro medicamento con <strong>{{ detail.genericName }}</strong>.
+                  </p>
+                </div>
+              }
+
+              @if (detail.type === 'pharmacy') {
+                <dl class="med-grafo__ficha-datos">
+                  <div>
+                    <dt>Marca que ofrece:</dt>
+                    <dd><strong>{{ detail.brandName }}</strong></dd>
+                  </div>
+                  @if (detail.city) {
+                    <div>
+                      <dt>Ciudad:</dt>
+                      <dd>{{ detail.city }}</dd>
+                    </div>
+                  }
+                </dl>
+              }
+            </div>
+
+            <footer class="med-grafo__ficha-pie">
+              <button
+                app-button
+                variant="primary"
+                size="sm"
+                type="button"
+                data-testid="med-grafo-ficha-accion"
+                (clicked)="verFarmacias()"
+              >
+                Ver farmacias y mapa
+              </button>
+            </footer>
+          </article>
+        } @else {
+          <p class="med-grafo__ficha-vacia">
+            Haga clic en cualquier nodo del grafo para leer su explicación didáctica y alternativas disponibles.
+          </p>
+        }
+      </aside>
+    </div>
+  }
+</section>
+
+<!-- Template para vista de lista accesible -->
+<ng-template #ramaTemplate let-node>
+  @if (node) {
+    <li>
+      @switch (node.kind) {
+        @case ('term') {
+          <button
+            type="button"
+            class="med-grafo__item"
+            [class.med-grafo__item--elegido]="isSelected(node)"
+            data-testid="med-grafo-item"
+            (click)="activate(node)"
+          >
+            <span class="med-grafo__item-texto">
+              <strong>{{ node.label }}</strong>
+              @if (node.sublabel) {
+                <span class="med-grafo__item-sub">{{ node.sublabel }}</span>
+              }
+              @if (node.definition) {
+                <span class="med-grafo__item-def">{{ node.definition }}</span>
+              }
+            </span>
+          </button>
+        }
+        @case ('group') {
+          <p class="med-grafo__grupo">
+            <strong>{{ node.label }}</strong>
+            <span class="med-grafo__item-sub">{{ node.sublabel }}</span>
+          </p>
+        }
+      }
+      @if (node.children.length > 0) {
+        <ul class="med-grafo__rama">
+          @for (child of node.children; track child.key) {
+            <ng-container *ngTemplateOutlet="ramaTemplate; context: { $implicit: child }" />
+          }
+        </ul>
+      }
+    </li>
+  }
+</ng-template>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Hormona estimulante de la tiroides</title>
+  <desc id="d">A la izquierda, la hipófisis libera TSH que estimula a la tiroides a producir T4 y T3, que a su vez frenan a la hipófisis; con la tiroides lenta la TSH sube y con la tiroides acelerada baja. A la derecha, el análisis de sangre y lo que ayuda a valorar.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">El eje que regula la tiroides</text>
+  <rect x="140" y="66" width="140" height="50" rx="10" fill="var(--violet-l)" stroke="var(--line)"/>
+  <text x="210.0" y="87.5" text-anchor="middle" class="lab">Hipófisis</text>
+  <text x="210.0" y="104.5" text-anchor="middle" class="lab">produce TSH</text>
+  <line x1="210" y1="118" x2="210" y2="170" stroke="var(--violet)" stroke-width="2.5" marker-end="url(#ah)"/>
+  <text x="220" y="150" class="step" style="fill:var(--violet)">TSH</text>
+  <path d="M210 200 C186 180 150 176 150 210 C150 246 186 252 204 232 Z M210 200 C234 180 270 176 270 210 C270 246 234 252 216 232 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+  <text x="210" y="276" text-anchor="middle" class="small">Tiroides: produce T4 y T3</text>
+  <path d="M290 220 C350 200 350 110 290 92" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)" stroke-dasharray="5 4"/>
+  <text x="352" y="160" class="small" style="fill:var(--muted)">Frena</text>
+  <rect x="40" y="304" width="180" height="118" rx="10" fill="var(--accent-l)" stroke="none" stroke-width="2"/>
+  <text x="130" y="328" text-anchor="middle" class="step">Tiroides lenta</text>
+  <text x="130" y="350" text-anchor="middle" class="small">poca hormona</text>
+  <text x="130" y="372" text-anchor="middle" class="small">la hipófisis insiste:</text>
+  <text x="130" y="396" text-anchor="middle" class="big" style="fill:var(--accent)">TSH alta</text>
+  <rect x="240" y="304" width="180" height="118" rx="10" fill="var(--warn-l)" stroke="none" stroke-width="2"/>
+  <text x="330" y="328" text-anchor="middle" class="step">Tiroides acelerada</text>
+  <text x="330" y="350" text-anchor="middle" class="small">mucha hormona</text>
+  <text x="330" y="372" text-anchor="middle" class="small">la hipófisis frena:</text>
+  <text x="330" y="396" text-anchor="middle" class="big" style="fill:var(--warn)">TSH baja</text>
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="50" text-anchor="middle" class="title">El análisis</text>
+  <rect x="480" y="70" width="30" height="14" rx="3" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <path d="M483 84 V140 a12 12 0 0 0 24 0 V84" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M485 110 V140 a10 10 0 0 0 20 0 V110 Z" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="524" y="104" class="small">Muestra: sangre</text>
+  <text x="524" y="122" class="small" style="fill:var(--muted)">Suele ser la primera prueba</text>
+  <text x="476" y="196" class="step">Ayuda a valorar</text>
+  <text x="484" y="220" class="small">• Hipotiroidismo</text>
+  <text x="484" y="242" class="small">• Hipertiroidismo</text>
+  <text x="484" y="264" class="small">• Control del tratamiento</text>
+  <text x="484" y="286" class="small">• con hormona tiroidea</text>
+  <text x="484" y="308" class="small">• Cribado en el embarazo</text>
+  <rect x="476" y="348" width="284" height="74" rx="10" fill="var(--accent-l)" stroke="none" stroke-width="2"/>
+  <text x="618" y="374" text-anchor="middle" class="small">Se completa con T4 libre</text>
+  <text x="618" y="394" text-anchor="middle" class="small">cuando sale alterada</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

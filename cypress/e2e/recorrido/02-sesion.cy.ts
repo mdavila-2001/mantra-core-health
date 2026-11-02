@@ -127,7 +127,7 @@ describe('Recorrido · armazón', () => {
     esperarEstable();
     capturar(pantalla, 'panel con Clínica Norte activa');
 
-    cy.porTestId('header-organizacion').click();
+    cy.porTestId('header-organization').click();
     esperarEstable();
     capturar(pantalla, 'selector de organización desplegado');
   });

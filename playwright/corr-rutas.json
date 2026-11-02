@@ -557,6 +557,10 @@
     },
     {
       "ruta": "/my-account/quotations",
+      "nombre": "my-account_cotizaciones"
+    },
+    {
+      "ruta": "/my-account/quotations",
       "nombre": "my-account_quotations"
     },
     {

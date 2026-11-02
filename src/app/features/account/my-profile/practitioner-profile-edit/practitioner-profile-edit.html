@@ -175,9 +175,9 @@
               </app-form-field>
 
               <!-- «Acepto pacientes nuevos» ya no se pregunta (propietario,
-                   13/09/2026): siempre está habilitado. El alta tampoco lo
-                   pregunta; ver `guardarPresentacion`. -->
-              <app-switch [(checked)]="telemedicina" label="Atiendo por telemedicina" />
+                   13/09/2026): siempre está habilitado.
+                   Telemedicina tampoco se activa desde el perfil (01/11/2026):
+                   sólo se activa por franja horaria anexada a una fecha en la agenda. -->
             </form>
 
             <!-- El logo del consultorio: se carga y se cambia SÓLO desde acá. La misma
@@ -830,7 +830,11 @@
                del documento lo deja en 0 px de alto. -->
           <app-tab [label]="pestanas[3]">
             @if (pestana() === pestanaEditor.dondeAtiendo) {
-              <app-work-history secciones="consultorios" />
+              <app-work-history
+                secciones="consultorios"
+                [lugarSugerido]="lugarSugerido()"
+                (lugarSugeridoTomado)="lugarSugerido.set(null)"
+              />
             }
           </app-tab>
 
@@ -847,7 +851,13 @@
                aquélla: montado pide el historial. -->
           <app-tab [label]="pestanas[4]">
             @if (pestana() === pestanaEditor.trayectoria) {
-              <app-work-history class="edicion__historial" secciones="historial" layout="tabla" />
+              <app-work-history
+                class="edicion__historial"
+                secciones="historial"
+                layout="tabla"
+                [ofreceLlevarADondeAtiendo]="true"
+                (llevarADondeAtiendo)="llevarADondeAtiendo($event)"
+              />
             }
           </app-tab>
 

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo es el temblor esencial</title>
+  <desc id="d">Mano que sostiene un vaso con líneas de movimiento a los lados, que representan el temblor de acción típico al sostener objetos, escribir o comer. A la derecha, la diferencia con el temblor del Parkinson, que aparece sobre todo en reposo, y las opciones de manejo.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Temblor esencial: un temblor que aparece al usar las manos</text>
+  <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="88" text-anchor="middle" class="h">Temblor de acción</text>
+  <path d="M150 180 L230 180 L224 290 C224 300 156 300 156 290 Z" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <path d="M230 200 C262 200 262 250 228 250" fill="none" stroke="var(--accent)" stroke-width="6"/>
+  <path d="M120 320 C130 280 160 280 170 300 L240 300 C260 300 262 330 240 334 L150 340 C130 342 118 336 120 320 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M120 200 C112 220 128 240 120 260" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M106 200 C98 220 114 240 106 260" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M92 200 C84 220 100 240 92 260" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M260 200 C268 220 252 240 260 260" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M274 200 C282 220 266 240 274 260" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M288 200 C296 220 280 240 288 260" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <text x="190" y="370" text-anchor="middle" class="small b">Al sostener un vaso,</text>
+  <text x="190" y="386" text-anchor="middle" class="small">escribir o comer</text>
+  <text x="190" y="414" text-anchor="middle" class="small muted">También cabeza o voz</text>
+  <rect x="396" y="60" width="384" height="190" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="88" text-anchor="middle" class="h">Diferencia con el Parkinson</text>
+  <rect x="414" y="104" width="168" height="90" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="498.0" y="146.0" text-anchor="middle" class="lab b">Esencial</text>
+  <text x="498.0" y="163.0" text-anchor="middle" class="small muted">al moverse o sostener</text>
+  <rect x="596" y="104" width="168" height="90" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="680.0" y="146.0" text-anchor="middle" class="lab b">Parkinson</text>
+  <text x="680.0" y="163.0" text-anchor="middle" class="small muted">sobre todo en reposo</text>
+  <text x="588" y="226" text-anchor="middle" class="small muted">Suele haber antecedentes en la familia</text>
+  <rect x="396" y="266" width="384" height="174" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="294" text-anchor="middle" class="h">Manejo</text>
+  <text x="414" y="314" class="small">• Reducir cafeína; dormir bien</text>
+  <text x="414" y="340" class="small">• Utensilios con peso, vasos con tapa</text>
+  <text x="414" y="366" class="small">• Fármacos si limita la vida diaria</text>
+  <text x="414" y="392" class="small">• Cirugía o ultrasonido en casos graves</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

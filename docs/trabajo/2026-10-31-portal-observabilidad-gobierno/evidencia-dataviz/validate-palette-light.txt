@@ -1,0 +1,43 @@
+# validate_palette.js — paleta categórica --chart-1..8 (src/styles.css:226-227) · modo claro · superficie --bg-surface claro = #FFFFFF (styles.css:233)
+# comando: node validate_palette.js "#2a78d6,#eb6834,#1baf7a,#eda100,#e87ba4,#008300,#6250d6,#e34948" --mode light --surface "#FFFFFF"
+# fecha: 2026-10-31T06:52:07Z
+
+Palette (light, surface #FFFFFF, categorical): 8 slots
+  [PASS] Lightness band         all 8 inside L 0.43–0.77
+  [PASS] Chroma floor           all 8 >= 0.1
+  [PASS] CVD separation         worst adjacent #eda100↔#1baf7a ΔE 9.1 (protan) · tritan 5.8
+  [PASS] Normal-vision floor    worst adjacent #e87ba4↔#eda100 ΔE 19.6 (normal)
+  [WARN] Contrast vs surface    below 3:1 — relief required (visible labels or table view): [["#1baf7a",2.82],["#eda100",2.17],["#e87ba4",2.69]]
+
+  → ALL CHECKS PASS  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+# exit code: 0
+
+# --- mismo juego, --pairs all (dispersión / múltiplos pequeños) ---
+
+Palette (light, surface #FFFFFF, categorical): 8 slots
+  [PASS] Lightness band         all 8 inside L 0.43–0.77
+  [PASS] Chroma floor           all 8 >= 0.1
+  [FAIL] CVD separation         worst all-pairs #008300↔#eb6834 ΔE 3.2 (protan) · tritan 5.1
+  [FAIL] Normal-vision floor    worst all-pairs #e34948↔#eb6834 ΔE 7.1 (normal) — below 15, hard to tell apart even with full color vision
+  [WARN] Contrast vs surface    below 3:1 — relief required (visible labels or table view): [["#1baf7a",2.82],["#eda100",2.17],["#e87ba4",2.69]]
+
+  → FAILED — fix the marked checks  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+# exit code: 1
+
+# --- primeros 3 slots, --pairs all ---
+
+Palette (light, surface #FFFFFF, categorical): 3 slots
+  [PASS] Lightness band         all 3 inside L 0.43–0.77
+  [PASS] Chroma floor           all 3 >= 0.1
+  [PASS] CVD separation         worst all-pairs #1baf7a↔#eb6834 ΔE 9.2 (deutan) · tritan 9.6
+  [PASS] Normal-vision floor    worst all-pairs #1baf7a↔#2a78d6 ΔE 24.0 (normal)
+  [WARN] Contrast vs surface    below 3:1 — relief required (visible labels or table view): [["#1baf7a",2.82]]
+
+  → ALL CHECKS PASS  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+# exit code: 0

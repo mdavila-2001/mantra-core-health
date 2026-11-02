@@ -1,0 +1,115 @@
+/* Estilos comunes de las pantallas de visibilidad. Sólo tokens. */
+:host {
+  display: block;
+}
+
+.vis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.vis__card {
+  display: block;
+  inline-size: 100%;
+}
+
+.vis__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.vis__note,
+.vis__hint {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.vis__hint {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.vis__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.vis__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.vis__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vis__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+}
+
+.vis__pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.vis__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.vis__name {
+  overflow-wrap: break-word;
+}
+
+.vis__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.vis__path {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.vis__secondary {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.vis__badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.preview__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--sp-3);
+}

@@ -1,5 +1,6 @@
 ---
 slug: candidiasis-vulvovaginal
+image: candidiasis-vulvovaginal.svg | La candidiasis aparece cuando Candida supera a la flora protectora. | Balanza inclinada entre los lactobacilos protectores y las levaduras de Candida, con los factores que favorecen la infección y sus síntomas principales.
 ---
 
 ## [definition] Introducción

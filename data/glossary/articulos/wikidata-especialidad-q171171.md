@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q171171
+image: wikidata-especialidad-q171171.svg | La dermatología estudia la piel, el pelo, las uñas y las mucosas. | Corte de la piel con sus tres capas, un pelo y una glándula sudorípara, junto a la lista de enfermedades frecuentes y las herramientas del dermatólogo.
 ---
 
 ## [definition] Introducción

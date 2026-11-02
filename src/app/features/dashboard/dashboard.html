@@ -37,14 +37,22 @@
     }
   }
 
-  @if (altaPendiente(); as alta) {
-    <app-alert tone="warning" title="Complete su perfil para recibir pacientes">
-      Lleva {{ alta.cumplidas }} de {{ alta.total }} pasos. Termínelos para dejar su perfil listo.
-      Su verificación es un trámite aparte: su estado figura más abajo.
-      <a app-button variant="primary" size="sm" [routerLink]="['/onboarding']">
-        Ver qué me falta
-      </a>
-    </app-alert>
+  <!-- Quien atiende entra por su portada (01/11/2026): saludo, atajos del día y
+       el avance de su alta en una sola pieza, como la del paciente. El aviso
+       marrón del alta (TJ-1) y la franja de «Mis verificaciones» viven ahora
+       ahí adentro: sin redirect forzado, sólo lo que le falta y un botón. -->
+  @if (veBienvenida()) {
+    <app-practitioner-welcome
+      [onboarding]="altaPendiente()"
+      [showVerifications]="veMisVerificaciones()"
+    />
+  } @else {
+    <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra. -->
+    <app-page-header
+      [title]="tituloDelPanel()"
+      [subtitle]="subtituloDelPanel()"
+      appTutorialTarget="panel-titulo"
+    />
   }
 
   <!-- El estado de la solicitud de verificación, solo para quien atiende. Va
@@ -52,34 +60,16 @@
        su cliente. Verificada, no ocupa lugar. -->
   @if (esProfesional()) {
     @defer (on immediate) {
-      <app-admission-status-card hideWhenVerified />
+      <app-admission-status-card class="panel__verificacion" hideWhenVerified />
     }
   }
 
-  <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
-     acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
-  <app-page-header
-    [title]="tituloDelPanel()"
-    [subtitle]="subtituloDelPanel()"
-    appTutorialTarget="panel-titulo"
-  />
-
-  <!-- Puertas a dos bandejas fuera de los menús cerrados (28/10/2026), debajo
-       del saludo para no romper la jerarquía: «Mis verificaciones» para quien
-       atiende y los profesionales que piden sumarse para la aseguradora. -->
-  @if (veMisVerificaciones()) {
-    <div class="panel__verificaciones" data-testid="panel-mis-verificaciones">
-      <p class="panel__verificaciones-texto">
-        Siga el sello de su perfil y las respuestas de las instituciones y aseguradoras a las que
-        les pidió trabajar.
-      </p>
-      <a app-button variant="secondary" size="sm" routerLink="/my-account/verifications">
-        Mis verificaciones
-      </a>
-    </div>
-  }
   @if (veProfesionalesQuePidenSumarse()) {
-    <div class="panel__verificaciones" data-testid="panel-profesionales-que-piden">
+    <div
+      *appVisible="ui.practitionerRequestsShortcut"
+      class="panel__verificaciones"
+      data-testid="panel-profesionales-que-piden"
+    >
       <p class="panel__verificaciones-texto">
         Revise a los profesionales que piden trabajar con su aseguradora: aprobar les da su sello.
       </p>
@@ -89,6 +79,7 @@
         size="sm"
         routerLink="/administration/insurer-practitioner-requests"
       >
+        <app-nav-icon name="people" />
         Profesionales que piden sumarse
       </a>
     </div>
@@ -109,9 +100,11 @@
        Va diferida por el mismo motivo que el aviso de puesta en marcha — este
        panel viaja en el paquete inicial. -->
   @if (atiendePacientes()) {
-    @defer (on immediate) {
-      <app-today-agenda class="panel__hoy" />
-    }
+    <ng-container *appVisible="ui.todayAgenda">
+      @defer (on immediate) {
+        <app-today-agenda class="panel__hoy" />
+      }
+    </ng-container>
   }
 
   <div class="panel__grid" appStaggerList>
@@ -125,9 +118,11 @@
          quien atiende: sin perfil profesional no hay ninguna cifra propia
          que reportar (mismo criterio que la franja de arriba). -->
     @if (atiendePacientes()) {
-      @defer (on immediate) {
-        <app-consultations-summary class="panel__bloque--ancho" />
-      }
+      <ng-container *appVisible="ui.consultationsSummary">
+        @defer (on immediate) {
+          <app-consultations-summary class="panel__bloque--ancho" />
+        }
+      </ng-container>
     }
 
     <!-- ─── Últimos pacientes ─────────────────────────────────────────────────
@@ -142,6 +137,7 @@
       <app-card
         variant="outlined"
         padding="lg"
+        *appVisible="ui.latestPatients"
         class="panel__bloque--ancho"
         data-testid="panel-ultimos-pacientes"
       >

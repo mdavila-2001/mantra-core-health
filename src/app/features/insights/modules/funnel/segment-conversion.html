@@ -1,0 +1,52 @@
+<app-ins-panel title="Prueba recomendada" question="¿Qué conviene probar primero? Es una propuesta, no un resultado.">
+  <p class="sg__pill">Propuesta, no resultado</p>
+  @if (test(); as t) {
+    <p>El paso «{{ t.step }}» es el que más empeoró frente al periodo anterior ({{ pct(t.change) }}). Hoy convierte {{ pct(t.rate) }}.</p>
+    <p>Para notar una mejora de 5 puntos hacen falta unas <strong>{{ int(t.perVariant) }} personas por variante</strong>@if (t.days !== null) { ; con el ritmo actual de registros, unos <strong>{{ int(t.days) }} días</strong> }@else { ; no hay ritmo de registros para estimar los días }.</p>
+  } @else {
+    <p class="sg__muted">Ningún paso empeoró frente al periodo anterior en esta selección: no hay una prueba urgente que proponer.</p>
+  }
+</app-ins-panel>
+
+<app-ins-panel title="Conversión por segmento" question="¿Qué segmento convierte mejor? Solo se publica con base suficiente.">
+  <div class="sg__dims" role="group" aria-label="Dimensión del segmento">
+    @for (d of dimensions; track d) {
+      <button type="button" class="sg__dim" [attr.aria-pressed]="dimension() === d" (click)="pick(d)">{{ labels[d] }}</button>
+    }
+  </div>
+  <p class="sg__muted">Hay dato suficiente con {{ int(minVisits) }} visitas y {{ int(minRegs) }} registros (en audiencia y formato, con clics y conversiones: ese corte no mide visitas). Un guion es «sin base», no cero.</p>
+
+  @if (rows().length === 0) {
+    <p class="sg__muted">No hay datos para esta selección.</p>
+  } @else {
+    <p class="sg__muted">Cada celda compara el segmento con el promedio de su columna (1,00 = igual al promedio); las cifras exactas están en la tabla.</p>
+    <app-ins-heatmap-chart [rows]="heat().rows" [cols]="heat().cols" [cells]="heat().cells" unit="ratio" valueName="Índice (1 = promedio de la columna)" [minCell]="52" [ariaLabel]="'Tasas de conversión por ' + labels[dimension()].toLowerCase()" />
+
+    <h3 class="sg__h">Clic a conversión, de mayor a menor</h3>
+    <ul class="sg__bars">
+      @for (r of bars(); track r.id) {
+        <li><span class="sg__lbl">{{ r.label }}</span><span class="sg__bar" aria-hidden="true"><span [style.inline-size.%]="((r.rates.clickToConv ?? 0) / maxRate()) * 100"></span></span><span class="sg__val">{{ pct(r.rates.clickToConv) }}</span></li>
+      }
+    </ul>
+
+    <div class="sg__wrap">
+      <table class="sg__table">
+        <caption class="sg__sr">Conversión por {{ labels[dimension()].toLowerCase() }}</caption>
+        <thead><tr><th scope="col">{{ labels[dimension()] }}</th><th scope="col" class="sg__n">Clics</th><th scope="col" class="sg__n">Visitas</th><th scope="col" class="sg__n">Registros</th><th scope="col" class="sg__n">Conversiones</th>@for (c of rates; track c.id) { <th scope="col" class="sg__n">{{ c.label }}</th> }<th scope="col" class="sg__n">Índice</th></tr></thead>
+        <tbody>
+          @for (r of rows(); track r.id) {
+            <tr>
+              <th scope="row">{{ r.label }}@if (!r.enough) { <span class="sg__flag"> · base insuficiente</span> }</th>
+              <td class="sg__n">{{ int(r.clicks) }}</td>
+              <td class="sg__n">{{ r.visits === null ? '—' : int(r.visits) }}</td>
+              <td class="sg__n">{{ r.registrations === null ? '—' : int(r.registrations) }}</td>
+              <td class="sg__n">{{ int(r.conversions) }}</td>
+              @for (c of rates; track c.id) { <td class="sg__n">{{ pct(r.rates[c.id]) }}</td> }
+              <td class="sg__n">{{ index(r.index) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</app-ins-panel>

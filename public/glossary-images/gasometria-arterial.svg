@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Gasometría arterial</title>
+  <desc id="d">A la izquierda, un antebrazo con la arteria radial en la muñeca y una jeringa heparinizada que toma sangre arterial. A la derecha, tres tarjetas: oxígeno, dióxido de carbono y pH, con la pregunta que responde cada una, y los usos de la prueba en insuficiencia respiratoria y trastornos ácido-base.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="50" text-anchor="middle" class="title">La toma de la muestra</text>
+  <path d="M40 300 L250 250 C280 244 300 250 320 262 L350 280 C356 290 350 298 340 296 L310 290 L300 312 C296 320 286 320 284 312 L250 300 L60 350 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M60 330 L262 282" fill="none" stroke="var(--vessel)" stroke-width="4" stroke-linecap="round"/>
+  <text x="70" y="372" class="lab" style="fill:var(--vessel)">Arteria radial (muñeca)</text>
+  <rect x="186" y="150" width="30" height="90" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="2" transform="rotate(-25 201 195)"/>
+  <path d="M226 236 L236 266" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <rect x="190" y="190" width="22" height="46" rx="3" fill="var(--vessel)" transform="rotate(-25 201 213)"/>
+  <text x="240" y="152" class="small">Jeringa con heparina</text>
+  <text x="240" y="170" class="small muted">sin burbujas de aire</text>
+  <text x="200" y="70" text-anchor="middle" class="step">Sangre arterial, no venosa</text>
+  <text x="200" y="92" text-anchor="middle" class="small muted">Se analiza enseguida</text>
+  <text x="200" y="410" text-anchor="middle" class="small muted">Puede doler un poco; se presiona después</text>
+  <rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="50" text-anchor="middle" class="title">Tres preguntas en un análisis</text>
+  <rect x="416" y="64" width="344" height="78" rx="10" fill="var(--tissue)"/>
+  <circle cx="452" cy="103" r="24" fill="var(--vessel)"/>
+  <text x="452" y="108" text-anchor="middle" class="step" style="fill:var(--on)">O₂</text>
+  <text x="490" y="98" class="lab">¿Llega oxígeno a la sangre?</text>
+  <text x="490" y="120" class="small muted">PaO2 y saturación</text>
+  <rect x="416" y="156" width="344" height="78" rx="10" fill="var(--tissue)"/>
+  <circle cx="452" cy="195" r="24" fill="var(--vein)"/>
+  <text x="452" y="200" text-anchor="middle" class="step" style="fill:var(--on)">CO₂</text>
+  <text x="490" y="190" class="lab">¿Se elimina el dióxido de carbono?</text>
+  <text x="490" y="212" class="small muted">PaCO2: ventilación</text>
+  <rect x="416" y="248" width="344" height="78" rx="10" fill="var(--tissue)"/>
+  <circle cx="452" cy="287" r="24" fill="var(--purple)"/>
+  <text x="452" y="292" text-anchor="middle" class="step" style="fill:var(--on)">pH</text>
+  <text x="490" y="282" class="lab">¿Sangre ácida o alcalina?</text>
+  <text x="490" y="304" class="small muted">pH y bicarbonato</text>
+  <text x="588" y="362" text-anchor="middle" class="step">Sirve para valorar</text>
+  <text x="588" y="386" text-anchor="middle" class="lab">insuficiencia respiratoria, acidosis,</text>
+  <text x="588" y="406" text-anchor="middle" class="lab">alcalosis y respuesta al oxígeno</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

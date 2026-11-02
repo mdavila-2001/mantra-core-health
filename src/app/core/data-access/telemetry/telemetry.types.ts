@@ -16,19 +16,26 @@ export interface ActivityEventProperty {
   readonly valueBoolean?: boolean;
 }
 
-/** Un evento del lote. */
+/**
+ * Un evento del lote.
+ *
+ * **No lleva `userId`, `sessionId` ni `tenantId`**: la identidad la pone el
+ * servidor desde el token (usuario y sesión `sid`) y el contexto de tenant, y
+ * el `ValidationPipe` global (`forbidNonWhitelisted`) responde 400 al lote que
+ * mande cualquiera de los tres. Contrato en
+ * `docs/trabajo/2026-10-31-portal-observabilidad-gobierno/evidencia-f0/CONTRATO-ingesta-ux.md`.
+ */
 export interface ActivityEvent {
-  /** Esquema registrado en la API; de él sale el propósito del consentimiento. */
+  /**
+   * Esquema registrado en la API; de él sale el propósito del consentimiento.
+   * `ux_interaccion` v2 exige consentimiento `GRANTED`; `pagina_vista_anonima`
+   * (propósito agregado) no lo exige y no admite propiedades.
+   */
   readonly eventSchemaDefinitionId: string;
   /** Override del nombre del esquema: `pagina_vista`, `clic`… */
   readonly eventName: string;
   /** Un uuid por evento: un reenvío del mismo lote no duplica nada. */
   readonly eventIdempotencyKey: string;
-  /** Con usuario, la API exige consentimiento `GRANTED` o descarta el evento. */
-  readonly userId?: string;
-  /** Sesión del navegador (pestaña), no la sesión de autenticación. */
-  readonly sessionId: string;
-  readonly tenantId?: string;
   /** Plantilla, nunca la URL: `/pacientes/:id`, no `/pacientes/8437`. */
   readonly routeTemplate: string;
   readonly occurredAt: string;

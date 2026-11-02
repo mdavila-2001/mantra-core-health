@@ -21,6 +21,7 @@ export const PRESCRIPTION_SHARE_TESTIDS = {
   dialog: 'prescription-share-dialog',
   dialogQr: 'prescription-share-dialog-qr',
   dialogUrl: 'prescription-share-dialog-url',
+  dialogCreate: 'prescription-share-dialog-create',
   dialogExpiry: 'prescription-share-dialog-expiry',
   dialogNativeShare: 'prescription-share-dialog-native-share',
   dialogWhatsapp: 'prescription-share-dialog-whatsapp',
@@ -28,6 +29,7 @@ export const PRESCRIPTION_SHARE_TESTIDS = {
   linksList: 'prescription-share-links-list',
   linkRow: 'prescription-share-link-row',
   linkStatus: 'prescription-share-link-status',
+  linkMeta: 'prescription-share-link-meta',
   linkRevoke: 'prescription-share-link-revoke',
   linkHighlight: 'prescription-share-link-highlight',
 } as const;

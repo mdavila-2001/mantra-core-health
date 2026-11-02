@@ -1,5 +1,6 @@
 ---
 slug: rinitis-alergica
+image: rinitis-alergica.svg | Un alérgeno inhalado activa los mastocitos de la nariz, que liberan histamina. | Cadena de la reacción: el alérgeno es reconocido por la IgE de los mastocitos, que liberan histamina y causan síntomas en minutos. Abajo, tres paneles con los síntomas, los desencadenantes y el tratamiento.
 ---
 
 ## [definition] Introducción

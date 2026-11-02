@@ -1,5 +1,5 @@
 <app-content-dialog
-  heading="Subir inventario por CSV"
+  [heading]="site() === null ? 'Subir inventario por CSV' : 'Subir el stock de ' + site()!.siteName + ' por CSV'"
   description="Se revisa el archivo antes de tocar nada: va a ver qué cambia y qué filas no valen."
   size="lg"
   [dismissible]="!applying()"
@@ -7,6 +7,12 @@
   (closed)="closed.emit()"
 >
   <div class="upload__body">
+    @if (site(); as s) {
+      <p class="upload__note" data-testid="inventory-upload-site-note">
+        Cambia el stock propio de <strong>{{ s.siteName }}</strong>, no lo declarado en el catálogo de
+        la farmacia. El servidor revisa el archivo antes de escribir nada.
+      </p>
+    }
     <p class="upload__note">
       El archivo necesita una columna <code>codigo</code> y al menos una de estas:
       <code>existencias</code> y <code>umbral</code> (números enteros), o <code>disponible</code>
@@ -19,7 +25,7 @@
       accept=".csv"
       [maxSizeBytes]="maxBytes"
       [maxFiles]="1"
-      [disabled]="reading() || applying()"
+      [disabled]="reading() || applying() || sitePreviewing()"
       [files]="files()"
       (filesChange)="choose($event)"
       (rejected)="reject($event)"
@@ -40,6 +46,53 @@
       <app-alert tone="error" title="No se pudo aplicar" data-testid="inventory-upload-apply-error">
         {{ message }}
       </app-alert>
+    }
+
+    @if (sitePreviewing()) {
+      <app-loading-state class="upload__note" message="El servidor está revisando el archivo…" />
+    }
+
+    @if (siteResults(); as results) {
+      <div class="upload__summary" data-testid="inventory-upload-site-summary">
+        <p class="upload__kind">
+          {{ siteApplied() ? 'Resultado de la carga en' : 'Vista previa del servidor para' }}
+          {{ site()?.siteName }}{{ siteApplied() ? '.' : ': todavía no se guardó nada.' }}
+        </p>
+        <ul class="upload__counts">
+          <li>
+            <strong data-testid="inventory-upload-site-created">{{ siteCounts().created }}</strong>
+            {{ siteCounts().created === 1 ? 'empieza' : 'empiezan' }} a llevarse en esta sucursal
+          </li>
+          <li>
+            <strong data-testid="inventory-upload-site-updated">{{ siteCounts().updated }}</strong>
+            {{ siteCounts().updated === 1 ? 'cambia' : 'cambian' }}
+          </li>
+          <li><strong>{{ siteCounts().unchanged }}</strong> ya {{ siteCounts().unchanged === 1 ? 'está' : 'están' }} igual</li>
+          <li [class.upload__counts--alert]="siteProblems().length > 0">
+            <strong data-testid="inventory-upload-site-problems-count">{{ siteProblems().length }}</strong>
+            {{ siteProblems().length === 1 ? 'fila no se aplica' : 'filas no se aplican' }}
+          </li>
+        </ul>
+
+        @if ((siteReading()?.ignoredColumns ?? []).length > 0) {
+          <p class="upload__note">
+            Columnas que no se usan en una sucursal: {{ siteReading()!.ignoredColumns.join(', ') }}.
+          </p>
+        }
+
+        @if (siteProblems().length > 0) {
+          <app-alert tone="warning" title="Estas filas no se aplican" data-testid="inventory-upload-site-problems">
+            <ul class="upload__problems">
+              @for (problem of siteProblems().slice(0, 20); track problem.line) {
+                <li><span class="upload__line">Línea {{ problem.line }}</span> {{ problem.message }}</li>
+              }
+            </ul>
+            @if (siteProblems().length > 20) {
+              <p class="upload__note">… y {{ siteProblems().length - 20 }} más en el archivo.</p>
+            }
+          </app-alert>
+        }
+      </div>
     }
 
     @if (review(); as r) {
@@ -102,6 +155,10 @@
     data-testid="inventory-upload-apply"
     (clicked)="apply()"
   >
-    {{ canApply() ? 'Aplicar ' + review()!.lines.length + (review()!.lines.length === 1 ? ' cambio' : ' cambios') : 'Aplicar' }}
+    @if (site() !== null) {
+      {{ canApply() ? 'Aplicar ' + siteChanges() + (siteChanges() === 1 ? ' cambio' : ' cambios') : 'Aplicar' }}
+    } @else {
+      {{ canApply() ? 'Aplicar ' + review()!.lines.length + (review()!.lines.length === 1 ? ' cambio' : ' cambios') : 'Aplicar' }}
+    }
   </button>
 </app-content-dialog>

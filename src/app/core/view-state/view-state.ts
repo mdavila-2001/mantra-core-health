@@ -99,10 +99,12 @@ export function stale<T>(data: T, asOf: Date): StaleViewState<T> {
 }
 
 /** **S8** — la petición no llegó a destino; reintentar es una salida válida. */
-export function offline(lastAttemptAt?: Date): OfflineViewState {
-  return lastAttemptAt === undefined
-    ? { status: 'offline' }
-    : { status: 'offline', lastAttemptAt };
+export function offline(lastAttemptAt?: Date, options?: { readonly timedOut?: boolean }): OfflineViewState {
+  return {
+    status: 'offline',
+    ...(lastAttemptAt === undefined ? {} : { lastAttemptAt }),
+    ...(options?.timedOut === true ? { timedOut: true as const } : {}),
+  };
 }
 
 /**
@@ -110,10 +112,18 @@ export function offline(lastAttemptAt?: Date): OfflineViewState {
  * porque es lo único que conecta el reporte de la persona con los registros del
  * servidor; si la respuesta no lo trae, quien la traduzca debe generarlo.
  */
-export function unexpectedError(requestId: string, message?: string): UnexpectedErrorViewState {
-  return message === undefined
-    ? { status: 'error', requestId }
-    : { status: 'error', requestId, message };
+export function unexpectedError(
+  requestId: string,
+  message?: string,
+  explanation?: { readonly title?: string; readonly hint?: string },
+): UnexpectedErrorViewState {
+  return {
+    status: 'error',
+    requestId,
+    ...(message === undefined ? {} : { message }),
+    ...(explanation?.title === undefined ? {} : { title: explanation.title }),
+    ...(explanation?.hint === undefined ? {} : { hint: explanation.hint }),
+  };
 }
 
 /**

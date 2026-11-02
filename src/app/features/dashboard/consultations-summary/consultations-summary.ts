@@ -79,6 +79,15 @@ export class SummaryConsultations {
   protected readonly sitesWithoutLoad = signal<readonly string[]>([]);
 
   /**
+   * Las sedes cuya lectura falló, dichas para la persona.
+   *
+   * Una sede caída no tumba el resumen, pero sus consultas faltan en las
+   * cifras: sin este aviso, «12 este mes» se leía como el total cuando era el
+   * total de las sedes que respondieron.
+   */
+  protected readonly sedesSinCargar = signal<readonly string[]>([]);
+
+  /**
    * «Las canceladas se pueden ver» (H5.S2.M1): mismo criterio que
    * `incluirCanceladas()` de la agenda (`features/agenda/agenda.ts`) — no se
    * inventa un estado nuevo, se reusa el mismo booleano con el mismo sentido.

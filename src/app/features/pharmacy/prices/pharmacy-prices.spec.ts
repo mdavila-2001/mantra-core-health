@@ -9,6 +9,7 @@ import type {
   PharmacyProduct,
   PharmacyProductChanges,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
+import { CsvExportService, toCsv, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 import { PharmacyPrices } from './pharmacy-prices';
 import { afterAll, beforeAll } from 'vitest';
 import { environment } from '../../../../environments/environment';
@@ -165,5 +166,58 @@ describe('PharmacyPrices', () => {
     expect(sent.map((s) => s.productId)).toEqual(['p-1', 'p-2']);
     expect(internal().rejected()).toHaveLength(1);
     expect(internal().rejected()[0]!.name).toBe('Paracetamol');
+  });
+
+  describe('catálogo de más de 500, exportar, ordenar y cambios sin guardar', () => {
+    const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
+
+    function remount(truncated: boolean): void {
+      searchProducts.mockReturnValue(of({ items: CATALOG, limit: 500, truncated }));
+      fixture = TestBed.createComponent(PharmacyPrices);
+      fixture.detectChanges();
+    }
+
+    it('con el listado cortado en 500 lo dice, como Productos', () => {
+      expect(root().querySelector('[data-testid="prices-truncated"]')).toBeNull();
+
+      remount(true);
+
+      expect(root().querySelector('[data-testid="prices-truncated"]')?.textContent).toContain(
+        'Se muestran los primeros 500',
+      );
+    });
+
+    it('«Exportar CSV» baja código y precio publicado con los encabezados de la importación', () => {
+      const download = vi.spyOn(TestBed.inject(CsvExportService), 'download').mockImplementation(() => undefined);
+      internal().setPrice(CATALOG[0]!, '99');
+      fixture.detectChanges();
+
+      (root().querySelector('[data-testid="prices-export"]') as HTMLButtonElement).click();
+
+      const [rows, columns, filename] = download.mock.calls[0]!;
+      expect(filename).toBe('precios-de-la-farmacia.csv');
+      expect(toCsv(rows as readonly PharmacyProduct[], columns as readonly CsvColumn<PharmacyProduct>[])).toBe(
+        'codigo,precio\r\nPAR-500,12.50\r\nIBU-400,',
+      );
+    });
+
+    it('se ordena desde el encabezado, sin perder las filas', async () => {
+      const header = root().querySelector('[data-testid="tabla-ordenar"][data-columna="name"]') as HTMLButtonElement;
+      const names = (): (string | undefined)[] =>
+        [...root().querySelectorAll('.prices__main')].map((name) => name.textContent?.trim());
+      expect(names()).toEqual(['Paracetamol', 'Ibuprofeno']);
+
+      header.click();
+      await fixture.whenStable();
+
+      expect(names()).toEqual(['Ibuprofeno', 'Paracetamol']);
+      expect(root().querySelector('app-data-table')?.classList).toContain('data-table--dense');
+    });
+
+    it('avisa al catálogo que hay precios escritos sin guardar', () => {
+      expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
+      internal().setPrice(CATALOG[0]!, '13');
+      expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
+    });
   });
 });

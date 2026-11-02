@@ -1,8 +1,6 @@
 import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, type ActivatedRouteSnapshot, type Routes } from '@angular/router';
-import { of } from 'rxjs';
-import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 
 import { routes } from './app.routes';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
@@ -12,9 +10,18 @@ import {
   REAL_EQUIVALENTS,
 } from './features/alovida/design-mockup-gate';
 
-/** El router por defecto ya usa API real. La demo se comprueba con su gate explicito. */
+/**
+ * El árbol de rutas tal como lo arma `production-api`.
+ *
+ * Las pruebas corren con el entorno de desarrollo (`designMockups: true`), así
+ * que `routes` trae las maquetas montadas. Acá se sacan esas mismas entradas
+ * —por identidad, son los objetos de `ALOVIDA_ROUTES`— y se ponen en su lugar
+ * las que devuelve el gate apagado. Los guards se vacían, como en
+ * `app.routes.spec.ts`: se prueba adónde lleva cada dirección, no la sesión.
+ */
 function apiTree(): Routes {
-  return withoutGuards(routes);
+  const withoutMockups = routes.filter((route) => !ALOVIDA_ROUTES.includes(route));
+  return withoutGuards([...designMockupRoutes(false), ...withoutMockups]);
 }
 
 function withoutGuards(tree: Routes): Routes {
@@ -30,12 +37,7 @@ describe('el gate de maquetas con la API real (production-api)', () => {
   let location: Location;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter(apiTree()),
-        { provide: PublicDirectoryClient, useValue: { getProfile: () => of(null) } },
-      ],
-    });
+    TestBed.configureTestingModule({ providers: [provideRouter(apiTree())] });
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
   });
@@ -55,6 +57,8 @@ describe('el gate de maquetas con la API real (production-api)', () => {
       expect(location.path() || '/').toBe(target);
       expect(leafPath()).not.toBe('**');
     },
+    // Lazy route imports can exceed Vitest's 5s default when V8 coverage is on.
+    15_000,
   );
 
   it.each([
@@ -78,23 +82,24 @@ describe('el gate de maquetas con la API real (production-api)', () => {
     expect(location.path()).toBe('/search/practitioners?q=cardio');
   });
 
+  it('la ficha de la bóveda con slug abre la ficha pública real', async () => {
+    await router.navigateByUrl('/search/pharmacy-profile-detail/farmacia-central');
+
+    expect(location.path()).toBe('/f/farmacia-central');
+  });
+
   it('el #ancla de una dirección vieja de la bóveda sobrevive a la redirección', async () => {
     await router.navigateByUrl('/directorio/organizaciones-listado?q=clinica#tabla');
 
     expect(location.path(true)).toBe('/administration/organizations?q=clinica#tabla');
   });
 
-  it('la ficha de la bóveda con slug abre la ficha pública real', async () => {
-    await router.navigateByUrl('/search/pharmacy-profile-detail/farmacia-central');
-
-    expect(location.path()).toBe('/f/farmacia-central');
-  });
 });
 
-describe('el gate de maquetas en la maqueta (configuracion demo)', () => {
+describe('el gate de maquetas en la maqueta (mockup / desarrollo)', () => {
   it('las pantallas de la bóveda siguen montadas', () => {
     for (const route of ALOVIDA_ROUTES) {
-      expect(designMockupRoutes(true)).toContain(route);
+      expect(routes).toContain(route);
     }
   });
 });

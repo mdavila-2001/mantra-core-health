@@ -375,6 +375,30 @@ beforeEach(async () => {
 });
 
 /**
+ * Al terminar este archivo, `jspdf` vuelve a ser el de verdad y no queda nada
+ * de la sesión en los holders del papel.
+ *
+ * Con el empaquetado del corredor de Angular, el `vi.mock` de arriba no queda
+ * dentro de este archivo: cualquier prueba que importe el motor de PDF después
+ * —la receta del simulador, la factura— recibía `DocumentoFalso` y reventaba con
+ * «output is not a function» o «widths» de `undefined`, según el orden en que el
+ * trabajador recorriera los archivos. `doUnmock` no se eleva como `vi.mock`, así
+ * que corre acá, al final, y `resetModules` descarta lo ya evaluado con el falso.
+ * Lo que el archivo deja fijado —el logo o la firma de la sesión— se limpia
+ * también tras cada prueba.
+ */
+afterEach(() => {
+  establecerLogoDeDocumentos(null);
+  setDocumentSignature(null);
+  setDocumentFonts(null);
+});
+
+afterAll(() => {
+  vi.doUnmock('jspdf');
+  vi.resetModules();
+});
+
+/**
  * El builder de Angular corre todos los archivos en el mismo entorno, sin
  * aislar módulos: lo que este archivo deja —el logo o la firma de la sesión
  * fijados en un holder, `pdf-export.ts` evaluado con el jsPDF falso en la
