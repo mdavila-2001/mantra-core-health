@@ -495,3 +495,25 @@
     transparent
   );
 }
+
+/* El acceso comparte el tono sereno del arranque móvil: el trazo es el único
+   movimiento protagonista. Las capas secundarias siguen en el DOM para no
+   alterar la geometría ni la hidratación, pero no se pintan ni se animan. */
+:host {
+  background: linear-gradient(160deg, var(--c-petrol-800), var(--c-petrol-900));
+}
+
+:host .auth-stage__aurora {
+  opacity: 0.18;
+}
+
+:host .auth-stage__rays,
+:host .auth-stage__monitor,
+:host .auth-stage__motes,
+:host .auth-stage__flash {
+  display: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__glow {
+  display: none;
+}
