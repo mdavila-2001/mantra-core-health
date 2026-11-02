@@ -2,6 +2,7 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   InjectionToken,
   PLATFORM_ID,
@@ -27,6 +28,7 @@ import {
   type BodyMapSnapshot,
 } from './body-map.export';
 import { VisorDelCuerpo } from './body-map.viewer';
+import { ImagenesDelCuerpo } from './body-map.images';
 import {
   VISTAS_DEL_CUERPO,
   VISTAS_DEL_CUERPO_FEMENINA,
@@ -76,9 +78,6 @@ export const ESPERAR_IMAGEN_DE_VISTA = new InjectionToken<boolean>('ESPERAR_IMAG
   providedIn: 'root',
   factory: () => true,
 });
-
-/** Cuánto se espera una imagen antes de darla por perdida y mostrar la vista igual. */
-const ESPERA_MAXIMA_DE_IMAGEN_MS = 4000;
 
 /** Los parámetros del enlace que reabre la misma zona y vista. */
 const PARAMETRO_ZONA = 'zona';
@@ -138,9 +137,8 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  * las zonas. Antes cambiaban las zonas al instante y la imagen cuando llegaba:
  * con conexión lenta se veía el contorno de la espalda sobre el maniquí de
  * frente (reporte del cliente, 24/10/2026). Cuando la vista pedida ya se
- * pintó una vez no hay espera. Al terminar de pintar la vista puesta, las
- * otras dos se precargan en reposo (unos 50 KB cada una), para que el segundo
- * cambio sea inmediato.
+ * pintó una vez no hay espera. Las tres vistas se precargan al montar la figura
+ * y se conservan como copias en memoria para cambiar sin nuevas peticiones.
  *
  * **El escenario no cambia de alto.** La cara es más baja que el cuerpo; sin
  * reserva, cada paso entre «Frente» y «Cara» corría 90 px todo lo que hay
@@ -279,8 +277,7 @@ export class BodyMap {
     isPlatformBrowser(inject(PLATFORM_ID)) && inject(ESPERAR_IMAGEN_DE_VISTA);
 
   /** Las imágenes ya descargadas y decodificadas (o que fallaron: no se espera para siempre). */
-  private readonly imagenesListas = signal<ReadonlySet<string>>(new Set());
-  private readonly imagenesPedidas = new Map<string, Promise<void>>();
+  protected readonly imagenes = new ImagenesDelCuerpo(inject(DestroyRef));
 
   /**
    * La vista que se **ve**: la pedida cuando su imagen ya está lista; hasta
@@ -291,7 +288,7 @@ export class BodyMap {
     { objetivo: VistaDibujable | null; listas: ReadonlySet<string> },
     VistaDibujable | null
   >({
-    source: () => ({ objetivo: this.vista(), listas: this.imagenesListas() }),
+    source: () => ({ objetivo: this.vista(), listas: this.imagenes.listas() }),
     computation: ({ objetivo, listas }, previo) => {
       if (objetivo === null) return null;
       if (!this.esperaLaImagen || listas.has(objetivo.vista.image)) return objetivo;
@@ -397,18 +394,10 @@ export class BodyMap {
   }
 
   constructor() {
-    // Pide la imagen de la vista puesta y, cuando ésa ya está, las otras.
+    // Las tres vistas quedan en memoria para cambiar sin nuevas peticiones.
     effect(() => {
-      const objetivo = this.vista();
-      if (!this.esperaLaImagen || objetivo === null) return;
-      this.precargar(objetivo.vista.image).then(() => {
-        const otras = this.vistas().filter((v) => v !== objetivo);
-        const enReposo = (tarea: () => void): void =>
-          typeof requestIdleCallback === 'function'
-            ? void requestIdleCallback(tarea)
-            : void setTimeout(tarea, 200);
-        enReposo(() => otras.forEach((v) => void this.precargar(v.vista.image)));
-      });
+      if (!this.esperaLaImagen) return;
+      for (const vista of this.vistasDelSexo()) void this.imagenes.precargar(vista.image);
     });
 
     // Cada vista se mira entera al llegar: el acercamiento de la espalda no
@@ -520,29 +509,6 @@ export class BodyMap {
     } finally {
       this.exportando.set(false);
     }
-  }
-
-  /** Descarga y decodifica una imagen una sola vez; resuelve también si falla. */
-  private precargar(url: string): Promise<void> {
-    const enCurso = this.imagenesPedidas.get(url);
-    if (enCurso !== undefined) return enCurso;
-    const imagen = new Image();
-    imagen.src = url;
-    const marcar = (): void => this.imagenesListas.update((listas) => new Set(listas).add(url));
-    const decodificada =
-      typeof imagen.decode === 'function'
-        ? imagen.decode()
-        : new Promise<void>((resolver, rechazar) => {
-            imagen.onload = () => resolver();
-            imagen.onerror = rechazar;
-          });
-    // Una imagen que no llega no deja la figura congelada: pasado el tope se
-    // muestra la vista igual (con su imagen rota o a medio cargar, pero con las
-    // zonas que se pueden tocar).
-    const tope = new Promise<void>((resolver) => setTimeout(resolver, ESPERA_MAXIMA_DE_IMAGEN_MS));
-    const lista = Promise.race([decodificada, tope]).then(marcar, marcar);
-    this.imagenesPedidas.set(url, lista);
-    return lista;
   }
 
   protected apuntar(id: string | null): void {
