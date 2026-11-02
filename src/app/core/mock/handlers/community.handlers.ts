@@ -84,14 +84,7 @@ function respuestaAutomaticaEncendida(): boolean {
   }
 }
 
-/**
- * Las respuestas automáticas configuradas, por perfil (F4.7).
- *
- * Una `Coleccion` cuyo `id` **es el perfil** —se busca siempre por perfil y hay
- * a lo sumo una por perfil— y no un `Map`: así sobrevive a recargar la página,
- * como el resto de lo que se escribe en la maqueta. Con un `Map`, recargar
- * devolvía la configuración de fábrica y pisaba lo que se acababa de guardar.
- */
+/** Las respuestas automáticas configuradas, por perfil (F4.7). */
 interface RespuestaAutomaticaGuardada {
   /** El perfil público al que pertenece. */
   readonly id: string;
@@ -99,14 +92,7 @@ interface RespuestaAutomaticaGuardada {
   readonly datos: Readonly<Record<string, unknown>>;
 }
 
-/**
- * La médica de la maqueta contesta con IA cuando no está.
- *
- * Es lo que deja ver la respuesta redactada por la IA sin backend: la paciente
- * le escribe y, al rato, llega la respuesta con su etiqueta. Encendida de
- * fábrica y no a mano porque en la maqueta nadie inicia sesión como la médica
- * para configurarla mientras la paciente escribe.
- */
+/** La médica de la maqueta contesta con IA cuando no está. */
 const respuestasAutomaticas = new Coleccion<RespuestaAutomaticaGuardada>(
   [
     {
@@ -1056,6 +1042,16 @@ export function registrarComunidad(router: MockRouter): void {
     if (existente !== undefined) return { status: 201, body: { id: existente.id } };
     const nueva = conversationList.agregar({ id: nuevoId('conv'), conversationTypeConceptId: datos.conversationType === 'GROUP' ? CONCEPT.conversationGroup : CONCEPT.conversationDirect, groupId: datos.groupId ?? null, participantes, noLeidosPor: {} });
     return { status: 201, body: { id: nueva.id } };
+  });
+
+  router.post('/community/conversations/contacts/search', (request) => {
+    const datos = cuerpo<{ profileId?: string; q?: string; limit?: number }>(request);
+    const yo = datos.profileId ?? vitrinaDeSesion(request)?.id ?? '';
+    const q = (datos.q ?? '').trim().toLowerCase();
+    if (q === '') return { items: [] };
+    const max = Math.max(1, Math.min(Number(datos.limit ?? 10) || 10, 50));
+    const items = showcases.todos().filter((s) => s.id !== yo && (s.kind === 'PRACTITIONER' || s.kind === 'PATIENT' || s.kind === 'BROKER') && s.displayName.toLowerCase().includes(q)).slice(0, max).map((s) => ({ profileId: s.id, displayName: s.displayName, headline: s.headline || null, avatarUrl: s.avatarUrl }));
+    return { items };
   });
 
   router.get('/community/conversations/:id/messages', (request) => {

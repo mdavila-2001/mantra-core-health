@@ -566,10 +566,10 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
       const oficial = await directorio.bySlug(params['slug']!);
       return oficial === undefined ? notFound('Ficha no encontrada') : fichaOficial(oficial);
     }
-    if (v.kind === 'PATIENT') return notFound('Ficha no encontrada');
+    if (v.kind === 'PATIENT' && params['prefix'] !== 'u' && params['prefix'] !== 'p') return notFound('Ficha no encontrada');
     const profesional = v.kind === 'PRACTITIONER' ? professionalById(v.targetId) : undefined;
     return {
-      kind: v.kind as ClasePublica,
+      kind: (v.kind === 'PATIENT' ? 'PRACTITIONER' : v.kind) as ClasePublica,
       slug: v.slug,
       displayName: v.displayName,
       headline: v.headline,
