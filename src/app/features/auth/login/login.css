@@ -291,9 +291,8 @@ form > *:nth-child(n + 4) {
   }
 }
 
-/* Cuenta de administración local (sólo desarrollo): un recuadro discreto bajo
-   el formulario. Va en tinta secundaria y con borde, no en un color de alerta:
-   es una ayuda, no un aviso. */
+/* Cuenta local (sólo desarrollo): recuadro discreto bajo el formulario, con
+   borde y sin color de alerta: es una ayuda, no un aviso. */
 .login__local {
   display: flex;
   flex-direction: column;
@@ -330,6 +329,7 @@ form > *:nth-child(n + 4) {
 }
 
 .login__local-datos code {
+  color: var(--text-primary);
   font-size: var(--fs-data);
   overflow-wrap: anywhere;
   user-select: all;
