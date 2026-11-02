@@ -111,7 +111,9 @@ interface Cell {
           />
         </app-form-field>
         @if (roleId() !== '') {
-          <app-search-field label="Buscar permisos" placeholder="Código, nombre o recurso" [(value)]="query" />
+          <app-form-field label="Buscar permisos">
+            <app-search-field label="Buscar permisos" placeholder="Código, nombre o recurso" [(value)]="query" />
+          </app-form-field>
         }
       </div>
 
@@ -119,7 +121,7 @@ interface Cell {
         <section class="panel__pick" aria-labelledby="role-pick-title">
           <h2 class="panel__pick-title" id="role-pick-title">Elija un rol para ver y editar qué permite y qué niega.</h2>
           @if (roles().length > 0) {
-            <ul class="panel__pick-list">
+            <ul class="panel__pick-list" [style.--pick-cols]="pickCols()">
               @for (r of roles(); track r.id) {
                 <li>
                   <button type="button" class="panel__pick-item" (click)="roleChanged.emit(r.id)">
@@ -232,6 +234,11 @@ export class RolePermissionsEditor {
   protected readonly rolesUnavailable = signal(false);
 
   protected readonly roles = signal<readonly AssignableRole[]>([]);
+  /** Columnas que reparten los roles parejo (5 → 3 + 2, nunca 4 + 1), con un máximo de cuatro. */
+  protected readonly pickCols = computed(() => {
+    const n = this.roles().length;
+    return n === 0 ? 1 : Math.ceil(n / Math.ceil(n / 4));
+  });
   private readonly catalog = signal<ViewState<readonly PermissionSummary[]>>(loading());
   /** Lo que el servidor tiene hoy, por permiso. */
   private readonly serverState = signal<ReadonlyMap<string, Cell>>(new Map());

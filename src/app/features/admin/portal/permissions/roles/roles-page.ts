@@ -31,7 +31,7 @@ const AUDIT_ACTIONS = ['ROLE_PERMISSIONS_SET', 'ROLE_CREATED'] as const;
       subtitle="Qué permite y qué niega cada rol, por acción. Los cambios piden confirmación y quedan en la bitácora con su autor."
     />
     <div class="perm-page" data-testid="portal-roles">
-      <app-alert class="perm-honesty" tone="info" data-testid="portal-roles-honesty">
+      <app-alert tone="info" title="Un permiso fino sólo se aplica donde el sistema lo evalúa." collapsible data-testid="portal-roles-honesty">
         Un permiso fino sólo se aplica donde el sistema lo evalúa; en el resto de las rutas decide el rol que la ruta
         exige. Dónde pasa cada cosa, en la
         <a app-link [routerLink]="matrixUrl">matriz RBAC por módulo</a>.
