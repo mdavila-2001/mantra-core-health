@@ -29,7 +29,7 @@ const ZONAS: readonly ZonaElegible[] = [
   { id: 'espalda', nombre: 'Espalda' },
   { id: 'rinones', nombre: 'Cintura y riñones' },
   { id: 'intima', nombre: 'Salud íntima' },
-  { id: 'gluteos', nombre: 'Glúteos y cola' },
+  { id: 'gluteos', nombre: 'Glúteos' },
   { id: 'brazos', nombre: 'Brazos y codos' },
   { id: 'manos', nombre: 'Manos y muñecas' },
   { id: 'caderas', nombre: 'Caderas' },
@@ -294,7 +294,7 @@ describe('BodyMap', () => {
     expect(component.value()).toBeNull();
     // Nombra también la que no se ve de frente (glúteos) y la que no tiene forma (piel).
     expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
-      'Glúteos y cola, Rodillas y Piel y pelo',
+      'Glúteos, Rodillas y Piel y pelo',
     );
     expect(formaDe('pecho').closest('g')?.classList).not.toContain('body-map__zona--marcada');
   });
@@ -498,6 +498,8 @@ describe('BodyMap · el cambio de vista espera la imagen', () => {
 
   beforeEach(() => {
     imagenes = new Map();
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', undefined); // Esta suite verifica el respaldo mediante Image.
     vi.stubGlobal(
       'Image',
       class {
@@ -540,8 +542,7 @@ describe('BodyMap · el cambio de vista espera la imagen', () => {
 
   async function llegada(url: string): Promise<void> {
     imagenes.get(url)!.resolver();
-    // Varias vueltas de microtareas: la imagen se decodifica, compite contra el
-    // tope de espera y recién entonces se marca como lista.
+    // La decodificación compite contra el tope antes de marcar la imagen como lista.
     for (let vuelta = 0; vuelta < 10; vuelta++) await Promise.resolve();
     fixture.detectChanges();
   }
@@ -582,7 +583,6 @@ describe('BodyMap · el cambio de vista espera la imagen', () => {
   });
 
   it('una imagen que no llega no deja la figura congelada', async () => {
-    vi.useFakeTimers();
     await llegada(FRENTE_IMG);
     pedir('espalda');
     expect(imagenDibujada()).toBe(FRENTE_IMG);
@@ -613,12 +613,12 @@ describe('BodyMap — vistas precargadas en memoria', () => {
       'fetch',
       vi.fn(async (ruta: string) => {
         pedidas.push(ruta);
-        return new Response(new Blob(['x'], { type: 'image/webp' }));
+        return new Response('x', { headers: { 'Content-Type': 'image/webp' } });
       }),
     );
-    // jsdom no implementa `URL.createObjectURL`: sin él la figura usa la ruta.
+    let siguienteCopia = 0;
     liberar = vi.fn<(url: string) => void>();
-    URL.createObjectURL = vi.fn(() => `blob:copia-${pedidas.length}`);
+    URL.createObjectURL = vi.fn(() => `blob:copia-${++siguienteCopia}`);
     URL.revokeObjectURL = liberar;
 
     TestBed.configureTestingModule({ imports: [BodyMap] });

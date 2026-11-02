@@ -160,7 +160,7 @@ export const BODY_ZONES: readonly BodyZone[] = [
   },
   {
     id: 'gluteos',
-    nombre: 'Glúteos y cola',
+    nombre: 'Glúteos',
     icono: 'huesos',
     sintomas: ['hemorroides', 'sangre-en-las-heces', 'dolor-de-cadera', 'dolor-de-espalda'],
   },
