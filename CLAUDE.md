@@ -40,6 +40,7 @@ Reglas absolutas:
   - Plantilla `.html` y estilos `.css` separados.
   - Rutas y menús modularizados por dominio (lazy loading por módulo).
   - Orquestación en paralelo mediante la herramienta y skill `kman`.
+- `PR_MANDATORY_ON_FINISH` — **Orden de Pablo (02/11/2026): Toda sesión que termine su tarea y valide sus gates debe empujar a remoto y ABRIR PULL REQUEST a `dev`. Prohibido dejar cambios pendientes en local o ramas sin PR.**
 
 
 
