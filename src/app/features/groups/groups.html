@@ -1,34 +1,68 @@
-<app-page-header
-  title="Grupos y foros"
-  subtitle="Comunidades por tema y especialidad dentro de tu organización."
-/>
+@if (embedded()) {
+  <div class="grupos__cabecera">
+    <p class="grupos__bajada">
+      Comunidades de su organización y foros por tema y especialidad.
+    </p>
+    <button
+      app-button
+      variant="primary"
+      data-testid="groups-new"
+      (clicked)="alternarAlta()"
+    >
+      {{ creando() ? 'Cancelar' : 'Crear grupo' }}
+    </button>
+  </div>
+} @else {
+  <app-page-header
+    title="Grupos y foros"
+    subtitle="Comunidades de su organización y foros por tema y especialidad."
+    [breadcrumbs]="breadcrumbs()"
+  >
+    <button
+      app-button
+      page-actions
+      variant="primary"
+      data-testid="groups-new"
+      (clicked)="alternarAlta()"
+    >
+      {{ creando() ? 'Cancelar' : 'Crear grupo' }}
+    </button>
+  </app-page-header>
+}
 
 @if (error(); as mensaje) {
   <app-alert tone="error" class="grupos__alerta">{{ mensaje }}</app-alert>
 }
 
-<!-- El servidor manda su código justamente para que acá haya una salida y no
-     otro «reintentá»: lo que resuelve este caso es ir a completar el perfil. -->
 @if (perfilIncompleto()) {
-  <!-- El servidor rechazó por vitrina incompleta y acá está la salida, desde el
-       13/09/2026. Antes el aviso derivaba a «quien administra tu organización»,
-       que no tenía dónde hacerlo: el contrato sólo sabe de la vitrina propia
-       (`PUT /community/profiles/me`). Se crea acá, con lo mínimo, y sin
-       devolver la configuración al perfil — de donde el propietario la mandó
-       sacar el 2026-09-10. Ver `docs/progress/BLOCKERS.md`. -->
-  <app-minimal-showcase
-    class="grupos__vitrina"
-    motivo="grupos"
-    (creada)="alCrearLaVitrina($event)"
+  <div class="grupos__aviso-box">
+    <p class="grupos__aviso-perfil">
+      Para crear un grupo <strong>público</strong> necesitás tu perfil público completo: nombre
+      visible, foto y el perfil en público.
+    </p>
+    <app-minimal-showcase
+      class="grupos__vitrina"
+      motivo="grupos"
+      (creada)="alCrearLaVitrina($event)"
+    />
+  </div>
+}
+
+@if (creando()) {
+  <app-group-form
+    [temas]="temas()"
+    [perfilListo]="perfilListoParaPublico()"
+    [guardando]="guardando()"
+    (submitForm)="crear($event)"
+    (cancel)="alternarAlta()"
+    (showcaseCreated)="alCrearLaVitrina($event)"
   />
 }
 
 @if (tenantId() === null) {
-  <!-- Una puerta, no un error: el directorio de grupos es por organización y
-       elegir por la persona mostraría los de la organización equivocada. -->
   <app-empty-state
-    title="Elegí una organización"
-    description="Los grupos son de cada organización. Elegí una desde el encabezado para ver los suyos."
+    title="Elija una organización"
+    description="Los grupos son de cada organización. Elija una desde el encabezado para ver los suyos."
     variant="empty"
   />
 } @else {
@@ -55,91 +89,82 @@
         }
       </div>
     }
-
-    <button app-button variant="outline" (clicked)="alternarAlta()">
-      {{ creando() ? 'Cancelar' : 'Crear grupo' }}
-    </button>
   </div>
 
-  @if (creando()) {
-    <app-card class="grupos__alta">
-      <h2 class="grupos__alta-titulo">Nuevo grupo</h2>
-
-      <app-form-field icon="labels" label="Nombre" [required]="true">
-        <app-input [(value)]="nombre" placeholder="Cardiología clínica" />
-      </app-form-field>
-
-      <app-form-field icon="note" label="De qué trata" hint="Opcional. Se ve en la tarjeta del directorio.">
-        <app-input [(value)]="descripcion" placeholder="Casos, guías y ateneos" />
-      </app-form-field>
-
-      <!-- La dirección se deriva del nombre, pero se muestra: sigue siendo
-           visible antes de crear, sin obligar a nadie a saber qué es un slug. -->
-      <p class="grupos__slug">
-        Dirección: <code>{{ slug() || '—' }}</code>
-      </p>
-
-      <!-- TP-3 · regla 06: con el perfil incompleto, «público» queda
-           **deshabilitado y a la vista**, no escondido. Ocultarlo dejaría a la
-           persona sin saber que la opción existe ni por qué no la tiene; así
-           ve qué le falta y cómo conseguirlo. -->
-      <app-switch
-        [(checked)]="privado"
-        [disabled]="!perfilListoParaPublico()"
-        label="Grupo privado (hay que aprobar cada ingreso)"
-      />
-
-      <!-- El mismo callejón sin salida que el aviso de arriba, y con el mismo
-           arreglo (13/09/2026): decía «pedíselo a quien administra tu
-           organización» y nadie podía. Ahora dice qué falta y ofrece
-           resolverlo acá, sin salir del formulario que se estaba llenando. -->
-      @if (!perfilListoParaPublico()) {
-        <p class="grupos__aviso-perfil">
-          Para crear un grupo <strong>público</strong> necesitás tu perfil público completo: nombre
-          visible, foto y el perfil en público.
-        </p>
-        <app-minimal-showcase
-          class="grupos__vitrina"
-          motivo="grupos"
-          (creada)="alCrearLaVitrina($event)"
+  <div class="grupos__contenedor-tabs">
+    <app-tabs [(selectedIndex)]="selectedIndex">
+      <app-tab label="Histórico de grupos">
+        <app-data-table
+          caption="Histórico de grupos"
+          [state]="stateOfHistorico()"
+          [columns]="columnsHistorico()"
+          [trackBy]="trackById"
+          [cursor]="cursorOfHistorico()"
+          rowNavigable
+          stackedOnMobile
+          (rowActivated)="abrirGrupo($event)"
+          (cursorChanged)="cambiarCursor($event)"
+          (retry)="recargar()"
         />
-      }
-
-      <div class="grupos__alta-acciones">
-        <button app-button [disabled]="!puedeCrear()" [isLoading]="guardando()" (clicked)="crear()">
-          Crear grupo
-        </button>
-      </div>
-    </app-card>
-  }
-
-  @if (vacio()) {
-    <app-empty-state
-      title="No hay grupos que coincidan"
-      description="Probá con otra búsqueda o sacá el filtro de tema. También podés crear el grupo vos."
-      variant="empty"
-    />
-  } @else {
-    <div class="grupos__lista">
-      @for (grupo of grupos(); track grupo.id) {
-        <a class="grupos__enlace" [routerLink]="['/groups', grupo.id]">
-          <app-card>
-            <h2 class="grupos__nombre">{{ grupo.name }}</h2>
-            @if (grupo.description) {
-              <p class="grupos__descripcion">{{ grupo.description }}</p>
-            }
-            <p class="grupos__meta">{{ grupo.memberCount ?? 0 }} integrantes</p>
-          </app-card>
-        </a>
-      }
-    </div>
-
-    @if (hayMas()) {
-      <div class="grupos__mas">
-        <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
-          Ver más grupos
-        </button>
-      </div>
-    }
-  }
+      </app-tab>
+      <app-tab label="Solicitudes enviadas">
+        <app-data-table
+          caption="Solicitudes enviadas"
+          [state]="stateOfEnviadas()"
+          [columns]="columnsEnviadas()"
+          [trackBy]="trackById"
+          (retry)="recargar()"
+        />
+      </app-tab>
+      <app-tab label="Solicitudes recibidas">
+        <app-data-table
+          caption="Solicitudes recibidas"
+          [state]="stateOfRecibidas()"
+          [columns]="columnsRecibidas()"
+          [trackBy]="trackById"
+          rowNavigable
+          stackedOnMobile
+          (rowActivated)="abrirGrupo($event)"
+          (retry)="recargar()"
+        />
+      </app-tab>
+    </app-tabs>
+  </div>
 }
+
+<ng-template #groupNameCell let-group>
+  <a class="grupos__enlace" [routerLink]="['/groups', group.id]">
+    {{ group.name }}
+  </a>
+</ng-template>
+
+<ng-template #topicCell let-group>
+  <app-badge variant="neutral" [value]="temaNombre(group.topicId)" />
+</ng-template>
+
+<ng-template #typeCell let-group>
+  {{ group.groupTypeConceptId === 'c-apoyo' || group.groupType === 'SUPPORT' ? 'Apoyo' : 'General' }}
+</ng-template>
+
+<ng-template #visibilityCell let-group>
+  <app-badge
+    [variant]="group.visibilityConceptId === 'c-publico' || group.visibility === 'PUBLIC' ? 'info' : 'outline'"
+    [value]="group.visibilityConceptId === 'c-publico' || group.visibility === 'PUBLIC' ? 'Público' : 'Privado'"
+  />
+</ng-template>
+
+<ng-template #membersCell let-group>
+  {{ group.memberCount ?? 0 }} integrantes
+</ng-template>
+
+<ng-template #actionsCell let-group>
+  <a
+    app-button
+    variant="ghost"
+    size="sm"
+    [routerLink]="['/groups', group.id]"
+    [attr.aria-label]="'Abrir grupo ' + group.name"
+  >
+    Abrir
+  </a>
+</ng-template>

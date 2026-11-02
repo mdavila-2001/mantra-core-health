@@ -5,6 +5,7 @@ import {
   computed,
   effect,
   inject,
+  input,
   signal,
   untracked,
   viewChild,
@@ -72,6 +73,7 @@ const EMPTY_TEXT: Readonly<Record<MedicalGroupTab, string>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MedicalGroupList {
+  readonly embedded = input(false);
   private readonly groups = inject(MedicalGroupsClient);
   private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);

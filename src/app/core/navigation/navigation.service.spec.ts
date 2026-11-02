@@ -337,12 +337,8 @@ describe('NavigationService', () => {
         'Formularios',
         'Mis servicios',
         'Cotizaciones',
-        // «Grupos médicos» entra el 25/10/2026 con el carril 21 (FT-21): la
-        // ficha pide la pantalla con sus tres pestañas y «Crear grupo médico»,
-        // y responder invitaciones o cargar las notas del ejercicio es un
-        // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
-        // por el propietario en el PR.
-        'Grupos médicos',
+        // «Grupos médicos» pasa a ser pestaña de «Grupos y foros» el 01/11/2026
+        // (pedido del propietario): se unifican las comunidades y los equipos médicos.
         // «Mi equipo» entra con el personal de apoyo (2026-10): es la única
         // puerta del doctor a quienes le ayudan con su agenda y sus mensajes —
         // aceptarlos una vez, decidir si responden en su nombre, aprobar el acceso
@@ -705,8 +701,6 @@ describe('NavigationService', () => {
         '/form-builder',
         '/my-services',
         '/my-quotations',
-        // Carril 21: los grupos médicos se arman sobre el mismo catálogo.
-        '/my-medical-groups',
       ]);
     });
 

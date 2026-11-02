@@ -1,96 +1,71 @@
+:host {
+  display: block;
+}
+
+.grupos__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-4);
+}
+
+.grupos__bajada {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
+}
+
 .grupos__alerta {
   display: block;
-  margin-bottom: var(--e4);
+  margin-block-end: var(--sp-4);
+}
+
+.grupos__aviso-box {
+  margin-block-end: var(--sp-5);
+  padding: var(--sp-4);
+  background-color: var(--surface-subtle);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--accent-primary);
+}
+
+.grupos__aviso-perfil {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-secondary);
+}
+
+.grupos__vitrina {
+  display: block;
+  margin-block-start: var(--sp-4);
+  width: 100%;
 }
 
 .grupos__filtros {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: var(--e3);
-  margin-bottom: var(--e4);
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-5);
 }
 
 .grupos__temas {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--e2);
+  gap: var(--sp-2);
 }
 
-.grupos__alta {
-  display: block;
-  margin-bottom: var(--e4);
-  max-inline-size: 52ch;
-}
-
-.grupos__alta-titulo {
-  margin: 0 0 var(--e3);
-  font-size: var(--fs-body-lg);
-  color: var(--text-primary);
-}
-
-.grupos__slug {
-  margin: var(--e2) 0;
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-.grupos__alta-acciones {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: var(--e3);
-}
-
-.grupos__lista {
-  display: grid;
-  /* Una sola columna en teléfono y tantas como entren después: el directorio
-     de una organización grande no se lee en una tira de tarjetas anchas. */
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 26ch), 1fr));
-  gap: var(--e3);
+.grupos__contenedor-tabs {
+  margin-block-start: var(--sp-4);
 }
 
 .grupos__enlace {
+  color: var(--text-link);
+  font-weight: 600;
   text-decoration: none;
-  color: inherit;
 }
 
-.grupos__nombre {
-  margin: 0;
-  font-size: var(--fs-body);
-  color: var(--text-primary);
-}
-
-.grupos__descripcion {
-  margin: var(--e2) 0 0;
-  color: var(--text-secondary);
-}
-
-.grupos__meta {
-  margin: var(--e2) 0 0;
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-.grupos__mas {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--e5);
-}
-
-/* TP-3 · regla 06: lo que falta para poder crear un grupo público. Va junto al
-   interruptor deshabilitado, no como error arriba: es una condición del campo,
-   no un fallo de la operación. */
-.grupos__aviso-perfil {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-/* La creación de la vitrina, cuando falta: ocupa el ancho del formulario que la
-   recibe y se separa de lo de arriba como un bloque propio, no como el pie de
-   un aviso. */
-.grupos__vitrina {
-  display: block;
-  margin-block-start: var(--sp-4);
-  width: 100%;
+.grupos__enlace:hover {
+  text-decoration: underline;
 }

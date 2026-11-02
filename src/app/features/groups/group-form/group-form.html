@@ -1,0 +1,102 @@
+<app-card class="group-form">
+  <div class="group-form__header">
+    <h2 class="group-form__title">Nuevo grupo</h2>
+    <p class="group-form__subtitle">
+      Cree un espacio de encuentro y discusión para integrantes de su organización.
+    </p>
+  </div>
+
+  <div class="group-form__grid">
+    <app-form-field icon="labels" label="Nombre del grupo" [required]="true">
+      <app-input
+        [(value)]="name"
+        placeholder="Ej. Cardiología clínica"
+        data-testid="group-name-input"
+      />
+    </app-form-field>
+
+    <app-form-field
+      icon="link"
+      label="Dirección web (slug)"
+      hint="Identificador derivado del nombre"
+    >
+      <app-input [value]="slug()" [disabled]="true" />
+    </app-form-field>
+
+    <app-form-field
+      icon="category"
+      label="Tema o especialidad"
+      hint="Clasificación temática en el directorio"
+    >
+      <app-select
+        [options]="topicOptions()"
+        [value]="topicId()"
+        (valueChange)="topicId.set($event)"
+      />
+    </app-form-field>
+
+    <app-form-field icon="tag" label="Tipo de grupo" hint="Finalidad del espacio">
+      <app-select
+        [options]="typeOptions"
+        [value]="groupType()"
+        (valueChange)="groupType.set($event)"
+      />
+    </app-form-field>
+
+    <app-form-field
+      icon="lock"
+      label="Visibilidad"
+      hint="Quién puede ver y unirse al grupo"
+    >
+      <app-select
+        [options]="visibilityOptions()"
+        [value]="visibility()"
+        (valueChange)="visibility.set($event)"
+      />
+    </app-form-field>
+
+    <div class="group-form__field-wide">
+      <app-form-field
+        icon="note"
+        label="Descripción"
+        hint="Opcional. Se muestra en el directorio y presentación del grupo"
+      >
+        <app-input
+          [(value)]="description"
+          placeholder="Casos clínicos, guías de práctica y ateneos semanales"
+        />
+      </app-form-field>
+    </div>
+  </div>
+
+  @if (!perfilListo()) {
+    <div class="group-form__aviso-box">
+      <p class="group-form__aviso-perfil">
+        Para crear un grupo <strong>público</strong> necesitás tu perfil público completo: nombre
+        visible, foto y el perfil en público. Si creas el grupo ahora, se registrará como
+        <strong>privado</strong>.
+      </p>
+      <app-minimal-showcase
+        class="group-form__vitrina"
+        motivo="grupos"
+        (creada)="showcaseCreated.emit($event)"
+      />
+    </div>
+  }
+
+  <div class="group-form__actions">
+    <button app-button variant="outline" type="button" (clicked)="cancel.emit()">
+      Cancelar
+    </button>
+    <button
+      app-button
+      variant="primary"
+      type="button"
+      [disabled]="!canSubmit()"
+      [isLoading]="guardando()"
+      (clicked)="onSubmit()"
+    >
+      Crear grupo
+    </button>
+  </div>
+</app-card>

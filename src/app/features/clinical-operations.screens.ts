@@ -45,10 +45,7 @@ export const CLINICAL_OPERATIONS_SCREENS: Readonly<Record<string, () => Promise<
   'my-services': () => import('./my-services/my-services').then((m) => m.MyServices),
   'my-quotations': () =>
     import('./quotations/quotation-list/quotation-list').then((m) => m.QuotationList),
-  'my-medical-groups': () =>
-    import('./medical-groups/medical-group-list/medical-group-list').then(
-      (m) => m.MedicalGroupList,
-    ),
+  'my-medical-groups': () => import('./groups-hub/groups-hub').then((m) => m.GroupsHub),
   'administration/clinical-forms': () =>
     import('./admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
   questionnaires: () => import('./forms-hub/forms-hub').then((m) => m.FormsHub),
