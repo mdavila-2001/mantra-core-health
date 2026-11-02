@@ -1162,4 +1162,112 @@ describe('FormBuilder', () => {
       expect(form.get('f-2')?.disabled).toBe(true);
     });
   });
+
+  /* ---- alcance de especialidades, carga y creación de formularios -------- */
+
+  describe('alcance de especialidades, carga y creación de formularios', () => {
+    const PEDIATRIA: ChartTemplate = {
+      ...PLANTILLA,
+      id: 'tpl-ped',
+      code: 'PED_CONTROL_NINO',
+      name: 'Control niño sano',
+      specialtyConceptId: 'sp-pediatria',
+    };
+    const CARDIOLOGIA: ChartTemplate = {
+      ...PLANTILLA,
+      id: 'tpl-card',
+      code: 'CARD_EVALUACION',
+      name: 'Evaluación cardiológica',
+      specialtyConceptId: 'sp-cardio',
+    };
+    const TRANSVERSAL: ChartTemplate = {
+      ...PLANTILLA,
+      id: 'tpl-transv',
+      code: 'TRANSV_ANAMNESIS',
+      name: 'Anamnesis transversal',
+      specialtyConceptId: 'sp-transv',
+    };
+
+    it('acota el catálogo a las especialidades del profesional y transversales', async () => {
+      http.expectOne((r) => r.url === PERFIL_PROPIO).flush(perfilDe('sp-cardio'));
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([PEDIATRIA, CARDIOLOGIA, TRANSVERSAL]);
+      harness.detectChanges();
+
+      interno<() => void>('cargarFormulario')();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      const filtrados = interno<() => readonly ChartTemplate[] | null>('filtrados')() ?? [];
+      const codigos = filtrados.map((p) => p.code);
+      expect(codigos).toContain('CARD_EVALUACION');
+      expect(codigos).toContain('TRANSV_ANAMNESIS');
+      expect(codigos).not.toContain('PED_CONTROL_NINO');
+    });
+
+    it('permite cargar un formulario del catálogo a mis formularios y luego retirarlo', () => {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([CARDIOLOGIA]);
+      harness.detectChanges();
+
+      expect(interno<(p: ChartTemplate) => boolean>('estaCargado')(CARDIOLOGIA)).toBe(false);
+
+      interno<(p: ChartTemplate) => void>('cargarFormularioAceptado')(CARDIOLOGIA);
+      expect(interno<(p: ChartTemplate) => boolean>('estaCargado')(CARDIOLOGIA)).toBe(true);
+
+      const mios = interno<() => readonly ChartTemplate[] | null>('misFormularios')() ?? [];
+      expect(mios.some((p) => p.id === CARDIOLOGIA.id)).toBe(true);
+
+      interno<(p: ChartTemplate) => void>('retirarFormulario')(CARDIOLOGIA);
+      expect(interno<(p: ChartTemplate) => boolean>('estaCargado')(CARDIOLOGIA)).toBe(false);
+    });
+
+    it('permite crear un formulario propio desde cero y lo abre para edición', () => {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([PLANTILLA]);
+      harness.detectChanges();
+
+      interno<() => void>('abrirModalCrear')();
+      expect(interno<() => boolean>('mostrandoModalCrear')()).toBe(true);
+
+      const nuevoForm: ChartTemplate = {
+        ...PLANTILLA,
+        id: 'tpl-nuevo-creado',
+        code: 'FORM_PREQUIRURGICO',
+        name: 'Control prequirúrgico',
+        specialtyConceptId: 'sp-1',
+        fields: [],
+      };
+
+      interno<(datos: import('./create-form-modal/create-form-modal').NuevoFormularioDatos) => void>(
+        'crearFormulario',
+      )({
+        name: 'Control prequirúrgico',
+        code: 'FORM_PREQUIRURGICO',
+        specialtyConceptId: 'sp-1',
+      });
+
+      const peticionPost = http.expectOne(
+        (r) => r.url === '/charts/templates' && r.method === 'POST',
+      );
+      expect(peticionPost.request.body).toEqual({
+        name: 'Control prequirúrgico',
+        code: 'FORM_PREQUIRURGICO',
+        specialtyConceptId: 'sp-1',
+        fields: [],
+      });
+      peticionPost.flush(nuevoForm);
+
+      http.expectOne((r) => r.url === `/charts/templates/${nuevoForm.id}`).flush(nuevoForm);
+      http.expectOne((r) => r.url.startsWith('/forms/assignments/budget')).flush(PRESUPUESTO);
+      harness.detectChanges();
+
+      expect(interno<() => boolean>('mostrandoModalCrear')()).toBe(false);
+      expect(interno<() => ChartTemplate | null>('abierta')()?.id).toBe(nuevoForm.id);
+      expect(interno<(p: ChartTemplate) => boolean>('estaCargado')(nuevoForm)).toBe(true);
+    });
+  });
 });
