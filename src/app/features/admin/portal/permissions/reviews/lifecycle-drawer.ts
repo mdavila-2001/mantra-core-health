@@ -18,7 +18,7 @@ import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { DrawerPanel } from '../../../../../shared/components/organisms/drawer-panel/drawer-panel';
 import { ViewStateHost } from '../../../../../shared/components/organisms/view-state-host/view-state-host';
-import { dateTime } from '../../governance/governance-labels';
+import { fechaHora } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import {
   actionsFor,
   governanceFailure,
@@ -149,7 +149,7 @@ export class LifecycleDrawer {
   protected readonly stateLabel = lifecycleState;
   protected readonly eventLabel = lifecycleEvent;
   protected readonly actions = actionsFor;
-  protected readonly when = dateTime;
+  protected readonly when = fechaHora;
 
   private reading: Subscription | null = null;
   private naming: Subscription | null = null;

@@ -29,7 +29,7 @@ const AUDIT_ACTIONS = ['USER_SUSPENDED', 'USER_REACTIVATED', 'USER_DEACTIVATED',
       subtitle="Suspender, reactivar o dar de baja una cuenta interna, y revisar de forma periódica que sus accesos siguen siendo los correctos."
     />
     <div class="perm-page" data-testid="portal-access-reviews">
-      <app-alert class="perm-honesty" tone="info" data-testid="portal-access-reviews-honesty">
+      <app-alert tone="info" title="La baja no se reactiva; suspender sí se puede deshacer." collapsible data-testid="portal-access-reviews-honesty">
         Suspender se puede deshacer; la baja revoca credenciales y roles globales y no se reactiva. Registrar una revisión deja constancia, pero no cambia ningún permiso.
       </app-alert>
       <app-card class="perm-card" variant="outlined" padding="md">

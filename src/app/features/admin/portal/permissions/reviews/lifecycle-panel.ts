@@ -6,12 +6,13 @@ import type { InternalUser } from '../../../../../core/data-access/authz-admin/a
 import { empty } from '../../../../../core/view-state/view-state';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
+import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../../../shared/components/molecules/search-field/search-field';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
 import { roleCodesOf } from '../../governance/access/access.model';
-import { dateTime } from '../../governance/governance-labels';
+import { fechaHora } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import { pagedList } from '../../support/paged-list';
 import { patchQuery, queryFilters, queryParamsSignal } from '../../support/route-query';
 import { portalUrl } from '../../portal-nav';
@@ -27,14 +28,16 @@ const URL_KEYS = ['user'] as const;
  */
 @Component({
   selector: 'app-portal-lifecycle-panel',
-  imports: [Badge, Alert, SearchField, DataTable, NavIcon, LifecycleDrawer],
+  imports: [FormField, Badge, Alert, SearchField, DataTable, NavIcon, LifecycleDrawer],
   template: `
     <div class="panel" data-testid="portal-lifecycle-panel">
       @if (notice(); as message) {
         <app-alert tone="success" dismissible (dismissed)="notice.set(null)">{{ message }}</app-alert>
       }
       <div class="panel__toolbar">
-        <app-search-field label="Buscar personas" placeholder="Nombre visible" [value]="query()" (searched)="query.set($event)" [loading]="users.state().status === 'loading'" />
+        <app-form-field label="Buscar personas">
+          <app-search-field label="Buscar personas" placeholder="Nombre visible" [value]="query()" (searched)="query.set($event)" [loading]="users.state().status === 'loading'" />
+        </app-form-field>
       </div>
       <p class="panel__note">
         Suspender bloquea la cuenta y corta sus sesiones. Elija una persona para ver su estado, su historial y lo que se
@@ -49,7 +52,6 @@ const URL_KEYS = ['user'] as const;
         [rowLabel]="rowName"
         [cursor]="users.cursor()"
         rowNavigable
-        dense
         stackedOnMobile
         fitContainer
         (rowActivated)="open($event)"
@@ -75,7 +77,7 @@ const URL_KEYS = ['user'] as const;
       </div>
     </ng-template>
     <ng-template #loginCell let-row>
-      <span class="panel__secondary">{{ row.lastLoginAt ? when(row.lastLoginAt) : 'Nunca ingresó' }}</span>
+      <span class="panel__secondary panel__date">{{ row.lastLoginAt ? when(row.lastLoginAt) : 'Nunca ingresó' }}</span>
     </ng-template>
     <ng-template #openCell>
       <span class="panel__open" aria-hidden="true">Ver estado <app-nav-icon name="arrow-right" /></span>
@@ -94,7 +96,7 @@ export class LifecyclePanel {
   protected readonly query = signal('');
   protected readonly notice = signal<string | null>(null);
   protected readonly roleCodes = roleCodesOf;
-  protected readonly when = dateTime;
+  protected readonly when = fechaHora;
 
   private readonly text = computed(() => this.query().trim());
 

@@ -12,7 +12,7 @@ import { FormField } from '../../../../../shared/components/molecules/form-field
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
-import { dateOnly } from '../../governance/governance-labels';
+import { fecha } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import { pagedList } from '../../support/paged-list';
 import { accountStatusLabel } from '../permissions-labels';
 import { portalUrl } from '../../portal-nav';
@@ -60,7 +60,6 @@ const URL_KEYS = ['review'] as const;
         [rowLabel]="rowName"
         [cursor]="due.cursor()"
         rowNavigable
-        dense
         stackedOnMobile
         fitContainer
         (rowActivated)="open($event)"
@@ -76,7 +75,7 @@ const URL_KEYS = ['review'] as const;
     </ng-template>
     <ng-template #lastCell let-row>
       @if (row.lastReviewedAt) {
-        <span class="panel__secondary">{{ day(row.lastReviewedAt) }}</span>
+        <span class="panel__secondary panel__date">{{ day(row.lastReviewedAt) }}</span>
       } @else {
         <app-badge size="sm" variant="warning">Nunca revisada</app-badge>
       }
@@ -97,7 +96,7 @@ export class ReviewsPanel {
   protected readonly values = queryFilters(queryParamsSignal(this.route), URL_KEYS);
   protected readonly daysText = signal<string | number | null>('');
   protected readonly notice = signal<string | null>(null);
-  protected readonly day = dateOnly;
+  protected readonly day = fecha;
   protected readonly status = accountStatusLabel;
 
   /** Los días que valen: entero entre 1 y 3650 (lo que acepta la API) o ninguno. */

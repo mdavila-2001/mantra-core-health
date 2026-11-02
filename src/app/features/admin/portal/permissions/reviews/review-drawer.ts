@@ -23,7 +23,8 @@ import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { DrawerPanel } from '../../../../../shared/components/organisms/drawer-panel/drawer-panel';
 import { ViewStateHost } from '../../../../../shared/components/organisms/view-state-host/view-state-host';
 import { scopeSummary } from '../../governance/access/access.model';
-import { dateOnly, dateTime, roleScope } from '../../governance/governance-labels';
+import { roleScope } from '../../governance/governance-labels';
+import { fecha, fechaHora } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import { accountStatusLabel, governanceFailure, staleAfter } from '../permissions-labels';
 
 interface ReviewData {
@@ -162,8 +163,8 @@ export class ReviewDrawer {
   protected readonly scope = roleScope;
   protected readonly status = accountStatusLabel;
   protected readonly where = scopeSummary;
-  protected readonly day = dateOnly;
-  protected readonly when = dateTime;
+  protected readonly day = fecha;
+  protected readonly when = fechaHora;
 
   private reading: Subscription | null = null;
   private naming: Subscription | null = null;

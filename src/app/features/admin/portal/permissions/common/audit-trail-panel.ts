@@ -23,7 +23,8 @@ import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../../shared/components/atoms/link/link';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
-import { auditResult, dateTime } from '../../governance/governance-labels';
+import { auditResult } from '../../governance/governance-labels';
+import { fechaHora } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import { portalUrl } from '../../portal-nav';
 
 const LIMIT = 10;
@@ -64,7 +65,6 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
         [columns]="columns()"
         [trackBy]="byId"
         [rowLabel]="rowName"
-        dense
         stackedOnMobile
         fitContainer
         (retry)="load()"
@@ -80,7 +80,7 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
       <app-badge size="sm" [variant]="result(row.result).tone">{{ result(row.result).label }}</app-badge>
     </ng-template>
     <ng-template #whenCell let-row>
-      <span class="panel__secondary">{{ when(row.recordedAt) }}</span>
+      <span class="panel__secondary panel__date">{{ when(row.recordedAt) }}</span>
     </ng-template>
     <ng-template #actorCell let-row>
       <code class="panel__code" [title]="row.userId">{{ row.userId.slice(0, 8) }}…</code>
@@ -99,7 +99,7 @@ export class AuditTrailPanel {
   protected readonly firstAction = computed(() => ({ action: this.actions()[0] ?? '' }));
   protected readonly entries = signal<ViewState<readonly AuditLogEntry[]>>(loading());
   protected readonly result = auditResult;
-  protected readonly when = dateTime;
+  protected readonly when = fechaHora;
   protected readonly actionText = (code: string): string => ACTION_LABELS[code] ?? code;
   protected readonly byId = (row: AuditLogEntry): string => row.id;
   protected readonly rowName = (row: AuditLogEntry): string => this.actionText(row.action);
