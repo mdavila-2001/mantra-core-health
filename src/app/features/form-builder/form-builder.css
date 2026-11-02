@@ -1,20 +1,4 @@
-/* ============================================================================
-    Formularios — el generador.
-
-    ---- el ancho, y por qué está acá arriba ---------------------------------
-
-    La pantalla entera —encabezado de página, cabecera del formulario,
-    presupuesto, campos y vista previa— va en **una sola columna, centrada, de
-    76rem como mucho**. Antes el encabezado de página ocupaba todo el ancho y
-    el resto se cortaba a 62rem: dos ejes distintos, el título pegado al borde
-    izquierdo y las tarjetas flotando a un costado con media pantalla vacía.
-    Se pidió que «Formularios» se vea al centro y ocupe un poco más: es esto.
-
-    76rem y no el ancho entero: un campo de texto de mil quinientos píxeles
-    para escribir «¿Fuma?» no es más cómodo, es más difícil de recorrer. Es el
-    ancho de un editor de formularios, un poco más generoso que el de Google
-    Forms porque acá cada tarjeta lleva además el tipo a la derecha.
-    ========================================================================== */
+/* Formularios — el generador: pantalla en una sola columna centrada de 76rem. */
 
 :host {
   display: block;
@@ -386,6 +370,12 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
+}
+
+.constructor__acciones-barra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
 }
 
 .mis-formularios {

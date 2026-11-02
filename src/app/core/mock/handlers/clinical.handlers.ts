@@ -675,7 +675,7 @@ export function registrarClinica(router: MockRouter): void {
   /* ---- plantillas de expediente ------------------------------------------- */
 
   router.get('/charts/templates', ({ query }) => {
-    const esp = query.get('specialtyConceptId');
+    const esp = query.get('specialtyConceptId') ?? query.get('specialtyId');
     return plantillasVigentes().filter((t) => esp === null || esp === '' || t.specialtyConceptId === esp);
   });
   router.get('/charts/templates/:id', ({ params }) => plantillasVigentes().find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
