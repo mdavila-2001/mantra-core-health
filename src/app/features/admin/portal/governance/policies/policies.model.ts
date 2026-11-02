@@ -7,6 +7,7 @@ import type {
   PolicyType,
 } from '../../../../../core/data-access/admin-portal/governance-policies.types';
 import { POLICY_TYPES } from '../../../../../core/data-access/admin-portal/governance-policies.types';
+import { fecha } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import type { Hecho } from '../../../../../shared/components/molecules/fact-list/fact-list.types';
 import type { Rotulo } from '../../../platform/platform-labels';
 import { nonEmpty } from '../../support/route-query';
@@ -125,7 +126,7 @@ function settingValue(key: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return 'Sin declarar';
   if (Array.isArray(value)) return value.length === 0 ? 'Ninguno' : value.join(', ');
   if ((key === 'validFrom' || key === 'validTo') && typeof value === 'string') {
-    return new Date(value).toLocaleDateString('es-BO', { dateStyle: 'medium' });
+    return fecha(value);
   }
   if (typeof value === 'number') return value.toLocaleString('es-BO');
   return typeof value === 'object' ? JSON.stringify(value) : String(value);

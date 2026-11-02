@@ -54,15 +54,8 @@
             <app-alert tone="error" data-testid="ui-catalog-sync-error">{{ message }}</app-alert>
           }
 
-          <!-- Filtros en una fila: buscador y desplegables; se apilan en el teléfono. Viven en la URL. -->
-          <app-filter-bar
-            searchLabel="Buscar elementos"
-            searchPlaceholder="Clave o nombre"
-            [filters]="filterDefs()"
-            [searchLoading]="list.state().status === 'loading'"
-            wrap
-            collapsible
-          />
+          <!-- Filtros (T5): buscador, desplegables y Quitar/Aplicar en una fila desde 1024 px. -->
+          <app-governance-filter-form [fields]="fields()" [values]="values()" (applied)="apply($event)" (cleared)="clear()" />
 
           @if (index.modules().length > 0) {
             <div class="vis__quick">
@@ -92,6 +85,8 @@
 
           <app-data-table
             data-testid="ui-catalog-table"
+            [filtered]="hasFilters()"
+            (clearFilters)="clear()"
             caption="Elementos de la interfaz del catálogo de visibilidad"
             [state]="tableState()"
             [columns]="columns()"
@@ -169,6 +164,7 @@
   <div class="vis__cell">
     <a
       class="catalog__rules"
+      [class.catalog__rules--zero]="row.activeRuleCount === 0"
       [routerLink]="rulesUrl"
       [queryParams]="rulesQuery(row)"
       [attr.aria-label]="'Ver las ' + row.activeRuleCount + ' reglas de ' + row.label"

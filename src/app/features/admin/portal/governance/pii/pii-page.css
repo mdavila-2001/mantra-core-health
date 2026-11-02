@@ -29,16 +29,6 @@
   min-inline-size: 0;
 }
 
-/* Aviso de honestidad: una línea, el detalle se despliega. */
-.pii__fold-summary {
-  cursor: pointer;
-}
-
-.pii__fold-summary:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
 .pii__fold-list {
   display: flex;
   flex-direction: column;
@@ -124,12 +114,17 @@
 }
 
 .pii__levels thead th {
+  /* Una sola cabecera de tabla en el portal: versalitas sobre el fondo de la tarjeta, como
+     la de app-data-table (sin banda de color). */
   position: sticky;
   inset-block-start: 0;
-  background: var(--bg-surface-alt);
+  background: var(--bg-surface);
   font-size: var(--fs-caption);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-secondary);
+  border-block-end-color: var(--border-default);
 }
 
 .pii__levels tbody th {

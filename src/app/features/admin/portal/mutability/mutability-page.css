@@ -35,19 +35,6 @@
   min-inline-size: 0;
 }
 
-/* Aviso de honestidad: una línea, el detalle se despliega. */
-.mut__limits-summary {
-  cursor: pointer;
-}
-
-.mut__limits-summary:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.mut__limits-text {
-  margin: var(--sp-2) 0 0;
-}
 
 .mut__card {
   display: block;
@@ -104,15 +91,6 @@
   margin: 0;
   color: var(--text-secondary);
   max-inline-size: 72ch;
-}
-
-.mut__scope {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: 0;
-  color: var(--text-secondary);
 }
 
 .mut__back {
@@ -261,11 +239,12 @@ p.mut__help {
 }
 
 .mut__table thead th {
-  position: sticky;
-  inset-block-start: 0;
-  background: var(--bg-surface-alt);
+  /* Misma cabecera que app-data-table: versalitas sobre el fondo de la tarjeta, sin banda. */
+  background: transparent;
   font-size: var(--fs-caption);
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-secondary);
   border-block-end-color: var(--border-default);
 }

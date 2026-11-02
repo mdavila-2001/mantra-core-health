@@ -34,8 +34,8 @@ import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
-import { FilterBar, type FilterDef } from '../../../../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../../../../shared/components/organisms/page-header/page-header';
+import { FilterForm, type FilterField } from '../../governance/filter-form';
 import { portalUrl } from '../../portal-nav';
 import { pagedList } from '../../support/paged-list';
 import { patchQuery, queryFilters, queryParamsSignal } from '../../support/route-query';
@@ -79,7 +79,7 @@ const RULES_SCREEN = portalUrl('governance/ui-rules');
     Tabs,
     DataTable,
     PageHeader,
-    FilterBar,
+    FilterForm,
     VisibilityNotice,
     ElementFormPanel,
   ],
@@ -117,22 +117,27 @@ export class UiCatalogPage {
   protected readonly syncError = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
 
-  /**
-   * La barra de filtros escribe cada clave en la URL (`q` el buscador) y la pantalla los lee con
-   * `values()`. El módulo se elige con la fila de módulos de abajo, que muestra cuántos tiene cada uno.
-   */
-  protected readonly filterDefs = computed<readonly FilterDef[]>(() => [
-    { key: 'kind', label: 'Tipo', placeholder: 'Todos los tipos', options: optionsOf(KINDS, (k) => kindLabel(k).label) },
+  /** El módulo se elige con la fila de módulos de abajo, que muestra cuántos tiene cada uno. */
+  protected readonly fields = computed<readonly FilterField[]>(() => [
+    { key: 'q', label: 'Buscar', kind: 'text', placeholder: 'Clave o nombre' },
+    {
+      key: 'kind',
+      label: 'Tipo',
+      kind: 'select',
+      options: [{ value: '', label: 'Todos los tipos' }, ...optionsOf(KINDS, (k) => kindLabel(k).label)],
+    },
     {
       key: 'status',
       label: 'Estado',
-      placeholder: 'Todos los estados',
+      kind: 'select',
       options: [
+        { value: '', label: 'Todos los estados' },
         { value: 'ACTIVE', label: 'Activos' },
         { value: 'RETIRED', label: 'Retirados del código' },
       ],
     },
   ]);
+  protected readonly hasFilters = computed(() => FILTER_KEYS.some((k) => this.values()[k] !== ''));
 
   /** Las cifras de la cabecera, del índice que la pantalla ya pide (sin peticiones nuevas). */
   protected readonly totals = computed(() => {
@@ -217,6 +222,14 @@ export class UiCatalogPage {
       this.values();
       untracked(() => this.list.restart());
     });
+  }
+
+  protected apply(filters: Readonly<Record<string, string>>): void {
+    void patchQuery(this.router, this.route, filters);
+  }
+
+  protected clear(): void {
+    void patchQuery(this.router, this.route, Object.fromEntries(FILTER_KEYS.map((k) => [k, null])));
   }
 
   protected pickModule(code: string): void {

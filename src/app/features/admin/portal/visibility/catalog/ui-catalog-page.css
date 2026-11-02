@@ -2,3 +2,22 @@
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
+
+/* La cifra es un enlace a sus reglas, pero no un subrayado suelto: se subraya al pasar o enfocar. */
+.catalog__rules {
+  display: inline-block;
+  min-inline-size: 2ch;
+  text-align: end;
+  text-decoration: none;
+}
+
+.catalog__rules:hover,
+.catalog__rules:focus-visible {
+  text-decoration: underline;
+}
+
+/* Cero reglas: se lee como dato, no como llamada a la acción. */
+.catalog__rules--zero {
+  color: var(--text-secondary);
+  font-weight: 400;
+}

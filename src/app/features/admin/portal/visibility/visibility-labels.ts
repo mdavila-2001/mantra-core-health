@@ -13,6 +13,7 @@ import type {
 import { describeApiFailure, fieldErrorsOf, supportCodeOf } from '../../../../core/http/api-failure';
 import { readApiError } from '../../../../core/http/api-error';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
+import { fecha } from '../../../../shared/components/organisms/data-table/sin-cortes';
 import type { Rotulo } from '../../platform/platform-labels';
 
 /* ============================================================================
@@ -86,7 +87,7 @@ export function ruleState(rule: Pick<UiVisibilityRule, 'validFrom' | 'validTo'>,
 
 /** La vigencia en una línea: «Desde … hasta …», o que no tiene fecha de fin. */
 export function validityText(rule: Pick<UiVisibilityRule, 'validFrom' | 'validTo'>): string {
-  const day = (iso: string): string => new Date(iso).toLocaleDateString('es-BO', { dateStyle: 'medium' });
+  const day = (iso: string): string => fecha(iso);
   if (rule.validFrom === null && rule.validTo === null) return 'Sin fecha de fin';
   if (rule.validFrom !== null && rule.validTo !== null) return `Del ${day(rule.validFrom)} al ${day(rule.validTo)}`;
   return rule.validFrom !== null ? `Desde el ${day(rule.validFrom)}, sin fecha de fin` : `Hasta el ${day(rule.validTo!)}`;

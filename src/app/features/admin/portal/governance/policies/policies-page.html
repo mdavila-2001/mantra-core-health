@@ -6,18 +6,15 @@
 
 <div class="policies">
   <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
-  <app-alert tone="info" data-testid="portal-policies-scope">
-    <details class="policies__fold">
-      <summary class="policies__fold-summary">
-        <strong>Sin totales a propósito:</strong> el servidor no cuenta las políticas, así que acá
-        tampoco.
-      </summary>
-      <p class="policies__fold-text">
-        Un conteo calculado sobre la página visible sería un número falso. «Sin estado» significa
-        que nadie declaró el estado de la política, no que esté inactiva. Lo que cada política
-        controla se ve en su ficha.
-      </p>
-    </details>
+  <app-alert
+    tone="info"
+    data-testid="portal-policies-scope"
+    collapsible
+    title="Sin totales a propósito: el servidor no cuenta las políticas, así que acá tampoco."
+  >
+    Un conteo calculado sobre la página visible sería un número falso. «Sin estado» significa que
+    nadie declaró el estado de la política, no que esté inactiva. Lo que cada política controla se
+    ve en su ficha.
   </app-alert>
 
   <app-card class="policies__card" variant="outlined" padding="md" data-testid="portal-policies">
@@ -79,7 +76,12 @@
 </ng-template>
 
 <ng-template #stateCell let-row>
-  <app-badge size="sm" [variant]="state(row.state).tone">{{ state(row.state).label }}</app-badge>
+  @if (row.state) {
+    <app-badge size="sm" [variant]="state(row.state).tone">{{ state(row.state).label }}</app-badge>
+  } @else {
+    <!-- Nadie declaró el estado: texto tenue, sin insignia (no compite con «Activa»). -->
+    <span class="policies__secondary">{{ state(row.state).label }}</span>
+  }
 </ng-template>
 
 <ng-template #versionCell let-row>

@@ -10,7 +10,7 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { DatePipe, DOCUMENT } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { Subscription } from 'rxjs';
 
@@ -53,6 +53,7 @@ import {
   segundosEntre,
 } from '../../../instances/instances-labels';
 import { FilterForm, type FilterField } from '../../governance/filter-form';
+import { fechaHora } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import { portalUrl } from '../../portal-nav';
 import { patchQuery, queryFilters, queryParamsSignal } from '../../support/route-query';
 import {
@@ -101,7 +102,6 @@ interface Aviso {
 @Component({
   selector: 'app-portal-runtime-pieces-page',
   imports: [
-    DatePipe,
     AppButton,
     Badge,
     Alert,
@@ -332,6 +332,23 @@ export class RuntimePiecesPage {
 
   protected antiguedadDe(evaluatedAt: string): string {
     return haceCuanto(segundosEntre(evaluatedAt, this.ahora()));
+  }
+
+  /** «recién evaluado» si pasaron menos de 5 s; si no, «evaluado hace 3 min» (S7). */
+  protected frescura(evaluatedAt: string): string {
+    const s = segundosEntre(evaluatedAt, this.ahora());
+    return s !== null && s < 5 ? 'recién evaluado' : `evaluado ${haceCuanto(s)}`;
+  }
+
+  /** La cifra de la antigüedad: «Recién» o «hace 3 min». */
+  protected antiguedadCorta(evaluatedAt: string): string {
+    const s = segundosEntre(evaluatedAt, this.ahora());
+    return s !== null && s < 5 ? 'Recién' : haceCuanto(s);
+  }
+
+  /** La fecha con el formato del resto del portal («1 nov de 2026, 8:34 p. m.»), sin cortes. */
+  protected cuando(valor: string | null): string {
+    return fechaHora(valor);
   }
 
   protected elegirPestana(indice: number): void {

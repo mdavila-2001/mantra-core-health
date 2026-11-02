@@ -43,6 +43,7 @@ import {
   itemsText,
   checkStatus,
   dateTime,
+  fuenteDelDato,
   dimensionLabel,
   dimensionTone,
   entero,
@@ -217,6 +218,7 @@ export class CatalogFitPage {
   protected readonly pista = checksText;
   protected readonly base = itemsText;
   protected readonly cuando = dateTime;
+  protected readonly fuente = fuenteDelDato;
   protected readonly antiguedad = ageText;
   protected readonly disparador = trigger;
   protected readonly cifra = entero;

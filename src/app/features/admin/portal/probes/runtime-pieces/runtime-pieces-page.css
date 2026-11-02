@@ -50,12 +50,10 @@
 }
 
 /* Avisos de honestidad: una línea, el detalle se despliega. */
-.piezas__aviso-resumen,
 .piezas__mas-resumen {
   cursor: pointer;
 }
 
-.piezas__aviso-resumen:focus-visible,
 .piezas__mas-resumen:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
@@ -183,4 +181,11 @@ app-tabs {
   .piezas__solo-movil {
     display: block;
   }
+}
+
+/* Las dos acciones secundarias, juntas: se leen como un grupo, separado de la primaria. */
+.piezas__acciones {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
 }

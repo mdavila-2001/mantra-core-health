@@ -1,3 +1,4 @@
+import { fechaHora } from '../../../../../shared/components/organisms/data-table/sin-cortes';
 import type { Tone } from '../../../../../shared/components/tone/tone.types';
 import type { MetricTone } from '../../../../../shared/components/molecules/metric-card/metric-card.types';
 import type {
@@ -6,6 +7,7 @@ import type {
   FitDimension,
   FitDimensionScore,
   FitHistoryEntry,
+  FitRetention,
   FitRunTrigger,
   FitSeverity,
 } from '../../../../../core/data-access/admin-portal/catalog-fit.types';
@@ -155,12 +157,30 @@ export function ageText(seconds: number | null): string {
   return `hace ${Math.round(seconds / 86_400)} d`;
 }
 
+/** El formato de fecha y hora del portal (uno solo para todas las pantallas). */
 export function dateTime(value: string | null | undefined): string {
-  if (!value) return 'Sin dato';
-  const fecha = new Date(value);
-  return Number.isNaN(fecha.getTime())
-    ? 'Sin dato'
-    : fecha.toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' });
+  return fechaHora(value);
+}
+
+/** De dónde se leyó el resultado y cómo salió la última escritura, en una frase (S7). */
+export function fuenteDelDato(r: FitRetention): { texto: string; tono: 'info' | 'warning' } {
+  const w = r.lastWrite;
+  const escritura =
+    w.state === 'GUARDADA'
+      ? `Última escritura: guardada${w.at ? ' el ' + fechaHora(w.at) : ''}.`
+      : w.state === 'CLAVE_REPETIDA'
+        ? 'Última escritura: ya existía, no se duplicó.'
+        : w.state === 'NO_GUARDADA'
+          ? `Última escritura: no se guardó${w.errorCode ? ' (' + w.errorCode + ')' : ''}.`
+          : 'Todavía no se intentó guardar ninguna corrida.';
+  if (r.kind === 'BASE_DE_DATOS') {
+    return { texto: `Leído de la base de datos: sobrevive a un reinicio. ${escritura}`, tono: 'info' };
+  }
+  const motivo = r.fallbackReason ? ` Motivo: ${r.fallbackReason}.` : '';
+  return {
+    texto: `Leído de la memoria del proceso: un reinicio lo borra.${motivo} ${escritura}`,
+    tono: 'warning',
+  };
 }
 
 /** Una fila de la tabla de comprobaciones, ya en palabras. */

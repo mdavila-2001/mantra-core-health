@@ -10,25 +10,27 @@
     @if (summaryReady(); as d) {
       <div class="pii__top">
         <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
-        <app-alert tone="info" data-testid="portal-pii-honesty">
-          <details class="pii__fold">
-            <summary class="pii__fold-summary">
-              <strong>Sólo nombres de columnas, nunca valores.</strong>
-              @if (d.notMeasured.length > 0) {
-                {{ d.notMeasured.length }}
-                {{ d.notMeasured.length === 1 ? 'cosa no se midió' : 'cosas no se midieron' }}: no
-                saberlo no es estar bien.
-              }
-            </summary>
-            <ul class="pii__fold-list">
-              @for (n of d.notMeasured; track n.field) {
-                <li data-testid="portal-pii-not-measured">
-                  {{ n.reason }} <span class="pii__secondary">(no medido: <code>{{ n.field }}</code>)</span>
-                </li>
-              }
-              <li>Fuente de las cifras: {{ d.source }}.</li>
-            </ul>
-          </details>
+        <app-alert
+          tone="info"
+          data-testid="portal-pii-honesty"
+          collapsible
+          [title]="
+            'Sólo nombres de columnas, nunca valores.' +
+            (d.notMeasured.length === 0
+              ? ''
+              : d.notMeasured.length === 1
+                ? ' Una cosa no se midió: no saberlo no es estar bien.'
+                : ' ' + d.notMeasured.length + ' cosas no se midieron: no saberlo no es estar bien.')
+          "
+        >
+          <ul class="pii__fold-list">
+            @for (n of d.notMeasured; track n.field) {
+              <li data-testid="portal-pii-not-measured">
+                {{ n.reason }} <span class="pii__secondary">(no medido: <code>{{ n.field }}</code>)</span>
+              </li>
+            }
+            <li>Fuente de las cifras: {{ d.source }}.</li>
+          </ul>
         </app-alert>
 
         <section class="pii__metrics" aria-label="Resumen de datos personales" data-testid="portal-pii-metrics">
@@ -46,10 +48,10 @@
           />
           <app-metric-card label="Personales" icon="people" [value]="d.personalColumns" hint="De nivel personal o superior" />
           <app-metric-card
-            label="Tablas con datos personales"
+            label="Tablas"
             icon="folder"
             [value]="d.objectsWithPersonalColumns"
-            hint="Con al menos una columna personal"
+            hint="Con al menos una columna de datos personales"
           />
         </section>
       </div>

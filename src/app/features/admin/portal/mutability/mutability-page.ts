@@ -32,13 +32,10 @@ import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
-import {
-  FilterBar,
-  type FilterDef,
-} from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { portalUrl } from '../portal-nav';
+import { FilterForm, type FilterField } from '../governance/filter-form';
 import { pagedList } from '../support/paged-list';
 import { patchQuery, queryFilters, queryParamsSignal } from '../support/route-query';
 import {
@@ -101,7 +98,7 @@ const NO_FILTERS: MutabilityUrlValues = {
     DataTable,
     PageHeader,
     ViewStateHost,
-    FilterBar,
+    FilterForm,
     RouterLink,
   ],
   templateUrl: './mutability-page.html',
@@ -148,17 +145,48 @@ export class MutabilityPage {
   );
 
   // ---- Filtros y listas ---------------------------------------------------------------------
-  /**
-   * La barra de filtros escribe cada clave en la URL (`q` el buscador); la pantalla los lee de ahí
-   * con `values()`. «Esquema exacto» no tiene control propio: llega por enlace (`?schema=`) y se
-   * muestra como alcance con su forma de quitarlo; el buscador ya cubre esquema o tabla.
-   */
-  protected readonly filterDefs: readonly FilterDef[] = [
-    { key: 'writeMode', label: 'Modo de escritura', placeholder: 'Cualquier modo', options: WRITE_MODE_OPTIONS },
-    { key: 'evidence', label: 'Nivel de evidencia', placeholder: 'Cualquier nivel', options: EVIDENCE_OPTIONS },
-    { key: 'finding', label: 'Hallazgos', placeholder: 'Con o sin hallazgos', options: FINDING_OPTIONS },
-    { key: 'disposition', label: 'Retención', placeholder: 'Cualquier retención', options: DISPOSITION_OPTIONS },
-    { key: 'legalHold', label: 'Legal hold', placeholder: 'Con o sin legal hold', options: LEGAL_HOLD_OPTIONS },
+  protected readonly fields: readonly FilterField[] = [
+    { key: 'q', label: 'Buscar', kind: 'text', placeholder: 'Esquema o tabla' },
+    {
+      key: 'writeMode',
+      label: 'Modo de escritura',
+      kind: 'select',
+      options: [{ value: '', label: 'Cualquier modo' }, ...WRITE_MODE_OPTIONS],
+    },
+    {
+      key: 'evidence',
+      label: 'Nivel de evidencia',
+      kind: 'select',
+      options: [{ value: '', label: 'Cualquier nivel' }, ...EVIDENCE_OPTIONS],
+    },
+    {
+      key: 'finding',
+      label: 'Hallazgos',
+      kind: 'select',
+      options: [{ value: '', label: 'Con o sin hallazgos' }, ...FINDING_OPTIONS],
+      advanced: true,
+    },
+    {
+      key: 'disposition',
+      label: 'Retención',
+      kind: 'select',
+      options: [{ value: '', label: 'Cualquiera' }, ...DISPOSITION_OPTIONS],
+      advanced: true,
+    },
+    {
+      key: 'legalHold',
+      label: 'Legal hold',
+      kind: 'select',
+      options: [{ value: '', label: 'Cualquiera' }, ...LEGAL_HOLD_OPTIONS],
+      advanced: true,
+    },
+    {
+      key: 'schema',
+      label: 'Esquema exacto',
+      kind: 'text',
+      placeholder: 'Ej.: audit',
+      advanced: true,
+    },
   ];
 
   protected readonly tables = pagedList<MutabilityItem>(
@@ -292,8 +320,16 @@ export class MutabilityPage {
     void patchQuery(this.router, this.route, { view: view === 'summary' ? null : view });
   }
 
-  protected clearSchema(): void {
-    void patchQuery(this.router, this.route, { schema: null });
+  protected apply(filters: Readonly<Record<string, string>>): void {
+    void patchQuery(this.router, this.route, filters);
+  }
+
+  protected clear(): void {
+    void patchQuery(
+      this.router,
+      this.route,
+      Object.fromEntries(MUTABILITY_URL_KEYS.map((k) => [k, null])),
+    );
   }
 
   protected open(row: MutabilityItem): void {

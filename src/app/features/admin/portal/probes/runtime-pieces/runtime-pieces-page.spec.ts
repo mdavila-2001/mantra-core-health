@@ -246,7 +246,7 @@ describe('RuntimePiecesPage', () => {
     expect(q('[data-testid="rp-count-VIVA"]')!.textContent).toContain('Viva: 1');
     expect(q('[data-testid="rp-count-NO_REGISTRADA"]')!.textContent).toContain('No registrada: 1');
     expect(q('[data-testid="rp-evaluated"]')!.textContent).toContain('3 piezas en total');
-    expect(q('[data-testid="rp-evaluated"]')!.textContent).toContain('hace 0 s');
+    expect(q('[data-testid="rp-evaluated"]')!.textContent).toContain('recién evaluado');
     const tabla = q('[data-testid="rp-pieces-table"]')!.textContent!;
     expect(tabla).toContain('messaging/outbox-relay');
     expect(tabla).toContain('src/worker/jobs/messaging/outbox-relay.job.ts:49');
@@ -289,7 +289,7 @@ describe('RuntimePiecesPage', () => {
     );
     const fuente = q('[data-testid="rp-source"]')!.textContent!;
     expect(fuente).toContain('manifiesto generado al compilar');
-    expect(fuente).toContain('30/10/2026');
+    expect(fuente).toContain('30 oct de 2026');
   });
 
   it('lo que no se mide se declara aparte, con su texto y sin el código', async () => {

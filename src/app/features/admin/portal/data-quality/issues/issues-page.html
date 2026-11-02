@@ -6,18 +6,15 @@
 
 <div class="issues" data-testid="portal-quality-issues">
   <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
-  <app-alert tone="info" data-testid="portal-quality-scope">
-    <details class="issues__fold">
-      <summary class="issues__fold-summary">
-        <strong>Calidad de los datos clínicos, no del catálogo de la plataforma.</strong>
-        Cerrar una incidencia no corrige el dato.
-      </summary>
-      <p class="issues__fold-text">
-        Resolver deja constancia de que el dato se corrigió en su origen; descartar, de que era un
-        falso positivo. Las dos cosas se hacen una sola vez, con un motivo que queda registrado. Si
-        el dato sigue mal, el próximo análisis abre otra incidencia.
-      </p>
-    </details>
+  <app-alert
+    tone="info"
+    data-testid="portal-quality-scope"
+    collapsible
+    title="Calidad de los datos clínicos, no del catálogo: cerrar una incidencia no corrige el dato."
+  >
+    Resolver deja constancia de que el dato se corrigió en su origen; descartar, de que era un
+    falso positivo. Las dos cosas se hacen una sola vez, con un motivo que queda registrado. Si el
+    dato sigue mal, el próximo análisis abre otra incidencia.
   </app-alert>
 
   @if (metrics(); as m) {

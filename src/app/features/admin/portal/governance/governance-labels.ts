@@ -1,3 +1,8 @@
+import {
+  fecha,
+  fechaHora,
+  sinCortes,
+} from '../../../../shared/components/organisms/data-table/sin-cortes';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import type { Rotulo } from '../../platform/platform-labels';
 
@@ -111,18 +116,16 @@ export function pathSegments(path: string): readonly string[] {
 
 /** Fecha y hora legibles, en la zona del navegador. */
 export function dateTime(value: Date | undefined | null): string {
-  if (!value) return 'Sin dato';
-  return value.toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' });
+  return fechaHora(value);
 }
 
 /** Sólo la hora («3:50 a. m.»): se dibuja sin cortes, separada de la fecha. */
 export function timeOnly(value: Date | undefined | null): string {
   if (!value) return '';
-  return value.toLocaleTimeString('es-BO', { timeStyle: 'short' });
+  return sinCortes(value.toLocaleTimeString('es-BO', { timeStyle: 'short' }));
 }
 
 /** Sólo la fecha. */
 export function dateOnly(value: Date | undefined | null): string {
-  if (!value) return 'Sin dato';
-  return value.toLocaleDateString('es-BO', { dateStyle: 'medium' });
+  return fecha(value);
 }

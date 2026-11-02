@@ -12,6 +12,7 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { map, type Subscription } from 'rxjs';
 
 import { UiVisibilityAdminClient } from '../../../../../core/data-access/ui-visibility/ui-visibility-admin.client';
@@ -29,9 +30,10 @@ import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
-import { FilterBar, type FilterDef } from '../../../../../shared/components/organisms/filter-bar/filter-bar';
+import { FilterForm, type FilterField } from '../../governance/filter-form';
 import { portalUrl } from '../../portal-nav';
 import { pagedList } from '../../support/paged-list';
+import { patchQuery } from '../../support/route-query';
 import { UiElementIndex } from '../element-index';
 import {
   SUBJECT_TYPES,
@@ -56,13 +58,15 @@ const FILTER_KEYS = ['element', 'subjectType', 'state'] as const;
  */
 @Component({
   selector: 'app-visibility-rules-panel',
-  imports: [AppButton, Badge, Alert, DataTable, FilterBar, RuleEditDialog],
+  imports: [AppButton, Badge, Alert, DataTable, FilterForm, RuleEditDialog],
   templateUrl: './rules-panel.html',
   styleUrl: '../visibility-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RulesPanel {
   private readonly client = inject(UiVisibilityAdminClient);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly dialogs = inject(DialogService);
   protected readonly index = inject(UiElementIndex);
   /** Teléfono: sólo las columnas que se leen de un vistazo; lo demás va dentro de la fila. */
@@ -85,25 +89,31 @@ export class RulesPanel {
   protected readonly failure = signal<string | null>(null);
   protected readonly working = signal<string | null>(null);
 
-  /** La barra de filtros escribe cada clave en la URL; la página los lee de ahí y los pasa en `values`. */
-  protected readonly filterDefs = computed<readonly FilterDef[]>(() => [
-    { key: 'element', label: 'Elemento', placeholder: 'Todos los elementos', options: this.index.options() },
+  protected readonly fields = computed<readonly FilterField[]>(() => [
+    {
+      key: 'element',
+      label: 'Elemento',
+      kind: 'select',
+      options: [{ value: '', label: 'Todos los elementos' }, ...this.index.options()],
+    },
     {
       key: 'subjectType',
       label: 'Se aplica a',
-      placeholder: 'A cualquiera',
-      options: optionsOf(SUBJECT_TYPES, (t) => subjectTypeLabel(t).label),
+      kind: 'select',
+      options: [{ value: '', label: 'Cualquiera' }, ...optionsOf(SUBJECT_TYPES, (t) => subjectTypeLabel(t).label)],
     },
     {
       key: 'state',
       label: 'Estado',
-      placeholder: 'Vigentes y programadas',
+      kind: 'select',
       options: [
+        { value: '', label: 'Vigentes y programadas' },
         { value: 'ended', label: 'Terminadas' },
         { value: 'all', label: 'Todas' },
       ],
     },
   ]);
+  protected readonly hasFilters = computed(() => FILTER_KEYS.some((k) => this.values()[k] !== ''));
 
   protected readonly list = pagedList<UiVisibilityRule>(
     (cursor) => {
@@ -136,7 +146,7 @@ export class RulesPanel {
       : [
           { key: 'rule', header: 'Regla', priority: 1, cell: this.ruleCell() },
           { key: 'subject', header: 'Se aplica a', priority: 1, cell: this.subjectCell() },
-          { key: 'validity', header: 'Vigencia', priority: 2, cell: this.validityCell() },
+          { key: 'validity', header: 'Vigencia', priority: 2, nowrap: true, cell: this.validityCell() },
           { key: 'reason', header: 'Motivo', priority: 3, cell: this.reasonCell() },
           { key: 'actions', header: 'Acciones', priority: 1, accion: true, cell: this.actionsCell() },
         ],
@@ -155,6 +165,14 @@ export class RulesPanel {
       this.values();
       untracked(() => this.list.restart());
     });
+  }
+
+  protected apply(filters: Readonly<Record<string, string>>): void {
+    void patchQuery(this.router, this.route, filters);
+  }
+
+  protected clear(): void {
+    void patchQuery(this.router, this.route, Object.fromEntries(FILTER_KEYS.map((k) => [k, null])));
   }
 
   protected edit(rule: UiVisibilityRule): void {

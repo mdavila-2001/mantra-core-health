@@ -12,20 +12,6 @@
   inline-size: 100%;
 }
 
-/* Aviso de honestidad: una línea, el detalle se despliega. */
-.privacy__fold-summary {
-  cursor: pointer;
-}
-
-.privacy__fold-summary:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.privacy__fold-text {
-  margin: var(--sp-2) 0 0;
-}
-
 .privacy__section {
   display: flex;
   flex-direction: column;

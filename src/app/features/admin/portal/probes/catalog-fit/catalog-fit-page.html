@@ -60,20 +60,22 @@
 
           @if (i.blindSpots.length > 0) {
             <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
-            <app-alert tone="info" data-testid="catalog-fit-blind-spots">
-              <details class="fit__aviso">
-                <summary class="fit__aviso-resumen">
-                  <strong>{{ i.blindSpots.length }} comprobación(es) no pudieron medir.</strong>
-                  No saber no es estar bien: el veredicto no las cuenta como cumplidas.
-                </summary>
-                <p class="fit__aviso-texto">
-                  Sin medir:
-                  @for (id of i.blindSpots; track id; let ultimo = $last) {
-                    <code class="fit__codigo">{{ id }}</code>{{ ultimo ? '.' : ', ' }}
-                  }
-                  Se ven en «Hallazgos», con el filtro «Sin medir».
-                </p>
-              </details>
+            <app-alert
+              tone="info"
+              data-testid="catalog-fit-blind-spots"
+              collapsible
+              [title]="
+                (i.blindSpots.length === 1
+                  ? '1 comprobación no pudo medir'
+                  : i.blindSpots.length + ' comprobaciones no pudieron medir') +
+                ': no saber no es estar bien.'
+              "
+            >
+              El veredicto no las cuenta como cumplidas. Sin medir:
+              @for (id of i.blindSpots; track id; let ultimo = $last) {
+                <code class="fit__codigo">{{ id }}</code>{{ ultimo ? '.' : ', ' }}
+              }
+              Se ven en «Hallazgos», con el filtro «Sin medir».
             </app-alert>
           }
 
@@ -93,7 +95,7 @@
               </span>
             </div>
             <app-metric-card
-              label="Antigüedad del dato"
+              label="Antigüedad"
               icon="clock"
               [value]="antiguedad(r.ageSeconds)"
               [hint]="
@@ -101,15 +103,15 @@
                   ? 'Atrasada: pasó más de ' +
                     cifra(r.retention.staleAfterSeconds / 60) +
                     ' min sin renovarse'
-                  : 'Vigente: el worker la renueva cada pocos minutos'
+                  : 'Vigente: se renueva sola cada pocos minutos'
               "
               [tone]="r.state === 'ATRASADO' ? 'warning' : 'success'"
             />
             <app-metric-card
               label="Fallan"
               icon="flag"
-              [value]="cuenta.fallan + ' de ' + cuenta.total"
-              [hint]="'Comprobaciones; ' + cuenta.altas + ' de severidad alta'"
+              [value]="cuenta.fallan"
+              [hint]="'De ' + cuenta.total + ' comprobaciones; ' + cuenta.altas + ' de severidad alta'"
               [tone]="cuenta.altas > 0 ? 'error' : cuenta.fallan > 0 ? 'warning' : 'success'"
             />
             <app-metric-card
@@ -250,6 +252,10 @@
               <!-- ============================ Historial ============================ -->
               <app-tab label="Historial">
                 <div class="fit__seccion">
+                  @let origen = fuente(r.retention);
+                  <app-alert [tone]="origen.tono" data-testid="catalog-fit-source">
+                    {{ origen.texto }}
+                  </app-alert>
                   <p class="fit__nota" data-testid="catalog-fit-retention">{{ r.retention.note }}</p>
                   <app-data-table
                     data-testid="catalog-fit-history"

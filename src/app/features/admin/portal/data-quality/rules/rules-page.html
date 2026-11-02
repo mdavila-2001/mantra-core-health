@@ -6,23 +6,20 @@
 
 <div class="rules" data-testid="portal-quality-rules">
   <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
-  <app-alert tone="info">
-    <details class="rules__fold">
-      <summary class="rules__fold-summary">
-        <strong>Sólo lectura.</strong> Las reglas se editan donde se carga su conjunto, no acá.
-      </summary>
-      <p class="rules__fold-text">
-        Cada regla pertenece a un conjunto versionado, que se ve en su fila. Las incidencias
-        abiertas son las que el análisis detectó y nadie resolvió ni descartó todavía.
-      </p>
-    </details>
+  <app-alert
+    tone="info"
+    collapsible
+    title="Sólo lectura: las reglas se editan donde se carga su conjunto, no acá."
+  >
+    Cada regla pertenece a un conjunto versionado, que se ve en su fila. Las incidencias abiertas
+    son las que el análisis detectó y nadie resolvió ni descartó todavía.
   </app-alert>
 
   @if (metrics(); as m) {
     <section class="rules__metrics" aria-label="Resumen de las reglas" data-testid="portal-quality-rules-metrics">
       <app-metric-card label="Reglas" icon="clipboard" [value]="m.total" hint="Todas las cargadas" />
       <app-metric-card label="Fatales o de error" icon="shield" [value]="m.serious" hint="Las de severidad más alta" />
-      <app-metric-card label="Con incidencias abiertas" icon="flag" [value]="m.withOpen + ' de ' + m.total" hint="Reglas que hoy detectan algo" />
+      <app-metric-card label="Detectan algo" icon="flag" [value]="m.withOpen" [hint]="'De ' + m.total + ' reglas, con incidencias abiertas'" />
       <app-metric-card label="Incidencias abiertas" icon="note" [value]="m.open" hint="Suma de todas las reglas" />
     </section>
   }

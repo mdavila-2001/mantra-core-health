@@ -9,11 +9,13 @@
     <app-alert tone="error" data-testid="ui-rules-failure">{{ message }}</app-alert>
   }
 
-  <!-- Filtros en una fila sobre la tabla; se apilan en el teléfono. Viven en la URL. -->
-  <app-filter-bar [filters]="filterDefs()" [showSearch]="false" wrap />
+  <!-- Filtros (T5): desplegables con rótulo y Quitar/Aplicar en una fila desde 1024 px. -->
+  <app-governance-filter-form [fields]="fields()" [values]="values()" (applied)="apply($event)" (cleared)="clear()" />
 
   <app-data-table
     data-testid="ui-rules-table"
+    [filtered]="hasFilters()"
+    (clearFilters)="clear()"
     caption="Reglas de visibilidad de la interfaz"
     [state]="list.state()"
     [columns]="columns()"

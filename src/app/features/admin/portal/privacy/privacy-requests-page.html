@@ -6,17 +6,14 @@
 
 <div class="privacy" data-testid="portal-privacy-requests">
 <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
-<app-alert tone="info" data-testid="portal-privacy-scope">
-  <details class="privacy__fold">
-    <summary class="privacy__fold-summary">
-      <strong>El vencimiento es orientativo:</strong> se cuentan 30 días desde la solicitud, no el
-      plazo legal de cada jurisdicción.
-    </summary>
-    <p class="privacy__fold-text">
-      La plataforma no guarda un plazo por jurisdicción. Una solicitud completada o rechazada ya
-      no admite cambios; el paso de un estado a otro se hace desde su ficha.
-    </p>
-  </details>
+<app-alert
+  tone="info"
+  data-testid="portal-privacy-scope"
+  collapsible
+  title="El vencimiento es orientativo: se cuentan 30 días desde la solicitud, no el plazo legal de cada jurisdicción."
+>
+  La plataforma no guarda un plazo por jurisdicción. Una solicitud completada o rechazada ya no
+  admite cambios; el paso de un estado a otro se hace desde su ficha.
 </app-alert>
 
 @if (metrics(); as m) {

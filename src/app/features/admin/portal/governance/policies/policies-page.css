@@ -16,20 +16,6 @@
   inline-size: 100%;
 }
 
-/* Aviso de honestidad: una línea, el detalle se despliega. */
-.policies__fold-summary {
-  cursor: pointer;
-}
-
-.policies__fold-summary:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.policies__fold-text {
-  margin: var(--sp-2) 0 0;
-}
-
 .policies__section {
   display: flex;
   flex-direction: column;

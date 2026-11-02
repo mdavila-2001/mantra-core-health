@@ -174,7 +174,8 @@ describe('UiCatalogPage', () => {
       await open(`${SCREEN}?q=zzz`);
       flush([], ALL);
       expect(text()).toContain('Ningún elemento coincide con los filtros elegidos');
-      expect(text()).toContain('Quitar los filtros');
+      // Vacío filtrado (T9): la salida «Quitar filtros» va dentro de la tabla, no sólo en el formulario.
+      expect(byTestId('ui-catalog-table')!.textContent).toContain('Quitar filtros');
     });
 
     it('un catálogo vacío no queda mudo', async () => {

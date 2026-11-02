@@ -1,30 +1,31 @@
 <!-- Una sola cabecera, sobre el lienzo: las migas viven en la barra superior del portal. -->
 <app-page-header
   title="Piezas en ejecución"
-  subtitle="Todo lo que el código puede tener corriendo: procesos, tareas programadas, consumidores de cola, endpoints internos, comprobaciones de salud y conectores. El servidor las descubre leyendo el código y las contrasta con el registro de herramientas y con los latidos; acá se muestra con su antigüedad."
+  subtitle="Todo lo que el código puede tener corriendo —procesos, tareas programadas, colas, endpoints internos y conectores—, contrastado con el registro de herramientas y con los latidos."
 >
-  <button
-    app-button
-    page-actions
-    variant="secondary"
-    size="sm"
-    (clicked)="cargar()"
-    data-testid="rp-refresh"
-  >
-    Actualizar
-  </button>
-  <button
-    app-button
-    page-actions
-    variant="secondary"
-    size="sm"
-    [disabled]="descubriendo()"
-    [isLoading]="descubriendo()"
-    (clicked)="simular()"
-    data-testid="rp-simulate"
-  >
-    Vista previa (sin registrar)
-  </button>
+  <!-- Las dos secundarias juntas, con borde; la primaria, sola y a la derecha. -->
+  <span page-actions class="piezas__acciones">
+    <button
+      app-button
+      variant="secondary"
+      size="sm"
+      (clicked)="cargar()"
+      data-testid="rp-refresh"
+    >
+      Actualizar
+    </button>
+    <button
+      app-button
+      variant="secondary"
+      size="sm"
+      [disabled]="descubriendo()"
+      [isLoading]="descubriendo()"
+      (clicked)="simular()"
+      data-testid="rp-simulate"
+    >
+      Vista previa
+    </button>
+  </span>
   <button
     app-button
     page-actions
@@ -49,45 +50,45 @@
         @let r = v.data;
         <div class="piezas__cuerpo">
           <!-- Aviso de honestidad en una línea; el detalle se despliega. -->
-          <app-alert tone="info" data-testid="rp-honesty">
-            <details class="piezas__aviso">
-              <summary class="piezas__aviso-resumen" data-testid="rp-evaluated">
-                <strong
-                  >{{ r.summary.total }} {{ r.summary.total === 1 ? 'pieza' : 'piezas' }} en total,
-                  evaluado {{ antiguedadDe(r.evaluatedAt) }}.</strong
-                >
-                Lo que no se mide se declara aparte: no es que esté bien.
-              </summary>
-              <div class="piezas__aviso-texto">
-                <p>
-                  Evaluado por la API el {{ r.evaluatedAt | date: 'dd/MM/yyyy HH:mm:ss' }}. Un
-                  latido es fresco hasta {{ r.thresholds.degradedAfterSeconds }} s; pasados
-                  {{ r.thresholds.downAfterSeconds }} s el proceso se da por caído.
+          <app-alert
+            tone="info"
+            data-testid="rp-evaluated"
+            collapsible
+            [title]="
+              r.summary.total +
+              (r.summary.total === 1 ? ' pieza en total, ' : ' piezas en total, ') +
+              frescura(r.evaluatedAt) +
+              '. Lo que no se mide se declara aparte.'
+            "
+          >
+            <div class="piezas__aviso-texto">
+              <p>
+                Evaluado por la API el {{ cuando(r.evaluatedAt) }}. Un latido es fresco hasta
+                {{ r.thresholds.degradedAfterSeconds }} s; pasados
+                {{ r.thresholds.downAfterSeconds }} s el proceso se da por caído.
+              </p>
+              @if (r.scan.available) {
+                <p data-testid="rp-source">
+                  Piezas descubiertas a partir del
+                  @if (r.scan.source === 'manifest' && r.scan.generatedAt) {
+                    manifiesto generado al compilar el {{ cuando(r.scan.generatedAt) }}: es el
+                    código que se desplegó, no una lectura de hoy.
+                  } @else {
+                    código fuente leído en el momento.
+                  }
                 </p>
-                @if (r.scan.available) {
-                  <p data-testid="rp-source">
-                    Piezas descubiertas a partir del
-                    @if (r.scan.source === 'manifest' && r.scan.generatedAt) {
-                      manifiesto generado al compilar el
-                      {{ r.scan.generatedAt | date: 'dd/MM/yyyy HH:mm' }}: es el código que se
-                      desplegó, no una lectura de hoy.
-                    } @else {
-                      código fuente leído en el momento.
+              }
+              @if (r.notMeasured.length > 0) {
+                <div data-testid="rp-not-measured">
+                  <strong>No se mide (no es que esté bien):</strong>
+                  <ul class="piezas__lista">
+                    @for (n of r.notMeasured; track n) {
+                      <li>{{ noMedido(n) }}</li>
                     }
-                  </p>
-                }
-                @if (r.notMeasured.length > 0) {
-                  <div data-testid="rp-not-measured">
-                    <strong>No se mide (no es que esté bien):</strong>
-                    <ul class="piezas__lista">
-                      @for (n of r.notMeasured; track n) {
-                        <li>{{ noMedido(n) }}</li>
-                      }
-                    </ul>
-                  </div>
-                }
-              </div>
-            </details>
+                  </ul>
+                </div>
+              }
+            </div>
           </app-alert>
 
           <!-- Cifras: cuántas hay, cuántas viven, cuáles preocupan y la antigüedad del dato (S7). -->
@@ -95,15 +96,15 @@
             <app-metric-card
               label="Antigüedad del dato"
               icon="clock"
-              [value]="antiguedadDe(r.evaluatedAt)"
-              [hint]="'Evaluado el ' + (r.evaluatedAt | date: 'dd/MM/yyyy HH:mm') + '; se vuelve a pedir cada 30 s'"
+              [value]="antiguedadCorta(r.evaluatedAt)"
+              [hint]="'Evaluado el ' + cuando(r.evaluatedAt) + '; se vuelve a pedir cada 30 s'"
             />
             <app-metric-card label="Piezas" icon="cube" [value]="r.summary.total" hint="Descubiertas en el código" />
             <app-metric-card
               label="Vivas"
               icon="check-circle"
-              [value]="r.summary.byState.VIVA + ' de ' + r.summary.total"
-              hint="Con prueba de vida dentro del umbral"
+              [value]="r.summary.byState.VIVA"
+              [hint]="'De ' + r.summary.total + ', con prueba de vida dentro del umbral'"
             />
             <app-metric-card
               label="Sin latido"
@@ -142,18 +143,22 @@
             </app-alert>
           }
           @if (r.scan.warnings.length > 0) {
-            <app-alert tone="warning" data-testid="rp-scan-warnings">
-              <details class="piezas__aviso">
-                <summary class="piezas__aviso-resumen">
-                  <strong>El escáner no pudo resolver {{ r.scan.warnings.length }} argumento(s).</strong>
-                  Esas piezas pueden faltar o tener datos incompletos.
-                </summary>
-                <ul class="piezas__lista piezas__aviso-texto">
-                  @for (w of r.scan.warnings; track w) {
-                    <li>{{ w }}</li>
-                  }
-                </ul>
-              </details>
+            <app-alert
+              tone="warning"
+              data-testid="rp-scan-warnings"
+              collapsible
+              [title]="
+                'El escáner no pudo resolver ' +
+                r.scan.warnings.length +
+                (r.scan.warnings.length === 1 ? ' argumento' : ' argumentos') +
+                ': esas piezas pueden faltar o tener datos incompletos.'
+              "
+            >
+              <ul class="piezas__lista">
+                @for (w of r.scan.warnings; track w) {
+                  <li>{{ w }}</li>
+                }
+              </ul>
             </app-alert>
           }
 
@@ -328,7 +333,7 @@
     <span class="piezas__codigo">{{ fila.causeDetail }}</span>
     @if (fila.lastHeartbeatAt) {
       <span class="piezas__codigo"
-        >Último latido {{ fila.lastHeartbeatAt | date: 'dd/MM HH:mm:ss' }}</span
+        >Último latido {{ cuando(fila.lastHeartbeatAt) }}</span
       >
     } @else {
       <span class="piezas__codigo">Sin latido</span>

@@ -108,19 +108,13 @@
 }
 
 /* Aviso de honestidad: una línea, el detalle se despliega. */
-.fit__aviso-resumen,
 .fit__plegable-resumen {
   cursor: pointer;
 }
 
-.fit__aviso-resumen:focus-visible,
 .fit__plegable-resumen:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-}
-
-.fit__aviso-texto {
-  margin: var(--sp-2) 0 0;
 }
 
 .fit__tarjeta {
@@ -187,11 +181,15 @@
 }
 
 .fit__tabla thead th {
+  /* Una sola cabecera de tabla en el portal: versalitas sobre el fondo de la tarjeta, como
+     la de app-data-table (sin banda de color). */
   position: sticky;
   inset-block-start: 0;
-  background: var(--bg-surface-alt);
+  background: var(--bg-surface);
   font-size: var(--fs-caption);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-secondary);
   border-block-end-color: var(--border-default);
 }

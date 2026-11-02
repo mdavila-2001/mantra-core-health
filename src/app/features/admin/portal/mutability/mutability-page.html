@@ -7,20 +7,16 @@
 <app-view-state-host [state]="summaryState()" (retry)="loadSummary()">
   @if (summary(); as s) {
     <div class="mut" data-testid="portal-mutability">
-      <!-- Aviso de honestidad en una línea; el detalle se despliega. Nada se borra. -->
-      <app-alert tone="info" data-testid="portal-mutability-provenance">
-        <details class="mut__limits">
-          <summary class="mut__limits-summary">
-            <strong>Catálogo derivado, sin revisión humana.</strong>
-            «Sin evidencia» significa que no se sabe, no que «No».
-          </summary>
-          <p class="mut__limits-text">
-            Se derivó del modelo{{ s.generatedFrom.modelVersion ? ' v' + s.generatedFrom.modelVersion : '' }}
-            y del código: no es un catálogo oficial ni lo revisó una persona. Los plazos de retención
-            no se infieren; los que aparecen los declara el modelo y siguen pendientes de
-            cumplimiento.
-          </p>
-        </details>
+      <!-- Aviso de honestidad en una línea; el detalle se despliega (aviso plegable del sistema). -->
+      <app-alert
+        tone="info"
+        title="Catálogo derivado, sin revisión humana: «sin evidencia» significa que no se sabe, no que «No»."
+        collapsible
+        data-testid="portal-mutability-provenance"
+      >
+        Se derivó del modelo{{ s.generatedFrom.modelVersion ? ' v' + s.generatedFrom.modelVersion : '' }}
+        y del código: no es un catálogo oficial ni lo revisó una persona. Los plazos de retención no se
+        infieren; los que aparecen los declara el modelo y siguen pendientes de cumplimiento.
       </app-alert>
 
       <section
@@ -221,26 +217,17 @@
 
           <app-tab [label]="'Tablas (' + s.totalTables + ')'">
             <div class="mut__section">
-              <!-- Filtros en una fila sobre la tabla; se apilan en el teléfono. Viven en la URL. -->
-              <app-filter-bar
-                class="mut__filters"
-                searchLabel="Buscar tablas"
-                searchPlaceholder="Esquema o tabla"
-                [filters]="filterDefs"
-                [searchLoading]="tables.state().status === 'loading'"
-                wrap
-                collapsible
+              <!-- Filtros (T5): buscador, desplegables y Quitar/Aplicar en una fila desde 1024 px. -->
+              <app-governance-filter-form
+                [fields]="fields"
+                [values]="values()"
+                (applied)="apply($event)"
+                (cleared)="clear()"
               />
-              @if (values().schema; as schema) {
-                <p class="mut__scope" data-testid="portal-mutability-schema">
-                  Sólo el esquema <code class="mut__code">{{ schema }}</code>.
-                  <button type="button" class="mut__link" (click)="clearSchema()">
-                    Ver todos los esquemas
-                  </button>
-                </p>
-              }
               <app-data-table
                 data-testid="portal-mutability-table"
+                [filtered]="hasFilters()"
+                (clearFilters)="clear()"
                 caption="Mutabilidad por tabla"
                 [state]="tables.state()"
                 [columns]="tableColumns()"
