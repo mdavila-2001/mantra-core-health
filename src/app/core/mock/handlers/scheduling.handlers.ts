@@ -12,6 +12,7 @@ import {
   type ReservaSimulada,
 } from '../fixtures/agenda';
 import { TIPO_CITA_RECONSULTA } from '../fixtures/agenda';
+import { TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
 import {
   ACTIVITY,
   CANAL,
@@ -424,6 +425,29 @@ function textoDeChat(encabezado: string, cuerpoDelAviso: string, cierre: string,
 }
 
 export function registrarAgenda(router: MockRouter): void {
+  // Como la API: las organizaciones con algún recurso activo, de todas las
+  // organizaciones (es la lectura que le permite a un paciente pedir cita con la
+  // que tiene a su profesional). La maqueta no genera cupos por organización, así
+  // que «con cupos» se aproxima a «con una agenda activa».
+  router.get('/scheduling/bookable-organizations', () => {
+    const porOrganizacion = new Map<string, { practitionerCount: number; roomCount: number }>();
+    for (const recurso of recursos.todos()) {
+      if (recurso.stateConceptId !== STATUS['ST-ACTIVE']) continue;
+      const cuenta = porOrganizacion.get(recurso.tenantId) ?? { practitionerCount: 0, roomCount: 0 };
+      if (recurso.resourceTypeConceptId === uuid('concept-resource-room')) cuenta.roomCount += 1;
+      else cuenta.practitionerCount += 1;
+      porOrganizacion.set(recurso.tenantId, cuenta);
+    }
+    const items = [...porOrganizacion.entries()]
+      .map(([tenantId, cuenta]) => ({
+        tenantId,
+        name: TENANTS_DEL_APOYO.find((tenant) => tenant.id === tenantId)?.tradeName ?? 'Organización',
+        ...cuenta,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    return { items, count: items.length };
+  });
+
   router.get('/scheduling/resources', ({ query }) => {
     const tenantId = texto(query, 'tenantId');
     const practiceId = texto(query, 'practiceId');

@@ -6,6 +6,7 @@ import type { ChallengeRequestOptions } from '../../access-challenge/access-chal
 import { API_BASE_URL, apiUrl } from '../api';
 import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import type {
+  BookableOrganization,
   AgendaResource,
   AgendaResourceCreated,
   AgendaResourcePage,
@@ -152,7 +153,7 @@ export class SchedulingClient {
    * @param query - Ventana obligatoria, recurso y tope opcionales.
    * @returns Los cupos, con aviso de si la ventana quedó recortada.
    */
-  listSlots(query: AgendaSlotQuery): Observable<AgendaSlotPage> {
+  listSlots(query: AgendaSlotQuery, scope?: TenantScope): Observable<AgendaSlotPage> {
     let params = new HttpParams()
       .set('from', query.from.toISOString())
       .set('to', query.to.toISOString());
@@ -170,7 +171,7 @@ export class SchedulingClient {
     }
 
     return this.http
-      .get<WireSlotPage>(this.url('/scheduling/slots'), { params })
+      .get<WireSlotPage>(this.url('/scheduling/slots'), { params, ...tenantOptions(scope) })
       .pipe(map((body) => ({ ...body, items: body.items.map(toSlot) })));
   }
 
@@ -227,9 +228,12 @@ export class SchedulingClient {
   }
 
   /** `GET /scheduling/bookings/:id` — una cita concreta (UC-41-15). */
-  getBooking(bookingId: string): Observable<Booking> {
+  getBooking(bookingId: string, scope?: TenantScope): Observable<Booking> {
     return this.http
-      .get<WireBooking>(this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}`))
+      .get<WireBooking>(
+        this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}`),
+        tenantOptions(scope),
+      )
       .pipe(map(toBooking));
   }
 
@@ -710,13 +714,14 @@ export class SchedulingClient {
    * dos personas retienen a la vez, una recibe el cupo y la otra un rechazo,
    * nunca las dos. El cupo vuelve solo cuando la retención expira.
    */
-  placeHold(slotId: string, hold: NewHold = {}): Observable<SlotHold> {
+  placeHold(slotId: string, hold: NewHold = {}, scope?: TenantScope): Observable<SlotHold> {
     return this.http
       .post<WireHold>(
         this.url(`/scheduling/slots/${encodeURIComponent(slotId)}/holds`),
         // Campo a campo: un opcional en `undefined` viaja como clave declarada
         // y el backend lo rechaza con 400 (`forbidNonWhitelisted`).
         hold.patientProfileId === undefined ? {} : { patientProfileId: hold.patientProfileId },
+        tenantOptions(scope),
       )
       .pipe(map((body) => ({ ...body, expiresAt: new Date(body.expiresAt) })));
   }
@@ -726,7 +731,12 @@ export class SchedulingClient {
    * (UC-41-06). Si la retención venció, el backend rechaza: se vuelve a
    * retener, no se reintenta el confirm.
    */
-  confirmHold(holdToken: string, confirmation: BookingConfirmation, options?: ChallengeRequestOptions): Observable<BookingConfirmed> {
+  confirmHold(
+    holdToken: string,
+    confirmation: BookingConfirmation,
+    options?: ChallengeRequestOptions,
+    scope?: TenantScope,
+  ): Observable<BookingConfirmed> {
     return this.http.post<BookingConfirmed>(
       this.url(`/scheduling/holds/${encodeURIComponent(holdToken)}/confirm`),
       {
@@ -735,7 +745,7 @@ export class SchedulingClient {
         channel: confirmation.channel,
         ...(confirmation.reasonText === undefined ? {} : { reasonText: confirmation.reasonText }),
       },
-      options,
+      { ...options, ...tenantOptions(scope) },
     );
   }
 
@@ -747,7 +757,11 @@ export class SchedulingClient {
    * y esto la **pide**. La cita nace pendiente y el profesional la acepta o la
    * rechaza desde su agenda.
    */
-  requestHold(holdToken: string, request: BookingRequest): Observable<BookingConfirmed> {
+  requestHold(
+    holdToken: string,
+    request: BookingRequest,
+    scope?: TenantScope,
+  ): Observable<BookingConfirmed> {
     return this.http.post<BookingConfirmed>(
       this.url(`/scheduling/holds/${encodeURIComponent(holdToken)}/request`),
       {
@@ -756,6 +770,7 @@ export class SchedulingClient {
         channel: request.channel,
         ...(request.reasonText === undefined ? {} : { reasonText: request.reasonText }),
       },
+      tenantOptions(scope),
     );
   }
 
@@ -771,6 +786,7 @@ export class SchedulingClient {
     bookingId: string,
     cancellation: BookingCancellation,
     options?: ChallengeRequestOptions,
+    scope?: TenantScope,
   ): Observable<BookingCancelled> {
     return this.http.post<BookingCancelled>(
       this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/cancel`),
@@ -779,7 +795,7 @@ export class SchedulingClient {
         reasonText: cancellation.reasonText,
         ...(cancellation.isNoShow === undefined ? {} : { isNoShow: cancellation.isNoShow }),
       },
-      options,
+      { ...options, ...tenantOptions(scope) },
     );
   }
 
@@ -793,6 +809,7 @@ export class SchedulingClient {
     bookingId: string,
     reschedule: BookingReschedule,
     options?: ChallengeRequestOptions,
+    scope?: TenantScope,
   ): Observable<BookingRescheduled> {
     return this.http.post<BookingRescheduled>(
       this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/reschedule`),
@@ -802,7 +819,7 @@ export class SchedulingClient {
         // 422 y la otra parte se quedaría sin saber por qué le movieron el día.
         reasonText: reschedule.reasonText,
       },
-      options,
+      { ...options, ...tenantOptions(scope) },
     );
   }
 
@@ -898,7 +915,11 @@ export class SchedulingClient {
    * completo es un callejón sin salida. Anotarse no reserva nada; cuando se
    * libera un cupo el paciente recibe el aviso y confirma por el flujo normal.
    */
-  enrollWaitlist(entry: NewWaitlistEntry, options?: ChallengeRequestOptions): Observable<WaitlistEntryCreated> {
+  enrollWaitlist(
+    entry: NewWaitlistEntry,
+    options?: ChallengeRequestOptions,
+    scope?: TenantScope,
+  ): Observable<WaitlistEntryCreated> {
     return this.http.post<WaitlistEntryCreated>(
       this.url('/scheduling/waitlist'),
       {
@@ -910,7 +931,7 @@ export class SchedulingClient {
         ...(entry.priority === undefined ? {} : { priority: entry.priority }),
         ...(entry.bookableSlotId === undefined ? {} : { bookableSlotId: entry.bookableSlotId }),
       },
-      options,
+      { ...options, ...tenantOptions(scope) },
     );
   }
 
@@ -986,7 +1007,10 @@ export class SchedulingClient {
    * suyo, apagado incluido. Sin `practitionerProfileId` la API devuelve las del
    * propio profesional que pregunta.
    */
-  listServiceOfferings(practitionerProfileId?: string): Observable<readonly ServiceOffering[]> {
+  listServiceOfferings(
+    practitionerProfileId?: string,
+    scope?: TenantScope,
+  ): Observable<readonly ServiceOffering[]> {
     // Un parámetro y nunca un objeto: `forbidNonWhitelisted` convierte una clave
     // en `undefined` en un 400.
     const params =
@@ -998,6 +1022,7 @@ export class SchedulingClient {
         this.url('/scheduling/service-offerings'),
         {
           params,
+          ...tenantOptions(scope),
         },
       )
       .pipe(map((body) => body.items));
@@ -1058,7 +1083,10 @@ export class SchedulingClient {
    * estar libre un segundo después; por eso retener ({@link placeServiceHold})
    * lo vuelve a decidir en el servidor.
    */
-  getServiceAvailability(query: ServiceAvailabilityQuery): Observable<ServiceAvailability> {
+  getServiceAvailability(
+    query: ServiceAvailabilityQuery,
+    scope?: TenantScope,
+  ): Observable<ServiceAvailability> {
     let params = new HttpParams()
       .set('offeringId', query.offeringId)
       .set('from', query.from.toISOString())
@@ -1067,7 +1095,10 @@ export class SchedulingClient {
       params = params.set('resourceId', query.resourceId);
     }
     return this.http
-      .get<WireServiceAvailability>(this.url('/scheduling/service-availability'), { params })
+      .get<WireServiceAvailability>(this.url('/scheduling/service-availability'), {
+        params,
+        ...tenantOptions(scope),
+      })
       .pipe(
         map((body) => ({
           ...body,
@@ -1088,7 +1119,11 @@ export class SchedulingClient {
    * {@link confirmHold} o {@link requestHold}, igual que una consulta. Un 409
    * dice que el horario ya no cabe: se vuelve a leer la disponibilidad.
    */
-  placeServiceHold(offeringId: string, hold: NewServiceHold): Observable<ServiceHold> {
+  placeServiceHold(
+    offeringId: string,
+    hold: NewServiceHold,
+    scope?: TenantScope,
+  ): Observable<ServiceHold> {
     return this.http
       .post<WireServiceHold>(
         this.url(`/scheduling/service-offerings/${encodeURIComponent(offeringId)}/holds`),
@@ -1099,6 +1134,7 @@ export class SchedulingClient {
             ? {}
             : { patientProfileId: hold.patientProfileId }),
         },
+        tenantOptions(scope),
       )
       .pipe(
         map((body) => ({
@@ -1120,6 +1156,7 @@ export class SchedulingClient {
   getFlexibleAvailability(
     resourceId: string,
     query: FlexibleAvailabilityQuery,
+    scope?: TenantScope,
   ): Observable<FlexibleAvailability> {
     const params = new HttpParams()
       .set('from', query.from.toISOString())
@@ -1127,7 +1164,7 @@ export class SchedulingClient {
     return this.http
       .get<WireFlexibleAvailability>(
         this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/flexible-availability`),
-        { params },
+        { params, ...tenantOptions(scope) },
       )
       .pipe(
         map((body) => ({
@@ -1149,7 +1186,11 @@ export class SchedulingClient {
    * {@link confirmHold} o {@link requestHold}, igual que una consulta. Un 409
    * dice que la hora ya no está libre: se vuelve a leer la disponibilidad.
    */
-  placeFlexibleHold(resourceId: string, hold: NewFlexibleHold): Observable<FlexibleHold> {
+  placeFlexibleHold(
+    resourceId: string,
+    hold: NewFlexibleHold,
+    scope?: TenantScope,
+  ): Observable<FlexibleHold> {
     return this.http
       .post<WireFlexibleHold>(
         this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/flexible-holds`),
@@ -1159,6 +1200,7 @@ export class SchedulingClient {
             ? {}
             : { patientProfileId: hold.patientProfileId }),
         },
+        tenantOptions(scope),
       )
       .pipe(
         map((body) => ({
@@ -1168,6 +1210,22 @@ export class SchedulingClient {
           endAt: new Date(body.endAt),
         })),
       );
+  }
+
+  /**
+   * `GET /scheduling/bookable-organizations` — las organizaciones con las que
+   * se puede pedir cita hoy, sean o no aquella en la que la cuenta está.
+   *
+   * Sólo la responde a una cuenta de paciente. Trae lo justo para elegir:
+   * identificador, nombre y cuántos profesionales y laboratorios tienen cupos
+   * por delante; la agenda de cada una se pide después con su `X-Tenant-Id`.
+   */
+  listBookableOrganizations(): Observable<readonly BookableOrganization[]> {
+    return this.http
+      .get<{ readonly items: readonly BookableOrganization[] }>(
+        this.url('/scheduling/bookable-organizations'),
+      )
+      .pipe(map((body) => body.items));
   }
 
   private url(path: string): string {
