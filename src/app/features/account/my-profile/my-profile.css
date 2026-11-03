@@ -122,11 +122,26 @@
    ya no hay a qué saltar. Una regla sin quién la use es una pista falsa para
    el próximo que lea este archivo. */
 
-/* Policy cards side by side when the tab is wide enough, one column on phones. */
+/* Policy cards side by side when the tab is wide enough, one column on phones.
+   `auto-fit` lets a single policy span the row; every card stretches to the
+   row height and is a light bordered item, like the address cards. */
 .mi-perfil__lista.mi-perfil__coverages {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(max(30%, min(100%, 22rem)), 1fr));
+  align-items: stretch;
   gap: var(--sp-4);
+}
+
+.mi-perfil__coverages > li,
+.mi-perfil__coverages app-patient-coverage-card {
+  display: grid;
+}
+
+.mi-perfil__coverages ::ng-deep .coverage {
+  align-content: start;
+  border-color: var(--border-subtle);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
 }
 
 /* Each Seguros section (policies, preventive benefits, portability) sits

@@ -71,12 +71,25 @@
   }
 }
 
-/* Residence and home map side by side from 1120px. One child takes the row. */
+/* Residence and home map side by side from 1120px. One child takes the row.
+   Both columns stretch to the taller one and the map fills what is left under
+   its heading, so no blank band sits below it. `.mapa` is the shared map's
+   unencapsulated box (fixed 360px); the scoped ::ng-deep only reaches the map
+   inside this residence pair. */
 @media (min-width: 1120px) {
   .mi-perfil__residencia {
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
     column-gap: var(--sp-6);
+    align-items: stretch;
+  }
+
+  .mi-perfil__residencia > [data-testid='perfil-mapa-domicilio'] {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .mi-perfil__residencia ::ng-deep .mapa {
+    block-size: 100%;
   }
 }
 
@@ -97,7 +110,23 @@ app-tab > .mi-perfil__accion {
   border-block-start: 1px solid var(--border-subtle);
 }
 
-/* ── Invoice box: label over value, three columns beside the logo ───────── */
+/* ── Invoice data: flat block under a divider, logo keeps its image frame ── */
+.mi-perfil__factura {
+  margin-block-start: var(--sp-5);
+  padding: var(--sp-5) 0 0;
+  border: 0;
+  border-block-start: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: none;
+}
+
+/* The NIT reads at the same size as the other two values. */
+.mi-perfil__factura-nit {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Label over value, three columns beside the logo. */
 @media (min-width: 780px) {
   .factura__datos {
     grid-template-rows: auto auto;
@@ -112,7 +141,38 @@ app-tab > .mi-perfil__accion {
   }
 }
 
+/* ── Specialties: inline rows of icon, name and status, no boxed cards ─── */
+/* The shared badge grid packs ~14rem tinted cards to the left. Here they
+   wrap as plain rows at the size of the other values. Scoped ::ng-deep: the
+   list and the badges live in the shared organisms' templates. */
+.mi-perfil__especialidades ::ng-deep .specialty-badge-grid__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-6);
+}
+
+.mi-perfil__especialidades ::ng-deep .specialty-badge-grid__item > app-specialty-badge.specialty-badge {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  inline-size: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.mi-perfil__especialidades ::ng-deep .specialty-badge .specialty-badge__sello {
+  grid-column: auto;
+}
+
 /* ── Timeline: status chip right-aligned on the same row for every entry ── */
+/* One seal size for every entry, current or past. */
+.trayecto app-status-seal {
+  padding: var(--sp-1) var(--sp-2);
+  font-size: var(--fs-caption);
+}
+
 .trayecto--pasado .trayecto__cuerpo {
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: var(--sp-3);
@@ -124,6 +184,12 @@ app-tab > .mi-perfil__accion {
   align-self: center;
 }
 
+/* «En curso» sits right above the seal, right-aligned, in sentence case. */
 .trayecto--curso .profesional__hito-cuerpo {
   justify-items: end;
+  gap: var(--sp-1);
+}
+
+.trayecto--curso .profesional__hito-cuerpo > .trayecto__fechas {
+  text-transform: none;
 }

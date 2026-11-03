@@ -41,15 +41,11 @@ import { LocationPicker } from '../../../../../auth/shared-registration/location
       />
     }
   `,
-  // A compact, centred block: the country map (22rem) and the municipality
-  // inset (14rem) fit side by side within 40rem, and the locked locality field
-  // takes that same measure instead of the full row. At half width (next to the
-  // home map) the inset wraps under the country, still centred.
+  // Full width on purpose (rule 6): the locked locality field spans the row,
+  // and the map pair keeps its own fixed size, centred by `department-map`.
   styles: `
     :host {
       display: block;
-      max-inline-size: 40rem;
-      margin-inline: auto;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

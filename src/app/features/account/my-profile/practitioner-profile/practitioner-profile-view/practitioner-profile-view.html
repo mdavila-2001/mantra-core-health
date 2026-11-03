@@ -489,14 +489,8 @@
               A nombre de quién salen los comprobantes que emite.
             </p>
 
-            <!-- Los dos datos van en un recuadro propio y no en la lista
-                 `dt`/`dd` del resto de la ficha: no son otro par de datos del
-                 profesional, son lo que hay que copiar en una factura, y se
-                 consultan juntos. El NIT es la cifra que se busca, así que va
-                 primero y en grande; la razón social lo completa. -->
-            <!-- Vista previa de lectura del logo del consultorio, en su caja de
-                 tamaño fijo: con o sin logo el recuadro mide lo mismo. **No se
-                 corrige acá**: se carga y se cambia desde «Datos personales». -->
+            <!-- Invoice data read together, beside a read-only preview of the practice logo
+                 (fixed frame; edited from «Datos personales»). Flat block, no nested box. -->
             <div class="mi-perfil__factura factura--con-logo" data-testid="perfil-factura-recuadro">
               <app-practice-logo
                 class="factura__logo"

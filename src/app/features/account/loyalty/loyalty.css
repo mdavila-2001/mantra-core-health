@@ -253,12 +253,26 @@
 
 :host([embebido]) .movimientos__fila,
 :host([embebido]) .movimientos__fila:last-child {
-  padding-block: var(--sp-3);
+  padding-block: var(--sp-2);
   border-bottom: 1px solid var(--border-default);
 }
 
+/* Wide: each movement reads as a table row with fixed columns
+   (detail | date | badge | points), so the badges and the points line up. */
 @media (min-width: 40rem) {
   :host([embebido]) .movimientos__fila {
     grid-template-columns: minmax(0, 1fr) 10rem 6rem;
+    gap: var(--sp-4);
+  }
+
+  :host([embebido]) .movimientos__datos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6.5rem;
+    align-items: baseline;
+    gap: var(--sp-4);
+  }
+
+  :host([embebido]) .movimientos__fila > app-badge {
+    justify-self: start;
   }
 }

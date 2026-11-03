@@ -36,11 +36,15 @@
     contain: size;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scrollbar-gutter: stable;
-    padding-inline-end: var(--sp-1);
     align-content: start;
+    /* No reserved gutter or end padding: the list's right edge is the grid's
+       content edge, flush with the table below. A thin, always-coloured
+       scrollbar sits inside that edge and says «there is more» on its own. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
     /* Bottom fade only while there is more list below (scroll-driven):
-       without overflow the timeline is inactive and nothing fades. */
+       without overflow the timeline is inactive and nothing fades. Tall
+       enough to swallow most of a cut row, so it reads as «keeps going». */
     mask-image: linear-gradient(
       to bottom,
       var(--text-primary) calc(100% - var(--sedes-desvanecido)),
@@ -59,11 +63,11 @@
 
 @keyframes sedes-desvanecido {
   from {
-    --sedes-desvanecido: var(--sp-8);
+    --sedes-desvanecido: var(--sp-16);
   }
 
   95% {
-    --sedes-desvanecido: var(--sp-8);
+    --sedes-desvanecido: var(--sp-16);
   }
 
   to {
