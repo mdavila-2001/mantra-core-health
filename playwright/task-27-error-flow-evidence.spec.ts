@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { entrarAlSimulador } from './support/simulador';
+import { elegirOpcion } from './support/desplegable';
 import { abrirExpedienteDelPrimero } from './support/expediente';
 
 const BASE = process.env['E2E_BASE_URL'] ?? 'http://localhost:4200';
@@ -39,9 +40,10 @@ async function chooseMedicine(page: Page): Promise<void> {
 
 async function addPrescriptionReason(page: Page): Promise<void> {
   const dialog = page.getByTestId('content-dialog');
-  await dialog.getByTestId('receta-diagnostico').locator('select').selectOption({
-    label: 'Otro motivo — escribirlo',
-  });
+  await elegirOpcion(
+    dialog.getByTestId('receta-diagnostico').getByRole('combobox'),
+    'Otro motivo — escribirlo',
+  );
   await dialog.getByTestId('receta-motivo').locator('textarea').fill('Control de síntomas');
   await expect(dialog.getByRole('button', { name: 'Prescribir' })).toBeEnabled();
 }
