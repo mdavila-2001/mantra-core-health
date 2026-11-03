@@ -44,6 +44,9 @@
 }
 
 .pagination__range {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
     margin: 0;
     font-size: var(--fs-caption);
     line-height: var(--lh-caption);
@@ -116,4 +119,9 @@
     .pagination__marker--ready {
         transition: none;
     }
+}
+
+/* Page in flight: the list dims so the spinner reads as the only live element. */
+:host(.pagination--loading) .pagination__track {
+    opacity: 0.6;
 }

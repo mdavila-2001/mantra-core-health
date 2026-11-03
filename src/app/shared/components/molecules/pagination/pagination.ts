@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
+import { Spinner } from '../../atoms/spinner/spinner';
 import { Select } from '../../atoms/select/select';
 import type { SelectOption } from '../../atoms/select/select.types';
 import {
@@ -38,12 +39,14 @@ import {
  */
 @Component({
   selector: 'app-pagination',
-  imports: [AppButton, Select],
+  imports: [AppButton, Select, Spinner],
   templateUrl: './pagination.html',
   styleUrl: './pagination.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'pagination',
+    '[class.pagination--loading]': 'loading()',
+    '[attr.aria-busy]': 'loading() || null',
   },
 })
 export class Pagination {
@@ -59,6 +62,8 @@ export class Pagination {
    * («…») que el select sí cubre entero.
    */
   readonly showPageJump = input(true, { transform: booleanAttribute });
+  /** The requested page is in flight: controls lock and a spinner shows. */
+  readonly loading = input(false, { transform: booleanAttribute });
 
   protected readonly gap = PAGE_GAP;
 
