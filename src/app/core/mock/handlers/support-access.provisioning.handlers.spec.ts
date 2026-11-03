@@ -79,13 +79,7 @@ describe('provisión directa de secretarias (simulador)', () => {
 
   describe('POST /org/support-staff', () => {
     it('crea la cuenta y el vínculo activo para la organización', () => {
-      const adminOrg = buscarUsuario('admin') ?? {
-        id: 'user-admin-org',
-        displayName: 'Administrador Hospital',
-        email: 'admin@hospital.bo',
-        roles: ['USER', 'ORGANIZATION_ADMIN'],
-        organizationAccess: ['tenant-hospital'],
-      };
+      const adminOrg = buscarUsuario('admin')!;
 
       const res = llamar<CreatedSupportStaffResponse>(
         adminOrg,
