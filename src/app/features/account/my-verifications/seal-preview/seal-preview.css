@@ -1,0 +1,73 @@
+:host {
+  display: block;
+}
+
+.lado {
+  display: grid;
+  gap: var(--e4);
+  padding: var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-card);
+  background: var(--sup-inset);
+}
+
+.lado__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lado__vista {
+  display: grid;
+  justify-items: center;
+  gap: var(--e2);
+  padding: var(--e4);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+  text-align: center;
+}
+
+.lado__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: calc(var(--e9) + var(--e3));
+  block-size: calc(var(--e9) + var(--e3));
+  border-radius: var(--r-pill);
+  background: var(--info-bg);
+  color: var(--info-tinta);
+}
+
+.lado__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lado__beneficios {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+.lado__beneficios li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--e2);
+  align-items: start;
+}
+
+.lado__beneficios app-nav-icon {
+  color: var(--ok-tinta);
+}
+
+.lado__beneficios strong {
+  color: var(--text-primary);
+}

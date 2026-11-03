@@ -1,0 +1,22 @@
+<aside class="lado" aria-labelledby="sello-vista-titulo">
+  <h3 id="sello-vista-titulo" class="lado__titulo">Así ven su perfil sus pacientes</h3>
+  <div class="lado__vista">
+    <span class="lado__avatar" aria-hidden="true"><app-nav-icon name="people" /></span>
+    <span class="lado__nombre">Su perfil profesional</span>
+    <app-verification-badge [status]="status()" variant="label" size="md" />
+  </div>
+  <ul class="lado__beneficios">
+    <li>
+      <app-nav-icon name="shield" />
+      <span><strong>Identidad y matrícula</strong> confirmadas por AloVida.</span>
+    </li>
+    <li>
+      <app-nav-icon name="building" />
+      <span><strong>Instituciones</strong> que confirman dónde atiende.</span>
+    </li>
+    <li>
+      <app-nav-icon name="heart" />
+      <span><strong>Aseguradoras</strong> que confirman con quién trabaja.</span>
+    </li>
+  </ul>
+</aside>
