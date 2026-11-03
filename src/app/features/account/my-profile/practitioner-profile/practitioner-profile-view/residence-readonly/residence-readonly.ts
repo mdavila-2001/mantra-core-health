@@ -41,6 +41,17 @@ import { LocationPicker } from '../../../../../auth/shared-registration/location
       />
     }
   `,
+  // A compact, centred block: the country map (22rem) and the municipality
+  // inset (14rem) fit side by side within 40rem, and the locked locality field
+  // takes that same measure instead of the full row. At half width (next to the
+  // home map) the inset wraps under the country, still centred.
+  styles: `
+    :host {
+      display: block;
+      max-inline-size: 40rem;
+      margin-inline: auto;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResidenceReadonly {
