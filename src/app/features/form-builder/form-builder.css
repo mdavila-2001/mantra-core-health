@@ -451,9 +451,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.mis-formularios__version {
-  grid-area: version;
-}
+.mis-formularios__version { grid-area: version; display: inline-flex; align-items: center; gap: var(--sp-1); }
+.mis-formularios__version app-nav-icon { inline-size: 1rem; block-size: 1rem; color: var(--brand-primary); }
 
 .mis-formularios__propios {
   grid-area: propios;
