@@ -27,7 +27,6 @@
   border-block-end: none;
 }
 
-
 /* Table cells: from tablet up the short values never break mid-phrase. */
 @media (min-width: 48rem) {
   .historial__aviso-qr,
@@ -38,7 +37,7 @@
   /* Row actions on one line («Configurar QR bancario» · «Editar teléfono»)
      instead of stacked; below tablet they keep wrapping as app-row-actions
      decides. Attribute selector outranks the child's `:host` rule. */
-  app-row-actions[data-testid='sede-acciones'] {
+  app-row-actions.historial__sede-acciones {
     flex-wrap: nowrap;
   }
 
@@ -62,12 +61,12 @@
   /* «Corregir o retirar»: one tidy row per link. Name and role take the free
      space on the left; dates and actions are fixed columns shared by every
      row (subgrid), so they line up instead of floating mid-row. */
-  .historial__lista[data-testid='vinculos-editables'] {
+  .historial__lista.historial__lista--editable {
     grid-template-columns: minmax(0, 1fr) auto auto;
     column-gap: var(--sp-6);
   }
 
-  [data-testid='vinculos-editables'] > .historial__item {
+  .historial__lista--editable > .historial__item {
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
@@ -75,13 +74,13 @@
   }
 
   /* «¿Atiende acá?» belongs to its row: a second line inside its rule. */
-  [data-testid='vinculos-editables'] .historial__donde-atiende {
+  .historial__lista--editable .historial__donde-atiende {
     grid-column: 1 / -1;
     margin: 0;
   }
 }
 
-[data-testid='vinculos-editables'] .historial__acciones-sede {
+.historial__lista--editable .historial__acciones-sede {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;

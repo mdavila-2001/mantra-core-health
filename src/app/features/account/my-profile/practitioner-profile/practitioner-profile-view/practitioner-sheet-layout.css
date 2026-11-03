@@ -20,8 +20,16 @@
   }
 }
 
+/* Tablet portrait (sidebar collapsed, ~700px of card): two columns already,
+   so short values don't stack in one ragged column. */
+@media (min-width: 560px) and (max-width: 779px) {
+  .mi-perfil__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* In two columns the insurers row would sit next to a blank cell: fill it. */
-@media (min-width: 780px) and (max-width: 1119px) {
+@media (min-width: 560px) and (max-width: 1119px) {
   .mi-perfil__dato--par {
     grid-column: 1 / -1;
   }

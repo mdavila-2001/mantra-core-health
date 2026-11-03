@@ -338,7 +338,7 @@
         [actions]="accionesDeSede(sede)"
         [fila]="sede.name"
         [attr.data-site-id]="sede.id"
-        data-testid="sede-acciones"
+        class="historial__sede-acciones" data-testid="sede-acciones"
         (actionSelected)="ejecutarAccionDeSede($event, sede)"
       />
     </ng-template>
@@ -419,7 +419,7 @@
         Lo que declaró usted, y las solicitudes que todavía nadie contestó. Lo que una institución
         ya confirmó o rechazó no se edita desde acá.
       </p>
-      <ul class="historial__lista" data-testid="vinculos-editables">
+      <ul class="historial__lista historial__lista--editable" data-testid="vinculos-editables">
         @for (afiliacion of vinculosEditables(); track afiliacion.id) {
           <li class="historial__item">
             <div class="historial__institucion">
