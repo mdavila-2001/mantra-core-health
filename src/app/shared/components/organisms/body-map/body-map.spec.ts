@@ -69,24 +69,24 @@ const FRENTE = [
   'pecho-izq',
   'brazo-der',
   'brazo-izq',
-  'codo-der',
-  'codo-izq',
   'hipocondrio-der',
   'epigastrio',
   'hipocondrio-izq',
-  'antebrazo-der',
-  'antebrazo-izq',
+  'codo-der',
+  'codo-izq',
   'flanco-der',
   'periumbilical',
   'flanco-izq',
+  'antebrazo-der',
+  'antebrazo-izq',
+  'muneca-der',
+  'muneca-izq',
   'fosa-iliaca-der',
   'hipogastrio',
   'fosa-iliaca-izq',
-  'muneca-der',
-  'muneca-izq',
-  'intima',
   'mano-der',
   'mano-izq',
+  'intima',
   'cadera-der',
   'cadera-izq',
   'muslo-der',
@@ -506,10 +506,10 @@ describe('BodyMap', () => {
 
   it('elegir otra zona con el puntero lleva el punto a la nueva', () => {
     tocarEn('pecho-der', 100, 110);
-    tocarEn('epigastrio', 118, 150);
+    tocarEn('epigastrio', 118, 142);
 
     expect(component.value()).toBe('epigastrio');
-    expect(marcadores()).toEqual(['translate(118 150)']);
+    expect(marcadores()).toEqual(['translate(118 142)']);
   });
 
   it('con el teclado el punto queda en el centro de la zona, y no hereda el de antes', () => {

@@ -667,6 +667,24 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     );
   });
 
+  /** A symptom only fine zones offer must not invent a side: «ampolla» lights both feet. */
+  it('lo contado no inventa un lado: una ampolla enciende los dos pies', () => {
+    escribir('tengo una ampolla');
+    fixture.detectChanges();
+
+    for (const id of ['pie-der', 'pie-izq']) {
+      expect(
+        html.querySelector(`[data-testid="body-map-${id}"]`)?.closest('g')?.classList,
+        id,
+      ).toContain('body-map__zona--marcada');
+    }
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Pies y tobillos');
+    vi.advanceTimersByTime(600);
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
+  });
+
   it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
     escribir('me duele la rodilla y ando triste');
     fixture.detectChanges();

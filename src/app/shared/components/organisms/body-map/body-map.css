@@ -161,26 +161,23 @@
   stroke-dasharray: none;
 }
 
-/* Active selection: near-solid fill, light rim, and the rest of the body steps back. */
+/* State: Active selection */
 .body-map__zona--elegida .body-map__forma {
   fill: var(--body-map-relleno-elegida, var(--brand-primary));
-  fill-opacity: 0.9;
-  stroke: var(--bg-surface);
-  stroke-width: 1.2;
+  fill-opacity: 0.62;
+  stroke: color-mix(in srgb, var(--brand-primary) 55%, var(--text-primary));
+  stroke-width: 1.8;
   stroke-dasharray: none;
-  filter: drop-shadow(0 0 1.2px var(--brand-primary-active));
 }
-.body-map__lienzo:has(.body-map__zona--elegida) .body-map__render { opacity: 0.6; }
-.body-map__elegida-arriba { stop-color: var(--brand-primary); }
+
+.body-map__elegida-arriba { stop-color: color-mix(in srgb, var(--brand-primary) 72%, var(--bg-surface)); }
 .body-map__elegida-abajo { stop-color: var(--brand-primary-active); }
 
 /* Name of the chosen part, on the body itself (decorative: the caption says it too) */
 .body-map__rotulo {
   font: 600 8px/1 var(--font-body);
   fill: var(--text-primary);
-  stroke: var(--bg-surface);
-  stroke-width: 2.4px;
-  paint-order: stroke;
+  stroke: var(--bg-surface); stroke-width: 2.4px; paint-order: stroke;
   pointer-events: none;
 }
 

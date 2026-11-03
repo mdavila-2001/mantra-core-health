@@ -40,11 +40,8 @@ from shapely.ops import polylabel
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "scripts/body-map-base/zonas-gruesas.ts.txt"
 TARGET = ROOT / "src/app/shared/components/organisms/body-map/body-zones.generated.ts"
-EXPORTS = {
-    "neutro": "VISTAS_DEL_CUERPO",
-    "masculino": "VISTAS_DEL_CUERPO_MASCULINA",
-    "femenino": "VISTAS_DEL_CUERPO_FEMENINA",
-}
+SOURCE_NAMES = {"neutro": "VISTAS_DEL_CUERPO", "masculino": "VISTAS_DEL_CUERPO_MASCULINA", "femenino": "VISTAS_DEL_CUERPO_FEMENINA"}
+EXPORTS = {"neutro": "BODY_VIEWS", "masculino": "BODY_VIEWS_MALE", "femenino": "BODY_VIEWS_FEMALE"}
 BIG = 1000.0
 
 
@@ -136,9 +133,12 @@ def along_axis(part: Polygon, fracs):
     angle = 0.5 * math.degrees(math.atan2(2 * sxy, sxx - syy))  # major axis vs x
     turn = 90 - angle  # rotate so the major axis is vertical
     upright = affinity.rotate(part, turn, origin=(mx, my))
-    pieces = [affinity.rotate(s, -turn, origin=(mx, my)) for s in rows_y(upright, fracs)]
-    # The rotation may flip the part: the proximal end is the highest one.
-    return pieces if pieces[0].centroid.y <= pieces[-1].centroid.y else pieces[::-1]
+    # The rotation may flip the part: then cut from the other end, so the
+    # fractions always start at the proximal (highest) end.
+    if affinity.rotate(rows_y(upright, [0.5])[0], -turn, origin=(mx, my)).centroid.y > my:
+        fracs = [1 - f for f in reversed(fracs)]
+        return [affinity.rotate(s, -turn, origin=(mx, my)) for s in rows_y(upright, fracs)][::-1]
+    return [affinity.rotate(s, -turn, origin=(mx, my)) for s in rows_y(upright, fracs)]
 
 
 def by_side(geom, cx):
@@ -161,8 +161,7 @@ def split_view(view_id: str, zones: dict, cx: float):
             out.append((zid, madre, geom))
 
     def sided(prefix, madre, pair):
-        add(f"{prefix}-{vl}", madre, pair[0])
-        add(f"{prefix}-{vr}", madre, pair[1])
+        [add(f"{prefix}-{side}", madre, g) for side, g in zip((vl, vr), pair)]
 
     def three(madre, geom, centre_id, side_prefix, frac):
         left, mid, right = bands_x(geom, cx, frac)
@@ -170,20 +169,24 @@ def split_view(view_id: str, zones: dict, cx: float):
         add(centre_id, madre, mid)
 
     for zid, geom in zones.items():
+        if zid == "abdomen":
+            continue  # cut together with "estomago"
         if zid in ("cabeza", "nariz", "boca", "intima"):
             add(zid, zid, geom)
         elif zid in ("garganta", "nuca"):
-            three(zid, geom, zid, "cuello", 0.3)
+            left, mid, right = bands_x(geom, cx, 0.3)
+            sided("cuello", "garganta", (left, right))  # one parent in every view
+            add(zid, zid, mid)
         elif zid in ("hombros", "caderas", "ojos", "oidos"):
             sided({"hombros": "hombro", "caderas": "cadera", "ojos": "ojo", "oidos": "oido"}[zid], zid, halves(geom, cx))
         elif zid == "pecho":
             three(zid, geom, "esternon", "pecho", 0.2)
         elif zid == "estomago":
-            three(zid, geom, "epigastrio", "hipocondrio", 0.34)
-        elif zid == "abdomen":
-            top, bottom = rows_y(geom, [0.5])
-            three(zid, top, "periumbilical", "flanco", 0.34)
-            three(zid, bottom, "hipogastrio", "fosa-iliaca", 0.34)
+            # Nine regions: three even rows over stomach + belly (stomach alone is twice as tall).
+            upper, middle, lower = rows_y(geom.union(zones["abdomen"]), [1 / 3, 2 / 3])
+            three(zid, upper, "epigastrio", "hipocondrio", 0.34)
+            three("abdomen", middle, "periumbilical", "flanco", 0.34)
+            three("abdomen", lower, "hipogastrio", "fosa-iliaca", 0.34)
         elif zid == "espalda":
             top, bottom = rows_y(geom, [0.5])
             three(zid, top, "columna-alta", "omoplato", 0.2)
@@ -196,26 +199,23 @@ def split_view(view_id: str, zones: dict, cx: float):
             low_l, low_r = halves(low, cx)
             sided("gluteo", zid, (left.union(low_l), right.union(low_r)))
             add("coxis", zid, coxis)
-        elif zid in ("brazos", "manos"):
-            names = ("brazo", "codo", "antebrazo") if zid == "brazos" else ("muneca", "mano")
-            fracs = [0.45, 0.6] if zid == "brazos" else [0.3]
+        elif zid == "manos":  # whole hand; the wrist is the arm's last band (keeps the thumb)
+            sided("mano", zid, by_side(geom, cx))
+        elif zid == "brazos":
+            names = ("brazo", "codo", "antebrazo", "muneca")
             for side, part in zip((vl, vr), by_side(geom, cx)):
-                # Hands hang almost vertical and the thumb skews their axis: cut by height.
-                cut = along_axis if zid == "brazos" else (lambda g, f: rows_y(g, f))
-                for name, piece in zip(names, cut(part.geoms[0], fracs) if part else []):
-                    add(f"{name}-{side}", zid, piece)
+                for name, piece in zip(names, along_axis(part.geoms[0], [0.38, 0.6, 0.8]) if part else []):
+                    add(f"{name}-{side}", "manos" if name == "muneca" else zid, piece)
         elif zid == "piernas":
             knee_y = zones["rodillas"].centroid.y
-            parts = polygons(geom)
-            thigh = [p for p in parts if p.centroid.y < knee_y]
-            shin = [p for p in parts if p.centroid.y >= knee_y]
-            lower = "canilla" if view_id == "frente" else "pantorrilla"
-            sided("muslo", zid, by_side(MultiPolygon(thigh), cx))
-            sided(lower, zid, by_side(MultiPolygon(shin), cx))
+            thigh = MultiPolygon([p for p in polygons(geom) if p.centroid.y < knee_y])
+            shin = MultiPolygon([p for p in polygons(geom) if p.centroid.y >= knee_y])
+            sided("muslo", zid, by_side(thigh, cx))
+            sided("canilla" if view_id == "frente" else "pantorrilla", zid, by_side(shin, cx))
         elif zid == "rodillas":
             sided("rodilla" if view_id == "frente" else "corva", zid, by_side(geom, cx))
         elif zid == "pies":
-            ankle, foot = rows_y(geom, [0.4])
+            ankle, foot = rows_y(geom, [0.5])
             sided("tobillo", zid, halves(ankle, cx))
             sided("pie" if view_id == "frente" else "talon", zid, halves(foot, cx))
         else:
@@ -226,7 +226,7 @@ def split_view(view_id: str, zones: dict, cx: float):
 def build():
     src = SOURCE.read_text(encoding="utf-8")
     profiles = {}
-    for key, name in EXPORTS.items():
+    for key, name in SOURCE_NAMES.items():
         block = src.split(f"export const {name}: readonly VistaDelCuerpo[] = [")[1].split("\n];")[0]
         built = []
         for vb in block.split("\n  {\n")[1:]:
@@ -281,10 +281,10 @@ HEADER = """/* =================================================================
 
     **GENERATED FILE** by `scripts/split-body-zones.py` from the coarse zones
     of `scripts/gen-body-zones.py`. Do not edit by hand: change the scripts and
-    run them again. Types and rationale: `body-zones.geometry.ts`.
+    run them again. Rationale: `body-zones.geometry.ts`.
     ========================================================================== */
 
-import type { VistaDelCuerpo } from './body-zones.geometry';
+import type { VistaDelCuerpo } from './body-zones.types';
 """
 
 

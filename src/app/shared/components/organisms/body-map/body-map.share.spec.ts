@@ -164,6 +164,19 @@ describe('BodyMap · ver de cerca y compartir', () => {
       );
     });
 
+    /** An old link to a coarse zone (before 2026-11-03) has no shape to pin: nothing is chosen. */
+    it('ignora un enlace viejo a una zona gruesa que ya no se dibuja', () => {
+      history.replaceState(null, '', '/?zona=rodillas');
+      TestBed.configureTestingModule({
+        imports: [BodyMap],
+        providers: [{ provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false }],
+      });
+      fixture = TestBed.createComponent(BodyMap);
+      fixture.componentRef.setInput('zonas', [...ZONAS, { id: 'rodillas', nombre: 'Rodillas' }]);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.value()).toBeNull();
+    });
+
     it('ignora una zona que no existe en vez de elegirla', () => {
       history.replaceState(null, '', '/?zona=inventada&vista=nada');
       montar();

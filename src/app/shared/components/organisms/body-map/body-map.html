@@ -193,14 +193,20 @@
           }
 
           <!-- The chosen part's name next to its pin: with ~40 parts per view,
-             «Codo derecho» must be readable on the body, not only below it. -->
+             «Codo derecho» must be readable on the body, not only below it. It
+             goes outward, beside the pin, when it fits; otherwise above it. -->
           @if (nombreElegido(); as nombre) {
             @if (centrosDeLaElegida()[0]; as c) {
+              @let lado = c[0] < caja()[0] / 2 ? -1 : 1;
+              @let largo = nombre.length * 4.6;
+              @let afuera = lado < 0 ? c[0] - 10 - largo > 0 : c[0] + 10 + largo < caja()[0];
               <text
                 class="body-map__rotulo"
-                [attr.x]="c[0]"
-                [attr.y]="c[1] - 9"
-                [attr.text-anchor]="c[0] < caja()[0] * 0.3 ? 'start' : c[0] > caja()[0] * 0.7 ? 'end' : 'middle'"
+                [attr.x]="afuera ? c[0] + lado * 10 : c[0]"
+                [attr.y]="afuera ? c[1] + 3 : c[1] - 11"
+                [attr.text-anchor]="
+                  afuera ? (lado < 0 ? 'end' : 'start') : c[0] < caja()[0] * 0.3 ? 'start' : c[0] > caja()[0] * 0.7 ? 'end' : 'middle'
+                "
                 aria-hidden="true"
                 [attr.data-testid]="testId() + '-rotulo'"
               >{{ nombre }}</text>
