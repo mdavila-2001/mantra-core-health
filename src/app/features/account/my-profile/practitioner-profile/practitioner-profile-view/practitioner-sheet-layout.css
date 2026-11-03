@@ -1,0 +1,129 @@
+/* ============================================================================
+    Layout of the practitioner's OWN sheet (/my-account): data grid, letterhead
+    zone, residence pair, invoice box and timeline status chips.
+
+    Lives apart from `practitioner-profile-view.css` (frozen at its size) and
+    from `profile-sheet.css` (shared with the patient sheet, which must not
+    change). Breakpoints follow composition-rules §5: one column on mobile, two
+    from 780px, three from 1120px. Media queries cannot take var(), hence the
+    literals (`--bp-md` declares the same 780px).
+    ========================================================================== */
+
+/* ── Data grid: short fields packed, long text spanning ─────────────────── */
+.mi-perfil__datos {
+  column-gap: var(--sp-6);
+}
+
+@media (min-width: 1120px) {
+  .mi-perfil__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* In two columns the insurers row would sit next to a blank cell: fill it. */
+@media (min-width: 780px) and (max-width: 1119px) {
+  .mi-perfil__dato--par {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── Shared section rule: letterhead zone and residence pair ────────────── */
+.mi-perfil__membrete,
+.mi-perfil__residencia {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.mi-perfil__membrete:empty,
+.mi-perfil__residencia:empty {
+  display: none;
+}
+
+/* Every section opens with the same small heading, flush with the rule. */
+.mi-perfil__membrete > section,
+.mi-perfil__residencia > .mi-perfil__domicilio {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--sp-2);
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.mi-perfil__residencia > .mi-perfil__domicilio {
+  justify-items: stretch;
+}
+
+.mi-perfil__membrete .mi-perfil__subtitulo,
+.mi-perfil__residencia .mi-perfil__subtitulo,
+.mi-perfil__membrete .mi-perfil__nota {
+  margin: 0;
+}
+
+/* Logo beside signature and seal from 780px; stacked below. */
+@media (min-width: 780px) {
+  .mi-perfil__membrete {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    column-gap: var(--sp-8);
+  }
+}
+
+/* Residence and home map side by side from 1120px. One child takes the row. */
+@media (min-width: 1120px) {
+  .mi-perfil__residencia {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    column-gap: var(--sp-6);
+  }
+}
+
+/* Same 100px height for the three boxes; widths keep the PDF slot ratios
+   (logo 2:1 is already 200 × 100). */
+.mi-perfil__firma-cajas [tipo='firma'] {
+  inline-size: 300px;
+}
+
+.mi-perfil__firma-cajas [tipo='sello'] {
+  inline-size: 100px;
+}
+
+/* ── Footer actions row, separated from the content ─────────────────────── */
+app-tab > .mi-perfil__accion {
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* ── Invoice box: label over value, three columns beside the logo ───────── */
+@media (min-width: 780px) {
+  .factura__datos {
+    grid-template-rows: auto auto;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    column-gap: var(--sp-6);
+    align-items: baseline;
+  }
+
+  .factura__datos .mi-perfil__factura-rotulo {
+    margin-block-start: 0;
+  }
+}
+
+/* ── Timeline: status chip right-aligned on the same row for every entry ── */
+.trayecto--pasado .trayecto__cuerpo {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--sp-3);
+}
+
+.trayecto--pasado .trayecto__cuerpo > app-status-seal {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.trayecto--curso .profesional__hito-cuerpo {
+  justify-items: end;
+}

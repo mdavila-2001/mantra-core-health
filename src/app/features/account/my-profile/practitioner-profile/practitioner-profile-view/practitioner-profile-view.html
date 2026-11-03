@@ -226,7 +226,7 @@
             </dd>
           </div>
 
-          <div class="mi-perfil__dato mi-perfil__dato--ancho" data-testid="profile-languages">
+          <div class="mi-perfil__dato" data-testid="profile-languages">
             <dt>Idiomas</dt>
             <dd>
               @for (idioma of perfil().idiomas; track idioma.id) {
@@ -251,9 +251,8 @@
             </dd>
           </div>
 
-          <!-- La fila del estado de la práctica se retiró de esta pestaña el 23/09/2026
-             a pedido del médico (D-02). El dato sigue en el contrato y en el pie del
-             sello de la portada. -->
+          <!-- La fila del estado de la práctica se retiró de esta pestaña el 23/09/2026 a pedido
+               del médico (D-02). El dato sigue en el contrato y en el pie del sello de la portada. -->
 
           <!-- Con qué seguros trabaja (pedido del 28/09/2026). Va con la
                identidad porque es lo que un paciente pregunta antes de pedir
@@ -264,7 +263,7 @@
                `null` es que la lectura falló, y no se dice «ninguna» de
                alguien que quizá trabaja con tres. -->
           @if (perfil().seguros !== undefined) {
-            <div class="mi-perfil__dato mi-perfil__dato--ancho" data-testid="perfil-seguros">
+            <div class="mi-perfil__dato mi-perfil__dato--par" data-testid="perfil-seguros">
               <dt>Seguros con los que trabaja</dt>
               <dd>
                 @if (perfil().seguros; as seguros) {
@@ -307,12 +306,10 @@
           </div>
         </dl>
 
-        <!-- La contraseña NO es un campo más: cambiarla revoca sesiones y exige
-             la actual, así que va por su propio flujo y con su propio botón —
-             igual que en la ficha del paciente. -->
-        <!-- El logo del consultorio. Es lo que sale en el membrete de cada PDF
-             que emite; se dibuja siempre, con su marcador «Sin logo», por lo
-             mismo que el resto de los renglones de la ficha propia. -->
+        <!-- Membrete y firma, side by side from 780px (stacked on mobile). El logo del
+             consultorio es lo que sale en el membrete de cada PDF que emite; se dibuja siempre,
+             con su marcador «Sin logo», por lo mismo que el resto de los renglones de la ficha propia. -->
+        <div class="mi-perfil__membrete">
         @if (perfil().consultorio; as consultorio) {
           <section class="mi-perfil__logo" data-testid="perfil-logo-consultorio">
             <h3 class="mi-perfil__subtitulo">Logo del consultorio</h3>
@@ -347,7 +344,10 @@
             <p class="mi-perfil__nota">Salen al pie de sus recetas y documentos. Se cambian desde «Editar».</p>
           </section>
         }
+        </div>
 
+        <!-- La contraseña NO es un campo más: cambiarla revoca sesiones y exige la actual, así
+             que va por su propio flujo y con su propio botón — igual que en la ficha del paciente. -->
         <p class="mi-perfil__accion">
           <a
             app-button
@@ -443,20 +443,20 @@
             </div>
           </dl>
 
-          <!-- El municipio en los mismos controles que el editor, cargados con
-               lo guardado y bloqueados: se ve, no se cambia (25/09/2026). -->
+          <!-- Residence + home map side by side from 1120px. El municipio en los mismos controles
+               que el editor, cargados con lo guardado y bloqueados: se ve, no se cambia (25/09/2026). -->
+          <div class="mi-perfil__residencia">
           @if (datos.municipioResidenciaId; as municipio) {
             <section class="mi-perfil__domicilio" data-testid="perfil-residencia">
-              <h2 class="mi-perfil__titulo">Municipio de residencia</h2>
+              <h3 class="mi-perfil__subtitulo">Municipio de residencia</h3>
               <app-residence-readonly [municipioId]="municipio" [punto]="datos.ubicacionDomicilio ?? null" />
             </section>
           }
 
-          <!-- El domicilio en el mapa, no sólo como enlace a otra pestaña del
-               navegador (pedido del 25/09/2026). -->
+          <!-- El domicilio en el mapa, no sólo como enlace a otra pestaña del navegador (25/09/2026). -->
           @if (datos.ubicacionDomicilio; as punto) {
             <section class="mi-perfil__domicilio" data-testid="perfil-mapa-domicilio">
-              <h2 class="mi-perfil__titulo">Ubicación del domicilio</h2>
+              <h3 class="mi-perfil__subtitulo">Ubicación del domicilio</h3>
               <app-map
                 [pines]="pinesDomicilio()"
                 etiqueta="Mapa con la ubicación del domicilio"
@@ -465,6 +465,7 @@
               />
             </section>
           }
+          </div>
         } @else {
           <p class="mi-perfil__nota mi-perfil__nota--primera">
             Todavía no pudimos traer estos datos.
@@ -619,9 +620,8 @@
            Los títulos del paso 11 se mudaron a «Credenciales» el 24/09/2026:
            son estudios, y acá el lápiz tiene que llevar a los cargos. -->
       <app-tab [label]="pestanas[4]" appTutorialTarget="perfil-trayectoria">
-        <!-- La ayuda de esta pestaña ya no es un bloque fijo arriba de la línea
-             de tiempo: sale como aviso de 3 s al abrirla (`alVerPestana` de
-             practitioner-profile).
+        <!-- La ayuda de esta pestaña ya no es un bloque fijo arriba de la línea de tiempo: sale
+             como aviso de 3 s al abrirla (`alVerPestana` de practitioner-profile).
              Fijo empujaba «Actividad actual» debajo del pliegue. -->
 
         <!-- ─── La trayectoria, como una línea de nodos ─────────────────────
