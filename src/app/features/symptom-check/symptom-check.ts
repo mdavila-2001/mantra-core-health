@@ -22,6 +22,7 @@ import {
   type ObservacionDeSintomas,
 } from '@core/symptom-notes/symptom-observations.store';
 import { BODY_ZONES, type BodyZone } from './zones.data';
+import { bodyPartsIn, withNamedParts } from './body-parts';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
@@ -377,7 +378,8 @@ export class SymptomCheck {
       const deLaTabla = BODY_ZONES.find((zona) => zona.sintomas.includes(sintoma.id));
       if (deLaTabla !== undefined) marcadas.add(deLaTabla.madre ?? deLaTabla.id); // no invented side
     }
-    return [...marcadas];
+    // Parts named in the text are exact («rodilla derecha») and narrow the symptom's coarse zone.
+    return withNamedParts(bodyPartsIn(this.texto()), [...marcadas], (id) => BODY_ZONES.find((z) => z.id === id)?.madre);
   });
 
   protected estaMarcada(idDeZona: string): boolean {
