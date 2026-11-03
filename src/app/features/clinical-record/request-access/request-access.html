@@ -13,12 +13,26 @@
     <app-alert tone="error" title="No se pudo enviar">{{ error() }}</app-alert>
   }
 
-  @if (yaPedido()) {
-    <app-alert tone="info" title="Ya hay un pedido con este paciente">
-      Ya existe una solicitud pendiente o un vínculo activo con este paciente.
-      Si todavía no respondió, espere su decisión; si ya aceptó, puede abrir su
-      expediente desde la agenda o desde su consulta.
-    </app-alert>
+  @switch (conflicto()) {
+    @case ('activo') {
+      <app-alert tone="info" title="Ya tiene un vínculo activo con este paciente">
+        No hace falta pedirlo de nuevo. Puede abrir su expediente desde la
+        agenda o desde su consulta.
+      </app-alert>
+    }
+    @case ('pendiente') {
+      <app-alert tone="info" title="Ya pidió la vinculación">
+        El paciente todavía no respondió. Espere su decisión: no hace falta
+        volver a pedirla.
+      </app-alert>
+    }
+    @case ('desconocido') {
+      <app-alert tone="info" title="Ya hay un pedido con este paciente">
+        Ya existe una solicitud pendiente o un vínculo activo con este paciente.
+        Si todavía no respondió, espere su decisión; si ya aceptó, puede abrir su
+        expediente desde la agenda o desde su consulta.
+      </app-alert>
+    }
   }
 
   @if (sinOrganizacion()) {
