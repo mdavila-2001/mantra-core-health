@@ -7,6 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { SpecialtyImages } from '../../core/data-access/terminology/specialty-images.service';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap, timer, type Observable } from 'rxjs';
@@ -31,7 +32,6 @@ import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
-import { specialtyPhoto } from '@shared/utils/directory-photo';
 import {
   recomendarMedicamentos,
   type MedicamentoSugerido,
@@ -561,7 +561,7 @@ export class SymptomCheck {
   protected readonly explicacionDe = explain;
 
   /** La foto de la tarjeta: la misma que esa especialidad tiene en `/directory`. */
-  protected readonly fotoDe = specialtyPhoto;
+  protected readonly fotoDe = inject(SpecialtyImages).of;
 
   /* --- Elegir sin escribir ---------------------------------------------- */
 

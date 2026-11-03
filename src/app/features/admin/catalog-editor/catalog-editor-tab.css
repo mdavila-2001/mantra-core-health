@@ -54,3 +54,12 @@
   list-style: disc;
   color: var(--text-secondary);
 }
+
+.concepto-miniatura {
+  display: block;
+  inline-size: 5.5rem;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+}

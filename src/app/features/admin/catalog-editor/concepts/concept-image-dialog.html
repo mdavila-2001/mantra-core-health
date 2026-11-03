@@ -1,0 +1,22 @@
+<app-content-dialog
+  size="md"
+  [heading]="'Imagen de «' + concept().display + '»'"
+  description="Se muestra en la portada del directorio y en el chequeo de síntomas. Se recorta a 16:9."
+  [dismissible]="!guardando()"
+  (closed)="closed.emit()"
+>
+  @if (error(); as mensaje) {
+    <app-alert tone="error" data-testid="concept-image-error">{{ mensaje }}</app-alert>
+  }
+  <img class="imagen-concepto__vista" [src]="vista()" alt="" data-testid="concept-image-preview" />
+  <div class="imagen-concepto__acciones">
+    <label class="imagen-concepto__subir">
+      <input type="file" accept="image/png,image/jpeg,image/webp" [disabled]="guardando()" (change)="elegir($event)" data-testid="concept-image-file" />
+    </label>
+    <button app-button variant="outline" size="sm" [disabled]="guardando()" (clicked)="restaurar()" data-testid="concept-image-restore">Usar la ilustración original</button>
+  </div>
+  <div dialog-actions>
+    <button app-button variant="outline" [disabled]="guardando()" (clicked)="closed.emit()">Cancelar</button>
+    <button app-button [disabled]="pendiente() === null || guardando()" (clicked)="guardar()" data-testid="concept-image-save">Guardar imagen</button>
+  </div>
+</app-content-dialog>

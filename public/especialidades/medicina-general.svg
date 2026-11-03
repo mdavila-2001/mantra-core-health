@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img">
+<title>Medicina general</title>
+<rect width="320" height="180" fill="var(--especialidad-fondo, #E6F4F1)"/>
+<g fill="var(--especialidad-trazo, #0F766E)" fill-opacity=".14" stroke="none"><circle cx="40" cy="48" r="14"/><circle cx="280" cy="132" r="14"/><circle cx="70" cy="140" r="6"/><circle cx="252" cy="40" r="6"/></g><g fill="none" stroke="var(--especialidad-acento, #F59E0B)" stroke-width="3" stroke-linecap="round"><path d="M270 80 V96 M262 88 H278"/><path d="M50 98 V110 M44 104 H56"/><path d="M92 36 h8 M220 146 h8"/></g>
+<circle cx="160" cy="90" r="55" fill="var(--especialidad-trazo, #0F766E)" fill-opacity=".12"/>
+<g transform="translate(83.2 13.2) scale(1.6)" fill="none" stroke="var(--especialidad-trazo, #0F766E)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M32 28 V42 C32 54 52 54 52 42 V28 M42 52 V60 C42 70 64 70 64 60"/><circle cx="64" cy="54" r="5"/><circle cx="32" cy="26" r="2.5" fill="var(--especialidad-acento, #F59E0B)" stroke="none"/><circle cx="52" cy="26" r="2.5" fill="var(--especialidad-acento, #F59E0B)" stroke="none"/></g>
+</svg>

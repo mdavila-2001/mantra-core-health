@@ -7,6 +7,7 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AccountingTab } from './accounting/accounting-tab';
 import { AuditTab } from './audit/audit-tab';
+import { ConceptsTab } from './concepts/concepts-tab';
 import { GlossaryTab } from './glossary/glossary-tab';
 import { ServicesTab } from './services/services-tab';
 
@@ -21,7 +22,7 @@ import { ServicesTab } from './services/services-tab';
  */
 @Component({
   selector: 'app-catalog-editor',
-  imports: [Card, Tabs, Tab, PageHeader, ServicesTab, GlossaryTab, AccountingTab, AuditTab],
+  imports: [Card, Tabs, Tab, PageHeader, ServicesTab, GlossaryTab, AccountingTab, AuditTab, ConceptsTab],
   templateUrl: './catalog-editor.html',
   styleUrl: './catalog-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

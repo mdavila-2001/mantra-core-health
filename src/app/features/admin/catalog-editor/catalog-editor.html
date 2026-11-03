@@ -1,6 +1,6 @@
 <app-page-header
   title="Catálogos globales"
-  subtitle="Servicios, glosarios y reporte contable por tipo de usuario. Cada cambio se guarda en la API con su versión y queda en la auditoría; nada se borra, se desactiva."
+  subtitle="Servicios, glosarios, conceptos de terminología (con la imagen de cada especialidad) y reporte contable por tipo de usuario. Cada cambio se guarda en la API con su versión y queda en la auditoría; nada se borra, se desactiva."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -25,6 +25,11 @@
       <app-tab label="Auditoría">
         @if (abiertas().has(3)) {
           <app-catalog-audit-tab />
+        }
+      </app-tab>
+      <app-tab label="Conceptos">
+        @if (abiertas().has(4)) {
+          <app-catalog-concepts-tab />
         }
       </app-tab>
     </app-tabs>
