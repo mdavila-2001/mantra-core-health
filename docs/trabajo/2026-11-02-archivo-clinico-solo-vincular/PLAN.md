@@ -7,7 +7,7 @@
 ## Alcance
 - IN: fila de `clinical-record` (sin carpeta), 409 de `request-access`, specs unitarios, 5 recorridos Playwright que entraban por la carpeta.
 - OUT: tarjeta «Su médico de cabecera» (reservar cita / lista de médicos) — tarea 2, otra rama; el 403 de `GET /profiles/patients/:id` en la pantalla de solicitud (el nombre cae al genérico, es esperable sin vínculo); estado por fila (el listado de vínculos es sólo `CLINICIAN`/`SECURITY_ADMIN`, requiere API).
-- Ambigüedades registradas: (1) el 409 no distingue pendiente de activo — la API no manda `code` distinto y la regla del repo es ramificar por `code`; supuesto: texto neutro. Confirmar con quien lleve la API si se quiere un `reason`. (2) Sin botón de expediente en el buscador, el médico entra al expediente por agenda/consulta/«Mis pacientes»; supuesto tomado por pedido explícito del propietario (02/11/2026).
+- Ambigüedades registradas: (1) el 409 no distingue pendiente de activo — la API no manda `code` distinto y la regla del repo es ramificar por `code`; supuesto: texto neutro. Confirmar con quien lleve la API si se quiere un `reason`. (2) Sin botón de expediente en el buscador, el médico entra al expediente por la agenda o la consulta; supuesto tomado por pedido explícito del propietario (02/11/2026).
 
 ## H1 — Un solo botón por fila
 **CA:** Dado un médico que buscó pacientes, cuando ve la tabla, entonces cada fila tiene sólo «Solicitar vinculación» y apunta a `/medical-records/:id/request-access`.
