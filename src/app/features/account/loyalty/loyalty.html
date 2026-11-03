@@ -1,8 +1,11 @@
-<app-page-header
-  title="Mis puntos"
-  subtitle="Lo que sumaste con tus compras, y cómo canjearlo."
-  [breadcrumbs]="breadcrumbs()"
-/>
+<!-- Embedded in the profile sheet tab: the card already has a header. -->
+@if (!embebido()) {
+  <app-page-header
+    title="Mis puntos"
+    subtitle="Lo que sumaste con tus compras, y cómo canjearlo."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
 
 @if (sinPerfilDePaciente) {
   <!-- Sesión válida de una cuenta que no es de un paciente: la pantalla no le
@@ -109,10 +112,26 @@
           <section class="movimientos" aria-labelledby="movimientos-titulo">
             <h2 id="movimientos-titulo" class="movimientos__titulo">Tus movimientos</h2>
 
+            @if (errorDeMovimientos(); as mensaje) {
+              <app-alert tone="error" data-testid="movimientos-error">{{ mensaje }}</app-alert>
+            }
+
             @if (movimientos().length === 0) {
-              <p class="movimientos__vacio" data-testid="movimientos-vacio">
-                Todavía no hay movimientos para mostrar.
-              </p>
+              @if (errorDeMovimientos() === null) {
+                <p class="movimientos__vacio" data-testid="movimientos-vacio">
+                  Todavía no hay movimientos para mostrar.
+                </p>
+              } @else {
+                <button
+                  app-button
+                  variant="outline"
+                  type="button"
+                  data-testid="movimientos-reintentar"
+                  (clicked)="cargarMovimientos()"
+                >
+                  Volver a intentar
+                </button>
+              }
             } @else {
               <ul class="movimientos__lista" data-testid="movimientos-lista">
                 @for (movimiento of movimientos(); track movimiento.id) {

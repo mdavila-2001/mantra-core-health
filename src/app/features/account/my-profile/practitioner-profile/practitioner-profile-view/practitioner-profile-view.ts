@@ -128,7 +128,7 @@ interface FilaCredencial {
     NgTemplateOutlet,
   ],
   templateUrl: './practitioner-profile-view.html',
-  styleUrl: './practitioner-profile-view.css',
+  styleUrls: ['./practitioner-profile-view.css', './practitioner-sheet-layout.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionerProfileView implements OnInit {

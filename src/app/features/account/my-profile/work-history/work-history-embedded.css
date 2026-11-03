@@ -1,0 +1,99 @@
+/* Layout refinements for «Dónde atiendo» (sites table) and for the block when
+   it is embedded in a tab. Kept apart because work-history.css is frozen at
+   its line baseline. */
+
+/* Inside a tab the surrounding page card already frames the content: drawing
+   this block's own outlined card produced a card inside a card. In a tab the
+   card goes flat (no border, no fill, no padding); standalone surfaces such as
+   «Mi consultorio propio» keep the card untouched. Higher specificity than
+   card.css's `:host(.card--outlined)` / padding modifiers, no `!important`.
+   `.card` is repeated to outrank the redesign frame in paciente.css
+   (`:root[data-theme] .app-shell--redesign .app-main .card.card--outlined`),
+   same technique as `.content-dialog__cuerpo` in alovida.css. */
+:host-context(app-tab) .historial.card.card.card.card.card {
+  --_card-padding: 0;
+
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The bottom rule separates the sites from the work history below. When the
+   history is not rendered (consultorios-only mounts) there is nothing to
+   separate, and the stray line read as the bottom edge of another box. */
+.historial__sedes:last-child {
+  padding-block-end: 0;
+  border-block-end: none;
+}
+
+/* Table cells: from tablet up the short values never break mid-phrase. */
+@media (min-width: 48rem) {
+  .historial__aviso-qr,
+  .historial__telefono {
+    white-space: nowrap;
+  }
+
+  /* Row actions on one line («Configurar QR bancario» · «Editar teléfono»)
+     instead of stacked; below tablet they keep wrapping as app-row-actions
+     decides. Attribute selector outranks the child's `:host` rule. */
+  app-row-actions.historial__sede-acciones {
+    flex-wrap: nowrap;
+  }
+
+  /* The two intro paragraphs of «Dónde atiendo» sit side by side, as a lead
+     spanning the same width as the search and the table under them, instead
+     of one capped column with an empty half next to it. Everything else in
+     the section keeps the full row. */
+  .historial__sedes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--sp-8);
+  }
+
+  .historial__sedes > * {
+    grid-column: 1 / -1;
+  }
+
+  .historial__sedes > .historial__intro {
+    grid-column: auto;
+  }
+
+  /* «Corregir o retirar»: one tidy row per link. Name and role take the free
+     space on the left; dates and actions are fixed columns shared by every
+     row (subgrid), so they line up instead of floating mid-row. */
+  .historial__lista.historial__lista--editable {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: var(--sp-6);
+  }
+
+  .historial__lista--editable > .historial__item {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+  }
+
+  /* «¿Atiende acá?» belongs to its row: a second line inside its rule. */
+  .historial__lista--editable .historial__donde-atiende {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+}
+
+.historial__lista--editable .historial__acciones-sede {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}
+
+/* The section's primary action closes the sheet as its footer: right-aligned
+   like «Agregar lugar de atención» in «Dónde atiendo», behind a rule. */
+:host-context(app-tab) .historial__alta {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0;
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
