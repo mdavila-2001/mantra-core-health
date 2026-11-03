@@ -38,6 +38,8 @@ export interface BodyZone {
   readonly icono: string;
   /** Los `id` de `SINTOMAS` que esta zona ofrece, en orden de frecuencia. */
   readonly sintomas: readonly string[];
+  /** Fine zones only: the coarse zone they were cut from (see `ZONAS_FINAS`). */
+  readonly madre?: string;
 }
 
 /*
@@ -55,7 +57,7 @@ export interface BodyZone {
     Un síntoma puede estar en más de una zona (el hormigueo se siente en la
     mano y en el pie): la zona es por dónde se entra, no una clasificación.
 */
-export const BODY_ZONES: readonly BodyZone[] = [
+const ZONAS_GRUESAS: readonly BodyZone[] = [
   // ─── La cabeza y la cara ───────────────────────────────────────────────
   {
     id: 'cabeza',
@@ -89,7 +91,7 @@ export const BODY_ZONES: readonly BodyZone[] = [
   },
   {
     id: 'garganta',
-    nombre: 'Garganta y cuello',
+    nombre: 'Garganta',
     icono: 'garganta',
     sintomas: ['dolor-de-garganta', 'ronquera', 'tiroides', 'ganglios', 'dolor-de-cuello'],
   },
@@ -252,3 +254,83 @@ export const BODY_ZONES: readonly BodyZone[] = [
     ],
   },
 ];
+
+/*
+    ## Zonas finas: lado y segmento (2026-11-03)
+
+    La figura ya no se toca por pares: cada zona gruesa de arriba se parte en lo
+    que uno señala —«Rodilla derecha», «Codo izquierdo», «Boca del estómago»—
+    (`scripts/split-body-zones.py`). El lado es siempre **el del paciente**.
+
+    Cada fina guarda su `madre`. Ofrece los síntomas de la madre salvo que acá
+    se afinen con otros `id` que ya existen en `SINTOMAS` (el codo no ofrece
+    «dolor de mano»; el costado derecho bajo las costillas ofrece «vesícula»).
+    Las gruesas siguen en la tabla: la lectura de la IA y la búsqueda por
+    síntoma hablan en zonas gruesas, y la figura enciende todas sus hijas.
+*/
+type Fina = readonly [id: string, nombre: string, madre: string, sintomas?: readonly string[]];
+
+const LADOS = [
+  ['der', 'derecho', 'derecha'],
+  ['izq', 'izquierdo', 'izquierda'],
+] as const;
+
+/** Both sides of a fine zone: `{n}` takes the gendered side name. */
+function ambos(id: string, nombre: string, femenino: boolean, madre: string, sintomas?: readonly string[]): Fina[] {
+  return LADOS.map(
+    ([sufijo, m, f]) => [`${id}-${sufijo}`, nombre.replace('{n}', femenino ? f : m), madre, sintomas] as const,
+  );
+}
+
+const BRAZO = ['dolor-muscular', 'hormigueo', 'golpe-o-torcedura', 'dolor-articular'];
+const COLUMNA = ['dolor-de-espalda', 'osteoporosis-escoliosis'];
+
+const FINAS: readonly Fina[] = [
+  ...ambos('cuello', 'Cuello, lado {n}', false, 'garganta', ['dolor-de-cuello', 'ganglios', 'golpe-o-torcedura']),
+  ...ambos('ojo', 'Ojo {n}', false, 'ojos'),
+  ...ambos('oido', 'Oído {n}', false, 'oidos'),
+  ...ambos('hombro', 'Hombro {n}', false, 'hombros'),
+  ...ambos('brazo', 'Brazo {n}', false, 'brazos', BRAZO),
+  ...ambos('codo', 'Codo {n}', false, 'brazos', ['dolor-de-codo', 'dolor-articular', 'golpe-o-torcedura', 'hormigueo']),
+  ...ambos('antebrazo', 'Antebrazo {n}', false, 'brazos', ['hormigueo', 'dolor-muscular', 'golpe-o-torcedura']),
+  ...ambos('muneca', 'Muñeca {n}', true, 'manos', ['dolor-de-mano', 'hormigueo', 'dolor-articular', 'golpe-o-torcedura']),
+  ...ambos('mano', 'Mano {n}', true, 'manos'),
+  ['esternon', 'Centro del pecho', 'pecho', ['dolor-de-pecho', 'palpitaciones', 'acidez', 'falta-de-aire']],
+  ...ambos('pecho', 'Pecho, lado {n}', false, 'pecho'),
+  ['epigastrio', 'Boca del estómago', 'estomago', ['acidez', 'dolor-de-panza', 'nauseas', 'gases']],
+  ['hipocondrio-der', 'Bajo las costillas, derecha', 'estomago', ['vesicula', 'dolor-de-panza', 'nauseas', 'ictericia']],
+  ['hipocondrio-izq', 'Bajo las costillas, izquierda', 'estomago', ['dolor-de-panza', 'gases', 'nauseas']],
+  ...ambos('flanco', 'Costado {n} de la panza', false, 'abdomen', ['dolor-de-panza', 'colico-renal', 'gases', 'estrenimiento']),
+  ['periumbilical', 'Alrededor del ombligo', 'abdomen', ['dolor-de-panza', 'diarrea', 'gases', 'hernia', 'parasitos']],
+  ['fosa-iliaca-der', 'Bajo vientre, derecha', 'abdomen', ['apendicitis', 'dolor-de-panza', 'hernia', 'dolor-menstrual', 'miomas-quistes']],
+  ['hipogastrio', 'Bajo vientre, al centro', 'abdomen', ['dolor-de-panza', 'ardor-al-orinar', 'dolor-menstrual', 'cambios-en-la-orina']],
+  ['fosa-iliaca-izq', 'Bajo vientre, izquierda', 'abdomen', ['dolor-de-panza', 'estrenimiento', 'hernia', 'dolor-menstrual', 'miomas-quistes']],
+  ...ambos('omoplato', 'Omóplato {n}', false, 'espalda', ['dolor-de-espalda', 'dolor-muscular', 'dolor-de-hombro']),
+  ['columna-alta', 'Columna, parte alta', 'espalda', [...COLUMNA, 'dolor-de-cuello']],
+  ...ambos('espalda-media', 'Espalda media, lado {n}', false, 'espalda', ['dolor-de-espalda', 'dolor-muscular']),
+  ['columna-media', 'Columna, parte media', 'espalda', COLUMNA],
+  ...ambos('lumbar', 'Cintura y riñón, lado {n}', false, 'rinones'),
+  ['columna-lumbar', 'Columna lumbar', 'rinones', [...COLUMNA, 'hormigueo', 'dificultad-para-caminar']],
+  ...ambos('gluteo', 'Glúteo {n}', false, 'gluteos', ['dolor-de-cadera', 'dolor-de-espalda', 'hormigueo']),
+  ['coxis', 'Coxis', 'gluteos', ['dolor-de-espalda', 'golpe-o-torcedura', 'hemorroides', 'sangre-en-las-heces']],
+  ...ambos('cadera', 'Cadera {n}', true, 'caderas'),
+  ...ambos('muslo', 'Muslo {n}', false, 'piernas', ['dolor-muscular', 'golpe-o-torcedura', 'hormigueo', 'varices']),
+  ...ambos('rodilla', 'Rodilla {n}', true, 'rodillas'),
+  ...ambos('corva', 'Detrás de la rodilla {n}', true, 'rodillas', ['dolor-de-rodilla', 'hinchazon-de-piernas', 'varices']),
+  ...ambos('canilla', 'Canilla {n}', true, 'piernas', ['golpe-o-torcedura', 'hinchazon-de-piernas', 'dolor-muscular', 'herida-que-no-cierra']),
+  ...ambos('pantorrilla', 'Pantorrilla {n}', true, 'piernas', ['dolor-muscular', 'hinchazon-de-piernas', 'varices', 'hormigueo']),
+  ...ambos('tobillo', 'Tobillo {n}', false, 'pies', ['golpe-o-torcedura', 'hinchazon-de-piernas', 'dolor-articular', 'dolor-de-pie']),
+  ...ambos('pie', 'Pie {n}', false, 'pies', ['dolor-de-pie', 'hongos', 'ampolla-callo', 'herida-que-no-cierra', 'hinchazon-de-piernas']),
+  ...ambos('talon', 'Talón {n}', false, 'pies', ['dolor-de-pie', 'ampolla-callo', 'golpe-o-torcedura']),
+];
+
+const ZONAS_FINAS: readonly BodyZone[] = FINAS.map(([id, nombre, madre, sintomas]) => {
+  const gruesa = ZONAS_GRUESAS.find((zona) => zona.id === madre);
+  return { id, nombre, madre, icono: gruesa?.icono ?? 'huesos', sintomas: sintomas ?? gruesa?.sintomas ?? [] };
+});
+
+/**
+ * Coarse zones first: «the first zone that offers a symptom» (the text
+ * fallback in `symptom-check`) stays the coarse one, which lights every child.
+ */
+export const BODY_ZONES: readonly BodyZone[] = [...ZONAS_GRUESAS, ...ZONAS_FINAS];

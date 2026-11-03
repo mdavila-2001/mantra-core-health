@@ -259,6 +259,22 @@ describe('ViewState · los 9 estados del M34', () => {
 
       expect(sinMensaje.nextAction).toEqual(UNA_ACCION);
       expect('message' in sinMensaje).toBe(false);
+      expect('title' in sinMensaje).toBe(false);
+    });
+
+    it('S3 lleva el título sólo cuando se da, con o sin mensaje', () => {
+      const completo = empty(UNA_ACCION, 'Nada por ahora', 'Sin novedades');
+      const soloTitulo = empty(UNA_ACCION, undefined, 'Sin novedades');
+
+      expect(completo).toEqual({
+        status: 'empty',
+        nextAction: UNA_ACCION,
+        message: 'Nada por ahora',
+        title: 'Sin novedades',
+      });
+      expect(soloTitulo.title).toBe('Sin novedades');
+      expect('message' in soloTitulo).toBe(false);
+      expect('title' in empty(UNA_ACCION, 'Nada por ahora')).toBe(false);
     });
 
     it('S4 conserva los problemas y el tiempo de espera cuando lo hay', () => {

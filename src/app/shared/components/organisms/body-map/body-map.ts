@@ -43,7 +43,6 @@ import {
 } from './body-map.types';
 
 export * from './body-map.types';
-
 /** Instance counter for unique gradient IDs. */
 let nextSilhouette = 0;
 
@@ -106,7 +105,7 @@ export class BodyMap {
       const zones = v.zonas.flatMap((s) => {
         const z = byId.get(s.id);
         if (!z) return [];
-        return [{ ...z, d: s.d, centros: s.centros, acercaA: s.acercaA }];
+        return [{ ...z, d: s.d, centros: s.centros, madre: s.madre, acercaA: s.acercaA }];
       });
       return zones.length > 0 ? [{ vista: v, zonas: zones }] : [];
     });
@@ -232,13 +231,13 @@ export class BodyMap {
     return this.zonas().find((z) => z.id === id)?.nombre ?? null;
   });
 
-  protected estaMarcada(id: string): boolean {
-    return this.marcadasPorId().has(id);
+  protected estaMarcada(zona: ZonaDibujable): boolean {
+    return this.marcadasPorId().has(zona.id) || this.marcadasPorId().has(zona.madre);
   }
 
   /** Accessible label including text match announcement. */
   protected nombreAccesible(zona: ZonaDibujable): string {
-    return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
+    return this.estaMarcada(zona) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
   }
 
   constructor() {
@@ -262,7 +261,7 @@ export class BodyMap {
       const zones = this.zonas();
       if (linkParsed || !this.navegador || zones.length === 0) return;
       linkParsed = true;
-      untracked(() => this.abrirDesdeElEnlace(zones));
+      untracked(() => this.abrirDesdeElEnlace());
     });
 
     // Clear pinned tap coordinates when active zone selection changes.
@@ -283,14 +282,15 @@ export class BodyMap {
     });
   }
 
-  private abrirDesdeElEnlace(zones: readonly ZonaElegible[]): void {
+  /** Restores view and zone from the URL; only drawn zones (an old coarse link has nothing to pin). */
+  private abrirDesdeElEnlace(): void {
     const params = new URLSearchParams(this.document.location.search);
     const z = params.get(PARAMETRO_ZONA);
     const v = params.get(PARAMETRO_VISTA);
     if (v && this.vistas().some((item) => item.vista.id === v)) {
       this.vistaPedida.set(v as IdDeVista);
     }
-    if (z && !this.value() && zones.some((item) => item.id === z)) {
+    if (z && !this.value() && this.vistas().some((v) => v.zonas.some((item) => item.id === z))) {
       this.value.set(z);
       this.elegidaAlPedirVista.set(z);
     }

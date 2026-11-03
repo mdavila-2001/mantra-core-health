@@ -375,7 +375,7 @@ export class SymptomCheck {
         continue;
       }
       const deLaTabla = BODY_ZONES.find((zona) => zona.sintomas.includes(sintoma.id));
-      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.madre ?? deLaTabla.id); // no invented side
     }
     return [...marcadas];
   });

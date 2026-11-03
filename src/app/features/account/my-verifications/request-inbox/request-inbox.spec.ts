@@ -21,7 +21,12 @@ function hilo(id: string, partial: Partial<RequestThread> = {}): RequestThread {
     lastAt: new Date('2026-10-30T12:00:00Z'),
     preview: `Pidió confirmar su cargo en ${id}`,
     messages: [
-      { speaker: 'me', text: 'Trabajé ahí de 2020 a 2024.', at: new Date('2026-10-29T10:00:00Z'), ticks: 'sent' },
+      {
+        speaker: 'me',
+        text: 'Trabajé ahí de 2020 a 2024.',
+        at: new Date('2026-10-29T10:00:00Z'),
+        ticks: 'sent',
+      },
       { speaker: 'them', text: 'Confirmado.', at: null, seal: 'approved' },
     ],
     canWithdraw: true,

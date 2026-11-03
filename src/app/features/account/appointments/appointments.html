@@ -738,9 +738,7 @@
             </ul>
           }
           @case ('empty') {
-            <app-alert tone="info" title="Sin horarios para mostrar">
-              {{ mensajeDeHorariosVacios() }}
-            </app-alert>
+            <app-view-state-host [state]="horariosVista()" />
           }
           @default {
             <app-alert tone="error" title="No pudimos traer los horarios">
