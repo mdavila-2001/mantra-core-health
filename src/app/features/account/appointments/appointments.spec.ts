@@ -114,6 +114,8 @@ describe('Appointments', () => {
 
     if (pid !== undefined) {
       http.expectOne((r) => r.url === '/scheduling/waitlist').flush({ items: esperas ?? [] });
+      // An empty list keeps the session's organization; the resources read follows it.
+      http.expectOne((r) => r.url === '/scheduling/bookable-organizations').flush({ items: [] });
       fixture.detectChanges();
     }
   }
@@ -457,6 +459,39 @@ describe('Appointments', () => {
       expect(fixture.nativeElement.querySelector('[aria-labelledby="pedir-turno"]')).not.toBeNull();
       expect(fixture.nativeElement.querySelector('[aria-labelledby="turnos-propios"]')).toBeNull();
       expect(document.activeElement?.id).toBe('pedir-turno');
+    });
+
+    it('con un laboratorio disponible, el vacío de horarios lleva el título del host y pide un laboratorio', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?seccion=pedir&resource=lab');
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({ items: [{ id: 'lab-1', name: 'Laboratorio Central', capacity: 1 }], count: 1 });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const vacio: HTMLElement | null = fixture.nativeElement.querySelector('app-view-state-host');
+      expect(vacio?.textContent).toContain('Primero elija un laboratorio');
+      expect(vacio?.textContent).not.toContain('Primero elija con quién');
+    });
+
+    it('con un profesional disponible, el mismo vacío pide con quién y el título lo dice', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?seccion=pedir');
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({ items: [{ id: 'r-1', name: 'Consultorio Cardiología', capacity: 1 }], count: 1 });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const vacio: HTMLElement | null = fixture.nativeElement.querySelector('app-view-state-host');
+      expect(vacio?.textContent).toContain('Primero elija con quién');
     });
 
     /**
@@ -803,8 +838,9 @@ describe('Appointments', () => {
     fixture.detectChanges();
 
     // El `http.verify()` del afterEach falla si se pidieron cupos.
-    const estado = interno<() => { status: string }>('horarios')();
+    const estado = interno<() => { status: string; title?: string }>('horarios')();
     expect(estado.status).toBe('empty');
+    expect(estado.title).toBe('Primero elija con quién');
   });
 
   /* ---- elegir el día en el calendario (F-10) ------------------------------ */
@@ -1201,6 +1237,7 @@ describe('Appointments', () => {
         desde: HORA_TEMPRANO,
         hasta: '2026-09-02T09:45:00.000Z',
         oferta: 'of-eco',
+        org: 't-1',
       });
     });
 
@@ -1320,9 +1357,12 @@ describe('Appointments', () => {
         p.flush({ offeringId: 'of-eco', minDurationMinutes: 30, maxDurationMinutes: 45, items: [] });
       }
 
-      const estado = interno<() => { status: string; message?: string }>('horarios')();
+      const estado = interno<() => { status: string; message?: string; title?: string }>(
+        'horarios',
+      )();
       expect(estado.status).toBe('empty');
       expect(estado.message).toContain('Ecocardiograma Doppler');
+      expect(estado.title).toBe('Sin horarios para este servicio');
     });
 
     it('si una sede no contesta, muestra los horarios de la otra y lo avisa', () => {
@@ -1752,6 +1792,8 @@ function montarCancelacion(opts: Opciones) {
           enrollWaitlist,
           // Corrección 11 · el bloque «Comprobante de pago» lee el pago de la cita.
           getBooking: vi.fn((id: string) => of({ id })),
+          // No other organization offers slots: keep the session's one.
+          listBookableOrganizations: vi.fn().mockReturnValue(of([])),
         },
       },
       { provide: TerminologyClient, useValue: { readConceptLabels } },
@@ -1901,10 +1943,12 @@ describe('Appointments · cancelar turno propio', () => {
       .cancelarTurno(api(comp).turnosListos()[0])
       .then(() => {
         // El motivo viaja siempre: el servidor lo exige (corrección #14).
-        expect(cancelBooking).toHaveBeenCalledWith('b1', {
-          cancelledBy: 'PATIENT',
-          reasonText: MOTIVO_DE_PRUEBA,
-        });
+        expect(cancelBooking).toHaveBeenCalledWith(
+          'b1',
+          { cancelledBy: 'PATIENT', reasonText: MOTIVO_DE_PRUEBA },
+          undefined,
+          undefined,
+        );
       });
   });
 
@@ -2327,6 +2371,8 @@ describe('Appointments · lista de espera (P8)', () => {
         patientProfileId: 'p-1',
         resourceId: 'r-1',
       }),
+      undefined,
+      { tenantId: 't-1' },
     );
     expect(toast.success).toHaveBeenCalled();
   });

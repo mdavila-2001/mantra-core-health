@@ -38,7 +38,7 @@ import type {
   ValueSetOption,
 } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../core/view-state/view-state';
+import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
@@ -58,6 +58,14 @@ import { SearchField } from '../../../shared/components/molecules/search-field/s
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import {
+  VACIO_ELEGIR_AGENDA,
+  VACIO_ELEGIR_LABORATORIO,
+  VACIO_SIN_CITAS,
+  VACIO_SIN_HORARIOS,
+  vacioSinHorariosDeServicio,
+} from './appointments-empty-states';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
 import { BookingPaymentReceipts } from './booking-payment-receipts/booking-payment-receipts';
@@ -177,9 +185,6 @@ const PARAM_DE_TURNO = 'turno';
  */
 export const RESOURCE_PARAM = 'resource';
 
-/** El vacío de horarios antes de elegir con quién; su par de laboratorio abajo. */
-const ELEGIR_CON_QUIEN = 'Elija con quién se quiere atender para ver los horarios libres.';
-const ELEGIR_LABORATORIO = 'Elija un laboratorio para ver los horarios libres.';
 export const LAB_RESOURCE = 'lab';
 
 /* ---- FT-05 · los cuatro filtros, también en la URL ------------------------ */
@@ -413,6 +418,7 @@ const SEDE_CUALQUIERA = 'cualquiera';
     RouterLink,
     SearchField,
     Select,
+    ViewStateHost,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
@@ -1128,23 +1134,12 @@ export class Appointments {
   /** La organización todavía no cargó ninguna agenda que ofrecer. */
   protected readonly sinRecursos = signal(false);
 
-  /**
-   * La próxima acción de todo vacío de esta pantalla es la misma: elegir una
-   * agenda. No lleva `route` porque el control ya está acá arriba, en la misma
-   * vista: mandar a otra ruta para volver al mismo lugar sería un rodeo.
-   */
-  private readonly pasoElegirAgenda = { label: 'Elija una agenda' } as const;
+  protected readonly horarios = signal<ViewState<readonly HorarioVisible[]>>(VACIO_ELEGIR_AGENDA);
 
-  protected readonly horarios = signal<ViewState<readonly HorarioVisible[]>>(
-    empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN),
-  );
-
-  /** El mensaje del vacío, que la plantilla no puede sacar del estado tipada. */
-  protected readonly mensajeDeHorariosVacios = computed(() => {
+  /** What the slots section renders: laboratory mode asks for a laboratory, not "whom to book with". */
+  protected readonly horariosVista = computed<ViewState<readonly HorarioVisible[]>>(() => {
     const estado = this.horarios();
-    const mensaje = estado.status === 'empty' ? (estado.message ?? '') : '';
-    // En modo laboratorio no se elige «con quién»: se elige un laboratorio.
-    return mensaje === ELEGIR_CON_QUIEN && this.esLaboratorio() ? ELEGIR_LABORATORIO : mensaje;
+    return estado === VACIO_ELEGIR_AGENDA && this.esLaboratorio() ? VACIO_ELEGIR_LABORATORIO : estado;
   });
 
   /** Todos los turnos del titular, **sin** filtrar. */
@@ -1368,7 +1363,7 @@ export class Appointments {
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
-            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pidió ninguna cita.'));
+            this.turnos.set(VACIO_SIN_CITAS);
             return;
           }
           this.traducirEstados(pagina.items);
@@ -1454,7 +1449,7 @@ export class Appointments {
     this.busquedaDeRecurso.set('');
     this.ofertasDelProfesional.set([]);
     this.queQuiere.set(PEDIR_CONSULTA);
-    this.horarios.set(empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN));
+    this.horarios.set(VACIO_ELEGIR_AGENDA);
     this.cargarRecursos();
   }
 
@@ -1501,7 +1496,7 @@ export class Appointments {
     if (clave === null) {
       this.ofertasDelProfesional.set([]);
       this.queQuiere.set(PEDIR_CONSULTA);
-      this.horarios.set(empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN));
+      this.horarios.set(VACIO_ELEGIR_AGENDA);
       return;
     }
     this.cargarOfertas();
@@ -1617,12 +1612,7 @@ export class Appointments {
           .sort((a, b) => a.desde.getTime() - b.desde.getTime())
           .slice(0, TOPE_DE_HORARIOS);
         if (libres.length === 0) {
-          this.horarios.set(
-            empty(
-              { label: 'Pruebe con otra agenda' },
-              'No hay horarios libres en las próximas dos semanas.',
-            ),
-          );
+          this.horarios.set(VACIO_SIN_HORARIOS);
           return;
         }
         this.horarios.set(ready(libres));
@@ -1694,12 +1684,7 @@ export class Appointments {
           .sort((a, b) => a.desde.getTime() - b.desde.getTime())
           .slice(0, TOPE_DE_HORARIOS);
         if (libres.length === 0) {
-          this.horarios.set(
-            empty(
-              { label: 'Pruebe con otro servicio o profesional' },
-              `No hay horarios para ${servicio.serviceName} en las próximas dos semanas.`,
-            ),
-          );
+          this.horarios.set(vacioSinHorariosDeServicio(servicio.serviceName));
           return;
         }
         this.horarios.set(ready(libres));

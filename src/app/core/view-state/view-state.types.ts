@@ -97,6 +97,11 @@ export interface EmptyViewState {
   readonly nextAction: ViewStateNextAction;
   /** Explicación breve de por qué está vacío («todavía no cargaste estudios»). */
   readonly message?: string;
+  /**
+   * Headline of the empty state. Optional: the host falls back to a generic one,
+   * so only screens whose emptiness has a more specific name need to set it.
+   */
+  readonly title?: string;
 }
 
 /**
