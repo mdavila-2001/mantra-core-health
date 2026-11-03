@@ -163,8 +163,9 @@ export class Groups {
     return { prevCursor: null, nextCursor: this.cursor() };
   }
 
-  protected cambiarCursor(direction: string): void {
-    if (direction === 'next' && this.cursor() !== null) this.cargar();
+  protected cambiarCursor(next: string): void {
+    // The table emits the cursor value itself (see cursorOfHistorico), never the word 'next'.
+    if (next === this.cursor()) this.cargar();
   }
 
   protected buscar(texto: string): void {

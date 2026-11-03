@@ -57,7 +57,8 @@
                       accept=".csv"
                       [maxSizeBytes]="maxBytes"
                       [maxFiles]="1"
-                      [disabled]="analyzing()"
+                      [uploading]="analyzing()"
+                      uploadingLabel="Revisando el archivo…"
                       [files]="files()"
                       (filesChange)="onFilesChange($event)"
                       (rejected)="showRejection($event)"
@@ -74,9 +75,6 @@
                   }
                 }
 
-                @if (analyzing()) {
-                  <p class="import__secondary" role="status">Revisando el archivo…</p>
-                }
                 @if (fileError(); as error) {
                   <app-alert tone="error" title="No se puede usar este archivo" data-testid="import-file-error">
                     {{ error }}
@@ -280,7 +278,8 @@
               <h2 id="import-server-title" class="import__subtitle">Vista previa del servidor</h2>
               @switch (serverPreview().status) {
                 @case ('loading') {
-                  <p class="import__secondary" role="status">
+                  <p class="import__secondary import__busy" role="status">
+                    <app-spinner size="sm" decorative />
                     Consultando al servidor qué pasaría con cada fila lista. Todavía no se guarda nada.
                   </p>
                 }

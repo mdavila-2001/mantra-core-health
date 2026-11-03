@@ -71,7 +71,7 @@
             </button>
           </div>
 
-          <div class="calendario__acciones">
+          <div class="calendario__acciones">@if (cargandoMes()) {<app-spinner size="sm" label="Cargando agenda" data-testid="agenda-cargando-mes" />}
             <a
               app-button
               variant="ghost"

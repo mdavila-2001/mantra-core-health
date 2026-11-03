@@ -62,4 +62,17 @@ describe('LogoConsultorio', () => {
 
     expect(el().querySelector('img')).not.toBeNull();
   });
+
+  it('uploading covers the box with a spinner and keeps the image underneath', async () => {
+    fixture.componentRef.setInput('src', PNG_1X1);
+    fixture.componentRef.setInput('uploading', true);
+    await fixture.whenStable();
+
+    expect(el().querySelector('[data-testid="logo-consultorio-subiendo"] app-spinner')).not.toBeNull();
+    expect(el().querySelector('img')).not.toBeNull();
+
+    fixture.componentRef.setInput('uploading', false);
+    await fixture.whenStable();
+    expect(el().querySelector('[data-testid="logo-consultorio-subiendo"]')).toBeNull();
+  });
 });

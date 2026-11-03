@@ -16,12 +16,8 @@ import type { ColumnDef } from '../../../../../shared/components/organisms/data-
 import { FilterBar } from '../../../../../shared/components/organisms/filter-bar/filter-bar';
 import { Pagination } from '../../../../../shared/components/molecules/pagination/pagination';
 import { ready } from '../../../../../core/view-state/view-state';
-import {
-  EDITOR_DOCTOR_TABS,
-  DOCTOR_PROFILE_TABS,
-  TAB_EDITOR,
-  DOCTOR_TAB,
-} from '../../doctor-profile-tabs';
+import { EDITOR_DOCTOR_TABS, DOCTOR_PROFILE_TABS, TAB_EDITOR, DOCTOR_TAB } from '../../doctor-profile-tabs';
+import { Spinner } from '../../../../../shared/components/atoms/spinner/spinner';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { VerificationBadge } from '../../../../../shared/components/atoms/verification-badge/verification-badge';
@@ -126,6 +122,7 @@ interface FilaCredencial {
     FilterBar,
     Pagination,
     NgTemplateOutlet,
+    Spinner,
   ],
   templateUrl: './practitioner-profile-view.html',
   styleUrls: ['./practitioner-profile-view.css', './practitioner-sheet-layout.css'],

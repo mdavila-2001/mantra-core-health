@@ -100,6 +100,8 @@
             [maxSizeBytes]="maxBytes"
             [maxFiles]="1"
             [disabled]="reading() || pending()"
+            [uploading]="reading() || pending()"
+            [uploadingLabel]="pending() ? 'Enviando el archivo…' : 'Revisando el archivo…'"
             [files]="files()"
             [showList]="false"
             (filesChange)="choose($event)"
@@ -111,10 +113,6 @@
             <p class="import__note" data-testid="lab-import-file-name">
               Archivo: <strong>{{ file.name }}</strong>
             </p>
-          }
-
-          @if (reading()) {
-            <p class="import__note" role="status">Revisando el archivo…</p>
           }
 
           @if (fileError(); as message) {

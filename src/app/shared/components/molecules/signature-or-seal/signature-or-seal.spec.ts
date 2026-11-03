@@ -71,4 +71,13 @@ describe('FirmaOSello', () => {
 
     expect(el().querySelector('img')).not.toBeNull();
   });
+
+  it('uploading shows a named spinner over the box', async () => {
+    montar('sello', PNG_1X1);
+    fixture.componentRef.setInput('uploading', true);
+    await fixture.whenStable();
+
+    const spinner = el().querySelector('[data-testid="firma-o-sello-subiendo-sello"] app-spinner');
+    expect(spinner?.getAttribute('aria-hidden')).toBe('true');
+  });
 });

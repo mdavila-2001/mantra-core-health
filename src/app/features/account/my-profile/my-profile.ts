@@ -30,10 +30,7 @@ import type {
 } from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
-import {
-  errorToViewState,
-  IDENTITY_VERIFICATION_ROUTE,
-} from '../../../core/http/error-to-view-state';
+import { errorToViewState, IDENTITY_VERIFICATION_ROUTE } from '../../../core/http/error-to-view-state';
 import { OFFERED_IDENTITY_VERIFICATION } from '../../../core/identity-assurance/offered-verification';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -44,6 +41,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -148,6 +146,7 @@ const FICHA_INCOMPLETA =
     PatientProfileEdit,
     PractitionerProfile,
     RouterLink,
+    Spinner,
     StatusSeal,
     Tab,
     Tabs,

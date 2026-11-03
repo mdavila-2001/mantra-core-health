@@ -255,6 +255,26 @@ describe('IdentityVerification', () => {
     expect(interno<() => { status: string }>('state')().status).toBe('offline');
   });
 
+  it('shows the uploading spinner on both document zones while the upload is in flight', () => {
+    elegirArchivo();
+    subir();
+    fixture.detectChanges();
+
+    const zonas = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '[data-testid="file-input-uploading"]',
+    );
+    expect(zonas.length).toBe(2);
+    expect(zonas[0]?.textContent).toContain('Subiendo imagen');
+
+    http
+      .expectOne((r) => r.url.endsWith('/common/files/upload'))
+      .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="file-input-uploading"]'),
+    ).toBeNull();
+  });
+
   it('traduce el rechazo del componente a algo accionable', () => {
     interno<(r: readonly { file: File; reason: string }[]) => void>('alRechazar')([
       { file: new File([''], 'enorme.pdf'), reason: 'tamaño' },

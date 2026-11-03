@@ -102,5 +102,13 @@ describe('Skeleton', () => {
       expect(bloque).toContain('animation: none !important');
       expect(bloque).toContain('background-image: none');
     });
+
+    it('the static fallback keeps a visible slot (theme veil, not the near-white inset)', () => {
+      const css = readFileSync(SKELETON_CSS, 'utf8');
+      const bloque = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+
+      expect(bloque).toContain('background-color: var(--bg-active)');
+      expect(css).toContain('animation: skeleton-sweep 1.4s ease-in-out infinite');
+    });
   });
 });

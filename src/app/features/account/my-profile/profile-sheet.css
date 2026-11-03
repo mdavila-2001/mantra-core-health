@@ -19,11 +19,10 @@
   margin: 0;
 }
 
-/* El retrato, disparador de la subida — mismo trato que el perfil profesional
-   (`.profesional__foto`), sin la capa de cámara: acá el avatar es más chico y
-   está arriba de la lista de datos, no montado sobre una portada. */
+/* Upload trigger (like `.profesional__foto`); a spinner covers it while uploading. */
 .mi-perfil__foto {
-  display: inline-block;
+  position: relative;
+  display: inline-flex;
   flex: 0 0 auto;
   border-radius: 50%;
   cursor: pointer;
@@ -31,7 +30,11 @@
 
 .mi-perfil__foto.is-subiendo {
   cursor: progress;
-  opacity: 0.7;
+}
+
+.mi-perfil__foto > app-spinner {
+  position: absolute; inset: 0; border-radius: 50%; font-size: 1.25rem;
+  background: color-mix(in srgb, var(--text-primary) 70%, transparent); color: var(--text-inverse);
 }
 
 .mi-perfil__foto-error {
@@ -291,9 +294,5 @@ app-tab > .mi-perfil__seccion:first-child > .mi-perfil__subtitulo:first-child {
   gap: var(--sp-2);
 }
 
-/* Acá vivían `.mi-perfil__bloque-interno` y `.mi-perfil__subtitulo--primero`.
-   Existían para una sola caja, «Cómo atendés», que se retiró el 20/09/2026
-   (C-01). Se van con ella y no se dejan «por si acaso»: ningún otro
-   `.html` del repo las nombraba —comprobado antes de borrarlas—, así que
-   sacarlas no le cambia el dibujo a nadie, tampoco a la ficha del paciente,
-   que comparte este archivo. */
+/* `.mi-perfil__bloque-interno` and `.mi-perfil__subtitulo--primero` were removed
+   with «Cómo atendés» (C-01, 20/09/2026); no template referenced them. */

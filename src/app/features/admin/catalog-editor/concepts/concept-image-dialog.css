@@ -15,3 +15,21 @@
   gap: var(--e3);
   margin-block-start: var(--e3);
 }
+
+.imagen-concepto__marco {
+  position: relative;
+}
+
+.imagen-concepto__subiendo {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--bg-surface) 85%, transparent);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
