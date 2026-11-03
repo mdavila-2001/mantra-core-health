@@ -80,7 +80,7 @@
 
 <!-- «Cómo le va»: el resumen general, ARRIBA de la lista. Pide lo suyo y falla
      por su cuenta: que el resumen no cargue no esconde las encuestas. -->
-<app-survey-insights />
+<div id="resumen"><app-survey-insights /></div>
 
 <app-view-state-host [state]="vista()" (retry)="cargar()">
   <!-- S2 · Cargando. El esqueleto tiene la forma de las filas, no la de la
@@ -174,49 +174,7 @@
       } @else {
         <ul class="encuestas__lista" data-testid="encuestas-lista">
           @for (encuesta of visibles(); track encuesta.id) {
-            <li>
-              <app-card variant="outlined" padding="lg">
-                <div class="encuestas__fila">
-                  <!-- El ícono de la sección, no uno por encuesta: en este
-                       listado todas son encuestas, así que lo que aporta es
-                       reconocer la fila como tal de un vistazo, igual que en las
-                       tarjetas de los directorios. -->
-                  <span class="encuestas__marca" aria-hidden="true">
-                    <app-nav-icon name="survey" />
-                  </span>
-
-                  <div class="encuestas__datos">
-                    <h2 class="encuestas__titulo">{{ encuesta.title }}</h2>
-
-                    @if (encuesta.description) {
-                      <p class="encuestas__consigna">{{ encuesta.description }}</p>
-                    }
-
-                    <p class="encuestas__meta">
-                      Versión {{ encuesta.latestVersionNumber }} ·
-                      {{ encuesta.questionCount }}
-                      {{ encuesta.questionCount === 1 ? 'pregunta' : 'preguntas' }}
-                      @if (!encuesta.published) {
-                        · sin publicar
-                      }
-                    </p>
-                  </div>
-
-                  <div class="encuestas__acciones-fila">
-                    <app-badge [variant]="encuesta.tono">{{ encuesta.palabra }}</app-badge>
-                    <a
-                      app-button
-                      variant="secondary"
-                      [routerLink]="encuesta.ruta"
-                      [attr.data-testid]="'abrir-' + encuesta.id"
-                      [attr.aria-label]="'Abrir: ' + encuesta.title"
-                    >
-                      Abrir
-                    </a>
-                  </div>
-                </div>
-              </app-card>
-            </li>
+            <li><app-survey-card [encuesta]="encuesta" /></li>
           }
         </ul>
       }
