@@ -14,7 +14,7 @@ import { ahora, avatarSvg, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, pa
     organización médica.
     ========================================================================== */
 
-const TIPO_PRACTICA = { CLINIC: uuid('concept-practice-type-clinic'), HOSPITAL: uuid('concept-practice-type-hospital'), OFFICE: uuid('concept-practice-type-office') } as const;
+export const TIPO_PRACTICA = { CLINIC: uuid('concept-practice-type-clinic'), HOSPITAL: uuid('concept-practice-type-hospital'), OFFICE: uuid('concept-practice-type-office') } as const;
 
 /** La práctica sirve a tres clientes con formas distintas: se devuelven todos los campos que alguno espera. */
 export const PRACTICAS = [

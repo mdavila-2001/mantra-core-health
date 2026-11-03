@@ -1,6 +1,7 @@
 import {
   affiliations,
   changeStatus,
+  CM_PRACTICES,
   createAffiliation,
   publishedOffer,
   toRow,
@@ -8,6 +9,7 @@ import {
   type StatusCode,
 } from '../fixtures/role-assignments';
 import { offers } from './healthcare-services.handlers';
+import { PRACTICAS, TIPO_PRACTICA } from './practice.handlers';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { cuerpo } from '../mock-store';
 
@@ -35,6 +37,15 @@ function practitionerOf(request: MockRequest): string | undefined {
 export function registerRoleAssignments(router: MockRouter): void {
   // Los procedimientos publicados son los del doble de CM-06; las sedes y el catálogo los sirve él.
   useOfferLookup((id) => offers.get(id));
+
+  // A qué organizaciones se puede pedir vincularse: de cualquier tenant, sin consultorios propios (como la API).
+  router.get('/practitioners/me/joinable-practices', () =>
+    [...PRACTICAS.filter((p) => p.typeConceptId !== TIPO_PRACTICA.OFFICE), ...CM_PRACTICES].map((p) => ({
+      id: p.id,
+      name: p.name,
+      practiceType: p.typeConceptId,
+    })),
+  );
 
   // Con la forma real de la API: una página `{ items, count, limit, nextCursor }`.
   router.get('/practices/:practiceId/role-assignments', ({ params }) => {
