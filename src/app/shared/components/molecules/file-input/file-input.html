@@ -4,7 +4,6 @@
     [class.is-dragging]="isDragging()"
     [class.has-files]="files().length > 0"
     [class.is-disabled]="locked()"
-    [attr.aria-busy]="uploading() || null"
     (dragover)="handleDragOver($event)"
     (dragleave)="handleDragLeave($event)"
     (drop)="handleDrop($event)"
@@ -58,8 +57,8 @@
       </span>
     </label>
     @if (uploading()) {
-      <div class="dropzone-uploading" data-testid="file-input-uploading">
-        <app-spinner size="md" [label]="uploadingLabel()" />
+      <div class="dropzone-uploading" role="status" data-testid="file-input-uploading">
+        <app-spinner size="md" decorative />
         <span>{{ uploadingLabel() }}</span>
       </div>
     }

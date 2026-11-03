@@ -44,9 +44,6 @@
 }
 
 .pagination__range {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-2);
     margin: 0;
     font-size: var(--fs-caption);
     line-height: var(--lh-caption);

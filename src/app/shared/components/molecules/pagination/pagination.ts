@@ -46,7 +46,6 @@ import {
   host: {
     class: 'pagination',
     '[class.pagination--loading]': 'loading()',
-    '[attr.aria-busy]': 'loading() || null',
   },
 })
 export class Pagination {
@@ -183,6 +182,7 @@ export class Pagination {
   });
 
   protected goTo(page: number): void {
+    if (this.loading()) return;
     const destino = Math.min(this.totalPages(), Math.max(1, page));
     if (destino !== this.currentPage()) {
       this.page.set(destino);
@@ -209,7 +209,7 @@ export class Pagination {
   }
 
   protected changePageSize(size: number | null): void {
-    if (size === null || size === this.pageSize()) {
+    if (size === null || size === this.pageSize() || this.loading()) {
       return;
     }
     this.pageSize.set(size);

@@ -70,17 +70,16 @@
     class="pagination__jump"
     ariaLabel="Ir a la página"
     [options]="pageJumpChoices()"
-    [disabled]="loading()"
     [value]="currentPage()"
     (valueChange)="goToFromSelect($event)"
   />
 }
 
 <!-- El rango cambia con cada salto de página: se anuncia, pero sin interrumpir. -->
+@if (loading()) {
+  <app-spinner class="pagination__spinner" size="sm" label="Cargando página" data-testid="pagination-loading" />
+}
 <p class="pagination__range tabular-nums" aria-live="polite">
-  @if (loading()) {
-    <app-spinner class="pagination__spinner" size="sm" label="Cargando página" data-testid="pagination-loading" />
-  }
   <!-- El rango se reemplaza en cada salto y entra con un fundido corto: el
        párrafo (la región viva) se queda; sólo cambia lo de adentro. -->
   @for (rango of [rangeLabel()]; track rango) {
@@ -93,7 +92,6 @@
     class="pagination__size"
     ariaLabel="Resultados por página"
     [options]="pageSizeChoices()"
-    [disabled]="loading()"
     [value]="pageSize()"
     (valueChange)="changePageSize($event)"
   />

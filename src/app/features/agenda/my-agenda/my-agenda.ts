@@ -18,7 +18,6 @@ import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { calculateSlots } from '../agenda-create/agenda-slots';
 import { concatMap, from, toArray } from 'rxjs';
-
 import { AuthService } from '../../../core/auth/auth.service';
 import { bookingChangeDeniedText } from '../../../core/data-access/scheduling/booking-change-denied';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';

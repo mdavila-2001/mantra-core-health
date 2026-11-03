@@ -351,7 +351,7 @@
     @if (total() > 0) {
       <app-pagination
         class="glosario__paginacion"
-        [totalItems]="total()" [loading]="cuerpo().status === 'loading'"
+        [totalItems]="total()" [loading]="cargando()"
         [page]="pagina()"
         (pageChange)="irAPagina($event)"
         [(pageSize)]="porPagina"

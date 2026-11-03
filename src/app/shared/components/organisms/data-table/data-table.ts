@@ -6,6 +6,7 @@ import {
   effect,
   type ElementRef,
   input,
+  linkedSignal,
   output,
   signal,
   untracked,
@@ -368,26 +369,20 @@ export class DataTable<Row> {
     });
   }
 
-  /**
-   * Hacia dónde se pidió la página, mientras se espera que llegue. Cuando las
-   * filas nuevas aterrizan, se convierte en {@link pageTurn}.
-   */
-  protected readonly pendingTurn = signal<'next' | 'prev' | null>(null);
-
-  /**
-   * El giro de página que anima el `<tbody>` (pulse.md §7): las filas nuevas
-   * entran desde el lado hacia el que se avanzó. Alterna `-a`/`-b` porque es
-   * el cambio de nombre lo que hace que el navegador repita la animación.
-   */
+  /** Requested direction while waiting for rows; becomes {@link pageTurn} once they land. */
+  private pendingTurn: 'next' | 'prev' | null = null;
+  /** Spinning cursor button: cleared by ANY new state or cursor, so it can never stick. */
+  protected readonly busyTurn = linkedSignal<unknown, 'next' | 'prev' | null>({ source: () => [this.state(), this.cursor()], computation: () => null });
+  /** Page-turn animation of the `<tbody>` (pulse.md §7); `-a`/`-b` alternate so it replays. */
   protected readonly pageTurn = signal<string | null>(null);
 
   private readonly landPageTurn = effect(() => {
     const filas = this.rows();
-    const sentido = untracked(() => (filas.length > 0 ? this.pendingTurn() : null));
+    const sentido = untracked(() => (filas.length > 0 ? this.pendingTurn : null));
     if (sentido === null) {
       return;
     }
-    this.pendingTurn.set(null);
+    this.pendingTurn = null;
     const previo = untracked(this.pageTurn);
     this.pageTurn.set(previo === `${sentido}-a` ? `${sentido}-b` : `${sentido}-a`);
   });
@@ -395,7 +390,8 @@ export class DataTable<Row> {
   protected goPrevious(): void {
     const cursor = this.cursor().prevCursor;
     if (cursor) {
-      this.pendingTurn.set('prev');
+      this.pendingTurn = 'prev';
+      this.busyTurn.set('prev');
       this.cursorChanged.emit(cursor);
     }
   }
@@ -403,7 +399,8 @@ export class DataTable<Row> {
   protected goNext(): void {
     const cursor = this.cursor().nextCursor;
     if (cursor) {
-      this.pendingTurn.set('next');
+      this.pendingTurn = 'next';
+      this.busyTurn.set('next');
       this.cursorChanged.emit(cursor);
     }
   }

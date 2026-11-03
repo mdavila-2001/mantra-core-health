@@ -169,7 +169,7 @@ describe('Groups', () => {
     fixture.detectChanges();
   });
 
-  it('shows the S2 skeleton while the next page is in flight', () => {
+  it('the next page requests the cursor and keeps the loaded rows on screen meanwhile', () => {
     montar();
     responderTemas();
     responderPerfil();
@@ -185,8 +185,9 @@ describe('Groups', () => {
     componente.cambiarCursor('c-2');
     const req = http.expectOne((r) => r.url === '/community/groups');
     expect(req.request.params.get('cursor')).toBe('c-2');
-    expect(componente.stateOfHistorico().status).toBe('loading');
-    req.flush(paginaVacia);
+    // Rows stay visible; the table's own cursor button shows the spinner.
+    expect(componente.stateOfHistorico().status).toBe('ready');
+    req.flush({ ...paginaVacia, items: [grupo('g-2', 'Pediatría')], count: 1 });
     expect(componente.stateOfHistorico().status).toBe('ready');
   });
 

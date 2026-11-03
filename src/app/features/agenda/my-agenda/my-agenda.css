@@ -318,7 +318,6 @@
 
 /* El lienzo: una superficie que se despega del fondo de la página, como la
    tarjeta del horario. */
-.calendario__cargando { align-self: center; }
 .calendario__panel {
   display: flex;
   flex-direction: column;

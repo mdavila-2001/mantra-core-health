@@ -9,11 +9,11 @@
     <app-alert tone="error" data-testid="concept-image-error">{{ mensaje }}</app-alert>
   }
   <!-- While the image is being saved, the preview is covered by a spinner. -->
-  <div class="imagen-concepto__marco" [attr.aria-busy]="guardando() || null">
+  <div class="imagen-concepto__marco">
     <img class="imagen-concepto__vista" [src]="vista()" alt="" data-testid="concept-image-preview" />
     @if (guardando()) {
-      <div class="imagen-concepto__subiendo" data-testid="concept-image-uploading">
-        <app-spinner size="md" label="Subiendo imagen…" />
+      <div class="imagen-concepto__subiendo" role="status" data-testid="concept-image-uploading">
+        <app-spinner size="md" decorative />
         <span>Subiendo imagen…</span>
       </div>
     }

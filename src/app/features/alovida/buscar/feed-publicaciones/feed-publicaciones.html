@@ -57,7 +57,8 @@
 
       @if (hayMas()) {
         <p class="feed__mas">
-          <button app-button variant="secondary" type="button" [isLoading]="cargandoMas()" (clicked)="verMas()">
+          <button app-button data-variante="secundario" type="button" [disabled]="cargandoMas()" [attr.aria-busy]="cargandoMas() || null" (click)="verMas()">
+            @if (cargandoMas()) { <app-spinner size="sm" decorative /> }
             {{ cargandoMas() ? 'Cargando…' : 'Ver más publicaciones' }}
           </button>
         </p>

@@ -200,7 +200,11 @@ app-file-preview {
   }
 }
 
-/* Upload in flight: a veil over the zone with spinner and label. */
+/* Upload in flight: a veil over the zone with spinner and label, at full strength (not dimmed). */
+:host(.is-uploading) .dropzone.is-disabled {
+  opacity: 1;
+}
+
 .dropzone-uploading {
   position: absolute;
   inset: 0;

@@ -121,7 +121,7 @@ export class Groups {
   ]);
 
   protected readonly stateOfHistorico = computed<ViewState<readonly GroupListItem[]>>(() => {
-    if (this.cargando()) return loading(); // S2 also while the next batch is in flight
+    if (this.cargando() && this.grupos().length === 0) return loading();
     if (this.error()) return unexpectedError(this.error());
     if (this.grupos().length === 0 && this.cargoAlgunaVez()) {
       return empty({ label: 'Crear grupo', route: '/groups' }, 'No hay grupos que coincidan');

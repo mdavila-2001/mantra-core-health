@@ -23,8 +23,8 @@
 }
 
 @if (uploading()) {
-  <!-- The consumer owns the upload request; this only draws its in-flight state. -->
+  <!-- Visual only: the consumer owns the request and its announcement (its file input overlay). -->
   <span class="logo-consultorio__subiendo" data-testid="logo-consultorio-subiendo">
-    <app-spinner size="md" label="Subiendo logo" />
+    <app-spinner size="md" decorative />
   </span>
 }

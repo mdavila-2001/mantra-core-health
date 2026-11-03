@@ -78,6 +78,6 @@ describe('FirmaOSello', () => {
     await fixture.whenStable();
 
     const spinner = el().querySelector('[data-testid="firma-o-sello-subiendo-sello"] app-spinner');
-    expect(spinner?.getAttribute('aria-label')).toBe('Subiendo sello');
+    expect(spinner?.getAttribute('aria-hidden')).toBe('true');
   });
 });
