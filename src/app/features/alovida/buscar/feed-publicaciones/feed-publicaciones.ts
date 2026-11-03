@@ -9,6 +9,7 @@ import type {
   PublicFeedPost,
   PublicProfileDetail,
 } from '@core/data-access/public-directory/public-directory.types';
+import { AppButton } from '@shared/components/atoms/button/button';
 import { ToastService } from '@shared/components/molecules/toast/toast.service';
 import { initialsOf } from '@shared/text/initials';
 import { ReportPost } from '../../../feed/report-post/report-post';
@@ -49,7 +50,7 @@ type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
  */
 @Component({
   selector: 'app-feed-publicaciones',
-  imports: [FeedBanner, FeedCrearPublicacion, FeedPerfilMini, FeedTendencias, PublicPostCard, ReportPost, RouterLink],
+  imports: [AppButton, FeedBanner, FeedCrearPublicacion, FeedPerfilMini, FeedTendencias, PublicPostCard, ReportPost, RouterLink],
   templateUrl: './feed-publicaciones.html',
   styleUrl: './feed-publicaciones.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

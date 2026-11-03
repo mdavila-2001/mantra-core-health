@@ -127,7 +127,8 @@
           </div>
         </div>
 
-        <div class="calendario__panel">
+        <div class="calendario__panel" [attr.aria-busy]="cargandoMes() || null">
+          @if (cargandoMes()) { <app-spinner class="calendario__cargando" size="sm" label="Cargando agenda" data-testid="agenda-cargando-mes" /> }
           @switch (calendarView()) {
             @case ('week') {
               <app-week-view

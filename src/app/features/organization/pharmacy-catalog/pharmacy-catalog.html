@@ -229,14 +229,13 @@
                       [maxSizeBytes]="bytesMaximos"
                       [maxFiles]="1"
                       [disabled]="analizando()"
+                      [uploading]="analizando()"
+                      uploadingLabel="Revisando el archivo…"
                       [files]="archivos()"
                       (filesChange)="alElegirArchivo($event)"
                       (rejected)="avisarRechazo($event)"
                       testId="catalogo-archivo"
                     />
-                    @if (analizando()) {
-                      <p class="catalogo__secundario" role="status">Revisando el archivo…</p>
-                    }
                     @if (errorDelArchivo(); as error) {
                       <app-alert tone="error" title="No se puede usar este archivo" data-testid="catalogo-error-archivo">
                         {{ error }}

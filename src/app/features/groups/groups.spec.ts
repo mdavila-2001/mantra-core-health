@@ -169,6 +169,27 @@ describe('Groups', () => {
     fixture.detectChanges();
   });
 
+  it('shows the S2 skeleton while the next page is in flight', () => {
+    montar();
+    responderTemas();
+    responderPerfil();
+    http
+      .expectOne((r) => r.url === '/community/groups')
+      .flush({ ...paginaVacia, items: [grupo('g-1', 'Cardiología')], count: 1, nextCursor: 'c-2' });
+    fixture.detectChanges();
+
+    const componente = fixture.componentInstance as unknown as {
+      cambiarCursor(cursor: string): void;
+      stateOfHistorico(): { status: string };
+    };
+    componente.cambiarCursor('c-2');
+    const req = http.expectOne((r) => r.url === '/community/groups');
+    expect(req.request.params.get('cursor')).toBe('c-2');
+    expect(componente.stateOfHistorico().status).toBe('loading');
+    req.flush(paginaVacia);
+    expect(componente.stateOfHistorico().status).toBe('ready');
+  });
+
   it('el tema se alterna: volver a tocarlo lo quita', () => {
     montar();
     responderTemas();

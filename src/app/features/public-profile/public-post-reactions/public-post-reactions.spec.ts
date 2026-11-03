@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { of, throwError, type Observable } from 'rxjs';
+import { NEVER, of, throwError, type Observable } from 'rxjs';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type {
@@ -151,6 +151,28 @@ describe('PublicPostReactions', () => {
 
       expect(pedidos[1]?.cursor).toBe('cursor-2');
       expect(root().querySelectorAll('.reacciones__persona')).toHaveLength(2);
+    });
+
+    it('shows a spinner on «Ver más» while the next page is in flight', async () => {
+      let primera = true;
+      await montar(() => {
+        if (primera) {
+          primera = false;
+          return of(pagina([persona('a')], 'cursor-2'));
+        }
+        return NEVER;
+      });
+
+      const boton = (): HTMLButtonElement | null =>
+        root().querySelector<HTMLButtonElement>('[data-testid="reactions-load-more"]');
+      expect(boton()?.querySelector('app-spinner')).toBeNull();
+
+      boton()?.click();
+      await fixture.whenStable();
+
+      expect(boton()?.querySelector('app-spinner')).not.toBeNull();
+      expect(boton()?.getAttribute('aria-busy')).toBe('true');
+      expect(boton()?.disabled).toBe(true);
     });
 
     it('sin más páginas no ofrece «Ver más»', async () => {

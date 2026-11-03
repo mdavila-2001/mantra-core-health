@@ -350,6 +350,8 @@ describe('ProcedureImport', () => {
       porTestId('specialty-browser-more')?.click();
       await asentar();
 
+      // While the next page is in flight, a spinner says so.
+      expect(porTestId('procedimientos-cargando-mas')).not.toBeNull();
       const req = arancel();
       expect(req.request.params.get('cursor')).toBe('cursor-2');
       expect(req.request.params.get('specialty')).toBe('Cardiología|Pediatría');
@@ -359,6 +361,7 @@ describe('ProcedureImport', () => {
       expect(texto()).toContain('Procedimiento A1');
       expect(texto()).toContain('Procedimiento P1');
       expect(porTestId('specialty-browser-more')).toBeNull();
+      expect(porTestId('procedimientos-cargando-mas')).toBeNull();
     });
 
     it('si falla «Cargar más», lo ya mostrado sigue en pantalla', async () => {

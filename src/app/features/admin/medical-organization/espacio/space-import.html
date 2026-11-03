@@ -29,7 +29,7 @@
         <div class="importar__botones">
           <label class="importar__archivo">
             <span>Elegir archivo .csv</span>
-            <input type="file" accept=".csv,text/csv" (change)="elegirArchivo($event)" data-testid="importar-archivo" />
+            <input type="file" accept=".csv,text/csv" [disabled]="enviando()" (change)="elegirArchivo($event)" data-testid="importar-archivo" />
           </label>
           <a app-button size="sm" variant="ghost" [href]="plantilla" download="plantilla-espacios.csv">Descargar plantilla</a>
         </div>
@@ -70,10 +70,10 @@
 
     <div class="importar__acciones">
       <a app-button variant="ghost" [routerLink]="rutaDeConsola" [queryParams]="{ tab: 'infrastructure', site: sitio }">Volver</a>
-      <button app-button variant="outline" type="button" [disabled]="!puedeValidar()" (clicked)="validar()" data-testid="importar-validar">
+      <button app-button variant="outline" type="button" [disabled]="!puedeValidar()" [isLoading]="enviando() && enviandoPrueba()" (clicked)="validar()" data-testid="importar-validar">
         {{ enviando() && validacion() === null ? 'Validando…' : 'Validar sin escribir' }}
       </button>
-      <button app-button type="button" [disabled]="!puedeConfirmar() || creados() !== null" (clicked)="confirmar()" data-testid="importar-confirmar">
+      <button app-button type="button" [disabled]="!puedeConfirmar() || creados() !== null" [isLoading]="enviando() && !enviandoPrueba()" (clicked)="confirmar()" data-testid="importar-confirmar">
         Confirmar importación
       </button>
     </div>

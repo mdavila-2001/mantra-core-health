@@ -104,6 +104,8 @@
           [maxSizeBytes]="tamanoMaximo"
           label="Elegir archivos"
           testId="documento-archivos"
+          [uploading]="registrando() && archivos().length > 0"
+          uploadingLabel="Subiendo archivos…"
           (rejected)="alDescartar($event)"
         />
       </app-form-field>

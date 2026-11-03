@@ -57,7 +57,7 @@
 
       @if (hayMas()) {
         <p class="feed__mas">
-          <button app-button data-variante="secundario" type="button" [disabled]="cargandoMas()" (click)="verMas()">
+          <button app-button variant="secondary" type="button" [isLoading]="cargandoMas()" (clicked)="verMas()">
             {{ cargandoMas() ? 'Cargando…' : 'Ver más publicaciones' }}
           </button>
         </p>

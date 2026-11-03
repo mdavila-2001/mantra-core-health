@@ -38,17 +38,9 @@
   min-inline-size: 0;
 }
 
-.logo-organizacion__estado,
 .logo-organizacion__error {
   margin: 0;
   font-size: var(--fs-caption);
-}
-
-.logo-organizacion__estado {
-  color: var(--text-secondary);
-}
-
-.logo-organizacion__error {
   color: var(--text-danger);
 }
 

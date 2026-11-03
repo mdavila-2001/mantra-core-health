@@ -362,13 +362,12 @@
             [multiple]="true"
             [maxFiles]="maxImages - imageIds().length"
             [disabled]="uploading()"
+            [uploading]="uploading()"
+            uploadingLabel="Subiendo imagen…"
             [files]="[]"
             (filesChange)="addImages($event)"
             testId="product-image-input"
           />
-          @if (uploading()) {
-            <p class="product-dialog__note" role="status">Subiendo…</p>
-          }
         }
       </div>
     </app-tab>

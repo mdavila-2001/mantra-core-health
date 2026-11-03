@@ -313,6 +313,9 @@ describe('Glossary', () => {
     const req = pedidoDeTerminos();
     expect(req.request.params.get('offset')).toBe('24');
     expect(req.request.params.get('limit')).toBe('12');
+    harness.fixture.detectChanges();
+    // The pager stays and shows its spinner while the next page is in flight.
+    expect(html().querySelector('app-pagination')?.getAttribute('aria-busy')).toBe('true');
     req.flush({ items: [TERMINO_B], count: 1, limit: 12, offset: 24, total: 1200 });
   });
 

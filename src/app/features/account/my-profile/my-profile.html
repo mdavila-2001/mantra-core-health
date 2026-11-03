@@ -78,9 +78,8 @@
                   [initials]="personInitials(resumen.displayName ?? '')"
                   [alt]="'Foto de ' + (resumen.displayName ?? 'su perfil')"
                 />
-                <span class="solo-lectores">
-                  {{ subiendoFoto() ? 'Subiendo su foto…' : 'Cambiar mi foto de perfil' }}
-                </span>
+                @if (subiendoFoto()) { <app-spinner size="md" decorative data-testid="mi-perfil-foto-subiendo" /> }
+                <span class="solo-lectores">{{ subiendoFoto() ? 'Subiendo su foto…' : 'Cambiar mi foto de perfil' }}</span>
                 <input
                   #dropInput1
                   type="file"
@@ -107,7 +106,7 @@
                   type="button"
                   class="mi-perfil__foto-boton"
                   data-testid="mi-perfil-foto-boton"
-                  [disabled]="subiendoFoto()"
+                  [disabled]="subiendoFoto()" [isLoading]="subiendoFoto()"
                   (clicked)="abrirSelectorDeFoto()"
                 >
                   {{

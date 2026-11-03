@@ -146,5 +146,8 @@
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-caption);
   color: var(--text-muted);
-  text-align: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
 }

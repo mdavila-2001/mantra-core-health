@@ -33,6 +33,8 @@
             [maxSizeBytes]="maxBytes"
             [maxFiles]="1"
             [disabled]="ocupado()"
+            [uploading]="ocupado()"
+            uploadingLabel="Guardando el logo…"
             [showList]="false"
             [showFeedback]="false"
             [label]="vista() ? 'Cambiar logo' : 'Subir logo'"
@@ -50,9 +52,6 @@
             >
               Quitar logo
             </button>
-          }
-          @if (ocupado()) {
-            <p class="logo-organizacion__estado" role="status">Guardando el logo…</p>
           }
           @if (error()) {
             <p class="logo-organizacion__error" role="alert" data-testid="logo-organizacion-error">

@@ -121,7 +121,7 @@ export class Groups {
   ]);
 
   protected readonly stateOfHistorico = computed<ViewState<readonly GroupListItem[]>>(() => {
-    if (this.cargando() && this.grupos().length === 0) return loading();
+    if (this.cargando()) return loading(); // S2 also while the next batch is in flight
     if (this.error()) return unexpectedError(this.error());
     if (this.grupos().length === 0 && this.cargoAlgunaVez()) {
       return empty({ label: 'Crear grupo', route: '/groups' }, 'No hay grupos que coincidan');
@@ -163,8 +163,9 @@ export class Groups {
     return { prevCursor: null, nextCursor: this.cursor() };
   }
 
-  protected cambiarCursor(direction: string): void {
-    if (direction === 'next' && this.cursor() !== null) this.cargar();
+  protected cambiarCursor(next: string): void {
+    // The table emits the cursor value itself (see cursorOfHistorico), never the word 'next'.
+    if (next === this.cursor()) this.cargar();
   }
 
   protected buscar(texto: string): void {

@@ -223,3 +223,11 @@
     </article>
   </ng-template>
 </app-specialty-browser>
+
+<!-- The browser's "Cargar más" button has no busy state: show the next page loading here. -->
+@if (cargandoMas()) {
+  <p class="importar__mas" data-testid="procedimientos-cargando-mas">
+    <app-spinner size="sm" label="Cargando más procedimientos" />
+    <span>Cargando más procedimientos…</span>
+  </p>
+}
