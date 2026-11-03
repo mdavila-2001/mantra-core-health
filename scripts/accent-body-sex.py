@@ -34,13 +34,14 @@ cabeza y las piernas bajo la rodilla no se tocan. La cara y el maniquí neutro
 tampoco.
 
 El **mismo** factor se aplica a cada vértice de cada zona (`d` y `centros`) de
-`body-zones.geometry.ts`, así que las zonas siguen calzando con el cuerpo.
+las zonas gruesas (`body-map-base/zonas-gruesas.ts.txt`), así que siguen calzando
+con el cuerpo; después `split-body-zones.py` las parte en las finas.
 
 ## Es idempotente
 
 Parte siempre de los originales sin acentuar, guardados en
 `scripts/body-map-base/` (`--guardar-base` los toma de `public/body-map/` y de
-`body-zones.geometry.ts` **antes** de aplicar nada). Correrlo dos veces da el
+`zonas-gruesas.ts.txt` **antes** de aplicar nada). Correrlo dos veces da el
 mismo resultado. Si algún día se rehace el render, se corre `gen-body-zones.py`,
 se vuelve a guardar la base y se aplica de nuevo; o se sube el peso de los
 targets en `render-body-map.py` y se retira este acento.
@@ -62,9 +63,8 @@ from PIL import Image
 RAIZ = Path(__file__).resolve().parent.parent
 BASE = RAIZ / "scripts" / "body-map-base"
 PUBLICO = RAIZ / "public" / "body-map"
-GEOMETRIA = (
-    RAIZ / "src/app/shared/components/organisms/body-map/body-zones.geometry.ts"
-)
+# Coarse zones; `split-body-zones.py` cuts them into the fine ones afterwards.
+GEOMETRIA = BASE / "zonas-gruesas.ts.txt"
 
 EJE_X = 120.0
 ALTO_VIEWBOX = 440.0

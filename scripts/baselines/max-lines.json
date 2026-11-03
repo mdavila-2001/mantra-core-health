@@ -1138,9 +1138,6 @@
     "src/app/shared/components/organisms/auth-split/auth-split.html": {
       "lineas": 415
     },
-    "src/app/shared/components/organisms/body-map/body-map.css": {
-      "lineas": 301
-    },
     "src/app/features/messaging/thread/composer/attachment-preview/attachment-preview.ts": {
       "lineas": 413
     },
