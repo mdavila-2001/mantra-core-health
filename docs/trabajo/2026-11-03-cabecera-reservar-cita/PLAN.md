@@ -5,7 +5,7 @@
 - Kill-test: abrir el inicio con médico elegido y no ver «Reservar cita».
 
 ## Alcance
-- IN: `primary-practitioner-card` (html, ts, css, spec) y su copy.
+- IN: `primary-practitioner-card` (html, ts, css, spec) y su copy; `practitioner-detail` (bajar al ancla `#horarios`, hallado en la verificación de navegador).
 - OUT: lado del médico («Mis pacientes de cabecera»); la pantalla de reserva; cambios en la API.
 - Ambigüedades registradas: (1) reservar exige elegir un cupo (`/my-account/appointments/book/:slotId`), así que «directo a reservar» se resolvió como llegar a los horarios de su ficha (`#horarios`); confirmar con el propietario. (2) Un paciente tiene un solo médico de cabecera vigente, por eso «si es uno» = «si ya eligió a alguien»; sin elegir va a la guía (`/directory`).
 
@@ -18,3 +18,12 @@
 |---|---|---|---|---|
 | H1.M1 | Botón «Reservar cita» a `#horarios` | href correcto | spec | HECHO |
 | H1.M2 | Sin médico no hay «Reservar cita» | ausente | spec | HECHO |
+
+## H2 — El ancla `#horarios` baja la pantalla
+**CA:** Dado que se llega a `/directory/:id#horarios`, cuando la ficha termina de pintarse, entonces «Sedes y horarios» queda a la vista; sin ancla, la ficha no se mueve.
+**DoD:** `ng test` de `practitioner-detail.spec.ts` en verde y medición en navegador.
+**Estado:** HECHO
+
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H2.M1 | La ficha baja al ancla cuando ya está pintada | `scrollIntoView` sobre `#horarios` | spec + Playwright | HECHO |
