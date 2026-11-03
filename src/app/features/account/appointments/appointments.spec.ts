@@ -112,6 +112,12 @@ describe('Appointments', () => {
     componente = fixture.componentInstance;
     fixture.detectChanges();
 
+    // Bookable organizations are asked first (#1899) and the agendas follow once
+    // they arrive; answering none keeps the session's organization, as before.
+    http
+      .match((r) => r.url === '/scheduling/bookable-organizations')
+      .forEach((r) => r.flush({ items: [] }));
+
     if (pid !== undefined) {
       http.expectOne((r) => r.url === '/scheduling/waitlist').flush({ items: esperas ?? [] });
       fixture.detectChanges();
@@ -1201,6 +1207,8 @@ describe('Appointments', () => {
         desde: HORA_TEMPRANO,
         hasta: '2026-09-02T09:45:00.000Z',
         oferta: 'of-eco',
+        // The booking talks to the agenda's organization (#1899).
+        org: 't-1',
       });
     });
 
@@ -1742,6 +1750,8 @@ function montarCancelacion(opts: Opciones) {
           searchBookings,
           listResources,
           listSlots,
+          // No other organization to book with: the session's one is used.
+          listBookableOrganizations: vi.fn().mockReturnValue(of([])),
           // P36 · sin horario flexible publicado: la lista es la de los turnos fijos.
           getFlexibleAvailability: vi
             .fn()
@@ -1901,10 +1911,13 @@ describe('Appointments · cancelar turno propio', () => {
       .cancelarTurno(api(comp).turnosListos()[0])
       .then(() => {
         // El motivo viaja siempre: el servidor lo exige (corrección #14).
-        expect(cancelBooking).toHaveBeenCalledWith('b1', {
-          cancelledBy: 'PATIENT',
-          reasonText: MOTIVO_DE_PRUEBA,
-        });
+        // The booking carries no organization, so no tenant scope travels (#1899).
+        expect(cancelBooking).toHaveBeenCalledWith(
+          'b1',
+          { cancelledBy: 'PATIENT', reasonText: MOTIVO_DE_PRUEBA },
+          undefined,
+          undefined,
+        );
       });
   });
 
@@ -2321,12 +2334,15 @@ describe('Appointments · lista de espera (P8)', () => {
     await p8(comp).anotarmeEnEspera();
 
     expect(confirm).toHaveBeenCalled();
+    // The waitlist entry is filed with the organization of the chosen agenda (#1899).
     expect(enrollWaitlist).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: 't-1',
         patientProfileId: 'p-1',
         resourceId: 'r-1',
       }),
+      undefined,
+      { tenantId: 't-1' },
     );
     expect(toast.success).toHaveBeenCalled();
   });
