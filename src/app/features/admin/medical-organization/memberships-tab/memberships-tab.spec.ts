@@ -16,7 +16,7 @@ describe('MembershipsTab — Carril 33', () => {
 
   function flushInicial(): void {
     http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
-    http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([]);
   }
 
   beforeEach(async () => {
@@ -77,7 +77,7 @@ describe('MembershipsTab — Carril 33', () => {
         avatarUrl: null,
       },
     ]);
-    http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([]);
     fixture.detectChanges();
 
     const tabla = (fixture.nativeElement as HTMLElement).querySelector('app-data-table');
@@ -119,7 +119,7 @@ describe('MembershipsTab — Carril 33', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
       },
     ]);
-    http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([]);
     fixture.detectChanges();
 
     const componente = fixture.componentInstance as unknown as {
@@ -159,7 +159,7 @@ describe('MembershipsTab — Carril 33', () => {
         { code: 'INTERNAL', message: 'boom', correlationId: 'corr-vinc', timestamp: '', path: '' },
         { status: 500, statusText: 'Server Error' },
       );
-    http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([]);
     fixture.detectChanges();
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -183,7 +183,7 @@ describe('MembershipsTab — Carril 33', () => {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     http
-      .expectOne((r) => r.url === '/practices')
+      .expectOne((r) => r.url === '/practitioners/me/joinable-practices')
       .flush(
         { code: 'DEPENDENCY_UNAVAILABLE', message: 'El servicio contable no responde.', correlationId: 'c-org', timestamp: '', path: '' },
         { status: 503, statusText: 'Service Unavailable' },
@@ -197,7 +197,7 @@ describe('MembershipsTab — Carril 33', () => {
     expect(aviso?.getAttribute('role')).toBe('status');
 
     (fixture.componentInstance as unknown as { cargarOrganizaciones: () => void }).cargarOrganizaciones();
-    http.expectOne((r) => r.url === '/practices').flush([{ id: 'p-1', name: 'Hospital Central' }]);
+    http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([{ id: 'p-1', name: 'Hospital Central' }]);
     fixture.detectChanges();
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="organizaciones-no-cargaron"]'),
@@ -290,7 +290,7 @@ describe('MembershipsTab — Carril 33', () => {
   it('si la solicitud falla con S9, muestra el código de soporte que permite seguir el caso', () => {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
-    http.expectOne((r) => r.url === '/practices').flush([{ id: 'practice-1', name: 'Hospital Central' }]);
+    http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([{ id: 'practice-1', name: 'Hospital Central' }]);
     fixture.detectChanges();
 
     const componente = fixture.componentInstance as unknown as {
@@ -333,7 +333,7 @@ describe('MembershipsTab — Carril 33', () => {
         avatarUrl: null,
       },
     ]);
-    http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([]);
     fixture.detectChanges();
 
     const filas = (
@@ -364,7 +364,7 @@ describe('MembershipsTab — Carril 33', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
       },
     ]);
-    http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([]);
     fixture.detectChanges();
 
     const filas = (
@@ -404,7 +404,7 @@ describe('MembershipsTab — Carril 33', () => {
     function cargar(filas: object[]): void {
       fixture.detectChanges();
       http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush(filas);
-      http.expectOne((r) => r.url === '/practices').flush([]);
+      http.expectOne((r) => r.url === '/practitioners/me/joinable-practices').flush([]);
       fixture.detectChanges();
     }
 

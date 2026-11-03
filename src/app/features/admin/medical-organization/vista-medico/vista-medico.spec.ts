@@ -44,7 +44,7 @@ describe('MedicalOrganization — vista del médico', () => {
 
   function resolverVinculaciones(): void {
     http.expectOne('/practitioners/me/role-assignments').flush([]);
-    http.expectOne('/practices').flush([]);
+    http.expectOne('/practitioners/me/joinable-practices').flush([]);
     harness.detectChanges();
   }
 
