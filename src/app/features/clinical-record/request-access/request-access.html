@@ -13,6 +13,14 @@
     <app-alert tone="error" title="No se pudo enviar">{{ error() }}</app-alert>
   }
 
+  @if (yaPedido()) {
+    <app-alert tone="info" title="Ya hay un pedido con este paciente">
+      Ya existe una solicitud pendiente o un vínculo activo con este paciente.
+      Si todavía no respondió, espere su decisión; si ya aceptó, puede abrir su
+      expediente desde la agenda o desde «Mis pacientes».
+    </app-alert>
+  }
+
   @if (sinOrganizacion()) {
     <app-alert tone="warning" title="Elija una organización">
       El pedido se hace a nombre de la organización con la que está trabajando.
