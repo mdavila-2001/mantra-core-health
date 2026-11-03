@@ -106,6 +106,7 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
  */
 @Component({
   selector: 'app-form-builder',
+  host: { '[class.form-builder--embebido]': 'embedded()' },
   imports: [
     Alert,
     AppButton,

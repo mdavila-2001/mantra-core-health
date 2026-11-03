@@ -7,6 +7,11 @@
   margin-inline: auto;
 }
 
+/* Dentro del centro de formularios el ancho lo manda la tira de pestañas. */
+:host(.form-builder--embebido) {
+  max-inline-size: none;
+}
+
 .constructor {
   display: flex;
   flex-direction: column;
