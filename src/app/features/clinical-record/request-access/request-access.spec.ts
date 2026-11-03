@@ -127,22 +127,36 @@ describe('RequestAccess', () => {
   });
 
   it.each([
-    ['CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING', 'Ya hay una solicitud pendiente', 'todavía no respondió'],
-    ['CARE_RELATIONSHIP_ALREADY_ACTIVE', 'Ya tiene vínculo con este paciente', 'El paciente ya aceptó'],
-  ])('un 409 con reason %s distingue pendiente de activo', async (reason, titulo, texto) => {
+    ['CARE_RELATIONSHIP_ALREADY_ACTIVE', 'Ya tiene un vínculo activo con este paciente', 'Ya pidió la vinculación'],
+    ['CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING', 'Ya pidió la vinculación', 'Ya tiene un vínculo activo'],
+  ])('un 409 con reason %s dice cuál de los dos es, sin error rojo', async (reason, dice, noDice) => {
     requestCareRelationship.mockReturnValue(
-      throwError(
-        () => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '', reason } }),
-      ),
+      throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '', reason } })),
     );
     await pintar();
     await pedir();
 
-    expect(root().textContent).toContain(titulo);
-    expect(root().textContent).toContain(texto);
+    expect(root().textContent).toContain(dice);
+    expect(root().textContent).not.toContain(noDice);
     expect(root().textContent).not.toContain('Ya existe una solicitud pendiente o un vínculo activo');
+    expect(root().textContent).not.toContain('No se pudo enviar');
     expect(root().querySelector('app-alert[tone="error"]')).toBeNull();
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('un reintento tras un 409 borra el aviso anterior', async () => {
+    requestCareRelationship
+      .mockReturnValueOnce(
+        throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '', reason: 'CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING' } })),
+      )
+      .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: null })));
+    await pintar();
+    await pedir();
+    expect(root().textContent).toContain('Ya pidió la vinculación');
+
+    await pedir();
+    expect(root().textContent).not.toContain('Ya pidió la vinculación');
+    expect(root().textContent).toContain('No se pudo enviar la solicitud.');
   });
 
   it.each([

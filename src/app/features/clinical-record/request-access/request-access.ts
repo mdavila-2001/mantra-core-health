@@ -17,30 +17,15 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 
-/** What the 409 means. `generico` covers an API that sends no `reason`. */
-type Conflicto409 = 'pendiente' | 'activo' | 'generico';
+/** Which duplicate the API reported when it answered 409. */
+type ConflictoDeVinculo = 'activo' | 'pendiente' | 'desconocido';
 
-const CONFLICTO_POR_REASON: Readonly<Record<string, Conflicto409>> = {
-  CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING: 'pendiente',
-  CARE_RELATIONSHIP_ALREADY_ACTIVE: 'activo',
-};
-
-const AVISO_409: Readonly<Record<Conflicto409, { titulo: string; texto: string }>> = {
-  pendiente: {
-    titulo: 'Ya hay una solicitud pendiente',
-    texto:
-      'Ya le pidió el vínculo a este paciente y todavía no respondió. Espere su decisión: no hace falta volver a pedirlo.',
-  },
-  activo: {
-    titulo: 'Ya tiene vínculo con este paciente',
-    texto: 'El paciente ya aceptó. Puede abrir su expediente desde la agenda o desde su consulta.',
-  },
-  generico: {
-    titulo: 'Ya hay un pedido con este paciente',
-    texto:
-      'Ya existe una solicitud pendiente o un vínculo activo con este paciente. Si todavía no respondió, espere su decisión; si ya aceptó, puede abrir su expediente desde la agenda o desde su consulta.',
-  },
-};
+/** Maps the API `reason` of a 409 to the duplicate it names. */
+function conflictoDe(reason: string | undefined): ConflictoDeVinculo {
+  if (reason === 'CARE_RELATIONSHIP_ALREADY_ACTIVE') return 'activo';
+  if (reason === 'CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING') return 'pendiente';
+  return 'desconocido';
+}
 
 /**
  * **Solicitar vinculación** (FT-07-R05) — el paso que faltaba entre encontrar
@@ -81,15 +66,12 @@ export class RequestAccess {
   protected readonly error = signal<string | null>(null);
 
   /**
-   * La API ya tiene un pedido sin responder o un vínculo activo con esta
-   * persona (409). No es un fallo: el pedido ya está hecho, así que se dice
-   * como estado y no como error. Cuál de los dos lo dice el `reason` de la API.
+   * What the 409 said. The API tells the two duplicates apart by `reason`
+   * (`CARE_RELATIONSHIP_ALREADY_ACTIVE` / `CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING`);
+   * `desconocido` is the fallback when no `reason` comes back (older API). It is
+   * not a failure: the request already exists, so it is told as a state.
    */
-  protected readonly yaPedido = signal<Conflicto409 | null>(null);
-  protected readonly aviso409 = computed(() => {
-    const conflicto = this.yaPedido();
-    return conflicto === null ? null : AVISO_409[conflicto];
-  });
+  protected readonly conflicto = signal<ConflictoDeVinculo | null>(null);
 
   /** Sin organización activa no hay a nombre de quién pedir: el contrato exige `tenantId`. */
   protected readonly sinOrganizacion = computed(() => this.auth.activeTenantId() === null);
@@ -116,7 +98,7 @@ export class RequestAccess {
     const motivo = this.motivo().trim();
     this.enviando.set(true);
     this.error.set(null);
-    this.yaPedido.set(null);
+    this.conflicto.set(null);
     this.authz
       .requestCareRelationship({
         tenantId,
@@ -130,20 +112,15 @@ export class RequestAccess {
         },
         error: (err: unknown) => {
           this.enviando.set(false);
-          // Por `code`, no por status (H2.S1.M2 lo forzó: PRECONDITION_FAILED
-          // pasó de 412 a 422, que es lo que la API siempre devolvió). El
-          // status alcanza para 403/409 porque ahí no hay ambigüedad; acá sí
-          // la había, y es justo la que este cambio corrige.
-          const code =
-            err instanceof HttpErrorResponse ? (readApiError(err)?.code ?? null) : null;
+          // Branch by `code`/`reason`, not by message or status alone: status is
+          // enough for 403/409 (no ambiguity), `code` settles 412/422.
+          const cuerpo = err instanceof HttpErrorResponse ? readApiError(err) : null;
+          const code = cuerpo?.code ?? null;
           const http = err instanceof HttpErrorResponse ? err.status : 0;
           if (http === 403) {
             this.error.set('No tiene permiso para pedir este vínculo.');
           } else if (http === 409) {
-            // Duplicate: the API says which one through `reason`; an older API
-            // sends none and gets the generic notice.
-            const reason = err instanceof HttpErrorResponse ? readApiError(err)?.reason : undefined;
-            this.yaPedido.set(CONFLICTO_POR_REASON[reason ?? ''] ?? 'generico');
+            this.conflicto.set(conflictoDe(cuerpo?.reason));
           } else if (code === 'PRECONDITION_FAILED') {
             this.error.set('Su cuenta no tiene un perfil profesional propio para pedir el vínculo.');
           } else {

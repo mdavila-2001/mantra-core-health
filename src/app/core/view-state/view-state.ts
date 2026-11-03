@@ -35,11 +35,21 @@ export function loading(): LoadingViewState {
   return { status: 'loading' };
 }
 
-/** **S3** — sin resultados. La próxima acción es obligatoria por contrato. */
-export function empty(nextAction: ViewStateNextAction, message?: string): EmptyViewState {
-  return message === undefined
-    ? { status: 'empty', nextAction }
-    : { status: 'empty', nextAction, message };
+/**
+ * **S3** — sin resultados. La próxima acción es obligatoria por contrato.
+ * `title` names this particular emptiness; omit it to get the host's generic one.
+ */
+export function empty(
+  nextAction: ViewStateNextAction,
+  message?: string,
+  title?: string,
+): EmptyViewState {
+  return {
+    status: 'empty',
+    nextAction,
+    ...(message === undefined ? {} : { message }),
+    ...(title === undefined ? {} : { title }),
+  };
 }
 
 /** Camino feliz: datos frescos. */
