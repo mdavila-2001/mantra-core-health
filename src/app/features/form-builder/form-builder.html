@@ -184,15 +184,8 @@
       <p class="constructor__nota">
         Elija un formulario estándar de sus especialidades para cargarlo y agregarle sus campos.
       </p>
-      <button
-        app-button
-        type="button"
-        variant="ghost"
-        size="sm"
-        (clicked)="volverAMisFormularios()"
-        data-testid="volver-mis-formularios"
-      >
-        Volver a mis formularios
+      <button app-button type="button" variant="outline" size="sm" (clicked)="volverAMisFormularios()" data-testid="volver-mis-formularios">
+        <app-nav-icon name="arrow-left" /> Volver a mis formularios
       </button>
     </div>
 
@@ -338,9 +331,7 @@
                     }}
                   </span>
                 </span>
-                <span class="mis-formularios__version" data-testid="mi-formulario-version">
-                  Versión {{ plantilla.version }}
-                </span>
+                <span class="mis-formularios__version" data-testid="mi-formulario-version"><app-nav-icon name="history" /> Versión {{ plantilla.version }}</span>
                 <span class="mis-formularios__propios">
                   @if (esPorDefecto(plantilla)) {
                     <app-badge variant="info" size="sm" data-testid="mi-formulario-por-defecto">
