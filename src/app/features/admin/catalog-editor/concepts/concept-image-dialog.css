@@ -1,0 +1,17 @@
+.imagen-concepto__vista {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.imagen-concepto__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin-block-start: var(--e3);
+}

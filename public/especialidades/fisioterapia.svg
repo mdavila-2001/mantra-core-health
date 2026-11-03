@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img">
+<title>Fisioterapia</title>
+<rect width="320" height="180" fill="var(--especialidad-fondo, #E6F4F1)"/>
+<g fill="var(--especialidad-trazo, #0F766E)" fill-opacity=".14" stroke="none"><circle cx="40" cy="48" r="14"/><circle cx="280" cy="132" r="14"/><circle cx="70" cy="140" r="6"/><circle cx="252" cy="40" r="6"/></g><g fill="none" stroke="var(--especialidad-acento, #F59E0B)" stroke-width="3" stroke-linecap="round"><path d="M270 80 V96 M262 88 H278"/><path d="M50 98 V110 M44 104 H56"/><path d="M92 36 h8 M220 146 h8"/></g>
+<circle cx="160" cy="90" r="55" fill="var(--especialidad-trazo, #0F766E)" fill-opacity=".12"/>
+<g transform="translate(83.2 13.2) scale(1.6)" fill="none" stroke="var(--especialidad-trazo, #0F766E)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="41" y="26" width="14" height="7" rx="2"/><rect x="43" y="36" width="14" height="7" rx="2"/><rect x="44" y="46" width="14" height="7" rx="2"/><rect x="43" y="56" width="14" height="7" rx="2"/><rect x="40" y="66" width="14" height="7" rx="2"/><path d="M64 34 C70 44 70 56 64 66" stroke="var(--especialidad-acento, #F59E0B)"/><path d="M64 66 L60 64 M64 66 L66 61" stroke="var(--especialidad-acento, #F59E0B)"/></g>
+</svg>
