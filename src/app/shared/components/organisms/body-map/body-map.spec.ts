@@ -371,6 +371,29 @@ describe('BodyMap', () => {
     expect(formaDe('pecho-der').closest('g')?.classList).not.toContain('body-map__zona--marcada');
   });
 
+  /** «me duelen los ojos»: los ojos sólo están en la cara, así que la figura gira sola a mostrarlos. */
+  it('lo marcado que no se ve en la vista puesta la cambia a la que lo muestra', () => {
+    fixture.componentRef.setInput('marcadas', ['ojo-der', 'ojo-izq']);
+    fixture.detectChanges();
+    expect(vistaPuesta()).toBe('cara');
+    expect(formaDe('ojo-izq').closest('g')?.classList).toContain('body-map__zona--marcada');
+
+    fixture.componentRef.setInput('marcadas', ['coxis']);
+    fixture.detectChanges();
+    expect(vistaPuesta()).toBe('espalda');
+  });
+
+  it('lo marcado no mueve la figura si ya se ve, ni si hay una zona elegida', () => {
+    fixture.componentRef.setInput('marcadas', ['rodilla-der']);
+    fixture.detectChanges();
+    expect(vistaPuesta()).toBe('frente');
+
+    formaDe('pecho-der').dispatchEvent(new MouseEvent('click'));
+    fixture.componentRef.setInput('marcadas', ['coxis']);
+    fixture.detectChanges();
+    expect(vistaPuesta()).toBe('frente');
+  });
+
   it('sin nada contado no hay leyenda de marcadas', () => {
     expect(html.querySelector('[data-testid="body-map-marcadas"]')).toBeNull();
   });
