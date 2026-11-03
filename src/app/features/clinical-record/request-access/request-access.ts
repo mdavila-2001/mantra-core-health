@@ -23,7 +23,7 @@ type ConflictoDeVinculo = 'activo' | 'pendiente' | 'desconocido';
 /** Maps the API `reason` of a 409 to the duplicate it names. */
 function conflictoDe(reason: string | undefined): ConflictoDeVinculo {
   if (reason === 'CARE_RELATIONSHIP_ALREADY_ACTIVE') return 'activo';
-  if (reason === 'CARE_RELATIONSHIP_REQUEST_PENDING') return 'pendiente';
+  if (reason === 'CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING') return 'pendiente';
   return 'desconocido';
 }
 
@@ -67,7 +67,7 @@ export class RequestAccess {
 
   /**
    * What the 409 said. The API tells the two duplicates apart by `reason`
-   * (`CARE_RELATIONSHIP_ALREADY_ACTIVE` / `CARE_RELATIONSHIP_REQUEST_PENDING`);
+   * (`CARE_RELATIONSHIP_ALREADY_ACTIVE` / `CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING`);
    * `desconocido` is the fallback when no `reason` comes back (older API). It is
    * not a failure: the request already exists, so it is told as a state.
    */

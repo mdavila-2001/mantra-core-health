@@ -128,7 +128,7 @@ describe('RequestAccess', () => {
 
   it.each([
     ['CARE_RELATIONSHIP_ALREADY_ACTIVE', 'Ya tiene un vínculo activo con este paciente', 'Ya pidió la vinculación'],
-    ['CARE_RELATIONSHIP_REQUEST_PENDING', 'Ya pidió la vinculación', 'Ya tiene un vínculo activo'],
+    ['CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING', 'Ya pidió la vinculación', 'Ya tiene un vínculo activo'],
   ])('un 409 con reason %s dice cuál de los dos es, sin error rojo', async (reason, dice, noDice) => {
     requestCareRelationship.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '', reason } })),
@@ -147,7 +147,7 @@ describe('RequestAccess', () => {
   it('un reintento tras un 409 borra el aviso anterior', async () => {
     requestCareRelationship
       .mockReturnValueOnce(
-        throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '', reason: 'CARE_RELATIONSHIP_REQUEST_PENDING' } })),
+        throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '', reason: 'CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING' } })),
       )
       .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: null })));
     await pintar();
