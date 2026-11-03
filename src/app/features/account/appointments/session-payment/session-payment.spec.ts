@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { environment } from '../../../../../environments/environment';
 import { API_BASE_URL } from '../../../../core/data-access/api';
 import type { SimulatedCharge } from '../../../../core/data-access/billing-simulated/billing-simulated.types';
 import type { SimulatedInvoicing } from '../../../../core/mock/billing-sim/simulated-invoicing';
@@ -20,6 +21,10 @@ function archivo(nombre: string, tipo: string, bytes = 8): File {
  * botón de envío no se habilita hasta que hay uno válido.
  */
 describe('SessionPayment', () => {
+  // The proof upload only exists with the payment demo on (the gateway is not there yet),
+  // and the unit-test environment ships it off: switch it on per test and restore it.
+  const originalPaymentDemo = environment.paymentDemo;
+
   let fixture: ComponentFixture<SessionPayment>;
   let http: HttpTestingController;
   let motor: SimulatedInvoicing;
@@ -52,11 +57,24 @@ describe('SessionPayment', () => {
   }
 
   beforeEach(() => {
+    Object.assign(environment, { paymentDemo: true });
     motor = motorDePrueba();
     cobro = motor.listCharges().find((c) => c.source === 'CONSULTATION' && c.payment === null && c.plan === null)!;
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    Object.assign(environment, { paymentDemo: originalPaymentDemo });
+    http.verify();
+  });
+
+  it('sin la demostración de pago no ofrece subir comprobante ni enviar', async () => {
+    Object.assign(environment, { paymentDemo: false });
+    await montar();
+
+    expect(el('session-payment')).not.toBeNull();
+    expect(el('session-payment-proof')).toBeNull();
+    expect(el('session-payment-send')).toBeNull();
+  });
 
   it('no deja enviar mientras no haya un comprobante', async () => {
     await montar();
