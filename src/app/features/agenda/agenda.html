@@ -22,19 +22,6 @@
        puertas que ya existen: quien no publicó horario ve «Publicar mi agenda»
        en el aviso de abajo, y quien sí lo publicó lo cambia desde el lápiz de
        la solapa «Mi agenda». Un tercer botón para lo mismo era ruido. -->
-  @if (esQuienAtiende()) {
-    <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a las visitas.
-
-         «Visitas de laboratorio» salió del menú del médico —la lista cerrada
-         del cliente son ocho opciones y no está—, y la especificación (línea
-         5399) exige que una visita comercial **no se mezcle** con la agenda
-         clínica. Las dos cosas se cumplen: la bandeja sigue siendo una sección
-         aparte, con su ruta y sus datos, y lo único que perdió es el renglón
-         lateral. Este enlace es por dónde se llega ahora. -->
-    <a app-button page-actions variant="ghost" routerLink="/lab-visits">
-      Visitas de laboratorio
-    </a>
-  }
 </app-page-header>
 
 <div class="agenda">
