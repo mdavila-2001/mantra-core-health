@@ -9,6 +9,15 @@ import { VOICE_RECOGNIZER } from './dictation';
 import type { VoiceErrorEvent, VoiceResultEvent, VoiceRecognizer } from './dictation.types';
 import { SymptomCheck } from './symptom-check';
 import { ESPERAR_IMAGEN_DE_VISTA } from '../../shared/components/organisms/body-map/body-map';
+import { SpecialtyImages } from '../../core/data-access/terminology/specialty-images.service';
+import { defaultSpecialtyImage } from '../../shared/specialties/specialty-images';
+
+/**
+ * `SpecialtyImages` pide el catálogo de especialidades apenas se inyecta. Estas
+ * pruebas no son sobre las imágenes propias del admin: rige la ilustración
+ * empaquetada y no queda ninguna petición sin responder.
+ */
+const SIN_IMAGENES_PROPIAS = { of: (nombre: string) => defaultSpecialtyImage(nombre) };
 
 /**
  * Responde el `GET /profiles/patients/me` que se pide al abrir, con sesión
@@ -49,6 +58,7 @@ describe('SymptomCheck · a dónde lleva «ver quién atiende»', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -219,6 +229,7 @@ describe('SymptomCheck · la silueta', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -323,6 +334,7 @@ describe('SymptomCheck · el área de texto', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -377,6 +389,7 @@ describe('SymptomCheck · mientras la IA lee', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -459,6 +472,7 @@ describe('SymptomCheck · dictar', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: VOICE_RECOGNIZER, useValue: constructor },
       ],
     });
@@ -583,6 +597,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -752,6 +767,7 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -925,7 +941,7 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(tarjetas.length).toBeGreaterThan(0);
     // La misma anatomía que `/directory`: foto, ícono de la especialidad y nombre.
     expect(tarjetas[0].querySelector('img.rejilla__foto')?.getAttribute('src')).toContain(
-      '/directorio/',
+      '/especialidades/',
     );
     expect(tarjetas[0].querySelector('app-specialty-icon')).not.toBeNull();
     expect(tarjetas[0].querySelector('.rejilla__nombre')?.textContent).toContain(
@@ -941,26 +957,19 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(html.textContent).not.toContain('Guardar observación');
   });
 
-  it('desde las especialidades se ven los medicamentos sugeridos y se vuelve sin pestañas', () => {
+  it('no ofrece medicamentos ni posología en ninguna vista (sin autorización legal)', () => {
     responderSexoPropio(http);
     (componente as unknown as { escribir(v: string): void }).escribir('dolor de cabeza');
     fixture.detectChanges();
     http.match(() => true);
 
     html = fixture.nativeElement as HTMLElement;
-    const ver = [...html.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
-      b.textContent?.includes('Ver medicamentos sugeridos'),
-    );
-    ver?.click();
-    fixture.detectChanges();
-    expect(html.querySelector('[data-testid="sintomas-medicamentos-seccion"]')).not.toBeNull();
-    expect(html.querySelector('[data-testid="sintomas-recomendaciones"]')).toBeNull();
-
-    html
-      .querySelector<HTMLButtonElement>('[data-testid="sintomas-volver-a-especialistas"]')
-      ?.click();
-    fixture.detectChanges();
     expect(html.querySelector('[data-testid="sintomas-recomendaciones"]')).not.toBeNull();
+    expect(html.querySelector('[data-testid="sintomas-medicamentos-seccion"]')).toBeNull();
+    const texto = html.textContent ?? '';
+    for (const prohibido of ['medicamentos sugeridos', 'posolog', 'farmacológic', 'venta libre']) {
+      expect(texto.toLowerCase(), prohibido).not.toContain(prohibido);
+    }
   });
 
   it('detecta «ideas suicidas» y ubica el soporte de crisis ABAJO del área de escritura', () => {
@@ -1035,6 +1044,7 @@ describe('SymptomCheck · la silueta', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -1139,6 +1149,7 @@ describe('SymptomCheck · el área de texto', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -1220,6 +1231,7 @@ describe('SymptomCheck · dictar', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: VOICE_RECOGNIZER, useValue: constructor },
       ],
     });
