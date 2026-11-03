@@ -488,12 +488,9 @@ export class SupportAccessClient {
 
   /* ---- doctor -------------------------------------------------------------- */
 
-  /** `GET /me/practitioner/support-team` — «Mi equipo». Devuelve lista vacía en 404/0. */
+  /** `GET /me/practitioner/support-team` — «Mi equipo». Los errores llegan a la pantalla (404/0 los trata como vacío). */
   getMyTeam(): Observable<DoctorTeam> {
-    return this.http.get<DoctorTeam>(this.url('/me/practitioner/support-team')).pipe(
-      map(fromWireTeam),
-      catchError(() => of({ items: [] })),
-    );
+    return this.http.get<DoctorTeam>(this.url('/me/practitioner/support-team')).pipe(map(fromWireTeam));
   }
 
   /**

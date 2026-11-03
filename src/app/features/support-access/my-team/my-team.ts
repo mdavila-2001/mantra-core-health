@@ -33,7 +33,13 @@ import { InviteSupport } from './invite-support/invite-support';
 import { esInvitacionSinResponder } from './invite-support/invite-support.rules';
 import { TeamAttention } from './team-attention/team-attention';
 import { TeamExplain } from './team-explain/team-explain';
-import { TeamQrTool } from './team-qr-tool/team-qr-tool';
+
+/** One empty state for the whole page: the attention and activity cards hide while they have nothing. */
+const SIN_EQUIPO = empty(
+  { label: 'Use «Invitar a una secretaria» para sumar a alguien' },
+  'Cuando acepte a alguien o la organización le asigne una persona, aparecerá acá.',
+  'Todavía no tiene equipo de apoyo',
+);
 
 /**
  * **Mi equipo y Mis accesos**: Gestión integral de equipo de apoyo y accesos delegados.
@@ -42,7 +48,7 @@ import { TeamQrTool } from './team-qr-tool/team-qr-tool';
   selector: 'app-my-team',
   imports: [
     Alert, AppButton, AppButtonLink, Badge, Card, InviteSupport, MySupport, PageHeader,
-    RouterLink, SearchField, SegmentedControl, Switch, TeamAttention, TeamExplain, TeamQrTool, ViewStateHost,
+    RouterLink, SearchField, SegmentedControl, Switch, TeamAttention, TeamExplain, ViewStateHost,
   ],
   templateUrl: './my-team.html',
   styleUrl: './my-team.css',
@@ -71,8 +77,6 @@ export class MyTeam implements OnInit {
     { value: 'accesos', label: 'Mis accesos' },
   ];
   protected readonly busqueda = signal('');
-  protected readonly mostrarQr = signal(false);
-  protected readonly qrInicial = signal<string | null>(null);
 
   protected readonly miembrosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
@@ -98,14 +102,10 @@ export class MyTeam implements OnInit {
   });
 
   ngOnInit(): void {
+    // An invitation QR opens `/my-support#code=…` (redirected here). «Mis accesos» reads the code and
+    // clears it from the address bar, so only the tab is switched — the URL is left for it to clean.
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
-    if (hash.includes('code=')) {
-      const match = hash.match(/code=([^&]+)/);
-      if (match) {
-        this.qrInicial.set(decodeURIComponent(match[1]));
-        this.mostrarQr.set(true);
-      }
-    }
+    if (/(^#|&)code=/.test(hash)) this.pestana.set('accesos');
     this.cargar();
   }
 
@@ -119,15 +119,6 @@ export class MyTeam implements OnInit {
     });
   }
 
-  protected alternarQr(): void {
-    this.mostrarQr.update((v) => !v);
-  }
-
-  protected alEscanearQr(codigo: string): void {
-    this.toasts.info(`Código detectado: ${codigo}`);
-    if (codigo.includes('REQ-')) this.cambiarPestana('accesos');
-  }
-
   protected cargar(): void {
     this.state.set(loading());
     this.support.getMyTeam().subscribe({
@@ -135,17 +126,13 @@ export class MyTeam implements OnInit {
         // `PENDING` es un vínculo que el doctor no decide (su invitación sin responder o una aprobación de la organización).
         const equipo = items.filter((m) => !esInvitacionSinResponder(m) && (m.status as string) !== 'PENDING');
         this.invitaciones.set(items.filter(esInvitacionSinResponder));
-        this.state.set(
-          equipo.length === 0
-            ? empty({ label: 'Cuando la organización le asigne a alguien, aparecerá acá' }, 'Todavía no tiene equipo de apoyo.')
-            : ready(equipo),
-        );
+        this.state.set(equipo.length === 0 ? SIN_EQUIPO : ready(equipo));
       },
       error: (failure: unknown) => {
         this.invitaciones.set([]);
         const status = (failure as { status?: number })?.status;
         if (status === 404 || status === 0) {
-          this.state.set(empty({ label: 'Cuando la organización le asigne a alguien, aparecerá acá' }, 'Todavía no tiene equipo de apoyo.'));
+          this.state.set(SIN_EQUIPO);
         } else {
           this.state.set(errorToViewState<readonly DoctorTeamMember[]>(failure));
         }
