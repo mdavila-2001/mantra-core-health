@@ -107,6 +107,21 @@ describe('TeamAttention', () => {
     expect(host().textContent).toContain('Cuando algo necesite su decisión, aparecerá acá');
   });
 
+  it('si el servidor no publica ninguna de las dos fuentes (404), es «nada pendiente» y no «no encontramos lo que busca»', async () => {
+    getPractitionerPanel.mockReturnValue(throwError(() => falloDeApi(404, 'NOT_FOUND')));
+    listPending.mockReturnValue(throwError(() => falloDeApi(404, 'NOT_FOUND')));
+    await abrir();
+    expect(host().textContent).toContain('No tiene nada pendiente por ahora.');
+    expect(host().textContent).not.toContain('No encontramos lo que busca');
+  });
+
+  it('si solo falta el panel (404), igual muestra las aprobaciones que sí responden', async () => {
+    getPractitionerPanel.mockReturnValue(throwError(() => falloDeApi(404, 'NOT_FOUND')));
+    await abrir();
+    expect(byId('atencion-aprobaciones')!.textContent).toContain('1 aprobación espera su decisión.');
+    expect(byId('atencion-revisiones')!.textContent).toContain('Ningún acceso de su equipo espera su revisión.');
+  });
+
   it('un fallo muestra el código de seguimiento y reintenta con el botón', async () => {
     getPractitionerPanel.mockReturnValueOnce(throwError(() => falloDeApi(500, 'INTERNAL')));
     await abrir();

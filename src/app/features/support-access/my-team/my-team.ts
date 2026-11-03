@@ -132,7 +132,8 @@ export class MyTeam implements OnInit {
     this.state.set(loading());
     this.support.getMyTeam().subscribe({
       next: ({ items }) => {
-        const equipo = items.filter((m) => !esInvitacionSinResponder(m));
+        // `PENDING` es un vínculo que el doctor no decide (su invitación sin responder o una aprobación de la organización).
+        const equipo = items.filter((m) => !esInvitacionSinResponder(m) && (m.status as string) !== 'PENDING');
         this.invitaciones.set(items.filter(esInvitacionSinResponder));
         this.state.set(
           equipo.length === 0
