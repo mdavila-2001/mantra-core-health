@@ -474,6 +474,25 @@
           Elija una organización desde el selector del encabezado para ver los horarios disponibles.
         </app-alert>
       } @else {
+        <!-- Con qué organización. El paciente no es de una organización: pide cita
+             con la que tiene a su profesional, y sin esta pregunta sólo se podía
+             agendar en la de la sesión. Va ANTES que todo lo demás porque decide
+             de qué organización son los profesionales que se buscan. -->
+        @if (preguntaPorOrganizacion()) {
+          <app-form-field
+            label="¿En qué organización?"
+            hint="Elija la organización donde quiere la cita. Sólo se listan las que tienen horarios disponibles."
+            class="turnos__filtro"
+          >
+            <app-select
+              data-testid="turnos-organizacion"
+              [options]="opcionesDeOrganizacion()"
+              [value]="organizacion()"
+              (valueChange)="elegirOrganizacion($event)"
+            />
+          </app-form-field>
+        }
+
         <!-- J2 · con quién se pide el turno. Va ANTES del buscador porque decide
              qué lista se busca: elegirlo después sería buscar en el conjunto
              equivocado. Dos opciones y no un desplegable — son dos, y un

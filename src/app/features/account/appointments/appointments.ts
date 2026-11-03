@@ -18,7 +18,11 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 // El sello de reconsulta (C4): los dos campos y su predicado viven en los tipos congelados de `scheduling`.
-import { esReconsulta } from '../../../core/data-access/scheduling/scheduling.types';
+import {
+  esReconsulta,
+  type BookableOrganization,
+} from '../../../core/data-access/scheduling/scheduling.types';
+import type { TenantScope } from '../../../core/data-access/scheduling/tenant-scope';
 import type {
   AgendaResource,
   AgendaSlot,
@@ -191,6 +195,8 @@ const PARAM_HASTA = 'hasta';
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
   readonly id: string;
+  /** La organización de la agenda del turno; `''` si la API no la dijo. */
+  readonly tenantId: string;
   readonly cuando: Date | null;
   readonly hasta: Date | null;
   /** El uuid del catálogo. Se conserva para poder reetiquetar cuando llegue. */
@@ -460,8 +466,42 @@ export class Appointments {
    */
   protected readonly rutaDeAgenda = AGENDA_ROUTE;
 
-  /** La organización, que `GET /scheduling/resources` exige explícita. */
-  protected readonly organizacion = this.auth.activeTenantId;
+  /**
+   * Las organizaciones con las que se puede pedir cita hoy.
+   *
+   * El paciente no es de una organización: pide cita con la que tiene a su
+   * profesional, sea o no aquella en la que su cuenta está. Sin esta lista la
+   * pantalla sólo mostraba la agenda de la organización activa, y si esa no
+   * había publicado horarios no había forma de agendar.
+   */
+  protected readonly organizaciones = signal<readonly BookableOrganization[]>([]);
+
+  /** La organización que la persona eligió para pedir cita; `null` = la activa de la sesión. */
+  private readonly organizacionElegida = signal<string | null>(null);
+
+  /** La organización con la que se pide cita, que `GET /scheduling/resources` exige explícita. */
+  protected readonly organizacion = computed(
+    () => this.organizacionElegida() ?? this.auth.activeTenantId(),
+  );
+
+  /**
+   * Como qué organización se habla con la agenda: la elegida, que puede no ser
+   * la activa. La API sólo lo acepta de una cuenta de paciente.
+   */
+  private readonly alcance = computed<TenantScope>(() => {
+    const tenantId = this.organizacion();
+    return tenantId === null ? {} : { tenantId };
+  });
+
+  protected readonly opcionesDeOrganizacion = computed<readonly SelectOption<string>[]>(() =>
+    this.organizaciones().map((organizacion) => ({
+      value: organizacion.tenantId,
+      label: organizacion.name,
+    })),
+  );
+
+  /** Sólo se pregunta cuando hay con qué organización elegir. */
+  protected readonly preguntaPorOrganizacion = computed(() => this.organizaciones().length > 0);
 
   /** Etiquetas de los conceptos de estado, para no mostrar uuid. */
   private readonly etiquetas = signal<ConceptLabels>(new Map());
@@ -1012,7 +1052,7 @@ export class Appointments {
     this.queQuiere.set(PEDIR_CONSULTA);
     const perfil = this.recursosEnFoco()[0]?.resourceRefId;
     if (this.esLaboratorio() || perfil === undefined) return;
-    this.scheduling.listServiceOfferings(perfil).subscribe({
+    this.scheduling.listServiceOfferings(perfil, this.alcance()).subscribe({
       next: (lista) => {
         this.ofertasDelProfesional.set(lista);
         this.aplicarEnlaceDelServicio(lista);
@@ -1288,7 +1328,7 @@ export class Appointments {
       });
     });
     if (this.auth.patientProfileId() !== null) {
-      this.cargarRecursos();
+      this.cargarOrganizaciones();
     }
     this.llevarAPedirSiVieneDeUnaOrden();
   }
@@ -1370,13 +1410,63 @@ export class Appointments {
     this.cargarRecursos();
   }
 
+  /**
+   * Lee con qué organizaciones se puede pedir cita y, con eso, las agendas de la
+   * que corresponde.
+   *
+   * Si la organización de la sesión no tiene cupos abiertos se elige la primera
+   * que sí: dejar a la persona frente a «todavía no hay profesionales» con otras
+   * organizaciones disponibles era no poder agendar. Un fallo al leer la lista no
+   * impide pedir cita: se sigue con la organización de la sesión, como antes.
+   */
+  private cargarOrganizaciones(): void {
+    this.scheduling.listBookableOrganizations().subscribe({
+      next: (lista) => {
+        this.organizaciones.set(lista);
+        const activa = this.auth.activeTenantId();
+        if (lista.length > 0 && !lista.some((organizacion) => organizacion.tenantId === activa)) {
+          this.organizacionElegida.set(lista[0].tenantId);
+        }
+        this.cargarRecursos();
+      },
+      error: () => this.cargarRecursos(),
+    });
+  }
+
+  /**
+   * Cambia la organización con la que se pide cita.
+   *
+   * Limpia lo elegido antes de recargar, por la misma razón que
+   * {@link cambiarTipoDeRecurso}: el profesional y los horarios en pantalla son
+   * de la organización anterior.
+   *
+   * @param tenantId - La organización elegida; `null` es volver al placeholder y no cambia nada.
+   */
+  protected elegirOrganizacion(tenantId: string | null): void {
+    if (tenantId === null || this.organizacion() === tenantId) {
+      return;
+    }
+    this.organizacionElegida.set(tenantId);
+    this.agendaElegida.set(null);
+    this.sedeElegida.set(SEDE_CUALQUIERA);
+    this.recursos.set([]);
+    this.sinRecursos.set(false);
+    this.busquedaDeRecurso.set('');
+    this.ofertasDelProfesional.set([]);
+    this.queQuiere.set(PEDIR_CONSULTA);
+    this.horarios.set(empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN));
+    this.cargarRecursos();
+  }
+
   private cargarRecursos(): void {
     const tenantId = this.organizacion();
     if (tenantId === null) {
       return;
     }
 
-    this.scheduling.listResources({ tenantId, resourceType: this.tipoDeRecurso() }).subscribe({
+    this.scheduling
+      .listResources({ tenantId, resourceType: this.tipoDeRecurso() }, this.alcance())
+      .subscribe({
       next: (pagina) => {
         this.recursos.set(pagina.items);
         this.catalogoDeRecursos.update((previo) => {
@@ -1463,17 +1553,20 @@ export class Appointments {
     forkJoin(
       enFoco.map((recurso) =>
         forkJoin([
-          this.scheduling.listSlots({
-            resourceId: recurso.id,
-            from: desde,
-            to: hasta,
-            onlyAvailable: true,
-            limit: TOPE_DE_HORARIOS,
-          }),
+          this.scheduling.listSlots(
+            {
+              resourceId: recurso.id,
+              from: desde,
+              to: hasta,
+              onlyAvailable: true,
+              limit: TOPE_DE_HORARIOS,
+            },
+            this.alcance(),
+          ),
           // P36 · las horas del horario flexible de la misma agenda. Vacío si
           // publicó turnos fijos. Que esta lectura falle no esconde los turnos
           // fijos: se avisa como lista incompleta y se sigue.
-          this.scheduling.getFlexibleAvailability(recurso.id, { from: desde, to: hasta }).pipe(
+          this.scheduling.getFlexibleAvailability(recurso.id, { from: desde, to: hasta }, this.alcance()).pipe(
             map((disponibilidad) => disponibilidad.items),
             catchError(() => {
               this.horariosIncompletos.set(true);
@@ -1557,12 +1650,15 @@ export class Appointments {
     forkJoin(
       enFoco.map((recurso) =>
         this.scheduling
-          .getServiceAvailability({
-            offeringId: servicio.id,
-            resourceId: recurso.id,
-            from: desde,
-            to: hasta,
-          })
+          .getServiceAvailability(
+            {
+              offeringId: servicio.id,
+              resourceId: recurso.id,
+              from: desde,
+              to: hasta,
+            },
+            this.alcance(),
+          )
           .pipe(
             map((disponibilidad) =>
               disponibilidad.items.map(
@@ -1671,13 +1767,17 @@ export class Appointments {
 
     this.anotandose.set(true);
     this.scheduling
-      .enrollWaitlist({
-        tenantId,
-        patientProfileId: perfil,
-        resourceId,
-        desiredFrom: desde,
-        desiredTo: hasta,
-      })
+      .enrollWaitlist(
+        {
+          tenantId,
+          patientProfileId: perfil,
+          resourceId,
+          desiredFrom: desde,
+          desiredTo: hasta,
+        },
+        undefined,
+        this.alcance(),
+      )
       .subscribe({
         next: () => {
           this.anotandose.set(false);
@@ -1748,7 +1848,13 @@ export class Appointments {
 
     this.operando.set(turno.id);
     this.scheduling
-      .cancelBooking(turno.id, { cancelledBy: 'PATIENT', reasonText: motivo })
+      .cancelBooking(
+        turno.id,
+        { cancelledBy: 'PATIENT', reasonText: motivo },
+        undefined,
+        // La cita puede ser de otra organización que la elegida para pedir una nueva.
+        turno.tenantId === '' ? undefined : { tenantId: turno.tenantId },
+      )
       .subscribe({
         next: () => {
           this.operando.set(null);
@@ -1886,6 +1992,8 @@ export class Appointments {
       recurso: horario.resourceId,
       desde: horario.desde.toISOString(),
       hasta: horario.hasta.toISOString(),
+      // La reserva habla con la organización de la agenda, que puede no ser la activa.
+      ...(this.organizacion() === null ? {} : { org: this.organizacion() as string }),
       ...(horario.ofertaId === undefined ? {} : { oferta: horario.ofertaId }),
       ...(horario.flexible === true ? { flexible: '1' } : {}),
     };
@@ -1898,6 +2006,7 @@ export class Appointments {
     const resourceId = cita.resourceId ?? '';
     return {
       id: cita.id,
+      tenantId: cita.tenantId ?? '',
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       statusConceptId: cita.statusConceptId,
