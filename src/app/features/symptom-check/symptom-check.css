@@ -449,7 +449,7 @@
    mismo aire que el bloque de la figura. El rótulo, la ayuda y el ícono son de
    `app-form-field`; acá sólo se lo ubica. */
 .sintomas__escribir {
-  margin: var(--e3) 0 0;
+  margin: var(--e2) 0 0;
 }
 
 /* Dictar (P-02): una fila bajo el área de texto. El aviso ocupa la fila
