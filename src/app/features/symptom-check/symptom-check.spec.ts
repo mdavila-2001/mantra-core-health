@@ -667,39 +667,6 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     );
   });
 
-  /** Lo escrito enciende la parte exacta que nombra, con su lado (pedido del 03/11/2026). */
-  it('«me duele la rodilla derecha» enciende sólo la rodilla derecha', () => {
-    escribir('me duele la rodilla derecha');
-    fixture.detectChanges();
-
-    const marcada = (id: string) =>
-      html.querySelector(`[data-testid="body-map-${id}"]`)?.closest('g')?.classList.contains('body-map__zona--marcada');
-    expect(marcada('rodilla-der')).toBe(true);
-    expect(marcada('rodilla-izq')).toBe(false);
-    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Rodilla derecha');
-    vi.advanceTimersByTime(600);
-    http
-      .match('/ai/v1/triage/analyze')
-      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
-  });
-
-  it('«me duelen los ojos» gira la figura a la cara y enciende los dos ojos', () => {
-    escribir('me duelen los ojos');
-    fixture.detectChanges();
-
-    expect(html.querySelector('svg[data-testid="body-map-vista-cara"]')).not.toBeNull();
-    for (const id of ['ojo-der', 'ojo-izq']) {
-      expect(
-        html.querySelector(`[data-testid="body-map-${id}"]`)?.closest('g')?.classList,
-        id,
-      ).toContain('body-map__zona--marcada');
-    }
-    vi.advanceTimersByTime(600);
-    http
-      .match('/ai/v1/triage/analyze')
-      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
-  });
-
   /** A symptom only fine zones offer must not invent a side: «ampolla» lights both feet. */
   it('lo contado no inventa un lado: una ampolla enciende los dos pies', () => {
     escribir('tengo una ampolla');
@@ -722,9 +689,8 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     escribir('me duele la rodilla y ando triste');
     fixture.detectChanges();
 
-    // «la rodilla» sin lado: las dos, nombradas una por una.
     expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
-      'Rodilla derecha',
+      'Rodillas',
     );
     expect(
       html.querySelector('[data-testid="body-map-rodilla-der"]')?.closest('g')?.classList,

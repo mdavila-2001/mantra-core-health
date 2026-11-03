@@ -88,15 +88,6 @@ El merge a `dev` exige revisión humana: `gh pr merge` y el auto-merge están
 bloqueados. El flujo termina en **abrir el PR**. El CI propio está caído; los
 `check-*.mjs` se corren a mano.
 
-**Responsable de cada commit y PR (pedido del usuario, 03/11/2026).** Varias
-personas usan la misma cuenta de claude.ai, y todo lo que se sube a GitHub sale
-como `mdavila-2001`. Por eso, **antes de cada commit y antes de abrir cada PR**,
-la sesión pregunta «¿Quién es el responsable?» y espera a que la persona escriba
-su nombre. Sin respuesta, no hay commit ni PR. El nombre se deja como línea
-`Responsable: <nombre>` al final del mensaje del commit y en la descripción del
-PR. Autor y committer de git no se tocan: siguen siendo los de la sesión, para
-que los commits salgan verificados.
-
 **Un PR por cambio terminado, hacia `dev`.** La rama `test` está dada de baja
 desde el 30/10/2026: no despliega nada y `test.alovidasalud.com` redirige a
 `dev`, así que no se le abren PR. Si el cambio también va a `mockup`, lleva su

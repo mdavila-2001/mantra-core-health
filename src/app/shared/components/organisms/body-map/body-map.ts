@@ -264,19 +264,6 @@ export class BodyMap {
       untracked(() => this.abrirDesdeElEnlace());
     });
 
-    // Follow what was told: when nothing marked shows in the current view and no
-    // zone is chosen, turn to a view that shows it («me duelen los ojos» → Cara).
-    effect(() => {
-      const ids = this.marcadasPorId();
-      untracked(() => {
-        const muestra = (v: VistaDibujable) => v.zonas.some((z) => ids.has(z.id) || ids.has(z.madre));
-        const actual = this.vista();
-        if (ids.size === 0 || this.value() || !actual || muestra(actual)) return;
-        const otra = this.vistas().find(muestra);
-        if (otra) this.vistaPedida.set(otra.vista.id);
-      });
-    });
-
     // Clear pinned tap coordinates when active zone selection changes.
     effect(() => {
       const selected = this.value();
@@ -348,11 +335,30 @@ export class BodyMap {
     this.ampliado.update((open) => !open);
   }
 
-  /** Keyboard shortcuts: zoom keys go to the viewer; Escape closes the full-screen view. */
+  /** Keyboard shortcuts (+, -, 0, Escape). */
   protected alPresionar(event: KeyboardEvent): void {
-    if (this.visor.alPresionar(event) || event.key !== 'Escape' || !this.ampliado()) return;
-    event.preventDefault();
-    this.alternarAmpliado();
+    switch (event.key) {
+      case '+':
+      case '=':
+        event.preventDefault();
+        this.visor.acercar();
+        break;
+      case '-':
+        event.preventDefault();
+        this.visor.alejar();
+        break;
+      case '0':
+        this.visor.restablecer();
+        break;
+      case 'Escape':
+        if (this.ampliado()) {
+          event.preventDefault();
+          this.alternarAmpliado();
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   private instantanea(v: VistaDibujable): BodyMapSnapshot {
