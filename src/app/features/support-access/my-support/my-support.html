@@ -12,24 +12,17 @@
   </p>
   <form class="canje__form" (submit)="$event.preventDefault(); canjear()" novalidate>
     <app-form-field label="Código de invitación">
-      <app-input
-        [value]="codigo()"
-        (valueChange)="codigo.set('' + ($event ?? ''))"
-        placeholder="Pegue aquí el código completo"
-        ariaLabel="Código de invitación"
-        data-testid="canje-codigo"
-      />
+      <app-input [value]="codigo()" (valueChange)="codigo.set('' + ($event ?? ''))" placeholder="Pegue aquí el código completo"
+        ariaLabel="Código de invitación" data-testid="canje-codigo" />
     </app-form-field>
-    <button
-      app-button
-      type="submit"
-      [isLoading]="canjeando()"
-      [disabled]="canjeando() || codigo().trim() === ''"
-      data-testid="canje-enviar"
-    >
-      Unirme
-    </button>
+    <div class="canje__acciones">
+      <button app-button type="submit" [isLoading]="canjeando()" [disabled]="canjeando() || codigo().trim() === ''"
+        data-testid="canje-enviar">Unirme</button>
+      <button app-button type="button" variant="outline" [attr.aria-expanded]="leyendoQr()"
+        (clicked)="leyendoQr.set(!leyendoQr())" data-testid="canje-leer-qr">{{ leyendoQr() ? 'Cerrar lector' : 'Leer QR' }}</button>
+    </div>
   </form>
+  @if (leyendoQr()) { <app-team-qr-tool (codeScanned)="canjear($event)" /> }
   @if (resultadoDelCanje(); as r) {
     <app-alert
       [tone]="r.tono"

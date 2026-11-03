@@ -142,7 +142,7 @@ describe('MyTeam · invitar a una secretaria', () => {
   it('con solo invitaciones el equipo sigue vacío: una invitación no cuenta como equipo', async () => {
     await montar(() => [INVITACION]);
 
-    expect(host().textContent).toContain('Todavía no tiene equipo de apoyo.');
+    expect(host().textContent).toContain('Todavía no tiene equipo de apoyo');
     expect(byId('invitacion-enviada-inv-lucia')).not.toBeNull();
   });
 
