@@ -1,14 +1,23 @@
+/* Same box as the KPI tiles (app-card outlined, padding md). Flex row so the
+   legend sits beside the title on wide screens and wraps under it on phones. */
 .grafico {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  column-gap: var(--sp-4);
   margin: var(--sp-5) 0 0;
   padding: var(--sp-4);
   border: 1px solid var(--border-default);
-  border-radius: var(--r-lg);
-  background: var(--surface-raised);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
 }
 
 .grafico__titulo {
   display: grid;
+  flex: 1 1 16rem;
   gap: var(--sp-1);
+  min-inline-size: 0;
   margin-block-end: var(--sp-4);
   font-family: var(--font-display);
   font-weight: 600;
@@ -28,6 +37,7 @@
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   gap: var(--sp-1);
+  flex: 1 0 100%;
   align-items: end;
   block-size: 9rem;
 }
@@ -90,7 +100,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1) var(--sp-4);
-  margin: 0 0 var(--sp-3);
+  margin: 0 0 var(--sp-4);
   padding: 0;
   list-style: none;
   font-size: var(--fs-caption);
