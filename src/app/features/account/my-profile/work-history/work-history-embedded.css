@@ -6,12 +6,17 @@
    this block's own outlined card produced a card inside a card. In a tab the
    card goes flat (no border, no fill, no padding); standalone surfaces such as
    «Mi consultorio propio» keep the card untouched. Higher specificity than
-   card.css's `:host(.card--outlined)` / padding modifiers, no `!important`. */
-:host-context(app-tab) .historial {
+   card.css's `:host(.card--outlined)` / padding modifiers, no `!important`.
+   `.card` is repeated to outrank the redesign frame in paciente.css
+   (`:root[data-theme] .app-shell--redesign .app-main .card.card--outlined`),
+   same technique as `.content-dialog__cuerpo` in alovida.css. */
+:host-context(app-tab) .historial.card.card.card.card.card {
   --_card-padding: 0;
 
   border-color: transparent;
+  border-radius: 0;
   background: transparent;
+  box-shadow: none;
 }
 
 /* The bottom rule separates the sites from the work history below. When the
