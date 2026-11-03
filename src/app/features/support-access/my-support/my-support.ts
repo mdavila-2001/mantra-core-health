@@ -82,24 +82,8 @@ interface ItemPedido {
 @Component({
   selector: 'app-my-support',
   imports: [
-    Alert,
-    AppButton,
-    AppButtonLink,
-    Badge,
-    Card,
-    ContentDialog,
-    FormField,
-    Input,
-    MyApprovals,
-    MyExplain,
-    PageHeader,
-    RouterLink,
-    SegmentedControl,
-    Select,
-    SupportActionPicker,
-    TeamQrTool,
-    Textarea,
-    ViewStateHost,
+    Alert, AppButton, AppButtonLink, Badge, Card, ContentDialog, FormField, Input, MyApprovals, MyExplain,
+    PageHeader, RouterLink, SegmentedControl, Select, SupportActionPicker, TeamQrTool, Textarea, ViewStateHost,
   ],
   templateUrl: './my-support.html',
   styleUrl: './my-support.css',
@@ -119,6 +103,7 @@ export class MySupport implements OnInit {
   /* ---- unirse con un código ------------------------------------------------ */
   protected readonly codigo = signal('');
   protected readonly canjeando = signal(false);
+  protected readonly leyendoQr = signal(false);
   protected readonly resultadoDelCanje = signal<{
     tono: 'success' | 'info' | 'error';
     texto: string;
@@ -198,25 +183,19 @@ export class MySupport implements OnInit {
   }
 
   protected cargar(): void {
+    const sinVinculos = empty(
+      { label: 'Escriba un código arriba para unirse' },
+      'Todavía no se unió a ninguna organización con un código.',
+    );
     this.state.set(loading());
     this.client.listMyEngagements().subscribe({
       next: (datos) =>
-        this.state.set(
-          datos.engagements.length === 0 && datos.requests.length === 0
-            ? empty(
-                { label: 'Escriba un código arriba para unirse' },
-                'Todavía no ayuda en ninguna organización.',
-              )
-            : ready(datos),
-        ),
+        this.state.set(datos.engagements.length === 0 && datos.requests.length === 0 ? sinVinculos : ready(datos)),
       error: (failure: unknown) => {
-        if (failure instanceof HttpErrorResponse && (failure.status === 404 || failure.status === 0)) {
-          this.state.set(
-            empty(
-              { label: 'Escriba un código arriba para unirse' },
-              'Todavía no ayuda en ninguna organización.',
-            ),
-          );
+        // 403: support links are SUPPORT_STAFF only, so a practitioner has none to list. It is not an
+        // error to show: the code form above is how a practitioner joins an organization.
+        if (failure instanceof HttpErrorResponse && [0, 403, 404].includes(failure.status)) {
+          this.state.set(sinVinculos);
         } else {
           this.state.set(errorToViewState<MySupportEngagements>(failure));
         }
@@ -302,6 +281,7 @@ export class MySupport implements OnInit {
 
   canjear(codigoDirecto?: string): void {
     if (codigoDirecto) this.codigo.set(codigoDirecto);
+    this.leyendoQr.set(false);
     const limpio = codeFromPasted(this.codigo());
     if (limpio === '' || this.canjeando()) return;
     this.canjeando.set(true);

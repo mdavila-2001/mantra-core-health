@@ -23,6 +23,12 @@
   margin-block: var(--sp-3);
 }
 
+.canje__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
 @media (min-width: 780px) {
   /* El campo toma el ancho que sobra y el botón su ancho natural. Con `minmax(16rem, 28rem) auto` la pista `auto` se
      estiraba y el botón «Unirme» quedaba de media tarjeta, con el campo acotado a la izquierda (CLAUDE.md regla 6). */
