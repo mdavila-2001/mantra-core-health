@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import type { Actor } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
+import { abrirExpedienteDelPrimero } from './support/expediente';
 
 /**
  * El medicamento es obligatorio en las dos recetas (`puedeRecetar` exige
@@ -80,7 +81,7 @@ test.describe('C5 · Receta ligada a un diagnóstico confirmado o motivo', () =>
     await estable(page);
     const buscador = page.getByLabel('Nombre o código');
     await buscador.fill('Ana');
-    await page.getByTestId('paciente-ver-expediente').first().click();
+    await abrirExpedienteDelPrimero(page);
     await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
     await estable(page);
 

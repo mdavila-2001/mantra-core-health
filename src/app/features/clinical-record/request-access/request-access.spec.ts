@@ -113,9 +113,21 @@ describe('RequestAccess', () => {
     expect(requestCareRelationship).not.toHaveBeenCalled();
   });
 
+  it('un 409 no es un error: dice que ya hay un pedido o un vínculo, en tono informativo', async () => {
+    requestCareRelationship.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '' } })),
+    );
+    await pintar();
+    await pedir();
+
+    expect(root().textContent).toContain('Ya existe una solicitud pendiente o un vínculo activo');
+    expect(root().textContent).not.toContain('No se pudo enviar');
+    expect(root().querySelector('app-alert[tone="error"]')).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it.each([
     [403, null, 'No tiene permiso para pedir este vínculo.'],
-    [409, null, 'Ya existe una solicitud pendiente o un vínculo activo'],
     [422, 'PRECONDITION_FAILED', 'no tiene un perfil profesional propio'],
     [500, null, 'No se pudo enviar la solicitud.'],
   ])('un %s (%s) muestra su explicación y deja reintentar', async (status, code, mensaje) => {

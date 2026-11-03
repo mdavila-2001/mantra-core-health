@@ -55,6 +55,13 @@ export class RequestAccess {
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  /**
+   * La API ya tiene un pedido sin responder o un vínculo activo con esta
+   * persona (409). No es un fallo: el pedido ya está hecho, así que se dice
+   * como estado y no como error.
+   */
+  protected readonly yaPedido = signal(false);
+
   /** Sin organización activa no hay a nombre de quién pedir: el contrato exige `tenantId`. */
   protected readonly sinOrganizacion = computed(() => this.auth.activeTenantId() === null);
 
@@ -80,6 +87,7 @@ export class RequestAccess {
     const motivo = this.motivo().trim();
     this.enviando.set(true);
     this.error.set(null);
+    this.yaPedido.set(false);
     this.authz
       .requestCareRelationship({
         tenantId,
@@ -105,9 +113,7 @@ export class RequestAccess {
           } else if (http === 409) {
             // El backend rechaza por duplicado: ya hay un vínculo activo o un
             // pedido sin responder con esta persona.
-            this.error.set(
-              'Ya existe una solicitud pendiente o un vínculo activo con este paciente.',
-            );
+            this.yaPedido.set(true);
           } else if (code === 'PRECONDITION_FAILED') {
             this.error.set('Su cuenta no tiene un perfil profesional propio para pedir el vínculo.');
           } else {

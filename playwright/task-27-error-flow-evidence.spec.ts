@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { entrarAlSimulador } from './support/simulador';
+import { abrirExpedienteDelPrimero } from './support/expediente';
 
 const BASE = process.env['E2E_BASE_URL'] ?? 'http://localhost:4200';
 const EVIDENCE = 'docs/progress/evidence/flujo-errores-visual';
@@ -20,7 +21,7 @@ async function signIn(page: Page, user: string): Promise<void> {
 async function openDoctorPrescription(page: Page): Promise<void> {
   await page.goto(`${BASE}/medical-records`, { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Nombre o código').fill('Ana');
-  await page.getByTestId('paciente-ver-expediente').first().click();
+  await abrirExpedienteDelPrimero(page);
   await page.waitForURL(/\/medical-records\/[^/]+$/);
   await page.getByRole('tab', { name: /Medicación/ }).click();
   await page.getByTestId('expediente-nueva-receta').click();

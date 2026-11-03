@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import type { Actor } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
+import { abrirExpedienteDelPrimero } from './support/expediente';
 
 /**
  * Antiduplicación de estudios de laboratorio e imagenología — v4.2.17,
@@ -57,7 +58,7 @@ async function openPatientConsultation(page: Page): Promise<void> {
 
   // Por `data-testid`: el nombre accesible del enlace nombra a la persona
   // («Ver el expediente de …»), no dice «Ver expediente».
-  await page.getByTestId('paciente-ver-expediente').first().click();
+  await abrirExpedienteDelPrimero(page);
   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
 
   await irA(page, `${new URL(page.url()).pathname}/consultation`);
