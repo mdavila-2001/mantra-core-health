@@ -67,7 +67,9 @@
                 >
               </header>
 
-              <p class="persona__cobertura">{{ m.coverageSummary }}</p>
+              @if (m.coverageSummary) {
+                <p class="persona__cobertura">{{ m.coverageSummary }}</p>
+              }
               @if (m.status !== 'REVOKED' && m.actions.length > 0) {
                 <p class="persona__sub" [attr.data-testid]="'miembro-acciones-' + m.delegateId">
                   Puede: {{ acciones(m) }}
