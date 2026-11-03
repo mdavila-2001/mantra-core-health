@@ -32,7 +32,6 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
-import { Spinner } from '../../../../shared/components/atoms/spinner/spinner';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
@@ -128,7 +127,7 @@ interface ResultadoDeLote extends ImportProceduresResult {
  */
 @Component({
   selector: 'app-procedure-import',
-  imports: [Alert, AppButton, Badge, FormField, PageHeader, RouterLink, Select, Skeleton, SpecialtyBrowser, Spinner],
+  imports: [Alert, AppButton, Badge, FormField, PageHeader, RouterLink, Select, Skeleton, SpecialtyBrowser],
   templateUrl: './procedure-import.html',
   styleUrl: './procedure-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

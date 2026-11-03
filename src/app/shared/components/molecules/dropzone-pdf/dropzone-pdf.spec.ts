@@ -90,6 +90,8 @@ describe('DropzonePdf', () => {
 
     expect(llamadas).toHaveLength(1);
     expect(estado().textContent).toContain('Subiendo escritura.pdf');
+    // The dropzone itself is locked and shows its spinner overlay while in flight.
+    expect(dropzone().querySelector('[data-testid="file-input-uploading"] app-spinner')).toBeTruthy();
 
     subida$.next({ type: HttpEventType.UploadProgress, loaded: 50, total: 100 } as HttpEvent<UploadedDocument>);
     await fixture.whenStable();

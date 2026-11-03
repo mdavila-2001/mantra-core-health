@@ -160,7 +160,7 @@
        existe y hacen que la pantalla parezca rota. Un listado de una sola página
        tampoco los necesita. -->
   @if (hasPrevious() || hasNext()) {
-  <nav class="data-table__cursor" aria-label="Paginación del listado">
+  <nav class="data-table__cursor" aria-label="Paginación del listado" [attr.aria-busy]="pendingTurn() !== null || null">
     @if (pageSummary()) {
       <span class="data-table__page-summary" data-testid="tabla-resumen">{{ pageSummary() }}</span>
     }
@@ -170,6 +170,7 @@
       size="sm"
       data-testid="tabla-anterior"
       [disabled]="!hasPrevious()"
+      [isLoading]="pendingTurn() === 'prev'"
       (clicked)="goPrevious()"
     >
       Anterior
@@ -180,6 +181,7 @@
       size="sm"
       data-testid="tabla-siguiente"
       [disabled]="!hasNext()"
+      [isLoading]="pendingTurn() === 'next'"
       (clicked)="goNext()"
     >
       Siguiente

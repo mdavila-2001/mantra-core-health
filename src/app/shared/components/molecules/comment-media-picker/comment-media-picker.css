@@ -24,6 +24,9 @@
 }
 
 .media-picker__estado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
   color: var(--tinta-2);
   font-size: var(--fs-caption);
 }

@@ -24,3 +24,10 @@
     {{ empty() }}
   </span>
 }
+
+@if (uploading()) {
+  <!-- The consumer owns the upload request; this only draws its in-flight state. -->
+  <span class="firma-o-sello__subiendo" [attr.data-testid]="'firma-o-sello-subiendo-' + label()">
+    <app-spinner size="md" [label]="'Subiendo ' + label()" />
+  </span>
+}

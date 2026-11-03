@@ -21,3 +21,10 @@
     Sin logo
   </span>
 }
+
+@if (uploading()) {
+  <!-- The consumer owns the upload request; this only draws its in-flight state. -->
+  <span class="logo-consultorio__subiendo" data-testid="logo-consultorio-subiendo">
+    <app-spinner size="md" label="Subiendo logo" />
+  </span>
+}

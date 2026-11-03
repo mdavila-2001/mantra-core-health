@@ -372,7 +372,7 @@ export class DataTable<Row> {
    * Hacia dónde se pidió la página, mientras se espera que llegue. Cuando las
    * filas nuevas aterrizan, se convierte en {@link pageTurn}.
    */
-  private pendingTurn: 'next' | 'prev' | null = null;
+  protected readonly pendingTurn = signal<'next' | 'prev' | null>(null);
 
   /**
    * El giro de página que anima el `<tbody>` (pulse.md §7): las filas nuevas
@@ -383,11 +383,11 @@ export class DataTable<Row> {
 
   private readonly landPageTurn = effect(() => {
     const filas = this.rows();
-    const sentido = untracked(() => (filas.length > 0 ? this.pendingTurn : null));
+    const sentido = untracked(() => (filas.length > 0 ? this.pendingTurn() : null));
     if (sentido === null) {
       return;
     }
-    this.pendingTurn = null;
+    this.pendingTurn.set(null);
     const previo = untracked(this.pageTurn);
     this.pageTurn.set(previo === `${sentido}-a` ? `${sentido}-b` : `${sentido}-a`);
   });
@@ -395,7 +395,7 @@ export class DataTable<Row> {
   protected goPrevious(): void {
     const cursor = this.cursor().prevCursor;
     if (cursor) {
-      this.pendingTurn = 'prev';
+      this.pendingTurn.set('prev');
       this.cursorChanged.emit(cursor);
     }
   }
@@ -403,7 +403,7 @@ export class DataTable<Row> {
   protected goNext(): void {
     const cursor = this.cursor().nextCursor;
     if (cursor) {
-      this.pendingTurn = 'next';
+      this.pendingTurn.set('next');
       this.cursorChanged.emit(cursor);
     }
   }
