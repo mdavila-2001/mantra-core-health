@@ -127,6 +127,25 @@ describe('RequestAccess', () => {
   });
 
   it.each([
+    ['CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING', 'Ya hay una solicitud pendiente', 'todavía no respondió'],
+    ['CARE_RELATIONSHIP_ALREADY_ACTIVE', 'Ya tiene vínculo con este paciente', 'El paciente ya aceptó'],
+  ])('un 409 con reason %s distingue pendiente de activo', async (reason, titulo, texto) => {
+    requestCareRelationship.mockReturnValue(
+      throwError(
+        () => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '', reason } }),
+      ),
+    );
+    await pintar();
+    await pedir();
+
+    expect(root().textContent).toContain(titulo);
+    expect(root().textContent).toContain(texto);
+    expect(root().textContent).not.toContain('Ya existe una solicitud pendiente o un vínculo activo');
+    expect(root().querySelector('app-alert[tone="error"]')).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it.each([
     [403, null, 'No tiene permiso para pedir este vínculo.'],
     [422, 'PRECONDITION_FAILED', 'no tiene un perfil profesional propio'],
     [500, null, 'No se pudo enviar la solicitud.'],

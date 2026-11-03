@@ -17,6 +17,31 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 
+/** What the 409 means. `generico` covers an API that sends no `reason`. */
+type Conflicto409 = 'pendiente' | 'activo' | 'generico';
+
+const CONFLICTO_POR_REASON: Readonly<Record<string, Conflicto409>> = {
+  CARE_RELATIONSHIP_REQUEST_ALREADY_PENDING: 'pendiente',
+  CARE_RELATIONSHIP_ALREADY_ACTIVE: 'activo',
+};
+
+const AVISO_409: Readonly<Record<Conflicto409, { titulo: string; texto: string }>> = {
+  pendiente: {
+    titulo: 'Ya hay una solicitud pendiente',
+    texto:
+      'Ya le pidió el vínculo a este paciente y todavía no respondió. Espere su decisión: no hace falta volver a pedirlo.',
+  },
+  activo: {
+    titulo: 'Ya tiene vínculo con este paciente',
+    texto: 'El paciente ya aceptó. Puede abrir su expediente desde la agenda o desde su consulta.',
+  },
+  generico: {
+    titulo: 'Ya hay un pedido con este paciente',
+    texto:
+      'Ya existe una solicitud pendiente o un vínculo activo con este paciente. Si todavía no respondió, espere su decisión; si ya aceptó, puede abrir su expediente desde la agenda o desde su consulta.',
+  },
+};
+
 /**
  * **Solicitar vinculación** (FT-07-R05) — el paso que faltaba entre encontrar
  * a alguien en `/medical-records` y poder leer su expediente sin un turno
@@ -58,9 +83,13 @@ export class RequestAccess {
   /**
    * La API ya tiene un pedido sin responder o un vínculo activo con esta
    * persona (409). No es un fallo: el pedido ya está hecho, así que se dice
-   * como estado y no como error.
+   * como estado y no como error. Cuál de los dos lo dice el `reason` de la API.
    */
-  protected readonly yaPedido = signal(false);
+  protected readonly yaPedido = signal<Conflicto409 | null>(null);
+  protected readonly aviso409 = computed(() => {
+    const conflicto = this.yaPedido();
+    return conflicto === null ? null : AVISO_409[conflicto];
+  });
 
   /** Sin organización activa no hay a nombre de quién pedir: el contrato exige `tenantId`. */
   protected readonly sinOrganizacion = computed(() => this.auth.activeTenantId() === null);
@@ -87,7 +116,7 @@ export class RequestAccess {
     const motivo = this.motivo().trim();
     this.enviando.set(true);
     this.error.set(null);
-    this.yaPedido.set(false);
+    this.yaPedido.set(null);
     this.authz
       .requestCareRelationship({
         tenantId,
@@ -111,9 +140,10 @@ export class RequestAccess {
           if (http === 403) {
             this.error.set('No tiene permiso para pedir este vínculo.');
           } else if (http === 409) {
-            // El backend rechaza por duplicado: ya hay un vínculo activo o un
-            // pedido sin responder con esta persona.
-            this.yaPedido.set(true);
+            // Duplicate: the API says which one through `reason`; an older API
+            // sends none and gets the generic notice.
+            const reason = err instanceof HttpErrorResponse ? readApiError(err)?.reason : undefined;
+            this.yaPedido.set(CONFLICTO_POR_REASON[reason ?? ''] ?? 'generico');
           } else if (code === 'PRECONDITION_FAILED') {
             this.error.set('Su cuenta no tiene un perfil profesional propio para pedir el vínculo.');
           } else {
