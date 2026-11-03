@@ -33,10 +33,6 @@ import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
 import {
-  recomendarMedicamentos,
-  type MedicamentoSugerido,
-} from './medications-guide.data';
-import {
   BodyMap,
   ZONAS_CON_SILUETA,
   type SexoDeLaSilueta,
@@ -517,25 +513,6 @@ export class SymptomCheck {
   protected readonly mostrarCrisis = computed(
     () => this.esRiesgoSuicida() || this.ayudaManualAbierta(),
   );
-
-  /** Modo activo de recomendación: por especialidades médicas o recomendación de medicamentos. */
-  protected readonly vistaRecomendacion = signal<'especialidades' | 'medicamentos'>('especialidades');
-
-  /** Medicamentos orientativos recomendados según los síntomas activos y conocimiento farmacológico. */
-  protected readonly medicamentosSugeridos = computed<readonly MedicamentoSugerido[]>(() => recomendarMedicamentos(this.sintomas()));
-
-  /** Resumen de nombres de síntomas detectados para la vista de medicamentos. */
-  protected readonly sintomasDetectadosTexto = computed(() => this.sintomas().map((s) => s.nombre).join(', '));
-
-  /** Parámetros de búsqueda para recomendación de medicamentos según síntomas reconocidos. */
-  protected readonly medicamentosQueryParams = computed(() => {
-    const primer = this.sintomas()[0];
-    return primer !== undefined ? { q: primer.nombre } : {};
-  });
-
-  protected cambiarVistaRecomendacion(modo: 'especialidades' | 'medicamentos'): void {
-    this.vistaRecomendacion.set(modo);
-  }
 
   /**
    * Lo que la persona escribió **para decir que no lo tiene**.
