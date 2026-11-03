@@ -62,9 +62,8 @@ from PIL import Image
 RAIZ = Path(__file__).resolve().parent.parent
 BASE = RAIZ / "scripts" / "body-map-base"
 PUBLICO = RAIZ / "public" / "body-map"
-GEOMETRIA = (
-    RAIZ / "src/app/shared/components/organisms/body-map/body-zones.geometry.ts"
-)
+# Coarse zones; `split-body-zones.py` cuts them into the fine ones afterwards.
+GEOMETRIA = BASE / "zonas-gruesas.ts.txt"
 
 EJE_X = 120.0
 ALTO_VIEWBOX = 440.0

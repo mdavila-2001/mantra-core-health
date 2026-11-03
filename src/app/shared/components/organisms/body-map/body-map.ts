@@ -106,7 +106,7 @@ export class BodyMap {
       const zones = v.zonas.flatMap((s) => {
         const z = byId.get(s.id);
         if (!z) return [];
-        return [{ ...z, d: s.d, centros: s.centros, acercaA: s.acercaA }];
+        return [{ ...z, d: s.d, centros: s.centros, madre: s.madre, acercaA: s.acercaA }];
       });
       return zones.length > 0 ? [{ vista: v, zonas: zones }] : [];
     });
@@ -232,13 +232,13 @@ export class BodyMap {
     return this.zonas().find((z) => z.id === id)?.nombre ?? null;
   });
 
-  protected estaMarcada(id: string): boolean {
-    return this.marcadasPorId().has(id);
+  protected estaMarcada(zona: ZonaDibujable): boolean {
+    return this.marcadasPorId().has(zona.id) || this.marcadasPorId().has(zona.madre);
   }
 
   /** Accessible label including text match announcement. */
   protected nombreAccesible(zona: ZonaDibujable): string {
-    return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
+    return this.estaMarcada(zona) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
   }
 
   constructor() {

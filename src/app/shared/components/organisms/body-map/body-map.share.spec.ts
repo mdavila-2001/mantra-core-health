@@ -14,9 +14,9 @@ import { VISTAS_DEL_CUERPO } from './body-zones.geometry';
 
 const ZONAS: readonly ZonaElegible[] = [
   { id: 'cabeza', nombre: 'Cabeza' },
-  { id: 'pecho', nombre: 'Pecho y respiración' },
-  { id: 'espalda', nombre: 'Espalda' },
-  { id: 'piernas', nombre: 'Piernas' },
+  { id: 'pecho-der', nombre: 'Pecho, lado derecho' },
+  { id: 'columna-media', nombre: 'Columna, parte media' },
+  { id: 'muslo-der', nombre: 'Muslo derecho' },
 ];
 
 /** El ancho en píxeles de un WebP (cabecera VP8X: el lienzo va en 3 bytes desde el 24). */
@@ -98,12 +98,12 @@ describe('BodyMap · ver de cerca y compartir', () => {
     });
 
     it('el primer acercamiento va a la zona elegida', () => {
-      const pecho = html.querySelector<SVGPathElement>('[data-testid="body-map-pecho"]')!;
+      const pecho = html.querySelector<SVGPathElement>('[data-testid="body-map-pecho-der"]')!;
       pecho.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       fixture.detectChanges();
       pulsar('body-map-acercar');
       const [x, y, ancho, alto] = viewBox().split(' ').map(Number);
-      const [cx, cy] = VISTAS_DEL_CUERPO[0].zonas.find((z) => z.id === 'pecho')!.centros[0];
+      const [cx, cy] = VISTAS_DEL_CUERPO[0].zonas.find((z) => z.id === 'pecho-der')!.centros[0];
       expect(cx).toBeGreaterThan(x);
       expect(cx).toBeLessThan(x + ancho);
       expect(cy).toBeGreaterThan(y);
@@ -113,7 +113,7 @@ describe('BodyMap · ver de cerca y compartir', () => {
     it('un arrastre no elige la zona sobre la que termina', () => {
       pulsar('body-map-acercar');
       const lienzo = html.querySelector('svg[data-testid^="body-map-vista-"]')!;
-      const pecho = html.querySelector<SVGPathElement>('[data-testid="body-map-pecho"]')!;
+      const pecho = html.querySelector<SVGPathElement>('[data-testid="body-map-pecho-der"]')!;
       lienzo.dispatchEvent(new PointerEvent('pointerdown', { clientX: 10, clientY: 10, button: 0, bubbles: true }));
       lienzo.dispatchEvent(new PointerEvent('pointermove', { clientX: 60, clientY: 60, bubbles: true }));
       lienzo.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
@@ -172,7 +172,7 @@ describe('BodyMap · ver de cerca y compartir', () => {
 
     it('«Compartir» ofrece el enlace con la zona elegida y los tres archivos', () => {
       montar();
-      const pecho = html.querySelector<SVGPathElement>('[data-testid="body-map-pecho"]')!;
+      const pecho = html.querySelector<SVGPathElement>('[data-testid="body-map-pecho-der"]')!;
       pecho.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       fixture.detectChanges();
       const compartir = html.querySelector('app-share-menu')!;
@@ -180,7 +180,7 @@ describe('BodyMap · ver de cerca y compartir', () => {
       const url = new URL(
         (fixture.componentInstance as unknown as { enlaceParaCompartir(): string }).enlaceParaCompartir(),
       );
-      expect(url.searchParams.get('zona')).toBe('pecho');
+      expect(url.searchParams.get('zona')).toBe('pecho-der');
       expect(url.searchParams.get('vista')).toBe('frente');
     });
   });
