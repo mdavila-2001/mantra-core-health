@@ -1,20 +1,7 @@
 <app-page-header
   title="Mi equipo"
   subtitle="Quienes le ayudan con su agenda y sus mensajes. Usted decide qué pueden hacer en su nombre y puede retirar a cualquiera cuando quiera."
->
-  <div page-actions class="cabecera-acciones">
-    <button
-      app-button
-      type="button"
-      variant="outline"
-      size="sm"
-      (clicked)="alternarQr()"
-      data-testid="boton-toggle-qr"
-    >
-      {{ mostrarQr() ? 'Cerrar QR' : 'QR Chat / Solicitud' }}
-    </button>
-  </div>
-</app-page-header>
+/>
 
 <div class="navegacion-seccion">
   <app-segmented-control
@@ -25,10 +12,6 @@
     size="md"
   />
 </div>
-
-@if (mostrarQr()) {
-  <app-team-qr-tool (codeScanned)="alEscanearQr($event)" />
-}
 
 @if (pestana() === 'accesos') {
   <app-my-support [embedded]="true" />
@@ -211,22 +194,17 @@
     }
   </app-view-state-host>
 
-  <app-card padding="lg" class="actividad" data-testid="mi-equipo-actividad">
-    <h2 class="actividad__titulo">Qué hizo su equipo</h2>
-    <p class="actividad__todo">
-      <a
-        app-button
-        variant="outline"
-        size="sm"
-        routerLink="/my-team/activity"
-        data-testid="mi-equipo-ver-actividad"
-        >Ver toda la actividad</a
-      >
-      <span class="persona__sub">Con filtros por persona, acción y fecha, y exportación a CSV.</span>
-    </p>
-    @if (actividad().length === 0) {
-      <p class="persona__sub">Todavía no hay actividad para mostrar.</p>
-    } @else {
+  @if (actividad().length > 0) {
+    <app-card padding="lg" class="actividad" data-testid="mi-equipo-actividad">
+      <header class="actividad__cabeza">
+        <div>
+          <h2 class="actividad__titulo">Qué hizo su equipo</h2>
+          <p class="persona__sub">Con filtros por persona, acción y fecha, y exportación a CSV.</p>
+        </div>
+        <a app-button variant="outline" size="sm" routerLink="/my-team/activity" data-testid="mi-equipo-ver-actividad"
+          >Ver toda la actividad</a
+        >
+      </header>
       <ul class="actividad__lista" role="list">
         @for (a of actividad(); track a.id) {
           <li class="actividad__fila">
@@ -235,8 +213,8 @@
           </li>
         }
       </ul>
-    }
-  </app-card>
+    </app-card>
+  }
 
   @if (preguntandoPor(); as persona) {
     <app-team-explain [member]="persona" (closed)="preguntandoPor.set(null)" />

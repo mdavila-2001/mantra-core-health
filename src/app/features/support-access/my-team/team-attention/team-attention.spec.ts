@@ -99,12 +99,12 @@ describe('TeamAttention', () => {
     expect(byId('atencion-alertas')!.textContent).toContain('Ana Gutiérrez: Muchas cancelaciones');
   });
 
-  it('sin nada pendiente es un vacío con su próxima acción en palabras', async () => {
+  it('sin nada pendiente no muestra la tarjeta: «Mi equipo» no repite estados vacíos', async () => {
     getPractitionerPanel.mockReturnValue(of({ ...PANEL, pendingReviews: 0, openAnomalies: [] }));
     listPending.mockReturnValue(of({ items: [], count: 0 }));
     await abrir();
-    expect(host().textContent).toContain('No tiene nada pendiente por ahora.');
-    expect(host().textContent).toContain('Cuando algo necesite su decisión, aparecerá acá');
+    expect(byId('equipo-atencion')).toBeNull();
+    expect(host().textContent).not.toContain('Todavía no hay nada acá');
   });
 
   it('un fallo muestra el código de seguimiento y reintenta con el botón', async () => {
