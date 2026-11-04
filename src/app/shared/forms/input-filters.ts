@@ -22,3 +22,28 @@ export function soloLetrasDeNombre(valor: string): string {
 export function soloLetrasYNumeros(valor: string): string {
   return valor.replace(/[^\p{L}\p{M}\p{Nd}]/gu, '');
 }
+
+/**
+ * An email address as it is typed: only ASCII letters, digits and `. _ + -`,
+ * plus a single `@`. Spaces, accents and any other symbol (`* [ ] ( ) , ; …`)
+ * never reach the field, not even when pasted.
+ */
+export function soloCaracteresDeCorreo(valor: string): string {
+  const limpio = valor.replace(/[^A-Za-z0-9._+@-]/g, '');
+  const arroba = limpio.indexOf('@');
+  return arroba < 0
+    ? limpio
+    : limpio.slice(0, arroba + 1) + limpio.slice(arroba + 1).replace(/@/g, '');
+}
+
+/** The typing filter a paginated-form field gets (see `FieldDef.soloLetras`). */
+export function filtroDeCampo(campo: {
+  control?: string;
+  soloLetras?: boolean;
+  soloAlfanumerico?: boolean;
+}): ((valor: string) => string) | null {
+  if (campo.soloLetras) return soloLetrasDeNombre;
+  if (campo.soloAlfanumerico) return soloLetrasYNumeros;
+  if (campo.control === 'email') return soloCaracteresDeCorreo;
+  return null;
+}
