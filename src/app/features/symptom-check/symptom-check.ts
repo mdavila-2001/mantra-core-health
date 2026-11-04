@@ -616,7 +616,28 @@ export class SymptomCheck {
 
   /** Abre una zona, o la cierra si ya lo estaba. */
   protected alternarZona(zona: BodyZone): void {
-    this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
+    const abre = this.zonaAbierta() !== zona.id;
+    this.zonaAbierta.set(abre ? zona.id : null);
+    if (abre) {
+      this.soltarTexto();
+    }
+  }
+
+  /**
+   * Tocar el muñeco es empezar a contar por otro camino: lo escrito antes
+   * («me duele la cadera») se borra para que no quede un síntoma viejo
+   * mezclado con la zona que se está eligiendo (pedido del usuario,
+   * 04/11/2026). Lo elegido a mano en pastillas se conserva; sólo se va el
+   * texto, y con él lo que se reconoció de él. Si se estaba dictando, se
+   * corta: si no, lo dictado volvería a escribir encima.
+   */
+  private soltarTexto(): void {
+    if (this.dictado.listening()) {
+      this.dictado.stop();
+    }
+    if (this.texto() !== '') {
+      this.texto.set('');
+    }
   }
 
   /**
@@ -640,6 +661,9 @@ export class SymptomCheck {
    */
   protected elegirZonaDesdeLaSilueta(id: string | null): void {
     this.zonaAbierta.set(id);
+    if (id !== null) {
+      this.soltarTexto();
+    }
   }
 
   /** Si un síntoma ya está elegido, para pintarlo distinto. */
