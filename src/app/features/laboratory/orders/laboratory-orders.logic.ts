@@ -1,3 +1,6 @@
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { readApiError } from '../../../core/http/api-error';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import type {
@@ -93,4 +96,13 @@ export function actionsOf(order: LabOrder): readonly RowAction[] {
 /** Las mismas acciones sin poder usarse: mientras una está en vuelo no se manda otra. */
 export function disabledAll(actions: readonly RowAction[]): readonly RowAction[] {
   return actions.map((action) => ({ ...action, disabled: true }));
+}
+
+/** The API's own readable message of a failed request (409, 422…), or the fallback. */
+export function apiMessageOf(error: unknown, fallback: string): string {
+  if (error instanceof HttpErrorResponse) {
+    const message = readApiError(error)?.message;
+    if (message !== undefined && message !== '') return message;
+  }
+  return fallback;
 }

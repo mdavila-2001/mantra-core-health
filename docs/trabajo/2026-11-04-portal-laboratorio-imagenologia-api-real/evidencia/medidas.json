@@ -2,14 +2,30 @@
   {
     "file": "inicio-laboratorio-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 437,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1485,
-      1896,
-      2276
+      1469,
+      1884,
+      2268
     ],
     "figureHeights": [
       60,
@@ -25,14 +41,85 @@
   {
     "file": "inicio-laboratorio-768-claro.png",
     "width": 768,
+    "cardHeights": {
+      "orders": 666,
+      "pending": 373,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 20,
     "rightGap": 20,
     "widthPct": 95,
     "footerBottoms": [
-      1346,
-      1757,
-      2137
+      1290,
+      1705,
+      2089
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "account": "laboratorio",
+    "theme": "light"
+  },
+  {
+    "file": "inicio-laboratorio-1024-claro.png",
+    "width": 1024,
+    "cardHeights": {
+      "orders": 662,
+      "pending": 437,
+      "bookings": 437,
+      "catalog": 364
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
+    "overflowX": false,
+    "leftGap": 24,
+    "rightGap": 24,
+    "widthPct": 94,
+    "footerBottoms": [
+      1355,
+      1355,
+      1735
     ],
     "figureHeights": [
       60,
@@ -48,14 +135,101 @@
   {
     "file": "inicio-laboratorio-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 437,
+      "bookings": 437,
+      "catalog": 437
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1164,
-      1164,
-      1164
+      1144,
+      1144,
+      1144
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "account": "laboratorio",
+    "theme": "light"
+  },
+  {
+    "file": "inicio-laboratorio-1920-claro.png",
+    "width": 1920,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 395,
+      "bookings": 395,
+      "catalog": 395
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 94,
+    "footerBottoms": [
+      1102,
+      1102,
+      1102
     ],
     "figureHeights": [
       60,
@@ -76,6 +250,17 @@
   {
     "file": "inicio-imagen-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 358,
+      "pending": 379,
+      "bookings": 358,
+      "catalog": 353
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
@@ -95,6 +280,17 @@
   {
     "file": "inicio-imagen-768-claro.png",
     "width": 768,
+    "cardHeights": {
+      "orders": 332,
+      "pending": 332,
+      "bookings": 332,
+      "catalog": 332
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 20,
     "rightGap": 20,
@@ -112,12 +308,83 @@
     "theme": "light"
   },
   {
+    "file": "inicio-imagen-1024-claro.png",
+    "width": 1024,
+    "cardHeights": {
+      "orders": 332,
+      "pending": 379,
+      "bookings": 379,
+      "catalog": 332
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
+    "overflowX": false,
+    "leftGap": 24,
+    "rightGap": 24,
+    "widthPct": 94,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "account": "imagen",
+    "theme": "light"
+  },
+  {
     "file": "inicio-imagen-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 332,
+      "pending": 379,
+      "bookings": 379,
+      "catalog": 379
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "account": "imagen",
+    "theme": "light"
+  },
+  {
+    "file": "inicio-imagen-1920-claro.png",
+    "width": 1920,
+    "cardHeights": {
+      "orders": 332,
+      "pending": 332,
+      "bookings": 332,
+      "catalog": 332
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 94,
     "footerBottoms": [
       null,
       null,
@@ -138,6 +405,17 @@
   {
     "file": "estado-cargando-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 361,
+      "pending": 361,
+      "bookings": 361,
+      "catalog": 361
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 0,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
@@ -157,6 +435,51 @@
   {
     "file": "estado-error-ordenes-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 269,
+      "pending": 395,
+      "bookings": 395,
+      "catalog": 395
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [
+      {
+        "text": "No pudimos cargar las órdenes",
+        "lines": 1,
+        "width": 1004,
+        "scrollWidth": 1004
+      },
+      {
+        "text": "No pudimos cargar los resultados pendientes",
+        "lines": 2,
+        "width": 247,
+        "scrollWidth": 247
+      }
+    ],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
@@ -171,7 +494,10 @@
       60,
       60
     ],
-    "requestIds": [],
+    "requestIds": [
+      "mock-fallo",
+      "mock-fallo"
+    ],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-orders-only",
@@ -180,6 +506,63 @@
   {
     "file": "estado-error-todo-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 269,
+      "pending": 332,
+      "bookings": 332,
+      "catalog": 332
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [
+      {
+        "text": "No pudimos cargar las órdenes",
+        "lines": 1,
+        "width": 1004,
+        "scrollWidth": 1004
+      },
+      {
+        "text": "No pudimos cargar los resultados pendientes",
+        "lines": 2,
+        "width": 247,
+        "scrollWidth": 247
+      },
+      {
+        "text": "No pudimos cargar los turnos de hoy",
+        "lines": 2,
+        "width": 247,
+        "scrollWidth": 247
+      },
+      {
+        "text": "No pudimos cargar su catálogo",
+        "lines": 1,
+        "width": 247,
+        "scrollWidth": 247
+      }
+    ],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
@@ -190,7 +573,11 @@
       null
     ],
     "figureHeights": [],
-    "requestIds": [],
+    "requestIds": [
+      "mock-fallo",
+      "mock-fallo",
+      "mock-fallo"
+    ],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-all",
@@ -199,6 +586,43 @@
   {
     "file": "estado-pendientes-2filas-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 395,
+      "bookings": 395,
+      "catalog": 395
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 8,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
@@ -222,14 +646,61 @@
   {
     "file": "estado-pendientes-con-mas-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 455,
+      "bookings": 455,
+      "catalog": 455
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
       null,
-      1135,
-      1135
+      1162,
+      1162
     ],
     "figureHeights": [
       60,
@@ -245,14 +716,61 @@
   {
     "file": "estado-foco-tile-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 455,
+      "bookings": 455,
+      "catalog": 455
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
       null,
-      1135,
-      1135
+      1162,
+      1162
     ],
     "figureHeights": [
       60,
@@ -268,14 +786,61 @@
   {
     "file": "estado-foco-subir-1440-claro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 455,
+      "bookings": 455,
+      "catalog": 455
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
       null,
-      1135,
-      1135
+      1162,
+      1162
     ],
     "figureHeights": [
       60,
@@ -291,6 +856,17 @@
   {
     "file": "estado-cargando-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 633,
+      "pending": 361,
+      "bookings": 361,
+      "catalog": 310
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 0,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
@@ -310,21 +886,48 @@
   {
     "file": "estado-error-ordenes-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 273,
+      "pending": 336,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [
+      {
+        "text": "No pudimos cargar las órdenes",
+        "lines": 1,
+        "width": 250,
+        "scrollWidth": 250
+      },
+      {
+        "text": "No pudimos cargar los resultados pendientes",
+        "lines": 2,
+        "width": 250,
+        "scrollWidth": 250
+      }
+    ],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
       null,
-      1310,
-      1690
+      1322,
+      1706
     ],
     "figureHeights": [
       60,
       60,
       60
     ],
-    "requestIds": [],
+    "requestIds": [
+      "mock-fallo",
+      "mock-fallo"
+    ],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-orders-only",
@@ -333,6 +936,42 @@
   {
     "file": "estado-error-todo-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 273,
+      "pending": 336,
+      "bookings": 282,
+      "catalog": 273
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [
+      {
+        "text": "No pudimos cargar las órdenes",
+        "lines": 1,
+        "width": 250,
+        "scrollWidth": 250
+      },
+      {
+        "text": "No pudimos cargar los resultados pendientes",
+        "lines": 2,
+        "width": 250,
+        "scrollWidth": 250
+      },
+      {
+        "text": "No pudimos cargar los turnos de hoy",
+        "lines": 2,
+        "width": 250,
+        "scrollWidth": 250
+      },
+      {
+        "text": "No pudimos cargar su catálogo",
+        "lines": 1,
+        "width": 250,
+        "scrollWidth": 250
+      }
+    ],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
@@ -343,7 +982,11 @@
       null
     ],
     "figureHeights": [],
-    "requestIds": [],
+    "requestIds": [
+      "mock-fallo",
+      "mock-fallo",
+      "mock-fallo"
+    ],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-all",
@@ -352,14 +995,25 @@
   {
     "file": "estado-pendientes-2filas-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 304,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 8,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1327,
-      1738,
-      2118
+      1335,
+      1750,
+      2134
     ],
     "figureHeights": [
       60,
@@ -375,14 +1029,25 @@
   {
     "file": "estado-pendientes-con-mas-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 429,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
       null,
-      1828,
-      2208
+      1875,
+      2259
     ],
     "figureHeights": [
       60,
@@ -398,14 +1063,25 @@
   {
     "file": "estado-foco-tile-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 429,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
       null,
-      1828,
-      2208
+      1875,
+      2259
     ],
     "figureHeights": [
       60,
@@ -421,14 +1097,25 @@
   {
     "file": "estado-foco-subir-390-claro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 429,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
       null,
-      1828,
-      2208
+      1875,
+      2259
     ],
     "figureHeights": [
       60,
@@ -444,14 +1131,30 @@
   {
     "file": "inicio-laboratorio-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 437,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1485,
-      1896,
-      2276
+      1469,
+      1884,
+      2268
     ],
     "figureHeights": [
       60,
@@ -467,14 +1170,85 @@
   {
     "file": "inicio-laboratorio-768-oscuro.png",
     "width": 768,
+    "cardHeights": {
+      "orders": 666,
+      "pending": 373,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 20,
     "rightGap": 20,
     "widthPct": 95,
     "footerBottoms": [
-      1346,
-      1757,
-      2137
+      1290,
+      1705,
+      2089
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "account": "laboratorio",
+    "theme": "dark"
+  },
+  {
+    "file": "inicio-laboratorio-1024-oscuro.png",
+    "width": 1024,
+    "cardHeights": {
+      "orders": 662,
+      "pending": 437,
+      "bookings": 437,
+      "catalog": 364
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
+    "overflowX": false,
+    "leftGap": 24,
+    "rightGap": 24,
+    "widthPct": 94,
+    "footerBottoms": [
+      1355,
+      1355,
+      1735
     ],
     "figureHeights": [
       60,
@@ -490,14 +1264,101 @@
   {
     "file": "inicio-laboratorio-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 437,
+      "bookings": 437,
+      "catalog": 437
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1164,
-      1164,
-      1164
+      1144,
+      1144,
+      1144
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "account": "laboratorio",
+    "theme": "dark"
+  },
+  {
+    "file": "inicio-laboratorio-1920-oscuro.png",
+    "width": 1920,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 395,
+      "bookings": 395,
+      "catalog": 395
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 7,
+    "footerName": {
+      "labelVisible": true,
+      "nameWidth": 200,
+      "nameClipped": false,
+      "text": "Examen general de orina, hace 2 días"
+    },
+    "alertTitles": [],
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 94,
+    "footerBottoms": [
+      1102,
+      1102,
+      1102
     ],
     "figureHeights": [
       60,
@@ -518,6 +1379,17 @@
   {
     "file": "inicio-imagen-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 358,
+      "pending": 379,
+      "bookings": 358,
+      "catalog": 353
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
@@ -537,6 +1409,17 @@
   {
     "file": "inicio-imagen-768-oscuro.png",
     "width": 768,
+    "cardHeights": {
+      "orders": 332,
+      "pending": 332,
+      "bookings": 332,
+      "catalog": 332
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 20,
     "rightGap": 20,
@@ -554,12 +1437,83 @@
     "theme": "dark"
   },
   {
+    "file": "inicio-imagen-1024-oscuro.png",
+    "width": 1024,
+    "cardHeights": {
+      "orders": 332,
+      "pending": 379,
+      "bookings": 379,
+      "catalog": 332
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
+    "overflowX": false,
+    "leftGap": 24,
+    "rightGap": 24,
+    "widthPct": 94,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "account": "imagen",
+    "theme": "dark"
+  },
+  {
     "file": "inicio-imagen-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 332,
+      "pending": 379,
+      "bookings": 379,
+      "catalog": 379
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "account": "imagen",
+    "theme": "dark"
+  },
+  {
+    "file": "inicio-imagen-1920-oscuro.png",
+    "width": 1920,
+    "cardHeights": {
+      "orders": 332,
+      "pending": 332,
+      "bookings": 332,
+      "catalog": 332
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [],
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 94,
     "footerBottoms": [
       null,
       null,
@@ -580,6 +1534,17 @@
   {
     "file": "estado-cargando-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 361,
+      "pending": 361,
+      "bookings": 361,
+      "catalog": 361
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 0,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
@@ -599,6 +1564,51 @@
   {
     "file": "estado-error-ordenes-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 269,
+      "pending": 395,
+      "bookings": 395,
+      "catalog": 395
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [
+      {
+        "text": "No pudimos cargar las órdenes",
+        "lines": 1,
+        "width": 1004,
+        "scrollWidth": 1004
+      },
+      {
+        "text": "No pudimos cargar los resultados pendientes",
+        "lines": 2,
+        "width": 247,
+        "scrollWidth": 247
+      }
+    ],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
@@ -613,7 +1623,10 @@
       60,
       60
     ],
-    "requestIds": [],
+    "requestIds": [
+      "mock-fallo",
+      "mock-fallo"
+    ],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-orders-only",
@@ -622,6 +1635,63 @@
   {
     "file": "estado-error-todo-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 269,
+      "pending": 332,
+      "bookings": 332,
+      "catalog": 332
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      },
+      {
+        "text": "Reintentar",
+        "w": 88,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [
+      {
+        "text": "No pudimos cargar las órdenes",
+        "lines": 1,
+        "width": 1004,
+        "scrollWidth": 1004
+      },
+      {
+        "text": "No pudimos cargar los resultados pendientes",
+        "lines": 2,
+        "width": 247,
+        "scrollWidth": 247
+      },
+      {
+        "text": "No pudimos cargar los turnos de hoy",
+        "lines": 2,
+        "width": 247,
+        "scrollWidth": 247
+      },
+      {
+        "text": "No pudimos cargar su catálogo",
+        "lines": 1,
+        "width": 247,
+        "scrollWidth": 247
+      }
+    ],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
@@ -632,7 +1702,11 @@
       null
     ],
     "figureHeights": [],
-    "requestIds": [],
+    "requestIds": [
+      "mock-fallo",
+      "mock-fallo",
+      "mock-fallo"
+    ],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-all",
@@ -641,6 +1715,43 @@
   {
     "file": "estado-pendientes-2filas-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 395,
+      "bookings": 395,
+      "catalog": 395
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 8,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
@@ -664,14 +1775,61 @@
   {
     "file": "estado-pendientes-con-mas-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 455,
+      "bookings": 455,
+      "catalog": 455
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
       null,
-      1135,
-      1135
+      1162,
+      1162
     ],
     "figureHeights": [
       60,
@@ -687,14 +1845,61 @@
   {
     "file": "estado-foco-tile-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 455,
+      "bookings": 455,
+      "catalog": 455
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
       null,
-      1135,
-      1135
+      1162,
+      1162
     ],
     "figureHeights": [
       60,
@@ -710,14 +1915,61 @@
   {
     "file": "estado-foco-subir-1440-oscuro.png",
     "width": 1440,
+    "cardHeights": {
+      "orders": 420,
+      "pending": 455,
+      "bookings": 455,
+      "catalog": 455
+    },
+    "centered": true,
+    "tapTargetsUnder44": [
+      {
+        "text": "Ver todas las órdenes",
+        "w": 176,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Subir resultado",
+        "w": 117,
+        "h": 40
+      },
+      {
+        "text": "Horarios y equipos",
+        "w": 160,
+        "h": 40
+      },
+      {
+        "text": "Precios",
+        "w": 94,
+        "h": 40
+      }
+    ],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
       null,
-      1135,
-      1135
+      1162,
+      1162
     ],
     "figureHeights": [
       60,
@@ -733,6 +1985,17 @@
   {
     "file": "estado-cargando-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 633,
+      "pending": 361,
+      "bookings": 361,
+      "catalog": 310
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 0,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
@@ -752,21 +2015,48 @@
   {
     "file": "estado-error-ordenes-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 273,
+      "pending": 336,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [
+      {
+        "text": "No pudimos cargar las órdenes",
+        "lines": 1,
+        "width": 250,
+        "scrollWidth": 250
+      },
+      {
+        "text": "No pudimos cargar los resultados pendientes",
+        "lines": 2,
+        "width": 250,
+        "scrollWidth": 250
+      }
+    ],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
       null,
-      1310,
-      1690
+      1322,
+      1706
     ],
     "figureHeights": [
       60,
       60,
       60
     ],
-    "requestIds": [],
+    "requestIds": [
+      "mock-fallo",
+      "mock-fallo"
+    ],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-orders-only",
@@ -775,6 +2065,42 @@
   {
     "file": "estado-error-todo-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 273,
+      "pending": 336,
+      "bookings": 282,
+      "catalog": 273
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 4,
+    "footerName": null,
+    "alertTitles": [
+      {
+        "text": "No pudimos cargar las órdenes",
+        "lines": 1,
+        "width": 250,
+        "scrollWidth": 250
+      },
+      {
+        "text": "No pudimos cargar los resultados pendientes",
+        "lines": 2,
+        "width": 250,
+        "scrollWidth": 250
+      },
+      {
+        "text": "No pudimos cargar los turnos de hoy",
+        "lines": 2,
+        "width": 250,
+        "scrollWidth": 250
+      },
+      {
+        "text": "No pudimos cargar su catálogo",
+        "lines": 1,
+        "width": 250,
+        "scrollWidth": 250
+      }
+    ],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
@@ -785,7 +2111,11 @@
       null
     ],
     "figureHeights": [],
-    "requestIds": [],
+    "requestIds": [
+      "mock-fallo",
+      "mock-fallo",
+      "mock-fallo"
+    ],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-all",
@@ -794,14 +2124,25 @@
   {
     "file": "estado-pendientes-2filas-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 304,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 8,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1327,
-      1738,
-      2118
+      1335,
+      1750,
+      2134
     ],
     "figureHeights": [
       60,
@@ -817,14 +2158,25 @@
   {
     "file": "estado-pendientes-con-mas-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 429,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
       null,
-      1828,
-      2208
+      1875,
+      2259
     ],
     "figureHeights": [
       60,
@@ -840,14 +2192,25 @@
   {
     "file": "estado-foco-tile-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 429,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
       null,
-      1828,
-      2208
+      1875,
+      2259
     ],
     "figureHeights": [
       60,
@@ -863,14 +2226,25 @@
   {
     "file": "estado-foco-subir-390-oscuro.png",
     "width": 390,
+    "cardHeights": {
+      "orders": 734,
+      "pending": 429,
+      "bookings": 399,
+      "catalog": 368
+    },
+    "centered": true,
+    "tapTargetsUnder44": [],
+    "tapTargetCount": 11,
+    "footerName": null,
+    "alertTitles": [],
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
       null,
-      1828,
-      2208
+      1875,
+      2259
     ],
     "figureHeights": [
       60,

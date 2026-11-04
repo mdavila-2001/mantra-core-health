@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { describe, expect, it } from 'vitest';
 
 import type {
@@ -6,6 +7,7 @@ import type {
 } from '../../../core/data-access/lab-portal/lab-portal.types';
 import {
   actionsOf,
+  apiMessageOf,
   disabledAll,
   ORDER_STATUS_BADGE,
   ORDER_TABS,
@@ -63,6 +65,17 @@ describe('órdenes del laboratorio: acciones por estado', () => {
     expect(habilitadas(order('UPLOADED', 0))).toEqual(['upload']);
   });
 
+  it('en ningún estado se ofrece Cancelar ni Rechazar: la API no los admite en imagenología y el menú no los trae', () => {
+    // An imaging order is the same `LabOrder` as a lab one: the menu never carries those steps.
+    const imaging = (status: LabOrderStatus) => ({ ...order(status, 1), studyName: 'Ecografía abdominal' });
+    for (const status of Object.keys(ORDER_STATUS_BADGE) as LabOrderStatus[]) {
+      for (const action of actionsOf(imaging(status))) {
+        expect(['receive', 'process', 'upload', 'download']).toContain(action.code);
+        expect(action.label).not.toMatch(/cancel|rechaz/i);
+      }
+    }
+  });
+
   it('una orden cancelada o rechazada no tiene acciones', () => {
     expect(actionsOf(order('CANCELLED'))).toEqual([]);
     expect(actionsOf(order('REJECTED'))).toEqual([]);
@@ -113,5 +126,26 @@ describe('órdenes del laboratorio: pestañas', () => {
     ] as const) {
       expect(ORDER_STATUS_BADGE[status].label).not.toBe('');
     }
+  });
+});
+
+describe('órdenes del laboratorio: mensaje de la API', () => {
+  const failure = (status: number, error: unknown) => new HttpErrorResponse({ status, error });
+
+  it('un 422 lleva el mensaje legible de la API, no el genérico', () => {
+    const error = failure(422, {
+      statusCode: 422,
+      code: 'VALIDATION_FAILED',
+      message: 'Una orden de imagenología no se puede rechazar.',
+    });
+    expect(apiMessageOf(error, 'No pudimos cambiar el estado de la orden.')).toBe(
+      'Una orden de imagenología no se puede rechazar.',
+    );
+  });
+
+  it('sin cuerpo de la API, o con un mensaje vacío, queda el de reserva', () => {
+    expect(apiMessageOf(failure(502, '<html>Bad gateway</html>'), 'reserva')).toBe('reserva');
+    expect(apiMessageOf(failure(422, { code: 'VALIDATION_FAILED', message: '' }), 'reserva')).toBe('reserva');
+    expect(apiMessageOf(new Error('x'), 'reserva')).toBe('reserva');
   });
 });

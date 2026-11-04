@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { CenterScheduleClient } from '../../../core/data-access/diagnostic-units/center-schedule.client';
@@ -117,6 +117,30 @@ describe('LaboratorySummaryPage (portada del centro de diagnóstico)', () => {
     expect(q('summary-result-files')?.textContent).toBe('40');
     expect(q('summary-activity')?.textContent).toContain('último: Estudio e, hace');
     expect(q('summary-activity')?.textContent).not.toContain('Se subió');
+  });
+
+  it('el pie de pendientes deja «último:» aparte del nombre: sólo el nombre se corta con puntos suspensivos', async () => {
+    await render();
+    const last = q('summary-activity')!;
+    expect(last.querySelector('.footer__label')?.textContent?.trim()).toBe('último:');
+    expect(last.querySelector('.footer__name')?.textContent).toContain('Estudio e, hace');
+  });
+
+  it('cargando, cada bloque dibuja un esqueleto con la forma del suyo y no un solo rectángulo', async () => {
+    lab.getSummary.mockReturnValue(NEVER);
+    lab.listOrders.mockReturnValue(NEVER);
+    schedule.getMyBookings.mockReturnValue(NEVER);
+    await render();
+    const count = (block: string, selector: string) => q(block)!.querySelectorAll(selector).length;
+
+    // Orders: three step tiles plus four rows; pending and bookings: four rows each.
+    expect(count('lab-home-orders', '.skeleton__tiles app-skeleton')).toBe(3);
+    expect(count('lab-home-orders', '.skeleton__row')).toBe(4);
+    expect(count('lab-home-pending', '.skeleton__row')).toBe(4);
+    expect(count('lab-home-bookings', '.skeleton__row')).toBe(4);
+    // Catalog: its three figures.
+    expect(count('lab-home-catalog', '.skeleton--figures app-skeleton')).toBe(3);
+    expect(q('lab-home-orders')!.querySelector('.skeleton')?.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('pide los turnos de hoy y los lista', async () => {
