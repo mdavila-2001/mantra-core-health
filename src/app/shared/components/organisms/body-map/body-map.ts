@@ -23,6 +23,7 @@ import { ShareMenu, type ShareFormat } from '../../molecules/share-menu/share-me
 import { ToastService } from '../../molecules/toast/toast.service';
 import { deliverBodyMap, readBodyMapColors, type BodyMapSnapshot } from './body-map.export';
 import { VisorDelCuerpo } from './body-map.viewer';
+import { BodyMapPaint } from './body-map.paint';
 import { ImagenesDelCuerpo } from './body-map.images';
 import {
   VISTAS_DEL_CUERPO,
@@ -43,13 +44,11 @@ import {
 } from './body-map.types';
 
 export * from './body-map.types';
-/** Instance counter for unique gradient IDs. */
-let nextSilhouette = 0;
 
 /** Interactive body map organism for clinical symptom localization. */
 @Component({
   selector: 'app-body-map',
-  imports: [AppButton, SegmentedControl, ShareMenu],
+  imports: [AppButton, SegmentedControl, ShareMenu, BodyMapPaint],
   templateUrl: './body-map.html',
   styleUrl: './body-map.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,8 +85,6 @@ export class BodyMap {
     }
   });
 
-  /** Unique SVG gradient ID for this instance. */
-  protected readonly idDeLaElegida = `body-map-elegida-${nextSilhouette++}`;
 
   /** Currently hovered or focused zone ID. */
   private readonly apuntada = signal<string | null>(null);
@@ -214,7 +211,7 @@ export class BodyMap {
     return zone ? `Mapa corporal · ${zone}` : `Mapa corporal · ${v.vista.nombre}`;
   });
 
-  private readonly marcadasPorId = computed(() => new Set(this.marcadas()));
+  protected readonly marcadasPorId = computed(() => new Set(this.marcadas()));
 
   /** Highlighted zones formatted as descriptive text. */
   protected readonly nombresMarcados = computed<string | null>(() => {

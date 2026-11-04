@@ -28,124 +28,31 @@ the symptom table still speak in coarse ids, and the map lights every child.
 from __future__ import annotations
 
 import argparse
-import math
 import re
-from itertools import pairwise
 from pathlib import Path
 
-from shapely import affinity
-from shapely.geometry import MultiPolygon, Polygon, box
-from shapely.ops import polylabel
+from body_zones_geom import (
+    BIG,
+    along_axis,
+    bands_x,
+    by_side,
+    centres,
+    face,
+    halves,
+    jaw_box,
+    num,
+    parse_d,
+    polygons,
+    rows_y,
+    to_d,
+)
+from shapely.geometry import MultiPolygon, box
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "scripts/body-map-base/zonas-gruesas.ts.txt"
 TARGET = ROOT / "src/app/shared/components/organisms/body-map/body-zones.generated.ts"
 SOURCE_NAMES = {"neutro": "VISTAS_DEL_CUERPO", "masculino": "VISTAS_DEL_CUERPO_MASCULINA", "femenino": "VISTAS_DEL_CUERPO_FEMENINA"}
 EXPORTS = {"neutro": "BODY_VIEWS", "masculino": "BODY_VIEWS_MALE", "femenino": "BODY_VIEWS_FEMALE"}
-BIG = 1000.0
-
-
-# ─── Path <-> geometry ─────────────────────────────────────────────────────
-
-
-def parse_d(d: str):
-    """`M x y x y …Z` rings, combined with even-odd (holes are XOR)."""
-    geom = None
-    for chunk in d.split("Z"):
-        nums = [float(n) for n in chunk.replace("M", " ").split()]
-        if len(nums) < 6:
-            continue
-        ring = Polygon(list(zip(nums[::2], nums[1::2]))).buffer(0)
-        geom = ring if geom is None else geom.symmetric_difference(ring)
-    return geom
-
-
-def polygons(geom):
-    if geom is None or geom.is_empty:
-        return []
-    if isinstance(geom, Polygon):
-        return [geom]
-    return [g for g in getattr(geom, "geoms", []) if isinstance(g, Polygon)]
-
-
-def num(v):
-    s = f"{v:.1f}"
-    return s.removesuffix(".0")
-
-
-def ring_d(coords):
-    pts = []
-    for p in ((round(x, 1), round(y, 1)) for x, y in coords):
-        pts += [p] if not pts or p != pts[-1] else []
-    if pts[0] == pts[-1]:
-        pts.pop()
-    return "M" + " ".join(f"{num(x)} {num(y)}" for x, y in pts) + "Z"
-
-
-def to_d(geom):
-    out = []
-    # Straight cuts leave bare edges: a vertex every 10 units lets a per-height warp bend them.
-    for pol in polygons(geom.simplify(0.15, preserve_topology=True).segmentize(10)):
-        if pol.area < 1.5:  # slivers left by the cuts
-            continue
-        out.append(ring_d(pol.exterior.coords))
-        out.extend(ring_d(i.coords) for i in pol.interiors)
-    return "".join(out)
-
-
-def centres(geom):
-    """One point inside each part (pole of inaccessibility): where the pin goes."""
-    return [(round((p := polylabel(pol, 0.2)).x, 1), round(p.y, 1)) for pol in polygons(geom) if pol.area >= 1.5]
-
-
-# ─── Cuts ──────────────────────────────────────────────────────────────────
-
-
-def halves(geom, cx):
-    """(viewer-left, viewer-right) halves of a geometry."""
-    return geom.intersection(box(-BIG, -BIG, cx, BIG)), geom.intersection(box(cx, -BIG, BIG, BIG))
-
-
-def bands_x(geom, cx, centre_frac):
-    """(viewer-left, centre, viewer-right) with a centre band around `cx`."""
-    minx, _, maxx, _ = geom.bounds
-    half = (maxx - minx) * centre_frac / 2
-    left = geom.intersection(box(-BIG, -BIG, cx - half, BIG))
-    mid = geom.intersection(box(cx - half, -BIG, cx + half, BIG))
-    right = geom.intersection(box(cx + half, -BIG, BIG, BIG))
-    return left, mid, right
-
-
-def rows_y(geom, fracs):
-    """Horizontal slices at fractions of the bounding-box height."""
-    _, miny, _, maxy = geom.bounds
-    cuts = [miny - 1] + [miny + f * (maxy - miny) for f in fracs] + [maxy + 1]
-    return [geom.intersection(box(-BIG, a, BIG, b)) for a, b in pairwise(cuts)]
-
-
-def along_axis(part: Polygon, fracs):
-    """Slices perpendicular to the part's principal axis, top to bottom."""
-    xs, ys = zip(*part.exterior.coords)
-    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
-    sxx = sum((x - mx) ** 2 for x in xs)
-    syy = sum((y - my) ** 2 for y in ys)
-    sxy = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
-    angle = 0.5 * math.degrees(math.atan2(2 * sxy, sxx - syy))  # major axis vs x
-    turn = 90 - angle  # rotate so the major axis is vertical
-    upright = affinity.rotate(part, turn, origin=(mx, my))
-    # The rotation may flip the part: then cut from the other end, so the
-    # fractions always start at the proximal (highest) end.
-    if affinity.rotate(rows_y(upright, [0.5])[0], -turn, origin=(mx, my)).centroid.y > my:
-        fracs = [1 - f for f in reversed(fracs)]
-        return [affinity.rotate(s, -turn, origin=(mx, my)) for s in rows_y(upright, fracs)][::-1]
-    return [affinity.rotate(s, -turn, origin=(mx, my)) for s in rows_y(upright, fracs)]
-
-
-def by_side(geom, cx):
-    """Each part to the side of its centroid: (viewer-left, viewer-right)."""
-    left = [p for p in polygons(geom) if p.centroid.x < cx]
-    right = [p for p in polygons(geom) if p.centroid.x >= cx]
-    return MultiPolygon(left) if left else None, MultiPolygon(right) if right else None
 
 
 # ─── The recipe ────────────────────────────────────────────────────────────
@@ -168,23 +75,60 @@ def split_view(view_id: str, zones: dict, cx: float):
         sided(side_prefix, madre, (left, right))
         add(centre_id, madre, mid)
 
+    bajo_costillas = {}  # side → lower chest handed to the hypochondrium
+
+    def inner_outer(part):
+        """(medial, lateral) halves of one side's part, cut at its own centroid."""
+        a, b = halves(part, part.centroid.x)
+        return (a, b) if part.centroid.x > cx else (b, a)
+
+    def per_side(geom):
+        return [(side, part) for side, part in zip((vl, vr), by_side(geom, cx)) if part]
+
     for zid, geom in zones.items():
         if zid == "abdomen":
             continue  # cut together with "estomago"
-        if zid in ("cabeza", "nariz", "boca", "intima"):
+        if zid == "cabeza" and view_id == "cara":
+            face(geom, zones, cx, add, sided)
+        elif zid in ("ojos", "oidos", "boca") and view_id == "cara":
+            continue  # cut with the face: orbit, earlobe and lips included
+        elif zid in ("cabeza", "nariz", "boca", "intima"):
             add(zid, zid, geom)
         elif zid in ("garganta", "nuca"):
+            if view_id == "cara":  # the jaw line hangs into the face view's neck cell
+                geom = geom.difference(box(-BIG, -BIG, BIG, jaw_box(zones).bounds[3]))
             left, mid, right = bands_x(geom, cx, 0.3)
             sided("cuello", "garganta", (left, right))  # one parent in every view
             add(zid, zid, mid)
-        elif zid in ("hombros", "caderas", "ojos", "oidos"):
-            sided({"hombros": "hombro", "caderas": "cadera", "ojos": "ojo", "oidos": "oido"}[zid], zid, halves(geom, cx))
+        elif zid in ("hombros", "ojos", "oidos"):
+            sided({"hombros": "hombro", "ojos": "ojo", "oidos": "oido"}[zid], zid, halves(geom, cx))
+        elif zid == "caderas":  # the groin is the inner half, next to the intimate zone
+            for side, part in per_side(geom):
+                ingle, cadera = inner_outer(part)
+                add(f"ingle-{side}", zid, ingle)
+                add(f"cadera-{side}", zid, cadera)
         elif zid == "pecho":
-            three(zid, geom, "esternon", "pecho", 0.2)
+            left, mid, right = bands_x(geom, cx, 0.2)
+            add("esternon", zid, mid)
+            for side, part in zip((vl, vr), (left, right)):
+                clav, rest = rows_y(part, [0.2])
+                x0, _, x1, _ = rest.bounds  # the armpit: outer third of the upper half
+                upper = rows_y(rest, [0.5])[0]
+                axila = upper.intersection(box(x1 - (x1 - x0) / 3, -BIG, BIG, BIG) if x0 > cx else box(-BIG, -BIG, x0 + (x1 - x0) / 3, BIG))
+                add(f"clavicula-{side}", zid, clav)
+                add(f"axila-{side}", zid, axila)
+                # Below the costal arch's apex is the hypochondrium, not the chest:
+                # otherwise «bajo las costillas» is a thin crescent under the arch.
+                costal = box(-BIG, zones["estomago"].bounds[1], BIG, BIG)
+                bajo_costillas[side] = rest.intersection(costal).difference(axila)
+                add(f"pecho-{side}", zid, rest.difference(axila).difference(costal))
         elif zid == "estomago":
             # Nine regions: three even rows over stomach + belly (stomach alone is twice as tall).
             upper, middle, lower = rows_y(geom.union(zones["abdomen"]), [1 / 3, 2 / 3])
-            three(zid, upper, "epigastrio", "hipocondrio", 0.34)
+            left, mid, right = bands_x(upper, cx, 0.34)
+            add("epigastrio", zid, mid)
+            for side, part in zip((vl, vr), (left, right)):
+                add(f"hipocondrio-{side}", zid, part.union(bajo_costillas.get(side, part)))
             three("abdomen", middle, "periumbilical", "flanco", 0.34)
             three("abdomen", lower, "hipogastrio", "fosa-iliaca", 0.34)
         elif zid == "espalda":
@@ -199,8 +143,11 @@ def split_view(view_id: str, zones: dict, cx: float):
             low_l, low_r = halves(low, cx)
             sided("gluteo", zid, (left.union(low_l), right.union(low_r)))
             add("coxis", zid, coxis)
-        elif zid == "manos":  # whole hand; the wrist is the arm's last band (keeps the thumb)
-            sided("mano", zid, by_side(geom, cx))
+        elif zid == "manos":  # the wrist is the arm's last band; here back/palm and fingers
+            for side, part in per_side(geom):
+                mano, dedos = rows_y(part, [0.45])
+                add(f"mano-{side}", zid, mano)
+                add(f"dedos-{side}", zid, dedos)
         elif zid == "brazos":
             names = ("brazo", "codo", "antebrazo", "muneca")
             for side, part in zip((vl, vr), by_side(geom, cx)):
@@ -210,14 +157,20 @@ def split_view(view_id: str, zones: dict, cx: float):
             knee_y = zones["rodillas"].centroid.y
             thigh = MultiPolygon([p for p in polygons(geom) if p.centroid.y < knee_y])
             shin = MultiPolygon([p for p in polygons(geom) if p.centroid.y >= knee_y])
-            sided("muslo", zid, by_side(thigh, cx))
+            for side, part in per_side(thigh):
+                if view_id == "frente":
+                    interno, externo = inner_outer(part)
+                    add(f"muslo-interno-{side}", zid, interno)
+                    add(f"muslo-{side}", zid, externo)
+                else:
+                    add(f"muslo-posterior-{side}", zid, part)
             sided("canilla" if view_id == "frente" else "pantorrilla", zid, by_side(shin, cx))
         elif zid == "rodillas":
             sided("rodilla" if view_id == "frente" else "corva", zid, by_side(geom, cx))
-        elif zid == "pies":
-            ankle, foot = rows_y(geom, [0.5])
-            sided("tobillo", zid, halves(ankle, cx))
-            sided("pie" if view_id == "frente" else "talon", zid, halves(foot, cx))
+        elif zid == "pies":  # front: ankle, instep, toes; back: ankle, heel
+            names = ("tobillo", "pie", "dedos-pie") if view_id == "frente" else ("tobillo", "talon")
+            for name, row in zip(names, rows_y(geom, [0.4, 0.72] if view_id == "frente" else [0.45])):
+                sided(name, zid, halves(row, cx))
         else:
             raise SystemExit(f"zona gruesa sin receta: {zid}")
     return out
@@ -256,26 +209,6 @@ def ts(profiles):
     return "\n".join(lines).rstrip("\n") + "\n"
 
 
-def overlay(profiles, folder: Path):
-    from PIL import Image, ImageDraw
-
-    folder.mkdir(parents=True, exist_ok=True)
-    palette = [(230, 57, 70), (42, 157, 143), (233, 196, 106), (69, 123, 157), (244, 162, 97), (131, 56, 236)]
-    for key, views in profiles.items():
-        for v in views:
-            img = Image.open(ROOT / "public" / v["image"].lstrip("/")).convert("RGBA")
-            s = img.width / float(v["viewBox"].split()[2])
-            layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-            draw = ImageDraw.Draw(layer)
-            for i, (zid, _m, geom) in enumerate(v["fine"]):
-                c = palette[i % len(palette)]
-                for pol in polygons(geom):
-                    draw.polygon([(x * s, y * s) for x, y in pol.exterior.coords], fill=c + (110,), outline=(0, 0, 0, 255))
-                for x, y in centres(geom):
-                    draw.text((x * s - 20, y * s - 6), zid, fill=(0, 0, 0, 255))
-            Image.alpha_composite(img, layer).save(folder / f"{key}-{v['id']}.png")
-
-
 HEADER = """/* ============================================================================
     The body-map zones, fine and lateralised (2026-11-03).
 
@@ -295,6 +228,8 @@ if __name__ == "__main__":
     built = build()
     TARGET.write_text(ts(built), encoding="utf-8", newline="\n")
     if args.overlay:
-        overlay(built, args.overlay)
+        from body_zones_overlay import overlay
+
+        overlay(built, args.overlay, polygons, centres, ROOT)
     for key, views in built.items():
         print(key, [(v["id"], len(v["fine"])) for v in views])

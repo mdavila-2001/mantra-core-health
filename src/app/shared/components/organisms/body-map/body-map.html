@@ -123,15 +123,6 @@
           (pointerup)="visor.terminarArrastre()"
           (pointercancel)="visor.terminarArrastre()"
         >
-          <!-- El relleno de la zona elegida, por instancia (dos siluetas en la
-             misma página no se pisan). Los colores salen de tokens: ver la hoja. -->
-          <defs>
-            <linearGradient [attr.id]="idDeLaElegida" x1="0" y1="0" x2="0" y2="1">
-              <stop class="body-map__elegida-arriba" offset="0" />
-              <stop class="body-map__elegida-abajo" offset="1" />
-            </linearGradient>
-          </defs>
-
           <!-- El maniquí renderizado, en el mismo viewBox que las zonas: debajo
              la imagen, encima las zonas transparentes que reciben el clic. Es
              decorativo: el nombre de cada parte llega por su zona. -->
@@ -147,7 +138,17 @@
             [attr.data-testid]="testId() + '-render'"
           />
 
-          <g [style.--body-map-relleno-elegida]="'url(#' + idDeLaElegida + ')'">
+          <!-- The chosen and told zones, painted on the render's own volume. -->
+          <g
+            app-body-map-paint
+            [fuente]="imagenes.fuente(actual.vista.image)"
+            [caja]="caja()"
+            [zonas]="actual.zonas"
+            [elegida]="value()"
+            [marcadas]="marcadasPorId()"
+          />
+
+          <g>
             @for (zona of actual.zonas; track zona.id) {
               <g
                 class="body-map__zona"

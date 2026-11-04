@@ -62,16 +62,20 @@ const FRENTE = [
   'cuello-der',
   'garganta',
   'cuello-izq',
+  'clavicula-der',
+  'clavicula-izq',
   'hombro-der',
   'hombro-izq',
+  'axila-der',
   'esternon',
+  'axila-izq',
   'pecho-der',
   'pecho-izq',
   'brazo-der',
   'brazo-izq',
   'hipocondrio-der',
-  'epigastrio',
   'hipocondrio-izq',
+  'epigastrio',
   'codo-der',
   'codo-izq',
   'flanco-der',
@@ -87,8 +91,14 @@ const FRENTE = [
   'mano-der',
   'mano-izq',
   'intima',
+  'dedos-der',
+  'dedos-izq',
   'cadera-der',
   'cadera-izq',
+  'ingle-der',
+  'ingle-izq',
+  'muslo-interno-der',
+  'muslo-interno-izq',
   'muslo-der',
   'muslo-izq',
   'rodilla-der',
@@ -99,6 +109,8 @@ const FRENTE = [
   'tobillo-izq',
   'pie-der',
   'pie-izq',
+  'dedos-pie-der',
+  'dedos-pie-izq',
 ];
 
 /** Las imágenes del maniquí viven en `public/`: lo que baja el navegador. */
@@ -154,13 +166,13 @@ describe('BodyMap', () => {
   });
 
   /**
-   * Cada parte que alguien señala tiene su zona, con su lado: 66 finas, más las
-   * 15 gruesas de las que salen (con las que habla la lectura de la IA).
+   * Cada parte que alguien señala tiene su zona, con su lado: 89 finas, más las
+   * gruesas de las que salen (con las que habla la lectura de la IA).
    */
-  it('entre las tres vistas hay 66 zonas finas, y con sus madres 81', () => {
+  it('entre las tres vistas hay 89 zonas finas, y con sus madres 104', () => {
     const finas = new Set(VISTAS_DEL_CUERPO.flatMap((vista) => vista.zonas.map((zona) => zona.id)));
-    expect(finas.size).toBe(66);
-    expect(ZONAS_CON_SILUETA.size).toBe(81);
+    expect(finas.size).toBe(89);
+    expect(ZONAS_CON_SILUETA.size).toBe(104);
     expect(ZONAS_CON_SILUETA.has('piel')).toBe(false);
   });
 
@@ -469,6 +481,29 @@ describe('BodyMap', () => {
     expect(rotulo?.getAttribute('aria-hidden')).toBe('true');
   });
 
+  /** El resaltado 3D: la zona elegida se pinta con el render recortado y teñido, no con un relleno plano. */
+  it('la zona elegida se pinta sobre el volumen del render, recortada a su forma', () => {
+    expect(html.querySelector('[data-testid="body-map-pintura-elegida"]')).toBeNull();
+    formaDe('rodilla-der').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+
+    const pintura = html.querySelector('[data-testid="body-map-pintura-elegida"]');
+    expect(pintura?.getAttribute('href')).toBe(VISTAS_DEL_CUERPO[0].image);
+    const recorte = html.querySelector(pintura?.getAttribute('clip-path')?.slice(4, -1) ?? '#nada');
+    expect(recorte?.querySelector('path')?.getAttribute('d')).toBe(formaDe('rodilla-der').getAttribute('d'));
+    expect(html.querySelector(pintura?.getAttribute('filter')?.slice(4, -1) ?? '#nada')?.tagName).toBe('filter');
+  });
+
+  it('lo contado se pinta también, con todas las hijas de una zona gruesa', () => {
+    fixture.componentRef.setInput('marcadas', ['rodillas']);
+    fixture.detectChanges();
+
+    const pintura = html.querySelector('[data-testid="body-map-pintura-marcada"]');
+    const recorte = html.querySelector(pintura?.getAttribute('clip-path')?.slice(4, -1) ?? '#nada');
+    const pintadas = Array.from(recorte?.querySelectorAll('path') ?? []).map((p) => p.getAttribute('d'));
+    expect(pintadas).toEqual([formaDe('rodilla-der').getAttribute('d'), formaDe('rodilla-izq').getAttribute('d')]);
+  });
+
   it('volver a pulsar la elegida la suelta', () => {
     formaDe('pecho-der').dispatchEvent(new MouseEvent('click'));
     formaDe('pecho-der').dispatchEvent(new MouseEvent('click'));
@@ -567,10 +602,12 @@ describe('BodyMap', () => {
   it('en la cara se puede señalar el lugar exacto de la cabeza', () => {
     formaDe('cabeza').dispatchEvent(new MouseEvent('click'));
     fixture.detectChanges();
-    tocarEn('cabeza', 60, 40);
+    // La cara ya no es una sola zona: se toca la frente, en el punto exacto.
+    tocarEn('frente', 100, 55);
 
     expect(vistaPuesta()).toBe('cara');
-    expect(marcadores()).toEqual(['translate(60 40)']);
+    expect(component.value()).toBe('frente');
+    expect(marcadores()).toEqual(['translate(100 55)']);
   });
 
   /**

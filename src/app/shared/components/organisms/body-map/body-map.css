@@ -135,7 +135,7 @@
 
 /* State: Highlighted via text extraction */
 .body-map__zona--marcada .body-map__forma {
-  fill: color-mix(in srgb, var(--brand-secondary) 34%, transparent);
+  fill: transparent; /* painted on the volume: body-map.paint */
   stroke: var(--brand-secondary);
   stroke-width: 1.6;
   stroke-dasharray: 4 3;
@@ -143,7 +143,7 @@
 }
 
 @keyframes body-map-latido {
-  50% { fill: color-mix(in srgb, var(--brand-secondary) 60%, transparent); }
+  50% { stroke-width: 2.6; }
 }
 
 /* Hover state */
@@ -163,15 +163,13 @@
 
 /* State: Active selection */
 .body-map__zona--elegida .body-map__forma {
-  fill: var(--body-map-relleno-elegida, var(--brand-primary));
-  fill-opacity: 0.62;
-  stroke: color-mix(in srgb, var(--brand-primary) 55%, var(--text-primary));
-  stroke-width: 1.8;
+  fill: transparent; /* painted on the volume: body-map.paint */
+  stroke: var(--c-aqua-600);
+  filter: drop-shadow(0 0 1.2px color-mix(in srgb, var(--c-aqua-500) 60%, transparent));
+  stroke-width: 0.9;
   stroke-dasharray: none;
 }
 
-.body-map__elegida-arriba { stop-color: color-mix(in srgb, var(--brand-primary) 72%, var(--bg-surface)); }
-.body-map__elegida-abajo { stop-color: var(--brand-primary-active); }
 
 /* Name of the chosen part, on the body itself (decorative: the caption says it too) */
 .body-map__rotulo {
