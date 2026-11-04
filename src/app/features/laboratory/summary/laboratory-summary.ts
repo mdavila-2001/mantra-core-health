@@ -30,6 +30,7 @@ import {
   catalogBlockState,
   ordersBlockState,
   pendingResultsState,
+  studyByFileOf,
   todayRange,
   wordingFor,
   type CenterKind,
@@ -66,6 +67,10 @@ export class LaboratorySummaryPage {
   protected readonly wording = computed(() => wordingFor(this.kind()));
   protected readonly ordersState = computed(() => ordersBlockState(this.orders(), this.wording()));
   protected readonly pendingState = computed(() => pendingResultsState(this.orders()));
+  protected readonly studies = computed(() => {
+    const orders = dataOf(this.orders());
+    return orders === null ? {} : studyByFileOf(orders);
+  });
   protected readonly bookingsState = computed(() => bookingsBlockState(this.bookings()));
   protected readonly catalogState = computed(() => catalogBlockState(this.summary()));
 

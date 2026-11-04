@@ -25,6 +25,7 @@
     <app-lab-pending-results
       [state]="pendingState()"
       [summary]="summary()"
+      [studies]="studies()"
       (retry)="loadOrders()"
     />
     <app-lab-day-bookings [state]="bookingsState()" (retry)="loadBookings()" />

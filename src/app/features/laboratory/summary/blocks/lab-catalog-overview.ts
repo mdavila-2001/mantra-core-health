@@ -8,13 +8,13 @@ import { AppButtonLink } from '../../../../shared/components/atoms/button/button
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { SectionHeading } from '../../../../shared/components/molecules/section-heading/section-heading';
-import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { PRICES_ROUTE } from '../laboratory-home.logic';
+import { LabBlockState } from './lab-block-state';
 
 /** «Su catálogo y precios»: published, drafts and unavailable today, with the way to Precios. */
 @Component({
   selector: 'app-lab-catalog-overview',
-  imports: [AppButtonLink, Card, NavIcon, RouterLink, SectionHeading, ViewStateHost],
+  imports: [AppButtonLink, Card, NavIcon, RouterLink, SectionHeading, LabBlockState],
   templateUrl: './lab-catalog-overview.html',
   styleUrls: ['./lab-home-block.css', './lab-catalog-overview.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

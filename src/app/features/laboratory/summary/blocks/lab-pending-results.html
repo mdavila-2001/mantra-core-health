@@ -11,7 +11,7 @@
     }
   </div>
 
-  <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
+  <app-lab-block-state [state]="state()" subject="los resultados pendientes" skeletonHeight="14rem" note="Salen de la lista de órdenes: al reintentar se vuelve a pedir esa lista." (retry)="retry.emit()">
     @if (data(); as d) {
       <ul class="rows" data-testid="lab-home-pending-list">
         @for (order of d.items; track order.orderId) {
@@ -36,18 +36,22 @@
         }
       </ul>
       @if (d.total > d.items.length) {
-        <p class="note">Y {{ d.total - d.items.length }} más esperando su archivo.</p>
+        <p class="note">
+          <a class="more" [routerLink]="ordersRoute" [queryParams]="uploadParams">
+            Y {{ d.total - d.items.length }} más esperando su archivo
+          </a>
+        </p>
       }
     }
-  </app-view-state-host>
+  </app-lab-block-state>
 
-  @if (uploaded(); as s) {
+  @if (footer(); as f) {
     <div card-footer class="footer">
-      <p class="note">
-        <strong data-testid="summary-result-files">{{ s.resultFiles }}</strong>
-        {{ s.resultFiles === 1 ? 'resultado subido' : 'resultados subidos' }}
-        @if (lastUpload(); as last) {
-          <span data-testid="summary-activity"> · último: {{ last }}</span>
+      <p class="footer__line">
+        <strong data-testid="summary-result-files">{{ f.count }}</strong>
+        {{ f.count === 1 ? 'resultado subido' : 'resultados subidos' }}
+        @if (f.last) {
+          <span data-testid="summary-activity"> · último: {{ f.last }}</span>
         }
       </p>
     </div>

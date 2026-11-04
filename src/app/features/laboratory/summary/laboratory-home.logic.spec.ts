@@ -41,10 +41,13 @@ describe('reglas de la portada del centro de diagnóstico', () => {
     expect(to).toEqual(new Date(2026, 10, 5));
   });
 
-  it('la última subida se dice sin verbo, sin peso y sin extensión', () => {
+  it('la última subida se nombra por su estudio, o no se nombra', () => {
     const now = new Date('2026-11-04T12:00:00Z');
     const entry = { text: 'Se subió orina-sedimento.dcm (2 KB).', at: '2026-11-04T10:00:00Z' };
-    expect(lastUploadLabel(entry, now)).toBe('orina-sedimento, hace 2 h');
+    const studies = { 'orina-sedimento.dcm': 'Examen general de orina' };
+    expect(lastUploadLabel(entry, studies, now)).toBe('Examen general de orina, hace 2 h');
+    // No order holds that file: omit the fragment instead of showing a slug.
+    expect(lastUploadLabel(entry, {}, now)).toBeNull();
   });
 
   it('hace cuánto: minutos, horas y días', () => {

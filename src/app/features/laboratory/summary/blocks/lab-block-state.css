@@ -1,0 +1,8 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.failure__text {
+  margin: 0;
+}

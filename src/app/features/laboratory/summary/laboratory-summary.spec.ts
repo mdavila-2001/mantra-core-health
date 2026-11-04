@@ -45,7 +45,7 @@ const ORDERS: LabOrder[] = [
   order('b', 'DRAFT', '2026-11-04T09:00:00Z'),
   order('c', 'RECEIVED', '2026-11-03T09:00:00Z'),
   order('d', 'PROCESSED', '2026-11-02T09:00:00Z'),
-  order('e', 'UPLOADED', '2026-11-01T09:00:00Z'),
+  { ...order('e', 'UPLOADED', '2026-11-01T09:00:00Z'), files: [{ id: 'f-1', fileName: 'hemograma.pdf', sizeBytes: 10 }] },
 ];
 
 const BOOKING: CenterBooking = {
@@ -115,7 +115,7 @@ describe('LaboratorySummaryPage (portada del centro de diagnóstico)', () => {
     expect(rows[0]!.textContent).toContain('Estudio d');
     expect(q('lab-home-upload')?.getAttribute('href')).toBe('/administration/laboratory-orders?estado=processed');
     expect(q('summary-result-files')?.textContent).toBe('40');
-    expect(q('summary-activity')?.textContent).toContain('último: hemograma, hace');
+    expect(q('summary-activity')?.textContent).toContain('último: Estudio e, hace');
     expect(q('summary-activity')?.textContent).not.toContain('Se subió');
   });
 
@@ -179,6 +179,29 @@ describe('LaboratorySummaryPage (portada del centro de diagnóstico)', () => {
     await render();
     const badge = q('lab-home-bookings')!.querySelector('app-badge');
     expect(badge?.getAttribute('aria-label')).toBe('1 turno hoy');
+  });
+
+  it('sin resultados subidos, o con las órdenes caídas, el pie de pendientes no aparece', async () => {
+    lab.getSummary.mockReturnValue(of({ ...SUMMARY, resultFiles: 0 }));
+    await render();
+    expect(q('summary-result-files')).toBeNull();
+    fixture.destroy();
+    lab.getSummary.mockReturnValue(of(SUMMARY));
+    lab.listOrders.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    await render();
+    expect(q('summary-result-files')).toBeNull();
+    // Pending results say where their data comes from, with a single retry.
+    expect(q('lab-home-pending')?.textContent).toContain('Salen de la lista de órdenes');
+    expect(q('lab-home-pending')?.querySelectorAll('button')).toHaveLength(1);
+  });
+
+  it('un turno sin conexión falla como los demás bloques y dice que no hay código', async () => {
+    schedule.getMyBookings.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    await render();
+    const text = q('lab-home-bookings')?.textContent ?? '';
+    expect(text).toContain('No pudimos cargar los turnos de hoy');
+    expect(text).toContain('Esta falla no tiene código de soporte');
+    expect(q('lab-home-bookings')?.querySelectorAll('button')).toHaveLength(1);
   });
 
   it('un turno sin nombre de paciente ni de estudio lo dice, no deja un hueco', async () => {

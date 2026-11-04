@@ -136,16 +136,24 @@ export function agoLabel(iso: string, now: Date): string {
   return `hace ${days} ${days === 1 ? 'día' : 'días'}`;
 }
 
+/** Study name of each uploaded file, so the footer can name the last upload by its study. */
+export function studyByFileOf(orders: readonly LabOrder[]): Readonly<Record<string, string>> {
+  return Object.fromEntries(orders.flatMap((o) => o.files.map((f) => [f.fileName, o.studyName] as const)));
+}
+
 /**
- * The last upload as a footer fragment: the file name without its extension,
- * without the «Se subió» verb or the size, and how long ago it happened.
+ * The last upload as a footer fragment: the study it answered and how long ago,
+ * e.g. «Examen general de orina, hace 2 h». The activity entry only carries a
+ * file name, so the study is resolved through the orders that hold that file;
+ * if none does, the fragment is omitted rather than showing a file slug.
  */
-export function lastUploadLabel(entry: { readonly text: string; readonly at: string }, now: Date): string {
-  const name = entry.text
-    .replace(/^(se subió|subiste|subió)\s+/i, '')
-    .replace(/\s*\([^)]*\)\.?$/, '')
-    .replace(/\.$/, '')
-    .replace(/\.[A-Za-z0-9]{2,5}$/, '');
+export function lastUploadLabel(
+  entry: { readonly text: string; readonly at: string },
+  studyByFile: Readonly<Record<string, string>>,
+  now: Date,
+): string | null {
+  const fileName = Object.keys(studyByFile).find((name) => entry.text.includes(name));
+  if (fileName === undefined) return null;
   const ago = agoLabel(entry.at, now);
-  return [name, ago].filter((part) => part !== '').join(', ');
+  return ago === '' ? studyByFile[fileName]! : `${studyByFile[fileName]}, ${ago}`;
 }

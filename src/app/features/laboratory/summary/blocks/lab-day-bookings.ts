@@ -11,9 +11,9 @@ import type { BadgeVariant } from '../../../../shared/components/atoms/badge/bad
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { SectionHeading } from '../../../../shared/components/molecules/section-heading/section-heading';
-import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { statusLabelOf } from '../../../agenda/booking-status';
 import { HOME_LIST_SIZE, SCHEDULE_ROUTE } from '../laboratory-home.logic';
+import { LabBlockState } from './lab-block-state';
 
 /** Same badge tones as the orders list: done is green, waiting is amber, cancelled is red. */
 const BADGE_BY_STATUS: Readonly<Record<string, BadgeVariant>> = {
@@ -28,7 +28,7 @@ const BADGE_BY_STATUS: Readonly<Record<string, BadgeVariant>> = {
 /** «Turnos del día»: today's bookings at the center, earliest first. */
 @Component({
   selector: 'app-lab-day-bookings',
-  imports: [AppButtonLink, Badge, Card, DatePipe, NavIcon, RouterLink, SectionHeading, ViewStateHost],
+  imports: [AppButtonLink, Badge, Card, DatePipe, NavIcon, RouterLink, SectionHeading, LabBlockState],
   templateUrl: './lab-day-bookings.html',
   styleUrl: './lab-home-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

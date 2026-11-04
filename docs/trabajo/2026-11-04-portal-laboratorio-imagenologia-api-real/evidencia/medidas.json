@@ -18,7 +18,7 @@
     ],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "account": "laboratorio",
     "theme": "light"
   },
@@ -30,9 +30,9 @@
     "rightGap": 20,
     "widthPct": 95,
     "footerBottoms": [
-      1371,
-      1782,
-      2162
+      1346,
+      1757,
+      2137
     ],
     "figureHeights": [
       60,
@@ -41,7 +41,7 @@
     ],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "account": "laboratorio",
     "theme": "light"
   },
@@ -53,9 +53,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1206,
-      1206,
-      1206
+      1164,
+      1164,
+      1164
     ],
     "figureHeights": [
       60,
@@ -64,7 +64,7 @@
     ],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "account": "laboratorio",
     "theme": "light"
   },
@@ -81,14 +81,14 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1150,
+      null,
       null,
       null
     ],
     "figureHeights": [],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "0 resultados subidos",
+    "pendingMore": null,
     "account": "imagen",
     "theme": "light"
   },
@@ -100,14 +100,14 @@
     "rightGap": 20,
     "widthPct": 95,
     "footerBottoms": [
-      1102,
+      null,
       null,
       null
     ],
     "figureHeights": [],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "0 resultados subidos",
+    "pendingMore": null,
     "account": "imagen",
     "theme": "light"
   },
@@ -119,14 +119,14 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1177,
+      null,
       null,
       null
     ],
     "figureHeights": [],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "0 resultados subidos",
+    "pendingMore": null,
     "account": "imagen",
     "theme": "light"
   },
@@ -162,21 +162,18 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1113,
-      1113,
-      1113
+      null,
+      951,
+      951
     ],
     "figureHeights": [
       60,
       60,
       60
     ],
-    "requestIds": [
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo"
-    ],
+    "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "state": "error-orders-only",
     "theme": "light"
   },
@@ -193,11 +190,7 @@
       null
     ],
     "figureHeights": [],
-    "requestIds": [
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo"
-    ],
+    "requestIds": [],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-all",
@@ -211,9 +204,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1127,
-      1127,
-      1127
+      1102,
+      1102,
+      1102
     ],
     "figureHeights": [
       60,
@@ -222,7 +215,7 @@
     ],
     "requestIds": [],
     "pendingRows": 2,
-    "pendingMore": "4 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "state": "pending-2-rows",
     "theme": "light"
   },
@@ -234,9 +227,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1218,
-      1218,
-      1218
+      null,
+      1135,
+      1135
     ],
     "figureHeights": [
       60,
@@ -245,7 +238,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "pending-more-than-limit",
     "theme": "light"
   },
@@ -257,9 +250,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1218,
-      1218,
-      1218
+      null,
+      1135,
+      1135
     ],
     "figureHeights": [
       60,
@@ -268,7 +261,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "focus-count-tile",
     "theme": "light"
   },
@@ -280,9 +273,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1218,
-      1218,
-      1218
+      null,
+      1135,
+      1135
     ],
     "figureHeights": [
       60,
@@ -291,7 +284,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "focus-upload-link",
     "theme": "light"
   },
@@ -322,21 +315,18 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1187,
-      1598,
-      1978
+      null,
+      1310,
+      1690
     ],
     "figureHeights": [
       60,
       60,
       60
     ],
-    "requestIds": [
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo"
-    ],
+    "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "state": "error-orders-only",
     "theme": "light"
   },
@@ -353,11 +343,7 @@
       null
     ],
     "figureHeights": [],
-    "requestIds": [
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo"
-    ],
+    "requestIds": [],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-all",
@@ -382,7 +368,7 @@
     ],
     "requestIds": [],
     "pendingRows": 2,
-    "pendingMore": "4 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "state": "pending-2-rows",
     "theme": "light"
   },
@@ -394,9 +380,9 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1458,
-      1869,
-      2249
+      null,
+      1828,
+      2208
     ],
     "figureHeights": [
       60,
@@ -405,7 +391,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "pending-more-than-limit",
     "theme": "light"
   },
@@ -417,9 +403,9 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1458,
-      1869,
-      2249
+      null,
+      1828,
+      2208
     ],
     "figureHeights": [
       60,
@@ -428,7 +414,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "focus-count-tile",
     "theme": "light"
   },
@@ -440,9 +426,9 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1458,
-      1869,
-      2249
+      null,
+      1828,
+      2208
     ],
     "figureHeights": [
       60,
@@ -451,7 +437,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "focus-upload-link",
     "theme": "light"
   },
@@ -474,7 +460,7 @@
     ],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "account": "laboratorio",
     "theme": "dark"
   },
@@ -486,9 +472,9 @@
     "rightGap": 20,
     "widthPct": 95,
     "footerBottoms": [
-      1371,
-      1782,
-      2162
+      1346,
+      1757,
+      2137
     ],
     "figureHeights": [
       60,
@@ -497,7 +483,7 @@
     ],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "account": "laboratorio",
     "theme": "dark"
   },
@@ -509,9 +495,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1206,
-      1206,
-      1206
+      1164,
+      1164,
+      1164
     ],
     "figureHeights": [
       60,
@@ -520,7 +506,7 @@
     ],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "account": "laboratorio",
     "theme": "dark"
   },
@@ -537,14 +523,14 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1150,
+      null,
       null,
       null
     ],
     "figureHeights": [],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "0 resultados subidos",
+    "pendingMore": null,
     "account": "imagen",
     "theme": "dark"
   },
@@ -556,14 +542,14 @@
     "rightGap": 20,
     "widthPct": 95,
     "footerBottoms": [
-      1102,
+      null,
       null,
       null
     ],
     "figureHeights": [],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "0 resultados subidos",
+    "pendingMore": null,
     "account": "imagen",
     "theme": "dark"
   },
@@ -575,14 +561,14 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1177,
+      null,
       null,
       null
     ],
     "figureHeights": [],
     "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "0 resultados subidos",
+    "pendingMore": null,
     "account": "imagen",
     "theme": "dark"
   },
@@ -618,21 +604,18 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1113,
-      1113,
-      1113
+      null,
+      951,
+      951
     ],
     "figureHeights": [
       60,
       60,
       60
     ],
-    "requestIds": [
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo"
-    ],
+    "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "state": "error-orders-only",
     "theme": "dark"
   },
@@ -649,11 +632,7 @@
       null
     ],
     "figureHeights": [],
-    "requestIds": [
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo"
-    ],
+    "requestIds": [],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-all",
@@ -667,9 +646,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1127,
-      1127,
-      1127
+      1102,
+      1102,
+      1102
     ],
     "figureHeights": [
       60,
@@ -678,7 +657,7 @@
     ],
     "requestIds": [],
     "pendingRows": 2,
-    "pendingMore": "4 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "state": "pending-2-rows",
     "theme": "dark"
   },
@@ -690,9 +669,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1218,
-      1218,
-      1218
+      null,
+      1135,
+      1135
     ],
     "figureHeights": [
       60,
@@ -701,7 +680,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "pending-more-than-limit",
     "theme": "dark"
   },
@@ -713,9 +692,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1218,
-      1218,
-      1218
+      null,
+      1135,
+      1135
     ],
     "figureHeights": [
       60,
@@ -724,7 +703,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "focus-count-tile",
     "theme": "dark"
   },
@@ -736,9 +715,9 @@
     "rightGap": 40,
     "widthPct": 93,
     "footerBottoms": [
-      1218,
-      1218,
-      1218
+      null,
+      1135,
+      1135
     ],
     "figureHeights": [
       60,
@@ -747,7 +726,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "focus-upload-link",
     "theme": "dark"
   },
@@ -778,21 +757,18 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1187,
-      1598,
-      1978
+      null,
+      1310,
+      1690
     ],
     "figureHeights": [
       60,
       60,
       60
     ],
-    "requestIds": [
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo"
-    ],
+    "requestIds": [],
     "pendingRows": 0,
-    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "state": "error-orders-only",
     "theme": "dark"
   },
@@ -809,11 +785,7 @@
       null
     ],
     "figureHeights": [],
-    "requestIds": [
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo",
-      "Código de soporte: mock-fallo"
-    ],
+    "requestIds": [],
     "pendingRows": 0,
     "pendingMore": null,
     "state": "error-all",
@@ -838,7 +810,7 @@
     ],
     "requestIds": [],
     "pendingRows": 2,
-    "pendingMore": "4 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "pendingMore": null,
     "state": "pending-2-rows",
     "theme": "dark"
   },
@@ -850,9 +822,9 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1458,
-      1869,
-      2249
+      null,
+      1828,
+      2208
     ],
     "figureHeights": [
       60,
@@ -861,7 +833,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "pending-more-than-limit",
     "theme": "dark"
   },
@@ -873,9 +845,9 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1458,
-      1869,
-      2249
+      null,
+      1828,
+      2208
     ],
     "figureHeights": [
       60,
@@ -884,7 +856,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "focus-count-tile",
     "theme": "dark"
   },
@@ -896,9 +868,9 @@
     "rightGap": 12,
     "widthPct": 94,
     "footerBottoms": [
-      1458,
-      1869,
-      2249
+      null,
+      1828,
+      2208
     ],
     "figureHeights": [
       60,
@@ -907,7 +879,7 @@
     ],
     "requestIds": [],
     "pendingRows": 4,
-    "pendingMore": "Y 1 más esperando su archivo.",
+    "pendingMore": "Y 1 más esperando su archivo",
     "state": "focus-upload-link",
     "theme": "dark"
   }

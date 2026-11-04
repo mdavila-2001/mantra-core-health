@@ -11,7 +11,7 @@
     }
   </div>
 
-  <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
+  <app-lab-block-state [state]="state()" subject="los turnos de hoy" skeletonHeight="12rem" (retry)="retry.emit()">
     @if (all(); as items) {
       <ol class="rows" data-testid="lab-home-bookings-list">
         @for (booking of shown(); track booking.bookingId) {
@@ -36,7 +36,7 @@
         <p class="note">Y {{ items.length - shown().length }} más hoy.</p>
       }
     }
-  </app-view-state-host>
+  </app-lab-block-state>
 
   @if (all()) {
     <div card-footer class="footer">

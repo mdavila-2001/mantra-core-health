@@ -12,6 +12,7 @@
    footers of cards in the same row line up at the bottom. */
 app-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto 1fr auto;
   block-size: 100%;
 }
@@ -89,4 +90,21 @@ app-card {
 .footer app-nav-icon {
   inline-size: 1rem;
   block-size: 1rem;
+}
+
+/* One non-wrapping line: a long study name is cut with an ellipsis. */
+.footer__line {
+  flex: 1 1 0;
+  min-inline-size: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more {
+  color: var(--text-link);
 }

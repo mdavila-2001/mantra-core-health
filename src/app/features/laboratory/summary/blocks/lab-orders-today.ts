@@ -9,14 +9,14 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { SectionHeading } from '../../../../shared/components/molecules/section-heading/section-heading';
-import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { ORDER_STATUS_BADGE } from '../../orders/laboratory-orders.logic';
 import { ORDERS_ROUTE, type OrdersOverview } from '../laboratory-home.logic';
+import { LabBlockState } from './lab-block-state';
 
 /** «Órdenes de hoy»: what waits at each step, linked to its tab, and the latest orders. */
 @Component({
   selector: 'app-lab-orders-today',
-  imports: [AppButtonLink, Badge, Card, DatePipe, NavIcon, RouterLink, SectionHeading, ViewStateHost],
+  imports: [AppButtonLink, Badge, Card, DatePipe, NavIcon, RouterLink, SectionHeading, LabBlockState],
   templateUrl: './lab-orders-today.html',
   styleUrls: ['./lab-home-block.css', './lab-orders-today.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

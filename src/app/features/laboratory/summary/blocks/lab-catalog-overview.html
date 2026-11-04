@@ -1,7 +1,7 @@
 <app-card padding="lg" data-testid="lab-home-catalog">
   <app-section-heading card-header icono="tag" titulo="Su catálogo y precios" />
 
-  <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
+  <app-lab-block-state [state]="state()" subject="su catálogo" skeletonHeight="11rem" (retry)="retry.emit()">
     @if (data(); as s) {
       <dl class="figures">
         <div class="figure">
@@ -21,7 +21,7 @@
         </div>
       </dl>
     }
-  </app-view-state-host>
+  </app-lab-block-state>
 
   @if (data()) {
     <div card-footer class="footer">
