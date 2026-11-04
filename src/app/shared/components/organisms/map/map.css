@@ -145,7 +145,7 @@ app-map {
   border-radius: var(--r-full);
   font-weight: 700;
   font-size: var(--fs-body);
-  background: var(--tono-bg, var(--brand-primary, #007788));
+  background: var(--tono-bg, var(--brand-primary));
   color: var(--tono-fg, #ffffff);
   border: 1.5px solid var(--tono-bd, #ffffff);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -154,7 +154,7 @@ app-map {
 }
 
 .mapa__pin--neutral {
-  --tono-bg: var(--brand-primary, #007788);
+  --tono-bg: var(--brand-primary);
   --tono-fg: #ffffff;
   --tono-bd: #ffffff;
 }
@@ -172,7 +172,7 @@ app-map {
   block-size: 32px;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  background: var(--brand-primary, #007788);
+  background: var(--brand-primary);
   border: 2px solid #ffffff;
   box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.4);
 }

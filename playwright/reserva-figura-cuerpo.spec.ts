@@ -6,9 +6,9 @@ import type { Actor } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
 
 /**
- * La figura del cuerpo de «¿Qué te pasa?» en la columna derecha de la reserva
- * (pedido del cliente, 04/11/2026): del texto del motivo a la figura, y de la
- * figura al motivo. Evidencia en `artifacts/evidencia/2026-11-04-reserva-figura-cuerpo`.
+ * The symptom-check body figure in the booking's right column (client request,
+ * 2026-11-04): reason text → figure, figure → reason, then hold, confirm and
+ * reload. Evidence in `artifacts/evidencia/2026-11-04-reserva-figura-cuerpo`.
  */
 const PACIENTE: Actor = {
   rol: 'paciente',
@@ -16,7 +16,6 @@ const PACIENTE: Actor = {
   clave: 'mock',
   nombre: 'Paciente',
 };
-const PROFESIONAL_SINTETICA = 'Valeria Rojas Mendoza';
 const SALIDA = join('artifacts', 'evidencia', '2026-11-04-reserva-figura-cuerpo');
 
 async function foto(page: Page, archivo: string): Promise<void> {
@@ -32,8 +31,8 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
   await page.setViewportSize({ width: 1440, height: 900 });
   await entrar(page, PACIENTE);
 
-  // El cupo se arma con las semillas de la maqueta (`core/mock/fixtures/agenda.ts`):
-  // las 10:00 del próximo día hábil en la agenda de la profesional sintética.
+  // Slot ids are rebuilt from the mock seeds (`core/mock/fixtures/agenda.ts`):
+  // morning slots of the synthetic practitioner over the next working days.
   const rutas = await page.evaluate(() => {
     const uuid = (seed: string): string => {
       let h1 = 0x811c9dc5;
@@ -65,10 +64,9 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
     }
     return salida;
   });
-  // Algunos cupos ya están tomados por las reservas de la maqueta: se prueba
-  // hasta dar con uno libre.
+  // Some slots are taken by mock bookings: try until a free one opens.
   for (const ruta of rutas) {
-    // La misma ruta con otro cupo reutiliza el componente: se sale y se vuelve.
+    // Same route with another slot reuses the component: leave and come back.
     await irA(page, '/my-account/appointments');
     await irA(page, ruta);
     await expect(page).toHaveURL(new RegExp(ruta.split('?')[0]!));
@@ -83,20 +81,20 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
   await expect(figura).toBeVisible();
   await figura.scrollIntoViewIfNeeded();
 
-  // La figura va a la derecha del formulario, no debajo.
+  // The figure sits to the right of the form, not below it.
   const form = await page.getByTestId('reserva-form').boundingBox();
   const caja = await figura.boundingBox();
   expect(form && caja && caja.x > form.x + form.width).toBeTruthy();
   await foto(page, '01-figura-vacia-1440-light.png');
 
-  // Del texto a la figura.
+  // Text → figure.
   const motivo = page.locator('app-textarea textarea');
   await motivo.fill('Me duele la cabeza desde ayer');
   await expect(page.getByTestId('reserva-figura-reconocidos')).toContainText('dolor de cabeza');
   await expect(page.locator('.body-map__zona--marcada')).not.toHaveCount(0);
   await foto(page, '02-texto-marca-cabeza-1440-light.png');
 
-  // De la figura al texto.
+  // Figure → text.
   await page.getByTestId('reserva-figura-cabeza').click();
   await page
     .getByTestId('reserva-figura-opciones')
@@ -105,7 +103,7 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
   await expect(motivo).toHaveValue('Me duele la cabeza desde ayer, mareo');
   await foto(page, '03-figura-agrega-mareo-1440-light.png');
 
-  // El tema lo fija el atributo del documento (ver `core/tokens/theme.service.ts`).
+  // The theme is set by the document attribute (see `core/tokens/theme.service.ts`).
   const tema = (oscuro: boolean) =>
     page.evaluate((o) => {
       document.documentElement.setAttribute('data-theme', o ? 'dark' : 'light');
@@ -122,11 +120,11 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
   await foto(page, '05-figura-390-light.png');
   await page.setViewportSize({ width: 1440, height: 900 });
 
-  // ---- Punta a punta: UI → request → response → persistencia → recarga → UI.
+  // ---- End to end: UI → request → response → persistence → reload → UI.
   const motivoEsperado = 'Me duele la cabeza desde ayer, mareo';
   await page.getByRole('button', { name: 'Retener el cupo' }).click();
   await expect(page.getByText('Se lo guardamos hasta las')).toBeVisible();
-  // Retenido: la figura sigue mostrando la cabeza, pero ya no ofrece agregar.
+  // Held: the figure still shows the head but no longer offers to add.
   await expect(page.getByTestId('reserva-figura-opciones')).toHaveCount(0);
   await expect(page.locator('.body-map__zona--marcada')).not.toHaveCount(0);
   await figura.scrollIntoViewIfNeeded();
@@ -135,7 +133,7 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
   await page.getByRole('button', { name: 'Confirmar la reserva' }).click();
   await expect(page).toHaveURL(/\/my-account\/appointments(\?|$)/, { timeout: 20_000 });
 
-  // El request que confirmó llevó el motivo armado con la figura, y el simulador lo aceptó.
+  // The confirming request carried the reason built with the figure, and the mock accepted it.
   const confirmacion = await page.evaluate(() =>
     (
       (
@@ -150,7 +148,7 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
   expect(confirmacion?.status).toBeLessThan(300);
   expect(JSON.stringify(confirmacion?.body)).toContain(motivoEsperado);
 
-  // Recarga completa: la cita sigue ahí con el motivo.
+  // Full reload: the booking is still there with its reason.
   await page.reload();
   await estable(page);
   const cita = page.locator('.turnos__motivo', { hasText: motivoEsperado }).first();

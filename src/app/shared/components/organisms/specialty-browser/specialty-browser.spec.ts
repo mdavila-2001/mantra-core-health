@@ -52,6 +52,7 @@ class VistaPrueba {}
       [groups]="grupos()"
       [filters]="filtros()"
       [hasMore]="hayMas()"
+      [loadingMore]="cargandoMas()"
       [collapsible]="plegable()"
       [expandAll]="abrirTodos()"
       noMatchesText="Nada coincide con lo que buscó."
@@ -72,6 +73,7 @@ class HostComponent {
   readonly grupos = signal<readonly SpecialtyGroup<Formulario>[]>(GRUPOS);
   readonly filtros = signal<readonly FilterDef[]>(FILTROS);
   readonly hayMas = signal(false);
+  readonly cargandoMas = signal(false);
   readonly plegable = signal(false);
   readonly abrirTodos = signal(false);
   readonly emisiones: Readonly<Record<string, string>>[] = [];
@@ -257,6 +259,18 @@ describe('SpecialtyBrowser', () => {
       await fixture.whenStable();
 
       expect(host.pedidosDeMas).toBe(1);
+    });
+
+    it('while the next batch loads the button is busy and does not ask again', async () => {
+      host.hayMas.set(true);
+      host.cargandoMas.set(true);
+      await fixture.whenStable();
+
+      const boton = root().querySelector<HTMLButtonElement>('[data-testid="specialty-browser-more"]');
+      expect(boton?.getAttribute('aria-busy')).toBe('true');
+      boton?.click();
+      await fixture.whenStable();
+      expect(host.pedidosDeMas).toBe(0);
     });
   });
 

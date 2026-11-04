@@ -6108,6 +6108,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jsqr@npm:1.4.0":
+  version: 1.4.0
+  resolution: "jsqr@npm:1.4.0"
+  checksum: 10c0/69fbfe4c866a04c97b377901a166544a583bfc76b838c275efa9af058d64e5612267079b1e96ea7b6434385803571b1c6a97a43c85f4373e8afa4f4034fc916c
+  languageName: node
+  linkType: hard
+
 "keyv@npm:^4.5.4":
   version: 4.5.4
   resolution: "keyv@npm:4.5.4"
@@ -6479,6 +6486,7 @@ __metadata:
     express: "npm:^5.1.0"
     jsdom: "npm:^28.0.0"
     jspdf: "npm:^4.2.1"
+    jsqr: "npm:1.4.0"
     leaflet: "npm:^1.9.4"
     ngx-echarts: "npm:21.0.0"
     pdfjs-dist: "npm:^6.3.289"

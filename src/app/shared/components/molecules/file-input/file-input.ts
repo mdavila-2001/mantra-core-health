@@ -12,6 +12,7 @@ import {
 import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
 
 import { matchesFileAccept } from '../../../forms/file-accept';
+import { Spinner } from '../../atoms/spinner/spinner';
 import { FilePreview } from '../file-preview/file-preview';
 
 const BYTES_PER_UNIT = 1024;
@@ -31,13 +32,14 @@ export interface RejectedFile {
 @Component({
   selector: 'app-file-input',
   standalone: true,
-  imports: [FilePreview],
+  imports: [FilePreview, Spinner],
   templateUrl: './file-input.html',
   styleUrl: './file-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.app-file-input-host]': 'true',
-    '[class.is-disabled]': 'disabled()',
+    '[class.is-disabled]': 'locked()',
+    '[class.is-uploading]': 'uploading()',
   },
 })
 export class FileInput {
@@ -53,6 +55,10 @@ export class FileInput {
   readonly feedback = signal<readonly string[]>([]);
   readonly multiple = input<boolean>(false);
   readonly disabled = input<boolean>(false);
+  /** An upload is in flight: the zone locks and shows a spinner over itself. */
+  readonly uploading = input<boolean>(false);
+  readonly uploadingLabel = input('Subiendo archivo…');
+  protected readonly locked = computed(() => this.disabled() || this.uploading());
   /** Lista al estilo del atributo nativo: `image/*,.pdf`. */
   readonly accept = input<string>('');
   readonly maxSizeBytes = input<number | null>(null);
@@ -153,7 +159,7 @@ export class FileInput {
 
   protected handleDragOver(event: DragEvent): void {
     event.preventDefault();
-    if (!this.disabled()) {
+    if (!this.locked()) {
       this.isDragging.set(true);
     }
   }
@@ -166,11 +172,11 @@ export class FileInput {
   protected handleDrop(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(false);
-    this.acceptFiles(Array.from(event.dataTransfer?.files ?? []));
+    if (!this.locked()) this.acceptFiles(Array.from(event.dataTransfer?.files ?? []));
   }
 
   protected removeFile(index: number): void {
-    if (this.disabled()) {
+    if (this.locked()) {
       return;
     }
     this.feedback.set([]);
@@ -190,7 +196,7 @@ export class FileInput {
   }
 
   private acceptFiles(incoming: File[]): void {
-    if (this.disabled() || incoming.length === 0) {
+    if (this.locked() || incoming.length === 0) {
       return;
     }
 

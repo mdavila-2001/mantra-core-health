@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 
 import { NavigationService } from '@core/navigation/navigation.service';
 
@@ -20,11 +21,10 @@ import {
   type MyClaimObjection,
   type MyClaimsView,
   type PatientObjectionReason,
-  type ReceivedClaimOutcome,
 } from '../../../core/data-access/insurance/insurance.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
-import type { ViewState, ViewStateNextAction } from '../../../core/view-state/view-state.types';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -49,56 +49,20 @@ import { StatusSeal } from '../../../shared/components/organisms/status-seal/sta
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { formatMoney } from '../../insurance/money-format';
+import { AccessRequests } from '../access-requests/access-requests';
+import {
+  DECISION,
+  PERIODOS,
+  PESTANA_DECIDIDAS,
+  PESTANA_POR_NOMBRE,
+  PESTANA_VINCULOS,
+  PESTANAS,
+  SELLO_ABIERTA,
+  SUBTITULO,
+  vacioDe,
+} from './my-requests.model';
 
 const TAMANO_INICIAL = 10;
-
-/** Las dos pestañas: lo que la aseguradora ya decidió y lo que todavía espera. */
-export const PESTANAS = ['Decisiones de la aseguradora', 'En espera de decisión'] as const;
-const PESTANA_DECIDIDAS = 0;
-
-/** El dictamen, dicho en palabras y con su sello. */
-const DECISION: Readonly<Record<ReceivedClaimOutcome, { readonly label: string; readonly seal: StatusSealVariant }>> =
-  {
-    APPROVED: { label: 'Aprobada', seal: 'approved' },
-    PARTIAL: { label: 'Aprobada en parte', seal: 'approved' },
-    REJECTED: { label: 'Rechazada', seal: 'rejected' },
-  };
-
-/** Estado de una solicitud abierta → sello. */
-const SELLO_ABIERTA: Readonly<Record<string, StatusSealVariant>> = {
-  SUBMITTED: 'pending',
-  IN_REVIEW: 'in-review',
-};
-
-const PERIODOS: readonly { readonly value: string; readonly label: string; readonly dias: number }[] = [
-  { value: '30', label: 'Últimos 30 días', dias: 30 },
-  { value: '90', label: 'Últimos 90 días', dias: 90 },
-  { value: '180', label: 'Últimos 180 días', dias: 180 },
-];
-
-const SUBTITULO: Readonly<Record<MyClaimsView, string>> = {
-  PATIENT: 'Lo que su aseguradora decidió sobre sus consultas y estudios: si los cubre, cuánto y por qué.',
-  PRACTITIONER: 'Lo que las aseguradoras decidieron sobre las atenciones que presentó: cuánto cubren y por qué.',
-  LABORATORY: 'Lo que las aseguradoras decidieron sobre los análisis que hizo su laboratorio.',
-  IMAGING: 'Lo que las aseguradoras decidieron sobre los estudios de imagen que hizo su centro.',
-  NONE: 'Las solicitudes a aseguradoras y lo que cada una decidió.',
-};
-
-/** El vacío de cada pestaña, según de qué lado mira la cuenta. */
-function vacioDe(vista: MyClaimsView, pestana: number): { readonly accion: ViewStateNextAction; readonly texto: string } {
-  const panel: ViewStateNextAction = { label: 'Volver al panel', route: '/dashboard' };
-  if (vista === 'NONE') {
-    return { accion: panel, texto: 'Su cuenta no presenta solicitudes a aseguradoras, así que no hay decisiones que mostrar.' };
-  }
-  if (pestana === PESTANA_DECIDIDAS) {
-    return {
-      accion: panel,
-      texto:
-        'Todavía no hay decisiones de la aseguradora. Cuando apruebe, apruebe en parte o rechace una solicitud, aparece acá con su motivo.',
-    };
-  }
-  return { accion: panel, texto: 'No hay solicitudes esperando decisión: la aseguradora ya respondió todas.' };
-}
 
 /**
  * **Mis solicitudes** (propietario, 01/10/2026): las solicitudes de seguro de
@@ -118,6 +82,7 @@ function vacioDe(vista: MyClaimsView, pestana: number): { readonly accion: ViewS
 @Component({
   selector: 'app-my-requests',
   imports: [
+    AccessRequests,
     AppButton,
     Badge,
     Alert,
@@ -150,6 +115,7 @@ export class MyRequests {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly pestanas = PESTANAS;
+  protected readonly PESTANA_VINCULOS = PESTANA_VINCULOS;
   protected readonly formatMoney = formatMoney;
 
   protected readonly estado = signal<ViewState<readonly MyClaim[]>>(loading());
@@ -157,7 +123,11 @@ export class MyRequests {
   protected readonly truncada = signal(false);
   protected readonly subtitulo = computed(() => SUBTITULO[this.vista()]);
 
-  protected readonly pestana = signal(PESTANA_DECIDIDAS);
+  // `?pestana=vinculos` (the notification link) opens the care-relationship tab.
+  protected readonly pestana = signal(
+    PESTANA_POR_NOMBRE[inject(ActivatedRoute).snapshot.queryParamMap.get('pestana') ?? ''] ??
+      PESTANA_DECIDIDAS,
+  );
   protected readonly q = signal('');
   protected readonly filtroResultado = signal<string | null>(null);
   protected readonly filtroPeriodo = signal<string | null>(null);

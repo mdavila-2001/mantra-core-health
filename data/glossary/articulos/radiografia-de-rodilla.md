@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-rodilla
+image: radiografia-de-rodilla.svg | Huesos de la rodilla y proyecciones habituales de la radiografía. | Rodilla de frente con fémur, tibia, peroné, rótula y espacio articular señalados, junto a las proyecciones frontal, lateral y axial y sus hallazgos principales.
 ---
 
 ## [definition] Introducción

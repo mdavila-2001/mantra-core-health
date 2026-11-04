@@ -1,8 +1,8 @@
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 
-import { agendaResourceMy, agendaResourcesMy } from './my-resource';
+import { agendaResourceMy, agendaResourcesMy, agendaWithLiveSchedule } from './my-resource';
 import type { SchedulingClient } from '@core/data-access/scheduling/scheduling.client';
-import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
+import type { AgendaResource, PublishedTemplate } from '@core/data-access/scheduling/scheduling.types';
 
 const PERFIL = 'hp-1';
 
@@ -111,5 +111,39 @@ describe('agendas en otra organización', () => {
     await firstValueFrom(agendaResourcesMy(client, 't-1', PERFIL));
 
     expect(listResources).toHaveBeenCalledWith({ tenantId: 't-1' }, undefined);
+  });
+});
+
+describe('agendaWithLiveSchedule', () => {
+  const plantilla = (id: string, retired: boolean) => ({ id, retired, rules: [] }) as unknown as PublishedTemplate;
+
+  function clienteDePlantillas(porRecurso: Record<string, readonly PublishedTemplate[] | 'error'>): SchedulingClient {
+    return {
+      listTemplates: (id: string) => {
+        const items = porRecurso[id];
+        return items === 'error' ? throwError(() => new Error('x')) : of({ items: items ?? [], count: 0 });
+      },
+    } as unknown as SchedulingClient;
+  }
+
+  it('skips agendas without a live schedule, or whose read failed', async () => {
+    const cliente = clienteDePlantillas({
+      'r-1': [],
+      'r-2': 'error',
+      'r-3': [plantilla('t-old', true)],
+      'r-4': [plantilla('t-live', false)],
+    });
+    const recursos = ['r-1', 'r-2', 'r-3', 'r-4'].map((id) => recurso(id, id));
+
+    const found = await firstValueFrom(agendaWithLiveSchedule(cliente, recursos));
+
+    expect(found?.resource.id).toBe('r-4');
+    expect(found?.template.id).toBe('t-live');
+  });
+
+  it('is null when no agenda has a schedule in force', async () => {
+    const cliente = clienteDePlantillas({ 'r-1': [] });
+    expect(await firstValueFrom(agendaWithLiveSchedule(cliente, [recurso('r-1', 'x')]))).toBeNull();
+    expect(await firstValueFrom(agendaWithLiveSchedule(cliente, []))).toBeNull();
   });
 });

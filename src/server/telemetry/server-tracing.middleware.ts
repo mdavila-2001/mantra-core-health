@@ -14,6 +14,8 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 
+import { redactShareTokens } from '../../app/core/observability/privacy/sanitize-url';
+
 /** Nombre del span del render. Ver `docs/observability/angular/02-naming-conventions.md`. */
 const SSR_RENDER = 'ssr.render';
 
@@ -101,9 +103,12 @@ function endSpan(span: Span, statusCode: number): void {
   span.end();
 }
 
-/** La ruta, sin query ni fragmento. */
-function pathOf(url: string): string {
+/**
+ * La ruta, sin query ni fragmento, y sin el token de una receta compartida
+ * (`/rx/<token>` → `/rx/:token`): la misma redacción que aplica el navegador.
+ */
+export function pathOf(url: string): string {
   const [path = ''] = url.split('?');
   const [clean = ''] = path.split('#');
-  return clean === '' ? '/' : clean;
+  return clean === '' ? '/' : redactShareTokens(clean);
 }

@@ -16,6 +16,7 @@ import {
 } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { ViewStateHost } from './view-state-host';
+import { explanationOf } from '../../../../core/http/error-explanation';
 
 @Component({
   imports: [ViewStateHost],
@@ -99,6 +100,25 @@ describe('ViewStateHost', () => {
       const accion = root().querySelector<HTMLAnchorElement>('a[app-link]');
       expect(accion?.textContent?.trim()).toBe('Registrar el primer paciente');
       expect(accion?.getAttribute('href')).toBe('/pacientes/alta');
+    });
+
+    it('muestra el título propio del estado en vez del genérico', async () => {
+      await conEstado(
+        empty({ label: 'Probar otra agenda' }, 'No hay cupos en dos semanas.', 'Sin horarios libres'),
+      );
+
+      const vacio = root().querySelector('app-empty-state');
+      expect(vacio?.querySelector('h1,h2,h3,h4,[class*="title"]')?.textContent?.trim()).toBe(
+        'Sin horarios libres',
+      );
+      expect(textoVisible()).toContain('No hay cupos en dos semanas.');
+      expect(textoVisible()).not.toContain('Todavía no hay nada acá');
+    });
+
+    it('sin título propio conserva el genérico', async () => {
+      await conEstado(empty({ label: 'Registrar el primer paciente' }));
+
+      expect(textoVisible()).toContain('Todavía no hay nada acá');
     });
   });
 
@@ -235,9 +255,39 @@ describe('ViewStateHost', () => {
 
       expect(host.retries).toHaveLength(1);
     });
+
+    it('sin red dice por qué y qué revisar', async () => {
+      await conEstado(offline());
+      const { title, cause, action } = explanationOf('offline');
+      expect(textoVisible()).toContain(title);
+      expect(textoVisible()).toContain(cause);
+      expect(textoVisible()).toContain(action);
+    });
+
+    it('el tiempo agotado no se presenta como «sin conexión»: pudo haberse guardado', async () => {
+      await conEstado(offline(undefined, { timedOut: true }));
+      expect(textoVisible()).toContain(explanationOf('timeout').title);
+      expect(textoVisible()).toContain('quedó registrado');
+      expect(textoVisible()).not.toContain(explanationOf('offline').title);
+    });
   });
 
   describe('S9 · error inesperado', () => {
+    it('muestra qué pasó, por qué y qué hacer cuando el estado lo trae', async () => {
+      await conEstado(unexpectedError('req-1', 'La causa en palabras.', { title: 'Qué pasó', hint: 'Qué hacer.' }));
+
+      expect(root().querySelector('.alert__title')?.textContent?.trim()).toBe('Qué pasó');
+      expect(textoVisible()).toContain('La causa en palabras.');
+      expect(root().querySelector('.view-state-host__hint')?.textContent).toContain('Qué hacer.');
+    });
+
+    it('sin título ni pista conserva el texto de siempre y no pinta un párrafo vacío', async () => {
+      await conEstado(unexpectedError('req-1'));
+
+      expect(root().querySelector('.alert__title')?.textContent?.trim()).toBe('Algo salió mal');
+      expect(root().querySelector('.view-state-host__hint')).toBeNull();
+    });
+
     it('el requestId está visible y es seleccionable', async () => {
       await conEstado(unexpectedError('req-7f3a-0042'));
 

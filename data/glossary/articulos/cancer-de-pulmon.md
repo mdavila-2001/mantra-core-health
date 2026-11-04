@@ -1,5 +1,6 @@
 ---
 slug: cancer-de-pulmon
+image: cancer-de-pulmon.svg | El cáncer de pulmón nace en el pulmón y puede extenderse a ganglios y otros órganos. | Pulmones con un tumor y ganglios cercanos afectados, flecha de extensión a distancia, el tabaco como principal factor de riesgo y los síntomas que conviene vigilar.
 ---
 
 ## [definition] Introducción

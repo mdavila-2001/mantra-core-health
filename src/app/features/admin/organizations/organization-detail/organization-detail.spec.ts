@@ -147,12 +147,12 @@ describe('OrganizationDetail', () => {
   }
 
   describe('los nueve estados de la organización', () => {
-    it('S5: un 403 dice «no tenés acceso» y no queda cargando', async () => {
+    it('S5: un 403 dice «no tiene acceso» y no queda cargando', async () => {
       await abrir(['SECURITY_ADMIN']);
       responder({
         fichaError: {
           status: 403,
-          body: { statusCode: 403, code: 'FORBIDDEN', message: 'No pertenecés a esta organización' },
+          body: { statusCode: 403, code: 'FORBIDDEN', message: 'No pertenece a esta organización' },
         },
       });
 
@@ -185,7 +185,9 @@ describe('OrganizationDetail', () => {
         fichaError: { status: 500, body: null, headers: { 'x-request-id': 'req-9f2' } },
       });
 
-      expect(texto()).toContain('Algo salió mal');
+      // Un 500 sin cuerpo dice qué pasó y que el fallo fue del servidor.
+      expect(texto()).toContain('No pudimos completar la operación');
+      expect(texto()).toContain('El fallo no está en lo que usted ingresó');
       expect(texto()).toContain('req-9f2');
     });
 

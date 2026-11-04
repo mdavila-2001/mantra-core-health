@@ -29,9 +29,9 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { RequestInbox } from './request-inbox/request-inbox';
+import { VerificationRoadmap } from './verification-roadmap/verification-roadmap';
 import { conceptosDe } from '../my-profile/practitioner-profile/practitioner-seal';
 import {
   buildRoadmap,
@@ -88,9 +88,9 @@ const PESTANA = { ruta: 0, bandeja: 1 } as const;
     RequestInbox,
     RouterLink,
     Select,
-    StatusSeal,
     Tab,
     Tabs,
+    VerificationRoadmap,
     ViewStateHost,
   ],
   templateUrl: './my-verifications.html',
@@ -124,10 +124,6 @@ export class MyVerifications {
     const d = this.datos();
     return d === null ? [] : buildRoadmap(d.perfil, d.etiquetas, d.seguros);
   });
-
-  protected readonly verificados = computed(
-    () => this.pasos().filter((p) => p.state === 'approved').length,
-  );
 
   protected readonly hilos = computed<readonly RequestThread[]>(() => {
     const d = this.datos();

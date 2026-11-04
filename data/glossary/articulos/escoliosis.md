@@ -1,5 +1,6 @@
 ---
 slug: escoliosis
+image: escoliosis.svg | Columna recta frente a columna con escoliosis | Dos columnas vistas por detrás, una recta y otra curvada en S con hombros y caderas desnivelados, junto a la prueba de Adams que muestra la giba al inclinarse
 ---
 
 ## [definition] Introducción

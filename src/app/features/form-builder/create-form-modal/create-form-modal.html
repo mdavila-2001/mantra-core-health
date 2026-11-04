@@ -1,0 +1,73 @@
+<app-content-dialog
+  heading="Crear nuevo formulario"
+  description="Diseñe un formulario propio para sus consultas médicas desde cero."
+  [dismissible]="!creando()"
+  (closed)="onClosed()"
+  data-testid="modal-crear-formulario"
+>
+  <form class="modal-crear__formulario" (submit)="$event.preventDefault(); enviar()">
+    <app-form-field
+      label="Nombre del formulario"
+      [required]="true"
+      hint="Por ejemplo: Control post-quirúrgico o Ficha de seguimiento"
+    >
+      <app-input
+        [value]="nombre()"
+        (valueChange)="onNombreInput($event)"
+        placeholder="Nombre de la ficha o formulario"
+        autocomplete="off"
+        testId="crear-formulario-nombre"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Especialidad médica"
+      [required]="true"
+      hint="Especialidad a la que corresponderá este formulario"
+    >
+      <app-select
+        [value]="especialidadId()"
+        [options]="opcionesSelect()"
+        (valueChange)="onEspecialidadChange($event)"
+        testId="crear-formulario-especialidad"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Código técnico del formulario"
+      [required]="true"
+      hint="Identificador único generado automáticamente"
+    >
+      <app-input
+        [value]="codigo()"
+        (valueChange)="onCodigoInput($event)"
+        placeholder="FORM_CODIGO"
+        autocomplete="off"
+        testId="crear-formulario-codigo"
+      />
+    </app-form-field>
+
+    <div class="modal-crear__acciones">
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        [disabled]="creando()"
+        (clicked)="onClosed()"
+        data-testid="crear-formulario-cancelar"
+      >
+        Cancelar
+      </button>
+      <button
+        app-button
+        type="submit"
+        variant="primary"
+        [disabled]="!puedeCrear()"
+        [isLoading]="creando()"
+        data-testid="crear-formulario-enviar"
+      >
+        Crear formulario
+      </button>
+    </div>
+  </form>
+</app-content-dialog>

@@ -21,8 +21,12 @@
                 <li class="receta">
                   <div class="receta__cabecera">
                     <p class="receta__cuando">{{ receta.cuando | date: 'd MMMM y' }}</p>
-                    <app-badge [variant]="receta.emitida ? 'success' : 'warning'" size="sm">
-                      {{ receta.emitida ? 'Emitida' : 'Sin emitir' }}
+                    <app-badge
+                      [variant]="insignia[receta.estado].variant"
+                      size="sm"
+                      [attr.data-testid]="testids.prescriptionStatus"
+                    >
+                      {{ insignia[receta.estado].label }}
                     </app-badge>
                   </div>
 
@@ -42,24 +46,24 @@
                     }
                   </ul>
 
-                  <div class="receta__actions">
-                    <a
-                      app-button
-                      variant="primary"
-                      size="sm"
-                      class="receta__cta"
-                      [attr.data-testid]="testids.prescriptionSearch"
-                      [routerLink]="rutaDeCompra(receta)"
-                      [attr.aria-label]="
-                        'Buscar dónde comprar la receta con ' +
-                        receta.medicamentos.length +
-                        ' medicamentos'
-                      "
-                    >
-                      Buscar dónde comprarla
-                    </a>
+                  @if (receta.estado === 'orderable') {
+                    <div class="receta__actions">
+                      <a
+                        app-button
+                        variant="primary"
+                        size="sm"
+                        class="receta__cta"
+                        [attr.data-testid]="testids.prescriptionSearch"
+                        [routerLink]="rutaDeCompra(receta)"
+                        [attr.aria-label]="
+                          'Buscar dónde comprar la receta con ' +
+                          receta.medicamentos.length +
+                          ' medicamentos'
+                        "
+                      >
+                        Buscar dónde comprarla
+                      </a>
 
-                    @if (receta.emitida) {
                       <button
                         app-button
                         type="button"
@@ -74,8 +78,15 @@
                       >
                         Compartir
                       </button>
-                    }
-                  </div>
+                    </div>
+                  } @else {
+                    <p
+                      class="receta__sin-compra"
+                      [attr.data-testid]="testids.prescriptionNotOrderable"
+                    >
+                      {{ motivoSinCompra[receta.estado] }}
+                    </p>
+                  }
                 </li>
               }
             </ul>

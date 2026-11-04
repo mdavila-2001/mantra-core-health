@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Medicina psicosomática</title>
+  <desc id="d">Tres círculos superpuestos, biológico, psicológico y social, con la persona en el centro. A la derecha, los problemas que atiende la psiquiatría de consulta y enlace y cómo trabaja con otros servicios del hospital.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">Modelo biopsicosocial</text>
+<circle cx="230" cy="170" r="90" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2" opacity=".85"/>
+<circle cx="170" cy="270" r="90" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2" opacity=".85"/>
+<circle cx="290" cy="270" r="90" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="2" opacity=".85"/>
+<text x="230" y="130" text-anchor="middle" class="step">Biológico</text>
+<text x="230" y="148" text-anchor="middle" class="small">enfermedad, fármacos</text>
+<text x="130" y="300" text-anchor="middle" class="step">Psicológico</text>
+<text x="130" y="318" text-anchor="middle" class="small">emociones</text>
+<text x="330" y="300" text-anchor="middle" class="step">Social</text>
+<text x="330" y="318" text-anchor="middle" class="small">familia, trabajo</text>
+<text x="230" y="238" text-anchor="middle" class="step">Persona</text>
+<text x="230" y="410" text-anchor="middle" class="lab" style="fill:var(--muted)">Los tres planos se influyen entre sí.</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Consulta y enlace</text>
+<text x="476" y="76" class="lab">• Depresión o ansiedad en enfermos</text>
+<text x="476" y="102" class="lab">• Síntomas físicos sin causa clara</text>
+<text x="476" y="128" class="lab">• Delirium en el hospital</text>
+<text x="476" y="154" class="lab">• Adherencia al tratamiento</text>
+<text x="476" y="180" class="lab">• Capacidad para decidir</text>
+<rect x="476" y="218" width="284" height="140" rx="10" fill="var(--accent-l)" stroke-width="1"/>
+<text x="490" y="242" class="step">Cómo trabaja</text>
+<text x="490" y="266" class="lab">• El médico de otra área consulta</text>
+<text x="490" y="288" class="lab">• El psiquiatra evalúa al paciente</text>
+<text x="490" y="310" class="lab">• Propone un plan conjunto</text>
+<text x="490" y="332" class="lab">• Hace seguimiento en planta</text>
+<text x="476" y="392" class="small" style="fill:var(--muted)">También llamada psiquiatría de</text>
+<text x="476" y="410" class="small" style="fill:var(--muted)">consulta y enlace.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

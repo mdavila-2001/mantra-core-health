@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">El recorrido de la señal de dolor</title>
+  <desc id="d">Un estímulo en la mano activa un receptor del dolor. La señal sube por un nervio hasta la médula espinal y de ahí al cerebro, que la interpreta junto con emociones, recuerdos y atención. Una vía descendente desde el cerebro puede atenuar la señal en la médula.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --up:#c0392b; --down:#1f8a5b; --brain:#f1d3dc; --brain-d:#c98ea0; --cord:#e6d6a8; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --up:#ef7467; --down:#4cc38a; --brain:#4d3240; --brain-d:#a8738a; --cord:#5c5233; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .num { font-size: 13px; font-weight: 700; fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="au" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--up)"/></marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--down)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="50" text-anchor="middle" class="title">Cómo llega el dolor al cerebro</text>
+
+  <!-- cerebro -->
+  <path d="M420 90 C420 70 470 62 500 72 C530 60 580 70 585 95 C615 100 620 140 600 155 C605 180 570 195 545 185 C525 200 480 198 465 182 C435 190 410 170 418 148 C395 135 400 100 420 90 Z" fill="var(--brain)" stroke="var(--brain-d)" stroke-width="2"/>
+  <text x="510" y="135" text-anchor="middle" class="lab" style="font-weight:700">Cerebro</text>
+  <text x="510" y="152" text-anchor="middle" class="small">interpreta</text>
+  <!-- médula -->
+  <rect x="495" y="190" width="30" height="230" rx="14" fill="var(--cord)"/>
+  <text x="545" y="300" class="lab">Médula espinal</text>
+
+  <!-- mano -->
+  <path d="M90 330 C90 300 110 290 130 295 L130 250 C130 238 146 238 146 250 L146 290 L150 240 C150 228 166 228 166 240 L166 290 L170 248 C170 236 186 236 186 248 L186 300 L192 270 C194 258 210 260 208 272 L200 340 C195 370 170 385 140 385 C110 385 90 365 90 330 Z" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <path d="M120 222 L132 236 M150 210 L156 226 M180 218 L176 234" stroke="var(--up)" stroke-width="3" stroke-linecap="round"/>
+  <text x="155" y="200" text-anchor="middle" class="small" style="fill:var(--up);font-weight:700">Estímulo</text>
+  <circle cx="160" cy="320" r="7" fill="var(--up)"/>
+  <text x="140" y="410" text-anchor="middle" class="lab">Receptor del dolor</text>
+  <text x="140" y="426" text-anchor="middle" class="small muted">(nociceptor)</text>
+
+  <!-- vía ascendente -->
+  <path d="M167 320 C260 320 300 360 492 360" fill="none" stroke="var(--up)" stroke-width="3" marker-end="url(#au)"/>
+  <path d="M505 350 V200" fill="none" stroke="var(--up)" stroke-width="3" marker-end="url(#au)"/>
+  <text x="320" y="335" text-anchor="middle" class="lab" style="fill:var(--up)">Nervio: la señal sube</text>
+  <!-- vía descendente -->
+  <path d="M517 195 V345" fill="none" stroke="var(--down)" stroke-width="3" stroke-dasharray="6 4" marker-end="url(#ad)"/>
+  <text x="545" y="380" class="small" style="fill:var(--down)">El cerebro puede</text>
+  <text x="545" y="395" class="small" style="fill:var(--down)">atenuar la señal</text>
+
+  <circle cx="160" cy="268" r="11" fill="var(--accent)"/><text x="160" y="273" text-anchor="middle" class="num">1</text>
+  <circle cx="320" cy="370" r="11" fill="var(--accent)"/><text x="320" y="375" text-anchor="middle" class="num">2</text>
+  <circle cx="470" cy="360" r="11" fill="var(--accent)"/><text x="470" y="365" text-anchor="middle" class="num">3</text>
+  <circle cx="440" cy="190" r="11" fill="var(--accent)"/><text x="440" y="195" text-anchor="middle" class="num">4</text>
+
+  <!-- influencias -->
+  <rect x="630" y="80" width="130" height="150" rx="10" fill="var(--bg)" stroke="var(--line)"/>
+  <text x="695" y="102" text-anchor="middle" class="lab" style="font-weight:700">Influyen</text>
+  <text x="645" y="126" class="small">• Emociones</text>
+  <text x="645" y="146" class="small">• Atención</text>
+  <text x="645" y="166" class="small">• Recuerdos</text>
+  <text x="645" y="186" class="small">• Sueño</text>
+  <text x="645" y="206" class="small">• Estrés</text>
+  <path d="M630 150 L600 145" stroke="var(--muted)" stroke-width="2"/>
+  <text x="400" y="448" text-anchor="middle" class="small muted">El dolor es real aunque el cerebro lo module</text>
+</svg>

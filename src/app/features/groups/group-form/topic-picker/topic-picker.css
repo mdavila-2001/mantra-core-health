@@ -1,0 +1,11 @@
+/* The fields flow into the parent form grid. */
+:host {
+  display: contents;
+}
+
+.topic-picker__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

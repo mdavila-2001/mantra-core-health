@@ -1,0 +1,8 @@
+[1440] después de guardar: 1 aviso(s) ["El sistema de la farmacia respondió y quedó guardado."]
+[1440] antes de confirmar «Quitar» (+196 ms): 1 aviso(s) ["El sistema de la farmacia respondió y quedó guardado."]
+[1440] después de quitar (+372 ms; el de éxito dura 5000): 1 aviso(s) ["Quitó el sistema de la farmacia."] · saliendo ["El sistema de la farmacia respondió y quedó guardado."]
+[1440] terminada la salida (+977 ms): 1 aviso(s) ["Quitó el sistema de la farmacia."]
+[390] después de guardar: 1 aviso(s) ["El sistema de la farmacia respondió y quedó guardado."]
+[390] antes de confirmar «Quitar» (+234 ms): 1 aviso(s) ["El sistema de la farmacia respondió y quedó guardado."]
+[390] después de quitar (+1265 ms; el de éxito dura 5000): 1 aviso(s) ["Quitó el sistema de la farmacia."] · saliendo ["El sistema de la farmacia respondió y quedó guardado."]
+[390] terminada la salida (+1875 ms): 1 aviso(s) ["Quitó el sistema de la farmacia."]

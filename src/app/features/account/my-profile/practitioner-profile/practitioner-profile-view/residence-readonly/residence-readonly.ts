@@ -41,6 +41,13 @@ import { LocationPicker } from '../../../../../auth/shared-registration/location
       />
     }
   `,
+  // Full width on purpose (rule 6): the locked locality field spans the row,
+  // and the map pair keeps its own fixed size, centred by `department-map`.
+  styles: `
+    :host {
+      display: block;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResidenceReadonly {

@@ -22,6 +22,7 @@ const PERFIL = '22222222-2222-2222-2222-222222222222';
 interface Testable {
   readonly publicarParaOtro: WritableSignal<boolean>;
   readonly usarPolitica: WritableSignal<boolean>;
+  readonly estado: () => { readonly status: string };
   readonly avanzadasAbiertas: WritableSignal<boolean>;
   readonly publicado: WritableSignal<boolean>;
   readonly semana: FormArray;
@@ -123,6 +124,7 @@ describe('AgendaCreate', () => {
           useValue: {
             roles: signal<readonly string[]>(roles),
             activeTenantId: signal<string | null>(tenant),
+            selectTenant: vi.fn(),
             practitionerProfileId: signal<string | null>(perfilProfesional),
             displayName: signal<string | null>('Dra. Elena Salas'),
           },
@@ -178,6 +180,7 @@ describe('AgendaCreate', () => {
           useValue: {
             roles: signal<readonly string[]>(['PRACTITIONER']),
             activeTenantId: signal<string | null>(TENANT),
+            selectTenant: vi.fn(),
             practitionerProfileId: signal<string | null>(PERFIL),
             displayName: signal<string | null>('Dra. Elena Salas'),
           },
@@ -216,6 +219,8 @@ describe('AgendaCreate', () => {
    * se toma en una promesa, así que el DELETE sale un tick después del GET.
    */
   async function retirarVigente(id = 'tpl-1'): Promise<void> {
+    // Replacing is confirmed first (a promise): the live-bookings read goes out a tick later.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     http
       .expectOne(`/scheduling/templates/${id}/live-bookings`)
       .flush({ templateId: id, total: 0, bookings: [], present: [] });
@@ -294,6 +299,7 @@ describe('AgendaCreate', () => {
       acc.publicar();
 
       // Primero la vista previa de citas vivas; sin ninguna, se retira directo.
+      await new Promise((resolve) => setTimeout(resolve, 0));
       http
         .expectOne('/scheduling/templates/tpl-1/live-bookings')
         .flush({ templateId: 'tpl-1', total: 0, bookings: [], present: [] });
@@ -333,6 +339,7 @@ describe('AgendaCreate', () => {
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
 
+      await new Promise((resolve) => setTimeout(resolve, 0));
       http
         .expectOne('/scheduling/templates/tpl-1/live-bookings')
         .flush({ templateId: 'tpl-1', total: 0, bookings: [], present: [] });
@@ -393,12 +400,11 @@ describe('AgendaCreate', () => {
     it('al publicar avisa con un modal, y dice cuántos turnos abrió', async () => {
       // `false` = «Quedarme acá»: sin esto el modal navega y la prueba se va
       // de la pantalla que está midiendo.
-      respuestaDelDialogo = false;
-      ultimoDialogo = null;
-
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
       await retirarVigente();
+      respuestaDelDialogo = false;
+      ultimoDialogo = null;
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
@@ -432,6 +438,98 @@ describe('AgendaCreate', () => {
         .expectOne('/scheduling/templates/tpl-2/generate-slots')
         .flush({ templateId: 'tpl-2', created: 40, skipped: 0 });
       fixture.detectChanges();
+    });
+
+    it('asks before replacing the current schedule', async () => {
+      crearConHorarioVigente(VIGENTE);
+      ultimoDialogo = null;
+      acc.publicar();
+      await retirarVigente();
+      expect(ultimoDialogo).toMatchObject({
+        title: 'Reemplazar su horario actual',
+        confirmLabel: 'Reemplazar mi horario',
+      });
+      http
+        .expectOne('/scheduling/resources/res-1/templates')
+        .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-2/generate-slots')
+        .flush({ templateId: 'tpl-2', created: 40, skipped: 0 });
+    });
+
+    it('declining the replacement retires nothing and publishes nothing', async () => {
+      crearConHorarioVigente(VIGENTE);
+      respuestaDelDialogo = false;
+      try {
+        acc.publicar();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        http.expectNone('/scheduling/templates/tpl-1/live-bookings');
+        http.expectNone('/scheduling/resources/res-1/templates');
+        expect(acc.estado().status).toBe('ready');
+      } finally {
+        respuestaDelDialogo = true;
+      }
+    });
+  });
+
+  describe('which agenda opens', () => {
+    function openWith(resources: readonly string[]): void {
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([{ path: 'schedule', children: [] }]),
+          {
+            provide: AuthService,
+            useValue: {
+              roles: signal<readonly string[]>(['PRACTITIONER']),
+              activeTenantId: signal<string | null>(TENANT),
+              selectTenant: vi.fn(),
+              practitionerProfileId: signal<string | null>(PERFIL),
+              displayName: signal<string | null>('Dra. Elena Salas'),
+            },
+          },
+          { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
+          { provide: DialogService, useValue: dialogsFalsos },
+        ],
+      });
+      fixture = TestBed.createComponent(AgendaCreate);
+      http = TestBed.inject(HttpTestingController);
+      acc = fixture.componentInstance as unknown as Testable;
+      fixture.detectChanges();
+      http.expectOne('/practices').flush([]);
+      http.expectOne((r) => r.url === '/scheduling/resources').flush({
+        items: resources.map((id) => ({ id, name: id, resourceRefId: PERFIL, stateConceptId: 'c' })),
+        count: resources.length,
+      });
+    }
+
+    const LIVE = {
+      id: 'tpl-live',
+      name: 'Horario',
+      statusConceptId: 'c',
+      retired: false,
+      rules: [{ dayOfWeek: 2, startTime: '15:00:00', endTime: '19:00:00', slotMinutes: 20 }],
+    };
+
+    it('skips an empty agenda left by a failed publication and loads the one with a schedule', () => {
+      openWith(['res-empty', 'res-real']);
+      http.expectOne('/scheduling/resources/res-empty/templates').flush({ items: [], count: 0 });
+      http.expectOne('/scheduling/resources/res-real/templates').flush({ items: [LIVE], count: 1 });
+      fixture.detectChanges();
+
+      expect(acc.resourceId()).toBe('res-real');
+      expect(acc.grupoDe(1).getRawValue()).toMatchObject({ activo: true, desde: '15:00', hasta: '19:00' });
+    });
+
+    it('a retired schedule is not the one in force: the newest live one is loaded', () => {
+      openWith(['res-1']);
+      const retired = { ...LIVE, id: 'tpl-old', retired: true, rules: [] };
+      http.expectOne('/scheduling/resources/res-1/templates').flush({ items: [retired, LIVE], count: 2 });
+      fixture.detectChanges();
+
+      expect(acc.resourceId()).toBe('res-1');
+      expect(acc.grupoDe(1).getRawValue().desde).toBe('15:00');
     });
   });
 
@@ -851,6 +949,28 @@ describe('AgendaCreate', () => {
     const plantilla = http.expectOne('/scheduling/resources/res-1/templates');
     expect(plantilla.request.body.bookingPolicyId).toBe('pol-1');
     plantilla.flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+    http
+      .expectOne('/scheduling/templates/tpl-1/generate-slots')
+      .flush({ templateId: 'tpl-1', created: 1, skipped: 0 });
+  });
+
+  it('booking rules typed in number inputs travel as numbers instead of crashing (t.trim)', () => {
+    crear();
+    encenderLunes();
+    acc.usarPolitica.set(true);
+    // `app-input type="number"` hands the control a number, or null once cleared.
+    acc.formPolitica.patchValue({ minNoticeMinutes: 60, maxAdvanceDays: null });
+    fixture.detectChanges();
+    acc.publicar();
+
+    http.expectOne('/scheduling/resources').flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
+    const politica = http.expectOne('/scheduling/booking-policies');
+    expect(politica.request.body.minNoticeMinutes).toBe(60);
+    expect('maxAdvanceDays' in politica.request.body).toBe(false);
+    politica.flush({ id: 'pol-1', code: 'X', stateConceptId: 'c' });
+    http
+      .expectOne('/scheduling/resources/res-1/templates')
+      .flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
     http
       .expectOne('/scheduling/templates/tpl-1/generate-slots')
       .flush({ templateId: 'tpl-1', created: 1, skipped: 0 });
@@ -1946,6 +2066,7 @@ describe('AgendaCreate', () => {
       expect(creation.request.body).not.toHaveProperty('practiceId');
       creation.flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
       finishPublishing('res-1');
+      expect(TestBed.inject(AuthService).selectTenant).not.toHaveBeenCalled();
     });
 
     it('con otra organización, busca sus agendas y el recurso lleva su organización y su práctica', () => {
@@ -1963,6 +2084,8 @@ describe('AgendaCreate', () => {
       });
       creation.flush({ id: 'res-olivos', name: 'x', stateConceptId: 'c' });
       finishPublishing('res-olivos');
+      // «Consultas» lee con la organización activa: tiene que ser donde se publicó.
+      expect(TestBed.inject(AuthService).selectTenant).toHaveBeenCalledWith('tenant-olivos');
     });
 
     it('cambiar de organización suelta la agenda y el horario de la anterior', () => {
@@ -2078,6 +2201,7 @@ describe('AgendaCreate', () => {
 
     /** La vista previa sin citas y el retiro de un horario; lo que declaró cada uno. */
     async function retireCurrent(templateId: string): Promise<(string | null)[]> {
+      await new Promise((resolve) => setTimeout(resolve, 0));
       const preview = answer(`/scheduling/templates/${templateId}/live-bookings`, {
         templateId,
         total: 0,

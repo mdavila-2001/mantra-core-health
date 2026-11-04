@@ -1,0 +1,101 @@
+<app-back-link [fallback]="listUrl" label="Volver a las reglas" />
+
+<app-page-header
+  [title]="title()"
+  subtitle="Lo que comprueba la regla y cómo le fue en las últimas corridas. Lo que la corrida no informó se dice «no informado»."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="detail()" (retry)="reload()">
+  @if (detail(); as state) {
+    @if (state.status === 'ready') {
+      @let rule = state.data;
+      <app-card class="rule" variant="outlined" padding="md" data-testid="portal-quality-rule-detail">
+        <p class="rule__headline">
+          <app-badge [variant]="severity(rule.severity).tone">{{ severity(rule.severity).label }}</app-badge>
+          <span>{{ rule.name }}</span>
+        </p>
+
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Resumen">
+            <section class="rule__section" aria-label="Resumen de la regla">
+              <app-fact-list [hechos]="facts(rule)" etiqueta="Datos de la regla" />
+              <h3 class="rule__subtitle">Cómo se corrige</h3>
+              @if (rule.remediationGuidance) {
+                <p>{{ rule.remediationGuidance }}</p>
+              } @else {
+                <p class="rule__muted">La regla no trae una guía de corrección.</p>
+              }
+            </section>
+          </app-tab>
+
+          <app-tab label="Expresión">
+            <section class="rule__section" aria-label="Expresión de la regla">
+              <p class="rule__muted">
+                Lenguaje: {{ rule.expressionLanguage ?? 'no informado' }}. Es sólo lectura: la regla se edita donde se carga el conjunto.
+              </p>
+              <pre class="rule__code" data-testid="portal-quality-rule-expression"><code>{{ rule.ruleExpression || 'La regla no trae expresión.' }}</code></pre>
+            </section>
+          </app-tab>
+
+          <app-tab label="Corridas recientes">
+            <section class="rule__section" aria-label="Corridas recientes del conjunto">
+              <p class="rule__muted">
+                Las corridas son del conjunto «{{ rule.ruleSet.name }}», no sólo de esta regla.
+              </p>
+              @if (rule.recentRuns.length === 0) {
+                <p data-testid="portal-quality-rule-no-runs">
+                  Este conjunto todavía no tuvo ninguna corrida: la regla no se evaluó nunca, así que no hay incidencias que esperar.
+                </p>
+              } @else {
+                <div class="rule__scroll">
+                  <table class="rule__table" data-testid="portal-quality-rule-runs">
+                    <caption class="rule__caption">Últimas corridas del conjunto</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Inicio</th>
+                        <th scope="col">Resultado</th>
+                        <th scope="col">Registros evaluados</th>
+                        <th scope="col">Incidencias detectadas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (run of rule.recentRuns; track run.id) {
+                        <tr>
+                          <td>{{ when(run.startedAt) }}</td>
+                          <td>{{ run.result.display ?? run.result.code ?? 'Sin dato' }}</td>
+                          <td>{{ count(run.recordsEvaluated) }}</td>
+                          <td>{{ count(run.issuesDetected) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </section>
+          </app-tab>
+
+          <app-tab label="Incidencias">
+            <section class="rule__section" aria-label="Incidencias de la regla">
+              <dl class="rule__counts" data-testid="portal-quality-rule-counts">
+                <div><dt>Abiertas</dt><dd>{{ rule.issuesByStatus.OPEN }}</dd></div>
+                <div><dt>Resueltas</dt><dd>{{ rule.issuesByStatus.RESOLVED }}</dd></div>
+                <div><dt>Descartadas</dt><dd>{{ rule.issuesByStatus.DISMISSED }}</dd></div>
+                @if (rule.issuesByStatus.other > 0) {
+                  <div><dt>En un estado no reconocido</dt><dd>{{ rule.issuesByStatus.other }}</dd></div>
+                }
+              </dl>
+              @if (rule.totalIssues > 0) {
+                <a app-link [routerLink]="issuesUrl" [queryParams]="{ ruleId: rule.id, status: 'ALL' }">
+                  Ver las incidencias de esta regla
+                </a>
+              } @else {
+                <p class="rule__muted">Esta regla no tiene ninguna incidencia.</p>
+              }
+            </section>
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  }
+</app-view-state-host>

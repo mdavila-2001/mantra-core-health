@@ -1,5 +1,6 @@
 ---
 slug: onicomicosis
+image: onicomicosis.svg | Los hongos vuelven la uña amarilla, gruesa y frágil. | Comparación de un dedo con uña sana y otro con uña afectada por hongos, amarillenta y engrosada, junto a listas de factores de riesgo y tratamiento.
 ---
 
 ## [definition] Introducción

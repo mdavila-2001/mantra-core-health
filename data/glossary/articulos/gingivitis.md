@@ -1,5 +1,6 @@
 ---
 slug: gingivitis
+image: gingivitis.svg | La gingivitis es la inflamación de la encía causada por la placa bacteriana. | Comparación de un diente con encía sana y rosada y otro con placa en el borde y encía roja e hinchada que sangra, junto a las medidas de prevención y el riesgo de periodontitis.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1944
+image: medlineplus-es-1944.svg | El trasplante sustituye el corazón enfermo por el de un donante. | Corazón enfermo reemplazado por un corazón donado, con los pasos básicos de la cirugía, la necesidad de inmunosupresores de por vida y los signos de alarma tras el trasplante.
 ---
 
 ## [definition] Introducción

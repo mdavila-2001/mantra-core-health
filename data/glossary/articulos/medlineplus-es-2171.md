@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2171
+image: medlineplus-es-2171.svg | Las células madre se renuevan a sí mismas y pueden dar lugar a células especializadas. | Célula madre que se divide en otra célula madre y en células especializadas, y los pasos del trasplante de células madre hematopoyéticas desde la obtención hasta la nueva sangre.
 ---
 
 ## [definition] Introducción

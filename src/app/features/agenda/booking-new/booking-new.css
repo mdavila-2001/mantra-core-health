@@ -70,8 +70,8 @@ form,
   line-height: var(--lh-caption);
 }
 
-/* Resumen y formulario a la izquierda, figura del cuerpo a la derecha. Desde
-   64rem hay lugar para las dos; por debajo la figura baja y ocupa el ancho. */
+/* Summary and form on the left, body figure on the right. From 64rem both fit;
+   below that the figure drops under the form at full width. */
 .reserva__layout {
   display: grid;
   gap: var(--sp-8);

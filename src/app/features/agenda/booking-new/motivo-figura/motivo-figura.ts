@@ -1,14 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { finalize, map, of, switchMap, timer } from 'rxjs';
+import type { FormControl } from '@angular/forms';
+import { finalize, map, of, startWith, switchMap, timer } from 'rxjs';
 
 import { TriageIaClient } from '../../../../core/data-access/triage-ia/triage-ia.client';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -32,29 +25,21 @@ import {
 } from '../../../symptom-check/symptoms';
 import { BODY_ZONES } from '../../../symptom-check/zones.data';
 
-/** La misma pausa que `symptom-check` antes de preguntarle al servicio de triage. */
-const PAUSA_PARA_LEER_MS = 600;
+/** Same pause as `symptom-check` before asking the triage service. */
+const READ_PAUSE_MS = 600;
 
 /**
- * La figura del cuerpo junto al **motivo de la consulta** de la reserva
- * (pedido del cliente, 04/11/2026: la columna derecha de la reserva quedaba
- * vacía).
+ * The body figure next to the booking's reason field (client request,
+ * 2026-11-04: the right column of the booking screen was empty).
  *
- * Es la misma figura y la misma detección de «¿Qué te pasa?»
- * (`features/symptom-check`), en dos sentidos:
+ * Same figure and same detection as the symptom check (`features/symptom-check`):
+ * - text → figure: the reason goes through the local engine and, after a pause,
+ *   the triage service; recognized zones light up on the silhouette;
+ * - figure → text: tapping a zone lists its symptoms, and picking one appends it
+ *   to the reason without overwriting it and without exceeding `maximo`.
  *
- * - **Del texto a la figura.** Lo que se escribe en el motivo pasa por el motor
- *   local (`recognize`) y, tras una pausa, por el servicio de triage; las zonas
- *   de lo reconocido se iluminan en la silueta, igual que allá.
- * - **De la figura al texto.** Tocar una zona abre sus síntomas; tocar uno lo
- *   **agrega al motivo** (`agregado`). La figura no escribe el formulario: lo
- *   pide, y quien la monta decide (respeta el tope de 500 caracteres).
- *
- * Frente a un síntoma de alarma dice que no espere al turno, como en
- * «¿Qué te pasa?»: una reserva para el jueves no es la respuesta a un dolor de
- * pecho con falta de aire.
- *
- * No recomienda especialidades: acá el profesional ya está elegido.
+ * Alarm symptoms show an "go to the ER" notice. No specialty recommendation:
+ * the practitioner is already chosen here.
  */
 @Component({
   selector: 'app-motivo-figura',
@@ -66,19 +51,26 @@ const PAUSA_PARA_LEER_MS = 600;
 export class MotivoFigura {
   private readonly triageIa = inject(TriageIaClient);
 
-  /** Lo escrito en el motivo, tal cual. */
-  readonly texto = input('');
+  /** The reason field the figure reads and appends to. */
+  readonly control = input.required<FormControl<string>>();
 
-  /** Con `false` la figura sólo muestra (paso de confirmar: el motivo ya no se edita). */
+  /** Max length of the reason; a symptom that does not fit is not appended. */
+  readonly maximo = input(500);
+
+  /** `false` only shows (confirm step: the reason is no longer editable). */
   readonly editable = input(true);
 
-  /** Con qué proporción dibujar la figura; sin dato, la neutra. */
+  /** Silhouette proportions; neutral when unknown. */
   readonly sexo = input<SexoDeLaSilueta | undefined>(undefined);
 
-  /** El nombre del síntoma que se tocó, para sumarlo al motivo. */
-  readonly agregado = output<string>();
+  protected readonly texto = toSignal(
+    toObservable(this.control).pipe(
+      switchMap((control) => control.valueChanges.pipe(startWith(control.value))),
+    ),
+    { initialValue: '' },
+  );
 
-  /* ---- detección: la de `symptom-check` ---------------------------------- */
+  /* ---- detection: the one from `symptom-check` --------------------------- */
 
   private readonly textoLeido = signal('');
 
@@ -88,7 +80,7 @@ export class MotivoFigura {
       switchMap((texto) =>
         texto.length < 3
           ? of(null)
-          : timer(PAUSA_PARA_LEER_MS).pipe(
+          : timer(READ_PAUSE_MS).pipe(
               switchMap(() => this.triageIa.analizar(texto)),
               map((lectura): TextReading | null => (lectura === null ? null : { texto, lectura })),
               finalize(() => this.textoLeido.set(texto)),
@@ -102,23 +94,22 @@ export class MotivoFigura {
     currentReading(this.lecturaGuardada(), this.texto()),
   );
 
-  /** Lo reconocido en el motivo: motor local más lo que sumó el servicio. */
+  /** What the reason mentions: local engine plus what the service added. */
   protected readonly sintomas = computed<readonly Sintoma[]>(() =>
     combine(recognize(this.texto()), readingSymptoms(this.lecturaVigente())).filter((s) =>
       this.visible(s),
     ),
   );
 
-  /** El servicio todavía está leyendo lo escrito. */
+  /** The service is still reading the text. */
   protected readonly leyendo = computed(() => {
     const texto = this.texto().trim();
     return texto.length >= 3 && this.textoLeido() !== texto;
   });
 
-  /** Las alarmas del texto: frente a ellas no se espera el turno. */
   protected readonly alarmas = computed(() => recognizeAlarms(this.texto()));
 
-  /** Las zonas que la silueta ilumina por lo escrito (misma regla que `symptom-check`). */
+  /** Zones lit by the text (same rule as `symptom-check`). */
   protected readonly zonasMarcadas = computed<readonly string[]>(() => {
     const delServicio = readingZones(this.lecturaVigente());
     const marcadas = new Set<string>();
@@ -134,7 +125,7 @@ export class MotivoFigura {
     return [...marcadas];
   });
 
-  /* ---- elegir tocando ---------------------------------------------------- */
+  /* ---- picking by touch -------------------------------------------------- */
 
   protected readonly zonas: readonly ZonaElegible[] = BODY_ZONES.map(({ id, nombre }) => ({
     id,
@@ -161,18 +152,23 @@ export class MotivoFigura {
   }
 
   protected estaEnElMotivo(sintoma: Sintoma): boolean {
-    return (
-      this.sintomas().some((s) => s.id === sintoma.id) ||
-      this.alarmas().some((s) => s.id === sintoma.id)
-    );
+    return [...this.sintomas(), ...this.alarmas()].some((s) => s.id === sintoma.id);
   }
 
+  /** Appends the symptom at the end, comma-separated; never half of it. */
   protected agregar(sintoma: Sintoma): void {
     if (!this.editable() || this.estaEnElMotivo(sintoma)) return;
-    this.agregado.emit(sintoma.nombre);
+    const control = this.control();
+    const previo = control.value.trimEnd();
+    const nombre = sintoma.nombre;
+    const nuevo =
+      previo === '' ? nombre.charAt(0).toUpperCase() + nombre.slice(1) : `${previo}, ${nombre}`;
+    if (nuevo.length > this.maximo()) return;
+    control.setValue(nuevo);
+    control.markAsDirty();
   }
 
-  /** Igual que en `symptom-check`: sin sexo conocido no se esconde nada. */
+  /** Same as `symptom-check`: with unknown sex nothing is hidden. */
   private visible(sintoma: Sintoma): boolean {
     const solo = sintoma.soloParaSexo;
     const sexo = this.sexo();

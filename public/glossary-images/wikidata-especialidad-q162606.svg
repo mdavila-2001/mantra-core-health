@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Glándulas endocrinas y endocrinología</title>
+  <desc id="d">Silueta humana con las glándulas endocrinas: hipófisis, tiroides, paratiroides, suprarrenales, páncreas y ovarios o testículos. A la derecha, las áreas que atiende la especialidad y un esquema de retroalimentación entre la hipófisis y una glándula.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Glándulas endocrinas</text>
+<path d="M168.0,136.6 Q129.0,139.2 123.8,179.5 L110.8,329.0 Q116.0,344.6 129.0,331.6 L139.4,199.0 L142.0,355.0 Q142.0,396.6 162.8,409.6 L277.2,409.6 Q298.0,396.6 298.0,355.0 L300.6,199.0 L311.0,331.6 Q324.0,344.6 329.2,329.0 L316.2,179.5 Q311.0,139.2 272.0,136.6 L235.6,131.4 L235.6,115.8 L204.4,115.8 L204.4,131.4 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="220" cy="87.2" r="31.2" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+<circle cx="220" cy="78" r="7" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="40" y="74" class="small">Hipófisis</text>
+<line x1="102.32000000000001" y1="70" x2="220" y2="78" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="220" cy="138" r="10" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="320" y="128" class="small">Tiroides</text>
+<line x1="316" y1="124" x2="220" y2="138" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="232" cy="150" r="4" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="320" y="156" class="small">Paratiroides</text>
+<line x1="316" y1="152" x2="232" y2="150" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="196" cy="250" r="9" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="40" y="236" class="small">Suprarrenales</text>
+<line x1="128.24" y1="232" x2="196" y2="250" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="244" cy="250" r="9" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<circle cx="236" cy="232" r="12" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="320" y="232" class="small">Páncreas</text>
+<line x1="316" y1="228" x2="236" y2="232" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="190" cy="318" r="7" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="40" y="316" class="small">Ovarios o</text>
+<line x1="102.32000000000001" y1="312" x2="190" y2="318" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="250" cy="318" r="7" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="2"/>
+<text x="40" y="332" class="small">testículos</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Qué atiende</text>
+<rect x="456" y="58" width="148" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="530.0" y="79.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Diabetes</text>
+<rect x="612" y="58" width="148" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="686.0" y="79.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Tiroides</text>
+<rect x="456" y="102" width="148" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="530.0" y="123.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Obesidad</text>
+<rect x="612" y="102" width="148" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="686.0" y="123.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Osteoporosis</text>
+<rect x="456" y="146" width="148" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="530.0" y="167.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Hipófisis</text>
+<rect x="612" y="146" width="148" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="686.0" y="167.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Suprarrenales</text>
+<rect x="456" y="204" width="304" height="118" rx="10" fill="var(--purple-l)" stroke-width="1"/>
+<text x="470" y="228" class="step">Retroalimentación</text>
+<rect x="476" y="240" width="110" height="32" rx="8" fill="var(--purple)" stroke-width="1"/>
+<text x="531.0" y="260.2" text-anchor="middle" class="small" style="fill:var(--on)">Hipófisis</text>
+<rect x="630" y="240" width="110" height="32" rx="8" fill="var(--purple)" stroke-width="1"/>
+<text x="685.0" y="260.2" text-anchor="middle" class="small" style="fill:var(--on)">Glándula</text>
+<line x1="588" y1="250" x2="626" y2="250" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M684,274 Q610,312 532,276" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ar)"/>
+<text x="608" y="312" text-anchor="middle" class="small" style="fill:var(--muted)">la hormona frena a la hipófisis</text>
+<text x="456" y="356" class="lab">Herramientas: análisis hormonales,</text>
+<text x="456" y="376" class="lab">ecografía y pruebas de estímulo</text>
+<text x="456" y="396" class="lab">o supresión.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

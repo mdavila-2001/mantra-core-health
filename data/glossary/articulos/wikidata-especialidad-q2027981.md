@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2027981
+image: wikidata-especialidad-q2027981.svg | La cirugía oral trata dientes, maxilares y estructuras de la cara mediante procedimientos quirúrgicos. | Esquema del maxilar superior y la mandíbula con sus dientes y una muela del juicio incluida. A la derecha, los problemas que trata la especialidad, desde extracciones e implantes hasta fracturas y malformaciones.
 ---
 
 ## [definition] Introducción

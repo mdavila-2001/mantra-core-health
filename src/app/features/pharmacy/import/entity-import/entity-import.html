@@ -14,7 +14,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="entity-import" padding="lg" [attr.data-testid]="'entity-import-' + entity()">
+    <div class="entity-import" [attr.data-testid]="'entity-import-' + entity()">
       <div class="entity-import__panel">
         <div class="entity-import__upload">
           <div class="entity-import__main">
@@ -42,6 +42,8 @@
               [maxSizeBytes]="maxBytes"
               [maxFiles]="1"
               [disabled]="phase() === 'applying' || phase() === 'previewing'"
+              [uploading]="phase() === 'previewing'"
+              uploadingLabel="Enviando el archivo…"
               [files]="files()"
               (filesChange)="onFilesChange($event)"
               (rejected)="showRejection($event)"
@@ -149,6 +151,7 @@
                   app-button
                   type="button"
                   [disabled]="phase() !== 'preview' || failure() !== null || sendableCount() === 0"
+                  [isLoading]="phase() === 'applying'"
                   (clicked)="apply()"
                   data-testid="entity-import-apply"
                 >
@@ -159,7 +162,7 @@
           </section>
         }
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

@@ -114,3 +114,26 @@
   color: var(--text-secondary);
   font-size: var(--fs-body);
 }
+
+/* Celular: la opción de cada representante es un blanco de 44 px y el control de modo se toca con el pulgar. */
+@media (max-width: 779px) {
+  .representante__opcion {
+    min-block-size: 44px;
+  }
+
+  .representante__opcion input {
+    inline-size: 20px;
+    block-size: 20px;
+  }
+
+  .buscador app-segmented-control ::ng-deep .segmentado__opcion {
+    position: relative;
+    min-block-size: 38px;
+  }
+
+  .buscador app-segmented-control ::ng-deep .segmentado__opcion::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
+}

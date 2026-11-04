@@ -1,0 +1,47 @@
+<app-page-header title="Indicadores de internación" [subtitle]="(site()?.name ?? 'Establecimiento') + ' · ' + short(from()) + ' al ' + short(to())" [breadcrumbs]="breadcrumbs()" />
+
+<app-view-state-host [state]="gate()" (retry)="access.reload()">
+  <app-card class="indicators" padding="lg" data-testid="indicators">
+    <div class="indicators__range">
+      <app-form-field label="Desde"><app-date-picker [value]="pickerOf(from())" (valueChange)="setRange('from', $event)" data-testid="indicators-from" /></app-form-field>
+      <app-form-field label="Hasta"><app-date-picker [value]="pickerOf(to())" (valueChange)="setRange('to', $event)" data-testid="indicators-to" /></app-form-field>
+    </div>
+
+    <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+      <ng-container vsh-stale>
+        @if (data(); as d) {
+          <app-alert tone="warning" title="Faltan días de censo cerrados" data-testid="indicators-missing">
+            Los indicadores cubren {{ d.coverage.daysClosed }} de {{ d.coverage.daysClosed + d.coverage.daysMissing.length }} días. Hasta cerrarlos, el período queda incompleto.
+            <div alert-actions class="indicators__missing">
+              @for (f of d.coverage.daysMissing; track f) {
+                <a app-link [routerLink]="censusRoute" [queryParams]="{ date: f, site: siteId() }">Cerrar censo del {{ short(f) }}</a>
+              }
+            </div>
+          </app-alert>
+        }
+      </ng-container>
+      @if (data(); as d) {
+        <ul class="indicators__kpis" data-testid="indicators-kpis">
+          @for (k of kpis(); track k.label) {
+            <li><app-metric-card [label]="k.label" [value]="k.value" [hint]="k.hint" [tone]="k.tone" [attr.data-testid]="k.testId" /></li>
+          }
+        </ul>
+
+        <section class="indicators__check" aria-labelledby="indicators-check" data-testid="indicators-crosscheck">
+          <h2 id="indicators-check" class="indicators__title">Prueba cruzada</h2>
+          <p>
+            Ocupación estimada desde la estancia media y el giro: <strong>{{ fmt(d.crossCheck.occupancyFromAlos, ' %') ?? '—' }}</strong>,
+            diferencia con la ocupación medida: <strong>{{ fmt(d.crossCheck.deltaPct, ' puntos') ?? '—' }}</strong>.
+            <span class="indicators__muted">{{ formula.crossCheck }}. Sin ajustes y con estancias que no cruzan el borde del período queda por debajo de 5 puntos; si es mayor, revise los egresos y los días cerrados del período.</span>
+          </p>
+          <p class="indicators__muted">
+            Rotación de cama (medianas): espera {{ fmt(d.bedTurnaroundMinutes.waitToStart) ?? '—' }} min,
+            limpieza {{ fmt(d.bedTurnaroundMinutes.cleaning) ?? '—' }} min, inspección {{ fmt(d.bedTurnaroundMinutes.inspection) ?? '—' }} min.
+          </p>
+        </section>
+
+        <app-data-table data-testid="indicators-units" [state]="unitRows()" [columns]="columns" [trackBy]="byId" caption="Indicadores por unidad" stackedOnMobile wrapHeaders />
+      }
+    </app-view-state-host>
+  </app-card>
+</app-view-state-host>

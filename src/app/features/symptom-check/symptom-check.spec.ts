@@ -9,6 +9,15 @@ import { VOICE_RECOGNIZER } from './dictation';
 import type { VoiceErrorEvent, VoiceResultEvent, VoiceRecognizer } from './dictation.types';
 import { SymptomCheck } from './symptom-check';
 import { ESPERAR_IMAGEN_DE_VISTA } from '../../shared/components/organisms/body-map/body-map';
+import { SpecialtyImages } from '../../core/data-access/terminology/specialty-images.service';
+import { defaultSpecialtyImage } from '../../shared/specialties/specialty-images';
+
+/**
+ * `SpecialtyImages` pide el catálogo de especialidades apenas se inyecta. Estas
+ * pruebas no son sobre las imágenes propias del admin: rige la ilustración
+ * empaquetada y no queda ninguna petición sin responder.
+ */
+const SIN_IMAGENES_PROPIAS = { of: (nombre: string) => defaultSpecialtyImage(nombre) };
 
 /**
  * Responde el `GET /profiles/patients/me` que se pide al abrir, con sesión
@@ -49,6 +58,7 @@ describe('SymptomCheck · a dónde lleva «ver quién atiende»', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -219,6 +229,7 @@ describe('SymptomCheck · la silueta', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -238,12 +249,19 @@ describe('SymptomCheck · la silueta', () => {
     fixture.detectChanges();
   }
 
+  /** Escribir o elegir un síntoma pide la lista de especialidades con gente; vacía = sin filtro. */
+  function responderEspecialidades(): void {
+    for (const req of http.match((r) => r.url === '/profiles/practitioners')) {
+      req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    }
+  }
+
   function presionada(testId: string): string | null {
     return html.querySelector(`[data-testid="${testId}"]`)?.getAttribute('aria-pressed') ?? null;
   }
 
-  it('tocar el pecho en la figura abre sus síntomas', () => {
-    tocar('body-map-pecho');
+  it('tocar el centro del pecho en la figura abre sus síntomas', () => {
+    tocar('body-map-esternon');
 
     expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
       'dolor de pecho',
@@ -251,41 +269,89 @@ describe('SymptomCheck · la silueta', () => {
   });
 
   it('tocar una zona la resalta en la figura y suelta la anterior', () => {
-    tocar('body-map-pecho');
-    tocar('body-map-estomago');
+    tocar('body-map-esternon');
+    tocar('body-map-epigastrio');
 
-    expect(presionada('body-map-estomago')).toBe('true');
-    expect(presionada('body-map-pecho')).toBe('false');
+    expect(presionada('body-map-epigastrio')).toBe('true');
+    expect(presionada('body-map-esternon')).toBe('false');
   });
 
   /** Zonas finas: cada parte ofrece lo suyo, y lleva a especialidades distintas. */
   it('la rodilla ofrece la rodilla, no el hombro', () => {
-    tocar('body-map-rodillas');
+    tocar('body-map-rodilla-der');
     const opciones = html.querySelector('[data-testid="zona-abierta"]')?.textContent ?? '';
 
     expect(opciones).toContain('dolor de rodilla');
     expect(opciones).not.toContain('dolor de hombro');
   });
 
+  /** Lado y segmento (2026-11-03): el codo no ofrece la mano, y bajo las costillas a la derecha está la vesícula. */
+  it('el codo ofrece el codo y el costado derecho ofrece la vesícula', () => {
+    tocar('body-map-codo-izq');
+    const codo = html.querySelector('[data-testid="zona-abierta"]')?.textContent ?? '';
+    expect(html.querySelector('.sintomas__lado-titulo')?.textContent).toContain('Codo izquierdo');
+    expect(codo).toContain('dolor de codo');
+    expect(codo).not.toContain('dolor de mano');
+
+    tocar('body-map-hipocondrio-der');
+    expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain('vesícula');
+  });
+
   it('de frente, tocar la cabeza acerca la cara para elegir los ojos', () => {
     tocar('body-map-cabeza');
-    tocar('body-map-ojos');
+    tocar('body-map-ojo-der');
 
     expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
       'visión borrosa',
     );
   });
 
+  /** Pedido del usuario (04/11/2026): tocar el muñeco reemplaza lo escrito. */
+  it('tocar una zona en la figura borra lo que se había escrito, y su chip', () => {
+    const control = html.querySelector<HTMLTextAreaElement>(
+      '[data-testid="sintomas-texto"] textarea',
+    );
+    if (control === null) throw new Error('no está el área de texto');
+    control.value = 'me duele la cadera';
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    expect(html.querySelectorAll('[data-testid="sintoma-reconocido"]').length).toBeGreaterThan(0);
+
+    tocar('body-map-pecho');
+
+    expect((fixture.componentInstance as unknown as { texto(): string }).texto()).toBe('');
+    expect(control.value).toBe('');
+    expect(html.querySelectorAll('[data-testid="sintoma-reconocido"]').length).toBe(0);
+    expect(html.querySelector('[data-testid="zona-abierta"]')).not.toBeNull();
+    responderEspecialidades();
+  });
+
+  it('lo elegido a mano en una zona no se borra al tocar otra', () => {
+    tocar('body-map-rodillas');
+    const opcion = Array.from(
+      html.querySelectorAll<HTMLButtonElement>('[data-testid="zona-abierta"] button'),
+    ).find((boton) => boton.textContent?.trim() === 'dolor de rodilla');
+    if (opcion === undefined) throw new Error('no está «dolor de rodilla»');
+    opcion.click();
+    fixture.detectChanges();
+
+    tocar('body-map-pecho');
+
+    const chips = Array.from(html.querySelectorAll('[data-testid="sintoma-reconocido"]'));
+    expect(chips.some((chip) => chip.textContent?.includes('rodilla'))).toBe(true);
+    responderEspecialidades();
+  });
+
   it('volver a tocar la zona en la figura la cierra', () => {
-    tocar('body-map-pecho');
-    tocar('body-map-pecho');
+    tocar('body-map-esternon');
+    tocar('body-map-esternon');
 
     expect(html.querySelector('[data-testid="zona-abierta"]')).toBeNull();
   });
 
   /** La alarma es el único camino que no puede romperse: el aviso de urgencia sigue saliendo. */
   it('un síntoma de alarma elegido desde la figura sigue disparando el aviso', () => {
-    tocar('body-map-pecho');
+    tocar('body-map-esternon');
     const opcion = Array.from(
       html.querySelectorAll<HTMLButtonElement>('[data-testid="zona-abierta"] button'),
     ).find((boton) => boton.textContent?.trim() === 'dolor de pecho');
@@ -323,6 +389,7 @@ describe('SymptomCheck · el área de texto', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -377,6 +444,7 @@ describe('SymptomCheck · mientras la IA lee', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -459,6 +527,7 @@ describe('SymptomCheck · dictar', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: VOICE_RECOGNIZER, useValue: constructor },
       ],
     });
@@ -583,6 +652,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -640,15 +710,67 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     );
   });
 
+  /** Lo escrito enciende la parte exacta que nombra, con su lado (pedido del 03/11/2026). */
+  it('«me duele la rodilla derecha» enciende sólo la rodilla derecha', () => {
+    escribir('me duele la rodilla derecha');
+    fixture.detectChanges();
+
+    const marcada = (id: string) =>
+      html.querySelector(`[data-testid="body-map-${id}"]`)?.closest('g')?.classList.contains('body-map__zona--marcada');
+    expect(marcada('rodilla-der')).toBe(true);
+    expect(marcada('rodilla-izq')).toBe(false);
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Rodilla derecha');
+    vi.advanceTimersByTime(600);
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
+  });
+
+  it('«me duelen los ojos» gira la figura a la cara y enciende los dos ojos', () => {
+    escribir('me duelen los ojos');
+    fixture.detectChanges();
+
+    expect(html.querySelector('svg[data-testid="body-map-vista-cara"]')).not.toBeNull();
+    for (const id of ['ojo-der', 'ojo-izq']) {
+      expect(
+        html.querySelector(`[data-testid="body-map-${id}"]`)?.closest('g')?.classList,
+        id,
+      ).toContain('body-map__zona--marcada');
+    }
+    vi.advanceTimersByTime(600);
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
+  });
+
+  /** A symptom only fine zones offer must not invent a side: «ampolla» lights both feet. */
+  it('lo contado no inventa un lado: una ampolla enciende los dos pies', () => {
+    escribir('tengo una ampolla');
+    fixture.detectChanges();
+
+    for (const id of ['pie-der', 'pie-izq']) {
+      expect(
+        html.querySelector(`[data-testid="body-map-${id}"]`)?.closest('g')?.classList,
+        id,
+      ).toContain('body-map__zona--marcada');
+    }
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Pies y tobillos');
+    vi.advanceTimersByTime(600);
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
+  });
+
   it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
     escribir('me duele la rodilla y ando triste');
     fixture.detectChanges();
 
+    // «la rodilla» sin lado: las dos, nombradas una por una.
     expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
-      'Rodillas',
+      'Rodilla derecha',
     );
     expect(
-      html.querySelector('[data-testid="body-map-rodillas"]')?.closest('g')?.classList,
+      html.querySelector('[data-testid="body-map-rodilla-der"]')?.closest('g')?.classList,
     ).toContain('body-map__zona--marcada');
     expect(html.querySelector('[data-testid="zona-animo"]')?.classList).toContain('is-marcada');
     expect(html.querySelector('[data-testid="zona-abierta"]')).toBeNull();
@@ -752,6 +874,7 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -925,7 +1048,7 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(tarjetas.length).toBeGreaterThan(0);
     // La misma anatomía que `/directory`: foto, ícono de la especialidad y nombre.
     expect(tarjetas[0].querySelector('img.rejilla__foto')?.getAttribute('src')).toContain(
-      '/directorio/',
+      '/especialidades/',
     );
     expect(tarjetas[0].querySelector('app-specialty-icon')).not.toBeNull();
     expect(tarjetas[0].querySelector('.rejilla__nombre')?.textContent).toContain(
@@ -941,26 +1064,19 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(html.textContent).not.toContain('Guardar observación');
   });
 
-  it('desde las especialidades se ven los medicamentos sugeridos y se vuelve sin pestañas', () => {
+  it('no ofrece medicamentos ni posología en ninguna vista (sin autorización legal)', () => {
     responderSexoPropio(http);
     (componente as unknown as { escribir(v: string): void }).escribir('dolor de cabeza');
     fixture.detectChanges();
     http.match(() => true);
 
     html = fixture.nativeElement as HTMLElement;
-    const ver = [...html.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
-      b.textContent?.includes('Ver medicamentos sugeridos'),
-    );
-    ver?.click();
-    fixture.detectChanges();
-    expect(html.querySelector('[data-testid="sintomas-medicamentos-seccion"]')).not.toBeNull();
-    expect(html.querySelector('[data-testid="sintomas-recomendaciones"]')).toBeNull();
-
-    html
-      .querySelector<HTMLButtonElement>('[data-testid="sintomas-volver-a-especialistas"]')
-      ?.click();
-    fixture.detectChanges();
     expect(html.querySelector('[data-testid="sintomas-recomendaciones"]')).not.toBeNull();
+    expect(html.querySelector('[data-testid="sintomas-medicamentos-seccion"]')).toBeNull();
+    const texto = html.textContent ?? '';
+    for (const prohibido of ['medicamentos sugeridos', 'posolog', 'farmacológic', 'venta libre']) {
+      expect(texto.toLowerCase(), prohibido).not.toContain(prohibido);
+    }
   });
 
   it('detecta «ideas suicidas» y ubica el soporte de crisis ABAJO del área de escritura', () => {
@@ -1035,6 +1151,7 @@ describe('SymptomCheck · la silueta', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -1058,8 +1175,8 @@ describe('SymptomCheck · la silueta', () => {
     return html.querySelector(`[data-testid="${testId}"]`)?.getAttribute('aria-pressed') ?? null;
   }
 
-  it('tocar el pecho en la figura abre sus síntomas', () => {
-    tocar('body-map-pecho');
+  it('tocar el centro del pecho en la figura abre sus síntomas', () => {
+    tocar('body-map-esternon');
 
     expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
       'dolor de pecho',
@@ -1067,16 +1184,16 @@ describe('SymptomCheck · la silueta', () => {
   });
 
   it('tocar una zona la resalta en la figura y suelta la anterior', () => {
-    tocar('body-map-pecho');
-    tocar('body-map-estomago');
+    tocar('body-map-esternon');
+    tocar('body-map-epigastrio');
 
-    expect(presionada('body-map-estomago')).toBe('true');
-    expect(presionada('body-map-pecho')).toBe('false');
+    expect(presionada('body-map-epigastrio')).toBe('true');
+    expect(presionada('body-map-esternon')).toBe('false');
   });
 
   /** Zonas finas: cada parte ofrece lo suyo, y lleva a especialidades distintas. */
   it('la rodilla ofrece la rodilla, no el hombro', () => {
-    tocar('body-map-rodillas');
+    tocar('body-map-rodilla-der');
     const opciones = html.querySelector('[data-testid="zona-abierta"]')?.textContent ?? '';
 
     expect(opciones).toContain('dolor de rodilla');
@@ -1085,7 +1202,7 @@ describe('SymptomCheck · la silueta', () => {
 
   it('de frente, tocar la cabeza acerca la cara para elegir los ojos', () => {
     tocar('body-map-cabeza');
-    tocar('body-map-ojos');
+    tocar('body-map-ojo-der');
 
     expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
       'visión borrosa',
@@ -1093,15 +1210,15 @@ describe('SymptomCheck · la silueta', () => {
   });
 
   it('volver a tocar la zona en la figura la cierra', () => {
-    tocar('body-map-pecho');
-    tocar('body-map-pecho');
+    tocar('body-map-esternon');
+    tocar('body-map-esternon');
 
     expect(html.querySelector('[data-testid="zona-abierta"]')).toBeNull();
   });
 
   /** La alarma es el único camino que no puede romperse: el aviso de urgencia sigue saliendo. */
   it('un síntoma de alarma elegido desde la figura sigue disparando el aviso', () => {
-    tocar('body-map-pecho');
+    tocar('body-map-esternon');
     const opcion = Array.from(
       html.querySelectorAll<HTMLButtonElement>('[data-testid="zona-abierta"] button'),
     ).find((boton) => boton.textContent?.trim() === 'dolor de pecho');
@@ -1139,6 +1256,7 @@ describe('SymptomCheck · el área de texto', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
       ],
     });
@@ -1220,6 +1338,7 @@ describe('SymptomCheck · dictar', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
         { provide: VOICE_RECOGNIZER, useValue: constructor },
       ],
     });
@@ -1304,3 +1423,4 @@ describe('SymptomCheck · dictar', () => {
     expect(boton().textContent).toContain('Dictar');
   });
 });
+

@@ -1,5 +1,6 @@
 ---
 slug: panel-metabolico-basico
+image: panel-metabolico-basico.svg | Los ocho análisis del panel metabólico básico, agrupados según lo que informan. | Un tubo de sangre y cuatro grupos de análisis: glucosa, electrolitos como sodio, potasio, cloruro y bicarbonato, pruebas de riñón como BUN y creatinina, y calcio.
 ---
 
 ## [definition] Introducción

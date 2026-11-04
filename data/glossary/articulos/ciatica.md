@@ -1,5 +1,6 @@
 ---
 slug: ciatica
+image: ciatica.svg | La ciática es el dolor que sigue el recorrido del nervio ciático. | Silueta con el nervio ciático marcado desde la zona lumbar hasta la pierna y la raíz comprimida, junto a causas frecuentes, tipo de dolor y signos de alarma.
 ---
 
 ## [definition] Introducción

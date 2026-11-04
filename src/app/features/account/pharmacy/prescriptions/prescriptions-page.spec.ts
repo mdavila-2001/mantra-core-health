@@ -3,7 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
+import { of } from 'rxjs';
+
 import { SessionStore } from '../../../../core/auth/session.store';
+import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
+import type { PrescriptionOrderRef } from '../../medical-record/where-to-buy/orderable-prescription';
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { SHARE_QR_DRAWER } from './share-dialog/share-dialog';
 import { agrupar, PrescriptionsPage, shareTargetOf } from './prescriptions-page';
@@ -19,6 +23,10 @@ function jwt(payload: Record<string, unknown>): string {
   };
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
+
+/** Los pedidos del paciente que devuelve `GET /pharmacy/orders/me` en cada prueba. */
+let pedidos: PrescriptionOrderRef[] = [];
+const ORDERS_STUB = { provide: PharmacyOrdersClient, useValue: { misPedidos: () => of(pedidos) } };
 
 const CONCEPTO_AMOXI = 'c-0000-0001';
 const CONCEPTO_IBU = 'c-0000-0002';
@@ -54,7 +62,7 @@ const RESUMEN = {
     {
       id: 'm-3',
       medicationConceptId: CONCEPTO_PARA,
-      statusConceptId: 'st-activa',
+      statusConceptId: 'st-borrador',
       createdAt: '2026-05-10T08:00:00.000Z',
     },
   ],
@@ -62,9 +70,34 @@ const RESUMEN = {
 
 const CONCEPTOS = {
   items: [
-    { conceptId: CONCEPTO_AMOXI, code: 'J01CA04', display: 'Amoxicilina', codeSystemVersionId: 'v1' },
+    {
+      conceptId: CONCEPTO_AMOXI,
+      code: 'J01CA04',
+      display: 'Amoxicilina',
+      codeSystemVersionId: 'v1',
+    },
     { conceptId: CONCEPTO_IBU, code: 'M01AE01', display: 'Ibuprofeno', codeSystemVersionId: 'v1' },
-    { conceptId: CONCEPTO_PARA, code: 'N02BE01', display: 'Paracetamol', codeSystemVersionId: 'v1' },
+    {
+      conceptId: CONCEPTO_PARA,
+      code: 'N02BE01',
+      display: 'Paracetamol',
+      codeSystemVersionId: 'v1',
+    },
+    // Los estados, con el código que sirve la API (`<módulo>:<clave>`).
+    ...(
+      [
+        ['st-activa', 'clinical:MEDICATION_REQUEST_ISSUED'],
+        ['st-borrador', 'clinical:MEDICATION_REQUEST_DRAFT'],
+        ['st-anulada', 'clinical:MEDICATION_REQUEST_INVALIDATED'],
+        ['st-reemplazada', 'clinical:MEDICATION_REQUEST_REPLACED'],
+        ['st-completada', 'clinical:MEDICATION_REQUEST_COMPLETED'],
+      ] as const
+    ).map(([conceptId, code]) => ({
+      conceptId,
+      code,
+      display: code,
+      codeSystemVersionId: 'v1',
+    })),
   ],
 };
 
@@ -82,8 +115,9 @@ describe('PrescriptionsPage', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    pedidos = [];
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ORDERS_STUB],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -156,7 +190,7 @@ describe('PrescriptionsPage', () => {
     expect(raiz().textContent).toContain('Sin registrar');
   });
 
-  it('«Buscar dónde comprarla» lleva a la receta correcta', () => {
+  it('«Buscar dónde comprarla» lleva a la receta correcta, y sólo en la vigente', () => {
     entrarComoPaciente();
     montar();
     responder();
@@ -164,14 +198,109 @@ describe('PrescriptionsPage', () => {
     const enlaces = [
       ...raiz().querySelectorAll<HTMLAnchorElement>('[data-testid="pharmacy-prescription-search"]'),
     ];
-    expect(enlaces).toHaveLength(2);
-    // La más reciente arriba: la receta suelta del 10/05.
-    expect(enlaces[0].getAttribute('href')).toBe(
-      '/my-account/medical-record/where-to-buy/m-3',
-    );
-    expect(enlaces[1].getAttribute('href')).toBe(
-      '/my-account/medical-record/where-to-buy/m-1',
-    );
+    // La suelta del 10/05 es un borrador: no se ofrece comprarla.
+    expect(enlaces).toHaveLength(1);
+    expect(enlaces[0].getAttribute('href')).toBe('/my-account/medical-record/where-to-buy/m-1');
+  });
+
+  it('pide al catálogo también el estado de cada fila', () => {
+    entrarComoPaciente();
+    montar();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
+    const ids = req.request.params.getAll('ids')?.join(',') ?? '';
+    expect(ids).toContain('st-activa');
+    expect(ids).toContain('st-borrador');
+    req.flush(CONCEPTOS);
+  });
+
+  it.each([
+    ['st-borrador', undefined, 'Sin emitir', 'todavía no la emitió'],
+    ['st-anulada', undefined, 'Anulada', 'anuló'],
+    ['st-reemplazada', undefined, 'Reemplazada', 'reemplazó'],
+    ['st-completada', undefined, 'Completada', 'ya se completó'],
+    ['st-activa', '2026-01-01T00:00:00.000Z', 'Vencida', 'venció'],
+  ] as const)(
+    'una receta %s (vence %s) dice «%s», y no ofrece comprar ni compartir',
+    (status, validTo, label, reason) => {
+      entrarComoPaciente();
+      montar();
+      responder(
+        {
+          ...RESUMEN,
+          medicationRequests: [
+            {
+              id: 'm-9',
+              medicationConceptId: CONCEPTO_AMOXI,
+              statusConceptId: status,
+              encounterId: 'e-9',
+              issuedAt: '2025-12-01T11:00:00.000Z',
+              createdAt: '2025-12-01T10:30:00.000Z',
+              ...(validTo === undefined ? {} : { validTo }),
+            },
+          ],
+        },
+        CONCEPTOS,
+      );
+
+      expect(
+        raiz().querySelector('[data-testid="pharmacy-prescription-status"]')?.textContent?.trim(),
+      ).toBe(label);
+      expect(
+        raiz().querySelector('[data-testid="pharmacy-prescription-not-orderable"]')?.textContent,
+      ).toContain(reason);
+      expect(raiz().querySelector('[data-testid="pharmacy-prescription-search"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="prescription-share-button"]')).toBeNull();
+    },
+  );
+
+  it.each([
+    ['ENVIADO', 'Ya tiene un pedido', 'Mis pedidos'],
+    ['LISTO_PARA_RETIRO', 'Ya tiene un pedido', 'Mis pedidos'],
+    ['RETIRADO', 'Retirada', 'Ya retiró'],
+  ] as const)(
+    'con un pedido %s de la receta dice «%s» y no ofrece comprar ni compartir',
+    (estado, label, reason) => {
+      pedidos = [{ requestId: 'm-2', estado }];
+      entrarComoPaciente();
+      montar();
+      responder();
+
+      const vigente = [...raiz().querySelectorAll('.receta')][1];
+      expect(
+        vigente.querySelector('[data-testid="pharmacy-prescription-status"]')?.textContent?.trim(),
+      ).toBe(label);
+      expect(
+        vigente.querySelector('[data-testid="pharmacy-prescription-not-orderable"]')?.textContent,
+      ).toContain(reason);
+      expect(raiz().querySelector('[data-testid="pharmacy-prescription-search"]')).toBeNull();
+    },
+  );
+
+  it.each(['CANCELADO', 'RECHAZADO', 'VENCIDO'])(
+    'un pedido %s libera la receta: se puede pedir de nuevo',
+    (estado) => {
+      pedidos = [{ requestId: 'm-1', estado }];
+      entrarComoPaciente();
+      montar();
+      responder();
+
+      expect(raiz().querySelectorAll('[data-testid="pharmacy-prescription-search"]')).toHaveLength(
+        1,
+      );
+    },
+  );
+
+  it('una receta emitida y vigente dice «Vigente» con el código real del catálogo', () => {
+    entrarComoPaciente();
+    montar();
+    responder();
+
+    expect(
+      [...raiz().querySelectorAll('[data-testid="pharmacy-prescription-status"]')].map((badge) =>
+        badge.textContent?.trim(),
+      ),
+    ).toEqual(['Sin emitir', 'Vigente']);
   });
 
   it('la lista lleva el id de prueba congelado', () => {
@@ -234,11 +363,13 @@ describe('PrescriptionsPage · compartir', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    pedidos = [];
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        ORDERS_STUB,
         { provide: SHARE_QR_DRAWER, useValue: () => Promise.resolve() },
       ],
     });
@@ -279,7 +410,7 @@ describe('PrescriptionsPage · compartir', () => {
         createdAt: new Date(createdAt),
       }),
     );
-    const prescriptions = agrupar(rows, new Map());
+    const prescriptions = agrupar(rows, new Map(), new Date('2026-06-01T00:00:00.000Z'));
 
     const fromEncounter = prescriptions.find((item) => item.requestId === 'm-1');
     const standalone = prescriptions.find((item) => item.requestId === 'm-3');
@@ -289,7 +420,7 @@ describe('PrescriptionsPage · compartir', () => {
     expect(standalone && shareTargetOf(standalone)).toEqual({ medicationRequestId: 'm-3' });
   });
 
-  it('solo la receta emitida ofrece «Compartir»', () => {
+  it('solo la receta vigente ofrece «Compartir»', () => {
     const fixture = mount();
     answer(fixture);
 
@@ -303,6 +434,14 @@ describe('PrescriptionsPage · compartir', () => {
     answer(fixture);
 
     shareButtons(fixture)[0].click();
+    fixture.detectChanges();
+    // Abrir el diálogo no crea nada: el enlace se crea con su botón.
+    http.expectNone('/clinical/prescription-shares');
+    (
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="prescription-share-dialog-create"]',
+      ) as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
     const req = http.expectOne('/clinical/prescription-shares');

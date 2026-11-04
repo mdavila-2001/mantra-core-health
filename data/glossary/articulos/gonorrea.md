@@ -1,5 +1,6 @@
 ---
 slug: gonorrea
+image: gonorrea.svg | La gonorrea es una infección de transmisión sexual que puede afectar varias zonas del cuerpo. | Silueta humana con los lugares donde puede asentarse la infección: uretra o cuello uterino, recto, garganta y ojos. A la derecha, cómo se transmite, sus complicaciones, el diagnóstico y la prevención.
 ---
 
 ## [definition] Introducción

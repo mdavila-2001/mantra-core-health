@@ -48,29 +48,51 @@ describe('handlers del portal de laboratorio', () => {
     expect(page.items.every((i) => i.patientName !== null && i.orderLabel !== null)).toBe(true);
   });
 
+  it('las órdenes se paginan como la API: count es el total y nextCursor lleva a la siguiente página', () => {
+    interface Pagina {
+      items: { orderId: string }[];
+      count: number;
+      nextCursor?: string;
+    }
+    const todas = cuerpo<Pagina>(pedir('GET', '/diagnostics/lab/orders'));
+    expect(todas.nextCursor).toBeUndefined();
+    expect(todas.count).toBe(todas.items.length);
+
+    const primera = cuerpo<Pagina>(pedir('GET', '/diagnostics/lab/orders', {}, laboratorio, new URLSearchParams({ limit: '2' })));
+    expect(primera.items).toHaveLength(2);
+    expect(primera.count).toBe(todas.count);
+    expect(primera.nextCursor).toBeDefined();
+
+    const segunda = cuerpo<Pagina>(
+      pedir('GET', '/diagnostics/lab/orders', {}, laboratorio, new URLSearchParams({ limit: '2', cursor: primera.nextCursor! })),
+    );
+    expect([...primera.items, ...segunda.items].map((o) => o.orderId)).toEqual(todas.items.slice(0, 4).map((o) => o.orderId));
+  });
+
   it('una cuenta que no es de laboratorio no ve nada (403)', () => {
     expect(estado(pedir('GET', '/diagnostics/lab/result-files', {}, farmacia))).toBe(403);
     expect(estado(pedir('POST', '/diagnostics/lab/result-uploads', { fileName: 'x.pdf', contentType: '', sizeBytes: 1 }, farmacia))).toBe(403);
   });
 
-  it('sube un archivo de más de una parte, sin tope, y lo devuelve entero', async () => {
+  it('sube un archivo de más de una parte y lo devuelve entero', async () => {
     // Los resultados sólo se suben a una orden ya procesada (31/10/2026).
     const ordenes = cuerpo<{ items: { orderId: string; status: string }[] }>(pedir('GET', '/diagnostics/lab/orders'));
     const orderId = ordenes.items.find((o) => o.status === 'UPLOADED')!.orderId;
-    const size = TAMANO_DE_PARTE * 2 + 1234;
+    // Within the API limit (10 MB), but larger than one part.
+    const size = TAMANO_DE_PARTE + 1234;
     const datos = new Uint8Array(size).map((_, i) => i % 251);
-    const archivo = new Blob([datos], { type: 'video/mp4' });
+    const archivo = new Blob([datos], { type: 'application/pdf' });
 
     const sesion = cuerpo<{ uploadId: string; totalParts: number; chunkSizeBytes: number }>(
       pedir('POST', '/diagnostics/lab/result-uploads', {
-        fileName: 'ecografia.mp4',
-        contentType: 'video/mp4',
+        fileName: 'ecografia.pdf',
+        contentType: 'application/pdf',
         sizeBytes: size,
         orderId,
         notify: true,
       }),
     );
-    expect(sesion.totalParts).toBe(3);
+    expect(sesion.totalParts).toBe(2);
 
     // Completar antes de mandar todo es un conflicto: faltan partes.
     expect(estado(pedir('POST', `/diagnostics/lab/result-uploads/${sesion.uploadId}/complete`))).toBe(409);
@@ -82,7 +104,8 @@ describe('handlers del portal de laboratorio', () => {
     const hecho = pedir('POST', `/diagnostics/lab/result-uploads/${sesion.uploadId}/complete`);
     expect(estado(hecho)).toBe(201);
     const file = cuerpo<{ id: string; kind: string; sizeBytes: number; notified: boolean; orderId: string }>(hecho);
-    expect(file).toMatchObject({ kind: 'VIDEO', sizeBytes: size, notified: true, orderId });
+    // The API does not notify yet: `notified` is always false.
+    expect(file).toMatchObject({ kind: 'PDF', sizeBytes: size, notified: false, orderId });
 
     const contenido = (pedir('GET', `/diagnostics/lab/result-files/${file.id}/content`) as { body: Blob }).body;
     const vuelta = new Uint8Array(await contenido.arrayBuffer());
@@ -93,9 +116,32 @@ describe('handlers del portal de laboratorio', () => {
     expect(lista.items[0]!.id).toBe(file.id);
   });
 
+  it('como la API: sin orden, de más de 10 MB o de un tipo no admitido, no se sube', () => {
+    const ordenes = cuerpo<{ items: { orderId: string; status: string }[] }>(pedir('GET', '/diagnostics/lab/orders'));
+    const orderId = ordenes.items.find((o) => o.status === 'UPLOADED')!.orderId;
+    const subir = (extra: object) =>
+      pedir('POST', '/diagnostics/lab/result-uploads', { fileName: 'a.pdf', contentType: 'application/pdf', sizeBytes: 10, orderId, ...extra });
+    expect(estado(subir({ orderId: undefined }))).toBe(400);
+    expect(estado(subir({ sizeBytes: 10 * 1024 * 1024 + 1 }))).toBe(422);
+    expect(estado(subir({ fileName: 'eco.mp4', contentType: 'video/mp4' }))).toBe(422);
+    expect(estado(subir({ fileName: 'rx.dcm', contentType: 'application/dicom' }))).toBe(422);
+    expect(estado(subir({}))).toBe(201);
+  });
+
+  it('la búsqueda por texto va por POST /search; en la URL es un 400', () => {
+    expect(estado(pedir('GET', '/diagnostics/lab/result-files', {}, laboratorio, new URLSearchParams({ q: 'a' })))).toBe(400);
+    const todos = cuerpo<{ count: number }>(pedir('GET', '/diagnostics/lab/result-files'));
+    const nada = cuerpo<{ count: number }>(pedir('POST', '/diagnostics/lab/result-files/search', { q: 'no-existe-zzz' }));
+    const sinTexto = cuerpo<{ count: number }>(pedir('POST', '/diagnostics/lab/result-files/search', {}));
+    expect(nada.count).toBe(0);
+    expect(sinTexto.count).toBe(todos.count);
+  });
+
   it('rechaza una parte de tamaño equivocado o fuera de rango', () => {
+    const ordenes = cuerpo<{ items: { orderId: string; status: string }[] }>(pedir('GET', '/diagnostics/lab/orders'));
+    const orderId = ordenes.items.find((o) => o.status === 'UPLOADED')!.orderId;
     const sesion = cuerpo<{ uploadId: string }>(
-      pedir('POST', '/diagnostics/lab/result-uploads', { fileName: 'a.txt', contentType: 'text/plain', sizeBytes: 10 }),
+      pedir('POST', '/diagnostics/lab/result-uploads', { fileName: 'a.txt', contentType: 'text/plain', sizeBytes: 10, orderId }),
     );
     expect(pedir('PUT', `/diagnostics/lab/result-uploads/${sesion.uploadId}/parts/0`, new Blob(['corto'])))
       .toMatchObject({
@@ -342,11 +388,12 @@ describe('handlers del portal de laboratorio', () => {
       expect(estadoDe(id)).toBe('UPLOADED');
     });
 
-    it('cancelar guarda el motivo; rechazar sólo se puede con la orden recibida', () => {
+    it('cancelar no lo admite la API (422); rechazar sólo se puede con la orden recibida', () => {
       const borrador = ordenEn('DRAFT', 0);
-      const cancelada = cuerpo<Orden>(paso(borrador, 'CANCEL', 'Pedida por error'));
-      expect(cancelada.status).toBe('CANCELLED');
-      expect(cancelada.reason).toBe('Pedida por error');
+      const cancelar = paso(borrador, 'CANCEL', 'Pedida por error');
+      expect(estado(cancelar)).toBe(422);
+      expect(cuerpo<{ code: string }>(cancelar).code).toBe('DIAGNOSTICS_LAB_ORDER_ACTION_UNSUPPORTED');
+      expect(estadoDe(borrador)).toBe('DRAFT');
 
       const recibida = ordenEn('RECEIVED', 1);
       const rechazada = cuerpo<Orden>(paso(recibida, 'REJECT', 'Muestra insuficiente'));

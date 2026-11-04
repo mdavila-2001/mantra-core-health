@@ -1,5 +1,6 @@
 ---
 slug: alopecia-androgenica
+image: alopecia-androgenica.svg | Patrones de pérdida de pelo y miniaturización del folículo | Dos cabezas vistas desde arriba con el patrón masculino de entradas y coronilla y el femenino de raya ancha, junto a tres folículos que se van haciendo más pequeños y finos
 ---
 
 ## [definition] Introducción

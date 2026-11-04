@@ -23,9 +23,9 @@ describe('rutaDeNotificacion', () => {
     );
   });
 
-  it('lleva el pedido de vínculo de un profesional a la bandeja del paciente (FT-07)', () => {
+  it('lleva el pedido de vínculo a la pestaña de vínculos de «Mis solicitudes» (FT-07)', () => {
     expect(rutaDeNotificacion({ type: 'CARE_RELATIONSHIP_REQUEST', id: 'cr-1' })).toBe(
-      '/my-account/access-requests',
+      '/my-account/requests?pestana=vinculos',
     );
   });
 
@@ -74,5 +74,42 @@ describe('rutaDeNotificacion', () => {
   it('devuelve null cuando el tipo es desconocido o no hay destino', () => {
     expect(rutaDeNotificacion({ type: 'ALGO_NUEVO', id: 'x' })).toBeNull();
     expect(rutaDeNotificacion(undefined)).toBeNull();
+  });
+
+  describe('la derivación a una organización (ORGANIZATION_PROFILE)', () => {
+    const destino = { type: 'ORGANIZATION_PROFILE', id: 't-hospital' };
+
+    it('abre la ficha pública que manda la API en payloadJson.route', () => {
+      expect(rutaDeNotificacion(destino, { route: '/o/hospital-san-lucas' })).toBe('/o/hospital-san-lucas');
+    });
+
+    it('sin ruta en el payload (organización sin ficha pública) no abre nada', () => {
+      expect(rutaDeNotificacion(destino)).toBeNull();
+      expect(rutaDeNotificacion(destino, null)).toBeNull();
+      expect(rutaDeNotificacion(destino, {})).toBeNull();
+      expect(rutaDeNotificacion(destino, { route: 42 })).toBeNull();
+    });
+
+    it('nunca navega a una ruta arbitraria del payload', () => {
+      for (const route of [
+        'https://evil.example/o/x',
+        '//evil.example',
+        '/o/../admin',
+        '/o/Hospital',
+        '/o/hospital/extra',
+        '/o/',
+        '/superadmin',
+        'javascript:alert(1)',
+        '/o/hospital?next=/x',
+      ]) {
+        expect(rutaDeNotificacion(destino, { route })).toBeNull();
+      }
+    });
+
+    it('el payload no cambia la ruta de otros destinos', () => {
+      expect(rutaDeNotificacion({ type: 'PRESCRIPTION', id: 'rx-1' }, { route: '/o/x' })).toBe(
+        '/my-account/medical-record',
+      );
+    });
   });
 });

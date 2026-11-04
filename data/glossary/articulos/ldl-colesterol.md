@@ -1,5 +1,6 @@
 ---
 slug: ldl-colesterol
+image: ldl-colesterol.svg | El exceso de LDL se deposita en la pared arterial y forma placas. | Tres esquemas de arteria que muestran el paso de la pared sana a la acumulación de LDL y a la placa, con tubo de sangre y listas de factores que elevan y reducen el LDL.
 ---
 
 ## [definition] Introducción

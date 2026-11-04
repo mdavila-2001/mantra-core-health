@@ -21,21 +21,15 @@ import {
   type ObservacionDeSintomas,
 } from '@core/symptom-notes/symptom-observations.store';
 import { BODY_ZONES, type BodyZone } from './zones.data';
-import { Badge } from '@shared/components/atoms/badge/badge';
+import { bodyPartsIn, withNamedParts } from './body-parts';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Chip } from '@shared/components/atoms/chip/chip';
-import { SpecialtyIcon } from '@shared/components/atoms/specialty-icon/specialty-icon';
 import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
-import { specialtyPhoto } from '@shared/utils/directory-photo';
-import {
-  recomendarMedicamentos,
-  type MedicamentoSugerido,
-} from './medications-guide.data';
 import {
   BodyMap,
   ZONAS_CON_SILUETA,
@@ -50,7 +44,6 @@ import {
   glossaryCode,
   nameForShow,
   enumerate,
-  explain,
   normalizar,
   preheat,
   recognize,
@@ -63,6 +56,7 @@ import {
   SYMPTOMS_ALL,
 } from './symptoms';
 import { Dictation } from './dictation';
+import { SymptomRecommendations } from './symptom-recommendations/symptom-recommendations';
 import {
   combine,
   currentReading,
@@ -71,6 +65,7 @@ import {
   type TextReading,
 } from './ai-reading';
 import { ultimaFrase } from './text';
+import { fitsSex, withSpecialtiesForSex } from './sex-filter';
 import { EmergencyPanel } from '../emergency/emergency-panel/emergency-panel';
 
 /**
@@ -139,23 +134,20 @@ const VACIO: ReadonlyMap<string, string> = new Map();
     AppButtonLink,
     Alert,
     AppButton,
-    Badge,
     BodyMap,
     Card,
     Chip,
     EmergencyPanel,
     FormField,
     RouterLink,
-    SpecialtyIcon,
     Spinner,
+    SymptomRecommendations,
     Textarea,
   ],
   templateUrl: './symptom-check.html',
   // El dictado vive y muere con la pantalla: ver `Dictado`.
   providers: [Dictation],
-  // La tarjeta de especialidad es la del buscador de `/directory` (27/10/2026):
-  // primero la hoja compartida, después la propia, para que la propia ajuste.
-  styleUrls: ['../../shared/styles/card-grid.css', './symptom-check.css'],
+  styleUrls: ['./symptom-check.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SymptomCheck {
@@ -259,20 +251,9 @@ export class SymptomCheck {
     return sexo === 'MALE' || sexo === 'FEMALE' ? sexo : undefined;
   });
 
-  /**
-   * Si un síntoma corresponde al sexo del propio perfil.
-   *
-   * Sin `soloParaSexo` es de cualquiera. Sin sexo conocido —`INTERSEX`,
-   * `UNKNOWN`, sin sesión o todavía sin resolver— no se filtra nada: se
-   * prefiere mostrar de más antes que esconder un síntoma real por un dato
-   * que no se pudo confirmar.
-   */
+  /** Si un síntoma corresponde al sexo del propio perfil; sin sexo conocido no se filtra (ver `sex-filter.ts`). */
   private sintomaVisible(sintoma: Sintoma): boolean {
-    const solo = sintoma.soloParaSexo;
-    if (solo === undefined) return true;
-    const sexo = this.siluetaSexo();
-    if (sexo === undefined) return true;
-    return solo === sexo;
+    return fitsSex(sintoma, this.siluetaSexo());
   }
 
   /**
@@ -379,9 +360,10 @@ export class SymptomCheck {
         continue;
       }
       const deLaTabla = BODY_ZONES.find((zona) => zona.sintomas.includes(sintoma.id));
-      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.madre ?? deLaTabla.id); // no invented side
     }
-    return [...marcadas];
+    // Parts named in the text are exact («rodilla derecha») and narrow the symptom's coarse zone.
+    return withNamedParts(bodyPartsIn(this.texto()), [...marcadas], (id) => BODY_ZONES.find((z) => z.id === id)?.madre);
   });
 
   protected estaMarcada(idDeZona: string): boolean {
@@ -477,7 +459,9 @@ export class SymptomCheck {
       return [];
     }
     const disponibles = new Set(this.especialidadesDisponibles().keys());
-    const lista = recommend(this.sintomas(), disponibles);
+    // A man's account is never sent to Gynecology/Obstetrics, even for shared symptoms.
+    const sexo = this.siluetaSexo();
+    const lista = recommend(this.sintomas().map((s) => withSpecialtiesForSex(s, sexo)), disponibles);
     const motivo = this.faltaDeCerteza();
     if (lista.length === 0 && motivo === null) {
       return lista;
@@ -518,25 +502,6 @@ export class SymptomCheck {
     () => this.esRiesgoSuicida() || this.ayudaManualAbierta(),
   );
 
-  /** Modo activo de recomendación: por especialidades médicas o recomendación de medicamentos. */
-  protected readonly vistaRecomendacion = signal<'especialidades' | 'medicamentos'>('especialidades');
-
-  /** Medicamentos orientativos recomendados según los síntomas activos y conocimiento farmacológico. */
-  protected readonly medicamentosSugeridos = computed<readonly MedicamentoSugerido[]>(() => recomendarMedicamentos(this.sintomas()));
-
-  /** Resumen de nombres de síntomas detectados para la vista de medicamentos. */
-  protected readonly sintomasDetectadosTexto = computed(() => this.sintomas().map((s) => s.nombre).join(', '));
-
-  /** Parámetros de búsqueda para recomendación de medicamentos según síntomas reconocidos. */
-  protected readonly medicamentosQueryParams = computed(() => {
-    const primer = this.sintomas()[0];
-    return primer !== undefined ? { q: primer.nombre } : {};
-  });
-
-  protected cambiarVistaRecomendacion(modo: 'especialidades' | 'medicamentos'): void {
-    this.vistaRecomendacion.set(modo);
-  }
-
   /**
    * Lo que la persona escribió **para decir que no lo tiene**.
    *
@@ -557,11 +522,6 @@ export class SymptomCheck {
     }
     return `Reconocimos: ${nombres.join(', ')}.`;
   });
-
-  protected readonly explicacionDe = explain;
-
-  /** La foto de la tarjeta: la misma que esa especialidad tiene en `/directory`. */
-  protected readonly fotoDe = specialtyPhoto;
 
   /* --- Elegir sin escribir ---------------------------------------------- */
 
@@ -616,7 +576,28 @@ export class SymptomCheck {
 
   /** Abre una zona, o la cierra si ya lo estaba. */
   protected alternarZona(zona: BodyZone): void {
-    this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
+    const abre = this.zonaAbierta() !== zona.id;
+    this.zonaAbierta.set(abre ? zona.id : null);
+    if (abre) {
+      this.soltarTexto();
+    }
+  }
+
+  /**
+   * Tocar el muñeco es empezar a contar por otro camino: lo escrito antes
+   * («me duele la cadera») se borra para que no quede un síntoma viejo
+   * mezclado con la zona que se está eligiendo (pedido del usuario,
+   * 04/11/2026). Lo elegido a mano en pastillas se conserva; sólo se va el
+   * texto, y con él lo que se reconoció de él. Si se estaba dictando, se
+   * corta: si no, lo dictado volvería a escribir encima.
+   */
+  private soltarTexto(): void {
+    if (this.dictado.listening()) {
+      this.dictado.stop();
+    }
+    if (this.texto() !== '') {
+      this.texto.set('');
+    }
   }
 
   /**
@@ -640,6 +621,9 @@ export class SymptomCheck {
    */
   protected elegirZonaDesdeLaSilueta(id: string | null): void {
     this.zonaAbierta.set(id);
+    if (id !== null) {
+      this.soltarTexto();
+    }
   }
 
   /** Si un síntoma ya está elegido, para pintarlo distinto. */

@@ -1,4 +1,10 @@
-<section class="gp" [class.gp--grande]="grande()" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'chart-' + spec().id">
+<section
+  class="gp"
+  [class.gp--grande]="grande()"
+  [class.gp--plano]="plano()"
+  [class.gp--refrescando]="refrescando()"
+  [attr.aria-busy]="refrescando() ? 'true' : null"
+  [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'chart-' + spec().id">
   <!-- 1) TÍTULO -->
   <header class="gp__cab">
     <div class="gp__titulos">

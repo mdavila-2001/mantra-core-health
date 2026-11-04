@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Mecanismo de acción del ibuprofeno</title>
+  <desc id="d">Diagrama de flujo: una lesión activa las enzimas ciclooxigenasa (COX-1 y COX-2), que fabrican prostaglandinas. Las prostaglandinas causan dolor, fiebre e inflamación, pero también protegen el estómago, el riñón y ayudan a las plaquetas. El ibuprofeno bloquea las enzimas, lo que alivia los síntomas y explica sus posibles efectos adversos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --red:#c0392b; --red-l:#f3c9c3; --blue:#2f6fc0; --ok:#1f8a5b; --warn:#c77d12; --plasma:#f2d77a; --tissue:#e9edf2; --organ:#a8473b; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --red:#ef7467; --red-l:#5a2b28; --blue:#79a8ea; --ok:#4cc38a; --warn:#e2a54a; --plasma:#8a7432; --tissue:#2a3541; --organ:#c4685c; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <text x="400" y="44" text-anchor="middle" class="title">Cómo actúa el ibuprofeno</text>
+  <rect x="30" y="80" width="160" height="70" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="110" y="110" text-anchor="middle" class="step">Lesión o</text>
+  <text x="110" y="130" text-anchor="middle" class="step">infección</text>
+  <path d="M190 115 H246" stroke="var(--muted)" stroke-width="3"/>
+  <polygon points="246,108 260,115 246,122" fill="var(--muted)"/>
+  <rect x="262" y="70" width="230" height="90" rx="12" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="377" y="100" text-anchor="middle" class="step">Enzimas COX-1 y COX-2</text>
+  <text x="377" y="122" text-anchor="middle" class="lab">fabrican</text>
+  <text x="377" y="142" text-anchor="middle" class="step">prostaglandinas</text>
+  <rect x="300" y="186" width="154" height="54" rx="27" fill="var(--warn)"/>
+  <text x="377" y="212" text-anchor="middle" class="step" style="fill:var(--on)">Ibuprofeno</text>
+  <text x="377" y="230" text-anchor="middle" class="small" style="fill:var(--on)">bloquea las COX</text>
+  <path d="M377 186 V162" stroke="var(--warn)" stroke-width="4"/>
+  <path d="M362 170 L392 170" stroke="var(--warn)" stroke-width="5"/>
+  <path d="M492 100 C540 100 540 100 560 100" stroke="var(--muted)" stroke-width="3"/>
+  <polygon points="560,93 574,100 560,107" fill="var(--muted)"/>
+  <path d="M492 140 C540 140 540 300 560 300" fill="none" stroke="var(--muted)" stroke-width="3"/>
+  <polygon points="560,293 574,300 560,307" fill="var(--muted)"/>
+  <rect x="576" y="64" width="204" height="150" rx="12" fill="var(--panel)" stroke="var(--red)" stroke-width="2"/>
+  <text x="678" y="92" text-anchor="middle" class="step" style="fill:var(--red)">Síntomas</text>
+  <text x="594" y="120" class="lab">• Dolor</text>
+  <text x="594" y="144" class="lab">• Fiebre</text>
+  <text x="594" y="168" class="lab">• Inflamación</text>
+  <text x="678" y="200" text-anchor="middle" class="small" style="fill:var(--ok)">Se alivian ✓</text>
+  <rect x="576" y="236" width="204" height="170" rx="12" fill="var(--panel)" stroke="var(--ok)" stroke-width="2"/>
+  <text x="678" y="264" text-anchor="middle" class="step" style="fill:var(--ok)">Funciones protectoras</text>
+  <text x="594" y="292" class="lab">• Mucosa del estómago</text>
+  <text x="594" y="316" class="lab">• Riego del riñón</text>
+  <text x="594" y="340" class="lab">• Función de plaquetas</text>
+  <text x="678" y="372" text-anchor="middle" class="small" style="fill:var(--warn)">Pueden debilitarse:</text>
+  <text x="678" y="390" text-anchor="middle" class="small" style="fill:var(--warn)">origen de efectos adversos</text>
+  <rect x="30" y="270" width="500" height="136" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="50" y="298" class="step">Uso prudente</text>
+  <text x="50" y="324" class="lab">• La menor cantidad eficaz, el menor tiempo posible</text>
+  <text x="50" y="348" class="lab">• Con comida si molesta el estómago; beber líquidos</text>
+  <text x="50" y="372" class="lab">• No combinar con otros antiinflamatorios</text>
+  <text x="50" y="396" class="lab">• Siga a su médico, farmacéutico y el prospecto</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -10,7 +10,7 @@
   border-radius: var(--r-xl);
   background:
     radial-gradient(120% 140% at 100% 0%, var(--c-aqua-50) 0%, transparent 55%),
-    var(--bg-surface, #fff);
+    var(--bg-surface);
   box-shadow: var(--shadow-sm);
 }
 
@@ -58,7 +58,7 @@
   padding: 0;
   border: 1px solid var(--border-default);
   border-radius: var(--r-full);
-  background: var(--bg-surface, #fff);
+  background: var(--bg-surface);
   color: var(--brand-primary);
   cursor: pointer;
   transition:
@@ -147,7 +147,7 @@
   padding: var(--sp-4);
   border: 1px solid var(--border-subtle, var(--c-neutral-200));
   border-radius: var(--r-lg);
-  background: var(--bg-surface, #fff);
+  background: var(--bg-surface);
   transition:
     transform var(--spring-rapido-dur, 260ms) var(--spring-rapido, ease-out),
     box-shadow var(--spring-rapido-dur, 260ms) var(--spring-rapido, ease-out);
@@ -191,7 +191,7 @@
 }
 
 .primeros-pasos__paso--hecho .primeros-pasos__marca {
-  background: var(--c-success-500, #2e9b6a);
+  background: var(--c-success-500);
   color: #fff;
 }
 
@@ -228,7 +228,7 @@
   border-color: var(--c-amber-300);
   background:
     radial-gradient(120% 140% at 50% 0%, var(--c-amber-50) 0%, transparent 60%),
-    var(--bg-surface, #fff);
+    var(--bg-surface);
 }
 
 .primeros-pasos__medalla {

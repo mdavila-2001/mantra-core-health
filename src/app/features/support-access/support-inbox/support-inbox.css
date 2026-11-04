@@ -69,3 +69,11 @@
   border-radius: var(--r-md);
   background: var(--bg-hover);
 }
+
+/* Celular: los botones `size="sm"` de la lista, la conversación y el compositor miden 44 px de alto (el talle mide 32 y un
+   pulgar no acierta). Cuelgan todos de este árbol, así que el gancho `--btn-min-block` se declara una vez acá. */
+@media (max-width: 779px) {
+  :host {
+    --btn-min-block: 44px;
+  }
+}

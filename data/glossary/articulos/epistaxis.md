@@ -1,5 +1,6 @@
 ---
 slug: epistaxis
+image: epistaxis.svg | La mayoría de los sangrados nasales nacen en la parte anterior del tabique. | Perfil de la nariz con las zonas anterior y posterior de sangrado, y cuatro pasos numerados de primeros auxilios junto a las señales de alarma.
 ---
 
 ## [definition] Introducción

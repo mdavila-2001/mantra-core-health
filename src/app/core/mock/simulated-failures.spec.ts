@@ -70,6 +70,20 @@ describe('fallos simulados del backend de maqueta', () => {
    * caería en «error inesperado» y no en el estado que se quería mirar.
    */
   it('el cuerpo lleva el código del contrato, no sólo el estado HTTP', () => {
+    const validacion = failureBody({ patron: '/x', modo: 'validation' }, '/x');
+    expect(validacion.status).toBe(422);
+    expect(validacion.body).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      details: {
+        fields: [
+          {
+            field: 'medicationConceptId',
+            messages: ['Elija un medicamento del catálogo.'],
+          },
+        ],
+      },
+    });
+
     const permiso = failureBody({ patron: '/x', modo: 'forbidden' }, '/x');
     expect(permiso.status).toBe(403);
     expect((permiso.body as { code: string }).code).toBe('FORBIDDEN');

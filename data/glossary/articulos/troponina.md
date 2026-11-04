@@ -1,5 +1,6 @@
 ---
 slug: troponina
+image: troponina.svg | La troponina sale del músculo cardíaco dañado y se mide en sangre. | Filamentos del músculo cardíaco con troponina, una banda que indica su paso a la sangre cuando la célula se daña y un tubo con las situaciones en que se usa la prueba.
 ---
 
 ## [definition] Introducción

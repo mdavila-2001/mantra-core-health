@@ -1,0 +1,84 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  622 componentes · 3 otros · 372 pantallas · 138 maquetas · 23 atomos · 48 moleculas · 38 organismos
+  207 con algo que mirar
+  relaciones: 2787 template-instantiates · 5 imports-available sin instanciar · 67 type-only · 237 dynamic-loads
+  nivel: 0 declarado · 622 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 622/622 · con escenario 3/622 · verificados visualmente 3/622 · bloqueados 83/622 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                         | Names                                                                    |  Raw size
+spec-app-features-admin-data-catalog-object-detail-catalog-object-detail.js | spec-app-features-admin-data-catalog-object-detail-catalog-object-detail | 502.56 kB | 
+chunk-QNBUY2KZ.js                                                           | -                                                                        | 282.74 kB | 
+chunk-OIMGIW6V.js                                                           | -                                                                        | 193.97 kB | 
+styles.css                                                                  | styles                                                                   | 182.46 kB | 
+spec-app-features-admin-data-catalog-data-catalog.js                        | spec-app-features-admin-data-catalog-data-catalog                        | 115.58 kB | 
+spec-app-features-admin-qa-lab-qa-lab.js                                    | spec-app-features-admin-qa-lab-qa-lab                                    |  61.85 kB | 
+chunk-IRCZ6DO4.js                                                           | -                                                                        |  51.18 kB | 
+chunk-K5KOTJK3.js                                                           | -                                                                        |  47.77 kB | 
+chunk-MDFXVY52.js                                                           | -                                                                        |  42.89 kB | 
+spec-app-features-admin-qa-lab-plan-detail-qa-plan-detail.js                | spec-app-features-admin-qa-lab-plan-detail-qa-plan-detail                |  31.08 kB | 
+chunk-3FHVI7G6.js                                                           | -                                                                        |  25.45 kB | 
+chunk-IUPHCIH4.js                                                           | -                                                                        |  19.02 kB | 
+chunk-U2R3KRH4.js                                                           | -                                                                        |   5.45 kB | 
+chunk-RSTWSNOR.js                                                           | -                                                                        |   4.75 kB | 
+init-testbed.js                                                             | init-testbed                                                             |   1.21 kB | 
+setup-test-setup.js                                                         | setup-test-setup                                                         | 984 bytes | 
+vitest-mock-patch.js                                                        | vitest-mock-patch                                                        | 974 bytes | 
+
+                                                                            | Initial total                                                            |   1.57 MB
+
+Application bundle generation complete. [96.507 seconds] - 2026-10-17T04:39:48.444Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+      135 │ ..., AppButton, Badge, BodyMap, Card, Chip, EmergencyPanel, FormF...
+          ╵                                 ~~~~
+
+
+
+ RUN  v4.1.10 /home/user/mantra-core-health
+
+
+ Test Files  4 passed (4)
+      Tests  19 passed (19)
+   Start at  04:39:48
+   Duration  4.57s (transform 4.83s, setup 2.02s, import 6.59s, tests 3.04s, environment 4.30s)
+

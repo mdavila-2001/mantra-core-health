@@ -1,0 +1,52 @@
+<app-drawer-panel [open]="alert() !== null" [heading]="alert() ? typeLabel() + ' · ' + alert()!.id : 'Alerta'" closeLabel="Cerrar el detalle de la alerta" (closed)="closed.emit()">
+  @if (alert(); as a) {
+    <div class="ad">
+      <p class="ad__meta"><strong>{{ typeLabel() }}</strong> · Confianza {{ confidence() }} · <span class="ad__status ad__status--{{ status() }}">{{ statusLabels[status()] }}</span></p>
+      <h3 class="ad__title">{{ a.title }}</h3>
+
+      <dl class="ad__facts">
+        <div><dt>Qué ocurrió</dt><dd>{{ a.what }}</dd></div>
+        <div><dt>Por qué importa</dt><dd>{{ a.impact }}</dd></div>
+        <div><dt>Posible causa (hipótesis, no confirmada)</dt><dd>{{ a.cause }}</dd></div>
+        <div><dt>Acción recomendada</dt><dd>{{ a.recommendation }}</dd></div>
+        <div>
+          <dt>Evidencia</dt>
+          <dd><ul>@for (e of a.evidence; track e) { <li>{{ e }}</li> }</ul></dd>
+        </div>
+        <div><dt>Fuente</dt><dd>{{ a.source }} · detectada el {{ detected() }}</dd></div>
+      </dl>
+
+      <label class="ad__owner">
+        <span>Responsable</span>
+        <select [value]="owner() ?? ''" [disabled]="wf.busy()" (change)="setOwner($event)">
+          <option value="">Sin asignar</option>
+          @for (t of teams; track t) { <option [value]="t" [selected]="owner() === t">{{ ownerLabels[t] }}</option> }
+        </select>
+      </label>
+
+      <div class="ad__actions">
+        @if (status() === 'new' || status() === 'in_progress') {
+          @if (status() === 'new') { <button type="button" class="ad__btn" [disabled]="wf.busy()" (click)="set('in_progress')">En revisión</button> }
+          <button type="button" class="ad__btn" [disabled]="wf.busy()" (click)="set('dismissed')">Descartar</button>
+          <button type="button" class="ad__btn ad__btn--main" [disabled]="wf.busy()" (click)="set('resolved')">Marcar resuelta</button>
+        } @else {
+          <button type="button" class="ad__btn" [disabled]="wf.busy()" (click)="set('new')">Reabrir</button>
+        }
+        @if (link(); as l) {
+          <a class="ad__btn" [routerLink]="l.path" [queryParams]="l.query">Ver datos</a>
+        }
+      </div>
+
+      @if (history().length) {
+        <section aria-label="Historial de la alerta">
+          <h4 class="ad__h4">Historial</h4>
+          <ul class="ad__hist">
+            @for (t of history(); track t.at) {
+              <li>{{ when(t.at) }} · {{ t.fromStatus ? statusLabels[t.fromStatus] : 'Alta' }} → {{ statusLabels[t.toStatus] }}@if (t.toOwner) { · {{ ownerLabels[t.toOwner] }} }</li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  }
+</app-drawer-panel>

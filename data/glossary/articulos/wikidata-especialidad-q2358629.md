@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q2358629
+image: wikidata-especialidad-q2358629.svg | La nutriología valora el estado nutricional y elige la vía de alimentación adecuada. | Plato dividido en verduras, cereales y proteínas con la lista de pasos de la valoración nutricional, y tres recuadros con la nutrición oral, enteral y parenteral.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Fractura de muñeca</title>
+  <desc id="d">A la izquierda, los huesos del antebrazo, radio y cúbito, con una línea de fractura en el extremo del radio cerca de la muñeca, y el mecanismo típico de caída sobre la mano extendida. A la derecha, señales, diagnóstico y tratamiento.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">Fractura del extremo del radio</text>
+  <path d="M70 90 L140 90 L150 300 L80 300 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M160 110 L210 110 L208 300 L162 300 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M72 300 L150 300 C160 320 150 334 140 336 L70 336 C60 330 62 310 72 300 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5" transform="rotate(-8 110 318)"/>
+  <path d="M76 266 L104 258 L118 272 L148 262" fill="none" stroke="var(--vessel)" stroke-width="3"/>
+  <rect x="66" y="350" width="30" height="22" rx="6" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.2"/>
+  <rect x="102" y="350" width="30" height="22" rx="6" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.2"/>
+  <rect x="138" y="350" width="30" height="22" rx="6" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.2"/>
+  <rect x="174" y="350" width="30" height="22" rx="6" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.2"/>
+  <text x="110" y="76" text-anchor="middle" class="small">Radio</text>
+  <text x="185" y="100" text-anchor="middle" class="small">Cúbito</text>
+  <text x="112" y="248" text-anchor="middle" class="small" style="fill:var(--vessel)">Fractura</text>
+  <text x="140" y="396" text-anchor="middle" class="small" style="fill:var(--muted)">Huesos de la mano</text>
+  <text x="320" y="90" text-anchor="middle" class="step">Mecanismo típico</text>
+  <path d="M300 260 L340 120 M340 120 l-10 8 M340 120 l6 12" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <path d="M260 300 H390" fill="none" stroke="var(--muted)" stroke-width="3"/>
+  <rect x="276" y="270" width="60" height="30" rx="8" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <line x1="306" y1="230" x2="306" y2="266" stroke="var(--vessel)" stroke-width="2.5" marker-end="url(#ah)"/>
+  <text x="320" y="330" text-anchor="middle" class="small">Caída sobre la mano</text>
+  <text x="320" y="346" text-anchor="middle" class="small">extendida</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Señales y tratamiento</text>
+  <text x="456" y="80" class="small">• Dolor intenso y rápida hinchazón</text>
+  <text x="456" y="104" class="small">• Deformidad en dorso de tenedor</text>
+  <text x="456" y="128" class="small">• No poder mover la muñeca</text>
+  <text x="456" y="152" class="small">• Hormigueo en los dedos: urgente</text>
+  <text x="456" y="200" class="step">Diagnóstico</text>
+  <text x="456" y="224" class="small">Radiografía de frente y de perfil</text>
+  <rect x="456" y="252" width="304" height="170" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="472" y="278" class="step">Tratamiento según el tipo</text>
+  <text x="480" y="304" class="small">• Reducción y yeso si está alineada</text>
+  <text x="480" y="326" class="small">• Cirugía con placa si es inestable</text>
+  <text x="480" y="348" class="small">• Rehabilitación al retirar el yeso</text>
+  <text x="480" y="370" class="small">• En mayores: valorar osteoporosis</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

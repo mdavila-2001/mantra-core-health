@@ -75,6 +75,7 @@
         variant="outline"
         size="sm"
         data-testid="specialty-browser-more"
+        [isLoading]="loadingMore()"
         (clicked)="moreRequested.emit()"
       >
         Cargar más

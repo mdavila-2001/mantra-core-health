@@ -1,0 +1,57 @@
+{
+  "marketing": {
+    "hasCost": true,
+    "sections": [
+      "1. Resumen ejecutivo",
+      "2. Indicadores principales",
+      "3. Alertas abiertas",
+      "4. Hallazgos y recomendaciones",
+      "5. Opinión pública",
+      "6. Método y fuentes",
+      "7. Limitaciones"
+    ]
+  },
+  "client": {
+    "hasCost": false,
+    "alertsSection": false,
+    "sections": [
+      "1. Resumen ejecutivo",
+      "2. Indicadores principales",
+      "3. Opinión pública",
+      "4. Método y fuentes",
+      "5. Limitaciones"
+    ]
+  },
+  "saved": {
+    "notice": "Informe guardado en el historial.",
+    "history": [
+      "Resultados octubre para el cliente"
+    ]
+  },
+  "reload": {
+    "history": [
+      "Resultados octubre para el cliente"
+    ]
+  },
+  "opened": {
+    "title": "Resultados octubre para el cliente",
+    "clientSelected": "true",
+    "hasCost": false
+  },
+  "order": {
+    "before": [
+      "1. Resumen ejecutivo",
+      "2. Método y fuentes",
+      "3. Limitaciones"
+    ],
+    "after": [
+      "1. Resumen ejecutivo",
+      "2. Método y fuentes",
+      "3. Limitaciones"
+    ]
+  },
+  "deleted": {
+    "history": []
+  },
+  "errors": []
+}

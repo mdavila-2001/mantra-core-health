@@ -1,5 +1,6 @@
 ---
 slug: epoc
+image: epoc.svg | En la EPOC se inflaman los bronquios y se destruyen los alvéolos, sobre todo por el tabaco. | Pulmones con bronquios y alvéolos señalados. A la derecha, un bronquio normal frente a uno inflamado con moco y alvéolos normales frente a alvéolos destruidos, más los síntomas, el diagnóstico por espirometría y el tratamiento.
 ---
 
 ## [definition] Introducción

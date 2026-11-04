@@ -1,5 +1,6 @@
 ---
 slug: cancer-de-tiroides
+image: cancer-de-tiroides.svg | La mayoría de los cánceres de tiroides aparecen como un nódulo en la glándula. | Cuello con la tráquea y la tiroides en forma de mariposa con un nódulo, barras de los tipos de cáncer de tiroides y los pasos de estudio con ecografía, punción y citología.
 ---
 
 ## [definition] Introducción

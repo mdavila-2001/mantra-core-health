@@ -1,5 +1,6 @@
 ---
 slug: infertilidad-femenina
+image: infertilidad-femenina.svg | Las causas se agrupan en ovulación, trompas, útero y endometriosis. | Útero con trompas y ovarios y cuatro zonas señaladas como posibles causas de infertilidad, junto al estudio básico y las opciones de tratamiento.
 ---
 
 ## [definition] Introducción

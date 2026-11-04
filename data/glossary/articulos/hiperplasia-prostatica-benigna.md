@@ -1,5 +1,6 @@
 ---
 slug: hiperplasia-prostatica-benigna
+image: hiperplasia-prostatica-benigna.svg | El crecimiento benigno de la próstata puede estrechar la uretra. | Dos esquemas de vejiga y próstata, uno normal con la uretra libre y otro con la próstata agrandada que estrecha la uretra, junto a los síntomas urinarios y signos de alarma.
 ---
 
 ## [definition] Introducción

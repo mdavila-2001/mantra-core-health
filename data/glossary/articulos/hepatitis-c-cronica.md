@@ -1,5 +1,6 @@
 ---
 slug: hepatitis-c-cronica
+image: hepatitis-c-cronica.svg | Sin tratamiento, la infección puede llevar a fibrosis y cirrosis. | Secuencia de cuatro hígados, de sano a inflamado, con fibrosis y con cirrosis, junto a las vías de contagio por sangre y el tratamiento antiviral curativo.
 ---
 
 ## [definition] Introducción

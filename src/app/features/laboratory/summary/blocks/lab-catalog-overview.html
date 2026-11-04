@@ -1,0 +1,34 @@
+<app-card padding="lg" data-testid="lab-home-catalog">
+  <app-section-heading card-header icono="tag" titulo="Su catálogo y precios" />
+
+  <app-lab-block-state [state]="state()" subject="su catálogo" skeleton="figures" [skeletonRows]="3" (retry)="retry.emit()">
+    @if (data(); as s) {
+      <dl class="figures">
+        <div class="figure">
+          <dt>Publicados</dt>
+          <dd class="figure__value" data-testid="summary-published">{{ s.published }}</dd>
+          <dd class="note">los ven los pacientes</dd>
+        </div>
+        <div class="figure">
+          <dt>Borradores</dt>
+          <dd class="figure__value" data-testid="summary-drafts">{{ s.drafts }}</dd>
+          <dd class="note">sin publicar</dd>
+        </div>
+        <div class="figure" [class.figure--alert]="s.unavailable > 0">
+          <dt>No disponibles hoy</dt>
+          <dd class="figure__value" data-testid="summary-unavailable">{{ s.unavailable }}</dd>
+          <dd class="note">sin reactivo o sin equipo</dd>
+        </div>
+      </dl>
+    }
+  </app-lab-block-state>
+
+  @if (data()) {
+    <div card-footer class="footer">
+      <a app-button variant="secondary" size="sm" [routerLink]="pricesRoute" data-testid="lab-home-prices">
+        Precios
+        <app-nav-icon name="arrow-right" />
+      </a>
+    </div>
+  }
+</app-card>

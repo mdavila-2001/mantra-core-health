@@ -1,0 +1,41 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» abre el útero desde la lista y lo resalta en el modelo (3.0m)
+
+
+  1) [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» abre el útero desde la lista y lo resalta en el modelo 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: /^útero$/i }).first()
+
+
+      165 |   await esperarModelo(page);
+      166 |   await page.getByText(/Piezas femeninas del modelo/).click();
+    > 167 |   await page.getByRole('button', { name: /^útero$/i }).first().click();
+          |                                                                ^
+      168 |   await expect(page).toHaveURL(/structure=UBERON%3A0000995|structure=UBERON:0000995/);
+      169 |   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeVisible({ timeout: 30_000 });
+      170 |   await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeInViewport();
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:167:64
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-la-vist-0a9d7-a-y-lo-resalta-en-el-modelo-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-la-vist-0a9d7-a-y-lo-resalta-en-el-modelo-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-la-vist-0a9d7-a-y-lo-resalta-en-el-modelo-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-la-vist-0a9d7-a-y-lo-resalta-en-el-modelo-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» abre el útero desde la lista y lo resalta en el modelo 
+exit=1

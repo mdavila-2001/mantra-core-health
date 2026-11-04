@@ -1,0 +1,7 @@
+<p class="support-code" data-testid="support-code">
+  Código de soporte:
+  <code class="support-code__value tabular-nums">{{ code() }}</code>
+  @if (copyable()) {
+    <button app-button size="sm" variant="outline" type="button" (clicked)="copy()">Copiar código</button>
+  }
+</p>

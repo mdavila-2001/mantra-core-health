@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-abdomen
+image: radiografia-de-abdomen.svg | La radiografía simple muestra el gas intestinal, los huesos y algunos cálculos. | Paciente acostado bajo un tubo de rayos X y un esquema de radiografía abdominal con columna, pelvis y gas intestinal, junto a los hallazgos que puede mostrar.
 ---
 
 ## [definition] Introducción

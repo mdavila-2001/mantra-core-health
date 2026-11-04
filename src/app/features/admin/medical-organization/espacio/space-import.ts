@@ -69,6 +69,8 @@ export class SpaceImport {
   protected readonly texto = signal('');
   protected readonly nombreDeArchivo = signal<string | null>(null);
   protected readonly enviando = signal(false);
+  /** Which request is in flight: the dry run (validate) or the real import (confirm). */
+  protected readonly enviandoPrueba = signal(true);
   protected readonly fallo = signal<ViewState<never> | null>(null);
   /** El dry-run del texto actual; `null` si no se validó o el texto cambió. */
   protected readonly validacion = signal<ImportResult | null>(null);
@@ -148,6 +150,7 @@ export class SpaceImport {
   private enviar(dryRun: boolean): void {
     const filas = this.parseo()?.rows ?? [];
     if (this.sitio === null || filas.length === 0) return;
+    this.enviandoPrueba.set(dryRun);
     this.enviando.set(true);
     this.fallo.set(null);
     this.client.importCareSpaces(this.sitio, filas, dryRun).subscribe({

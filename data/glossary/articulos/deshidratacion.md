@@ -1,5 +1,6 @@
 ---
 slug: deshidratacion
+image: deshidratacion.svg | La deshidratación aparece cuando se pierde más líquido del que entra. | Balanza en la que las pérdidas de líquido pesan más que las entradas, junto a las causas frecuentes, las señales habituales y los signos de deshidratación grave.
 ---
 
 ## [definition] Introducción

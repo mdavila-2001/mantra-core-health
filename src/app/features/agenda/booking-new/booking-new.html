@@ -48,10 +48,9 @@
     }
     @case ('ready') {
       @if (cupoListo(); as cupo) {
-        <!-- Dos columnas: a la izquierda el resumen y el formulario; a la
-             derecha la figura del cuerpo de «¿Qué te pasa?», conectada al
-             motivo (pedido del cliente, 04/11/2026). En angosto, la figura va
-             debajo. -->
+        <!-- Two columns: summary and form on the left, the body figure from
+             the symptom check on the right, wired to the reason field (client
+             request, 2026-11-04). On narrow screens the figure drops below. -->
         <div class="reserva__layout">
           <div class="reserva__principal">
             <!-- El resumen dice qué se está por reservar; los datos salen de la
@@ -210,11 +209,7 @@
           </div>
 
           <aside class="reserva__figura" aria-label="Figura del cuerpo">
-            <app-motivo-figura
-              [texto]="motivoActual()"
-              [editable]="!retencion()"
-              (agregado)="agregarAlMotivo($event)"
-            />
+            <app-motivo-figura [control]="motivo" [maximo]="maxMotivo" [editable]="!retencion()" />
           </aside>
         </div>
       }

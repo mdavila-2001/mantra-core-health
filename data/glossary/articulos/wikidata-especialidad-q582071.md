@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q582071
+image: wikidata-especialidad-q582071.svg | Periodo que abarca la perinatología y embarazos de riesgo | Línea de tiempo desde antes del embarazo hasta las semanas posteriores al parto, con los embarazos de mayor riesgo y las herramientas de la medicina materno-fetal
 ---
 
 ## [definition] Introducción

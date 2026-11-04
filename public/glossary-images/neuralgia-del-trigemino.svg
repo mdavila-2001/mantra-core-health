@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Neuralgia del trigémino</title>
+  <desc id="d">A la izquierda, una cara de frente con el nervio trigémino y sus tres ramas: V1 hacia la frente y el ojo, V2 hacia la mejilla y V3 hacia la mandíbula. A la derecha, un trazo en zigzag que representa las descargas eléctricas breves, los desencadenantes cotidianos, la causa frecuente y los tratamientos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">El nervio trigémino</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Cómo es el dolor</text>
+<circle cx="200" cy="220" r="140" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+<ellipse cx="150" cy="200" rx="12" ry="7" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<ellipse cx="250" cy="200" rx="12" ry="7" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<path d="M200 210 L190 260 L210 260" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M170 300 Q200 316 230 300" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="330" cy="220" r="10" fill="var(--purple)"/>
+<path d="M330 220 C300 170 250 130 200 120" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M330 220 C290 230 250 236 220 240" fill="none" stroke="var(--ok)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M330 220 C310 280 270 320 230 330" fill="none" stroke="var(--warn)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="196" y="110" text-anchor="end" class="step" style="fill:var(--accent)">V1</text>
+<text x="262" y="222" text-anchor="middle" class="step" style="fill:var(--ok)">V2</text>
+<text x="226" y="350" text-anchor="end" class="step" style="fill:var(--warn)">V3</text>
+<text x="40" y="400" class="small">V1 frente y ojo · V2 mejilla · V3 mandíbula</text>
+<text x="40" y="418" class="small" style="fill:var(--muted)">Suele afectar un solo lado de la cara.</text>
+<text x="416" y="76" class="h">Características</text>
+<path d="M420 140 L436 96 L444 132 L456 92 L466 136 L476 104 L484 140" fill="none" stroke="var(--bad)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="500" y="112" class="lab">Descargas eléctricas</text>
+<text x="500" y="130" class="small" style="fill:var(--muted)">breves e intensas</text>
+<text x="416" y="182" class="h">Lo desencadenan</text>
+<text x="416" y="208" class="lab">• Masticar o hablar</text>
+<text x="416" y="232" class="lab">• Lavarse los dientes</text>
+<text x="416" y="256" class="lab">• Tocarse la cara</text>
+<text x="416" y="280" class="lab">• Una corriente de aire</text>
+<text x="416" y="324" class="h">Causa frecuente</text>
+<text x="416" y="348" class="lab">Un vaso sanguíneo que presiona</text>
+<text x="416" y="366" class="lab">el nervio cerca de su salida.</text>
+<text x="416" y="402" class="small" style="fill:var(--muted)">Se trata con fármacos para el nervio;</text>
+<text x="416" y="418" class="small" style="fill:var(--muted)">a veces, cirugía o radiocirugía.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

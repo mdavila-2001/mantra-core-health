@@ -1,5 +1,6 @@
 ---
 slug: obesidad
+image: obesidad.svg | La obesidad resulta de muchos factores y aumenta el riesgo de otras enfermedades. | Diagrama con el exceso de grasa corporal en el centro y seis factores que contribuyen, junto a las enfermedades asociadas como diabetes o hipertensión y las formas de valorarla.
 ---
 
 ## [definition] Introducción

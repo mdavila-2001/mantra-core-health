@@ -44,8 +44,10 @@ interface Area {
 }
 
 interface Portal {
-  readonly id: 'administrativo' | 'reporteria';
+  readonly id: 'administrativo' | 'observabilidad';
   readonly titulo: string;
+  /** Pantalla a la que lleva el título de la puerta, si tiene portada propia. */
+  readonly ruta?: string;
   readonly descripcion: string;
   readonly areas: readonly Area[];
 }
@@ -105,8 +107,9 @@ const PORTALES: readonly Portal[] = [
     ],
   },
   {
-    id: 'reporteria',
-    titulo: 'Portal de reportería',
+    id: 'observabilidad',
+    titulo: 'Observabilidad y gobierno',
+    ruta: '/superadmin/observability',
     descripcion: 'Cuánto se usa cada herramienta, cuánto dinero mueve y dónde falla.',
     areas: [
       {
@@ -141,7 +144,7 @@ const PORTALES: readonly Portal[] = [
 
 /**
  * La entrada del perfil de gestión: dos puertas —el portal administrativo y el
- * de reportería— y, debajo, el estado de toda la plataforma: la API, su
+ * de observabilidad y gobierno— y, debajo, el estado de toda la plataforma: la API, su
  * preparación para producción, los incidentes, los despliegues, las pruebas y
  * los respaldos. Cada bloque se carga por su cuenta: que uno falle o no tenga
  * permiso no apaga a los demás.
@@ -179,8 +182,10 @@ export class PlatformHome {
   /** Sólo los destinos que la sesión puede abrir; un área sin destinos no se dibuja. */
   protected readonly portales = computed<readonly Portal[]>(() => {
     const abiertas = new Set(this.navigation.visibleSections().map((s) => `/${s.path}`));
-    return PORTALES.map((portal) => ({
+    return PORTALES.map(({ ruta, ...portal }) => ({
       ...portal,
+      // El título sólo es enlace si la sesión puede abrir esa pantalla.
+      ...(ruta !== undefined && abiertas.has(ruta) ? { ruta } : {}),
       areas: portal.areas
         .map((area) => ({ ...area, destinos: area.destinos.filter((d) => abiertas.has(d.route)) }))
         .filter((area) => area.destinos.length > 0),

@@ -1,0 +1,5 @@
+
+Sembrando solicitudes de seguro contra http://localhost:3000
+
+    ✗ login del administrador → 500 {"code":"INTERNAL","message":"Error interno del servidor","correlationId":"559e1beb-a5b2-45e3-ad8d-6d7b5d0ad22a","timestamp":"2026-10-24T20:17:38.616Z","path":"/iam/auth/login"}
+✗ No se pudo entrar como admin@alovida.com.

@@ -117,3 +117,8 @@
         transition: none;
     }
 }
+
+/* Page in flight: the list dims so the spinner reads as the only live element. */
+:host(.pagination--loading) .pagination__track {
+    opacity: 0.6;
+}

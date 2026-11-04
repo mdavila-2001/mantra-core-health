@@ -1,5 +1,5 @@
-/* La figura junto al motivo de la reserva. Sólo tokens; el estado elegido se
-   dice con fondo, borde, peso y `aria-pressed`, nunca sólo con color. */
+/* The body figure next to the booking reason. Tokens only; the picked state
+   uses background, border, weight and `aria-pressed`, never color alone. */
 
 :host {
   display: block;

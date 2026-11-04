@@ -1,0 +1,100 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.dr__crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+.dr__chip,
+.dr__up,
+.dr__open {
+  font: inherit;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  padding: var(--sp-1) var(--sp-3);
+  cursor: pointer;
+}
+
+.dr__chip--now {
+  background: var(--st-primary-bg);
+  border-color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.dr__up {
+  margin-inline-start: auto;
+  color: var(--brand-primary);
+}
+
+.dr__open {
+  border: none;
+  padding: 0;
+  text-align: start;
+  color: var(--brand-primary);
+  text-decoration: underline;
+  border-radius: var(--r-sm);
+}
+
+.dr__chip:focus-visible,
+.dr__up:focus-visible,
+.dr__open:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.dr__now {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.dr__wrap {
+  overflow-x: auto;
+}
+
+.dr__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+}
+
+.dr__table th,
+.dr__table td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  white-space: nowrap;
+  border-block-end: 1px solid var(--border-default);
+}
+
+.dr__table thead th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dr__n {
+  text-align: end !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.dr__empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.dr__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

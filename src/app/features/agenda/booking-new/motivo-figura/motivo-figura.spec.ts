@@ -1,4 +1,5 @@
 import { Component, signal } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
@@ -8,16 +9,11 @@ import { MotivoFigura } from './motivo-figura';
 
 @Component({
   imports: [MotivoFigura],
-  template: `<app-motivo-figura
-    [texto]="texto()"
-    [editable]="editable()"
-    (agregado)="agregados.push($event)"
-  />`,
+  template: `<app-motivo-figura [control]="motivo" [maximo]="40" [editable]="editable()" />`,
 })
 class Anfitrion {
-  readonly texto = signal('');
+  readonly motivo = new FormControl('', { nonNullable: true });
   readonly editable = signal(true);
-  readonly agregados: string[] = [];
 }
 
 describe('MotivoFigura', () => {
@@ -25,7 +21,7 @@ describe('MotivoFigura', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
-        // Sin servicio de triage: la figura sigue con el motor local.
+        // No triage service: the figure keeps working with the local engine.
         { provide: TriageIaClient, useValue: { analizar: () => of(null) } },
       ],
     });
@@ -36,7 +32,7 @@ describe('MotivoFigura', () => {
 
   it('ilumina la zona de lo que se escribió en el motivo y lo nombra', () => {
     const { fixture, host, el } = montar();
-    host.texto.set('me duele la cabeza desde ayer');
+    host.motivo.setValue('me duele la cabeza desde ayer');
     fixture.detectChanges();
 
     const cabeza = el.querySelector('[data-testid="reserva-figura-cabeza"]');
@@ -46,7 +42,7 @@ describe('MotivoFigura', () => {
     );
   });
 
-  it('al tocar una zona ofrece sus síntomas y tocar uno lo pide para el motivo', () => {
+  it('al tocar una zona ofrece sus síntomas y elegir uno lo suma al motivo', () => {
     const { fixture, host, el } = montar();
     (el.querySelector('[data-testid="reserva-figura-cabeza"]') as SVGElement).dispatchEvent(
       new MouseEvent('click'),
@@ -58,13 +54,15 @@ describe('MotivoFigura', () => {
     ];
     const mareo = opciones.find((b) => b.textContent?.trim() === 'mareo');
     expect(mareo).toBeDefined();
+    host.motivo.setValue('Me duele la cabeza');
+    fixture.detectChanges();
     mareo!.click();
-    expect(host.agregados).toEqual(['mareo']);
+    expect(host.motivo.value).toBe('Me duele la cabeza, mareo');
   });
 
-  it('no vuelve a pedir lo que el motivo ya dice', () => {
+  it('no repite lo que el motivo ya dice', () => {
     const { fixture, host, el } = montar();
-    host.texto.set('tengo dolor de cabeza');
+    host.motivo.setValue('tengo dolor de cabeza');
     fixture.detectChanges();
     (el.querySelector('[data-testid="reserva-figura-cabeza"]') as SVGElement).dispatchEvent(
       new MouseEvent('click'),
@@ -76,12 +74,25 @@ describe('MotivoFigura', () => {
     ].find((b) => b.textContent?.trim() === 'dolor de cabeza');
     expect(dolor?.getAttribute('aria-pressed')).toBe('true');
     dolor!.click();
-    expect(host.agregados).toEqual([]);
+    expect(host.motivo.value).toBe('tengo dolor de cabeza');
+  });
+
+  it('no agrega a medias lo que no entra en el tope', () => {
+    const { fixture, host, el } = montar();
+    host.motivo.setValue('x'.repeat(38));
+    (el.querySelector('[data-testid="reserva-figura-cabeza"]') as SVGElement).dispatchEvent(
+      new MouseEvent('click'),
+    );
+    fixture.detectChanges();
+    [...el.querySelectorAll<HTMLButtonElement>('[data-testid="reserva-figura-opciones"] button')]
+      .find((b) => b.textContent?.trim() === 'mareo')!
+      .click();
+    expect(host.motivo.value).toBe('x'.repeat(38));
   });
 
   it('frente a una alarma dice que no espere al turno', () => {
     const { fixture, host, el } = montar();
-    host.texto.set('me duele el pecho y no puedo respirar');
+    host.motivo.setValue('me duele el pecho y no puedo respirar');
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="reserva-figura-alarma"]')).not.toBeNull();
   });

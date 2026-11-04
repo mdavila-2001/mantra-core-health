@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, type WritableSignal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting, type TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -6,6 +6,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../auth/session.store';
 import type { ActivityEvent, CaptureActivityEvents } from '../../data-access/telemetry/telemetry.types';
+import { UxConsent, type ModoUx } from '../consent/ux-consent.service';
 import { UX_ANALYTICS_CONFIG, type UxAnalyticsConfig } from './ux-analytics.config';
 import { normalizarRuta, nuevoUuid, UxAnalytics } from './ux-analytics.service';
 
@@ -28,6 +29,7 @@ const TOKEN = jwt({ sub: USUARIO_A, roles: [], tenants: [TENANT] });
 const TOKEN_B = jwt({ sub: USUARIO_B, roles: [], tenants: [] });
 const TOKEN_VENCIDO = jwt({ sub: USUARIO_A, roles: [], tenants: [TENANT], exp: 1 });
 const ESQUEMA = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+const ESQUEMA_ANONIMO = 'df630ae0-3bf4-567d-97f3-5b75ea77bc94';
 const URL_INGESTA = '/telemetry/activity-events';
 
 @Component({ changeDetection: ChangeDetectionStrategy.OnPush, template: '' })
@@ -36,6 +38,8 @@ class Pantalla {}
 const CONFIG: UxAnalyticsConfig = {
   active: true,
   eventSchemaDefinitionId: ESQUEMA,
+  anonymousSchemaDefinitionId: ESQUEMA_ANONIMO,
+  consentPurposeDefinitionId: '9889b3b6-4293-5266-bba2-b27fa26bec2e',
   sampleRatio: 1,
   flushIntervalMs: 10_000,
   maxBatch: 50,
@@ -53,8 +57,12 @@ describe('UxAnalytics', () => {
   let http: HttpTestingController;
   let session: SessionStore;
   let router: Router;
+  /** Doble de `UxConsent`: aquí solo importa el modo; el consentimiento real tiene su propia prueba. */
+  let modo: WritableSignal<ModoUx>;
+  let bloqueada = false;
 
   function configurar(config: Partial<UxAnalyticsConfig> = {}): UxAnalytics {
+    modo = signal<ModoUx>('completo');
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -65,6 +73,7 @@ describe('UxAnalytics', () => {
           { path: '**', component: Pantalla },
         ]),
         { provide: UX_ANALYTICS_CONFIG, useValue: { ...CONFIG, ...config } },
+        { provide: UxConsent, useFactory: () => ({ modo, bloqueadaPorPrivacidad: bloqueada }) },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -93,6 +102,7 @@ describe('UxAnalytics', () => {
   }
 
   beforeEach(() => {
+    bloqueada = false;
     sessionStorage.clear();
     document.body.innerHTML = '<button data-testid="abrir">Abrir la receta de Ana Pérez</button><input formcontrolname="dosis">';
   });
@@ -136,14 +146,19 @@ describe('UxAnalytics', () => {
       expect(eventos.map((e) => e.eventName)).toEqual(['pagina_vista', 'clic']);
       for (const evento of eventos) {
         expect(evento.eventSchemaDefinitionId).toBe(ESQUEMA);
-        expect(evento.userId).toBe(USUARIO_A);
-        expect(evento.tenantId).toBe(TENANT);
         expect(evento.routeTemplate).toBe('/pacientes/:pacienteId');
-        expect(evento.sessionId).toMatch(/^[0-9a-f-]{36}$/);
+        // La pestaña viaja como propiedad declarada, no como `sessionId`.
+        const pestana = evento.properties.find((p) => p.propertyName === 'pestana');
+        expect(pestana?.valueType).toBe('STRING');
+        expect(pestana?.valueString).toMatch(/^[0-9a-f-]{36}$/);
       }
       expect(new Set(eventos.map((e) => e.eventIdempotencyKey)).size).toBe(2);
 
       const cuerpo = JSON.stringify(req.request.body);
+      // La identidad la pone la API desde el token: la API da 400 si llegan.
+      for (const campo of ['userId', 'sessionId', 'tenantId', USUARIO_A, TENANT]) {
+        expect(cuerpo).not.toContain(campo);
+      }
       for (const prohibido of ['8437', 'Ana', 'Pérez', 'receta']) {
         expect(cuerpo).not.toContain(prohibido);
       }
@@ -457,9 +472,143 @@ describe('UxAnalytics', () => {
       ux.enviar(false);
 
       const deB = http.expectOne(URL_INGESTA);
-      expect(lote(deB).map((e) => [e.eventName, e.userId])).toEqual([['pagina_vista', USUARIO_B]]);
-      expect(lote(deB)[0]?.sessionId).not.toBe(sesionDeA);
+      expect(lote(deB).map((e) => e.eventName)).toEqual(['pagina_vista']);
+      expect(JSON.stringify(deB.request.body)).not.toContain(USUARIO_B);
+      expect(lote(deB)[0]?.properties.find((p) => p.propertyName === 'pestana')?.valueString).not.toBe(sesionDeA);
       responder(deB);
+    });
+  });
+
+  describe('consentimiento y señales de privacidad', () => {
+    it('con la decisión ausente manda solo la vista, anónima: esquema agregado, sin propiedades ni identidad', async () => {
+      const ux = configurar();
+      modo.set('anonimo');
+      session.start({ accessToken: TOKEN, refreshToken: 'r-1' });
+      TestBed.tick();
+      ux.start();
+
+      await navegar('/pacientes/8437');
+      clicEn('[data-testid="abrir"]');
+      document.querySelector('input')!.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      await navegar('/inicio');
+      ux.enviar(false);
+
+      const req = http.expectOne(URL_INGESTA);
+      const eventos = lote(req);
+      // Ni clic, ni foco, ni abandono: solo las dos vistas.
+      expect(eventos.map((e) => e.eventName)).toEqual(['pagina_vista', 'pagina_vista']);
+      for (const evento of eventos) {
+        expect(evento.eventSchemaDefinitionId).toBe(ESQUEMA_ANONIMO);
+        expect(evento.properties).toEqual([]);
+      }
+      expect(eventos.map((e) => e.routeTemplate)).toEqual(['/pacientes/:pacienteId', '/inicio']);
+      const cuerpo = JSON.stringify(req.request.body);
+      for (const campo of ['userId', 'sessionId', 'tenantId', 'pestana', '8437']) {
+        expect(cuerpo).not.toContain(campo);
+      }
+      responder(req);
+    });
+
+    it('al otorgar el consentimiento a mitad de sesión empiezan los clics, contra el esquema que lo exige', async () => {
+      const ux = configurar();
+      modo.set('anonimo');
+      session.start({ accessToken: TOKEN, refreshToken: 'r-1' });
+      TestBed.tick();
+      ux.start();
+
+      await navegar('/inicio');
+      clicEn('[data-testid="abrir"]');
+      modo.set('completo');
+      clicEn('[data-testid="abrir"]');
+      ux.enviar(false);
+
+      const req = http.expectOne(URL_INGESTA);
+      expect(lote(req).map((e) => [e.eventName, e.eventSchemaDefinitionId])).toEqual([
+        ['pagina_vista', ESQUEMA_ANONIMO],
+        ['clic', ESQUEMA],
+      ]);
+      responder(req);
+    });
+
+    it('con el consentimiento retirado no sale nada, y lo que ya estaba en cola se descarta', async () => {
+      const ux = configurar();
+      session.start({ accessToken: TOKEN, refreshToken: 'r-1' });
+      TestBed.tick();
+      ux.start();
+
+      await navegar('/inicio');
+      clicEn('[data-testid="abrir"]');
+      modo.set('ninguno');
+      TestBed.tick();
+      clicEn('[data-testid="abrir"]');
+      await navegar('/pacientes/1');
+      ux.enviar(false);
+
+      http.expectNone(URL_INGESTA);
+    });
+
+    it('con DNT o Global Privacy Control no arranca: ningún oyente, ninguna vista, y deja dicho por qué', async () => {
+      bloqueada = true;
+      const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+      const ux = configurar();
+      session.start({ accessToken: TOKEN, refreshToken: 'r-1' });
+      TestBed.tick();
+      ux.start();
+
+      await navegar('/inicio');
+      clicEn('[data-testid="abrir"]');
+      ux.enviar(false);
+
+      http.expectNone(URL_INGESTA);
+      expect(sessionStorage.getItem('mch.ux.session')).toBeNull();
+      expect(ux.motivoDeApagado).toContain('senal-de-privacidad');
+      expect(info).toHaveBeenCalled();
+    });
+  });
+
+  describe('rechazos de la API', () => {
+    it('un 400 apaga la captura pero deja el motivo en el registro y en el servicio', async () => {
+      const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const ux = await abrir();
+      ux.enviar(false);
+      http
+        .expectOne(URL_INGESTA)
+        .flush(
+          { statusCode: 400, message: ['property userId should not exist'], reason: 'VALIDATION_ERROR' },
+          { status: 400, statusText: 'Bad Request' },
+        );
+
+      expect(ux.motivoDeApagado).toBe('400 VALIDATION_ERROR property userId should not exist');
+      expect(aviso).toHaveBeenCalledWith(expect.stringContaining('property userId should not exist'));
+    });
+
+    it('un 412 (esquema DEPRECATED) también la apaga, con su motivo', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const ux = await abrir();
+      ux.enviar(false);
+      http
+        .expectOne(URL_INGESTA)
+        .flush({ reason: 'TELEMETRY_EVENT_SCHEMA_NOT_ACTIVE', message: 'esquema no activo' }, { status: 412, statusText: 'Precondition Failed' });
+
+      expect(ux.motivoDeApagado).toBe('412 TELEMETRY_EVENT_SCHEMA_NOT_ACTIVE esquema no activo');
+      clicEn('[data-testid="abrir"]');
+      ux.enviar(false);
+      http.expectNone(URL_INGESTA);
+    });
+
+    it('un 422 descarta ese lote y lo registra, pero no apaga la captura', async () => {
+      const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const ux = await abrir();
+      ux.enviar(false);
+      http
+        .expectOne(URL_INGESTA)
+        .flush({ reason: 'TELEMETRY_EVENT_PROPERTY_NOT_ALLOWED' }, { status: 422, statusText: 'Unprocessable Entity' });
+
+      expect(ux.motivoDeApagado).toBeNull();
+      expect(aviso).toHaveBeenCalledWith(expect.stringContaining('TELEMETRY_EVENT_PROPERTY_NOT_ALLOWED'));
+      clicEn('[data-testid="abrir"]');
+      ux.enviar(false);
+      responder(http.expectOne(URL_INGESTA));
     });
   });
 });

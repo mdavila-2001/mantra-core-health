@@ -2,7 +2,7 @@
     Contratos del Skeleton — sistema ALOVIDA v1.0.
 
     El spec no lo declara: extensión propia armada con las superficies del tema
-    (`--bg-inset` / `--bg-surface-alt`), así que el modo oscuro sale solo.
+    (veils `--bg-active` / `--bg-hover`), así que el modo oscuro sale solo.
     Pendiente de validación del diseñador.
     ========================================================================== */
 

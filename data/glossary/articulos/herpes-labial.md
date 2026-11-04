@@ -1,5 +1,6 @@
 ---
 slug: herpes-labial
+image: herpes-labial.svg | El virus queda dormido en un ganglio nervioso y reaparece en el labio. | Cabeza de perfil con el ganglio donde se esconde el virus del herpes y el nervio hacia el labio, y cuatro viñetas con las fases del brote de herpes labial.
 ---
 
 ## [definition] Introducción

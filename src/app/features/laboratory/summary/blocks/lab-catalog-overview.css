@@ -1,0 +1,52 @@
+/* Three catalog figures as rows (label and note left, value right): they keep
+   the same height and never wrap badly, in any cell width. */
+
+.figures {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.figure {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label value'
+    'note value';
+  align-items: center;
+  column-gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.figure dt,
+.figure dd {
+  margin: 0;
+}
+
+.figure dt {
+  grid-area: label;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.figure .note {
+  grid-area: note;
+}
+
+.figure__value {
+  grid-area: value;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.figure--alert .figure__value {
+  color: var(--st-error-fg);
+}

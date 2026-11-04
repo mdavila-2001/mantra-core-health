@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Fascitis plantar</title>
+  <desc id="d">A la izquierda, un pie visto de lado con la fascia plantar, una banda que va del talón a los dedos, y el punto de dolor donde se inserta en el talón. A la derecha, los factores de riesgo y las medidas que suelen aliviarla, como estiramientos, hielo, plantillas y fisioterapia.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Dónde duele</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Causas y alivio</text>
+<path d="M60 140 L60 250 C60 280 80 300 120 300 L330 300 C350 300 356 286 350 274 C340 260 300 256 270 240 C230 220 190 180 150 150 L130 100 L80 100 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M90 290 C150 280 220 250 330 284" fill="none" stroke="var(--organ)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="104" cy="288" r="14" fill="var(--bad)" opacity=".55"/>
+<text x="40" y="336" class="lab" style="fill:var(--bad)">Dolor en el talón</text>
+<text x="200" y="260" text-anchor="middle" class="small" style="fill:var(--organ)">Fascia plantar</text>
+<text x="200" y="366" text-anchor="middle" class="lab">La banda que sostiene el arco se irrita</text>
+<text x="200" y="386" text-anchor="middle" class="lab">donde se inserta en el hueso del talón.</text>
+<text x="200" y="416" text-anchor="middle" class="small" style="fill:var(--muted)">Típico: dolor en los primeros pasos al levantarse</text>
+<text x="416" y="76" class="h">Factores de riesgo</text>
+<text x="416" y="102" class="lab">• Correr o estar mucho de pie</text>
+<text x="416" y="126" class="lab">• Sobrepeso</text>
+<text x="416" y="150" class="lab">• Calzado sin soporte</text>
+<text x="416" y="174" class="lab">• Pie plano o arco alto</text>
+<text x="416" y="198" class="lab">• Gemelos acortados</text>
+<text x="416" y="236" class="h" style="fill:var(--ok)">Lo que suele ayudar</text>
+<text x="416" y="262" class="lab">• Estiramientos de fascia y gemelo</text>
+<text x="416" y="286" class="lab">• Hielo y reposo relativo</text>
+<text x="416" y="310" class="lab">• Plantillas y buen calzado</text>
+<text x="416" y="334" class="lab">• Fisioterapia</text>
+<text x="416" y="384" class="small" style="fill:var(--muted)">Mejora en la mayoría en semanas</text>
+<text x="416" y="400" class="small" style="fill:var(--muted)">o meses con medidas sencillas.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

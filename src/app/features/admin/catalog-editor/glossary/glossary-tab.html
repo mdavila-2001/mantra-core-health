@@ -1,0 +1,75 @@
+<div class="catalogo" data-testid="catalog-glossary">
+  <p class="catalogo__ayuda">
+    Cada término tiene un texto por audiencia: el resumen en lenguaje llano que lee la persona atendida y la definición clínica que lee el
+    profesional. El glosario no es de una organización: lo que guarde llega a todas, y por eso sólo lo edita la superadministración.
+  </p>
+
+  <div class="catalogo__barra">
+    <app-segmented-control
+      ariaLabel="Audiencia del texto"
+      [options]="opcionesAudiencia"
+      [value]="audiencia()"
+      [wrap]="true"
+      (valueChange)="elegirAudiencia($event)"
+      data-testid="catalog-glossary-audience"
+    />
+    <button app-button size="sm" (clicked)="abrirAlta()" data-testid="catalog-glossary-new">Nuevo término</button>
+  </div>
+
+  <div class="catalogo__filtros">
+    <app-search-field
+      class="catalogo__buscador"
+      label="Buscar términos"
+      placeholder="Identificador o término"
+      [value]="busqueda()"
+      (searched)="buscar($event)"
+    />
+    <app-segmented-control
+      ariaLabel="Estado del término"
+      [options]="opcionesEstado"
+      [value]="filtroEstado()"
+      (valueChange)="elegirEstado($event)"
+      data-testid="catalog-glossary-status"
+    />
+  </div>
+
+  @if (aviso(); as nota) {
+    <app-alert [tone]="nota.tono" data-testid="catalog-glossary-notice" [dismissible]="true" (dismissed)="aviso.set(null)">{{ nota.texto }}</app-alert>
+  }
+
+  <app-data-table
+    [state]="lista()"
+    [columns]="columnas()"
+    [trackBy]="porId"
+    [rowLabel]="nombreDeFila"
+    stackedOnMobile
+    fitContainer
+    caption="Términos del glosario para la audiencia elegida"
+    [cursor]="paginador.cursor()"
+    data-testid="catalog-glossary-table"
+    (cursorChanged)="mover($event)"
+    (retry)="recargar()"
+  />
+</div>
+
+@if (dialogo(); as abierto) {
+  <app-glossary-dialog
+    [audience]="audiencia()"
+    [termino]="abierto.termino"
+    (saved)="guardado($event)"
+    (closed)="cerrarDialogo()"
+    (reloadRequested)="recargarTras409()"
+  />
+}
+
+<ng-template #celdaEstado let-fila>
+  @if (fila.item.state === 'active') {
+    <app-badge variant="success" value="Vigente" />
+  } @else {
+    <app-badge variant="secondary" value="Retirado" />
+  }
+</ng-template>
+
+<ng-template #celdaAcciones let-fila>
+  <app-row-actions [actions]="accionesDe(fila)" [fila]="nombreDeFila(fila)" [inline]="true" (actionSelected)="ejecutar(fila, $event)" />
+</ng-template>

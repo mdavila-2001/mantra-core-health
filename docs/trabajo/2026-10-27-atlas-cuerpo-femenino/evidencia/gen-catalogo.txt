@@ -1,0 +1,21 @@
+{
+ "uberonRelease": "releases/2026-10-01",
+ "structures": 6347,
+ "uberonStructures": 6074,
+ "fmaOnlyStructures": 273,
+ "relations": 7338,
+ "definitions": 5152,
+ "definitionsEs": 5152,
+ "labelsEs": 6347,
+ "meshes": 975,
+ "compositeStructures": 513,
+ "meshesMappedToUberon": 702,
+ "netterEntries": 3161,
+ "netterMapped": 805,
+ "netterUnmapped": 2356,
+ "netterRejected": 0,
+ "netterNotReviewed": 0,
+ "femaleOnlyStructures": 121,
+ "femaleOnlyWithMesh": 17,
+ "femaleMeshes": 45
+}

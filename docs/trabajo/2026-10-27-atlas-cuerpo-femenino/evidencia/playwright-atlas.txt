@@ -1,0 +1,370 @@
+
+Running 11 tests using 1 worker
+
+  ✘   1 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 375-claro (1.1m)
+  ✘   2 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 375-claro (1.0m)
+  ✘   3 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 768-claro (1.0m)
+  ✘   4 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 768-claro (1.0m)
+  ✘   5 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-claro (1.0m)
+  ✘   6 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-claro (1.0m)
+  ✘   7 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-oscuro (1.0m)
+  ✘   8 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-oscuro (1.0m)
+  ✘   9 [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» abre el útero desde la lista y lo resalta en el modelo (1.0m)
+  ✘  10 [chromium] › playwright/atlas-anatomico-3d.spec.ts:179:5 › la vista «Mujer» lista la vagina como ficha sin pieza 3D (1.0m)
+  ✘  11 [chromium] › playwright/atlas-anatomico-3d.spec.ts:195:5 › se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas (1.0m)
+
+
+  1) [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 375-claro 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:135:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-3cb24-su-ficha-—-male-—-375-claro-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-3cb24-su-ficha-—-male-—-375-claro-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-3cb24-su-ficha-—-male-—-375-claro-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-3cb24-su-ficha-—-male-—-375-claro-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 375-claro 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:135:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-94f40--ficha-—-female-—-375-claro-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-94f40--ficha-—-female-—-375-claro-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-94f40--ficha-—-female-—-375-claro-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-94f40--ficha-—-female-—-375-claro-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 768-claro 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:135:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-0639f-su-ficha-—-male-—-768-claro-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-0639f-su-ficha-—-male-—-768-claro-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-0639f-su-ficha-—-male-—-768-claro-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-0639f-su-ficha-—-male-—-768-claro-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 768-claro 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:135:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-49bc0--ficha-—-female-—-768-claro-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-49bc0--ficha-—-female-—-768-claro-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-49bc0--ficha-—-female-—-768-claro-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-49bc0--ficha-—-female-—-768-claro-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-claro 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:135:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-b4b9c-u-ficha-—-male-—-1440-claro-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-b4b9c-u-ficha-—-male-—-1440-claro-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-b4b9c-u-ficha-—-male-—-1440-claro-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-b4b9c-u-ficha-—-male-—-1440-claro-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-claro 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:135:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-94ed7-ficha-—-female-—-1440-claro-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-94ed7-ficha-—-female-—-1440-claro-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-94ed7-ficha-—-female-—-1440-claro-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-94ed7-ficha-—-female-—-1440-claro-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-oscuro 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:135:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-ea167--ficha-—-male-—-1440-oscuro-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-ea167--ficha-—-male-—-1440-oscuro-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-ea167--ficha-—-male-—-1440-oscuro-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-ea167--ficha-—-male-—-1440-oscuro-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-oscuro 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:135:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-68d75-icha-—-female-—-1440-oscuro-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-68d75-icha-—-female-—-1440-oscuro-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-68d75-icha-—-female-—-1440-oscuro-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-tocar-u-68d75-icha-—-female-—-1440-oscuro-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» abre el útero desde la lista y lo resalta en el modelo 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:163:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-la-vist-0a9d7-a-y-lo-resalta-en-el-modelo-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-la-vist-0a9d7-a-y-lo-resalta-en-el-modelo-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-la-vist-0a9d7-a-y-lo-resalta-en-el-modelo-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-la-vist-0a9d7-a-y-lo-resalta-en-el-modelo-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) [chromium] › playwright/atlas-anatomico-3d.spec.ts:179:5 › la vista «Mujer» lista la vagina como ficha sin pieza 3D 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:180:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-la-vist-7c851-ina-como-ficha-sin-pieza-3D-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-la-vist-7c851-ina-como-ficha-sin-pieza-3D-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-la-vist-7c851-ina-como-ficha-sin-pieza-3D-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-la-vist-7c851-ina-como-ficha-sin-pieza-3D-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) [chromium] › playwright/atlas-anatomico-3d.spec.ts:195:5 › se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      39 |   await pagina.getByTestId('login-password').fill('mockup');
+      40 |   await pagina.getByTestId('login-submit').click();
+    > 41 |   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+         |                ^
+      42 |   if (pagina.url().includes('/auth/organization')) {
+      43 |     await pagina.getByTestId('tenant-opcion').first().click();
+      44 |     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
+        at entrarComoMedica (/home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:41:16)
+        at /home/user/mantra-core-health/playwright/atlas-anatomico-3d.spec.ts:196:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-se-elig-8e976-e-resaltan-sus-relacionadas-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/atlas-anatomico-3d-se-elig-8e976-e-resaltan-sus-relacionadas-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/atlas-anatomico-3d-se-elig-8e976-e-resaltan-sus-relacionadas-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/atlas-anatomico-3d-se-elig-8e976-e-resaltan-sus-relacionadas-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11 failed
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 375-claro 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 375-claro 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 768-claro 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 768-claro 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-claro 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-claro 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-oscuro 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-oscuro 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» abre el útero desde la lista y lo resalta en el modelo 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:179:5 › la vista «Mujer» lista la vagina como ficha sin pieza 3D 
+    [chromium] › playwright/atlas-anatomico-3d.spec.ts:195:5 › se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas 
+exit=1

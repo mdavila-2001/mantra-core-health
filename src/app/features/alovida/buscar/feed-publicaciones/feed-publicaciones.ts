@@ -17,6 +17,7 @@ import { FeedBanner } from './feed-banner/feed-banner';
 import { FeedCrearPublicacion } from './feed-crear-publicacion/feed-crear-publicacion';
 import { FeedPerfilMini } from './feed-perfil-mini/feed-perfil-mini';
 import { FeedTendencias } from './feed-tendencias/feed-tendencias';
+import { Spinner } from '@shared/components/atoms/spinner/spinner';
 
 /** En qué estado está la pantalla, para el `@switch` de la plantilla. */
 type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
@@ -49,7 +50,7 @@ type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
  */
 @Component({
   selector: 'app-feed-publicaciones',
-  imports: [FeedBanner, FeedCrearPublicacion, FeedPerfilMini, FeedTendencias, PublicPostCard, ReportPost, RouterLink],
+  imports: [FeedBanner, FeedCrearPublicacion, FeedPerfilMini, FeedTendencias, PublicPostCard, ReportPost, RouterLink, Spinner],
   templateUrl: './feed-publicaciones.html',
   styleUrl: './feed-publicaciones.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

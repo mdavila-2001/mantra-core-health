@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Virus de la inmunodeficiencia humana</title>
+  <desc id="d">A la izquierda, el VIH acercándose a un linfocito CD4 para infectarlo y una gráfica en la que los CD4 caen sin tratamiento y se recuperan con él. A la derecha, las vías de transmisión, lo que no la transmite y las claves del control actual.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">El virus ataca a los linfocitos CD4</text>
+  <circle cx="130" cy="150" r="70" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="130" cy="150" r="28" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="130" y="154" text-anchor="middle" class="step" style="fill:var(--accent)">CD4</text>
+  <circle cx="200.0" cy="150.0" r="5" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <circle cx="179.5" cy="199.5" r="5" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <circle cx="130.0" cy="220.0" r="5" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <circle cx="80.5" cy="199.5" r="5" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <circle cx="60.0" cy="150.0" r="5" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <circle cx="80.5" cy="100.5" r="5" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <circle cx="130.0" cy="80.0" r="5" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <circle cx="179.5" cy="100.5" r="5" fill="var(--ok)" stroke="none" stroke-width="2"/>
+  <text x="130" y="244" text-anchor="middle" class="small">Linfocito CD4</text>
+  <circle cx="300" cy="110" r="26" fill="var(--violet-l)" stroke="var(--violet)" stroke-width="2"/>
+  <line x1="326.0" y1="110.0" x2="334.0" y2="110.0" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="321.0" y1="125.3" x2="327.5" y2="130.0" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="308.0" y1="134.7" x2="310.5" y2="142.3" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="292.0" y1="134.7" x2="289.5" y2="142.3" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="279.0" y1="125.3" x2="272.5" y2="130.0" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="274.0" y1="110.0" x2="266.0" y2="110.0" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="279.0" y1="94.7" x2="272.5" y2="90.0" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="292.0" y1="85.3" x2="289.5" y2="77.7" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="308.0" y1="85.3" x2="310.5" y2="77.7" stroke="var(--violet)" stroke-width="3"/>
+  <line x1="321.0" y1="94.7" x2="327.5" y2="90.0" stroke="var(--violet)" stroke-width="3"/>
+  <text x="300" y="162" text-anchor="middle" class="step" style="fill:var(--violet)">VIH</text>
+  <line x1="272" y1="124" x2="204" y2="140" stroke="var(--violet)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="40" y="280" width="360" height="80" rx="10" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <line x1="60" y1="340" x2="380" y2="340" stroke="var(--muted)" stroke-width="1"/>
+  <path d="M60 296 C120 296 160 300 200 310 C260 322 320 334 380 338" fill="none" stroke="var(--accent)" stroke-width="3"/>
+  <path d="M200 310 C240 296 300 294 380 296" fill="none" stroke="var(--ok)" stroke-width="3" stroke-dasharray="6 4"/>
+  <text x="70" y="354" class="small" style="fill:var(--accent)">CD4 sin tratamiento</text>
+  <text x="260" y="354" class="small" style="fill:var(--ok)">Con tratamiento</text>
+  <text x="220" y="390" text-anchor="middle" class="small">Sin tratamiento, las defensas caen</text>
+  <text x="220" y="408" text-anchor="middle" class="small" style="fill:var(--muted)">durante años hasta llegar al sida</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Transmisión y control</text>
+  <text x="456" y="74" class="step">Se transmite por</text>
+  <text x="464" y="98" class="small">• Relaciones sexuales sin protección</text>
+  <text x="464" y="120" class="small">• Compartir agujas o jeringas</text>
+  <text x="464" y="142" class="small">• De madre a hijo sin tratamiento</text>
+  <text x="456" y="180" class="step" style="fill:var(--muted)">No se transmite por</text>
+  <text x="456" y="202" class="small">besos, abrazos, cubiertos ni picaduras</text>
+  <rect x="456" y="228" width="304" height="194" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="472" y="254" class="step">Hoy es una infección crónica tratable</text>
+  <text x="480" y="280" class="small">• Prueba de detección: saber a tiempo</text>
+  <text x="480" y="302" class="small">• Tratamiento antirretroviral diario</text>
+  <text x="480" y="324" class="small">• Carga viral indetectable =</text>
+  <text x="480" y="346" class="small">• no se transmite por vía sexual</text>
+  <text x="480" y="368" class="small">• Preservativo y profilaxis (PrEP, PEP)</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -88,6 +88,8 @@ export class SpecialtyBrowser<T> {
 
   /** Si el consumidor sabe que hay más para traer: al pie, «Cargar más». */
   readonly hasMore = input(false);
+  /** The next batch is in flight: the button spins and ignores further clicks. */
+  readonly loadingMore = input(false);
 
   /**
    * Grupos plegables (refactor UX). Con el catálogo entero abierto, «Formularios

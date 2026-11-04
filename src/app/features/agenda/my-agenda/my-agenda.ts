@@ -10,14 +10,16 @@ import {
   PLATFORM_ID,
   signal,
   type OnInit,
+  type WritableSignal,
   type TemplateRef,
   untracked,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Spinner } from '@shared/components/atoms/spinner/spinner';
+import { DayLoad, type DayRead, type DayState } from './day-load';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { calculateSlots } from '../agenda-create/agenda-slots';
 import { concatMap, from, toArray } from 'rxjs';
-
 import { AuthService } from '../../../core/auth/auth.service';
 import { bookingChangeDeniedText } from '../../../core/data-access/scheduling/booking-change-denied';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -28,6 +30,7 @@ import type {
   AvailabilityExceptionTypeOption,
   Booking,
   PublishedTemplate,
+  PublishedTemplatePage,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { describeApiFailure, fieldErrorsOf } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -71,6 +74,7 @@ import { DayCard, type DayGap } from './day-card/day-card';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
+import { findMyAgenda } from '../my-live-agenda';
 import { AGENDA_CREATE_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
 import { statusLabelOf } from '../booking-status';
 import {
@@ -228,6 +232,7 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
   selector: 'app-my-agenda',
   imports: [
     Alert,
+    Spinner,
     Badge,
     AppButton,
     AppButtonLink,
@@ -564,10 +569,15 @@ export class MyAgenda implements OnInit {
    */
   protected readonly lecturasFallidas = signal<ReadonlyMap<LecturaDeAgenda, string>>(new Map());
 
-  /** Si falló alguna lectura del día: el día no afirma «No atiende» ni «No disponible». */
-  protected readonly dayLoadFailed = computed(() => {
+  /**
+   * What the day may claim. Loading another day wins over the previous day's failure; a
+   * same-day reload keeps it, so a retry never shows a taken slot as "No disponible".
+   */
+  protected readonly dayState = computed<DayState>(() => {
     const fallidas = this.lecturasFallidas();
-    return fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia');
+    if (this.dayLoad.loading() && this.dayLoad.freshDay()) return 'loading';
+    if (fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia')) return 'error';
+    return this.dayLoad.loading() ? 'loading' : 'ready';
   });
 
   /** Los mensajes del aviso, sin repetir: sin conexión, todas dicen lo mismo. */
@@ -630,6 +640,7 @@ export class MyAgenda implements OnInit {
   protected readonly diaAbierto = signal<Date | null>(null);
   protected readonly cuposDelDia = signal<readonly AgendaSlot[]>([]);
   protected readonly citasDelDia = signal<readonly Booking[]>([]);
+  protected readonly dayLoad = new DayLoad(this.cuposDelDia, this.citasDelDia);
 
   /* -- Las visitas de laboratorio del doctor (C-13) -------------------------- */
 
@@ -837,60 +848,52 @@ export class MyAgenda implements OnInit {
       return;
     }
 
-    // Después de la guarda, no antes: una sesión sin perfil profesional no va a
-    // ver ningún día, así que pedirle el catálogo al servidor es una consulta
-    // para nada. Lo fija una prueba que dice, con esas palabras, que esa cuenta
-    // «no pide nada al servidor».
+    // Después de la guarda: una sesión sin perfil profesional «no pide nada al
+    // servidor» (lo fija una prueba con esas palabras).
     this.cargarTipologias();
 
     this.estado.set(loading());
-    // El recurso se busca por el perfil: es el mismo criterio con el que el
-    // backend decide si la agenda es suya (`assertRecursoDelActor`).
-    this.scheduling.listResources({ tenantId }).subscribe({
-      next: (pagina) => {
-        const propio = pagina.items.find((r) => r.resourceRefId === perfil) ?? null;
-        this.recurso.set(propio);
-        if (propio === null) {
-          this.estado.set(SIN_AGENDA);
-          return;
+    const otras = this.auth.tenants().filter((t) => t !== tenantId);
+    findMyAgenda(this.scheduling, [tenantId, ...otras], perfil).subscribe({
+      next: (found) => {
+        if (found !== null && found.tenantId !== tenantId) {
+          this.auth.selectTenant(found.tenantId); // Another of the session's organizations.
+          if (this.auth.activeTenantId() === found.tenantId) return this.cargar();
         }
-        this.leerPlantilla(propio.id);
+        this.recurso.set(found?.resource ?? null);
+        if (found === null) this.estado.set(SIN_AGENDA);
+        else this.mostrarPlantillas(found.resource.id, found.page);
       },
       error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
     });
   }
 
-  private leerPlantilla(resourceId: string): void {
-    this.scheduling.listTemplates(resourceId).subscribe({
-      next: (pagina) => {
-        // El listado trae TODAS las plantillas del recurso, retiradas
-        // incluidas, ordenadas por creación. Tomar `items[0]` a secas mostraba
-        // un horario retirado como si fuera el vigente —basta con que sea el
-        // más reciente— y el médico que acababa de retirarlo veía que seguía
-        // atendiendo.
-        const vigente = pagina.items.find((plantilla) => !plantilla.retired);
-        this.historicos.set(pagina.items.filter((p) => p.retired));
+  private mostrarPlantillas(resourceId: string, pagina: PublishedTemplatePage): void {
+    // El listado trae TODAS las plantillas del recurso, retiradas
+    // incluidas, ordenadas por creación. Tomar `items[0]` a secas mostraba
+    // un horario retirado como si fuera el vigente —basta con que sea el
+    // más reciente— y el médico que acababa de retirarlo veía que seguía
+    // atendiendo.
+    const vigente = pagina.items.find((plantilla) => !plantilla.retired);
+    this.historicos.set(pagina.items.filter((p) => p.retired));
 
-        // Sin plantillas no es un fallo: el recurso existe y todavía no publicó
-        // horario. Es el estado de quien creó la agenda y no la completó.
-        if (vigente === undefined) {
-          this.estado.set(SIN_AGENDA);
-          return;
-        }
-        this.estado.set(ready(vigente));
-        if (this.mode() === 'calendar') {
-          this.abrirPosicionInicial();
-          // C-13 · las visitas de laboratorio del doctor, para que el día las
-          // muestre. Se leen una vez: son de la persona, no del día.
-          this.leerVisitasDeLaboratorio();
-        }
-        // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
-        // ninguno, y preguntarlo sería un viaje para confirmar un cero.
-        this.leerHastaCuandoHayCupos(resourceId);
-        this.leerBloqueosDeLaSemana(resourceId);
-      },
-      error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
-    });
+    // Sin plantillas no es un fallo: el recurso existe y todavía no publicó
+    // horario. Es el estado de quien creó la agenda y no la completó.
+    if (vigente === undefined) {
+      this.estado.set(SIN_AGENDA);
+      return;
+    }
+    this.estado.set(ready(vigente));
+    if (this.mode() === 'calendar') {
+      this.abrirPosicionInicial();
+      // C-13 · las visitas de laboratorio del doctor, para que el día las
+      // muestre. Se leen una vez: son de la persona, no del día.
+      this.leerVisitasDeLaboratorio();
+    }
+    // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
+    // ninguno, y preguntarlo sería un viaje para confirmar un cero.
+    this.leerHastaCuandoHayCupos(resourceId);
+    this.leerBloqueosDeLaSemana(resourceId);
   }
 
   /**
@@ -1935,38 +1938,35 @@ export class MyAgenda implements OnInit {
    */
   private cargarDia(fecha: Date): void {
     const recurso = this.recurso();
-    if (recurso === null) return;
+    // A slow write may ask for the day it started on; the day open now wins.
+    if (recurso === null || this.diaAbierto()?.toDateString() !== fecha.toDateString()) return;
 
     const desde = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
     const hasta = new Date(desde);
     hasta.setDate(hasta.getDate() + 1);
 
-    this.scheduling
-      .listSlots({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
-      .subscribe({
-        next: (pagina) => {
-          this.cuposDelDia.set(pagina.items);
-          this.lecturaRecuperada('cupos-del-dia');
-        },
-        error: (error: unknown) => {
-          this.cuposDelDia.set([]);
-          this.registrarFalloDeLectura('cupos-del-dia', error);
-        },
-      });
+    const query = { resourceId: recurso.id, from: desde, to: hasta, limit: 100 };
+    this.dayLoad.load(
+      desde,
+      this.scheduling.listSlots(query),
+      this.scheduling.searchBookings(query),
+      (slots, bookings) => {
+        this.applyRead('cupos-del-dia', slots, this.cuposDelDia);
+        this.applyRead('citas-del-dia', bookings, this.citasDelDia);
+        if (bookings.ok) this.traducirEstados(bookings.items);
+      },
+    );
+  }
 
-    this.scheduling
-      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
-      .subscribe({
-        next: (pagina: { items: readonly Booking[] }) => {
-          this.citasDelDia.set(pagina.items);
-          this.lecturaRecuperada('citas-del-dia');
-          this.traducirEstados(pagina.items);
-        },
-        error: (error: unknown) => {
-          this.citasDelDia.set([]);
-          this.registrarFalloDeLectura('citas-del-dia', error);
-        },
-      });
+  /** Applies one read of the day: its items, or the failure noted for the notice. */
+  private applyRead<T>(
+    read: LecturaDeAgenda,
+    result: DayRead<T>,
+    target: WritableSignal<readonly T[]>,
+  ): void {
+    target.set(result.ok ? result.items : []);
+    if (result.ok) this.lecturaRecuperada(read);
+    else this.registrarFalloDeLectura(read, result.error);
   }
 
   /**

@@ -13,12 +13,11 @@
 .libreta__cabecera {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
 }
 
-.libreta__titulo,
 .libreta__subtitulo {
   margin: 0;
   font-size: var(--fs-body);
@@ -41,10 +40,13 @@
   color: var(--st-error-fg);
 }
 
+/* Cards fill the tab width: `auto-fit` collapses empty tracks, so one address
+   spans the row instead of sitting at the left; the 30% floor caps it at three
+   columns. */
 .libreta__lista {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(30%, min(100%, 280px)), 1fr));
+  gap: var(--sp-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -52,8 +54,7 @@
 
 .libreta__item {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);

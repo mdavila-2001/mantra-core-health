@@ -1,4 +1,4 @@
-import { esPaciente, etiquetaDeRol, etiquetasDeRoles, rolesConEtiqueta } from './role-labels';
+import { esPaciente, etiquetaDeRol, etiquetasDeRoles, rolesConEtiqueta, vieneAAtenderse } from './role-labels';
 
 /**
  * El diccionario es lo que decide que un paciente lea «Paciente» y no
@@ -57,5 +57,15 @@ describe('esPaciente', () => {
     expect(esPaciente(['USER', 'PATIENT'])).toBe(true);
     expect(esPaciente(['USER', 'SECURITY_ADMIN'])).toBe(false);
     expect(esPaciente([])).toBe(false);
+  });
+});
+
+describe('personal de apoyo (SUPPORT_STAFF)', () => {
+  it('tiene etiqueta: la secretaria aparece en las insignias y listas de roles', () => {
+    expect(etiquetaDeRol('SUPPORT_STAFF')).toBe('Secretaria · personal de apoyo');
+  });
+
+  it('viene a trabajar aunque además sea paciente', () => {
+    expect(vieneAAtenderse(['USER', 'PATIENT', 'SUPPORT_STAFF'])).toBe(false);
   });
 });

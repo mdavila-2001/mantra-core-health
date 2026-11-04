@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cesárea: dónde se hace la incisión y sus fases</title>
+  <desc id="d">A la izquierda, el abdomen de una mujer embarazada de frente, con el útero, el bebé cabeza abajo y una línea discontinua horizontal sobre el pubis que indica la incisión habitual. A la derecha, cinco pasos en orden: anestesia, incisión, nacimiento del bebé, salida de la placenta y cierre por capas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#e3eef9; --skin:#efe3dc; --uterus:#e7b7a8; --baby:#f6d3b8; --cut:#c0392b; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#1f3047; --skin:#3a302c; --uterus:#7a4a40; --baby:#8f6a52; --cut:#ef7467; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .n { font-size: 15px; font-weight: 800; fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="360" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200" y="50" text-anchor="middle" class="title">Dónde se hace</text>
+  <!-- torso -->
+  <path d="M110 70 H290 C300 140 340 220 330 300 C322 360 290 400 260 420 H140 C110 400 78 360 70 300 C60 220 100 140 110 70 Z" fill="var(--skin)" stroke="var(--line)"/>
+  <!-- utero -->
+  <ellipse cx="200" cy="260" rx="105" ry="125" fill="var(--uterus)" opacity=".9"/>
+  <!-- bebé cabeza abajo -->
+  <ellipse cx="205" cy="230" rx="52" ry="70" fill="var(--baby)"/>
+  <circle cx="200" cy="320" r="36" fill="var(--baby)"/>
+  <text x="200" y="230" text-anchor="middle" class="small">Bebé</text>
+  <text x="200" y="152" text-anchor="middle" class="small">Útero</text>
+  <!-- incision -->
+  <path d="M135 392 C170 404 230 404 265 392" fill="none" stroke="var(--cut)" stroke-width="4" stroke-dasharray="8 5"/>
+  <text x="200" y="440" text-anchor="middle" class="lab" style="fill:var(--cut)">Incisión horizontal baja</text>
+
+  <rect x="396" y="20" width="384" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588" y="50" text-anchor="middle" class="title">Cómo transcurre</text>
+  <path d="M440 90 V410" stroke="var(--line)" stroke-width="4"/>
+  <g>
+    <circle cx="440" cy="92" r="16" fill="var(--accent)"/><text x="440" y="97" text-anchor="middle" class="n">1</text>
+    <text x="468" y="88" class="h">Anestesia</text><text x="468" y="106" class="small muted">Casi siempre regional: la madre está despierta</text>
+    <circle cx="440" cy="170" r="16" fill="var(--accent)"/><text x="440" y="175" text-anchor="middle" class="n">2</text>
+    <text x="468" y="166" class="h">Incisión</text><text x="468" y="184" class="small muted">Piel, pared abdominal y útero</text>
+    <circle cx="440" cy="248" r="16" fill="var(--cut)"/><text x="440" y="253" text-anchor="middle" class="n">3</text>
+    <text x="468" y="244" class="h">Nacimiento</text><text x="468" y="262" class="small muted">En pocos minutos; contacto piel con piel</text>
+    <circle cx="440" cy="326" r="16" fill="var(--accent)"/><text x="440" y="331" text-anchor="middle" class="n">4</text>
+    <text x="468" y="322" class="h">Placenta</text><text x="468" y="340" class="small muted">Se extrae después del bebé</text>
+    <circle cx="440" cy="404" r="16" fill="var(--accent)"/><text x="440" y="409" text-anchor="middle" class="n">5</text>
+    <text x="468" y="400" class="h">Cierre por capas</text><text x="468" y="418" class="small muted">Útero, pared y piel; es la fase más larga</text>
+  </g>
+</svg>

@@ -17,7 +17,6 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
@@ -25,21 +24,29 @@ import type { RowAction } from '../../../shared/components/molecules/row-actions
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
-import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
+import type { ColumnDef, SortState } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
 
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyCategory } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
+import { sortRows, type SortAccessors } from '../catalog/catalog-sort';
+import { ENTITY_COLUMNS } from '../import/entity-import/entity-csv';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 
 /** Largo máximo del nombre de una categoría (el mismo tope del servidor). */
 const NAME_MAX_LENGTH = 60;
+
+const SORT_ACCESSORS: SortAccessors<PharmacyCategory> = {
+  name: (category) => category.name,
+  count: (category) => category.productCount,
+};
 
 const ROW_ACTIONS: readonly RowAction[] = [
   { code: 'rename', label: 'Renombrar', icon: 'edit' },
@@ -63,7 +70,6 @@ const ROW_ACTIONS: readonly RowAction[] = [
   imports: [
     Alert,
     AppButton,
-    Card,
     ContentDialog,
     DataTable,
     FormField,
@@ -74,7 +80,7 @@ const ROW_ACTIONS: readonly RowAction[] = [
     Select,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-categories.html',
   styleUrl: './pharmacy-categories.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,8 +93,13 @@ export class PharmacyCategories {
   private readonly pharmacy = inject(PharmacyClient);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly csv = inject(CsvExportService);
 
   protected readonly categories = signal<ViewState<readonly PharmacyCategory[]>>(loading());
+  protected readonly sort = signal<SortState | null>(null);
+  protected readonly sortedCategories = computed(() =>
+    mapData(this.categories(), (list) => sortRows(list, this.sort(), SORT_ACCESSORS)),
+  );
   /** Un mensaje del servidor que la pantalla tiene que dejar a la vista (409, 403…). */
   protected readonly notice = signal<string | null>(null);
 
@@ -109,8 +120,8 @@ export class PharmacyCategories {
   private readonly actionsCell = viewChild.required<TemplateRef<{ $implicit: PharmacyCategory }>>('actionsCell');
 
   protected readonly columns = computed<readonly ColumnDef<PharmacyCategory>[]>(() => [
-    { key: 'name', header: 'Categoría', priority: 1, cell: this.nameCell() },
-    { key: 'count', header: 'Productos', priority: 1, align: 'end', cell: this.countCell() },
+    { key: 'name', header: 'Categoría', priority: 1, sortable: true, cell: this.nameCell() },
+    { key: 'count', header: 'Productos', priority: 1, align: 'end', sortable: true, cell: this.countCell() },
     { key: 'actions', header: 'Acciones', priority: 1, align: 'end', sticky: 'end', cell: this.actionsCell() },
   ]);
 
@@ -141,6 +152,19 @@ export class PharmacyCategories {
       error: (error: unknown) =>
         this.categories.set(errorToViewState<readonly PharmacyCategory[]>(error)),
     });
+  }
+
+  /**
+   * Descarga las categorías con el encabezado de su importación (`nombre`):
+   * se editan en una planilla y se vuelven a subir desde «Importación».
+   */
+  protected exportCsv(): void {
+    const [name] = ENTITY_COLUMNS.categories;
+    this.csv.download(
+      dataOf(this.sortedCategories()) ?? [],
+      [{ header: name!.header, value: (category) => category.name }],
+      'categorias-de-la-farmacia.csv',
+    );
   }
 
   /* ─── Crear y renombrar ───────────────────────────────────────────────── */

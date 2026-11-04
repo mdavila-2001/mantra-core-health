@@ -402,9 +402,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: var(--sp-6);
-  margin-block-end: var(--sp-6);
-  padding: var(--sp-8) var(--sp-6);
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
   overflow: hidden;
   border-radius: var(--r-2xl);
   background:
@@ -416,14 +416,14 @@
 
 @media (min-width: 780px) {
   .app-shell--paciente app-patient-home .portada {
-    grid-template-columns: minmax(0, 1fr) 15rem;
-    padding: var(--sp-10) var(--sp-10);
+    grid-template-columns: minmax(0, 1fr) 7rem;
+    padding: var(--sp-4) var(--sp-6);
   }
 }
 
 .app-shell--paciente app-patient-home .portada__texto {
   display: grid;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   min-inline-size: 0;
 }
 
@@ -447,7 +447,7 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(var(--fs-h1), 4vw, var(--fs-display));
+  font-size: clamp(var(--fs-h2), 3vw, var(--fs-h1));
   line-height: 1.15;
   letter-spacing: -0.02em;
   /* Tinta (27/10/2026, «está muy azul»): el acento lo pone el nombre. */
@@ -463,9 +463,8 @@
 
 .app-shell--paciente app-patient-home .portada__bajada {
   margin: 0;
-  max-inline-size: 52ch;
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
   color: var(--text-secondary);
 }
 
@@ -473,7 +472,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3);
-  margin-block-start: var(--sp-2);
+  margin-block-start: var(--sp-1);
 }
 
 .app-shell--paciente app-patient-home .portada__recorrido {
@@ -487,7 +486,7 @@
   position: relative;
   display: none;
   place-items: center;
-  inline-size: 13rem;
+  inline-size: 6.5rem;
   aspect-ratio: 1;
   justify-self: center;
 }
@@ -507,24 +506,24 @@
   z-index: 1;
   display: grid;
   place-items: center;
-  inline-size: 9.5rem;
+  inline-size: 4.75rem;
   aspect-ratio: 1;
   border-radius: var(--r-full);
   background: #fff;
   border: 1px solid var(--c-aqua-100);
   box-shadow:
-    0 18px 40px -18px rgb(11 85 126 / 45%),
-    0 0 0 10px rgb(255 255 255 / 55%);
+    0 10px 22px -12px rgb(11 85 126 / 45%),
+    0 0 0 5px rgb(255 255 255 / 55%);
 }
 
 .app-shell--paciente app-patient-home .portada__sello img {
-  inline-size: 6rem;
+  inline-size: 3rem;
   block-size: auto;
   translate: 0 4%;
 }
 
 .app-shell--paciente app-patient-home .portada__anillo {
-  inline-size: 9.5rem;
+  inline-size: 4.75rem;
   aspect-ratio: 1;
   border-radius: var(--r-full);
   border: 2px solid var(--c-aqua-300);

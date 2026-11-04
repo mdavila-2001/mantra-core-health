@@ -10,8 +10,8 @@
 
     Todas las rutas cuelgan de `/diagnostics/lab/…` y no llevan el id del
     laboratorio: lo decide el servidor con el tenant del contexto
-    (`X-Tenant-Id`), igual que la recepción de muestras. La API real no tiene
-    ninguna (P52): las responde sólo el simulador.
+    (`X-Tenant-Id`), igual que la recepción de muestras. The real API publishes
+    them (04/11/2026); the simulator mirrors them for `development,demo`.
     ========================================================================== */
 
 /** En qué punto de su vida está un servicio del catálogo. */
@@ -207,12 +207,12 @@ export interface LabResultFilePage {
   readonly totalBytes: number;
 }
 
-/** Lo que se declara al empezar una subida. No hay tope de tamaño. */
+/** Declared when an upload starts: the API requires the order and allows 10 MB of pdf/image/docx/xlsx/txt (422). */
 export interface LabResultUploadStart {
   readonly fileName: string;
   readonly contentType: string;
   readonly sizeBytes: number;
-  readonly orderId?: string | null;
+  readonly orderId: string;
   readonly note?: string | null;
   /** Avisar al médico y al paciente cuando termine. */
   readonly notify?: boolean;
@@ -291,5 +291,8 @@ export interface LabOrder {
 
 export interface LabOrderPage {
   readonly items: readonly LabOrder[];
+  /** The lab's TOTAL orders, not `items.length`. */
   readonly count: number;
+  /** Cursor of the next page; absent on the last one. */
+  readonly nextCursor?: string;
 }

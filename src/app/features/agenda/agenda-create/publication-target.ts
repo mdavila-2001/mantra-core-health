@@ -126,6 +126,21 @@ export class PublicationAttempt {
     return this.target()?.scope;
   }
 
+  /**
+   * Makes the organization where the agenda was published the session's active one.
+   *
+   * The schedule screen reads with the active organization only, and the API answers
+   * 404 for a resource of another one. Without this, publishing in an affiliated
+   * organization left «Consultas» showing «No encontramos lo que busca».
+   */
+  activateIn(auth: {
+    activeTenantId(): string | null;
+    selectTenant(tenantId: string): void;
+  }): void {
+    const tenantId = this.target()?.tenantId;
+    if (tenantId !== undefined && tenantId !== auth.activeTenantId()) auth.selectTenant(tenantId);
+  }
+
   /** Se cambió de organización o de agenda: nada de lo hecho vale para la nueva. */
   reset(): void {
     this.target.set(null);

@@ -581,13 +581,13 @@ export function calificacionDe(v: SimulatedShowcase): { average: number | null; 
 /* ---- grupos y temas ------------------------------------------------------- */
 
 export const THEMES = [
-  { id: uuid('topic-cardio'), code: 'CARDIO', name: 'Cardiología', specialtyConceptId: SPECIALTY['CARDIOLOGIA']! },
-  { id: uuid('topic-pedia'), code: 'PEDIA', name: 'Pediatría', specialtyConceptId: SPECIALTY['PEDIATRIA']! },
-  { id: uuid('topic-diabetes'), code: 'DIABETES', name: 'Diabetes' },
-  { id: uuid('topic-saludmental'), code: 'MENTAL', name: 'Salud mental', specialtyConceptId: SPECIALTY['PSIQUIATRIA']! },
-  { id: uuid('topic-nutricion'), code: 'NUTRI', name: 'Nutrición', specialtyConceptId: SPECIALTY['NUTRICION']! },
-  { id: uuid('topic-embarazo'), code: 'EMBARAZO', name: 'Embarazo y maternidad', specialtyConceptId: SPECIALTY['GINECOLOGIA_OBSTETRICIA']! },
-];
+  { id: uuid('topic-cardio'), code: 'CARDIO', name: 'Cardiología', parentTopicId: uuid('topic-cat-clinica'), specialtyConceptId: SPECIALTY['CARDIOLOGIA']! },
+  { id: uuid('topic-pedia'), code: 'PEDIA', name: 'Pediatría', parentTopicId: uuid('topic-cat-ninez'), specialtyConceptId: SPECIALTY['PEDIATRIA']! },
+  { id: uuid('topic-diabetes'), code: 'DIABETES', name: 'Diabetes', parentTopicId: uuid('topic-cat-clinica') },
+  { id: uuid('topic-saludmental'), code: 'MENTAL', name: 'Salud mental', parentTopicId: uuid('topic-cat-mental'), specialtyConceptId: SPECIALTY['PSIQUIATRIA']! },
+  { id: uuid('topic-nutricion'), code: 'NUTRI', name: 'Nutrición', parentTopicId: uuid('topic-cat-disciplinas'), specialtyConceptId: SPECIALTY['NUTRICION']! },
+  { id: uuid('topic-embarazo'), code: 'EMBARAZO', name: 'Embarazo y maternidad', parentTopicId: uuid('topic-cat-ninez'), specialtyConceptId: SPECIALTY['GINECOLOGIA_OBSTETRICIA']! },
+  ...([['clinica', 'CAT_MEDICINA_CLINICA', 'Medicina clínica'], ['ninez', 'CAT_MUJER_Y_NINEZ', 'Mujer y niñez'], ['mental', 'CAT_NEUROCIENCIAS_SALUD_MENTAL', 'Neurociencias y salud mental'], ['disciplinas', 'CAT_DISCIPLINAS_SALUD', 'Otras disciplinas de salud'], ['propios', 'CAT_TEMAS_PROPIOS', 'Temas propios']] as const).map(([k, code, name]) => ({ id: uuid(`topic-cat-${k}`), code, name }))];
 
 export interface SimulatedGroup {
   readonly id: string;
@@ -653,8 +653,11 @@ export interface SimulatedMessage {
   readonly attachmentFileId: string | null;
   readonly isEdited: boolean;
   readonly sentAt: string;
-  /** `STICKER` si lo mandó como sticker propio; ausente = texto o adjunto. */
-  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  /**
+   * `STICKER` si lo mandó como sticker propio; `AUTO_REPLY_AI` si es una
+   * respuesta automática que redactó la IA. Ausente = texto o adjunto.
+   */
+  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER' | 'AUTO_REPLY_AI';
   /** Reacciones por emoji. Un perfil aparece en una sola. */
   readonly reactions?: readonly { readonly emoji: string; readonly profileIds: readonly string[] }[];
 }

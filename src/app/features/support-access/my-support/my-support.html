@@ -1,18 +1,9 @@
-<app-page-header
-  title="Mis accesos"
-  subtitle="En qué organizaciones ayuda y qué puede hacer en cada una. Si necesita más, pídalo desde acá: lo decide la organización."
-/>
-
-<div class="mi-actividad">
-  <a
-    app-button
-    variant="outline"
-    size="sm"
-    routerLink="/my-support/activity"
-    data-testid="mi-actividad-enlace"
-    >Ver mi actividad</a
-  >
-</div>
+@if (!embedded()) {
+  <app-page-header title="Mis accesos" subtitle="En qué organizaciones ayuda y qué puede hacer en cada una. Si necesita más, pídalo desde acá: lo decide la organización." />
+  <div class="mi-actividad">
+    <a app-button variant="outline" size="sm" routerLink="/my-support/activity" data-testid="mi-actividad-enlace">Ver mi actividad</a>
+  </div>
+}
 
 <app-card class="canje" padding="lg" data-testid="canje-card">
   <h2 class="seccion__titulo">Unirme con un código o QR</h2>
@@ -21,24 +12,17 @@
   </p>
   <form class="canje__form" (submit)="$event.preventDefault(); canjear()" novalidate>
     <app-form-field label="Código de invitación">
-      <app-input
-        [value]="codigo()"
-        (valueChange)="codigo.set('' + ($event ?? ''))"
-        placeholder="Pegue aquí el código completo"
-        ariaLabel="Código de invitación"
-        data-testid="canje-codigo"
-      />
+      <app-input [value]="codigo()" (valueChange)="codigo.set('' + ($event ?? ''))" placeholder="Pegue aquí el código completo"
+        ariaLabel="Código de invitación" data-testid="canje-codigo" />
     </app-form-field>
-    <button
-      app-button
-      type="submit"
-      [isLoading]="canjeando()"
-      [disabled]="canjeando() || codigo().trim() === ''"
-      data-testid="canje-enviar"
-    >
-      Unirme
-    </button>
+    <div class="canje__acciones">
+      <button app-button type="submit" [isLoading]="canjeando()" [disabled]="canjeando() || codigo().trim() === ''"
+        data-testid="canje-enviar">Unirme</button>
+      <button app-button type="button" variant="outline" [attr.aria-expanded]="leyendoQr()"
+        (clicked)="leyendoQr.set(!leyendoQr())" data-testid="canje-leer-qr">{{ leyendoQr() ? 'Cerrar lector' : 'Leer QR' }}</button>
+    </div>
   </form>
+  @if (leyendoQr()) { <app-team-qr-tool (codeScanned)="canjear($event)" /> }
   @if (resultadoDelCanje(); as r) {
     <app-alert
       [tone]="r.tono"

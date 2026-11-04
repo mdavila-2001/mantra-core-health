@@ -450,7 +450,7 @@ describe('ChatStore', () => {
         );
 
       expect(store.enOrden()[0].bodyText).toBe('Original');
-      expect(store.error()).toBe('No pudimos editar el mensaje. Intente de nuevo. (Código de soporte: corr-500)');
+      expect(store.error()).toBe('No pudimos editar el mensaje. Intente de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-500)');
       expect(store.error()).not.toContain('5 minutos');
     });
 
@@ -762,7 +762,7 @@ describe('ChatStore', () => {
 
       expect(json).toBeNull();
       expect(store.exportando()).toBe(false);
-      expect(store.error()).toBe('No pudimos descargar la conversación. (Código de soporte: corr-exp)');
+      expect(store.error()).toBe('No pudimos descargar la conversación. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-exp)');
     });
   });
 
@@ -1096,7 +1096,7 @@ describe('ChatStore', () => {
 
     expect(store.bloqueados()).toEqual([]);
     expect(store.bloqueosFallaron()).toBe(true);
-    expect(store.error()).toBe('No pudimos leer las personas que bloqueó. (Código de soporte: corr-blk)');
+    expect(store.error()).toBe('No pudimos leer las personas que bloqueó. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-blk)');
   });
 
   it('un envío que falla dice por qué, y reintentar limpia el aviso', () => {

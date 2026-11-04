@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Otitis externa en el conducto auditivo</title>
+  <desc id="d">Corte del oído con la oreja, el conducto auditivo externo rojo e hinchado, el tímpano y el oído medio por detrás. A la derecha, las causas frecuentes, como el agua retenida o los hisopos, y las medidas de prevención y tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Otitis externa: inflamación del conducto auditivo</text>
+  <rect x="20" y="60" width="440" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="240.0" y="88" text-anchor="middle" class="title">Corte del oído</text>
+  <path d="M80 130 C40 170 40 330 90 370 C110 350 104 300 120 280 L120 220 C110 190 110 150 80 130 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="120" y="220" width="200" height="60" rx="6" fill="var(--skin)" stroke="var(--muted)"/>
+  <rect x="124" y="228" width="192" height="44" rx="20" fill="var(--red)" stroke="none" opacity=".4"/>
+  <path d="M320 210 L326 290" fill="none" stroke="var(--ink)" stroke-width="4"/>
+  <path d="M330 250 C350 230 380 230 400 250 C420 270 400 300 380 290" fill="none" stroke="var(--pur)" stroke-width="5"/>
+  <text x="70" y="110" text-anchor="middle" class="small b">Oreja</text>
+  <text x="220" y="206" text-anchor="middle" class="small b">Conducto inflamado</text>
+  <text x="220" y="300" text-anchor="middle" class="small">piel roja e hinchada</text>
+  <line x1="323" y1="290" x2="330" y2="330" stroke="var(--muted)" stroke-width="1"/>
+  <text x="330" y="346" text-anchor="middle" class="small">Tímpano</text>
+  <text x="380" y="220" text-anchor="middle" class="small muted">Oído medio</text>
+  <text x="100" y="400" class="small b">Dolor al tocar o tirar de la oreja</text>
+  <text x="100" y="418" class="small">Picor, secreción, oído tapado</text>
+  <rect x="476" y="60" width="304" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="628.0" y="88" text-anchor="middle" class="h">Causas</text>
+  <text x="494" y="110" class="small">• Agua retenida al nadar</text>
+  <text x="494" y="138" class="small">• Hisopos o rascado</text>
+  <text x="494" y="166" class="small">• Audífonos o tapones</text>
+  <text x="494" y="194" class="small">• Piel con eccema</text>
+  <rect x="476" y="276" width="304" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="628.0" y="304" text-anchor="middle" class="h">Prevención y tratamiento</text>
+  <text x="494" y="324" class="small">• Gotas que indique el médico</text>
+  <text x="494" y="350" class="small">• Secar el oído tras el baño</text>
+  <text x="494" y="376" class="small">• No introducir hisopos</text>
+  <text x="494" y="402" class="small">• Evitar agua hasta curar</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

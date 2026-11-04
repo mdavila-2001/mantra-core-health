@@ -1,6 +1,7 @@
 import { type Observable, map } from 'rxjs';
 
 import type { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
+import type { TenantScope } from '../../../core/data-access/scheduling/tenant-scope';
 import type {
   AgendaSlot,
   SlotHold,
@@ -35,12 +36,17 @@ export function releerHoraFlexible(
   resourceId: string,
   desde: Date,
   margenMs: number,
+  scope?: TenantScope,
 ): Observable<AgendaSlot | null> {
   return scheduling
-    .getFlexibleAvailability(resourceId, {
-      from: new Date(desde.getTime() - margenMs),
-      to: new Date(desde.getTime() + margenMs),
-    })
+    .getFlexibleAvailability(
+      resourceId,
+      {
+        from: new Date(desde.getTime() - margenMs),
+        to: new Date(desde.getTime() + margenMs),
+      },
+      scope,
+    )
     .pipe(
       map((disponibilidad) => {
         const hora = disponibilidad.items.find(
@@ -71,9 +77,10 @@ export function retenerHoraFlexible(
   resourceId: string,
   inicio: Date,
   pacienteId: string,
+  scope?: TenantScope,
 ): Observable<SlotHold> {
   return scheduling
-    .placeFlexibleHold(resourceId, { startAt: inicio, patientProfileId: pacienteId })
+    .placeFlexibleHold(resourceId, { startAt: inicio, patientProfileId: pacienteId }, scope)
     .pipe(
       map((retencion) => ({
         id: retencion.id,

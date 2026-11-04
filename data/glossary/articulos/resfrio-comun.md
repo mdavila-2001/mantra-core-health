@@ -1,5 +1,6 @@
 ---
 slug: resfrio-comun
+image: resfrio-comun.svg | Infección viral de nariz y garganta que se resuelve sola en una a dos semanas. | Perfil de cabeza con la nariz y la faringe ocupadas por virus. A la derecha, la evolución habitual por días hasta la resolución, las medidas de alivio y los signos que obligan a consultar.
 ---
 
 ## [definition] Introducción

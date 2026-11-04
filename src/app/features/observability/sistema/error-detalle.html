@@ -1,0 +1,109 @@
+<section class="det" aria-labelledby="det-t" data-testid="obs-error-detalle">
+  <header class="det__cab">
+    <h2 class="obs-seccion__titulo" id="det-t">Detalle del grupo de errores</h2>
+    <button app-button type="button" variant="ghost" size="sm" (clicked)="cerrar.emit()" data-testid="obs-error-cerrar">Cerrar detalle</button>
+  </header>
+
+  <app-view-state-host [state]="detalle.state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (datos(); as d) {
+      <div class="det__cuerpo">
+        <div class="det__resumen">
+          <p class="det__titulo">{{ d.title }}</p>
+          <p class="obs-chip" [attr.data-tono]="estadoDe[d.state].tono" data-testid="obs-error-estado">
+            <span aria-hidden="true">{{ estadoDe[d.state].glifo }}</span> {{ estadoDe[d.state].texto }}
+          </p>
+          <div class="det__heroe">
+            <span class="det__cifra" data-testid="obs-error-ocurrencias">{{ entero(d.occurrencesTotal) }}</span>
+            <span class="obs-nota">ocurrencias en total · {{ entero(d.occurrences24h) }} en las últimas 24 h</span>
+          </div>
+          <dl class="obs-dl">
+            <dt>Operación</dt><dd><code class="obs-mono">{{ d.method ?? sinDato }} {{ d.route ?? sinDato }}</code></dd>
+            <dt>Código</dt><dd>{{ d.httpStatus ?? sinDato }} · {{ d.code }}{{ d.reason ? ' · ' + d.reason : '' }}</dd>
+            <dt>Módulo</dt><dd>{{ d.moduleCode }}</dd>
+            <dt>Origen</dt><dd>{{ d.source }}{{ d.exceptionType ? ' · ' + d.exceptionType : '' }}</dd>
+            <dt>Primera vez</dt><dd>{{ fecha(d.firstSeenAt) }}</dd>
+            <dt>Última vez</dt><dd>{{ fecha(d.lastSeenAt) }}</dd>
+            <dt>Personas afectadas (24 h)</dt><dd>{{ afectados(d) }}</dd>
+            @if (d.resolutionNote) {
+              <dt>Motivo de resolución</dt><dd>{{ d.resolutionNote }}</dd>
+            }
+          </dl>
+          @if (d.sampleMessage) {
+            <p class="obs-nota"><strong>Mensaje de ejemplo (ya sin datos personales):</strong></p>
+            <pre class="obs-sql" data-testid="obs-error-mensaje">{{ d.sampleMessage }}</pre>
+          }
+        </div>
+
+        <div class="obs-grid">
+          @if (specSerie(); as s) {
+            <app-chart-panel [spec]="s" [plano]="true" [refrescando]="detalle.refrescando()" />
+          }
+          @if (specModulos(); as s) {
+            <app-chart-panel [spec]="s" [plano]="true" [refrescando]="detalle.refrescando()" />
+          }
+        </div>
+
+        <section class="obs-seccion" aria-labelledby="det-ev-t">
+          <h3 class="obs-seccion__titulo" id="det-ev-t">Últimos eventos</h3>
+          @if (d.recentEvents.length === 0) {
+            <p class="obs-nota" data-testid="obs-error-sin-eventos">Este grupo no tiene eventos guardados (superó el tope de muestreo o los eventos individuales no se guardan para su código).</p>
+          } @else {
+            <div class="det__tabla" role="region" aria-label="Últimos eventos del grupo" tabindex="0">
+              <table class="det__t" data-testid="obs-error-eventos">
+                <thead>
+                  <tr><th scope="col">Cuándo</th><th scope="col">requestId</th><th scope="col">Código HTTP</th><th scope="col">Duración</th><th scope="col">Instancia</th></tr>
+                </thead>
+                <tbody>
+                  @for (e of d.recentEvents; track e.id) {
+                    <tr>
+                      <td>{{ fecha(e.occurredAt) }}</td>
+                      <td>
+                        @if (e.requestId; as r) {
+                          <code class="obs-mono" data-testid="obs-error-request-id">{{ r }}</code>
+                          <button type="button" class="obs-copiar" (click)="copiar(r)" [attr.aria-label]="'Copiar requestId ' + r">Copiar</button>
+                        } @else {
+                          {{ sinDato }}
+                        }
+                      </td>
+                      <td>{{ e.httpStatus ?? sinDato }}</td>
+                      <td>{{ duracion(e.durationMs) }}</td>
+                      <td><code class="obs-mono">{{ e.instanceId.slice(0, 8) }}</code></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+
+        @if (puedeCambiar()) {
+          <section class="obs-seccion" aria-labelledby="det-cam-t">
+            <h3 class="obs-seccion__titulo" id="det-cam-t">Cambiar el estado</h3>
+            <p class="obs-seccion__sub">Resolver o ignorar exige un motivo (mínimo 3 caracteres). Queda auditado.</p>
+            <form class="obs-barra" (submit)="$event.preventDefault(); guardar()" data-testid="obs-error-form">
+              <app-form-field label="Nuevo estado">
+                <app-select [options]="opciones()" [value]="destino()" (valueChange)="destino.set($event)" placeholder="Elegir estado" ariaLabel="Nuevo estado del grupo" />
+              </app-form-field>
+              @if (pideNota()) {
+                <app-form-field label="Motivo" class="det__motivo">
+                  <app-textarea [value]="nota()" (valueChange)="nota.set($event)" [rows]="2" [maxLength]="1000" placeholder="Qué se hizo o por qué se ignora" />
+                </app-form-field>
+              }
+              <button app-button type="submit" variant="primary" size="md" [disabled]="!puedeEnviar()" [isLoading]="enviando()" data-testid="obs-error-guardar">Guardar estado</button>
+            </form>
+            @if (resultado(); as r) {
+              <app-alert [tone]="r.tono" data-testid="obs-error-resultado">
+                {{ r.texto }}
+                @if (r.conflicto) {
+                  <div alert-actions><button app-button size="sm" variant="secondary" (clicked)="cargar()">Recargar</button></div>
+                }
+              </app-alert>
+            }
+          </section>
+        } @else {
+          <p class="obs-nota" data-testid="obs-error-solo-lectura">Su rol puede leer los errores, pero no cambiar su estado.</p>
+        }
+      </div>
+    }
+  </app-view-state-host>
+</section>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q512285
+image: wikidata-especialidad-q512285.svg | La medicina ambiental estudia cómo el entorno afecta a la salud humana. | Silueta humana rodeada de seis factores ambientales, aire, agua, alimentos, químicos, ruido y calor, con flechas hacia el cuerpo, junto a los problemas que atiende y su forma de trabajar.
 ---
 
 ## [definition] Introducción

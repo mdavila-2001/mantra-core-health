@@ -1,0 +1,62 @@
+<svg:defs>
+  @for (tono of tonos; track tono) {
+    <!-- The render's light and shade (luminance 0.60–0.89 on this plaster) stretched to
+         0.52–1 (a floor: no dirty rims), times the tint, plus a sheen where the light hits: paint on the volume. -->
+    <svg:filter [attr.id]="uid + '-' + tono" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+      <svg:feColorMatrix type="saturate" values="0" result="gris" />
+      <svg:feComponentTransfer in="gris" result="volumen">
+        <svg:feFuncR type="linear" slope="1.7" intercept="-0.5" />
+        <svg:feFuncG type="linear" slope="1.7" intercept="-0.5" />
+        <svg:feFuncB type="linear" slope="1.7" intercept="-0.5" />
+      </svg:feComponentTransfer>
+      <svg:feFlood [attr.class]="'body-map-pintura__tinta body-map-pintura__tinta--' + tono" result="tinta" />
+      <svg:feBlend in="tinta" in2="volumen" mode="multiply" result="pintado" />
+      <svg:feComponentTransfer in="gris" result="brillo">
+        <svg:feFuncR type="linear" slope="4" intercept="-3.3" />
+        <svg:feFuncG type="linear" slope="4" intercept="-3.3" />
+        <svg:feFuncB type="linear" slope="4" intercept="-3.3" />
+      </svg:feComponentTransfer>
+      <svg:feBlend in="brillo" in2="pintado" mode="screen" result="lustre" />
+      <svg:feComposite in="lustre" in2="SourceAlpha" operator="in" />
+    </svg:filter>
+  }
+  <svg:clipPath [attr.id]="uid + '-recorte-elegida'">
+    @if (dElegida(); as d) {
+      <svg:path [attr.d]="d" fill-rule="evenodd" />
+    }
+  </svg:clipPath>
+  <svg:clipPath [attr.id]="uid + '-recorte-marcada'">
+    @for (d of dsMarcadas(); track $index) {
+      <svg:path [attr.d]="d" fill-rule="evenodd" />
+    }
+  </svg:clipPath>
+</svg:defs>
+
+@if (dsMarcadas().length > 0) {
+  <svg:image
+    class="body-map-pintura__capa body-map-pintura__capa--marcada"
+    data-testid="body-map-pintura-marcada"
+    [attr.href]="fuente()"
+    x="0"
+    y="0"
+    [attr.width]="caja()[0]"
+    [attr.height]="caja()[1]"
+    preserveAspectRatio="xMidYMid meet"
+    [attr.clip-path]="'url(#' + uid + '-recorte-marcada)'"
+    [attr.filter]="'url(#' + uid + '-marcada)'"
+  />
+}
+@if (dElegida()) {
+  <svg:image
+    class="body-map-pintura__capa body-map-pintura__capa--elegida"
+    data-testid="body-map-pintura-elegida"
+    [attr.href]="fuente()"
+    x="0"
+    y="0"
+    [attr.width]="caja()[0]"
+    [attr.height]="caja()[1]"
+    preserveAspectRatio="xMidYMid meet"
+    [attr.clip-path]="'url(#' + uid + '-recorte-elegida)'"
+    [attr.filter]="'url(#' + uid + '-elegida)'"
+  />
+}

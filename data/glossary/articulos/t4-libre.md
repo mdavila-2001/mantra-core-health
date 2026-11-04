@@ -1,5 +1,6 @@
 ---
 slug: t4-libre
+image: t4-libre.svg | La T4 libre es la parte de la hormona tiroidea que no va unida a proteínas. | Eje entre la hipófisis y la tiroides con la TSH y la T4, moléculas de T4 unidas a proteínas y otras libres en la sangre, y un tubo con los usos de la prueba.
 ---
 
 ## [definition] Introducción

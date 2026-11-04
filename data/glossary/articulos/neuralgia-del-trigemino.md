@@ -1,5 +1,6 @@
 ---
 slug: neuralgia-del-trigemino
+image: neuralgia-del-trigemino.svg | El dolor sigue las tres ramas del nervio trigémino en un lado de la cara. | Cara de frente con las tres ramas del nervio trigémino en colores y una descripción del dolor en descargas con sus desencadenantes.
 ---
 
 ## [definition] Introducción

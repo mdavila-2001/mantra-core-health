@@ -1,5 +1,6 @@
 ---
 slug: sincope
+image: sincope.svg | Una bajada breve del flujo de sangre al cerebro provoca una pérdida de conciencia transitoria. | Secuencia vertical: cae la presión o el pulso, llega menos sangre al cerebro, se pierde la conciencia y hay una recuperación rápida. A la derecha, los tipos vasovagal, ortostático y cardíaco y los signos de alarma.
 ---
 
 ## [definition] Introducción

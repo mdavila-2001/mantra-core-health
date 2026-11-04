@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Qué mide el cortisol sérico</title>
+  <desc id="d">A la izquierda, el eje hipotálamo, hipófisis y glándulas suprarrenales sobre los riñones, con la retroalimentación del cortisol. Arriba a la derecha, una curva que muestra el máximo al despertar y el mínimo nocturno. Abajo, un tubo de sangre y los trastornos que ayuda a evaluar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Cortisol: hormona de las glándulas suprarrenales</text>
+  <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="170.0" y="88" text-anchor="middle" class="h">El eje que lo regula</text>
+  <rect x="70" y="104" width="200" height="50" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="170.0" y="126.0" text-anchor="middle" class="lab b">Hipotálamo</text>
+  <text x="170.0" y="143.0" text-anchor="middle" class="small muted">CRH</text>
+  <line x1="170.0" y1="156" x2="170.0" y2="174" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="70" y="176" width="200" height="50" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="170.0" y="198.0" text-anchor="middle" class="lab b">Hipófisis</text>
+  <text x="170.0" y="215.0" text-anchor="middle" class="small muted">ACTH</text>
+  <line x1="170.0" y1="228" x2="170.0" y2="246" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="70" y="248" width="200" height="50" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="170.0" y="270.0" text-anchor="middle" class="lab b">Suprarrenales</text>
+  <text x="170.0" y="287.0" text-anchor="middle" class="small muted">producen cortisol</text>
+  <ellipse cx="120" cy="365" rx="22" ry="34" fill="var(--organ)"/>
+  <ellipse cx="220" cy="365" rx="22" ry="34" fill="var(--organ)"/>
+  <path d="M102 335 q18 -22 36 0 z" fill="var(--warn)"/>
+  <path d="M202 335 q18 -22 36 0 z" fill="var(--warn)"/>
+  <text x="170" y="370" text-anchor="middle" class="small muted">Riñones</text>
+  <path d="M280 300 C305 250 305 150 280 115" fill="none" stroke="var(--red)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <text x="170" y="424" text-anchor="middle" class="small" style="fill:var(--red)">El cortisol frena el eje (retroalimentación)</text>
+  <rect x="336" y="60" width="444" height="180" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="558.0" y="88" text-anchor="middle" class="title">Varía a lo largo del día</text>
+  <line x1="370" y1="200" x2="750" y2="200" stroke="var(--line)" stroke-width="2"/>
+  <path d="M370 180 C400 170 420 132 450 128 C520 132 600 170 680 190 C710 195 730 192 750 185" fill="none" stroke="var(--warn)" stroke-width="3"/>
+  <text x="450" y="120" text-anchor="middle" class="small">Máximo al despertar</text>
+  <text x="700" y="168" text-anchor="middle" class="small">Mínimo de noche</text>
+  <text x="560" y="224" text-anchor="middle" class="small muted">Por eso importa la hora de la extracción</text>
+  <rect x="336" y="256" width="444" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="558.0" y="284" text-anchor="middle" class="title">Qué ayuda a evaluar</text>
+  <rect x="360" y="318" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
+  <rect x="362" y="348" width="22" height="48" rx="10" fill="var(--red)" opacity=".85"/>
+  <rect x="357" y="310" width="32" height="12" rx="3" fill="var(--accent)"/>
+  <text x="373" y="418" text-anchor="middle" class="small muted">Sangre</text>
+  <text x="410" y="320" class="lab">• Exceso: síndrome de Cushing</text>
+  <text x="410" y="346" class="lab">• Déficit: insuficiencia suprarrenal</text>
+  <text x="410" y="372" class="lab">• Problemas de hipófisis</text>
+  <text x="410" y="398" class="lab">• Efecto de corticoides tomados</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

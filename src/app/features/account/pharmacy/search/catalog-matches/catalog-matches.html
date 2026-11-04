@@ -1,0 +1,46 @@
+@if (medicamentos().length > 0) {
+  <section
+    class="coincidencias"
+    aria-labelledby="coincidencias-titulo"
+    data-testid="pharmacy-catalog-matches"
+  >
+    <h2 id="coincidencias-titulo" class="coincidencias__titulo">
+      Medicamentos que coinciden con «{{ corregido() ?? term() }}»
+    </h2>
+    @if (corregido(); as corregido) {
+      <p class="coincidencias__correccion" data-testid="pharmacy-catalog-correction">
+        ¿Quiso decir <strong>«{{ corregido }}»</strong>? No encontramos nada para «{{ term() }}».
+      </p>
+    }
+    <p class="coincidencias__nota">
+      Ninguna farmacia de la red los publica hoy para comprar, pero están en el vademécum. El uso es
+      el de su grupo ATC (OMS), no una indicación médica: consulte a su médico o farmacéutico.
+    </p>
+    <ul class="coincidencias__lista">
+      @for (med of medicamentos(); track med.conceptId) {
+        <li class="coincidencias__item">
+          <p class="coincidencias__nombre">{{ med.genericName }}</p>
+          @if (med.matchedUse ?? med.uses?.[0]; as uso) {
+            <p class="coincidencias__uso">Sirve para: {{ uso }}</p>
+          }
+          <p class="coincidencias__dato">
+            {{
+              med.pharmacyCount > 0
+                ? med.pharmacyCount +
+                  (med.pharmacyCount === 1 ? ' farmacia lo publica' : ' farmacias lo publican')
+                : 'Ninguna farmacia de la red lo publica todavía'
+            }}
+          </p>
+        </li>
+      }
+    </ul>
+  </section>
+}
+<app-official-medicines [products]="oficiales()" />
+@if (sinNada()) {
+  <p class="coincidencias__vacio" role="status" data-testid="pharmacy-catalog-empty">
+    No encontramos «{{ term() }}» en las farmacias de la red, ni en el vademécum, ni en el registro
+    sanitario. Pruebe con el nombre del principio activo o con para qué lo necesita (por ejemplo,
+    «dolor de cabeza»).
+  </p>
+}

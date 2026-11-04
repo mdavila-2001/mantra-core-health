@@ -95,6 +95,15 @@ function api(fixture: ComponentFixture<WorkHistory>): Record<string, UnMiembro> 
   return fixture.componentInstance as unknown as Record<string, UnMiembro>;
 }
 
+/** Renders the per-node actions the Trayectoria tab places inside one timeline node. */
+function accionesDelNodo(fixture: ComponentFixture<WorkHistory>, id: string): HTMLElement {
+  const vista = fixture.componentInstance.accionesDelNodo()!.createEmbeddedView({ $implicit: id });
+  vista.detectChanges();
+  const raiz = document.createElement('div');
+  raiz.append(...(vista.rootNodes as Node[]));
+  return raiz;
+}
+
 /**
  * Una señal, una computada o un método del componente.
  *
@@ -1201,22 +1210,75 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     http.verify();
   });
 
-  it('elegir un establecimiento del padrón declara que atiende ahí, en curso', async () => {
+  /**
+   * Antes esta prueba exigía un `POST` al historial laboral. Ése era el
+   * defecto (31/10/2026): el vínculo del historial no es un lugar de atención,
+   * la lista de «Dónde atiendo» seguía vacía y la clínica aparecía en
+   * «Trayectoria» con fecha de hoy. Ahora el padrón pone el nombre y el lugar
+   * se crea como sede, con su punto.
+   */
+  it('elegir un establecimiento del padrón abre el alta del lugar con su nombre, sin tocar el historial', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     fixture.detectChanges();
 
     const componente = api(fixture);
-    componente['lugarElegido'].set({ value: 'fac-1', label: 'Clínica Foianini' });
+    componente['abrirAgregarLugar']();
+    componente['lugarElegido'].set({
+      value: 'fac-1',
+      label: 'Clínica Foianini',
+      hint: 'Santa Cruz de la Sierra · Av. Irala 468',
+    });
     componente['atiendoAca']();
+    fixture.detectChanges();
 
-    const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
-    const cuerpo = req.request.body as Record<string, unknown>;
-    expect(cuerpo['organizationName']).toBe('Clínica Foianini');
-    // Sin `endDate`: es dónde atiende HOY, y así lo lee la ficha.
-    expect(cuerpo['endDate']).toBeUndefined();
-    // Y sin cargo: acá la pregunta es dónde, no como qué.
-    expect(cuerpo['roleTitle']).toBeUndefined();
+    http.expectNone((r) => r.url === AFILIACIONES && r.method === 'POST');
+    expect(leer(componente, 'altaDeSedeAbierta')).toBe(true);
+    expect(leer(componente, 'agregandoLugar')).toBe(false);
+    expect(leer(componente, 'nombreDeSedeNueva')).toBe('Clínica Foianini');
+    expect(
+      document.querySelector('[data-testid="sede-referencia-padron"]')?.textContent,
+    ).toContain('Av. Irala 468');
+
+    marcarSede(componente);
+    componente['guardarSede']();
+    const alta = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
+    expect((alta.request.body as { name: string }).name).toBe('Clínica Foianini');
+    alta.flush(sedeEnCable({ name: 'Clínica Foianini' }));
+    http.expectOne(SITIOS).flush({ items: [sedeEnCable({ name: 'Clínica Foianini' })], count: 1 });
+    http.verify();
+  });
+
+  it('un lugar sugerido por otra pestaña abre el alta con su nombre y avisa que lo tomó', async () => {
+    const { fixture, http } = await montarConSedes(true, 'consultorios');
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    let tomados = 0;
+    fixture.componentInstance.lugarSugeridoTomado.subscribe(() => tomados++);
+
+    fixture.componentRef.setInput('lugarSugerido', { nombre: 'CLINICA ANGEL FOIANINI' });
+    fixture.detectChanges();
+
+    const componente = api(fixture);
+    expect(leer(componente, 'altaDeSedeAbierta')).toBe(true);
+    expect(leer(componente, 'nombreDeSedeNueva')).toBe('CLINICA ANGEL FOIANINI');
+    // Sin padrón no hay referencia que mostrar.
+    expect(leer(componente, 'referenciaDelPadron')).toBeNull();
+    expect(tomados).toBe(1);
+    http.verify();
+  });
+
+  it('un lugar sugerido no pisa un alta que ya estaba a medio escribir', async () => {
+    const { fixture, http } = await montarConSedes(true, 'consultorios');
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    const componente = api(fixture);
+    componente['abrirAltaDeSede']();
+    componente['nombreDeSedeNueva'].set('Consultorio Dra. Pérez');
+
+    fixture.componentRef.setInput('lugarSugerido', { nombre: 'Clínica Incor' });
+    fixture.detectChanges();
+
+    expect(leer(componente, 'nombreDeSedeNueva')).toBe('Consultorio Dra. Pérez');
+    http.verify();
   });
 });
 
@@ -2233,9 +2295,11 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
     ]);
 
     expect(tabla(fixture)).toBeNull();
-    expect(
-      fixture.nativeElement.querySelectorAll('[data-testid="vinculos-editables"] li'),
-    ).toHaveLength(5);
+    for (const indice of [1, 2, 3, 4, 5]) {
+      expect(accionesDelNodo(fixture, `vinculo-${indice}`).querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    }
+    expect(accionesDelNodo(fixture, 'aprobado').querySelector('button')).toBeNull();
+    expect(accionesDelNodo(fixture, 'rechazado').querySelector('button')).toBeNull();
     http.verify();
   });
 
@@ -2243,7 +2307,7 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
     const { fixture, http } = await montarListado(declarados(6));
 
     expect(filas(fixture)).toHaveLength(6);
-    expect(fixture.nativeElement.querySelector('[data-testid="vinculos-editables"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="vinculo-acciones"]')).toBeNull();
     expect(tabla(fixture)?.querySelector<HTMLElement>('.data-table__scroll')?.style.maxHeight).toBe(
       '420px',
     );
@@ -2428,7 +2492,9 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
       );
       fixture.detectChanges();
 
-      expect(tabla(fixture)?.textContent).toContain('Algo salió mal');
+      // Un 500 dice qué pasó y que el fallo fue del servidor, no «algo salió mal».
+      expect(tabla(fixture)?.textContent).toContain('No pudimos completar la operación');
+      expect(tabla(fixture)?.textContent).toContain('El fallo no está en lo que usted ingresó');
       expect(tabla(fixture)?.textContent).toContain('historial-test-500');
       expect(
         fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]'),
@@ -2443,7 +2509,7 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
       fixture.detectChanges();
 
       expect(filas(fixture)).toHaveLength(6);
-      expect(tabla(fixture)?.textContent).not.toContain('Algo salió mal');
+      expect(tabla(fixture)?.textContent).not.toContain('No pudimos completar la operación');
       http.verify();
     },
   );
@@ -2620,11 +2686,12 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     http.verify();
   });
   /**
-   * La razón de ser del bloque: en «Trayectoria» —que es el único lugar donde
-   * el perfil monta este componente— la lista plana está suprimida a propósito,
-   * así que sin este bloque los botones no existirían para nadie.
+   * En «Trayectoria» (layout="timeline") lo declarado por el profesional se
+   * corrige o retira desde su propio nodo de la línea de tiempo —no desde una
+   * segunda lista que repetía las mismas instituciones—; además se ofrece el
+   * botón de alta.
    */
-  it('en «Trayectoria» ofrece lo accionable, sin repetir la historia entera', async () => {
+  it('en «Trayectoria» ofrece corregir o retirar lo declarado, además del alta', async () => {
     const { fixture, http } = await montarConVinculo(
       enCable({ statusKind: 'declarado' }),
       true,
@@ -2632,24 +2699,83 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     );
 
     const raiz: HTMLElement = fixture.nativeElement;
-    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).not.toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-acciones"]')).toBeNull();
+    const nodo = accionesDelNodo(fixture, 'af-1');
+    expect(nodo.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    expect(nodo.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
+
+    const botonAlta = raiz.querySelector('[data-testid="abrir-alta-vinculo"]');
+    expect(botonAlta).not.toBeNull();
+    // The add button carries no icon today (AppButton has no `icon` input); if the icon is a
+    // requirement, it is a product change, not a spec one.
 
     http.verify();
   });
 
-  it('sin nada que tocar, el bloque no se dibuja', async () => {
+  it('sin nada que tocar, el nodo no lleva acciones', async () => {
     const { fixture, http } = await montarConVinculo(
       enCable({ statusKind: 'aprobado' }),
       true,
       'timeline',
     );
 
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="vinculos-editables"]'),
-    ).toBeNull();
+    expect(accionesDelNodo(fixture, 'af-1').querySelector('button')).toBeNull();
 
     http.verify();
+  });
+});
+
+/**
+ * «¿Atiende acá?» (31/10/2026): el paso de un vínculo vigente de
+ * «Trayectoria» a «Dónde atiendo». El cliente leía las dos pestañas como una
+ * sola y creía que con la trayectoria bastaba.
+ */
+describe('WorkHistory — de Trayectoria a «Dónde atiendo»', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  async function montarHistorial(ofrece: boolean, items: readonly Record<string, unknown>[]) {
+    const { fixture, http } = await montar('prac-1');
+    fixture.componentRef.setInput('layout', 'tabla');
+    fixture.componentRef.setInput('ofreceLlevarADondeAtiendo', ofrece);
+    http.expectOne(AFILIACIONES).flush({ items, count: items.length });
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+    fixture.detectChanges();
+    return { fixture, http };
+  }
+
+  function preguntas(fixture: ComponentFixture<WorkHistory>): HTMLElement[] {
+    return [...fixture.nativeElement.querySelectorAll('[data-testid="vinculo-donde-atiende"]')];
+  }
+
+  it('ofrece el paso sólo en los vínculos vigentes sin lugar, y emite el nombre', async () => {
+    const { fixture } = await montarHistorial(true, [
+      enCable({ id: 'vigente', organizationName: 'CLINICA INCOR', statusKind: 'declarado' }),
+      enCable({ id: 'terminado', current: false, endDate: '2022-01-01', statusKind: 'declarado' }),
+      enCable({ id: 'con-sede', practiceSiteId: 'site-1', statusKind: 'declarado' }),
+      // Aprobado, pendiente o rechazado nacen de un vínculo con sede.
+      enCable({ id: 'aprobado' }),
+      enCable({ id: 'rechazado', statusKind: 'rechazado' }),
+    ]);
+
+    const filas = preguntas(fixture);
+    expect(filas.length).toBe(1);
+
+    const nombres: string[] = [];
+    fixture.componentInstance.llevarADondeAtiendo.subscribe((n) => nombres.push(n));
+    filas[0].querySelector<HTMLButtonElement>('button')?.click();
+    expect(nombres).toEqual(['CLINICA INCOR']);
+  });
+
+  it('sin quien escuche no se ofrece: sería un botón que no hace nada', async () => {
+    const { fixture } = await montarHistorial(false, [enCable({ statusKind: 'declarado' })]);
+    expect(preguntas(fixture).length).toBe(0);
+  });
+
+  it('el historial dice que no es «Dónde atiendo»', async () => {
+    const { fixture } = await montarHistorial(true, []);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="historial-no-es-donde-atiendo"]')
+        ?.textContent,
+    ).toContain('Dónde atiendo');
   });
 });

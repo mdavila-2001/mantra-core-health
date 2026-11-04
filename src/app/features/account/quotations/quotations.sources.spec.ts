@@ -4,6 +4,12 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
 import { QuotationSources } from './quotations.sources';
+import { environment } from '../../../../environments/environment';
+
+// Este spec se escribió contra el entorno de `dev` (API real); la maqueta arranca con `mockBackend: true`.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: false }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 /**
  * Las fuentes de Cotizaciones — H3.S1.M4 / H3.S2.M6.

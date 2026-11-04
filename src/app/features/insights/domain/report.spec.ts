@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildAlerts } from './alerts';
-import { buildReport, defaultSections, REPORT_AUDIENCES } from './report';
+import { buildReport, defaultSections, REPORT_AUDIENCES, REPORT_TYPES } from './report';
 import type { InsightsFilter } from './insights.types';
 import { CHANNELS } from './insights.types';
 
@@ -46,5 +46,44 @@ describe('informes y alertas combinadas', () => {
       expect(a.cause.toLowerCase()).toContain('hipótesis');
       expect(a.evidence.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('informes para más lectores', () => {
+  const filter: InsightsFilter = { campaignIds: ['c1', 'c2'], range: { from: '2026-10-01', to: '2026-10-29' }, grain: 'day', channels: CHANNELS, metric: 'ctr' };
+
+  it('hay siete tipos y cinco audiencias', () => {
+    expect(Object.keys(REPORT_TYPES)).toHaveLength(7);
+    expect(Object.keys(REPORT_AUDIENCES)).toHaveLength(5);
+  });
+
+  it('NEGATIVO: para un cliente o un aliado no aparece ningún costo ni sección interna', () => {
+    for (const audience of ['client', 'partner'] as const) {
+      const doc = buildReport({ type: 'monthly', audience, sections: ['kpis', 'channels', 'alerts', 'next', 'recommendations'] }, filter);
+      const text = JSON.stringify(doc);
+      expect(text).not.toMatch(/Inversión|CPA|CAC|ROAS|Costo/i);
+      const ids = doc.sections.map((s) => s.id);
+      expect(ids).not.toContain('alerts');
+      expect(ids).not.toContain('next');
+      expect(ids).not.toContain('recommendations');
+    }
+  });
+
+  it('un lector interno sí ve los costos', () => {
+    const doc = buildReport({ type: 'campaign', audience: 'marketing', sections: ['kpis', 'channels'] }, filter);
+    expect(JSON.stringify(doc)).toMatch(/Inversión/);
+  });
+
+  it('respeta el orden elegido y no repite secciones', () => {
+    const doc = buildReport({ type: 'custom', audience: 'marketing', sections: ['opinion', 'kpis', 'opinion'] }, filter);
+    const middle = doc.sections.map((s) => s.id).filter((id) => id === 'opinion' || id === 'kpis');
+    expect(middle).toEqual(['opinion', 'kpis']);
+  });
+
+  it('el título propio reemplaza al de fábrica y las secciones obligatorias no se quitan', () => {
+    const doc = buildReport({ type: 'executive', audience: 'direction', sections: [], title: '  Mi informe  ' }, filter);
+    expect(doc.title).toBe('Mi informe');
+    const ids = doc.sections.map((s) => s.id);
+    for (const must of ['summary', 'method', 'limits']) expect(ids).toContain(must);
   });
 });
