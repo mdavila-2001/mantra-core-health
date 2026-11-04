@@ -19,7 +19,7 @@
 <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F1FAF7"/><stop offset="1" stop-color="#D2ECE5"/></linearGradient>
 <radialGradient id="glow" cx="160" cy="84" r="130" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
 <radialGradient id="orb" cx=".36" cy=".3" r=".78"><stop offset="0" stop-color="#fff"/><stop offset=".38" stop-color="#E4F5F0"/><stop offset=".82" stop-color="#A7DBCF"/><stop offset="1" stop-color="#78BFB0"/></radialGradient>
-<linearGradient id="ink" x1="0" y1="14" x2="0" y2="82" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#17A898"/><stop offset="1" stop-color="#0B5E57"/></linearGradient>
+<linearGradient id="ink" x1="0" y1="2" x2="0" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#17A898"/><stop offset="1" stop-color="#0B5E57"/></linearGradient>
 <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 <filter id="blur3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
 <filter id="blur6" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
@@ -38,10 +38,10 @@
 <ellipse cx="140" cy="58" rx="20" ry="9" fill="#fff" fill-opacity=".75" transform="rotate(-28 140 58)" filter="url(#blur3)"/>
 <g clip-path="url(#clip)"><rect class="g" x="130" y="20" width="40" height="140" fill="url(#shine)" transform="skewX(-20)"/></g>
 <g class="i">
-<g transform="translate(0 3)"><g transform="translate(83.2 13.2) scale(1.6)" fill="none" stroke="#073B37" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 28 C70 30 74 46 66 58 C60 68 46 70 42 62 C40 56 46 54 46 48 C46 42 38 40 38 36 C38 30 48 26 58 28Z"/><path d="M46 50 H34 V70" stroke="#92400E"/></g></g>
-<g transform="translate(0 2)"><g transform="translate(83.2 13.2) scale(1.6)" fill="none" stroke="#0A4F49" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 28 C70 30 74 46 66 58 C60 68 46 70 42 62 C40 56 46 54 46 48 C46 42 38 40 38 36 C38 30 48 26 58 28Z"/><path d="M46 50 H34 V70" stroke="#B45309"/></g></g>
-<g transform="translate(0 1)"><g transform="translate(83.2 13.2) scale(1.6)" fill="none" stroke="#0C5F58" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 28 C70 30 74 46 66 58 C60 68 46 70 42 62 C40 56 46 54 46 48 C46 42 38 40 38 36 C38 30 48 26 58 28Z"/><path d="M46 50 H34 V70" stroke="#C2620A"/></g></g>
-<g transform="translate(83.2 13.2) scale(1.6)" fill="none" stroke="url(#ink)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 28 C70 30 74 46 66 58 C60 68 46 70 42 62 C40 56 46 54 46 48 C46 42 38 40 38 36 C38 30 48 26 58 28Z"/><path d="M46 50 H34 V70" stroke="#F59E0B"/></g>
+<g transform="translate(0 3)"><g transform="translate(124 52) scale(3)" fill="none" stroke="#073B37" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3.5c-4.4 0 -8 3.8 -8 8.5s3.6 8.5 8 8.5c1.9 0 3 -1.2 3 -2.6c0 -2 -2.5 -2.9 -2.5 -5.9s2.5 -3.9 2.5 -5.9c0 -1.4 -1.1 -2.6 -3 -2.6z"/><path d="M15.5 12h2a2 2 0 0 1 2 2v7"/></g></g>
+<g transform="translate(0 2)"><g transform="translate(124 52) scale(3)" fill="none" stroke="#0A4F49" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3.5c-4.4 0 -8 3.8 -8 8.5s3.6 8.5 8 8.5c1.9 0 3 -1.2 3 -2.6c0 -2 -2.5 -2.9 -2.5 -5.9s2.5 -3.9 2.5 -5.9c0 -1.4 -1.1 -2.6 -3 -2.6z"/><path d="M15.5 12h2a2 2 0 0 1 2 2v7"/></g></g>
+<g transform="translate(0 1)"><g transform="translate(124 52) scale(3)" fill="none" stroke="#0C5F58" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3.5c-4.4 0 -8 3.8 -8 8.5s3.6 8.5 8 8.5c1.9 0 3 -1.2 3 -2.6c0 -2 -2.5 -2.9 -2.5 -5.9s2.5 -3.9 2.5 -5.9c0 -1.4 -1.1 -2.6 -3 -2.6z"/><path d="M15.5 12h2a2 2 0 0 1 2 2v7"/></g></g>
+<g transform="translate(124 52) scale(3)" fill="none" stroke="url(#ink)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3.5c-4.4 0 -8 3.8 -8 8.5s3.6 8.5 8 8.5c1.9 0 3 -1.2 3 -2.6c0 -2 -2.5 -2.9 -2.5 -5.9s2.5 -3.9 2.5 -5.9c0 -1.4 -1.1 -2.6 -3 -2.6z"/><path d="M15.5 12h2a2 2 0 0 1 2 2v7"/></g>
 </g>
 </g>
 </svg>
