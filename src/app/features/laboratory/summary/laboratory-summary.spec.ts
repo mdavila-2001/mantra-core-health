@@ -4,18 +4,19 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
+import { CenterScheduleClient } from '../../../core/data-access/diagnostic-units/center-schedule.client';
+import type { CenterBooking } from '../../../core/data-access/diagnostic-units/center-schedule.types';
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
-import type { LabSummary } from '../../../core/data-access/lab-portal/lab-portal.types';
+import type { LabOrder, LabSummary } from '../../../core/data-access/lab-portal/lab-portal.types';
 import { LaboratorySummaryPage } from './laboratory-summary';
 
 /**
- * El resumen del portal de laboratorio: indicadores (con alerta cuando hay
- * algo pendiente), servicios por categoría en barras relativas al mayor,
- * atajos a la bandeja con su filtro y actividad reciente. Un fallo de la API
- * no se muestra como «cero».
+ * La portada del centro de diagnóstico: saludo con el nombre del centro y cuatro
+ * bloques —órdenes de hoy, resultados pendientes, turnos del día, catálogo—,
+ * cada uno con su estado: si uno falla, los otros siguen a la vista.
  */
 
-const RESUMEN: LabSummary = {
+const SUMMARY = {
   labName: 'Laboratorio Andino',
   published: 12,
   drafts: 2,
@@ -24,71 +25,189 @@ const RESUMEN: LabSummary = {
   ordersWithoutResults: 3,
   resultFiles: 40,
   resultBytes: 2_097_152,
-  byCategory: [
-    { category: 'Hematología', count: 8 },
-    { category: 'Química', count: 4 },
-  ],
-  recentActivity: [{ id: 'a-1', text: 'Publicó Hemograma', at: '2026-10-30T12:00:00Z' }],
-} as unknown as LabSummary;
+  byCategory: [],
+  recentActivity: [{ id: 'a-1', kind: 'RESULT_UPLOADED', text: 'Se subió hemograma.pdf', at: '2026-10-30T12:00:00Z' }],
+} as LabSummary;
 
-describe('LaboratorySummaryPage', () => {
+const order = (orderId: string, status: LabOrder['status'], requestedAt: string): LabOrder => ({
+  orderId,
+  studyName: `Estudio ${orderId}`,
+  patientName: `Paciente ${orderId}`,
+  requesterName: 'Dra. Rojas',
+  requestedAt,
+  status,
+  reason: null,
+  files: [],
+});
+
+const ORDERS: LabOrder[] = [
+  order('a', 'DRAFT', '2026-11-04T10:00:00Z'),
+  order('b', 'DRAFT', '2026-11-04T09:00:00Z'),
+  order('c', 'RECEIVED', '2026-11-03T09:00:00Z'),
+  order('d', 'PROCESSED', '2026-11-02T09:00:00Z'),
+  { ...order('e', 'UPLOADED', '2026-11-01T09:00:00Z'), files: [{ id: 'f-1', fileName: 'hemograma.pdf', sizeBytes: 10 }] },
+];
+
+const BOOKING: CenterBooking = {
+  bookingId: 'bk-1',
+  orderId: 'a',
+  patientName: 'Ana Pérez',
+  studyName: 'Hemograma',
+  startsAt: '2026-11-04T11:30:00Z',
+  endsAt: '2026-11-04T12:15:00Z',
+  siteName: 'Sede central',
+  status: 'BOOKING_CONFIRMED',
+};
+
+describe('LaboratorySummaryPage (portada del centro de diagnóstico)', () => {
   let fixture: ComponentFixture<LaboratorySummaryPage>;
-  let getSummary: ReturnType<typeof vi.fn>;
+  let lab: { getSummary: ReturnType<typeof vi.fn>; listOrders: ReturnType<typeof vi.fn> };
+  let schedule: { getMySchedule: ReturnType<typeof vi.fn>; getMyBookings: ReturnType<typeof vi.fn> };
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const q = (id: string): HTMLElement | null => root().querySelector(`[data-testid="${id}"]`);
 
-  function pintar(): void {
+  async function render(): Promise<void> {
     fixture = TestBed.createComponent(LaboratorySummaryPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
   }
 
   beforeEach(() => {
-    getSummary = vi.fn(() => of(RESUMEN));
-    TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: LabPortalClient, useValue: { getSummary } }] });
+    lab = {
+      getSummary: vi.fn(() => of(SUMMARY)),
+      listOrders: vi.fn(() => of({ items: ORDERS, count: ORDERS.length })),
+    };
+    schedule = {
+      getMySchedule: vi.fn(() => of({ kind: 'LABORATORY' })),
+      getMyBookings: vi.fn(() => of({ items: [BOOKING], count: 1 })),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: LabPortalClient, useValue: lab },
+        { provide: CenterScheduleClient, useValue: schedule },
+      ],
+    });
   });
 
-  it('nombra al laboratorio y muestra sus indicadores', () => {
-    pintar();
-    expect(root().querySelector('h1')?.textContent).toContain('Resumen');
-    expect(root().textContent).toContain('Laboratorio Andino: qué ofrece');
-    expect(q('summary-published')?.textContent).toBe('12');
-    expect(q('summary-orders-without-results')?.textContent).toBe('3');
+  it('saluda con el nombre del centro', async () => {
+    await render();
+    expect(root().querySelector('h1')?.textContent).toContain('Laboratorio Andino');
+  });
+
+  it('cuenta las órdenes por paso y cada cifra abre su pestaña', async () => {
+    await render();
+    expect(q('lab-home-count-draft')?.textContent).toContain('2');
+    expect(q('lab-home-count-received')?.textContent).toContain('1');
+    expect(q('lab-home-count-processed')?.textContent).toContain('1');
+    expect(q('lab-home-count-draft')?.getAttribute('href')).toBe('/administration/laboratory-orders?estado=draft');
+    expect(q('lab-home-count-processed')?.getAttribute('href')).toBe('/administration/laboratory-orders?estado=processed');
+    const recent = q('lab-home-recent-orders')!.querySelectorAll('li');
+    expect(recent).toHaveLength(4);
+    expect(recent[0]!.textContent).toContain('Estudio a');
+  });
+
+  it('los resultados pendientes son las procesadas sin archivo, con su enlace para subir', async () => {
+    await render();
+    const rows = q('lab-home-pending-list')!.querySelectorAll('li');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.textContent).toContain('Estudio d');
+    expect(q('lab-home-upload')?.getAttribute('href')).toBe('/administration/laboratory-orders?estado=processed');
     expect(q('summary-result-files')?.textContent).toBe('40');
+    expect(q('summary-activity')?.textContent).toContain('último: Estudio e, hace');
+    expect(q('summary-activity')?.textContent).not.toContain('Se subió');
   });
 
-  it('lo pendiente se resalta: no disponibles y órdenes sin resultado', () => {
-    pintar();
-    expect(q('summary-unavailable')!.closest('li')!.classList.contains('summary__indicator--alert')).toBe(true);
-    expect(q('summary-orders-without-results')!.closest('li')!.classList.contains('summary__indicator--alert')).toBe(true);
-    expect(q('summary-drafts')!.closest('li')!.classList.contains('summary__indicator--alert')).toBe(false);
+  it('pide los turnos de hoy y los lista', async () => {
+    await render();
+    const [from, to] = schedule.getMyBookings.mock.calls[0] as [Date, Date];
+    expect(to.getTime() - from.getTime()).toBe(86_400_000);
+    expect(q('lab-home-bookings-list')?.textContent).toContain('Ana Pérez');
+    expect(q('lab-home-bookings-list')?.textContent).toContain('Confirmada');
   });
 
-  it('las barras por categoría son relativas a la mayor', () => {
-    pintar();
-    const anchos = Array.from(root().querySelectorAll<HTMLElement>('.summary__bar-fill')).map((b) => b.style.inlineSize);
-    expect(anchos).toEqual(['100%', '50%']);
+  it('el catálogo muestra publicados, borradores y no disponibles, y lleva a Precios', async () => {
+    await render();
+    expect(q('summary-published')?.textContent).toBe('12');
+    expect(q('summary-drafts')?.textContent).toBe('2');
+    expect(q('summary-unavailable')?.textContent).toBe('1');
+    expect(q('lab-home-prices')?.getAttribute('href')).toBe('/administration/laboratory-prices');
   });
 
-  it('los atajos llevan a la bandeja con el filtro de cada paso', () => {
-    pintar();
-    const hrefs = Array.from(root().querySelectorAll('a.summary__shortcut')).map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual([
-      '/administration/laboratory-orders?estado=draft',
-      '/administration/laboratory-orders?estado=processed',
-    ]);
+  it('si fallan las órdenes, el catálogo y los turnos siguen a la vista', async () => {
+    lab.listOrders.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    await render();
+    expect(q('lab-home-recent-orders')).toBeNull();
+    expect(q('lab-home-pending-list')).toBeNull();
+    expect(q('summary-published')?.textContent).toBe('12');
+    expect(q('lab-home-bookings-list')).not.toBeNull();
   });
 
-  it('sin categorías ni actividad lo dice en palabras', () => {
-    getSummary.mockReturnValue(of({ ...RESUMEN, byCategory: [], recentActivity: [] }));
-    pintar();
-    expect(root().textContent).toContain('Todavía no hay servicios en su catálogo.');
-    expect(q('summary-no-activity')).not.toBeNull();
-  });
-
-  it('un error de la API no se pinta como un resumen en cero', () => {
-    getSummary.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
-    pintar();
-    expect(q('summary-card')).toBeNull();
+  it('si falla el resumen, las órdenes siguen y el saludo no queda vacío', async () => {
+    lab.getSummary.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    schedule.getMySchedule.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    await render();
     expect(q('summary-published')).toBeNull();
+    expect(q('lab-home-count-draft')).not.toBeNull();
+    expect(q('lab-home-name')?.textContent?.trim()).toBe('Su centro');
+  });
+
+  it('un centro de imagen habla de estudios, no de muestras', async () => {
+    schedule.getMySchedule.mockReturnValue(of({ kind: 'IMAGING' }));
+    await render();
+    expect(q('lab-home-count-draft')?.textContent).toContain('estudios');
+    expect(q('lab-home-count-received')?.textContent).toContain('Estudios por informar');
+  });
+
+  it('sin órdenes, la tarjeta de órdenes sólo ofrece la acción del estado vacío', async () => {
+    lab.listOrders.mockReturnValue(of({ items: [], count: 0 }));
+    await render();
+    expect(q('lab-home-orders-all')).toBeNull();
+    expect(q('lab-home-orders')?.querySelectorAll('a')).toHaveLength(1);
+  });
+
+  it('sin turnos hoy lo dice y ofrece revisar los horarios', async () => {
+    schedule.getMyBookings.mockReturnValue(of({ items: [], count: 0 }));
+    await render();
+    expect(q('lab-home-bookings')?.textContent).toContain('Hoy no hay turnos reservados');
+    // The empty state carries the only action: no second button in the footer.
+    expect(q('lab-home-bookings')?.querySelectorAll('a')).toHaveLength(1);
+  });
+
+  it('el recuento de turnos es una insignia con nombre accesible', async () => {
+    await render();
+    const badge = q('lab-home-bookings')!.querySelector('app-badge');
+    expect(badge?.getAttribute('aria-label')).toBe('1 turno hoy');
+  });
+
+  it('sin resultados subidos, o con las órdenes caídas, el pie de pendientes no aparece', async () => {
+    lab.getSummary.mockReturnValue(of({ ...SUMMARY, resultFiles: 0 }));
+    await render();
+    expect(q('summary-result-files')).toBeNull();
+    fixture.destroy();
+    lab.getSummary.mockReturnValue(of(SUMMARY));
+    lab.listOrders.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    await render();
+    expect(q('summary-result-files')).toBeNull();
+    // Pending results say where their data comes from, with a single retry.
+    expect(q('lab-home-pending')?.textContent).toContain('Salen de la lista de órdenes');
+    expect(q('lab-home-pending')?.querySelectorAll('button')).toHaveLength(1);
+  });
+
+  it('un turno sin conexión falla como los demás bloques y dice que no hay código', async () => {
+    schedule.getMyBookings.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    await render();
+    const text = q('lab-home-bookings')?.textContent ?? '';
+    expect(text).toContain('No pudimos cargar los turnos de hoy');
+    expect(text).toContain('Esta falla no tiene código de soporte');
+    expect(q('lab-home-bookings')?.querySelectorAll('button')).toHaveLength(1);
+  });
+
+  it('un turno sin nombre de paciente ni de estudio lo dice, no deja un hueco', async () => {
+    schedule.getMyBookings.mockReturnValue(of({ items: [{ ...BOOKING, patientName: null, studyName: null, siteName: null }], count: 1 }));
+    await render();
+    expect(q('lab-home-bookings-list')?.textContent).toContain('Paciente sin nombre');
+    expect(q('lab-home-bookings-list')?.textContent).toContain('Estudio sin nombre');
   });
 });

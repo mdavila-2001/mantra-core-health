@@ -3,7 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { IamClient, type IdentifierKind } from '../../../../core/data-access/iam/iam.client';
 
 /**
- * ¿Ya existe una cuenta con este documento, correo o nombre de institución?
+ * ¿Ya existe una institución con este nombre?
  *
  * Se llama cuando la persona **sale** del campo (ver `FieldDef.alSalir`): si la
  * API dice que sí, `encontrado` guarda el tipo y {@link AccountExistsDialog}
@@ -25,7 +25,10 @@ export class AccountExistsCheck {
 
   verificar(kind: IdentifierKind, value: string): void {
     const limpio = value.trim();
-    if (limpio === '') {
+    // The public API only answers for organization names: asking about a
+    // national id or email would leak who is registered. Those duplicates are
+    // still caught by the registration's 409.
+    if (limpio === '' || kind !== 'ORG_NAME') {
       return;
     }
     const clave = `${kind}:${limpio.toLowerCase()}`;

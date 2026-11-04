@@ -36,16 +36,24 @@ describe('AccountExistsCheck + AccountExistsDialog', () => {
     req.flush({ exists });
   }
 
-  it('si el documento ya existe, deja el tipo para abrir el aviso', () => {
-    check.verificar('NATIONAL_ID', ' 4567890 ');
-    responder('NATIONAL_ID', '4567890', true);
+  it('si la institución ya existe, deja el tipo para abrir el aviso', () => {
+    check.verificar('ORG_NAME', ' Laboratorio Central ');
+    responder('ORG_NAME', 'Laboratorio Central', true);
 
-    expect(check.encontrado()).toBe('NATIONAL_ID');
+    expect(check.encontrado()).toBe('ORG_NAME');
+  });
+
+  it('no consulta documento ni correo: la API pública no los revela', () => {
+    check.verificar('NATIONAL_ID', '4567890');
+    check.verificar('EMAIL', 'nuevo@correo.bo');
+
+    http.expectNone((r) => r.url.endsWith('/iam/auth/identifier-exists'));
+    expect(check.encontrado()).toBeNull();
   });
 
   it('si no existe, no avisa nada', () => {
-    check.verificar('EMAIL', 'nuevo@correo.bo');
-    responder('EMAIL', 'nuevo@correo.bo', false);
+    check.verificar('ORG_NAME', 'Clínica Nueva');
+    responder('ORG_NAME', 'Clínica Nueva', false);
 
     expect(check.encontrado()).toBeNull();
   });
@@ -57,23 +65,23 @@ describe('AccountExistsCheck + AccountExistsDialog', () => {
   });
 
   it('salir dos veces del mismo valor consulta una sola vez', () => {
-    check.verificar('NATIONAL_ID', '123');
-    responder('NATIONAL_ID', '123', false);
-    check.verificar('NATIONAL_ID', '123');
+    check.verificar('ORG_NAME', 'Lab 1');
+    responder('ORG_NAME', 'Lab 1', false);
+    check.verificar('ORG_NAME', 'Lab 1');
 
     http.expectNone((r) => r.url.endsWith('/iam/auth/identifier-exists'));
   });
 
   it('si la consulta falla, no avisa y deja volver a intentar', () => {
-    check.verificar('EMAIL', 'a@b.bo');
+    check.verificar('ORG_NAME', 'Lab 2');
     http
       .expectOne((r) => r.url.endsWith('/iam/auth/identifier-exists'))
       .flush('x', { status: 500, statusText: 'Error' });
     expect(check.encontrado()).toBeNull();
 
-    check.verificar('EMAIL', 'a@b.bo');
-    responder('EMAIL', 'a@b.bo', true);
-    expect(check.encontrado()).toBe('EMAIL');
+    check.verificar('ORG_NAME', 'Lab 2');
+    responder('ORG_NAME', 'Lab 2', true);
+    expect(check.encontrado()).toBe('ORG_NAME');
   });
 
   it('el modal dice que ya existe y «Iniciar sesión» lleva a /auth', () => {

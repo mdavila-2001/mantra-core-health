@@ -1,0 +1,47 @@
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { RouterLink } from '@angular/router';
+
+import type { LabSummary } from '../../../../core/data-access/lab-portal/lab-portal.types';
+import { dataOf } from '../../../../core/view-state/view-state';
+import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import { Card } from '../../../../shared/components/molecules/card/card';
+import { SectionHeading } from '../../../../shared/components/molecules/section-heading/section-heading';
+import { lastUploadLabel, ORDERS_ROUTE, type PendingResults } from '../laboratory-home.logic';
+import { LabBlockState } from './lab-block-state';
+
+/** «Resultados pendientes»: processed orders without a file, each with its upload link. */
+@Component({
+  selector: 'app-lab-pending-results',
+  imports: [AppButtonLink, Badge, Card, DatePipe, NavIcon, RouterLink, SectionHeading, LabBlockState],
+  templateUrl: './lab-pending-results.html',
+  styleUrl: './lab-home-block.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class LabPendingResults {
+  readonly state = input.required<ViewState<PendingResults>>();
+  /** The summary feeds only the footer (files uploaded, last upload); it may still be loading or failed. */
+  readonly summary = input.required<ViewState<LabSummary>>();
+  /** Study name by uploaded file name, from the orders list. */
+  readonly studies = input<Readonly<Record<string, string>>>({});
+  readonly retry = output<void>();
+
+  protected readonly data = computed(() => dataOf(this.state()));
+  protected readonly uploaded = computed(() => dataOf(this.summary()));
+  /** The footer only speaks when the block loaded fine and there is something uploaded. */
+  protected readonly footer = computed(() => {
+    const status = this.state().status;
+    const summary = this.uploaded();
+    if ((status !== 'ready' && status !== 'stale' && status !== 'empty') || summary === null || summary.resultFiles < 1) {
+      return null;
+    }
+    const entry = summary.recentActivity.find((e) => e.kind === 'RESULT_UPLOADED');
+    const last = entry === undefined ? null : lastUploadLabel(entry, this.studies(), new Date());
+    return { count: summary.resultFiles, last };
+  });
+  protected readonly ordersRoute = ORDERS_ROUTE;
+  protected readonly uploadParams = { estado: 'processed' };
+}

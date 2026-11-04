@@ -21,6 +21,8 @@ import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
 import { registrarCentros } from './centros.handlers';
+import { registerCenterBookings } from './center-bookings.handlers';
+import { registerLabPortalApiParity } from './lab-portal-api-parity.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
@@ -176,7 +178,9 @@ export function crearRouterSimulado(): MockRouter {
   });
   // Después de diagnóstico: usa sus unidades y la agenda que les abre.
   registrarCentros(router);
+  registerCenterBookings(router);
   registrarPortalDeLaboratorio(router);
+  registerLabPortalApiParity(router);
   registrarProcedimientos(router);
   // F4 · quirófanos: salas, bloques, utilización y el día del caso.
   registerOperatingRooms(router);

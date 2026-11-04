@@ -4,6 +4,7 @@ import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
+  CenterBookingPage,
   CenterSchedule,
   CenterScheduleView,
   EquipmentStatus,
@@ -28,6 +29,12 @@ export class CenterScheduleClient {
   /** `GET /diagnostic-units/me/schedule` — el centro de la organización activa. */
   getMySchedule(): Observable<CenterScheduleView> {
     return this.http.get<CenterScheduleView>(this.url('/diagnostic-units/me/schedule'));
+  }
+
+  /** `GET /diagnostic-units/me/bookings` — the active center's bookings between `from` and `to`. */
+  getMyBookings(from: Date, to: Date): Observable<CenterBookingPage> {
+    const params = new HttpParams().set('from', from.toISOString()).set('to', to.toISOString());
+    return this.http.get<CenterBookingPage>(this.url('/diagnostic-units/me/bookings'), { params });
   }
 
   /** `GET /diagnostic-units/{unitId}/schedule` — horario, estudios y equipos del centro. */
