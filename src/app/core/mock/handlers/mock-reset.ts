@@ -9,6 +9,7 @@ import { reiniciarTopeDeBusquedas } from './support-access.patients.handlers';
 import { olvidarSimulaciones } from './support-access.governance.tokens';
 import { olvidarLasSesionesDeCuenta } from './auth.handlers';
 import { dispositivos, politicasDeSesion } from './support-access.session.handlers';
+import { pedidos } from './pharmacy.handlers';
 
 /**
  * Deja la **sesión** del simulador (políticas, dispositivos, factores de segundo paso, redes, sesiones abiertas por cuenta) como la trae de fábrica.
@@ -52,4 +53,15 @@ export function reiniciarElGobiernoDeAccesos(): void {
   // El tope de búsquedas por persona es memoria pura (no tiene filas de fábrica): se vacía. Las tablas de la bandeja (asignaciones, notas,
   // autorías…) reciben filas de los módulos de chat al cargarse: reiniciarlas las dejaría sin ellas, así que NO se tocan acá.
   reiniciarTopeDeBusquedas();
+}
+
+/**
+ * Puts the pharmacy orders back to their factory rows. Tests only.
+ *
+ * The incoming order ("Carla Montaño Rivero") is seeded the first time anyone lists Farmacia Vida's main site and then stays in
+ * the table. The runner does not isolate modules between the files of one worker (`isolate: false`), so any file that opened that
+ * inbox earlier leaves the order behind for the next one; a spec that expects it not to exist yet asks for this in `beforeEach`.
+ */
+export function reiniciarLosPedidosDeFarmacia(): void {
+  pedidos.reiniciar();
 }
