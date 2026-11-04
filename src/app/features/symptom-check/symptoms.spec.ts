@@ -351,6 +351,7 @@ describe('la tabla', () => {
       [
         'atraso-menstrual',
         'control-embarazo',
+        'control-ginecologico',
         'dolor-menstrual',
         'flujo-vaginal',
         'lactancia-posparto',

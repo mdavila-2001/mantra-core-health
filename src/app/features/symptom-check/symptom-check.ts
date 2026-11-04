@@ -65,6 +65,7 @@ import {
   type TextReading,
 } from './ai-reading';
 import { ultimaFrase } from './text';
+import { fitsSex, withSpecialtiesForSex } from './sex-filter';
 import { EmergencyPanel } from '../emergency/emergency-panel/emergency-panel';
 
 /**
@@ -250,20 +251,9 @@ export class SymptomCheck {
     return sexo === 'MALE' || sexo === 'FEMALE' ? sexo : undefined;
   });
 
-  /**
-   * Si un síntoma corresponde al sexo del propio perfil.
-   *
-   * Sin `soloParaSexo` es de cualquiera. Sin sexo conocido —`INTERSEX`,
-   * `UNKNOWN`, sin sesión o todavía sin resolver— no se filtra nada: se
-   * prefiere mostrar de más antes que esconder un síntoma real por un dato
-   * que no se pudo confirmar.
-   */
+  /** Si un síntoma corresponde al sexo del propio perfil; sin sexo conocido no se filtra (ver `sex-filter.ts`). */
   private sintomaVisible(sintoma: Sintoma): boolean {
-    const solo = sintoma.soloParaSexo;
-    if (solo === undefined) return true;
-    const sexo = this.siluetaSexo();
-    if (sexo === undefined) return true;
-    return solo === sexo;
+    return fitsSex(sintoma, this.siluetaSexo());
   }
 
   /**
@@ -469,7 +459,9 @@ export class SymptomCheck {
       return [];
     }
     const disponibles = new Set(this.especialidadesDisponibles().keys());
-    const lista = recommend(this.sintomas(), disponibles);
+    // A man's account is never sent to Gynecology/Obstetrics, even for shared symptoms.
+    const sexo = this.siluetaSexo();
+    const lista = recommend(this.sintomas().map((s) => withSpecialtiesForSex(s, sexo)), disponibles);
     const motivo = this.faltaDeCerteza();
     if (lista.length === 0 && motivo === null) {
       return lista;
