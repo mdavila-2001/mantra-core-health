@@ -1,8 +1,10 @@
-<app-page-header
-  title="Solicitudes de vínculo"
-  subtitle="Profesionales que pidieron acceder a su historia clínica. Usted elige qué áreas autoriza."
-  [breadcrumbs]="breadcrumbs()"
-/>
+@if (!embebido()) {
+  <app-page-header
+    title="Solicitudes de vínculo"
+    subtitle="Profesionales que pidieron acceder a su historia clínica. Usted elige qué áreas autoriza."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
 
 <div class="solicitudes">
   @if (errorDeCarga(); as mensaje) {

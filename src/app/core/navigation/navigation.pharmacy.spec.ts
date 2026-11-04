@@ -84,13 +84,14 @@ describe('Menú de la cuenta de farmacia', () => {
     ];
   }
 
-  it('ofrece los seis renglones de farmacia y el Buzón común, sin otra cuenta', () => {
+  // The «Buzón de solicitudes» left the menu (owner, 04/11/2026): it is a tab of «Mis solicitudes».
+  it('ofrece los seis renglones de farmacia, sin otra cuenta', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const rutas = rutasDelMenu();
 
     expect(rutas.filter((ruta) => !FIJOS_DE_TODA_CUENTA.includes(ruta))).toEqual(
-      [...MENU_DE_LA_FARMACIA, '/my-account/access-requests'],
+      [...MENU_DE_LA_FARMACIA],
     );
     expect(rutas.filter((ruta) => FIJOS_DE_TODA_CUENTA.includes(ruta)).sort()).toEqual(
       [...FIJOS_DE_TODA_CUENTA].sort(),

@@ -47,7 +47,7 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   // FT-07-R06: «un profesional pide ver tu historia clínica». La bandeja
   // lista todo lo pendiente, así que no hace falta el id para llegar a la
   // decisión — y la solicitud puede haber sido respondida ya desde otro aviso.
-  CARE_RELATIONSHIP_REQUEST: () => '/my-account/access-requests',
+  CARE_RELATIONSHIP_REQUEST: () => '/my-account/requests?pestana=vinculos',
   // «Alguien pide registrarte como su dependiente»: se acepta o rechaza en la
   // bandeja de la pantalla de Dependientes.
   DEPENDENT_LINK_REQUEST: () => '/my-account/dependents',
