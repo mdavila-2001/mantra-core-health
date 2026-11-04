@@ -15,6 +15,7 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { MinShowcase } from '../../communities/minimal-showcase/minimal-showcase';
+import { GroupTopicPicker } from './topic-picker/topic-picker';
 
 export interface GroupFormData {
   name: string;
@@ -37,7 +38,7 @@ export function deriveGroupSlug(name: string): string {
 
 @Component({
   selector: 'app-group-form',
-  imports: [AppButton, Card, FormField, Input, MinShowcase, Select],
+  imports: [AppButton, Card, FormField, GroupTopicPicker, Input, MinShowcase, Select],
   templateUrl: './group-form.html',
   styleUrl: './group-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,11 +60,6 @@ export class GroupForm {
 
   protected readonly slug = computed(() => deriveGroupSlug(this.name()));
   protected readonly canSubmit = computed(() => this.slug().length > 0 && !this.guardando());
-
-  protected readonly topicOptions = computed<readonly SelectOption<string | null>[]>(() => [
-    { value: null, label: 'General (sin tema específico)', description: 'Abierto a cualquier especialidad' },
-    ...this.temas().map((t) => ({ value: t.id, label: t.name })),
-  ]);
 
   protected readonly typeOptions: readonly SelectOption<'GENERAL' | 'SUPPORT'>[] = [
     { value: 'GENERAL', label: 'General', description: 'Comunidad para casos clínicos, guías y debate' },

@@ -34,6 +34,8 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { MinShowcase } from '../communities/minimal-showcase/minimal-showcase';
 import { GroupForm, deriveGroupSlug, type GroupFormData } from './group-form/group-form';
+import { topicFilterGroups } from './group-form/topic-picker/topic-picker';
+import { TreeSelect } from '../../shared/components/organisms/tree-select/tree-select';
 
 const PAGE_SIZE = 20;
 
@@ -52,6 +54,7 @@ const PAGE_SIZE = 20;
     SearchField,
     Tab,
     Tabs,
+    TreeSelect,
   ],
   templateUrl: './groups.html',
   styleUrl: './groups.css',
@@ -69,6 +72,7 @@ export class Groups {
   protected readonly tenantId = this.auth.activeTenantId;
   protected readonly grupos = signal<readonly GroupListItem[]>([]);
   protected readonly temas = signal<readonly Topic[]>([]);
+  protected readonly temasFiltro = computed(() => topicFilterGroups(this.temas()));
   protected readonly cargando = signal(false);
   protected readonly error = signal('');
   protected readonly cursor = signal<string | null>(null);
@@ -174,7 +178,7 @@ export class Groups {
   }
 
   protected filtrarPorTema(topicId: string): void {
-    this.temaElegido.update((actual) => (actual === topicId ? null : topicId));
+    this.temaElegido.update((actual) => (!topicId || actual === topicId ? null : topicId));
     this.recargar();
   }
 
