@@ -1,0 +1,17 @@
+<app-alert tone="warning" title="Ya hay un paciente con ese nombre" data-testid="alta-homonimo">
+  <p class="homonimo__texto">
+    Para no duplicar a la persona, búsquela en el listado de pacientes antes de crear otra ficha. Si
+    es una persona distinta con el mismo nombre, confirme el alta.
+  </p>
+  <button
+    app-button
+    type="button"
+    variant="secondary"
+    size="sm"
+    [isLoading]="sending()"
+    data-testid="alta-homonimo-confirmar"
+    (clicked)="confirm.emit()"
+  >
+    Es otra persona: registrar igual
+  </button>
+</app-alert>
