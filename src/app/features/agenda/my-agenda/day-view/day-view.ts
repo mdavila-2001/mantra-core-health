@@ -337,13 +337,11 @@ export class DayView {
     const claves = this.recorribles();
     const pendiente = this.focoPendiente;
     if (pendiente === null || pendiente.dia !== dia) return;
-    // While the day loads the wait does not expire: re-arm it (the API may be slow).
+    // The wait does not run out while the day loads; it restarts when the slots arrive.
     const loading = this.dayState() === 'loading';
-    if (loading) this.focoPendiente = { ...pendiente, vence: Date.now() + 5000 };
-    else if (Date.now() > pendiente.vence) {
-      this.focoPendiente = null;
-      return;
-    }
+    const vence = loading ? Infinity : Math.min(pendiente.vence, Date.now() + 5000);
+    this.focoPendiente = Date.now() > vence ? null : { ...pendiente, vence };
+    if (this.focoPendiente === null) return;
     const doc = this.host.nativeElement.ownerDocument;
     const activo = doc.activeElement;
     if (activo !== null && activo !== doc.body && !this.host.nativeElement.contains(activo)) {

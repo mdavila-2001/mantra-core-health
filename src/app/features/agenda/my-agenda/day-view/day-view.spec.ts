@@ -774,6 +774,33 @@ describe('DayView', () => {
       await fixture.whenStable();
       expect((document.activeElement as HTMLElement).getAttribute('data-linea')).toBe('s26-13-30');
     });
+
+    it('←/→ with a load slower than the focus wait still lands on the slots', async () => {
+      montar([cupo(9), cupo(14)]);
+      controles()[2].focus();
+      tecla('ArrowRight');
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 26));
+      fixture.componentRef.setInput('cupos', []);
+      fixture.componentRef.setInput('dayState', 'loading');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // The API takes longer than the 5 s wait: the wait must not run out while loading.
+      const later = Date.now() + 6000;
+      const now = vi.spyOn(Date, 'now').mockReturnValue(later);
+      fixture.componentRef.setInput('cupos', [
+        {
+          ...cupo(13, 30, 's26-13-30'),
+          startAt: new Date(2026, 7, 26, 13, 30),
+          endAt: new Date(2026, 7, 26, 14, 0),
+        },
+      ]);
+      fixture.componentRef.setInput('dayState', 'ready');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      now.mockRestore();
+      expect((document.activeElement as HTMLElement).getAttribute('data-linea')).toBe('s26-13-30');
+    });
   });
 
   describe('lo que lee el lector', () => {
