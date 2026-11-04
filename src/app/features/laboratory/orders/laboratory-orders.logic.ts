@@ -5,6 +5,7 @@ import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import type {
   LabOrder,
+  LabOrderAction,
   LabOrderStatus,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
 
@@ -58,13 +59,14 @@ export const ORDER_STATUS_BADGE: Readonly<
   REJECTED: { label: 'Rechazada', variant: 'error' },
 };
 
-/** Los códigos estables de las cuatro acciones de la fila. */
-export type OrderActionCode = 'receive' | 'process' | 'upload' | 'download';
+/** Los códigos estables de las acciones de la fila. */
+export type OrderActionCode = 'receive' | 'process' | 'upload' | 'download' | 'cancel' | 'reject';
 
 /**
- * Las cuatro acciones, y nada más: recibir, marcar como procesada, subir
- * resultados y descargar. Cada una sólo está habilitada en el paso del camino
- * que le toca; una orden cancelada o rechazada no tiene ninguna.
+ * Las acciones de la fila: recibir, marcar como procesada, subir resultados,
+ * descargar, y las dos salidas, cancelar y rechazar. Cada una sólo está
+ * habilitada en el paso del camino que le toca; una orden cancelada o
+ * rechazada no tiene ninguna. Valen igual para laboratorio e imagenología.
  *
  * Es presentación: la API revalida cada paso y responde 409 si no corresponde.
  */
@@ -90,8 +92,68 @@ export function actionsOf(order: LabOrder): readonly RowAction[] {
       icon: 'download',
       disabled: order.status !== 'UPLOADED' || order.files.length === 0,
     },
+    {
+      code: 'cancel',
+      label: 'Cancelar',
+      icon: 'close',
+      destructive: true,
+      disabled: order.status !== 'DRAFT' && order.status !== 'RECEIVED',
+    },
+    {
+      code: 'reject',
+      label: 'Rechazar',
+      icon: 'remove',
+      destructive: true,
+      disabled: order.status !== 'RECEIVED',
+    },
   ];
 }
+
+/** The reason box of the cancel and reject dialogs: three characters at least. */
+export const REASON_FIELD = {
+  label: 'Motivo',
+  placeholder: 'Por ejemplo: pedida por error',
+  minLength: 3,
+  maxLength: 300,
+} as const;
+
+/** What each exit step asks, and what it says when it is done. */
+export const REASON_STEPS: Readonly<
+  Record<
+    'cancel' | 'reject',
+    {
+      readonly action: LabOrderAction;
+      readonly done: string;
+      readonly dialog: (order: LabOrder) => {
+        title: string;
+        message: string;
+        confirmLabel: string;
+        destructive: true;
+      };
+    }
+  >
+> = {
+  cancel: {
+    action: 'CANCEL',
+    done: 'Orden cancelada.',
+    dialog: (order) => ({
+      title: 'Cancelar la orden',
+      message: `Cancela «${order.studyName}» de ${order.patientName}. La orden queda cancelada con el motivo que escriba y ya no admite más pasos.`,
+      confirmLabel: 'Cancelar la orden',
+      destructive: true,
+    }),
+  },
+  reject: {
+    action: 'REJECT',
+    done: 'Orden rechazada.',
+    dialog: (order) => ({
+      title: 'Rechazar la orden',
+      message: `Rechaza «${order.studyName}» de ${order.patientName}. La orden queda rechazada con el motivo que escriba y ya no admite más pasos.`,
+      confirmLabel: 'Rechazar la orden',
+      destructive: true,
+    }),
+  },
+};
 
 /** Las mismas acciones sin poder usarse: mientras una está en vuelo no se manda otra. */
 export function disabledAll(actions: readonly RowAction[]): readonly RowAction[] {

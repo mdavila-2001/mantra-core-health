@@ -156,7 +156,7 @@ export interface LabSummary {
   readonly resultFiles: number;
   /** Bytes de todo lo subido (sin los retirados). */
   readonly resultBytes: number;
-  readonly byCategory: readonly { readonly category: string; readonly count: number }[];
+  readonly byCategory: readonly { readonly category: string; readonly categoryId: string | null; readonly count: number }[];
   readonly recentActivity: readonly LabActivityEntry[];
 }
 

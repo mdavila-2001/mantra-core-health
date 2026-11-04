@@ -11,6 +11,8 @@ import {
   disabledAll,
   ORDER_STATUS_BADGE,
   ORDER_TABS,
+  REASON_FIELD,
+  REASON_STEPS,
   orderTabIndexOf,
   orderTabKeyOf,
   ordersOfTab,
@@ -39,24 +41,28 @@ const habilitadas = (o: LabOrder) =>
     .map((a) => a.code);
 
 describe('órdenes del laboratorio: acciones por estado', () => {
-  it('ofrece sólo las cuatro acciones, en el orden del camino', () => {
+  it('ofrece las cuatro del camino y, al final, Cancelar y Rechazar', () => {
     expect(actionsOf(order('DRAFT')).map((a) => a.code)).toEqual([
       'receive',
       'process',
       'upload',
       'download',
+      'cancel',
+      'reject',
     ]);
     expect(actionsOf(order('DRAFT')).map((a) => a.label)).toEqual([
       'Recibir',
       'Marcar como procesada',
       'Subir resultados',
       'Descargar',
+      'Cancelar',
+      'Rechazar',
     ]);
   });
 
-  it('en cada estado sólo está habilitado el paso que le toca', () => {
-    expect(habilitadas(order('DRAFT'))).toEqual(['receive']);
-    expect(habilitadas(order('RECEIVED'))).toEqual(['process']);
+  it('en cada estado sólo está habilitado el paso que le toca, y las salidas donde la API las admite', () => {
+    expect(habilitadas(order('DRAFT'))).toEqual(['receive', 'cancel']);
+    expect(habilitadas(order('RECEIVED'))).toEqual(['process', 'cancel', 'reject']);
     expect(habilitadas(order('PROCESSED'))).toEqual(['upload']);
     expect(habilitadas(order('UPLOADED', 2))).toEqual(['upload', 'download']);
   });
@@ -65,15 +71,21 @@ describe('órdenes del laboratorio: acciones por estado', () => {
     expect(habilitadas(order('UPLOADED', 0))).toEqual(['upload']);
   });
 
-  it('en ningún estado se ofrece Cancelar ni Rechazar: la API no los admite en imagenología y el menú no los trae', () => {
-    // An imaging order is the same `LabOrder` as a lab one: the menu never carries those steps.
+  it('laboratorio e imagenología tienen el mismo menú: Cancelar y Rechazar valen para las dos', () => {
     const imaging = (status: LabOrderStatus) => ({ ...order(status, 1), studyName: 'Ecografía abdominal' });
-    for (const status of Object.keys(ORDER_STATUS_BADGE) as LabOrderStatus[]) {
-      for (const action of actionsOf(imaging(status))) {
-        expect(['receive', 'process', 'upload', 'download']).toContain(action.code);
-        expect(action.label).not.toMatch(/cancel|rechaz/i);
-      }
+    for (const status of ['DRAFT', 'RECEIVED', 'PROCESSED', 'UPLOADED'] as const) {
+      expect(actionsOf(imaging(status))).toEqual(actionsOf(order(status, 1)));
     }
+    expect(habilitadas(imaging('RECEIVED'))).toEqual(['process', 'cancel', 'reject']);
+  });
+
+  it('Cancelar y Rechazar son acciones que anulan y llevan su paso y su motivo mínimo', () => {
+    const exits = actionsOf(order('RECEIVED')).filter((a) => a.code === 'cancel' || a.code === 'reject');
+    expect(exits.every((a) => a.destructive === true)).toBe(true);
+    expect(REASON_STEPS.cancel.action).toBe('CANCEL');
+    expect(REASON_STEPS.reject.action).toBe('REJECT');
+    expect(REASON_FIELD.minLength).toBeGreaterThanOrEqual(3);
+    expect(REASON_STEPS.reject.dialog(order('RECEIVED')).message).toContain('Hemograma completo');
   });
 
   it('una orden cancelada o rechazada no tiene acciones', () => {
@@ -136,10 +148,10 @@ describe('órdenes del laboratorio: mensaje de la API', () => {
     const error = failure(422, {
       statusCode: 422,
       code: 'VALIDATION_FAILED',
-      message: 'Una orden de imagenología no se puede rechazar.',
+      message: 'La orden no admite ese paso.',
     });
     expect(apiMessageOf(error, 'No pudimos cambiar el estado de la orden.')).toBe(
-      'Una orden de imagenología no se puede rechazar.',
+      'La orden no admite ese paso.',
     );
   });
 

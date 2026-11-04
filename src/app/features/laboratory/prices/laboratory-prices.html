@@ -131,3 +131,13 @@
     <app-badge variant="info">Borrador</app-badge>
   }
 </ng-template>
+
+<ng-template #availableCell let-service>
+  <app-switch
+    [checked]="availableOf(service)"
+    [disabled]="togglingId() !== null"
+    [ariaLabel]="'Disponible hoy: ' + service.name"
+    (checkedChange)="toggleAvailable(service, $event)"
+    [attr.data-testid]="'lab-prices-available-' + service.code"
+  />
+</ng-template>

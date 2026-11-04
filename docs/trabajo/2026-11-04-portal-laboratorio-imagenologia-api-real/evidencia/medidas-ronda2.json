@@ -1,0 +1,162 @@
+[
+  {
+    "file": "ordenes-recibidas-1440-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-rechazar-dialogo-1440-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-rechazar-con-motivo-1440-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-cancelar-dialogo-1440-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-canceladas-y-rechazadas-1440-claro.png",
+    "overflowX": false
+  },
+  {
+    "account": "laboratorio",
+    "width": 1440,
+    "theme": "light",
+    "httpErrors": []
+  },
+  {
+    "file": "ordenes-recibidas-390-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-rechazar-dialogo-390-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-rechazar-con-motivo-390-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-cancelar-dialogo-390-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-canceladas-y-rechazadas-390-claro.png",
+    "overflowX": false
+  },
+  {
+    "account": "laboratorio",
+    "width": 390,
+    "theme": "light",
+    "httpErrors": []
+  },
+  {
+    "file": "equipo-invitado-pendiente-1440-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "equipo-invitar-repetido-409-1440-claro.png",
+    "overflowX": false
+  },
+  {
+    "account": "hospital",
+    "width": 1440,
+    "theme": "light",
+    "httpErrors": []
+  },
+  {
+    "file": "equipo-invitado-pendiente-390-claro.png",
+    "overflowX": false
+  },
+  {
+    "file": "equipo-invitar-repetido-409-390-claro.png",
+    "overflowX": false
+  },
+  {
+    "account": "hospital",
+    "width": 390,
+    "theme": "light",
+    "httpErrors": []
+  },
+  {
+    "file": "ordenes-recibidas-1440-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-rechazar-dialogo-1440-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-rechazar-con-motivo-1440-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-cancelar-dialogo-1440-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-canceladas-y-rechazadas-1440-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "account": "laboratorio",
+    "width": 1440,
+    "theme": "dark",
+    "httpErrors": []
+  },
+  {
+    "file": "ordenes-recibidas-390-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-rechazar-dialogo-390-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-rechazar-con-motivo-390-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-cancelar-dialogo-390-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "ordenes-canceladas-y-rechazadas-390-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "account": "laboratorio",
+    "width": 390,
+    "theme": "dark",
+    "httpErrors": []
+  },
+  {
+    "file": "equipo-invitado-pendiente-1440-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "equipo-invitar-repetido-409-1440-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "account": "hospital",
+    "width": 1440,
+    "theme": "dark",
+    "httpErrors": []
+  },
+  {
+    "file": "equipo-invitado-pendiente-390-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "file": "equipo-invitar-repetido-409-390-oscuro.png",
+    "overflowX": false
+  },
+  {
+    "account": "hospital",
+    "width": 390,
+    "theme": "dark",
+    "httpErrors": []
+  }
+]

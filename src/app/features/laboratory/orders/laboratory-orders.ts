@@ -12,7 +12,6 @@ import {
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { concat, map, type Observable, toArray } from 'rxjs';
 
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
 import type {
@@ -26,6 +25,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
@@ -36,6 +36,7 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 
 import { formatBytes } from '../file-size';
+import { downloadOrderFiles } from './order-download';
 import { filesFromInput } from '../results/picked-files';
 import { ResultUploadQueue, type UploadItem } from '../results/result-upload-queue';
 import { ACCEPT_ATTRIBUTE } from '../results/upload-rules';
@@ -44,6 +45,8 @@ import {
   apiMessageOf,
   disabledAll,
   ORDER_STATUS_BADGE,
+  REASON_FIELD,
+  REASON_STEPS,
   ORDER_TAB_LABELS,
   ORDER_TABS,
   orderTabIndexOf,
@@ -60,7 +63,8 @@ import {
  * camino de una orden es `Borrador → Recibida → Procesada → Subidos`, con
  * `Cancelada` y `Rechazada` como salidas, y cada paso es una acción del menú de
  * tres puntos de su fila — **Recibir**, **Marcar como procesada**, **Subir
- * resultados** y **Descargar**, y nada más.
+ * resultados**, **Descargar**, y las salidas **Cancelar** y **Rechazar**, que
+ * piden un motivo.
  *
  * ## Una tarjeta con pestañas, a lo ancho
  *
@@ -106,6 +110,7 @@ export class LaboratoryOrders {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toasts = inject(ToastService);
+  private readonly dialogs = inject(DialogService);
   protected readonly queue = inject(ResultUploadQueue);
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
@@ -257,12 +262,27 @@ export class LaboratoryOrders {
         return;
       case 'download':
         return this.download(order);
+      case 'cancel':
+        return void this.askReason(order, 'cancel');
+      case 'reject':
+        return void this.askReason(order, 'reject');
     }
   }
 
-  private transition(order: LabOrder, action: LabOrderAction, done: string): void {
+  /** Cancel and reject need a reason: the dialog will not confirm without one, and the API requires it. */
+  private async askReason(order: LabOrder, code: 'cancel' | 'reject'): Promise<void> {
+    const step = REASON_STEPS[code];
+    const reason = await this.dialogs.confirmWithReason(step.dialog(order), REASON_FIELD);
+    if (reason !== null) this.transition(order, step.action, step.done, reason);
+  }
+
+  private transition(order: LabOrder, action: LabOrderAction, done: string, reason?: string): void {
     this.busyOrderId.set(order.orderId);
-    this.lab.transitionOrder(order.orderId, action).subscribe({
+    const request =
+      reason === undefined
+        ? this.lab.transitionOrder(order.orderId, action)
+        : this.lab.transitionOrder(order.orderId, action, reason);
+    request.subscribe({
       next: () => {
         this.busyOrderId.set(null);
         this.toasts.success(done);
@@ -290,28 +310,12 @@ export class LaboratoryOrders {
   private download(order: LabOrder): void {
     if (order.files.length === 0) return;
     this.busyOrderId.set(order.orderId);
-    concat(...order.files.map((file) => this.fetchAndSave(file.id, file.fileName)))
-      .pipe(toArray())
-      .subscribe({
-        next: () => this.busyOrderId.set(null),
-        error: (error: unknown) => {
-          this.busyOrderId.set(null);
-          this.actionError.set(apiMessageOf(error, 'No pudimos descargar los resultados.'));
-        },
-      });
-  }
-
-  /** Pide los bytes del archivo y lo baja con su nombre. */
-  private fetchAndSave(id: string, fileName: string): Observable<void> {
-    return this.lab.resultContent(id).pipe(
-      map((blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        link.click();
-        URL.revokeObjectURL(url);
-      }),
-    );
+    downloadOrderFiles(this.lab, order).subscribe({
+      next: () => this.busyOrderId.set(null),
+      error: (error: unknown) => {
+        this.busyOrderId.set(null);
+        this.actionError.set(apiMessageOf(error, 'No pudimos descargar los resultados.'));
+      },
+    });
   }
 }

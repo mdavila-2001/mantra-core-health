@@ -87,9 +87,9 @@ export class OrganizationInvitations implements OnInit {
         this.enCurso.set(null);
         this.resultado.set(`Aceptó la invitación de ${invitacion.tenantName}. Ya forma parte de la organización.`);
         this.toasts.success(`Ya forma parte de ${invitacion.tenantName}.`, 'Invitación aceptada');
-        // El token se arma con las membresías activas: se renueva para que la organización nueva aparezca sin volver a entrar.
-        this.refresher.refresh().subscribe({ error: () => undefined });
-        this.cargar();
+        // The token lists the organizations of the ACTIVE memberships: the new one only appears after a refresh,
+        // so the list is read again once the session is renewed (or the renewal failed: it still reflects the accept).
+        this.refresher.refresh().subscribe({ next: () => this.cargar(), error: () => this.cargar() });
       },
       error: (error: unknown) => this.fallar(error),
     });
