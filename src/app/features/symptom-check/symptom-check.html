@@ -284,12 +284,11 @@
              hay botón, porque un botón que al tocarlo dice «acá no se puede» es
              peor que ninguno. El aviso va ANTES del botón y siempre a la vista:
              quien va a hablar de su salud tiene que saber a dónde va lo que dice
-             antes de decirlo (Q-M1). Lo transcribe el navegador; después el
-             servicio de triage lo analiza sin guardarlo, como a lo tecleado. -->
+             antes de decirlo (Q-M1). Lo transcribe el navegador. -->
         @if (dictado.supported) {
           <div class="sintomas__dictado" data-testid="sintomas-dictado">
             <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
-              Lo que dicta lo transcribe su navegador y lo analizamos para entenderle; no lo guardamos.
+              Lo que dicta lo transcribe su navegador; no lo guardamos.
             </p>
             <button
               app-button
@@ -408,11 +407,6 @@
               />
 
           </div>
-        } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
-          <p class="sintomas__leyendo" role="status" data-testid="sintomas-leyendo">
-            <app-spinner size="sm" decorative />
-            <span>Estamos leyendo lo que escribió… puede tardar unos segundos.</span>
-          </p>
         } @else if (texto().trim() !== '' && sintomas().length === 0) {
           <p class="sintomas__sin-coincidencias" role="status">
             @if (descartados() !== '') {
@@ -572,9 +566,7 @@
     <!-- Alarma médica general no psiquiátrica -->
     <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
       <app-alert tone="error" title="Esto no puede esperar a un turno">
-        @if (respuestaDelServicio(); as respuesta) {
-          <p class="sintomas__respuesta-ia" data-testid="sintomas-respuesta-ia">{{ respuesta }}</p>
-        } @else if (mensajeDeAlarma(); as mensaje) {
+        @if (mensajeDeAlarma(); as mensaje) {
           <p>{{ mensaje }}</p>
         } @else {
           <p>

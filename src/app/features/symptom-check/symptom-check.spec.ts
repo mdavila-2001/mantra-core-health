@@ -389,7 +389,7 @@ describe('SymptomCheck · el área de texto', () => {
   });
 });
 
-describe('SymptomCheck · mientras la IA lee', () => {
+describe('SymptomCheck · sin IA', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
   let html: HTMLElement;
   let http: HttpTestingController;
@@ -424,23 +424,13 @@ describe('SymptomCheck · mientras la IA lee', () => {
     fixture.detectChanges();
   }
 
-  it('dice que está leyendo, no «no reconocimos», hasta que el servicio contesta', () => {
-    // Un texto que el motor local no reconoce: sólo el servicio puede leerlo.
+  it('sin IA no hay espera: lo que el motor local no reconoce se dice al instante', () => {
     escribir('algo raro me pasa desde ayer');
-    expect(html.querySelector('[data-testid="sintomas-leyendo"]')?.textContent).toContain(
-      'Estamos leyendo',
-    );
-    expect(html.textContent).not.toContain('No reconocimos');
 
-    vi.advanceTimersByTime(700);
-    const consulta = http.expectOne((r) => r.url.endsWith('/v1/triage/analyze'));
-    fixture.detectChanges();
-    expect(html.querySelector('[data-testid="sintomas-leyendo"]')).not.toBeNull();
-
-    consulta.flush('falla', { status: 500, statusText: 'Error' });
-    fixture.detectChanges();
     expect(html.querySelector('[data-testid="sintomas-leyendo"]')).toBeNull();
     expect(html.textContent).toContain('No reconocimos');
+    vi.advanceTimersByTime(2_000);
+    expect(http.match((r) => r.url.includes('/triage/'))).toHaveLength(0);
     http.match(() => true);
   });
 });
@@ -521,10 +511,10 @@ describe('SymptomCheck · dictar', () => {
     expect(boton().textContent).toContain('Dictar');
     expect(boton().querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     const aviso = html.querySelector('#sintomas-dictado-aviso');
-    // Dice las tres cosas que la persona tiene que saber antes de hablar: quién
-    // transcribe, que el texto se analiza para entenderla y que no se guarda.
+    // Dice lo que la persona tiene que saber antes de hablar: quién transcribe
+    // y que no se guarda. Ningún servicio lo analiza.
     expect(aviso?.textContent).toContain('lo transcribe su navegador');
-    expect(aviso?.textContent).toContain('lo analizamos para entenderle');
+    expect(aviso?.textContent).not.toContain('analizamos');
     expect(aviso?.textContent).toContain('no lo guardamos');
     expect(boton().getAttribute('aria-describedby')).toBe('sintomas-dictado-aviso');
     // El aviso está ANTES del botón en el DOM: el botón «sigue» al aviso.
@@ -572,35 +562,11 @@ describe('SymptomCheck · dictar', () => {
   });
 });
 
-/**
- * Lo que suma el servicio de triage (AlovidaAIService): partes del cuerpo que
- * la tabla no tiene. La respuesta es la real del servicio desplegado para la
- * frase del pedido (2026-09-23); ver `lectura-ia.spec.ts` para la combinación
- * aislada.
- */
-describe('SymptomCheck · lo que entiende el servicio de triage', () => {
+/** What the local engine recognizes on its own: no AI service is asked anything. */
+describe('SymptomCheck · lo que reconoce el motor local', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
   let http: HttpTestingController;
   let html: HTMLElement;
-
-  const MANCHAS = {
-    symptoms: [
-      {
-        code: 'mancha:espalda',
-        label: 'manchas en la espalda',
-        kind: 'anatomy',
-        zones: ['espalda', 'piel'],
-        bodyPart: { code: 'espalda', label: 'espalda', side: null },
-        alarm: false,
-        especialidades: [
-          { nombre: 'Dermatología', peso: 3 },
-          { nombre: 'Medicina general', peso: 1 },
-        ],
-      },
-    ],
-    urgency: 'programada',
-    response: 'Gracias por contarnos cómo se siente. Entendemos que esto puede preocuparle.',
-  };
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -634,31 +600,18 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     }
   }
 
-  it('pregunta después de una pausa y suma lo que el motor local no reconoce', () => {
+  it('no consulta ningún servicio de IA, por más que se escriba y se espere', () => {
     escribir('Me salieron unas manchas raras en la espalda');
-    expect(html.textContent).not.toContain('manchas en la espalda');
-    http.expectNone('/ai/v1/triage/analyze');
+    vi.advanceTimersByTime(5_000);
 
-    vi.advanceTimersByTime(600);
-    const req = http.expectOne('/ai/v1/triage/analyze');
-    expect(req.request.body).toEqual({ text: 'Me salieron unas manchas raras en la espalda' });
-    expect(req.request.headers.has('Authorization')).toBe(false);
-    req.flush(MANCHAS);
-    fixture.detectChanges();
-
-    expect(html.querySelector('.sintomas__chips')?.textContent).toContain('manchas en la espalda');
-    expect(html.querySelector('.sintomas__recomendaciones')?.textContent).toContain('Dermatología');
-    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain(
-      'Gracias por contarnos',
+    expect(http.match((r) => r.url.includes('/triage/'))).toHaveLength(0);
+    expect(html.querySelector('.sintomas__chips')?.textContent ?? '').not.toContain(
+      'manchas en la espalda',
     );
   });
 
-  it('si el servicio no responde, la pantalla sigue con lo que reconoce sola', () => {
+  it('lo que reconoce el motor local da chips y una respuesta fija, sin servicio', () => {
     escribir('me duele la cabeza');
-    vi.advanceTimersByTime(600);
-    http
-      .expectOne('/ai/v1/triage/analyze')
-      .flush('caído', { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('dolor de cabeza');
@@ -677,10 +630,6 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     expect(marcada('rodilla-der')).toBe(true);
     expect(marcada('rodilla-izq')).toBe(false);
     expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Rodilla derecha');
-    vi.advanceTimersByTime(600);
-    http
-      .match('/ai/v1/triage/analyze')
-      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
   });
 
   it('«me duelen los ojos» gira la figura a la cara y enciende los dos ojos', () => {
@@ -694,10 +643,6 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
         id,
       ).toContain('body-map__zona--marcada');
     }
-    vi.advanceTimersByTime(600);
-    http
-      .match('/ai/v1/triage/analyze')
-      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
   });
 
   /** A symptom only fine zones offer must not invent a side: «ampolla» lights both feet. */
@@ -712,10 +657,6 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
       ).toContain('body-map__zona--marcada');
     }
     expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Pies y tobillos');
-    vi.advanceTimersByTime(600);
-    http
-      .match('/ai/v1/triage/analyze')
-      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
   });
 
   it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
@@ -732,42 +673,12 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     expect(html.querySelector('[data-testid="zona-animo"]')?.classList).toContain('is-marcada');
     expect(html.querySelector('[data-testid="zona-abierta"]')).toBeNull();
 
-    // La lectura del servicio se pide igual; se la da por atendida.
-    vi.advanceTimersByTime(600);
-    http
-      .match('/ai/v1/triage/analyze')
-      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
   });
 
-  it('sin certeza manda a Medicina general: nada reconocido, o sólo lo que interpretó MedGemma', () => {
+  it('sin certeza manda a Medicina general cuando no se reconoce nada', () => {
     escribir('tengo un problema que no se explicar');
-    vi.advanceTimersByTime(600);
-    http
-      .expectOne('/ai/v1/triage/analyze')
-      .flush({ symptoms: [], urgency: 'programada', source: 'catalog' });
     fixture.detectChanges();
     expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).not.toBeNull();
-    expect(
-      html.querySelector('[data-testid="sintomas-recomendaciones"] .rejilla__nombre')?.textContent,
-    ).toContain('Medicina general');
-
-    escribir('me siento rarisimo desde ayer');
-    vi.advanceTimersByTime(600);
-    http.expectOne('/ai/v1/triage/analyze').flush({ ...MANCHAS, source: 'model' });
-    fixture.detectChanges();
-    const especialidades = [
-      ...html.querySelectorAll('[data-testid="sintomas-recomendaciones"] .rejilla__nombre'),
-    ].map((e) => e.textContent?.trim());
-    expect(especialidades[0]).toBe('Medicina general');
-    expect(especialidades).toContain('Dermatología');
-    expect(
-      html.querySelector('[data-testid="sintomas-recomendaciones"] .rejilla__resumen')?.textContent,
-    ).toContain('interpretamos con IA');
-
-    escribir('me brota algo raro en el lomo');
-    vi.advanceTimersByTime(600);
-    http.expectOne('/ai/v1/triage/analyze').flush({ ...MANCHAS, source: 'semantic' });
-    fixture.detectChanges();
     expect(
       html.querySelector('[data-testid="sintomas-recomendaciones"] .rejilla__nombre')?.textContent,
     ).toContain('Medicina general');
@@ -775,10 +686,6 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
 
   it('los síntomas reconocidos se muestran con su término del glosario médico y la forma llana', () => {
     escribir('eyaculo sangre y me duele la cabeza');
-    vi.advanceTimersByTime(600);
-    http
-      .match('/ai/v1/triage/analyze')
-      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
     fixture.detectChanges();
     const chips = [...html.querySelectorAll('[data-testid="sintoma-reconocido"]')];
     const textos = chips.map((c) => c.textContent?.trim());
@@ -792,10 +699,6 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
   it('con un síntoma reconocido con certeza Medicina general igual va primero, y el especialista debajo', () => {
     // Decisión del propietario (2026-10-08): Medicina general siempre primero.
     escribir('me salieron granos en la cara');
-    vi.advanceTimersByTime(600);
-    http
-      .match('/ai/v1/triage/analyze')
-      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
     fixture.detectChanges();
     const especialidades = [
       ...html.querySelectorAll('[data-testid="sintomas-recomendaciones"] .rejilla__nombre'),
@@ -803,12 +706,6 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     expect(especialidades[0]).toBe('Medicina general');
     expect(especialidades).toContain('Dermatología');
     expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).toBeNull();
-  });
-
-  it('con menos de tres letras no pregunta nada', () => {
-    escribir('me');
-    vi.advanceTimersByTime(2_000);
-    http.expectNone('/ai/v1/triage/analyze');
   });
 });
 
@@ -1333,7 +1230,7 @@ describe('SymptomCheck · dictar', () => {
     expect(boton().querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     const aviso = html.querySelector('#sintomas-dictado-aviso');
     expect(aviso?.textContent).toContain('lo transcribe su navegador');
-    expect(aviso?.textContent).toContain('lo analizamos para entenderle');
+    expect(aviso?.textContent).not.toContain('analizamos');
     expect(aviso?.textContent).toContain('no lo guardamos');
     expect(boton().getAttribute('aria-describedby')).toBe('sintomas-dictado-aviso');
     // El aviso está ANTES del botón en el DOM: el botón «sigue» al aviso.

@@ -1636,29 +1636,6 @@ describe('SpecialtyFormBlock', () => {
       drenarLecturasDelBloque();
     });
 
-    it('las respuestas viajan a la IA en palabras: pregunta = campo, respuesta = valor', () => {
-      peticionDePlantillas().flush([PLANTILLA]);
-      const actualizar = interno<(fieldId: string, valor: unknown) => void>('actualizarValor');
-
-      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([]);
-      actualizar('f-1', 'Buena');
-      actualizar('f-2', true);
-
-      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([
-        { question: 'Tolerancia al ejercicio', answer: 'Buena' },
-        { question: 'Edema', answer: 'Sí' },
-      ]);
-    });
-
-    it('el odontograma no viaja a la IA: es un mapa de piezas, no una respuesta', () => {
-      peticionDePlantillas().flush([PLANTILLA_ODONTO]);
-      interno<(fdi: string) => void>('abrirPieza')('16');
-      interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
-
-      const respuestas = interno<() => { question: string }[]>('respuestasParaLaIa')();
-      expect(respuestas.some((r) => r.question === 'Odontograma')).toBe(false);
-    });
-
     it('completar encadena cerrar la ficha → diagnóstico tentativo → orden, en ese orden y con sus avisos', () => {
       const exito = vi.spyOn(TestBed.inject(ToastService), 'success');
       peticionDePlantillas().flush([PLANTILLA]);
