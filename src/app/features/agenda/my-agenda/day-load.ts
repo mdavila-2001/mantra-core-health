@@ -72,12 +72,15 @@ export class DayLoad {
     bookings: Observable<Page<B>>,
     apply: (slots: DayRead<S>, bookings: DayRead<B>) => void,
   ): void {
-    this.turn?.unsubscribe();
     const key = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+    // Still fresh if the same day is asked again before its first turn applied
+    // anything: its lists are still empty. Read before cancelling, which ends loading.
+    const fresh = this.lastDay !== key || (this.loading() && this.freshDay());
+    this.turn?.unsubscribe();
     if (this.lastDay !== null && this.lastDay !== key) {
       for (const list of this.lists) list.set([]);
     }
-    this.freshDaySignal.set(this.lastDay !== key);
+    this.freshDaySignal.set(fresh);
     this.lastDay = key;
     this.loadingSignal.set(true);
     this.turn = forkJoin([read(slots), read(bookings)])

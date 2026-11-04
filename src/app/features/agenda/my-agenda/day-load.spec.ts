@@ -109,12 +109,25 @@ describe('DayLoad', () => {
 
   it('freshDay is true for a first load or another day, false for a reload of the same day', () => {
     const pending = new Subject<{ items: Item[] }>();
-    load.load(TODAY, pending, pending, apply);
+    load.load(TODAY, of(page(1)), of(page(2)), apply);
     expect(load.freshDay()).toBe(true);
     load.load(TODAY, pending, pending, apply);
     expect(load.freshDay()).toBe(false);
     load.load(TOMORROW, pending, pending, apply);
     expect(load.freshDay()).toBe(true);
+  });
+
+  it('asking the same new day again before it answers keeps it fresh; once applied, it is a reload', () => {
+    const pending = new Subject<{ items: Item[] }>();
+    load.load(TODAY, of(page(1)), of(page(2)), apply);
+    load.load(TOMORROW, pending, pending, apply);
+    load.load(TOMORROW, pending, pending, apply);
+    expect(load.freshDay()).toBe(true);
+
+    load.load(TOMORROW, of(page(3)), of(page(4)), apply);
+    expect(load.loading()).toBe(false);
+    load.load(TOMORROW, pending, pending, apply);
+    expect(load.freshDay()).toBe(false);
   });
 
   it('a source that completes without answering counts as a failed read', () => {
