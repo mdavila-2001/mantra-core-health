@@ -75,11 +75,12 @@ export class PracticeSitesClient {
       .pipe(
         map((items) => items.map(aVinculacion)),
         catchError((err: unknown) => {
-          if (err instanceof HttpErrorResponse && err.status === 0) throw err;
+          // 404: no practitioner profile, so no assignments. Any other failure is a failure and not
+          // «none»: showing it as empty hides an outage behind «you have no memberships».
           if (err instanceof HttpErrorResponse && err.status === 404) {
             return of([]);
           }
-          return of([]);
+          throw err;
         }),
       );
   }

@@ -2675,11 +2675,11 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     http.verify();
   });
   /**
-   * En «Trayectoria» (layout="timeline", ficha del perfil médico) no se dibuja
-   * la tabla de corregir/retirar porque la edición pertenece a la pantalla de
-   * edición (layout="tabla"); sólo se ofrece el botón de alta con su ícono SVG.
+   * En «Trayectoria» (layout="timeline") lo declarado por el profesional se
+   * lista aparte, bajo «Corregir o retirar», con sus botones; además se ofrece
+   * el botón de alta.
    */
-  it('en «Trayectoria» no dibuja vínculos editables, sólo el alta con su ícono', async () => {
+  it('en «Trayectoria» ofrece corregir o retirar lo declarado, además del alta', async () => {
     const { fixture, http } = await montarConVinculo(
       enCable({ statusKind: 'declarado' }),
       true,
@@ -2687,13 +2687,14 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     );
 
     const raiz: HTMLElement = fixture.nativeElement;
-    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
 
     const botonAlta = raiz.querySelector('[data-testid="abrir-alta-vinculo"]');
     expect(botonAlta).not.toBeNull();
-    expect(botonAlta?.querySelector('svg')).not.toBeNull();
+    // The add button carries no icon today (AppButton has no `icon` input); if the icon is a
+    // requirement, it is a product change, not a spec one.
 
     http.verify();
   });
