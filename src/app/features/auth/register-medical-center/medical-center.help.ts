@@ -80,6 +80,12 @@ export const AYUDA_ALTA_MEDICA: Readonly<Record<string, readonly HelpCard[]>> = 
       texto:
         'El representante legal firma por la organización y es también quien administra la cuenta. En el paso siguiente se sube el poder que lo acredita.',
     },
+    {
+      icono: 'mail',
+      titulo: 'Con este correo se entra',
+      texto:
+        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
+    },
   ],
   poder: [
     {
@@ -113,17 +119,12 @@ export const AYUDA_ALTA_MEDICA: Readonly<Record<string, readonly HelpCard[]>> = 
         'Las campañas se coordinan con esta persona. Se puede cargar más adelante desde el perfil.',
     },
   ],
-  acceso: [
-    {
-      icono: 'mail',
-      titulo: 'Con este correo se entra',
-      texto:
-        'El correo del representante legal es el usuario de la cuenta: con él y con la contraseña se entra a la plataforma. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
-    },
+  password: [
     {
       icono: 'lock',
-      titulo: 'Una clave nueva, no la del correo',
-      texto: 'Al menos ocho caracteres. Se puede cambiar después desde el perfil.',
+      titulo: 'Una clave nueva',
+      texto:
+        'Al menos ocho caracteres, distinta de la de otras cuentas. Se escribe dos veces para evitar un error de tipeo y se puede cambiar después desde el perfil.',
     },
   ],
 };

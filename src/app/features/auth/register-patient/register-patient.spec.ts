@@ -376,6 +376,7 @@ describe('RegisterPatient', () => {
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
       // Los cinco que AC-03-3 volvió obligatorios se completan acá: sin ellos
       // el formulario es inválido y `submit()` no llega a salir, así que toda
       // prueba de envío los necesita. El que comprueba que cada uno frena el
@@ -463,22 +464,25 @@ describe('RegisterPatient', () => {
    */
   describe('las páginas del alta de paciente', () => {
     /**
-     * El alta se recorre en cinco pasos (el propietario consolidó las diez
-     * páginas originales el 21/10/2026). Este número se fija a propósito: sumar
+     * El alta se recorre en seis pasos (el propietario consolidó las diez
+     * páginas originales el 21/10/2026; la contraseña, al final, es el sexto).
+     * Este número se fija a propósito: sumar
      * o partir un paso es una decisión de producto. Qué pregunta cada paso lo
      * fija la prueba de contenido por página, más abajo.
      */
-    it('el formulario se organiza exactamente en 5 pasos consolidados', () => {
+    it('el formulario se organiza exactamente en 6 pasos consolidados', () => {
       const paginas = component.paginasPaciente();
 
-      expect(paginas.length).toBe(5);
+      expect(paginas.length).toBe(6);
     });
 
-    it('el recorrido se ve entero con sus pasos rotulados', () => {
+    // Con seis páginas el motor deja el indicador rotulado (tope de cinco) y
+    // muestra el contador «Paso 1 de 6»; la barra de avance sigue a la vista.
+    it('con la contraseña como sexto paso el recorrido se muestra como contador', () => {
       const html = fixture.nativeElement as HTMLElement;
 
-      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(5);
-      expect(html.querySelector('.paginated-form__contador')).toBeNull();
+      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(0);
+      expect(html.querySelector('.paginated-form__contador')?.textContent).toContain('de 6');
     });
 
     /**
@@ -487,16 +491,32 @@ describe('RegisterPatient', () => {
      * 2) Lugares donde vive (residencia, dirección, mapa/GPS)
      * 3) Datos de contacto + emergencia (celular, contacto de emergencia, ambulancia)
      * 4) Empresa + lugar donde trabaja (empresa, dirección, mapa de trabajo)
-     * 5) Resto de cosas (acceso/contraseña, seguro médico, facturación)
+     * 5) Resto de cosas (correo, seguro médico, facturación)
+     * 6) Contraseña y su confirmación, siempre al final
      */
-    it('presenta los bloques en el orden pedido (5 pasos)', () => {
+    it('presenta los bloques en el orden pedido (6 pasos)', () => {
       expect(component.paginasPaciente().map((pagina) => pagina.clave)).toEqual([
         'identity',
         'residence',
         'contact',
         'work',
         'misc',
+        'password',
       ]);
+    });
+
+    it('la última página tiene sólo la contraseña y su confirmación', () => {
+      const paginas = component.paginasPaciente();
+      const ultima = paginas[paginas.length - 1];
+
+      expect(ultima.campos.map((campo) => campo.key)).toEqual(['password', 'confirmPassword']);
+      expect(ultima.campos.map((campo) => campo.testId)).toEqual([
+        'registro-password',
+        'registro-confirm-password',
+      ]);
+      expect(paginas.slice(0, -1).flatMap((p) => p.campos.map((c) => c.key))).not.toContain(
+        'password',
+      );
     });
 
     /**
@@ -540,9 +560,9 @@ describe('RegisterPatient', () => {
         'gpsTrabajo',
         'workMunicipalityConceptId',
       ]);
+      expect(porClave('password')).toEqual(['password', 'confirmPassword']);
       expect(porClave('misc')).toEqual([
         'email',
-        'password',
         'privateInsurancePlanId',
         'publicInsurancePlanId',
         'billingTaxId',
@@ -570,11 +590,11 @@ describe('RegisterPatient', () => {
       expect(claves).not.toContain('workZone');
     });
 
-    it('empieza por el nombre y termina por la facturación', () => {
+    it('empieza por el nombre y la facturación cierra los datos, antes de la contraseña', () => {
       const primera = component.paginasPaciente()[0];
       expect(primera.campos[0].key).toBe('name');
 
-      const ultima = component.paginasPaciente().at(-1);
+      const ultima = component.paginasPaciente().find((pagina) => pagina.clave === 'misc');
       expect(ultima?.campos.slice(-2).map((campo) => campo.key)).toEqual([
         'billingTaxId',
         'billingLegalName',
@@ -955,6 +975,26 @@ describe('RegisterPatient', () => {
         component.submit();
         http.expectNone('/iam/auth/register-patient');
       }
+    });
+
+    it('con la confirmación distinta o vacía el alta no sale', () => {
+      for (const confirmacion of ['otra-clave-1', '']) {
+        completar();
+        component.formPaciente.controls.confirmPassword.setValue(confirmacion);
+
+        expect(component.formPaciente.controls.confirmPassword.invalid).toBe(true);
+        component.submit();
+        http.expectNone('/iam/auth/register-patient');
+      }
+    });
+
+    it('cambiar la contraseña después de confirmarla invalida la confirmación', () => {
+      completar();
+      component.formPaciente.controls.password.setValue('otra-clave-1');
+
+      expect(component.formPaciente.controls.confirmPassword.hasError('passwordMismatch')).toBe(
+        true,
+      );
     });
 
     it('nada más es obligatorio: con los nueve completos el alta sale', () => {
@@ -2838,11 +2878,13 @@ describe('RegisterPatient', () => {
     it('nunca escribe la contraseña en localStorage', () => {
       component.formPaciente.controls.name.setValue('Carlos');
       component.formPaciente.controls.password.setValue('secreto12');
-      component.recordarPaso({ titulo: '¿Dónde vive?', clave: 'residence', campos: [] });
+      component.formPaciente.controls.confirmPassword.setValue('secreto12');
+      component.recordarPaso({ titulo: 'Contraseña', clave: 'password', campos: [] });
 
       const guardado = localStorage.getItem(component.STORAGE_KEY)!;
       expect(guardado).not.toContain('secreto12');
       expect(JSON.parse(guardado).formValores.password).toBeUndefined();
+      expect(JSON.parse(guardado).formValores.confirmPassword).toBeUndefined();
     });
 
     it('un borrador viejo con contraseña se limpia y no se reinyecta', () => {

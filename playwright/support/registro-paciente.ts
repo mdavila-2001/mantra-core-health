@@ -55,7 +55,27 @@ export const PASOS_DEL_ALTA = {
   contacto: 'Datos de contacto y emergencia',
   trabajo: 'Empresa y lugar de trabajo',
   resto: 'Resto de datos (acceso, seguros y facturación)',
+  contrasena: 'Contraseña',
 } as const;
+
+/**
+ * Pasa de «Resto de datos» al último paso y escribe la contraseña y su
+ * confirmación. Deja la pantalla lista para «Crear cuenta». `testIdPrefix` es
+ * `registro` en el alta de paciente y `registro-pro` en la de profesional.
+ */
+export async function completarContrasena(
+  page: Page,
+  clave: string,
+  testIdPrefix = 'registro',
+  confirmacion = clave,
+): Promise<void> {
+  const siguiente = page.getByTestId('paginated-form-continuar');
+  await expect(siguiente).toBeEnabled({ timeout: 15_000 });
+  await siguiente.click();
+  await expect(page.getByRole('heading', { name: PASOS_DEL_ALTA.contrasena, exact: true })).toBeVisible();
+  await page.getByTestId(`${testIdPrefix}-password`).fill(clave);
+  await page.getByTestId(`${testIdPrefix}-confirm-password`).fill(confirmacion);
+}
 
 /**
  * Completa el primer paso —identidad: nombre, apellido, documento y su

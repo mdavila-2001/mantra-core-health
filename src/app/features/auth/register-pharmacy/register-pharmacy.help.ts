@@ -84,7 +84,7 @@ export const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
         'Las promociones de su farmacia se coordinan con esta persona. Se puede cargar después.',
     },
   ],
-  acceso: [
+  password: [
     {
       icono: 'lock',
       titulo: 'Una clave nueva, no la del correo',

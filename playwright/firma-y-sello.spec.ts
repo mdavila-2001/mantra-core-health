@@ -245,8 +245,9 @@ test('el alta del doctor ofrece la firma y el sello como paso opcional y se pued
   await expect(page.getByRole('alert').filter({ hasText: 'JPG, PNG o WebP' })).toBeVisible();
 
   // Y termina el alta con el paso cargado (la firma se quitó y el sello sigue).
-  await avanzar('Su contraseña');
+  await avanzar('Contraseña');
   await page.getByTestId('registro-pro-password').fill('una-clave-segura-1');
+  await page.getByTestId('registro-pro-confirm-password').fill('una-clave-segura-1');
   await page.getByTestId('paginated-form-continuar').click();
   await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 30_000 });
   await page.screenshot({ path: join(EVIDENCIA, 'alta-terminada.png') });
@@ -296,8 +297,9 @@ test('el alta se completa sin cargar firma ni sello: el paso se salta', async ({
   await avanzar('Sus especialidades');
   await avanzar('Su firma y su sello');
   // Sin tocar nada, el motor deja pasar.
-  await avanzar('Su contraseña');
+  await avanzar('Contraseña');
   await page.getByTestId('registro-pro-password').fill('una-clave-segura-1');
+  await page.getByTestId('registro-pro-confirm-password').fill('una-clave-segura-1');
   await page.getByTestId('paginated-form-continuar').click();
   await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 30_000 });
 });

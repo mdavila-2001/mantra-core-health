@@ -121,7 +121,10 @@ describe('Recorrido real · el camino del consumidor', () => {
 
     cy.porTestId('paginated-form-continuar').click();
 
+    // La contraseña es la última página, con su confirmación.
+    cy.porTestId('paginated-form-continuar').click();
     escribirPorTestId('registro-password', CLAVE);
+    escribirPorTestId('registro-confirm-password', CLAVE);
     capturar({ carpeta: 'consumidor-00-registro', titulo: 'Crear cuenta' }, 'formulario-completo');
 
     cy.porTestId('paginated-form-continuar').click();

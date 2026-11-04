@@ -262,7 +262,6 @@ test('alta: el distrito del consultorio viaja aparte de la calle y la sede lo mu
   await expect(fecha).toHaveValue('12/05/1985');
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill(CORREO);
-  await page.getByTestId('registro-pro-password').fill(CLAVE);
   await continuar(page);
 
   await enLaPagina(page, '¿Dónde vive?');
@@ -320,6 +319,12 @@ test('alta: el distrito del consultorio viaja aparte de la calle y la sede lo mu
       page.waitForTimeout(1_500).then(() => false),
     ]);
     if (enviada) break;
+    // La contraseña es la última página: se escribe cuando aparece.
+    const clave = page.getByTestId('registro-pro-password');
+    if (await clave.isVisible()) {
+      await clave.fill(CLAVE);
+      await page.getByTestId('registro-pro-confirm-password').fill(CLAVE);
+    }
     await continuar(page);
   }
 

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 import { subirLosCincoDocumentos } from './helpers/documentos-legales';
-import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
+import { completarContrasena, completarDirectorio, completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
  * Subtarea 1.4 · representante legal (con poder notariado en PDF) y
@@ -70,7 +70,7 @@ async function llegarARepresentanteLegal(page: Page): Promise<void> {
 test.describe('alta pública de aseguradora — representante legal y gerencias (subtarea 1.4)', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('«Representante legal (1 de 2)» trae los cinco nombres, la cédula, el correo y la contraseña', async ({
+  test('«Representante legal (1 de 2)» trae los cinco nombres, la cédula y el correo', async ({
     page,
   }) => {
     await abrirElAlta(page);
@@ -84,7 +84,6 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
       'registro-organizacion-representante-apellido-materno',
       'registro-organizacion-representante-ci',
       'registro-organizacion-representante-correo',
-      'registro-organizacion-representante-password',
     ]) {
       await expect(page.getByTestId(testId)).toBeVisible();
     }
@@ -103,7 +102,6 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await page
       .getByTestId('registro-organizacion-representante-correo')
       .fill('legal@andina.test');
-    await page.getByTestId('registro-organizacion-representante-password').fill('secreto12');
     await page.getByTestId('paginated-form-continuar').click();
 
     await expect(page.locator('.paginated-form__titulo')).toContainText(
@@ -130,7 +128,6 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await page
       .getByTestId('registro-organizacion-representante-correo')
       .fill('legal@andina.test');
-    await page.getByTestId('registro-organizacion-representante-password').fill('secreto12');
     await page.getByTestId('paginated-form-continuar').click();
 
     await expect(page.locator('.paginated-form__titulo')).toContainText(
@@ -280,7 +277,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await abrirElAlta(page);
     await llegarARepresentanteLegal(page);
     // El representante legal es el owner: su correo y su contraseña son los
-    // del login. No hay un paso «Tu cuenta» después del directorio.
+    // del login. La contraseña es la última página, después del directorio.
     await completarRepresentanteLegal(page, { email: 'con-representante@andina.test' });
     await completarGerencias(page);
 
@@ -288,7 +285,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await capturar(page, 'exito-con-representante');
   });
 
-  test('no hay página «Su cuenta»: la contraseña se pide junto al correo del representante', async ({
+  test('no hay página «Su cuenta»: la contraseña es la última página, aparte del correo', async ({
     page,
   }) => {
     await abrirElAlta(page);
@@ -297,7 +294,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await expect(page.locator('.paginated-form__titulo')).toContainText(
       'Representante legal (1 de 2)',
     );
-    // Las cinco partes del nombre, la cédula, el correo y la contraseña, a la vez.
+    // Las cinco partes del nombre, la cédula y el correo, a la vez; la contraseña no.
     for (const testId of [
       'registro-organizacion-representante-nombre',
       'registro-organizacion-representante-segundo-nombre',
@@ -306,7 +303,6 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
       'registro-organizacion-representante-apellido-materno',
       'registro-organizacion-representante-ci',
       'registro-organizacion-representante-correo',
-      'registro-organizacion-representante-password',
     ]) {
       await expect(page.getByTestId(testId)).toBeVisible();
     }
@@ -315,21 +311,17 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await expect(page.getByText('Su cuenta', { exact: true })).toHaveCount(0);
   });
 
-  test('sin contraseña, el representante no avanza de la primera página', async ({ page }) => {
+  test('con otra confirmación, la última página no envía el alta', async ({ page }) => {
     await abrirElAlta(page);
     await llegarARepresentanteLegal(page);
+    await completarRepresentanteLegal(page);
+    await completarDirectorio(page);
 
-    await page.getByTestId('registro-organizacion-representante-nombre').fill('Mariana');
-    await page.getByTestId('registro-organizacion-representante-apellido-paterno').fill('Siles');
-    await page.getByTestId('registro-organizacion-representante-ci').fill('4872190 SC');
-    await page
-      .getByTestId('registro-organizacion-representante-correo')
-      .fill('legal@andina.test');
-    await page.getByTestId('paginated-form-continuar').click();
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Contraseña');
+    await completarContrasena(page, 'otra-cosa12');
 
-    await expect(page.locator('.paginated-form__titulo')).toContainText(
-      'Representante legal (1 de 2)',
-    );
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Contraseña');
+    await expect(page.getByText('Las contraseñas no coinciden.')).toBeVisible();
   });
 
   test('la página del representante legal no se desborda en teléfono ni en tablet', async ({
@@ -346,9 +338,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
       ['escritorio-grande-1920x1080', { width: 1920, height: 1080 }],
     ] as const) {
       await page.setViewportSize(tamano);
-      await expect(
-        page.getByTestId('registro-organizacion-representante-password'),
-      ).toBeVisible();
+      await expect(page.getByTestId('registro-organizacion-representante-correo')).toBeVisible();
 
       const desborde = await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

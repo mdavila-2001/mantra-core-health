@@ -30,9 +30,11 @@ import {
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
 import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+  confirmPasswordControl,
+  linkPasswordConfirmation,
+  passwordControl,
+  passwordStep,
+} from '../shared-registration/password-step';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
@@ -345,7 +347,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
         'Las campañas de estudios dirigidas se coordinan con esta persona. Se puede cargar más adelante desde el perfil.',
     },
   ],
-  acceso: [
+  password: [
     {
       icono: 'lock',
       titulo: 'Una clave nueva, no la del correo',
@@ -551,6 +553,7 @@ export class RegisterImagingCenter {
   }
 
   constructor() {
+    linkPasswordConfirmation(this.form);
     if (isPlatformBrowser(this.platformId)) {
       const detectado = this.draftService.detectDraft('imaging-center');
       if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
@@ -684,10 +687,8 @@ export class RegisterImagingCenter {
       validators: [Validators.email],
     }),
     // --- la cuenta ---------------------------------------------------------
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    password: passwordControl(),
+    confirmPassword: confirmPasswordControl(),
   });
 
   /**
@@ -985,25 +986,7 @@ export class RegisterImagingCenter {
         },
       ],
     },
-    {
-      titulo: 'Su acceso',
-      clave: 'acceso',
-      icon: 'lock' as const,
-      hint: 'Entra con el correo del representante legal y esta contraseña.',
-      campos: [
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          control: 'password' as const,
-          required: true,
-          icono: 'lock' as const,
-          autocomplete: 'new-password',
-          testId: 'registro-imagen-password',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
-        },
-      ],
-    },
+    passwordStep('registro-imagen', 'Entra con el correo del representante legal y esta contraseña.'),
   ]);
 
   readonly attachmentFiles = signal<Partial<Record<ClaveDeAdjunto, readonly File[]>>>({});

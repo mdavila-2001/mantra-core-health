@@ -67,9 +67,11 @@ import {
   completeName,
 } from '../shared-registration/name-fields/person-name';
 import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+  confirmPasswordControl,
+  linkPasswordConfirmation,
+  passwordControl,
+  passwordStep,
+} from '../shared-registration/password-step';
 import {
   MapLocationPicker,
   type Coordinates,
@@ -296,7 +298,8 @@ export class RegisterPharmacy {
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     // --- la cuenta -------------------------------------------------------------
-    password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
+    password: passwordControl(),
+    confirmPassword: confirmPasswordControl(),
   });
 
   readonly state = signal<ViewState<null>>(ready(null));
@@ -439,25 +442,7 @@ export class RegisterPharmacy {
         ],
       },
       ...this.paginasDeGerencia(),
-      {
-        titulo: 'Su acceso',
-        clave: 'acceso',
-        icon: 'lock' as const,
-        hint: 'Entra con el correo del representante legal y esta contraseña.',
-        campos: [
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
-            required: true,
-            icono: 'lock' as const,
-            autocomplete: 'new-password',
-            testId: 'registro-farmacia-password',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
-          },
-        ],
-      },
+      passwordStep('registro-farmacia', 'Entra con el correo del representante legal y esta contraseña.'),
     ]),
   );
 
@@ -694,6 +679,7 @@ export class RegisterPharmacy {
       this.draftService.trackEvent('start', 'pharmacy', 0);
     }
 
+    linkPasswordConfirmation(this.form);
     this.form.controls.companyType.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
       const poder = this.form.controls.powerOfAttorneyFileId;
       if (tipo === null || tipo === 'UNIPERSONAL') {

@@ -16,6 +16,7 @@ import {
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
 import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterPharmacy } from './register-pharmacy';
+import { AYUDA } from './register-pharmacy.help';
 
 /** La forma que espera `IamClient.registerPharmacyOrganization`, según lo arma el cliente. */
 interface CuerpoDelAlta {
@@ -117,6 +118,7 @@ describe('RegisterPharmacy', () => {
     // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
     component.form.controls.powerOfAttorneyFileId.setValue('file-poder');
     component.form.controls.password.setValue('secreto12');
+    component.form.controls.confirmPassword.setValue('secreto12');
     // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
     component.fijarGpsCentral({ lat: -17.78, lng: -63.18 });
   }
@@ -184,6 +186,34 @@ describe('RegisterPharmacy', () => {
     component.submit();
 
     http.expectNone(RUTA_ALTA);
+  });
+
+  it('la última página es sólo la contraseña y su confirmación, con la ayuda propia', () => {
+    const paginas = component.paginas();
+    const ultima = paginas[paginas.length - 1];
+    expect(ultima.clave).toBe('password');
+    expect(ultima.campos.map((c) => c.key)).toEqual(['password', 'confirmPassword']);
+    expect(ultima.campos[0].testId).toBe('registro-farmacia-password');
+    expect(paginas.slice(0, -1).some((p) => p.campos.some((c) => c.key === 'password'))).toBe(false);
+    expect(AYUDA['password']?.length).toBeGreaterThan(0);
+  });
+
+  it('una confirmación distinta bloquea el envío', () => {
+    completarObligatorio();
+    component.form.controls.confirmPassword.setValue('secreto13');
+    component.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(component.form.controls.confirmPassword.hasError('passwordMismatch')).toBe(true);
+  });
+
+  it('el cuerpo lleva la contraseña y nunca la confirmación', () => {
+    completarObligatorio();
+    component.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    expect(JSON.stringify(req.request.body)).not.toContain('confirmPassword');
+    req.flush(RESPUESTA_201);
   });
 
   it('el punto de la central viaja como pharmacy.latitude/longitude', () => {
@@ -603,6 +633,14 @@ describe('RegisterPharmacy', () => {
       expect(component.gpsCentral()).toEqual({ lat: -17.8, lng: -63.15 });
       expect(component.form.controls.gpsCentral.value).toEqual({ lat: -17.8, lng: -63.15 });
       expect(component.pasoGuardado()).toBe(1);
+    });
+
+    it('no guarda ni la contraseña ni su confirmación', () => {
+      component.form.patchValue({ password: 'secreto12', confirmPassword: 'secreto12' });
+      component.guardarBorrador();
+      const draft = JSON.parse(localStorage.getItem('alovida.onboarding.draft.pharmacy')!);
+      expect(draft.data.password).toBeUndefined();
+      expect(draft.data.confirmPassword).toBeUndefined();
     });
 
     it('limpia el borrador al descartarlo', () => {

@@ -144,7 +144,6 @@ test('1 · el alta lleva la institución y la aseguradora elegidas, y la API las
   await page.keyboard.type('12051985', { delay: 40 });
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill(MEDICO.identificador);
-  await page.getByTestId('registro-pro-password').fill(MEDICO.clave);
   await continuar(page);
 
   await marcarCasa(page);
@@ -180,7 +179,10 @@ test('1 · el alta lleva la institución y la aseguradora elegidas, y la API las
   await page.getByTestId('registro-pro-credencial').fill(`TI-${RUN}`);
   await page.getByTestId('registro-pro-colegio').fill(`CM-${RUN}`);
   await continuar(page); // → especialidades (opcional)
-  await continuar(page); // → firma y sello (opcional, la última)
+  await continuar(page); // → firma y sello (opcional)
+  await continuar(page); // → contraseña, la última
+  await page.getByTestId('registro-pro-password').fill(MEDICO.clave);
+  await page.getByTestId('registro-pro-confirm-password').fill(MEDICO.clave);
 
   const [peticion, respuesta] = await Promise.all([
     page.waitForRequest(

@@ -102,7 +102,13 @@ import {
 } from '../../../core/profession/university-registry';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
-import { passwordValidators } from '../shared-registration/password-policy';
+import { AYUDA_CONTRASENA } from '../shared-registration/password-help';
+import {
+  confirmPasswordControl,
+  linkPasswordConfirmation,
+  passwordControl,
+  passwordStep,
+} from '../shared-registration/password-step';
 import { identityDocumentValidators } from '../shared-registration/national-id';
 import {
   EMPTY_STUDY,
@@ -568,18 +574,13 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
         'Use uno que siga teniendo si cambia de trabajo: es su identidad de acceso y por donde se recupera la cuenta si pierde la clave.',
     },
     {
-      icono: 'lock',
-      titulo: 'Su contraseña, sólo suya',
-      texto:
-        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
-    },
-    {
       icono: 'stethoscope',
       titulo: 'Por qué le pedimos los dos',
       texto:
         'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. Los dos se guardan en su perfil. Qué clase de profesional es se pregunta más adelante, con su título.',
     },
   ],
+  password: AYUDA_CONTRASENA,
   residence: [
     {
       icono: 'pin',
@@ -1163,10 +1164,8 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    confirmPassword: confirmPasswordControl(),
+    password: passwordControl(),
     // Documento de identidad boliviano. Obligatorio en el alta de profesional:
     // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
     // a una persona verificable. Además del formato válido, ahora tiene que estar.
@@ -2493,13 +2492,10 @@ export class RegisterPractitioner {
    * lista del propietario (TAREA 05 §1.2) con los bloques que **tienen dónde
    * guardarse**; los que no, más abajo.
    *
-   * ## Por qué la contraseña viaja con el correo y no al final
+   * ## La contraseña va al final
    *
-   * Porque acá el correo **es** el identificador de acceso —a diferencia del
-   * alta de paciente, que entra con el documento—, y las dos mitades de una
-   * misma credencial se contestan juntas. El orden del propietario no la nombra
-   * en ningún sitio; ponerla en su propia página al final sería un paso más
-   * para un dato que ya está en la página que dice «con esto entrás».
+   * Por decisión del propietario, la última página de todo alta tiene sólo la
+   * contraseña y su confirmación (`passwordStep`).
    *
    * ## Lo que el orden pide y esta pantalla NO pregunta
    *
@@ -2545,13 +2541,14 @@ export class RegisterPractitioner {
    * salvo **nombre y cédula**: son cinco campos en una sola página, como en el
    * alta de paciente (propietario, 22/10/2026), y es la única excepción.
    */
-  readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() =>
-    practitionerFields({
+  readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() => [
+    ...practitionerFields({
       professionalTitle: this.tituloProfesionalElegido(),
       departmentIssuerField: (testId) => this.campoDepartamentoEmisor(testId),
       alSalirCorreoPersonal: (valor) => this.cuentaExistente.verificar('EMAIL', valor),
     }),
-  );
+    passwordStep('registro-pro'),
+  ]);
 
   /**
    * El campo del departamento que emitió el documento.
@@ -2744,6 +2741,7 @@ export class RegisterPractitioner {
   });
 
   constructor() {
+    linkPasswordConfirmation(this.formProfesional);
     const detectado = this.draftService.detectDraft('practitioner');
     if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
       this.borradorDetectado.set(detectado);

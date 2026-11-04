@@ -61,6 +61,7 @@ describe('RegisterSupportStaff', () => {
       email: 'rosa@ejemplo.com',
       phone: '+591 70012345',
       password: 'secreta123',
+      confirmPassword: 'secreta123',
       ...cambios,
     });
   }
@@ -97,5 +98,32 @@ describe('RegisterSupportStaff', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('[data-testid="alta-apoyo-siguiente"]')).not.toBeNull();
+  });
+
+  it('la última página pide sólo la contraseña y su confirmación', () => {
+    const paginas = interno<() => readonly { clave?: string; campos: readonly { key: string }[] }[]>('paginas')();
+    const ultima = paginas.at(-1)!;
+    expect(ultima.clave).toBe('password');
+    expect(ultima.campos.map((c) => c.key)).toEqual(['password', 'confirmPassword']);
+    expect(paginas.slice(0, -1).flatMap((p) => p.campos).map((c) => c.key)).not.toContain('password');
+  });
+
+  it('una confirmación distinta no deja enviar, y editar la contraseña la revalida', () => {
+    completar({ confirmPassword: 'otra-clave-1' });
+    expect(formulario().invalid).toBe(true);
+    interno<() => void>('submit')();
+    expect(enviados).toHaveLength(0);
+
+    completar();
+    expect(formulario().invalid).toBe(false);
+    formulario().controls['password']!.setValue('secreta1234');
+    expect(formulario().invalid).toBe(true);
+  });
+
+  it('el cuerpo lleva password y nunca confirmPassword', () => {
+    completar();
+    interno<() => void>('submit')();
+    expect(enviados[0]).toHaveProperty('password', 'secreta123');
+    expect(enviados[0]).not.toHaveProperty('confirmPassword');
   });
 });

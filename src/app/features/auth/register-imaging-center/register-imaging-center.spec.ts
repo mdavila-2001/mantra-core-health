@@ -99,6 +99,7 @@ describe('RegisterImagingCenter', () => {
       legalRepEmail: 'ana.paz@imagenoriente.test',
       legalRepIdNumber: '4872190',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     component.updateAttachment('nitFile', [archivo('nit.pdf', 'application/pdf', 10)]);
     component.updateAttachment('seprecFile', [archivo('seprec.pdf', 'application/pdf', 10)]);
@@ -187,7 +188,30 @@ describe('RegisterImagingCenter', () => {
     }
   });
 
+  it('la última página es solo contraseña y su confirmación, sin el correo', () => {
+    const ultima = component.paginas.at(-1)!;
+
+    expect(ultima.clave).toBe('password');
+    expect(ultima.campos.map((c) => c.key)).toEqual(['password', 'confirmPassword']);
+    expect(ultima.campos[0].testId).toBe('registro-imagen-password');
+    expect(component.paginas.find((p) => p.clave === 'representante')!.campos.map((c) => c.key)).toContain(
+      'legalRepEmail',
+    );
+  });
+
   /* --- qué frena y qué no ------------------------------------------------ */
+
+  it('una confirmación distinta frena el envío; al corregir la contraseña se revalida', () => {
+    completarLoObligatorio();
+    component.form.patchValue({ confirmPassword: 'otra-clave1' });
+
+    component.submit();
+    expect(component.enviada()).toBe(false);
+    expect(component.form.controls.confirmPassword.hasError('passwordMismatch')).toBe(true);
+
+    component.form.patchValue({ password: 'otra-clave1' });
+    expect(component.form.valid).toBe(true);
+  });
 
   it('no se envía vacío', () => {
     component.submit();
@@ -226,6 +250,8 @@ describe('RegisterImagingCenter', () => {
       },
     });
     expect(cuerpo.organization.payer).toBeUndefined();
+    expect(cuerpo.owner.password).toBe('secreto12');
+    expect(JSON.stringify(cuerpo)).not.toContain('confirmPassword');
     // La central viaja con su dirección y su punto, que es obligatorio.
     expect(cuerpo.organization.diagnosticUnit.primarySite.address).toEqual({
       lines: ['Av. Cañoto esq. Ballivián 234'],
@@ -601,6 +627,13 @@ describe('RegisterImagingCenter', () => {
       const draft = JSON.parse(raw!);
       expect(draft.data.legalName).toBe('Centro Radiológico La Paz');
       expect(draft.data.taxId).toBe('1023456789');
+    });
+
+    it('nunca guarda la contraseña ni su confirmación', () => {
+      component.form.patchValue({ password: 'secreto12', confirmPassword: 'secreto12' });
+      component.guardarBorrador();
+      const raw = localStorage.getItem('alovida.onboarding.draft.imaging-center');
+      expect(raw).not.toContain('secreto12');
     });
 
     it('restaura el borrador guardado', () => {

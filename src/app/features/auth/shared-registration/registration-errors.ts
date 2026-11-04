@@ -314,7 +314,7 @@ function repeatedData(body: ApiErrorBody, kind: RegistrationKind): ViewStateIssu
       message:
         kind === 'organization'
           ? 'Ya hay una cuenta registrada con el correo del representante legal. Si la organización ya tiene cuenta, inicie sesión con ese correo o use «¿Olvidó su contraseña?». Si no, use otro correo.'
-          : 'Ya hay una cuenta registrada con este correo electrónico. Si es suya, inicie sesión o use «¿Olvidó su contraseña?». Si no, escriba otro correo en el paso «Su acceso».',
+          : 'Ya hay una cuenta registrada con este correo electrónico. Si es suya, inicie sesión o use «¿Olvidó su contraseña?». Si no, vuelva al paso del correo y escriba otro.',
     };
   }
   if (/documento/i.test(texto)) {

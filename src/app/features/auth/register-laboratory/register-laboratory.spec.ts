@@ -138,6 +138,7 @@ describe('RegisterLaboratory', () => {
       // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
       powerOfAttorneyFileId: 'file-poder',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
     component.fijarGpsCentral(PUNTO_CENTRAL);
@@ -194,7 +195,30 @@ describe('RegisterLaboratory', () => {
     expect(papeles[0].campos).toHaveLength(5);
   });
 
+  it('la última página es solo contraseña y su confirmación, sin el correo', () => {
+    const ultima = component.paginas().at(-1)!;
+
+    expect(ultima.clave).toBe('password');
+    expect(ultima.campos.map((c) => c.key)).toEqual(['password', 'confirmPassword']);
+    expect(ultima.campos[0].testId).toBe('registro-lab-password');
+    expect(
+      component.paginas().find((p) => p.clave === 'representante')!.campos.map((c) => c.key),
+    ).toContain('legalRepEmail');
+  });
+
   /* --- qué frena y qué no ------------------------------------------------ */
+
+  it('una confirmación distinta frena el envío; al corregir la contraseña se revalida', () => {
+    completarLoObligatorio();
+    component.form.patchValue({ confirmPassword: 'otra-clave1' });
+
+    component.submit();
+    expect(component.registered()).toBe(false);
+    expect(component.form.controls.confirmPassword.hasError('passwordMismatch')).toBe(true);
+
+    component.form.patchValue({ password: 'otra-clave1' });
+    expect(component.form.valid).toBe(true);
+  });
 
   it('no se envía vacío: no sale ninguna petición', () => {
     component.submit();
@@ -239,6 +263,7 @@ describe('RegisterLaboratory', () => {
       password: 'secreto12',
       displayName: 'Ana Paz Rojas',
     });
+    expect(JSON.stringify(cuerpo)).not.toContain('confirmPassword');
     // Lo opcional que no se completó no viaja: ni papeles ni cargos. El poder sí:
     // una S.R.L. no puede omitirlo (BR-09).
     expect(cuerpo.organization).not.toHaveProperty('legalDocuments');
@@ -265,6 +290,7 @@ describe('RegisterLaboratory', () => {
     'legalRepIdNumber',
     'legalRepEmail',
     'password',
+    'confirmPassword',
   ] as const)('sin %s no se envía', (clave) => {
     completarLoObligatorio();
     // `patchValue` y no `controls[clave].setValue`: el tipo de sociedad se
@@ -806,6 +832,13 @@ describe('RegisterLaboratory', () => {
       const draft = JSON.parse(raw!);
       expect(draft.data.legalName).toBe('Laboratorio Santa Cruz SRL');
       expect(draft.data.taxId).toBe('1023456789');
+    });
+
+    it('nunca guarda la contraseña ni su confirmación', () => {
+      component.form.patchValue({ password: 'secreto12', confirmPassword: 'secreto12' });
+      component.guardarBorrador();
+      const raw = localStorage.getItem('alovida.onboarding.draft.laboratory');
+      expect(raw).not.toContain('secreto12');
     });
 
     it('restaura el borrador guardado', () => {

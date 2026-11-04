@@ -197,8 +197,8 @@ const ESPERADO = [
   [/organizacion-(vacia|errores|llena)/, (vw) => (vw >= 1120 ? [3] : vw >= 672 ? [2, 1] : [1, 1, 1])],
   [/establecimiento/, (vw) => (vw >= 672 ? [2] : [1, 1])],
   [/director$/, (vw) => (vw >= 1120 ? [1, 3] : vw >= 672 ? [1, 2, 1] : [1, 1, 1, 1])],
-  [/representante$/, (vw) => (vw >= 672 ? [1, 2] : [1, 1, 1])],
-  [/acceso$/, (vw) => (vw >= 672 ? [2] : [1, 1])],
+  [/representante$/, (vw) => (vw >= 672 ? [1, 2, 1] : [1, 1, 1, 1])],
+  [/contrasena$/, (vw) => (vw >= 672 ? [2] : [1, 1])],
   [/gerente-(general|comercial|marketing)$/, (vw) => (vw >= 672 ? [1, 2] : [1, 1, 1])],
 ];
 
@@ -474,6 +474,7 @@ async function recorrer(browser, vp) {
   await nombre(p, 'medical-center-signup-legal-rep', 'Marta', 'Rojas');
   await llenar(p, 'medical-center-signup-legal-rep-id', '4872190');
   const correo = `marta.${Date.now()}@clinica-norte.test`;
+  await llenar(p, 'medical-center-signup-legal-rep-email', correo);
   await pagina(p, etiqueta, '16-representante', 'Representante legal');
   await continuar(p);
 
@@ -524,11 +525,11 @@ async function recorrer(browser, vp) {
     }
   }
 
-  // 12 · Su acceso y envío
+  // 12 · Contraseña (última página: sólo la contraseña y su confirmación) y envío
   await p.getByTestId('medical-center-signup-password').waitFor({ timeout: 15_000 });
-  await llenar(p, 'medical-center-signup-legal-rep-email', correo);
   await llenar(p, 'medical-center-signup-password', 'S3cret-passw0rd');
-  await pagina(p, etiqueta, '21-acceso', 'Su acceso');
+  await llenar(p, 'medical-center-signup-confirm-password', 'S3cret-passw0rd');
+  await pagina(p, etiqueta, '21-contrasena', 'Contraseña');
 
   await continuar(p);
   await p.waitForFunction((ruta) => (window.__espia ?? []).some((x) => x.url.endsWith(ruta) && (x.respuesta || x.error)), RUTA_ALTA, { timeout: 30_000 }).catch(async (e) => {
@@ -615,16 +616,17 @@ async function unipersonalY409(browser) {
   await continuar(p); // sucursales: ninguna
   await nombre(p, 'medical-center-signup-legal-rep', 'Pedro', 'Paz');
   await llenar(p, 'medical-center-signup-legal-rep-id', '4872190');
+  // El correo del representante es el usuario. Uno que el simulador ya conoce da el 409 real, por el
+  // mismo camino que la API.
+  await llenar(p, 'medical-center-signup-legal-rep-email', 'superadmin@alovida.mock');
   await continuar(p);
   // Poder: opcional para una unipersonal, se avanza sin subirlo.
   await p.getByTestId('medical-center-signup-doc-powerOfAttorneyFileId').waitFor({ timeout: 15_000 });
   await foto(p, etiqueta, 'u2-unipersonal-poder-opcional');
   await continuar(p);
   for (let i = 0; i < 3; i += 1) await continuar(p); // gerencias vacías
-  // El correo del representante es el usuario: se escribe con la contraseña. Uno que el simulador ya
-  // conoce da el 409 real, por el mismo camino que la API.
-  await llenar(p, 'medical-center-signup-legal-rep-email', 'superadmin@alovida.mock');
   await llenar(p, 'medical-center-signup-password', 'S3cret-passw0rd');
+  await llenar(p, 'medical-center-signup-confirm-password', 'S3cret-passw0rd');
 
   await continuar(p);
   await p.getByTestId('medical-center-signup-error').waitFor({ timeout: 20_000 });
@@ -634,9 +636,12 @@ async function unipersonalY409(browser) {
   ok('[409] el error de la API es 409', primero?.error?.status === 409, JSON.stringify(primero?.error));
   await foto(p, etiqueta, 'u3-error-409');
 
-  // Corregir el correo: está en la misma página (junto a la contraseña), se corrige y se reenvía.
+  // Corregir el correo: está en «Representante legal», cinco páginas atrás (gerencias y poder); se
+  // corrige, se avanza hasta la contraseña —que sigue escrita— y se reenvía.
   const correo = `pedro.${Date.now()}@consultorio-paz.test`;
+  for (let i = 0; i < 5; i += 1) await p.getByTestId('paginated-form-atras').click();
   await llenar(p, 'medical-center-signup-legal-rep-email', correo);
+  for (let i = 0; i < 5; i += 1) await continuar(p);
   await continuar(p);
   await p.getByTestId('medical-center-signup-success').waitFor({ timeout: 20_000 });
   const envios = await espiado(p);

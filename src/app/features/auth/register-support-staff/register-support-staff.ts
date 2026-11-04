@@ -22,7 +22,12 @@ import { paginateFields } from '../../../shared/forms/paginated/paginate-fields'
 import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import { nameGroup } from '../shared-registration/name-fields/person-name';
 import { identityDocumentValidators } from '../shared-registration/national-id';
-import { MESSAGE_SHORT_PASSWORD, passwordValidators } from '../shared-registration/password-policy';
+import {
+  confirmPasswordControl,
+  linkPasswordConfirmation,
+  passwordControl,
+  passwordStep,
+} from '../shared-registration/password-step';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 
@@ -99,7 +104,8 @@ export class RegisterSupportStaff {
       validators: [Validators.required, Validators.email, Validators.pattern(CORREO_CON_DOMINIO)],
     }),
     phone: new FormControl('', { nonNullable: true, validators: [Validators.required, telefonoCompleto] }),
-    password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
+    password: passwordControl(),
+    confirmPassword: confirmPasswordControl(),
   });
 
   protected readonly paginas = computed(() =>
@@ -169,9 +175,9 @@ export class RegisterSupportStaff {
         ],
       },
       {
-        titulo: 'Contacto y acceso',
+        titulo: 'Contacto',
         clave: 'access',
-        icon: 'lock',
+        icon: 'mail',
         hint: 'Por acá le llegan los avisos de la organización y recupera su cuenta.',
         campos: [
           {
@@ -197,20 +203,9 @@ export class RegisterSupportStaff {
             ancho: 'mitad',
             mensajeDeError: 'Ingrese un número completo para el país elegido.',
           },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password',
-            required: true,
-            autocomplete: 'new-password',
-            placeholder: 'Su contraseña',
-            testId: 'alta-apoyo-password',
-            icono: 'lock',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
-          },
         ],
       },
+      passwordStep('alta-apoyo'),
     ]),
   );
 
@@ -228,6 +223,7 @@ export class RegisterSupportStaff {
   });
 
   constructor() {
+    linkPasswordConfirmation(this.form);
     this.cargarDepartamentos();
   }
 

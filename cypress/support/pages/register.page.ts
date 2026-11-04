@@ -88,10 +88,13 @@ export const RegisterPage = {
 
     RegisterPage.continuar();
 
-    cy.porTestId('registro-password').clear().type(datos.password);
     if (opciones.conCorreo === true) {
       cy.porTestId('registro-correo').clear().type(datos.correo);
     }
+    // The password is the last step: it is its own page, with its confirmation.
+    RegisterPage.continuar();
+    cy.porTestId('registro-password').clear().type(datos.password);
+    cy.porTestId('registro-confirm-password').clear().type(datos.password);
   },
 
   /** El botón de la última página. Ver `continuar`. */

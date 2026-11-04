@@ -5,6 +5,7 @@ import * as path from 'path';
 import {
   PASOS_DEL_ALTA,
   completarContacto,
+  completarContrasena,
   empezarElAlta,
   avanzarHasta,
   elegirLocalidadDeResidencia,
@@ -97,10 +98,12 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     // Paso 5: acceso, seguros y facturación
     await avanzarHasta(page, PASOS_DEL_ALTA.resto);
     await page.getByTestId('registro-correo').fill(emailPrueba);
-    await page.getByTestId('registro-password').fill('P@ssword1234!');
     await page.getByTestId('registro-nit').fill('9988776655');
     await page.getByTestId('registro-razon-social').fill('Audit Corp SRL');
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso5-resto.png') });
+
+    // Paso 6: contraseña y confirmación, siempre al final
+    await completarContrasena(page, 'P@ssword1234!');
 
     // Enviar formulario final
     const btnCrear = page.getByTestId('paginated-form-continuar');
@@ -121,7 +124,6 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     await avanzarHasta(page, PASOS_DEL_ALTA.resto);
 
     await page.getByTestId('registro-correo').fill('correo-sin-formato');
-    await page.getByTestId('registro-password').fill('123');
 
     const btnContinuar = page.getByTestId('paginated-form-continuar');
     await btnContinuar.click();

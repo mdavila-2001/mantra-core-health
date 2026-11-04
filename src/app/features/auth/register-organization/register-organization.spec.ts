@@ -252,6 +252,7 @@ describe('RegisterOrganization', () => {
       // la suscripción al cambiar de país (ver `acomodarPaisYTipoSocietario`).
       timeZone: extra.timeZone ?? 'America/La_Paz',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
       constitutionFileId: extra.constitutionFileId ?? DOCUMENTOS_DE_PRUEBA.constitutionFileId,
       taxIdentifierFileId: extra.taxIdentifierFileId ?? DOCUMENTOS_DE_PRUEBA.taxIdentifierFileId,
       commerceRegistryFileId:
@@ -1150,14 +1151,16 @@ describe('RegisterOrganization', () => {
         fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
         fixture.detectChanges();
       }
-      // Seis: los documentos legales van en una sola página (28/10/2026).
-      expect(titulos.length).toBe(6);
+      // Siete: los documentos legales van en una sola página (28/10/2026) y la
+      // contraseña, sola, es la última.
+      expect(titulos.length).toBe(7);
+      expect(titulos[titulos.length - 1]).toContain('Contraseña');
       expect(titulos.some((titulo) => titulo.includes('Su cuenta'))).toBe(false);
       expect('ownerName' in component.form.controls).toBe(false);
       expect('email' in component.form.controls).toBe(false);
     });
 
-    it('«Representante legal (1 de 2)» trae juntos el nombre, el correo y la contraseña', () => {
+    it('«Representante legal (1 de 2)» trae juntos el nombre y el correo, sin la contraseña', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
@@ -1171,10 +1174,12 @@ describe('RegisterOrganization', () => {
         'registro-organizacion-representante-apellido-materno',
         'registro-organizacion-representante-ci',
         'registro-organizacion-representante-correo',
-        'registro-organizacion-representante-password',
       ]) {
         expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
       }
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-representante-password"]'),
+      ).toBeNull();
     });
 
     it('los tres nombres ocupan un tercio y los dos apellidos una mitad', () => {
@@ -1191,19 +1196,53 @@ describe('RegisterOrganization', () => {
       expect(grilla.querySelectorAll('.nombres__campo--mitad').length).toBe(2);
     });
 
-    it('sin contraseña, «Continuar» no avanza de la página del representante', () => {
+    it('la última página es sólo la contraseña y su confirmación, y se muestra con los mismos ids', () => {
       fixture.detectChanges();
       completar();
-      component.form.controls.password.setValue('');
       fixture.detectChanges();
-      avanzarHasta('Representante legal (1 de 2)');
+      avanzarHasta('Contraseña');
+
+      const paginas = component['paginas']();
+      expect(paginas[paginas.length - 1].campos.map((c) => c.key)).toEqual([
+        'password',
+        'confirmPassword',
+      ]);
+      for (const testId of [
+        'registro-organizacion-representante-password',
+        'registro-organizacion-representante-confirm-password',
+      ]) {
+        expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
+      }
+    });
+
+    it('con otra confirmación, «Continuar» en la última página no envía el alta', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.confirmPassword.setValue('otra-cosa12');
+      fixture.detectChanges();
+      avanzarHasta('Contraseña');
 
       fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
       fixture.detectChanges();
 
+      http.expectNone('/iam/auth/register-organization');
+      expect(component.form.controls.confirmPassword.hasError('passwordMismatch')).toBe(true);
       expect(
         fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent,
-      ).toContain('Representante legal (1 de 2)');
+      ).toContain('Contraseña');
+    });
+
+    it('el cuerpo no lleva la confirmación y el borrador no guarda ninguna contraseña', () => {
+      fixture.detectChanges();
+      completar();
+      component.guardarBorrador();
+      const guardado = Object.values({ ...localStorage }).join('');
+      expect(guardado).not.toContain('secreto12');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(JSON.stringify(req.request.body)).not.toContain('confirmPassword');
+      req.flush(RESPUESTA);
     });
 
     it('el owner copia el nombre y el correo del representante, y trae la contraseña', () => {
@@ -1384,14 +1423,15 @@ describe('RegisterOrganization', () => {
       http.expectNone('/iam/auth/register-organization');
     });
 
-    it('AC-02 y AC-04: Bolivia (zona única) queda en 6 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 7 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
 
-      // Seis: ya no hay «Tu cuenta» (la única persona que inicia sesión es el
-      // representante legal) y los documentos legales van en una sola página.
-      expect(totalDePaginas()).toBe(6);
+      // Siete: ya no hay «Tu cuenta» (la única persona que inicia sesión es el
+      // representante legal), los documentos legales van en una sola página y
+      // la contraseña, sola, es la última.
+      expect(totalDePaginas()).toBe(7);
       expect(titulosDeLosPasos().some((titulo) => titulo.includes('identifica'))).toBe(false);
 
       // «La empresa»: nombre, sigla, país, tipo societario — sin código ni
@@ -1439,7 +1479,7 @@ describe('RegisterOrganization', () => {
       // Las mismas que Bolivia: el selector de zona horaria suma un campo a
       // «Datos de la aseguradora», pero desde que «Dirección» sale del punto
       // (26/10/2026) la sección cabe en una página de cuatro.
-      expect(totalDePaginas()).toBe(6);
+      expect(totalDePaginas()).toBe(7);
 
       avanzarHasta('Datos de la aseguradora');
       // `[data-testid]` va en el host `<app-select>`; el botón que hace de

@@ -20,7 +20,7 @@ const context = {
 };
 
 describe('practitionerFields', () => {
-  it('agrupa el alta en diez páginas, con el correo y la contraseña juntos', () => {
+  it('agrupa el alta en diez páginas, sin la contraseña (va al final, en `passwordStep`)', () => {
     const pages = practitionerFields(context);
 
     // Eran quince; el propietario pidió juntarlas (26/10/2026). La décima es
@@ -29,7 +29,7 @@ describe('practitionerFields', () => {
     expect(pages.every((page) => page.campos.length <= 6)).toBe(true);
     const access = pages.find((page) => page.clave === 'access')?.campos.map((c) => c.key);
     expect(access).toContain('personalEmail');
-    expect(access).toContain('password');
+    expect(pages.flatMap((page) => page.campos).map((c) => c.key)).not.toContain('password');
     // La autoridad emisora ya no se pregunta.
     expect(pages.flatMap((page) => page.campos).map((c) => c.key)).not.toContain(
       'regulatoryAuthority',

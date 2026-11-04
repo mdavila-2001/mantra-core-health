@@ -99,10 +99,11 @@ async function saltarGerencias(page: Page): Promise<void> {
   }
 }
 
-/** Página «Tu acceso»: la contraseña y el envío. */
+/** Última página: la contraseña, su confirmación y el envío. */
 async function completarAccesoYEnviar(page: Page): Promise<void> {
-  await expect(page.locator('.paginated-form__titulo')).toContainText('Su acceso');
+  await expect(page.locator('.paginated-form__titulo')).toContainText('Contraseña');
   await page.getByTestId('registro-farmacia-password').fill('secreto12');
+  await page.getByTestId('registro-farmacia-confirm-password').fill('secreto12');
   await page.getByTestId('paginated-form-continuar').click();
 }
 

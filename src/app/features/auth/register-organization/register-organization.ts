@@ -35,9 +35,11 @@ import { CustomField } from '../../../shared/components/organisms/paginated-form
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
 import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+  confirmPasswordControl,
+  linkPasswordConfirmation,
+  passwordControl,
+  passwordStep,
+} from '../shared-registration/password-step';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -327,15 +329,10 @@ export class RegisterOrganization {
       commercialManager: grupoDeGerente(),
       marketingManager: grupoDeGerente(),
     }),
-    // La contraseña del representante legal. El representante ES el owner:
-    // es la única persona que inicia sesión por la aseguradora, así que ya
-    // no hay un segundo juego de nombre y correo («Tu cuenta»). El nombre y
-    // el correo salen de `legalRepresentative` y `legalRepresentativeEmail`;
-    // acá sólo falta la clave con la que va a entrar. Ver `datos()`.
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    // La contraseña del representante legal (el owner) y su confirmación; esta
+    // última nunca viaja ni se guarda. Ver `datos()`.
+    password: passwordControl(),
+    confirmPassword: confirmPasswordControl(),
   });
 
   /** Las opciones crudas del catálogo, sin filtrar por país. */
@@ -396,12 +393,10 @@ export class RegisterOrganization {
    * de aseguradora se derivan de la sigla (`codigoDesdeSigla`, en `datos()`)
    * y no son algo que la persona escriba. Tampoco hay un paso de «Tu
    * cuenta»: la única persona que inicia sesión por una aseguradora es su
-   * representante legal, y su contraseña se pide en la misma sección que su
-   * nombre y su correo. Para un país de zona única (Bolivia, Argentina…) el
-   * alta queda en **7 páginas**. Para uno multizona (Estados Unidos, Brasil,
-   * México) el selector de zona horaria suma un campo a «Datos de la
-   * aseguradora»; desde que «Dirección» dejó de escribirse (26/10/2026) la
-   * sección sigue cabiendo en una página de cuatro, así que también son 7.
+   * representante legal, y su contraseña (con su confirmación) es la última
+   * página, sola. Un país multizona (Estados Unidos, Brasil, México) suma el
+   * selector de zona horaria a «Datos de la aseguradora», que sigue cabiendo
+   * en una página de cuatro: el número de páginas no cambia.
    *
    * `computed`, y no una constante: las opciones del tipo societario y de
    * zona horaria cambian con el país elegido (subtareas 1.1 y ésta).
@@ -542,22 +537,12 @@ export class RegisterOrganization {
           {
             key: 'legalRepresentativeEmail',
             label: 'Correo',
-            hint: 'Con este correo y la contraseña de abajo se inicia sesión. También recibe las notificaciones oficiales.',
+            hint: 'Con este correo y la contraseña del último paso se inicia sesión. También recibe las notificaciones oficiales.',
             control: 'email' as const,
             required: true,
             autocomplete: 'username',
             testId: 'registro-organizacion-representante-correo',
             mensajeDeError: 'Ingrese un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
-            required: true,
-            autocomplete: 'new-password',
-            testId: 'registro-organizacion-representante-password',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
           {
             key: 'legalRepresentativePhone',
@@ -588,6 +573,7 @@ export class RegisterOrganization {
           },
         ],
       },
+      passwordStep('registro-organizacion-representante'),
     ]),
   );
 
@@ -711,6 +697,7 @@ export class RegisterOrganization {
         : null;
     });
     this.form.controls.legalRepresentative.updateValueAndValidity();
+    linkPasswordConfirmation(this.form);
     this.cargarTipoSocietario();
     this.acomodarPaisYTipoSocietario();
 

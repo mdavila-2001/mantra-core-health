@@ -314,10 +314,10 @@ export class RegisterMedicalCenter {
       const datos: Record<string, unknown> = { ...this.form.getRawValue() };
       for (const papel of CLAVES_DE_PAPELES) delete datos[papel];
       delete datos['sucursales'];
-      // Una contraseña no se guarda en ningún borrador: ni en el navegador ni
-      // en el servidor. `OnboardingDraftService` también la quita, pero esta
-      // pantalla no depende de que otro se acuerde.
-      delete datos['password'];
+      // Una contraseña (y su confirmación) no se guarda en ningún borrador: ni en el
+      // navegador ni en el servidor. `OnboardingDraftService` también la quita, pero
+      // esta pantalla no depende de que otro se acuerde.
+      for (const secreto of ['password', 'confirmPassword']) delete datos[secreto];
       this.draftService.saveProgress(
         FORM_TYPE,
         indice,

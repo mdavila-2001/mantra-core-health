@@ -424,7 +424,7 @@ async function paginaDocumentos(page: Page): Promise<void> {
 /**
  * De la casa central en el mapa a la clave: el punto, las sucursales (ninguna), el representante
  * legal —que es también el dueño de la cuenta, con `correo` como usuario—, su poder, las tres
- * gerencias (vacías) y la contraseña. Deja el asistente en «Su acceso», sin enviar.
+ * gerencias (vacías) y la contraseña con su confirmación. Deja el asistente en «Contraseña», sin enviar.
  */
 async function paginaCuenta(page: Page, correo: string, password: string): Promise<void> {
   await expect(page.getByTestId('medical-center-signup-central-map')).toBeVisible({ timeout: 20_000 });
@@ -436,6 +436,8 @@ async function paginaCuenta(page: Page, correo: string, password: string): Promi
   await escribir(page, 'medical-center-signup-legal-rep-nombre', 'Marta');
   await escribir(page, 'medical-center-signup-legal-rep-apellido-paterno', 'Rojas');
   await escribir(page, 'medical-center-signup-legal-rep-id', '4872190');
+  // The representative's email is the account user: it lives on this page, not on the password page.
+  await escribir(page, 'medical-center-signup-legal-rep-email', correo);
   await continuar(page);
   const poder = 'medical-center-signup-doc-powerOfAttorneyFileId';
   await page.getByTestId(poder).setInputFiles(pdfDePrueba('powerOfAttorneyFileId'));
@@ -443,9 +445,8 @@ async function paginaCuenta(page: Page, correo: string, password: string): Promi
   await continuar(page);
   for (let gerencia = 0; gerencia < 3; gerencia += 1) await continuar(page);
   await expect(page.getByTestId('medical-center-signup-password')).toBeVisible({ timeout: 20_000 });
-  // El correo del representante es el usuario de la cuenta: va con la contraseña, en la última página.
-  await escribir(page, 'medical-center-signup-legal-rep-email', correo);
   await escribir(page, 'medical-center-signup-password', password);
+  await escribir(page, 'medical-center-signup-confirm-password', password);
 }
 
 /** Envía la última página y devuelve la respuesta del alta. */

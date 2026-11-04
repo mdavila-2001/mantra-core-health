@@ -9,7 +9,11 @@ import {
 import { executivesControls } from '../shared-registration/executives';
 import type { Coordinates } from '../shared-registration/map-location-picker/map-location-picker';
 import { nameGroup } from '../shared-registration/name-fields/person-name';
-import { passwordValidators } from '../shared-registration/password-policy';
+import {
+  confirmPasswordControl,
+  linkPasswordConfirmation,
+  passwordControl,
+} from '../shared-registration/password-step';
 import {
   sucursalesCompletas,
   type SucursalDeclarada,
@@ -42,7 +46,7 @@ export const CLAVES_DE_PAPELES = [
  */
 export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
   const papel = () => new FormControl('', { nonNullable: true, validators: [Validators.required] });
-  return new FormGroup({
+  const form = new FormGroup({
     // --- la organización -----------------------------------------------------
     tenantType: new FormControl('', {
       nonNullable: true,
@@ -120,8 +124,11 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
     // --- las tres gerencias, todas opcionales ---------------------------------
     ...executivesControls(),
     // --- la cuenta -----------------------------------------------------------
-    password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
+    password: passwordControl(),
+    confirmPassword: confirmPasswordControl(),
   });
+  linkPasswordConfirmation(form);
+  return form;
 }
 
 export type MedicalCenterForm = ReturnType<typeof createMedicalCenterForm>;

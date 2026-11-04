@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { elegirOpcion, marcarYConfirmarCasa } from './support/registro-paciente';
+import { completarContrasena, elegirOpcion, marcarYConfirmarCasa } from './support/registro-paciente';
 
 /**
  * Carril 04 — correcciones visuales del alta de paciente (`/auth/register/patient`).
@@ -29,6 +29,7 @@ const TITULOS = [
   'Datos de contacto y emergencia',
   'Empresa y lugar de trabajo',
   'Resto de datos (acceso, seguros y facturación)',
+  'Contraseña',
 ];
 
 async function escribirFecha(page: Page, digitos: string): Promise<void> {
@@ -42,7 +43,7 @@ async function escribirFecha(page: Page, digitos: string): Promise<void> {
 async function esperarPaso(page: Page, numero: number): Promise<void> {
   await expect(
     page.getByRole('progressbar', {
-      name: `Crear cuenta: paso ${numero} de 5, ${TITULOS[numero - 1]}`,
+      name: `Crear cuenta: paso ${numero} de 6, ${TITULOS[numero - 1]}`,
     }),
   ).toBeVisible();
 }
@@ -271,7 +272,7 @@ test.describe('Carril 04 — visuales del alta de paciente', () => {
     await esperarPaso(page, 5);
 
     await page.getByTestId('registro-correo').fill(`carril04.${Date.now()}@example.com`);
-    await page.getByTestId('registro-password').fill('Clave-Segura-2026');
+    await completarContrasena(page, 'Clave-Segura-2026');
     await page.getByTestId('paginated-form-continuar').click();
 
     await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 30_000 });

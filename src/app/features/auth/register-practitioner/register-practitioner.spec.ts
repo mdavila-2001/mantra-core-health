@@ -189,6 +189,7 @@ describe('RegisterPractitioner', () => {
       // el de acceso es `personalEmail`, obligatorio, de acá abajo.
       email: extra.email ?? '',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       // Obligatorio para un título con colegio conocido, como el de por defecto.
@@ -313,8 +314,7 @@ describe('RegisterPractitioner', () => {
       expect(component.paginasProfesional().map((pagina) => pagina.clave)).toEqual([
         // Nombre y cédula comparten página, como en el alta de paciente.
         'name',
-        // Datos personales, celular, correo de acceso y contraseña: el correo
-        // y la contraseña van JUNTOS, son las dos mitades del inicio de sesión.
+        // Datos personales, celular y correo de acceso.
         'access',
         'residence',
         // Contacto y dirección del trabajo en una sola página.
@@ -331,8 +331,9 @@ describe('RegisterPractitioner', () => {
         'credentials',
         // Especialidades y demás títulos: la formación, junta.
         'specialties',
-        // La firma y el sello (imágenes, opcionales) cierran el alta.
         'signature-seal',
+        // La contraseña y su confirmación cierran el alta (decisión del propietario).
+        'password',
       ]);
     });
 
@@ -345,15 +346,8 @@ describe('RegisterPractitioner', () => {
         'issuerAdministrativeAreaConceptId',
       ]);
       expect(camposDe('document')).toBeUndefined();
-      // El correo de acceso y la contraseña en la MISMA página (26/10/2026).
       // AC-05-7: el sexo sigue antes de la fecha de nacimiento.
-      expect(camposDe('access')).toEqual([
-        'sexAtBirth',
-        'birthDate',
-        'mobilePhone',
-        'personalEmail',
-        'password',
-      ]);
+      expect(camposDe('access')).toEqual(['sexAtBirth', 'birthDate', 'mobilePhone', 'personalEmail']);
       // Pedido del cliente del 26/10/2026: en cada ubicación lo único que se
       // marca es el punto. La calle, la zona y el municipio salen de él: siguen
       // en el formulario, pero ya no son campos de ninguna página.
@@ -388,13 +382,13 @@ describe('RegisterPractitioner', () => {
       ]);
       expect(camposDe('specialties')).toEqual(['especialidadesExtra', 'academicTitles']);
       expect(camposDe('signature-seal')).toEqual(['signatureImageBase64', 'sealImageBase64']);
+      expect(camposDe('password')).toEqual(['password', 'confirmPassword']);
       for (const vieja of [
         'profile',
         'personal-contact',
         'own-office-contact',
         'credential-files',
         'academic-titles',
-        'password',
       ]) {
         expect(camposDe(vieja), `«${vieja}» se fusionó con otra página`).toBeUndefined();
       }
@@ -439,6 +433,19 @@ describe('RegisterPractitioner', () => {
       ]) {
         expect(claves, `«${ausente}» no tiene dónde guardarse todavía`).not.toContain(ausente);
       }
+    });
+
+    it('la última página tiene sólo la contraseña y su confirmación', () => {
+      const paginas = component.paginasProfesional();
+      const ultima = paginas[paginas.length - 1];
+      expect(ultima.clave).toBe('password');
+      expect(ultima.campos.map((campo) => campo.testId)).toEqual([
+        'registro-pro-password',
+        'registro-pro-confirm-password',
+      ]);
+      expect(paginas.slice(0, -1).flatMap((p) => p.campos.map((c) => c.key))).not.toContain(
+        'password',
+      );
     });
 
     it('cada página declara su ícono', () => {
@@ -496,14 +503,15 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene diez páginas, ninguna con más de seis preguntas', () => {
+  it('tiene once páginas, ninguna con más de seis preguntas', () => {
     // Antes eran quince, de a cuatro campos como mucho (AC-05-2). El
     // propietario pidió juntarlas (26/10/2026): ahora se agrupan por tema, y
     // las páginas largas lo son por campos opcionales o que se abren solos
     // (`showWhen`).
-    // Diez desde el 28/10/2026: «Dónde trabaja y con qué seguros».
+    // Diez desde el 28/10/2026 («Dónde trabaja y con qué seguros»); once con la
+    // contraseña al final.
     const paginas = component.paginasProfesional();
-    expect(paginas.length).toBe(10);
+    expect(paginas.length).toBe(11);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -932,6 +940,27 @@ describe('RegisterPractitioner', () => {
     });
 
     req.flush(RESPUESTA_PRO);
+  });
+
+  it('manda sólo `password`, nunca `confirmPassword`', () => {
+    completarProfesional();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.password).toBe('secreto12');
+    expect('confirmPassword' in req.request.body).toBe(false);
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('con la confirmación distinta el alta no se envía', () => {
+    completarProfesional();
+    component.formProfesional.controls.confirmPassword.setValue('otra-clave-1');
+
+    expect(component.formProfesional.controls.confirmPassword.errors).toEqual({
+      passwordMismatch: true,
+    });
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
   });
 
   it('sin cédula el formulario no se puede enviar', () => {
@@ -3091,10 +3120,12 @@ describe('RegisterPractitioner', () => {
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
     const SELLO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBD';
 
-    it('el paso existe, es saltable y cierra el alta', () => {
+    it('el paso existe, es saltable y cierra los datos', () => {
       const claves = component.paginasProfesional().map((pagina) => pagina.clave);
       expect(claves).toContain('signature-seal');
-      expect(claves.at(-1)).toBe('signature-seal');
+      // Cierra los datos; la contraseña va después, siempre última.
+      expect(claves.at(-2)).toBe('signature-seal');
+      expect(claves.at(-1)).toBe('password');
       const pagina = component.paginasProfesional().find((p) => p.clave === 'signature-seal')!;
       // Ninguno de los dos campos es obligatorio: se puede seguir sin cargar nada.
       expect(pagina.campos.map((c) => c.key)).toEqual(['signatureImageBase64', 'sealImageBase64']);

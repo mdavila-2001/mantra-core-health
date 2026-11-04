@@ -234,7 +234,6 @@ async function fillUntilOwnOffice(page: Page, applicant: Applicant): Promise<voi
   await expect(birthDate).toHaveValue('12/05/1985');
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
   await page.getByTestId('registro-pro-correo-personal').fill(applicant.email);
-  await page.getByTestId('registro-pro-password').fill('Medico-2026!');
   await next(page);
 
   await onPage(page, '¿Dónde vive?');
@@ -269,6 +268,12 @@ async function finishRegistration(page: Page, applicant: Applicant): Promise<voi
   const done = page.getByTestId('registro-exito');
   const button = page.getByTestId('paginated-form-continuar').last();
   for (let step = 0; step < 8 && !(await done.isVisible()); step += 1) {
+    // La contraseña es la última página: se escribe cuando aparece.
+    const clave = page.getByTestId('registro-pro-password');
+    if (await clave.isVisible()) {
+      await clave.fill('Medico-2026!');
+      await page.getByTestId('registro-pro-confirm-password').fill('Medico-2026!');
+    }
     if ((await button.count()) > 0 && (await button.isEnabled())) await button.click();
     await done.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => undefined);
   }

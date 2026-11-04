@@ -3,6 +3,7 @@ import { urlDeApi } from './support/actores';
 import {
   PASOS_DEL_ALTA,
   completarContacto,
+  completarContrasena,
   elegirLocalidadDeResidencia,
   marcarYConfirmarCasa,
   empezarElAlta,
@@ -74,7 +75,7 @@ test('el alta persiste contra la API: un login nuevo devuelve la misma localidad
   await avanzarUnPaso(page, PASOS_DEL_ALTA.resto);
 
   await page.getByTestId('registro-correo').fill(email);
-  await page.getByTestId('registro-password').fill(password);
+  await completarContrasena(page, password);
 
   // Última página: el mismo botón, con el texto de envío.
   const enviar = page.getByTestId('paginated-form-continuar');
@@ -153,7 +154,7 @@ test('el GPS del domicilio, confirmado sobre el mapa, persiste contra la API', a
   await avanzarUnPaso(page, PASOS_DEL_ALTA.resto);
 
   await page.getByTestId('registro-correo').fill(email);
-  await page.getByTestId('registro-password').fill(password);
+  await completarContrasena(page, password);
 
   const enviar = page.getByTestId('paginated-form-continuar');
   await expect(enviar).toHaveText(/Crear cuenta/);

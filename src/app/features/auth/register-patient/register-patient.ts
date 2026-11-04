@@ -78,10 +78,13 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { AYUDA_CONTRASENA } from '../shared-registration/password-help';
 import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+  confirmPasswordControl,
+  linkPasswordConfirmation,
+  passwordControl,
+  passwordStep,
+} from '../shared-registration/password-step';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
@@ -373,13 +376,8 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
         'Cada trabajo trae sus riesgos —químicos, esfuerzo, turnos de noche— y su médico los tiene en cuenta.',
     },
   ],
+  password: AYUDA_CONTRASENA,
   misc: [
-    {
-      icono: 'lock',
-      titulo: 'Su contraseña, sólo suya',
-      texto:
-        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
-    },
     {
       icono: 'umbrella',
       titulo: 'Para que no pague lo que ya está cubierto',
@@ -750,10 +748,8 @@ export class RegisterPatient {
       // arriba.
       lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       motherLastName: new FormControl('', { nonNullable: true }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [...passwordValidators],
-      }),
+      confirmPassword: confirmPasswordControl(),
+      password: passwordControl(),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
       // tu documento»— y el documento sigue siendo el identificador de acceso.
@@ -1655,8 +1651,8 @@ export class RegisterPatient {
     {
       titulo: 'Resto de datos (acceso, seguros y facturación)',
       clave: 'misc',
-      icon: 'lock',
-      hint: 'Su contraseña de acceso, seguros de salud y datos para facturación.',
+      icon: 'umbrella',
+      hint: 'Su correo, seguros de salud y datos para facturación.',
       campos: [
         {
           key: 'email',
@@ -1671,21 +1667,6 @@ export class RegisterPatient {
           testId: 'registro-correo',
           icono: 'mail',
           mensajeDeError: 'Ingrese un correo válido.',
-          ancho: 'mitad',
-        },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          description:
-            'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
-          control: 'password',
-          required: true,
-          autocomplete: 'new-password',
-          placeholder: 'Su contraseña',
-          testId: 'registro-password',
-          icono: 'lock',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
           ancho: 'mitad',
         },
         this.campoSeguro('privado'),
@@ -1717,6 +1698,7 @@ export class RegisterPatient {
         },
       ],
     },
+    passwordStep('registro'),
   ]);
 
   /**
@@ -2847,6 +2829,7 @@ export class RegisterPatient {
   });
 
   constructor() {
+    linkPasswordConfirmation(this.formPaciente);
     this.leerBorradorLocal();
     const detectado = this.draftService.detectDraft('patient');
     if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {

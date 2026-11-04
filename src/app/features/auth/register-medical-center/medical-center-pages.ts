@@ -5,7 +5,7 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { executivesPages } from '../shared-registration/executives';
-import { MESSAGE_SHORT_PASSWORD, MIN_CHARACTERS_PASSWORD } from '../shared-registration/password-policy';
+import { passwordStep } from '../shared-registration/password-step';
 import { MAX_LEGAL_NAME } from './medical-center-form';
 
 /** Prefijo de los `data-testid` de toda la pantalla (los de antes de la ampliación lo conservan). */
@@ -210,8 +210,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'representante',
       icon: 'shield' as const,
       hint: 'Quien firma por la organización. Es también quien administra la cuenta.',
-      // El nombre en su renglón; el documento y el teléfono, uno al lado del otro. El correo —que es
-      // también el usuario de la cuenta— va con la contraseña, en la última página.
+      // The name on its own row; ID and phone, then the email (also the account user), side by side.
       disposicion: 'dos-columnas' as const,
       campos: [
         {
@@ -239,6 +238,17 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           testId: `${TEST_ID}-legal-rep-phone`,
           mensajeDeError: 'El número está incompleto.',
         },
+        {
+          key: 'legalRepEmail',
+          label: 'Correo del representante legal',
+          hint: 'Con este correo va a entrar a la plataforma.',
+          control: 'email' as const,
+          required: true,
+          icono: 'mail' as const,
+          autocomplete: 'username',
+          testId: `${TEST_ID}-legal-rep-email`,
+          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
+        },
       ],
     },
     {
@@ -251,38 +261,6 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       campos: [ctx.campoDePoder],
     },
     ...executivesPages(TEST_ID, ctx.gerenciasEnUso),
-    {
-      titulo: 'Su acceso',
-      clave: 'acceso',
-      icon: 'lock' as const,
-      hint: 'Entra con el correo del representante legal y esta contraseña.',
-      // Usuario y contraseña, uno al lado del otro: una página de un solo campo dejaba la
-      // casilla de 1.600 px de ancho a 1920.
-      disposicion: 'dos-columnas' as const,
-      campos: [
-        {
-          key: 'legalRepEmail',
-          label: 'Correo del representante legal',
-          hint: 'Con este correo va a entrar a la plataforma.',
-          control: 'email' as const,
-          required: true,
-          icono: 'mail' as const,
-          autocomplete: 'username',
-          testId: `${TEST_ID}-legal-rep-email`,
-          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
-        },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          control: 'password' as const,
-          required: true,
-          icono: 'lock' as const,
-          autocomplete: 'new-password',
-          hint: `Mínimo ${MIN_CHARACTERS_PASSWORD} caracteres.`,
-          testId: `${TEST_ID}-password`,
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
-        },
-      ],
-    },
+    passwordStep(TEST_ID, 'Entra con el correo del representante legal y esta contraseña.'),
   ]);
 }

@@ -19,7 +19,8 @@ async function cont(p){const b=p.getByTestId('paginated-form-continuar');await b
  await p.getByTestId('registro-telefono').fill('70012345');await p.getByTestId('registro-tutor-nombre').fill('Contacto Sintetico');await elegir(p,'registro-tutor-relacion',{index:2});
  await cont(p);await s('04-trabajo');await cont(p);await s('05-acceso');
  const email=`prueba.${vp}.${Date.now()}@correo.umsa.bo`;
- await p.getByTestId('registro-correo').fill(email);await p.getByTestId('registro-password').fill('Secreto123!');
+ await p.getByTestId('registro-correo').fill(email);
+ await cont(p);await p.getByTestId('registro-password').fill('Secreto123!');await p.getByTestId('registro-confirm-password').fill('Secreto123!');
  await cont(p);await p.waitForTimeout(2500);await s('06-resultado');
  console.log(vp,'resultado:',(await p.locator('main').innerText()).replace(/\n+/g,' | ').slice(0,500),'| errores',errs.slice(0,3));
  // intentar entrar con la cuenta nueva

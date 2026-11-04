@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { elegirOpcion, marcarYConfirmarCasa } from './support/registro-paciente';
+import { completarContrasena, elegirOpcion, marcarYConfirmarCasa } from './support/registro-paciente';
 
 /**
  * Carril 03 — el alta de paciente de punta a punta, en sus cinco pasos.
@@ -32,7 +32,7 @@ async function escribirFecha(page: Page, digitos: string): Promise<void> {
 /** El paso visible, por el título de su encabezado de progreso. */
 async function esperarPaso(page: Page, numero: number, titulo: string): Promise<void> {
   await expect(
-    page.getByRole('progressbar', { name: `Crear cuenta: paso ${numero} de 5, ${titulo}` }),
+    page.getByRole('progressbar', { name: `Crear cuenta: paso ${numero} de 6, ${titulo}` }),
   ).toBeVisible();
 }
 
@@ -84,7 +84,6 @@ test.describe('carril 03 — alta de paciente', () => {
     await llegarAlUltimoPaso(page, `C03-${Date.now()}`);
 
     await page.getByTestId('registro-correo').fill('ana@gmail');
-    await page.getByTestId('registro-password').fill('Secreto123!');
     await page.getByTestId('paginated-form-continuar').click();
 
     await expect(page.getByText('Ingrese un correo válido.')).toBeVisible();
@@ -114,9 +113,9 @@ test.describe('carril 03 — alta de paciente', () => {
     await llegarAlUltimoPaso(page, `C03-${Date.now()}`);
 
     await page.getByTestId('registro-correo').fill('ana.paz@correo.umsa.bo');
-    await page.getByTestId('registro-password').fill('Secreto123!');
     await page.getByTestId('registro-nit').fill('1234567019');
     await page.getByTestId('registro-razon-social').fill('Ana Paz');
+    await completarContrasena(page, 'Secreto123!');
 
     await page.getByTestId('paginated-form-continuar').click();
 
@@ -171,7 +170,7 @@ test.describe('carril 03 — alta de paciente', () => {
     await esperarPaso(page, 5, 'Resto de datos (acceso, seguros y facturación)');
 
     await page.getByTestId('registro-correo').fill('luis.paz@correo.umsa.bo');
-    await page.getByTestId('registro-password').fill('Secreto123!');
+    await completarContrasena(page, 'Secreto123!');
     await page.getByTestId('paginated-form-continuar').click();
 
     // El validador de contrato del mock rechazaría una clave que la API no conoce.

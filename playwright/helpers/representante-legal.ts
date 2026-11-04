@@ -25,7 +25,6 @@ export async function completarRepresentanteLegal(
   await page
     .getByTestId('registro-organizacion-representante-correo')
     .fill(opciones.email ?? 'legal@andina.test');
-  await page.getByTestId('registro-organizacion-representante-password').fill('secreto12');
   await page.getByTestId('paginated-form-continuar').click();
 
   await subirArchivo(page, 'powerOfAttorneyFileId', pdfDePrueba('poder-notariado'));
@@ -38,9 +37,16 @@ export async function completarRepresentanteLegal(
  * nombre): la General ya está abierta y trae las cinco partes del nombre
  * (AC-01); Comercial y Marketing se abren por su cabecera antes de escribir
  * y sólo llevan nombre y apellido paterno, las dos partes obligatorias
- * (AC-02). Es la última página del alta: su «Continuar» **envía** el alta.
+ * (AC-02). Después viene la última página del alta, con la contraseña y su
+ * confirmación: `completarGerencias` la completa y **envía** el alta.
  */
 export async function completarGerencias(page: Page): Promise<void> {
+  await completarDirectorio(page);
+  await completarContrasena(page);
+}
+
+/** El «Directorio ejecutivo» completo; su «Continuar» lleva a la página de la contraseña. */
+export async function completarDirectorio(page: Page): Promise<void> {
   // La General trae las cinco partes (AC-01): es la que demuestra el
   // desglose completo, comercial y marketing sólo las dos obligatorias.
   await page
@@ -93,5 +99,15 @@ export async function completarGerencias(page: Page): Promise<void> {
     .getByTestId('registro-organizacion-executives-marketing-manager-email')
     .fill('mm@andina.test');
 
+  await page.getByTestId('paginated-form-continuar').click();
+}
+
+/** Última página: contraseña y confirmación; su «Continuar» **envía** el alta. */
+export async function completarContrasena(
+  page: Page,
+  confirmacion = 'secreto12',
+): Promise<void> {
+  await page.getByTestId('registro-organizacion-representante-password').fill('secreto12');
+  await page.getByTestId('registro-organizacion-representante-confirm-password').fill(confirmacion);
   await page.getByTestId('paginated-form-continuar').click();
 }

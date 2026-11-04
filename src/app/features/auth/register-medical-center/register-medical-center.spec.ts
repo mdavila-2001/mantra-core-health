@@ -146,6 +146,7 @@ describe('RegisterMedicalCenter', () => {
       legalRepIdNumber: '4872190',
       legalRepEmail: 'marta@centro.test',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     fixture.componentInstance.fijarGpsCentral(PUNTO_CENTRAL);
     fixture.componentInstance.escribirLocalidadCentral({
@@ -373,7 +374,7 @@ describe('RegisterMedicalCenter', () => {
       'Gerencia general',
       'Gerencia comercial',
       'Gerencia de marketing',
-      'Su acceso',
+      'Contraseña',
     ]);
     expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
       ['tenantType', 'legalName', 'legalEntityType'],
@@ -388,12 +389,12 @@ describe('RegisterMedicalCenter', () => {
       ],
       ['gpsCentral'],
       ['sucursales'],
-      ['legalRepName', 'legalRepIdNumber', 'legalRepPhone'],
+      ['legalRepName', 'legalRepIdNumber', 'legalRepPhone', 'legalRepEmail'],
       ['powerOfAttorneyFileId'],
       ['generalManagerName', 'generalManagerPhone', 'generalManagerEmail'],
       ['salesManagerName', 'salesManagerPhone', 'salesManagerEmail'],
       ['marketingManagerName', 'marketingManagerPhone', 'marketingManagerEmail'],
-      ['legalRepEmail', 'password'],
+      ['password', 'confirmPassword'],
     ]);
     // Los papeles van todos en una vista (pedido del cliente del 28/10/2026); el resto, de a cuatro como tope.
     const documentos = paginas.find((p) => p.clave === 'documentos-legales')!;
@@ -427,7 +428,7 @@ describe('RegisterMedicalCenter', () => {
       'gerencia-general': 'dos-columnas',
       'gerencia-comercial': 'dos-columnas',
       'gerencia-marketing': 'dos-columnas',
-      acceso: 'dos-columnas',
+      password: 'dos-columnas',
     });
 
     // Y la regla de fondo: una página con dos o más campos (salvo los papeles, que son zonas de carga)
@@ -545,7 +546,38 @@ describe('RegisterMedicalCenter', () => {
 
   it('la contraseña avisa su mínimo antes de equivocarse, como el alta de usuarios', () => {
     const clave = interno().paginas().at(-1)!.campos.find((c) => c.key === 'password')!;
-    expect(clave.hint).toBe('Mínimo 8 caracteres.');
+    expect(clave.hint).toBe('Al menos 8 caracteres.');
+  });
+
+  it('la última página pide sólo la contraseña y su confirmación', () => {
+    const ultima = interno().paginas().at(-1)!;
+    expect(ultima.clave).toBe('password');
+    expect(ultima.campos.map((c) => c.key)).toEqual(['password', 'confirmPassword']);
+    expect(interno().paginas().filter((p) => p.campos.some((c) => c.key === 'password'))).toHaveLength(1);
+  });
+
+  it('una confirmación distinta de la contraseña no se envía, y al editar la contraseña se revalida', () => {
+    completar();
+    const { password, confirmPassword } = fixture.componentInstance.form.controls;
+    confirmPassword.setValue('otra-clave-1');
+    expect(confirmPassword.hasError('passwordMismatch')).toBe(true);
+    fixture.componentInstance.submit();
+    http.expectNone(RUTA_ALTA);
+
+    confirmPassword.setValue('secreto12');
+    expect(confirmPassword.valid).toBe(true);
+    password.setValue('secreto123');
+    expect(confirmPassword.hasError('passwordMismatch')).toBe(true);
+  });
+
+  it('el cuerpo del alta no lleva confirmPassword, sólo password', () => {
+    completar();
+    fixture.componentInstance.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    expect(req.request.body.owner).toHaveProperty('password', 'secreto12');
+    expect(JSON.stringify(req.request.body)).not.toContain('confirmPassword');
+    req.flush(RESPUESTA_ALTA);
   });
 
   it('la razón social vacía tiene su propio mensaje', () => {
@@ -974,6 +1006,7 @@ describe('RegisterMedicalCenter', () => {
       // La defensa es de esta pantalla, no sólo de `OnboardingDraftService`: ni la clave ni los papeles
       // llegan a `saveProgress`, ni en los datos ni en ningún otro argumento.
       expect(datos).not.toHaveProperty('password');
+      expect(datos).not.toHaveProperty('confirmPassword');
       for (const papel of Object.keys(DOCUMENTOS).concat('powerOfAttorneyFileId')) {
         expect(datos).not.toHaveProperty(papel);
       }
@@ -1137,15 +1170,14 @@ describe('RegisterMedicalCenter', () => {
         }
       });
 
-      it('el correo del representante (el usuario) se explica en «Su acceso», con la contraseña, y no en «Representante legal»', () => {
-        const acceso = AYUDA_ALTA_MEDICA['acceso']!.map((t) => `${t.titulo} ${t.texto}`).join(' ');
-        expect(acceso).toMatch(/usuario/);
-        expect(acceso).toMatch(/contraseña/);
-        expect(paginas().find((p) => p.clave === 'acceso')!.campos.map((c) => c.key)).toContain('legalRepEmail');
-
+      it('el correo del representante (el usuario) se explica en «Representante legal», y la última página sólo habla de la contraseña', () => {
         const representante = AYUDA_ALTA_MEDICA['representante']!.map((t) => `${t.titulo} ${t.texto}`).join(' ');
-        expect(representante).not.toMatch(/Con este correo se entra/);
-        expect(paginas().find((p) => p.clave === 'representante')!.campos.map((c) => c.key)).not.toContain('legalRepEmail');
+        expect(representante).toMatch(/Con este correo se entra/);
+        expect(paginas().find((p) => p.clave === 'representante')!.campos.map((c) => c.key)).toContain('legalRepEmail');
+
+        const clave = AYUDA_ALTA_MEDICA['password']!.map((t) => `${t.titulo} ${t.texto}`).join(' ');
+        expect(clave).toMatch(/contraseña|clave/i);
+        expect(paginas().find((p) => p.clave === 'password')!.campos.map((c) => c.key)).not.toContain('legalRepEmail');
       });
 
       it('la ayuda de la gerencia general dice «las tres o ninguna», no «ninguno frena el alta»', () => {

@@ -200,6 +200,7 @@ for (const view of VIEWPORTS) {
       await escribir(page, 'medical-center-signup-legal-rep-nombre', 'Marta');
       await escribir(page, 'medical-center-signup-legal-rep-apellido-paterno', 'Rojas');
       await escribir(page, 'medical-center-signup-legal-rep-id', '4872190');
+      await escribir(page, 'medical-center-signup-legal-rep-email', `marta${Date.now()}@centro-norte.test`);
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-05-signup-legal-rep`);
       await page.getByTestId('paginated-form-continuar').click();
@@ -215,9 +216,9 @@ for (const view of VIEWPORTS) {
       // Páginas 9 a 11 · las tres gerencias son opcionales: se siguen vacías.
       for (let i = 0; i < 3; i += 1) await page.getByTestId('paginated-form-continuar').click();
 
-      // Página 12 · el usuario (el correo del representante) y la clave. «Crear cuenta» envía.
-      await escribir(page, 'medical-center-signup-legal-rep-email', `marta${Date.now()}@centro-norte.test`);
+      // Página 12 · sólo la contraseña y su confirmación. «Crear cuenta» envía.
       await escribir(page, 'medical-center-signup-password', 'S3cret-passw0rd');
+      await escribir(page, 'medical-center-signup-confirm-password', 'S3cret-passw0rd');
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-05b-signup-password`);
       await page.getByTestId('paginated-form-continuar').click();

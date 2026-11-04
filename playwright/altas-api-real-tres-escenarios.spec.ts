@@ -117,7 +117,9 @@ async function altaPaciente(page: Page, datos: DatosPaciente): Promise<Response>
   await page.getByTestId('registro-telefono').fill('70012345');
   await continuarHasta(page, 'Resto de datos');
   await page.getByTestId('registro-correo').fill(datos.correo);
+  await continuarHasta(page, 'Contraseña');
   await page.getByTestId('registro-password').fill(datos.password);
+  await page.getByTestId('registro-confirm-password').fill(datos.password);
   return enviar(page, '/iam/auth/register-patient');
 }
 
@@ -212,8 +214,9 @@ async function altaMedico(page: Page, datos: DatosMedico): Promise<Response> {
   await enLaPagina(page, 'Su habilitación');
   await page.getByTestId('registro-pro-matricula').fill(datos.matricula);
   await page.getByTestId('registro-pro-credencial').fill(datos.sedes);
-  await continuarHasta(page, 'Su contraseña');
+  await continuarHasta(page, 'Contraseña');
   await page.getByTestId('registro-pro-password').fill(datos.password);
+  await page.getByTestId('registro-pro-confirm-password').fill(datos.password);
   return enviar(page, '/iam/auth/register-practitioner');
 }
 
@@ -357,8 +360,9 @@ async function altaOrganizacion(
     await subirPdf(page, org.poder.testId, 'poder-notariado');
     await expect(page.getByTestId(org.poder.quitar)).toBeVisible({ timeout: 15_000 });
   }
-  await continuarHasta(page, 'Su acceso');
+  await continuarHasta(page, 'Contraseña');
   await page.getByTestId(`${org.prefijo}-password`).fill(datos.password);
+  await page.getByTestId(`${org.prefijo}-confirm-password`).fill(datos.password);
   return enviar(page, '/iam/auth/register-organization');
 }
 

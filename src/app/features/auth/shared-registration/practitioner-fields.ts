@@ -9,7 +9,6 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { INVALID_IDENTITY_DOCUMENT_MESSAGE } from './national-id';
-import { MESSAGE_SHORT_PASSWORD } from './password-policy';
 
 /**
  * Las páginas y los campos del alta de médico, en un solo lugar.
@@ -171,15 +170,15 @@ export function practitionerFields(
 
   // Las páginas se juntaron por pedido del propietario (26/10/2026): eran
   // quince y el alta se hacía eterna. Ahora son nueve, agrupadas por tema, y
-  // el correo de acceso va en la MISMA página que la contraseña: son las dos
-  // mitades del inicio de sesión. Ya no pasan por `paginateFields`, que las
+  // el correo de acceso va en la página de datos personales (la contraseña es
+  // el último paso, ver `passwordStep`). Ya no pasan por `paginateFields`, que las
   // volvería a partir de a cuatro.
   const remainingPages: readonly PaginaDeFormulario[] = [
     {
       titulo: 'Sus datos y su acceso',
       clave: 'access',
-      icon: 'lock',
-      hint: 'Todo obligatorio. Con su correo personal y esta contraseña va a iniciar sesión. Nada de esto se publica en su ficha.',
+      icon: 'mail',
+      hint: 'Todo obligatorio. Con su correo personal va a iniciar sesión. Nada de esto se publica en su ficha.',
       campos: [
         {
           key: 'sexAtBirth',
@@ -231,20 +230,6 @@ export function practitionerFields(
           testId: 'registro-pro-correo-personal',
           icono: 'mail',
           mensajeDeError: 'Ingrese un correo válido.',
-        },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          description:
-            'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
-          control: 'password',
-          required: true,
-          autocomplete: 'new-password',
-          placeholder: 'Su contraseña',
-          testId: 'registro-pro-password',
-          icono: 'lock',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
         },
       ],
     },
