@@ -51,6 +51,7 @@ export const SPECIALTY_ICON_NAMES = [
   'oncologia',
   'otorrinolaringologia',
   'hematologia',
+  'cirugia',
   /** El de las que el set todavía no dibuja. Nunca un hueco. */
   'general',
 ] as const;
@@ -86,6 +87,7 @@ const CLAVES: readonly (readonly [SpecialtyIconName, readonly string[]])[] = [
   ['oncologia', ['oncolog', 'tumor', 'cancer']],
   ['otorrinolaringologia', ['otorrin', 'audio', 'foniatr']],
   ['hematologia', ['hematolog', 'sangre', 'transfus']],
+  ['cirugia', ['cirugia', 'quirurg']],
   ['medicina-interna', ['medicina interna', 'internist', 'infectolog', 'geriatr', 'reumatolog']],
 ];
 
