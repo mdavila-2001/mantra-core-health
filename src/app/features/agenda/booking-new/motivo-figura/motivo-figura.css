@@ -1,0 +1,87 @@
+/* La figura junto al motivo de la reserva. Sólo tokens; el estado elegido se
+   dice con fondo, borde, peso y `aria-pressed`, nunca sólo con color. */
+
+:host {
+  display: block;
+}
+
+.figura {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.figura__cabecera {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.figura__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.figura__ayuda,
+.figura__rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.figura__zona {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.figura__zona-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.figura__opciones,
+.figura__reconocidos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.figura__opcion {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+
+.figura__opcion:hover,
+.figura__opcion:focus-visible {
+  border-color: var(--accent);
+}
+
+.figura__opcion.is-elegido {
+  border-color: var(--accent);
+  background: var(--bg-active);
+  font-weight: 600;
+  cursor: default;
+}
+
+.figura__leido {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.figura__reconocido {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-pill);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+}

@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -38,6 +39,7 @@ import {
   comoMotivoDeConsulta,
 } from '../../../core/symptom-notes/symptom-observations.store';
 import { AGENDA_ROUTE } from '../agenda.routes';
+import { MotivoFigura } from './motivo-figura/motivo-figura';
 import { FLEXIBLE_PARAM, releerHoraFlexible, retenerHoraFlexible } from './flexible-booking';
 
 /** Largo que declara `ConfirmBookingDto` para el motivo. */
@@ -110,6 +112,7 @@ type Entrada = 'DESK' | 'PORTAL';
     FormActions,
     FormField,
     FormSection,
+    MotivoFigura,
     PageHeader,
     ReactiveFormsModule,
     ReferenceCombobox,
@@ -139,7 +142,8 @@ export class BookingNew {
     if (porUrl !== null) {
       return porUrl.slice(0, MAX_MOTIVO);
     }
-    const pendiente = this.route.snapshot.data['entrada'] === 'PORTAL' ? this.observaciones.pendiente() : null;
+    const pendiente =
+      this.route.snapshot.data['entrada'] === 'PORTAL' ? this.observaciones.pendiente() : null;
     return pendiente === null ? '' : comoMotivoDeConsulta(pendiente);
   }
 
@@ -326,7 +330,9 @@ export class BookingNew {
    * la URL; queda editable, y al solicitar el turno se marca como enviada.
    */
   protected readonly observacionPrecargada =
-    this.esAutoservicio && !this.route.snapshot.queryParamMap.has('motivo') ? this.observaciones.pendiente() : null;
+    this.esAutoservicio && !this.route.snapshot.queryParamMap.has('motivo')
+      ? this.observaciones.pendiente()
+      : null;
 
   /**
    * El formulario que envuelve al motivo. Un solo control, pero declarado como
@@ -345,6 +351,25 @@ export class BookingNew {
    * `retener()` directamente y nunca pasan por el envío del formulario.
    */
   protected readonly formulario = new FormGroup({ motivo: this.motivo });
+
+  /** El motivo como señal, para que la figura del cuerpo lo lea mientras se escribe. */
+  protected readonly motivoActual = toSignal(this.motivo.valueChanges, {
+    initialValue: this.motivo.value,
+  });
+
+  /**
+   * Suma al motivo el síntoma que se tocó en la figura. Va al final, separado
+   * por coma, sin pisar lo escrito; si ya no entra en los 500 caracteres no se
+   * agrega a medias.
+   */
+  protected agregarAlMotivo(nombre: string): void {
+    const previo = this.motivo.value.trimEnd();
+    const nuevo =
+      previo === '' ? nombre.charAt(0).toUpperCase() + nombre.slice(1) : `${previo}, ${nombre}`;
+    if (nuevo.length > MAX_MOTIVO) return;
+    this.motivo.setValue(nuevo);
+    this.motivo.markAsDirty();
+  }
   protected readonly maxMotivo = MAX_MOTIVO;
 
   private readonly enviado = signal(false);
