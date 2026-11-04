@@ -7,10 +7,11 @@
       app-button
       variant="outline"
       size="sm"
-      routerLink="/my-account/access-requests"
+      routerLink="/my-account/requests"
+      [queryParams]="{ pestana: 'vinculos' }"
       data-testid="pacientes-cabecera-buzon"
     >
-      Buzón de solicitudes
+      Solicitudes de vínculo
     </a>
     <a
       app-button

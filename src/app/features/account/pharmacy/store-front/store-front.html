@@ -120,6 +120,9 @@
             <app-store-results [items]="filasDeSede()" [sinOrigen]="sinOrigenEnResultados()" />
           }
         </app-view-state-host>
+        @if (modo() === 'products' && !buscando() && filasDeProducto().length === 0) {
+          <app-catalog-matches [term]="termino()" [exact]="exacto()" />
+        }
       }
     }
 

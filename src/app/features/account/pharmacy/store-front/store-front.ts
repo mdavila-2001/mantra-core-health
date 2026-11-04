@@ -36,6 +36,7 @@ import {
 } from '../search/pharmacy-search.service';
 import type { ProductHit, SearchMode, SearchSort, StoreHit } from '../search/pharmacy-search.types';
 import { StoreResults } from '../search/store-results';
+import { CatalogMatches } from '../search/catalog-matches/catalog-matches';
 import { SearchCorrection } from '../../../../shared/components/molecules/search-correction/search-correction';
 import { NADA, type Consulta, type Resultado } from './store-front.types';
 import { RecentOrders } from './recent-orders';
@@ -78,6 +79,7 @@ const COTIZACIONES_ROUTE = '/my-account/quotations';
   imports: [
     AppButtonLink,
     Card,
+    CatalogMatches,
     Chip,
     FormField,
     Link,
@@ -112,7 +114,7 @@ export class StoreFront {
 
   protected readonly termino = signal('');
   /** `true` after «Buscar X tal cual»: search what was typed, no typo fix. */
-  private readonly exacto = signal(false);
+  protected readonly exacto = signal(false);
   protected readonly modo = signal<SearchMode>('products');
   /**
    * P34 · en el modo Farmacias, sólo las abiertas ahora: 24 h declaradas o de
@@ -254,7 +256,9 @@ export class StoreFront {
     if (actual.status !== 'ready') {
       return actual;
     }
-    if (this.esperandoTermino() || actual.data.items.length > 0) {
+    // Products with no pharmacy offer: `CatalogMatches` shows what the
+    // vademécum and the registry have, or its own «no encontramos nada».
+    if (this.esperandoTermino() || actual.data.items.length > 0 || this.modo() === 'products') {
       return actual;
     }
     if (this.modo() === 'stores' && this.soloAbiertas()) {
@@ -265,9 +269,7 @@ export class StoreFront {
     }
     return empty(
       { label: 'Pruebe con otra palabra' },
-      this.modo() === 'products'
-        ? 'Ninguna farmacia publica algo con ese nombre.'
-        : 'Ninguna farmacia coincide con ese nombre.',
+      'Ninguna farmacia coincide con ese nombre.',
     );
   });
 

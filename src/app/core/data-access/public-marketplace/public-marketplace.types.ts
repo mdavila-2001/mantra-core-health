@@ -36,11 +36,11 @@ export interface TarjetaDeMedicamento {
   /** `true` si alguna publicación lo marca como venta bajo receta. */
   readonly requiresPrescription: boolean;
   /** Precio más bajo publicado hoy, texto exacto. */
-  readonly priceFrom: string;
+  readonly priceFrom: string | null;
   /** Precio más alto publicado hoy, texto exacto. */
-  readonly priceTo: string;
-  /** Código de moneda. */
-  readonly currency: string;
+  readonly priceTo: string | null;
+  /** Código de moneda; `null` si ninguna farmacia lo publica. */
+  readonly currency: string | null;
   /** En cuántas farmacias está dentro del alcance consultado. */
   readonly pharmacyCount: number;
   /** Distancia a la más cercana que lo tiene; `null` sin origen. */
@@ -53,6 +53,19 @@ export interface TarjetaDeMedicamento {
   readonly matchedUse?: string | null;
 }
 
+/** Un medicamento del registro sanitario oficial que coincide con la búsqueda. */
+export interface MedicamentoDelRegistro {
+  readonly id: string;
+  readonly name: string;
+  readonly holder: string | null;
+  readonly strengthText: string | null;
+  readonly dosageForm: string | null;
+  readonly sourceName: string;
+  readonly atc: readonly string[];
+  readonly uses: readonly string[];
+  readonly requiresPrescription: boolean | null;
+}
+
 /** La página de la vitrina. */
 export interface PaginaDeVitrina {
   readonly items: readonly TarjetaDeMedicamento[];
@@ -61,6 +74,8 @@ export interface PaginaDeVitrina {
   readonly groups: readonly string[];
   /** Lo que de verdad se buscó cuando lo escrito no daba nada («ibopofeno» → «ibuprofeno»). */
   readonly correctedQuery?: string | null;
+  /** Lo que coincide en el registro sanitario oficial (AGEMED, CIMA…). */
+  readonly officialProducts?: readonly MedicamentoDelRegistro[];
   readonly generatedAt: string;
 }
 

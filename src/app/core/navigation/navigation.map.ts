@@ -4,6 +4,7 @@ import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-ver
 import { ANY_ROLE } from './navigation.types';
 import { SECCIONES_DE_LABORATORIO } from './navigation.laboratory';
 import { INSIGHTS_SECTIONS } from './navigation.insights';
+import { ACCESS_REQUESTS_SECTIONS } from './navigation.access-requests';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import { SECCIONES_DE_APOYO } from './navigation.support';
 import type { AppSection } from './navigation.types';
@@ -1400,16 +1401,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Quién ve su historia clínica, y revóquelo.',
     module: 'M06 authz',
   },
-  {
-    path: 'my-account/access-requests',
-    label: 'Buzón de solicitudes',
-    group: 'Mi cuenta',
-    icon: 'mail',
-    roles: [ANY_ROLE],
-    availability: 'disponible',
-    summary: 'Solicitudes de vínculo asistencial.',
-    module: 'M06 authz',
-  },
+  ...ACCESS_REQUESTS_SECTIONS,
   {
     // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones.
     fueraDelMenuPara: [ANY_ROLE],

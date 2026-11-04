@@ -58,32 +58,26 @@
     grid-column: auto;
   }
 
-  /* «Corregir o retirar»: one tidy row per link. Name and role take the free
-     space on the left; dates and actions are fixed columns shared by every
-     row (subgrid), so they line up instead of floating mid-row. */
-  .historial__lista.historial__lista--editable {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    column-gap: var(--sp-6);
-  }
-
-  .historial__lista--editable > .historial__item {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-template-columns: subgrid;
-    align-items: center;
-  }
-
-  /* «¿Atiende acá?» belongs to its row: a second line inside its rule. */
-  .historial__lista--editable .historial__donde-atiende {
-    grid-column: 1 / -1;
-    margin: 0;
-  }
 }
 
-.historial__lista--editable .historial__acciones-sede {
+/* Actions of one Trayectoria node: second column of the node's grid, under its
+   name, with «¿Atiende acá?» on the left and Editar / Retirar on the right. */
+.historial__nodo-acciones {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  grid-column: 2;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.historial__nodo-acciones .historial__donde-atiende {
+  flex-basis: auto;
+  margin: 0;
+}
+
+.historial__nodo-acciones .historial__acciones-sede {
+  display: flex;
   gap: var(--sp-2);
   margin-inline-start: auto;
 }

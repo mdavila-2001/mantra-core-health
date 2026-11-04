@@ -225,7 +225,7 @@
                     <div>
                       <dt>Rango de precios en red:</dt>
                       <dd class="tabular-nums">
-                        Desde {{ med.priceFrom }} hasta {{ med.priceTo }} {{ med.currency }}
+                        {{ med.priceFrom ? 'Desde ' + med.priceFrom + ' hasta ' + med.priceTo + ' ' + med.currency : 'Ninguna farmacia de la red lo publica todavía' }}
                       </dd>
                     </div>
                   }

@@ -28,6 +28,7 @@ import type {
   AvailabilityExceptionTypeOption,
   Booking,
   PublishedTemplate,
+  PublishedTemplatePage,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { describeApiFailure, fieldErrorsOf } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -71,6 +72,7 @@ import { DayCard, type DayGap } from './day-card/day-card';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
+import { findMyAgenda } from '../my-live-agenda';
 import { AGENDA_CREATE_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
 import { statusLabelOf } from '../booking-status';
 import {
@@ -227,7 +229,8 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
 @Component({
   selector: 'app-my-agenda',
   imports: [
-    Alert, Spinner,
+    Alert,
+    Spinner,
     Badge,
     AppButton,
     AppButtonLink,
@@ -837,60 +840,52 @@ export class MyAgenda implements OnInit {
       return;
     }
 
-    // Después de la guarda, no antes: una sesión sin perfil profesional no va a
-    // ver ningún día, así que pedirle el catálogo al servidor es una consulta
-    // para nada. Lo fija una prueba que dice, con esas palabras, que esa cuenta
-    // «no pide nada al servidor».
+    // Después de la guarda: una sesión sin perfil profesional «no pide nada al
+    // servidor» (lo fija una prueba con esas palabras).
     this.cargarTipologias();
 
     this.estado.set(loading());
-    // El recurso se busca por el perfil: es el mismo criterio con el que el
-    // backend decide si la agenda es suya (`assertRecursoDelActor`).
-    this.scheduling.listResources({ tenantId }).subscribe({
-      next: (pagina) => {
-        const propio = pagina.items.find((r) => r.resourceRefId === perfil) ?? null;
-        this.recurso.set(propio);
-        if (propio === null) {
-          this.estado.set(SIN_AGENDA);
-          return;
+    const otras = this.auth.tenants().filter((t) => t !== tenantId);
+    findMyAgenda(this.scheduling, [tenantId, ...otras], perfil).subscribe({
+      next: (found) => {
+        if (found !== null && found.tenantId !== tenantId) {
+          this.auth.selectTenant(found.tenantId); // Another of the session's organizations.
+          if (this.auth.activeTenantId() === found.tenantId) return this.cargar();
         }
-        this.leerPlantilla(propio.id);
+        this.recurso.set(found?.resource ?? null);
+        if (found === null) this.estado.set(SIN_AGENDA);
+        else this.mostrarPlantillas(found.resource.id, found.page);
       },
       error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
     });
   }
 
-  private leerPlantilla(resourceId: string): void {
-    this.scheduling.listTemplates(resourceId).subscribe({
-      next: (pagina) => {
-        // El listado trae TODAS las plantillas del recurso, retiradas
-        // incluidas, ordenadas por creación. Tomar `items[0]` a secas mostraba
-        // un horario retirado como si fuera el vigente —basta con que sea el
-        // más reciente— y el médico que acababa de retirarlo veía que seguía
-        // atendiendo.
-        const vigente = pagina.items.find((plantilla) => !plantilla.retired);
-        this.historicos.set(pagina.items.filter((p) => p.retired));
+  private mostrarPlantillas(resourceId: string, pagina: PublishedTemplatePage): void {
+    // El listado trae TODAS las plantillas del recurso, retiradas
+    // incluidas, ordenadas por creación. Tomar `items[0]` a secas mostraba
+    // un horario retirado como si fuera el vigente —basta con que sea el
+    // más reciente— y el médico que acababa de retirarlo veía que seguía
+    // atendiendo.
+    const vigente = pagina.items.find((plantilla) => !plantilla.retired);
+    this.historicos.set(pagina.items.filter((p) => p.retired));
 
-        // Sin plantillas no es un fallo: el recurso existe y todavía no publicó
-        // horario. Es el estado de quien creó la agenda y no la completó.
-        if (vigente === undefined) {
-          this.estado.set(SIN_AGENDA);
-          return;
-        }
-        this.estado.set(ready(vigente));
-        if (this.mode() === 'calendar') {
-          this.abrirPosicionInicial();
-          // C-13 · las visitas de laboratorio del doctor, para que el día las
-          // muestre. Se leen una vez: son de la persona, no del día.
-          this.leerVisitasDeLaboratorio();
-        }
-        // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
-        // ninguno, y preguntarlo sería un viaje para confirmar un cero.
-        this.leerHastaCuandoHayCupos(resourceId);
-        this.leerBloqueosDeLaSemana(resourceId);
-      },
-      error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
-    });
+    // Sin plantillas no es un fallo: el recurso existe y todavía no publicó
+    // horario. Es el estado de quien creó la agenda y no la completó.
+    if (vigente === undefined) {
+      this.estado.set(SIN_AGENDA);
+      return;
+    }
+    this.estado.set(ready(vigente));
+    if (this.mode() === 'calendar') {
+      this.abrirPosicionInicial();
+      // C-13 · las visitas de laboratorio del doctor, para que el día las
+      // muestre. Se leen una vez: son de la persona, no del día.
+      this.leerVisitasDeLaboratorio();
+    }
+    // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
+    // ninguno, y preguntarlo sería un viaje para confirmar un cero.
+    this.leerHastaCuandoHayCupos(resourceId);
+    this.leerBloqueosDeLaSemana(resourceId);
   }
 
   /**

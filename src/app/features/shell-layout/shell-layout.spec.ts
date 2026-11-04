@@ -241,8 +241,6 @@ describe('ShellLayout', () => {
       // Los dependientes (B.1) van con el mismo criterio que «Mis turnos»: sin
       // rol, porque el filtro real es tener perfil de paciente.
       '/my-account/dependents',
-      // «Buzón de solicitudes» (2026-11-02): for any role, so every account has it.
-      '/my-account/access-requests',
       '/my-account/appointments',
       // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
       // «Mis turnos»: el filtro real es tener perfil de paciente, que es un
@@ -946,14 +944,13 @@ describe('ShellLayout', () => {
         // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
         '/administration/insurance-campaigns',
         '/administration/my-organization',
-        // «Buzón de solicitudes» (2026-11-02): for any role, so the insurer has it too.
-        '/my-account/access-requests',
       ]);
       // Pedido del propietario, 2026-10-01: «Administración» no se dibuja como
       // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
-      // Two loose blocks: «Administración» and, since 2026-11-02, «Mi cuenta» (the access-requests mailbox).
-      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(2);
+      // One loose block, «Administración»: the access-requests mailbox moved
+      // into «Mis solicitudes» on 04/11/2026, so «Mi cuenta» has nothing left.
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
     });
 
     /**

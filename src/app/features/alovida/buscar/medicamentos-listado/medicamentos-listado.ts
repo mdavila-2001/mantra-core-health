@@ -26,6 +26,7 @@ import { MedicationGraph } from './medication-graph/medication-graph';
 import { MedicationTree } from './medication-tree/medication-tree';
 import { PharmacyAvailabilityDialog } from './pharmacy-availability-dialog/pharmacy-availability-dialog';
 import { VitrinaSearchNotice } from './search-notice/search-notice';
+import { OfficialMedicines } from './official-medicines/official-medicines';
 
 /** Tope de tarjetas de la vitrina. El backend no deja pasar de 60. */
 const TOPE = 36;
@@ -132,6 +133,7 @@ const VISTAS: readonly SegmentedOption<Vista>[] = [
     Chip,
     MedicationGraph,
     MedicationTree,
+    OfficialMedicines,
     PharmacyAvailabilityDialog,
     SearchField,
     SegmentedControl,
@@ -180,6 +182,7 @@ export class BuscarMedicamentosListado {
   /** `true` after «Buscar X tal cual»: the API searches the literal text. */
   protected readonly exacto = signal(false);
   protected readonly corregido = computed(() => this.pagina()?.correctedQuery ?? null);
+  protected readonly oficiales = computed(() => this.pagina()?.officialProducts ?? []);
 
   /* ---- el origen: se pide, no se toma ------------------------------------- */
 

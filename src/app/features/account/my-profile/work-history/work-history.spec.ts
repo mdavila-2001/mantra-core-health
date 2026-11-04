@@ -95,6 +95,15 @@ function api(fixture: ComponentFixture<WorkHistory>): Record<string, UnMiembro> 
   return fixture.componentInstance as unknown as Record<string, UnMiembro>;
 }
 
+/** Renders the per-node actions the Trayectoria tab places inside one timeline node. */
+function accionesDelNodo(fixture: ComponentFixture<WorkHistory>, id: string): HTMLElement {
+  const vista = fixture.componentInstance.accionesDelNodo()!.createEmbeddedView({ $implicit: id });
+  vista.detectChanges();
+  const raiz = document.createElement('div');
+  raiz.append(...(vista.rootNodes as Node[]));
+  return raiz;
+}
+
 /**
  * Una señal, una computada o un método del componente.
  *
@@ -2286,9 +2295,11 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
     ]);
 
     expect(tabla(fixture)).toBeNull();
-    expect(
-      fixture.nativeElement.querySelectorAll('[data-testid="vinculos-editables"] li'),
-    ).toHaveLength(5);
+    for (const indice of [1, 2, 3, 4, 5]) {
+      expect(accionesDelNodo(fixture, `vinculo-${indice}`).querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    }
+    expect(accionesDelNodo(fixture, 'aprobado').querySelector('button')).toBeNull();
+    expect(accionesDelNodo(fixture, 'rechazado').querySelector('button')).toBeNull();
     http.verify();
   });
 
@@ -2296,7 +2307,7 @@ describe('WorkHistory — densidad, estados y acciones de la trayectoria', () =>
     const { fixture, http } = await montarListado(declarados(6));
 
     expect(filas(fixture)).toHaveLength(6);
-    expect(fixture.nativeElement.querySelector('[data-testid="vinculos-editables"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="vinculo-acciones"]')).toBeNull();
     expect(tabla(fixture)?.querySelector<HTMLElement>('.data-table__scroll')?.style.maxHeight).toBe(
       '420px',
     );
@@ -2676,8 +2687,9 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
   });
   /**
    * En «Trayectoria» (layout="timeline") lo declarado por el profesional se
-   * lista aparte, bajo «Corregir o retirar», con sus botones; además se ofrece
-   * el botón de alta.
+   * corrige o retira desde su propio nodo de la línea de tiempo —no desde una
+   * segunda lista que repetía las mismas instituciones—; además se ofrece el
+   * botón de alta.
    */
   it('en «Trayectoria» ofrece corregir o retirar lo declarado, además del alta', async () => {
     const { fixture, http } = await montarConVinculo(
@@ -2687,9 +2699,10 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     );
 
     const raiz: HTMLElement = fixture.nativeElement;
-    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).not.toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
-    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-acciones"]')).toBeNull();
+    const nodo = accionesDelNodo(fixture, 'af-1');
+    expect(nodo.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    expect(nodo.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
 
     const botonAlta = raiz.querySelector('[data-testid="abrir-alta-vinculo"]');
     expect(botonAlta).not.toBeNull();
@@ -2699,16 +2712,14 @@ describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
     http.verify();
   });
 
-  it('sin nada que tocar, el bloque no se dibuja', async () => {
+  it('sin nada que tocar, el nodo no lleva acciones', async () => {
     const { fixture, http } = await montarConVinculo(
       enCable({ statusKind: 'aprobado' }),
       true,
       'timeline',
     );
 
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="vinculos-editables"]'),
-    ).toBeNull();
+    expect(accionesDelNodo(fixture, 'af-1').querySelector('button')).toBeNull();
 
     http.verify();
   });
