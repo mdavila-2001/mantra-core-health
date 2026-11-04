@@ -249,6 +249,13 @@ describe('SymptomCheck · la silueta', () => {
     fixture.detectChanges();
   }
 
+  /** Escribir o elegir un síntoma pide la lista de especialidades con gente; vacía = sin filtro. */
+  function responderEspecialidades(): void {
+    for (const req of http.match((r) => r.url === '/profiles/practitioners')) {
+      req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    }
+  }
+
   function presionada(testId: string): string | null {
     return html.querySelector(`[data-testid="${testId}"]`)?.getAttribute('aria-pressed') ?? null;
   }
@@ -297,6 +304,42 @@ describe('SymptomCheck · la silueta', () => {
     expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
       'visión borrosa',
     );
+  });
+
+  /** Pedido del usuario (04/11/2026): tocar el muñeco reemplaza lo escrito. */
+  it('tocar una zona en la figura borra lo que se había escrito, y su chip', () => {
+    const control = html.querySelector<HTMLTextAreaElement>(
+      '[data-testid="sintomas-texto"] textarea',
+    );
+    if (control === null) throw new Error('no está el área de texto');
+    control.value = 'me duele la cadera';
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    expect(html.querySelectorAll('[data-testid="sintoma-reconocido"]').length).toBeGreaterThan(0);
+
+    tocar('body-map-pecho');
+
+    expect((fixture.componentInstance as unknown as { texto(): string }).texto()).toBe('');
+    expect(control.value).toBe('');
+    expect(html.querySelectorAll('[data-testid="sintoma-reconocido"]').length).toBe(0);
+    expect(html.querySelector('[data-testid="zona-abierta"]')).not.toBeNull();
+    responderEspecialidades();
+  });
+
+  it('lo elegido a mano en una zona no se borra al tocar otra', () => {
+    tocar('body-map-rodillas');
+    const opcion = Array.from(
+      html.querySelectorAll<HTMLButtonElement>('[data-testid="zona-abierta"] button'),
+    ).find((boton) => boton.textContent?.trim() === 'dolor de rodilla');
+    if (opcion === undefined) throw new Error('no está «dolor de rodilla»');
+    opcion.click();
+    fixture.detectChanges();
+
+    tocar('body-map-pecho');
+
+    const chips = Array.from(html.querySelectorAll('[data-testid="sintoma-reconocido"]'));
+    expect(chips.some((chip) => chip.textContent?.includes('rodilla'))).toBe(true);
+    responderEspecialidades();
   });
 
   it('volver a tocar la zona en la figura la cierra', () => {

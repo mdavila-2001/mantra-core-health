@@ -23,7 +23,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { CORREO_CON_DOMINIO } from '../../../core/data-access/iam/strict-email';
+import { CORREO_ESTRICTO } from '../../../core/data-access/iam/strict-email';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
   BoEmployersCatalog,
@@ -766,7 +766,7 @@ export class RegisterPatient {
         validators: [
           Validators.required,
           Validators.email,
-          Validators.pattern(CORREO_CON_DOMINIO),
+          Validators.pattern(CORREO_ESTRICTO),
         ],
       }),
       // El control guarda lo que `app-phone-input` compone —el prefijo del país

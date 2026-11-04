@@ -65,6 +65,7 @@ import {
   type TextReading,
 } from './ai-reading';
 import { ultimaFrase } from './text';
+import { fitsSex, withSpecialtiesForSex } from './sex-filter';
 import { EmergencyPanel } from '../emergency/emergency-panel/emergency-panel';
 
 /**
@@ -250,20 +251,9 @@ export class SymptomCheck {
     return sexo === 'MALE' || sexo === 'FEMALE' ? sexo : undefined;
   });
 
-  /**
-   * Si un síntoma corresponde al sexo del propio perfil.
-   *
-   * Sin `soloParaSexo` es de cualquiera. Sin sexo conocido —`INTERSEX`,
-   * `UNKNOWN`, sin sesión o todavía sin resolver— no se filtra nada: se
-   * prefiere mostrar de más antes que esconder un síntoma real por un dato
-   * que no se pudo confirmar.
-   */
+  /** Si un síntoma corresponde al sexo del propio perfil; sin sexo conocido no se filtra (ver `sex-filter.ts`). */
   private sintomaVisible(sintoma: Sintoma): boolean {
-    const solo = sintoma.soloParaSexo;
-    if (solo === undefined) return true;
-    const sexo = this.siluetaSexo();
-    if (sexo === undefined) return true;
-    return solo === sexo;
+    return fitsSex(sintoma, this.siluetaSexo());
   }
 
   /**
@@ -469,7 +459,9 @@ export class SymptomCheck {
       return [];
     }
     const disponibles = new Set(this.especialidadesDisponibles().keys());
-    const lista = recommend(this.sintomas(), disponibles);
+    // A man's account is never sent to Gynecology/Obstetrics, even for shared symptoms.
+    const sexo = this.siluetaSexo();
+    const lista = recommend(this.sintomas().map((s) => withSpecialtiesForSex(s, sexo)), disponibles);
     const motivo = this.faltaDeCerteza();
     if (lista.length === 0 && motivo === null) {
       return lista;
@@ -585,7 +577,28 @@ export class SymptomCheck {
   /** Abre una zona, o la cierra si ya lo estaba. */
   protected alternarZona(zona: BodyZone): void {
     this.haceFalta.set(true);
-    this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
+    const abre = this.zonaAbierta() !== zona.id;
+    this.zonaAbierta.set(abre ? zona.id : null);
+    if (abre) {
+      this.soltarTexto();
+    }
+  }
+
+  /**
+   * Tocar el muñeco es empezar a contar por otro camino: lo escrito antes
+   * («me duele la cadera») se borra para que no quede un síntoma viejo
+   * mezclado con la zona que se está eligiendo (pedido del usuario,
+   * 04/11/2026). Lo elegido a mano en pastillas se conserva; sólo se va el
+   * texto, y con él lo que se reconoció de él. Si se estaba dictando, se
+   * corta: si no, lo dictado volvería a escribir encima.
+   */
+  private soltarTexto(): void {
+    if (this.dictado.listening()) {
+      this.dictado.stop();
+    }
+    if (this.texto() !== '') {
+      this.texto.set('');
+    }
   }
 
   /** Specialists of an open shapeless category (skin, mood, general) before any symptom is picked. */
@@ -622,6 +635,9 @@ export class SymptomCheck {
    */
   protected elegirZonaDesdeLaSilueta(id: string | null): void {
     this.zonaAbierta.set(id);
+    if (id !== null) {
+      this.soltarTexto();
+    }
   }
 
   /** Si un síntoma ya está elegido, para pintarlo distinto. */
