@@ -123,6 +123,7 @@ export type { RowAction } from './row-actions/row-actions.types';
 
 export { SectionHeading } from './section-heading/section-heading';
 
+export { SearchCorrection } from './search-correction/search-correction';
 export { SearchField } from './search-field/search-field';
 export { SEARCH_DEBOUNCE_MS } from './search-field/search-field.types';
 

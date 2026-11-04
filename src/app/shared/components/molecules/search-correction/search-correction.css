@@ -1,0 +1,25 @@
+:host {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  margin-block-end: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--c-aqua-500) 12%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--c-aqua-500) 35%, var(--border-default));
+}
+
+.search-correction__icono {
+  flex-shrink: 0;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-block-start: 0.125rem;
+  color: var(--c-aqua-600);
+}
+
+.search-correction__texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+}

@@ -18,8 +18,8 @@
 
     <div class="vitrina-hero__buscador">
       <app-search-field
-        label="Busque por principio activo, marca o código ATC"
-        placeholder="Paracetamol, Losartán, C09CA01…"
+        label="Busque por medicamento, marca o para qué sirve"
+        placeholder="Paracetamol, Buscapina, dolor abdominal…"
         [value]="texto()"
         (searched)="buscar($event)"
       />
@@ -150,26 +150,12 @@
 <section class="app-view-state-host" app-view-state-host="" aria-label="Medicamentos publicados">
   @switch (estado()) {
     @case ('datos') {
-      @if (coincidenciaMarca(); as coincidencia) {
-        <aside class="vitrina-coincidencia-marca" role="status" aria-live="polite" data-testid="vitrina-coincidencia-marca">
-          <div class="vitrina-coincidencia-marca__icono" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-          </div>
-          <div class="vitrina-coincidencia-marca__cuerpo">
-            <p class="vitrina-coincidencia-marca__titulo">
-              Buscó por nombre comercial: <strong>«{{ coincidencia.marca }}»</strong>
-            </p>
-            <p class="vitrina-coincidencia-marca__bajada">
-              El compuesto químico concreto (principio activo) es <strong>{{ coincidencia.compuesto }}</strong>.
-              Todas las marcas o genéricos con este principio activo comparten la misma acción terapéutica.
-            </p>
-          </div>
-        </aside>
-      }
+      <app-vitrina-search-notice
+        [term]="texto()"
+        [correctedQuery]="corregido()"
+        [medications]="medicamentos()"
+        (literalRequested)="buscar($event, true)"
+      />
 
       <div class="vitrina-vista">
         <app-segmented-control
