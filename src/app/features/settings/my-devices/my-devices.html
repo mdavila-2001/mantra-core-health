@@ -1,0 +1,67 @@
+<section class="dispositivos" data-testid="my-devices">
+  <h2 class="dispositivos__titulo">Mis dispositivos</h2>
+  <p class="dispositivos__detalle">
+    Los dispositivos desde los que se inició sesión en su cuenta. Verifique los que reconozca con
+    el código que le enviamos a su correo.
+  </p>
+
+  @switch (load()) {
+    @case ('loading') {
+      <app-loading-state message="Cargando sus dispositivos…" />
+    }
+    @case ('error') {
+      <app-alert tone="error" title="No pudimos cargar sus dispositivos">
+        <p class="dispositivos__detalle">Revise su conexión e intente de nuevo.</p>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="reload()" data-testid="my-devices-retry">
+          Reintentar
+        </button>
+      </app-alert>
+    }
+    @case ('ready') {
+      @if (devices().length === 0) {
+        <p class="dispositivos__vacio" data-testid="my-devices-empty">
+          Todavía no detectamos dispositivos. Aparecen aquí la próxima vez que inicie sesión.
+        </p>
+      } @else {
+        <ul class="dispositivos__lista">
+          @for (device of devices(); track device.id) {
+            <li class="dispositivos__fila" [attr.data-testid]="'device-' + device.id">
+              <div class="dispositivos__cabecera">
+                <span class="dispositivos__nombre">{{ device.name }}</span>
+                @if (device.current) {
+                  <app-badge variant="info" size="sm">Este dispositivo</app-badge>
+                }
+                <app-badge [variant]="device.trusted ? 'success' : 'warning'" size="sm" data-testid="device-estado">
+                  {{ device.trusted ? 'Verificado' : 'Sin verificar' }}
+                </app-badge>
+              </div>
+              <p class="dispositivos__detalle">
+                Última vez: {{ when(device.lastSeenAt) }} · Sesiones abiertas: {{ device.activeSessions }}
+              </p>
+
+              @if (!device.trusted) {
+                @if (verifying() === device.id) {
+                  <app-device-verify [deviceId]="device.id" (verified)="verified()" (cancelled)="verifying.set(null)" />
+                } @else {
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    (clicked)="verifying.set(device.id)"
+                    data-testid="device-verificar"
+                  >
+                    Verificar con código por correo
+                  </button>
+                }
+              }
+            </li>
+          }
+        </ul>
+      }
+      @if (loadedAt(); as at) {
+        <p class="dispositivos__nota">Actualizado: {{ when(at) }}</p>
+      }
+    }
+  }
+</section>
