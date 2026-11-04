@@ -145,6 +145,23 @@ describe('RelatedPersonRelationshipsCatalog', () => {
    * Sin `olvidar()`, el `shareReplay` del cliente replicaría el error guardado
    * sin llegar a tocar la red, y «Reintentar» no reintentaría nada.
    */
+  // The catalog grew from 9 to 38 relationships; the new ones showed their
+  // English catalog label («Grandparent relationship») in the patient sign-up.
+  it.each([
+    ['RELATIONSHIP_GRANDPARENT', 'Abuelo o abuela'],
+    ['RELATIONSHIP_GRANDCHILD', 'Nieto o nieta'],
+    ['RELATIONSHIP_UNCLE_AUNT', 'Tío o tía'],
+    ['RELATIONSHIP_NEPHEW_NIECE', 'Sobrino o sobrina'],
+    ['RELATIONSHIP_COUSIN', 'Primo o prima'],
+    ['RELATIONSHIP_EMPLOYER', 'Empleador o empleadora'],
+  ])('%s se dice en castellano: «%s»', (code, etiqueta) => {
+    const { catalogo } = montar();
+
+    expect(
+      catalogo.etiquetaDe({ conceptId: 'c', code, display: 'English relationship', ordinal: 10, isDefault: false }),
+    ).toBe(etiqueta);
+  });
+
   it('olvidar deja que el siguiente intento vuelva a pedir', () => {
     const { catalogo, http } = montar();
     catalogo.listar().subscribe({ error: () => undefined });
