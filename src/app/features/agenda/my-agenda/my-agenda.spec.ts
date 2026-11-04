@@ -60,7 +60,12 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
   }
 
-  function crear(perfil: string | null = PERFIL, tenant: string | null = TENANT): void {
+  function crear(
+    perfil: string | null = PERFIL,
+    tenant: string | null = TENANT,
+    otras: readonly string[] = [],
+  ): void {
+    const activa = signal<string | null>(tenant);
     // Cada caso monta su propia sesión (con perfil, sin perfil, sin tenant), y
     // sin reiniciar, el segundo `configureTestingModule` revienta.
     TestBed.resetTestingModule();
@@ -73,7 +78,9 @@ describe('MyAgenda', () => {
           provide: AuthService,
           useValue: {
             practitionerProfileId: signal<string | null>(perfil),
-            activeTenantId: signal<string | null>(tenant),
+            activeTenantId: activa,
+            tenants: signal<readonly string[]>(tenant === null ? otras : [tenant, ...otras]),
+            selectTenant: (id: string) => activa.set(id),
             roles: signal<readonly string[]>(['PRACTITIONER']),
           },
         },
@@ -235,6 +242,7 @@ describe('MyAgenda', () => {
             useValue: {
               practitionerProfileId: signal<string | null>(PERFIL),
               activeTenantId: signal<string | null>(TENANT),
+              tenants: signal<readonly string[]>([]),
               roles: signal<readonly string[]>(['PRACTITIONER']),
             },
           },
@@ -563,6 +571,7 @@ describe('MyAgenda', () => {
             useValue: {
               practitionerProfileId: signal<string | null>(PERFIL),
               activeTenantId: signal<string | null>(TENANT),
+              tenants: signal<readonly string[]>([]),
               roles: signal<readonly string[]>(['PRACTITIONER']),
             },
           },
@@ -659,6 +668,7 @@ describe('MyAgenda', () => {
             useValue: {
               practitionerProfileId: signal<string | null>(PERFIL),
               activeTenantId: signal<string | null>(TENANT),
+              tenants: signal<readonly string[]>([]),
               roles: signal<readonly string[]>(['PRACTITIONER']),
             },
           },
@@ -722,6 +732,7 @@ describe('MyAgenda', () => {
             useValue: {
               practitionerProfileId: signal<string | null>(PERFIL),
               activeTenantId: signal<string | null>(TENANT),
+              tenants: signal<readonly string[]>([]),
               roles: signal<readonly string[]>(['PRACTITIONER']),
             },
           },
@@ -1223,6 +1234,28 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Publicar mi agenda');
+  });
+
+  it('si el horario está publicado en otra organización, cambia a esa y lo muestra', () => {
+    // «¿Dónde publica?» deja publicar en una organización afiliada: buscar solo
+    // en la activa decía «Todavía no publicó su horario» con el horario publicado.
+    crear(PERFIL, TENANT, ['org-afiliada']);
+    conTipologias();
+    http.expectOne(RECURSOS).flush({ items: [], count: 0 });
+    const ajena = http.expectOne('/scheduling/resources?tenantId=org-afiliada');
+    expect(ajena.request.headers.get('X-Tenant-Id')).toBe('org-afiliada');
+    ajena.flush({ items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL }], count: 1 });
+    conPlantilla([]);
+    // Switched: the screen reloads as the affiliated organization, which is now the active one.
+    conTipologias();
+    http
+      .expectOne('/scheduling/resources?tenantId=org-afiliada')
+      .flush({ items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL }], count: 1 });
+    conPlantilla([]);
+    conCuposHasta(null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Todavía no publicó su horario');
   });
 
   it('una cuenta sin perfil profesional no pide nada al servidor', () => {
