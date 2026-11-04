@@ -286,6 +286,13 @@ const BRAZO = ['dolor-muscular', 'hormigueo', 'golpe-o-torcedura', 'dolor-articu
 const COLUMNA = ['dolor-de-espalda', 'osteoporosis-escoliosis'];
 
 const FINAS: readonly Fina[] = [
+  // ─── Cara (vista Cara, 2026-11-04) ─────────────────────────────────────
+  ['coronilla', 'Parte de arriba de la cabeza', 'cabeza', ['dolor-de-cabeza', 'caida-de-pelo', 'golpe-o-torcedura', 'herida-o-corte']],
+  ['frente', 'Frente', 'cabeza', ['dolor-de-cabeza', 'congestion-nasal', 'golpe-o-torcedura', 'acne']],
+  ...ambos('sien', 'Sien {n}', true, 'cabeza', ['dolor-de-cabeza', 'mareo', 'dolor-de-mandibula']),
+  ...ambos('mejilla', 'Mejilla {n}', true, 'cabeza', ['congestion-nasal', 'dolor-de-muelas', 'acne', 'alergia']),
+  ...ambos('mandibula', 'Mandíbula, lado {n}', false, 'cabeza', ['dolor-de-mandibula', 'dolor-de-muelas', 'ganglios', 'dolor-de-oido']),
+  ['menton', 'Mentón', 'cabeza', ['acne', 'dolor-de-mandibula', 'golpe-o-torcedura']],
   ...ambos('cuello', 'Cuello, lado {n}', false, 'garganta', ['dolor-de-cuello', 'ganglios', 'golpe-o-torcedura']),
   ...ambos('ojo', 'Ojo {n}', false, 'ojos'),
   ...ambos('oido', 'Oído {n}', false, 'oidos'),
@@ -295,8 +302,11 @@ const FINAS: readonly Fina[] = [
   ...ambos('antebrazo', 'Antebrazo {n}', false, 'brazos', ['hormigueo', 'dolor-muscular', 'golpe-o-torcedura']),
   ...ambos('muneca', 'Muñeca {n}', true, 'manos', ['dolor-de-mano', 'hormigueo', 'dolor-articular', 'golpe-o-torcedura']),
   ...ambos('mano', 'Mano {n}', true, 'manos'),
+  ...ambos('dedos', 'Dedos de la mano {n}', true, 'manos', ['dolor-de-mano', 'hormigueo', 'dolor-articular', 'golpe-o-torcedura', 'herida-o-corte', 'hongos']),
   ['esternon', 'Centro del pecho', 'pecho', ['dolor-de-pecho', 'palpitaciones', 'acidez', 'falta-de-aire']],
   ...ambos('pecho', 'Pecho, lado {n}', false, 'pecho'),
+  ...ambos('clavicula', 'Clavícula {n}', true, 'pecho', ['golpe-o-torcedura', 'dolor-de-hombro', 'dolor-de-cuello']),
+  ...ambos('axila', 'Axila {n}', true, 'pecho', ['ganglios', 'bulto-en-la-mama', 'dolor-muscular', 'erupcion']),
   ['epigastrio', 'Boca del estómago', 'estomago', ['acidez', 'dolor-de-panza', 'nauseas', 'gases']],
   ['hipocondrio-der', 'Bajo las costillas, derecha', 'estomago', ['vesicula', 'dolor-de-panza', 'nauseas', 'ictericia']],
   ['hipocondrio-izq', 'Bajo las costillas, izquierda', 'estomago', ['dolor-de-panza', 'gases', 'nauseas']],
@@ -314,13 +324,17 @@ const FINAS: readonly Fina[] = [
   ...ambos('gluteo', 'Glúteo {n}', false, 'gluteos', ['dolor-de-cadera', 'dolor-de-espalda', 'hormigueo']),
   ['coxis', 'Coxis', 'gluteos', ['dolor-de-espalda', 'golpe-o-torcedura', 'hemorroides', 'sangre-en-las-heces']],
   ...ambos('cadera', 'Cadera {n}', true, 'caderas'),
-  ...ambos('muslo', 'Muslo {n}', false, 'piernas', ['dolor-muscular', 'golpe-o-torcedura', 'hormigueo', 'varices']),
+  ...ambos('ingle', 'Ingle {n}', true, 'caderas', ['hernia', 'ganglios', 'dolor-de-cadera', 'hongos', 'infeccion-de-transmision-sexual']),
+  ...ambos('muslo', 'Muslo {n}, cara externa', false, 'piernas', ['dolor-muscular', 'golpe-o-torcedura', 'hormigueo', 'varices']),
+  ...ambos('muslo-interno', 'Muslo {n}, cara interna', false, 'piernas', ['dolor-muscular', 'varices', 'hongos', 'golpe-o-torcedura', 'hinchazon-de-piernas']),
+  ...ambos('muslo-posterior', 'Muslo {n}, parte de atrás', false, 'piernas', ['dolor-muscular', 'golpe-o-torcedura', 'hormigueo', 'varices']),
   ...ambos('rodilla', 'Rodilla {n}', true, 'rodillas'),
   ...ambos('corva', 'Detrás de la rodilla {n}', true, 'rodillas', ['dolor-de-rodilla', 'hinchazon-de-piernas', 'varices']),
   ...ambos('canilla', 'Canilla {n}', true, 'piernas', ['golpe-o-torcedura', 'hinchazon-de-piernas', 'dolor-muscular', 'herida-que-no-cierra']),
   ...ambos('pantorrilla', 'Pantorrilla {n}', true, 'piernas', ['dolor-muscular', 'hinchazon-de-piernas', 'varices', 'hormigueo']),
   ...ambos('tobillo', 'Tobillo {n}', false, 'pies', ['golpe-o-torcedura', 'hinchazon-de-piernas', 'dolor-articular', 'dolor-de-pie']),
-  ...ambos('pie', 'Pie {n}', false, 'pies', ['dolor-de-pie', 'hongos', 'ampolla-callo', 'herida-que-no-cierra', 'hinchazon-de-piernas']),
+  ...ambos('pie', 'Empeine {n}', false, 'pies', ['dolor-de-pie', 'hinchazon-de-piernas', 'golpe-o-torcedura', 'herida-que-no-cierra']),
+  ...ambos('dedos-pie', 'Dedos del pie {n}', false, 'pies', ['dolor-de-pie', 'hongos', 'ampolla-callo', 'golpe-o-torcedura', 'herida-que-no-cierra']),
   ...ambos('talon', 'Talón {n}', false, 'pies', ['dolor-de-pie', 'ampolla-callo', 'golpe-o-torcedura']),
 ];
 

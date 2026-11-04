@@ -19,6 +19,7 @@ import { ThemeService } from './core/tokens/theme.service';
 import { ACCESS_CHALLENGE_RESOLVER } from './core/access-challenge/access-challenge';
 import { accessChallengeInterceptor } from './core/http/access-challenge.interceptor';
 import { authInterceptor } from './core/http/auth.interceptor';
+import { deviceIdInterceptor } from './core/http/device-id.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { apiFailureLogInterceptor } from './core/http/api-failure-log.interceptor';
 import { AuthService } from './core/auth/auth.service';
@@ -123,6 +124,7 @@ export const appConfig: ApplicationConfig = {
         tracingInterceptor,
         timeoutInterceptor,
         authInterceptor,
+        deviceIdInterceptor,
         // Resuelve los desafíos de acceso (motivo, segundo paso, aprobación) de las peticiones que lo piden con
         // `withAccessChallenge()`. Va **dentro** de `authInterceptor` (el reintento ya lleva la sesión) y **fuera** del
         // simulado, para que vea también los 403/422 del mock.

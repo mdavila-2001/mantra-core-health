@@ -25,6 +25,7 @@ import { toMedicationCard, type MedicationCard } from './medication-card.mapper'
 import { MedicationGraph } from './medication-graph/medication-graph';
 import { MedicationTree } from './medication-tree/medication-tree';
 import { PharmacyAvailabilityDialog } from './pharmacy-availability-dialog/pharmacy-availability-dialog';
+import { VitrinaSearchNotice } from './search-notice/search-notice';
 
 /** Tope de tarjetas de la vitrina. El backend no deja pasar de 60. */
 const TOPE = 36;
@@ -134,6 +135,7 @@ const VISTAS: readonly SegmentedOption<Vista>[] = [
     PharmacyAvailabilityDialog,
     SearchField,
     SegmentedControl,
+    VitrinaSearchNotice,
   ],
   templateUrl: './medicamentos-listado.html',
   styleUrls: ['./medicamentos-listado.css', '../centro-card/centro-grid.css'],
@@ -175,22 +177,9 @@ export class BuscarMedicamentosListado {
   protected readonly grupos = computed(() => this.pagina()?.groups ?? []);
   protected readonly total = computed(() => this.pagina()?.total ?? 0);
 
-  /**
-   * Cuando el paciente busca por marca comercial (ej. «Kitadol»), identifica
-   * la marca que coincidió y explica cuál es el compuesto químico activo concreto (ej. «Paracetamol»).
-   */
-  protected readonly coincidenciaMarca = computed<{ marca: string; compuesto: string } | null>(() => {
-    const q = this.texto().trim().toLowerCase();
-    if (q.length < 2) return null;
-    for (const med of this.medicamentos()) {
-      for (const brand of med.brands) {
-        if (brand.toLowerCase().includes(q)) {
-          return { marca: brand, compuesto: med.genericName };
-        }
-      }
-    }
-    return null;
-  });
+  /** `true` after «Buscar X tal cual»: the API searches the literal text. */
+  protected readonly exacto = signal(false);
+  protected readonly corregido = computed(() => this.pagina()?.correctedQuery ?? null);
 
   /* ---- el origen: se pide, no se toma ------------------------------------- */
 
@@ -259,6 +248,7 @@ export class BuscarMedicamentosListado {
     this.vitrina
       .listMedications({
         q: this.texto(),
+        exact: this.exacto(),
         group: this.grupo() ?? undefined,
         origin: punto === null ? undefined : puntoGeoDe(punto),
         radiusKm: punto === null ? undefined : RADIO_KM,
@@ -280,8 +270,10 @@ export class BuscarMedicamentosListado {
       });
   }
 
-  protected buscar(valor: string): void {
+  /** @param literal - `true` searches what was typed, without typo correction. */
+  protected buscar(valor: string, literal = false): void {
     this.texto.set(valor);
+    this.exacto.set(literal);
     this.consultar();
   }
 
@@ -293,6 +285,7 @@ export class BuscarMedicamentosListado {
 
   protected limpiarFiltros(): void {
     this.texto.set('');
+    this.exacto.set(false);
     this.grupo.set(null);
     this.consultar();
   }

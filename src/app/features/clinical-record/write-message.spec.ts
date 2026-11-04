@@ -76,8 +76,15 @@ describe('mensajeDeFalloDeEscritura', () => {
       'Se cayó el índice (req-42)',
     );
     expect(writeFailureMessage(unexpectedError('req-42', ''), textos)).toBe(
-      'No pudimos completar la acción. Intente de nuevo en unos segundos. (req-42)',
+      'Ocurrió un error inesperado. (req-42)',
     );
+    // The what-to-do hint comes from the error catalog, never from the server.
+    expect(
+      writeFailureMessage(
+        unexpectedError('req-42', '', { hint: 'Intente de nuevo en unos segundos.' }),
+        textos,
+      ),
+    ).toBe('Ocurrió un error inesperado. Intente de nuevo en unos segundos. (req-42)');
   });
 
   /**
@@ -132,7 +139,7 @@ describe('mensajeDeEscritura', () => {
   describe('writeFailureParts', () => {
     it('separa el código de S9 del texto, con el mismo respaldo', () => {
       expect(writeFailureParts(unexpectedError('req-1', ''), { accion: 'x' })).toEqual({
-        text: 'No pudimos completar la acción. Intente de nuevo en unos segundos.',
+        text: 'Ocurrió un error inesperado.',
         code: 'req-1',
       });
     });

@@ -51,9 +51,7 @@
 }
 
 .grupos__temas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
+  display: block;
 }
 
 .grupos__contenedor-tabs {

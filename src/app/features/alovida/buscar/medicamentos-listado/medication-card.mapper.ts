@@ -87,6 +87,17 @@ function medicationAttributes(medication: TarjetaDeMedicamento): CentroAtributo[
     },
   ];
 
+  // What it is for, from its ATC group: the use that found it when the search
+  // was by symptom, else its most specific group. Classification, not advice.
+  const use = medication.matchedUse ?? medication.uses?.[0];
+  if (use) {
+    attributes.unshift({
+      clave: 'grupo',
+      texto: `Sirve para: ${use}`,
+      etiqueta: `Grupo terapéutico según la clasificación ATC de la OMS: ${use}`,
+    });
+  }
+
   const nearest = formatDistance(medication.nearestKm);
   if (nearest !== null) {
     attributes.push({
@@ -103,6 +114,11 @@ function medicationRows(medication: TarjetaDeMedicamento): CardDetailRow[] {
   const rows: CardDetailRow[] = [];
   addRow(rows, 'Código ATC', medication.atcCode);
   addRow(rows, 'Grupo terapéutico', medication.therapeuticGroup);
+  addRow(
+    rows,
+    'Se usa para (ATC, OMS)',
+    medication.uses && medication.uses.length > 0 ? medication.uses.join(' · ') : null,
+  );
   addRow(
     rows,
     'Marcas publicadas',

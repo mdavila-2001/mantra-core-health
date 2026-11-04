@@ -72,6 +72,9 @@
     </button>
   </div>
 } @else {
+  @if (homonimo()) {
+    <app-homonym-warning [sending]="isSubmitting()" (confirm)="submit(true)" />
+  }
   @if (errorMessage(); as mensaje) {
     <app-alert appAnuncio tone="error" class="asistida__alert" data-testid="alta-paciente-error">{{
       mensaje

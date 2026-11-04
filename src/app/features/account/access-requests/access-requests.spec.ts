@@ -74,7 +74,7 @@ describe('AccessRequests', () => {
     montar({ solicitudes: () => (falla ? throwError(() => caida('corr-acc')) : of([SOLICITUD])) });
 
     expect(porTestId('access-requests-error')?.textContent).toContain(
-      'No pudimos traer sus solicitudes de vínculo. (Código de soporte: corr-acc)',
+      'No pudimos traer sus solicitudes de vínculo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-acc)',
     );
     expect(raiz().textContent).not.toContain('No tiene solicitudes pendientes');
 
@@ -93,7 +93,7 @@ describe('AccessRequests', () => {
     });
 
     expect(porTestId('access-requests-specialties-error')?.textContent).toContain(
-      'No pudimos traer la lista de especialidades para elegir qué autoriza. (Código de soporte: corr-esp)',
+      'No pudimos traer la lista de especialidades para elegir qué autoriza. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-esp)',
     );
   });
 

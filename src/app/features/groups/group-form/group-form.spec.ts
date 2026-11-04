@@ -14,10 +14,10 @@ describe('GroupForm · contratos de selección estrictos', () => {
     fixture.detectChanges();
     fixture.debugElement.query(By.directive(Input)).injector.get(Input).value.set('Grupo sintético');
     const selects = fixture.debugElement.queryAll(By.directive(Select));
-    selects[1].injector.get(Select).value.set('SUPPORT');
-    selects[2].injector.get(Select).value.set('PUBLIC');
+    selects[0].injector.get(Select).value.set('SUPPORT');
+    selects[1].injector.get(Select).value.set('PUBLIC');
+    selects[0].injector.get(Select).value.set(null);
     selects[1].injector.get(Select).value.set(null);
-    selects[2].injector.get(Select).value.set(null);
     fixture.detectChanges();
     let sent: GroupFormData | undefined;
     fixture.componentInstance.submitForm.subscribe((value) => { sent = value; });

@@ -68,16 +68,52 @@ describe('BuscarMedicamentosListado', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const coincidencia = fixture.componentInstance['coincidenciaMarca']();
-    expect(coincidencia).toEqual({
-      marca: 'Kitadol',
-      compuesto: 'Paracetamol',
-    });
-
     const banner = fixture.nativeElement.querySelector('[data-testid="vitrina-coincidencia-marca"]');
     expect(banner).not.toBeNull();
     expect(banner?.textContent).toContain('Kitadol');
     expect(banner?.textContent).toContain('Paracetamol');
+  });
+
+  it('dice qué corrigió la API y permite buscar lo escrito tal cual', async () => {
+    listMedications.mockReturnValue(of({ ...PAGINA, correctedQuery: 'paracetamol' }));
+    fixture.componentInstance['buscar']('paracetamlo');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(listMedications).toHaveBeenLastCalledWith(
+      expect.objectContaining({ q: 'paracetamlo', exact: false }),
+    );
+    const aviso = fixture.nativeElement.querySelector('[data-testid="search-correction"]');
+    expect(aviso?.textContent).toContain('«paracetamol»');
+
+    listMedications.mockReturnValue(of({ ...PAGINA, items: [], total: 0, correctedQuery: null }));
+    fixture.nativeElement.querySelector('[data-testid="search-correction-literal"]')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(listMedications).toHaveBeenLastCalledWith(
+      expect.objectContaining({ q: 'paracetamlo', exact: true }),
+    );
+    expect(fixture.nativeElement.querySelector('[data-testid="search-correction"]')).toBeNull();
+  });
+
+  it('una búsqueda por síntoma dice el grupo terapéutico y que no es indicación', async () => {
+    listMedications.mockReturnValue(
+      of({
+        ...PAGINA,
+        items: [{ ...PARACETAMOL, matchedBy: 'use', matchedUse: 'Dolor y fiebre' }],
+      }),
+    );
+    fixture.componentInstance['buscar']('fiebre');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const aviso = fixture.nativeElement.querySelector('[data-testid="vitrina-coincidencia-uso"]');
+    expect(aviso?.textContent).toContain('Dolor y fiebre');
+    expect(aviso?.textContent).toContain('no una indicación médica');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="vitrina-coincidencia-marca"]'),
+    ).toBeNull();
   });
 
   it('permite alternar a la vista de grafo visual y renderiza app-medication-graph', async () => {

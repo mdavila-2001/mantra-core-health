@@ -21,26 +21,39 @@ interface Parte {
 }
 
 const BRAZO_ENTERO = ['brazo', 'codo', 'antebrazo', 'muneca'];
-const PIERNA_ENTERA = ['muslo', 'rodilla', 'canilla', 'corva', 'pantorrilla', 'tobillo'];
+const MUSLO_ENTERO = ['muslo', 'muslo-interno', 'muslo-posterior'];
+const PIERNA_ENTERA = [...MUSLO_ENTERO, 'rodilla', 'canilla', 'corva', 'pantorrilla', 'tobillo'];
+/** «dedo del pie» / «dedo de la mano»: read by `dedosDe`, not by a single word. */
+const DEDOS_DEL_PIE: Parte = { lados: ['dedos-pie'] };
+const DEDOS_DE_LA_MANO: Parte = { lados: ['dedos'] };
 
 /** Normalised word (singular and plural) → part. Words are as people write them. */
 const PALABRAS: ReadonlyMap<string, Parte> = new Map(
   (
     [
       [['cabeza', 'craneo', 'cabezas'], { fijas: ['cabeza'] }],
+      [['coronilla', 'cuero cabelludo', 'mollera'], { fijas: ['coronilla'] }],
+      [['frente'], { fijas: ['frente'] }],
+      [['sien', 'sienes'], { lados: ['sien'] }],
+      [['mejilla', 'mejillas', 'cachete', 'cachetes', 'pomulo', 'pomulos'], { lados: ['mejilla'] }],
+      [['mandibula', 'mandibulas', 'quijada'], { lados: ['mandibula'] }],
+      [['menton', 'barbilla'], { fijas: ['menton'] }],
       [['ojo', 'ojos', 'parpado', 'parpados', 'vista'], { lados: ['ojo'] }],
       [['oido', 'oidos', 'oreja', 'orejas'], { lados: ['oido'] }],
       [['nariz', 'fosa nasal'], { fijas: ['nariz'] }],
-      [['boca', 'diente', 'dientes', 'muela', 'muelas', 'labio', 'labios', 'lengua', 'encia', 'encias', 'mandibula', 'quijada'], { fijas: ['boca'] }],
+      [['boca', 'diente', 'dientes', 'muela', 'muelas', 'labio', 'labios', 'lengua', 'encia', 'encias'], { fijas: ['boca'] }],
       [['garganta', 'amigdalas', 'anginas'], { fijas: ['garganta'] }],
       [['cuello'], { lados: ['cuello'], fijas: ['garganta'] }],
       [['nuca'], { fijas: ['nuca'] }],
+      [['clavicula', 'claviculas'], { lados: ['clavicula'] }],
+      [['axila', 'axilas', 'sobaco', 'sobacos'], { lados: ['axila'] }],
       [['hombro', 'hombros'], { lados: ['hombro'] }],
       [['brazo', 'brazos'], { lados: BRAZO_ENTERO }],
       [['codo', 'codos'], { lados: ['codo'] }],
       [['antebrazo', 'antebrazos'], { lados: ['antebrazo'] }],
       [['muneca', 'munecas'], { lados: ['muneca'] }],
-      [['mano', 'manos', 'dedo', 'dedos', 'palma', 'palmas'], { lados: ['mano'] }],
+      [['mano', 'manos', 'palma', 'palmas'], { lados: ['mano', 'dedos'] }],
+      [['dedo', 'dedos', 'pulgar', 'pulgares'], { lados: ['dedos'] }],
       [['pecho', 'torax'], { lados: ['pecho'], fijas: ['esternon'] }],
       [['esternon'], { fijas: ['esternon'] }],
       [['seno', 'senos', 'mama', 'mamas', 'teta', 'tetas'], { lados: ['pecho'] }],
@@ -51,7 +64,7 @@ const PALABRAS: ReadonlyMap<string, Parte> = new Map(
       [['panza', 'barriga', 'abdomen', 'guata', 'tripa', 'tripas'], { fijas: ['estomago', 'abdomen'] }],
       [['vientre', 'bajo vientre', 'vejiga', 'utero', 'ovario', 'ovarios'], { fijas: ['hipogastrio'] }],
       [['apendice'], { fijas: ['fosa-iliaca-der'] }],
-      [['ingle', 'ingles'], { lados: ['fosa-iliaca'] }],
+      [['ingle', 'ingles'], { lados: ['ingle'] }],
       [['espalda'], { fijas: ['espalda'] }],
       [['omoplato', 'omoplatos', 'paleta', 'paletas'], { lados: ['omoplato'] }],
       [['columna', 'espinazo'], { fijas: ['columna-alta', 'columna-media', 'columna-lumbar'] }],
@@ -60,16 +73,46 @@ const PALABRAS: ReadonlyMap<string, Parte> = new Map(
       [['coxis', 'rabadilla'], { fijas: ['coxis'] }],
       [['cadera', 'caderas'], { lados: ['cadera'] }],
       [['pierna', 'piernas'], { lados: PIERNA_ENTERA }],
-      [['muslo', 'muslos'], { lados: ['muslo'] }],
+      [['muslo', 'muslos'], { lados: MUSLO_ENTERO }],
+      [['entrepierna'], { lados: ['muslo-interno'] }],
       [['rodilla', 'rodillas'], { lados: ['rodilla'] }],
       [['canilla', 'canillas', 'espinilla', 'espinillas'], { lados: ['canilla'] }],
       [['pantorrilla', 'pantorrillas'], { lados: ['pantorrilla'] }],
       [['tobillo', 'tobillos'], { lados: ['tobillo'] }],
-      [['pie', 'pies', 'planta', 'plantas'], { lados: ['pie'] }],
+      [['pie', 'pies', 'planta', 'plantas'], { lados: ['pie', 'dedos-pie', 'talon'] }],
+      [['empeine', 'empeines'], { lados: ['pie'] }],
       [['talon', 'talones'], { lados: ['talon'] }],
     ] as const
   ).flatMap(([palabras, parte]) => palabras.map((p) => [p, parte as Parte] as const)),
 );
+
+/** Words that may sit between «dedo» and «pie»/«mano»: «dedo gordo del pie», «dedos de la mano». */
+const ENLACE_DE_DEDO = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'mi', 'mis', 'gordo', 'chico', 'chiquito', 'menique']);
+
+/** «dedo … pie» or «dedo … mano» in the same sentence: whose fingers, up to which word. */
+function dedosDe(tokens: readonly Token[], i: number): { parte: Parte; fin: number } | null {
+  if (!['dedo', 'dedos', 'pulgar'].includes(tokens[i].texto)) return null;
+  for (let k = i + 1; k <= i + 5 && k < tokens.length && tokens[k].frase === tokens[i].frase; k += 1) {
+    if (['pie', 'pies'].includes(tokens[k].texto)) return { parte: DEDOS_DEL_PIE, fin: k };
+    if (['mano', 'manos'].includes(tokens[k].texto)) return { parte: DEDOS_DE_LA_MANO, fin: k };
+    if (!ENLACE_DE_DEDO.has(tokens[k].texto)) return null;
+  }
+  return null;
+}
+
+/** The part at token `i` and the index of its last word, or null («de frente» is not the forehead). */
+function parteEn(tokens: readonly Token[], i: number): { parte: Parte; fin: number } | null {
+  const dedos = dedosDe(tokens, i);
+  if (dedos !== null) return dedos;
+  for (const largo of [3, 2, 1]) {
+    const frase = tokens.slice(i, i + largo).map((t) => t.texto);
+    const parte = frase.length === largo ? PALABRAS.get(frase.join(' ')) : undefined;
+    if (parte === undefined) continue;
+    if (frase[0] === 'frente' && !['la', 'mi', 'su'].includes(tokens[i - 1]?.texto ?? '')) return null;
+    return { parte, fin: i + largo - 1 };
+  }
+  return null;
+}
 
 /** Every word (or phrase) read as a body part. */
 export const BODY_PART_WORDS: readonly string[] = [...PALABRAS.keys()];
@@ -127,12 +170,14 @@ export function bodyPartsIn(texto: string): readonly string[] {
   const negadas = negatedBrackets(tokens);
   const zonas = new Set<string>();
   for (let i = 0; i < tokens.length; i += 1) {
-    // Two-word names first («boca del estomago», «bajo vientre»).
-    const dos = `${tokens[i].texto} ${tokens[i + 1]?.texto ?? ''}`;
-    const tres = `${dos} ${tokens[i + 2]?.texto ?? ''}`;
-    const parte = PALABRAS.get(tres) ?? PALABRAS.get(dos) ?? PALABRAS.get(tokens[i].texto);
-    if (parte === undefined || negada(tokens, negadas, i)) continue;
-    const lado = parte.lados ? ladoCerca(tokens, i) : null;
+    const hallada = parteEn(tokens, i);
+    if (hallada === null) continue;
+    const { parte, fin } = hallada;
+    const desde = i;
+    i = fin; // a phrase's own words are not read again («boca del estómago», «dedo del pie»)
+    if (negada(tokens, negadas, desde)) continue;
+    // The side goes after the whole name («dedo del pie derecho») or before it.
+    const lado = parte.lados ? (ladoCerca(tokens, fin) ?? ladoCerca(tokens, desde)) : null;
     for (const prefijo of parte.lados ?? []) {
       if (lado !== 'izq') zonas.add(`${prefijo}-der`);
       if (lado !== 'der') zonas.add(`${prefijo}-izq`);

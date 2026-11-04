@@ -691,7 +691,7 @@ function pedidosDelTablero(): PedidoSimulado[] {
   ];
 }
 
-const pedidos = new Coleccion<PedidoSimulado>(
+export const pedidos = new Coleccion<PedidoSimulado>(
   (() => {
     const f0 = FARMACIAS[0]!;
     const f1 = FARMACIAS[1] ?? f0;
