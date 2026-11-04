@@ -120,4 +120,41 @@ test('la reserva muestra la figura del cuerpo conectada al motivo', async ({ pag
   const ancho = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(ancho).toBeLessThanOrEqual(390);
   await foto(page, '05-figura-390-light.png');
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  // ---- Punta a punta: UI → request → response → persistencia → recarga → UI.
+  const motivoEsperado = 'Me duele la cabeza desde ayer, mareo';
+  await page.getByRole('button', { name: 'Retener el cupo' }).click();
+  await expect(page.getByText('Se lo guardamos hasta las')).toBeVisible();
+  // Retenido: la figura sigue mostrando la cabeza, pero ya no ofrece agregar.
+  await expect(page.getByTestId('reserva-figura-opciones')).toHaveCount(0);
+  await expect(page.locator('.body-map__zona--marcada')).not.toHaveCount(0);
+  await figura.scrollIntoViewIfNeeded();
+  await foto(page, '06-retenido-figura-solo-lectura-1440-light.png');
+
+  await page.getByRole('button', { name: 'Confirmar la reserva' }).click();
+  await expect(page).toHaveURL(/\/my-account\/appointments(\?|$)/, { timeout: 20_000 });
+
+  // El request que confirmó llevó el motivo armado con la figura, y el simulador lo aceptó.
+  const confirmacion = await page.evaluate(() =>
+    (
+      (
+        window as unknown as {
+          __mockRequests?: { method: string; url: string; status?: number; body: unknown }[];
+        }
+      ).__mockRequests ?? []
+    )
+      .filter((r) => r.method === 'POST' && /\/holds\/.+\/(confirm|request)/.test(r.url))
+      .at(-1),
+  );
+  expect(confirmacion?.status).toBeLessThan(300);
+  expect(JSON.stringify(confirmacion?.body)).toContain(motivoEsperado);
+
+  // Recarga completa: la cita sigue ahí con el motivo.
+  await page.reload();
+  await estable(page);
+  const cita = page.locator('.turnos__motivo', { hasText: motivoEsperado }).first();
+  await expect(cita).toBeVisible({ timeout: 20_000 });
+  await cita.scrollIntoViewIfNeeded();
+  await foto(page, '07-mis-citas-tras-recarga-1440-light.png');
 });
