@@ -65,7 +65,9 @@ async function signIn(page: Page, account: 'medica' | 'paciente'): Promise<void>
 
 async function openInbox(page: Page, tab: 'Recibidas' | 'Enviadas' | 'Historial'): Promise<void> {
   await page.goto(`${BASE}${INBOX}`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: 'Buzón de solicitudes' })).toBeVisible({ timeout: 30_000 });
+  // The old path redirects to the «Solicitudes de vínculo» tab of «Mis solicitudes».
+  await expect(page.getByRole('heading', { name: 'Mis solicitudes' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('mis-solicitudes-vinculos')).toBeVisible();
   await page.getByRole('tab', { name: new RegExp(`^${tab}`) }).click();
   await esperarAQueSeAsiente(page);
 }
