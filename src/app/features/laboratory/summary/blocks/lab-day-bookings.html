@@ -1,0 +1,37 @@
+<app-card padding="lg" data-testid="lab-home-bookings">
+  <app-section-heading card-header icono="calendar" titulo="Turnos del día" [cuantos]="all()?.length ?? null" />
+
+  <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
+    @if (all(); as items) {
+      <ol class="rows" data-testid="lab-home-bookings-list">
+        @for (booking of shown(); track booking.bookingId) {
+          <li class="row">
+            <span class="row__main">
+              <span class="row__title">
+                <time class="row__time" [attr.datetime]="booking.startsAt">{{ booking.startsAt | date: "HH:mm" }}</time>
+                · {{ booking.patientName ?? 'Paciente sin nombre' }}
+              </span>
+              <span class="row__meta">
+                {{ booking.studyName ?? 'Estudio sin nombre' }}
+                @if (showSite() && booking.siteName) {
+                  · {{ booking.siteName }}
+                }
+              </span>
+            </span>
+            <app-status-seal [variant]="variantOf(booking.status)" [label]="labelOf(booking.status)" />
+          </li>
+        }
+      </ol>
+      @if (items.length > shown().length) {
+        <p class="note">Y {{ items.length - shown().length }} más hoy.</p>
+      }
+    }
+  </app-view-state-host>
+
+  <div card-footer class="footer">
+    <a app-button variant="secondary" size="sm" [routerLink]="scheduleRoute">
+      Horarios y equipos
+      <app-nav-icon name="arrow-right" />
+    </a>
+  </div>
+</app-card>

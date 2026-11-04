@@ -1,0 +1,238 @@
+[
+  {
+    "account": "laboratorio",
+    "theme": "light",
+    "width": 390,
+    "file": "inicio-laboratorio-390-claro.png",
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthRatio": 94,
+    "h1": "Buenas noches, Laboratorio Central",
+    "blocks": [
+      "orders:data",
+      "pending:state",
+      "bookings:data",
+      "catalog:data"
+    ]
+  },
+  {
+    "account": "laboratorio",
+    "theme": "light",
+    "width": 768,
+    "file": "inicio-laboratorio-768-claro.png",
+    "overflowX": false,
+    "leftGap": 20,
+    "rightGap": 20,
+    "widthRatio": 95,
+    "h1": "Buenas noches, Laboratorio Central",
+    "blocks": [
+      "orders:data",
+      "pending:state",
+      "bookings:data",
+      "catalog:data"
+    ]
+  },
+  {
+    "account": "laboratorio",
+    "theme": "light",
+    "width": 1440,
+    "file": "inicio-laboratorio-1440-claro.png",
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthRatio": 93,
+    "h1": "Buenas noches, Laboratorio Central",
+    "blocks": [
+      "orders:data",
+      "pending:state",
+      "bookings:data",
+      "catalog:data"
+    ]
+  },
+  {
+    "account": "laboratorio",
+    "theme": "light",
+    "consoleErrors": [
+      "InvalidStateError: Transition was aborted because of invalid state. Viewport size changed"
+    ],
+    "failedResponses": []
+  },
+  {
+    "account": "laboratorio",
+    "theme": "dark",
+    "width": 390,
+    "file": "inicio-laboratorio-390-oscuro.png",
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthRatio": 94,
+    "h1": "Buenas noches, Laboratorio Central",
+    "blocks": [
+      "orders:data",
+      "pending:state",
+      "bookings:data",
+      "catalog:data"
+    ]
+  },
+  {
+    "account": "laboratorio",
+    "theme": "dark",
+    "width": 768,
+    "file": "inicio-laboratorio-768-oscuro.png",
+    "overflowX": false,
+    "leftGap": 20,
+    "rightGap": 20,
+    "widthRatio": 95,
+    "h1": "Buenas noches, Laboratorio Central",
+    "blocks": [
+      "orders:data",
+      "pending:state",
+      "bookings:data",
+      "catalog:data"
+    ]
+  },
+  {
+    "account": "laboratorio",
+    "theme": "dark",
+    "width": 1440,
+    "file": "inicio-laboratorio-1440-oscuro.png",
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthRatio": 93,
+    "h1": "Buenas noches, Laboratorio Central",
+    "blocks": [
+      "orders:data",
+      "pending:state",
+      "bookings:data",
+      "catalog:data"
+    ]
+  },
+  {
+    "account": "laboratorio",
+    "theme": "dark",
+    "consoleErrors": [
+      "InvalidStateError: Transition was aborted because of invalid state. Viewport size changed"
+    ],
+    "failedResponses": []
+  },
+  {
+    "account": "imagen",
+    "theme": "light",
+    "width": 390,
+    "file": "inicio-imagen-390-claro.png",
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthRatio": 94,
+    "h1": "Buenas noches, Centro de Imagen Sur",
+    "blocks": [
+      "orders:state",
+      "pending:state",
+      "bookings:state",
+      "catalog:state"
+    ]
+  },
+  {
+    "account": "imagen",
+    "theme": "light",
+    "width": 768,
+    "file": "inicio-imagen-768-claro.png",
+    "overflowX": false,
+    "leftGap": 20,
+    "rightGap": 20,
+    "widthRatio": 95,
+    "h1": "Buenas noches, Centro de Imagen Sur",
+    "blocks": [
+      "orders:state",
+      "pending:state",
+      "bookings:state",
+      "catalog:state"
+    ]
+  },
+  {
+    "account": "imagen",
+    "theme": "light",
+    "width": 1440,
+    "file": "inicio-imagen-1440-claro.png",
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthRatio": 93,
+    "h1": "Buenas noches, Centro de Imagen Sur",
+    "blocks": [
+      "orders:state",
+      "pending:state",
+      "bookings:state",
+      "catalog:state"
+    ]
+  },
+  {
+    "account": "imagen",
+    "theme": "light",
+    "consoleErrors": [
+      "InvalidStateError: Transition was aborted because of invalid state. Viewport size changed"
+    ],
+    "failedResponses": []
+  },
+  {
+    "account": "imagen",
+    "theme": "dark",
+    "width": 390,
+    "file": "inicio-imagen-390-oscuro.png",
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthRatio": 94,
+    "h1": "Buenas noches, Centro de Imagen Sur",
+    "blocks": [
+      "orders:state",
+      "pending:state",
+      "bookings:state",
+      "catalog:state"
+    ]
+  },
+  {
+    "account": "imagen",
+    "theme": "dark",
+    "width": 768,
+    "file": "inicio-imagen-768-oscuro.png",
+    "overflowX": false,
+    "leftGap": 20,
+    "rightGap": 20,
+    "widthRatio": 95,
+    "h1": "Buenas noches, Centro de Imagen Sur",
+    "blocks": [
+      "orders:state",
+      "pending:state",
+      "bookings:state",
+      "catalog:state"
+    ]
+  },
+  {
+    "account": "imagen",
+    "theme": "dark",
+    "width": 1440,
+    "file": "inicio-imagen-1440-oscuro.png",
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthRatio": 93,
+    "h1": "Buenas noches, Centro de Imagen Sur",
+    "blocks": [
+      "orders:state",
+      "pending:state",
+      "bookings:state",
+      "catalog:state"
+    ]
+  },
+  {
+    "account": "imagen",
+    "theme": "dark",
+    "consoleErrors": [
+      "InvalidStateError: Transition was aborted because of invalid state. Viewport size changed"
+    ],
+    "failedResponses": []
+  }
+]

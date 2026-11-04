@@ -1,0 +1,76 @@
+/* Shared look of the four home blocks: a card that fills its grid cell, a
+   compact list of rows and the footer link. Tokens only. */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+app-card {
+  block-size: 100%;
+}
+
+.rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.row:last-child {
+  border-block-end: 0;
+}
+
+.row__main {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.row__title {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.row__meta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.row__time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.note {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.footer app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}

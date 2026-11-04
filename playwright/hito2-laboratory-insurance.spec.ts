@@ -14,8 +14,9 @@ import { esperarAplicacionLista, irA } from './support/sesion';
  * bytes del PDF en IndexedDB: se comprueban ambos después de recargar.
  *
  * Esto NO certifica API real ni facturación fiscal: la factura de
- * `/insurance/received-claims` y el portal P52 del laboratorio sólo existen en el
- * simulador. Ver docs/contracts/insurer-received-claims.md y LabPortalClient.
+ * `/insurance/received-claims` sólo existe en el simulador (ver
+ * docs/contracts/insurer-received-claims.md). The lab portal routes are
+ * published by the real API since 04/11/2026 (LabPortalClient).
  */
 
 const LAB_SUMMARY = '/administration/laboratory';
@@ -36,10 +37,11 @@ async function signInDemo(page: Page, email: string): Promise<void> {
   await expect(page.getByTestId('login-identifier')).toHaveValue(email);
   await expect(page.getByTestId('login-password')).toHaveValue('mock');
   await page.getByTestId('login-submit').click();
-  await page.waitForURL(/\/(dashboard|auth\/organization)/);
+  // Organization accounts land on their own home (lab → /administration/laboratory).
+  await page.waitForURL(/\/(dashboard|administration\/|auth\/organization)/);
   if (page.url().includes('/auth/organization')) {
     await page.getByTestId('tenant-opcion').first().click();
-    await page.waitForURL(/\/dashboard/);
+    await page.waitForURL(/\/(dashboard|administration\/)/);
   }
   await esperarAplicacionLista(page);
 }
@@ -115,14 +117,14 @@ test.describe('Hito 2 · laboratorio y aseguradora · solo demo', () => {
       await signInDemo(page, 'laboratorio@alovida.mock');
 
       await irA(page, LAB_SUMMARY);
-      const summary = page.getByTestId('summary-card');
+      const summary = page.getByTestId('lab-home');
       await expect(summary).toBeVisible();
       await expect(page.getByTestId('summary-result-files')).toHaveText(/^\d+$/);
       const initialCount = Number(await page.getByTestId('summary-result-files').innerText());
       await capture(page, 'laboratory-portal-before', viewport.width, info);
       // «Órdenes» (31/10/2026) junta recepción, cola y resultados: recibida → procesada →
       // resultados subidos → descarga, todo desde el menú de acciones de la fila.
-      await summary.getByRole('link', { name: /^Recibir y procesar órdenes/ }).click();
+      await summary.getByTestId('lab-home-count-draft').click();
       await expect(page).toHaveURL(new RegExp(`${LAB_ORDERS}\\?estado=draft$`));
       await page.getByRole('tab', { name: /^Recibidas/ }).click();
       const order = page.locator('tbody tr').first();

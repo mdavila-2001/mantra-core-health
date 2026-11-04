@@ -10,8 +10,8 @@
 
     Todas las rutas cuelgan de `/diagnostics/lab/…` y no llevan el id del
     laboratorio: lo decide el servidor con el tenant del contexto
-    (`X-Tenant-Id`), igual que la recepción de muestras. La API real no tiene
-    ninguna (P52): las responde sólo el simulador.
+    (`X-Tenant-Id`), igual que la recepción de muestras. The real API publishes
+    them (04/11/2026); the simulator mirrors them for `development,demo`.
     ========================================================================== */
 
 /** En qué punto de su vida está un servicio del catálogo. */

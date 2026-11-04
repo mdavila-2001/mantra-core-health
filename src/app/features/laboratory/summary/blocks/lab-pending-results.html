@@ -1,0 +1,44 @@
+<app-card padding="lg" data-testid="lab-home-pending">
+  <app-section-heading card-header icono="results" titulo="Resultados pendientes" [cuantos]="data()?.total ?? null" />
+
+  <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
+    @if (data(); as d) {
+      <ul class="rows" data-testid="lab-home-pending-list">
+        @for (order of d.items; track order.orderId) {
+          <li class="row">
+            <span class="row__main">
+              <span class="row__title">{{ order.studyName }}</span>
+              <span class="row__meta">
+                {{ order.patientName }} ·
+                <time [attr.datetime]="order.requestedAt">{{ order.requestedAt | date: "d MMM" }}</time>
+              </span>
+            </span>
+            <a
+              app-button
+              variant="primary"
+              size="sm"
+              [routerLink]="ordersRoute"
+              [queryParams]="uploadParams"
+              [attr.aria-label]="'Subir resultado de ' + order.studyName + ', ' + order.patientName"
+              data-testid="lab-home-upload"
+            >Subir resultado</a>
+          </li>
+        }
+      </ul>
+      @if (d.total > d.items.length) {
+        <p class="note">Y {{ d.total - d.items.length }} más esperando su archivo.</p>
+      }
+    }
+  </app-view-state-host>
+
+  @if (uploaded(); as s) {
+    <div card-footer class="footer">
+      <p class="note">
+        <strong data-testid="summary-result-files">{{ s.resultFiles }}</strong> resultados subidos
+        @if (lastUpload(); as last) {
+          <span data-testid="summary-activity"> · último: {{ last.text }}</span>
+        }
+      </p>
+    </div>
+  }
+</app-card>
