@@ -5,6 +5,7 @@
 /* Same row shape as «Quién ve mi historia»: bordered, roomy, full width. */
 .request {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
@@ -19,6 +20,8 @@
 }
 
 .request__who {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
   margin-inline-end: auto;
 }
 
@@ -30,6 +33,7 @@
 
 .request__decision {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   justify-items: start;
   padding-block-start: var(--sp-2);

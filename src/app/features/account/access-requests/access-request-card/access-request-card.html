@@ -29,6 +29,7 @@
         data-testid="access-request-decision"
         ariaLabel="Su respuesta a esta solicitud"
         size="md"
+        wrap
         [options]="choices"
         [value]="choice()"
         (valueChange)="choice.set($event)"

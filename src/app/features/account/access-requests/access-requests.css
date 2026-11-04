@@ -5,6 +5,8 @@
 /* One card with tabs, centered and full width (client rule §5): no own max width. */
 .inbox {
   display: grid;
+  /* A bare grid track is `auto`: it takes the tab strip min-content width and pushes the page sideways on phones. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
   margin-block-start: var(--sp-6);
 }
@@ -16,6 +18,7 @@
 
 .inbox__list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   margin: 0;
   padding: 0;
