@@ -664,6 +664,7 @@
                       <app-status-seal [variant]="afiliacion.sello ?? 'unknown'" [label]="afiliacion.estado ?? 'Sin verificar'" />
                     </div>
                   </div>
+                  <ng-container [ngTemplateOutlet]="historial.accionesDelNodo() ?? null" [ngTemplateOutletContext]="{ $implicit: afiliacion.id }" />
                 </li>
               }
             </ol>
@@ -695,6 +696,7 @@
                     </p>
                     <app-status-seal [variant]="afiliacion.sello ?? 'unknown'" [label]="afiliacion.estado ?? 'Sin verificar'" />
                   </div>
+                  <ng-container [ngTemplateOutlet]="historial.accionesDelNodo() ?? null" [ngTemplateOutletContext]="{ $implicit: afiliacion.id }" />
                 </li>
               }
             </ol>
@@ -711,6 +713,7 @@
              duplica ni se reescribe, se sigue embebiendo en modo «timeline». -->
         <section class="mi-perfil__seccion">
           <app-work-history
+            #historial
             layout="timeline"
             secciones="historial"
             [ofreceLlevarADondeAtiendo]="true"
