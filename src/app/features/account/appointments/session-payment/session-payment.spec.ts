@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { environment } from '../../../../../environments/environment';
 import { API_BASE_URL } from '../../../../core/data-access/api';
 import type { SimulatedCharge } from '../../../../core/data-access/billing-simulated/billing-simulated.types';
 import type { SimulatedInvoicing } from '../../../../core/mock/billing-sim/simulated-invoicing';
@@ -51,12 +52,19 @@ describe('SessionPayment', () => {
     });
   }
 
+  // The QR payment is a demo feature: the screen and the simulated handlers only exist with the flag on.
+  const originalPaymentDemo = environment.paymentDemo;
+
   beforeEach(() => {
+    Object.assign(environment, { paymentDemo: true });
     motor = motorDePrueba();
     cobro = motor.listCharges().find((c) => c.source === 'CONSULTATION' && c.payment === null && c.plan === null)!;
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    Object.assign(environment, { paymentDemo: originalPaymentDemo });
+  });
 
   it('no deja enviar mientras no haya un comprobante', async () => {
     await montar();

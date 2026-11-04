@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, type ActivatedRouteSnapshot, type Routes } from '@angular/router';
 
+import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import {
@@ -13,10 +14,10 @@ import {
 /**
  * El árbol de rutas tal como lo arma `production-api`.
  *
- * Las pruebas corren con el entorno de desarrollo (`designMockups: true`), así
- * que `routes` trae las maquetas montadas. Acá se sacan esas mismas entradas
- * —por identidad, son los objetos de `ALOVIDA_ROUTES`— y se ponen en su lugar
- * las que devuelve el gate apagado. Los guards se vacían, como en
+ * `routes` trae las maquetas montadas sólo si el entorno las enciende
+ * (`designMockups`, hoy apagado en el de pruebas). Acá se sacan esas entradas
+ * —por identidad, son los objetos de `ALOVIDA_ROUTES`— si estuvieran, y se
+ * ponen en su lugar las que devuelve el gate apagado. Los guards se vacían, como en
  * `app.routes.spec.ts`: se prueba adónde lleva cada dirección, no la sesión.
  */
 function apiTree(): Routes {
@@ -96,10 +97,13 @@ describe('el gate de maquetas con la API real (production-api)', () => {
 
 });
 
-describe('el gate de maquetas en la maqueta (mockup / desarrollo)', () => {
-  it('las pantallas de la bóveda siguen montadas', () => {
-    for (const route of ALOVIDA_ROUTES) {
-      expect(routes).toContain(route);
-    }
+describe('el gate de maquetas según el entorno', () => {
+  // Mounted when the environment turns them on, and only then. The gate's own
+  // spec covers the switched-on tree; this one ties `routes` to the flag.
+  it('las pantallas de la bóveda están montadas si y sólo si el entorno las enciende', () => {
+    const montadas = ALOVIDA_ROUTES.every((route) => routes.includes(route));
+
+    expect(montadas).toBe(environment.designMockups);
+    expect(ALOVIDA_ROUTES.some((route) => routes.includes(route))).toBe(environment.designMockups);
   });
 });

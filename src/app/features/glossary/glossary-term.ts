@@ -399,7 +399,8 @@ export class GlossaryTerm {
    * `null` si ninguna se puede mostrar: entonces va la portada ilustrada.
    */
   protected readonly imagen = computed<GlossaryImage | null>(() => {
-    const propia = this.ficha()?.image;
+    // Only an image whose relevance was approved is shown (a license alone does not certify it).
+    const propia = this.imagenAprobada();
     if (propia) return propia;
     const deArticulo = imagenesVisibles(this.articulo()?.images ?? [])[0];
     if (deArticulo === undefined) return null;

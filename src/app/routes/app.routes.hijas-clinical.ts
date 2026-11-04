@@ -38,15 +38,6 @@ export const PANTALLAS_HIJAS_CLINICAL: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    path: 'my-account/access-requests',
-    title: `${APP_TITLE} - Solicitudes de vínculo`,
-    canActivate: [seccionRolesGuard],
-    loadComponent: () =>
-      import('../features/account/access-requests/access-requests')
-        .then((m) => m.AccessRequests)
-        .catch(() => chunkFallido()),
-  },
-  {
     path: 'administration/patients/new',
     title: `${APP_TITLE} - Nuevo paciente`,
     canActivate: [seccionRolesGuard],

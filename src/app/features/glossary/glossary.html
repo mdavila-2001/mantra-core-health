@@ -251,7 +251,7 @@
                          siendo el enlace del título (se estira con ::after). -->
                     <app-card class="glosario__entrada">
                       <div card-header class="glosario__entrada-cabeza">
-                        @if (termino.imageThumbnailUrl; as miniatura) {
+                        @if (termino.imageReviewStatus === 'approved' && termino.imageThumbnailUrl; as miniatura) {
                           <!-- La miniatura es decorativa en la lista (el nombre
                                ya está escrito al lado): alt vacío. El crédito y
                                la licencia se muestran en la ficha, junto a la

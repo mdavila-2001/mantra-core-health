@@ -1,5 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
+import { environment } from '../../../../environments/environment';
+
 import type {
   SimulatedCharge,
   SimulatedChargesPage,
@@ -31,12 +33,18 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
   const paciente = buscarUsuario('paciente')!;
   const medica = buscarUsuario('medica')!;
 
+  // The patient's QR payment endpoints answer 404 unless the demo flag is on.
+  const originalPaymentDemo = environment.paymentDemo;
+
   beforeEach(() => {
+    Object.assign(environment, { paymentDemo: true });
     activa = true;
     ahora = new Date('2026-09-15T14:00:00.000Z');
     router = new MockRouter();
     registrarFacturacionSimulada(router, { activa: () => activa, reloj: () => ahora, persistir: false });
   });
+
+  afterEach(() => Object.assign(environment, { paymentDemo: originalPaymentDemo }));
 
   function llamar(method: MockMethod, path: string, body: unknown = null, user: MockUser | null = admin, r = router): MockReply {
     const match = r.match(method, path.split('?')[0]!);

@@ -35,7 +35,8 @@ const MENU_DEL_LABORATORIO = [
   '/administration/laboratory-branches',
 ];
 
-const FIJOS_DE_TODA_CUENTA = ['/my-account', '/notification-center'];
+// «Buzón de solicitudes» is for any role (added 2026-11-02), so every account has it.
+const FIJOS_DE_TODA_CUENTA = ['/my-account', '/notification-center', '/my-account/access-requests'];
 
 describe('Menú de la cuenta de laboratorio', () => {
   let service: NavigationService;
