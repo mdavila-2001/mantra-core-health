@@ -611,7 +611,11 @@ describe('ReferralBlock', () => {
     const code = error.querySelector('app-support-code code');
     expect(code?.textContent?.trim()).toBe('req-777');
     expect(error.querySelector('app-support-code button')?.textContent).toContain('Copiar código');
-    expect(errorText()).toBe('Falló el servidor.');
+    // A server fault is explained with the catalog text; the raw API message never reaches the screen.
+    expect(errorText()).toBe(
+      'El servidor encontró un problema inesperado al procesarla. El fallo no está en lo que usted ingresó. Intente de nuevo en unos segundos. Si vuelve a pasar, comparta el código de soporte con el equipo de ayuda: con él se encuentra el detalle.',
+    );
+    expect(error.textContent).not.toContain('Falló el servidor.');
   });
 
   it('sin encuentro, si el anfitrión sabe abrirlo, ofrece ir a hacerlo', () => {

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img">
+<title>Psicología clínica</title>
+<rect width="320" height="180" fill="var(--especialidad-fondo, #E6F4F1)"/>
+<g fill="var(--especialidad-trazo, #0F766E)" fill-opacity=".14" stroke="none"><circle cx="40" cy="48" r="14"/><circle cx="280" cy="132" r="14"/><circle cx="70" cy="140" r="6"/><circle cx="252" cy="40" r="6"/></g><g fill="none" stroke="var(--especialidad-acento, #F59E0B)" stroke-width="3" stroke-linecap="round"><path d="M270 80 V96 M262 88 H278"/><path d="M50 98 V110 M44 104 H56"/><path d="M92 36 h8 M220 146 h8"/></g>
+<circle cx="160" cy="90" r="55" fill="var(--especialidad-trazo, #0F766E)" fill-opacity=".12"/>
+<g transform="translate(83.2 13.2) scale(1.6)" fill="none" stroke="var(--especialidad-trazo, #0F766E)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M36 72 V64 C26 60 24 50 27 42 C30 30 42 24 54 26 C66 28 72 40 66 48 L70 54 L64 56 V62 C64 66 60 68 56 68 V72"/><path d="M48 56 C40 50 40 42 45 42 C47 42 48 44 48 45 C48 44 50 42 52 42 C57 42 56 50 48 56Z" stroke="var(--especialidad-acento, #F59E0B)"/></g>
+</svg>

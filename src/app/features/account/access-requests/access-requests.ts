@@ -30,8 +30,8 @@ interface SolicitudEnPantalla {
  * **Mis solicitudes de vínculo** (FT-07-R05/R06) — a dónde lleva el aviso
  * "un profesional pide ver tu historia clínica".
  *
- * Sin entrada de menú a propósito: se llega por el enlace de la notificación,
- * como `/my-account/identity/cases`. El paciente elige QUÉ especialidades
+ * Tiene entrada de menú («Buzón de solicitudes») y también se llega por el
+ * enlace de la notificación. El paciente elige QUÉ especialidades
  * autoriza — aceptar no es todo o nada (FT-07-R06). Las especialidades salen
  * del catálogo entero porque el pedido no las trae: las decide quien autoriza,
  * no quien pide.

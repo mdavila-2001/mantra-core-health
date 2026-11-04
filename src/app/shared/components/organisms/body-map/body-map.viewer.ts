@@ -149,6 +149,38 @@ export class VisorDelCuerpo {
     this.centro.set(centros[0]);
   }
 
+  /**
+   * Where a screen position lands in drawing units, or `undefined` if the canvas
+   * has no measurable size. Used to pin the exact spot the person tapped.
+   */
+  puntoEnElDibujo(
+    lienzo: SVGSVGElement,
+    clientX: number,
+    clientY: number,
+  ): readonly [number, number] | undefined {
+    // The screen matrix already accounts for letterboxing and the current zoom.
+    const matriz = lienzo.getScreenCTM?.();
+    if (matriz) {
+      const punto = new DOMPoint(clientX, clientY).matrixTransform(matriz.inverse());
+      return [punto.x, punto.y];
+    }
+    const { width, height } = lienzo.getBoundingClientRect();
+    if (width === 0 || height === 0) return undefined;
+    return this.aCoordenadasDelDibujo(lienzo, clientX, clientY);
+  }
+
+  /** Zoom keys (+/=, -, 0). Returns whether the key was the viewer's. */
+  alPresionar(event: KeyboardEvent): boolean {
+    const accion = { '+': () => this.acercar(), '=': () => this.acercar(), '-': () => this.alejar() }[event.key];
+    if (accion) {
+      event.preventDefault();
+      accion();
+    } else if (event.key === '0') {
+      this.restablecer();
+    }
+    return accion !== undefined || event.key === '0';
+  }
+
   private aCoordenadasDelDibujo(lienzo: SVGSVGElement, clientX: number, clientY: number): readonly [number, number] {
     const [vx, vy, vancho, valto] = this.viewBox().split(' ').map(Number);
     const caja = lienzo.getBoundingClientRect();

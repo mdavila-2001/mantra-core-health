@@ -4431,6 +4431,23 @@ describe('PractitionerProfileEdit', () => {
       expect(firma().change).toBeUndefined();
     });
 
+    it('un obligatorio vacío que no se tocó no frena guardar la firma', async () => {
+      montarYCargar({ name: '' });
+      http.match((r) => r.url === SEDES).forEach((lectura) => lectura.flush({ items: [], count: 0 }));
+      http.expectOne(ACTIVOS_DE_FIRMA).flush({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      const put = http.expectOne(ACTIVOS_DE_FIRMA);
+      expect(put.request.body).toEqual({ signatureFileId: 'file-firma' });
+      put.flush({ signatureFileId: 'file-firma', sealFileId: null });
+      expect(firma().change).toBeUndefined();
+    });
+
     it('firma y sello elegidos juntos viajan en un solo PUT', async () => {
       montarConFirma({ signatureFileId: null, sealFileId: null });
       interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);

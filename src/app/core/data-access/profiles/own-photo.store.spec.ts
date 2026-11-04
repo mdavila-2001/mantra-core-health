@@ -10,15 +10,17 @@ import { ProfilesClient } from './profiles.client';
 
 describe('OwnPhotoStore', () => {
   const getOwnPatientProfile = vi.fn();
+  const getOwnPractitionerProfile = vi.fn();
   const imageDataUrl = vi.fn();
 
   const userId = signal<string | null>('u1');
+  const practitionerProfileId = signal<string | null>(null);
 
   function crear(): OwnPhotoStore {
     TestBed.configureTestingModule({
       providers: [
-        { provide: AuthService, useValue: { userId } },
-        { provide: ProfilesClient, useValue: { getOwnPatientProfile } },
+        { provide: AuthService, useValue: { userId, practitionerProfileId } },
+        { provide: ProfilesClient, useValue: { getOwnPatientProfile, getOwnPractitionerProfile } },
         { provide: FilesClient, useValue: { imageDataUrl } },
       ],
     });
@@ -27,7 +29,9 @@ describe('OwnPhotoStore', () => {
 
   beforeEach(() => {
     userId.set('u1');
+    practitionerProfileId.set(null);
     getOwnPatientProfile.mockReset();
+    getOwnPractitionerProfile.mockReset();
     imageDataUrl.mockReset();
   });
 
@@ -41,6 +45,19 @@ describe('OwnPhotoStore', () => {
 
     expect(getOwnPatientProfile).toHaveBeenCalledTimes(1);
     expect(store.url()).toBe('data:image/png;base64,AAA');
+  });
+
+  it('a un profesional le pinta la foto de su perfil profesional, la misma de «Mi perfil»', () => {
+    practitionerProfileId.set('hp1');
+    getOwnPractitionerProfile.mockReturnValue(of({ photoFileId: 'fp' }));
+    imageDataUrl.mockReturnValue(of('data:image/png;base64,PRO'));
+    const store = crear();
+
+    store.load();
+
+    expect(getOwnPatientProfile).not.toHaveBeenCalled();
+    expect(imageDataUrl).toHaveBeenCalledWith('fp');
+    expect(store.url()).toBe('data:image/png;base64,PRO');
   });
 
   it('sin foto, o si la lectura falla, queda en null', () => {

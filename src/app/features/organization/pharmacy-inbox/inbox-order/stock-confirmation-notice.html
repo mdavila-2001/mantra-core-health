@@ -1,0 +1,10 @@
+@if (message(); as text) {
+  <app-alert tone="warning" data-testid="mostrador-confirmation-error">{{ text }}</app-alert>
+  <a
+    app-button
+    variant="secondary"
+    routerLink="/administration/pharmacy-catalog"
+    [queryParams]="{ tab: 'inventory' }"
+    data-testid="mostrador-inventory-link"
+  >Ir a Inventario</a>
+}

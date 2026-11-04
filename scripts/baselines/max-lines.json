@@ -5,7 +5,7 @@
   "vence": "2027-04-01",
   "excepciones": {
     "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts": {
-      "lineas": 3618
+      "lineas": 3615
     },
     "src/app/features/auth/register-patient/register-patient.ts": {
       "lineas": 3379
@@ -32,7 +32,7 @@
       "lineas": 2072
     },
     "src/app/core/navigation/navigation.map.ts": {
-      "lineas": 2069
+      "lineas": 2065
     },
     "src/app/features/account/my-profile/work-history/work-history.ts": {
       "lineas": 2033
@@ -44,7 +44,7 @@
       "lineas": 1811
     },
     "src/app/core/mock/handlers/profiles.handlers.ts": {
-      "lineas": 1774
+      "lineas": 1762
     },
     "src/app/core/mock/handlers/diagnostics.handlers.ts": {
       "lineas": 1758
@@ -65,7 +65,7 @@
       "lineas": 1681
     },
     "src/app/features/form-builder/form-builder.ts": {
-      "lineas": 1596
+      "lineas": 1593
     },
     "src/app/features/agenda/agenda-create/agenda-create.ts": {
       "lineas": 1557
@@ -95,7 +95,7 @@
       "lineas": 1401
     },
     "src/app/core/mock/handlers/community.handlers.ts": {
-      "lineas": 1388
+      "lineas": 1381
     },
     "src/app/core/data-access/profiles/profiles.types.ts": {
       "lineas": 1370
@@ -380,7 +380,7 @@
       "lineas": 708
     },
     "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.ts": {
-      "lineas": 706
+      "lineas": 704
     },
     "src/app/features/admin/terminology/version-import/version-import.ts": {
       "lineas": 704
@@ -521,7 +521,7 @@
       "lineas": 600
     },
     "src/app/shared/components/organisms/body-map/body-map.ts": {
-      "lineas": 600
+      "lineas": 430
     },
     "src/app/features/agenda/my-agenda/my-agenda.html": {
       "lineas": 599
@@ -542,7 +542,7 @@
       "lineas": 595
     },
     "src/app/core/data-access/support-access/support-access.client.ts": {
-      "lineas": 594
+      "lineas": 590
     },
     "src/app/core/data-access/directory/directory.types.ts": {
       "lineas": 593
@@ -551,7 +551,7 @@
       "lineas": 593
     },
     "src/app/core/mock/handlers/practice.handlers.ts": {
-      "lineas": 593
+      "lineas": 555
     },
     "src/app/features/clinical-record/patient-chart/informed-consent/informed-consent-panel.ts": {
       "lineas": 593
@@ -677,7 +677,7 @@
       "lineas": 551
     },
     "src/app/shared/components/organisms/auth-stage/auth-stage.css": {
-      "lineas": 551
+      "lineas": 520
     },
     "src/app/core/navigation/navigation.subgroups.ts": {
       "lineas": 550
@@ -863,7 +863,7 @@
       "lineas": 489
     },
     "src/app/features/form-builder/form-builder.css": {
-      "lineas": 489
+      "lineas": 479
     },
     "src/app/features/clinical-record/patient-chart/recorrido-clinico/recorrido-clinico.css": {
       "lineas": 488
@@ -971,13 +971,13 @@
       "lineas": 460
     },
     "src/app/features/support-access/my-support/my-support.ts": {
-      "lineas": 460
+      "lineas": 458
     },
     "src/app/core/tokens/design-tokens.types.ts": {
       "lineas": 459
     },
     "src/app/core/mock/handlers/files.handlers.ts": {
-      "lineas": 457
+      "lineas": 452
     },
     "src/app/core/mock/handlers/support-access.governance.reviews.handlers.ts": {
       "lineas": 454
@@ -1138,9 +1138,6 @@
     "src/app/shared/components/organisms/auth-split/auth-split.html": {
       "lineas": 415
     },
-    "src/app/shared/components/organisms/body-map/body-map.css": {
-      "lineas": 414
-    },
     "src/app/features/messaging/thread/composer/attachment-preview/attachment-preview.ts": {
       "lineas": 413
     },
@@ -1193,10 +1190,10 @@
       "lineas": 404
     },
     "src/app/features/form-builder/form-builder.html": {
-      "lineas": 404
+      "lineas": 386
     },
     "src/app/features/auth/login/login.css": {
-      "lineas": 403
+      "lineas": 344
     },
     "src/app/features/observability/sistema/obs-mappers.ts": {
       "lineas": 403
@@ -1445,7 +1442,7 @@
       "lineas": 360
     },
     "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.html": {
-      "lineas": 360
+      "lineas": 358
     },
     "src/app/features/laboratory/prices/laboratory-prices.ts": {
       "lineas": 359
@@ -1844,7 +1841,7 @@
       "lineas": 314
     },
     "src/app/features/support-access/my-support/my-support.html": {
-      "lineas": 314
+      "lineas": 305
     },
     "src/app/core/mock/handlers/reporting/comisiones.graficos-pagos.ts": {
       "lineas": 312
@@ -1889,9 +1886,6 @@
       "lineas": 307
     },
     "src/app/features/glossary/glossary-graph.html": {
-      "lineas": 307
-    },
-    "src/app/features/groups/groups.ts": {
       "lineas": 307
     },
     "src/app/features/insights/domain/kpi.ts": {

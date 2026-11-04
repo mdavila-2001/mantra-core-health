@@ -9,7 +9,7 @@ export const PUBLIC_DIRECTORIES_SCREENS: Readonly<Record<string, () => Promise<T
   'notification-center': () =>
     import('../notifications/notification-center').then((m) => m.NotificationCenter),
   messaging: () => import('../messaging/messaging').then((m) => m.Messaging),
-  groups: () => import('../groups/groups').then((m) => m.Groups),
+  groups: () => import('../groups-hub/groups-hub').then((m) => m.GroupsHub),
   settings: () => import('../settings/settings').then((m) => m.Settings),
   directories: () =>
     import('../directories-overview/directories-overview').then((m) => m.DirectoriesOverview),

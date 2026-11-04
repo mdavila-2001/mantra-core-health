@@ -136,19 +136,18 @@ export interface PharmacyProductSearchPage {
   readonly limit: number;
   /** `true` si quedaron productos afuera del tope. */
   readonly truncated: boolean;
+  /** Lo que se buscó en lugar de lo escrito, si la API corrigió el tipeo. */
+  readonly correctedQuery?: string | null;
 }
 
 /** Los filtros de la búsqueda de productos. Sin ninguno, lista lo publicado. */
 export interface PharmacyProductSearchQuery {
-  /** Texto a buscar en marca, genérico o código de producto. */
+  /** Marca, genérico, código o para qué se usa («dolor abdominal»). */
   readonly search?: string;
+  readonly exact?: boolean;
   /** Medicamento del vademécum (`medication_concept_id`). */
   readonly conceptId?: string;
-  /**
-   * Sólo lo publicado por esta farmacia. Lo agrega «Farmacia» (pestaña
-   * Comprar, 25/09/2026) para mostrar el catálogo de una sede elegida — sin
-   * este filtro la búsqueda mezcla las de todas.
-   */
+  /** Sólo lo publicado por esta farmacia (pestaña Comprar); sin él, se mezclan todas. */
   readonly pharmacyId?: string;
   /**
    * Con `true` lista **todo** el catálogo de la farmacia —borradores y

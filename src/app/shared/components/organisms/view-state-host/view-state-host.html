@@ -27,7 +27,7 @@
       <ng-content select="[vsh-empty]">
         <app-empty-state
           variant="empty"
-          title="Todavía no hay nada acá"
+          [title]="vacio.title ?? 'Todavía no hay nada acá'"
           [description]="vacio.message ?? ''"
         >
           @if (vacio.nextAction.route) {

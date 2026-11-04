@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img">
+<title>Oncología</title>
+<rect width="320" height="180" fill="var(--especialidad-fondo, #E6F4F1)"/>
+<g fill="var(--especialidad-trazo, #0F766E)" fill-opacity=".14" stroke="none"><circle cx="40" cy="48" r="14"/><circle cx="280" cy="132" r="14"/><circle cx="70" cy="140" r="6"/><circle cx="252" cy="40" r="6"/></g><g fill="none" stroke="var(--especialidad-acento, #F59E0B)" stroke-width="3" stroke-linecap="round"><path d="M270 80 V96 M262 88 H278"/><path d="M50 98 V110 M44 104 H56"/><path d="M92 36 h8 M220 146 h8"/></g>
+<circle cx="160" cy="90" r="55" fill="var(--especialidad-trazo, #0F766E)" fill-opacity=".12"/>
+<g transform="translate(83.2 13.2) scale(1.6)" fill="none" stroke="var(--especialidad-trazo, #0F766E)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M48 28 C34 28 34 42 48 52 C62 42 62 28 48 28Z"/><path d="M44 50 L36 70 M52 50 L60 70"/><path d="M48 34 V44 M43 39 H53" stroke="var(--especialidad-acento, #F59E0B)"/></g>
+</svg>

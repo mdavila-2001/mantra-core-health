@@ -3,7 +3,18 @@
     title="Quién ve mi historia"
     subtitle="Los profesionales vinculados y los accesos concedidos a su historia clínica. Puede revocar cualquiera."
     [breadcrumbs]="breadcrumbs()"
-  />
+  >
+    <a
+      page-actions
+      app-button
+      variant="outline"
+      size="sm"
+      routerLink="/my-account/access-requests"
+      data-testid="acceso-ir-buzon"
+    >
+      Buzón de solicitudes
+    </a>
+  </app-page-header>
 }
 
 <div class="acceso">

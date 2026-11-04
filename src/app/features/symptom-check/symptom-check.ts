@@ -7,6 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { SpecialtyImages } from '../../core/data-access/terminology/specialty-images.service';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap, timer, type Observable } from 'rxjs';
@@ -21,6 +22,7 @@ import {
   type ObservacionDeSintomas,
 } from '@core/symptom-notes/symptom-observations.store';
 import { BODY_ZONES, type BodyZone } from './zones.data';
+import { bodyPartsIn, withNamedParts } from './body-parts';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
@@ -31,11 +33,6 @@ import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
-import { specialtyPhoto } from '@shared/utils/directory-photo';
-import {
-  recomendarMedicamentos,
-  type MedicamentoSugerido,
-} from './medications-guide.data';
 import {
   BodyMap,
   ZONAS_CON_SILUETA,
@@ -379,9 +376,10 @@ export class SymptomCheck {
         continue;
       }
       const deLaTabla = BODY_ZONES.find((zona) => zona.sintomas.includes(sintoma.id));
-      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.madre ?? deLaTabla.id); // no invented side
     }
-    return [...marcadas];
+    // Parts named in the text are exact («rodilla derecha») and narrow the symptom's coarse zone.
+    return withNamedParts(bodyPartsIn(this.texto()), [...marcadas], (id) => BODY_ZONES.find((z) => z.id === id)?.madre);
   });
 
   protected estaMarcada(idDeZona: string): boolean {
@@ -518,25 +516,6 @@ export class SymptomCheck {
     () => this.esRiesgoSuicida() || this.ayudaManualAbierta(),
   );
 
-  /** Modo activo de recomendación: por especialidades médicas o recomendación de medicamentos. */
-  protected readonly vistaRecomendacion = signal<'especialidades' | 'medicamentos'>('especialidades');
-
-  /** Medicamentos orientativos recomendados según los síntomas activos y conocimiento farmacológico. */
-  protected readonly medicamentosSugeridos = computed<readonly MedicamentoSugerido[]>(() => recomendarMedicamentos(this.sintomas()));
-
-  /** Resumen de nombres de síntomas detectados para la vista de medicamentos. */
-  protected readonly sintomasDetectadosTexto = computed(() => this.sintomas().map((s) => s.nombre).join(', '));
-
-  /** Parámetros de búsqueda para recomendación de medicamentos según síntomas reconocidos. */
-  protected readonly medicamentosQueryParams = computed(() => {
-    const primer = this.sintomas()[0];
-    return primer !== undefined ? { q: primer.nombre } : {};
-  });
-
-  protected cambiarVistaRecomendacion(modo: 'especialidades' | 'medicamentos'): void {
-    this.vistaRecomendacion.set(modo);
-  }
-
   /**
    * Lo que la persona escribió **para decir que no lo tiene**.
    *
@@ -561,7 +540,7 @@ export class SymptomCheck {
   protected readonly explicacionDe = explain;
 
   /** La foto de la tarjeta: la misma que esa especialidad tiene en `/directory`. */
-  protected readonly fotoDe = specialtyPhoto;
+  protected readonly fotoDe = inject(SpecialtyImages).of;
 
   /* --- Elegir sin escribir ---------------------------------------------- */
 

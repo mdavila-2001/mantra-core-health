@@ -55,6 +55,9 @@ describe('NAV_SUBGROUPS', () => {
     // clínico; un subgrupo para envolverla sería el escalón de más.
     'my-primary-patients',
     'psychological-help',
+    // «Buzón de solicitudes» (2026-11-02): drawn loose for every role. Whether it
+    // belongs under «Mi privacidad» is a product decision still open.
+    'my-account/access-requests',
     // La portada de «Superadministración» (17/10/2026): es el tablero con el que
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
     // bloque la escondería detrás de un desplegable.

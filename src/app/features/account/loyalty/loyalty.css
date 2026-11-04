@@ -195,3 +195,84 @@
     min-width: 5ch;
   }
 }
+
+/* Embedded in the profile sheet tab (`<app-loyalty embebido>`): the card is
+   already the container, so no boxes inside it. The balance becomes a compact
+   summary band and the movements a full-width list with row dividers. */
+:host([embebido]) .saldo {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-6);
+  border: 0;
+  background: var(--bg-surface-alt);
+}
+
+:host([embebido]) .saldo__programa {
+  flex-basis: 100%;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+:host([embebido]) .saldo__cifra strong {
+  font-size: var(--fs-h1);
+}
+
+:host([embebido]) .saldo__datos {
+  flex-direction: row;
+  gap: var(--sp-6);
+  padding-top: 0;
+  border-top: 0;
+}
+
+:host([embebido]) .saldo__dato {
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+:host([embebido]) .saldo > [app-button] {
+  margin-inline-start: auto;
+}
+
+:host([embebido]) :is(.canjear, .movimientos) {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+:host([embebido]) .movimientos {
+  margin-top: var(--sp-6);
+}
+
+:host([embebido]) .movimientos__lista {
+  gap: 0;
+  border-top: 1px solid var(--border-default);
+}
+
+:host([embebido]) .movimientos__fila,
+:host([embebido]) .movimientos__fila:last-child {
+  padding-block: var(--sp-2);
+  border-bottom: 1px solid var(--border-default);
+}
+
+/* Wide: each movement reads as a table row with fixed columns
+   (detail | date | badge | points), so the badges and the points line up. */
+@media (min-width: 40rem) {
+  :host([embebido]) .movimientos__fila {
+    grid-template-columns: minmax(0, 1fr) 10rem 6rem;
+    gap: var(--sp-4);
+  }
+
+  :host([embebido]) .movimientos__datos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6.5rem;
+    align-items: baseline;
+    gap: var(--sp-4);
+  }
+
+  :host([embebido]) .movimientos__fila > app-badge {
+    justify-self: start;
+  }
+}

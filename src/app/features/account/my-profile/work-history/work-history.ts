@@ -157,7 +157,7 @@ function telefonoDeSedeValido(value: string): boolean {
     UpperCasePipe,
   ],
   templateUrl: './work-history.html',
-  styleUrl: './work-history.css',
+  styleUrls: ['./work-history.css', './work-history-embedded.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WorkHistory implements OnInit {

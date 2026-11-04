@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { OrganizationLogoClient } from '../../../core/data-access/directory/organization-logo.client';
@@ -85,6 +85,20 @@ describe('OrganizationLogo', () => {
     });
     expect(el().querySelector('[data-testid="logo-organizacion-quitar"]')).not.toBeNull();
     expect(el().querySelector('[data-testid="logo-organizacion-error"]')).toBeNull();
+  });
+
+  it('shows the upload spinner on the picker while the logo is in flight', async () => {
+    const subida = new Subject<string>();
+    cliente.upload.mockReturnValue(subida);
+    await montar({ editar: true });
+
+    elegir([archivo()]);
+    fixture.detectChanges();
+    expect(el().querySelector('[data-testid="file-input-uploading"]')?.textContent).toContain('Guardando el logo…');
+
+    subida.error(new Error('boom'));
+    fixture.detectChanges();
+    expect(el().querySelector('[data-testid="file-input-uploading"]')).toBeNull();
   });
 
   it('si no se pudo guardar lo dice y no deja un logo que no existe', async () => {

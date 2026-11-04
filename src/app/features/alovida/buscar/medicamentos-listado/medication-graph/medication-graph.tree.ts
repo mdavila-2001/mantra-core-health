@@ -42,7 +42,7 @@ export function buildMedicationTree(
   const usoNode: GraphNode = {
     key: `uso:${medication.conceptId}`,
     kind: 'term',
-    label: medication.therapeuticGroup,
+    label: medication.uses?.[0] ?? medication.therapeuticGroup,
     sublabel: `Código ATC: ${medication.atcCode}`,
     tone: 'petrol',
     definition: 'Indicación terapéutica oficial según clasificación internacional ATC.',

@@ -99,6 +99,7 @@
     "echarts": "6.1.0",
     "express": "^5.1.0",
     "jspdf": "^4.2.1",
+    "jsqr": "1.4.0",
     "leaflet": "^1.9.4",
     "ngx-echarts": "21.0.0",
     "pdfjs-dist": "^6.3.289",

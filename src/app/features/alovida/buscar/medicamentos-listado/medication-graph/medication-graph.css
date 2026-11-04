@@ -27,7 +27,7 @@
 
 .med-grafo__selector-etiqueta {
   font-size: var(--fs-caption);
-  font-weight: var(--fw-medium);
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
@@ -59,7 +59,7 @@
 .med-grafo__chip-compuesto--activo {
   border-color: var(--c-aqua-600);
   background: color-mix(in srgb, var(--c-aqua-600) 15%, var(--bg-surface));
-  font-weight: var(--fw-bold);
+  font-weight: 700;
   box-shadow: 0 0 0 1px var(--c-aqua-600);
 }
 
@@ -261,7 +261,7 @@
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   color: var(--text-primary);
-  font-weight: var(--fw-bold);
+  font-weight: 700;
 }
 
 .med-grafo__ficha-subtitulo {
@@ -305,7 +305,7 @@
 .med-grafo__ficha-datos dd {
   margin: 0;
   color: var(--text-primary);
-  font-weight: var(--fw-medium);
+  font-weight: 500;
 }
 
 .med-grafo__ficha-destacado {
@@ -402,5 +402,5 @@
   margin: var(--sp-2) 0 var(--sp-1);
   font-size: var(--fs-caption);
   color: var(--text-secondary);
-  font-weight: var(--fw-bold);
+  font-weight: 700;
 }

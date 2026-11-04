@@ -116,7 +116,9 @@ describe('errores del servidor de visibilidad', () => {
   });
 
   it('un fallo sin código estable cae al texto de la pantalla, sin el cuerpo crudo', () => {
-    expect(visibilityFailure(fail(500, { code: 'INTERNAL', message: 'SELECT * FROM x' }), 'No se pudo guardar.')).toBe('No se pudo guardar.');
+    expect(visibilityFailure(fail(500, { code: 'INTERNAL', message: 'SELECT * FROM x' }), 'No se pudo guardar.')).toBe(
+      'No se pudo guardar. El problema fue del servidor, no de lo que usted ingresó.',
+    );
     expect(visibilityFailure(fail(0, null), 'No se pudo')).toContain('conexión');
   });
 

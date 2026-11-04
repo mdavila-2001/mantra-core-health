@@ -124,6 +124,24 @@ describe('ClinicalRecord', () => {
     expect(html.querySelector('a[href="tel:+591 70011223"]')).not.toBeNull();
   });
 
+  /**
+   * Propietario, 02/11/2026: «Ver expediente» respondía 403 sin turno ni
+   * vínculo y salía al lado del de vincular. En la fila queda sólo el de
+   * vincular, y apunta a la pantalla de solicitud de ESA persona.
+   */
+  it('cada fila ofrece sólo «Solicitar vinculación», sin botón de expediente', async () => {
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+    harness.detectChanges();
+
+    const html = harness.fixture.nativeElement as HTMLElement;
+    const vincular = html.querySelectorAll('[data-testid="paciente-solicitar-vinculacion"]');
+    expect(vincular.length).toBe(1);
+    expect(vincular[0]?.getAttribute('href')).toBe('/medical-records/p-001/request-access');
+    expect(html.querySelector('[data-testid="paciente-ver-expediente"]')).toBeNull();
+  });
+
   it('dice con palabras cuando falta el documento o el teléfono', async () => {
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();

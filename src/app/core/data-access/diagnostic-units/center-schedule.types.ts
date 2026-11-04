@@ -147,3 +147,23 @@ export interface OrderAppointment {
   readonly currency: string | null;
   readonly preparation: string | null;
 }
+
+/** One booked slot of the active center, as `GET /diagnostic-units/me/bookings` returns it. */
+export interface CenterBooking {
+  readonly bookingId: string;
+  readonly orderId: string | null;
+  /** `null` when the API withholds or cannot resolve it. */
+  readonly patientName: string | null;
+  readonly studyName: string | null;
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly siteName: string | null;
+  /** Booking status code as the API sends it (`BOOKED`, `ARRIVED`, `FULFILLED`…). */
+  readonly status: string;
+}
+
+/** Response of `GET /diagnostic-units/me/bookings?from&to` (both required, at most 31 days apart). */
+export interface CenterBookingPage {
+  readonly items: readonly CenterBooking[];
+  readonly count: number;
+}

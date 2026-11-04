@@ -1,5 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
+import { environment } from '../../../../environments/environment';
+
 import type {
   SimulatedCharge,
   SimulatedChargesPage,
@@ -30,13 +32,19 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
   const admin = buscarUsuario('admin')!;
   const paciente = buscarUsuario('paciente')!;
   const medica = buscarUsuario('medica')!;
+  // The patient QR routes check `environment.paymentDemo` directly (it is not injectable),
+  // and the unit-test environment ships it off: switch it on per test and restore it.
+  const originalPaymentDemo = environment.paymentDemo;
 
   beforeEach(() => {
+    Object.assign(environment, { paymentDemo: true });
     activa = true;
     ahora = new Date('2026-09-15T14:00:00.000Z');
     router = new MockRouter();
     registrarFacturacionSimulada(router, { activa: () => activa, reloj: () => ahora, persistir: false });
   });
+
+  afterEach(() => Object.assign(environment, { paymentDemo: originalPaymentDemo }));
 
   function llamar(method: MockMethod, path: string, body: unknown = null, user: MockUser | null = admin, r = router): MockReply {
     const match = r.match(method, path.split('?')[0]!);
@@ -130,6 +138,16 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(estado.credentials).toEqual([]);
       expect(estado.issuers.every((e) => e.kind === 'PRACTICE')).toBe(true);
     });
+  });
+
+  it('con el pago de demostración apagado, el portal del paciente no ve cobros ni puede informar un pago', () => {
+    const propios = (llamar('GET', '/billing/simulated/patient/charges', null, paciente).body as SimulatedChargesPage).items;
+    const cobro = propios.find((item) => item.source === 'CONSULTATION' && item.payment === null && item.plan === null)!;
+    Object.assign(environment, { paymentDemo: false });
+
+    expect(llamar('GET', '/billing/simulated/patient/charges', null, paciente).status).toBe(404);
+    // A real charge on purpose: a missing one would also answer 404 and hide a missing gate.
+    expect(llamar('POST', `/billing/simulated/patient/charges/${cobro.id}/report`, { proof: {} }, paciente).status).toBe(404);
   });
 
   it('mantiene el pago QR pendiente hasta que quien atiende confirma la recepción', () => {

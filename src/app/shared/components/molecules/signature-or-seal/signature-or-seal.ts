@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
 
+import { Spinner } from '../../atoms/spinner/spinner';
+
 /** Qué imagen es: decide la proporción de la caja y el texto del marcador. */
 export type SignatureOrSealType = 'firma' | 'sello';
 
@@ -24,6 +26,7 @@ export type SignatureOrSealType = 'firma' | 'sello';
  */
 @Component({
   selector: 'app-signature-or-seal',
+  imports: [Spinner],
   templateUrl: './signature-or-seal.html',
   styleUrl: './signature-or-seal.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +36,8 @@ export class SignatureOrSeal {
   readonly tipo = input.required<SignatureOrSealType>();
   /** La imagen como `data:` URL (la CSP no admite otra), o `null` si no hay. */
   readonly src = input<string | null>(null);
+  /** The new image is being uploaded: a spinner covers the box until it lands. */
+  readonly uploading = input(false);
 
   /** Una imagen rota no puede dejar un hueco: cae al marcador. */
   protected readonly failure = linkedSignal({

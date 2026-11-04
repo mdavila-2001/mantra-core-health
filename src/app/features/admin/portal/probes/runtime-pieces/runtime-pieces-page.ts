@@ -194,6 +194,7 @@ export class RuntimePiecesPage {
   protected readonly filasDePiezas = computed<ViewState<readonly RuntimePiece[]>>(() => {
     const e = this.vista();
     if (e.status !== 'ready' && e.status !== 'stale') return e;
+    if (this.refrescando() && e.data.meta.page !== this.pagina()) return loading(); // page change in flight: S2 skeleton
     if (e.data.data.length > 0) return ready(e.data.data);
     if (hayFiltros(this.valores())) {
       return empty(
@@ -252,8 +253,7 @@ export class RuntimePiecesPage {
   private readonly estadoInstanciaCell =
     viewChild<TemplateRef<{ $implicit: RuntimeInstance }>>('estadoInstanciaCell');
   private readonly aloja = viewChild<TemplateRef<{ $implicit: RuntimeInstance }>>('alojaCell');
-  private readonly hallazgoCell =
-    viewChild<TemplateRef<{ $implicit: RuntimeFinding }>>('hallazgoCell');
+  private readonly hallazgoCell = viewChild<TemplateRef<{ $implicit: RuntimeFinding }>>('hallazgoCell');
   private readonly gravedadCell =
     viewChild<TemplateRef<{ $implicit: RuntimeFinding }>>('gravedadCell');
 

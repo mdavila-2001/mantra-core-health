@@ -1,0 +1,52 @@
+.lector {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.lector__ayuda {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.lector__controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.lector__archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.lector__camara {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.lector__video {
+  width: 100%;
+  max-width: 20rem;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+}
+
+.lector__guia {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

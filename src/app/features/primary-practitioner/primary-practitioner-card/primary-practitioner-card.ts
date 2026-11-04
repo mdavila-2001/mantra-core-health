@@ -34,6 +34,8 @@ export class PrimaryPractitionerCard {
   private readonly client = inject(PrimaryPractitionerClient);
 
   protected readonly copy = COPY;
+  /** El `id` de «Sedes y horarios» en la ficha del médico (`practitioner-detail.html`). */
+  protected readonly anclaHorarios = 'horarios';
   protected readonly estado = signal<ViewState<OwnPrimaryPractitioner>>(loading());
   /** La cuenta no es de paciente: la tarjeta no se dibuja. */
   protected readonly oculto = signal(false);

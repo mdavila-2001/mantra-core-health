@@ -39,7 +39,9 @@ Reglas absolutas:
   - Subcomponentes subatómicos (Container Smart ≤ 150 lín., subcomponentes Dumb ≤ 120 lín.).
   - Plantilla `.html` y estilos `.css` separados.
   - Rutas y menús modularizados por dominio (lazy loading por módulo).
+  - Comentarios de código e inline comments: OBLIGATORIAMENTE en inglés (All inline comments in English).
   - Orquestación en paralelo mediante la herramienta y skill `kman`.
+- `PR_MANDATORY_ON_FINISH` — **Orden de Pablo (02/11/2026): Toda sesión que termine su tarea y valide sus gates debe empujar a remoto y ABRIR PULL REQUEST a `dev`. Prohibido dejar cambios pendientes en local o ramas sin PR.**
 
 
 
@@ -85,6 +87,15 @@ lugar (`trabajo/DECISIONES.md` D-01).
 El merge a `dev` exige revisión humana: `gh pr merge` y el auto-merge están
 bloqueados. El flujo termina en **abrir el PR**. El CI propio está caído; los
 `check-*.mjs` se corren a mano.
+
+**Responsable de cada commit y PR (pedido del usuario, 03/11/2026).** Varias
+personas usan la misma cuenta de claude.ai, y todo lo que se sube a GitHub sale
+como `mdavila-2001`. Por eso, **antes de cada commit y antes de abrir cada PR**,
+la sesión pregunta «¿Quién es el responsable?» y espera a que la persona escriba
+su nombre. Sin respuesta, no hay commit ni PR. El nombre se deja como línea
+`Responsable: <nombre>` al final del mensaje del commit y en la descripción del
+PR. Autor y committer de git no se tocan: siguen siendo los de la sesión, para
+que los commits salgan verificados.
 
 **Un PR por cambio terminado, hacia `dev`.** La rama `test` está dada de baja
 desde el 30/10/2026: no despliega nada y `test.alovidasalud.com` redirige a

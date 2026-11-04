@@ -4,9 +4,27 @@
    columna sin tocar nada. */
 .actividad {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   margin-block-start: var(--sp-5);
+}
+
+/* Four tiles: 1, 2x2 or 1x4 by available width, never 3+1 with an orphan. */
+:host {
+  display: block;
+  container-type: inline-size;
+}
+
+@container (min-width: 26rem) {
+  .actividad {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 52rem) {
+  .actividad {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* Rótulo en «overline» y no en caption, igual que en el panel: cuatro tarjetas

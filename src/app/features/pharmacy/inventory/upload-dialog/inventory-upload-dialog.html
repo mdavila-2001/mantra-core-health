@@ -26,6 +26,8 @@
       [maxSizeBytes]="maxBytes"
       [maxFiles]="1"
       [disabled]="reading() || applying() || sitePreviewing()"
+      [uploading]="sitePreviewing() || applying()"
+      [uploadingLabel]="applying() ? 'Aplicando el archivo…' : 'Enviando el archivo…'"
       [files]="files()"
       (filesChange)="choose($event)"
       (rejected)="reject($event)"

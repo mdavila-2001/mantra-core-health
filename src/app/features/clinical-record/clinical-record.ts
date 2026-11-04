@@ -32,7 +32,6 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import {
   CLINICAL_RECORD_ROUTE,
-  patientChartRoute,
   requestAccessRoute,
 } from './clinical-record.routes';
 
@@ -168,7 +167,7 @@ export class ClinicalRecord {
     // alineada al principio deja un canalón vacío entre el dato y el botón.
     {
       key: 'accion',
-      header: 'Expediente',
+      header: 'Vinculación',
       priority: 1,
       align: 'end',
       cell: this.celdaAccion(),
@@ -183,11 +182,11 @@ export class ClinicalRecord {
    * Cómo nombrar a la persona en el nombre accesible de una acción.
    *
    * Los botones de la fila son íconos: sin esto, un lector de pantalla leería
-   * «Ver expediente» veinticinco veces seguidas sin decir de quién.
+   * «Solicitar vinculación» veinticinco veces seguidas sin decir de quién.
    *
    * Se apoya en `nombreDePaciente` para no tener dos ideas de cómo se llama la
-   * misma fila, pero **no** puede quedarse con su vacío: «Ver el expediente
-   * de » no nombra a nadie. Cuando no hay nombre cae al código y, si tampoco,
+   * misma fila, pero **no** puede quedarse con su vacío: «Solicitar la vinculación
+   * con » no nombra a nadie. Cuando no hay nombre cae al código y, si tampoco,
    * al identificador — feo, pero distingue una fila de la siguiente.
    */
   protected nombreDe(paciente: PatientListItem): string {
@@ -290,11 +289,6 @@ export class ClinicalRecord {
 
   protected recargar(): void {
     this.cargar();
-  }
-
-  /** La ruta del expediente de un paciente. */
-  protected rutaDe(profileId: string): string {
-    return patientChartRoute(profileId);
   }
 
   /** FT-07-R05: la ruta para pedirle el vínculo a esta persona. */

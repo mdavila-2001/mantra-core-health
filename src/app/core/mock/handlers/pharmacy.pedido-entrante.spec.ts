@@ -4,6 +4,7 @@ import { crearRouterSimulado } from './index';
 import { buscarUsuario, TENANT_FARMACIA, type MockUser } from '../mock-session';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { uuid } from '../mock-store';
+import { reiniciarLosPedidosDeFarmacia } from './mock-reset';
 
 /**
  * El pedido que llega mientras la farmacia mira la bandeja (3.2: «alguna
@@ -38,8 +39,23 @@ describe('handlers de farmacia: el pedido entrante y las sedes cargadas', () => 
   const nombres = (user: MockUser, query: string) =>
     pedir('GET', '/pharmacy/orders', user, query).items.map((p) => p.patientName);
 
-  beforeEach(() => vi.useFakeTimers({ toFake: ['Date'] }));
+  beforeEach(() => {
+    // The order is seeded once per module and modules are shared by the files of a worker: start each test without it.
+    reiniciarLosPedidosDeFarmacia();
+    vi.useFakeTimers({ toFake: ['Date'] });
+  });
   afterEach(() => vi.useRealTimers());
+
+  it('arranca sin el pedido aunque otro archivo del mismo worker ya lo hubiera sembrado', () => {
+    const consulta = `siteId=${SEDE_CENTRAL}&limit=500`;
+    nombres(farmacia, consulta);
+    vi.advanceTimersByTime(16_000);
+    expect(nombres(farmacia, consulta)).toContain('Carla Montaño Rivero');
+
+    reiniciarLosPedidosDeFarmacia();
+
+    expect(nombres(farmacia, consulta)).not.toContain('Carla Montaño Rivero');
+  });
 
   it('mirar la bandeja de otra cuenta no siembra el pedido de Farmacia Vida', () => {
     nombres(paciente, '');

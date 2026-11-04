@@ -44,6 +44,9 @@ export class PublicMarketplaceClient {
     if (consulta.q !== undefined && consulta.q !== '') {
       params = params.set('q', consulta.q);
     }
+    if (consulta.exact === true) {
+      params = params.set('exact', 'true');
+    }
     if (consulta.group !== undefined && consulta.group !== '') {
       params = params.set('group', consulta.group);
     }

@@ -22,6 +22,7 @@ import { PracticeLogoClient } from '../../../../core/data-access/practice-sites/
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { OwnPhotoStore } from '../../../../core/data-access/profiles/own-photo.store';
 import type {
   MonthlyCount,
   OwnAddress,
@@ -242,6 +243,7 @@ export class PractitionerProfile {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly files = inject(FilesClient);
+  private readonly fotoPropia = inject(OwnPhotoStore);
   private readonly descargas = inject(FileDownloader);
   protected readonly descargandoRespaldo = signal<string | null>(null);
 
@@ -330,9 +332,7 @@ export class PractitionerProfile {
   protected readonly errorDeFoto = signal('');
 
   /**
-   * La foto recién subida, ya en `data:`.
-   *
-   * La vista recibe el perfil por `input()` y no puede releerlo sola, así que
+   * La foto recién subida, ya en `data:`. La vista recibe el perfil por `input()` y no puede releerlo sola, así que
    * se le dice cuál es la foto nueva. Es una `data:` URL y no un `blob:` ni la
    * firma de descarga: la CSP declara `img-src 'self' data:`, y la firma apunta
    * a `file://local/<sha>`, que ningún `<img>` carga.
@@ -381,8 +381,7 @@ export class PractitionerProfile {
           ),
         ),
         switchMap(({ guardado, falloDeVitrina }) =>
-          // La foto ya quedó guardada: si sólo falla la lectura para pintarla,
-          // no se dice «no pudimos subir la foto», que sería falso.
+          // Photo is saved; a failed read must not be reported as a failed upload.
           this.files.imageDataUrl(guardado.photoFileId ?? '').pipe(
             catchError(() => of<string | null>(null)),
             map((fotoUrl) => ({ fotoUrl, fileId: guardado.photoFileId, falloDeVitrina })),
@@ -396,6 +395,7 @@ export class PractitionerProfile {
             this.toasts.info('Su foto se guardó. Recargue la página para verla.', 'Foto de perfil');
           } else {
             this.fotoRecien.set(fotoUrl);
+            this.fotoPropia.set(fotoUrl); // keeps the header avatar in sync
           }
           this.anotarVitrina(fileId, falloDeVitrina);
         },

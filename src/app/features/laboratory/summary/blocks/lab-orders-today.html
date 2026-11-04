@@ -1,0 +1,57 @@
+<app-card padding="lg" data-testid="lab-home-orders">
+  <app-section-heading card-header icono="orders" titulo="Órdenes de hoy" />
+
+  <app-lab-block-state [state]="state()" subject="las órdenes" skeletonHeight="15rem" (retry)="retry.emit()">
+    @if (data(); as d) {
+      <div class="orders">
+        <ul class="tiles" aria-label="Órdenes por paso">
+          @for (step of d.counts; track step.key) {
+            <li>
+              <a
+                class="tile"
+                [class.tile--waiting]="step.count > 0"
+                [routerLink]="ordersRoute"
+                [queryParams]="{ estado: step.key }"
+                [attr.data-testid]="'lab-home-count-' + step.key"
+              >
+                <span class="tile__icon" aria-hidden="true"><app-nav-icon [name]="step.icon" /></span>
+                <span class="tile__body">
+                  <span class="tile__label">{{ step.label }}</span>
+                  <span class="tile__hint">{{ step.hint }}</span>
+                </span>
+                <strong class="tile__count">{{ step.count }}</strong>
+              </a>
+            </li>
+          }
+        </ul>
+
+        <section class="recent" aria-labelledby="lab-home-recent">
+          <h3 class="recent__title" id="lab-home-recent">Las más recientes</h3>
+          <ul class="rows" data-testid="lab-home-recent-orders">
+            @for (order of d.recent; track order.orderId) {
+              <li class="row">
+                <span class="row__main">
+                  <span class="row__title">{{ order.studyName }}</span>
+                  <span class="row__meta">
+                    {{ order.patientName }} · {{ order.requesterName }} ·
+                    <time [attr.datetime]="order.requestedAt">{{ order.requestedAt | date: "d MMM, HH:mm" }}</time>
+                  </span>
+                </span>
+                <app-badge size="sm" [variant]="badges[order.status].variant" [value]="badges[order.status].label" />
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+  </app-lab-block-state>
+
+  @if (data()) {
+    <div card-footer class="footer">
+      <a app-button variant="secondary" size="sm" [routerLink]="ordersRoute" data-testid="lab-home-orders-all">
+        Ver todas las órdenes
+        <app-nav-icon name="arrow-right" />
+      </a>
+    </div>
+  }
+</app-card>

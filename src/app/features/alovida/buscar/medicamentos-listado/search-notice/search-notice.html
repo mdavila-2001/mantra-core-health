@@ -1,0 +1,75 @@
+@if (correctedQuery(); as corregido) {
+  <app-search-correction
+    [original]="term()"
+    [corrected]="corregido"
+    (literalRequested)="literalRequested.emit($event)"
+  />
+}
+
+@if (usos().length > 0) {
+  <aside
+    class="vitrina-aviso"
+    role="status"
+    aria-live="polite"
+    data-testid="vitrina-coincidencia-uso"
+  >
+    <svg
+      class="vitrina-aviso__icono"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="16" x2="12" y2="12"></line>
+      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+    <div class="vitrina-aviso__cuerpo">
+      <p class="vitrina-aviso__titulo">
+        Medicamentos del grupo que se usa para <strong>{{ usos().join(' · ') }}</strong>
+      </p>
+      <p class="vitrina-aviso__bajada">
+        Es la clasificación terapéutica ATC de la OMS, no una indicación médica: consulte a su
+        médico o farmacéutico antes de tomar cualquier medicamento.
+      </p>
+    </div>
+  </aside>
+} @else if (marca(); as coincidencia) {
+  <aside
+    class="vitrina-aviso"
+    role="status"
+    aria-live="polite"
+    data-testid="vitrina-coincidencia-marca"
+  >
+    <svg
+      class="vitrina-aviso__icono"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="16" x2="12" y2="12"></line>
+      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+    <div class="vitrina-aviso__cuerpo">
+      <p class="vitrina-aviso__titulo">
+        Buscó por nombre comercial: <strong>«{{ coincidencia.marca }}»</strong>
+      </p>
+      <p class="vitrina-aviso__bajada">
+        El compuesto químico concreto (principio activo) es
+        <strong>{{ coincidencia.compuesto }}</strong
+        >. Todas las marcas o genéricos con este principio activo comparten la misma acción
+        terapéutica.
+      </p>
+    </div>
+  </aside>
+}
