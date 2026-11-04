@@ -69,6 +69,8 @@ export class MinShowcase {
   protected readonly slug = signal(suggestLink(this.auth.displayName() ?? ''));
   protected readonly photo = signal<readonly File[]>([]);
   protected readonly saving = signal(false);
+  /** The photo upload is in flight: the dropzone shows its spinner. */
+  protected readonly uploading = signal(false);
   protected readonly error = signal('');
 
   protected readonly photoMaxBytes = PHOTO_MAX_BYTES;
@@ -132,9 +134,14 @@ export class MinShowcase {
 
     // `IMAGE`/`NORMAL`: es la foto con la que se firma en público, no un dato
     // clínico. El mismo par que usaba la pantalla de vitrina que se sacó.
+    this.uploading.set(true);
     this.files.upload(foto, 'IMAGE', 'NORMAL').subscribe({
-      next: ({ id }) => this.saveShowcase(tenantId, id),
+      next: ({ id }) => {
+        this.uploading.set(false);
+        this.saveShowcase(tenantId, id);
+      },
       error: () => {
+        this.uploading.set(false);
         this.saving.set(false);
         this.error.set('No pudimos subir la foto, así que no se creó la vitrina. Pruebe de nuevo.');
       },

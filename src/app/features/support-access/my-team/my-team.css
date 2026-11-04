@@ -3,6 +3,21 @@
   gap: var(--sp-4);
 }
 
+.navegacion-seccion {
+  display: flex;
+  justify-content: flex-start;
+  margin-block-end: var(--sp-2);
+}
+
+.barra-busqueda {
+  margin-block-end: var(--sp-2);
+}
+
+.sin-resultados {
+  text-align: center;
+  padding: var(--sp-6);
+}
+
 .equipo,
 .clinico__lista,
 .actividad__lista {
@@ -86,7 +101,7 @@
 }
 
 .actividad__titulo {
-  margin: 0 0 var(--sp-3);
+  margin: 0 0 var(--sp-1);
   font-size: var(--fs-body-lg);
   font-weight: 600;
   color: var(--text-primary);
@@ -108,10 +123,11 @@
 .actividad__texto {
   color: var(--text-primary);
 }
-.actividad__todo {
+.actividad__cabeza {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: var(--sp-3);
-  margin: 0 0 var(--sp-3);
+  margin: 0 0 var(--sp-4);
 }

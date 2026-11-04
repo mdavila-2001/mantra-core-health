@@ -44,6 +44,7 @@ import {
   type PublicPostReaction,
 } from '@core/data-access/public-directory/public-directory.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
+import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { initialsOf } from '@shared/text/initials';
 
 /** Los cuatro estados del M34, con los nombres que ya usa la superficie pública. */
@@ -54,7 +55,7 @@ const TAMANO_DE_PAGINA = 25;
 
 @Component({
   selector: 'app-public-post-reactions',
-  imports: [ContentDialog, NgTemplateOutlet, RouterLink],
+  imports: [ContentDialog, NgTemplateOutlet, RouterLink, Spinner],
   templateUrl: './public-post-reactions.html',
   styleUrl: './public-post-reactions.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

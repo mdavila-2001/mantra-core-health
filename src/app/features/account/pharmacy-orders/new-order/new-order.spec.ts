@@ -672,7 +672,8 @@ describe('NewOrder', () => {
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
 
-      expect(texto()).toContain('Algo salió mal');
+      // A plain `Error` is a browser-side failure, explained as such (not as a server one).
+      expect(texto()).toContain('Esta pantalla tuvo un problema');
       expect(uno('pedido-confirmacion')).toBeNull();
 
       const reintentar = Array.from(raiz().querySelectorAll<HTMLButtonElement>('button')).find(

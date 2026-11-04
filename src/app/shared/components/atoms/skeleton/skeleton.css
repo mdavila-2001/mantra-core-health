@@ -1,12 +1,13 @@
 /* ============================================================================
-    Skeleton — el brillo se arma con las superficies del tema, así que el modo
-    oscuro sale solo: `--bg-inset` es el hueco y `--bg-surface-alt` el reflejo
-    que lo recorre.
+    Skeleton — built from the theme's translucent veils (`--bg-active` is the
+    slot, `--bg-hover` the sheen that sweeps it), so it composes over any
+    surface in both themes. The previous `--bg-inset`/`--bg-surface-alt` pair
+    was #F9F8F4 → #F8F5F0 over white in light mode: the slot and its sweep
+    were practically invisible, so the loading state read as an empty page.
     ========================================================================== */
 
 :host {
     display: block;
-    background: var(--bg-inset);
     border-radius: var(--r-sm);
 }
 
@@ -15,9 +16,9 @@
 .skeleton__line {
     background-image: linear-gradient(
         90deg,
-        var(--bg-inset) 0%,
-        var(--bg-surface-alt) 50%,
-        var(--bg-inset) 100%
+        var(--bg-active) 0%,
+        var(--bg-hover) 50%,
+        var(--bg-active) 100%
     );
     background-size: 200% 100%;
     animation: skeleton-sweep 1.4s ease-in-out infinite;
@@ -68,6 +69,7 @@
     .skeleton__line {
         animation: none !important;
         background-image: none;
-        background-color: var(--bg-inset);
+        /* static but still visible: the slot keeps saying "not here yet" */
+        background-color: var(--bg-active);
     }
 }

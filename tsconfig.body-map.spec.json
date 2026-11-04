@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/**/*.d.ts",
+    "src/app/shared/components/organisms/body-map/*.spec.ts",
+    "src/test-setup.ts"
+  ],
+  "references": []
+}

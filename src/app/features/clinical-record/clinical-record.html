@@ -113,37 +113,22 @@
   }
 </ng-template>
 
-<!-- Las dos acciones de la fila, cada una con SU color y su globo.
-     Eran dos enlaces de texto pegados —«Ver expedienteSolicitar
-     vinculación»— sin separación ni jerarquía: no se veía que fueran dos.
+<!-- La única acción de la fila: pedirle el vínculo a la persona (FT-07-R05).
 
-     Son anclas y no botones porque navegan: así siguen valiendo el clic con
-     la rueda, «abrir en pestaña nueva» y el destino en la barra de estado.
-     El nombre accesible va en el host y nombra a la persona, que es lo que
-     un lector de pantalla necesita para no leer «Ver expediente» veinte
-     veces seguidas. -->
+     Antes había además un botón «Ver expediente», que sin turno confirmado hoy
+     ni vínculo activo respondía 403: un botón que falla no es una acción. El
+     expediente se abre desde donde ya se tiene derecho a él —la agenda, la
+     consulta—, no desde un buscador de todo el padrón.
+
+     Es un ancla y no un botón porque navega: así siguen valiendo el clic con la
+     rueda y «abrir en pestaña nueva». El nombre accesible nombra a la persona,
+     que es lo que un lector de pantalla necesita para no leer «Solicitar
+     vinculación» veinte veces seguidas. -->
 <ng-template #celdaAccion let-paciente>
   <div class="archivo__fila-acciones">
     <a
       app-button
       variant="primary"
-      size="sm"
-      [iconOnly]="true"
-      data-testid="paciente-ver-expediente"
-      [routerLink]="rutaDe(paciente.profileId)"
-      [attr.aria-label]="'Ver el expediente de ' + nombreDe(paciente)"
-      appTooltip="Ver expediente"
-    >
-      <app-nav-icon name="folder" />
-    </a>
-
-    <!-- FT-07-R05: sin turno confirmado hoy, «Ver expediente» da 403 — este es
-         el camino para pedirle el vínculo al paciente. Va en secundario: es la
-         salida cuando la primera no está disponible, no la acción de todos los
-         días. -->
-    <a
-      app-button
-      variant="secondary"
       size="sm"
       [iconOnly]="true"
       data-testid="paciente-solicitar-vinculacion"

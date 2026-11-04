@@ -17,8 +17,8 @@
   justify-content: space-between;
   gap: var(--sp-4);
   inline-size: 100%;
-  margin-block-start: var(--sp-5);
-  padding: var(--sp-6);
+  margin-block-start: var(--sp-3);
+  padding: var(--sp-4);
   border: 1px solid var(--border-default);
   /* El filo del lado del inicio es lo que la separa de la tira de resumen sin
      necesidad de un segundo color de fondo. */
@@ -145,7 +145,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--sp-2);
-  margin: var(--sp-4) 0 0;
+  margin: var(--sp-3) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -155,7 +155,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--border-subtle, var(--border-default));
   border-radius: var(--r-sm);
   background: var(--bg-surface);
@@ -225,7 +225,7 @@
    preguntas distintas y la separación es la que dice cuál se está mirando. */
 .mi-salud__sintomas {
   display: block;
-  margin-block-end: var(--sp-6);
+  margin-block-end: var(--sp-3);
 }
 
 /* El widget de beneficios sólo separa de lo que sigue cuando dibuja algo: sin
@@ -235,12 +235,12 @@
 }
 
 .mi-salud__benefits:not(:empty) {
-  margin-block-end: var(--sp-6);
+  margin-block-end: var(--sp-3);
 }
 
 /* El lugar de «Su médico de cabecera» mientras llega su `@defer`: reserva
    aproximadamente su alto para que la tarjeta no empuje lo de abajo. */
 .mi-salud__cabecera-hueco {
   min-block-size: var(--sp-20);
-  margin-block: var(--sp-6);
+  margin-block: var(--sp-3);
 }

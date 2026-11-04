@@ -21,6 +21,7 @@ import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { NotificationPreferences } from '../account/notification-preferences/notification-preferences';
 import { ChatPreferences } from './chat-preferences/chat-preferences';
+import { MyDevices } from './my-devices/my-devices';
 
 /** Quién administra los permisos delegados del M29. Mismo rol que su sección. */
 const PERMISSION_ADMIN_ROLES: readonly string[] = ['SECURITY_ADMIN'];
@@ -86,7 +87,7 @@ const BROWSER_PERMISSIONS: readonly {
  */
 @Component({
   selector: 'app-settings',
-  imports: [AlovidaThemeToggleDirective, AppButtonLink, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
+  imports: [AlovidaThemeToggleDirective, AppButtonLink, ChatPreferences, MyDevices, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,7 +1,28 @@
 <app-page-header
   title="Mis pacientes de cabecera"
   subtitle="Los pacientes que lo eligieron como su médico de cabecera y desde cuándo."
-/>
+>
+  <div page-actions class="cabecera__acciones-header">
+    <a
+      app-button
+      variant="outline"
+      size="sm"
+      routerLink="/my-account/access-requests"
+      data-testid="pacientes-cabecera-buzon"
+    >
+      Buzón de solicitudes
+    </a>
+    <a
+      app-button
+      variant="primary"
+      size="sm"
+      routerLink="/medical-records"
+      data-testid="pacientes-cabecera-vincular"
+    >
+      Solicitar vinculación
+    </a>
+  </div>
+</app-page-header>
 
 <app-view-state-host [state]="state()" (retry)="retry()">
   @if (pagina()) {

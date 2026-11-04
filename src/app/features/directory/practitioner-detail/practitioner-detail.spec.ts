@@ -1,8 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
+import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { PractitionerDetail } from './practitioner-detail';
@@ -417,6 +418,59 @@ describe('PractitionerDetail', () => {
     expect(seccion.querySelector('app-practitioner-availability')).toBeNull();
     expect(seccion.querySelector('app-practitioner-service-schedule')).not.toBeNull();
     http.verify();
+  });
+
+  /**
+   * «Reservar cita» (tarjeta de cabecera) y «Revisar disponibilidad» (guía)
+   * llegan con `#horarios`. El router salta antes de que la sección exista, así
+   * que la ficha baja sola cuando ya está pintada.
+   */
+  it('con #horarios en la URL baja a «Sedes y horarios» cuando la ficha ya está pintada', async () => {
+    const saltar = vi.fn();
+    Element.prototype.scrollIntoView = saltar;
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ profileId: 'per-9' })) } },
+        { provide: AuthService, useValue: { isAuthenticated: () => false, activeTenantId: () => null } },
+      ],
+    });
+    vi.spyOn(TestBed.inject(Router), 'url', 'get').mockReturnValue('/directory/per-9#horarios');
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(PractitionerDetail);
+    fixture.detectChanges();
+    responder();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(saltar).toHaveBeenCalledTimes(1);
+    expect(saltar.mock.contexts[0]).toBe((fixture.nativeElement as HTMLElement).querySelector('#horarios'));
+  });
+
+  it('sin ancla en la URL la ficha no se mueve', async () => {
+    const saltar = vi.fn();
+    Element.prototype.scrollIntoView = saltar;
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ profileId: 'per-9' })) } },
+        { provide: AuthService, useValue: { isAuthenticated: () => false, activeTenantId: () => null } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(PractitionerDetail);
+    fixture.detectChanges();
+    responder();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(saltar).not.toHaveBeenCalled();
   });
 
   /** Sin id en la ruta no se pide nada: no hay a quién consultar. */

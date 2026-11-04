@@ -127,17 +127,7 @@ interface ResultadoDeLote extends ImportProceduresResult {
  */
 @Component({
   selector: 'app-procedure-import',
-  imports: [
-    Alert,
-    AppButton,
-    Badge,
-    FormField,
-    PageHeader,
-    RouterLink,
-    Select,
-    Skeleton,
-    SpecialtyBrowser,
-  ],
+  imports: [Alert, AppButton, Badge, FormField, PageHeader, RouterLink, Select, Skeleton, SpecialtyBrowser],
   templateUrl: './procedure-import.html',
   styleUrl: './procedure-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -341,7 +331,7 @@ export class ProcedureImport {
   /** Lo acumulado de todas las páginas pedidas con el filtro vigente. */
   private readonly acumulado = signal<readonly ProcedureNomenclatureItem[]>([]);
   private readonly cursor = signal<string | null>(null);
-  private readonly cargandoMas = signal(false);
+  protected readonly cargandoMas = signal(false);
 
   protected readonly estado = signal<ViewState<readonly ProcedureNomenclatureItem[]>>(loading());
 

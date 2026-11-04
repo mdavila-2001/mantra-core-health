@@ -67,6 +67,8 @@
           [accept]="photoFormats"
           [maxSizeBytes]="photoMaxBytes"
           [maxFiles]="1"
+          [uploading]="uploading()"
+          uploadingLabel="Subiendo imagen…"
           accessibleLabel="Su foto de vitrina"
         />
       </app-form-field>

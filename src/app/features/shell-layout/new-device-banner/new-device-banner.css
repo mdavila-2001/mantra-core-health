@@ -1,5 +1,7 @@
 :host {
-  display: block;
+  /* Not a flex item of `.app-main__inner` while empty: an empty block host
+     still adds the column's 32px gap above every screen. */
+  display: contents;
 }
 
 .aviso-dispositivo {

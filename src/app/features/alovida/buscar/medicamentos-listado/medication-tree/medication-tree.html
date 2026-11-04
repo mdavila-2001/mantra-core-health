@@ -34,7 +34,7 @@
             <details open>
               <summary class="arbol__resumen arbol__resumen--nivel">
                 <span class="arbol__rotulo">Para qué se usa</span>
-                <span>{{ medicamento.therapeuticGroup }}</span>
+                <span>{{ medicamento.uses?.[0] ?? medicamento.therapeuticGroup }}</span>
               </summary>
               <p
                 class="arbol__nota arbol__nota--lectura"

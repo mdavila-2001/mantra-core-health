@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { of, throwError, type Observable } from 'rxjs';
+import { NEVER, of, throwError, type Observable } from 'rxjs';
 
 import { SessionStore } from '@core/auth/session.store';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
@@ -337,6 +337,26 @@ describe('PublicPostComments', () => {
       await fixture.whenStable();
 
       expect(root().querySelectorAll('.comentario')).toHaveLength(2);
+    });
+
+    it('shows a spinner on «Ver más comentarios» while the next page is in flight', async () => {
+      let primera = true;
+      await montar({
+        raiz: () => {
+          if (primera) {
+            primera = false;
+            return of(pagina([comentario('a')], 'cursor-2'));
+          }
+          return NEVER;
+        },
+      });
+
+      botones('comments-load-more')[0]?.click();
+      await fixture.whenStable();
+
+      const boton = botones('comments-load-more')[0];
+      expect(boton?.querySelector('app-spinner')).not.toBeNull();
+      expect(boton?.getAttribute('aria-busy')).toBe('true');
     });
   });
 });

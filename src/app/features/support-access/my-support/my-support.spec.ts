@@ -14,6 +14,8 @@ import type {
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { MENSAJE_DE_CODIGO_INVALIDO, MySupport } from './my-support';
+import { TeamQrTool } from '../my-team/team-qr-tool/team-qr-tool';
+import { By } from '@angular/platform-browser';
 
 const enDias = (n: number): string => new Date(Date.now() + n * 86_400_000).toISOString();
 const CODIGO = 'aB3_xY-9QzLmN0pRsTuVwXyZ1a2B3c4D';
@@ -238,6 +240,35 @@ describe('MySupport', () => {
       await abrir([vinculo('e-1', 'ACTIVE', 200)], `/my-support#code=${CODIGO}`);
       await clic(byId('canje-enviar'));
       expect(redeemInvitation).toHaveBeenCalledWith(CODIGO);
+    });
+
+    it('«Leer QR» abre el lector y lo que lee se canjea directo, y el lector se cierra', async () => {
+      await abrir([vinculo('e-1', 'ACTIVE', 200)]);
+      await clic(byId('canje-leer-qr'));
+      const lector = fixture.debugElement.query(By.directive(TeamQrTool));
+      expect(lector).not.toBeNull();
+
+      lector.componentInstance.codeScanned.emit(CODIGO);
+      await refrescar();
+
+      expect(redeemInvitation).toHaveBeenCalledWith(CODIGO);
+      expect(byId('qr-lector')).toBeNull();
+    });
+  });
+
+  describe('una cuenta de doctor (sin rol de personal de apoyo)', () => {
+    it('el 403 de «mis vínculos» no tapa la pantalla: queda el vacío y el canje sigue a mano', async () => {
+      await abrir([]);
+      listMyEngagements.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 403, error: { message: 'Rol insuficiente para la operación' } })),
+      );
+      fixture.componentInstance['cargar']();
+      await refrescar();
+
+      expect(host().textContent).not.toContain('No tiene acceso a esta sección');
+      expect(host().textContent).not.toContain('Rol insuficiente');
+      expect(host().textContent).toContain('Todavía no se unió a ninguna organización con un código.');
+      expect(byId('canje-codigo')).not.toBeNull();
     });
   });
 

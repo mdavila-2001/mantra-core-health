@@ -38,18 +38,14 @@ const VACIO = { items: [], sinOrigen: false } as const;
  * `availability()`, y una fila sin precio dice «Precio no publicado» en vez
  * de inventarlo.
  *
- * Es la misma composición que hace `CotizacionesFuentes.medicamentos()`. No se
- * importa ni se toca: esa pantalla compara cuatro verticales y devuelve su
- * propia fila; acá hacen falta el `siteId`, si exige receta y la sede entera
- * para armar un carrito. Se lee de ahí la forma, se escribe acá el contenido.
+ * Es la misma composición que `CotizacionesFuentes.medicamentos()`, sin
+ * importarla: acá hacen falta el `siteId`, la receta y la sede entera.
  *
  * ## Ordenar es de la pantalla, no del backend
  *
- * La disponibilidad ya llega ordenada por el backend (completas, distancia,
- * total, nombre). {@link sortByPrice} y {@link sortByDistance} reacomodan lo
- * que llegó, sin volver a consultar — y **sin origen, `distance` no reordena
- * nada**: se devuelve el orden de la API con `sinOrigen: true` y quien mira
- * elige desde dónde medir.
+ * {@link sortByPrice} y {@link sortByDistance} reacomodan lo que el backend
+ * ya ordenó, sin volver a consultar; **sin origen, `distance` no reordena**:
+ * vuelve el orden de la API con `sinOrigen: true`.
  */
 @Injectable({ providedIn: 'root' })
 export class PharmacySearchService {
@@ -62,16 +58,19 @@ export class PharmacySearchService {
    *   consulta nada: el catálogo entero no es una respuesta a media palabra.
    * @param origin - Desde dónde medir. `null` deja las distancias en `null`.
    * @param sort - Cómo acomodar lo que volvió.
+   * @param exact - `true` busca lo escrito tal cual, sin que la API corrija el tipeo.
    */
   searchProducts(
     term: string,
     origin: SearchOrigin | null,
     sort: SearchSort,
+    exact = false,
   ): Observable<SearchResult<ProductHit>> {
     if (!esBuscable(term)) {
       return of(VACIO);
     }
-    return this.pharmacy.searchProducts({ search: term, limit: TOPE_DE_PRODUCTOS }).pipe(
+    const consulta = { search: term, limit: TOPE_DE_PRODUCTOS, ...(exact ? { exact } : {}) };
+    return this.pharmacy.searchProducts(consulta).pipe(
       switchMap((pagina) => {
         const productIds = [...new Set(pagina.items.map((producto) => producto.id))];
         if (productIds.length === 0) {
@@ -81,7 +80,8 @@ export class PharmacySearchService {
           map((respuesta) => {
             const catalogo = new Map(pagina.items.map((producto) => [producto.id, producto]));
             const filas = respuesta.items.flatMap((sede) => filasDeSede(sede, catalogo));
-            return acomodarProductos(filas, origin, sort);
+            const correctedQuery = pagina.correctedQuery ?? null;
+            return { ...acomodarProductos(filas, origin, sort), correctedQuery };
           }),
         );
       }),

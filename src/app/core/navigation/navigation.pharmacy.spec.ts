@@ -84,13 +84,13 @@ describe('Menú de la cuenta de farmacia', () => {
     ];
   }
 
-  it('ofrece los seis renglones de la farmacia, en orden, y nada de otra cuenta', () => {
+  it('ofrece los seis renglones de farmacia y el Buzón común, sin otra cuenta', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const rutas = rutasDelMenu();
 
     expect(rutas.filter((ruta) => !FIJOS_DE_TODA_CUENTA.includes(ruta))).toEqual(
-      MENU_DE_LA_FARMACIA,
+      [...MENU_DE_LA_FARMACIA, '/my-account/access-requests'],
     );
     expect(rutas.filter((ruta) => FIJOS_DE_TODA_CUENTA.includes(ruta)).sort()).toEqual(
       [...FIJOS_DE_TODA_CUENTA].sort(),

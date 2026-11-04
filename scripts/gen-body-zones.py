@@ -1,4 +1,4 @@
-"""Genera `body-zones.geometry.ts` y las imágenes del maniquí a partir del render.
+"""Genera las zonas gruesas y las imágenes del maniquí a partir del render.
 
 Uso:  python scripts/gen-body-zones.py --render <carpeta del render> [--overlay <carpeta>]
 
@@ -6,11 +6,13 @@ Uso:  python scripts/gen-body-zones.py --render <carpeta del render> [--overlay 
 un PNG RGBA por sexo y vista más `landmarks.json`. Este script escribe:
 
 - `public/body-map/<sexo>-<vista>.webp`: el maniquí, reducido y comprimido;
-- `src/app/shared/components/organisms/body-map/body-zones.geometry.ts`: la
-  silueta y las zonas pulsables de cada vista, en el mismo `viewBox` que la
+- `scripts/body-map-base/zonas-gruesas.ts.txt`: la silueta y las zonas pulsables de cada vista, en el mismo `viewBox` que la
   imagen, para que cada zona calce con el cuerpo que se ve;
 - con `--overlay`, un PNG por vista con las zonas delineadas sobre el render
   (la prueba de calce).
+
+Después se corre `scripts/split-body-zones.py`, que parte estas zonas gruesas en
+las finas (lado y segmento) y escribe `body-zones.generated.ts`.
 
 Requiere `pillow`, `shapely` y `scikit-image`. No corre en el build: lo que
 escribe se versiona y este script queda para poder rehacerlo.
@@ -58,7 +60,7 @@ from shapely.ops import unary_union
 from skimage import measure
 
 RAIZ = Path(__file__).resolve().parent.parent
-DESTINO = RAIZ / "src/app/shared/components/organisms/body-map/body-zones.geometry.ts"
+DESTINO = RAIZ / "scripts/body-map-base/zonas-gruesas.ts.txt"
 IMAGENES = RAIZ / "public/body-map"
 URL_IMAGENES = "/body-map"
 

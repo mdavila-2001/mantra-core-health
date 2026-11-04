@@ -109,6 +109,8 @@ describe('EntityImport', () => {
     mount('categories');
     await upload('nombre;nota\nVitaminas;\n;vacía\nTercera;\nvitaminas;\nOtra;\n');
 
+    // While the dry run is in flight the dropzone shows its upload spinner.
+    expect(fixture.nativeElement.querySelector('[data-testid="file-input-uploading"]')).not.toBeNull();
     // «Vitaminas» y «vitaminas» son la misma clave: no viaja ninguna de las dos.
     const preview = http.expectOne(bulkUrl('categories'));
     expect(preview.request.method).toBe('POST');
@@ -157,6 +159,7 @@ describe('EntityImport', () => {
     expect(textOf('entity-import-apply')).toContain('Aplicar 2 filas');
 
     click('entity-import-apply');
+    expect(byId('entity-import-apply')?.getAttribute('aria-busy')).toBe('true');
 
     const write = http.expectOne(bulkUrl('prices'));
     expect(write.request.body).toEqual({

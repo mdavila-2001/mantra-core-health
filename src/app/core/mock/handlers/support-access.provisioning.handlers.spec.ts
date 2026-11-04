@@ -79,13 +79,10 @@ describe('provisión directa de secretarias (simulador)', () => {
 
   describe('POST /org/support-staff', () => {
     it('crea la cuenta y el vínculo activo para la organización', () => {
-      const adminOrg = buscarUsuario('admin') ?? {
-        id: 'user-admin-org',
-        displayName: 'Administrador Hospital',
-        email: 'admin@hospital.bo',
-        roles: ['USER', 'ORGANIZATION_ADMIN'],
-        organizationAccess: ['tenant-hospital'],
-      };
+      // The seeded admin must exist: a made-up fallback user no longer fits `MockUser`
+      // and would hide a missing seed behind a different identity.
+      const adminOrg = buscarUsuario('admin');
+      if (adminOrg === undefined) throw new Error('The seeded "admin" mock user is missing');
 
       const res = llamar<CreatedSupportStaffResponse>(
         adminOrg,

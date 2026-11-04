@@ -68,7 +68,7 @@ const ECG_LAYERS = ['base', 'aura', 'halo', 'comet', 'spark'] as const;
 @Component({
   selector: 'app-auth-stage',
   templateUrl: './auth-stage.html',
-  styleUrl: './auth-stage.css',
+  styleUrls: ['./auth-stage.css', './auth-stage-aurora.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { 'aria-hidden': 'true' },
 })

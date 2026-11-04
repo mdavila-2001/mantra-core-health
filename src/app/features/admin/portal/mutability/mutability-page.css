@@ -197,7 +197,7 @@ p.mut__help {
   gap: var(--sp-2);
   padding: var(--sp-3);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-md);
   background: var(--bg-surface-alt);
 }
 

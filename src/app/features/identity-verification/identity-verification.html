@@ -94,7 +94,8 @@
             accept="image/*"
             [maxSizeBytes]="maxBytes"
             [maxFiles]="1"
-            [disabled]="enviando()"
+            [uploading]="enviando()"
+            uploadingLabel="Subiendo imagen…"
             (rejected)="alRechazar($event)"
           />
         </app-form-field>
@@ -110,7 +111,8 @@
             accept="image/*"
             [maxSizeBytes]="maxBytes"
             [maxFiles]="1"
-            [disabled]="enviando()"
+            [uploading]="enviando()"
+            uploadingLabel="Subiendo imagen…"
             (rejected)="alRechazar($event)"
           />
         </app-form-field>

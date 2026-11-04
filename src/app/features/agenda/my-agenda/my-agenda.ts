@@ -14,10 +14,10 @@ import {
   untracked,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { calculateSlots } from '../agenda-create/agenda-slots';
 import { concatMap, from, toArray } from 'rxjs';
-
 import { AuthService } from '../../../core/auth/auth.service';
 import { bookingChangeDeniedText } from '../../../core/data-access/scheduling/booking-change-denied';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -227,7 +227,7 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
 @Component({
   selector: 'app-my-agenda',
   imports: [
-    Alert,
+    Alert, Spinner,
     Badge,
     AppButton,
     AppButtonLink,

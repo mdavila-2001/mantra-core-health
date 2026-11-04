@@ -86,7 +86,18 @@ export function integrationErrorMessage(
   if (reason === null) {
     return pharmacyErrorMessage(error, fallback);
   }
-  const text = overrides[reason] ?? INTEGRATION_ERROR_TEXT[reason];
+  const details = error instanceof HttpErrorResponse
+    ? (error.error as { details?: { errorReason?: unknown } } | null)?.details?.errorReason
+    : undefined;
+  // La causa específica de la API prima sobre el override genérico del formulario.
+  const cause = reason === 'PHARMACY_INTEGRATION_UNAVAILABLE'
+    ? details === 'AUTH_REJECTED'
+      ? 'El sistema rechazó la clave de conexión. Revísela antes de volver a guardar o probar.'
+      : details === 'UNREACHABLE'
+        ? 'El sistema de la farmacia no responde. Revise su disponibilidad y vuelva a probar.'
+        : null
+    : null;
+  const text = cause ?? overrides[reason] ?? INTEGRATION_ERROR_TEXT[reason];
   const requestId = requestIdOf(error);
   return error instanceof HttpErrorResponse && error.status >= 500 && requestId !== null
     ? `${text} (petición ${requestId})`

@@ -7,6 +7,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { SpecialtyImages } from '../../../core/data-access/terminology/specialty-images.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
@@ -41,7 +42,6 @@ import {
   type CortesDeLaGuia,
 } from './practitioner-filters';
 import { porNombre, toResultado } from './practitioner-card';
-import { specialtyPhoto } from '../../../shared/utils/directory-photo';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
 interface TarjetaDeEspecialidad {
@@ -222,7 +222,7 @@ export class PractitionersDirectory {
       Object.keys(this.cortes()).length === 0,
   );
 
-  protected readonly photoOf = specialtyPhoto;
+  protected readonly photoOf = inject(SpecialtyImages).of;
 
   /**
    * Para qué especialidad está cargada la lista, o `undefined` si todavía no

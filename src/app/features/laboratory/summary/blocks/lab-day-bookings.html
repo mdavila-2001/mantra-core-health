@@ -1,0 +1,49 @@
+<app-card padding="lg" data-testid="lab-home-bookings">
+  <div card-header class="head">
+    <app-section-heading icono="calendar" titulo="Turnos del día" />
+    @if (all(); as total) {
+      <app-badge
+        variant="info"
+        size="sm"
+        [value]="total.length + (total.length === 1 ? ' turno' : ' turnos')"
+        [label]="total.length + (total.length === 1 ? ' turno hoy' : ' turnos hoy')"
+      />
+    }
+  </div>
+
+  <app-lab-block-state [state]="state()" subject="los turnos de hoy" skeletonHeight="12rem" (retry)="retry.emit()">
+    @if (all(); as items) {
+      <ol class="rows" data-testid="lab-home-bookings-list">
+        @for (booking of shown(); track booking.bookingId) {
+          <li class="row">
+            <span class="row__main">
+              <span class="row__title">
+                <time class="row__time" [attr.datetime]="booking.startsAt">{{ booking.startsAt | date: "HH:mm" }}</time>
+                · {{ booking.patientName ?? 'Paciente sin nombre' }}
+              </span>
+              <span class="row__meta">
+                {{ booking.studyName ?? 'Estudio sin nombre' }}
+                @if (showSite() && booking.siteName) {
+                  · {{ booking.siteName }}
+                }
+              </span>
+            </span>
+            <app-badge size="sm" [variant]="variantOf(booking.status)" [value]="labelOf(booking.status)" />
+          </li>
+        }
+      </ol>
+      @if (items.length > shown().length) {
+        <p class="note">Y {{ items.length - shown().length }} más hoy.</p>
+      }
+    }
+  </app-lab-block-state>
+
+  @if (all()) {
+    <div card-footer class="footer">
+      <a app-button variant="secondary" size="sm" [routerLink]="scheduleRoute">
+        Horarios y equipos
+        <app-nav-icon name="arrow-right" />
+      </a>
+    </div>
+  }
+</app-card>

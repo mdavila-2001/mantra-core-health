@@ -202,6 +202,56 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(element('[data-testid="mostrador-listo"]')).not.toBeNull();
   });
 
+  function pendingOrder(): PharmacyOrderDto {
+    const base = pharmacyOrderDtoFixture();
+    return pharmacyOrderDtoFixture({
+      status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      lines: [{ ...base.lines[0], reservedQuantity: 0, status: { code: 'PINV_RES_LINE_PENDING_CONFIRMATION', display: 'Por confirmar' } }],
+    });
+  }
+
+  it('pending exige cantidad explícita, envía CONFIRMAR_STOCK y relee lo confirmado', async () => {
+    const pending = pendingOrder();
+    await mount(pending);
+    expect(element<HTMLInputElement>('[data-testid="mostrador-cantidad-confirmada-0"]')?.value).toBe('');
+    expect(element('[data-testid="mostrador-confirmar"]')?.getAttribute('aria-disabled')).toBe('true');
+    expect(text()).toContain('no sustituye un recuento');
+    type('[data-testid="mostrador-cantidad-confirmada-0"]', '12');
+    click('mostrador-confirmar');
+    const request = http.expectOne({ method: 'POST', url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/confirm` });
+    expect(request.request.body).toEqual({ adjustments: [{
+      productId: pending.lines[0].productId, decision: 'CONFIRMAR_STOCK', quantity: 12,
+    }] });
+    const confirmed = pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } });
+    request.flush(confirmed); flushReload(confirmed);
+    expect(text()).toContain('En preparación');
+    expect(element('[data-testid="mostrador-cantidad-confirmada-0"]')).toBeNull();
+  });
+
+  it.each(['0', '-1', '1.5', '1000001', ''])('cantidad inválida %s no confirma', async (value) => {
+    await mount(pendingOrder());
+    type('[data-testid="mostrador-cantidad-confirmada-0"]', value);
+    click('mostrador-confirmar');
+    http.expectNone({ method: 'POST', url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/confirm` });
+    expect(element('[data-testid="mostrador-confirmar"]')?.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it.each(['reason', 'details'] as const)('422 por lotes (%s) conserva pedido y cantidad, con salida a Inventario', async (envelope) => {
+    await mount(pendingOrder());
+    type('[data-testid="mostrador-cantidad-confirmada-0"]', '12');
+    click('mostrador-confirmar');
+    const body = envelope === 'reason' ? { reason: 'SITE_PRODUCT_KEPT_BY_LOTS' } : { details: { reason: 'SITE_PRODUCT_KEPT_BY_LOTS' } };
+    http.expectOne({ method: 'POST', url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/confirm` })
+      .flush(body, { status: 422, statusText: 'Unprocessable Entity' });
+    harness.detectChanges();
+    expect(element('[data-testid="mostrador-confirmation-error"]')?.textContent).toContain('por lotes');
+    expect(element('[data-testid="mostrador-confirmation-error"]')?.textContent).toContain('no sustituye un recuento');
+    expect(element('[data-testid="mostrador-inventory-link"]')?.getAttribute('href')).toBe('/administration/pharmacy-catalog?tab=inventory');
+    expect(element<HTMLInputElement>('[data-testid="mostrador-cantidad-confirmada-0"]')?.value).toBe('12');
+    expect(element('[data-testid="mostrador-detalle"]')).not.toBeNull();
+    http.expectNone({ method: 'GET', url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}` });
+  });
+
   it('proposes a real published product from the same medication concept', async () => {
     const conceptId = '00000000-0000-4000-8000-000000000007';
     const proposedProductId = '00000000-0000-4000-8000-000000000008';

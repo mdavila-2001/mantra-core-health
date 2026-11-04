@@ -98,3 +98,19 @@ describe('toMedicationCard', () => {
     expect(details.find((fila) => fila.label === 'Venta')?.value).toBe('Venta libre');
   });
 });
+
+describe('toMedicationCard · para qué sirve', () => {
+  it('muestra el uso que encontró la búsqueda, o el grupo más específico', () => {
+    const porUso = toMedicationCard(
+      medicamento({ uses: ['Presión alta'], matchedBy: 'use', matchedUse: 'Presión alta' }),
+    );
+    expect(porUso.card.atributos[0]).toMatchObject({
+      clave: 'grupo',
+      texto: 'Sirve para: Presión alta',
+    });
+    expect(porUso.details).toContainEqual(expect.objectContaining({ value: 'Presión alta' }));
+
+    const sinUso = toMedicationCard(medicamento());
+    expect(sinUso.card.atributos.some((a) => a.clave === 'grupo')).toBe(false);
+  });
+});

@@ -1260,6 +1260,19 @@ describe('PractitionerProfileView', () => {
       expect(elegidas).toEqual([]);
     });
 
+    it('while the photo uploads, a spinner shows over the portrait', () => {
+      const host = montar(PERFIL, true);
+      expect(host.querySelector('[data-testid="perfil-foto-subiendo"]')).toBeNull();
+
+      fixture.componentRef.setInput('fotoSubiendo', true);
+      fixture.detectChanges();
+      expect(host.querySelector('[data-testid="perfil-foto-subiendo"]')).not.toBeNull();
+
+      fixture.componentRef.setInput('fotoSubiendo', false);
+      fixture.detectChanges();
+      expect(host.querySelector('[data-testid="perfil-foto-subiendo"]')).toBeNull();
+    });
+
     it('pinta la foto que le pasan recién subida, sin releer el perfil', () => {
       const host = montar(PERFIL, true);
 

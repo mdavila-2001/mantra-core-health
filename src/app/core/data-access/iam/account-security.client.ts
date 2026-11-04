@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type { DeviceCodeRequested, DeviceConfirmed, DeviceReportedNotMe, MyNetwork } from './iam-new-device';
+import type { DeviceCodeRequested, DeviceConfirmed, DeviceReportedNotMe, MyDevice, MyNetwork } from './iam-new-device';
 import type { MySession, PasswordChanged } from './iam.types';
 
 interface WireMySession {
@@ -60,6 +60,20 @@ export class AccountSecurityClient {
     return this.http.post<{ readonly revoked: boolean }>(
       this.url(`/iam/me/sessions/${encodeURIComponent(sessionId)}/revoke`),
       {},
+    );
+  }
+
+  /** `GET /iam/me/devices`. The devices this account signed in from, with the current one marked. */
+  listMyDevices(): Observable<readonly MyDevice[]> {
+    type Wire = Omit<MyDevice, 'lastSeenAt' | 'createdAt'> & { lastSeenAt?: string | null; createdAt: string };
+    return this.http.get<readonly Wire[]>(this.url('/iam/me/devices')).pipe(
+      map((rows) =>
+        rows.map(({ lastSeenAt, createdAt, ...row }) => ({
+          ...row,
+          createdAt: new Date(createdAt),
+          ...(lastSeenAt ? { lastSeenAt: new Date(lastSeenAt) } : {}),
+        })),
+      ),
     );
   }
 

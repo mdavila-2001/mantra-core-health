@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { abrirExpedienteDelPrimero } from './support/expediente';
 
 /**
  * F5b (puntos de toma), F5d (consultorio de la agenda), F5f (activos y centros
@@ -160,7 +161,7 @@ async function openConsultation(page: Page): Promise<void> {
   await page.goto('/medical-records', { waitUntil: 'domcontentloaded' });
   await page.getByTestId('clinical-record-national-id').fill(PATIENT_DOCUMENT);
   await page.getByTestId('clinical-record-search-by-document').click();
-  await page.getByTestId('paciente-ver-expediente').first().click();
+  await abrirExpedienteDelPrimero(page);
   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
   await page.goto(`${new URL(page.url()).pathname}/consultation`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('consulta-rejilla')).toBeVisible({ timeout: 60_000 });

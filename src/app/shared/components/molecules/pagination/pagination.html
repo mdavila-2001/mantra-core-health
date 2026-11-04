@@ -3,7 +3,7 @@
     app-button
     variant="ghost"
     size="sm"
-    [disabled]="isFirstPage()"
+    [disabled]="isFirstPage() || loading()"
     aria-label="Página anterior"
     (clicked)="goToPrevious()"
   >
@@ -37,7 +37,8 @@
               app-button
               size="sm"
               variant="ghost"
-                [attr.aria-label]="'Página ' + slot"
+              [disabled]="loading()"
+              [attr.aria-label]="'Página ' + slot"
               [attr.aria-current]="slot === currentPage() ? 'page' : null"
               (clicked)="goTo(slot)"
             >
@@ -53,7 +54,7 @@
     app-button
     variant="ghost"
     size="sm"
-    [disabled]="isLastPage()"
+    [disabled]="isLastPage() || loading()"
     aria-label="Página siguiente"
     (clicked)="goToNext()"
   >
@@ -75,6 +76,9 @@
 }
 
 <!-- El rango cambia con cada salto de página: se anuncia, pero sin interrumpir. -->
+@if (loading()) {
+  <app-spinner class="pagination__spinner" size="sm" label="Cargando página" data-testid="pagination-loading" />
+}
 <p class="pagination__range tabular-nums" aria-live="polite">
   <!-- El rango se reemplaza en cada salto y entra con un fundido corto: el
        párrafo (la región viva) se queda; sólo cambia lo de adentro. -->

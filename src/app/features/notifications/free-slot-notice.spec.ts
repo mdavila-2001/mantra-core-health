@@ -73,6 +73,8 @@ describe('AvisoDeHuecoLibre', () => {
   afterEach(() => {
     servicio.stop();
     vi.useRealTimers();
+    // The service remembers what it already showed for the whole session: forget it between cases.
+    sessionStorage.removeItem('mock.avisos-de-hueco.mostrados');
   });
 
   it('levanta el toast cuando llega un hueco libre', () => {

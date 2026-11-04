@@ -1,0 +1,32 @@
+<ng-template #failure>
+  <app-alert tone="error" [title]="'No pudimos cargar ' + subject()" class="failure">
+    <p class="failure__text">
+      @if (offline()) {
+        Sin conexión con el servidor.
+      } @else if (forbidden()) {
+        Su cuenta no tiene permiso para ver esto.
+      } @else {
+        Intente de nuevo en unos segundos.
+      }
+      @if (note()) {
+        {{ note() }}
+      }
+    </p>
+    @if (code(); as value) {
+      <app-support-code [code]="value" [copyable]="false" />
+    } @else {
+      <p class="failure__text">Esta falla no tiene código de soporte.</p>
+    }
+    <div alert-actions>
+      <button app-button size="sm" variant="secondary" type="button" (clicked)="retry.emit()">Reintentar</button>
+    </div>
+  </app-alert>
+</ng-template>
+
+<app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
+  <app-skeleton vsh-skeleton variant="rect" width="100%" [height]="skeletonHeight()" />
+  <div vsh-error><ng-container *ngTemplateOutlet="failure" /></div>
+  <div vsh-offline><ng-container *ngTemplateOutlet="failure" /></div>
+  <div vsh-forbidden><ng-container *ngTemplateOutlet="failure" /></div>
+  <ng-content />
+</app-view-state-host>
