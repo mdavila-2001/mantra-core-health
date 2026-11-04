@@ -359,6 +359,24 @@
                       {{ fotoBase64() ? 'Cambiar foto' : 'Subir foto de perfil' }}
                     </span>
                   </label>
+                  <!-- El selector de fotos de Android (con `accept` de imágenes) no
+                       ofrece la cámara. Un segundo control con `capture` la abre
+                       directo; en escritorio el navegador lo trata como un
+                       selector de archivos más. -->
+                  <label class="registro-foto__boton-subir">
+                    <input
+                      #inputCamara
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      capture="user"
+                      class="sr-only"
+                      data-testid="registro-pro-foto-camara"
+                      (change)="alSeleccionarFoto($event)"
+                    />
+                    <span class="registro-foto__label-btn registro-foto__label-btn--secundario">
+                      Tomar foto con la cámara
+                    </span>
+                  </label>
                   @if (fotoBase64()) {
                     <button
                       type="button"

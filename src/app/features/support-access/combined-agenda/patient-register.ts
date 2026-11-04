@@ -11,6 +11,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { patientFailureMessage } from './patient-failure';
 import type { PickedPatient } from './patient-finder';
 import { isMinorOn, MIN_DOCUMENT_LENGTH, MIN_PHONE_DIGITS } from './patient-search';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /**
  * Registro rápido de un paciente nuevo, para quien tiene permiso de registrar.
@@ -25,7 +26,7 @@ import { isMinorOn, MIN_DOCUMENT_LENGTH, MIN_PHONE_DIGITS } from './patient-sear
  */
 @Component({
   selector: 'app-patient-register',
-  imports: [Alert, AppButton, FormField, Input],
+  imports: [DateStringPicker, Alert, AppButton, FormField, Input],
   templateUrl: './patient-register.html',
   styleUrl: './patient-register.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

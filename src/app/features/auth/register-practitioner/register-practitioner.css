@@ -112,6 +112,12 @@
   transition: opacity var(--dur-base) var(--ease-standard);
 }
 
+.registro-foto__label-btn--secundario {
+  background-color: transparent;
+  color: var(--brand-primary);
+  border: 1px solid var(--brand-primary);
+}
+
 .registro-foto__label-btn:hover {
   opacity: 0.9;
 }

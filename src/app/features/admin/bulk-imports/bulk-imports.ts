@@ -67,6 +67,7 @@ import {
   type FalloDeCarga,
   type Rotulo,
 } from './bulk-imports-labels';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** Cada cuánto se vuelve a pedir un lote que sigue en cola o procesándose. */
 export const INTERVALO_DE_AVANCE_MS = 2_000;
@@ -130,7 +131,7 @@ const comoTexto = (valor: string | number | null): string => (valor === null ? '
  */
 @Component({
   selector: 'app-bulk-imports',
-  imports: [
+  imports: [DateStringPicker, 
     DatePipe,
     NgTemplateOutlet,
     AppButton,

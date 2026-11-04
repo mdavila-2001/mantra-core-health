@@ -23,6 +23,7 @@ import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -81,7 +82,7 @@ export interface ReviewDialogConfig {
  */
 @Component({
   selector: 'app-admission-review-dialog',
-  imports: [Alert, AppButton, ContentDialog, FormField, Input, Textarea],
+  imports: [DateStringPicker, Alert, AppButton, ContentDialog, FormField, Input, Textarea],
   templateUrl: './admission-review-dialog.html',
   styleUrl: './admission-review-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -174,8 +175,8 @@ export class AdmissionReviewDialog {
     this.assigneeId.set((event.target as HTMLSelectElement).value);
   }
 
-  protected onDate(event: Event): void {
-    this.consultedAt.set((event.target as HTMLInputElement).value);
+  protected onDate(value: string | number | null): void {
+    this.consultedAt.set(String(value ?? ''));
   }
 
   protected submit(): void {
