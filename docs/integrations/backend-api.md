@@ -518,7 +518,7 @@ extensibilidad (`extension_target_policies.maximumFields`) dice cuántos campos
 propios admite ese target, y la pantalla lo consulta para no ofrecer un alta que
 el backend va a rechazar.
 
-### `AuthzClient` — 5 operaciones
+### `AuthzClient` — 8 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -526,7 +526,10 @@ el backend va a rechazar.
 | `GET` | `/authz/legal-representations` | — |
 | `POST` | `/authz/care-relationships/:id/respond` | `AccessRequests` y 2 pantallas más | No |
 | `POST` | `/authz/care-relationships/request` | `AccessRequests` y 2 pantallas más | No |
-| `GET` | `/authz/care-relationships/requests/mine` | `AccessRequests` y 2 pantallas más | No |
+| `GET` | `/authz/me/access-requests` | `AccessRequests` (paciente) | No |
+| `GET` | `/authz/practitioners/me/access-requests` | `AccessRequests` (profesional), `ChartAccessScope` | No |
+| `POST` | `/authz/me/primary-practitioner-requests` | — (la ficha del médico todavía no expone su organización) | No |
+| `POST` | `/authz/practitioners/me/care-relationships/:id/respond` | `AccessRequests` (profesional) | No |
 
 No son permisos: son el **motivo** por el que alguien puede mirar la historia de
 otra persona. El PDP los consume; la interfaz sólo los muestra.
@@ -1813,6 +1816,9 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/consent/me/hipaa-authorizations` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/consent/me/objections` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/consent/me/treatment-informed-consents` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/practitioner-access-requests` | [`PractitionerAccessClient`](../../src/app/core/data-access/consent/practitioner-access.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/practitioner-access-requests/:id/decision` | [`PractitionerAccessClient`](../../src/app/core/data-access/consent/practitioner-access.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/practitioner-access-requests/:id/revoke` | [`PractitionerAccessClient`](../../src/app/core/data-access/consent/practitioner-access.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/diagnostic-results/me/:reportId/files/:fileId/content` | [`DiagnosticsClient`](../../src/app/core/data-access/diagnostics/diagnostics.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/diagnostics/lab/categories` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/diagnostics/lab/categories` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |

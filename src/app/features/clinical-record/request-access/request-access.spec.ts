@@ -7,6 +7,8 @@ import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthzClient } from '../../../core/data-access/authz/authz.client';
+import { PractitionerAccessClient } from '../../../core/data-access/consent/practitioner-access.client';
+import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -15,12 +17,13 @@ import { RequestAccess } from './request-access';
 /**
  * Pedir el vínculo de cuidado con un paciente para ver su expediente. Pedir no
  * da acceso (decide el paciente). Se fija el contrato del pedido —tenant
- * activo, paciente de la URL, motivo sólo si se escribió— y que cada rechazo
- * de la API tenga su explicación.
+ * activo, paciente de la URL, motivo sólo si se escribió, cabecera o por
+ * especialidad— y que cada rechazo de la API tenga su explicación.
  */
 describe('RequestAccess', () => {
   let fixture: ComponentFixture<RequestAccess>;
   let requestCareRelationship: ReturnType<typeof vi.fn>;
+  let requestAccess: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let success: ReturnType<typeof vi.fn>;
   const tenant = signal<string | null>('t-1');
@@ -51,15 +54,30 @@ describe('RequestAccess', () => {
     fixture.detectChanges();
   }
 
+  async function elegir(alcance: 'CABECERA' | 'GRANULAR'): Promise<void> {
+    root().querySelector<HTMLElement>(`[data-testid="segmentado-${alcance}"]`)!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
   beforeEach(() => {
     tenant.set('t-1');
     requestCareRelationship = vi.fn(() => of({}));
+    requestAccess = vi.fn(() => of(undefined));
     navigate = vi.fn(async () => true);
     success = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthService, useValue: { activeTenantId: tenant } },
         { provide: AuthzClient, useValue: { requestCareRelationship } },
+        { provide: PractitionerAccessClient, useValue: { requestAccess } },
+        {
+          provide: MedicalSpecialtiesCatalog,
+          useValue: {
+            listar: () => of([{ conceptId: 'c-card', display: 'Cardiología' }, { conceptId: 'c-neuro', display: 'Neurología' }]),
+            olvidar: vi.fn(),
+          },
+        },
         { provide: ProfilesClient, useValue: { getPatient: vi.fn(() => of({ displayName: 'Ana Pérez' })) } },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
         { provide: ToastService, useValue: { success, error: vi.fn() } },
@@ -75,30 +93,66 @@ describe('RequestAccess', () => {
     expect(root().textContent).toContain('Pedir NO le da acceso todavía');
   });
 
-  it('envía tenant y paciente; sin motivo no manda reasonText; vuelve a la historia clínica', async () => {
+  it('sin elegir qué pide no deja pedir', async () => {
     await pintar();
+    expect(boton().getAttribute('aria-disabled')).toBe('true');
+    await pedir();
+    expect(requestCareRelationship).not.toHaveBeenCalled();
+    expect(requestAccess).not.toHaveBeenCalled();
+  });
+
+  it('cabecera: envía tenant, paciente y PRIMARY; sin motivo no manda reasonText; vuelve a la historia clínica', async () => {
+    await pintar();
+    await elegir('CABECERA');
     await pedir();
 
-    expect(requestCareRelationship).toHaveBeenCalledWith({ tenantId: 't-1', patientProfileId: 'pac-1' });
+    expect(requestCareRelationship).toHaveBeenCalledWith({
+      tenantId: 't-1',
+      patientProfileId: 'pac-1',
+      relationshipType: 'PRIMARY',
+    });
+    expect(requestAccess).not.toHaveBeenCalled();
     expect(success).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/medical-records']);
   });
 
   it('el motivo viaja recortado', async () => {
     await pintar();
+    await elegir('CABECERA');
     await escribirMotivo('  seguimiento de una derivación  ');
     await pedir();
 
     expect(requestCareRelationship).toHaveBeenCalledWith({
       tenantId: 't-1',
       patientProfileId: 'pac-1',
+      relationshipType: 'PRIMARY',
       reasonText: 'seguimiento de una derivación',
     });
+  });
+
+  it('por especialidad: exige al menos una y manda el pedido granular, no el vínculo', async () => {
+    await pintar();
+    await elegir('GRANULAR');
+    expect(boton().getAttribute('aria-disabled')).toBe('true');
+
+    const casillas = root().querySelectorAll<HTMLInputElement>('[data-testid="request-access-specialties"] input');
+    expect(casillas).toHaveLength(2);
+    casillas[1]!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await pedir();
+
+    expect(requestAccess).toHaveBeenCalledWith({ patientProfileId: 'pac-1', specialtyConceptIds: ['c-neuro'] });
+    expect(requestCareRelationship).not.toHaveBeenCalled();
+    expect(success).toHaveBeenCalledWith('Solicitud enviada. El paciente va a decidir qué especialidades le autoriza.');
+    expect(navigate).toHaveBeenCalledWith(['/medical-records']);
   });
 
   it('sin organización activa no deja pedir y explica qué hacer', async () => {
     tenant.set(null);
     await pintar();
+    // With a scope chosen, the only thing missing is the organization.
+    await elegir('CABECERA');
 
     expect(boton().getAttribute('aria-disabled')).toBe('true');
     expect(root().textContent).toContain('Elija una organización');
@@ -108,6 +162,7 @@ describe('RequestAccess', () => {
 
   it('sin paciente en la URL no deja pedir', async () => {
     await pintar('');
+    await elegir('CABECERA');
     expect(boton().getAttribute('aria-disabled')).toBe('true');
     await pedir();
     expect(requestCareRelationship).not.toHaveBeenCalled();
@@ -118,6 +173,7 @@ describe('RequestAccess', () => {
       throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '' } })),
     );
     await pintar();
+    await elegir('CABECERA');
     await pedir();
 
     expect(root().textContent).toContain('Ya existe una solicitud pendiente o un vínculo activo');
@@ -134,6 +190,7 @@ describe('RequestAccess', () => {
       throwError(() => new HttpErrorResponse({ status: 409, error: { code: 'CONFLICT', message: '', reason } })),
     );
     await pintar();
+    await elegir('CABECERA');
     await pedir();
 
     expect(root().textContent).toContain(dice);
@@ -151,6 +208,7 @@ describe('RequestAccess', () => {
       )
       .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: null })));
     await pintar();
+    await elegir('CABECERA');
     await pedir();
     expect(root().textContent).toContain('Ya pidió la vinculación');
 
@@ -168,6 +226,7 @@ describe('RequestAccess', () => {
       throwError(() => new HttpErrorResponse({ status, error: code ? { code, message: '' } : null })),
     );
     await pintar();
+    await elegir('CABECERA');
     await pedir();
 
     expect(root().textContent).toContain(mensaje);
