@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { concat, map, type Observable, toArray } from 'rxjs';
 
@@ -20,7 +19,6 @@ import type {
   LabOrder,
   LabOrderAction,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
-import { readApiError } from '../../../core/http/api-error';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -40,8 +38,10 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { formatBytes } from '../file-size';
 import { filesFromInput } from '../results/picked-files';
 import { ResultUploadQueue, type UploadItem } from '../results/result-upload-queue';
+import { ACCEPT_ATTRIBUTE } from '../results/upload-rules';
 import {
   actionsOf,
+  apiMessageOf,
   disabledAll,
   ORDER_STATUS_BADGE,
   ORDER_TAB_LABELS,
@@ -123,6 +123,7 @@ export class LaboratoryOrders {
   protected readonly tabs = ORDER_TABS;
   protected readonly labels = ORDER_TAB_LABELS;
   protected readonly formatBytes = formatBytes;
+  protected readonly acceptedFormats = ACCEPT_ATTRIBUTE;
   protected readonly actionsOf = actionsOf;
   protected readonly disabledAll = disabledAll;
 
@@ -269,7 +270,7 @@ export class LaboratoryOrders {
       },
       error: (error: unknown) => {
         this.busyOrderId.set(null);
-        this.actionError.set(messageOf(error, 'No pudimos cambiar el estado de la orden.'));
+        this.actionError.set(apiMessageOf(error, 'No pudimos cambiar el estado de la orden.'));
         // Un 409 quiere decir que el estado cambió por otro lado: se relee.
         this.load();
       },
@@ -282,7 +283,8 @@ export class LaboratoryOrders {
     const orderId = this.uploadOrderId;
     input.value = '';
     if (picked.length === 0 || orderId === null) return;
-    this.queue.add(picked, { orderId, note: null, notify: true });
+    const refused = this.queue.add(picked, { orderId, note: null, notify: true });
+    if (refused.length > 0) this.actionError.set(refused.map((r) => r.message).join(' '));
   }
 
   private download(order: LabOrder): void {
@@ -294,7 +296,7 @@ export class LaboratoryOrders {
         next: () => this.busyOrderId.set(null),
         error: (error: unknown) => {
           this.busyOrderId.set(null);
-          this.actionError.set(messageOf(error, 'No pudimos descargar los resultados.'));
+          this.actionError.set(apiMessageOf(error, 'No pudimos descargar los resultados.'));
         },
       });
   }
@@ -312,12 +314,4 @@ export class LaboratoryOrders {
       }),
     );
   }
-}
-
-function messageOf(error: unknown, fallback: string): string {
-  if (error instanceof HttpErrorResponse) {
-    const message = readApiError(error)?.message;
-    if (message !== undefined && message !== '') return message;
-  }
-  return fallback;
 }

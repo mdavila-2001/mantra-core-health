@@ -11,7 +11,7 @@
     }
   </div>
 
-  <app-lab-block-state [state]="state()" subject="los resultados pendientes" skeletonHeight="14rem" note="Salen de la lista de órdenes: al reintentar se vuelve a pedir esa lista." (retry)="retry.emit()">
+  <app-lab-block-state [state]="state()" subject="los resultados pendientes" note="Salen de la lista de órdenes: al reintentar se vuelve a pedir esa lista." (retry)="retry.emit()">
     @if (data(); as d) {
       <ul class="rows" data-testid="lab-home-pending-list">
         @for (order of d.items; track order.orderId) {
@@ -37,7 +37,7 @@
       </ul>
       @if (d.total > d.items.length) {
         <p class="note">
-          <a class="more" [routerLink]="ordersRoute" [queryParams]="uploadParams">
+          <a class="more" data-testid="lab-home-pending-more" [routerLink]="ordersRoute" [queryParams]="uploadParams">
             Y {{ d.total - d.items.length }} más esperando su archivo
           </a>
         </p>
@@ -48,10 +48,16 @@
   @if (footer(); as f) {
     <div card-footer class="footer">
       <p class="footer__line">
-        <strong data-testid="summary-result-files">{{ f.count }}</strong>
-        {{ f.count === 1 ? 'resultado subido' : 'resultados subidos' }}
+        <span class="footer__count">
+          <strong data-testid="summary-result-files">{{ f.count }}</strong>
+          {{ f.count === 1 ? 'resultado subido' : 'resultados subidos' }}
+        </span>
         @if (f.last) {
-          <span data-testid="summary-activity"> · último: {{ f.last }}</span>
+          <span class="footer__last" data-testid="summary-activity">
+            <span class="footer__sep" aria-hidden="true">· </span>
+            <span class="footer__label">último: </span>
+            <span class="footer__name">{{ f.last }}</span>
+          </span>
         }
       </p>
     </div>

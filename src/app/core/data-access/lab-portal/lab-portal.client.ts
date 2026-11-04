@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { type Observable } from 'rxjs';
+import { EMPTY, expand, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
@@ -25,6 +25,10 @@ import type {
   LabServiceQuery,
   LabSummary,
 } from './lab-portal.types';
+
+/** The API caps `limit` at 500; asking for the cap keeps the page count low. */
+const ORDER_PAGE_SIZE = 500;
+const MAX_ORDER_PAGES = 20;
 
 /**
  * El cliente del portal de la cuenta de laboratorio: su catálogo de servicios,
@@ -104,9 +108,27 @@ export class LabPortalClient {
 
   /* ---- órdenes ---------------------------------------------------------- */
 
-  /** Todas las órdenes del laboratorio con su estado; las pestañas filtran en pantalla. */
+  /**
+   * Every order of the lab with its status (the tabs filter on screen). The API
+   * pages the list, so this follows `nextCursor` up to `MAX_ORDER_PAGES` pages
+   * and returns one merged page: `count` is the lab's total and a `nextCursor`
+   * left over means the cap was hit.
+   */
   listOrders(): Observable<LabOrderPage> {
-    return this.http.get<LabOrderPage>(this.url('/diagnostics/lab/orders'));
+    const fetchPage = (cursor?: string) =>
+      this.http.get<LabOrderPage>(this.url('/diagnostics/lab/orders'), {
+        params: parametros({ limit: ORDER_PAGE_SIZE, cursor }),
+      });
+    return fetchPage().pipe(
+      expand((page, index) =>
+        page.nextCursor !== undefined && index + 1 < MAX_ORDER_PAGES ? fetchPage(page.nextCursor) : EMPTY,
+      ),
+      reduce((all, page) => ({
+        items: [...all.items, ...page.items],
+        count: all.count,
+        nextCursor: page.nextCursor,
+      })),
+    );
   }
 
   /**

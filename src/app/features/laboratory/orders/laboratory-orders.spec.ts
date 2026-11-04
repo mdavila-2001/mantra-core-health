@@ -169,6 +169,36 @@ describe('LaboratoryOrders', () => {
     expect(internal().busyOrderId()).toBeNull();
   });
 
+  it('un 422 en un paso (p. ej. rechazar en imagenología) muestra el mensaje de la API y relee la lista', () => {
+    transitionOrder.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: {
+              statusCode: 422,
+              code: 'VALIDATION_FAILED',
+              message: 'Una orden de imagenología no se puede rechazar.',
+              timestamp: '2026-11-04T00:00:00Z',
+              path: '/diagnostics/lab/orders/b/transitions',
+            },
+          }),
+      ),
+    );
+    create();
+    listOrders.mockClear();
+
+    internal().run('process', ORDERS[1]!);
+    fixture.detectChanges();
+
+    expect(internal().actionError()).toBe('Una orden de imagenología no se puede rechazar.');
+    expect(host().querySelector('[data-testid="lab-orders-error"]')?.textContent).toContain(
+      'Una orden de imagenología no se puede rechazar.',
+    );
+    expect(success).not.toHaveBeenCalled();
+    expect(listOrders).toHaveBeenCalledTimes(1);
+  });
+
   it('no manda una segunda acción mientras la primera está en vuelo', () => {
     let finish: (() => void) | undefined;
     transitionOrder.mockReturnValue({
@@ -213,6 +243,26 @@ describe('LaboratoryOrders', () => {
     expect(internal().table().status).not.toBe('ready');
     expect(internal().table().status).not.toBe('loading');
   });
+  it('un archivo que la API rechazaría no se sube: la pantalla dice cuál y por qué', () => {
+    create();
+    internal().run('upload', ORDERS[2]!);
+    const input = host().querySelector<HTMLInputElement>('[data-testid="lab-orders-file-input"]')!;
+    const grande = new File(['x'], 'informe.pdf');
+    Object.defineProperty(grande, 'size', { value: 11 * 1024 * 1024 });
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['x'], 'eco.mp4', { type: 'video/mp4' }), grande],
+    });
+
+    input.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    const error = host().querySelector('[data-testid="lab-orders-error"]')!.textContent!;
+    expect(error).toContain('eco.mp4: formato no admitido');
+    expect(error).toContain('informe.pdf: pesa 11,0 MB y supera el máximo de 10 MB.');
+    expect(host().querySelector('[data-testid="lab-orders-uploads"]')).toBeNull();
+  });
+
   it('mientras se sube, el panel dice a qué orden va y muestra el avance; al terminar cambia el título', () => {
     const items = signal<readonly UploadItem[]>([
       {

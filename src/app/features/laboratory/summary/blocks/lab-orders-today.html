@@ -1,7 +1,7 @@
 <app-card padding="lg" data-testid="lab-home-orders">
   <app-section-heading card-header icono="orders" titulo="Órdenes de hoy" />
 
-  <app-lab-block-state [state]="state()" subject="las órdenes" skeletonHeight="15rem" (retry)="retry.emit()">
+  <app-lab-block-state [state]="state()" subject="las órdenes" skeleton="orders" (retry)="retry.emit()">
     @if (data(); as d) {
       <div class="orders">
         <ul class="tiles" aria-label="Órdenes por paso">

@@ -145,7 +145,13 @@ export function registrarOrdenesDeLaboratorio(
       .sort(
         (a, b) => b.requestedAt.localeCompare(a.requestedAt) || a.orderId.localeCompare(b.orderId),
       );
-    return { items, count: items.length };
+    // Same shape as the API: `count` is the lab's total, `limit` defaults to 100
+    // (max 500) and `cursor` is the offset of the next page.
+    const limit = Math.min(Math.max(Number(request.query.get('limit')) || 100, 1), 500);
+    const from = Math.max(Number(request.query.get('cursor')) || 0, 0);
+    const page = items.slice(from, from + limit);
+    const nextCursor = from + limit < items.length ? String(from + limit) : undefined;
+    return { items: page, count: items.length, ...(nextCursor === undefined ? {} : { nextCursor }) };
   });
 
   router.post('/diagnostics/lab/orders/:orderId/transitions', (request) => {

@@ -48,6 +48,27 @@ describe('handlers del portal de laboratorio', () => {
     expect(page.items.every((i) => i.patientName !== null && i.orderLabel !== null)).toBe(true);
   });
 
+  it('las órdenes se paginan como la API: count es el total y nextCursor lleva a la siguiente página', () => {
+    interface Pagina {
+      items: { orderId: string }[];
+      count: number;
+      nextCursor?: string;
+    }
+    const todas = cuerpo<Pagina>(pedir('GET', '/diagnostics/lab/orders'));
+    expect(todas.nextCursor).toBeUndefined();
+    expect(todas.count).toBe(todas.items.length);
+
+    const primera = cuerpo<Pagina>(pedir('GET', '/diagnostics/lab/orders', {}, laboratorio, new URLSearchParams({ limit: '2' })));
+    expect(primera.items).toHaveLength(2);
+    expect(primera.count).toBe(todas.count);
+    expect(primera.nextCursor).toBeDefined();
+
+    const segunda = cuerpo<Pagina>(
+      pedir('GET', '/diagnostics/lab/orders', {}, laboratorio, new URLSearchParams({ limit: '2', cursor: primera.nextCursor! })),
+    );
+    expect([...primera.items, ...segunda.items].map((o) => o.orderId)).toEqual(todas.items.slice(0, 4).map((o) => o.orderId));
+  });
+
   it('una cuenta que no es de laboratorio no ve nada (403)', () => {
     expect(estado(pedir('GET', '/diagnostics/lab/result-files', {}, farmacia))).toBe(403);
     expect(estado(pedir('POST', '/diagnostics/lab/result-uploads', { fileName: 'x.pdf', contentType: '', sizeBytes: 1 }, farmacia))).toBe(403);
