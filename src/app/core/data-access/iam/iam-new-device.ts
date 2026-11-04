@@ -71,3 +71,18 @@ export interface MyNetwork {
   /** Cuántos saltos de proxy de confianza tiene configurados el servidor (`TRUST_PROXY_HOPS`). */
   readonly trustProxyHops: number;
 }
+
+/** `GET /iam/me/devices` — a device the account signed in from. */
+export interface MyDevice {
+  readonly id: string;
+  /** «Chrome en Windows». */
+  readonly name: string;
+  readonly platform?: 'WEB' | 'IOS' | 'ANDROID';
+  /** Verified by the owner (e-mailed code or another trusted device). */
+  readonly trusted: boolean;
+  /** The device of this very session. */
+  readonly current: boolean;
+  readonly activeSessions: number;
+  readonly lastSeenAt?: Date;
+  readonly createdAt: Date;
+}
