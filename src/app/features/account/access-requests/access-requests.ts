@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -51,6 +51,8 @@ export class AccessRequests {
   private readonly toasts = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+  /** Inside «Mis solicitudes» (as its tab): the host page owns the header. */
+  readonly embebido = input(false);
   protected readonly cargando = signal(true);
   protected readonly solicitudes = signal<readonly SolicitudEnPantalla[]>([]);
   protected readonly especialidades = signal<readonly { id: string; nombre: string }[]>([]);
