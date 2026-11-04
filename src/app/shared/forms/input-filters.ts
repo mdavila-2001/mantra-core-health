@@ -23,17 +23,28 @@ export function soloLetrasYNumeros(valor: string): string {
   return valor.replace(/[^\p{L}\p{M}\p{Nd}]/gu, '');
 }
 
+/** Drops what `prohibidos` matches, leading symbols and every symbol right after another one. */
+function tramoDeCorreo(texto: string, prohibidos: RegExp): string {
+  return texto
+    .replace(prohibidos, '')
+    .replace(/^[._-]+/, '')
+    .replace(/([._-])[._-]+/g, '$1');
+}
+
 /**
- * An email address as it is typed: only ASCII letters, digits and `. _ + -`,
- * plus a single `@`. Spaces, accents and any other symbol (`* [ ] ( ) , ; …`)
- * never reach the field, not even when pasted.
+ * An email address as it is typed: ASCII letters and digits, with `.`, `_` or
+ * `-` only between them (never first, never two in a row), and a single `@`
+ * after at least one letter or digit. The domain takes only `.` and `-`.
+ * Spaces, accents, `+` and any other symbol never reach the field, not even
+ * when pasted: `---++++-++--+++++` leaves it empty.
  */
 export function soloCaracteresDeCorreo(valor: string): string {
-  const limpio = valor.replace(/[^A-Za-z0-9._+@-]/g, '');
-  const arroba = limpio.indexOf('@');
-  return arroba < 0
-    ? limpio
-    : limpio.slice(0, arroba + 1) + limpio.slice(arroba + 1).replace(/@/g, '');
+  const arroba = valor.indexOf('@');
+  const local = tramoDeCorreo(arroba < 0 ? valor : valor.slice(0, arroba), /[^A-Za-z0-9._-]/g);
+  if (arroba < 0) return local;
+  const usuario = local.replace(/[._-]+$/, '');
+  if (usuario === '') return '';
+  return `${usuario}@${tramoDeCorreo(valor.slice(arroba + 1), /[^A-Za-z0-9.-]/g)}`;
 }
 
 /** The typing filter a paginated-form field gets (see `FieldDef.soloLetras`). */

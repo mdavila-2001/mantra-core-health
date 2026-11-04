@@ -27,9 +27,9 @@ export function esCorreoComoLaApi(correo: string): boolean {
 
 /**
  * Strict email for self-registration (same rule as the API's `IsStrictEmail`):
- * local part of ASCII letters, digits and `. _ + -`, without a leading or
- * trailing dot nor two dots in a row; domain labels of letters, digits and
- * inner hyphens; a TLD of 2+ letters. No spaces nor other symbols anywhere.
+ * the local part is ASCII letters and digits, with single `.`, `_` or `-` only
+ * between them (no leading, trailing or repeated symbols, no `+`); domain
+ * labels of letters and digits with inner single hyphens; a TLD of 2+ letters.
  */
 export const CORREO_ESTRICTO =
-  /^(?!\.)(?!.*\.\.)[A-Za-z0-9._+-]+(?<!\.)@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/;
+  /^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*@[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*(?:\.[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)*\.[A-Za-z]{2,}$/;
