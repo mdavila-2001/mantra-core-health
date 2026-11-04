@@ -1,0 +1,36 @@
+<app-form-field icon="tag" label="Tema o especialidad" hint="Clasificación temática en el directorio">
+  <app-tree-select
+    [groups]="groups()"
+    [value]="choice()"
+    (valueChange)="choose($event)"
+    dialogTitle="Elija el tema del grupo"
+    searchPlaceholder="Buscar especialidad o tema…"
+    placeholder="Sin tema específico · General"
+    data-testid="group-topic-picker"
+  />
+</app-form-field>
+
+@if (creating()) {
+  <app-form-field
+    icon="labels"
+    label="Nombre del tema propio"
+    hint="Queda en «Temas propios» para toda la organización"
+    [required]="true"
+    [errorMessage]="error()"
+  >
+    <app-input [(value)]="newName" placeholder="Ej. Medicina del viajero" data-testid="group-topic-new-name" />
+  </app-form-field>
+  <div class="topic-picker__actions">
+    <button app-button variant="ghost" size="sm" (clicked)="cancelCreate()">Cancelar</button>
+    <button
+      app-button
+      size="sm"
+      [disabled]="!canCreate()"
+      [isLoading]="saving()"
+      (clicked)="create()"
+      data-testid="group-topic-create"
+    >
+      Crear tema
+    </button>
+  </div>
+}

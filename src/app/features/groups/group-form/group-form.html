@@ -23,17 +23,7 @@
       <app-input [value]="slug()" [disabled]="true" />
     </app-form-field>
 
-    <app-form-field
-      icon="tag"
-      label="Tema o especialidad"
-      hint="Clasificación temática en el directorio"
-    >
-      <app-select
-        [options]="topicOptions()"
-        [value]="topicId()"
-        (valueChange)="topicId.set($event)"
-      />
-    </app-form-field>
+    <app-group-topic-picker [temas]="temas()" [(value)]="topicId" />
 
     <app-form-field icon="tag" label="Tipo de grupo" hint="Finalidad del espacio">
       <app-select

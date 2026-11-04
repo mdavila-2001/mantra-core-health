@@ -75,19 +75,15 @@
     />
 
     @if (temas().length > 0) {
-      <div class="grupos__temas" role="group" aria-label="Filtrar por tema">
-        @for (tema of temas(); track tema.id) {
-          <button
-            app-button
-            size="sm"
-            [variant]="temaElegido() === tema.id ? 'primary' : 'outline'"
-            [attr.aria-pressed]="temaElegido() === tema.id"
-            (clicked)="filtrarPorTema(tema.id)"
-          >
-            {{ tema.name }}
-          </button>
-        }
-      </div>
+      <app-tree-select
+        class="grupos__temas"
+        [groups]="temasFiltro()"
+        [value]="temaElegido() ?? ''"
+        (valueChange)="filtrarPorTema($event ?? '')"
+        dialogTitle="Filtrar por tema"
+        searchPlaceholder="Buscar especialidad o tema…"
+        aria-label="Filtrar por tema"
+      />
     }
   </div>
 

@@ -883,7 +883,7 @@ export function registrarComunidad(router: MockRouter): void {
   /* ---- grupos y temas ------------------------------------------------------- */
 
   router.get('/community/topics', () => ({ items: THEMES, count: THEMES.length, limit: 50 }));
-
+  router.post('/community/topics', (request) => ({ id: nuevoId('topic'), code: 'PROPIO', name: cuerpo<{ name: string }>(request).name ?? '', parentTopicId: uuid('topic-cat-propios') }));
   router.get('/community/groups', ({ query }) => {
     const q = texto(query, 'q');
     const topicId = texto(query, 'topicId');
