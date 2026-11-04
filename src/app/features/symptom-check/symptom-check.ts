@@ -7,7 +7,6 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { SpecialtyImages } from '../../core/data-access/terminology/specialty-images.service';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap, timer, type Observable } from 'rxjs';
@@ -23,11 +22,9 @@ import {
 } from '@core/symptom-notes/symptom-observations.store';
 import { BODY_ZONES, type BodyZone } from './zones.data';
 import { bodyPartsIn, withNamedParts } from './body-parts';
-import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Chip } from '@shared/components/atoms/chip/chip';
-import { SpecialtyIcon } from '@shared/components/atoms/specialty-icon/specialty-icon';
 import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
@@ -47,7 +44,6 @@ import {
   glossaryCode,
   nameForShow,
   enumerate,
-  explain,
   normalizar,
   preheat,
   recognize,
@@ -60,6 +56,7 @@ import {
   SYMPTOMS_ALL,
 } from './symptoms';
 import { Dictation } from './dictation';
+import { SymptomRecommendations } from './symptom-recommendations/symptom-recommendations';
 import {
   combine,
   currentReading,
@@ -136,23 +133,20 @@ const VACIO: ReadonlyMap<string, string> = new Map();
     AppButtonLink,
     Alert,
     AppButton,
-    Badge,
     BodyMap,
     Card,
     Chip,
     EmergencyPanel,
     FormField,
     RouterLink,
-    SpecialtyIcon,
     Spinner,
+    SymptomRecommendations,
     Textarea,
   ],
   templateUrl: './symptom-check.html',
   // El dictado vive y muere con la pantalla: ver `Dictado`.
   providers: [Dictation],
-  // La tarjeta de especialidad es la del buscador de `/directory` (27/10/2026):
-  // primero la hoja compartida, después la propia, para que la propia ajuste.
-  styleUrls: ['../../shared/styles/card-grid.css', './symptom-check.css'],
+  styleUrls: ['./symptom-check.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SymptomCheck {
@@ -536,11 +530,6 @@ export class SymptomCheck {
     }
     return `Reconocimos: ${nombres.join(', ')}.`;
   });
-
-  protected readonly explicacionDe = explain;
-
-  /** La foto de la tarjeta: la misma que esa especialidad tiene en `/directory`. */
-  protected readonly fotoDe = inject(SpecialtyImages).of;
 
   /* --- Elegir sin escribir ---------------------------------------------- */
 

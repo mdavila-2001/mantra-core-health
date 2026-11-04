@@ -1,0 +1,150 @@
+/* Manual carousel over the shared card grid. The track is one row that scrolls
+   sideways; cards are narrower than the track so the next one always peeks,
+   which is the main cue that there is more content. */
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.carrusel {
+  position: relative;
+}
+
+.carrusel__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+
+.carrusel__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.carrusel__controles {
+  display: flex;
+  margin-inline-start: auto;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.carrusel__contador {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.carrusel__flecha {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 50%;
+  background: var(--bg-surface);
+  color: var(--brand-primary);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+
+.carrusel__flecha:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+}
+
+.carrusel__flecha:disabled {
+  color: var(--text-muted);
+  cursor: default;
+  opacity: 0.45;
+}
+
+.carrusel__flecha svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* One row, scroll-snapped. About 2.25 cards fit on wide tracks and never more
+   than 82% of the track on a phone, so a clear slice of the next card shows. */
+.carrusel__pista {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: min(82%, max(15rem, calc((100% - var(--sp-3)) / 2.25)));
+  margin: 0;
+  padding-block: var(--sp-1) var(--sp-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0;
+  scrollbar-width: thin;
+}
+
+.carrusel__item {
+  scroll-snap-align: start;
+  min-inline-size: 0;
+}
+
+/* Edge fade on the side that still has content, hidden once the end is reached. */
+.carrusel::after {
+  position: absolute;
+  inset-block: 3.5rem var(--sp-2);
+  inset-inline-end: 0;
+  inline-size: 3rem;
+  background: linear-gradient(to right, transparent, var(--bg-surface));
+  content: '';
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+.carrusel--final::after {
+  opacity: 0;
+}
+
+/* Wraps so the badge drops below the icon instead of crossing the card padding. */
+.carrusel__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.carrusel__cabeza app-badge {
+  max-inline-size: 100%;
+}
+
+/* The first card is the recommended one: brand border plus the worded badge,
+   so it does not depend on colour alone. */
+.carrusel__tarjeta--primera {
+  border-color: var(--brand-primary);
+}
+
+.carrusel__accion {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-2);
+  color: var(--brand-primary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carrusel__pista {
+    scroll-behavior: auto;
+  }
+
+  .carrusel__flecha,
+  .carrusel::after {
+    transition: none;
+  }
+}
