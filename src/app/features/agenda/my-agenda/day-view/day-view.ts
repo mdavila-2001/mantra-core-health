@@ -28,6 +28,11 @@ import {
 } from '../../../../shared/components/organisms/status-seal/status-seal.types';
 import { statusLabelOf, statusVariantOf } from '../../booking-status';
 import type { BloqueoDelMes } from '../calendar-view.types';
+import type { DayState } from '../day-load';
+import { DayEmptyState } from './day-empty-state/day-empty-state';
+import { DayLoadingNote } from './day-loading-note/day-loading-note';
+import { isWaitingForSlots, summarizeDay } from './day-summary';
+import { nearestBlockKey } from './nearest-block';
 
 export type { EstadoResuelto } from '../calendar-view.types';
 
@@ -254,7 +259,17 @@ const WITH_MAIN_CONTROL: ReadonlySet<BloqueDelDia['tipo']> = new Set([
  */
 @Component({
   selector: 'app-day-view',
-  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, RouterLink, StatusSeal, Tooltip],
+  imports: [
+    AppButton,
+    Badge,
+    DatePipe,
+    DayEmptyState,
+    DayLoadingNote,
+    NgTemplateOutlet,
+    RouterLink,
+    StatusSeal,
+    Tooltip,
+  ],
   templateUrl: './day-view.html',
   styleUrl: './day-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -322,7 +337,10 @@ export class DayView {
     const claves = this.recorribles();
     const pendiente = this.focoPendiente;
     if (pendiente === null || pendiente.dia !== dia) return;
-    if (Date.now() > pendiente.vence) {
+    // While the day loads the wait does not expire: re-arm it (the API may be slow).
+    const loading = this.dayState() === 'loading';
+    if (loading) this.focoPendiente = { ...pendiente, vence: Date.now() + 5000 };
+    else if (Date.now() > pendiente.vence) {
       this.focoPendiente = null;
       return;
     }
@@ -333,20 +351,12 @@ export class DayView {
       return;
     }
     if (claves.length === 0) {
-      this.host.nativeElement.querySelector<HTMLElement>('.dia__vacio button')?.focus();
+      // Loading: wait on the loading container; the effect reruns when `dayState` changes.
+      const target = loading ? '[data-testid="dia-cargando"]' : '.dia__vacio button';
+      this.host.nativeElement.querySelector<HTMLElement>(target)?.focus();
       return;
     }
-    let elegido = claves[0];
-    let distancia = Infinity;
-    for (const b of this.bloques()) {
-      if (!claves.includes(b.clave)) continue;
-      const minuto = b.desde.getHours() * 60 + b.desde.getMinutes();
-      const d = Math.abs(minuto - pendiente.minuto);
-      if (d < distancia) {
-        distancia = d;
-        elegido = b.clave;
-      }
-    }
+    const elegido = nearestBlockKey(this.bloques(), claves, pendiente.minuto);
     this.foco.set(elegido);
     this.enfocarClave(elegido);
   }
@@ -436,12 +446,20 @@ export class DayView {
   readonly visitas = input<readonly VisitaDelDia[]>([]);
 
   /**
-   * Si alguna lectura del día (citas o cupos) falló. Lo decide `my-agenda`,
-   * que es quien anota cada fallo: acá sólo cambia lo que el día **afirma**.
-   * Con la lectura caída, un día vacío no es «No atiende este día» y un cupo
-   * sin cita encima no es «No disponible».
+   * What the day may claim; `my-agenda` decides it. With `error`, or while
+   * `loading` and nothing is drawn from the slots, an empty day is not "No
+   * atiende este día" and an unbooked slot is not "No disponible". `loading`
+   * wins over `error`.
    */
-  readonly incompleteLoad = input<boolean>(false);
+  readonly dayState = input<DayState>('ready');
+
+  /** The day is loading and still draws nothing that comes from its slots. */
+  protected readonly waitingForSlots = computed(() =>
+    isWaitingForSlots(
+      this.dayState(),
+      this.bloques().map((b) => b.tipo),
+    ),
+  );
 
   /** Pidieron hacer algo con una cita. */
   readonly accionPedida = output<PedidoDeAccion>();
@@ -762,7 +780,7 @@ export class DayView {
         // un 409. La regla se aplica donde se dibuja Y donde se crea
         // (`tocar()`), no sólo escondiendo el botón.
         const tomado = cupo.remainingCapacity <= 0;
-        const tipoTomado = this.incompleteLoad() ? 'sin-cargar' : 'no-disponible';
+        const tipoTomado = this.dayState() === 'error' ? 'sin-cargar' : 'no-disponible';
         delDia.push({
           clave: cupo.id,
           desde: cupo.startAt,
@@ -833,31 +851,13 @@ export class DayView {
   });
 
   /** Cuántos turnos tiene tomados, para el encabezado. */
-  protected readonly resumen = computed(() => {
-    if (this.incompleteLoad()) return 'No se pudieron cargar las citas de este día.';
-    const bloques = this.bloques();
-    const cupos = bloques.filter((b) => b.tipo === 'cita' || b.tipo === 'libre');
-    const conCita = bloques.filter((b) => b.tipo === 'cita').length;
-    const ocupados = bloques.filter((b) => b.tipo === 'ocupado').length;
-    if (cupos.length === 0 && ocupados === 0) {
-      const flexible = this.horarioFlexible();
-      return flexible === null
-        ? 'No atiende este día.'
-        : `Horario flexible de ${flexible}: sin citas pedidas todavía.`;
-    }
-    const partes: string[] = [];
-    if (cupos.length > 0) {
-      partes.push(
-        conCita === 0
-          ? `${cupos.length} horarios publicados, ninguno reservado`
-          : `${conCita} de ${cupos.length} horarios reservados`,
-      );
-    }
-    if (ocupados > 0) {
-      partes.push(`${ocupados} ${ocupados === 1 ? 'rato ocupado' : 'ratos ocupados'}`);
-    }
-    return `${partes.join(' · ')}.`;
-  });
+  protected readonly resumen = computed(() =>
+    summarizeDay(
+      this.dayState(),
+      this.bloques().map((b) => b.tipo),
+      this.horarioFlexible(),
+    ),
+  );
 
   /**
    * Si a esta persona todavía se le puede marcar la llegada.

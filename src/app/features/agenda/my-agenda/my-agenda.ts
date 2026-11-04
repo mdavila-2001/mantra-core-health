@@ -10,11 +10,13 @@ import {
   PLATFORM_ID,
   signal,
   type OnInit,
+  type WritableSignal,
   type TemplateRef,
   untracked,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Spinner } from '@shared/components/atoms/spinner/spinner';
+import { DayLoad, type DayRead, type DayState } from './day-load';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { calculateSlots } from '../agenda-create/agenda-slots';
 import { concatMap, from, toArray } from 'rxjs';
@@ -567,10 +569,11 @@ export class MyAgenda implements OnInit {
    */
   protected readonly lecturasFallidas = signal<ReadonlyMap<LecturaDeAgenda, string>>(new Map());
 
-  /** Si falló alguna lectura del día: el día no afirma «No atiende» ni «No disponible». */
-  protected readonly dayLoadFailed = computed(() => {
+  /** What the day may claim: loading wins over a failure left by a previous turn. */
+  protected readonly dayState = computed<DayState>(() => {
     const fallidas = this.lecturasFallidas();
-    return fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia');
+    if (this.dayLoad.loading()) return 'loading';
+    return fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia') ? 'error' : 'ready';
   });
 
   /** Los mensajes del aviso, sin repetir: sin conexión, todas dicen lo mismo. */
@@ -633,6 +636,7 @@ export class MyAgenda implements OnInit {
   protected readonly diaAbierto = signal<Date | null>(null);
   protected readonly cuposDelDia = signal<readonly AgendaSlot[]>([]);
   protected readonly citasDelDia = signal<readonly Booking[]>([]);
+  protected readonly dayLoad = new DayLoad(this.cuposDelDia, this.citasDelDia);
 
   /* -- Las visitas de laboratorio del doctor (C-13) -------------------------- */
 
@@ -1936,32 +1940,28 @@ export class MyAgenda implements OnInit {
     const hasta = new Date(desde);
     hasta.setDate(hasta.getDate() + 1);
 
-    this.scheduling
-      .listSlots({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
-      .subscribe({
-        next: (pagina) => {
-          this.cuposDelDia.set(pagina.items);
-          this.lecturaRecuperada('cupos-del-dia');
-        },
-        error: (error: unknown) => {
-          this.cuposDelDia.set([]);
-          this.registrarFalloDeLectura('cupos-del-dia', error);
-        },
-      });
+    const query = { resourceId: recurso.id, from: desde, to: hasta, limit: 100 };
+    this.dayLoad.load(
+      desde,
+      this.scheduling.listSlots(query),
+      this.scheduling.searchBookings(query),
+      (slots, bookings) => {
+        this.applyRead('cupos-del-dia', slots, this.cuposDelDia);
+        this.applyRead('citas-del-dia', bookings, this.citasDelDia);
+        if (bookings.ok) this.traducirEstados(bookings.items);
+      },
+    );
+  }
 
-    this.scheduling
-      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: 100 })
-      .subscribe({
-        next: (pagina: { items: readonly Booking[] }) => {
-          this.citasDelDia.set(pagina.items);
-          this.lecturaRecuperada('citas-del-dia');
-          this.traducirEstados(pagina.items);
-        },
-        error: (error: unknown) => {
-          this.citasDelDia.set([]);
-          this.registrarFalloDeLectura('citas-del-dia', error);
-        },
-      });
+  /** Applies one read of the day: its items, or the failure noted for the notice. */
+  private applyRead<T>(
+    read: LecturaDeAgenda,
+    result: DayRead<T>,
+    target: WritableSignal<readonly T[]>,
+  ): void {
+    target.set(result.ok ? result.items : []);
+    if (result.ok) this.lecturaRecuperada(read);
+    else this.registrarFalloDeLectura(read, result.error);
   }
 
   /**
