@@ -91,14 +91,20 @@
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPaciente let-paciente>
   <span class="archivo__nombre">{{ paciente.displayName ?? 'Sin nombre registrado' }}</span>
+  <!-- Homonyms: only the person with an own account can receive a request. -->
+  @if (paciente.hasAccount === false) {
+    <span class="archivo__sin-cuenta" data-testid="paciente-sin-cuenta">
+      Sin cuenta en la plataforma
+    </span>
+  }
 </ng-template>
 
 <!-- El documento y el teléfono, en lugar del código interno y del uuid del
      perfil (propietario, 19/09/2026). Cuando el dato falta se dice con
      palabras: un guion suelto se lee como si el dato fuera ese. -->
 <ng-template #celdaDocumento let-paciente>
-  @if (paciente.nationalId) {
-    <span class="archivo__dato">{{ paciente.nationalId }}</span>
+  @if (paciente.nationalId ?? paciente.nationalIdMasked; as documento) {
+    <span class="archivo__dato">{{ documento }}</span>
   } @else {
     <span class="archivo__sin-dato">Sin documento registrado</span>
   }
@@ -126,17 +132,34 @@
      vinculación» veinte veces seguidas. -->
 <ng-template #celdaAccion let-paciente>
   <div class="archivo__fila-acciones">
-    <a
-      app-button
-      variant="primary"
-      size="sm"
-      [iconOnly]="true"
-      data-testid="paciente-solicitar-vinculacion"
-      [routerLink]="rutaSolicitarAcceso(paciente.profileId)"
-      [attr.aria-label]="'Solicitar la vinculación con ' + nombreDe(paciente)"
-      appTooltip="Solicitar vinculación"
-    >
-      <app-nav-icon name="link" />
-    </a>
+    @if (paciente.hasAccount === false) {
+      <!-- Without an own account the request would reach nobody (the API
+           creates it but cannot notify): say so instead of offering it. -->
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        [iconOnly]="true"
+        [disabled]="true"
+        data-testid="paciente-solicitar-vinculacion-sin-cuenta"
+        [attr.aria-label]="nombreDe(paciente) + ' no tiene cuenta: la solicitud no le llegaría'"
+        appTooltip="Sin cuenta: la solicitud no le llegaría"
+      >
+        <app-nav-icon name="link" />
+      </button>
+    } @else {
+      <a
+        app-button
+        variant="primary"
+        size="sm"
+        [iconOnly]="true"
+        data-testid="paciente-solicitar-vinculacion"
+        [routerLink]="rutaSolicitarAcceso(paciente.profileId)"
+        [attr.aria-label]="'Solicitar la vinculación con ' + nombreDe(paciente)"
+        appTooltip="Solicitar vinculación"
+      >
+        <app-nav-icon name="link" />
+      </a>
+    }
   </div>
 </ng-template>

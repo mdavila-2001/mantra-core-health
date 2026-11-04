@@ -1,0 +1,8 @@
+:host {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.homonimo__texto {
+  margin: 0 0 var(--sp-3);
+}

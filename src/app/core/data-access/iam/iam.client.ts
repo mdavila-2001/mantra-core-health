@@ -715,13 +715,12 @@ export class IamClient {
    * orquestación ni reanudación que hacer.
    */
   assistedRegistration(
-    registration: AssistedPatientRegistration,
+    registration: AssistedPatientRegistration & { readonly allowHomonym?: boolean },
   ): Observable<AssistedRegistrationResult> {
     return this.http
       .post<AssistedRegistrationBody>(this.url('/iam/users/assisted-registration'), {
-        // El nombre viaja en partes y el backend compone el que se muestra: si
-        // el front lo compusiera, la cuenta guardaría una versión y el contrato
-        // otra.
+        // The name travels in parts and the backend composes the visible one:
+        // composing it here would leave the account and the contract disagreeing.
         name: registration.name,
         lastName: registration.lastName,
         ...(registration.middleName === undefined ? {} : { middleName: registration.middleName }),
@@ -737,6 +736,7 @@ export class IamClient {
         ...(registration.legalRepresentativeUserId === undefined
           ? {}
           : { legalRepresentativeUserId: registration.legalRepresentativeUserId }),
+        ...(registration.allowHomonym ? { allowHomonym: true } : {}),
       })
       .pipe(map(toAssistedResult));
   }
