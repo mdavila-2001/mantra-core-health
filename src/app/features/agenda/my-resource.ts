@@ -1,7 +1,11 @@
-import { map, type Observable } from 'rxjs';
+import { catchError, concatMap, first, from, map, of, type Observable } from 'rxjs';
 
 import type { SchedulingClient } from '@core/data-access/scheduling/scheduling.client';
-import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
+import type {
+  AgendaResource,
+  PublishedTemplate,
+  PublishedTemplatePage,
+} from '@core/data-access/scheduling/scheduling.types';
 import type { TenantScope } from '@core/data-access/scheduling/tenant-scope';
 
 /**
@@ -78,4 +82,33 @@ export function agendaResourcesMy(
   return scheduling
     .listResources({ tenantId }, scope)
     .pipe(map((pagina) => pagina.items.filter((r) => r.resourceRefId === practitionerProfileId)));
+}
+
+/** The schedule a template list holds in force: the newest one not retired. */
+export function liveTemplateOf(page: PublishedTemplatePage): PublishedTemplate | null {
+  return page.items.find((template) => !template.retired) ?? null;
+}
+
+/**
+ * The first of these agendas that has a schedule in force, with it.
+ *
+ * Not simply the first agenda: a publication that failed half-way leaves an
+ * empty agenda behind, and opening that one showed a blank form to someone who
+ * already had a schedule. A read that fails counts as «no schedule here».
+ */
+export function agendaWithLiveSchedule(
+  scheduling: SchedulingClient,
+  resources: readonly AgendaResource[],
+  scope?: TenantScope,
+): Observable<{ readonly resource: AgendaResource; readonly template: PublishedTemplate } | null> {
+  return from(resources).pipe(
+    concatMap((resource) =>
+      scheduling.listTemplates(resource.id, scope).pipe(
+        map((page) => liveTemplateOf(page)),
+        catchError(() => of(null)),
+        map((template) => (template === null ? null : { resource, template })),
+      ),
+    ),
+    first((found) => found !== null, null),
+  );
 }

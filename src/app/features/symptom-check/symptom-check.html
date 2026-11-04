@@ -346,6 +346,116 @@
           </div>
         }
       </div>
+
+      <!-- Results go under the free-text box, in the side column, not below the whole figure. -->
+      @if (sintomas().length > 0) {
+        <div class="sintomas__chips">
+          <span class="sintomas__chips-rotulo">Le entendimos</span>
+          @for (sintoma of sintomas(); track sintoma.id) {
+            <!-- Cada chip se puede quitar: un falso positivo no puede quedar
+                 atrapado dentro de la recomendación. -->
+            <!-- Con el término del glosario médico oficial; la forma llana, entre paréntesis. -->
+            <app-chip
+              variant="info"
+              [removable]="true"
+              [label]="nombreParaMostrar(sintoma)"
+              [attr.title]="codigoDelGlosario(sintoma.id)"
+              [attr.data-glossary-code]="codigoDelGlosario(sintoma.id)"
+              data-testid="sintoma-reconocido"
+              (removed)="quitar(sintoma)"
+            >
+              {{ nombreParaMostrar(sintoma) }}
+            </app-chip>
+          }
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="empezarDeNuevo()">
+            Empezar de nuevo
+          </button>
+        </div>
+      }
+
+      @if (sugerencias().length > 0) {
+        <div class="sintomas__sugerencias">
+          <span class="sintomas__chips-rotulo">¿Algo de esto?</span>
+          @for (sintoma of sugerencias(); track sintoma.id) {
+            <button app-button variant="outline" size="sm" type="button" (clicked)="agregar(sintoma)">
+              + {{ sintoma.nombre }}
+            </button>
+          }
+        </div>
+      }
+      @if (alarmas().length === 0) {
+        @if (recomendaciones().length > 0) {
+          <div class="sintomas__recomendaciones">
+            @if (respuestaEmpatica(); as respuesta) {
+              <section class="sintomas__respuesta-ia" role="status" data-testid="sintomas-respuesta-ia">
+                <span class="sintomas__respuesta-ia-rotulo">Una respuesta para usted</span>
+                <p>{{ respuesta }}</p>
+              </section>
+            }
+            @if (sintomas().length === 0) {
+              <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
+                   y la pista para que pruebe de nuevo si quiere. -->
+              <p class="sintomas__sin-coincidencias" role="status" data-testid="sintomas-sin-certeza">
+                No reconocimos un síntoma concreto. Puede probar con otras palabras o tocar una zona de arriba.
+              </p>
+            }
+
+              <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
+              <!-- Pedido del cliente (27/10/2026): la MISMA tarjeta del buscador de
+                   especialidades de `/directory` —foto, ícono, nombre—, de
+                   `shared/styles/card-grid.css`. La tarjeta entera lleva a quién
+                   atiende, como allá; acá suma el porqué, que es lo que hace que la
+                   recomendación no sea una caja negra, y marca por cuál empezar. -->
+              <ul class="rejilla sintomas__rejilla" data-testid="sintomas-recomendaciones">
+                @for (recomendacion of recomendaciones(); track recomendacion.nombre; let primera = $first) {
+                  <li>
+                    <button
+                      type="button"
+                      class="rejilla__tarjeta sintomas__tarjeta"
+                      [class.sintomas__tarjeta--primera]="primera"
+                      [attr.data-testid]="'sintomas-especialidad-' + $index"
+                      [attr.aria-label]="
+                        'Ver quién atiende ' + recomendacion.nombre + '. ' + explicacionDe(recomendacion)
+                      "
+                      (click)="verProfesionales(recomendacion.nombre)"
+                    >
+                      <img class="rejilla__foto" [src]="fotoDe(recomendacion.nombre)" alt="" loading="lazy" />
+                      <span class="sintomas__tarjeta-cabeza">
+                        <app-specialty-icon
+                          class="rejilla__icono"
+                          aria-hidden="true"
+                          [especialidad]="recomendacion.nombre"
+                        />
+                        @if (primera && recomendaciones().length > 1) {
+                          <app-badge variant="primary">Empiece por acá</app-badge>
+                        }
+                      </span>
+                      <span class="rejilla__nombre">{{ recomendacion.nombre }}</span>
+                      <span class="rejilla__resumen">{{ explicacionDe(recomendacion) }}</span>
+                      <span class="sintomas__tarjeta-accion" aria-hidden="true">Ver quién atiende →</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+
+          </div>
+        } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
+          <p class="sintomas__leyendo" role="status" data-testid="sintomas-leyendo">
+            <app-spinner size="sm" decorative />
+            <span>Estamos leyendo lo que escribió… puede tardar unos segundos.</span>
+          </p>
+        } @else if (texto().trim() !== '' && sintomas().length === 0) {
+          <p class="sintomas__sin-coincidencias" role="status">
+            @if (descartados() !== '') {
+              <!-- Leímos el texto y entendimos que lo negaba. Decirlo es lo que evita
+                   que «no reconocimos nada» se lea como «no te leímos». -->
+              Entendimos que <strong>no</strong> tiene {{ descartados() }}. Cuéntenos qué sí siente.
+            } @else {
+              No reconocimos ningún síntoma. Pruebe con palabras más simples, o toque una zona de arriba.
+            }
+          </p>
+        }
+      }
     </div>
   </div>
 
@@ -353,41 +463,6 @@
        recibo para quien mira, y esta región lo es para quien escucha. -->
   <p class="solo-lectores" role="status" aria-live="polite">{{ anuncio() }}</p>
 
-  @if (sintomas().length > 0) {
-    <div class="sintomas__chips">
-      <span class="sintomas__chips-rotulo">Le entendimos</span>
-      @for (sintoma of sintomas(); track sintoma.id) {
-        <!-- Cada chip se puede quitar: un falso positivo no puede quedar
-             atrapado dentro de la recomendación. -->
-        <!-- Con el término del glosario médico oficial; la forma llana, entre paréntesis. -->
-        <app-chip
-          variant="info"
-          [removable]="true"
-          [label]="nombreParaMostrar(sintoma)"
-          [attr.title]="codigoDelGlosario(sintoma.id)"
-          [attr.data-glossary-code]="codigoDelGlosario(sintoma.id)"
-          data-testid="sintoma-reconocido"
-          (removed)="quitar(sintoma)"
-        >
-          {{ nombreParaMostrar(sintoma) }}
-        </app-chip>
-      }
-      <button app-button variant="ghost" size="sm" type="button" (clicked)="empezarDeNuevo()">
-        Empezar de nuevo
-      </button>
-    </div>
-  }
-
-  @if (sugerencias().length > 0) {
-    <div class="sintomas__sugerencias">
-      <span class="sintomas__chips-rotulo">¿Algo de esto?</span>
-      @for (sintoma of sugerencias(); track sintoma.id) {
-        <button app-button variant="outline" size="sm" type="button" (clicked)="agregar(sintoma)">
-          + {{ sintoma.nombre }}
-        </button>
-      }
-    </div>
-  }
   @if (mostrarCrisis()) {
     <!-- ─── Soporte en crisis y líneas de contención (detección o apertura manual) ─── -->
     <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
@@ -547,79 +622,6 @@
     </div>
   }
 
-  @if (alarmas().length === 0) {
-    @if (recomendaciones().length > 0) {
-      <div class="sintomas__recomendaciones">
-        @if (respuestaEmpatica(); as respuesta) {
-          <section class="sintomas__respuesta-ia" role="status" data-testid="sintomas-respuesta-ia">
-            <span class="sintomas__respuesta-ia-rotulo">Una respuesta para usted</span>
-            <p>{{ respuesta }}</p>
-          </section>
-        }
-        @if (sintomas().length === 0) {
-          <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
-               y la pista para que pruebe de nuevo si quiere. -->
-          <p class="sintomas__sin-coincidencias" role="status" data-testid="sintomas-sin-certeza">
-            No reconocimos un síntoma concreto. Puede probar con otras palabras o tocar una zona de arriba.
-          </p>
-        }
-
-          <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
-          <!-- Pedido del cliente (27/10/2026): la MISMA tarjeta del buscador de
-               especialidades de `/directory` —foto, ícono, nombre—, de
-               `shared/styles/card-grid.css`. La tarjeta entera lleva a quién
-               atiende, como allá; acá suma el porqué, que es lo que hace que la
-               recomendación no sea una caja negra, y marca por cuál empezar. -->
-          <ul class="rejilla sintomas__rejilla" data-testid="sintomas-recomendaciones">
-            @for (recomendacion of recomendaciones(); track recomendacion.nombre; let primera = $first) {
-              <li>
-                <button
-                  type="button"
-                  class="rejilla__tarjeta sintomas__tarjeta"
-                  [class.sintomas__tarjeta--primera]="primera"
-                  [attr.data-testid]="'sintomas-especialidad-' + $index"
-                  [attr.aria-label]="
-                    'Ver quién atiende ' + recomendacion.nombre + '. ' + explicacionDe(recomendacion)
-                  "
-                  (click)="verProfesionales(recomendacion.nombre)"
-                >
-                  <img class="rejilla__foto" [src]="fotoDe(recomendacion.nombre)" alt="" loading="lazy" />
-                  <span class="sintomas__tarjeta-cabeza">
-                    <app-specialty-icon
-                      class="rejilla__icono"
-                      aria-hidden="true"
-                      [especialidad]="recomendacion.nombre"
-                    />
-                    @if (primera && recomendaciones().length > 1) {
-                      <app-badge variant="primary">Empiece por acá</app-badge>
-                    }
-                  </span>
-                  <span class="rejilla__nombre">{{ recomendacion.nombre }}</span>
-                  <span class="rejilla__resumen">{{ explicacionDe(recomendacion) }}</span>
-                  <span class="sintomas__tarjeta-accion" aria-hidden="true">Ver quién atiende →</span>
-                </button>
-              </li>
-            }
-          </ul>
-
-      </div>
-    } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
-      <p class="sintomas__leyendo" role="status" data-testid="sintomas-leyendo">
-        <app-spinner size="sm" decorative />
-        <span>Estamos leyendo lo que escribió… puede tardar unos segundos.</span>
-      </p>
-    } @else if (texto().trim() !== '' && sintomas().length === 0) {
-      <p class="sintomas__sin-coincidencias" role="status">
-        @if (descartados() !== '') {
-          <!-- Leímos el texto y entendimos que lo negaba. Decirlo es lo que evita
-               que «no reconocimos nada» se lea como «no te leímos». -->
-          Entendimos que <strong>no</strong> tiene {{ descartados() }}. Cuéntenos qué sí siente.
-        } @else {
-          No reconocimos ningún síntoma. Pruebe con palabras más simples, o toque una zona de arriba.
-        }
-      </p>
-    }
-  }
 
   <!-- «Guardar observación» salió a pedido del cliente (27/10/2026). Las que ya
        estaban guardadas en el dispositivo se siguen viendo para poder borrarlas. -->

@@ -21,6 +21,10 @@ function archivo(nombre: string, tipo: string, bytes = 8): File {
  * botón de envío no se habilita hasta que hay uno válido.
  */
 describe('SessionPayment', () => {
+  // The proof upload only exists with the payment demo on (the gateway is not there yet),
+  // and the unit-test environment ships it off: switch it on per test and restore it.
+  const originalPaymentDemo = environment.paymentDemo;
+
   let fixture: ComponentFixture<SessionPayment>;
   let http: HttpTestingController;
   let motor: SimulatedInvoicing;
@@ -52,9 +56,6 @@ describe('SessionPayment', () => {
     });
   }
 
-  // The QR payment is a demo feature: the screen and the simulated handlers only exist with the flag on.
-  const originalPaymentDemo = environment.paymentDemo;
-
   beforeEach(() => {
     Object.assign(environment, { paymentDemo: true });
     motor = motorDePrueba();
@@ -62,8 +63,17 @@ describe('SessionPayment', () => {
   });
 
   afterEach(() => {
-    http.verify();
     Object.assign(environment, { paymentDemo: originalPaymentDemo });
+    http.verify();
+  });
+
+  it('sin la demostración de pago no ofrece subir comprobante ni enviar', async () => {
+    Object.assign(environment, { paymentDemo: false });
+    await montar();
+
+    expect(el('session-payment')).not.toBeNull();
+    expect(el('session-payment-proof')).toBeNull();
+    expect(el('session-payment-send')).toBeNull();
   });
 
   it('no deja enviar mientras no haya un comprobante', async () => {

@@ -394,7 +394,16 @@ describe('RuntimePiecesPage', () => {
     responderLista(respuesta({ meta: { page: 1, pageSize: 25, total: 60, totalPages: 3 } }));
     componente().irAPagina('2');
     await harness.fixture.whenStable();
-    expect(lista().request.params.get('page')).toBe('2');
+    harness.detectChanges();
+    // While the next page is in flight the pieces table shows the S2 skeleton, not the old rows.
+    const tabla = q('[data-testid="rp-pieces-table"]')!;
+    expect(tabla.querySelector('app-skeleton')).not.toBeNull();
+    expect(tabla.querySelector('[data-testid="tabla"]')).toBeNull();
+    const req = lista();
+    expect(req.request.params.get('page')).toBe('2');
+    req.flush(respuesta({ meta: { page: 2, pageSize: 25, total: 60, totalPages: 3 } }));
+    harness.detectChanges();
+    expect(tabla.querySelector('app-skeleton')).toBeNull();
   });
 
   describe('pestañas', () => {

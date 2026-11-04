@@ -101,6 +101,25 @@ describe('ViewStateHost', () => {
       expect(accion?.textContent?.trim()).toBe('Registrar el primer paciente');
       expect(accion?.getAttribute('href')).toBe('/pacientes/alta');
     });
+
+    it('muestra el título propio del estado en vez del genérico', async () => {
+      await conEstado(
+        empty({ label: 'Probar otra agenda' }, 'No hay cupos en dos semanas.', 'Sin horarios libres'),
+      );
+
+      const vacio = root().querySelector('app-empty-state');
+      expect(vacio?.querySelector('h1,h2,h3,h4,[class*="title"]')?.textContent?.trim()).toBe(
+        'Sin horarios libres',
+      );
+      expect(textoVisible()).toContain('No hay cupos en dos semanas.');
+      expect(textoVisible()).not.toContain('Todavía no hay nada acá');
+    });
+
+    it('sin título propio conserva el genérico', async () => {
+      await conEstado(empty({ label: 'Registrar el primer paciente' }));
+
+      expect(textoVisible()).toContain('Todavía no hay nada acá');
+    });
   });
 
   describe('S4 · validación', () => {

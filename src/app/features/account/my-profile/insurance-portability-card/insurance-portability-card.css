@@ -1,6 +1,6 @@
 :host {
   display: block;
-  margin-top: var(--sp-4);
+  margin-top: var(--sp-6);
 }
 
 /* El estado de las coberturas: lo primero que se lee de la tarjeta, así que

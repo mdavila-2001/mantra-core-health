@@ -166,7 +166,7 @@
   }
 
   @if (store.cargandoHilo() && store.hiloCargado()) {
-    <p class="hilo__cargando" role="status">Cargando mensajes anteriores…</p>
+    <p class="hilo__cargando" role="status"><app-spinner size="sm" decorative /> Cargando mensajes anteriores…</p>
   }
 
   @if (vacio()) {
@@ -377,7 +377,7 @@
                 } @else if (adjuntoNoDisponible(linea.mensaje)) {
                   <p class="hilo__subiendo" role="status">Archivo no disponible</p>
                 } @else if (linea.mensaje.pendiente) {
-                  <p class="hilo__subiendo" role="status">Subiendo el archivo…</p>
+                  <p class="hilo__subiendo" role="status"><app-spinner size="sm" decorative /> Subiendo el archivo…</p>
                 } @else {
                   <!-- Ya está en el servidor y se está leyendo: esqueleto, no
                        «subiendo», que sería mentir sobre lo que pasa. -->

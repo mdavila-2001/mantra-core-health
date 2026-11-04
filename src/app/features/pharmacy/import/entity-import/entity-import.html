@@ -42,6 +42,8 @@
               [maxSizeBytes]="maxBytes"
               [maxFiles]="1"
               [disabled]="phase() === 'applying' || phase() === 'previewing'"
+              [uploading]="phase() === 'previewing'"
+              uploadingLabel="Enviando el archivo…"
               [files]="files()"
               (filesChange)="onFilesChange($event)"
               (rejected)="showRejection($event)"
@@ -149,6 +151,7 @@
                   app-button
                   type="button"
                   [disabled]="phase() !== 'preview' || failure() !== null || sendableCount() === 0"
+                  [isLoading]="phase() === 'applying'"
                   (clicked)="apply()"
                   data-testid="entity-import-apply"
                 >

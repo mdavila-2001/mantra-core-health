@@ -1,38 +1,78 @@
-/* Mapa y lista, uno al lado del otro a partir de tablet. Mobile-first: en
-   teléfono el mapa va arriba y la lista debajo, en una sola columna. */
+/* Map and list side by side when the block itself is wide enough; stacked
+   (map first) otherwise. A container query instead of a viewport one: the
+   block lives inside a tab whose width the page decides, not the screen. */
+:host {
+  display: block;
+  container-type: inline-size;
+}
+
 .sedes {
   display: grid;
   gap: var(--sp-4);
 }
 
-@media (min-width: 60rem) {
-  .sedes {
-    grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr);
-    align-items: start;
+/* The map's own `.mapa` already draws border and radius: the wrapper only
+   clips, otherwise the canvas showed a double outline. */
+.sedes__mapa {
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+@container (min-width: 44rem) {
+  .sedes--con-mapa {
+    grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 1fr);
+    align-items: stretch;
   }
 
-  /* El pie habla de las dos columnas: cruza la rejilla entera. */
+  /* The footer talks about both columns: it spans the whole grid. */
   .sedes__pie {
     grid-column: 1 / -1;
   }
 
-  /* SÓLO al lado del mapa la lista se recorre sola: cuatro sedes entran, diez
-     no, y estirar la columna dejaría el mapa flotando arriba de un vacío. El
-     tope es el alto del lienzo (320 px de `map.css`) más su borde. En teléfono
-     van una debajo de la otra y recortarlas escondería sedes sin decirlo. */
-  .sedes__lista {
-    max-block-size: 20.2rem;
+  /* Next to the map the list is exactly as tall as the map: `contain: size`
+     drops its content from the row height, so the map sets the row and the
+     list stretches to it and scrolls inside. Stacked, it simply grows. */
+  .sedes--con-mapa .sedes__lista {
+    contain: size;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    align-content: start;
+    /* No reserved gutter or end padding: the list's right edge is the grid's
+       content edge, flush with the table below. A thin, always-coloured
+       scrollbar sits inside that edge and says «there is more» on its own. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+    /* Bottom fade only while there is more list below (scroll-driven):
+       without overflow the timeline is inactive and nothing fades. Tall
+       enough to swallow most of a cut row, so it reads as «keeps going». */
+    mask-image: linear-gradient(
+      to bottom,
+      var(--text-primary) calc(100% - var(--sedes-desvanecido)),
+      transparent
+    );
+    animation: sedes-desvanecido linear both;
+    animation-timeline: scroll(self);
   }
 }
 
-/* Sin alto propio: el alto lo pone el organismo del mapa (`min-height: 320px`
-   en `map.css`). Fijar uno acá dejaba una franja vacía debajo del lienzo,
-   porque el mapa no se estira hasta el borde de su caja. */
-.sedes__mapa {
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  border: 1px solid var(--border-default);
+@property --sedes-desvanecido {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes sedes-desvanecido {
+  from {
+    --sedes-desvanecido: var(--sp-16);
+  }
+
+  95% {
+    --sedes-desvanecido: var(--sp-16);
+  }
+
+  to {
+    --sedes-desvanecido: 0px;
+  }
 }
 
 .sedes__lista {
@@ -43,10 +83,14 @@
   list-style: none;
 }
 
+/* Compact card: name row on top, its two links on one line underneath,
+   aligned with the text and not with the ordinal badge. */
 .sedes__item {
-  display: grid;
-  gap: var(--sp-1);
-  padding: var(--sp-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: var(--surface-raised);
@@ -60,6 +104,7 @@
 }
 
 .sedes__boton {
+  flex: 1 0 100%;
   display: flex;
   gap: var(--sp-3);
   align-items: flex-start;
@@ -120,13 +165,16 @@
   font-style: italic;
 }
 
-/* Los dos enlaces del renglón —llamar y cómo llegar— van debajo del botón que
-   elige la sede, con la misma forma: son acciones de la sede, no parte de ella. */
+/* The row's two links (call, directions) sit on one line under the button
+   that picks the site: they act on the site, they are not part of it. */
 .sedes__telefono,
 .sedes__ruta {
-  justify-self: start;
   font-size: var(--fs-caption);
   color: var(--brand-primary);
+}
+
+.sedes__boton + a {
+  margin-inline-start: calc(1.75rem + var(--sp-3));
 }
 
 .sedes__pie {

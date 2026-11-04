@@ -20,6 +20,7 @@ import {
   UPLOAD_MAX_BYTES,
 } from '../../../../core/data-access/files/upload-policy';
 import { AppButton } from '../../atoms/button/button';
+import { Spinner } from '../../atoms/spinner/spinner';
 import { Alert } from '../../molecules/alert/alert';
 import { FileInput } from '../../molecules/file-input/file-input';
 import { FormField } from '../../molecules/form-field/form-field';
@@ -110,7 +111,7 @@ function claveDe(file: File): string {
  */
 @Component({
   selector: 'app-attachment-uploader',
-  imports: [AppButton, Alert, FileInput, FormField],
+  imports: [AppButton, Alert, FileInput, FormField, Spinner],
   templateUrl: './attachment-uploader.html',
   styleUrl: './attachment-uploader.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -174,7 +175,6 @@ export class AttachmentUploader {
 
   /** El resultado de cada archivo, por {@link claveDe}. */
   private readonly resultados = signal<ReadonlyMap<string, ResultadoDeArchivo>>(new Map());
-
   readonly enviando = signal(false);
 
   /** Lo que el control descartó, con su motivo. */

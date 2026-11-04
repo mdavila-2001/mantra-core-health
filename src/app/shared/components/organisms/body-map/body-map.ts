@@ -23,6 +23,7 @@ import { ShareMenu, type ShareFormat } from '../../molecules/share-menu/share-me
 import { ToastService } from '../../molecules/toast/toast.service';
 import { deliverBodyMap, readBodyMapColors, type BodyMapSnapshot } from './body-map.export';
 import { VisorDelCuerpo } from './body-map.viewer';
+import { BodyMapPaint } from './body-map.paint';
 import { ImagenesDelCuerpo } from './body-map.images';
 import {
   VISTAS_DEL_CUERPO,
@@ -44,13 +45,10 @@ import {
 
 export * from './body-map.types';
 
-/** Instance counter for unique gradient IDs. */
-let nextSilhouette = 0;
-
 /** Interactive body map organism for clinical symptom localization. */
 @Component({
   selector: 'app-body-map',
-  imports: [AppButton, SegmentedControl, ShareMenu],
+  imports: [AppButton, SegmentedControl, ShareMenu, BodyMapPaint],
   templateUrl: './body-map.html',
   styleUrl: './body-map.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,8 +85,6 @@ export class BodyMap {
     }
   });
 
-  /** Unique SVG gradient ID for this instance. */
-  protected readonly idDeLaElegida = `body-map-elegida-${nextSilhouette++}`;
 
   /** Currently hovered or focused zone ID. */
   private readonly apuntada = signal<string | null>(null);
@@ -106,7 +102,7 @@ export class BodyMap {
       const zones = v.zonas.flatMap((s) => {
         const z = byId.get(s.id);
         if (!z) return [];
-        return [{ ...z, d: s.d, centros: s.centros, acercaA: s.acercaA }];
+        return [{ ...z, d: s.d, centros: s.centros, madre: s.madre, acercaA: s.acercaA }];
       });
       return zones.length > 0 ? [{ vista: v, zonas: zones }] : [];
     });
@@ -215,7 +211,7 @@ export class BodyMap {
     return zone ? `Mapa corporal · ${zone}` : `Mapa corporal · ${v.vista.nombre}`;
   });
 
-  private readonly marcadasPorId = computed(() => new Set(this.marcadas()));
+  protected readonly marcadasPorId = computed(() => new Set(this.marcadas()));
 
   /** Highlighted zones formatted as descriptive text. */
   protected readonly nombresMarcados = computed<string | null>(() => {
@@ -232,13 +228,13 @@ export class BodyMap {
     return this.zonas().find((z) => z.id === id)?.nombre ?? null;
   });
 
-  protected estaMarcada(id: string): boolean {
-    return this.marcadasPorId().has(id);
+  protected estaMarcada(zona: ZonaDibujable): boolean {
+    return this.marcadasPorId().has(zona.id) || this.marcadasPorId().has(zona.madre);
   }
 
   /** Accessible label including text match announcement. */
   protected nombreAccesible(zona: ZonaDibujable): string {
-    return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
+    return this.estaMarcada(zona) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
   }
 
   constructor() {
@@ -262,7 +258,20 @@ export class BodyMap {
       const zones = this.zonas();
       if (linkParsed || !this.navegador || zones.length === 0) return;
       linkParsed = true;
-      untracked(() => this.abrirDesdeElEnlace(zones));
+      untracked(() => this.abrirDesdeElEnlace());
+    });
+
+    // Follow what was told: when nothing marked shows in the current view and no
+    // zone is chosen, turn to a view that shows it («me duelen los ojos» → Cara).
+    effect(() => {
+      const ids = this.marcadasPorId();
+      untracked(() => {
+        const muestra = (v: VistaDibujable) => v.zonas.some((z) => ids.has(z.id) || ids.has(z.madre));
+        const actual = this.vista();
+        if (ids.size === 0 || this.value() || !actual || muestra(actual)) return;
+        const otra = this.vistas().find(muestra);
+        if (otra) this.vistaPedida.set(otra.vista.id);
+      });
     });
 
     // Clear pinned tap coordinates when active zone selection changes.
@@ -283,14 +292,15 @@ export class BodyMap {
     });
   }
 
-  private abrirDesdeElEnlace(zones: readonly ZonaElegible[]): void {
+  /** Restores view and zone from the URL; only drawn zones (an old coarse link has nothing to pin). */
+  private abrirDesdeElEnlace(): void {
     const params = new URLSearchParams(this.document.location.search);
     const z = params.get(PARAMETRO_ZONA);
     const v = params.get(PARAMETRO_VISTA);
     if (v && this.vistas().some((item) => item.vista.id === v)) {
       this.vistaPedida.set(v as IdDeVista);
     }
-    if (z && !this.value() && zones.some((item) => item.id === z)) {
+    if (z && !this.value() && this.vistas().some((v) => v.zonas.some((item) => item.id === z))) {
       this.value.set(z);
       this.elegidaAlPedirVista.set(z);
     }
@@ -335,30 +345,11 @@ export class BodyMap {
     this.ampliado.update((open) => !open);
   }
 
-  /** Keyboard shortcuts (+, -, 0, Escape). */
+  /** Keyboard shortcuts: zoom keys go to the viewer; Escape closes the full-screen view. */
   protected alPresionar(event: KeyboardEvent): void {
-    switch (event.key) {
-      case '+':
-      case '=':
-        event.preventDefault();
-        this.visor.acercar();
-        break;
-      case '-':
-        event.preventDefault();
-        this.visor.alejar();
-        break;
-      case '0':
-        this.visor.restablecer();
-        break;
-      case 'Escape':
-        if (this.ampliado()) {
-          event.preventDefault();
-          this.alternarAmpliado();
-        }
-        break;
-      default:
-        break;
-    }
+    if (this.visor.alPresionar(event) || event.key !== 'Escape' || !this.ampliado()) return;
+    event.preventDefault();
+    this.alternarAmpliado();
   }
 
   private instantanea(v: VistaDibujable): BodyMapSnapshot {

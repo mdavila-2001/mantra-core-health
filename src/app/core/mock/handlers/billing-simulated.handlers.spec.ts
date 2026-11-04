@@ -32,8 +32,8 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
   const admin = buscarUsuario('admin')!;
   const paciente = buscarUsuario('paciente')!;
   const medica = buscarUsuario('medica')!;
-
-  // The patient's QR payment endpoints answer 404 unless the demo flag is on.
+  // The patient QR routes check `environment.paymentDemo` directly (it is not injectable),
+  // and the unit-test environment ships it off: switch it on per test and restore it.
   const originalPaymentDemo = environment.paymentDemo;
 
   beforeEach(() => {
@@ -138,6 +138,16 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(estado.credentials).toEqual([]);
       expect(estado.issuers.every((e) => e.kind === 'PRACTICE')).toBe(true);
     });
+  });
+
+  it('con el pago de demostración apagado, el portal del paciente no ve cobros ni puede informar un pago', () => {
+    const propios = (llamar('GET', '/billing/simulated/patient/charges', null, paciente).body as SimulatedChargesPage).items;
+    const cobro = propios.find((item) => item.source === 'CONSULTATION' && item.payment === null && item.plan === null)!;
+    Object.assign(environment, { paymentDemo: false });
+
+    expect(llamar('GET', '/billing/simulated/patient/charges', null, paciente).status).toBe(404);
+    // A real charge on purpose: a missing one would also answer 404 and hide a missing gate.
+    expect(llamar('POST', `/billing/simulated/patient/charges/${cobro.id}/report`, { proof: {} }, paciente).status).toBe(404);
   });
 
   it('mantiene el pago QR pendiente hasta que quien atiende confirma la recepción', () => {

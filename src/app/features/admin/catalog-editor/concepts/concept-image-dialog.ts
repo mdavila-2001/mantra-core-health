@@ -4,6 +4,7 @@ import { ConceptAdminClient, type ConceptWithProperties } from '../../../../core
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { IMAGE_PROPERTY, defaultSpecialtyImage, safeImageValue } from '../../../../shared/specialties/specialty-images';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Spinner } from '../../../../shared/components/atoms/spinner/spinner';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { toThumbnail } from './image-thumbnail';
@@ -15,7 +16,7 @@ import { toThumbnail } from './image-thumbnail';
  */
 @Component({
   selector: 'app-concept-image-dialog',
-  imports: [AppButton, Alert, ContentDialog],
+  imports: [AppButton, Alert, ContentDialog, Spinner],
   templateUrl: './concept-image-dialog.html',
   styleUrl: './concept-image-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

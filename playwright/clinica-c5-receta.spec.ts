@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import type { Actor } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
+import { elegirOpcion, leerOpciones } from './support/desplegable';
 import { abrirExpedienteDelPrimero } from './support/expediente';
 
 /**
@@ -60,6 +61,9 @@ async function cerrarOfertaDeAdjuntos(page: Page): Promise<void> {
  * motivo cambia el badge.
  */
 
+/** Motivo escrito a mano por este spec; la semilla de la maqueta no lo usa. */
+const MOTIVO_LIBRE = 'Control de síntomas C5';
+
 const MEDICA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',
@@ -99,16 +103,25 @@ test.describe('C5 · Receta ligada a un diagnóstico confirmado o motivo', () =>
 
     await page.getByTestId('consulta-casilla-medicacion').click();
     await expect(page.getByRole('dialog')).toBeVisible();
+    await estable(page);
+
+    // Línea base: las recetas con vínculo que la maqueta ya trae.
+    const vinculosAntes = await page.getByTestId('receta-vinculo').count();
+    const diagnosticosAntes = await page
+      .getByTestId('receta-vinculo')
+      .filter({ hasText: 'Diagnóstico:' })
+      .count();
 
     const selectorDiagnostico = page.getByTestId('receta-diagnostico');
     await expect(selectorDiagnostico).toBeVisible();
-    // `app-select` es el host; el `<select>` nativo que `selectOption` exige
-    // vive adentro (`select.html:19`).
-    const nativoDiagnostico = selectorDiagnostico.locator('select');
+    // `app-select` es un botón `combobox`, no un `<select>` nativo: las filas
+    // sólo existen con la lista abierta (`support/desplegable.ts`).
+    const disparadorDiagnostico = selectorDiagnostico.getByRole('combobox');
 
     // El selector no debe listar un diagnóstico presuntivo/provisional de la
     // seed — sólo confirmados y «Otro motivo».
-    const opciones = await selectorDiagnostico.locator('option, [role="option"]').allTextContents();
+    const opciones = await leerOpciones(disparadorDiagnostico);
+    expect(opciones.length).toBeGreaterThan(0);
     expect(opciones.some((texto) => /provisional|presuntivo/i.test(texto))).toBe(false);
 
     // Elegir un confirmado y guardar. La fila muestra «Borrador Activo»
@@ -116,12 +129,15 @@ test.describe('C5 · Receta ligada a un diagnóstico confirmado o motivo', () =>
     // su badge real (Diagnóstico:/Motivo:) tras recargar — por eso las dos
     // altas se hacen primero y la verificación del contenido es una sola,
     // después de recargar (ver más abajo).
-    const confirmado = opciones.find((texto) => /confirmado el/i.test(texto));
+    const confirmado = opciones.find((texto) => /· confirmado\b/i.test(texto));
+    // La semilla de la maqueta trae diagnósticos confirmados: que no aparezcan
+    // es un fallo, no un motivo para saltarse esa mitad del recorrido.
+    expect(confirmado, 'el selector debe ofrecer un diagnóstico confirmado').toBeDefined();
     let huboConfirmado = false;
     if (confirmado !== undefined) {
       huboConfirmado = true;
       await elegirUnMedicamento(page);
-      await nativoDiagnostico.selectOption({ label: confirmado });
+      await elegirOpcion(disparadorDiagnostico, confirmado);
       await page.getByTestId('content-dialog').getByRole('button', { name: 'Prescribir' }).click();
       await seguirPeseAInteraccion(page);
       await cerrarOfertaDeAdjuntos(page);
@@ -129,9 +145,9 @@ test.describe('C5 · Receta ligada a un diagnóstico confirmado o motivo', () =>
 
     // Segunda receta, con «Otro motivo».
     await elegirUnMedicamento(page);
-    await nativoDiagnostico.selectOption({ label: 'Otro motivo — escribirlo' });
+    await elegirOpcion(disparadorDiagnostico, 'Otro motivo — escribirlo');
     // `app-textarea` es el host; el `<textarea>` nativo vive adentro.
-    await page.getByTestId('receta-motivo').locator('textarea').fill('Control de síntomas');
+    await page.getByTestId('receta-motivo').locator('textarea').fill(MOTIVO_LIBRE);
     await page.getByTestId('content-dialog').getByRole('button', { name: 'Prescribir' }).click();
     await seguirPeseAInteraccion(page);
     await cerrarOfertaDeAdjuntos(page);
@@ -142,26 +158,34 @@ test.describe('C5 · Receta ligada a un diagnóstico confirmado o motivo', () =>
     await estable(page);
     await page.getByTestId('consulta-casilla-medicacion').click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    const total = huboConfirmado ? 2 : 1;
-    await expect(page.getByTestId('receta-vinculo')).toHaveCount(total, { timeout: 15_000 });
-    await expect(page.getByTestId('receta-vinculo').last()).toContainText('Motivo:');
-    if (huboConfirmado) {
-      await expect(page.getByTestId('receta-vinculo').first()).toContainText('Diagnóstico:');
-    }
+    // La maqueta ya siembra recetas con vínculo: se cuenta contra la línea base
+    // y lo creado aquí se reconoce por su motivo, que es único de este spec.
+    const vinculos = page.getByTestId('receta-vinculo');
+    const conDiagnostico = vinculos.filter({ hasText: 'Diagnóstico:' });
+    await expect(vinculos).toHaveCount(vinculosAntes + (huboConfirmado ? 2 : 1), { timeout: 15_000 });
+    await expect(conDiagnostico).toHaveCount(diagnosticosAntes + (huboConfirmado ? 1 : 0));
+    await expect(vinculos.filter({ hasText: `Motivo: ${MOTIVO_LIBRE}` })).toHaveCount(1);
 
-    // «Vincular a un diagnóstico…» sobre la de motivo.
-    const vincular = page.getByTestId('receta-vincular').first();
-    if (await vincular.count()) {
-      await vincular.click();
-      await expect(page.getByTestId('receta-vincular-dialog')).toBeVisible();
-      const selectorDelDialogo = page.getByTestId('receta-vincular-dialog').getByRole('combobox');
-      const opcionesDelDialogo = await selectorDelDialogo.locator('option, [role="option"]').allTextContents();
-      const confirmadoEnDialogo = opcionesDelDialogo.find((texto) => /confirmado el/i.test(texto));
-      if (confirmadoEnDialogo !== undefined) {
-        await selectorDelDialogo.selectOption({ label: confirmadoEnDialogo });
-        await page.getByTestId('receta-vincular-dialog').getByRole('button', { name: 'Vincular' }).click();
-        await expect(page.getByTestId('receta-vinculo').first()).toContainText('Diagnóstico:');
-      }
+    // «Vincular a un diagnóstico…» sobre la receta de motivo que creó este spec.
+    const filaDelMotivo = page.locator('.receta__item').filter({ hasText: `Motivo: ${MOTIVO_LIBRE}` });
+    await expect(filaDelMotivo).toHaveCount(1);
+    // La opción vive en el menú ⋮ de la receta: se abre el de esta fila.
+    await filaDelMotivo.getByRole('button', { name: 'Acciones de la receta' }).click();
+    await page.getByTestId('receta-vincular').click();
+    // El anfitrión `app-content-dialog` no tiene caja propia: se espera el
+    // `<dialog>` por su rol y su título.
+    const dialogoVincular = page.getByRole('dialog', { name: 'Vincular a un diagnóstico' });
+    await expect(dialogoVincular).toBeVisible();
+    const selectorDelDialogo = dialogoVincular.getByRole('combobox');
+    const opcionesDelDialogo = await leerOpciones(selectorDelDialogo);
+    const confirmadoEnDialogo = opcionesDelDialogo.find((texto) => /· confirmado\b/i.test(texto));
+    expect(confirmadoEnDialogo, 'el diálogo debe ofrecer un diagnóstico confirmado').toBeDefined();
+    if (confirmadoEnDialogo !== undefined) {
+      const diagnosticosAntesDeVincular = await conDiagnostico.count();
+      await elegirOpcion(selectorDelDialogo, confirmadoEnDialogo);
+      await dialogoVincular.getByRole('button', { name: 'Vincular', exact: true }).click();
+      await expect(conDiagnostico).toHaveCount(diagnosticosAntesDeVincular + 1);
+      await expect(vinculos.filter({ hasText: `Motivo: ${MOTIVO_LIBRE}` })).toHaveCount(0);
     }
   });
 });

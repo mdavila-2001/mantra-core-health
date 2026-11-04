@@ -45,6 +45,12 @@ export interface TarjetaDeMedicamento {
   readonly pharmacyCount: number;
   /** Distancia a la más cercana que lo tiene; `null` sin origen. */
   readonly nearestKm: number | null;
+  /** Para qué se usa según su grupo ATC (OMS); clasificación, no indicación. */
+  readonly uses?: readonly string[];
+  /** Por qué salió en la búsqueda; ausente sin texto. */
+  readonly matchedBy?: 'name' | 'brand' | 'code' | 'use' | null;
+  /** El uso que lo encontró, cuando `matchedBy` es `use`. */
+  readonly matchedUse?: string | null;
 }
 
 /** La página de la vitrina. */
@@ -53,6 +59,8 @@ export interface PaginaDeVitrina {
   readonly total: number;
   /** Los grupos terapéuticos del catálogo completo, para los filtros. */
   readonly groups: readonly string[];
+  /** Lo que de verdad se buscó cuando lo escrito no daba nada («ibopofeno» → «ibuprofeno»). */
+  readonly correctedQuery?: string | null;
   readonly generatedAt: string;
 }
 
@@ -89,8 +97,10 @@ export interface DisponibilidadDeMedicamento {
 
 /** Los filtros de la vitrina. Sin ninguno, lista el catálogo publicado. */
 export interface ConsultaDeVitrina {
-  /** Texto a buscar en principio activo, marca o código ATC. */
+  /** Principio activo, marca, código ATC o para qué se usa («dolor abdominal»). */
   readonly q?: string;
+  /** `true` busca lo escrito tal cual, sin corregir el tipeo. */
+  readonly exact?: boolean;
   /** Grupo terapéutico, tal como lo lista `groups`. */
   readonly group?: string;
   /** Desde dónde medir; `lat` y `lng` viajan juntos o no viajan. */

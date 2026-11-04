@@ -169,6 +169,18 @@ export class VisorDelCuerpo {
     return this.aCoordenadasDelDibujo(lienzo, clientX, clientY);
   }
 
+  /** Zoom keys (+/=, -, 0). Returns whether the key was the viewer's. */
+  alPresionar(event: KeyboardEvent): boolean {
+    const accion = { '+': () => this.acercar(), '=': () => this.acercar(), '-': () => this.alejar() }[event.key];
+    if (accion) {
+      event.preventDefault();
+      accion();
+    } else if (event.key === '0') {
+      this.restablecer();
+    }
+    return accion !== undefined || event.key === '0';
+  }
+
   private aCoordenadasDelDibujo(lienzo: SVGSVGElement, clientX: number, clientY: number): readonly [number, number] {
     const [vx, vy, vancho, valto] = this.viewBox().split(' ').map(Number);
     const caja = lienzo.getBoundingClientRect();

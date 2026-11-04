@@ -1,5 +1,5 @@
 import { effect, inject, Injectable, signal } from '@angular/core';
-import { catchError, of, switchMap } from 'rxjs';
+import { catchError, of, switchMap, type Observable } from 'rxjs';
 
 import { AuthService } from '../../auth/auth.service';
 import { FilesClient } from '../files/files.client';
@@ -13,8 +13,10 @@ import { ProfilesClient } from './profiles.client';
  * pantallas. Quien sube o cambia la foto la deja con {@link set}; el
  * encabezado la pide una vez con {@link load}.
  *
- * Es sólo la foto del paciente (`/profiles/patients/me`). Si no hay foto o la
- * lectura falla, `url` queda en `null` y el avatar sigue mostrando iniciales:
+ * Es la foto del perfil con el que la persona se presenta: la del perfil
+ * profesional si la sesión tiene uno (`hpid`), la del paciente si no. Así el
+ * avatar del encabezado y el retrato de «Mi perfil» muestran la misma imagen.
+ * Si no hay foto o la lectura falla, `url` queda en `null` y el avatar sigue mostrando iniciales:
  * una foto que no llega no es un error que haya que contarle a nadie.
  */
 @Injectable({ providedIn: 'root' })
@@ -50,8 +52,12 @@ export class OwnPhotoStore {
     }
     this.pedida = true;
     const paraQuien = this.duenio;
-    this.profiles
-      .getOwnPatientProfile()
+    // Practitioners see their practitioner photo on «Mi perfil», so the header must too.
+    const perfil$: Observable<{ readonly photoFileId?: string }> =
+      this.auth.practitionerProfileId() === null
+        ? this.profiles.getOwnPatientProfile()
+        : this.profiles.getOwnPractitionerProfile();
+    perfil$
       .pipe(
         switchMap((perfil) =>
           perfil.photoFileId === undefined ? of(null) : this.files.imageDataUrl(perfil.photoFileId),

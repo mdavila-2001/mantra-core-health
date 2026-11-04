@@ -1,0 +1,67 @@
+/* Ajustes › Dispositivos: one bordered row per device, full panel width. */
+.dispositivos__titulo {
+  margin: 0 0 var(--e3);
+  font-size: var(--fs-body-lg);
+}
+
+.dispositivos__detalle {
+  margin: 0 0 var(--e2);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+.dispositivos__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: var(--e3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dispositivos__fila {
+  padding: var(--e3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.dispositivos__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-bottom: var(--e1);
+}
+
+.dispositivos__nombre {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dispositivos__verificar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin-top: var(--e2);
+  max-inline-size: 28rem;
+}
+
+.dispositivos__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.dispositivos__fallo {
+  margin: 0;
+  color: var(--st-error-fg);
+  font-size: var(--fs-body);
+}
+
+.dispositivos__vacio,
+.dispositivos__nota {
+  margin: var(--e3) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
+}

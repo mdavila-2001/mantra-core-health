@@ -123,15 +123,6 @@
           (pointerup)="visor.terminarArrastre()"
           (pointercancel)="visor.terminarArrastre()"
         >
-          <!-- El relleno de la zona elegida, por instancia (dos siluetas en la
-             misma página no se pisan). Los colores salen de tokens: ver la hoja. -->
-          <defs>
-            <linearGradient [attr.id]="idDeLaElegida" x1="0" y1="0" x2="0" y2="1">
-              <stop class="body-map__elegida-arriba" offset="0" />
-              <stop class="body-map__elegida-abajo" offset="1" />
-            </linearGradient>
-          </defs>
-
           <!-- El maniquí renderizado, en el mismo viewBox que las zonas: debajo
              la imagen, encima las zonas transparentes que reciben el clic. Es
              decorativo: el nombre de cada parte llega por su zona. -->
@@ -147,12 +138,22 @@
             [attr.data-testid]="testId() + '-render'"
           />
 
-          <g [style.--body-map-relleno-elegida]="'url(#' + idDeLaElegida + ')'">
+          <!-- The chosen and told zones, painted on the render's own volume. -->
+          <g
+            app-body-map-paint
+            [fuente]="imagenes.fuente(actual.vista.image)"
+            [caja]="caja()"
+            [zonas]="actual.zonas"
+            [elegida]="value()"
+            [marcadas]="marcadasPorId()"
+          />
+
+          <g>
             @for (zona of actual.zonas; track zona.id) {
               <g
                 class="body-map__zona"
                 [class.body-map__zona--elegida]="zona.id === value()"
-                [class.body-map__zona--marcada]="estaMarcada(zona.id)"
+                [class.body-map__zona--marcada]="estaMarcada(zona)"
               >
                 <!-- El `role="button"` y el `tabindex` son lo que convierte un dibujo
                    en un control: sin ellos la silueta sería un adorno que sólo
@@ -190,6 +191,27 @@
               <circle class="body-map__marcador-halo" r="5" />
               <circle class="body-map__marcador-punto" r="2.6" />
             </g>
+          }
+
+          <!-- The chosen part's name next to its pin: with ~40 parts per view,
+             «Codo derecho» must be readable on the body, not only below it. It
+             goes outward, beside the pin, when it fits; otherwise above it. -->
+          @if (nombreElegido(); as nombre) {
+            @if (centrosDeLaElegida()[0]; as c) {
+              @let lado = c[0] < caja()[0] / 2 ? -1 : 1;
+              @let largo = nombre.length * 4.6;
+              @let afuera = lado < 0 ? c[0] - 10 - largo > 0 : c[0] + 10 + largo < caja()[0];
+              <text
+                class="body-map__rotulo"
+                [attr.x]="afuera ? c[0] + lado * 10 : c[0]"
+                [attr.y]="afuera ? c[1] + 3 : c[1] - 11"
+                [attr.text-anchor]="
+                  afuera ? (lado < 0 ? 'end' : 'start') : c[0] < caja()[0] * 0.3 ? 'start' : c[0] > caja()[0] * 0.7 ? 'end' : 'middle'
+                "
+                aria-hidden="true"
+                [attr.data-testid]="testId() + '-rotulo'"
+              >{{ nombre }}</text>
+            }
           }
         </svg>
       </div>

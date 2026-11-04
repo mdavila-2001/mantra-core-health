@@ -117,6 +117,24 @@ describe('CommentMediaPicker', () => {
     expect(fixture.nativeElement.querySelectorAll('[data-testid="comment-media-item"]').length).toBe(0);
   });
 
+  it('shows a spinner while the upload is in flight and hides it on response', async () => {
+    const input = inputDe('comment-media-add-image');
+    Object.defineProperty(input, 'files', { value: [archivo('foto.png', 'image/png')], configurable: true });
+    input.dispatchEvent(new Event('change'));
+    await tick();
+    fixture.detectChanges();
+
+    const estado = (): HTMLElement | null =>
+      fixture.nativeElement.querySelector('[data-testid="comment-media-uploading"]');
+    expect(estado()?.querySelector('app-spinner')).not.toBeNull();
+
+    http.expectOne('/common/files/upload').flush({ id: 'f-1' });
+    await tick();
+    await tick();
+    fixture.detectChanges();
+    expect(estado()).toBeNull();
+  });
+
   it('limpiar() vacía el estado, para cuando el comentario ya se envió', async () => {
     await elegirArchivo('comment-media-add-image', archivo('foto.png', 'image/png'));
 

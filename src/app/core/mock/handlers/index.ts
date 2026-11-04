@@ -81,6 +81,7 @@ import { registrarSondaDeVida } from './ops-liveness.handlers';
 import { registrarSondaCatalogo } from './catalog-fit.handlers';
 import { registrarHerramientas } from './ops-tools.handlers';
 import { registrarDispositivos } from './analytics-devices.handlers';
+import { registrarMisDispositivos } from './my-devices.handlers';
 import { registrarDinero } from './analytics-money.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
@@ -203,6 +204,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarSondaCatalogo(router);
   registrarHerramientas(router);
   registrarDispositivos(router);
+  registrarMisDispositivos(router);
   registrarDinero(router);
   registrarFlujos(router);
   registrarAltaDeMedicoAsistida(router);

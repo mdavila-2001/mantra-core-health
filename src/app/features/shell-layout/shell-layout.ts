@@ -391,7 +391,7 @@ export class ShellLayout {
     const destroyRef = inject(DestroyRef);
     const fotoPropia = this.fotoPropia;
     effect(() => {
-      if (this.esPacienteDelCarrito()) {
+      if (this.esPacienteDelCarrito() || this.auth.practitionerProfileId() !== null) {
         untracked(() => fotoPropia.load());
       }
     });
