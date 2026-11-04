@@ -85,11 +85,12 @@ describe('CenterSchedulePage', () => {
     const { el, clic } = await montar({ getMySchedule: () => of(VISTA), setEquipmentStatus });
     const pestana = [...el.querySelectorAll('[role="tab"]')].find((t) => t.textContent?.trim() === 'Equipos') as HTMLElement;
     await clic(pestana);
-    const estado = el.querySelector('[data-testid="centro-equipo-eco-2"] select') as HTMLSelectElement;
-    const operativo = [...estado.options].findIndex((o) => o.textContent?.trim() === 'Operativo');
-    estado.selectedIndex = operativo;
-    estado.dispatchEvent(new Event('change'));
-    await clic(estado);
+    // The status is an `app-select`: open it from its trigger and pick the option, like a person would.
+    await clic(el.querySelector<HTMLElement>('[data-testid="centro-estado-eco-2"] .select-trigger')!);
+    const operativo = [...el.querySelectorAll<HTMLElement>('[role="option"]')].find(
+      (o) => o.textContent?.trim() === 'Operativo',
+    );
+    await clic(operativo!);
     expect(setEquipmentStatus).toHaveBeenCalledWith('sur', 'eco-2', 'OPERATIONAL');
   });
 });

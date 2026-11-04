@@ -977,10 +977,10 @@ describe('FormBuilder', () => {
       ]);
       const html = harness.routeNativeElement?.textContent ?? '';
       expect(html).toContain('Mostrando los formularios de Cardiología');
-      expect(html).toContain('Ver todas las especialidades');
+      expect(html).toContain('Ver todas mis especialidades');
     });
 
-    it('«Ver todas las especialidades» quita el filtro y no se vuelve a poner solo', async () => {
+    it('«Ver todas mis especialidades» quita el filtro y no se vuelve a poner solo', async () => {
       listarDos();
       http.expectOne((r) => r.url === PERFIL_PROPIO).flush(perfilDe('sp-2'));
       responderEspecialidades();
@@ -996,7 +996,9 @@ describe('FormBuilder', () => {
       harness.detectChanges();
 
       expect(TestBed.inject(Router).url).not.toContain('especialidad=');
-      expect(filtrados()?.length).toBe(2);
+      // The catalog stays bounded to the practitioner's own specialties (+ the transversal
+      // ones): «Medicina general» is not theirs, so its form never comes back.
+      expect(filtrados()?.map((p) => p.code)).toEqual(['CARDIO_FICHA_BASE']);
     });
 
     it('un enlace que ya trae filtro no se pisa con la especialidad propia', async () => {
@@ -1024,7 +1026,7 @@ describe('FormBuilder', () => {
       await irA({ view: 'catalog' });
       await harness.fixture.whenStable();
       harness.detectChanges();
-      // La preselección deja sólo la propia y la transversal; se mira todo.
+      // La preselección deja sólo la propia y la transversal; se miran todas las propias.
       interno<() => void>('verTodasLasEspecialidades')();
       await harness.fixture.whenStable();
       harness.detectChanges();
@@ -1033,9 +1035,10 @@ describe('FormBuilder', () => {
       const grupos = interno<() => readonly Grupo[]>('gruposPorEspecialidad')();
       expect(grupos.map((g) => [g.label, g.items.map((p) => p.code)])).toEqual([
         ['Cardiología', ['CARDIO_FICHA_BASE', 'CARDIO_CTRL_HTA']],
-        ['Medicina general', ['ANAMNESIS']],
         ['Especialidad sin nombre en el catálogo', ['TRANSV_EPICRISIS']],
       ]);
+      // «Medicina general» is not one of the practitioner's specialties: it is not offered.
+      expect(grupos.map((g) => g.label)).not.toContain('Medicina general');
       // El organismo del carril 22, no una grilla propia.
       expect(harness.routeNativeElement?.querySelector('app-specialty-browser')).not.toBeNull();
     });

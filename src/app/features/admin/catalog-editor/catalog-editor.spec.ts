@@ -27,10 +27,11 @@ describe('CatalogEditor', () => {
 
   afterEach(() => http.verify({ ignoreCancelled: true }));
 
-  it('una sola tarjeta con cuatro pestañas, y la de servicios es la que abre', () => {
+  it('una sola tarjeta con cinco pestañas, y la de servicios es la que abre', () => {
     expect(root().querySelectorAll('app-card').length).toBe(1);
     const etiquetas = Array.from(root().querySelectorAll('[role="tab"]')).map((t) => (t.textContent ?? '').trim());
-    expect(etiquetas).toEqual(['Servicios', 'Glosarios', 'Reporte contable', 'Auditoría']);
+    // «Conceptos» (the concept manager) joined the card on 2026-11-02.
+    expect(etiquetas).toEqual(['Servicios', 'Glosarios', 'Reporte contable', 'Auditoría', 'Conceptos']);
     http.expectOne('/admin/catalogs/services/scopes').flush({ types: [], practices: [], currencies: [] });
   });
 

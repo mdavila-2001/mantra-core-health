@@ -976,20 +976,18 @@ describe('RegisterPractitioner', () => {
     expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
   });
 
-  it('la cédula se valida de verdad: sólo dígitos, de 5 a 9, y no un relleno', () => {
+  // Product decision pending (see `national-id.ts`): the strict cédula (5-9 digits, no filler) is
+  // NOT wired in. The form takes the backend's floor, so a passport or a `CI-…` document goes through.
+  it('el documento no es la cédula estricta: acepta pasaportes y «QA-123», a la espera de la decisión de producto', () => {
     const control = component.formProfesional.controls.nationalId;
-    for (const invalida of ['QA-123', '1234', '1234567890', '1.234.567', '0000000', '9999999']) {
-      control.setValue(invalida);
-      expect(control.invalid, `«${invalida}» no es una cédula`).toBe(true);
-    }
-    for (const valida of ['12345', '1234567', '12345678', '123456789']) {
-      control.setValue(valida);
-      expect(control.valid, `«${valida}» sí lo es`).toBe(true);
+    for (const valido of ['QA-123', '1234', '1234567890', '1.234.567', '0000000']) {
+      control.setValue(valido);
+      expect(control.valid, `«${valido}» pasa con el piso del backend`).toBe(true);
     }
   });
 
-  it('con la cédula inválida no se puede enviar el alta', () => {
-    completarProfesional({ nationalId: 'QA-123' });
+  it('con un documento inválido no se puede enviar el alta', () => {
+    completarProfesional({ nationalId: 'CI#1234' });
 
     component.submit();
     http.expectNone('/iam/auth/register-practitioner');
@@ -3212,22 +3210,16 @@ describe('RegisterPractitioner', () => {
       component.formProfesional.controls.signatureImageBase64.setValue(FIRMA);
       component.formProfesional.controls.sealImageBase64.setValue(SELLO);
       component.submit();
-      http.expectOne('/iam/auth/upload-registration-signature-image').flush({ fileId: 'firma-id' });
+      const firma = http.expectOne('/iam/auth/upload-registration-signature-image');
+      // The real DTO rejects base64 on purpose: the image is pre-uploaded as multipart.
+      expect(firma.request.body).toBeInstanceOf(FormData);
+      expect((firma.request.body as FormData).get('file')).toBeInstanceOf(Blob);
+      firma.flush({ fileId: 'firma-id' });
       http
         .expectOne('/iam/auth/upload-registration-signature-image')
         .flush({}, { status: 503, statusText: 'Unavailable' });
       http.expectNone('/iam/auth/register-practitioner');
       expect(component.registered()).toBe(false);
-
-      // El DTO real rechaza el base64 a propósito: primero se pre-cargan.
-      const subidas = http.match('/iam/auth/upload-registration-signature-image');
-      expect(subidas).toHaveLength(2);
-      for (const subida of subidas) {
-        expect(subida.request.body).toBeInstanceOf(FormData);
-        expect((subida.request.body as FormData).get('file')).toBeInstanceOf(Blob);
-      }
-      subidas[0]!.flush({ fileId: 'file-firma', originalName: 'firma.png', sizeBytes: 1, mimeType: 'image/png' });
-      subidas[1]!.flush({ fileId: 'file-sello', originalName: 'sello.png', sizeBytes: 1, mimeType: 'image/png' });
 
       component.submit();
       http.expectOne('/iam/auth/upload-registration-signature-image').flush({ fileId: 'sello-id' });
