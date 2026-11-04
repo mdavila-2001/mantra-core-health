@@ -151,8 +151,9 @@ describe('Agenda', () => {
     // Dos señales, porque el calendario puede haberse montado y destruido
     // dentro del caso —pasa cuando los recursos revelan que la agenda no es
     // propia— y entonces ya no está en el DOM pero dejó sus lecturas vivas.
-    // `enMiAgenda` is the template's own condition for mounting `app-my-agenda`.
-    const montado = componente !== undefined && interno<() => boolean>('enMiAgenda')();
+    const montado =
+      componente !== undefined &&
+      (interno<() => boolean>('enCalendario')() || interno<() => boolean>('enHorario')());
     const dejoLecturasSuyas =
       http.match((r) => r.url === '/scheduling/activity-types' || r.url.endsWith('/templates'))
         .length > 0;
