@@ -123,3 +123,29 @@ export function todayRange(now: Date): { readonly from: Date; readonly to: Date 
   to.setDate(to.getDate() + 1);
   return { from, to };
 }
+
+/** «hace 5 min», «hace 2 h», «hace 3 días»: how long ago an instant was, for footers. */
+export function agoLabel(iso: string, now: Date): string {
+  const minutes = Math.max(0, Math.round((now.getTime() - Date.parse(iso)) / 60_000));
+  if (Number.isNaN(minutes)) return '';
+  if (minutes < 1) return 'hace un momento';
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.round(hours / 24);
+  return `hace ${days} ${days === 1 ? 'día' : 'días'}`;
+}
+
+/**
+ * The last upload as a footer fragment: the file name without its extension,
+ * without the «Se subió» verb or the size, and how long ago it happened.
+ */
+export function lastUploadLabel(entry: { readonly text: string; readonly at: string }, now: Date): string {
+  const name = entry.text
+    .replace(/^(se subió|subiste|subió)\s+/i, '')
+    .replace(/\s*\([^)]*\)\.?$/, '')
+    .replace(/\.$/, '')
+    .replace(/\.[A-Za-z0-9]{2,5}$/, '');
+  const ago = agoLabel(entry.at, now);
+  return [name, ago].filter((part) => part !== '').join(', ');
+}

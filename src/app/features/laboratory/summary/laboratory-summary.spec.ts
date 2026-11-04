@@ -115,7 +115,8 @@ describe('LaboratorySummaryPage (portada del centro de diagnóstico)', () => {
     expect(rows[0]!.textContent).toContain('Estudio d');
     expect(q('lab-home-upload')?.getAttribute('href')).toBe('/administration/laboratory-orders?estado=processed');
     expect(q('summary-result-files')?.textContent).toBe('40');
-    expect(q('summary-activity')?.textContent).toContain('hemograma.pdf');
+    expect(q('summary-activity')?.textContent).toContain('último: hemograma, hace');
+    expect(q('summary-activity')?.textContent).not.toContain('Se subió');
   });
 
   it('pide los turnos de hoy y los lista', async () => {
@@ -159,10 +160,25 @@ describe('LaboratorySummaryPage (portada del centro de diagnóstico)', () => {
     expect(q('lab-home-count-received')?.textContent).toContain('Estudios por informar');
   });
 
+  it('sin órdenes, la tarjeta de órdenes sólo ofrece la acción del estado vacío', async () => {
+    lab.listOrders.mockReturnValue(of({ items: [], count: 0 }));
+    await render();
+    expect(q('lab-home-orders-all')).toBeNull();
+    expect(q('lab-home-orders')?.querySelectorAll('a')).toHaveLength(1);
+  });
+
   it('sin turnos hoy lo dice y ofrece revisar los horarios', async () => {
     schedule.getMyBookings.mockReturnValue(of({ items: [], count: 0 }));
     await render();
     expect(q('lab-home-bookings')?.textContent).toContain('Hoy no hay turnos reservados');
+    // The empty state carries the only action: no second button in the footer.
+    expect(q('lab-home-bookings')?.querySelectorAll('a')).toHaveLength(1);
+  });
+
+  it('el recuento de turnos es una insignia con nombre accesible', async () => {
+    await render();
+    const badge = q('lab-home-bookings')!.querySelector('app-badge');
+    expect(badge?.getAttribute('aria-label')).toBe('1 turno hoy');
   });
 
   it('un turno sin nombre de paciente ni de estudio lo dice, no deja un hueco', async () => {

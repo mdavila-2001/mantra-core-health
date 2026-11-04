@@ -1,5 +1,15 @@
 <app-card padding="lg" data-testid="lab-home-bookings">
-  <app-section-heading card-header icono="calendar" titulo="Turnos del día" [cuantos]="all()?.length ?? null" />
+  <div card-header class="head">
+    <app-section-heading icono="calendar" titulo="Turnos del día" />
+    @if (all(); as total) {
+      <app-badge
+        variant="info"
+        size="sm"
+        [value]="total.length + (total.length === 1 ? ' turno' : ' turnos')"
+        [label]="total.length + (total.length === 1 ? ' turno hoy' : ' turnos hoy')"
+      />
+    }
+  </div>
 
   <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
     @if (all(); as items) {
@@ -18,7 +28,7 @@
                 }
               </span>
             </span>
-            <app-status-seal [variant]="variantOf(booking.status)" [label]="labelOf(booking.status)" />
+            <app-badge size="sm" [variant]="variantOf(booking.status)" [value]="labelOf(booking.status)" />
           </li>
         }
       </ol>
@@ -28,10 +38,12 @@
     }
   </app-view-state-host>
 
-  <div card-footer class="footer">
-    <a app-button variant="secondary" size="sm" [routerLink]="scheduleRoute">
-      Horarios y equipos
-      <app-nav-icon name="arrow-right" />
-    </a>
-  </div>
+  @if (all()) {
+    <div card-footer class="footer">
+      <a app-button variant="secondary" size="sm" [routerLink]="scheduleRoute">
+        Horarios y equipos
+        <app-nav-icon name="arrow-right" />
+      </a>
+    </div>
+  }
 </app-card>

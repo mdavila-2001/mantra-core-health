@@ -1,6 +1,6 @@
 import type { LabOrder } from '../../../core/data-access/lab-portal/lab-portal.types';
 import { loading, ready } from '../../../core/view-state/view-state';
-import { ordersBlockState, pendingResultsState, todayRange, wordingFor } from './laboratory-home.logic';
+import { agoLabel, lastUploadLabel, ordersBlockState, pendingResultsState, todayRange, wordingFor } from './laboratory-home.logic';
 
 const order = (orderId: string, status: LabOrder['status']): LabOrder => ({
   orderId,
@@ -39,5 +39,18 @@ describe('reglas de la portada del centro de diagnóstico', () => {
     const { from, to } = todayRange(new Date(2026, 10, 4, 15, 30));
     expect(from).toEqual(new Date(2026, 10, 4));
     expect(to).toEqual(new Date(2026, 10, 5));
+  });
+
+  it('la última subida se dice sin verbo, sin peso y sin extensión', () => {
+    const now = new Date('2026-11-04T12:00:00Z');
+    const entry = { text: 'Se subió orina-sedimento.dcm (2 KB).', at: '2026-11-04T10:00:00Z' };
+    expect(lastUploadLabel(entry, now)).toBe('orina-sedimento, hace 2 h');
+  });
+
+  it('hace cuánto: minutos, horas y días', () => {
+    const now = new Date('2026-11-04T12:00:00Z');
+    expect(agoLabel('2026-11-04T11:55:00Z', now)).toBe('hace 5 min');
+    expect(agoLabel('2026-11-03T12:00:00Z', now)).toBe('hace 1 día');
+    expect(agoLabel('2026-11-01T12:00:00Z', now)).toBe('hace 3 días');
   });
 });

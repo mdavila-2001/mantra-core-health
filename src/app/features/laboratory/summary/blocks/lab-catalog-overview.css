@@ -1,37 +1,45 @@
-/* Three catalog figures always in one row: a 2 + 1 wrap left a hole. */
+/* Three catalog figures as rows (label and note left, value right): they keep
+   the same height and never wrap badly, in any cell width. */
 
 .figures {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-2);
   margin: 0;
 }
 
 .figure {
   display: grid;
-  align-content: start;
-  gap: var(--sp-1);
-  min-inline-size: 0;
-  padding: var(--sp-3) var(--sp-2);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label value'
+    'note value';
+  align-items: center;
+  column-gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: var(--bg-surface-alt);
 }
 
+.figure dt,
+.figure dd {
+  margin: 0;
+}
+
 .figure dt {
+  grid-area: label;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   font-weight: 600;
   color: var(--text-secondary);
 }
 
-.figure dt,
-.figure dd {
-  margin: 0;
-  overflow-wrap: anywhere;
+.figure .note {
+  grid-area: note;
 }
 
 .figure__value {
+  grid-area: value;
   font-family: var(--font-display);
   font-size: var(--fs-h2);
   line-height: var(--lh-h2);

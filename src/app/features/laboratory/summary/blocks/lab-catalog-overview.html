@@ -23,10 +23,12 @@
     }
   </app-view-state-host>
 
-  <div card-footer class="footer">
-    <a app-button variant="secondary" size="sm" [routerLink]="pricesRoute" data-testid="lab-home-prices">
-      Precios
-      <app-nav-icon name="arrow-right" />
-    </a>
-  </div>
+  @if (data()) {
+    <div card-footer class="footer">
+      <a app-button variant="secondary" size="sm" [routerLink]="pricesRoute" data-testid="lab-home-prices">
+        Precios
+        <app-nav-icon name="arrow-right" />
+      </a>
+    </div>
+  }
 </app-card>

@@ -1,238 +1,914 @@
 [
   {
-    "account": "laboratorio",
-    "theme": "light",
-    "width": 390,
     "file": "inicio-laboratorio-390-claro.png",
+    "width": 390,
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
-    "widthRatio": 94,
-    "h1": "Buenas noches, Laboratorio Central",
-    "blocks": [
-      "orders:data",
-      "pending:state",
-      "bookings:data",
-      "catalog:data"
-    ]
+    "widthPct": 94,
+    "footerBottoms": [
+      1485,
+      1896,
+      2276
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "account": "laboratorio",
+    "theme": "light"
   },
   {
-    "account": "laboratorio",
-    "theme": "light",
-    "width": 768,
     "file": "inicio-laboratorio-768-claro.png",
+    "width": 768,
     "overflowX": false,
     "leftGap": 20,
     "rightGap": 20,
-    "widthRatio": 95,
-    "h1": "Buenas noches, Laboratorio Central",
-    "blocks": [
-      "orders:data",
-      "pending:state",
-      "bookings:data",
-      "catalog:data"
-    ]
+    "widthPct": 95,
+    "footerBottoms": [
+      1371,
+      1782,
+      2162
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "account": "laboratorio",
+    "theme": "light"
   },
   {
-    "account": "laboratorio",
-    "theme": "light",
-    "width": 1440,
     "file": "inicio-laboratorio-1440-claro.png",
-    "overflowX": false,
-    "leftGap": 40,
-    "rightGap": 40,
-    "widthRatio": 93,
-    "h1": "Buenas noches, Laboratorio Central",
-    "blocks": [
-      "orders:data",
-      "pending:state",
-      "bookings:data",
-      "catalog:data"
-    ]
-  },
-  {
-    "account": "laboratorio",
-    "theme": "light",
-    "consoleErrors": [
-      "InvalidStateError: Transition was aborted because of invalid state. Viewport size changed"
-    ],
-    "failedResponses": []
-  },
-  {
-    "account": "laboratorio",
-    "theme": "dark",
-    "width": 390,
-    "file": "inicio-laboratorio-390-oscuro.png",
-    "overflowX": false,
-    "leftGap": 12,
-    "rightGap": 12,
-    "widthRatio": 94,
-    "h1": "Buenas noches, Laboratorio Central",
-    "blocks": [
-      "orders:data",
-      "pending:state",
-      "bookings:data",
-      "catalog:data"
-    ]
-  },
-  {
-    "account": "laboratorio",
-    "theme": "dark",
-    "width": 768,
-    "file": "inicio-laboratorio-768-oscuro.png",
-    "overflowX": false,
-    "leftGap": 20,
-    "rightGap": 20,
-    "widthRatio": 95,
-    "h1": "Buenas noches, Laboratorio Central",
-    "blocks": [
-      "orders:data",
-      "pending:state",
-      "bookings:data",
-      "catalog:data"
-    ]
-  },
-  {
-    "account": "laboratorio",
-    "theme": "dark",
     "width": 1440,
-    "file": "inicio-laboratorio-1440-oscuro.png",
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
-    "widthRatio": 93,
-    "h1": "Buenas noches, Laboratorio Central",
-    "blocks": [
-      "orders:data",
-      "pending:state",
-      "bookings:data",
-      "catalog:data"
-    ]
+    "widthPct": 93,
+    "footerBottoms": [
+      1206,
+      1206,
+      1206
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "account": "laboratorio",
+    "theme": "light"
   },
   {
     "account": "laboratorio",
-    "theme": "dark",
-    "consoleErrors": [
-      "InvalidStateError: Transition was aborted because of invalid state. Viewport size changed"
-    ],
-    "failedResponses": []
+    "theme": "light",
+    "httpErrors": []
   },
   {
-    "account": "imagen",
-    "theme": "light",
-    "width": 390,
     "file": "inicio-imagen-390-claro.png",
-    "overflowX": false,
-    "leftGap": 12,
-    "rightGap": 12,
-    "widthRatio": 94,
-    "h1": "Buenas noches, Centro de Imagen Sur",
-    "blocks": [
-      "orders:state",
-      "pending:state",
-      "bookings:state",
-      "catalog:state"
-    ]
-  },
-  {
-    "account": "imagen",
-    "theme": "light",
-    "width": 768,
-    "file": "inicio-imagen-768-claro.png",
-    "overflowX": false,
-    "leftGap": 20,
-    "rightGap": 20,
-    "widthRatio": 95,
-    "h1": "Buenas noches, Centro de Imagen Sur",
-    "blocks": [
-      "orders:state",
-      "pending:state",
-      "bookings:state",
-      "catalog:state"
-    ]
-  },
-  {
-    "account": "imagen",
-    "theme": "light",
-    "width": 1440,
-    "file": "inicio-imagen-1440-claro.png",
-    "overflowX": false,
-    "leftGap": 40,
-    "rightGap": 40,
-    "widthRatio": 93,
-    "h1": "Buenas noches, Centro de Imagen Sur",
-    "blocks": [
-      "orders:state",
-      "pending:state",
-      "bookings:state",
-      "catalog:state"
-    ]
-  },
-  {
-    "account": "imagen",
-    "theme": "light",
-    "consoleErrors": [
-      "InvalidStateError: Transition was aborted because of invalid state. Viewport size changed"
-    ],
-    "failedResponses": []
-  },
-  {
-    "account": "imagen",
-    "theme": "dark",
     "width": 390,
-    "file": "inicio-imagen-390-oscuro.png",
     "overflowX": false,
     "leftGap": 12,
     "rightGap": 12,
-    "widthRatio": 94,
-    "h1": "Buenas noches, Centro de Imagen Sur",
-    "blocks": [
-      "orders:state",
-      "pending:state",
-      "bookings:state",
-      "catalog:state"
-    ]
+    "widthPct": 94,
+    "footerBottoms": [
+      1150,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "0 resultados subidos",
+    "account": "imagen",
+    "theme": "light"
   },
   {
-    "account": "imagen",
-    "theme": "dark",
+    "file": "inicio-imagen-768-claro.png",
     "width": 768,
-    "file": "inicio-imagen-768-oscuro.png",
     "overflowX": false,
     "leftGap": 20,
     "rightGap": 20,
-    "widthRatio": 95,
-    "h1": "Buenas noches, Centro de Imagen Sur",
-    "blocks": [
-      "orders:state",
-      "pending:state",
-      "bookings:state",
-      "catalog:state"
-    ]
+    "widthPct": 95,
+    "footerBottoms": [
+      1102,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "0 resultados subidos",
+    "account": "imagen",
+    "theme": "light"
   },
   {
-    "account": "imagen",
-    "theme": "dark",
+    "file": "inicio-imagen-1440-claro.png",
     "width": 1440,
-    "file": "inicio-imagen-1440-oscuro.png",
     "overflowX": false,
     "leftGap": 40,
     "rightGap": 40,
-    "widthRatio": 93,
-    "h1": "Buenas noches, Centro de Imagen Sur",
-    "blocks": [
-      "orders:state",
-      "pending:state",
-      "bookings:state",
-      "catalog:state"
-    ]
+    "widthPct": 93,
+    "footerBottoms": [
+      1177,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "0 resultados subidos",
+    "account": "imagen",
+    "theme": "light"
+  },
+  {
+    "account": "imagen",
+    "theme": "light",
+    "httpErrors": []
+  },
+  {
+    "file": "estado-cargando-1440-claro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "state": "loading",
+    "theme": "light"
+  },
+  {
+    "file": "estado-error-ordenes-1440-claro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1113,
+      1113,
+      1113
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo"
+    ],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "state": "error-orders-only",
+    "theme": "light"
+  },
+  {
+    "file": "estado-error-todo-1440-claro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo"
+    ],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "state": "error-all",
+    "theme": "light"
+  },
+  {
+    "file": "estado-pendientes-2filas-1440-claro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1127,
+      1127,
+      1127
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 2,
+    "pendingMore": "4 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "state": "pending-2-rows",
+    "theme": "light"
+  },
+  {
+    "file": "estado-pendientes-con-mas-1440-claro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1218,
+      1218,
+      1218
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "pending-more-than-limit",
+    "theme": "light"
+  },
+  {
+    "file": "estado-foco-tile-1440-claro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1218,
+      1218,
+      1218
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "focus-count-tile",
+    "theme": "light"
+  },
+  {
+    "file": "estado-foco-subir-1440-claro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1218,
+      1218,
+      1218
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "focus-upload-link",
+    "theme": "light"
+  },
+  {
+    "file": "estado-cargando-390-claro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "state": "loading",
+    "theme": "light"
+  },
+  {
+    "file": "estado-error-ordenes-390-claro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1187,
+      1598,
+      1978
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo"
+    ],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "state": "error-orders-only",
+    "theme": "light"
+  },
+  {
+    "file": "estado-error-todo-390-claro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo"
+    ],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "state": "error-all",
+    "theme": "light"
+  },
+  {
+    "file": "estado-pendientes-2filas-390-claro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1327,
+      1738,
+      2118
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 2,
+    "pendingMore": "4 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "state": "pending-2-rows",
+    "theme": "light"
+  },
+  {
+    "file": "estado-pendientes-con-mas-390-claro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1458,
+      1869,
+      2249
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "pending-more-than-limit",
+    "theme": "light"
+  },
+  {
+    "file": "estado-foco-tile-390-claro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1458,
+      1869,
+      2249
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "focus-count-tile",
+    "theme": "light"
+  },
+  {
+    "file": "estado-foco-subir-390-claro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1458,
+      1869,
+      2249
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "focus-upload-link",
+    "theme": "light"
+  },
+  {
+    "file": "inicio-laboratorio-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1485,
+      1896,
+      2276
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "account": "laboratorio",
+    "theme": "dark"
+  },
+  {
+    "file": "inicio-laboratorio-768-oscuro.png",
+    "width": 768,
+    "overflowX": false,
+    "leftGap": 20,
+    "rightGap": 20,
+    "widthPct": 95,
+    "footerBottoms": [
+      1371,
+      1782,
+      2162
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "account": "laboratorio",
+    "theme": "dark"
+  },
+  {
+    "file": "inicio-laboratorio-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1206,
+      1206,
+      1206
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "account": "laboratorio",
+    "theme": "dark"
+  },
+  {
+    "account": "laboratorio",
+    "theme": "dark",
+    "httpErrors": []
+  },
+  {
+    "file": "inicio-imagen-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1150,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "0 resultados subidos",
+    "account": "imagen",
+    "theme": "dark"
+  },
+  {
+    "file": "inicio-imagen-768-oscuro.png",
+    "width": 768,
+    "overflowX": false,
+    "leftGap": 20,
+    "rightGap": 20,
+    "widthPct": 95,
+    "footerBottoms": [
+      1102,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "0 resultados subidos",
+    "account": "imagen",
+    "theme": "dark"
+  },
+  {
+    "file": "inicio-imagen-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1177,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": "0 resultados subidos",
+    "account": "imagen",
+    "theme": "dark"
   },
   {
     "account": "imagen",
     "theme": "dark",
-    "consoleErrors": [
-      "InvalidStateError: Transition was aborted because of invalid state. Viewport size changed"
+    "httpErrors": []
+  },
+  {
+    "file": "estado-cargando-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      null,
+      null,
+      null
     ],
-    "failedResponses": []
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "state": "loading",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-error-ordenes-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1113,
+      1113,
+      1113
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo"
+    ],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "state": "error-orders-only",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-error-todo-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo"
+    ],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "state": "error-all",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-pendientes-2filas-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1127,
+      1127,
+      1127
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 2,
+    "pendingMore": "4 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "state": "pending-2-rows",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-pendientes-con-mas-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1218,
+      1218,
+      1218
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "pending-more-than-limit",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-foco-tile-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1218,
+      1218,
+      1218
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "focus-count-tile",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-foco-subir-1440-oscuro.png",
+    "width": 1440,
+    "overflowX": false,
+    "leftGap": 40,
+    "rightGap": 40,
+    "widthPct": 93,
+    "footerBottoms": [
+      1218,
+      1218,
+      1218
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "focus-upload-link",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-cargando-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "state": "loading",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-error-ordenes-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1187,
+      1598,
+      1978
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo"
+    ],
+    "pendingRows": 0,
+    "pendingMore": "6 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "state": "error-orders-only",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-error-todo-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      null,
+      null,
+      null
+    ],
+    "figureHeights": [],
+    "requestIds": [
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo",
+      "Código de soporte: mock-fallo"
+    ],
+    "pendingRows": 0,
+    "pendingMore": null,
+    "state": "error-all",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-pendientes-2filas-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1327,
+      1738,
+      2118
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 2,
+    "pendingMore": "4 resultados subidos  · último: orina-sedimento, hace 2 días",
+    "state": "pending-2-rows",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-pendientes-con-mas-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1458,
+      1869,
+      2249
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "pending-more-than-limit",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-foco-tile-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1458,
+      1869,
+      2249
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "focus-count-tile",
+    "theme": "dark"
+  },
+  {
+    "file": "estado-foco-subir-390-oscuro.png",
+    "width": 390,
+    "overflowX": false,
+    "leftGap": 12,
+    "rightGap": 12,
+    "widthPct": 94,
+    "footerBottoms": [
+      1458,
+      1869,
+      2249
+    ],
+    "figureHeights": [
+      60,
+      60,
+      60
+    ],
+    "requestIds": [],
+    "pendingRows": 4,
+    "pendingMore": "Y 1 más esperando su archivo.",
+    "state": "focus-upload-link",
+    "theme": "dark"
   }
 ]

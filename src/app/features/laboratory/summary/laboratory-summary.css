@@ -67,6 +67,7 @@
 .welcome__lead {
   margin: 0;
   max-inline-size: 60ch;
+  text-wrap: pretty;
   font-size: var(--fs-body-lg);
   line-height: var(--lh-body-lg);
   color: var(--text-secondary);

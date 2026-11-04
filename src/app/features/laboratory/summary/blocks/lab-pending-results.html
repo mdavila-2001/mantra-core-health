@@ -1,5 +1,15 @@
 <app-card padding="lg" data-testid="lab-home-pending">
-  <app-section-heading card-header icono="results" titulo="Resultados pendientes" [cuantos]="data()?.total ?? null" />
+  <div card-header class="head">
+    <app-section-heading icono="results" titulo="Resultados pendientes" />
+    @if (data(); as d) {
+      <app-badge
+        variant="warning"
+        size="sm"
+        [value]="d.total + (d.total === 1 ? ' pendiente' : ' pendientes')"
+        [label]="d.total + (d.total === 1 ? ' resultado pendiente' : ' resultados pendientes')"
+      />
+    }
+  </div>
 
   <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
     @if (data(); as d) {
@@ -34,9 +44,10 @@
   @if (uploaded(); as s) {
     <div card-footer class="footer">
       <p class="note">
-        <strong data-testid="summary-result-files">{{ s.resultFiles }}</strong> resultados subidos
+        <strong data-testid="summary-result-files">{{ s.resultFiles }}</strong>
+        {{ s.resultFiles === 1 ? 'resultado subido' : 'resultados subidos' }}
         @if (lastUpload(); as last) {
-          <span data-testid="summary-activity"> · último: {{ last.text }}</span>
+          <span data-testid="summary-activity"> · último: {{ last }}</span>
         }
       </p>
     </div>

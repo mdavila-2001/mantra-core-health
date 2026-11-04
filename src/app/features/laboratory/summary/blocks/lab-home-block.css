@@ -4,10 +4,23 @@
 :host {
   display: block;
   min-inline-size: 0;
+  /* Inherited: balances the empty-state titles; running text opts out below. */
+  text-wrap: balance;
 }
 
+/* Header / body / footer as grid rows: the body takes the free height, so the
+   footers of cards in the same row line up at the bottom. */
 app-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   block-size: 100%;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
 }
 
 .rows {
@@ -37,12 +50,14 @@ app-card {
 }
 
 .row__title {
+  text-wrap: pretty;
   font-weight: 600;
   color: var(--text-primary);
   overflow-wrap: anywhere;
 }
 
 .row__meta {
+  text-wrap: pretty;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
@@ -56,6 +71,7 @@ app-card {
 }
 
 .note {
+  text-wrap: pretty;
   margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);

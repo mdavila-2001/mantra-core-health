@@ -6,16 +6,17 @@ import type { LabSummary } from '../../../../core/data-access/lab-portal/lab-por
 import { dataOf } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { SectionHeading } from '../../../../shared/components/molecules/section-heading/section-heading';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { ORDERS_ROUTE, type PendingResults } from '../laboratory-home.logic';
+import { lastUploadLabel, ORDERS_ROUTE, type PendingResults } from '../laboratory-home.logic';
 
 /** «Resultados pendientes»: processed orders without a file, each with its upload link. */
 @Component({
   selector: 'app-lab-pending-results',
-  imports: [AppButtonLink, Card, DatePipe, NavIcon, RouterLink, SectionHeading, ViewStateHost],
+  imports: [AppButtonLink, Badge, Card, DatePipe, NavIcon, RouterLink, SectionHeading, ViewStateHost],
   templateUrl: './lab-pending-results.html',
   styleUrl: './lab-home-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,9 +29,10 @@ export class LabPendingResults {
 
   protected readonly data = computed(() => dataOf(this.state()));
   protected readonly uploaded = computed(() => dataOf(this.summary()));
-  protected readonly lastUpload = computed(
-    () => this.uploaded()?.recentActivity.find((entry) => entry.kind === 'RESULT_UPLOADED') ?? null,
-  );
+  protected readonly lastUpload = computed(() => {
+    const entry = this.uploaded()?.recentActivity.find((e) => e.kind === 'RESULT_UPLOADED');
+    return entry === undefined ? null : lastUploadLabel(entry, new Date());
+  });
   protected readonly ordersRoute = ORDERS_ROUTE;
   protected readonly uploadParams = { estado: 'processed' };
 }
