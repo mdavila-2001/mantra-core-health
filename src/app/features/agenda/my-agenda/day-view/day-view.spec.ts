@@ -801,6 +801,36 @@ describe('DayView', () => {
       now.mockRestore();
       expect((document.activeElement as HTMLElement).getAttribute('data-linea')).toBe('s26-13-30');
     });
+
+    it('opening another day while one loads drops the wait: coming back later does not steal the focus', async () => {
+      montar([cupo(9), cupo(14)]);
+      controles()[2].focus();
+      tecla('ArrowRight');
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 26));
+      fixture.componentRef.setInput('cupos', []);
+      fixture.componentRef.setInput('dayState', 'loading');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // "Ayer" is clicked before the day arrives: the pending wait belongs to a day no longer open.
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 25));
+      fixture.componentRef.setInput('dayState', 'ready');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Later the person comes back to that day: the old wait must not move the focus.
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 26));
+      fixture.componentRef.setInput('cupos', [
+        {
+          ...cupo(13, 30, 's26-13-30'),
+          startAt: new Date(2026, 7, 26, 13, 30),
+          endAt: new Date(2026, 7, 26, 14, 0),
+        },
+      ]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect((document.activeElement as HTMLElement).getAttribute('data-linea')).not.toBe('s26-13-30');
+    });
   });
 
   describe('lo que lee el lector', () => {

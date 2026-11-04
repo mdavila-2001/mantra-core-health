@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
 
 import { DayLoad, type DayRead } from './day-load';
 
@@ -57,9 +57,19 @@ describe('DayLoad', () => {
 
   it('a failing read becomes a result and the other one is still applied', () => {
     const error = new Error('down');
-    load.load(TODAY, throwError(() => error), of(page(2)), apply);
+    load.load(
+      TODAY,
+      throwError(() => error),
+      of(page(2)),
+      apply,
+    );
     expect(load.loading()).toBe(false);
-    expect(applied).toEqual([[{ ok: false, error }, { ok: true, items: [{ id: 2 }] }]]);
+    expect(applied).toEqual([
+      [
+        { ok: false, error },
+        { ok: true, items: [{ id: 2 }] },
+      ],
+    ]);
   });
 
   it('a new turn cancels the old source and ignores its late answer', () => {
@@ -95,5 +105,23 @@ describe('DayLoad', () => {
     expect(list()).toEqual([1, 2]);
     load.load(TOMORROW, pending, pending, apply);
     expect(list()).toEqual([]);
+  });
+
+  it('freshDay is true for a first load or another day, false for a reload of the same day', () => {
+    const pending = new Subject<{ items: Item[] }>();
+    load.load(TODAY, pending, pending, apply);
+    expect(load.freshDay()).toBe(true);
+    load.load(TODAY, pending, pending, apply);
+    expect(load.freshDay()).toBe(false);
+    load.load(TOMORROW, pending, pending, apply);
+    expect(load.freshDay()).toBe(true);
+  });
+
+  it('a source that completes without answering counts as a failed read', () => {
+    load.load(TODAY, EMPTY, of(page(2)), apply);
+    expect(load.loading()).toBe(false);
+    expect(applied.length).toBe(1);
+    expect(applied[0][0].ok).toBe(false);
+    expect(applied[0][1]).toEqual({ ok: true, items: [{ id: 2 }] });
   });
 });

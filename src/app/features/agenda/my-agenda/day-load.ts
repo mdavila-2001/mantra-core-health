@@ -1,5 +1,14 @@
 import { signal, type WritableSignal } from '@angular/core';
-import { catchError, finalize, forkJoin, map, of, type Observable, type Subscription } from 'rxjs';
+import {
+  catchError,
+  defaultIfEmpty,
+  finalize,
+  forkJoin,
+  map,
+  of,
+  type Observable,
+  type Subscription,
+} from 'rxjs';
 
 import type { ViewStateStatus } from '../../../core/view-state/view-state.types';
 
@@ -33,6 +42,14 @@ export class DayLoad {
   /** True from the moment a turn starts until it completes, fails or is cancelled. */
   readonly loading = this.loadingSignal.asReadonly();
 
+  private readonly freshDaySignal = signal(false);
+  /**
+   * True when the turn in flight is for a day other than the one last loaded:
+   * the lists were emptied, so nothing on screen belongs to the day yet. False
+   * on a reload of the same day, whose lists (and failures) still stand.
+   */
+  readonly freshDay = this.freshDaySignal.asReadonly();
+
   private readonly lists: readonly WritableSignal<readonly unknown[]>[];
   private turn: Subscription | null = null;
   private lastDay: number | null = null;
@@ -60,6 +77,7 @@ export class DayLoad {
     if (this.lastDay !== null && this.lastDay !== key) {
       for (const list of this.lists) list.set([]);
     }
+    this.freshDaySignal.set(this.lastDay !== key);
     this.lastDay = key;
     this.loadingSignal.set(true);
     this.turn = forkJoin([read(slots), read(bookings)])
@@ -71,6 +89,12 @@ export class DayLoad {
 function read<T>(source: Observable<Page<T>>): Observable<DayRead<T>> {
   return source.pipe(
     map((page): DayRead<T> => ({ ok: true, items: page.items })),
+    // A source that completes without answering counts as a failed read, so
+    // the day never claims "No atiende este día" on data it did not get.
+    defaultIfEmpty<DayRead<T>, DayRead<T>>({
+      ok: false,
+      error: new Error('The day read returned nothing'),
+    }),
     catchError((error: unknown) => of<DayRead<T>>({ ok: false, error })),
   );
 }

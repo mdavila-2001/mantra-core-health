@@ -569,11 +569,15 @@ export class MyAgenda implements OnInit {
    */
   protected readonly lecturasFallidas = signal<ReadonlyMap<LecturaDeAgenda, string>>(new Map());
 
-  /** What the day may claim: loading wins over a failure left by a previous turn. */
+  /**
+   * What the day may claim. Loading another day wins over the previous day's failure; a
+   * same-day reload keeps it, so a retry never shows a taken slot as "No disponible".
+   */
   protected readonly dayState = computed<DayState>(() => {
     const fallidas = this.lecturasFallidas();
-    if (this.dayLoad.loading()) return 'loading';
-    return fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia') ? 'error' : 'ready';
+    if (this.dayLoad.loading() && this.dayLoad.freshDay()) return 'loading';
+    if (fallidas.has('citas-del-dia') || fallidas.has('cupos-del-dia')) return 'error';
+    return this.dayLoad.loading() ? 'loading' : 'ready';
   });
 
   /** Los mensajes del aviso, sin repetir: sin conexión, todas dicen lo mismo. */
@@ -1934,7 +1938,8 @@ export class MyAgenda implements OnInit {
    */
   private cargarDia(fecha: Date): void {
     const recurso = this.recurso();
-    if (recurso === null) return;
+    // A slow write may ask for the day it started on; the day open now wins.
+    if (recurso === null || this.diaAbierto()?.toDateString() !== fecha.toDateString()) return;
 
     const desde = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
     const hasta = new Date(desde);

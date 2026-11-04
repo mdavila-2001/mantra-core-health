@@ -336,12 +336,13 @@ export class DayView {
     const dia = this.dia().toDateString();
     const claves = this.recorribles();
     const pendiente = this.focoPendiente;
-    if (pendiente === null || pendiente.dia !== dia) return;
-    // The wait does not run out while the day loads; it restarts when the slots arrive.
+    if (pendiente === null) return;
+    // Opening another day drops the wait; loading keeps it alive until the slots arrive.
     const loading = this.dayState() === 'loading';
     const vence = loading ? Infinity : Math.min(pendiente.vence, Date.now() + 5000);
-    this.focoPendiente = Date.now() > vence ? null : { ...pendiente, vence };
-    if (this.focoPendiente === null) return;
+    const vigente = pendiente.dia === dia && Date.now() <= vence;
+    this.focoPendiente = vigente ? { ...pendiente, vence } : null;
+    if (!vigente) return;
     const doc = this.host.nativeElement.ownerDocument;
     const activo = doc.activeElement;
     if (activo !== null && activo !== doc.body && !this.host.nativeElement.contains(activo)) {

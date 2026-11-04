@@ -404,6 +404,9 @@ describe('MyAgenda', () => {
       interface Readings {
         dayLoad: { loading(): boolean };
         cuposDelDia(): readonly unknown[];
+        dayState(): string;
+        diaAbierto(): Date | null;
+        cargarDia(fecha: Date): void;
       }
       const readings = (): Readings => fixture.componentInstance as unknown as Readings;
       const isDayRead = (r: { url: string; params: { get(k: string): string | null } }): boolean =>
@@ -508,6 +511,44 @@ describe('MyAgenda', () => {
         expect(readings().cuposDelDia().length).toBe(0);
         expect(readings().dayLoad.loading()).toBe(true);
         holdDay();
+      });
+
+      it('retrying the same day keeps its failure: a taken slot is not shown as "No disponible"', () => {
+        const { slots, bookings } = openHeld();
+        const taken = { ...slotOf('tomado'), remainingCapacity: 0 };
+        slots.flush({ items: [taken], count: 1 });
+        bookings.flush(
+          { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'c' },
+          { status: 500, statusText: 'Internal Server Error' },
+        );
+        fixture.detectChanges();
+
+        ($('[data-testid="agenda-reintentar-lecturas"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        // Same day: the lists stay and so does the failure until the retry answers.
+        expect(readings().dayLoad.loading()).toBe(true);
+        expect(readings().dayState()).toBe('error');
+        expect(fixture.nativeElement.textContent).not.toContain('No disponible');
+        for (const req of http.match((r) => isDayRead(r))) req.flush({ items: [], count: 0 });
+      });
+
+      it('a slow write that asks for the day it started on does not replace the day open now', () => {
+        const first = openHeld();
+        first.slots.flush({ items: [], count: 0 });
+        first.bookings.flush({ items: [], count: 0 });
+        fixture.detectChanges();
+        const startedOn = readings().diaAbierto() as Date;
+
+        ($('[data-testid="dia-siguiente"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const next = holdDay();
+
+        readings().cargarDia(startedOn);
+        expect(http.match((r) => isDayRead(r))).toEqual([]);
+        expect(next.slots.cancelled).toBe(false);
+        next.slots.flush({ items: [], count: 0 });
+        next.bookings.flush({ items: [], count: 0 });
       });
     });
 
