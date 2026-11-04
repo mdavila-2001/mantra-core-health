@@ -1,0 +1,30 @@
+@if (products().length > 0) {
+  <section
+    class="registro"
+    aria-labelledby="registro-titulo"
+    data-testid="vitrina-registro-oficial"
+  >
+    <h2 id="registro-titulo" class="registro__titulo">En el registro sanitario oficial</h2>
+    <p class="registro__nota">
+      Medicamentos registrados que coinciden con su búsqueda. Que estén registrados no quiere decir
+      que una farmacia de la red los tenga hoy. El uso es el de su grupo ATC (OMS), no una
+      indicación médica.
+    </p>
+    <ul class="registro__lista">
+      @for (producto of products(); track producto.id) {
+        <li class="registro__item">
+          <p class="registro__nombre">{{ producto.name }}</p>
+          <p class="registro__dato">
+            {{ producto.holder ?? 'Titular no informado' }} · {{ producto.sourceName }}
+            @if (producto.requiresPrescription) {
+              · Con receta
+            }
+          </p>
+          @if (producto.uses.length > 0) {
+            <p class="registro__uso">Sirve para: {{ producto.uses[0] }}</p>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+}

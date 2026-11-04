@@ -308,7 +308,16 @@ describe('StoreFront', () => {
       .flush({ items: [], limit: 20, truncated: false });
     harness.detectChanges();
 
-    expect(texto()).toContain('Pruebe con otra palabra');
+    // With no pharmacy offer the vademécum and the registry are searched too;
+    // only when nothing turns up anywhere does it say so, with what to try.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    http
+      .expectOne((r) => r.url === '/public/medications')
+      .flush({ items: [], total: 0, groups: [], correctedQuery: null, officialProducts: [], generatedAt: '' });
+    harness.detectChanges();
+
+    expect(texto()).toContain('No encontramos «xxxxxx»');
+    expect(texto()).toContain('Pruebe con el nombre del principio activo');
   });
 
   /**
