@@ -1,12 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { FilesClient } from '../../../core/data-access/files/files.client';
 import { PaymentReceiptsClient } from '../../../core/data-access/scheduling/payment-receipts.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-import type { BookableOrganization } from '../../../core/data-access/scheduling/scheduling.types';
+import {
+  BookableResourcesClient,
+  type BookableResource,
+} from '../../../core/data-access/scheduling/bookable-resources.client';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -14,21 +17,23 @@ import { Appointments } from './appointments';
 
 /**
  * Which organization a patient books with (#1899): the one their practitioner
- * works in, whether or not it is the session's. Pins how the screen picks it and
- * that every later read and write talks to it, not to the session's.
+ * works in, whether or not it is the session's. The patient picks a person from
+ * every organization and the organization comes with it; every later read and
+ * write talks to it, not to the session's.
  */
 
 const MOTIVO = 'Me surgió un viaje esa semana';
 
-const org = (tenantId: string, name: string): BookableOrganization => ({
+const persona = (tenantId: string, resourceId: string, name: string): BookableResource => ({
   tenantId,
+  organizationName: tenantId === 't-1' ? 'AloVida' : 'Hospital San Lucas',
+  resourceId,
+  resourceRefType: '',
+  resourceRefId: '',
   name,
-  practitionerCount: 1,
-  roomCount: 0,
 });
-const OLIVOS = org('t-1', 'Clínica Los Olivos');
-const SAN_LUCAS = org('t-2', 'Hospital San Lucas');
-const NORTE = org('t-3', 'Centro Norte');
+const ROJAS = persona('t-1', 'r-1', 'Dra. Rojas');
+const VARGAS = persona('t-2', 'r-9', 'Dr. Vargas');
 
 const pagina = <T>(items: readonly T[]) => ({ items, count: items.length, limit: 50, truncated: false });
 
@@ -48,8 +53,6 @@ const cita = (id: string, tenantId?: string) => ({
 interface Montaje {
   /** The session's active organization. */
   readonly activa: string | null;
-  /** What `GET /scheduling/bookable-organizations` answers; `'falla'` makes it fail. */
-  readonly organizaciones: readonly BookableOrganization[] | 'falla';
   /** Agenda resources by organization. */
   readonly recursos?: Readonly<Record<string, readonly { id: string; name: string; capacity: number }[]>>;
   readonly bookings?: readonly ReturnType<typeof cita>[];
@@ -58,9 +61,7 @@ interface Montaje {
 /** The members the screen keeps protected and these cases exercise. */
 interface Interno {
   organizacion(): string | null;
-  preguntaPorOrganizacion(): boolean;
-  opcionesDeOrganizacion(): readonly { value: string; label: string }[];
-  elegirOrganizacion(tenantId: string | null): void;
+  elegirProfesional(elegido: BookableResource | null): void;
   elegirAgenda(clave: string | null): void;
   elegirSeccion(seccion: string): void;
   agendaElegida(): string | null;
@@ -71,8 +72,7 @@ interface Interno {
 }
 
 function montar(m: Montaje) {
-  const respuesta = m.organizaciones === 'falla' ? throwError(() => new Error('500')) : of(m.organizaciones);
-  const listBookableOrganizations = vi.fn().mockReturnValue(respuesta);
+  const listBookable = vi.fn().mockReturnValue(of({ items: [ROJAS, VARGAS], total: 2 }));
   const listResources = vi.fn((q: { tenantId: string }) => of(pagina(m.recursos?.[q.tenantId] ?? [])));
   const listSlots = vi.fn().mockReturnValue(of(pagina([])));
   const cancelBooking = vi.fn().mockReturnValue(of({ bookingId: 'x', capacityReleased: true }));
@@ -84,7 +84,6 @@ function montar(m: Montaje) {
       {
         provide: SchedulingClient,
         useValue: {
-          listBookableOrganizations,
           searchBookings: vi.fn().mockReturnValue(of(pagina(m.bookings ?? []))),
           listResources,
           listSlots,
@@ -103,6 +102,7 @@ function montar(m: Montaje) {
           ),
         },
       },
+      { provide: BookableResourcesClient, useValue: { list: listBookable } },
       { provide: PaymentReceiptsClient, useValue: { list: vi.fn().mockReturnValue(of([])) } },
       { provide: FilesClient, useValue: { upload: vi.fn() } },
       {
@@ -123,7 +123,7 @@ function montar(m: Montaje) {
   const fixture: ComponentFixture<Appointments> = TestBed.createComponent(Appointments);
   fixture.detectChanges();
   const comp = fixture.componentInstance as unknown as Interno;
-  return { fixture, comp, listBookableOrganizations, listResources, listSlots, cancelBooking };
+  return { fixture, comp, listBookable, listResources, listSlots, cancelBooking };
 }
 
 /** The first argument of the n-th `listResources` call, and the scope it travelled with. */
@@ -133,13 +133,9 @@ const lectura = (listResources: ReturnType<typeof vi.fn>, n = 0) => ({
 });
 
 describe('Appointments · con qué organización se pide cita (#1899)', () => {
-  it('pide las organizaciones una sola vez, y las agendas de la de la sesión si está en la lista', () => {
-    const { listBookableOrganizations, listResources, comp } = montar({
-      activa: 't-1',
-      organizaciones: [OLIVOS, SAN_LUCAS],
-    });
+  it('arranca con las agendas de la organización de la sesión, sin preguntar por organizaciones', () => {
+    const { listResources, comp } = montar({ activa: 't-1' });
 
-    expect(listBookableOrganizations).toHaveBeenCalledTimes(1);
     expect(listResources).toHaveBeenCalledTimes(1);
     expect(lectura(listResources)).toEqual({
       consulta: { tenantId: 't-1', resourceType: 'PRACTITIONER' },
@@ -148,75 +144,37 @@ describe('Appointments · con qué organización se pide cita (#1899)', () => {
     expect(comp.organizacion()).toBe('t-1');
   });
 
-  it('si la organización de la sesión no tiene cupos, elige la primera de la lista', () => {
-    const { listResources, comp } = montar({ activa: 't-1', organizaciones: [SAN_LUCAS, NORTE] });
-
-    // The session's agendas have no openings: don't leave the patient with «no professionals».
-    expect(listResources).toHaveBeenCalledTimes(1);
-    expect(lectura(listResources)).toEqual({
-      consulta: { tenantId: 't-2', resourceType: 'PRACTITIONER' },
-      alcance: { tenantId: 't-2' },
-    });
-    expect(comp.organizacion()).toBe('t-2');
-  });
-
-  it('una cuenta sin organización activa también cae en la primera de la lista', () => {
-    const { listResources, comp } = montar({ activa: null, organizaciones: [SAN_LUCAS] });
-
-    expect(comp.organizacion()).toBe('t-2');
-    expect(lectura(listResources).alcance).toEqual({ tenantId: 't-2' });
-  });
-
-  it('con la lista vacía sigue con la de la sesión y no pregunta cuál', () => {
-    const { listResources, comp } = montar({ activa: 't-1', organizaciones: [] });
-
-    expect(comp.organizacion()).toBe('t-1');
-    expect(comp.preguntaPorOrganizacion()).toBe(false);
-    expect(lectura(listResources).alcance).toEqual({ tenantId: 't-1' });
-  });
-
-  it('si leer la lista falla, igual se puede pedir cita en la organización de la sesión', () => {
-    const { listResources, comp } = montar({ activa: 't-1', organizaciones: 'falla' });
-
-    expect(listResources).toHaveBeenCalledTimes(1);
-    expect(lectura(listResources).alcance).toEqual({ tenantId: 't-1' });
-    expect(comp.preguntaPorOrganizacion()).toBe(false);
-  });
-
-  it('sin lista ni organización de la sesión no hay agendas que pedir', () => {
-    const { listResources, comp } = montar({ activa: null, organizaciones: [] });
+  it('sin organización de la sesión no hay agendas que pedir al arrancar', () => {
+    const { listResources, comp } = montar({ activa: null });
 
     expect(comp.organizacion()).toBeNull();
     expect(listResources).not.toHaveBeenCalled();
   });
 
-  it('con varias organizaciones pregunta en cuál, con sus nombres', async () => {
-    const { fixture, comp } = montar({ activa: 't-1', organizaciones: [OLIVOS, SAN_LUCAS] });
-
-    expect(comp.preguntaPorOrganizacion()).toBe(true);
-    expect(comp.opcionesDeOrganizacion()).toEqual([
-      { value: 't-1', label: 'Clínica Los Olivos' },
-      { value: 't-2', label: 'Hospital San Lucas' },
-    ]);
+  it('el buscador lista a los profesionales de todas las organizaciones, sin selector de organización', async () => {
+    const { fixture, comp, listBookable } = montar({ activa: 't-1' });
 
     comp.elegirSeccion('pedir');
     await fixture.whenStable();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[data-testid="turnos-organizacion"]')).not.toBeNull();
+
+    expect(listBookable).toHaveBeenCalledWith(expect.objectContaining({ resourceType: 'PRACTITIONER', offset: 0 }));
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-organizacion"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-profesional"]')).not.toBeNull();
   });
 });
 
-describe('Appointments · cambiar de organización (#1899)', () => {
+describe('Appointments · elegir un profesional de otra organización (#1899)', () => {
   const RECURSOS = {
     't-1': [{ id: 'r-1', name: 'Dra. Rojas', capacity: 1 }],
     't-2': [{ id: 'r-9', name: 'Dr. Vargas', capacity: 1 }],
   };
 
-  it('relee las agendas de la elegida, con su alcance, y se queda solo con las suyas', () => {
-    const { listResources, comp } = montar({ activa: 't-1', organizaciones: [OLIVOS, SAN_LUCAS], recursos: RECURSOS });
+  it('relee las agendas de su organización, con su alcance, y abre la suya', () => {
+    const { listResources, comp } = montar({ activa: 't-1', recursos: RECURSOS });
     expect(comp.recursos().map((r) => r.id)).toEqual(['r-1']);
 
-    comp.elegirOrganizacion('t-2');
+    comp.elegirProfesional(VARGAS);
 
     expect(listResources).toHaveBeenCalledTimes(2);
     expect(lectura(listResources, 1)).toEqual({
@@ -225,42 +183,41 @@ describe('Appointments · cambiar de organización (#1899)', () => {
     });
     expect(comp.organizacion()).toBe('t-2');
     expect(comp.recursos().map((r) => r.id)).toEqual(['r-9']);
+    expect(comp.agendaElegida()).toBe('recurso:r-9');
   });
 
-  it('suelta el profesional que estaba elegido: era de la otra organización', () => {
-    const { comp } = montar({ activa: 't-1', organizaciones: [OLIVOS, SAN_LUCAS], recursos: RECURSOS });
-    comp.elegirAgenda('recurso:r-1');
-    expect(comp.agendaElegida()).toBe('recurso:r-1');
+  it('uno de la organización ya cargada abre su agenda sin releer nada', () => {
+    const { listResources, comp } = montar({ activa: 't-1', recursos: RECURSOS });
 
-    comp.elegirOrganizacion('t-2');
-
-    expect(comp.agendaElegida()).toBeNull();
-  });
-
-  it('elegir la que ya está, o volver al placeholder, no relee nada', () => {
-    const { listResources, comp } = montar({ activa: 't-1', organizaciones: [OLIVOS, SAN_LUCAS], recursos: RECURSOS });
-
-    comp.elegirOrganizacion('t-1');
-    comp.elegirOrganizacion(null);
+    comp.elegirProfesional(ROJAS);
 
     expect(listResources).toHaveBeenCalledTimes(1);
-    expect(comp.organizacion()).toBe('t-1');
+    expect(comp.agendaElegida()).toBe('recurso:r-1');
   });
 
-  it('los horarios del profesional se piden a la organización elegida', () => {
-    const { listSlots, comp } = montar({ activa: 't-1', organizaciones: [OLIVOS, SAN_LUCAS], recursos: RECURSOS });
-    comp.elegirOrganizacion('t-2');
+  it('limpiar la elección suelta la agenda y no relee nada', () => {
+    const { listResources, comp } = montar({ activa: 't-1', recursos: RECURSOS });
+    comp.elegirProfesional(ROJAS);
 
-    comp.elegirAgenda('recurso:r-9');
+    comp.elegirProfesional(null);
+
+    expect(comp.agendaElegida()).toBeNull();
+    expect(listResources).toHaveBeenCalledTimes(1);
+  });
+
+  it('los horarios del profesional se piden a su organización', () => {
+    const { listSlots, comp } = montar({ activa: 't-1', recursos: RECURSOS });
+
+    comp.elegirProfesional(VARGAS);
 
     expect(listSlots).toHaveBeenCalledTimes(1);
     expect(listSlots.mock.calls[0]?.[0]).toMatchObject({ resourceId: 'r-9' });
     expect(listSlots.mock.calls[0]?.[1]).toEqual({ tenantId: 't-2' });
   });
 
-  it('el enlace de reserva lleva la organización elegida y no la de la sesión', () => {
-    const { comp } = montar({ activa: 't-1', organizaciones: [OLIVOS, SAN_LUCAS], recursos: RECURSOS });
-    comp.elegirOrganizacion('t-2');
+  it('el enlace de reserva lleva la organización del profesional y no la de la sesión', () => {
+    const { comp } = montar({ activa: 't-1', recursos: RECURSOS });
+    comp.elegirProfesional(VARGAS);
 
     const params = comp.paramsDeReserva({
       resourceId: 'r-9',
@@ -286,7 +243,7 @@ describe('Appointments · una cita de otra organización (#1899)', () => {
   afterEach(() => vi.useRealTimers());
 
   it('cancelarla le habla a la organización de la cita', async () => {
-    const { comp, cancelBooking } = montar({ activa: 't-1', organizaciones: [], bookings: [cita('b1', 't-2')] });
+    const { comp, cancelBooking } = montar({ activa: 't-1', bookings: [cita('b1', 't-2')] });
 
     await comp.cancelarTurno(comp.turnosListos()[0]);
 
