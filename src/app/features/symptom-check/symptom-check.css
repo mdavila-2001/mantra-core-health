@@ -523,37 +523,6 @@
   margin-block-start: var(--sp-3);
 }
 
-/* ─── Especialidades recomendadas ─────────────────────────────────────────
-   La rejilla y la tarjeta son las de `shared/styles/card-grid.css`, las
-   mismas del buscador de especialidades de `/directory` (pedido del cliente,
-   27/10/2026). Acá sólo lo propio del chequeo: la marca de por cuál empezar y
-   la acción escrita, porque la tarjeta suma el porqué y no un recuento. */
-.sintomas__rejilla {
-  margin-block-start: var(--sp-2);
-}
-
-.sintomas__tarjeta-cabeza {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-}
-
-/* La primera es la recomendada: un borde de marca, además de la insignia con
-   palabras, para que no dependa sólo del color. */
-.sintomas__tarjeta--primera {
-  border-color: var(--brand-primary);
-}
-
-.sintomas__tarjeta-accion {
-  margin-block-start: auto;
-  padding-block-start: var(--sp-2);
-  color: var(--brand-primary);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 600;
-}
-
 .sintomas__volver {
   margin-block-end: var(--sp-3);
 }

@@ -400,43 +400,12 @@
               </p>
             }
 
-              <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
-              <!-- Pedido del cliente (27/10/2026): la MISMA tarjeta del buscador de
-                   especialidades de `/directory` —foto, ícono, nombre—, de
-                   `shared/styles/card-grid.css`. La tarjeta entera lleva a quién
-                   atiende, como allá; acá suma el porqué, que es lo que hace que la
-                   recomendación no sea una caja negra, y marca por cuál empezar. -->
-              <ul class="rejilla sintomas__rejilla" data-testid="sintomas-recomendaciones">
-                @for (recomendacion of recomendaciones(); track recomendacion.nombre; let primera = $first) {
-                  <li>
-                    <button
-                      type="button"
-                      class="rejilla__tarjeta sintomas__tarjeta"
-                      [class.sintomas__tarjeta--primera]="primera"
-                      [attr.data-testid]="'sintomas-especialidad-' + $index"
-                      [attr.aria-label]="
-                        'Ver quién atiende ' + recomendacion.nombre + '. ' + explicacionDe(recomendacion)
-                      "
-                      (click)="verProfesionales(recomendacion.nombre)"
-                    >
-                      <img class="rejilla__foto" [src]="fotoDe(recomendacion.nombre)" alt="" loading="lazy" />
-                      <span class="sintomas__tarjeta-cabeza">
-                        <app-specialty-icon
-                          class="rejilla__icono"
-                          aria-hidden="true"
-                          [especialidad]="recomendacion.nombre"
-                        />
-                        @if (primera && recomendaciones().length > 1) {
-                          <app-badge variant="primary">Empiece por acá</app-badge>
-                        }
-                      </span>
-                      <span class="rejilla__nombre">{{ recomendacion.nombre }}</span>
-                      <span class="rejilla__resumen">{{ explicacionDe(recomendacion) }}</span>
-                      <span class="sintomas__tarjeta-accion" aria-hidden="true">Ver quién atiende →</span>
-                    </button>
-                  </li>
-                }
-              </ul>
+              <!-- Client request (27/10/2026): same card as `/directory`; shown as a
+                   manual carousel so it is clear more specialties follow. -->
+              <app-symptom-recommendations
+                [recomendaciones]="recomendaciones()"
+                (elegir)="verProfesionales($event)"
+              />
 
           </div>
         } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
