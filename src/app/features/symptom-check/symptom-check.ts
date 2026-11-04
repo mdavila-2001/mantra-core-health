@@ -584,8 +584,22 @@ export class SymptomCheck {
 
   /** Abre una zona, o la cierra si ya lo estaba. */
   protected alternarZona(zona: BodyZone): void {
+    this.haceFalta.set(true);
     this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
   }
+
+  /** Specialists of an open shapeless category (skin, mood, general) before any symptom is picked. */
+  protected readonly especialistasDeLaCategoria = computed<readonly Recommendation[]>(() => {
+    const abierta = this.zonaAbierta();
+    const ocupada = this.sintomas().length > 0 || this.texto().trim() !== '';
+    if (abierta === null || ZONAS_CON_SILUETA.has(abierta) || ocupada) {
+      return [];
+    }
+    const disponibles = new Set(this.especialidadesDisponibles().keys());
+    const lista = recommend(this.sintomasDeLaZona(), disponibles);
+    const breves = lista.map((r) => ({ ...r, porque: r.porque.slice(0, 2) }));
+    return withMedicineFirstGeneral(breves, FIRST_GENERAL, disponibles);
+  });
 
   /**
    * Las zonas tal como las entiende la silueta: `id` y nombre, nada más.
