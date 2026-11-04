@@ -38,12 +38,33 @@ describe('soloLetrasYNumeros', () => {
 
 describe('soloCaracteresDeCorreo', () => {
   it('keeps a normal address untouched', () => {
-    expect(soloCaracteresDeCorreo('ana.perez+1_x-y@gmail.com')).toBe('ana.perez+1_x-y@gmail.com');
+    expect(soloCaracteresDeCorreo('ana.perez_1-x@mi-clinica.com.bo')).toBe(
+      'ana.perez_1-x@mi-clinica.com.bo',
+    );
   });
 
-  it('drops spaces, accents and special symbols, also when pasted', () => {
+  it('drops spaces, accents, + and special symbols, also when pasted', () => {
     expect(soloCaracteresDeCorreo('qqoewqw*[]@gmail.com')).toBe('qqoewqw@gmail.com');
     expect(soloCaracteresDeCorreo(' jo sé(1);@gmail .com ')).toBe('jos1@gmail.com');
+    expect(soloCaracteresDeCorreo('ana+promo@gmail.com')).toBe('anapromo@gmail.com');
+  });
+
+  it('leaves nothing from a run of symbols', () => {
+    expect(soloCaracteresDeCorreo('---++++-++--+++++')).toBe('');
+    expect(soloCaracteresDeCorreo('._-')).toBe('');
+    expect(soloCaracteresDeCorreo('@gmail.com')).toBe('');
+  });
+
+  it('never starts with a symbol nor repeats one', () => {
+    expect(soloCaracteresDeCorreo('--ana')).toBe('ana');
+    expect(soloCaracteresDeCorreo('ana..--__paz')).toBe('ana.paz');
+    expect(soloCaracteresDeCorreo('ana.')).toBe('ana.');
+  });
+
+  it('drops the symbol right before @ and cleans the domain', () => {
+    expect(soloCaracteresDeCorreo('ana.-@')).toBe('ana@');
+    expect(soloCaracteresDeCorreo('ana@-.gm__ail..com')).toBe('ana@gmail.com');
+    expect(soloCaracteresDeCorreo('ana@mi--clinica.bo')).toBe('ana@mi-clinica.bo');
   });
 
   it('keeps only the first @', () => {
