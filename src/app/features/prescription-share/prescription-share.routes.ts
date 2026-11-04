@@ -17,13 +17,13 @@ import { PRESCRIPTION_VERIFY_PATH, SHARED_PRESCRIPTION_PATH } from './prescripti
  *   de un fragmento (`chunkFallido` de `app.routes.ts`, que no se importa de
  *   vuelta para no armar un ciclo).
  */
-export function publicPrescriptionShareRoutes(chunkFailed: () => Type<unknown>): Routes {
+export function publicPrescriptionShareRoutes(chunkFailed: (error: unknown) => Type<unknown>): Routes {
   return [
     {
       path: SHARED_PRESCRIPTION_PATH,
       title: `${APP_TITLE} - Receta compartida`,
       loadComponent: () =>
-        import('./public-share/public-share').then((m) => m.PublicShare).catch(() => chunkFailed()),
+        import('./public-share/public-share').then((m) => m.PublicShare).catch(chunkFailed),
     },
     {
       path: PRESCRIPTION_VERIFY_PATH,
@@ -31,7 +31,7 @@ export function publicPrescriptionShareRoutes(chunkFailed: () => Type<unknown>):
       loadComponent: () =>
         import('./prescription-verify/prescription-verify')
           .then((m) => m.PrescriptionVerify)
-          .catch(() => chunkFailed()),
+          .catch(chunkFailed),
     },
   ];
 }

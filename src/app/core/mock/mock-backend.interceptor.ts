@@ -16,6 +16,7 @@ import { forcedRealApi } from './api-mode';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
 import { bloqueoDelToken } from './mock-token-guard';
 import { usuarioDeAccessToken } from './mock-session';
+import { StaleBuildRecovery } from '../errors/stale-build-recovery';
 
 /* ============================================================================
     El backend simulado.
@@ -74,7 +75,23 @@ export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  return from(Promise.all([inject(MOCK_ROUTER_LOADER)(), validadorSimulado()])).pipe(
+  const staleBuild = inject(StaleBuildRecovery);
+  const carga = Promise.all([inject(MOCK_ROUTER_LOADER)(), validadorSimulado()]).catch(
+    (error: unknown) => {
+      // Una carga fallida no se queda guardada: con la promesa rechazada en
+      // caché, todas las peticiones siguientes fallaban hasta recargar a mano.
+      // Si el trozo falta porque la pestaña es de una construcción anterior
+      // (redespliegue de la maqueta), se recupera sin recargar a mitad de un
+      // formulario. Ver
+      // `core/errors/stale-build-recovery.ts`.
+      router = null;
+      validador = null;
+      void staleBuild.recoverFromBackground(error);
+      throw error;
+    },
+  );
+
+  return from(carga).pipe(
     mergeMap(([tabla, contrato]) => atender(tabla, contrato, request, path)),
   );
 };

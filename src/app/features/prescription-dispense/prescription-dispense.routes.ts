@@ -24,7 +24,7 @@ export const OPEN_PRESCRIPTION_PATH = 'administration/pharmacy-orders/rx/:token'
  *   de un fragmento (`chunkFallido` de `app.routes.ts`, que no se importa de
  *   vuelta para no armar un ciclo).
  */
-export function prescriptionDispenseRoutes(chunkFailed: () => Type<unknown>): Routes {
+export function prescriptionDispenseRoutes(chunkFailed: (error: unknown) => Type<unknown>): Routes {
   return [
     {
       path: OPEN_PRESCRIPTION_PATH,
@@ -33,7 +33,7 @@ export function prescriptionDispenseRoutes(chunkFailed: () => Type<unknown>): Ro
       loadComponent: () =>
         import('./open-prescription/open-prescription')
           .then((m) => m.OpenPrescription)
-          .catch(() => chunkFailed()),
+          .catch(chunkFailed),
     },
   ];
 }

@@ -1,8 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, PLATFORM_ID } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ErrorHandler,
+  inject,
+  PLATFORM_ID,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 import { BUILD_INFO, buildLabel } from '../../core/build/build-info';
 import { ErrorReporter } from '../../core/errors/error-reporter';
+import { StaleBuildRecovery, takeRouteChunkFailure } from '../../core/errors/stale-build-recovery';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 
@@ -40,6 +48,20 @@ export class ErrorRecovery {
 
   /** El código de soporte, o `null` si se llegó acá sin un fallo registrado. */
   protected readonly codigo = computed(() => this.ultimo()?.id ?? null);
+
+  constructor() {
+    // Si se llegó por una ruta cuyo trozo no bajó (`chunkFallido`), el fallo
+    // pasa por el manejador global: queda registrado con su código —el que se
+    // muestra abajo— y, si es de una construcción anterior a la desplegada, la
+    // página se recarga sola una vez. Ver `core/errors/stale-build-recovery.ts`.
+    const pendiente = takeRouteChunkFailure();
+    if (pendiente !== null) {
+      inject(ErrorHandler).handleError(pendiente.error);
+      // Es una navegación: la pantalla no llegó a abrirse y los guards ya
+      // pasaron, así que se recarga directamente (una vez por construcción).
+      inject(StaleBuildRecovery).recoverFrom(pendiente.error);
+    }
+  }
 
   /**
    * Recarga desde el servidor.

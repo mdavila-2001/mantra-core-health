@@ -110,7 +110,10 @@ ARG BUILD_CONFIGURATION="production"
 # `yarn build` encadena `env:generate`, que además estampa versión y commit en
 # el paquete. El commit sale de Git, y por eso `.git` tiene que estar en el
 # contexto: sin él queda `desconocido` y se pierde la trazabilidad del artefacto.
-RUN yarn build --configuration=$BUILD_CONFIGURATION
+# Respaldo del commit cuando el contexto llega sin `.git` (Coolify lo pasa como
+# `SOURCE_COMMIT`). `scripts/generate-env.mjs` lo usa sólo si Git no responde.
+ARG SOURCE_COMMIT=""
+RUN SOURCE_COMMIT="$SOURCE_COMMIT" yarn build --configuration=$BUILD_CONFIGURATION
 
 # ─── Etapa 2 · dependencias de producción ────────────────────────────────────
 FROM node:24-bookworm-slim AS prod-deps

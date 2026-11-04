@@ -10,7 +10,12 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
+import {
+  provideRouter,
+  withInMemoryScrolling,
+  withNavigationErrorHandler,
+  withViewTransitions,
+} from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -26,6 +31,8 @@ import { SESSION_CLEANERS } from './core/auth/session-cleanup';
 import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { AppErrorHandler } from './core/errors/app-error-handler';
+import { StaleBuildRecovery } from './core/errors/stale-build-recovery';
+import { BuildVersionWatcher } from './core/build/build-version-watcher';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
 import { AccessChallengeService } from './features/access-governance/access-challenge/access-challenge.service';
@@ -83,6 +90,13 @@ export const appConfig: ApplicationConfig = {
       routes,
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
       withViewTransitions(ROUTE_VIEW_TRANSITION_OPTIONS),
+      // Una ruta perezosa cuyo trozo ya no existe (pestaña abierta antes de un
+      // redespliegue) se abre con una carga completa de la URL a la que se iba,
+      // en vez de quedarse en la pantalla anterior con un error en consola.
+      // Una vez por construcción: ver `core/errors/stale-build-recovery.ts`.
+      withNavigationErrorHandler((navigationError) => {
+        inject(StaleBuildRecovery).recoverFrom(navigationError.error, navigationError.url);
+      }),
     ),
     provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
@@ -198,6 +212,12 @@ export const appConfig: ApplicationConfig = {
     // pantalla quedaba en pie sin token y ninguna acción funcionaba.
     provideAppInitializer(() => {
       inject(SessionEndedRedirect);
+    }),
+    // Una pestaña abierta antes de un redespliegue se entera de que hay una
+    // construcción nueva y abre la próxima pantalla con una carga completa,
+    // antes de pedir trozos que ya no existen. Ver `build-version-watcher.ts`.
+    provideAppInitializer(() => {
+      inject(BuildVersionWatcher).start();
     }),
   ],
 };

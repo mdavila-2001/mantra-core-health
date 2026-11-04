@@ -465,7 +465,14 @@ function validateTracesEndpoint(key, value) {
  * El commit se lee de Git y cae en `'desconocido'` si el build no corre dentro
  * de un repositorio, que es el caso de una imagen construida desde un tarball.
  */
+let buildInfoCache = null;
+
 function readBuildInfo() {
+  buildInfoCache ??= computeBuildInfo();
+  return buildInfoCache;
+}
+
+function computeBuildInfo() {
   let version = '0.0.0';
   try {
     version = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')).version ?? version;
@@ -482,6 +489,14 @@ function readBuildInfo() {
     }).trim();
   } catch {
     // Fuera de un repositorio, o sin git instalado.
+  }
+  // Coolify construye sin `.git` en el contexto pero expone el commit como
+  // `SOURCE_COMMIT` (ARG del `Dockerfile`). Sin este respaldo, en `test` cada
+  // código de soporte salía `E-desconocido-NNN` y no se podía saber qué
+  // construcción falló.
+  const delEntorno = (process.env['SOURCE_COMMIT'] ?? '').trim();
+  if (commit === 'desconocido' && /^[0-9a-f]{7,40}$/i.test(delEntorno)) {
+    commit = delEntorno.slice(0, 7);
   }
 
   return { version, commit, builtAt: new Date().toISOString() };
@@ -603,6 +618,7 @@ function main() {
   }
 
   const output = render(entries);
+  writeBuildVersionFile(readBuildInfo());
 
   // Solo se escribe si cambió: el archivo está bajo el ojo del compilador en
   // modo watch y reescribirlo igual dispararía una recompilación por orden.
@@ -620,6 +636,22 @@ function main() {
       : entries.map(({ key, value }) => `${key}=${value === '' ? '(vacío)' : value}`).join(', ');
 
   process.stdout.write(`[generate-env] src/environments/env.generated.ts · ${summary}\n`);
+}
+
+/**
+ * `public/build-version.json`: la misma identidad que viaja en el paquete, pero
+ * en un archivo que el servidor sirve sin caché.
+ *
+ * La lee `core/build/build-version-watcher.ts` para darse cuenta, desde una
+ * pestaña abierta, de que se redesplegó: si la del servidor ya no es la suya, el
+ * próximo cambio de pantalla se hace con una carga completa en vez de pedir
+ * trozos que ya no existen. Ignorado en Git, como `env.generated.ts`.
+ */
+function writeBuildVersionFile({ commit, builtAt }) {
+  const file = join(REPO_ROOT, 'public', 'build-version.json');
+  const content = `${JSON.stringify({ commit, builtAt })}\n`;
+  if (existsSync(file) && readFileSync(file, 'utf8') === content) return;
+  writeFileSync(file, content, 'utf8');
 }
 
 main();

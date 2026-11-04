@@ -15,6 +15,7 @@ import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { ActivateAccount } from './features/auth/activate-account/activate-account';
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
+import { recordRouteChunkFailure } from './core/errors/stale-build-recovery';
 import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
 import { NotFound } from './features/not-found/not-found';
 import {
@@ -478,7 +479,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/billing-setup/billing-setup')
         .then((m) => m.BillingSetup)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El **cockpit contable**: estado del ejercicio, bandeja de documentos por
@@ -492,7 +493,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/accounting/cockpit/cockpit')
         .then((m) => m.Cockpit)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // FT-26 · activos y pasivos, en auto-servicio del doctor. Era la entrada
@@ -514,7 +515,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/assets-liabilities/assets-liabilities')
         .then((m) => m.AssetsLiabilities)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Los libros: balance de sumas y saldos, diario y el registro de ingresos y
@@ -528,7 +529,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/accounting/accounting')
         .then((m) => m.Accounting)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El grupo por dentro (P7). El directorio es la sección `groups`, que el
@@ -544,7 +545,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/groups/group-detail/group-detail')
         .then((m) => m.GroupDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La ficha de una encuesta (carril 10): cuestionario, publicación y
@@ -555,7 +556,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/questionnaires/survey-detail/survey-detail')
         .then((m) => m.SurveyDetailScreen)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Responder un cuestionario concreto. Cuelga de «Mis cuestionarios».
@@ -564,7 +565,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/questionnaires/answer/answer')
         .then((m) => m.QuestionnaireAnswer)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Dónde comprar una receta (carril E3). Cuelga de «Mi historia clínica»:
@@ -575,7 +576,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/medical-record/where-to-buy/where-to-buy')
         .then((m) => m.WhereToBuy)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Mis recetas (carril 43, H4; «Compartir», FAR-01). Hija de «Farmacia», con
@@ -587,7 +588,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy/prescriptions/prescriptions-page')
         .then((m) => m.PrescriptionsPage)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El carrito de farmacia (Ola 0, plan `04-farmacia-ecommerce-2026-09-25`
@@ -599,7 +600,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy/cart/cart-page')
         .then((m) => m.CartPage)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La confirmación del pedido de farmacia (carril FAR-I2). Cuelga de «Mis
@@ -613,7 +614,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/new-order/new-order')
         .then((m) => m.NewOrder)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El checkout del pedido (T-E3 · pantalla G): entrega, dirección, medio de
@@ -625,7 +626,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/checkout/checkout')
         .then((m) => m.Checkout)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La ficha de un pedido concreto: línea de tiempo, decisión de sustitución
@@ -637,7 +638,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/order-detail/order-detail')
         .then((m) => m.OrderDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El comprobante interno del pago (carril FAR-I5). Es el destino de la
@@ -649,7 +650,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/order-receipt/order-receipt')
         .then((m) => m.OrderReceipt)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La factura del pedido (T-E4 · F2.1.12, F3.3). Hermana del comprobante
@@ -661,7 +662,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/order-invoice/order-invoice')
         .then((m) => m.OrderInvoice)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   ...prescriptionDispenseRoutes(chunkFallido),
   {
@@ -672,7 +673,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/organization/pharmacy-inbox/inbox-order/inbox-order')
         .then((m) => m.InboxOrder)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El expediente de una persona concreta. Cuelga de «Archivo clínico», que
@@ -684,7 +685,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/clinical-record/patient-chart/patient-chart')
         .then((m) => m.PatientChart)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La consulta: lo que se registra mientras se atiende. Nace sólo de
@@ -697,7 +698,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/clinical-record/consultation/consultation')
         .then((m) => m.Consultation)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // FT-07-R05: pedir el vínculo, previo a poder leer el expediente sin un
@@ -709,7 +710,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/clinical-record/request-access/request-access')
         .then((m) => m.RequestAccess)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // FT-07-R06: a dónde lleva el aviso "un médico pidió acceder a tu
@@ -721,7 +722,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/access-requests/access-requests')
         .then((m) => m.AccessRequests)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/patients/new',
@@ -730,7 +731,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/patients/patient-new/patient-new')
         .then((m) => m.PatientNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // FT-24. El alta de una cotización. Cuelga de «Cotizaciones», que es el
@@ -742,7 +743,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/quotations/quotation-form/quotation-form')
         .then((m) => m.QuotationForm)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // FT-21. El alta y la consulta de un grupo médico. Cuelgan de «Grupos
@@ -754,7 +755,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/medical-groups/medical-group-form/medical-group-form')
         .then((m) => m.MedicalGroupForm)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-medical-groups/:id',
@@ -763,7 +764,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/medical-groups/medical-group-detail/medical-group-detail')
         .then((m) => m.MedicalGroupDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/patients/merge',
@@ -772,7 +773,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/patients/patient-merge/patient-merge')
         .then((m) => m.PatientMerge)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Estaba en la raíz de la sección; se corre acá para dejarle el lugar al
@@ -788,7 +789,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/assisted-registration/assisted-registration')
         .then((m) => m.AssistedRegistration)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   PRACTITIONER_ASSISTED_ROUTE,
   {
@@ -798,7 +799,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/patients/patient-detail/patient-detail')
         .then((m) => m.PatientDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El listado viejo de casos abre la pestaña «Mis trámites» de la identidad
@@ -847,7 +848,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/directory/practitioner-detail/practitioner-detail')
         .then((m) => m.PractitionerDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'laboratory-directory/:unitId',
@@ -855,7 +856,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La ficha de una clínica y la de una farmacia: el destino del clic en sus
@@ -880,7 +881,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/public-directories/clinic-detail/clinic-detail')
         .then((m) => m.ClinicDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La ficha de una aseguradora: productos, planes y cláusulas, y sus
@@ -890,7 +891,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/public-directories/insurer-detail/insurer-detail')
         .then((m) => m.InsurerDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'pharmacies-directory/:slug',
@@ -898,7 +899,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/public-directories/pharmacy-detail/pharmacy-detail')
         .then((m) => m.PharmacyDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El detalle de una solicitud de seguro (TAREA-16): se llega desde el
@@ -918,7 +919,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/insurance/insurance-claim-detail/insurance-claim-detail')
         .then((m) => m.InsuranceClaimDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La ficha de un corredor (C14): se llega desde el listado de brokers,
@@ -933,7 +934,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/insurance/broker-detail/broker-detail')
         .then((m) => m.BrokerDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Se cuelga de «Mi perfil»: se llega por el botón «Editar perfil»,
@@ -948,7 +949,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/onboarding-practitioner/onboarding-practitioner')
         .then((m) => m.OnboardingPractitioner)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/edit',
@@ -957,7 +958,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
         .then((m) => m.PractitionerProfileEdit)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Corregir los datos propios del paciente. **Sin `soloDeQuienAtiende()`**:
@@ -970,7 +971,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/my-profile/patient-profile-edit/patient-profile-edit')
         .then((m) => m.PatientProfileEdit)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Publicar, revisar lo publicado y sus comentarios. Cuelga de la vitrina:
@@ -981,7 +982,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/my-profile/medical-articles/medical-articles')
         .then((m) => m.MedicalArticles)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   ...affiliationRoutes({ practitionerOnly: soloDeQuienAtiende, chunkFailed: chunkFallido }),
   {
@@ -989,7 +990,7 @@ const PANTALLAS_HIJAS: Routes = [
     path: ADMISSION_DETAIL_PATH,
     title: `${APP_TITLE} - Revisión de admisión`,
     canActivate: [seccionRolesGuard],
-    loadComponent: () => loadAdmissionDetail().catch(() => chunkFallido()),
+    loadComponent: () => loadAdmissionDetail().catch(chunkFallido),
   },
   {
     // La importación por archivo. No es una sección del menú: cuelga de
@@ -1001,7 +1002,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/terminology/version-import/version-import')
         .then((m) => m.VersionImport)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El recorrido de puesta en marcha. No es una sección del menú: se llega
@@ -1014,7 +1015,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/getting-started/getting-started')
         .then((m) => m.GettingStarted)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Detalle de un plan de QA. Hereda los roles de `superadmin/qa-lab`.
@@ -1024,7 +1025,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/qa-lab/plan-detail/qa-plan-detail')
         .then((m) => m.QaPlanDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Un flujo del catálogo. Hereda los roles de `superadmin/flows` (prefijo más largo).
@@ -1034,7 +1035,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/flows/flow-detail/flow-detail')
         .then((m) => m.FlowDetailPage)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Ficha de un objeto del catálogo. Hereda los roles de la sección
@@ -1045,7 +1046,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/data-catalog/object-detail/catalog-object-detail')
         .then((m) => m.CatalogObjectDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/organizations/new',
@@ -1054,7 +1055,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/organizations/organization-new/organization-new')
         .then((m) => m.OrganizationNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Las tres pantallas de escritura de una organización. Van ANTES de la
@@ -1070,7 +1071,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/organizations/organization-verify/organization-verify')
         .then((m) => m.OrganizationVerify)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Guard propio y no el de sección (que pide SECURITY_ADMIN): la API abre
@@ -1082,7 +1083,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/organizations/branch-new/branch-new')
         .then((m) => m.BranchNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Mismo criterio que el alta de sucursal: `POST /tenants/{id}/memberships`
@@ -1093,7 +1094,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/organizations/membership-new/membership-new')
         .then((m) => m.MembershipNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/organizations/:tenantId/child-organizations/new',
@@ -1102,7 +1103,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/organizations/child-organization-new/child-organization-new')
         .then((m) => m.ChildOrganizationNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Ficha de una organización (V04-06·L, V04-02·L y V04-07·L): sus
@@ -1119,7 +1120,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/organizations/organization-detail/organization-detail')
         .then((m) => m.OrganizationDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La reserva de un cupo concreto (V41-09 → V41-05). La franja viaja por
@@ -1133,7 +1134,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La MISMA pantalla de reserva, entrada del paciente: el turno queda a su
@@ -1146,7 +1147,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // El atlas anatómico 3D cuelga del glosario: miga, menú y roles son los
@@ -1158,7 +1159,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/glossary/glossary-anatomy-atlas')
         .then((m) => m.GlossaryAnatomyAtlas)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'glossary/network',
@@ -1167,7 +1168,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/glossary/glossary-network')
         .then((m) => m.GlossaryNetwork)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // Comparador diferencial (TAREA-41 F5.3): dos términos lado a lado. Va
@@ -1178,7 +1179,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/glossary/glossary-compare')
         .then((m) => m.GlossaryCompare)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     // La ficha de un término del glosario. Es ruta y no panel porque un término
@@ -1193,7 +1194,7 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/glossary/glossary-term')
         .then((m) => m.GlossaryTerm)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
 ];
 
@@ -1218,7 +1219,7 @@ function pantallaDeOperacion(
     path: `${seccion}/${subpath}`,
     title: `${APP_TITLE} - ${titulo}`,
     canActivate: [seccionRolesGuard],
-    loadComponent: () => loader().catch(() => chunkFallido()),
+    loadComponent: () => loader().catch(chunkFallido),
   };
 }
 
@@ -1302,7 +1303,7 @@ const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
       loadComponent: () =>
         import('./features/messaging/thread/thread')
           .then((m) => m.Thread)
-          .catch(() => chunkFallido()),
+          .catch(chunkFallido),
     },
   ],
 };
@@ -1436,14 +1437,14 @@ function componenteDe(
 
   const diferida = PANTALLAS_DIFERIDAS[section.path];
   if (diferida !== undefined) {
-    return { loadComponent: () => diferida().catch(() => chunkFallido()) };
+    return { loadComponent: () => diferida().catch(chunkFallido) };
   }
 
   return {
     loadComponent: () =>
       import('./features/section-placeholder/section-placeholder')
         .then((m) => m.SectionPlaceholder)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   };
 }
 
@@ -1826,7 +1827,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/portal-selector/portal-selector')
         .then((m) => m.PortalSelector)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'reports',
@@ -1837,7 +1838,7 @@ export const routes: Routes = [
         .then((m) => m.REPORTING_ROUTES)
         // Un fragmento que ya no existe tras un despliegue: la misma pantalla de
         // recuperación que el resto, en vez de una navegación muerta.
-        .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
+        .catch((error: unknown): Routes => [{ path: '**', component: chunkFallido(error) }]),
   },
   insightsPortalRoute(chunkFallido),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
@@ -2322,7 +2323,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/design-system-sample/design-system-sample')
         .then((m) => m.DesignSystemSample)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
     title: 'AloVida - Vitrina de Diseño',
   },
   {
@@ -2343,7 +2344,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/component-stock/component-stock')
         .then((m) => m.ComponentStock)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
     title: 'AloVida - Stock de componentes',
   },
   {
@@ -2356,7 +2357,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/component-stock/component-stock')
         .then((m) => m.ComponentStock)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
     title: 'AloVida - Stock de componentes',
   },
   {
@@ -2558,6 +2559,9 @@ export const routes: Routes = [
  * mensaje accionable: la pantalla de recuperación ofrece recargar, que es
  * exactamente lo que resuelve el caso.
  */
-function chunkFallido(): typeof ErrorRecovery {
+function chunkFallido(error: unknown): typeof ErrorRecovery {
+  // El error viaja a la recuperación, que lo registra (código de soporte) y,
+  // si es un trozo de una construcción anterior, recarga una vez sola.
+  recordRouteChunkFailure(error);
   return ErrorRecovery;
 }

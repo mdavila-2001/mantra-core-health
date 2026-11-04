@@ -19,16 +19,16 @@ import { ROLES_INSIGHTS } from '../reporting/reporting-access';
  * (mismo patrón que `publicPrescriptionShareRoutes`); así esta ruta no depende
  * del archivo que la contiene.
  */
-export function insightsPortalRoute(chunkFallido: () => Type<unknown>): Route {
+export function insightsPortalRoute(chunkFallido: (error: unknown) => Type<unknown>): Route {
   return {
     path: 'insights',
     canActivate: [authGuard, seccionRolesGuard],
     data: { [ROLES_ROUTE_DATA]: ROLES_INSIGHTS },
     loadComponent: () =>
-      import('./insights-shell').then((m) => m.InsightsShell).catch(() => chunkFallido()),
+      import('./insights-shell').then((m) => m.InsightsShell).catch(chunkFallido),
     loadChildren: () =>
       import('./insights.routes')
         .then((m) => m.INSIGHTS_RUTAS)
-        .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
+        .catch((error: unknown): Routes => [{ path: '**', component: chunkFallido(error) }]),
   };
 }
