@@ -1,6 +1,7 @@
 import { formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type { ChartSpec, UnidadValor } from '@core/data-access/reporting/reporting.types';
 import type { ModoGrafico } from './chart-option.builder';
+import { rangoDeCubo } from './chart-option.histograma';
 
 /**
  * La tabla de respaldo de un gráfico (skill `dataviz`: «a table view exists»).
@@ -42,6 +43,10 @@ export function buildChartTable(spec: ChartSpec, modo: ModoGrafico): ChartTableD
       ]);
       return { columnas, crudo, filas: crudo.map((r) => r.map((v, i) => (i === 0 ? String(v) : f(v as number | null)))) };
     }
+    case 'histograma': {
+      const crudo = d.conteos.map((c, i) => [rangoDeCubo(d, i), c]);
+      return { columnas: ['Rango', d.nombreValor], crudo, filas: crudo.map((r) => [String(r[0]), f(r[1] as number | null)]) };
+    }
     case 'medidor': {
       const crudo = [[d.nombre, d.valor, d.objetivo ?? null]];
       return { columnas: ['Indicador', 'Valor', 'Objetivo'], crudo, filas: crudo.map((r) => [String(r[0]), f(r[1] as number | null), r[2] === null ? '—' : f(r[2] as number)]) };
@@ -74,6 +79,8 @@ export function etiquetaUnidad(unidad: UnidadValor): string {
       return '%';
     case 'razon':
       return unidad.sufijo;
+    case 'duracion':
+      return 'ms';
     case 'numero':
       return 'cantidad';
   }

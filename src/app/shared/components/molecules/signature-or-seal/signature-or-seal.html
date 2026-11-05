@@ -24,3 +24,10 @@
     {{ empty() }}
   </span>
 }
+
+@if (uploading()) {
+  <!-- Visual only: the consumer owns the request and its announcement (its file input overlay). -->
+  <span class="firma-o-sello__subiendo" [attr.data-testid]="'firma-o-sello-subiendo-' + label()">
+    <app-spinner size="md" decorative />
+  </span>
+}

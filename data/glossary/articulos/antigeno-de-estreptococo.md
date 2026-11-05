@@ -1,5 +1,6 @@
 ---
 slug: antigeno-de-estreptococo
+image: antigeno-de-estreptococo.svg | Cómo se hace y se lee la prueba rápida de estreptococo | Esquema del hisopado de las amígdalas y de dos tiras reactivas, una positiva con dos líneas y otra negativa con solo la línea de control
 ---
 
 ## [definition] Introducción

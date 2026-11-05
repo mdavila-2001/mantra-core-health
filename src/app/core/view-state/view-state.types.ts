@@ -97,6 +97,11 @@ export interface EmptyViewState {
   readonly nextAction: ViewStateNextAction;
   /** Explicación breve de por qué está vacío («todavía no cargaste estudios»). */
   readonly message?: string;
+  /**
+   * Headline of the empty state. Optional: the host falls back to a generic one,
+   * so only screens whose emptiness has a more specific name need to set it.
+   */
+  readonly title?: string;
 }
 
 /**
@@ -184,6 +189,11 @@ export interface OfflineViewState {
   readonly status: 'offline';
   /** Último intento, para poder decir «reintentado hace un momento». */
   readonly lastAttemptAt?: Date;
+  /**
+   * `true` si no fue la red sino el límite de espera: la petición pudo haberse
+   * completado igual, y la persona tiene que saberlo antes de repetir un envío.
+   */
+  readonly timedOut?: true;
 }
 
 /**
@@ -195,6 +205,10 @@ export interface UnexpectedErrorViewState {
   readonly status: 'error';
   readonly requestId: string;
   readonly message?: string;
+  /** Qué pasó, en una línea (el título del aviso). Texto fijo, nunca del servidor. */
+  readonly title?: string;
+  /** Qué puede hacer la persona ahora. Texto fijo, nunca del servidor. */
+  readonly hint?: string;
 }
 
 /**

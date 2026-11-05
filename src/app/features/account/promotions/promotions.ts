@@ -16,7 +16,7 @@ import {
 import { PromotionsClient } from '@core/data-access/promotions/promotions.client';
 import type { MyPromotionDto } from '@core/data-access/promotions/promotions.dto';
 import { errorToViewState } from '@core/http/error-to-view-state';
-import { SAMPLE_DATA_ENABLED } from '@core/mock/sample-data';
+import { SAMPLE_DATA_ENABLED } from '@core/simulator/sample-data';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -112,7 +112,7 @@ const FECHA = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'short' 
  *
  * En `mockup` los datos son de ejemplo, con farmacia, ciudad y medicamento.
  * Contra la API real (`SAMPLE_DATA_ENABLED` apagado, ver
- * `core/mock/sample-data.ts`) salen de `GET /promotions/me` (B-REAL-13): las
+ * `core/simulator/sample-data.ts`) salen de `GET /promotions/me` (B-REAL-13): las
  * vigentes para la persona, sin lugar ni farmacia, porque el contrato no los
  * relaciona con una promoción.
  */

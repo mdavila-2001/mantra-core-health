@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-4275
+image: medlineplus-es-4275.svg | El injerto rellena un defecto del hueso y sirve de base para que se forme hueso nuevo. | Hueso largo con un hueco rellenado por fragmentos de injerto, junto a los tipos de injerto según su origen y las tres propiedades que favorecen la formación de hueso.
 ---
 
 ## [definition] Introducción

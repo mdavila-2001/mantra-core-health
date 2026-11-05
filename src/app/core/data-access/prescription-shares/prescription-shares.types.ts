@@ -36,6 +36,13 @@ export interface CreatedPrescriptionShare {
  */
 export type PrescriptionShareStatus = 'VALID' | 'EXPIRED' | 'REVOKED';
 
+/**
+ * Por qué terminó un enlace `EXPIRED`: venció su plazo, o la receta dejó de
+ * valer antes (se anuló, se reemplazó o se completó). `null` en cualquier otro
+ * estado, o si la API no lo dice.
+ */
+export type PrescriptionShareEndedReason = 'LINK_EXPIRED' | 'PRESCRIPTION_NOT_ACTIVE';
+
 /** Qué se compartió (S-7): la receta de una consulta o un fármaco suelto. */
 export type PrescriptionShareResourceType = 'PRESCRIPTION_ENCOUNTER' | 'MEDICATION_REQUEST';
 
@@ -48,7 +55,8 @@ export interface PrescriptionShareSummary {
   readonly createdAt: Date;
   readonly expiresAt: Date;
   readonly status: PrescriptionShareStatus;
-  /** Cuántas veces la abrió una farmacia (usos `OPENED`). */
+  readonly endedReason: PrescriptionShareEndedReason | null;
+  /** Cuántas veces la abrió una farmacia. La vista pública no cuenta. */
   readonly uses: number;
 }
 
@@ -85,6 +93,7 @@ export interface PrescriberLicense {
  */
 export interface PublicPrescriptionShare {
   readonly status: PrescriptionShareStatus;
+  readonly endedReason: PrescriptionShareEndedReason | null;
   readonly issuedAt: Date | null;
   readonly prescriberName: string | null;
   readonly prescriberLicense: PrescriberLicense | null;

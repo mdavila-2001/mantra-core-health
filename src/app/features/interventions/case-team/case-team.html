@@ -1,0 +1,61 @@
+@if (problem(); as notice) {
+  <app-alert tone="error" title="No se registró la respuesta">{{ notice }}</app-alert>
+}
+
+@let state = team();
+@switch (state.status) {
+  @case ('ready') {
+    <ul class="case-team__members" data-testid="case-team">
+      @for (member of state.data; track byMember(member)) {
+        <li class="case-team__member">
+          <div class="case-team__data">
+            <span class="case-team__role">{{ labelOf(member.teamRoleConceptId) }}</span>
+            <span class="case-team__status">{{ labelOf(member.statusConceptId) }}</span>
+            @if (isMine(member)) {
+              <span class="case-team__mine">Es usted</span>
+            }
+          </div>
+          <!-- Las acciones sólo en la fila propia: el backend rechaza responder por otro (spec 168). -->
+          @if (isMine(member)) {
+            <div class="case-team__actions">
+              <button app-button variant="primary" size="sm" [disabled]="sending()" (clicked)="accept(member)">Aceptar</button>
+              <button app-button variant="secondary" size="sm" [disabled]="sending()" (clicked)="startResponse(member)">
+                No puedo participar
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+  @case ('loading') {
+    <app-loading-state message="Cargando el equipo…" />
+  }
+  @case ('empty') {
+    <app-alert tone="warning" title="Sin integrantes">{{ state.message }}</app-alert>
+  }
+  @default {
+    <app-alert tone="error" title="No pudimos leer el equipo">Vuelva a abrir la intervención para reintentar.</app-alert>
+  }
+}
+
+<!-- El motivo viaja en la notificación al responsable: sin él no puede decidir. -->
+@if (responding(); as member) {
+  <div class="case-team__response">
+    <h3 class="case-team__response-title">Su respuesta como {{ labelOf(member.teamRoleConceptId) }}</h3>
+    <app-select [options]="negativeResponses" [value]="chosenResponse()" ariaLabel="Qué responde" (valueChange)="chooseResponse($event)" />
+    <app-textarea
+      [value]="reason()"
+      [rows]="3"
+      [maxLength]="2000"
+      placeholder="Motivo (obligatorio): lo lee el médico responsable"
+      (valueChange)="reason.set($event)"
+    />
+    <div class="case-team__actions">
+      <button app-button variant="primary" size="sm" [disabled]="!reasonValid() || sending()" [isLoading]="sending()" (clicked)="sendResponse()">
+        Enviar respuesta
+      </button>
+      <button app-button variant="ghost" size="sm" [disabled]="sending()" (clicked)="cancelResponse()">Cancelar</button>
+    </div>
+  </div>
+}

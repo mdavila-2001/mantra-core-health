@@ -411,7 +411,7 @@ describe('Cockpit contable — fallos de las acciones', () => {
 
     const ultimo = avisos.mock.lastCall?.[0];
     expect(ultimo?.message).toBe(
-      'No se pudo compensar la partida FAC-7. Intente de nuevo. (Código de soporte: corr-500)',
+      'No se pudo compensar la partida FAC-7. Intente de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-500)',
     );
     expect(ultimo?.message).not.toMatch(/período|postear|cerrad/i);
   });

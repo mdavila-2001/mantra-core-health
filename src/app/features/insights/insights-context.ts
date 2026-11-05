@@ -7,6 +7,7 @@ import { CAMPAIGNS, CAMPAIGN_BY_ID, CAMPAIGN_CHANNELS } from './domain/campaigns
 import { addDays, daysBetween, monthStart, PROTOTYPE_TODAY } from './domain/dates';
 import type { Channel, DateRange, InsightsFilter, MetricId, TimeGrain } from './domain/insights.types';
 import { CHANNELS, METRIC_IDS } from './domain/insights.types';
+import { applyDrill, encodeDrill, parseDrill, type DrillStep } from './domain/drill';
 
 export type PeriodPreset = 'campaign' | '7d' | '30d' | 'month' | 'quarter' | 'custom';
 
@@ -27,6 +28,8 @@ export interface InsightsState {
   readonly channels: readonly Channel[] | null;
   readonly metric: MetricId;
   readonly compare: readonly string[];
+  /** Pasos del drill-down de Campañas (canal → campaña); cada uno filtra toda la pantalla. */
+  readonly drill: readonly DrillStep[];
 }
 
 const DEFAULT_CAMPAIGN = 'c1';
@@ -50,6 +53,7 @@ export function parseState(query: Params): InsightsState {
     channels: channels.length ? channels : null,
     metric,
     compare: list(query['cmp']).filter((id) => CAMPAIGN_BY_ID.has(id)),
+    drill: parseDrill(query['dr']),
   };
 }
 
@@ -117,7 +121,8 @@ export class InsightsContext {
     return base.filter((c) => available.has(c));
   });
 
-  readonly filter = computed<InsightsFilter>(() => ({
+  /** El filtro del contexto SIN el drill: lo que se está comparando antes de bajar de nivel. */
+  readonly baseFilter = computed<InsightsFilter>(() => ({
     campaignIds: this.state().campaignIds,
     range: this.range(),
     grain: this.grain(),
@@ -125,11 +130,23 @@ export class InsightsContext {
     metric: this.state().metric,
   }));
 
+  readonly drill = computed(() => this.state().drill);
+
+  /** El filtro con el drill aplicado: es el que ven los gráficos y los KPI. */
+  readonly filter = computed<InsightsFilter>(() => applyDrill(this.baseFilter(), this.drill()));
+
   readonly campaigns = CAMPAIGNS;
 
   /** Mezcla cambios en la URL conservando el resto del contexto. */
-  update(patch: Partial<Record<'c' | 'p' | 'from' | 'to' | 'g' | 'ch' | 'm' | 'cmp', string | null>>): void {
-    void this.router.navigate([], { queryParams: patch, queryParamsHandling: 'merge', replaceUrl: true });
+  update(patch: Partial<Record<'c' | 'p' | 'from' | 'to' | 'g' | 'ch' | 'm' | 'cmp' | 'dr', string | null>>): void {
+    // Un drill fija canal o campaña: si la persona cambia esos filtros, el drill ya no aplica.
+    const next = ('c' in patch || 'ch' in patch) && !('dr' in patch) ? { ...patch, dr: null } : patch;
+    void this.router.navigate([], { queryParams: next, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
+  /** Baja o sube en el drill-down: deja exactamente estos pasos. */
+  setDrill(steps: readonly DrillStep[]): void {
+    this.update({ dr: encodeDrill(steps) });
   }
 
   /** Query para llevar el contexto actual a otro módulo. */

@@ -102,3 +102,15 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Celular: flechas y días de 44 px. A 26 px el dedo cae en el día de al lado. */
+@media (max-width: 779px) {
+  .mini__flecha {
+    inline-size: 44px;
+    block-size: 44px;
+  }
+
+  .mini__dia {
+    min-block-size: 44px;
+  }
+}

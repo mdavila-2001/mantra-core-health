@@ -28,8 +28,8 @@ const EMERGENCIA = {
 };
 
 /**
- * BR-20 · «Quién ve mi historia»: la médica por nombre, desde cuándo y hasta
- * cuándo; los accesos de emergencia marcados; revocar confirma y relee.
+ * Clinical access suite (BR-20). Verifies practitioner relationship display,
+ * emergency grant badges, and revocation flows.
  */
 describe('AccountClinicalAccess (BR-20)', () => {
   let fixture: ComponentFixture<AccountClinicalAccess>;
@@ -60,7 +60,7 @@ describe('AccountClinicalAccess (BR-20)', () => {
 
   afterEach(() => http.verify());
 
-  /** Las pestañas montan sólo el panel activo: para ver la otra hay que elegirla. */
+  /** Activates specified tab index. */
   function abrirPestana(indice: number): void {
     const botones = fixture.nativeElement.querySelectorAll('[role="tab"]') as NodeListOf<HTMLElement>;
     botones[indice]?.click();
@@ -85,10 +85,11 @@ describe('AccountClinicalAccess (BR-20)', () => {
     responder({ careRelationships: [], grants: [EMERGENCIA] });
 
     expect(fixture.nativeElement.querySelector('[data-testid="acceso-aviso-emergencia"]')).not.toBeNull();
-    // La marca «Emergencia» de cada acceso vive en la pestaña de accesos.
+    // Emergency badge renders in grants tab.
     abrirPestana(1);
     expect(fixture.nativeElement.querySelector('[data-testid="acceso-g-1"]')?.textContent).toContain('Emergencia');
   });
+
 
   it('revocar el vínculo confirma, llama a la ruta del titular y relee: ya figura revocado', async () => {
     responder({ careRelationships: [RELACION], grants: [] });
@@ -103,6 +104,8 @@ describe('AccountClinicalAccess (BR-20)', () => {
     responder({ careRelationships: [{ ...RELACION, state: 'REVOKED', validTo: '2026-09-26T10:00:00.000Z' }], grants: [] });
     expect(fixture.nativeElement.textContent).toContain('Revocado');
     expect(fixture.nativeElement.querySelector('[data-testid="relacion-revocar-r-1"]')).toBeNull();
+    // Spoken as «usted», like the rest of the patient's screens.
+    expect(avisos).toContain('Revocó el vínculo con Dra. Valeria Rojas.');
   });
 
   it('revocar un acceso concedido usa la ruta de grants del titular', async () => {
@@ -114,6 +117,7 @@ describe('AccountClinicalAccess (BR-20)', () => {
 
     http.expectOne('/authz/me/clinical-access-grants/g-1/revoke').flush({ ok: true });
     responder({ careRelationships: [], grants: [{ ...EMERGENCIA, state: 'REVOKED' }] });
+    expect(avisos).toContain('Revocó el acceso de Dr. Luis Paz.');
   });
 
   it('estado vacío y sin permiso se dicen con palabras', () => {

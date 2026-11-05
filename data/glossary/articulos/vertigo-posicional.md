@@ -1,5 +1,6 @@
 ---
 slug: vertigo-posicional
+image: vertigo-posicional.svg | Cristales del oído interno desplazados a un canal semicircular. | Oído interno con el utrículo y los canales semicirculares y cristales sueltos dentro de un canal, junto a los síntomas y los pasos de la maniobra de reposicionamiento.
 ---
 
 ## [definition] Introducción

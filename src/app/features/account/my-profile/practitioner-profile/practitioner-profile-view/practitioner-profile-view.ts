@@ -4,7 +4,7 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal, viewChild, type OnInit, type TemplateRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { WorkHistory } from '../../work-history/work-history';
+import { WorkHistory, type LugarSugerido } from '../../work-history/work-history';
 import { PractitionerActivity } from './practitioner-activity/practitioner-activity';
 import { PracticeSitesMap } from './practice-sites-map/practice-sites-map';
 import { ResidenceReadonly } from './residence-readonly/residence-readonly';
@@ -16,12 +16,8 @@ import type { ColumnDef } from '../../../../../shared/components/organisms/data-
 import { FilterBar } from '../../../../../shared/components/organisms/filter-bar/filter-bar';
 import { Pagination } from '../../../../../shared/components/molecules/pagination/pagination';
 import { ready } from '../../../../../core/view-state/view-state';
-import {
-  EDITOR_DOCTOR_TABS,
-  DOCTOR_PROFILE_TABS,
-  TAB_EDITOR,
-  DOCTOR_TAB,
-} from '../../doctor-profile-tabs';
+import { EDITOR_DOCTOR_TABS, DOCTOR_PROFILE_TABS, TAB_EDITOR, DOCTOR_TAB } from '../../doctor-profile-tabs';
+import { Spinner } from '../../../../../shared/components/atoms/spinner/spinner';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { VerificationBadge } from '../../../../../shared/components/atoms/verification-badge/verification-badge';
@@ -126,9 +122,10 @@ interface FilaCredencial {
     FilterBar,
     Pagination,
     NgTemplateOutlet,
+    Spinner,
   ],
   templateUrl: './practitioner-profile-view.html',
-  styleUrl: './practitioner-profile-view.css',
+  styleUrls: ['./practitioner-profile-view.css', './practitioner-sheet-layout.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionerProfileView implements OnInit {
@@ -356,6 +353,29 @@ export class PractitionerProfileView implements OnInit {
 
   /** «Ahora se mira esta pestaña». Qué hacer con eso es de quien escucha. */
   readonly pestanaVisible = output<string>();
+
+  /**
+   * El lugar que «Trayectoria» pidió cargar en «Dónde atiendo».
+   *
+   * Mismo puente que el editor (`PractitionerProfileEdit.lugarSugerido`): las
+   * dos pestañas montan instancias distintas de `app-work-history` y sólo la
+   * ficha puede cambiar de una a otra.
+   */
+  protected readonly lugarSugerido = signal<LugarSugerido | null>(null);
+
+  /**
+   * «¿Atiende acá?» desde Trayectoria: abre «Dónde atiendo» con el alta del
+   * lugar. Pasa por {@link alCambiarPestana} porque es un clic de la persona y
+   * quien escucha {@link pestanaVisible} tiene que enterarse igual.
+   */
+  protected llevarADondeAtiendo(nombre: string): void {
+    const indice = this.pestanasVisibles().indexOf(DOCTOR_PROFILE_TABS[DOCTOR_TAB.dondeAtiendo]);
+    if (indice < 0) {
+      return;
+    }
+    this.lugarSugerido.set({ nombre });
+    this.alCambiarPestana(indice);
+  }
 
   /**
    * Alguien cambió de pestaña.

@@ -1,5 +1,6 @@
 ---
 slug: depresion
+image: depresion.svg | Síntomas principales de la depresión y su repercusión en la vida diaria. | Diagrama radial con los síntomas de la depresión alrededor de un círculo que indica al menos dos semanas, y dos recuadros sobre su impacto en la vida diaria y sus tratamientos.
 ---
 
 ## [definition] Introducción

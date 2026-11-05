@@ -276,13 +276,20 @@ describe('InsuranceCatalog', () => {
   });
 
   it('contra la API real no manda la baja: la ruta todavía no existe', async () => {
-    mountAsAdmin();
-    confirm.mockResolvedValue(true);
-    const plan = internal<() => CarrierDetail | null>('carrier')()!.products[0]!.plans[0]!;
+    // La maqueta arranca con `mockBackend: true`; este caso es el de la API real.
+    const originalMockBackend = environment.mockBackend;
+    Object.assign(environment, { mockBackend: false });
+    try {
+      mountAsAdmin();
+      confirm.mockResolvedValue(true);
+      const plan = internal<() => CarrierDetail | null>('carrier')()!.products[0]!.plans[0]!;
 
-    await internal<(plan: unknown) => Promise<void>>('deletePlan')(plan);
+      await internal<(plan: unknown) => Promise<void>>('deletePlan')(plan);
 
-    http.expectNone('/insurance-plans/pl-1');
+      http.expectNone('/insurance-plans/pl-1');
+    } finally {
+      Object.assign(environment, { mockBackend: originalMockBackend });
+    }
   });
 
   it('no elimina nada si se cancela la confirmación', async () => {

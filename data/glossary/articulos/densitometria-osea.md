@@ -1,5 +1,6 @@
 ---
 slug: densitometria-osea
+image: densitometria-osea.svg | Cómo se realiza una densitometría y qué evalúa | Persona tumbada bajo el brazo del densitómetro que recorre la cadera y la columna, junto a un hueso denso, un hueso poroso y las categorías normal, osteopenia y osteoporosis
 ---
 
 ## [definition] Introducción

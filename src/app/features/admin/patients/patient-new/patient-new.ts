@@ -14,6 +14,10 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import {
+  HomonymWarning,
+  isPossibleDuplicatePatient,
+} from '../../../../shared/forms/homonym-warning/homonym-warning';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
@@ -21,6 +25,7 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { patientDetailRoute, PATIENTS_ROUTE } from '../patients.routes';
 
 /** Largos que declara `CreatePatientDto`. */
@@ -62,7 +67,9 @@ const MAX_MPI = 100;
     FormActions,
     FormField,
     FormSection,
+    HomonymWarning,
     Input,
+    BackLink,
     PageHeader,
     ReactiveFormsModule,
   ],
@@ -139,6 +146,8 @@ export class PatientNew {
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
+  /** The API found a live patient with this name (409 POSSIBLE_DUPLICATE_PATIENT). */
+  protected readonly homonimo = signal(false);
 
   protected readonly errorMessage = computed<string | null>(() => {
     const state = this.state();
@@ -152,7 +161,7 @@ export class PatientNew {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });
@@ -174,7 +183,7 @@ export class PatientNew {
     );
   });
 
-  protected submit(): void {
+  protected submit(allowHomonym = false): void {
     if (this.enviando()) {
       return;
     }
@@ -186,16 +195,24 @@ export class PatientNew {
 
     this.state.set(loading());
 
-    this.profiles.createPatient(this.datos()).subscribe({
+    this.homonimo.set(false);
+    const datos = { ...this.datos(), ...(allowHomonym ? { allowHomonym } : {}) };
+    this.profiles.createPatient(datos).subscribe({
       next: (perfil: PatientProfile) => {
         this.state.set(ready(null));
         // A la ficha recién creada y no de vuelta al listado: quien acaba de
         // registrar a alguien casi siempre sigue completando sus datos.
         void this.router.navigateByUrl(patientDetailRoute(perfil.profileId));
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => {
+        this.homonimo.set(isPossibleDuplicatePatient(error));
+        this.state.set(this.homonimo() ? ready(null) : errorToViewState<null>(error));
+      },
     });
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = PATIENTS_ROUTE;
 
   protected cancelar(): void {
     void this.router.navigateByUrl(PATIENTS_ROUTE);

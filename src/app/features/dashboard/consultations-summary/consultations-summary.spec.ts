@@ -307,7 +307,7 @@ describe('ConsultasResumen', () => {
     expect(aviso?.getAttribute('role')).toBe('alert');
     expect(aviso?.textContent).toContain('Las cifras pueden estar incompletas.');
     expect(aviso?.textContent).toContain(
-      'No se pudieron cargar las consultas de Consultorio. (Código de soporte: corr-resumen-2)',
+      'No se pudieron cargar las consultas de Consultorio. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-resumen-2)',
     );
   });
 

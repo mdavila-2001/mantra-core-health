@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Deshidratación</title>
+  <desc id="d">A la izquierda, una balanza inclinada en la que las pérdidas de líquido superan a las entradas, con la nota de que también se pierden sales y se repone con suero oral. A la derecha, causas frecuentes, señales como sed, boca seca u orina oscura, y signos de deshidratación grave.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Balance de líquidos</text>
+  <path d="M200 90 L200 124" fill="none" stroke="var(--ink)" stroke-width="4"/>
+  <g transform="rotate(-10 200 124)">
+  <line x1="70" y1="124" x2="330" y2="124" stroke="var(--ink)" stroke-width="4"/>
+  <rect x="60" y="124" width="90" height="70" rx="6" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="105" y="166" text-anchor="middle" class="small">Entradas</text>
+  <rect x="250" y="124" width="90" height="110" rx="6" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="295" y="182" text-anchor="middle" class="small">Pérdidas</text>
+  </g>
+  <path d="M190 300 L200 124 L210 300 Z" fill="var(--muted)"/>
+  <text x="200" y="330" text-anchor="middle" class="lab">Se pierde más de lo que entra</text>
+  <text x="200" y="360" text-anchor="middle" class="small muted">Con el agua se van sales</text>
+  <text x="200" y="378" text-anchor="middle" class="small muted">(electrolitos): por eso se repone</text>
+  <text x="200" y="396" text-anchor="middle" class="small muted">con suero oral, no solo agua</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Causas y señales</text>
+  <text x="436" y="78" class="step">Causas frecuentes</text>
+  <text x="440" y="102" class="lab">• Diarrea y vómitos</text>
+  <text x="440" y="124" class="lab">• Fiebre, calor o ejercicio intenso</text>
+  <text x="440" y="146" class="lab">• Beber poco (niños, mayores)</text>
+  <text x="436" y="178" class="step">Señales</text>
+  <rect x="436" y="192" width="158" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="515.0" y="213.32" text-anchor="middle" class="small" style="fill:var(--ink)">Sed</text>
+  <rect x="602" y="192" width="158" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="681.0" y="213.32" text-anchor="middle" class="small" style="fill:var(--ink)">Boca seca</text>
+  <rect x="436" y="236" width="158" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="515.0" y="257.32" text-anchor="middle" class="small" style="fill:var(--ink)">Orina escasa y oscura</text>
+  <rect x="602" y="236" width="158" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="681.0" y="257.32" text-anchor="middle" class="small" style="fill:var(--ink)">Mareo</text>
+  <rect x="436" y="290" width="324" height="130" rx="10" fill="var(--warn-l)"/>
+  <text x="452" y="314" class="step" style="fill:var(--warn)">Grave si hay</text>
+  <text x="456" y="340" class="small">• Somnolencia o confusión</text>
+  <text x="456" y="362" class="small">• Ojos hundidos, sin lágrimas</text>
+  <text x="456" y="384" class="small">• No orina en muchas horas</text>
+  <text x="456" y="406" class="small">• Pulso rápido y débil</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

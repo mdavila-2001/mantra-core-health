@@ -189,3 +189,10 @@ span.import__secondary {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   }
 }
+
+/* Server dry-run in flight: spinner next to the waiting message. */
+.import__busy {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}

@@ -1,5 +1,6 @@
 ---
 slug: escarlatina
+image: escarlatina.svg | La escarlatina la causa la toxina de un estreptococo del grupo A. | Cara de un niño con mejillas enrojecidas, palidez alrededor de la boca y lengua de fresa, junto a la causa bacteriana, el modo de contagio y el tratamiento con antibiótico.
 ---
 
 ## [definition] Introducción

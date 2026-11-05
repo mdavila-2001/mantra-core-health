@@ -13,7 +13,7 @@ import { SurveysHome } from './questionnaires';
  * El bloque «Cómo le va» tiene su propio spec (`insights/survey-insights.spec.ts`)
  * y sus propias peticiones. Acá se reemplaza por un hueco para que estas pruebas
  * sigan midiendo SÓLO el listado —y `http.verify()` siga exigiendo que la única
- * lectura sea la de `GET /surveys/templates`—.
+ * lectura sea la de `GET /surveys/catalog`—.
  */
 @Component({ selector: 'app-survey-insights', template: '' })
 class ResumenHueco {}
@@ -33,7 +33,7 @@ class ResumenHueco {}
        ofrece crear otra en vez de aflojar el filtro.
     4. Control negativo: sin criterios puestos no se esconde nada.
 
-    Lo que NO acreditan: que la API filtre. No filtra —`GET /surveys/templates`
+    Lo que NO acreditan: que la API filtre. No filtra —`GET /surveys/catalog`
     no declara `?q=` ni `?status=`—, y por eso el filtrado es de cliente sobre
     lo ya cargado. Estas pruebas no emiten ninguna petición más que la lectura
     inicial, y `http.verify()` lo hace cumplir.
@@ -54,6 +54,8 @@ function encuestaEnCable(
     latestVersionNumber: 1,
     published: status !== 'DRAFT',
     questionCount: 3,
+    origin: 'PRACTITIONER',
+    assignments: [],
   };
 }
 
@@ -96,7 +98,7 @@ describe('SurveysHome · buscar, filtrar y los vacíos que no se confunden', () 
 
   /** Responde la lectura del listado y deja la pantalla pintada. */
   function responderListado(cuerpo: readonly Record<string, unknown>[]): void {
-    http.expectOne((r) => r.url === '/surveys/templates').flush(cuerpo);
+    http.expectOne((r) => r.url === '/surveys/catalog').flush(cuerpo);
     harness.detectChanges();
   }
 
@@ -105,7 +107,7 @@ describe('SurveysHome · buscar, filtrar y los vacíos que no se confunden', () 
   const buscar = (selector: string): HTMLElement | null => raiz().querySelector(selector);
 
   const titulos = (): readonly string[] =>
-    Array.from(raiz().querySelectorAll('.encuestas__titulo')).map(
+    Array.from(raiz().querySelectorAll('.tarjeta__titulo')).map(
       (nodo) => nodo.textContent?.trim() ?? '',
     );
 

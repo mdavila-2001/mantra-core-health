@@ -4,7 +4,16 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
+import { SpecialtyImages } from '../../../core/data-access/terminology/specialty-images.service';
+import { defaultSpecialtyImage } from '../../../shared/specialties/specialty-images';
 import { PractitionersDirectory, type GrupoDeEspecialidad } from './practitioners-directory';
+
+/**
+ * `SpecialtyImages` asks for the specialty catalog as soon as it is injected.
+ * These cases are not about the admin's own images: the bundled illustration
+ * rules and no request is left unanswered.
+ */
+const SIN_IMAGENES_PROPIAS = { of: (nombre: string) => defaultSpecialtyImage(nombre) };
 
 /**
  * La guía de profesionales (carril R2-1).
@@ -82,6 +91,7 @@ describe('PractitionersDirectory', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { queryParams: parametros } },
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
       ],
     });
     http = TestBed.inject(HttpTestingController);

@@ -1,0 +1,1 @@
+{"baseRefName":"mockup","headRefOid":"14495e3a46c4f8ac72b06c79946136cdb55247f6","isDraft":false,"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE"}

@@ -1,5 +1,6 @@
 ---
 slug: endoscopia-digestiva-alta
+image: endoscopia-digestiva-alta.svg | El endoscopio entra por la boca y permite ver esófago, estómago y duodeno. | Perfil de una cabeza y un tubo flexible que entra por la boca, baja por el esófago y llega al estómago y el duodeno, con la imagen en un monitor. A la derecha, para qué sirve la prueba y cómo se prepara.
 ---
 
 ## [definition] Introducción

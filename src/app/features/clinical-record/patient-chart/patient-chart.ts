@@ -14,8 +14,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { forkJoin, map, of, type Subscription } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, forkJoin, map, of, switchMap, type Subscription } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ChartTemplatesClient } from '../../../core/data-access/chart-templates/chart-templates.client';
@@ -89,15 +88,17 @@ import {
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
-import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
+import type { ColumnDef, SortState } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ReceivedServicesPanel } from '../../../shared/components/organisms/received-services-panel/received-services-panel';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { writeFailureMessage } from '../write-message';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
+import { chartError } from '../consultation/consultation-forbidden';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
+import { ChartAccessScope } from './chart-access-scope/chart-access-scope';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { DocumentBlock } from './document-block/document-block';
@@ -127,7 +128,6 @@ import { LoadingState } from '../../../shared/components/molecules/loading-state
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
-import type { SortState } from '../../../shared/components/organisms/data-table/data-table.types';
 import { RecorridoClinico } from './recorrido-clinico/recorrido-clinico';
 import {
   aristasDelHistorial,
@@ -444,6 +444,7 @@ interface Expediente {
     Badge,
     Card,
     CarePlanBlock,
+    ChartAccessScope,
     Chip,
     ConceptSelect,
     ContentDialog,
@@ -1739,7 +1740,7 @@ export class PatientChart {
       case 'validation':
         return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos leerlos.';
       case 'error':
-        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+        return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
       default:
         return null;
     }
@@ -2554,7 +2555,9 @@ export class PatientChart {
           this.etiquetas.set(etiquetas);
           this.expediente.set(ready(datos));
         },
-        error: (error: unknown) => this.expediente.set(errorToViewState<Expediente>(error)),
+        // El 403 de la API le habla al paciente; acá se le dice a quien
+        // atiende qué le falta y se le da la salida (pedir acceso).
+        error: (error: unknown) => this.expediente.set(chartError<Expediente>(error, profileId)),
       });
   }
 

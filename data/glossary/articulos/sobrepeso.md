@@ -1,5 +1,6 @@
 ---
 slug: sobrepeso
+image: sobrepeso.svg | El sobrepeso es el tramo intermedio entre el peso normal y la obesidad. | Fórmula del índice de masa corporal y una barra con las categorías bajo peso, normal, sobrepeso y obesidad para adultos, junto a otros indicadores y consejos.
 ---
 
 ## [definition] Introducción

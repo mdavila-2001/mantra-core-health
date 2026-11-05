@@ -1,5 +1,6 @@
 ---
 slug: ecografia-tiroidea
+image: ecografia-tiroidea.svg | La ecografía de tiroides distingue nódulos sólidos de quistes con líquido. | Persona con la tiroides marcada en el cuello y una sonda de ecografía, y una imagen esquemática de los dos lóbulos con un quiste y un nódulo sólido.
 ---
 
 ## [definition] Introducción

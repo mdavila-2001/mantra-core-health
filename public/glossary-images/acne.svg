@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se forma el acné</title>
+  <desc id="d">Corte de la piel con dos folículos pilosebáceos: uno normal por donde sale el sebo y otro obstruido por un tapón, con bacterias e inflamación alrededor. A la derecha, los cuatro factores que causan el acné y los tipos de lesiones.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">Unidad pilosebácea</text>
+<rect x="40" y="90" width="380" height="40" rx="4" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+<rect x="40" y="130" width="380" height="190" rx="4" fill="var(--vessel-l)" stroke="var(--line)" stroke-width="1" opacity=".6"/>
+<text x="48" y="112" class="small">Epidermis</text>
+<text x="48" y="306" class="small">Dermis</text>
+<path d="M112,90 L116,270 Q130,290 144,270 L148,90" fill="var(--panel)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="92" cy="200" rx="20" ry="28" fill="var(--beam)" stroke="var(--warn)" stroke-width="1"/>
+<ellipse cx="168" cy="200" rx="20" ry="28" fill="var(--beam)" stroke="var(--warn)" stroke-width="1"/>
+<path d="M130,280 L130,70" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M292,90 L296,270 Q310,290 324,270 L328,90" fill="var(--panel)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="272" cy="200" rx="20" ry="28" fill="var(--beam)" stroke="var(--warn)" stroke-width="1"/>
+<ellipse cx="348" cy="200" rx="20" ry="28" fill="var(--beam)" stroke="var(--warn)" stroke-width="1"/>
+<path d="M310,280 L310,70" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="310" cy="140" rx="15" ry="40" fill="var(--beam)" stroke="var(--warn)" stroke-width="1.5"/>
+<circle cx="306" cy="130" r="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="315" cy="150" r="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<circle cx="310" cy="165" r="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<ellipse cx="310" cy="150" rx="48" ry="62" fill="none" stroke="var(--vessel)" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="130" y="352" text-anchor="middle" class="step">Folículo normal</text>
+<text x="310" y="352" text-anchor="middle" class="step">Folículo obstruido</text>
+<text x="130" y="372" text-anchor="middle" class="small" style="fill:var(--muted)">el sebo sale a la piel</text>
+<text x="310" y="372" text-anchor="middle" class="small" style="fill:var(--muted)">tapón, bacterias e inflamación</text>
+<text x="60" y="254" class="small">Glándula</text>
+<text x="60" y="268" class="small">sebácea</text>
+<text x="370" y="80" text-anchor="middle" class="small">Tapón</text>
+<rect x="40" y="388" width="380" height="36" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="52" y="410" class="small">C. acnes = bacteria de la piel (puntos morados)</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Cuatro factores</text>
+<rect x="476" y="60" width="284" height="34" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="618.0" y="81.5" text-anchor="middle" class="lab" style="fill:var(--on)">1 · Exceso de sebo</text>
+<line x1="618.0" y1="95" x2="618.0" y2="109" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="476" y="112" width="284" height="34" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="618.0" y="133.6" text-anchor="middle" class="lab" style="fill:var(--on)">2 · Tapón de queratina</text>
+<line x1="618.0" y1="147" x2="618.0" y2="161" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="476" y="164" width="284" height="34" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="618.0" y="185.6" text-anchor="middle" class="lab" style="fill:var(--on)">3 · Proliferación de C. acnes</text>
+<line x1="618.0" y1="199" x2="618.0" y2="213" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="476" y="216" width="284" height="34" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="618.0" y="237.6" text-anchor="middle" class="lab" style="fill:var(--on)">4 · Inflamación</text>
+<rect x="476" y="264" width="284" height="122" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="488" y="286" class="step">Lesiones típicas</text>
+<text x="488" y="310" class="lab">• Comedón abierto (punto negro)</text>
+<text x="488" y="332" class="lab">• Comedón cerrado (punto blanco)</text>
+<text x="488" y="354" class="lab">• Pápula y pústula</text>
+<text x="488" y="376" class="lab">• Nódulo o quiste profundo</text>
+<text x="476" y="420" class="small" style="fill:var(--muted)">Zonas: cara, pecho y espalda.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

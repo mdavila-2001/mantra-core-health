@@ -108,3 +108,30 @@
   display: grid;
   gap: var(--sp-2);
 }
+
+/* Celular: plantillas y modo de respuesta se tocan con el pulgar, y las acciones ocupan la fila entera. El rótulo
+   «Enviar como <doctor>» no se corta ni desborda con un nombre largo (el botón trae `white-space: nowrap`). */
+@media (max-width: 779px) {
+  .plantillas__abrir,
+  .plantilla {
+    min-block-size: 44px;
+  }
+
+  .compositor > app-segmented-control ::ng-deep .segmentado__opcion {
+    position: relative;
+    min-block-size: 38px;
+  }
+
+  .compositor > app-segmented-control ::ng-deep .segmentado__opcion::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
+
+  .acciones > button {
+    flex: 1 1 14rem;
+    max-inline-size: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}

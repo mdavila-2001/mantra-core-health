@@ -1,5 +1,6 @@
 ---
 slug: angina-de-pecho
+image: angina-de-pecho.svg | En la angina, una arteria coronaria estrechada no aporta suficiente sangre durante el esfuerzo. | Corazón con dos arterias coronarias, una estrechada por una placa de ateroma y una zona de músculo con poco oxígeno. A la derecha, los rasgos de la angina estable, los factores de riesgo y cuándo llamar a emergencias.
 ---
 
 ## [definition] Introducción

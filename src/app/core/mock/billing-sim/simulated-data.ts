@@ -28,6 +28,7 @@ import type {
 } from '../../data-access/billing-simulated/billing-simulated.types';
 import type { SimulatedSalesNote } from '../../data-access/billing-simulated/billing-simulated.types';
 import { RECURSO_CONSULTORIO_MEDICA, recursos, reservas, type ReservaSimulada } from '../fixtures/agenda';
+import { BOOKING_STATUS } from '../fixtures/concepts';
 import { MEDICAL, PACIENTE, patientById } from '../fixtures/people';
 import { renglonesDePedidoSimulado } from '../handlers/pharmacy.handlers';
 import { uuid } from '../mock-store';
@@ -263,7 +264,7 @@ function consultationCharges(): InitialCharge[] {
     .filtrar((r) => r.paymentState?.state === 'PARTIALLY_PAID' && !reconsultaDe.has(r.id))
     .slice(0, PARTIAL_PAYMENT_PLANS);
 
-  return [
+  const cobrosBase: InitialCharge[] = [
     ...pagadas.map((r, i) => {
       const monto = i % 3 === 0 ? '180.00' : '250.00';
       // Una consulta pagada que ya tiene su reconsulta agendada es un servicio
@@ -277,6 +278,25 @@ function consultationCharges(): InitialCharge[] {
     ...parciales.map((r, i) => conPlan(r, '250.00', i + 1)),
     ...[...pendientes, ...enAtencion].map((r) => cobro(r, '250.00', null)),
   ];
+  // Toda cita de la paciente demo abre su pago, también si es futura. Sólo se
+  // agregan las que no tenían un cobro sembrado para no duplicar servicios.
+  const referencias = new Set(cobrosBase
+    .filter((item) => item.source === 'CONSULTATION')
+    .map((item) => item.sourceRef));
+  const faltantes = reservas.filtrar((r) =>
+    r.patientProfileId === PACIENTE.id &&
+    r.statusConceptId !== BOOKING_STATUS['BK-CANCELLED'] &&
+    r.statusConceptId !== BOOKING_STATUS['BK-REJECTED'] &&
+    !referencias.has(r.appointmentId ?? r.id) &&
+    r.followUpOf === null,
+  );
+  return [...cobrosBase, ...faltantes.map((r) => cobro(
+    r,
+    '250.00',
+    r.paymentState?.state === 'PAID'
+      ? pago(`consulta-${r.id}`, 1, '250.00', r.startAt)
+      : null,
+  ))];
 
   /** El electrocardiograma (`ECG` del catálogo, Bs 120) hecho en esa consulta, todavía sin cobrar. */
   function electrocardiograma(r: ReservaSimulada): InitialCharge {
@@ -344,6 +364,43 @@ function pharmacyCharges(): InitialCharge[] {
     ...PAID_ORDERS.map(([semilla, minutos]) => orderCharge(semilla, minutos)),
     ...PENDING_ORDERS.map((semilla) => orderCharge(semilla, null)),
   ].filter((c): c is InitialCharge => c !== null);
+}
+
+/** Lo que vale una consulta cuando la cita aún no tiene un cobro propio. */
+const MONTO_DE_CONSULTA_POR_OMISION = '250.00';
+
+/** Una cita que ya no se atiende no genera cobro. */
+function estaVigente(r: ReservaSimulada): boolean {
+  return r.statusConceptId !== BOOKING_STATUS['BK-CANCELLED'] && r.statusConceptId !== BOOKING_STATUS['BK-REJECTED'];
+}
+
+/**
+ * El cobro pendiente de una cita que todavía no tiene ninguno, o `null` si la
+ * cita no admite uno (sin paciente, cancelada o rechazada).
+ *
+ * Tiene el **mismo id** que le daría la siembra inicial (`cobro-consulta-…`),
+ * así que si la siembra ya lo había creado no se duplica: el motor lo detecta
+ * por id. Existe para que el paciente pueda subir su comprobante y quien
+ * atiende lo vea **desde que la cita existe**, no sólo si la maqueta la
+ * sembró con un cobro.
+ */
+export function cobroPendienteDeReserva(r: ReservaSimulada): InitialCharge | null {
+  if (r.patientProfileId === null || !estaVigente(r)) return null;
+  const fecha = r.startAt.slice(0, 10);
+  return {
+    id: uuid(`cobro-consulta-${r.id}`),
+    source: 'CONSULTATION',
+    sourceRef: r.appointmentId ?? r.id,
+    issuerId: PRACTICE_ISSUER.issuer.id,
+    patientProfileId: r.patientProfileId,
+    patientName: r.patientName,
+    practitionerProfileId: professionalOf(r),
+    description: `Consulta médica · ${fecha}`,
+    lines: [consultationLine(MONTO_DE_CONSULTA_POR_OMISION, fecha)],
+    createdAt: r.startAt,
+    suggestedBuyer: compradorSugerido(r.patientProfileId, r.patientName),
+    payment: r.paymentState?.state === 'PAID' ? pago(`consulta-${r.id}`, 1, MONTO_DE_CONSULTA_POR_OMISION, r.startAt) : null,
+  };
 }
 
 export function initialCharges(): InitialCharge[] {

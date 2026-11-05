@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo trabaja la radiología intervencionista</title>
+  <desc id="d">Pantalla de imagen que muestra un vaso con un catéter que avanza hasta una lesión marcada, y debajo los instrumentos: una aguja y una guía con catéter. A la derecha, los procedimientos frecuentes, como angioplastia, embolización o biopsias guiadas, y sus ventajas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Radiología intervencionista: tratar con agujas y catéteres guiados</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="88" text-anchor="middle" class="title">La imagen guía el instrumento</text>
+  <rect x="60" y="100" width="320" height="200" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+  <rect x="70" y="110" width="300" height="180" rx="8" fill="#3b4550" stroke="none"/>
+  <path d="M90 230 C150 220 180 180 240 170 C290 162 320 140 350 130" fill="none" stroke="#e8eef5" stroke-width="5"/>
+  <path d="M90 230 C150 220 180 180 240 170" fill="none" stroke="#f2c46d" stroke-width="2" stroke-dasharray="6 3"/>
+  <circle cx="240" cy="170" r="10" fill="none" stroke="#ef7467" stroke-width="3"/>
+  <text x="220" y="320" text-anchor="middle" class="small b">Pantalla: rayos X, ecografía o TC</text>
+  <rect x="70" y="346" width="120" height="70" rx="10" fill="var(--panel)" stroke="var(--muted)"/>
+  <path d="M100 380 L170 380 M100 380 L92 372 M100 380 L92 388" fill="none" stroke="var(--muted)" stroke-width="2"/>
+  <text x="130" y="404" text-anchor="middle" class="small">Aguja</text>
+  <rect x="220" y="346" width="140" height="70" rx="10" fill="var(--panel)" stroke="var(--muted)"/>
+  <path d="M240 392 C270 360 300 400 340 368" fill="none" stroke="var(--muted)" stroke-width="3"/>
+  <text x="290" y="404" text-anchor="middle" class="small">Guía y catéter</text>
+  <rect x="436" y="60" width="344" height="230" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Procedimientos frecuentes</text>
+  <text x="454" y="108" class="small">• Angioplastia y stent</text>
+  <text x="454" y="132" class="small">• Embolización de sangrados</text>
+  <text x="465" y="156" class="small">y de miomas</text>
+  <text x="454" y="180" class="small">• Biopsias guiadas</text>
+  <text x="454" y="204" class="small">• Drenaje de abscesos</text>
+  <text x="454" y="228" class="small">• Ablación de tumores</text>
+  <text x="454" y="252" class="small">• Accesos venosos</text>
+  <rect x="436" y="306" width="344" height="134" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="334" text-anchor="middle" class="h">Ventajas</text>
+  <text x="454" y="352" class="small">• Incisión de pocos milímetros</text>
+  <text x="454" y="376" class="small">• A menudo sin anestesia general</text>
+  <text x="454" y="400" class="small">• Recuperación más rápida</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q7208
+image: wikidata-especialidad-q7208.svg | El recorrido de una muestra de tejido hasta el diagnóstico al microscopio. | Seis pasos ilustrados: biopsia, fijación en formol, bloque de parafina, cortes finos, tinción y microscopio, con las muestras que estudia la anatomía patológica y sus técnicas.
 ---
 
 ## [definition] Introducción

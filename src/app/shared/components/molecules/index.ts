@@ -123,6 +123,7 @@ export type { RowAction } from './row-actions/row-actions.types';
 
 export { SectionHeading } from './section-heading/section-heading';
 
+export { SearchCorrection } from './search-correction/search-correction';
 export { SearchField } from './search-field/search-field';
 export { SEARCH_DEBOUNCE_MS } from './search-field/search-field.types';
 
@@ -145,6 +146,8 @@ export type {
 export { Stepper } from './stepper/stepper';
 export { porcentajeDelRecorrido, STEP_STATUSES } from './stepper/stepper.types';
 export type { StepperStep, StepStatus } from './stepper/stepper.types';
+
+export { SupportCode } from './support-code/support-code';
 
 /* `Tab` es la pestaña individual; sin `Tabs` alrededor no significa nada. */
 export { Tabs } from './tabs/tabs';

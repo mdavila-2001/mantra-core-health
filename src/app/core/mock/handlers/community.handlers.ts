@@ -31,7 +31,7 @@ import { conflict, forbidden, notFound, preconditionFailed, reply, validation, t
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
 // constante que la pantalla, para que no puedan separarse.
 import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
-import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 import { fileContent, urlDeArchivoSimulado } from './files.handlers';
 
 /* ============================================================================
@@ -83,13 +83,36 @@ function respuestaAutomaticaEncendida(): boolean {
   }
 }
 
-/**
- * Las respuestas automáticas configuradas, por perfil (F4.7).
- *
- * Un `Map` y no una `Coleccion`: se busca siempre por perfil, nunca por id, y
- * hay a lo sumo una por perfil.
- */
-const respuestasAutomaticas = new Map<string, Record<string, unknown>>();
+/** Las respuestas automáticas configuradas, por perfil (F4.7). */
+interface RespuestaAutomaticaGuardada {
+  /** El perfil público al que pertenece. */
+  readonly id: string;
+  /** Lo que devuelve `GET …/auto-reply`, tal cual. */
+  readonly datos: Readonly<Record<string, unknown>>;
+}
+
+/** La médica de la maqueta contesta con un mensaje fijo cuando no está. */
+const respuestasAutomaticas = new Coleccion<RespuestaAutomaticaGuardada>(
+  [
+    {
+      id: MEDICAL_SHOWCASE.id,
+      datos: {
+        id: uuid(`auto-reply-${MEDICAL_SHOWCASE.id}`),
+        publicProfileId: MEDICAL_SHOWCASE.id,
+        isActive: true,
+        inactivityMinutes: 30,
+        bodyText:
+          'Gracias por escribir. En este momento no estoy disponible; le respondo apenas pueda. Si es una urgencia, acuda a Emergencia.',
+        cooldownHours: 4,
+        onlyOutsideBusinessHours: false,
+        businessHoursFrom: null,
+        businessHoursTo: null,
+        updatedAt: ahora(),
+      },
+    },
+  ],
+  'mock.comunidad.respuestas-automaticas',
+);
 
 function vitrinaDeSesion(request: MockRequest): SimulatedShowcase | undefined {
   const user = request.user;
@@ -267,8 +290,9 @@ function conversacion(c: { id: string; conversationTypeConceptId: string; groupI
       .filter((p) => p !== yo)
       .map((p) => {
         if (p === SUPPORT_ID) return { profileId: p, displayName: 'Soporte AloVida', avatarUrl: null };
-        const v = showcases.get(p);
-        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null, ...(v === undefined ? {} : showcaseVerification(v)) };
+        const v = showcases.get(p) ?? showcaseOf(p);
+        const avatarUrl = (v?.avatarFileId ? urlDeArchivoSimulado(v.avatarFileId) : null) ?? v?.avatarUrl ?? null;
+        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl, ...(v === undefined ? {} : showcaseVerification(v)) };
       }),
   };
 }
@@ -327,12 +351,7 @@ export function registrarComunidad(router: MockRouter): void {
       kind: user.practitionerProfileId !== undefined ? 'PRACTITIONER' : 'PATIENT',
       slug: datos.slug ?? user.key,
       displayName: datos.displayName ?? user.displayName,
-      headline: '',
-      biography: '',
-      avatarUrl: '',
-      coverUrl: '',
-      avatarFileId: '',
-      coverFileId: '',
+      headline: '', biography: '', avatarUrl: '', coverUrl: '', avatarFileId: '', coverFileId: '',
       verified: false,
       acceptsReviews: false,
       visibility: 'PUBLIC',
@@ -344,11 +363,11 @@ export function registrarComunidad(router: MockRouter): void {
       ratingAverage: null,
       ratingCount: 0,
       hasPublishedAgenda: false,
-      // Una vitrina recién creada desde «mi perfil» es de un profesional o de
-      // un paciente: ninguno de los dos lleva chip de categoría.
       categoria: null,
       seguidores: 0,
     };
+    const avatarFileId = datos.avatarFileId === null ? '' : (datos.avatarFileId ?? base.avatarFileId);
+    const avatarUrl = avatarFileId ? (urlDeArchivoSimulado(avatarFileId) ?? (base.avatarUrl || `/public/media/${avatarFileId}`)) : '';
     const actualizada: SimulatedShowcase = {
       ...base,
       slug: datos.slug ?? base.slug,
@@ -357,7 +376,8 @@ export function registrarComunidad(router: MockRouter): void {
       biography: datos.biography ?? base.biography,
       acceptsReviews: datos.acceptsReviews ?? base.acceptsReviews,
       visibility: datos.visibility ?? base.visibility,
-      avatarFileId: datos.avatarFileId === null ? '' : (datos.avatarFileId ?? base.avatarFileId),
+      avatarFileId,
+      avatarUrl,
       coverFileId: datos.coverFileId === null ? '' : (datos.coverFileId ?? base.coverFileId),
     };
     showcases.agregar(actualizada);
@@ -410,7 +430,7 @@ export function registrarComunidad(router: MockRouter): void {
    */
   router.get('/community/profiles/:id/auto-reply', (request) => {
     if (!puedeActuarComo(request, request.params['id']!)) return perfilAjeno();
-    return respuestasAutomaticas.get(request.params['id']!) ?? null;
+    return respuestasAutomaticas.get(request.params['id']!)?.datos ?? null;
   });
 
   router.put('/community/profiles/:id/auto-reply', (request) => {
@@ -441,7 +461,7 @@ export function registrarComunidad(router: MockRouter): void {
         : null,
       updatedAt: ahora(),
     };
-    respuestasAutomaticas.set(perfil, guardada);
+    respuestasAutomaticas.agregar({ id: perfil, datos: guardada });
     return guardada;
   });
 
@@ -755,7 +775,7 @@ export function registrarComunidad(router: MockRouter): void {
   /* ---- grupos y temas ------------------------------------------------------- */
 
   router.get('/community/topics', () => ({ items: THEMES, count: THEMES.length, limit: 50 }));
-
+  router.post('/community/topics', (request) => ({ id: nuevoId('topic'), code: 'PROPIO', name: cuerpo<{ name: string }>(request).name ?? '', parentTopicId: uuid('topic-cat-propios') }));
   router.get('/community/groups', ({ query }) => {
     const q = texto(query, 'q');
     const topicId = texto(query, 'topicId');
@@ -916,6 +936,16 @@ export function registrarComunidad(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id } };
   });
 
+  router.post('/community/conversations/contacts/search', (request) => {
+    const datos = cuerpo<{ profileId?: string; q?: string; limit?: number }>(request);
+    const yo = datos.profileId ?? vitrinaDeSesion(request)?.id ?? '';
+    const q = (datos.q ?? '').trim().toLowerCase();
+    if (q === '') return { items: [] };
+    const max = Math.max(1, Math.min(Number(datos.limit ?? 10) || 10, 50));
+    const items = showcases.todos().filter((s) => s.id !== yo && (s.kind === 'PRACTITIONER' || s.kind === 'PATIENT' || s.kind === 'BROKER') && s.displayName.toLowerCase().includes(q)).slice(0, max).map((s) => ({ profileId: s.id, displayName: s.displayName, headline: s.headline || null, avatarUrl: s.avatarUrl }));
+    return { items };
+  });
+
   router.get('/community/conversations/:id/messages', (request) => {
     const { params, query } = request;
     if (!puedeActuarComo(request, texto(query, 'profileId') ?? '')) return perfilAjeno();
@@ -1010,7 +1040,7 @@ export function registrarComunidad(router: MockRouter): void {
       const otro = c.participantes.find((p) => p !== nuevo.senderProfileId);
       if (otro !== undefined) {
         setTimeout(() => {
-          messageList.agregar({
+          const eco: SimulatedMessage = {
             ...nuevo,
             id: nuevoId('msg-eco'),
             senderProfileId: otro,
@@ -1018,7 +1048,10 @@ export function registrarComunidad(router: MockRouter): void {
             attachmentFileId: null,
             contentTypeConceptId: CONCEPT.messageText,
             sentAt: ahora(),
-          });
+          };
+          // Al eco no se le contesta con IA: quien usa la maqueta está
+          // escribiendo en ese momento, así que no está ausente.
+          messageList.agregar(eco);
         }, 2000);
       }
     }

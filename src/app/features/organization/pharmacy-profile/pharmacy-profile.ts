@@ -15,6 +15,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../shared/components/molecules/card/card';
 import type { AlertTone } from '../../../shared/components/molecules/alert/alert.types';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
@@ -27,7 +28,7 @@ import type {
   PharmacyLicense,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { SAMPLE_DATA_ENABLED } from '../../../core/mock/sample-data';
+import { SAMPLE_DATA_ENABLED } from '../../../core/simulator/sample-data';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -290,6 +291,7 @@ export function avisoDeLaCarpeta(
   imports: [
     Alert,
     AppButton,
+    Card,
     Chip,
     CompanyData,
     LegalDocuments,
@@ -311,7 +313,7 @@ export class PharmacyProfile {
   /**
    * Maqueta (`true`) o API real (`false`). Sobre la maqueta la ficha entera es
    * de ejemplo y se rotula; contra la API real cada pestaña lee su parte del
-   * contrato, en modo lectura. Ver `core/mock/sample-data.ts`.
+   * contrato, en modo lectura. Ver `core/simulator/sample-data.ts`.
    */
   protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 

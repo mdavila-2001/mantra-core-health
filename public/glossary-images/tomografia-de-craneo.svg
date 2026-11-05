@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Tomografía de cráneo</title>
+  <desc id="d">A la izquierda, un tomógrafo en forma de anillo con la cabeza del paciente en el centro y el tubo de rayos X que gira alrededor, y un corte axial del cráneo con el hueso en blanco. A la derecha, qué permite valorar y qué avisar antes.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">Tomógrafo y cortes del cráneo</text>
+  <circle cx="150" cy="170" r="90" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="150" cy="170" r="46" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <rect x="40" y="196" width="240" height="16" rx="4" fill="var(--muted)" stroke="none" stroke-width="2"/>
+  <circle cx="150" cy="170" r="24" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M150 82 A88 88 0 0 1 238 170" fill="none" stroke="var(--beam)" stroke-width="8" opacity=".9"/>
+  <text x="150" y="286" text-anchor="middle" class="small">El tubo de rayos X gira</text>
+  <text x="150" y="302" text-anchor="middle" class="small">alrededor de la cabeza</text>
+  <rect x="296" y="70" width="124" height="124" rx="8" fill="var(--ink)" stroke="none" stroke-width="2"/>
+  <ellipse cx="358" cy="132" rx="46" ry="54" fill="var(--panel)" stroke="none" stroke-width="2"/>
+  <ellipse cx="358" cy="132" rx="40" ry="48" fill="var(--muted)" stroke="none" stroke-width="2"/>
+  <path d="M346 116 C350 124 350 134 346 140 M370 116 C366 124 366 134 370 140" fill="none" stroke="var(--ink)" stroke-width="4"/>
+  <text x="358" y="212" text-anchor="middle" class="small">Corte axial</text>
+  <text x="358" y="228" text-anchor="middle" class="small" style="fill:var(--muted)">hueso blanco</text>
+  <rect x="40" y="330" width="380" height="92" rx="10" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="230" y="356" text-anchor="middle" class="step">Rápida: ideal en urgencias</text>
+  <text x="230" y="380" text-anchor="middle" class="small">Sangre reciente se ve blanca;</text>
+  <text x="230" y="398" text-anchor="middle" class="small">a veces se usa contraste por vena</text>
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="50" text-anchor="middle" class="title">Qué permite valorar</text>
+  <rect x="476" y="66" width="284" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="490" y="87" class="lab">Golpes en la cabeza</text>
+  <text x="490" y="105" class="small" style="fill:var(--muted)">fracturas y hemorragias</text>
+  <rect x="476" y="124" width="284" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="490" y="145" class="lab">Sospecha de ictus</text>
+  <text x="490" y="163" class="small" style="fill:var(--muted)">distingue sangrado de infarto</text>
+  <rect x="476" y="182" width="284" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="490" y="203" class="lab">Dolor de cabeza brusco</text>
+  <text x="490" y="221" class="small" style="fill:var(--muted)">y otros signos de alarma</text>
+  <rect x="476" y="240" width="284" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="490" y="261" class="lab">Tumores e hidrocefalia</text>
+  <text x="490" y="279" class="small" style="fill:var(--muted)">masas o ventrículos dilatados</text>
+  <rect x="476" y="310" width="284" height="112" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+  <text x="492" y="336" class="step" style="fill:var(--warn)">Avisar antes</text>
+  <text x="500" y="360" class="small">• Posible embarazo</text>
+  <text x="500" y="380" class="small">• Alergia al contraste</text>
+  <text x="500" y="400" class="small">• Problemas de riñón</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

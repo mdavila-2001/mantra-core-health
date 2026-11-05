@@ -105,6 +105,20 @@ describe('PublicShare', () => {
     expect(text(fixture)).toContain('Soy farmacia: iniciar sesión');
   });
 
+  it('anulada o reemplazada antes de su plazo: no dice «venció» (H12-09)', () => {
+    const fixture = mount();
+    flushPublic(fixture, {
+      ...VALID,
+      status: 'EXPIRED',
+      endedReason: 'PRESCRIPTION_NOT_ACTIVE',
+      itemCount: 0,
+    });
+
+    const shown = text(fixture);
+    expect(shown).toContain('Esta receta ya no está vigente');
+    expect(shown).not.toContain('venció');
+  });
+
   it('vencida: solo el estado, sin «0 medicamentos» ni la entrada de la farmacia', () => {
     const fixture = mount();
     // La forma real de la API: vencida, `itemCount` cuenta los ítems vigentes (cero).

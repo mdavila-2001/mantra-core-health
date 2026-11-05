@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q426449
+image: wikidata-especialidad-q426449.svg | Procedimientos mínimamente invasivos guiados por imagen. | Pantalla con un catéter que avanza por un vaso hasta una lesión, junto a una aguja y una guía, y la lista de procedimientos y ventajas de la radiología intervencionista.
 ---
 
 ## [definition] Introducción

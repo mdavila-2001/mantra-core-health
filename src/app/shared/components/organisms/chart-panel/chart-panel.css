@@ -13,6 +13,11 @@
   min-width: 0;
 }
 .gp--grande { border: 0; box-shadow: none; padding: 0; }
+/* Dentro de la tarjeta con pestañas: ni borde, ni sombra, ni radio propios (una sola superficie elevada por pantalla). */
+.gp--plano { border: 0; box-shadow: none; border-radius: 0; padding: 0; background: transparent; }
+/* Recarga sin salto: el dibujo anterior sigue ahí, atenuado, hasta que llega el nuevo. */
+.gp__lienzo { transition: opacity var(--dur-fast, 120ms) var(--ease-out, ease-out); }
+.gp--refrescando .gp__lienzo { opacity: 0.6; }
 
 .gp__cab { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
 .gp__titulos { min-width: 0; flex: 1 1 14rem; }

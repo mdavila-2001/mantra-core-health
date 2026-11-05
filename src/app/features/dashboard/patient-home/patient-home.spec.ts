@@ -4,7 +4,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { SpecialtyImages } from '../../../core/data-access/terminology/specialty-images.service';
+import { defaultSpecialtyImage } from '../../../shared/specialties/specialty-images';
 import { PatientHome } from './patient-home';
+
+/**
+ * `SpecialtyImages` pide el catálogo de especialidades apenas se inyecta. Estas
+ * pruebas no son sobre las imágenes propias del admin: rige la ilustración
+ * empaquetada y no queda ninguna petición sin responder.
+ */
+const SIN_IMAGENES_PROPIAS = { of: (nombre: string) => defaultSpecialtyImage(nombre) };
 
 /**
  * «Mi salud» — el panel de quien viene a atenderse (F-16 / F-17).
@@ -55,7 +64,12 @@ describe('PatientHome', () => {
       // Declarado en `imports` para que `compileComponents` lo alcance: la
       // plantilla trae un `@defer` desde C5 y sin compilar queda sin metadatos.
       imports: [PatientHome],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: SpecialtyImages, useValue: SIN_IMAGENES_PROPIAS },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     session = TestBed.inject(SessionStore);
@@ -451,7 +465,7 @@ describe('PatientHome', () => {
     const aviso = html.querySelector('[data-testid="mi-salud-cita-error"]');
     expect(aviso?.getAttribute('role')).toBe('alert');
     expect(aviso?.textContent).toContain(
-      'No pudimos traer su próxima cita. (Código de soporte: corr-citas-1)',
+      'No pudimos traer su próxima cita. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-citas-1)',
     );
   });
 
@@ -492,7 +506,7 @@ describe('PatientHome', () => {
 
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('[data-testid="mi-salud-error"]')?.textContent).toContain(
-      'No pudimos cargar su información en este momento. (Código de soporte: corr-panel-1)',
+      'No pudimos cargar su información en este momento. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-panel-1)',
     );
 
     (html.querySelector('[data-testid="mi-salud-reintentar"]') as HTMLButtonElement).click();

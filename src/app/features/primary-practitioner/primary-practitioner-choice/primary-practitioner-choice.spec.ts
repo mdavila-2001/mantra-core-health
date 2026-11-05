@@ -167,7 +167,7 @@ describe('PrimaryPractitionerChoice', () => {
     leer('<html>Not Found</html>', { status: 404, statusText: 'Not Found' });
 
     expect(byTestId('primary-doctor')).not.toBeNull();
-    expect(host().textContent).toContain('Algo salió mal');
+    expect(host().textContent).toContain('La solicitud no pudo procesarse');
   });
 
   it('un error inesperado muestra el código de soporte y reintenta', () => {

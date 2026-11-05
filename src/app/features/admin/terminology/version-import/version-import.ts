@@ -696,7 +696,7 @@ export class VersionImport {
       return 'No pudimos conectarnos. Revise su conexión y reintente: su archivo y sus selecciones siguen acá.';
     }
     if (estado.status === 'error') {
-      return `${estado.message || 'Ocurrió un error inesperado.'} (${estado.requestId})`;
+      return `${estado.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${estado.requestId})`;
     }
     return 'No se pudo completar la operación.';
   }

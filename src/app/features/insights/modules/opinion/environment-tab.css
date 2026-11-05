@@ -1,0 +1,20 @@
+:host { display: grid; gap: var(--sp-4); }
+.en__expo { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); margin: 0; padding: 0; list-style: none; }
+.en__card { padding: var(--sp-3); border: 1px solid var(--border-default); border-radius: var(--r-md); min-inline-size: 0; }
+.en__name { margin: 0; font-weight: 600; }
+.en__risk { margin: var(--sp-1) 0; font-weight: 600; }
+.en__risk--3 { color: var(--st-error-fg); }
+.en__risk--2 { color: var(--st-warning-fg); }
+.en__small { margin: 0; color: var(--text-secondary); font-size: var(--fs-caption); }
+.en__filters { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-block-end: var(--sp-3); }
+.en__filters label { display: grid; gap: var(--sp-1); font-size: var(--fs-caption); color: var(--text-secondary); }
+.en__filters select { font: inherit; padding: var(--sp-2) var(--sp-3); color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-sm); }
+.en__filters select:focus-visible, .en__open:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.en__feed { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.en__item { border: 1px solid var(--border-default); border-radius: var(--r-md); }
+.en__open { display: grid; gap: var(--sp-1); inline-size: 100%; padding: var(--sp-3); font: inherit; text-align: start; color: inherit; background: none; border: 0; cursor: pointer; }
+.en__kind { font-size: var(--fs-caption); font-weight: 600; }
+.en__kind--Riesgo { color: var(--st-error-fg); }
+.en__kind--Oportunidad { color: var(--st-success-fg); }
+.en__title { font-weight: 600; }
+.en__qa { display: grid; gap: var(--sp-2); margin: 0; padding: 0 var(--sp-4) var(--sp-3) var(--sp-6); }

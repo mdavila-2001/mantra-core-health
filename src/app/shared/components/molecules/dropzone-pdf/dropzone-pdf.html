@@ -9,6 +9,8 @@
   [showList]="false"
   [showFeedback]="false"
   [disabled]="disabled() || state().kind === 'uploading'"
+  [uploading]="state().kind === 'uploading'"
+  uploadingLabel="Subiendo PDF…"
   [testId]="testId()"
   (filesChange)="aceptar($event)"
   (rejected)="rechazar($event)"

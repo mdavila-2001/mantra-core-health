@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-muneca
+image: radiografia-de-muneca.svg | La muñeca se apoya sobre el detector y se obtienen proyecciones de frente y de lado. | A la izquierda, un tubo de rayos X sobre el antebrazo y la mano apoyados en el detector. A la derecha, los huesos que se ven: radio, cúbito, huesos del carpo con el escafoides resaltado y metacarpianos.
 ---
 
 ## [definition] Introducción

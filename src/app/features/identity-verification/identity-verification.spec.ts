@@ -255,6 +255,26 @@ describe('IdentityVerification', () => {
     expect(interno<() => { status: string }>('state')().status).toBe('offline');
   });
 
+  it('shows the uploading spinner on both document zones while the upload is in flight', () => {
+    elegirArchivo();
+    subir();
+    fixture.detectChanges();
+
+    const zonas = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '[data-testid="file-input-uploading"]',
+    );
+    expect(zonas.length).toBe(2);
+    expect(zonas[0]?.textContent).toContain('Subiendo imagen');
+
+    http
+      .expectOne((r) => r.url.endsWith('/common/files/upload'))
+      .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="file-input-uploading"]'),
+    ).toBeNull();
+  });
+
   it('traduce el rechazo del componente a algo accionable', () => {
     interno<(r: readonly { file: File; reason: string }[]) => void>('alRechazar')([
       { file: new File([''], 'enorme.pdf'), reason: 'tamaño' },
@@ -400,6 +420,34 @@ describe('IdentityVerification', () => {
 
     expect(interno<() => string | null>('organizacionId')()).toBe('t-1');
   });
+
+  it('un médico solo ve el trámite profesional y arranca en él', () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], hpid: 'pp-1' }),
+      refreshToken: 'r',
+    });
+    fixture.detectChanges();
+
+    const opciones = valoresDelSelector();
+    expect(opciones).not.toContain('patient');
+    expect(opciones).toEqual(expect.arrayContaining(['practitioner', 'license']));
+    expect(interno<() => string>('tramite')()).toBe('practitioner');
+  });
+
+  it('un paciente no ve los trámites del profesional', () => {
+    fixture.detectChanges();
+
+    const opciones = valoresDelSelector();
+    expect(opciones).toContain('patient');
+    expect(opciones).not.toContain('practitioner');
+    expect(opciones).not.toContain('license');
+    expect(interno<() => string>('tramite')()).toBe('patient');
+  });
+
+  function valoresDelSelector(): (string | null)[] {
+    const radios: Element[] = [...fixture.nativeElement.querySelectorAll('app-radio')];
+    return radios.map((radio) => radio.getAttribute('value'));
+  }
 
   it('el selector solo acepta trámites reales', () => {
     elegirTramite('license');

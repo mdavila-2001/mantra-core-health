@@ -9,7 +9,7 @@ import {
   validation,
 } from '../../core/view-state/view-state';
 
-import { writeMessage, writeFailureMessage } from './write-message';
+import { writeFailureMessage, writeFailureParts, writeMessage } from './write-message';
 
 /**
  * La cola de fallos que comparten los ocho puntos de escritura del expediente.
@@ -78,6 +78,13 @@ describe('mensajeDeFalloDeEscritura', () => {
     expect(writeFailureMessage(unexpectedError('req-42', ''), textos)).toBe(
       'Ocurrió un error inesperado. (req-42)',
     );
+    // The what-to-do hint comes from the error catalog, never from the server.
+    expect(
+      writeFailureMessage(
+        unexpectedError('req-42', '', { hint: 'Intente de nuevo en unos segundos.' }),
+        textos,
+      ),
+    ).toBe('Ocurrió un error inesperado. Intente de nuevo en unos segundos. (req-42)');
   });
 
   /**
@@ -127,5 +134,22 @@ describe('mensajeDeEscritura', () => {
       'No pudimos conectarnos. Revise su conexión y reintente.',
     );
     expect(writeMessage(ready(null), textos)).toBeNull();
+  });
+
+  describe('writeFailureParts', () => {
+    it('separa el código de S9 del texto, con el mismo respaldo', () => {
+      expect(writeFailureParts(unexpectedError('req-1', ''), { accion: 'x' })).toEqual({
+        text: 'Ocurrió un error inesperado.',
+        code: 'req-1',
+      });
+    });
+
+    it('trae el código de S5 si vino, y ninguno en S8', () => {
+      expect(writeFailureParts(forbidden({ message: 'No.', requestId: 'req-5' }), { accion: 'x' })).toEqual({
+        text: 'No.',
+        code: 'req-5',
+      });
+      expect(writeFailureParts(offline(), { accion: 'x' })?.code).toBeNull();
+    });
   });
 });

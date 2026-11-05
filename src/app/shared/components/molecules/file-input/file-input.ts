@@ -14,6 +14,7 @@ import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.
 import { NativeFilePicker } from '@shared/forms/native-file-picker';
 
 import { matchesFileAccept } from '../../../forms/file-accept';
+import { Spinner } from '../../atoms/spinner/spinner';
 import { FilePreview } from '../file-preview/file-preview';
 
 const BYTES_PER_UNIT = 1024;
@@ -36,13 +37,14 @@ export interface RejectedFile {
 @Component({
   selector: 'app-file-input',
   standalone: true,
-  imports: [FilePreview, NativeFilePicker],
+  imports: [FilePreview, NativeFilePicker, Spinner],
   templateUrl: './file-input.html',
   styleUrl: './file-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.app-file-input-host]': 'true',
-    '[class.is-disabled]': 'disabled()',
+    '[class.is-disabled]': 'locked()',
+    '[class.is-uploading]': 'uploading()',
   },
 })
 export class FileInput {
@@ -58,6 +60,10 @@ export class FileInput {
   readonly feedback = signal<readonly string[]>([]);
   readonly multiple = input<boolean>(false);
   readonly disabled = input<boolean>(false);
+  /** An upload is in flight: the zone locks and shows a spinner over itself. */
+  readonly uploading = input<boolean>(false);
+  readonly uploadingLabel = input('Subiendo archivo…');
+  protected readonly locked = computed(() => this.disabled() || this.uploading());
   /** Lista al estilo del atributo nativo: `image/*,.pdf`. */
   readonly accept = input<string>('');
   readonly maxSizeBytes = input<number | null>(null);
@@ -176,7 +182,8 @@ export class FileInput {
    */
   protected handleDragOver(event: DragEvent): void {
     event.preventDefault();
-    const blocked = this.disabled() || this.pickerOpen();
+    // Blocked while disabled, uploading, or with the native picker open.
+    const blocked = this.locked() || this.pickerOpen();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = blocked ? 'none' : 'copy';
     }
@@ -191,14 +198,14 @@ export class FileInput {
   protected handleDrop(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(false);
-    if (this.pickerOpen()) {
+    if (this.pickerOpen() || this.locked()) {
       return;
     }
     this.acceptFiles(Array.from(event.dataTransfer?.files ?? []));
   }
 
   protected removeFile(index: number): void {
-    if (this.disabled()) {
+    if (this.locked()) {
       return;
     }
     this.feedback.set([]);
@@ -218,7 +225,7 @@ export class FileInput {
   }
 
   private acceptFiles(incoming: File[]): void {
-    if (this.disabled() || incoming.length === 0) {
+    if (this.locked() || incoming.length === 0) {
       return;
     }
 

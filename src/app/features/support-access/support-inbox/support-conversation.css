@@ -153,3 +153,10 @@
 .esqueleto__linea--alta {
   block-size: 8rem;
 }
+
+/* «Volver a la bandeja» se ve hasta 1023 px (desde ahí la lista y el hilo van lado a lado): también es un blanco táctil. */
+@media (max-width: 1023px) {
+  .conv__volver {
+    --btn-min-block: 44px;
+  }
+}

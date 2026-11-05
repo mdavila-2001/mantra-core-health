@@ -1,5 +1,6 @@
 ---
 slug: gripe
+image: gripe.svg | El virus de la gripe cambia cada temporada, por eso la vacuna se renueva cada año. | Virus de la influenza con hemaglutinina y neuraminidasa en su superficie, una tabla que compara la gripe con el resfriado y un recuadro con los grupos de riesgo y la vacunación anual.
 ---
 
 ## [definition] Introducción

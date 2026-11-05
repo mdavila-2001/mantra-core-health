@@ -1,0 +1,55 @@
+<ng-template #failure>
+  <app-alert tone="error" [title]="'No pudimos cargar ' + subject()" class="failure">
+    <p class="failure__text">
+      @if (offline()) {
+        Sin conexión con el servidor.
+      } @else if (forbidden()) {
+        Su cuenta no tiene permiso para ver esto.
+      } @else {
+        Intente de nuevo en unos segundos.
+      }
+      @if (note()) {
+        {{ note() }}
+      }
+    </p>
+    @if (code(); as value) {
+      <app-support-code [code]="value" [copyable]="false" />
+    } @else {
+      <p class="failure__text">Esta falla no tiene código de soporte.</p>
+    }
+    <div alert-actions>
+      <button app-button size="sm" variant="secondary" type="button" (clicked)="retry.emit()">Reintentar</button>
+    </div>
+  </app-alert>
+</ng-template>
+
+<app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="retry.emit()">
+  <div vsh-skeleton class="skeleton skeleton--{{ skeleton() }}" aria-hidden="true">
+    @if (skeleton() === 'orders') {
+      <div class="skeleton__tiles">
+        @for (n of [0, 1, 2]; track n) {
+          <app-skeleton variant="rect" width="100%" height="4.25rem" />
+        }
+      </div>
+    }
+    <div class="skeleton__rows">
+      @for (n of slots(); track n) {
+        @if (skeleton() === 'figures') {
+          <app-skeleton variant="rect" width="100%" height="3.75rem" />
+        } @else {
+          <div class="skeleton__row">
+            <span class="skeleton__lines">
+              <app-skeleton variant="text" width="60%" />
+              <app-skeleton variant="text" width="85%" height="0.75rem" />
+            </span>
+            <app-skeleton variant="rect" width="4.5rem" height="1.5rem" />
+          </div>
+        }
+      }
+    </div>
+  </div>
+  <div vsh-error><ng-container *ngTemplateOutlet="failure" /></div>
+  <div vsh-offline><ng-container *ngTemplateOutlet="failure" /></div>
+  <div vsh-forbidden><ng-container *ngTemplateOutlet="failure" /></div>
+  <ng-content />
+</app-view-state-host>

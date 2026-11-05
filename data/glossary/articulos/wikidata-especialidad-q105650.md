@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q105650
+image: wikidata-especialidad-q105650.svg | La urología se ocupa del aparato urinario y del reproductor masculino. | Aparato urinario con riñones, uréteres, vejiga, próstata y uretra señalados, junto a los problemas que atiende la urología y sus herramientas principales.
 ---
 
 ## [definition] Introducción

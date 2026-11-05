@@ -1,5 +1,6 @@
 ---
 slug: fosforo
+image: fosforo.svg | Órganos y hormonas que regulan el fósforo de la sangre. | Fosfato sanguíneo en el centro con el intestino, el hueso y el riñón a su alrededor, más la paratiroides y la vitamina D, y un tubo de suero con sus usos clínicos.
 ---
 
 ## [definition] Introducción

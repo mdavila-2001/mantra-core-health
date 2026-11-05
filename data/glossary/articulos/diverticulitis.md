@@ -1,5 +1,6 @@
 ---
 slug: diverticulitis
+image: diverticulitis.svg | La diverticulitis es la inflamación de una de las bolsitas que se forman en la pared del colon. | Tramo del colon sigmoide con varias bolsitas en la pared y una de ellas inflamada. A la derecha, la diferencia entre diverticulosis y diverticulitis, los síntomas y los signos de urgencia.
 ---
 
 ## [definition] Introducción

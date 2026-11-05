@@ -1,0 +1,57 @@
+<app-page-header title="Censo diario" [subtitle]="(site()?.name ?? 'Establecimiento') + ' · ' + dateLabel()" [breadcrumbs]="breadcrumbs()">
+  <div page-actions class="census__actions">
+    <button app-button size="sm" variant="outline" (clicked)="reload()">Actualizar</button>
+    @if (access.can(siteId(), 'f3.census.close') && closable()) {
+      <button app-button size="sm" [disabled]="working()" data-testid="census-close" (clicked)="close()">Cerrar censo</button>
+    }
+  </div>
+</app-page-header>
+
+<app-view-state-host [state]="gate()" (retry)="access.reload()">
+  @if (failure(); as f) {
+    <app-view-state-host class="census__failure" data-testid="census-failure" [state]="f" (retry)="reload()" />
+  }
+  <app-card class="census" padding="lg" data-testid="census">
+    <div class="census__toolbar">
+      <app-form-field label="Día del censo" hint="Corte a las 00:00 del día siguiente, hora de la sede.">
+        <app-date-picker [value]="pickerDate()" (valueChange)="pickDate($event)" data-testid="census-date" />
+      </app-form-field>
+      @if (data()) {
+        <p class="census__meta" data-testid="census-meta">
+          @if (allClosed()) {
+            Cerrado. Las correcciones son ajustes con motivo.
+          } @else if (closable()) {
+            Abierto: es una vista previa calculada, todavía no se guardó.
+          } @else {
+            El día no terminó: se puede cerrar desde el {{ when(closableFrom()) }}.
+          }
+        </p>
+      }
+    </div>
+
+    <app-data-table data-testid="census-table" [state]="rows()" [columns]="columns()" [trackBy]="byId" [caption]="'Censo del ' + dateLabel() + ' por unidad'" stackedOnMobile wrapHeaders (retry)="reload()" />
+
+    <section class="census__adjustments" aria-labelledby="census-adj-title">
+      <h2 id="census-adj-title" class="census__title">Ajustes</h2>
+      <app-data-table data-testid="census-adjustments" [state]="adjustments()" [columns]="adjColumns()" [trackBy]="byId" caption="Ajustes del censo: el número original no se reescribe" stackedOnMobile />
+    </section>
+  </app-card>
+</app-view-state-host>
+
+@if (adjusting(); as d) {
+  <app-adjust-dialog [day]="d" (saved)="afterAdjust()" (closed)="adjusting.set(null)" />
+}
+
+<ng-template #cellUnit let-r><strong>{{ r.unitName }}</strong></ng-template>
+<ng-template #cellStatus let-r>
+  <app-status-seal [variant]="r.day.status === 'CLOSED' ? 'approved' : 'pending'" [label]="r.day.status === 'CLOSED' ? 'Cerrado' : 'Abierto · vista previa'" />
+  <span class="census__muted">Corte {{ when(r.day.cutoffAt) }}</span>
+</ng-template>
+<ng-template #cellActions let-r>
+  @if (r.day.status === 'CLOSED' && access.can(siteId(), 'f3.census.adjust')) {
+    <button app-button size="sm" variant="outline" data-testid="census-adjust" (clicked)="adjusting.set(r.day)">Ajustar</button>
+  } @else {
+    <span class="census__muted">—</span>
+  }
+</ng-template>
+<ng-template #cellAdj let-a>{{ fieldLabel(a.fieldCode) }}: <span class="census__num">{{ a.previousValue }} → {{ a.newValue }}</span></ng-template>

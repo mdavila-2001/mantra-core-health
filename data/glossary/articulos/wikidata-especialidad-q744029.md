@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q744029
+image: wikidata-especialidad-q744029.svg | Hipnograma con las etapas del sueño durante una noche. | Gráfico escalonado que muestra los ciclos de vigilia, N1, N2, N3 y REM a lo largo de la noche, con los trastornos que atiende la medicina del sueño y la polisomnografía.
 ---
 
 ## [definition] Introducción

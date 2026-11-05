@@ -2,8 +2,13 @@
   title="Nuevo paciente"
   subtitle="Se registra la persona y su perfil de paciente en una sola operación."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver" label="Volver a los pacientes" />
+</app-page-header>
 
+@if (homonimo()) {
+  <app-homonym-warning [sending]="enviando()" (confirm)="submit(true)" />
+}
 @if (errorMessage(); as mensaje) {
   <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-paciente-error">{{
     mensaje

@@ -47,12 +47,23 @@ describe('PrimaryPractitionerCard', () => {
     expect(byTestId('mi-salud-cabecera-ficha')?.getAttribute('href')).toBe(`/directory/${PRACTITIONER_ID}`);
   });
 
+  it('con médico de cabecera ofrece «Reservar cita», directo a sus horarios', () => {
+    leer({
+      current: { practitionerProfileId: PRACTITIONER_ID, displayName: 'Carla Gutiérrez', since: '2026-10-28T12:00:00.000Z' },
+    });
+
+    const reservar = byTestId('mi-salud-cabecera-reservar');
+    expect(reservar?.textContent).toContain('Reservar cita');
+    expect(reservar?.getAttribute('href')).toBe(`/directory/${PRACTITIONER_ID}#horarios`);
+  });
+
   it('sin médico explica qué es y ofrece buscarlo en la guía (S3 con próxima acción)', () => {
     leer({ current: null });
 
     expect(byTestId('mi-salud-cabecera-vacio')).not.toBeNull();
     expect(host().textContent).toContain('profesional de confianza');
     expect(byTestId('mi-salud-cabecera-buscar')?.getAttribute('href')).toBe('/directory');
+    expect(byTestId('mi-salud-cabecera-reservar')).toBeNull();
   });
 
   it('una cuenta sin perfil de paciente (reason de la API) no ve la tarjeta', () => {

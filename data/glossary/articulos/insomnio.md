@@ -1,5 +1,6 @@
 ---
 slug: insomnio
+image: insomnio.svg | Tipos de insomnio a lo largo de la noche y medidas que ayudan | Tres barras nocturnas con los periodos de sueño y vigilia según el tipo de insomnio, junto a las consecuencias diurnas y las medidas que ayudan a dormir
 ---
 
 ## [definition] Introducción

@@ -2,7 +2,7 @@
     Contrato del portal de reportería (MAQUETA).
 
     Lo que viaja entre la pantalla y el servidor. En la rama de maqueta lo sirve
-    `core/mock/handlers/reporting.handlers.ts` con datos de EJEMPLO; cuando
+    `mock/handlers/reporting.handlers.ts` del simulador con datos de EJEMPLO; cuando
     exista `POST /reporting/query` (hitos H0–H2 del plan) se cambia el manejador
     por la API real y estos tipos son el contrato a cumplir.
 
@@ -19,7 +19,9 @@ export type UnidadValor =
   | { readonly tipo: 'moneda'; readonly moneda: Moneda }
   | { readonly tipo: 'numero' }
   | { readonly tipo: 'porcentaje' }
-  | { readonly tipo: 'razon'; readonly sufijo: string };
+  | { readonly tipo: 'razon'; readonly sufijo: string }
+  /** Milisegundos: se lee «850 ms», «1,2 s» o «2,5 min» según su tamaño. */
+  | { readonly tipo: 'duracion' };
 
 /** Cuánto se parece este número a uno real. En la maqueta siempre `ejemplo`. */
 export type OrigenDato = 'ejemplo' | 'api';
@@ -50,7 +52,16 @@ export type DimensionFiltro =
   | 'canal'
   | 'metodo-pago'
   | 'estado'
-  | 'mes';
+  | 'mes'
+  // Observabilidad del sistema: se filtra por la operación, la parte de la app o el código de error.
+  | 'endpoint'
+  | 'pantalla'
+  | 'funcionalidad'
+  | 'dominio'
+  | 'codigo'
+  | 'metodo'
+  | 'modulo'
+  | 'hora';
 
 export interface FiltroActivo {
   readonly dimension: DimensionFiltro;
@@ -90,6 +101,10 @@ export interface ConfigVelas {
 
 export type FormaSerie = 'linea' | 'barra' | 'area';
 
+/** Qué significa el color de una serie: identidad (categórica), orden (ordinal) o estado (bueno/aviso/error). */
+export type PaletaGrafico = 'categorica' | 'ordinal' | 'estado';
+export type RolSerie = 'exito' | 'aviso' | 'error';
+
 export interface SerieCartesiana {
   readonly nombre: string;
   readonly valores: readonly (number | null)[];
@@ -97,6 +112,20 @@ export interface SerieCartesiana {
   /** Series con el mismo grupo se apilan. */
   readonly apilar?: string;
   readonly unidad?: UnidadValor;
+  /** Obligatorio cuando el gráfico declara `paleta: 'estado'`: el color lo da el significado, no la posición. */
+  readonly rol?: RolSerie;
+}
+
+/** Línea de objetivo (umbral de un SLO): sólida, en color de aviso, con su rótulo. */
+export interface ObjetivoGrafico {
+  readonly valor: number;
+  readonly etiqueta: string;
+}
+
+/** Un hecho puntual sobre el eje del tiempo (despliegue, incidente). `en` es una de las categorías. */
+export interface AnotacionGrafico {
+  readonly en: string;
+  readonly etiqueta: string;
 }
 
 /* Sin eje doble: dos magnitudes de escala distinta son DOS gráficos (skill dataviz, regla 1). */
@@ -106,6 +135,30 @@ export type DatosGrafico =
       readonly categorias: readonly string[];
       readonly series: readonly SerieCartesiana[];
       readonly horizontal?: boolean;
+      /** Por defecto `categorica`. `estado` exige un `rol` en cada serie; `ordinal` pinta p50 < p95 < p99 con una rampa. */
+      readonly paleta?: PaletaGrafico;
+      /** Nombre de la categoría o serie destacada: lleva el acento y las demás se atenúan (nunca se recolorean). */
+      readonly enfasis?: string;
+      readonly objetivo?: ObjetivoGrafico;
+      readonly anotaciones?: readonly AnotacionGrafico[];
+    }
+  | {
+      /**
+       * Distribución de una magnitud en cubos contiguos: `bordes` tiene un elemento más que `conteos`
+       * (el cubo i es `[bordes[i], bordes[i+1])`). `null` = sin dato (no es cero). El último borde puede ser
+       * `null` = «sin tope» (el cubo «≥ último corte»).
+       */
+      readonly tipo: 'histograma';
+      readonly bordes: readonly (number | null)[];
+      readonly conteos: readonly (number | null)[];
+      /** Unidad de los bordes (p. ej. duración en ms); la del conteo es `spec.unidad`. */
+      readonly unidadBorde: UnidadValor;
+      readonly nombreValor: string;
+      /**
+       * De qué lado se cierra cada cubo. `izquierda` (por omisión): `[a, b)`. `derecha`: `(a, b]`, que es lo que
+       * publican los histogramas acumulados «menos o igual a» (`le`): leer `≥ a` ahí contaría mal el límite.
+       */
+      readonly cerrado?: 'izquierda' | 'derecha';
     }
   | {
       readonly tipo: 'partes';
@@ -190,7 +243,15 @@ export interface KpiSpec {
   readonly infoMotivo?: string;
   /** Mini-serie para la línea de tendencia. */
   readonly tendencia?: readonly (number | null)[];
+  /** Veredicto del indicador. Siempre se dice con icono y palabra; el color sólo refuerza. */
+  readonly estado?: EstadoKpi;
+  /** Texto antes de la cifra cuando es una cota («≥ » en un percentil que cayó en el último corte del histograma). */
+  readonly prefijo?: string;
+  /** `hero`: la cifra grande de la vista (una sola por pantalla). */
+  readonly variante?: 'normal' | 'hero';
 }
+
+export type EstadoKpi = 'bueno' | 'aviso' | 'serio' | 'critico';
 
 /* ---- catálogo de reportes (el grid) ---------------------------------------------- */
 

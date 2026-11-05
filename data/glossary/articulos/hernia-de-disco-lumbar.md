@@ -1,5 +1,6 @@
 ---
 slug: hernia-de-disco-lumbar
+image: hernia-de-disco-lumbar.svg | En la hernia discal el núcleo del disco sale y puede comprimir una raíz nerviosa. | Vista lateral de las vértebras lumbares con un disco herniado que comprime la raíz nerviosa, un corte del disco con el núcleo saliendo por el anillo y la lista de síntomas y signos de urgencia.
 ---
 
 ## [definition] Introducción

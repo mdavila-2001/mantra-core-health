@@ -1,0 +1,39 @@
+{
+  "l0": {
+    "url": "http://127.0.0.1:4200/insights/campaigns?c=c1,c2,c3,c4&p=quarter&m=conversions",
+    "head": "Canal|Inversión|Impresiones|CTR|Registros|CPA|Conversiones|CAC|ROAS|Estado · Conversiones",
+    "kpi": "Alcanceest. ○ Sin evidencia 837.664 Sin periodo anterior com",
+    "rows": 6
+  },
+  "l1": {
+    "clicked": "Instagram",
+    "url": "http://127.0.0.1:4200/insights/campaigns?c=c1,c2,c3,c4&p=quarter&m=conversions&dr=ch.instagram",
+    "head": "Campaña|Inversión|Impresiones|CTR|Registros|CPA|Conversiones|CAC|ROAS|Estado · Conversiones",
+    "kpi": "Alcanceest. ● Óptimo 650.354 ↑ +75,9% vs periodo anterior Si",
+    "rows": 3,
+    "crumbs": [
+      "General",
+      "Canal: Instagram"
+    ]
+  },
+  "l2": {
+    "clicked": "Abran paso · La maqueta de los anillos",
+    "url": "http://127.0.0.1:4200/insights/campaigns?c=c1,c2,c3,c4&p=quarter&m=conversions&dr=ch.instagram,camp.c2",
+    "head": "Día|Conversiones|Desvío|Hito asociado",
+    "rows": 8,
+    "crumbs": [
+      "General",
+      "Canal: Instagram",
+      "Campaña: Abran paso · La maqueta de los anillos"
+    ]
+  },
+  "up": {
+    "url": "http://127.0.0.1:4200/insights/campaigns?c=c1,c2,c3,c4&p=quarter&m=conversions&dr=ch.instagram",
+    "head": "Campaña|Inversión|Impresiones|CTR|Registros|CPA|Conversiones|CAC|ROAS|Estado · Conversiones"
+  },
+  "reload": {
+    "url": "http://127.0.0.1:4200/insights/campaigns?c=c1,c2,c3,c4&p=quarter&m=conversions&dr=ch.instagram",
+    "head": "Campaña|Inversión|Impresiones|CTR|Registros|CPA|Conversiones|CAC|ROAS|Estado · Conversiones"
+  },
+  "errors": []
+}

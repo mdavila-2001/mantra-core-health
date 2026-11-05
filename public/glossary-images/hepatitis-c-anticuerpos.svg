@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Anticuerpos contra la hepatitis C</title>
+  <desc id="d">Tubo de sangre y un virus rodeado de anticuerpos. A la derecha, un diagrama de decisión: si los anticuerpos son positivos se mide el ARN del virus para distinguir infección pasada de activa, que se trata con antivirales.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="300" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="170.0" y="50" text-anchor="middle" class="title">Qué detecta</text>
+<rect x="60" y="84" width="30" height="96" rx="12" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+<rect x="63" y="119.5" width="24" height="57.50000000000001" rx="10" fill="var(--vessel)" stroke-width="1" opacity=".8"/>
+<rect x="57" y="70" width="36" height="18" rx="4" fill="var(--vessel)" stroke-width="1"/>
+<text x="75" y="200" text-anchor="middle" class="lab">Sangre</text>
+<circle cx="220" cy="120" r="34" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+<text x="220" y="124" text-anchor="middle" class="step">VHC</text>
+<path d="M170,90 L170,78 M170,78 L162,68 M170,78 L178,68" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M270,90 L270,78 M270,78 L262,68 M270,78 L278,68" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M220,188 L220,176 M220,176 L212,166 M220,176 L228,166" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="220" y="214" text-anchor="middle" class="step" style="fill:var(--accent)">Anticuerpos anti-VHC</text>
+<text x="170" y="252" text-anchor="middle" class="lab">Indican que hubo contacto</text>
+<text x="170" y="272" text-anchor="middle" class="lab">con el virus de la hepatitis C.</text>
+<text x="170" y="300" text-anchor="middle" class="lab">No distinguen entre infección</text>
+<text x="170" y="320" text-anchor="middle" class="lab">actual y curada.</text>
+<text x="170" y="360" text-anchor="middle" class="small" style="fill:var(--muted)">Suelen persistir de por vida,</text>
+<text x="170" y="378" text-anchor="middle" class="small" style="fill:var(--muted)">aunque la infección se cure.</text>
+<rect x="336" y="20" width="444" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="558.0" y="50" text-anchor="middle" class="title">Cómo se sigue el resultado</text>
+<rect x="456" y="58" width="204" height="40" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="558.0" y="82.5" text-anchor="middle" class="lab" style="fill:var(--on)">Anticuerpos anti-VHC</text>
+<line x1="520" y1="100" x2="440" y2="136" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="596" y1="100" x2="660" y2="136" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="356" y="140" width="170" height="52" rx="8" fill="var(--ok-l)" stroke-width="1"/>
+<text x="441.0" y="162.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Negativo</text>
+<text x="441.0" y="178.6" text-anchor="middle" class="lab" style="fill:var(--ink)">sin contacto previo</text>
+<rect x="580" y="140" width="180" height="52" rx="8" fill="var(--warn-l)" stroke-width="1"/>
+<text x="670.0" y="162.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Positivo</text>
+<text x="670.0" y="178.6" text-anchor="middle" class="lab" style="fill:var(--ink)">hacer ARN del VHC</text>
+<line x1="620" y1="194" x2="560" y2="236" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="700" y1="194" x2="700" y2="236" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="476" y="240" width="170" height="52" rx="8" fill="var(--ok-l)" stroke-width="1"/>
+<text x="561.0" y="262.6" text-anchor="middle" class="lab" style="fill:var(--ink)">ARN no detectable</text>
+<text x="561.0" y="278.6" text-anchor="middle" class="lab" style="fill:var(--ink)">infección pasada</text>
+<rect x="656" y="240" width="110" height="52" rx="8" fill="var(--vessel)" stroke-width="1"/>
+<text x="711.0" y="262.7" text-anchor="middle" class="small" style="fill:var(--on)">ARN detectable</text>
+<text x="711.0" y="277.7" text-anchor="middle" class="small" style="fill:var(--on)">infección activa</text>
+<line x1="711" y1="294" x2="711" y2="326" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="576" y="330" width="190" height="52" rx="8" fill="var(--ok)" stroke-width="1"/>
+<text x="671.0" y="352.7" text-anchor="middle" class="small" style="fill:var(--on)">Antivirales orales:</text>
+<text x="671.0" y="367.7" text-anchor="middle" class="small" style="fill:var(--on)">curación muy frecuente</text>
+<text x="356" y="212" class="small">Infección muy reciente:</text>
+<text x="356" y="228" class="small">puede dar aún negativo.</text>
+<text x="356" y="410" class="small" style="fill:var(--muted)">Se recomienda al menos una prueba en la vida adulta.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: anafilaxia
+image: anafilaxia.svg | Desencadenantes, síntomas y actuación ante una anafilaxia | Silueta humana con los sistemas que afecta la anafilaxia, flanqueada por los desencadenantes más frecuentes y los pasos a seguir, empezando por la adrenalina y la llamada a emergencias
 ---
 
 ## [definition] Introducción

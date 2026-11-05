@@ -18,131 +18,34 @@
   background: var(--filete-2);
 }
 
-/* ─── Hoja de ruta ──────────────────────────────────────────────────────── */
+/* ─── Solicitudes enviadas ──────────────────────────────────────────────── */
 
-.verif__resumen {
+/* The «ask another insurer» box: the tab's primary action, set apart. */
+.verif__pedir {
+  margin-block-end: var(--e5);
+  padding: var(--e4) var(--e5);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-card);
+  background: linear-gradient(135deg, var(--info-bg), var(--sup-tarjeta) 70%);
+}
+
+.verif__pedir-titulo {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--e2);
-  margin: 0 0 var(--e4);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  color: var(--text-secondary);
-}
-
-.verif__resumen-texto {
-  margin: 0;
-}
-
-.verif__ruta {
-  display: grid;
-  gap: 0;
-  margin: var(--e5) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* Cada tramo cuelga de una línea vertical continua: es lo que convierte una
-   lista de estados en un recorrido. La marca es el ícono del tramo. */
-.verif__tramo {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--e9) minmax(0, 1fr);
-  gap: var(--e3);
-  padding-block-end: var(--e5);
-}
-
-.verif__tramo::before {
-  content: '';
-  position: absolute;
-  inset-block: var(--e9) 0;
-  inset-inline-start: calc(var(--e9) / 2 - 1px);
-  inline-size: 2px;
-  background: var(--filete);
-}
-
-.verif__tramo:last-child::before {
-  display: none;
-}
-
-.verif__marca {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: var(--e9);
-  block-size: var(--e9);
-  border: 2px solid var(--filete);
-  border-radius: var(--r-pill);
-  background: var(--sup-tarjeta);
-  color: var(--tinta-3);
-}
-
-.verif__tramo--approved .verif__marca {
-  border-color: var(--ok-tinta);
-  background: var(--ok-bg);
-  color: var(--ok-tinta);
-}
-
-.verif__tramo--approved::before {
-  background: var(--ok-tinta);
-}
-
-.verif__tramo--pending .verif__marca,
-.verif__tramo--in-review .verif__marca {
-  border-color: var(--aviso-tinta);
-  background: var(--aviso-bg);
-  color: var(--aviso-tinta);
-}
-
-.verif__tramo--rejected .verif__marca,
-.verif__tramo--expired .verif__marca {
-  border-color: var(--error-tinta);
-  background: var(--error-bg);
-  color: var(--error-tinta);
-}
-
-.verif__tramo--not-started .verif__marca {
-  border-style: dashed;
-}
-
-.verif__tramo-cuerpo {
-  display: grid;
-  gap: var(--e2);
-  justify-items: start;
-  min-inline-size: 0;
-  padding-block-start: var(--e2);
-}
-
-.verif__tramo-cabeza {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--e2) var(--e3);
-}
-
-.verif__tramo-titulo {
-  margin: 0;
+  margin: 0 0 var(--e1);
   font-size: var(--fs-body-lg);
   line-height: var(--lh-body-lg);
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-.verif__opcional {
-  margin-inline-start: var(--e2);
-  font-size: var(--fs-caption);
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-.verif__tramo-detalle {
-  margin: 0;
+.verif__pedir-bajada {
+  margin: 0 0 var(--e3);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   color: var(--text-secondary);
 }
-
-/* ─── Solicitudes enviadas ──────────────────────────────────────────────── */
 
 .verif__nueva {
   display: flex;
@@ -152,7 +55,7 @@
 }
 
 .verif__nueva-ayuda {
-  margin-block: var(--e2) var(--e5);
+  margin-block: var(--e2) 0;
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }

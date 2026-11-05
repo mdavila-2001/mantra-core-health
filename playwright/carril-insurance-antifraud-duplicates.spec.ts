@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import type { Actor } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
+import { abrirExpedienteDelPrimero } from './support/expediente';
 
 /**
  * Antiduplicación de estudios de laboratorio e imagenología — v4.2.17,
@@ -57,7 +58,7 @@ async function openPatientConsultation(page: Page): Promise<void> {
 
   // Por `data-testid`: el nombre accesible del enlace nombra a la persona
   // («Ver el expediente de …»), no dice «Ver expediente».
-  await page.getByTestId('paciente-ver-expediente').first().click();
+  await abrirExpedienteDelPrimero(page);
   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
 
   await irA(page, `${new URL(page.url()).pathname}/consultation`);
@@ -218,16 +219,17 @@ async function elegir(zona: Locator, campo: RegExp, opcion: string): Promise<voi
 }
 
 /**
- * Elige un estudio y su tipo, y pulsa «Pedir estudio».
+ * Elige un estudio y pulsa «Pedir estudio».
  *
- * Los campos van por prefijo: el asterisco de obligatoriedad agrega
- * «(obligatorio)» al nombre accesible del control (`FormField` lo suma como
- * texto visualmente oculto), así que el nombre real es «Tipo (obligatorio)»,
- * no «Tipo» a secas.
+ * El tipo ya no se elige: sale del estudio y la pantalla lo muestra como pista
+ * («Tipo: …») bajo el campo. Se comprueba que esa pista aparezca antes de
+ * pedir. El campo «Estudio» va por prefijo: el asterisco de obligatoriedad
+ * agrega «(obligatorio)» al nombre accesible del control (`FormField` lo suma
+ * como texto visualmente oculto).
  */
-async function pedirEstudio(modal: Locator, estudio: string, tipo: string): Promise<void> {
+async function pedirEstudio(modal: Locator, estudio: string): Promise<void> {
   await elegir(modal, /^Estudio\b/, estudio);
-  await elegir(modal, /^Tipo\b/, tipo);
+  await expect(modal.getByText(/^\s*Tipo: /)).toBeVisible();
   await modal.getByRole('button', { name: 'Pedir estudio' }).click();
 }
 
@@ -289,7 +291,7 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
 
     // El Hemograma completo de PACIENTE lo liberó TENANT_LABORATORIO — otra
     // organización que la de `medica` (TENANT_CLINICA/TENANT_HOSPITAL).
-    await pedirEstudio(ordenes, 'Hemograma completo', 'Laboratorio');
+    await pedirEstudio(ordenes, 'Hemograma completo');
 
     const dialogo = await esperarDialogoDuplicado(page);
     await expect(dialogo).toContainText('Hemograma completo');
@@ -333,7 +335,7 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     // El Perfil lipídico de PACIENTE lo liberó TENANT_CLINICA — la misma
     // organización que `medica`: acá sí llega la conclusión clínica.
     // El catálogo de la maqueta (inlasa-tariffs.generated.ts) lo nombra sin tilde.
-    await pedirEstudio(ordenes, 'Perfil lipidico', 'Laboratorio');
+    await pedirEstudio(ordenes, 'Perfil lipidico');
 
     const dialogo = await esperarDialogoDuplicado(page);
     await expect(dialogo).not.toContainText('otra organización');
@@ -372,7 +374,7 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     await openPatientConsultation(page);
     await submitMedicalForm(page);
     const ordenes = await openAnalysisOrder(page);
-    await pedirEstudio(ordenes, 'Hemograma completo', 'Laboratorio');
+    await pedirEstudio(ordenes, 'Hemograma completo');
 
     await esperarDialogoDuplicado(page);
 

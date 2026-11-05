@@ -206,3 +206,23 @@ app-file-preview {
     transition: none;
   }
 }
+
+/* Upload in flight: a veil over the zone with spinner and label, at full strength (not dimmed). */
+:host(.is-uploading) .dropzone.is-disabled {
+  opacity: 1;
+}
+
+.dropzone-uploading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--bg-surface) 85%, transparent);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}

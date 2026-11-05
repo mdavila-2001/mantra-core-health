@@ -1,0 +1,24 @@
+/* Formulario del modal: una columna en móvil, dos desde 780 px. Los campos
+   largos (nombre, textos) ocupan toda la fila. */
+.servicio-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--e4);
+}
+
+@media (min-width: 780px) {
+  .servicio-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .servicio-form__ancho {
+    grid-column: 1 / -1;
+  }
+}
+
+.servicio-form__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--e3);
+}

@@ -181,7 +181,7 @@ export function buildRoadmap(
       title: 'Su cuenta',
       icon: 'people',
       state: 'approved',
-      detail: 'Creada. Entra con su correo personal y su contraseña.',
+      detail: 'Activa. Ingresa con su correo personal y su contraseña.',
       optional: false,
     }),
     paso({
@@ -191,11 +191,11 @@ export function buildRoadmap(
       state: perfilEstado,
       detail:
         perfilEstado === 'approved'
-          ? 'AloVida comprobó su identidad profesional: su ficha lleva el sello.'
-          : 'Un equipo de AloVida revisa sus datos y su matrícula antes de dar el sello.',
+          ? 'AloVida verificó su identidad profesional: su perfil ya muestra el sello.'
+          : 'El equipo de AloVida revisa sus datos y su matrícula. Con el sello, sus pacientes saben que su perfil fue verificado.',
       ...(perfilEstado === 'approved'
         ? {}
-        : { action: { label: 'Ver qué me falta', route: '/onboarding' } }),
+        : { action: { label: 'Completar mi perfil', route: '/onboarding' } }),
       optional: false,
     }),
     paso({
@@ -207,7 +207,7 @@ export function buildRoadmap(
         matriculas,
         'habilitación',
         'habilitaciones',
-        'Todavía no cargó su matrícula.',
+        'Cargue su matrícula para que podamos verificarla.',
       ),
       ...(combineStates(matriculas) === 'approved'
         ? {}
@@ -223,7 +223,7 @@ export function buildRoadmap(
         titulos,
         'título',
         'títulos',
-        'Opcional. Puede cargar sus diplomas desde su perfil.',
+        'Opcional. Sus diplomas dan confianza a quien lo elige.',
       ),
       ...(titulos.length === 0
         ? { action: { label: 'Cargar un título', route: '/my-account/edit' } }
@@ -239,7 +239,7 @@ export function buildRoadmap(
         especialidades,
         'especialidad',
         'especialidades',
-        'Opcional. Sin especialidad figura como medicina general.',
+        'Opcional. Sin especialidad, figura como medicina general.',
       ),
       optional: true,
     }),
@@ -252,7 +252,7 @@ export function buildRoadmap(
         instituciones,
         'institución',
         'instituciones',
-        'Opcional. Cada institución que elija confirma su vínculo con su sello oficial.',
+        'Opcional. Cada institución donde atiende confirma el vínculo con su sello.',
       ),
       optional: true,
     }),

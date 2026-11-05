@@ -1,6 +1,9 @@
 <app-card variant="outlined" padding="lg" class="internacion">
   <h2 class="internacion__titulo">Internación</h2>
 
+  <!-- F3: la cama actual del episodio abierto y el ingreso con cama. -->
+  <app-inpatient-stay-summary [patientProfileId]="patientProfileId()" />
+
   <!-- El duplicado va primero y en ámbar: no es un fallo, es el expediente
        negándose a abrir dos veces la misma estancia, y la que ya está abierta
        se ve justo debajo. -->

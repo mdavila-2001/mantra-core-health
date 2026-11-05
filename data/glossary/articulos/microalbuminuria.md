@@ -1,5 +1,6 @@
 ---
 slug: microalbuminuria
+image: microalbuminuria.svg | Cuando el filtro renal empieza a dañarse, se escapa algo de albúmina a la orina. | Glomérulo del riñón que deja escapar pequeñas cantidades de albúmina hacia la orina, recogida en un frasco. A la derecha, qué se mide, a quién se controla y por qué hay que confirmar el resultado.
 ---
 
 ## [definition] Introducción

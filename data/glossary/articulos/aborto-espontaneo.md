@@ -1,5 +1,6 @@
 ---
 slug: aborto-espontaneo
+image: aborto-espontaneo.svg | Según el estado del cuello uterino y la salida del tejido se distinguen varias formas clínicas. | A la izquierda, dos úteros con saco gestacional: uno con el cuello cerrado (amenaza de aborto) y otro con el cuello abierto (aborto inevitable). A la derecha, la lista de formas clínicas y los signos de alarma.
 ---
 
 ## [definition] Introducción

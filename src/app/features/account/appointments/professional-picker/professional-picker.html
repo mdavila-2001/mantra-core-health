@@ -1,0 +1,49 @@
+@if (nadie()) {
+  @if (esLaboratorio()) {
+    <app-alert tone="info" title="Todavía no hay laboratorios con horarios">
+      Ningún laboratorio publicó horarios todavía. Puede llevar su orden al mostrador mientras tanto.
+    </app-alert>
+  } @else {
+    <app-alert tone="info" title="Todavía no hay profesionales con horarios">
+      Ningún profesional publicó horarios todavía. Vuelva a probar más adelante.
+    </app-alert>
+  }
+} @else {
+  <app-form-field
+    [label]="esLaboratorio() ? '¿En qué laboratorio?' : '¿Con quién se quiere atender?'"
+    [hint]="
+      esLaboratorio()
+        ? 'Escriba el nombre del laboratorio para encontrarlo más rápido.'
+        : 'Escriba su nombre para encontrarlo más rápido.'
+    "
+  >
+    <!-- Only people who already published hours are listed: not finding someone
+         most often means they have not published yet. -->
+    <app-reference-combobox
+      data-testid="turnos-profesional"
+      [selected]="selected()"
+      [options]="options()"
+      [loading]="loading()"
+      [minQueryLength]="0"
+      [placeholder]="esLaboratorio() ? 'Busque por nombre del laboratorio' : 'Busque por nombre'"
+      [emptyMessage]="
+        esLaboratorio()
+          ? 'No encontramos ese laboratorio entre los que publicaron horarios. Puede que todavía no los haya publicado.'
+          : 'No encontramos ese profesional entre los que publicaron horarios. Puede que todavía no los haya publicado.'
+      "
+      (searched)="buscar($event)"
+      (selectionChange)="elegir($event)"
+    />
+  </app-form-field>
+  @if (failed()) {
+    <app-alert tone="error" title="No pudimos cargar la lista">
+      Revise su conexión y vuelva a intentarlo.
+      <button app-button variant="ghost" size="sm" type="button" (clicked)="verMas()">Reintentar</button>
+    </app-alert>
+  }
+  @if (hayMas()) {
+    <button app-button variant="ghost" size="sm" type="button" data-testid="turnos-profesional-mas" (clicked)="verMas()">
+      Ver más ({{ items().length }} de {{ total() }})
+    </button>
+  }
+}

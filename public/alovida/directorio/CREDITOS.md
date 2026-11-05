@@ -85,3 +85,16 @@ Fotos de Wikimedia Commons (licencias libres). Se muestran como ilustración del
 | imagen-09.jpg | Vision College siew mun | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Symposium_photo_purpose.jpg |
 | imagen-10.jpg | Scott | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Ultrasound_examination_of_woman.JPG |
 | imagen-11.jpg | Sérgio Valle Duarte  .mw-parser-output .messagebox{margin:4px 0;width:auto;borde | CC BY 3.0 | https://commons.wikimedia.org/wiki/File:CT_Scan_Liver-Kidneys.jpg |
+
+## Portada «Directorios» (`portada/`)
+
+Fotos de [Unsplash](https://unsplash.com/license) (licencia Unsplash: uso libre, sin atribución
+obligatoria), recortadas a 16:9 en 960, 1600 y 2400 px de ancho.
+
+| Archivo | Fuente |
+|---|---|
+| portada/medico-*.jpg | https://images.unsplash.com/photo-1666214277730-e9c7e755e5a3 |
+| portada/laboratorio-*.jpg | https://images.unsplash.com/photo-1766297246931-7b861269dab0 |
+| portada/clinica-*.jpg | https://images.unsplash.com/photo-1565262353342-6e919eab5b58 |
+| portada/farmacia-*.jpg | https://images.unsplash.com/photo-1580281657527-47f249e8f4df |
+| portada/aseguradora-*.jpg | https://images.unsplash.com/photo-1758691463331-2ac00e6f676f |

@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-5618
+image: medlineplus-es-5618.svg | La rehabilitación cardíaca combina ejercicio supervisado, educación y control de factores de riesgo. | Tres tarjetas con las fases hospitalaria, supervisada y de mantenimiento de la rehabilitación cardíaca y cinco círculos numerados con sus componentes: ejercicio, factores de riesgo, dieta, emociones y medicación.
 ---
 
 ## [definition] Introducción

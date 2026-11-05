@@ -235,6 +235,14 @@ export interface FollowUpOriginRef extends FollowUpOrigin {
 
 export interface Booking {
   readonly id: string;
+  /**
+   * La organización de la agenda de la cita. Una cuenta de paciente ve sus citas
+   * de todas las organizaciones y para cancelar o reprogramar una tiene que
+   * hablarle a la suya, no a la activa de la sesión.
+   */
+  readonly tenantId?: string;
+  /** F5d: el consultorio de la cita (`appointments.care_space_id`), si la agenda tiene uno. */
+  readonly careSpace?: { readonly id: string; readonly code: string; readonly name: string } | null;
   readonly patientProfileId?: string;
   readonly resourceId?: string;
   readonly bookableSlotId?: string;
@@ -643,6 +651,11 @@ export interface ScheduleRule {
 /** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
 export interface NewScheduleTemplate {
   readonly name: string;
+  /**
+   * F5d: el consultorio donde se atiende (espacio de F1 con función
+   * consultorio, sala de procedimientos o imagen). Las citas lo heredan.
+   */
+  readonly careSpaceId?: string;
   /** Al menos una franja: sin franjas no hay agenda que generar. */
   readonly rules: readonly ScheduleRule[];
   readonly slotMinutes?: number;
@@ -1196,6 +1209,11 @@ export interface NewWalkInAppointment {
    * y eso lo pone la API, no este cuerpo.
    */
   readonly channel?: ModalidadDeAtencion;
+  /**
+   * Si la atención arranca ya; ausente = sí. Con `false` la cita queda
+   * confirmada para su hora y sin encuentro abierto.
+   */
+  readonly startAttention?: boolean;
 }
 
 /**
@@ -1214,8 +1232,8 @@ export interface WalkInAppointmentCreated {
   readonly bookingId: string;
   readonly bookableSlotId: string;
   readonly appointmentId: string;
-  /** El encuentro abierto, listo para registrar la atención. */
-  readonly encounterId: string;
+  /** El encuentro abierto; ausente si la cita se agendó con `startAttention: false`. */
+  readonly encounterId?: string;
   readonly statusConceptId: string;
   /** Cupos ofrecidos que este turno retiró. Se informa, no se pregunta. */
   readonly retractedSlots: number;
@@ -1389,4 +1407,22 @@ export interface FlexibleHold {
   readonly bookableSlotId: string;
   readonly startAt: Date;
   readonly endAt: Date;
+}
+
+/** Clave que el DTO publicado de la plantilla todavía no declara (F5d): el cliente sí la manda. */
+export const TEMPLATE_CARE_SPACE_PENDING_KEYS = ['careSpaceId'] as const;
+
+/**
+ * Una organización con la que el paciente puede pedir cita hoy
+ * (`GET /scheduling/bookable-organizations`).
+ */
+export interface BookableOrganization {
+  /** La organización: es el `X-Tenant-Id` con el que se piden sus agendas. */
+  readonly tenantId: string;
+  /** Su nombre comercial, o la razón social si no tiene. */
+  readonly name: string;
+  /** Cuántos profesionales tienen cupos abiertos en ella. */
+  readonly practitionerCount: number;
+  /** Cuántos laboratorios o salas tienen cupos abiertos en ella. */
+  readonly roomCount: number;
 }

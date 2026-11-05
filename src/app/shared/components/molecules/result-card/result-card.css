@@ -351,14 +351,19 @@
   padding-block-start: var(--sp-1);
 }
 
-.tarjeta-resultado__pie:empty {
-  display: none;
-}
+.tarjeta-resultado__pie:empty { display: none; }
 
 .tarjeta-resultado__accion {
   display: inline-flex;
   align-items: center;
+  /* Shared button is nowrap with a fixed height: long labels spilled past
+     the card. Wrap the label and let the button grow with it. */
+  min-inline-size: 0;
   max-inline-size: 100%;
+  block-size: auto;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
   gap: 6px;
   font-weight: 600;
   border-radius: var(--r-md);
@@ -376,10 +381,7 @@
   transform: translateY(-1px);
 }
 
-.tarjeta-resultado__accion-icono {
-  flex-shrink: 0;
-  color: currentColor;
-}
+.tarjeta-resultado__accion-icono { flex-shrink: 0; }
 
 /* ---- vista de lista ----------------------------------------------------- */
 
@@ -595,14 +597,9 @@
 
 /* ---- detalles (propietario, 23/10/2026) ---------------------------------- */
 
-.tarjeta-resultado__distincion-icono {
-  font-size: 0.85rem;
-  color: var(--c-amber-500);
-}
+.tarjeta-resultado__distincion-icono { font-size: 0.85rem; color: var(--c-amber-500); }
 
-.tarjeta-resultado__accion-flecha {
-  font-size: 0.95rem;
-}
+.tarjeta-resultado__accion-flecha { font-size: 0.95rem; }
 
 /* Un velo suave abajo de la foto: el sello de verificación y el borde de la
    tarjeta se separan de fotos claras sin oscurecer la imagen. */

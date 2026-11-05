@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Apendicitis aguda</title>
+  <desc id="d">A la izquierda, un abdomen con el intestino grueso y el apéndice en la parte inferior derecha, y una flecha que muestra cómo el dolor empieza cerca del ombligo y baja a la derecha. A la derecha, los pasos del proceso: obstrucción, acumulación de bacterias, inflamación y posible perforación, con señales de alarma.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Dónde está el apéndice</text>
+  <path d="M80 70 H320 C340 70 350 90 350 110 V360 C350 390 330 410 300 410 H100 C70 410 50 390 50 360 V110 C50 90 60 70 80 70 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M120 330 V150 H280 V330" fill="none" stroke="var(--organ)" stroke-width="26" stroke-linejoin="round" opacity=".8"/>
+  <path d="M120 330 C120 360 110 372 100 380" fill="none" stroke="var(--warn)" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="200" cy="206" r="26" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+  <text x="200" y="211" text-anchor="middle" class="small">Ombligo</text>
+  <path d="M106 380 L170 384" fill="none" stroke="var(--muted)" stroke-width="1"/>
+  <text x="176" y="388" class="step" style="fill:var(--warn)">Apéndice</text>
+  <text x="200" y="120" text-anchor="middle" class="small muted">Intestino grueso</text>
+  <path d="M178 222 Q134 262 126 345" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <text x="158" y="262" class="small">El dolor empieza</text>
+  <text x="158" y="278" class="small">en el ombligo</text>
+  <text x="158" y="294" class="small">y baja hacia</text>
+  <text x="158" y="310" class="small">la derecha</text>
+  <text x="200" y="434" text-anchor="middle" class="small muted">Derecha del paciente = izquierda del dibujo</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Cómo se produce</text>
+  <circle cx="449" cy="74" r="13" fill="var(--accent)"/>
+  <text x="449" y="79" text-anchor="middle" class="step" style="fill:var(--on)">1</text>
+  <text x="470" y="79" class="lab">Algo obstruye la luz del apéndice</text>
+  <circle cx="449" cy="118" r="13" fill="var(--accent)"/>
+  <text x="449" y="123" text-anchor="middle" class="step" style="fill:var(--on)">2</text>
+  <text x="470" y="123" class="lab">Se acumulan moco y bacterias</text>
+  <circle cx="449" cy="162" r="13" fill="var(--accent)"/>
+  <text x="449" y="167" text-anchor="middle" class="step" style="fill:var(--on)">3</text>
+  <text x="470" y="167" class="lab">Se hincha e inflama</text>
+  <circle cx="449" cy="206" r="13" fill="var(--accent)"/>
+  <text x="449" y="211" text-anchor="middle" class="step" style="fill:var(--on)">4</text>
+  <text x="470" y="211" class="lab">Puede perforarse: peritonitis</text>
+  <text x="436" y="268" class="step" style="fill:var(--warn)">Señales de alarma</text>
+  <text x="440" y="296" class="lab">• Dolor abdominal que aumenta</text>
+  <text x="440" y="320" class="lab">• Fiebre, náuseas o vómitos</text>
+  <text x="440" y="344" class="lab">• Dolor al caminar o al toser</text>
+  <rect x="436" y="372" width="324" height="52" rx="10" fill="var(--warn-l)"/>
+  <text x="598" y="395" text-anchor="middle" class="lab">Es una urgencia: suele tratarse</text>
+  <text x="598" y="413" text-anchor="middle" class="lab">con cirugía (apendicectomía)</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

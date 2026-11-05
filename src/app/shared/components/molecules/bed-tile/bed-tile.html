@@ -1,0 +1,42 @@
+<button
+  type="button"
+  class="bed-tile"
+  [class]="'bed-tile bed-tile--' + bed().tone"
+  [class.bed-tile--selected]="selected()"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-pressed]="selected()"
+  data-testid="bed-tile"
+  [attr.data-bed]="bed().code"
+  [attr.data-v2]="bed().statusCode"
+  (click)="activated.emit()"
+>
+  <span class="bed-tile__head" aria-hidden="true">
+    <span class="bed-tile__code">{{ bed().code }}</span>
+    <span class="bed-tile__badge"><abbr class="bed-tile__letter">{{ bed().statusCode }}</abbr> {{ bed().statusLabel }}</span>
+  </span>
+  <span class="bed-tile__body" aria-hidden="true">
+    @if (bed().patient; as p) {
+      <span class="bed-tile__line bed-tile__line--strong">{{ p }}</span>
+    }
+    @if (bed().reason; as r) {
+      <span class="bed-tile__line">{{ r }}</span>
+    }
+    @if (bed().until; as h) {
+      <span class="bed-tile__line">{{ h }}</span>
+    }
+    @if (bed().isolation; as i) {
+      <span class="bed-tile__line bed-tile__line--iso">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" />
+        </svg>
+        {{ i }}
+      </span>
+    }
+    @if (bed().hygiene; as g) {
+      <span class="bed-tile__line">{{ g }}</span>
+    }
+  </span>
+  @if (bed().age; as a) {
+    <span class="bed-tile__age" aria-hidden="true">{{ a }}</span>
+  }
+</button>

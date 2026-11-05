@@ -1,5 +1,6 @@
 ---
 slug: ggt
+image: ggt.svg | La GGT abunda en el hígado y en las vías biliares. | Hígado con la vesícula y la vía biliar resaltada, junto a un tubo de suero y la lista de situaciones que ayuda a evaluar, como obstrucción biliar o consumo de alcohol.
 ---
 
 ## [definition] Introducción

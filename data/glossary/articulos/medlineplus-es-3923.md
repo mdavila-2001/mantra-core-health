@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-3923
+image: medlineplus-es-3923.svg | La prótesis sustituye la superficie dañada de la pelvis y el fémur. | Comparación entre una cadera con artrosis y una prótesis total con la copa acetabular, el inserto, la cabeza femoral y el vástago colocados en el fémur.
 ---
 
 ## [definition] Introducción

@@ -61,7 +61,8 @@ function medir() {
     const ruta = repoPath(archivo);
     if (esExento(ruta)) continue;
     const esCss = ruta.endsWith('.css');
-    const texto = read(archivo).replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+    const textoOriginal = read(archivo);
+    const texto = textoOriginal.replace(/\/\*(?![\s\S]*?colores-sueltos:ok)[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
     let n = 0;
     const muestras = [];
     texto.split('\n').forEach((linea, i) => {

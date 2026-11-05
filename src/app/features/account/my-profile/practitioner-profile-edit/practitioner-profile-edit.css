@@ -360,17 +360,9 @@
   min-inline-size: 0;
 }
 
-.edicion__logo-estado,
 .edicion__logo-error {
   margin: 0;
   font-size: var(--fs-caption);
-}
-
-.edicion__logo-estado {
-  color: var(--text-secondary);
-}
-
-.edicion__logo-error {
   color: var(--text-danger);
 }
 

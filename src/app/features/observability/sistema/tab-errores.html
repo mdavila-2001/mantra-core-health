@@ -1,0 +1,92 @@
+<div class="obs-tab" data-testid="obs-tab-errores">
+  <section class="obs-seccion" aria-labelledby="obs-req-t">
+    <h2 class="obs-seccion__titulo" id="obs-req-t">Buscar una petición por su requestId</h2>
+    <p class="obs-seccion__sub">Pegue el código de soporte que le pasó un usuario. Sólo se guardan los errores y las peticiones lentas.</p>
+    <form class="obs-barra" (submit)="$event.preventDefault(); buscarPorEntrada()">
+      <app-form-field label="requestId" class="err__campo-largo">
+        <app-input [value]="busqueda()" (valueChange)="busqueda.set('' + ($event ?? ''))" placeholder="p. ej. 178dbe25-ac0e-406d-9b38-4eb68790999b" testId="obs-request-input" />
+      </app-form-field>
+      <button app-button type="submit" variant="primary" size="md" data-testid="obs-request-buscar">Buscar</button>
+      @if (store.requestId() !== '') {
+        <button app-button type="button" variant="ghost" size="md" (clicked)="limpiarBusqueda()">Limpiar</button>
+      }
+    </form>
+
+    @if (store.requestId() !== '') {
+      <app-view-state-host [state]="traza.state()" (retry)="buscarPorEntrada()">
+        @if (trazaDatos(); as t) {
+          <div class="err__traza" data-testid="obs-request-result">
+            @if (!t.found) {
+              <p class="obs-nota" data-testid="obs-request-notfound"><strong>No hay registro de esa petición.</strong> {{ t.hint }}</p>
+            } @else {
+              <p class="obs-nota">
+                <strong>Petición</strong> <code class="obs-mono">{{ t.requestId }}</code> · {{ t.errors.length }} error(es) guardado(s)
+                @if (t.slowSample) { · con muestra lenta ({{ t.slowSample.durationMs }} ms) }
+              </p>
+              @for (e of t.errors; track e.id) {
+                <dl class="obs-dl" [attr.data-testid]="'obs-request-error-' + $index">
+                  <dt>Cuándo</dt><dd>{{ traceFecha(e.occurredAt) }}</dd>
+                  <dt>Operación</dt><dd><code class="obs-mono">{{ e.method ?? sinDato }} {{ e.route ?? sinDato }}</code></dd>
+                  <dt>Resultado</dt><dd>{{ e.httpStatus ?? sinDato }} · {{ e.code }}{{ e.reason ? ' · ' + e.reason : '' }}</dd>
+                  <dt>Módulo</dt><dd>{{ e.moduleCode }}</dd>
+                  <dt>Grupo</dt><dd><button type="button" class="obs-copiar" (click)="rutaGrupo(e.groupId)">Abrir el grupo de este error</button></dd>
+                </dl>
+              }
+            }
+          </div>
+        }
+      </app-view-state-host>
+    }
+  </section>
+
+  <section class="obs-seccion" aria-labelledby="obs-grp-t">
+    <h2 class="obs-seccion__titulo" id="obs-grp-t">Grupos de errores</h2>
+    <p class="obs-seccion__sub">Errores con la misma huella se cuentan como un solo problema. Seleccione una fila para ver el detalle.</p>
+    <div class="obs-barra" role="group" aria-label="Filtros de errores">
+      <app-form-field label="Estado">
+        <app-select [options]="estados" [value]="store.estado()" (valueChange)="cambiarEstado($event)" ariaLabel="Estado del grupo" />
+      </app-form-field>
+      <app-form-field label="Módulo">
+        <app-input [value]="store.modulo()" (valueChange)="store.modulo.set('' + ($event ?? ''))" placeholder="p. ej. iam" testId="obs-filtro-modulo" />
+      </app-form-field>
+      <app-form-field label="Código">
+        <app-input [value]="store.codigo()" (valueChange)="store.codigo.set('' + ($event ?? ''))" placeholder="p. ej. INTERNAL" testId="obs-filtro-codigo" />
+      </app-form-field>
+    </div>
+    <app-data-table
+      [state]="filas()"
+      [columns]="columnas()"
+      [trackBy]="porId"
+      [rowLabel]="nombreDeFila"
+      [rowNavigable]="true"
+      stackedOnMobile
+      fitContainer
+      caption="Grupos de errores de la ventana"
+      data-testid="obs-errores-tabla"
+      (rowActivated)="abrir($event)"
+      (retry)="recargar()"
+      (refresh)="recargar()"
+    />
+    @if (grupos.state().status === 'ready') {
+      <p class="obs-nota">{{ nota() }}</p>
+    }
+  </section>
+
+  @if (store.grupo() !== '') {
+    <app-obs-error-detalle [id]="store.grupo()" (cerrar)="store.grupo.set('')" (cambio)="recargar()" />
+  }
+</div>
+
+<ng-template #celdaEstado let-fila>
+  <span class="obs-chip" [attr.data-tono]="estadoInfo(fila.estado).tono" [attr.data-testid]="'obs-estado-' + fila.id">
+    <span aria-hidden="true">{{ estadoInfo(fila.estado).glifo }}</span> {{ estadoInfo(fila.estado).texto }}
+  </span>
+</ng-template>
+
+<ng-template #celdaRequest let-fila>
+  @if (fila.requestId; as r) {
+    <code class="obs-mono">{{ r }}</code>
+  } @else {
+    <span class="obs-nota">{{ sinDato }}</span>
+  }
+</ng-template>

@@ -369,9 +369,9 @@ class Motor {
         malla.visible = false;
         continue;
       }
-      // «Mujer» esconde lo que es exclusivo del cuerpo masculino de referencia;
-      // no agrega nada, porque no existe malla libre de órganos femeninos.
-      malla.visible = capas.has(parte.layer) && !(this.estado.sexo === 'female' && parte.sex === 'male');
+      // Las piezas de un solo cuerpo se dibujan sólo en ese: «Mujer» cambia la
+      // pelvis y los genitales masculinos por los femeninos de HuBMAP.
+      malla.visible = capas.has(parte.layer) && (parte.sex === 'shared' || parte.sex === this.estado.sexo);
       const material = malla.material;
       const esElegida = this.estado.elegidas.has(id);
       const esRelacionada = this.estado.relacionadas.has(id);

@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-torax
+image: radiografia-de-torax.svg | Cómo se hace una radiografía de tórax y qué se ve | Persona de pie entre el tubo de rayos X y el detector, junto a una radiografía esquemática con los pulmones oscuros, las costillas, el corazón claro y el diafragma
 ---
 
 ## [definition] Introducción

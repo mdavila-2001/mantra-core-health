@@ -24,11 +24,11 @@
 
   <div class="registro__campos">
     <app-form-field label="Nombre(s)" [required]="true"><app-input [value]="name()" (valueChange)="set(name, $event)" ariaLabel="Nombre(s)" autocomplete="off" data-testid="registro-nombre" /></app-form-field>
-    <app-form-field label="Apellido paterno" [required]="true"><app-input [value]="lastName()" (valueChange)="set(lastName, $event)" ariaLabel="Apellido paterno" data-testid="registro-apellido" /></app-form-field>
-    <app-form-field label="Apellido materno"><app-input [value]="motherLastName()" (valueChange)="set(motherLastName, $event)" ariaLabel="Apellido materno" /></app-form-field>
-    <app-form-field label="Documento de identidad" [required]="true"><app-input [value]="documentValue()" (valueChange)="set(documentValue, $event)" ariaLabel="Documento de identidad" data-testid="registro-documento" /></app-form-field>
-    <app-form-field label="Fecha de nacimiento" [required]="true"><app-input type="date" [value]="birthDate()" (valueChange)="set(birthDate, $event)" ariaLabel="Fecha de nacimiento" data-testid="registro-nacimiento" /></app-form-field>
-    <app-form-field label="Teléfono" [required]="true" hint="Con sus 8 dígitos."><app-input [value]="phone()" (valueChange)="set(phone, $event)" inputMode="tel" ariaLabel="Teléfono" data-testid="registro-telefono" /></app-form-field>
+    <app-form-field label="Apellido paterno" [required]="true"><app-input autocomplete="off" [value]="lastName()" (valueChange)="set(lastName, $event)" ariaLabel="Apellido paterno" data-testid="registro-apellido" /></app-form-field>
+    <app-form-field label="Apellido materno"><app-input autocomplete="off" [value]="motherLastName()" (valueChange)="set(motherLastName, $event)" ariaLabel="Apellido materno" /></app-form-field>
+    <app-form-field label="Documento de identidad" [required]="true"><app-input autocomplete="off" [value]="documentValue()" (valueChange)="set(documentValue, $event)" ariaLabel="Documento de identidad" data-testid="registro-documento" /></app-form-field>
+    <app-form-field label="Fecha de nacimiento" [required]="true"><app-input autocomplete="off" type="date" [value]="birthDate()" (valueChange)="set(birthDate, $event)" ariaLabel="Fecha de nacimiento" data-testid="registro-nacimiento" /></app-form-field>
+    <app-form-field label="Teléfono" [required]="true" hint="Con sus 8 dígitos."><app-input autocomplete="off" [value]="phone()" (valueChange)="set(phone, $event)" inputMode="tel" ariaLabel="Teléfono" data-testid="registro-telefono" /></app-form-field>
   </div>
 
   @if (minor()) {
@@ -36,10 +36,10 @@
       <legend>Es menor de edad: ¿quién actúa por él?</legend>
       <p class="registro__nota">Un menor se registra con su representante legal o un familiar autorizado. En el mostrador queda anotado como <strong>contacto pendiente de verificación</strong>: la representación legal la establece la organización con un documento, no este registro.</p>
       <div class="registro__campos">
-        <app-form-field label="Nombre del representante" [required]="true"><app-input [value]="guardianName()" (valueChange)="set(guardianName, $event)" ariaLabel="Nombre del representante" data-testid="registro-rep-nombre" /></app-form-field>
-        <app-form-field label="Documento del representante" [required]="true"><app-input [value]="guardianDocument()" (valueChange)="set(guardianDocument, $event)" ariaLabel="Documento del representante" data-testid="registro-rep-documento" /></app-form-field>
-        <app-form-field label="Parentesco" [required]="true" hint="Madre, padre, tutor legal, familiar autorizado…"><app-input [value]="guardianRelationship()" (valueChange)="set(guardianRelationship, $event)" ariaLabel="Parentesco" data-testid="registro-rep-parentesco" /></app-form-field>
-        <app-form-field label="Teléfono del representante" [required]="true"><app-input [value]="guardianPhone()" (valueChange)="set(guardianPhone, $event)" inputMode="tel" ariaLabel="Teléfono del representante" data-testid="registro-rep-telefono" /></app-form-field>
+        <app-form-field label="Nombre del representante" [required]="true"><app-input autocomplete="off" [value]="guardianName()" (valueChange)="set(guardianName, $event)" ariaLabel="Nombre del representante" data-testid="registro-rep-nombre" /></app-form-field>
+        <app-form-field label="Documento del representante" [required]="true"><app-input autocomplete="off" [value]="guardianDocument()" (valueChange)="set(guardianDocument, $event)" ariaLabel="Documento del representante" data-testid="registro-rep-documento" /></app-form-field>
+        <app-form-field label="Parentesco" [required]="true" hint="Madre, padre, tutor legal, familiar autorizado…"><app-input autocomplete="off" [value]="guardianRelationship()" (valueChange)="set(guardianRelationship, $event)" ariaLabel="Parentesco" data-testid="registro-rep-parentesco" /></app-form-field>
+        <app-form-field label="Teléfono del representante" [required]="true"><app-input autocomplete="off" [value]="guardianPhone()" (valueChange)="set(guardianPhone, $event)" inputMode="tel" ariaLabel="Teléfono del representante" data-testid="registro-rep-telefono" /></app-form-field>
       </div>
     </fieldset>
   }

@@ -138,6 +138,23 @@ describe('OrganizationPanel', () => {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
 
+  /** Abre una pestaña de la ficha: el panel cerrado no se dibuja. */
+  function abrirPestana(indice: number): void {
+    const pestana = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+      '[role="tab"]',
+    )[indice];
+    pestana.click();
+    fixture.detectChanges();
+  }
+
+  /** El lápiz: abre el formulario de «Datos». */
+  function editar(): void {
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="organizacion-editar"]')
+      ?.click();
+    fixture.detectChanges();
+  }
+
   afterEach(() => http?.verify());
 
   it('pregunta por las organizaciones del actor sin que nadie le pase un id', () => {
@@ -160,8 +177,12 @@ describe('OrganizationPanel', () => {
     montar();
     responder([organizacion()]);
 
-    expect(texto()).toContain('Datos de su organización');
-    expect(texto()).toContain('Su gente');
+    expect(texto()).toContain('Clínica del Centro SRL');
+    const pestanas = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]'),
+    ).map((t) => t.textContent?.trim());
+    expect(pestanas).toEqual(['Datos', 'Su gente', 'Agenda', 'Solicitudes de médicos']);
+    expect(texto()).not.toContain('Qué administra esta pantalla');
   });
 
   it('ofrece ir a «Médicos del centro», donde se invita y se aprueba por procedimiento', () => {
@@ -191,9 +212,61 @@ describe('OrganizationPanel', () => {
     expect(texto()).not.toContain('Guardar datos');
   });
 
+  it('el lápiz abre el formulario y cancelar lo cierra sin guardar', () => {
+    montar();
+    responder([organizacion()]);
+    const formulario = (): Element | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="organizacion-formulario"]');
+
+    expect(formulario()).toBeNull();
+    editar();
+    expect(formulario()).not.toBeNull();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="organizacion-cancelar"]')
+      ?.click();
+    fixture.detectChanges();
+    expect(formulario()).toBeNull();
+  });
+
+  it('quien no administra no tiene lápiz', () => {
+    montar();
+    responder([organizacion({ canAdminister: false })]);
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="organizacion-editar"]'),
+    ).toBeNull();
+  });
+
+  it('con más gente que una página la lista se pagina', () => {
+    montar();
+    http.expectOne((r) => r.url === MIAS).flush({ items: [organizacion()] });
+    fixture.detectChanges();
+    const items = Array.from({ length: 12 }, (_, i) => ({
+      id: `m-${i}`,
+      userId: `usuario-${i}`,
+      tenantRoleConceptId: 'STAFF',
+      statusConceptId: 'activa',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    }));
+    http
+      .expectOne((r) => r.url.includes('/memberships'))
+      .flush({ items, count: 12, limit: 50, nextCursor: null });
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
+    fixture.detectChanges();
+    http.match((r) => r.url.includes('/agenda')).forEach((p) => p.flush({ items: [] }));
+    abrirPestana(1);
+
+    expect(texto()).toContain('usuario-0');
+    expect(texto()).not.toContain('usuario-11');
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-pagination')).not.toBeNull();
+  });
+
   it('quien administra sí puede guardar', () => {
     montar();
     responder([organizacion()]);
+    editar();
 
     expect(texto()).toContain('Guardar datos');
   });
@@ -391,6 +464,7 @@ describe('OrganizationPanel', () => {
   function guardarYRechazar(cuerpo: object, status: number): void {
     montar();
     responder([organizacion()]);
+    editar();
     (
       fixture.componentInstance as unknown as { nombreComercial: { set(v: string): void } }
     ).nombreComercial.set('Clínica Nueva');
@@ -440,6 +514,7 @@ describe('OrganizationPanel', () => {
   it('decidir una solicitud que falla dice el motivo de la API', () => {
     montar();
     responder([organizacion()], [solicitud()]);
+    abrirPestana(3);
 
     const boton = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
@@ -477,6 +552,7 @@ describe('OrganizationPanel', () => {
   it('sin solicitudes pendientes lo dice', () => {
     montar();
     responder([organizacion()]);
+    abrirPestana(3);
 
     expect(texto()).toContain('No hay solicitudes pendientes');
   });
@@ -484,6 +560,7 @@ describe('OrganizationPanel', () => {
   it('muestra cada solicitud con su cargo y desde cuándo', () => {
     montar();
     responder([organizacion()], [solicitud()]);
+    abrirPestana(3);
 
     expect(texto()).toContain('Médico de planta');
     expect(texto()).toContain('Aprobar');
@@ -498,6 +575,7 @@ describe('OrganizationPanel', () => {
   it('quien no administra ve las solicitudes pero no decide', () => {
     montar();
     responder([organizacion({ canAdminister: false })], [solicitud()]);
+    abrirPestana(3);
 
     expect(texto()).toContain('Médico de planta');
     expect(texto()).not.toContain('Aprobar');
@@ -506,6 +584,7 @@ describe('OrganizationPanel', () => {
   it('aprobar manda la decisión y recarga la bandeja', () => {
     montar();
     responder([organizacion()], [solicitud()]);
+    abrirPestana(3);
 
     const boton = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
@@ -530,6 +609,7 @@ describe('OrganizationPanel', () => {
   it('rechazar manda la decisión al endpoint de rechazo', () => {
     montar();
     responder([organizacion()], [solicitud()]);
+    abrirPestana(3);
 
     const boton = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
@@ -561,6 +641,7 @@ describe('OrganizationPanel', () => {
   it('un día sin citas lo dice', () => {
     montar();
     responder([organizacion()]);
+    abrirPestana(2);
 
     expect(texto()).toContain('No hay citas en este día');
   });
@@ -568,6 +649,7 @@ describe('OrganizationPanel', () => {
   it('muestra cada cita con su hora, su paciente y su sede', () => {
     hastaLaAgenda();
     responderAgenda([cita()]);
+    abrirPestana(2);
 
     expect(texto()).toContain('Marisol Quispe');
     expect(texto()).toContain('Consultorio Centro');
@@ -580,6 +662,7 @@ describe('OrganizationPanel', () => {
   it('el motivo de consulta no aparece en ninguna parte', () => {
     hastaLaAgenda();
     responderAgenda([cita({ reasonText: 'Dolor de pecho' })]);
+    abrirPestana(2);
 
     expect(texto()).not.toContain('Dolor de pecho');
   });
@@ -591,6 +674,7 @@ describe('OrganizationPanel', () => {
   it('buscar a alguien que no está se distingue de un día vacío', () => {
     hastaLaAgenda();
     responderAgenda([cita()]);
+    abrirPestana(2);
 
     (
       fixture.componentInstance as unknown as {
@@ -610,6 +694,7 @@ describe('OrganizationPanel', () => {
   it('buscar un paciente no vuelve al servidor', () => {
     montar();
     responder([organizacion()]);
+    abrirPestana(2);
 
     (
       fixture.componentInstance as unknown as {

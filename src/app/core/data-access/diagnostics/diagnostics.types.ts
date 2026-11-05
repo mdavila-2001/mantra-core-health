@@ -1,4 +1,6 @@
+import type { OrderAppointment } from '../diagnostic-units/center-schedule.types';
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
+import type { CollectionPointRef } from './sample-collection.types';
 import type {
   ServiceRequestPerformerFields,
   ServiceRequestPerformerInput,
@@ -43,6 +45,8 @@ export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
  */
 export interface DiagnosticOrder {
   readonly id: string;
+  /** F5b: el punto de toma sugerido, ya resuelto. */
+  readonly suggestedCareSpace?: CollectionPointRef | null;
   readonly patientProfileId: string;
   readonly encounterId?: string;
   readonly codeConceptId: string;
@@ -145,6 +149,9 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly performerTenantId?: string;
+  /** F5b: sede y punto de toma sugeridos (`SAMPLE_COLLECTION` de esa sede). */
+  readonly suggestedPracticeSiteId?: string;
+  readonly suggestedCareSpaceId?: string;
   /**
    * Antiduplicación de estudios (v4.2.17). Presente sólo cuando el chequeo
    * previo detectó un duplicado y el médico decidió: junto con
@@ -250,6 +257,8 @@ export interface LabWorkOrder {
   readonly assignedProfileId?: string;
   readonly scheduledAt?: Date;
   readonly completedAt?: Date;
+  /** F5b: dónde se tomó la muestra (`collection_care_space_id`); `null` si no se registró. */
+  readonly collectionPoint?: CollectionPointRef | null;
 }
 
 /** Filtros de la cola del laboratorio. Todos opcionales: sin ninguno, es la cola entera. */
@@ -257,6 +266,8 @@ export interface LabWorkOrderQuery {
   readonly laboratoryAccessionId?: string;
   readonly statusConceptId?: string;
   readonly assignedProfileId?: string;
+  /** F5b: sólo las órdenes tomadas en este punto. */
+  readonly collectionCareSpaceId?: string;
   readonly limit?: number;
   readonly offset?: number;
 }
@@ -343,6 +354,12 @@ export interface PatientOrder extends PatientSettlementFields, ServiceRequestPer
   readonly preparationInstructions?: string;
   readonly hasReleasedResult: boolean;
   readonly reportId?: string;
+  /**
+   * El turno que el paciente reservó en un centro para hacer este estudio.
+   * `null` o ausente: todavía no reservó. Contrato del simulador, pendiente de
+   * backend (P-CENTRO-HORARIOS).
+   */
+  readonly appointment?: OrderAppointment | null;
 }
 
 /** Página de órdenes propias. */
@@ -363,6 +380,7 @@ export interface PatientOwnOrders {
 export interface DiagnosticResultShare {
   readonly id: string;
   readonly reportId: string;
+  /** La cuenta del profesional con acceso; la API la resuelve del perfil. */
   readonly practitionerUserId: string;
   /**
    * El nombre del profesional, para que «Compartido con» no muestre un uuid.

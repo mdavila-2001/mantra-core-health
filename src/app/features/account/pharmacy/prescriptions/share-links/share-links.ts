@@ -101,7 +101,11 @@ export class ShareLinks implements OnInit {
   }
 
   protected statusOf(row: PrescriptionShareSummary): { label: string; variant: BadgeVariant } {
-    return STATUS_LABEL[row.status];
+    // «Vencido» junto a «vence el 30/11» confundía: si la receta dejó de valer
+    // antes, se dice eso (H12-09).
+    return row.endedReason === 'PRESCRIPTION_NOT_ACTIVE'
+      ? { label: 'Receta sin vigencia', variant: 'warning' }
+      : STATUS_LABEL[row.status];
   }
 
   protected dateOf(row: PrescriptionShareSummary): Date | null {

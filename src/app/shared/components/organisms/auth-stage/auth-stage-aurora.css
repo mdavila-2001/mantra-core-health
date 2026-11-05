@@ -1,0 +1,122 @@
+/* ==========================================================================
+    `app-auth-stage` — auroras y rayos.
+
+    Hoja aparte de `auth-stage.css` por el tope de líneas por archivo del
+    repositorio (`scripts/check-max-lines.mjs`): es la capa de color de fondo,
+    sin animación, y lo que la separa del resto no cambia ninguna regla. El
+    orden de `styleUrls` es el de la cascada: esta hoja va después de la
+    principal y sus overrides de modo claro siguen ganando por especificidad.
+    ========================================================================== */
+
+/* --- Auroras: cinco orbes de color pleno que ACLARAN el petróleo. ---------
+   El fondo NO sigue al puntero. Tenía paralaje —aurora, cuadrícula, motas y
+   latido corridos cada uno a su profundidad—, y cada movimiento del ratón
+   recomponía la ventana entera: medido sin GPU a 1920×1080, la escena caía de
+   60 a 20 cuadros por segundo con el mouse en movimiento, y escribir en el
+   correo tardaba medio segundo. Lo que responde a la mano es la tarjeta. */
+
+.auth-stage__orb {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--orb-color), transparent 70%);
+  mix-blend-mode: screen;
+  /* QUIETAS a propósito. Derivaban en bucles de 19–37 s, y cinco capas de
+     40–70vmax mezcladas en `screen` que se mueven obligan a recomponer media
+     pantalla en cada cuadro: medido sin GPU a 1920×1080, el escenario iba a
+     22 cuadros por segundo. Quietas se pintan una vez y el color es el mismo. */
+}
+
+.auth-stage__orb--1 {
+  top: -30%;
+  left: -12%;
+  width: 62vmax;
+  --orb-color: color-mix(in srgb, var(--c-aqua-500) 88%, transparent);
+}
+
+.auth-stage__orb--2 {
+  right: -18%;
+  bottom: -34%;
+  width: 70vmax;
+  --orb-color: color-mix(in srgb, var(--c-aqua-400) 58%, transparent);
+}
+
+.auth-stage__orb--3 {
+  top: 8%;
+  right: 4%;
+  width: 44vmax;
+  --orb-color: color-mix(in srgb, var(--c-aqua-400) 72%, transparent);
+}
+
+.auth-stage__orb--4 {
+  top: 30%;
+  left: 38%;
+  width: 46vmax;
+  /* El único orbe que NO aclara: petróleo 500 es el azul más saturado de la
+     paleta, y en `screen` sobre petróleo se lavaría a gris. En mezcla normal
+     pone el azul profundo contra el que el aqua y la menta se ven vivos. */
+  mix-blend-mode: normal;
+  --orb-color: color-mix(in srgb, var(--c-petrol-500) 80%, transparent);
+}
+
+.auth-stage__orb--5 {
+  top: -22%;
+  right: -10%;
+  width: 40vmax;
+  --orb-color: color-mix(in srgb, var(--c-aqua-500) 55%, transparent);
+}
+
+/* --- Rayos: un abanico de luz que sale del pico R. ------------------------ */
+.auth-stage__rays {
+  /* Centrados en el pico R protagonista (649, 150 de 1920 × 1080): la luz
+     sale de donde late. */
+  inset: auto;
+  left: 33.8%;
+  top: 13.9%;
+  width: 240vmax;
+  height: 240vmax;
+  margin: -120vmax 0 0 -120vmax;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg 14deg,
+    color-mix(in srgb, var(--c-aqua-200) 5%, transparent) 18deg,
+    transparent 24deg 40deg
+  );
+  mix-blend-mode: screen;
+  mask-image: radial-gradient(closest-side, black 4%, transparent 38%);
+  /* Tampoco gira: una capa de 240vmax con máscara y mezcla que rota es de lo
+     más caro que puede pedírsele a un equipo sin GPU. El movimiento de la
+     escena lo llevan el cometa, las ondas y las motas, que son chicos. */
+}
+
+/* Las auroras vuelven, pero en mezcla NORMAL: `screen` sobre un fondo claro
+   solo lo empuja al blanco, que es justo lo que hay que evitar. Quietas y de
+   baja opacidad: se pintan una vez y no cuestan nada por cuadro. */
+:host-context(:root[data-tema='claro']) .auth-stage__orb {
+  mix-blend-mode: normal;
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__orb--1 {
+  --orb-color: color-mix(in srgb, var(--c-aqua-300) 62%, transparent);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__orb--2 {
+  --orb-color: color-mix(in srgb, var(--c-mint-500) 62%, transparent);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__orb--3 {
+  --orb-color: color-mix(in srgb, var(--c-aqua-200) 70%, transparent);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__orb--4 {
+  --orb-color: color-mix(in srgb, var(--c-mint-300) 55%, transparent);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__orb--5 {
+  --orb-color: color-mix(in srgb, var(--c-aqua-400) 38%, transparent);
+}
+
+/* Los rayos son luz sobre oscuro: sobre claro no aportan. */
+:host-context(:root[data-tema='claro']) .auth-stage__rays {
+  display: none;
+}

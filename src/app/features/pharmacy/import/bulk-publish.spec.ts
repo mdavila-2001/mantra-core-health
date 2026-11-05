@@ -123,6 +123,42 @@ describe('bulk-publish', () => {
     expect(countOutcomes(rows)).toEqual({ created: 1, updated: 0, unchanged: 1, rejected: 1 });
   });
 
+  it('el medicamento por su nombre viaja en el alta y en el cambio; vacío, no viaja', () => {
+    const rows = reviewed(
+      [
+        'codigo;generico;receta;medicamento',
+        'AMX;Amoxicilina;sí;Amoxicilina',
+        'PAR-500;Paracetamol;;Paracetamol',
+        'B-1;Otro;no;',
+      ].join('\n'),
+    ).filter((row): row is ReadyRow => row.lista);
+
+    expect(productBulkRow(rows[0]!)).toMatchObject({ productCode: 'AMX', medicationName: 'Amoxicilina' });
+    expect(productBulkRow(rows[1]!)).toEqual({
+      productCode: 'PAR-500',
+      genericName: 'Paracetamol',
+      inStock: true,
+      medicationName: 'Paracetamol',
+    });
+    expect('medicationName' in productBulkRow(rows[2]!)).toBe(false);
+  });
+
+  it('una fila que se carga con un aviso lo lleva como motivo, para que se vea en la tabla', () => {
+    const rows = toFileRows([3, 4], [
+      {
+        row: 1,
+        outcome: 'CREATED',
+        warnings: [{ field: 'medicationConceptId', reason: 'MEDICATION_NOT_LINKED', message: 'Pide receta sin medicamento' }],
+      },
+      { row: 2, outcome: 'UPDATED', warnings: [{ field: 'medicationConceptId', reason: 'MEDICATION_NOT_LINKED' }] },
+    ]);
+
+    expect(rows.map((row) => row.message)).toEqual([
+      'Pide receta sin medicamento',
+      'Pide receta y no tiene medicamento vinculado: ninguna receta lo encuentra.',
+    ]);
+  });
+
   it('un 413 se dice como tamaño; lo demás, con el mensaje de la farmacia', () => {
     expect(bulkFailureMessage(new HttpErrorResponse({ status: 413 }))).toContain('pasó de 1 MB');
     expect(bulkFailureMessage(new HttpErrorResponse({ status: 0 }))).toContain('Sin conexión');

@@ -12,6 +12,7 @@ import {
   nombreDeFuente,
   seccionesPintables,
 } from './glossary-article.logic';
+import { imagenAprobadaDelTermino } from './glossary-image.logic';
 
 interface PreparedImage {
   /** `null` si no se pudo descargar (otro origen sin permiso, caída, formato): el PDF lo dice y lleva el crédito. */
@@ -60,7 +61,7 @@ async function prepareImages(
   article: GlossaryArticle | null,
 ): Promise<readonly PreparedImage[]> {
   const result: PreparedImage[] = [];
-  const termImage = term.image;
+  const termImage = imagenAprobadaDelTermino(term);
   if (termImage !== undefined) {
     result.push({
       image: await readImageOrNull(termImage.source, termImage.thumbnailSource),
@@ -159,7 +160,7 @@ export function glossaryPdfBlocks(
       const section = item.seccion;
       appendParagraphs(
         blocks,
-        `Fuente: ${nombreDeFuente(section.source)} · ${section.sourceUrl} · ${section.license} · versión ${section.sourceVersion} · consultado el ${fechaLegible(section.retrievedAt)} · ${section.locator}`,
+        `Fuente: ${nombreDeFuente(section.source)} · ${section.sourceUrl} · ${section.license} · versión ${section.sourceVersion}${section.nregistro ? ` · ficha técnica del producto con registro ${section.nregistro}` : ''} · consultado el ${fechaLegible(section.retrievedAt)} · ${section.locator}`,
       );
     }
     if (article.facts.length > 0) {
