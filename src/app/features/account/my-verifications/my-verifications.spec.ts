@@ -4,6 +4,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { sinSolicitudDeAdmision, wireMine } from '../../../../testing/admissions';
 import { MyVerifications } from './my-verifications';
 
 /**
@@ -88,10 +89,19 @@ describe('MyVerifications', () => {
     ],
   };
 
-  function montar(): void {
+  /**
+   * `admission: 'none'` stubs the request card's read with a 404 (its own spec
+   * covers it); `'http'` leaves it on the wire, for the tests about the request.
+   */
+  function montar(admission: 'none' | 'http' = 'none'): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        ...(admission === 'none' ? [sinSolicitudDeAdmision()] : []),
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(MyVerifications);
@@ -411,5 +421,118 @@ describe('MyVerifications', () => {
     expect(porTestId('verif-nueva-ayuda')?.textContent).toContain(
       'No pudimos cargar la lista de aseguradoras',
     );
+  });
+
+  describe('la solicitud de verificación (admisión)', () => {
+    const ADMISSION_URL = '/profiles/practitioners/me/admission';
+    const ATTESTATION = { attested: true, attestationVersion: '2026-10' };
+
+    /** Mounts the screen, answers its reads and the request's read. */
+    function mountWithAdmission(answer: 'none' | ReturnType<typeof wireMine>): void {
+      montar('http');
+      responder();
+      const read = http.expectOne(ADMISSION_URL);
+      if (answer === 'none') {
+        read.flush(
+          { code: 'NOT_FOUND', reason: 'ADMISSION_NOT_FOUND' },
+          { status: 404, statusText: 'Not Found' },
+        );
+      } else {
+        read.flush(answer);
+      }
+      fixture.detectChanges();
+    }
+
+    function attestAndSubmit(): void {
+      porTestId('admission-card-submit-attest')!.querySelector<HTMLInputElement>('input')!.click();
+      fixture.detectChanges();
+      porTestId('admission-card-submit')!.click();
+    }
+
+    function refusal(status: number, reason: string): [object, { status: number; statusText: string }] {
+      return [{ code: 'X', reason, message: reason }, { status, statusText: 'x' }];
+    }
+
+    it('con admisión muestra su estado, y la hoja de ruta sigue debajo', () => {
+      mountWithAdmission(
+        wireMine({
+          status: { code: 'INFORMACION_REQUERIDA', label: 'Información requerida' },
+          canResubmit: true,
+        }),
+      );
+      expect(porTestId('admission-card-status')?.textContent).toContain('Información requerida');
+      expect(porTestId('admission-card-submit')).toBeNull();
+      expect(porTestId('verif-tramo-profile')).not.toBeNull();
+    });
+
+    it('mientras la lee, y si su lectura falla, la hoja de ruta no se tapa', () => {
+      montar('http');
+      responder();
+      expect(porTestId('admission-card-loading')).not.toBeNull();
+      expect(porTestId('verif-tramo-profile')).not.toBeNull();
+      http.expectOne(ADMISSION_URL).flush(null, { status: 500, statusText: 'Error' });
+      fixture.detectChanges();
+      expect(porTestId('admission-card-error')?.textContent).toContain('No pudimos cargar');
+      expect(porTestId('verif-tramo-profile')).not.toBeNull();
+    });
+
+    it('sin admisión (404) ofrece enviarla con la declaración y su versión; si sale bien, muestra la nueva', () => {
+      mountWithAdmission('none');
+      expect(texto()).toContain('Enviar a verificación');
+      expect(texto()).toContain('Declaro que los datos y documentos son verídicos.');
+
+      attestAndSubmit();
+      const submission = http.expectOne(`${ADMISSION_URL}/submit`);
+      expect(submission.request.method).toBe('POST');
+      expect(submission.request.body).toEqual(ATTESTATION);
+      submission.flush(wireMine({ status: { code: 'ENVIADA', label: 'Enviada' } }));
+      fixture.detectChanges();
+
+      expect(porTestId('admission-card-status')?.textContent).toContain('Enviada');
+      expect(porTestId('admission-card-submit')).toBeNull();
+    });
+
+    it('un 409 (ya tenía una) relee la admisión y la muestra', () => {
+      mountWithAdmission('none');
+      attestAndSubmit();
+      http.expectOne(`${ADMISSION_URL}/submit`).flush(...refusal(409, 'ADMISSION_ALREADY_EXISTS'));
+      http
+        .expectOne(ADMISSION_URL)
+        .flush(wireMine({ status: { code: 'EN_REVISION', label: 'En revisión' } }));
+      fixture.detectChanges();
+
+      expect(porTestId('admission-card-status')?.textContent).toContain('En revisión');
+      expect(porTestId('admission-card-submit')).toBeNull();
+    });
+
+    it('un 422 ADMISSION_NOT_PENDING relee el resumen y deja de ofrecer el envío', () => {
+      mountWithAdmission('none');
+      attestAndSubmit();
+      http.expectOne(`${ADMISSION_URL}/submit`).flush(...refusal(422, 'ADMISSION_NOT_PENDING'));
+      fixture.detectChanges();
+      // The screen reads the profile summary again: what it shows is out of date.
+      responder();
+
+      expect(porTestId('admission-card-not-pending')?.textContent).toContain('ya no está pendiente');
+      expect(porTestId('admission-card-submit')).toBeNull();
+      expect(porTestId('verif-tramo-profile')).not.toBeNull();
+    });
+
+    it('un 422 ADMISSION_ATTESTATION_REQUIRED marca el error en la declaración, sin releer nada', () => {
+      mountWithAdmission('none');
+      attestAndSubmit();
+      http
+        .expectOne(`${ADMISSION_URL}/submit`)
+        .flush(...refusal(422, 'ADMISSION_ATTESTATION_REQUIRED'));
+      fixture.detectChanges();
+
+      const hint = porTestId('admission-card-submit-attest-error')!;
+      expect(hint.textContent).toContain('No recibimos su declaración');
+      expect(hint.getAttribute('role')).toBe('alert');
+      const checkbox = porTestId('admission-card-submit-attest')!.querySelector('input')!;
+      expect(checkbox.checked).toBe(false);
+      expect(checkbox.getAttribute('aria-invalid')).toBe('true');
+      expect(porTestId('admission-card-submit-error')).toBeNull();
+    });
   });
 });
