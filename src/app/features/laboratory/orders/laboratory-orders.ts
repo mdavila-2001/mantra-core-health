@@ -12,7 +12,6 @@ import {
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { concat, map, type Observable, toArray } from 'rxjs';
 
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
 import type {
@@ -26,17 +25,18 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
-import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 
 import { formatBytes } from '../file-size';
+import { downloadOrderFiles } from './order-download';
 import { filesFromInput } from '../results/picked-files';
 import { ResultUploadQueue, type UploadItem } from '../results/result-upload-queue';
 import { ACCEPT_ATTRIBUTE } from '../results/upload-rules';
@@ -45,6 +45,8 @@ import {
   apiMessageOf,
   disabledAll,
   ORDER_STATUS_BADGE,
+  REASON_FIELD,
+  REASON_STEPS,
   ORDER_TAB_LABELS,
   ORDER_TABS,
   orderTabIndexOf,
@@ -52,7 +54,6 @@ import {
   ordersOfTab,
   type OrderActionCode,
 } from './laboratory-orders.logic';
-import { saveBlob } from './save-blob';
 
 /**
  * **Órdenes** del laboratorio y del centro de imagenología, en una sola
@@ -62,7 +63,8 @@ import { saveBlob } from './save-blob';
  * camino de una orden es `Borrador → Recibida → Procesada → Subidos`, con
  * `Cancelada` y `Rechazada` como salidas, y cada paso es una acción del menú de
  * tres puntos de su fila — **Recibir**, **Marcar como procesada**, **Subir
- * resultados** y **Descargar**, y nada más.
+ * resultados**, **Descargar**, y la salida **Rechazar** (sólo si la API la
+ * permite), que pide un motivo.
  *
  * ## Una tarjeta con pestañas, a lo ancho
  *
@@ -262,22 +264,24 @@ export class LaboratoryOrders {
       case 'download':
         return this.download(order);
       case 'reject':
-        void this.reject(order);
+        return void this.askReason(order);
     }
   }
 
-  /** Rejecting needs the reason: the requester reads it on the order. */
-  private async reject(order: LabOrder): Promise<void> {
-    const reason = await this.dialogs.confirmWithReason(
-      { title: 'Rechazar la orden', message: `${order.studyName} de ${order.patientName}. El médico verá el motivo.`, confirmLabel: 'Rechazar', destructive: true },
-      { label: 'Motivo del rechazo', hint: 'Por ejemplo: muestra hemolizada o insuficiente.' },
-    );
-    if (reason !== null) this.transition(order, 'REJECT', 'Orden rechazada.', reason);
+  /** Rejecting needs a reason: the dialog will not confirm without one, and the API requires it. */
+  private async askReason(order: LabOrder): Promise<void> {
+    const step = REASON_STEPS.reject;
+    const reason = await this.dialogs.confirmWithReason(step.dialog(order), REASON_FIELD);
+    if (reason !== null) this.transition(order, step.action, step.done, reason);
   }
 
   private transition(order: LabOrder, action: LabOrderAction, done: string, reason?: string): void {
     this.busyOrderId.set(order.orderId);
-    this.lab.transitionOrder(order.orderId, action, ...((reason === undefined ? [] : [reason]) as [string?])).subscribe({
+    const request =
+      reason === undefined
+        ? this.lab.transitionOrder(order.orderId, action)
+        : this.lab.transitionOrder(order.orderId, action, reason);
+    request.subscribe({
       next: () => {
         this.busyOrderId.set(null);
         this.toasts.success(done);
@@ -305,19 +309,12 @@ export class LaboratoryOrders {
   private download(order: LabOrder): void {
     if (order.files.length === 0) return;
     this.busyOrderId.set(order.orderId);
-    concat(...order.files.map((file) => this.fetchAndSave(file.id, file.fileName)))
-      .pipe(toArray())
-      .subscribe({
-        next: () => this.busyOrderId.set(null),
-        error: (error: unknown) => {
-          this.busyOrderId.set(null);
-          this.actionError.set(apiMessageOf(error, 'No pudimos descargar los resultados.'));
-        },
-      });
-  }
-
-  /** Pide los bytes del archivo y lo baja con su nombre. */
-  private fetchAndSave(id: string, fileName: string): Observable<void> {
-    return this.lab.resultContent(id).pipe(map((blob) => saveBlob(blob, fileName)));
+    downloadOrderFiles(this.lab, order).subscribe({
+      next: () => this.busyOrderId.set(null),
+      error: (error: unknown) => {
+        this.busyOrderId.set(null);
+        this.actionError.set(apiMessageOf(error, 'No pudimos descargar los resultados.'));
+      },
+    });
   }
 }

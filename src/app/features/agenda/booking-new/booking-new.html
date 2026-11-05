@@ -48,159 +48,170 @@
     }
     @case ('ready') {
       @if (cupoListo(); as cupo) {
-        <!-- El resumen dice qué se está por reservar; los datos salen de la
+        <!-- Two columns: summary and form on the left, the body figure from
+             the symptom check on the right, wired to the reason field (client
+             request, 2026-11-04). On narrow screens the figure drops below. -->
+        <div class="reserva__layout">
+          <div class="reserva__principal">
+            <!-- El resumen dice qué se está por reservar; los datos salen de la
              relectura, no de la fila que originó la navegación. -->
-        <dl class="reserva__resumen" data-testid="reserva-resumen">
-          <!-- Con quién es el turno. Va primero porque es lo que la persona
+            <dl class="reserva__resumen" data-testid="reserva-resumen">
+              <!-- Con quién es el turno. Va primero porque es lo que la persona
                quiere confirmar antes que nada, y hasta ahora no estaba: se veía
                el horario y el lugar, pero no a quién iba a atenderla. -->
-          @if (profesional(); as nombre) {
-            <div class="reserva__dato" data-testid="reserva-profesional">
-              <dt>Con quién</dt>
-              <dd>{{ nombre }}</dd>
-            </div>
-          }
+              @if (profesional(); as nombre) {
+                <div class="reserva__dato" data-testid="reserva-profesional">
+                  <dt>Con quién</dt>
+                  <dd>{{ nombre }}</dd>
+                </div>
+              }
 
-          <!-- Qué servicio es, cuánto dura y cuánto sale (v4.2.40). La duración
+              <!-- Qué servicio es, cuánto dura y cuánto sale (v4.2.40). La duración
                es un rango porque depende de cada paciente; el horario reserva el
                máximo. Aparece sólo si se reserva un servicio. -->
-          @if (esServicio && servicio(); as s) {
-            <div class="reserva__dato" data-testid="reserva-servicio">
-              <dt>Servicio</dt>
-              <dd>
-                {{ s.serviceName }}
-                <span class="reserva__cifra" data-testid="reserva-duracion"
-                  >· dura {{ duracion() }}</span
-                >
-              </dd>
-            </div>
-            <div class="reserva__dato" data-testid="reserva-precio">
-              <dt>Precio de referencia</dt>
-              <dd class="reserva__cifra">{{ precio() }}</dd>
-            </div>
-          }
+              @if (esServicio && servicio(); as s) {
+                <div class="reserva__dato" data-testid="reserva-servicio">
+                  <dt>Servicio</dt>
+                  <dd>
+                    {{ s.serviceName }}
+                    <span class="reserva__cifra" data-testid="reserva-duracion"
+                      >· dura {{ duracion() }}</span
+                    >
+                  </dd>
+                </div>
+                <div class="reserva__dato" data-testid="reserva-precio">
+                  <dt>Precio de referencia</dt>
+                  <dd class="reserva__cifra">{{ precio() }}</dd>
+                </div>
+              }
 
-          <div class="reserva__dato">
-            <dt>Fecha de reserva</dt>
-            <dd>
-              <span class="reserva__cifra">{{ cupo.startAt | date: 'EEEE d MMM, HH:mm' }}</span>
-              hasta <span class="reserva__cifra">{{ cupo.endAt | date: 'HH:mm' }}</span>
-            </dd>
-          </div>
-          @if (!esServicio) {
-            <div class="reserva__dato">
-              <dt>Disponibilidad</dt>
-              <dd>{{ cupo.remainingCapacity }} de {{ cupo.capacity }} sin ocupar</dd>
-            </div>
-            <!-- FAC-01: el precio de la consulta viene con el turno. Sin precio
-                 publicado se dice así, nunca «0,00». Si la API no lo manda
-                 (\`undefined\`), el renglón no se dibuja. -->
-            @if (cupo.price !== undefined) {
-              <div class="reserva__dato" data-testid="reserva-precio-consulta">
-                <dt>Precio de la consulta</dt>
-                <dd [class.reserva__cifra]="!!precio()">
-                  {{ precio() || 'El consultorio todavía no publicó el precio' }}
+              <div class="reserva__dato">
+                <dt>Fecha de reserva</dt>
+                <dd>
+                  <span class="reserva__cifra">{{ cupo.startAt | date: 'EEEE d MMM, HH:mm' }}</span>
+                  hasta <span class="reserva__cifra">{{ cupo.endAt | date: 'HH:mm' }}</span>
                 </dd>
               </div>
-            }
-          }
+              @if (!esServicio) {
+                <div class="reserva__dato">
+                  <dt>Disponibilidad</dt>
+                  <dd>{{ cupo.remainingCapacity }} de {{ cupo.capacity }} sin ocupar</dd>
+                </div>
+                <!-- FAC-01: el precio de la consulta viene con el turno. Sin precio
+                 publicado se dice así, nunca «0,00». Si la API no lo manda
+                 (\`undefined\`), el renglón no se dibuja. -->
+                @if (cupo.price !== undefined) {
+                  <div class="reserva__dato" data-testid="reserva-precio-consulta">
+                    <dt>Precio de la consulta</dt>
+                    <dd [class.reserva__cifra]="!!precio()">
+                      {{ precio() || 'El consultorio todavía no publicó el precio' }}
+                    </dd>
+                  </div>
+                }
+              }
 
-          <!-- Dónde es el turno. El renglón aparece sólo si el recurso tiene
+              <!-- Dónde es el turno. El renglón aparece sólo si el recurso tiene
                sede: uno vacío se leería como un dato que no cargó, y quien
                reserva por el portal no tiene a quién preguntarle. -->
-          @if (sede()) {
-            <div class="reserva__dato" data-testid="reserva-ubicacion">
-              <dt>Dónde</dt>
-              <dd>{{ ubicacion() }}</dd>
-            </div>
-          }
-        </dl>
+              @if (sede()) {
+                <div class="reserva__dato" data-testid="reserva-ubicacion">
+                  <dt>Dónde</dt>
+                  <dd>{{ ubicacion() }}</dd>
+                </div>
+              }
+            </dl>
 
-        @if (retencion(); as retencion) {
-          <!-- Paso 2: el cupo ya está retenido a nombre del paciente. Lo único
+            @if (retencion(); as retencion) {
+              <!-- Paso 2: el cupo ya está retenido a nombre del paciente. Lo único
                que queda es confirmar antes del vencimiento. -->
-          <app-alert appAnuncio tone="success" title="Cupo retenido" class="reserva__alert">
-            @if (esAutoservicio) {
-              Se lo guardamos hasta las {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme antes
-              de esa hora o el horario vuelve a quedar libre.
+              <app-alert appAnuncio tone="success" title="Cupo retenido" class="reserva__alert">
+                @if (esAutoservicio) {
+                  Se lo guardamos hasta las {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme
+                  antes de esa hora o el horario vuelve a quedar libre.
+                } @else {
+                  Retenido a nombre de {{ paciente()?.label }} hasta las
+                  {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme antes de esa hora o el cupo
+                  vuelve a la agenda.
+                }
+              </app-alert>
+
+              <app-form-actions
+                submitLabel="Confirmar la reserva"
+                cancelLabel="Volver a elegir"
+                [pending]="enviando()"
+                (submitted)="confirmar()"
+                (cancelled)="volverAElegir()"
+              />
             } @else {
-              Retenido a nombre de {{ paciente()?.label }} hasta las
-              {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme antes de esa hora o el cupo
-              vuelve a la agenda.
-            }
-          </app-alert>
-
-          <app-form-actions
-            submitLabel="Confirmar la reserva"
-            cancelLabel="Volver a elegir"
-            [pending]="enviando()"
-            (submitted)="confirmar()"
-            (cancelled)="volverAElegir()"
-          />
-        } @else {
-          <!-- Paso 1: para quién es el turno. Por el portal ya se sabe. -->
-          <form
-            [formGroup]="formulario"
-            (ngSubmit)="retener()"
-            novalidate
-            data-testid="reserva-form"
-          >
-            @if (!esAutoservicio) {
-              <app-form-section
-                legend="Paciente"
-                description="El turno queda a nombre de una persona registrada."
+              <!-- Paso 1: para quién es el turno. Por el portal ya se sabe. -->
+              <form
+                [formGroup]="formulario"
+                (ngSubmit)="retener()"
+                novalidate
+                data-testid="reserva-form"
               >
-                <app-form-field
-                  label="Paciente"
-                  hint="Busque por nombre o por código de paciente."
-                  [required]="true"
-                  [errorMessage]="pacienteFaltante() ? 'Elija para quién es la cita.' : ''"
-                >
-                  <app-reference-combobox
-                    [selected]="paciente()"
-                    [options]="candidatos()"
-                    [loading]="buscando()"
-                    placeholder="Nombre o código"
-                    emptyMessage="Ningún paciente coincide"
-                    (searched)="buscarPaciente($event)"
-                    (selectionChange)="paciente.set($event)"
-                  />
-                </app-form-field>
-              </app-form-section>
-            }
+                @if (!esAutoservicio) {
+                  <app-form-section
+                    legend="Paciente"
+                    description="El turno queda a nombre de una persona registrada."
+                  >
+                    <app-form-field
+                      label="Paciente"
+                      hint="Busque por nombre o por código de paciente."
+                      [required]="true"
+                      [errorMessage]="pacienteFaltante() ? 'Elija para quién es la cita.' : ''"
+                    >
+                      <app-reference-combobox
+                        [selected]="paciente()"
+                        [options]="candidatos()"
+                        [loading]="buscando()"
+                        placeholder="Nombre o código"
+                        emptyMessage="Ningún paciente coincide"
+                        (searched)="buscarPaciente($event)"
+                        (selectionChange)="paciente.set($event)"
+                      />
+                    </app-form-field>
+                  </app-form-section>
+                }
 
-            <app-form-section legend="Motivo de la consulta" [description]="ayudaDelMotivo">
-              <!-- Ocupa la fila entera: la sección tiene un solo campo y, en el
+                <app-form-section legend="Motivo de la consulta" [description]="ayudaDelMotivo">
+                  <!-- Ocupa la fila entera: la sección tiene un solo campo y, en el
                    grid de dos columnas, quedaba a media caja para un texto que
                    admite 500 caracteres. -->
-              <app-form-field
-                class="reserva__campo--ancho"
-                label="¿Qué le pasa o qué quiere consultar?"
-                [errorMessage]="
-                  motivo.touched && motivo.invalid
-                    ? 'El motivo no puede superar los 500 caracteres.'
-                    : ''
-                "
-              >
-                <app-textarea formControlName="motivo" [maxLength]="maxMotivo" [rows]="5" />
-              </app-form-field>
-              @if (observacionPrecargada) {
-                <p class="reserva__nota" data-testid="reserva-observacion-precargada">
-                  Completamos el motivo con la observación de síntomas que guardó. Puede editarla
-                  antes de solicitar la cita.
-                </p>
-              }
-            </app-form-section>
+                  <app-form-field
+                    class="reserva__campo--ancho"
+                    label="¿Qué le pasa o qué quiere consultar?"
+                    [errorMessage]="
+                      motivo.touched && motivo.invalid
+                        ? 'El motivo no puede superar los 500 caracteres.'
+                        : ''
+                    "
+                  >
+                    <app-textarea formControlName="motivo" [maxLength]="maxMotivo" [rows]="5" />
+                  </app-form-field>
+                  @if (observacionPrecargada) {
+                    <p class="reserva__nota" data-testid="reserva-observacion-precargada">
+                      Completamos el motivo con la observación de síntomas que guardó. Puede
+                      editarla antes de solicitar la cita.
+                    </p>
+                  }
+                </app-form-section>
 
-            <app-form-actions
-              submitLabel="Retener el cupo"
-              cancelLabel="Cancelar"
-              [pending]="enviando()"
-              (submitted)="retener()"
-              (cancelled)="cancelar()"
-            />
-          </form>
-        }
+                <app-form-actions
+                  submitLabel="Retener el cupo"
+                  cancelLabel="Cancelar"
+                  [pending]="enviando()"
+                  (submitted)="retener()"
+                  (cancelled)="cancelar()"
+                />
+              </form>
+            }
+          </div>
+
+          <aside class="reserva__figura" aria-label="Figura del cuerpo">
+            <app-motivo-figura [control]="motivo" [maximo]="maxMotivo" [editable]="!retencion()" />
+          </aside>
+        </div>
       }
     }
     @case ('empty') {

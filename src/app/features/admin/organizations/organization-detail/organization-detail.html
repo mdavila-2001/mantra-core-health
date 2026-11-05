@@ -235,7 +235,7 @@
 <ng-template #celdaEstadoMembresia let-membresia>
   <app-badge [variant]="varianteDe(membresia.statusConceptId)" [attr.data-testid]="'membresia-estado-' + membresia.id">
     @if (esInvitacionPendiente(membresia)) {
-      Invitación enviada, pendiente de aceptación
+      Invitado · pendiente
     } @else {
       {{ etiquetaDe(membresia.statusConceptId)?.display ?? '—' }}
     }
@@ -266,7 +266,7 @@
      plantilla: asignarle una sede (quien administra, si hay sedes) y retirar
      la invitación mientras esté pendiente. -->
 <ng-template #celdaAccionesMembresia let-membresia>
-  @let asignable = puedeAdministrar() && sucursalesCargadas().length > 0;
+  @let asignable = puedeAdministrar() && sucursalesCargadas().length > 0 && esGestionable(membresia);
   @let pendiente = esInvitacionPendiente(membresia);
   @if (asignable) {
     <button

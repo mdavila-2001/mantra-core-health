@@ -2,7 +2,9 @@ import {
   conflict,
   forbidden,
   notFound,
+  unprocessable,
   validation,
+  validationPipeRejected,
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
@@ -172,13 +174,25 @@ export function registrarOrdenesDeLaboratorio(
       return validation('Ese paso no existe.');
     }
     const paso = TRANSICIONES[action];
+    // CANCEL and REJECT need a reason: 400, before the semantic 422 and the state 409.
+    const motivo = (reason ?? '').trim();
+    if ((action === 'CANCEL' || action === 'REJECT') && motivo === '') {
+      return validationPipeRejected('reason should not be empty');
+    }
+    // Like the API: the performer cannot cancel (the order belongs to the requester) and an
+    // imaging order has no specimen to reject.
+    if (action === 'CANCEL') {
+      return unprocessable('La orden es de quien la pidió: el laboratorio no puede cancelarla.');
+    }
+    if (action === 'REJECT' && orden.categoryConceptId !== ORDER_CATEGORY['SRQ-LAB']) {
+      return unprocessable('Una orden de imagenología no tiene muestra que rechazar.');
+    }
     const actual = ordenDeRespuesta(orderId, deps)!;
     if (!paso.desde.includes(actual.status === 'UPLOADED' ? 'PROCESSED' : actual.status)) {
       return conflict('La orden no está en un estado que admita ese paso.', {
         currentStatus: actual.status,
       });
     }
-    const motivo = (reason ?? '').trim();
     estadosDeOrden.agregar({
       id: orderId,
       status: paso.a,

@@ -1363,9 +1363,6 @@
     "src/app/features/account/pharmacy-orders/new-order/new-order.html": {
       "lineas": 369
     },
-    "src/app/features/clinical-record/patient-chart/form-conclusion-block/form-conclusion-block.ts": {
-      "lineas": 369
-    },
     "src/app/features/admin/data-catalog/data-catalog.ts": {
       "lineas": 368
     },

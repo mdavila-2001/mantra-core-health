@@ -718,7 +718,7 @@ export function registrarPortalDeLaboratorio(router: MockRouter): void {
     if (c === undefined || c.tenantId !== tenantId) return notFound('Categoría no encontrada');
     const enUso = categoriaDeRespuesta(c).serviceCount;
     if (enUso > 0) {
-      return conflict(`«${c.name}» tiene ${enUso} servicios. Muévalos a otra categoría antes de borrarla.`);
+      return conflict(`«${c.name}» tiene ${enUso} servicios. Muévalos a otra categoría antes de borrarla.`, { serviceCount: enUso });
     }
     categoriasDeLaboratorio.borrar(c.id);
     return { ok: true };

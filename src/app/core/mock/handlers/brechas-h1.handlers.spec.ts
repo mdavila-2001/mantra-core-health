@@ -8,6 +8,7 @@ import { registrarClinica } from './clinical.handlers';
 import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
 import { registrarVarios } from './misc.handlers';
+import { registerAuthz } from './authz.handlers';
 
 /**
  * El simulador dice lo mismo que la API en los recorridos de H1 (BR-04, BR-05,
@@ -27,6 +28,8 @@ describe('simulador · H1 sesión, cuenta y archivos', () => {
   registrarConsentimientos(router);
   registrarDiagnostico(router);
   registrarVarios(router);
+  // The authz routes left misc.handlers.ts: «Quién ve mi historia» and the emergency live there now.
+  registerAuthz(router);
 
   const paciente = buscarUsuario('paciente')!;
   const medica = buscarUsuario('medica')!;

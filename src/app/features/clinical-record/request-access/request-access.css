@@ -1,4 +1,4 @@
-/* Solicitar vinculación — un formulario corto: aviso y motivo. */
+/* Solicitar vinculación — un formulario corto: qué pide, aviso y motivo. */
 
 :host {
   display: block;
@@ -11,3 +11,19 @@
   max-inline-size: 48rem;
 }
 
+/* Decades of specialties: in columns they read at a glance, one column on a phone. */
+.solicitar-acceso__especialidades app-checkbox-group {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  column-gap: var(--sp-4);
+}
+
+.solicitar-acceso__alcance {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+}
+
+.solicitar-acceso__pregunta {
+  margin: 0;
+  font-weight: 500;
+}

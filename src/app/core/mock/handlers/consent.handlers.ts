@@ -3,7 +3,7 @@ import { PACIENTE } from '../fixtures/people';
 import { forbidden, notFound, preconditionFailed, unauthorized, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
-import { relacionDelProfesional } from './misc.handlers';
+import { practitionerRelationshipState } from './authz.store';
 
 /* ============================================================================
     Consent (M07): «Mi privacidad» y el consentimiento informado del encuentro.
@@ -187,7 +187,7 @@ export function registrarConsentimientos(router: MockRouter): void {
     const encuentro = encounterList.get(request.params['encounterId']!);
     if (encuentro === undefined) return notFound('Encuentro no encontrado');
     // Sin vínculo (o con vínculo revocado) no se escribe la historia.
-    if (relacionDelProfesional(user.practitionerProfileId, encuentro.patientProfileId) === 'REVOCADA') {
+    if (practitionerRelationshipState(user.practitionerProfileId, encuentro.patientProfileId) === 'REVOCADA') {
       return forbidden('No tiene acceso a la historia de este paciente');
     }
     const datos = cuerpo<{ decision?: 'ACCEPTED' | 'DECLINED'; informationVersion?: string }>(request);

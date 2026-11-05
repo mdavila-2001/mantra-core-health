@@ -35,6 +35,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 import { crearBuscadorDePersonas } from '../people-search';
 import { errorMessageOf } from '../../../../shared/forms/form-support';
@@ -93,6 +94,7 @@ const ETIQUETAS_DE_ALCANCE: Readonly<Record<AccessScopeCode, string>> = {
     FormActions,
     FormField,
     FormSection,
+    BackLink,
     PageHeader,
     ReferenceCombobox,
     Select,
@@ -331,6 +333,9 @@ export class MembershipNew {
     this.toast.success(`Invitación enviada a ${nombre}: queda pendiente de aceptación. Hasta que la acepte, no cuenta en la organización.`, 'Invitación enviada');
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = computed(() => organizationDetailRoute(this.tenantId()));
 
   protected cancelar(): void {
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));

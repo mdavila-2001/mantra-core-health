@@ -72,6 +72,8 @@ import { registerPractitionerInsurerRequests } from './practitioner-insurer-requ
 import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
+import { registerAuthz } from './authz.handlers';
+import { registerAccessRequests } from './access-requests.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
 import { registrarCatalogoDeModulos } from './authz-modules-catalog.handlers';
 import { registerPermissionsAdmin } from './permissions-admin.handlers';
@@ -198,6 +200,8 @@ export function crearRouterSimulado(): MockRouter {
   registrarLaboratorioFarmaceutico(router);
   registerLoyalty(router);
   registrarVarios(router);
+  registerAuthz(router);
+  registerAccessRequests(router);
   registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
   registerGovernance(router);

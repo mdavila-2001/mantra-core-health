@@ -14,7 +14,7 @@ import { SolicitudesDeIngreso } from '../solicitudes-de-ingreso/solicitudes-de-i
  * acciones (retirarse, salir de la fila), y el buzón de solicitudes de ingreso
  * es la pestaña de al lado.
  *
- * Quien administra una organización no pasa por acá: ve la consola completa.
+ * Son sólo esas dos pestañas, también para quien además tiene un consultorio.
  */
 @Component({
   selector: 'app-vista-medico',
