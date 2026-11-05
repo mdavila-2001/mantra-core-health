@@ -8,6 +8,10 @@ import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
 import { NEVER, of } from 'rxjs';
+import { defaultRegistrationHours, defaultWeekHours, toShifts } from '../shared-registration/opening-hours/opening-hours';
+
+/** The pre-filled week every sign-up starts with, as it travels to the API. */
+const HORARIO_PLANTILLA = toShifts(defaultWeekHours());
 
 import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
 import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
@@ -273,6 +277,7 @@ describe('RegisterOrganization', () => {
       powerOfAttorneyFileId:
         extra.powerOfAttorneyFileId ?? REPRESENTANTE_DE_PRUEBA.powerOfAttorneyFileId,
       executives: extra.executives ?? GERENCIAS_DE_PRUEBA,
+      openingHours: defaultRegistrationHours(),
     });
   }
 
@@ -366,6 +371,7 @@ describe('RegisterOrganization', () => {
         // Zona única (Bolivia, país por defecto): viaja siempre, asignada
         // en segundo plano — nadie la eligió en pantalla.
         timeZone: 'America/La_Paz',
+        openingHours: HORARIO_PLANTILLA,
         payer: {
           // `code` y `carrierCode` son el mismo valor: los dos se derivan
           // de la sigla con `codigoDesdeSigla`.
@@ -1150,8 +1156,9 @@ describe('RegisterOrganization', () => {
         fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
         fixture.detectChanges();
       }
-      // Seis: los documentos legales van en una sola página (28/10/2026).
-      expect(titulos.length).toBe(6);
+      // Siete: los documentos legales van en una sola página (28/10/2026) y
+      // el horario de atención tiene la suya.
+      expect(titulos.length).toBe(7);
       expect(titulos.some((titulo) => titulo.includes('Su cuenta'))).toBe(false);
       expect('ownerName' in component.form.controls).toBe(false);
       expect('email' in component.form.controls).toBe(false);
@@ -1384,14 +1391,15 @@ describe('RegisterOrganization', () => {
       http.expectNone('/iam/auth/register-organization');
     });
 
-    it('AC-02 y AC-04: Bolivia (zona única) queda en 6 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 7 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
 
       // Seis: ya no hay «Tu cuenta» (la única persona que inicia sesión es el
-      // representante legal) y los documentos legales van en una sola página.
-      expect(totalDePaginas()).toBe(6);
+      // representante legal), los documentos legales van en una sola página y
+      // el horario de atención suma la suya.
+      expect(totalDePaginas()).toBe(7);
       expect(titulosDeLosPasos().some((titulo) => titulo.includes('identifica'))).toBe(false);
 
       // «La empresa»: nombre, sigla, país, tipo societario — sin código ni
@@ -1439,7 +1447,7 @@ describe('RegisterOrganization', () => {
       // Las mismas que Bolivia: el selector de zona horaria suma un campo a
       // «Datos de la aseguradora», pero desde que «Dirección» sale del punto
       // (26/10/2026) la sección cabe en una página de cuatro.
-      expect(totalDePaginas()).toBe(6);
+      expect(totalDePaginas()).toBe(7);
 
       avanzarHasta('Datos de la aseguradora');
       // `[data-testid]` va en el host `<app-select>`; el botón que hace de

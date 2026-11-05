@@ -1,3 +1,4 @@
+import type { OpeningHoursShift } from './organization-branches.types';
 /* ============================================================================
     El bloque `organization.medicalFacility` del alta de una organización médica
     (`POST /iam/auth/register-organization`, tenantType HOSPITAL | CLINIC |
@@ -37,6 +38,8 @@ export interface MedicalFacilitySite {
   /** Ambas coordenadas o ninguna. */
   readonly latitude?: number;
   readonly longitude?: number;
+  /** Horario de atención de la sucursal; sin él, el de la casa central. */
+  readonly openingHours?: readonly OpeningHoursShift[];
 }
 
 /**

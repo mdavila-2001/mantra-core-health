@@ -83,7 +83,7 @@
       "lineas": 1446
     },
     "src/app/features/auth/register-imaging-center/register-imaging-center.ts": {
-      "lineas": 1411
+      "lineas": 1390
     },
     "src/app/core/data-access/scheduling/scheduling.types.ts": {
       "lineas": 1408
@@ -116,7 +116,7 @@
       "lineas": 1198
     },
     "src/app/features/auth/register-laboratory/register-laboratory.ts": {
-      "lineas": 1191
+      "lineas": 1186
     },
     "src/app/core/mock/handlers/finance.handlers.ts": {
       "lineas": 1190
@@ -146,16 +146,16 @@
       "lineas": 1089
     },
     "src/app/features/auth/register-pharmacy/register-pharmacy.ts": {
-      "lineas": 1085
+      "lineas": 1081
     },
     "src/app/features/auth/register-organization/register-organization.ts": {
-      "lineas": 1084
+      "lineas": 1047
     },
     "src/app/core/data-access/insurance/insurance.client.ts": {
       "lineas": 1073
     },
     "src/app/core/data-access/iam/iam.types.ts": {
-      "lineas": 1053
+      "lineas": 894
     },
     "src/app/core/mock/fixtures/support-hospital-governance.ts": {
       "lineas": 1029
@@ -221,7 +221,7 @@
       "lineas": 894
     },
     "src/app/core/data-access/iam/iam.client.ts": {
-      "lineas": 867
+      "lineas": 818
     },
     "src/app/features/symptom-check/symptom-check.html": {
       "lineas": 866

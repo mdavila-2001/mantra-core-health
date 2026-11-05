@@ -17,6 +17,11 @@ import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/ma
 import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterPharmacy } from './register-pharmacy';
 
+import { defaultWeekHours, toShifts } from '../shared-registration/opening-hours/opening-hours';
+
+/** The pre-filled week every sign-up starts with, as it travels to the API. */
+const HORARIO_PLANTILLA = toShifts(defaultWeekHours());
+
 /** La forma que espera `IamClient.registerPharmacyOrganization`, según lo arma el cliente. */
 interface CuerpoDelAlta {
   readonly organization: {
@@ -306,7 +311,7 @@ describe('RegisterPharmacy', () => {
 
     const req = http.expectOne(RUTA_ALTA);
     expect((req.request.body as CuerpoDelAlta).organization.pharmacy?.branches).toEqual([
-      { name: 'Sucursal Equipetrol', latitude: -17.75, longitude: -63.15 },
+      { name: 'Sucursal Equipetrol', latitude: -17.75, longitude: -63.15, openingHours: HORARIO_PLANTILLA },
     ]);
     req.flush(RESPUESTA_201);
   });

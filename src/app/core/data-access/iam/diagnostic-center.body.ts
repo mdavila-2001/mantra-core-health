@@ -40,6 +40,9 @@ export function cuerpoDeCentroDiagnostico(registration: DiagnosticCenterRegistra
         ? {}
         : { legalRepresentative: registration.legalRepresentative }),
       ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+      ...(registration.openingHours === undefined
+        ? {}
+        : { openingHours: registration.openingHours }),
     },
     owner: {
       email: registration.owner.email,

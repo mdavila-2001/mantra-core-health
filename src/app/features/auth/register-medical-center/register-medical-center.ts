@@ -79,6 +79,7 @@ import {
   medicalOrganizationTypeOptions,
 } from './medical-organization-types';
 import { medicalCenterPages, TEST_ID } from './medical-center-pages';
+import { RegistrationOpeningHours } from '../shared-registration/opening-hours';
 import { AYUDA_ALTA_MEDICA } from './medical-center.help';
 import {
   AVISO_CATALOGO,
@@ -91,11 +92,9 @@ import {
 export { documentosOpcionales, entreLasOpciones, signupErrorMessage };
 export { DOCUMENTOS_OPCIONALES_POR_TIPO } from './medical-center-rules';
 
-/** Dónde se leen el país y la jurisdicción: los mismos catálogos públicos del alta de laboratorio. */
+/** Dónde se leen el país y la jurisdicción (los catálogos públicos del alta de laboratorio) y sus códigos estables. */
 const DESTINO_PAIS = 'directory.tenants.country_concept_id';
 const DESTINO_JURISDICCION = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
-
-/** Los códigos estables de esos conceptos. */
 const COUNTRY_CODE = 'BO';
 const JURISDICTION_CODE = 'JURISDICTION_NATIONAL';
 
@@ -166,6 +165,7 @@ const AVISO_GERENCIAS =
     PaginatedForm,
     RegistrationBadge,
     RegistrationHelp,
+    RegistrationOpeningHours,
     RouterLink,
   ],
   templateUrl: './register-medical-center.html',
