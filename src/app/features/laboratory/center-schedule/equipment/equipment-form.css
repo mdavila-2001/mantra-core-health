@@ -1,0 +1,31 @@
+/* Device form: one column on a phone, two from a tablet up. */
+
+:host {
+  display: block;
+}
+
+.formulario {
+  display: grid;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.formulario__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}
+
+@media (min-width: 780px) {
+  .formulario {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .formulario__acciones {
+    grid-column: 1 / -1;
+  }
+}

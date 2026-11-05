@@ -70,3 +70,40 @@ La entrega se preparó sobre `origin/mockup` en `f57b50f3`, incorporando sus cam
 La suite Angular completa ejecutó **5.243 pruebas: 5.241 PASS y 2 FAIL**. Además del fallo de identidad ya identificado, la prueba de navegación detecta que el catálogo de iconos no incluye `edit` en ambas listas. Los dos fallos se reprodujeron ejecutando esos specs sobre un worktree intacto de `origin/mockup`: 54 PASS y los mismos 2 FAIL. Se conservaron las aserciones y no se modificaron esos módulos.
 
 Evidencia adicional: `logs/push-full-tests.log`, `logs/push-baseline-tests.log`, `logs/push-build.log` y `logs/push-playwright.log`. En los logs versionados sólo se eliminaron espacios finales y líneas vacías finales para cumplir `git diff --check`.
+
+## Diálogo nativo abierto: la zona no acepta soltar (05/11/2026)
+
+Pedido del propietario (captura del 04/11/2026, constitución de la empresa en
+el registro de aseguradora): si eligió «desde su dispositivo», mientras el
+diálogo del sistema está abierto no se debe poder arrastrar a la zona. En
+Windows se puede arrastrar desde el propio diálogo hasta la página, y la zona
+lo tomaba iluminada como si invitara a soltar: dos caminos de selección a la
+vez.
+
+La regla vive en una sola primitiva, `src/app/shared/forms/native-file-picker.ts`:
+
+- `observeNativeFilePicker(input, renderer, onChange)` escucha el `click` del
+  `<input type="file">` (abre; un control deshabilitado no abre nada) y lo
+  cierra con `change`, con `cancel` (Chrome 113, Firefox 91, Safari 16.4) o con
+  el `focus` de la ventana, que vuelve al cerrarse el diálogo en navegadores
+  sin `cancel`.
+- La directiva `appNativeFilePicker` la declara sobre el propio input y expone
+  `open()`; quien la contiene la lee con `viewChild`.
+
+La usan las tres superficies con arrastre y selector nativo, así que cualquier
+pantalla que las reutilice la hereda sin hacer nada:
+
+| Superficie | Con el diálogo abierto |
+|---|---|
+| `app-file-input` (y `app-dropzone-pdf`, `app-attachment-uploader`, registros, ficha clínica…) | `dragover` con `dropEffect = 'none'`, sin realce; `drop` ignorado; el texto dice «Elija el archivo en la ventana de su dispositivo». Clase `is-picker-open` en la zona. |
+| `appFileDropTarget` (foto, firma, sello, portada, comentarios, chat) | `dragover` con `dropEffect = 'none'`, sin realce; `drop` ignorado. Acepta un input o una lista (`[archivo, camara]` en el compositor del chat): cualquiera abierto bloquea, lo soltado va al primero. |
+| Resultados de laboratorio («Elegir archivos» / «Elegir una carpeta») | Igual; clase `results__drop--picker-open` (borde sólido apagado) y el título pasa a «Elija en la ventana de su dispositivo». |
+
+En ningún caso se suelta el `preventDefault` del `dragover`: sin él, soltar
+sobre la página la reemplaza por el archivo.
+
+Evidencia: pruebas unitarias en `native-file-picker.spec.ts`,
+`file-input.spec.ts` («con el diálogo nativo abierto»),
+`file-drop-target.spec.ts` y `laboratory-results.spec.ts`. El diálogo nativo en sí no se puede abrir desde
+Playwright (lo intercepta), así que el cierre por `cancel`/`focus` se prueba
+con eventos sintéticos y no con captura de navegador.

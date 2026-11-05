@@ -1,9 +1,11 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { crearRouterSimulado } from './index';
+import { labInboxOrders } from './diagnostics.handlers';
 import { estadosDeOrden } from './lab-orders.handlers';
 import { TAMANO_DE_PARTE, tipoDeResultado } from './lab-portal.handlers';
 import { orderList } from '../fixtures/clinic';
+import { ORDER_CATEGORY } from '../fixtures/concepts';
 import { buscarUsuario, TENANT_LABORATORIO } from '../mock-session';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 
@@ -358,6 +360,7 @@ describe('handlers del portal de laboratorio', () => {
       orderId: string;
       status: string;
       reason: string | null;
+      canReject?: boolean;
       files: { id: string; fileName: string }[];
     }
     const listar = () => cuerpo<{ items: Orden[]; count: number }>(pedir('GET', '/diagnostics/lab/orders'));
@@ -424,32 +427,55 @@ describe('handlers del portal de laboratorio', () => {
       expect(estadoDe(id)).toBe('UPLOADED');
     });
 
-    it('cancelar (borrador o recibida) y rechazar (recibida) funcionan, con el motivo guardado', () => {
-      const borrador = ordenEn('DRAFT', 0);
-      const cancelada = cuerpo<Orden>(paso(borrador, 'CANCEL', 'Pedida por error'));
-      expect(cancelada.status).toBe('CANCELLED');
-      expect(cancelada.reason).toBe('Pedida por error');
-      expect(estadoDe(borrador)).toBe('CANCELLED');
+    /** A laboratory order of the sample data (they all are), left in `status`. */
+    function ordenDeLaboratorio(status: 'DRAFT' | 'RECEIVED' | 'PROCESSED'): string {
+      const orden = listar().items.find((o) => o.files.length === 0 || o.status !== 'UPLOADED')!;
+      estadosDeOrden.agregar({ id: orden.orderId, status, reason: null });
+      return orden.orderId;
+    }
 
-      const recibida = ordenEn('RECEIVED', 1);
-      const rechazada = cuerpo<Orden>(paso(recibida, 'REJECT', 'Muestra insuficiente'));
+    it('rechazar una orden recibida con muestra funciona, con el motivo guardado, y deja de ofrecerse', () => {
+      const id = ordenDeLaboratorio('RECEIVED');
+      const rechazada = cuerpo<Orden>(paso(id, 'REJECT', 'Muestra insuficiente'));
       expect(rechazada.status).toBe('REJECTED');
       expect(rechazada.reason).toBe('Muestra insuficiente');
-
-      expect(estado(paso(ordenEn('RECEIVED', 0), 'CANCEL', 'Duplicada'))).toBe(200);
+      expect(rechazada.canReject).toBe(false);
+      expect(estadoDe(id)).toBe('REJECTED');
     });
 
-    it('cancelar y rechazar sin motivo es un 400, y un paso que el estado no admite es un 409 con el estado actual', () => {
-      const borrador = ordenEn('DRAFT', 0);
-      expect(estado(paso(borrador, 'CANCEL'))).toBe(400);
-      expect(estado(paso(borrador, 'CANCEL', '   '))).toBe(400);
+    it('cancelar no existe para el laboratorio: la API responde 422 en cualquier estado y la orden no cambia', () => {
+      for (const status of ['DRAFT', 'RECEIVED'] as const) {
+        const id = ordenDeLaboratorio(status);
+        expect(estado(paso(id, 'CANCEL', 'Pedida por error'))).toBe(422);
+        expect(estadoDe(id)).toBe(status);
+      }
+    });
+
+    it('rechazar una orden de imagenología (sin muestra) es un 422 y la orden no cambia', () => {
+      // The sample inbox only has laboratory orders: one is turned into imaging for this test and restored.
+      const id = ordenDeLaboratorio('RECEIVED');
+      const original = labInboxOrders.get(id)!;
+      labInboxOrders.agregar({ ...original, categoryConceptId: ORDER_CATEGORY['SRQ-IMAGING']! });
+      try {
+        const antes = listar().items.find((o) => o.orderId === id)!;
+        expect(antes.canReject).toBe(false);
+        expect(estado(paso(id, 'REJECT', 'Placa movida'))).toBe(422);
+        expect(estadoDe(id)).toBe('RECEIVED');
+      } finally {
+        labInboxOrders.agregar(original);
+      }
+    });
+
+    it('rechazar sin motivo es un 400, y un paso que el estado no admite es un 409 con el estado actual', () => {
+      const borrador = ordenDeLaboratorio('DRAFT');
+      expect(estado(paso(borrador, 'REJECT'))).toBe(400);
+      expect(estado(paso(borrador, 'REJECT', '   '))).toBe(400);
       expect(estadoDe(borrador)).toBe('DRAFT');
 
-      const procesada = ordenEn('PROCESSED', 1);
+      const procesada = ordenDeLaboratorio('PROCESSED');
       const rechazo = paso(procesada, 'REJECT', 'Tarde');
       expect(estado(rechazo)).toBe(409);
       expect(cuerpo<{ details: { currentStatus: string } }>(rechazo).details.currentStatus).toBe('PROCESSED');
-      expect(estado(paso(procesada, 'CANCEL', 'Tarde'))).toBe(409);
     });
 
     it('rechaza un paso inventado y una cuenta ajena al laboratorio', () => {

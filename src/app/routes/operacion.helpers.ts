@@ -18,7 +18,7 @@ export function pantallaDeOperacion(
     path: `${seccion}/${subpath}`,
     title: `${APP_TITLE} - ${titulo}`,
     canActivate: [seccionRolesGuard],
-    loadComponent: () => loader().catch(() => chunkFallido()),
+    loadComponent: () => loader().catch(chunkFallido),
   };
 }
 

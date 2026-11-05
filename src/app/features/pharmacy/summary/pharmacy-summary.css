@@ -3,7 +3,21 @@
 }
 
 .summary__pharmacy {
-  margin-block-end: var(--sp-4);
+  margin-block: var(--sp-4);
+}
+
+app-pharmacy-welcome {
+  display: block;
+  margin-block-end: var(--sp-6);
+}
+
+.summary__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .summary__panel {

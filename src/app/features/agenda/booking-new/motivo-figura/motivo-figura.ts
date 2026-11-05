@@ -9,6 +9,7 @@ import {
   type SexoDeLaSilueta,
   type ZonaElegible,
 } from '../../../../shared/components/organisms/body-map/body-map';
+import { bodyPartsIn, withNamedParts } from '../../../symptom-check/body-parts';
 import {
   recognize,
   recognizeAlarms,
@@ -22,8 +23,8 @@ import { BODY_ZONES } from '../../../symptom-check/zones.data';
  * 2026-11-04: the right column of the booking screen was empty).
  *
  * Same figure and same detection as the symptom check (`features/symptom-check`):
- * - text → figure: the reason goes through the local rules engine (no AI
- *   service: removed on 2026-11-04 for legal risk); recognized zones light up;
+ * - text → figure: the reason goes through the local engine only (no external
+ *   service); recognized zones light up on the silhouette;
  * - figure → text: tapping a zone lists its symptoms, and picking one appends it
  *   to the reason without overwriting it and without exceeding `maximo`.
  *
@@ -57,23 +58,24 @@ export class MotivoFigura {
     { initialValue: '' },
   );
 
-  /* ---- detection: the local engine of `symptom-check` -------------------- */
+  /* ---- detection: the local one from `symptom-check` ---------------------- */
 
-  /** What the reason mentions, as the local engine reads it. */
+  /** What the reason mentions, from the local engine. */
   protected readonly sintomas = computed<readonly Sintoma[]>(() =>
     recognize(this.texto()).filter((s) => this.visible(s)),
   );
 
   protected readonly alarmas = computed(() => recognizeAlarms(this.texto()));
 
-  /** Zones lit by the text (same rule as `symptom-check`). */
+  /** Zones lit by the text: same rule as `symptom-check`. */
   protected readonly zonasMarcadas = computed<readonly string[]>(() => {
     const marcadas = new Set<string>();
     for (const sintoma of [...this.sintomas(), ...this.alarmas()]) {
       const deLaTabla = BODY_ZONES.find((zona) => zona.sintomas.includes(sintoma.id));
-      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.madre ?? deLaTabla.id); // no invented side
     }
-    return [...marcadas];
+    // Parts named in the text are exact («rodilla derecha») and narrow the symptom's coarse zone.
+    return withNamedParts(bodyPartsIn(this.texto()), [...marcadas], (id) => BODY_ZONES.find((z) => z.id === id)?.madre);
   });
 
   /* ---- picking by touch -------------------------------------------------- */

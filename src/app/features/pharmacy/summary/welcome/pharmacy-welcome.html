@@ -1,0 +1,48 @@
+<!-- Pharmacy home: greeting and shortcuts on the left, the counter on the side.
+     One full-width piece, same as the practitioner welcome. -->
+<section class="welcome" data-testid="pharmacy-welcome" aria-labelledby="pharmacy-welcome-title">
+  <div class="welcome__main">
+    @if (today(); as date) {
+      <p class="welcome__date">
+        <app-nav-icon name="calendar" aria-hidden="true" />
+        <span>{{ date | date: "EEEE d 'de' MMMM" }}</span>
+      </p>
+    }
+
+    <h1 class="welcome__title" id="pharmacy-welcome-title">
+      @if (name() === '') {
+        Su farmacia
+      } @else {
+        {{ greeting() }}, <span class="welcome__name">{{ name() }}</span>
+      }
+    </h1>
+    <p class="welcome__lead">
+      Le damos la bienvenida a su mostrador en AloVida: las solicitudes que llegan, su catálogo y sus
+      promociones, en un solo lugar.
+    </p>
+
+    @if (shortcuts().length > 0) {
+      <h2 class="welcome__question">¿Qué necesita hacer ahora?</h2>
+      <ul class="welcome__shortcuts">
+        @for (shortcut of shortcuts(); track shortcut.testId) {
+          <li>
+            <a class="shortcut" [routerLink]="shortcut.route" [attr.data-testid]="shortcut.testId">
+              <span class="shortcut__icon" aria-hidden="true">
+                <app-nav-icon [name]="shortcut.icon" />
+              </span>
+              <span class="shortcut__body">
+                <span class="shortcut__title">{{ shortcut.title }}</span>
+                <span class="shortcut__text">{{ shortcut.text }}</span>
+              </span>
+              <app-nav-icon class="shortcut__arrow" name="arrow-right" aria-hidden="true" />
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <aside class="welcome__aside" aria-label="Su mostrador ahora">
+    <app-counter-today />
+  </aside>
+</section>

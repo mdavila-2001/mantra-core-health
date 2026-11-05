@@ -1,0 +1,70 @@
+@let e = equipo();
+<article class="linea" [attr.data-testid]="'centro-equipo-' + e.id" [attr.aria-label]="e.name">
+  <div class="linea__cabecera">
+    <div class="linea__datos">
+      <p class="linea__nombre">{{ e.name }}</p>
+      @if (e.manufacturer || e.serialNumber) {
+        <p class="linea__ayuda">{{ e.manufacturer }}{{ e.manufacturer && e.serialNumber ? ' · ' : '' }}{{ e.serialNumber ? 'Nº ' + e.serialNumber : '' }}</p>
+      }
+    </div>
+    <div class="linea__acciones">
+      <app-select
+        class="linea__estado"
+        [ariaLabel]="'Estado de ' + e.name"
+        [options]="estados"
+        [value]="e.status"
+        [disabled]="ocupado()"
+        (valueChange)="$event !== null && $event !== e.status && estadoChange.emit($event)"
+        [attr.data-testid]="'centro-estado-' + e.id"
+      />
+      <button app-button variant="ghost" size="sm" [disabled]="ocupado()" (click)="editar.emit()" [attr.data-testid]="'centro-equipo-editar-' + e.id">Editar</button>
+      <button app-button variant="ghost" size="sm" [disabled]="ocupado()" (click)="quitar.emit()" [attr.data-testid]="'centro-equipo-quitar-' + e.id">Quitar</button>
+    </div>
+  </div>
+
+  @if (limitaTurnos()) {
+    <div class="linea__turno">
+      <span class="linea__rotulo">Tiene turno propio</span>
+      <app-segmented-control
+        [attr.data-testid]="'centro-turno-propio-' + e.id"
+        [ariaLabel]="e.name + ': ¿tiene turno propio?'"
+        [options]="siNo"
+        [value]="turno() !== null ? 'si' : 'no'"
+        (valueChange)="alternarTurno($event)"
+      />
+    </div>
+    @if (turno(); as propio) {
+      <app-schedule-block-editor [testPrefix]="'centro-equipo-' + e.id" [nombre]="e.name" [block]="propio" (blockChange)="turnoChange.emit($event)" />
+    } @else {
+      <p class="linea__ayuda">Atiende en el horario de su servicio.</p>
+    }
+
+    <section class="cola" [attr.aria-label]="'Cola de hoy de ' + e.name" [attr.data-testid]="'centro-cola-' + e.id">
+      <h3 class="cola__titulo">Cola de hoy · {{ cola().length }} {{ cola().length === 1 ? 'paciente' : 'pacientes' }}</h3>
+      @if (cola().length > 0) {
+        <ol class="cola__lista">
+          @for (b of cola(); track b.bookingId) {
+            <li class="cola__turno">
+              <time [attr.datetime]="b.startsAt">{{ hora(b.startsAt) }}</time>
+              <span>{{ b.patientName ?? 'Paciente' }}{{ b.studyName ? ' · ' + b.studyName : '' }}</span>
+              <span class="linea__ayuda">{{ estadoDelTurno(b.status) }}</span>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p class="linea__ayuda">Nadie en cola hoy.</p>
+      }
+    </section>
+  } @else {
+    <p class="linea__ayuda">Procesa muestras en lote: no limita los turnos.</p>
+  }
+
+  @if (e.glossaryConceptId) {
+    <details class="linea__mapa" (toggle)="alternarMapa($event)">
+      <summary>Cómo se conectan sus datos</summary>
+      @if (mapaAbierto()) {
+        <app-glossary-data-flow [conceptoId]="e.glossaryConceptId" [enlazar]="veGlosario()" />
+      }
+    </details>
+  }
+</article>

@@ -17,7 +17,9 @@ class Anfitrion {
 describe('MotivoFigura', () => {
   function montar() {
     TestBed.configureTestingModule({
-      providers: [{ provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false }],
+      providers: [
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     const fixture = TestBed.createComponent(Anfitrion);
     fixture.detectChanges();
@@ -33,6 +35,17 @@ describe('MotivoFigura', () => {
     expect(cabeza?.parentElement?.classList.contains('body-map__zona--marcada')).toBe(true);
     expect(el.querySelector('[data-testid="reserva-figura-reconocidos"]')?.textContent).toContain(
       'dolor de cabeza',
+    );
+  });
+
+  it('lee solo con el motor local: sin servicios externos y sin el aviso «Leyendo…»', () => {
+    const { fixture, host, el } = montar();
+    host.motivo.setValue('me duele la cabeza desde ayer');
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('Leyendo');
+    expect(el.querySelector('[data-testid="reserva-figura-reconocidos"]')?.textContent).toContain(
+      'En el motivo reconocemos',
     );
   });
 

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { MEDICAL_ORGANIZATION_TYPES } from '../../../core/data-access/directory/directory.types';
 import { OrganizationProfile } from '../../organization/organization-profile/organization-profile';
 import { MyProfile } from '../my-profile/my-profile';
 
@@ -16,7 +17,7 @@ import { MyProfile } from '../my-profile/my-profile';
   selector: 'app-my-account',
   imports: [MyProfile, OrganizationProfile],
   template: `
-    @if (auth.isOrganizationAccount()) {
+    @if (muestraLaOrganizacion()) {
       <app-organization-profile />
     } @else {
       <app-my-profile />
@@ -26,4 +27,15 @@ import { MyProfile } from '../my-profile/my-profile';
 })
 export class MyAccount {
   protected readonly auth = inject(AuthService);
+
+  protected readonly muestraLaOrganizacion = computed(() => {
+    if (this.auth.isOrganizationAccount()) return true;
+    const tipo = this.auth.activeTenantType() as (typeof MEDICAL_ORGANIZATION_TYPES)[number] | null;
+    return (
+      tipo !== null &&
+      MEDICAL_ORGANIZATION_TYPES.includes(tipo) &&
+      this.auth.patientProfileId() === null &&
+      this.auth.practitionerProfileId() === null
+    );
+  });
 }

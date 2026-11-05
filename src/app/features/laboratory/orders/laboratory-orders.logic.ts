@@ -60,13 +60,16 @@ export const ORDER_STATUS_BADGE: Readonly<
 };
 
 /** Los códigos estables de las acciones de la fila. */
-export type OrderActionCode = 'receive' | 'process' | 'upload' | 'download' | 'cancel' | 'reject';
+export type OrderActionCode = 'receive' | 'process' | 'upload' | 'download' | 'reject';
 
 /**
- * Las acciones de la fila: recibir, marcar como procesada, subir resultados,
- * descargar, y las dos salidas, cancelar y rechazar. Cada una sólo está
- * habilitada en el paso del camino que le toca; una orden cancelada o
- * rechazada no tiene ninguna. Valen igual para laboratorio e imagenología.
+ * Recibir, marcar como procesada, subir resultados, descargar y rechazar (con
+ * motivo; sólo si la API dice `canReject`: lo registra contra la muestra, así
+ * que una orden de imagenología nunca lo trae). Cada una sólo está habilitada
+ * en el paso del camino que le toca; una orden cancelada o rechazada no tiene
+ * ninguna. Cancelar no se ofrece: la orden es de quien la pidió y la API
+ * responde 422 (`DIAGNOSTICS_LAB_ORDER_ACTION_UNSUPPORTED`) si el laboratorio
+ * intenta anularla.
  *
  * Es presentación: la API revalida cada paso y responde 409 si no corresponde.
  */
@@ -92,35 +95,25 @@ export function actionsOf(order: LabOrder): readonly RowAction[] {
       icon: 'download',
       disabled: order.status !== 'UPLOADED' || order.files.length === 0,
     },
-    {
-      code: 'cancel',
-      label: 'Cancelar',
-      icon: 'close',
-      destructive: true,
-      disabled: order.status !== 'DRAFT' && order.status !== 'RECEIVED',
-    },
-    {
-      code: 'reject',
-      label: 'Rechazar',
-      icon: 'remove',
-      destructive: true,
-      disabled: order.status !== 'RECEIVED',
-    },
+    // Only when the API says so: rejecting is recorded against the specimen, which imaging orders lack.
+    ...(order.canReject === true
+      ? [{ code: 'reject', label: 'Rechazar', icon: 'remove', destructive: true } satisfies RowAction]
+      : []),
   ];
 }
 
-/** The reason box of the cancel and reject dialogs: three characters at least. */
+/** The reason box of the reject dialog: three characters at least. */
 export const REASON_FIELD = {
-  label: 'Motivo',
-  placeholder: 'Por ejemplo: pedida por error',
+  label: 'Motivo del rechazo',
+  placeholder: 'Por ejemplo: muestra hemolizada o insuficiente',
   minLength: 3,
   maxLength: 300,
 } as const;
 
-/** What each exit step asks, and what it says when it is done. */
+/** What the reject step asks, and what it says when it is done. */
 export const REASON_STEPS: Readonly<
   Record<
-    'cancel' | 'reject',
+    'reject',
     {
       readonly action: LabOrderAction;
       readonly done: string;
@@ -133,16 +126,6 @@ export const REASON_STEPS: Readonly<
     }
   >
 > = {
-  cancel: {
-    action: 'CANCEL',
-    done: 'Orden cancelada.',
-    dialog: (order) => ({
-      title: 'Cancelar la orden',
-      message: `Cancela «${order.studyName}» de ${order.patientName}. La orden queda cancelada con el motivo que escriba y ya no admite más pasos.`,
-      confirmLabel: 'Cancelar la orden',
-      destructive: true,
-    }),
-  },
   reject: {
     action: 'REJECT',
     done: 'Orden rechazada.',
