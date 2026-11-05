@@ -120,6 +120,54 @@ describe('buildRoadmap', () => {
     expect(de('licenses').detail).toContain('1 de 2');
   });
 
+  describe('«Títulos» es obligatorio, como en el catálogo de requisitos de la API', () => {
+    const credentialsStep = (credentials: unknown[]) =>
+      buildRoadmap(perfil({ credentials } as unknown as Partial<OwnPractitionerProfile>), etiquetas, []).find(
+        (p) => p.key === 'credentials',
+      )!;
+
+    it('no se presenta como opcional', () => {
+      const step = credentialsStep([]);
+      expect(step.optional).toBe(false);
+      expect(step.detail).not.toContain('Opcional');
+      expect(step.detail).toContain('título universitario');
+    });
+
+    it('sin títulos invita a cargar uno; con uno rechazado, a revisarlos; verificado, no pide nada', () => {
+      expect(credentialsStep([]).action?.label).toBe('Cargar un título');
+      expect(credentialsStep([{ id: 'c-1', stateConceptId: 'c-cred-rejected' }]).action?.label).toBe(
+        'Revisar mis títulos',
+      );
+      expect(credentialsStep([{ id: 'c-1', stateConceptId: 'c-cred-verified' }]).action).toBeUndefined();
+    });
+  });
+
+  describe('cada salida lleva a su sección exacta de «Editar perfil»', () => {
+    const steps = buildRoadmap(perfil({ licenses: [] }), etiquetas, []);
+    const stepOf = (key: string) => steps.find((p) => p.key === key)!;
+
+    it.each([
+      ['licenses', 5, 'licenses'],
+      ['credentials', 5, 'credentials'],
+      ['specialties', 0, 'specialties'],
+    ] as const)('%s: pestaña %d, ancla #%s', (key, tab, fragment) => {
+      expect(stepOf(key).action).toMatchObject({
+        route: '/my-account/edit',
+        queryParams: { pestana: tab },
+        fragment,
+      });
+    });
+
+    it('«Especialidades» tiene su salida mientras no estén verificadas', () => {
+      expect(stepOf('specialties').action?.label).toBe('Revisar mis especialidades');
+    });
+
+    it('un tramo verificado no ofrece salida', () => {
+      const withLicense = buildRoadmap(perfil(), etiquetas, []);
+      expect(withLicense.find((p) => p.key === 'licenses')!.action).toBeUndefined();
+    });
+  });
+
   it('las instituciones cuentan sólo los pedidos que alguien puede confirmar', () => {
     const pasos = buildRoadmap(
       perfil({

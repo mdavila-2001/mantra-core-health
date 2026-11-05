@@ -7,6 +7,7 @@ import type { ConceptLabels } from '../../../core/data-access/terminology/termin
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { sello } from '../my-profile/practitioner-profile/practitioner-seal';
+import { ROADMAP_LINKS, untilApproved, type RoadmapLink } from './roadmap-links';
 
 /* ============================================================================
     «Mis verificaciones»: lo que hay que mostrar, armado sin DOM.
@@ -37,7 +38,7 @@ export interface RoadmapStep {
   /** Qué hay detrás del estado, en una frase. */
   readonly detail: string;
   /** La salida, cuando el tramo depende de algo que la persona puede hacer. */
-  readonly action?: { readonly label: string; readonly route: string };
+  readonly action?: RoadmapLink;
   /** Los tramos que no impiden atender no frenan la hoja de ruta. */
   readonly optional: boolean;
 }
@@ -193,9 +194,7 @@ export function buildRoadmap(
         perfilEstado === 'approved'
           ? 'AloVida verificó su identidad profesional: su perfil ya muestra el sello.'
           : 'El equipo de AloVida revisa sus datos y su matrícula. Con el sello, sus pacientes saben que su perfil fue verificado.',
-      ...(perfilEstado === 'approved'
-        ? {}
-        : { action: { label: 'Completar mi perfil', route: '/onboarding' } }),
+      ...untilApproved(perfilEstado, ROADMAP_LINKS.profile),
       optional: false,
     }),
     paso({
@@ -209,11 +208,10 @@ export function buildRoadmap(
         'habilitaciones',
         'Cargue su matrícula para que podamos verificarla.',
       ),
-      ...(combineStates(matriculas) === 'approved'
-        ? {}
-        : { action: { label: 'Revisar mis habilitaciones', route: '/my-account/edit' } }),
+      ...untilApproved(combineStates(matriculas), ROADMAP_LINKS.licenses),
       optional: false,
     }),
+    // Required: the API's admission catalog asks every practitioner for a university degree.
     paso({
       key: 'credentials',
       title: 'Títulos',
@@ -223,12 +221,13 @@ export function buildRoadmap(
         titulos,
         'título',
         'títulos',
-        'Opcional. Sus diplomas dan confianza a quien lo elige.',
+        'Cargue su título universitario para que podamos verificarlo.',
       ),
-      ...(titulos.length === 0
-        ? { action: { label: 'Cargar un título', route: '/my-account/edit' } }
-        : {}),
-      optional: true,
+      ...untilApproved(
+        combineStates(titulos),
+        titulos.length === 0 ? ROADMAP_LINKS.firstCredential : ROADMAP_LINKS.credentials,
+      ),
+      optional: false,
     }),
     paso({
       key: 'specialties',
@@ -241,6 +240,7 @@ export function buildRoadmap(
         'especialidades',
         'Opcional. Sin especialidad, figura como medicina general.',
       ),
+      ...untilApproved(combineStates(especialidades), ROADMAP_LINKS.specialties),
       optional: true,
     }),
     paso({

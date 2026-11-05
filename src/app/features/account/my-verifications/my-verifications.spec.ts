@@ -423,6 +423,25 @@ describe('MyVerifications', () => {
     );
   });
 
+  it('«Títulos» está entre las etapas obligatorias, con su salida a la sección exacta de «Editar perfil»', () => {
+    montar();
+    responder();
+    const credentials = porTestId('verif-tramo-credentials')!;
+    expect(credentials.closest('ol')?.getAttribute('aria-label')).toBe('Etapas de su verificación');
+    expect(credentials.textContent).not.toContain('Opcional');
+    // No license yet, so the license is the next step: the main call to action goes to its section.
+    expect(porTestId('verif-siguiente')?.getAttribute('href')).toBe(
+      '/my-account/edit?pestana=5#licenses',
+    );
+    expect(porTestId('verif-step-action-credentials')?.textContent).toContain('Cargar un título');
+    expect(porTestId('verif-step-action-credentials')?.getAttribute('href')).toBe(
+      '/my-account/edit?pestana=5#credentials',
+    );
+    expect(porTestId('verif-step-action-specialties')?.getAttribute('href')).toBe(
+      '/my-account/edit?pestana=0#specialties',
+    );
+  });
+
   describe('la solicitud de verificación (admisión)', () => {
     const ADMISSION_URL = '/profiles/practitioners/me/admission';
     const ATTESTATION = { attested: true, attestationVersion: '2026-10' };
