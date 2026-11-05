@@ -411,7 +411,9 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
-  it('una S.R.L. sin poder notariado no se envía; una unipersonal sí (BR-09)', () => {
+  it('sin poder notariado no se envía, tampoco una unipersonal: es obligatorio para toda organización', () => {
+    // Decisión del propietario (05/11/2026): el front exige el poder a todo tipo
+    // societario, aunque la API (BR-09) dejara pasar a una unipersonal sin él.
     completarObligatorio();
     component.form.controls.powerOfAttorneyFileId.setValue('');
     component.submit();
@@ -419,11 +421,27 @@ describe('RegisterPharmacy', () => {
 
     component.form.controls.companyType.setValue('UNIPERSONAL');
     component.submit();
+    http.expectNone(RUTA_ALTA);
+    expect(component.form.controls.powerOfAttorneyFileId.invalid).toBe(true);
+
+    component.form.controls.powerOfAttorneyFileId.setValue('file-poder');
+    component.submit();
     const req = http.expectOne(RUTA_ALTA);
-    expect((req.request.body as CuerpoDelAlta).organization.legalRepresentative).not.toHaveProperty(
+    expect((req.request.body as CuerpoDelAlta).organization.legalRepresentative).toHaveProperty(
       'powerOfAttorneyFileId',
+      'file-poder',
     );
     req.flush(RESPUESTA_201);
+  });
+
+  it('el poder del representante se rotula obligatorio, nunca «(opcional)»', () => {
+    const poder = component
+      .paginas()
+      .flatMap((p) => p.campos)
+      .find((c) => c.key === 'powerOfAttorneyFileId');
+
+    expect(poder?.label).not.toMatch(/opcional/);
+    expect(poder?.required).toBe(true);
   });
 
   it('una gerencia a medias no viaja: las tres o ninguna', () => {

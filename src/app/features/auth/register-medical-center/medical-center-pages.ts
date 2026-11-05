@@ -19,7 +19,7 @@ export interface PaginasDeAlta {
   readonly tiposSocietarios: readonly SelectOption<string>[];
   /** Los cinco papeles de la empresa, con los que el tipo societario omite marcados «(opcional)». */
   readonly camposDeDocumentos: readonly CampoDeFormulario[];
-  /** El poder del representante, opcional sólo para una unipersonal. */
+  /** El poder del representante, obligatorio para toda organización. */
   readonly campoDePoder: CampoDeFormulario;
   /** Si ya hay algo escrito en las gerencias: entonces las tres van completas y sus campos llevan asterisco. */
   readonly gerenciasEnUso: boolean;
@@ -247,7 +247,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       titulo: 'Poder del representante legal',
       clave: 'poder',
       icon: 'folder' as const,
-      hint: 'Solo PDF. Una empresa unipersonal no lo necesita: el titular se representa a sí mismo.',
+      hint: 'Solo PDF. Es obligatorio para toda organización, cualquiera sea su tipo de sociedad.',
       campos: [ctx.campoDePoder],
     },
     ...executivesPages(TEST_ID, ctx.gerenciasEnUso),
