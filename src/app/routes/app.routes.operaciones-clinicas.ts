@@ -35,6 +35,12 @@ export const RUTAS_OPERACIONES_CLINICAS: Routes = [
         (m) => m.ProcedureOffers,
       ),
   ),
+  // Proceso 4.2: the lab adds análisis from the same LOINC catalog the doctor orders from.
+  pantallaDeOperacion('administration/laboratory-prices', 'catalog', 'Agregar del catálogo', () =>
+    import('../features/laboratory/prices/catalog-import/lab-catalog-import').then(
+      (m) => m.LabCatalogImport,
+    ),
+  ),
   pantallaDeOperacion('my-services', 'import', 'Importar producto', () =>
     import('../features/admin/services-catalog/procedure-import/procedure-import').then(
       (m) => m.ProcedureImport,

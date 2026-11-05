@@ -23,6 +23,7 @@ import { registrarDiagnostico } from './diagnostics.handlers';
 import { registrarCentros } from './centros.handlers';
 import { registerCenterBookings } from './center-bookings.handlers';
 import { registerLabPortalApiParity } from './lab-portal-api-parity.handlers';
+import { registerLabCatalog } from './lab-catalog.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
@@ -181,6 +182,7 @@ export function crearRouterSimulado(): MockRouter {
   registerCenterBookings(router);
   registrarPortalDeLaboratorio(router);
   registerLabPortalApiParity(router);
+  registerLabCatalog(router);
   registrarProcedimientos(router);
   // F4 · quirófanos: salas, bloques, utilización y el día del caso.
   registerOperatingRooms(router);

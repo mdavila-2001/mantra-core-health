@@ -1444,9 +1444,6 @@
     "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.html": {
       "lineas": 358
     },
-    "src/app/features/laboratory/prices/laboratory-prices.ts": {
-      "lineas": 359
-    },
     "src/app/features/laboratory/results/laboratory-results.html": {
       "lineas": 359
     },

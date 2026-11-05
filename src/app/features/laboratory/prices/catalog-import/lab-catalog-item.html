@@ -1,0 +1,51 @@
+<article class="item" data-testid="lab-catalog-item" [attr.data-code]="item().code">
+  <div class="item__head">
+    @if (item().offeredServiceId) {
+      <app-badge variant="success" size="sm">Ya está en su lista de precios</app-badge>
+    } @else {
+      <app-checkbox
+        [label]="'Agregar ' + item().name"
+        [hideLabel]="true"
+        [checked]="selected()"
+        (checkedChange)="toggled.emit()"
+      />
+    }
+    <div>
+      <h3 class="item__name">{{ item().name }}</h3>
+      <p class="item__meta">
+        <code>{{ item().code }}</code>
+        @if (item().loinc) {
+          · LOINC {{ item().loinc }}
+        }
+        @if (item().specimen) {
+          · {{ item().specimen }}
+        }
+      </p>
+    </div>
+  </div>
+
+  @if (item().suggestedPrice; as price) {
+    <p class="item__price" data-testid="lab-catalog-price">
+      Sugerido <strong>{{ priceOf(price) }}</strong> ·
+      <span class="item__source">{{ price.source }} {{ price.sourceCode }}</span>
+    </p>
+  } @else {
+    <p class="item__price item__price--none" data-testid="lab-catalog-price">
+      Sin precio sugerido: lo pone usted en Precios.
+    </p>
+  }
+
+  @if (item().components.length > 0) {
+    <details class="item__parts">
+      <summary>Ver sus {{ item().components.length }} componentes</summary>
+      <ul>
+        @for (part of item().components; track part.conceptId) {
+          <li>
+            <span>{{ part.name }}</span>
+            <span class="item__part-price">{{ priceOf(part.suggestedPrice) }}</span>
+          </li>
+        }
+      </ul>
+    </details>
+  }
+</article>

@@ -1,0 +1,71 @@
+<app-data-table
+  caption="Precios de los servicios del laboratorio"
+  [state]="pageRows()"
+  [columns]="columns()"
+  [trackBy]="rowId"
+  [rowLabel]="rowLabel"
+  wrapHeaders
+  [cursor]="cursor()"
+  (cursorChanged)="goToCursor($event)"
+  (retry)="retry.emit()"
+  (refresh)="retry.emit()"
+  data-testid="lab-prices-table"
+/>
+
+<ng-template #nameCell let-service>
+  <div [class.prices__part]="service.parentId !== null">
+    <span class="prices__main">{{ service.name }}</span>
+    @if (panelName(service); as panel) {
+      <span class="prices__of">Componente de {{ panel }}</span>
+    } @else {
+      <code class="prices__code">{{ service.code }}</code>
+    }
+  </div>
+</ng-template>
+
+<ng-template #priceCell let-service>
+  <app-input
+    inputMode="decimal"
+    [placeholder]="service.hasPrice ? '0.00' : 'Sin precio'"
+    [ariaLabel]="'Precio de lista de ' + service.name + ', en bolivianos'"
+    [value]="edits().priceOf(service)"
+    (valueChange)="edits().setPrice(service, $event)"
+    [hasSuccess]="edits().isEdited(service)"
+    [testId]="'lab-prices-price-' + service.code"
+  />
+</ng-template>
+
+<ng-template #discountCell let-service>
+  <app-input
+    inputMode="decimal"
+    placeholder="Sin descuento"
+    [ariaLabel]="'Descuento AloVida de ' + service.name + ', en porcentaje'"
+    [value]="edits().discountOf(service)"
+    (valueChange)="edits().setDiscount(service, $event)"
+    [hasSuccess]="edits().isEdited(service)"
+    [testId]="'lab-prices-discount-' + service.code"
+  />
+</ng-template>
+
+<ng-template #alovidaCell let-service>
+  @if (edits().alovidaPriceOf(service); as price) {
+    <span class="prices__amount" [attr.data-testid]="'lab-prices-alovida-' + service.code">{{
+      price
+    }}</span>
+  } @else if (!service.hasPrice && !edits().isEdited(service)) {
+    <span class="prices__muted">—</span>
+  } @else {
+    <span class="prices__muted">Revise el precio</span>
+  }
+</ng-template>
+
+<ng-template #statusCell let-service>
+  @if (service.status === 'PUBLISHED') {
+    <app-badge variant="success">Visible</app-badge>
+  } @else if (!service.hasPrice) {
+    <!-- An unpriced catalog item waits out of sight; its first price publishes it. -->
+    <app-badge variant="warning">Falta el precio</app-badge>
+  } @else {
+    <app-badge variant="info">Borrador</app-badge>
+  }
+</ng-template>

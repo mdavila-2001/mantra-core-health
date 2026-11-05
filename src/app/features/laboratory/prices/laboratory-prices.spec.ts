@@ -9,6 +9,7 @@ import type {
   LabServiceChanges,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
 import { LaboratoryPrices } from './laboratory-prices';
+import type { PriceEdits } from './price-edits';
 
 /**
  * La pestaña «Precios» del laboratorio: precio de lista y descuento AloVida
@@ -19,6 +20,9 @@ function service(partial: Partial<LabService>): LabService {
     id: 's-1',
     code: 'HEM-01',
     name: 'Hemograma completo',
+    parentId: null,
+    catalogConceptId: null,
+    hasPrice: true,
     categoryId: null,
     categoryName: 'Hematología',
     sampleType: null,
@@ -40,15 +44,19 @@ function service(partial: Partial<LabService>): LabService {
 
 const CATALOG = [
   service({}),
-  service({ id: 's-2', code: 'GLU-01', name: 'Glucosa', price: '30.00', alovidaDiscountPercent: null, alovidaPrice: '30.00' }),
+  service({
+    id: 's-2',
+    code: 'GLU-01',
+    name: 'Glucosa',
+    price: '30.00',
+    alovidaDiscountPercent: null,
+    alovidaPrice: '30.00',
+  }),
   service({ id: 's-3', code: 'OLD-01', name: 'Retirado', status: 'WITHDRAWN' }),
 ];
 
 interface Internal {
-  setPrice: (service: LabService, value: string) => void;
-  setDiscount: (service: LabService, value: string) => void;
-  alovidaPriceOf: (service: LabService) => string | null;
-  dirtyCount: () => number;
+  edits: PriceEdits;
   save: () => void;
   errors: () => readonly string[];
   importOpen: { (): boolean; set: (value: boolean) => void };
@@ -60,7 +68,22 @@ describe('LaboratoryPrices', () => {
   let sent: { id: string; changes: LabServiceChanges }[];
   let listServices: ReturnType<typeof vi.fn>;
 
-  const internal = (): Internal => fixture.componentInstance as unknown as Internal;
+  const component = (): Internal => fixture.componentInstance as unknown as Internal;
+  // The row edits live in `PriceEdits`; the assertions stay the same.
+  const internal = () => {
+    const c = component();
+    return {
+      ...c,
+      save: () => c.save(),
+      errors: () => c.errors(),
+      importOpen: c.importOpen,
+      importClosed: (imported: boolean) => c.importClosed(imported),
+      setPrice: (s: LabService, v: string) => c.edits.setPrice(s, v),
+      setDiscount: (s: LabService, v: string) => c.edits.setDiscount(s, v),
+      alovidaPriceOf: (s: LabService) => c.edits.alovidaPriceOf(s),
+      dirtyCount: () => c.edits.count(),
+    };
+  };
 
   beforeEach(() => {
     sent = [];
@@ -153,5 +176,64 @@ describe('LaboratoryPrices', () => {
     internal().importClosed(true);
     expect(listServices).toHaveBeenCalledTimes(2);
     expect(internal().importOpen()).toBe(false);
+  });
+
+  it('pone cada componente debajo de su perfil, con su propio monto', () => {
+    const panel = service({
+      id: 'p-1',
+      code: 'HEMOGRAMA',
+      name: 'Hemograma completo',
+      catalogConceptId: 'c-1',
+    });
+    const hb = service({
+      id: 'p-2',
+      code: 'HEMOGRAMA.HB',
+      name: 'Hemoglobina',
+      parentId: 'p-1',
+      price: '9.75',
+      alovidaPrice: '9.75',
+      alovidaDiscountPercent: null,
+    });
+    const vcm = service({
+      id: 'p-3',
+      code: 'HEMOGRAMA.VCM',
+      name: 'Volumen corpuscular medio',
+      parentId: 'p-1',
+      hasPrice: false,
+      price: '0.00',
+      alovidaPrice: '0.00',
+      status: 'DRAFT',
+      alovidaDiscountPercent: null,
+    });
+    const glu = service({ id: 's-2', code: 'GLU-01', name: 'Glucosa' });
+    listServices.mockReturnValue(of({ items: [vcm, glu, hb, panel], count: 4 }));
+    fixture = TestBed.createComponent(LaboratoryPrices);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const rows = [...root.querySelectorAll('.prices__main')].map((el) => el.textContent?.trim());
+    expect(rows).toEqual([
+      'Glucosa',
+      'Hemograma completo',
+      'Hemoglobina',
+      'Volumen corpuscular medio',
+    ]);
+    expect(root.textContent).toContain('Componente de Hemograma completo');
+    // Without a suggested price the row asks for one instead of showing 0.00.
+    expect(root.textContent).toContain('Falta el precio');
+    expect(component().edits.priceOf(vcm)).toBe('');
+
+    component().edits.setPrice(vcm, '12');
+    component().save();
+    expect(sent).toEqual([
+      { id: 'p-3', changes: { price: '12.00', alovidaDiscountPercent: null } },
+    ]);
+  });
+
+  it('ofrece agregar análisis del catálogo', () => {
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="lab-prices-catalog"]',
+    );
+    expect(link?.getAttribute('href')).toBe('/administration/laboratory-prices/catalog');
   });
 });
