@@ -47,6 +47,13 @@
   color: var(--text-secondary);
 }
 
+.linea__turno app-segmented-control {
+  /* Same rule as the modality's: grows and never shrinks, or at 390 px the
+     options get base 0 and the labels are cut («N.»). */
+  flex: 1 0 auto;
+  min-inline-size: 8rem;
+}
+
 .linea__estado {
   min-inline-size: 12rem;
 }
