@@ -13,7 +13,7 @@ import {
 } from '../../catalog-rules/catalog.rules';
 
 /* ============================================================================
-    Los CSV de categorías, precios y sucursales de la pestaña «Importación».
+    Los CSV de categorías, precios y sucursales del modal «Importar CSV» del catálogo.
 
     Los encabezados van en castellano, como el de productos:
 

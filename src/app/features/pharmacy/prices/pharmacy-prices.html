@@ -1,7 +1,7 @@
 @if (!embedded()) {
   <app-page-header
     title="Precios"
-    subtitle="El precio de venta de cada producto, tal como lo ven los pacientes en la plataforma. Cambie los que necesite y guarde todo junto."
+    subtitle="El precio de venta de cada producto, tal como lo ven los pacientes en la plataforma."
   />
 }
 
@@ -22,27 +22,7 @@
   @if (scope.pharmacyId() !== null) {
     <div class="prices" data-testid="prices-card">
       <div class="prices__panel">
-        @if (errors().length > 0) {
-          <app-alert tone="error" title="Falta resolver esto" data-testid="prices-errors">
-            <ul class="prices__list">
-              @for (error of errors(); track error) {
-                <li>{{ error }}</li>
-              }
-            </ul>
-          </app-alert>
-        }
-
-        @if (rejected().length > 0) {
-          <app-alert tone="warning" title="Estos precios no se guardaron" data-testid="prices-rejected">
-            <ul class="prices__list">
-              @for (rejection of rejected(); track rejection.name) {
-                <li><strong>{{ rejection.name }}:</strong> {{ rejection.reason }}</li>
-              }
-            </ul>
-          </app-alert>
-        }
-
-        <!-- Buscar y guardar en un renglón desde 780 px: la tabla sube. -->
+        <!-- Buscar y exportar en un renglón desde 780 px: la tabla sube. -->
         <div class="prices__tools">
           <app-search-field
             label="Buscar un producto"
@@ -52,30 +32,10 @@
           />
 
           <div class="prices__bar">
-            <p class="prices__hint">Deje el precio vacío si todavía no quiere mostrarlo.</p>
-            <div class="prices__save">
-              @if (dirtyCount() > 0) {
-                <span class="prices__dirty" role="status">
-                  {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
-                </span>
-                <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
-                  Descartar
-                </button>
-              }
-              <button app-button variant="outline" type="button" (clicked)="exportCsv()" data-testid="prices-export">
-                Exportar CSV
-              </button>
-              <button
-                app-button
-                type="button"
-                [isLoading]="saving()"
-                [disabled]="saving() || dirtyCount() === 0"
-                (clicked)="save()"
-                data-testid="prices-save"
-              >
-                Guardar cambios
-              </button>
-            </div>
+            <p class="prices__hint">Use «Editar» en cada fila. Para cambiar muchos a la vez, «Importar CSV».</p>
+            <button app-button variant="outline" type="button" (clicked)="exportCsv()" data-testid="prices-export">
+              Exportar CSV
+            </button>
           </div>
         </div>
 
@@ -120,18 +80,6 @@
   }
 </ng-template>
 
-<ng-template #priceCell let-product>
-  <app-input
-    inputMode="decimal"
-    placeholder="0.00"
-    [ariaLabel]="'Precio de ' + name(product) + ', en bolivianos'"
-    [value]="priceOf(product)"
-    (valueChange)="setPrice(product, $event)"
-    [hasSuccess]="isEdited(product)"
-    [testId]="'prices-price-' + product.productCode"
-  />
-</ng-template>
-
 <ng-template #statusCell let-product>
   @if (status(product) === 'PUBLISHED') {
     <app-badge variant="success">Visible</app-badge>
@@ -139,3 +87,26 @@
     <app-badge variant="info">Borrador</app-badge>
   }
 </ng-template>
+
+<ng-template #actionsCell let-product>
+  @if (busy().has(product.id)) {
+    <span class="prices__muted" role="status">Guardando…</span>
+  } @else {
+    <app-row-actions
+      [actions]="actionsOf(product)"
+      [fila]="name(product)"
+      (actionSelected)="onRowAction($event, product)"
+    />
+  }
+</ng-template>
+
+@if (editing(); as product) {
+  @if (scope.pharmacyId(); as pharmacyId) {
+    <app-price-dialog
+      [pharmacyId]="pharmacyId"
+      [product]="product"
+      (saved)="onSaved()"
+      (closed)="editing.set(null)"
+    />
+  }
+}

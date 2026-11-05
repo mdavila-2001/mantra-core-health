@@ -13,8 +13,8 @@
     cliente pidió — que se vea «tal como se ven mis servicios»—, así que
     copiarla habría sido el primer paso para que dejaran de parecerse.
 
-    Lo que queda acá es lo único propio: el resumen del establecimiento, sus
-    modalidades de atención y el pie de cada tarjeta con su precio. Sólo
+    Lo que queda acá es lo único propio: el resumen del establecimiento y el
+    pie de cada tarjeta con su precio. Sólo
     distribución.
     ========================================================================== */
 
@@ -132,31 +132,6 @@
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   font-weight: 500;
-}
-
-/* ---- las modalidades del resumen ---------------------------------------- */
-
-/* «Atención sin cita», «Toma de muestras a domicilio»: cosas que el
-   establecimiento **hace o no hace**, no campos con valor. Por eso son
-   etiquetas al pie del resumen y no filas de `app-fact-list` — una fila
-   «Atención sin cita → Sí» obligaría a dibujar también los «No», y una ficha
-   llena de noes dice de un lugar lo que no ofrece antes que lo que sí. */
-.ficha-publica__modalidades {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin: var(--sp-4) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.ficha-publica__modalidades li {
-  padding: var(--sp-1) var(--sp-3);
-  border: 1px solid var(--border-subtle, var(--border-default));
-  border-radius: var(--r-full);
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
 }
 
 /* Los distintivos del pie de la tarjeta: receta, agotado. Envuelven en vez de

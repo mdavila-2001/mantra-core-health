@@ -338,7 +338,7 @@ describe('SymptomCheck · la silueta', () => {
     fixture.detectChanges();
     expect(html.querySelectorAll('[data-testid="sintoma-reconocido"]').length).toBeGreaterThan(0);
 
-    tocar('body-map-pecho');
+    tocar('body-map-esternon');
 
     expect((fixture.componentInstance as unknown as { texto(): string }).texto()).toBe('');
     expect(control.value).toBe('');
@@ -348,7 +348,7 @@ describe('SymptomCheck · la silueta', () => {
   });
 
   it('lo elegido a mano en una zona no se borra al tocar otra', () => {
-    tocar('body-map-rodillas');
+    tocar('body-map-rodilla-der');
     const opcion = Array.from(
       html.querySelectorAll<HTMLButtonElement>('[data-testid="zona-abierta"] button'),
     ).find((boton) => boton.textContent?.trim() === 'dolor de rodilla');
@@ -356,7 +356,7 @@ describe('SymptomCheck · la silueta', () => {
     opcion.click();
     fixture.detectChanges();
 
-    tocar('body-map-pecho');
+    tocar('body-map-esternon');
 
     const chips = Array.from(html.querySelectorAll('[data-testid="sintoma-reconocido"]'));
     expect(chips.some((chip) => chip.textContent?.includes('rodilla'))).toBe(true);

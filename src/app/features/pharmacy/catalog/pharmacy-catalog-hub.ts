@@ -2,59 +2,57 @@ import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PharmacyCategories } from '../categories/pharmacy-categories';
-import { ImportTargetPicker } from '../import/import-target/import-target';
+import { IMPORT_TARGET_PARAM, ImportTargetPicker } from '../import/import-target/import-target';
 import { PharmacyInventory } from '../inventory/pharmacy-inventory';
 import { PharmacyIntegration } from '../integration/pharmacy-integration';
 import { PharmacyPrices } from '../prices/pharmacy-prices';
 import { PharmacyScope } from '../pharmacy-scope';
 import { PharmacyProducts } from '../products/pharmacy-products';
-import { CATALOG_TABS, CATALOG_TAB_LABELS, tabIndexOf, tabKeyOf } from './catalog-tabs';
+import {
+  CATALOG_TABS,
+  CATALOG_TAB_LABELS,
+  IMPORT_TAB_KEY,
+  IMPORT_TARGET_BY_TAB,
+  tabIndexOf,
+  tabKeyOf,
+} from './catalog-tabs';
 
 /**
- * **Catálogo** de la farmacia: productos, categorías, precios, inventario,
- * importación e integración con el sistema de la farmacia en UNA tarjeta con
- * pestañas (`composition-rules.md` §5), en vez de un renglón de menú por cada
- * una.
+ * Pharmacy **Catalog**: products, categories, prices, inventory and the
+ * integration with the pharmacy's system in ONE tabbed card
+ * (`composition-rules.md` §5), with CSV import behind a header button that
+ * opens a modal.
  *
- * ## Qué NO se reescribió
+ * ## What was NOT rewritten
  *
- * Las cinco primeras pantallas son las mismas clases, con su lógica y sus
- * pruebas: acá se montan con `embedded`, que sólo les quita el membrete
- * propio. Integración (FAR-07) nació como pestaña y no tiene membrete ni ruta
- * propia. Ninguna dibuja su propia tarjeta: la única es la de acá. El
- * `PharmacyScope` es el del hub: la farmacia elegida en una pestaña sigue
- * elegida en la siguiente. Sus rutas viejas redirigen a la pestaña
- * (`app.routes.ts`), con el query que traían: `?alerts=true` sigue abriendo
- * Inventario con «solo alertas».
+ * The screens are the same classes, with their logic and tests: they are
+ * mounted with `embedded`, which only drops their own header. The
+ * `PharmacyScope` belongs to the hub: the pharmacy chosen in one tab stays
+ * chosen in the next one and inside the import modal.
  *
- * ## La pestaña vive en la URL, en las dos direcciones
+ * ## The tab and the modal live in the URL
  *
- * `?tab=` abre la pestaña por su nombre ({@link tabIndexOf}). El hub escucha
- * `queryParamMap` y no sólo la foto inicial: un enlace interno a la misma ruta
- * —«Ver productos» al terminar una importación, el de Categorías— cambia de
- * pestaña sin recrear la pantalla.
- *
- * Sólo se monta la pantalla de la pestaña abierta: `app-tab` no dibuja el
- * panel cerrado, pero el contenido proyectado se instanciaría igual y las
- * seis pedirían sus datos a la vez.
- *
- * ## Lo escrito y sin guardar no se pierde en silencio
- *
- * Precios e Inventario se editan en la tabla. Salir de esas pestañas con
- * cambios sin guardar desmontaría la pantalla y los borraría, así que antes se
- * pregunta con la confirmación de descarte de siempre; la pestaña no cambia
- * hasta que se responda que sí.
+ * `?tab=` opens the tab by name ({@link tabIndexOf}). `?tab=import` — the old
+ * tab key, still used by the Summary and by the `administration/pharmacy-import`
+ * redirect — opens the modal over the tab that was open, with `?target=`
+ * saying what is imported. Any navigation to another tab («Ver precios» after
+ * an import) closes it. Closing it remounts the tab, which re-reads what was
+ * just loaded.
  */
 @Component({
   selector: 'app-pharmacy-catalog-hub',
   imports: [
+    AppButton,
     Card,
+    ContentDialog,
     ImportTargetPicker,
     PageHeader,
     PharmacyCategories,
@@ -73,59 +71,70 @@ import { CATALOG_TABS, CATALOG_TAB_LABELS, tabIndexOf, tabKeyOf } from './catalo
 export class PharmacyCatalogHub {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly dialogs = inject(DialogService);
-  private readonly tabStrip = viewChild.required(Tabs);
-  private readonly prices = viewChild(PharmacyPrices);
-  private readonly inventory = viewChild(PharmacyInventory);
+  private readonly toasts = inject(ToastService);
+  private readonly importPicker = viewChild(ImportTargetPicker);
 
   protected readonly tabs = CATALOG_TABS;
   protected readonly labels = CATALOG_TAB_LABELS;
 
-  protected readonly selected = signal(tabIndexOf(this.route.snapshot.queryParamMap.get('tab')));
+  protected readonly selected = signal(0);
+  protected readonly importOpen = signal(false);
+  /** Bumped when the import closes: remounts the open tab. */
+  protected readonly generation = signal(0);
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      this.selected.set(tabIndexOf(params.get('tab')));
+      const tab = params.get('tab');
+      const importing = tab === IMPORT_TAB_KEY;
+      if (this.importOpen() && !importing) {
+        this.generation.update((value) => value + 1);
+      }
+      this.importOpen.set(importing);
+      // With the modal open, the previous tab stays underneath.
+      if (!importing) {
+        this.selected.set(tabIndexOf(tab));
+      }
     });
   }
 
   /**
-   * El clic en una pestaña. Con cambios sin guardar en la abierta, la tira
-   * vuelve a marcar la de antes mientras se pregunta: sólo cambia si se
-   * acepta descartarlos.
+   * Close guard of the import modal: while a load is being written, closing
+   * would cut it halfway and lose the result screen, so it stays open.
    */
-  protected async requestTab(index: number): Promise<void> {
-    const current = this.selected();
-    if (index === current || !this.hasUnsavedChanges()) {
-      this.select(index);
-      return;
+  protected readonly importGuard = (): boolean => {
+    if (this.importPicker()?.busy()) {
+      this.toasts.info('Espere a que termine la carga: si cierra ahora, se corta a la mitad.');
+      return false;
     }
-    this.tabStrip().selectedIndex.set(current);
-    const discard = await this.dialogs.confirmarDescarte({
-      title: '¿Sale sin guardar?',
-      message: 'Tiene cambios sin guardar en esta pestaña. Si cambia de pestaña, se pierden.',
-      cancelLabel: 'Seguir en esta pestaña',
+    return true;
+  };
+
+  /** Opens the modal preselecting what matches the open tab. */
+  protected openImport(): void {
+    this.navigate({
+      tab: IMPORT_TAB_KEY,
+      [IMPORT_TARGET_PARAM]: IMPORT_TARGET_BY_TAB[tabKeyOf(this.selected())],
     });
-    if (discard) {
-      this.select(index);
-    }
   }
 
-  private hasUnsavedChanges(): boolean {
-    return (this.prices()?.hasUnsavedChanges() ?? false) || (this.inventory()?.hasUnsavedChanges() ?? false);
+  /** Closes the modal and leaves only the underlying tab in the URL. */
+  protected closeImport(): void {
+    if (this.importOpen()) {
+      this.navigate({ tab: tabKeyOf(this.selected()) });
+    }
   }
 
   /**
-   * Cambia de pestaña y lo deja escrito en la URL: sólo `tab`, porque los
-   * filtros de una pestaña no significan nada en otra. `replaceUrl` para no
-   * llenar el historial: volver atrás sale de la pantalla.
+   * Switches tab and writes it to the URL: only `tab`, because one tab's
+   * filters mean nothing in another. `replaceUrl` keeps history clean: going
+   * back leaves the screen.
    */
-  private select(index: number): void {
+  protected select(index: number): void {
     this.selected.set(index);
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab: tabKeyOf(index) },
-      replaceUrl: true,
-    });
+    this.navigate({ tab: tabKeyOf(index) });
+  }
+
+  private navigate(queryParams: Record<string, string>): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams, replaceUrl: true });
   }
 }
