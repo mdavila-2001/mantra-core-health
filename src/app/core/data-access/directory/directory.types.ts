@@ -501,12 +501,13 @@ export interface NewBranch {
 }
 
 /**
- * Una membresía (`GET /tenants/{id}/memberships`).
- *
- * `primaryBranchId`, `startDate` y `endDate` llegan como `null` explícito
- * cuando no hay dato: son nulos del contrato, no ausencias, y se normalizan a
- * `undefined` en la frontera como manda `wire.ts`.
+ * Una membresía (`GET /tenants/{id}/memberships`). Los nulos del contrato
+ * (`primaryBranchId`, fechas, `userName`) se normalizan a `undefined` en la frontera (`wire.ts`).
+  /** Nombre de la persona, para mostrarlo en vez del uuid. */
+  readonly userName?: string;
  */
+  /** El rol por su código (`OWNER`, `ADMIN`, `STAFF`); ausente si la API no lo rotula. */
+  readonly tenantRoleCode?: string;
 export interface MembershipListItem {
   readonly id: string;
   readonly userId: string;

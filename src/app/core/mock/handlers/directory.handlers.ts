@@ -1,4 +1,5 @@
 import type { TenantSimulado } from '../fixtures/directory.types';
+import { withMembershipNames } from './directory.membership-names';
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, STATUS, ORGANIZATION_TYPE } from '../fixtures/concepts';
 import { ALCANCE_ACCESO, INVITACIONES_PENDIENTES, MEMBRESIAS_DEL_APOYO, ROL_TENANT, TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
@@ -857,7 +858,7 @@ export function registrarDirectorio(router: MockRouter): void {
     const items = membresias
       .filtrar((m) => m.tenantId === params['id'])
       .filter((m) => status === null || m.statusConceptId === status)
-      .map(({ tenantId: _t, ...m }) => m);
+      .map(({ tenantId: _t, ...m }) => withMembershipNames(m));
     return paginar(items, query, 25);
   });
 
@@ -1009,9 +1010,7 @@ export function registrarDirectorio(router: MockRouter): void {
           statusConceptId: r.statusConceptId,
         };
       })
-      .filter(
-        (i) => practitionerProfileId === null || i.practitionerProfileId === practitionerProfileId,
-      )
+      .filter((i) => practitionerProfileId === null || i.practitionerProfileId === practitionerProfileId)
       .sort((a, b) => a.startAt.localeCompare(b.startAt));
     return { items: items.slice(0, limit), truncated: items.length > limit };
   });

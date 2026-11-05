@@ -42,6 +42,7 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { InsurerProfileCard } from '../insurance/insurer-profile-card/insurer-profile-card';
 import { OrganizationLogo } from './organization-logo/organization-logo';
+import { organizationRoleLabel } from './organization-role-label';
 
 /**
  * Los campos del `PATCH /tenants/:id` que el formulario ancla debajo de su
@@ -136,12 +137,11 @@ function rebanar<T>(
 export class OrganizationPanel {
   /** Pestaña abierta de la ficha: 0 Datos · 1 Su gente · 2 Agenda · 3 Solicitudes. */
   protected readonly pestana = signal(0);
-
   /** El lápiz abre el formulario de «Datos»; guardar o cancelar lo cierra. */
   protected readonly editando = signal(false);
 
   protected readonly opcionesDeTamano: readonly number[] = [10, 25, 50];
-
+  protected readonly etiquetaDeRol = organizationRoleLabel;
   protected readonly pagGente = signal(1);
   protected readonly tamGente = signal(10);
   protected readonly pagAgenda = signal(1);

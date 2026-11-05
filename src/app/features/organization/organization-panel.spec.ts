@@ -245,7 +245,9 @@ describe('OrganizationPanel', () => {
     const items = Array.from({ length: 12 }, (_, i) => ({
       id: `m-${i}`,
       userId: `usuario-${i}`,
-      tenantRoleConceptId: 'STAFF',
+      userName: `Persona ${i}`,
+      tenantRoleConceptId: 'concepto-staff',
+      tenantRoleCode: 'STAFF',
       statusConceptId: 'activa',
       createdAt: '2026-01-01T00:00:00.000Z',
     }));
@@ -258,8 +260,12 @@ describe('OrganizationPanel', () => {
     http.match((r) => r.url.includes('/agenda')).forEach((p) => p.flush({ items: [] }));
     abrirPestana(1);
 
-    expect(texto()).toContain('usuario-0');
-    expect(texto()).not.toContain('usuario-11');
+    // Se ve a la persona y su rol en palabras, nunca los identificadores.
+    expect(texto()).toContain('Persona 0');
+    expect(texto()).toContain('Equipo');
+    expect(texto()).not.toContain('usuario-0');
+    expect(texto()).not.toContain('concepto-staff');
+    expect(texto()).not.toContain('Persona 11');
     expect((fixture.nativeElement as HTMLElement).querySelector('app-pagination')).not.toBeNull();
   });
 
