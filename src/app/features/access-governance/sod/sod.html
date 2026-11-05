@@ -234,8 +234,8 @@
                           [required]="true"
                           hint="Toda excepción vence."
                         >
-                          <app-input
-                            type="date"
+                          <app-date-string-picker
+                            
                             [value]="hasta()"
                             (valueChange)="hasta.set('' + ($event ?? ''))"
                             ariaLabel="La excepción vale hasta"

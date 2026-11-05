@@ -28,6 +28,7 @@ import {
   dateRangeValidator,
   optional,
 } from './insurance-form.helpers';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** Sin decimales negativos y hasta dos decimales — mismo patrón que el resto del módulo. */
 const MONEY = /^\d+(?:\.\d{1,2})?$/;
@@ -40,7 +41,7 @@ const MONEY = /^\d+(?:\.\d{1,2})?$/;
  */
 @Component({
   selector: 'app-plan-form-dialog',
-  imports: [PaginatedForm, CustomField,
+  imports: [DateStringPicker, PaginatedForm, CustomField,
     ReactiveFormsModule,
     AnnounceOnAppear,
     Input,

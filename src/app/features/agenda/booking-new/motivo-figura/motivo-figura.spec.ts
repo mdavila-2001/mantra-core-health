@@ -38,6 +38,17 @@ describe('MotivoFigura', () => {
     );
   });
 
+  it('lee solo con el motor local: sin servicios externos y sin el aviso «Leyendo…»', () => {
+    const { fixture, host, el } = montar();
+    host.motivo.setValue('me duele la cabeza desde ayer');
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('Leyendo');
+    expect(el.querySelector('[data-testid="reserva-figura-reconocidos"]')?.textContent).toContain(
+      'En el motivo reconocemos',
+    );
+  });
+
   it('al tocar una zona ofrece sus síntomas y elegir uno lo suma al motivo', () => {
     const { fixture, host, el } = montar();
     (el.querySelector('[data-testid="reserva-figura-cabeza"]') as SVGElement).dispatchEvent(

@@ -1,5 +1,5 @@
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
-import { filtroDeCampo } from '../../../forms/input-filters';
+import { fieldKindOf } from '../../../forms/field-kinds';
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -206,8 +206,8 @@ type RespuestaSiNo = 'si' | 'no' | '';
   },
 })
 export class PaginatedForm {
-  /** Ver `FieldDef.soloLetras` and `filtroDeCampo`. */
-  protected readonly filtroDe = filtroDeCampo;
+  /** See `CampoDeFormulario.fieldKind` and `fieldKindOf`. */
+  protected readonly fieldKindDe = fieldKindOf;
 
   /** Ver `FieldDef.alSalir`: pasa el valor ya escrito del campo, recortado. */
   protected alSalirDe(campo: { key: string; alSalir?: (valor: string) => void }): void {

@@ -1,0 +1,84 @@
+[
+  {
+    "form": "imagenologia",
+    "tipoSocietario": "UNIPERSONAL",
+    "titulo": "Representante legal",
+    "lineasConPoder": [
+      "Poder del representante legal"
+    ],
+    "tituloTrasContinuar": "Representante legal",
+    "seQuedoEnLaPagina": true,
+    "mensajesObligatorio": [
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "Este documento es obligatorio para continuar"
+    ],
+    "tieneOpcional": false,
+    "erroresJs": []
+  },
+  {
+    "form": "laboratorio",
+    "tipoSocietario": "UNIPERSONAL",
+    "titulo": "Representante legal",
+    "lineasConPoder": [
+      "Poder del representante legal",
+      "Poder del representante legal"
+    ],
+    "tituloTrasContinuar": "Representante legal",
+    "seQuedoEnLaPagina": true,
+    "mensajesObligatorio": [
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "Este documento es obligatorio para continuar"
+    ],
+    "tieneOpcional": false,
+    "erroresJs": []
+  },
+  {
+    "form": "farmacia",
+    "tipoSocietario": "UNIPERSONAL",
+    "titulo": "Representante legal",
+    "lineasConPoder": [
+      "Poder del representante legal",
+      "Poder del representante legal"
+    ],
+    "tituloTrasContinuar": "Representante legal",
+    "seQuedoEnLaPagina": true,
+    "mensajesObligatorio": [
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "(obligatorio)",
+      "Este documento es obligatorio para continuar"
+    ],
+    "tieneOpcional": false,
+    "erroresJs": []
+  },
+  {
+    "form": "centro-medico",
+    "tipoSocietario": "UNIPERSONAL",
+    "titulo": "Poder del representante legal",
+    "lineasConPoder": [
+      "Crear cuenta de la organización médica: paso 8 de 12, Poder del representante legal",
+      "Poder del representante legal",
+      "Poder del representante legal",
+      "Poder del representante legal"
+    ],
+    "tituloTrasContinuar": "Poder del representante legal",
+    "seQuedoEnLaPagina": true,
+    "mensajesObligatorio": [
+      "Solo PDF. Es obligatorio para toda organización, cualquiera sea su tipo de sociedad.",
+      "(obligatorio)",
+      "Este documento es obligatorio para continuar"
+    ],
+    "tieneOpcional": false,
+    "erroresJs": []
+  }
+]

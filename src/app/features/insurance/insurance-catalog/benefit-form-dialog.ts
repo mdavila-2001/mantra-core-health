@@ -32,6 +32,7 @@ import {
   nullableDecimal,
   optional,
 } from './insurance-form.helpers';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 const MONEY = /^\d+(?:\.\d{1,2})?$/;
 const COVERAGE = /^(?:100(?:\.0{1,2})?|\d{1,2}(?:\.\d{1,2})?)$/;
@@ -51,7 +52,7 @@ const SERVICE_SEARCH_LIMIT = 20;
 
 @Component({
   selector: 'app-benefit-form-dialog',
-  imports: [
+  imports: [DateStringPicker, 
     ReactiveFormsModule,
     AnnounceOnAppear,
     AppButton,

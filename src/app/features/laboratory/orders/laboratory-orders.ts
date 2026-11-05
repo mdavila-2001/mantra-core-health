@@ -63,8 +63,8 @@ import {
  * camino de una orden es `Borrador → Recibida → Procesada → Subidos`, con
  * `Cancelada` y `Rechazada` como salidas, y cada paso es una acción del menú de
  * tres puntos de su fila — **Recibir**, **Marcar como procesada**, **Subir
- * resultados**, **Descargar**, y las salidas **Cancelar** y **Rechazar**, que
- * piden un motivo.
+ * resultados**, **Descargar**, y la salida **Rechazar** (sólo si la API la
+ * permite), que pide un motivo.
  *
  * ## Una tarjeta con pestañas, a lo ancho
  *
@@ -162,6 +162,7 @@ export class LaboratoryOrders {
       (order) =>
         query === '' ||
         order.patientName.toLocaleLowerCase('es').includes(query) ||
+        order.requesterName.toLocaleLowerCase('es').includes(query) ||
         order.studyName.toLocaleLowerCase('es').includes(query),
     );
     if (rows.length > 0) return ready(rows);
@@ -262,16 +263,14 @@ export class LaboratoryOrders {
         return;
       case 'download':
         return this.download(order);
-      case 'cancel':
-        return void this.askReason(order, 'cancel');
       case 'reject':
-        return void this.askReason(order, 'reject');
+        return void this.askReason(order);
     }
   }
 
-  /** Cancel and reject need a reason: the dialog will not confirm without one, and the API requires it. */
-  private async askReason(order: LabOrder, code: 'cancel' | 'reject'): Promise<void> {
-    const step = REASON_STEPS[code];
+  /** Rejecting needs a reason: the dialog will not confirm without one, and the API requires it. */
+  private async askReason(order: LabOrder): Promise<void> {
+    const step = REASON_STEPS.reject;
     const reason = await this.dialogs.confirmWithReason(step.dialog(order), REASON_FIELD);
     if (reason !== null) this.transition(order, step.action, step.done, reason);
   }

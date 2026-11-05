@@ -35,7 +35,6 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Checkbox } from '../../../shared/components/atoms/checkbox/checkbox';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -62,6 +61,7 @@ import {
   MIN_COMMENT,
   unusedAtoms,
 } from './review-rules';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** Un aviso que la pantalla anuncia (`aria-live`) tras una acción. */
 interface Aviso {
@@ -101,7 +101,7 @@ const accesos = (n: number): string => (n === 1 ? '1 acceso' : `${n} accesos`);
  */
 @Component({
   selector: 'app-my-reviews',
-  imports: [
+  imports: [DateStringPicker, 
     Alert,
     AppButton,
     AppButtonLink,
@@ -109,7 +109,6 @@ const accesos = (n: number): string => (n === 1 ? '1 acceso' : `${n} accesos`);
     Card,
     Checkbox,
     FormField,
-    Input,
     PageHeader,
     RouterLink,
     SegmentedControl,
