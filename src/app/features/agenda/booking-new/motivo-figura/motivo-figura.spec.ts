@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
 
-import { TriageIaClient } from '../../../../core/data-access/triage-ia/triage-ia.client';
 import { ESPERAR_IMAGEN_DE_VISTA } from '../../../../shared/components/organisms/body-map/body-map';
 import { MotivoFigura } from './motivo-figura';
 
@@ -21,8 +21,8 @@ describe('MotivoFigura', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
-        // No triage service: the figure keeps working with the local engine.
-        { provide: TriageIaClient, useValue: { analizar: () => of(null) } },
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     });
     const fixture = TestBed.createComponent(Anfitrion);
@@ -106,5 +106,14 @@ describe('MotivoFigura', () => {
     );
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="reserva-figura-opciones"]')).toBeNull();
+  });
+
+  it('no le manda el motivo a ningún servicio: sólo el motor local (sin IA)', async () => {
+    const { fixture, host } = montar();
+    host.motivo.setValue('me duele la cabeza desde ayer');
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController).verify();
   });
 });
