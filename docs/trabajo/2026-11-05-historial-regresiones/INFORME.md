@@ -80,6 +80,27 @@ Cada paso evita rehacer la resolución de conflictos de los siguientes.
 3. **Independientes, en cualquier momento tras el paso 0:** #1957, #1962, #1966, #1970, #1978. #1967 queda idéntico a `dev`: cerrarlo.
 4. **Al final, las puertas:** #1979 (front) y #1347 (API). Una vez mergeadas, todo push exige prueba real; mergearlas antes frenaría el resto.
 
+## Estado de los merges (05/11, noche)
+
+Mergeados a `dev` del front por Pablo (vía el asistente, con el SHA de cada PR verificado antes y
+sin conflictos): **#1986** (arregla el build), **#1957, #1962, #1966, #1970, #1971, #1972, #1978**.
+Tras los ocho: `tsc` en 0 errores y el build de producción completa.
+
+| Pendiente | Por qué | Qué lo destraba |
+|---|---|---|
+| **Todos los PRs de la API** (#1336, #1337, #1340, #1342, #1343, #1345, #1346, #1347) | La protección de rama del API exige **1 aprobación de un revisor con permiso de escritura** (`405 At least 1 approving review is required`). No se aprueba el propio trabajo (`NO_SELF_APPROVAL`). | Una persona con permiso de escritura aprueba, en el orden de abajo |
+| Front #1974, #1975, #1977 | Dependen de los PRs del API #1343, #1345 y #1346. Mergearlos antes enviaría pantallas que llaman a endpoints que no están en `dev`. | Que entre su PR del API |
+| Front #1976 | Su último commit dice que «el NIT sin PDF lo resuelve el PR del API #1350». | Que entre el API #1350 |
+| Front #1979 y API #1347 (la puerta) | Van al final a propósito: una vez mergeadas, todo push exige prueba real. | Que entre lo demás |
+| #1967 y API #1338 | Su contenido ya está entero en `dev`: quedan sin diferencias. | Cerrarlos sin mergear |
+
+### S15 — más pruebas rojas latentes en `dev` (no las causó ningún merge de esta noche)
+
+Con el build arreglado la suite vuelve a correr y aparecen **15 fallos más**, además de los de S12 y S14:
+`features/account/my-requests` (la mayoría), `diagnostic-orders` (2) y `doctor-profile-tabs` (1).
+Se midieron **idénticos en el `dev` de justo antes de los siete merges de front y después**: ya estaban.
+Estuvieron ocultos mientras `dev` no compilaba. Necesitan su propio PR.
+
 ## Qué tienen en común (causas raíz)
 
 1. **Merges entre ramas largas** (`dev`, `test`, `mockup`, `master`). Cuatro ramas
