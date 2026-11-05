@@ -1177,7 +1177,7 @@ describe('RegisterOrganization', () => {
       }
     });
 
-    it('los tres nombres ocupan un tercio y los dos apellidos una mitad', () => {
+    it('los nombres y los apellidos van de a dos por renglón', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
@@ -1187,8 +1187,7 @@ describe('RegisterOrganization', () => {
         'app-inline-name-fields .nombres',
       );
       expect(grilla).not.toBeNull();
-      expect(grilla.querySelectorAll('.nombres__campo--tercio').length).toBe(3);
-      expect(grilla.querySelectorAll('.nombres__campo--mitad').length).toBe(2);
+      expect(grilla.querySelectorAll('.nombres__campo--mitad').length).toBe(5);
     });
 
     it('sin contraseña, «Continuar» no avanza de la página del representante', () => {

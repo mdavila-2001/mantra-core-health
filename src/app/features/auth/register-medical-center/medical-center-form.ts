@@ -53,6 +53,8 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
       validators: [Validators.required, noSoloEspacios, Validators.maxLength(MAX_LEGAL_NAME)],
     }),
     legalEntityType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // Optional: the name patients know it by (same cap as the legal name).
+    tradeName: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(MAX_LEGAL_NAME)] }),
     taxId: new FormControl('', { nonNullable: true, validators: [Validators.required, nitValido] }),
     // --- el establecimiento y su director médico -----------------------------
     healthFacilityRegistrationNumber: new FormControl('', {

@@ -1396,9 +1396,6 @@
     "src/app/features/agenda/my-agenda/month-view/month-view.css": {
       "lineas": 363
     },
-    "src/app/shared/utils/branch-import/branch-import.ts": {
-      "lineas": 363
-    },
     "src/app/core/mock/fixtures/glossary.ts": {
       "lineas": 362
     },
