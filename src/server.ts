@@ -77,7 +77,6 @@ const telemetryHandle = startServerTelemetry(telemetry);
  */
 const cabecerasComunes = {
   apiBaseUrl: process.env['PUBLIC_API_BASE_URL'] ?? '',
-  aiBaseUrl: process.env['PUBLIC_AI_BASE_URL'] ?? '/ai',
   inlineScriptHashes: [
     ...new Set([
       ...collectInlineScriptHashes(browserDistFolder),

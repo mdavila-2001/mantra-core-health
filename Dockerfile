@@ -93,12 +93,10 @@ RUN yarn install --immutable
 
 COPY . .
 
-# La API usa rutas relativas por defecto; el AI Service se define aparte y
-# queda público en el paquete del navegador. Ninguna de las dos variables lleva secretos.
+# La API usa rutas relativas por defecto y queda pública en el paquete del
+# navegador. La variable no lleva secretos.
 ARG PUBLIC_API_BASE_URL=""
 ENV PUBLIC_API_BASE_URL=$PUBLIC_API_BASE_URL
-ARG PUBLIC_AI_BASE_URL="/ai"
-ENV PUBLIC_AI_BASE_URL=$PUBLIC_AI_BASE_URL
 
 # `production` (el valor por omisión de `ng build`) y `production-api` son builds de API REAL: `mockBackend: false` en
 # su entorno (lo fijan `environment.production-api.spec.ts` y `execution environments`) y, desde la revisión de seguridad,
