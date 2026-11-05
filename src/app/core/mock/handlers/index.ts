@@ -6,6 +6,7 @@ import { registrarPiezasVivas } from './runtime-pieces.handlers';
 import { registrarPoliticasGobierno } from './governance-policies.handlers';
 import { MockRouter } from '../mock-router';
 import { activarAceptacionDeDemostracion, registrarAgenda } from './scheduling.handlers';
+import { registerBookingApproval } from './booking-approval.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registerPaymentReceipts } from './payment-receipts.handlers';
@@ -121,6 +122,7 @@ export function crearRouterSimulado(): MockRouter {
   registerPrimaryPractitioner(router);
   registerSignatureAndSeal(router);
   registrarAgenda(router);
+  registerBookingApproval(router);
   activarAceptacionDeDemostracion();
   registrarServiciosDeAgenda(router);
   // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
