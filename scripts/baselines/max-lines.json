@@ -1951,9 +1951,6 @@
     "src/app/features/notifications/notification-center.ts": {
       "lineas": 302
     },
-    "src/app/features/pharmacy/opening-hours/pharmacy-opening-hours.ts": {
-      "lineas": 302
-    },
     "src/app/shared/components/organisms/body-map/body-map.export.ts": {
       "lineas": 301
     }

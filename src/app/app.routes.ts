@@ -160,6 +160,10 @@ export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> 
   'my-account/clinical-access': { ruta: '/my-account/privacy', query: { ver: 'historia' } },
   'my-account/access-requests': { ruta: '/my-account/requests', query: { pestana: 'vinculos' } },
   'administration/pharmacy-profile': { ruta: '/my-account' },
+  'administration/pharmacy-hours': {
+    ruta: '/administration/pharmacy-branches',
+    query: { tab: 'horario' },
+  },
   'administration/data-catalog': { ruta: '/superadmin/data-catalog' },
   'administration/web-analytics': { ruta: '/superadmin/web-analytics' },
   'administration/qa-lab': { ruta: '/superadmin/qa-lab' },
