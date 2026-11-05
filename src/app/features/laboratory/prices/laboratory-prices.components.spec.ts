@@ -1,7 +1,7 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
 import type { LabService } from '../../../core/data-access/lab-portal/lab-portal.types';
