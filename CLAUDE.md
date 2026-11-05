@@ -41,6 +41,14 @@ Reglas absolutas:
   - Rutas y menús modularizados por dominio (lazy loading por módulo).
   - Comentarios de código e inline comments: OBLIGATORIAMENTE en inglés (All inline comments in English).
   - Orquestación en paralelo mediante la herramienta y skill `kman`.
+- `LARGO_PLAZO_O_NADA` — **Orden de Pablo (05/11/2026).** Toda solución responde antes de
+  escribirse: *¿esto sirve a largo plazo? ¿soluciona el problema a largo plazo?* Si no, no
+  sirve y no se sube: se reporta qué hace falta de fondo y la persona decide. Cada commit
+  lleva `Largo plazo: <respuesta>`.
+- `PRE_PUSH_GATE` — nada se empuja ni se abre como PR sin pasar `scripts/pre-push-gate.mjs`
+  (rama con el `dev` actual, resultado que compila, cambio probado con Playwright en el front
+  o con pruebas de integración en la API). Skill `pre-push-gate`; origen:
+  `docs/trabajo/2026-11-05-historial-regresiones/INFORME.md`.
 - `PR_MANDATORY_ON_FINISH` — **Orden de Pablo (02/11/2026): Toda sesión que termine su tarea y valide sus gates debe empujar a remoto y ABRIR PULL REQUEST a `dev`. Prohibido dejar cambios pendientes en local o ramas sin PR.**
 
 
