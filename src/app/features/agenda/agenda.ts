@@ -449,10 +449,10 @@ const SCHEDULE_VIEW = 'agenda';
 const SLOTS_VIEW = 'cupos';
 
 /**
- * Las solapas posibles de `/schedule`. **Nunca están las cuatro a la vez**
- * (C-07, C-10): con calendario son «Consultas» (el calendario) y «Mis
- * horarios»; sin calendario —quien reparte turnos, o quien todavía no publicó
- * la suya— siguen siendo la lista y los cupos, que es su único camino.
+ * The possible tabs of `/schedule`; **never more than two at once** (C-07,
+ * C-10, E4). Who attends gets «Consultas» (the calendar, or the list while no
+ * agenda of theirs is published) and «Mis horarios»; who hands out
+ * appointments gets the list and «Cupos», their only way to see the gaps.
  */
 type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
 
@@ -861,35 +861,34 @@ export class Agenda {
   );
 
   /**
-   * Las solapas, en orden. **Dos, no cuatro** (C-07 y C-10, 2026-09-20):
-   * «Consultas» —que es el calendario— y «Mis horarios». La tabla de consultas
-   * y la de cupos se fueron: el calendario ya muestra las dos cosas, y la barra
-   * de cuatro obligaba a mirar el mismo día en dos lugares distintos.
-   *
-   * **La lista y los cupos sobreviven sólo donde no hay calendario.** Quien
-   * reparte turnos y quien todavía no publicó su agenda no tienen calendario
-   * que mirar: dejarlos con una sola solapa de horario sería quitarles la
-   * pantalla entera, no limpiarla. Como son excluyentes con el calendario,
-   * **en ningún momento hay dos solapas llamadas «Consultas»**.
-   *
-   * «Mis horarios» —el horario publicado— sólo existe para quien atiende: quien
-   * reparte turnos no tiene agenda propia y no se le ofrece una puerta que la
-   * otra pantalla no va a reconocer como suya.
+   * Whether the «Cupos» tab exists: only for who hands out appointments (E4,
+   * 2026-11-04). Who attends never gets it, with or without a calendar: they
+   * move a booking on their calendar, and without a published agenda nothing
+   * of theirs is read, so there is no booking to move.
+   */
+  protected readonly hasSlotsTab = computed(() => !this.esQuienAtiende());
+
+  /**
+   * The tabs, in order: **two, never four** (C-07 and C-10, 2026-09-20). With a
+   * calendar, «Consultas» —which is the calendar— and «Mis horarios». Without
+   * one the list survives as «Consultas»: who hands out appointments pairs it
+   * with «Cupos», who attends and has not published an agenda yet with «Mis
+   * horarios» (taking the list away would take the whole screen). Calendar and
+   * list exclude each other, so **there are never two tabs called «Consultas»**.
+   * «Mis horarios» only exists for who attends: it is their own schedule.
    */
   protected readonly pestanas = computed<readonly AgendaTab[]>(() => {
-    const propias = this.esQuienAtiende() ? (['schedule'] as const) : ([] as const);
-    return this.tieneCalendario()
-      ? (['calendar', ...propias] as const)
-      : (['consultations', ...propias, 'slots'] as const);
+    if (this.tieneCalendario()) return ['calendar', 'schedule'];
+    return this.hasSlotsTab() ? ['consultations', 'slots'] : ['consultations', 'schedule'];
   });
 
   /**
-   * La solapa abierta, leída de la URL para que un enlace pueda apuntar a una
-   * en concreto. Los valores viejos **siguen llegando y ninguno rompe**, pero
-   * desde C-07 (2026-09-20) ya no significan lo mismo: con calendario, todo lo
-   * que no sea `vista=agenda` cae en «Consultas», que es el calendario. Sin
-   * calendario siguen como estaban: `cupos` a los cupos, y `table`, `citas` y
-   * `solicitudes` a la lista unificada (ALV-019).
+   * The open tab, read from the URL so a link can point at one. Old values
+   * **still arrive and none breaks** (C-07, 2026-09-20): with a calendar,
+   * anything but `vista=agenda` lands on «Consultas», the calendar. Without
+   * one, `cupos` opens «Cupos» only where it exists —for who attends it lands
+   * on the list, their default (E4)— and `table`, `citas` and `solicitudes`
+   * go to the unified list (ALV-019).
    */
   protected readonly pestanaActual = computed<AgendaTab>(() => {
     const vista = this.params()?.get('vista');
@@ -900,7 +899,7 @@ export class Agenda {
     // redirección le mete una entrada al historial y le rompe el «atrás» a
     // quien llegó por un enlace viejo.
     if (this.tieneCalendario()) return 'calendar';
-    if (vista === SLOTS_VIEW) return 'slots';
+    if (vista === SLOTS_VIEW && this.hasSlotsTab()) return 'slots';
     return 'consultations';
   });
 
@@ -1807,7 +1806,7 @@ export class Agenda {
       return;
     }
     this.reprogramando.set(cita.id);
-    if (!this.tieneCalendario()) {
+    if (this.hasSlotsTab()) {
       this.publicar({ vista: SLOTS_VIEW });
     }
   }
@@ -1819,9 +1818,9 @@ export class Agenda {
   protected cancelarReprogramacion(): void {
     this.reprogramando.set(null);
     this.cupoDestino.set(null);
-    // Con calendario nunca se saltó de solapa, así que tampoco se vuelve: el
-    // día que se estaba mirando es el que hay que seguir mirando.
-    if (!this.tieneCalendario()) {
+    // Only who hands out appointments jumped to «Cupos», so only they go back:
+    // on the calendar, the day being looked at is the one to keep looking at.
+    if (this.hasSlotsTab()) {
       this.publicar({ vista: this.vistaDeConsultas() });
     }
   }
@@ -1867,10 +1866,10 @@ export class Agenda {
         this.cupoDestino.set(null);
         this.reprogramando.set(null);
         this.toast.success('La cita quedó en el horario nuevo.', 'Reprogramación');
-        // De vuelta a «Consultas»: el resultado del movimiento se ve ahí, no en
-        // la grilla de cupos desde la que se eligió el destino. Con calendario
-        // nunca se salió de la solapa, así que no hay a dónde volver.
-        if (!this.tieneCalendario()) {
+        // Back to «Consultas»: the result shows there, not on the «Cupos» grid
+        // the target was picked from. Who never left their tab (the calendar)
+        // has nowhere to go back to.
+        if (this.hasSlotsTab()) {
           this.publicar({ vista: this.vistaDeConsultas() });
         }
         this.trasOperar();

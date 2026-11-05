@@ -3187,4 +3187,163 @@ describe('Agenda', () => {
       expect((harness.fixture.nativeElement as HTMLElement).textContent).not.toContain('de la cita del');
     });
   });
+
+  /**
+   * E4 (2026-11-04) — **who attends never sees «Cupos»**, with a calendar or
+   * with no published agenda yet: they get «Consultas» and «Mis horarios», and
+   * move a booking from their calendar. Who hands out appointments keeps
+   * «Consultas» and «Cupos», their only way to the gaps, and reads the same as
+   * before.
+   */
+  describe('quien atiende no tiene «Cupos» (E4)', () => {
+    const DISPATCHER_SUBTITLE = 'Las consultas comprometidas y los cupos que quedan por ofrecer.';
+
+    /** The visible tab labels, without their counters. */
+    function tabLabels(): string[] {
+      const tabs = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
+      return [...tabs].map((tab) => tab.textContent?.trim().replace(/\s*\(\d+\)$/, '') ?? '');
+    }
+
+    /** Text with its whitespace collapsed, as a person reads it. */
+    function readable(text: string | null | undefined): string {
+      return (text ?? '').replace(/\s+/g, ' ');
+    }
+
+    function textOf(selector: string): string {
+      return readable(harness.routeNativeElement?.querySelector(selector)?.textContent);
+    }
+
+    /** Who attends and has no schedule of their own here: the organization has others. */
+    async function mountWithoutOwnSchedule(url = '/schedule'): Promise<void> {
+      await montar({ roles: ['PRACTITIONER'] }, url);
+      await responderRecursos([RECURSO_AJENO, RECURSO]);
+      await drenarCalendario();
+      harness.detectChanges();
+    }
+
+    it('con calendario: «Consultas» y «Mis horarios», y el encabezado no habla de cupos', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+      await responderTodo();
+
+      expect(interno<() => boolean>('tieneCalendario')()).toBe(true);
+      expect(interno<() => readonly string[]>('pestanas')()).not.toContain('slots');
+      expect(tabLabels()).toEqual(['Consultas', 'Mis horarios']);
+      expect(textOf('app-page-header')).toContain('Las consultas comprometidas y sus horarios de atención.');
+      expect(textOf('app-page-header')).not.toMatch(/cupo/i);
+    });
+
+    it('sin agenda publicada tampoco: la lista de «Consultas» y «Mis horarios»', async () => {
+      await mountWithoutOwnSchedule();
+
+      expect(interno<() => boolean>('sinAgendaPropia')()).toBe(true);
+      expect(interno<() => readonly string[]>('pestanas')()).toEqual(['consultations', 'schedule']);
+      expect(tabLabels()).toEqual(['Consultas', 'Mis horarios']);
+      expect(textOf('app-page-header')).not.toMatch(/cupo/i);
+    });
+
+    /**
+     * The old link neither breaks nor redirects: a redirect adds a history
+     * entry and breaks «back» for whoever arrived through it.
+     */
+    it('sin agenda publicada, `vista=cupos` cae en «Consultas», sin redirigir', async () => {
+      await mountWithoutOwnSchedule('/schedule?vista=cupos');
+
+      expect(interno<() => string>('pestanaActual')()).toBe('consultations');
+      expect(interno<() => number>('pestana')()).toBe(0);
+      expect(TestBed.inject(Router).url).toContain('vista=cupos');
+    });
+
+    it('quien reparte turnos conserva «Consultas» y «Cupos», y `vista=cupos` abre «Cupos»', async () => {
+      await montar({ roles: ['SCHEDULING_AGENT'] }, '/schedule?vista=cupos');
+      await responder();
+      harness.detectChanges();
+
+      expect(tabLabels()).toEqual(['Consultas', 'Cupos']);
+      expect(interno<() => string>('pestanaActual')()).toBe('slots');
+      expect(textOf('app-page-header')).toContain(DISPATCHER_SUBTITLE);
+    });
+
+    for (const scenario of [
+      { who: 'quien atiende', roles: ['PRACTITIONER'], says: 'para ver sus citas.' },
+      { who: 'quien reparte turnos', roles: ['SCHEDULING_AGENT'], says: 'ver sus citas y sus cupos.' },
+    ]) {
+      it(`sin organización, a ${scenario.who} el aviso le dice «${scenario.says}»`, async () => {
+        await montar({ roles: scenario.roles, hpid: 'hp-1', tenants: [] }, '/schedule');
+        harness.detectChanges();
+
+        expect(interno<() => boolean>('sinOrganizacion')()).toBe(true);
+        expect(textOf('app-alert')).toContain(scenario.says);
+      });
+    }
+
+    it('sin recursos agendables, el aviso a quien atiende no habla de cupos', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+      await responderRecursos([]);
+      await drenarCalendario();
+      harness.detectChanges();
+
+      expect(interno<() => boolean>('sinRecursos')()).toBe(true);
+      expect(textOf('app-alert')).toContain('sus citas van a aparecer acá.');
+      expect(textOf('app-alert')).not.toMatch(/cupo/i);
+    });
+
+    /**
+     * Who attends: «Mover a otro horario» keeps the mode **on the calendar**,
+     * and the free slot they pick on the day arrives as the target. The «Cupos»
+     * tab never shows up.
+     */
+    it('quien atiende mueve la cita desde su calendario, sin pasar por «Cupos»', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await verSolapaDeCitas();
+      const router = TestBed.inject(Router);
+      vi.spyOn(TestBed.inject(DialogService), 'confirmWithReason').mockResolvedValue('Urgencia en sala');
+
+      interno<(c: unknown, code: string) => void>('ejecutarAccionDeFila')(
+        citas().data?.[0],
+        'agenda-reprogramar',
+      );
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(interno<() => boolean>('enReprogramacion')()).toBe(true);
+      expect(interno<() => string>('pestanaActual')()).toBe('calendar');
+      expect(router.url).not.toContain('vista=cupos');
+      expect(tabLabels()).not.toContain('Cupos');
+      const notice = readable(boton('agenda-reprogramando')?.textContent);
+      expect(notice).toContain('Toque «Mover acá» en el horario libre que quiera');
+      expect(notice).not.toMatch(/cupo/i);
+
+      // The day offers «Mover acá» on its free slots; its pick goes up as-is.
+      const day = harness.fixture.debugElement.query((d) => d.name === 'app-day-view')
+        ?.componentInstance as
+        | { moviendoCita: () => boolean; ratoElegidoParaMover: { emit: (r: unknown) => void } }
+        | undefined;
+      expect(day?.moviendoCita()).toBe(true);
+      day?.ratoElegidoParaMover.emit({ id: 's-9', desde: new Date('2026-08-10T13:00:00.000Z') });
+      await harness.fixture.whenStable();
+
+      const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
+      expect(req.request.body).toEqual({ toSlotId: 's-9', reasonText: 'Urgencia en sala' });
+      req.flush({ bookingId: 'b-1', fromSlotId: 's-1', toSlotId: 's-9' });
+      await drenarCalendario();
+
+      expect(interno<() => boolean>('enReprogramacion')()).toBe(false);
+      expect(router.url).not.toContain('vista=cupos');
+    });
+
+    it('a quien reparte turnos, el aviso de mover sigue hablando de cupos', async () => {
+      await montar();
+      await responder();
+
+      interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(interno<() => string>('pestanaActual')()).toBe('slots');
+      expect(readable(boton('agenda-reprogramando')?.textContent)).toContain(
+        'Toque «Mover acá» en el cupo que quiera',
+      );
+    });
+  });
 });
