@@ -11,16 +11,13 @@ import {
   validarHorario,
 } from '../../../core/data-access/diagnostic-units/center-schedule.rules';
 import type {
-  CenterEquipment,
   CenterSchedule,
   CenterScheduleView,
   CenterStudy,
-  EquipmentStatus,
   ScheduleBlock,
 } from '../../../core/data-access/diagnostic-units/center-schedule.types';
-import { MODALIDADES, modalidad, type ModalityCode } from '../../../core/data-access/diagnostic-units/modalidades';
+import { MODALIDADES, type ModalityCode } from '../../../core/data-access/diagnostic-units/modalidades';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -28,13 +25,11 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
-import { Select } from '../../../shared/components/atoms/select/select';
-import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { GlossaryDataFlow } from '../../glossary/glossary-data-flow';
+import { CenterEquipmentTab } from './equipment/center-equipment';
 import { ScheduleBlockEditor } from './schedule-block-editor';
 
 /* ============================================================================
@@ -80,22 +75,15 @@ interface FilaDelResumen {
   readonly excepciones: readonly { readonly nombre: string; readonly horario: string }[];
 }
 
-const STATUS_LABEL: Readonly<Record<EquipmentStatus, string>> = {
-  OPERATIONAL: 'Operativo',
-  MAINTENANCE: 'En mantenimiento',
-  OUT_OF_SERVICE: 'Fuera de servicio',
-};
-
 @Component({
   selector: 'app-center-schedule',
-  imports: [PageHeader, ViewStateHost, Card, Tabs, Tab, SegmentedControl, Select, AppButton, Alert, ScheduleBlockEditor, GlossaryDataFlow],
+  imports: [PageHeader, ViewStateHost, Card, Tabs, Tab, SegmentedControl, AppButton, Alert, ScheduleBlockEditor, CenterEquipmentTab],
   templateUrl: './center-schedule.html',
   styleUrl: './center-schedule.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CenterSchedulePage implements OnInit {
   private readonly cliente = inject(CenterScheduleClient);
-  private readonly navegacion = inject(NavigationService);
 
   protected readonly estado = signal<ViewState<CenterScheduleView>>(loading());
   protected readonly borrador = signal<CenterSchedule | null>(null);
@@ -103,14 +91,7 @@ export class CenterSchedulePage implements OnInit {
   protected readonly guardando = signal(false);
   protected readonly publicado = signal(false);
 
-  /** Los equipos con su mapa de datos desplegado: se lee al abrirlo, no antes. */
-  protected readonly mapasAbiertos = signal<ReadonlySet<string>>(new Set());
-  /** El Glosario es de quien atiende; sin él, el mapa se lee sin enlaces. */
-  protected readonly veGlosario = computed(() => this.navegacion.visibleSections().some((s) => s.path === 'glossary'));
   protected readonly problemas = signal<readonly string[]>([]);
-  protected readonly cambiandoEquipo = signal<string | null>(null);
-  /** El error del último cambio de estado de un equipo: se muestra en «Equipos», no en «Horarios». */
-  protected readonly errorDeEquipo = signal<string | null>(null);
 
   protected readonly centro = computed<CenterScheduleView | null>(() => {
     const e = this.estado();
@@ -120,17 +101,6 @@ export class CenterSchedulePage implements OnInit {
   protected readonly siNo: readonly SegmentedOption<'si' | 'no'>[] = [
     { value: 'si', label: 'Sí' },
     { value: 'no', label: 'No' },
-  ];
-
-  /**
-   * Un desplegable y no un segmentado: «Fuera de servicio» y «Mantenimiento»
-   * no entran en tres pastillas a 390 px. Mientras un cambio viaja, los
-   * desplegables quedan deshabilitados en vez de ignorar la elección.
-   */
-  protected readonly estados: readonly SelectOption<EquipmentStatus>[] = [
-    { value: 'OPERATIONAL', label: 'Operativo' },
-    { value: 'MAINTENANCE', label: 'Mantenimiento' },
-    { value: 'OUT_OF_SERVICE', label: 'Fuera de servicio' },
   ];
 
   protected readonly nombreGeneral = computed(() => {
@@ -297,54 +267,19 @@ export class CenterSchedulePage implements OnInit {
     if (donde === 'general') return this.nombreGeneral();
     const m = MODALIDADES.find((x) => x.code === donde);
     if (m !== undefined) return m.label;
-    return centro.studies.find((s) => s.code === donde)?.name ?? donde;
+    return centro.studies.find((s) => s.code === donde)?.name ?? centro.equipment.find((e) => e.id === donde)?.name ?? donde;
   }
 
   /* ---- equipos ---------------------------------------------------------- */
 
-  protected equiposDe(code: ModalityCode): readonly CenterEquipment[] {
-    return this.centro()?.equipment.filter((e) => e.modalityCode === code) ?? [];
+  /** The server changed the devices: the half-edited schedule is kept. */
+  protected alCambiarVista(vista: CenterScheduleView): void {
+    this.estado.set(ready(vista));
   }
 
-  /** Los equipos que no limitan turnos (analizadores, centrífugas…). */
-  protected readonly otrosEquipos = computed(() => this.centro()?.equipment.filter((e) => e.modalityCode === null) ?? []);
-
-  protected etiquetaDeEstado(status: EquipmentStatus): string {
-    return STATUS_LABEL[status];
-  }
-
-  protected cambiarEstado(equipo: CenterEquipment, status: EquipmentStatus): void {
-    const centro = this.centro();
-    if (centro === null || status === equipo.status || this.cambiandoEquipo() !== null) return;
-    this.cambiandoEquipo.set(equipo.id);
-    this.errorDeEquipo.set(null);
-    const borrador = this.borrador();
-    this.cliente.setEquipmentStatus(centro.unitId, equipo.id, status).subscribe({
-      next: (vista) => {
-        this.cambiandoEquipo.set(null);
-        this.estado.set(ready(vista));
-        // El horario a medio editar no se pierde por cambiar un equipo.
-        this.borrador.set(borrador ?? vista.schedule);
-      },
-      error: (error: unknown) => {
-        this.cambiandoEquipo.set(null);
-        this.errorDeEquipo.set(mensajeDeErrorDeEquipo(error));
-      },
-    });
-  }
-
-  protected nombreDeModalidad(code: ModalityCode): string {
-    return modalidad(code).label;
-  }
-
-  protected alternarMapa(equipoId: string, evento: Event): void {
-    const abierto = (evento.target as HTMLDetailsElement).open;
-    this.mapasAbiertos.update((actual) => {
-      const nuevo = new Set(actual);
-      if (abierto) nuevo.add(equipoId);
-      else nuevo.delete(equipoId);
-      return nuevo;
-    });
+  /** A device's own shift changed: part of the draft, published with the rest. */
+  protected fijarBorrador(schedule: CenterSchedule): void {
+    this.editar(() => schedule);
   }
 }
 
@@ -354,12 +289,4 @@ function errorMessage(error: unknown): string {
     if (typeof cuerpo?.message === 'string' && cuerpo.message !== '') return cuerpo.message;
   }
   return 'No pudimos guardar los cambios. Pruebe de nuevo en un momento.';
-}
-
-function mensajeDeErrorDeEquipo(error: unknown): string {
-  if (error instanceof HttpErrorResponse) {
-    const cuerpo = error.error as { message?: string } | null;
-    if (typeof cuerpo?.message === 'string' && cuerpo.message !== '') return cuerpo.message;
-  }
-  return 'No pudimos cambiar el estado del equipo. Pruebe de nuevo en un momento.';
 }
