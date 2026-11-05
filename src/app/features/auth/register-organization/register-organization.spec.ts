@@ -886,8 +886,9 @@ describe('RegisterOrganization', () => {
       avanzarHasta('Directorio ejecutivo');
       fixture.detectChanges();
 
+      // The field-kind catalog message (`fieldKind: 'email'` on the input).
       expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-        'Revise el correo: falta el arroba o el dominio.',
+        'Escriba un correo válido, como nombre@dominio.com.',
       );
     });
 

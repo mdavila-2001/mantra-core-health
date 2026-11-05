@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 
+import { FieldKindDirective } from '@shared/forms/field-kind.directive';
+import { fieldKindFilter, fieldKindInputMode, fieldKindNormalize } from '@shared/forms/field-kinds';
 import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
 import { createValueAccessorBridge } from '@shared/forms/value-accessor';
 import type { InputComboboxAria, InputType } from './input.types';
@@ -25,6 +27,7 @@ import type { InputComboboxAria, InputType } from './input.types';
     '[class.app-input-host]': 'true',
     '[class.is-disabled]': 'isDisabled()',
   },
+  hostDirectives: [{ directive: FieldKindDirective, inputs: ['fieldKind'] }],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -122,6 +125,10 @@ export class Input implements ControlValueAccessor {
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
 
+  private readonly kind = inject(FieldKindDirective);
+  protected readonly effectiveInputMode = computed(() => this.inputMode() ?? fieldKindInputMode(this.kind.fieldKind()));
+  private readonly effectiveFilter = computed(() => this.inputFilter() ?? fieldKindFilter(this.kind.fieldKind()));
+
   protected readonly isFocused = signal(false);
   protected readonly passwordVisible = signal(false);
 
@@ -208,7 +215,7 @@ export class Input implements ControlValueAccessor {
     const target = event.target as HTMLInputElement;
 
     if (this.type() !== 'number') {
-      const filtro = this.inputFilter();
+      const filtro = this.effectiveFilter();
       if (filtro) {
         const limpio = filtro(target.value);
         if (limpio !== target.value) {
@@ -264,7 +271,7 @@ export class Input implements ControlValueAccessor {
     if (typeof raw !== 'string') {
       return;
     }
-    const trimmed = raw.trim();
+    const trimmed = fieldKindNormalize(this.kind.fieldKind())(raw);
     if (!trimmed) {
       return;
     }
