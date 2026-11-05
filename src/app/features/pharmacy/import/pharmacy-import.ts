@@ -107,19 +107,13 @@ type ServerPreview =
   | { readonly status: 'ready'; readonly results: readonly FileRowResult[] }
   | { readonly status: 'failed'; readonly message: string };
 
-const MODE_OPTIONS: readonly SelectOption<LoadMode>[] = [
-  { value: 'CREAR_Y_ACTUALIZAR', label: 'Crear y actualizar' },
-  { value: 'SOLO_CREAR', label: 'Sólo crear' },
-  { value: 'SOLO_ACTUALIZAR', label: 'Sólo actualizar' },
-];
-
-const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
-  CREAR_Y_ACTUALIZAR:
-    'Los códigos nuevos se crean y los que ya están en su catálogo se actualizan con lo que traiga el archivo.',
-  SOLO_CREAR: 'Sólo se crean los códigos nuevos; los que ya están en su catálogo se rechazan.',
-  SOLO_ACTUALIZAR:
-    'Sólo se actualizan los productos que ya están en su catálogo; los códigos nuevos se rechazan.',
-};
+/**
+ * The import is always an upsert: new codes are created and codes already in
+ * the catalog are updated with the file's data. There is no «create only» or
+ * «update only»: with a single path, uploading the same file twice leaves the
+ * catalog unchanged.
+ */
+const UPSERT: LoadMode = 'CREAR_Y_ACTUALIZAR';
 
 /**
  * **Importación masiva** del catálogo de la farmacia: un CSV con una fila por
@@ -135,15 +129,15 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
  * relee el catálogo con `managed: true` (con borradores y retirados, que también
  * reservan el código) para saber qué fila es un alta y cuál un cambio.
  *
- * ## El modo, las categorías y la farmacia
+ * ## Upsert, categories and pharmacy
  *
- * Cada modo lo describe `MODE_HINTS`. Las categorías son de cada farmacia
- * (`GET /pharmacies/:id/categories`): se cargan al elegir la farmacia y la
- * revisión valida contra ellas; hasta que llegan no se puede subir el archivo,
- * porque revisar contra otra lista daría errores falsos. La farmacia la elige
- * {@link PharmacyScope}: con una sola queda elegida sola.
+ * Always an upsert ({@link UPSERT}). Categories belong to each pharmacy
+ * (`GET /pharmacies/:id/categories`): they load when the pharmacy is chosen and
+ * the review validates against them; until they arrive no file can be
+ * uploaded, because checking against another list would raise false errors.
+ * {@link PharmacyScope} picks the pharmacy: with only one it is chosen alone.
  *
- * Es la pestaña «Importación» de `PharmacyCatalogHub` (`embedded`).
+ * Mounted inside the «Importar CSV» modal of `PharmacyCatalogHub` (`embedded`).
  */
 @Component({
   selector: 'app-pharmacy-import',
@@ -184,7 +178,6 @@ export class PharmacyImport {
 
   protected readonly maxRows = MAX_ROWS_BY_LOAD;
   protected readonly maxBytes = FILE_MAX_BYTES;
-  protected readonly modeOptions = MODE_OPTIONS;
 
   protected readonly pharmacyOptions = computed<readonly SelectOption<string>[]>(
     () => dataOf(this.scope.options()) ?? [],
@@ -205,13 +198,10 @@ export class PharmacyImport {
 
   /* ─── El recorrido ────────────────────────────────────────────────────── */
 
-  protected readonly mode = signal<LoadMode>('CREAR_Y_ACTUALIZAR');
-  protected readonly modeHint = computed(() => MODE_HINTS[this.mode()]);
-  protected readonly modeLabel = computed(
-    () => MODE_OPTIONS.find((option) => option.value === this.mode())?.label ?? '',
-  );
 
   protected readonly step = signal<ImportStep>('file');
+  /** A write is in flight: closing the import modal now would cut it. */
+  readonly busy = computed(() => this.step() === 'publishing');
   protected readonly files = signal<readonly File[]>([]);
   protected readonly fileName = signal('');
   protected readonly analyzing = signal(false);
@@ -233,7 +223,7 @@ export class PharmacyImport {
     const reading = this.reading();
     return reading === null
       ? []
-      : reviewLoad(reading.filas, this.catalog(), this.mode(), this.allowedCategories());
+      : reviewLoad(reading.filas, this.catalog(), UPSERT, this.allowedCategories());
   });
 
   protected readonly mappings = computed<readonly CsvColumnMapping[]>(
@@ -277,12 +267,6 @@ export class PharmacyImport {
   protected readonly withProblems = computed(() => this.reviewed().length - this.readyRows().length);
   protected readonly duplicatedInFile = computed(
     () => this.reviewed().filter((row) => !row.lista && row.motivo === 'REPETIDA_EN_EL_ARCHIVO').length,
-  );
-  protected readonly notInCatalog = computed(
-    () => this.reviewed().filter((row) => !row.lista && row.motivo === 'NO_EN_EL_CATALOGO').length,
-  );
-  protected readonly alreadyInCatalog = computed(
-    () => this.reviewed().filter((row) => !row.lista && row.motivo === 'YA_EN_EL_CATALOGO').length,
   );
 
   protected readonly problemRows = computed<ViewState<readonly RowWithProblem[]>>(() => {
@@ -519,13 +503,6 @@ export class PharmacyImport {
     );
   }
 
-  protected setMode(mode: LoadMode | null): void {
-    this.mode.set(mode ?? 'CREAR_Y_ACTUALIZAR');
-    if (this.step() === 'review') {
-      this.requestPreview();
-    }
-  }
-
   protected async onFilesChange(files: readonly File[]): Promise<void> {
     this.files.set(files);
     const file = files[0];
@@ -638,7 +615,7 @@ export class PharmacyImport {
       return;
     }
     this.serverPreview.set({ status: 'loading' });
-    this.previewRequest = sendProducts(this.bulk, pharmacyId, this.mode(), rows, { dryRun: true })
+    this.previewRequest = sendProducts(this.bulk, pharmacyId, UPSERT, rows, { dryRun: true })
       .pipe(takeLast(1))
       .subscribe({
         next: (results) =>
@@ -669,7 +646,7 @@ export class PharmacyImport {
     this.publishing.set(true);
     this.step.set('publishing');
 
-    this.publication = sendProducts(this.bulk, pharmacyId, this.mode(), rows, {
+    this.publication = sendProducts(this.bulk, pharmacyId, UPSERT, rows, {
       proceed: () => !this.stopRequested,
     }).subscribe({
       next: (results) => this.results.set(results),

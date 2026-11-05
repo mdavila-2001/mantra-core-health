@@ -1,0 +1,107 @@
+[
+  {
+    "nombre": "cinco pestañas, sin «Importación»",
+    "cond": true,
+    "detalle": "Productos · Categorías · Precios · Inventario · Integración"
+  },
+  {
+    "nombre": "«Importar CSV» está en el membrete",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "desde Categorías, el modal arranca en Categorías",
+    "cond": true,
+    "detalle": "http://localhost:4300/administration/pharmacy-catalog?tab=import&target=categories"
+  },
+  {
+    "nombre": "Esc cierra el modal y la URL vuelve a la pestaña",
+    "cond": true,
+    "detalle": "http://localhost:4300/administration/pharmacy-catalog?tab=categories"
+  },
+  {
+    "nombre": "Categorías: «Editar» abre su modal con Guardar y Cancelar",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "Precios no tiene campos en la tabla ni «Guardar cambios»",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "Guardar cierra el modal",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el precio quedó persistido",
+    "cond": true,
+    "detalle": "19.75"
+  },
+  {
+    "nombre": "tras recargar, la fila muestra 19.75",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el precio se borró del simulador",
+    "cond": true,
+    "detalle": "null"
+  },
+  {
+    "nombre": "tras recargar, la fila dice «Sin precio»",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "Guardar cierra el modal de inventario",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "existencias y umbral persistidos",
+    "cond": true,
+    "detalle": "stock 7 · umbral 3"
+  },
+  {
+    "nombre": "tras recargar, la fila muestra 7 y umbral 3",
+    "cond": true,
+    "detalle": "Enalapril BagóFAR-ENALAPRIL | 7 | 3"
+  },
+  {
+    "nombre": "Vaciar dejó 0 en el simulador",
+    "cond": true,
+    "detalle": "0"
+  },
+  {
+    "nombre": "tras recargar, la fila dice «Sin stock»",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "el enlace viejo `?tab=import` abre el modal",
+    "cond": true,
+    "detalle": ""
+  },
+  {
+    "nombre": "modal de importar sin desborde horizontal a 390 px",
+    "cond": true,
+    "detalle": "0 px"
+  },
+  {
+    "nombre": "modal de importar sin desborde horizontal a 768 px",
+    "cond": true,
+    "detalle": "0 px"
+  },
+  {
+    "nombre": "Precios sin desborde horizontal a 768 px",
+    "cond": true,
+    "detalle": "0 px"
+  },
+  {
+    "nombre": "sin errores de página",
+    "cond": true,
+    "detalle": ""
+  }
+]

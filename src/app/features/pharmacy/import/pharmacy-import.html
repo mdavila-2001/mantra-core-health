@@ -36,14 +36,10 @@
                   Excel: Archivo → Guardar como → CSV UTF-8.
                 </p>
 
-                <app-form-field label="¿Qué hago con los productos del archivo?" [hint]="modeHint()">
-                  <app-select
-                    [options]="modeOptions"
-                    [value]="mode()"
-                    (valueChange)="setMode($event)"
-                    ariaLabel="Qué hacer con los productos del archivo"
-                  />
-                </app-form-field>
+                <p class="import__secondary" data-testid="import-upsert">
+                  Los códigos nuevos se crean y los que ya están en su catálogo se actualizan con lo
+                  que traiga el archivo.
+                </p>
 
                 @switch (categories().status) {
                   @case ('loading') {
@@ -193,15 +189,6 @@
               <p class="import__secondary">de {{ fileName() }}</p>
             </div>
 
-            <app-form-field label="Qué hacer con los productos del archivo" [hint]="modeHint()">
-              <app-select
-                [options]="modeOptions"
-                [value]="mode()"
-                (valueChange)="setMode($event)"
-                ariaLabel="Cambiar qué hacer con los productos del archivo"
-              />
-            </app-form-field>
-
             @if (encoding() === 'windows-1252') {
               <app-alert tone="info" title="Leímos su archivo como texto de Excel (Windows-1252)" data-testid="import-encoding">
                 No venía en UTF-8. Revise en la lista de abajo que las tildes y las eñes se vean
@@ -212,7 +199,7 @@
             @if (catalogTruncated()) {
               <app-alert tone="warning" title="Su catálogo tiene más de 500 productos" data-testid="import-truncated">
                 Sólo se compararon los primeros 500: un código que ya exista fuera de ellos se
-                tomaría por nuevo y, en «sólo actualizar», se rechazaría por error.
+                contaría como alta en esta revisión, aunque al cargarlo se actualiza.
               </app-alert>
             }
 
@@ -222,22 +209,6 @@
                 {{ duplicatedInFile() === 1 ? 'fila comparte' : 'filas comparten' }} su código con
                 otra del archivo. Se rechazan todas: elegir una por el orden sería decidir en
                 silencio cuál vale.
-              </app-alert>
-            }
-
-            @if (notInCatalog() > 0) {
-              <app-alert tone="warning" title="Códigos que no están en su catálogo" data-testid="import-not-in-catalog">
-                {{ notInCatalog() }}
-                {{ notInCatalog() === 1 ? 'fila' : 'filas' }} no se {{ notInCatalog() === 1 ? 'actualiza' : 'actualizan' }}
-                porque su código no existe. Con «Crear y actualizar» se crearían.
-              </app-alert>
-            }
-
-            @if (alreadyInCatalog() > 0) {
-              <app-alert tone="warning" title="Códigos que ya están en su catálogo" data-testid="import-already-in-catalog">
-                {{ alreadyInCatalog() }}
-                {{ alreadyInCatalog() === 1 ? 'fila' : 'filas' }} no se {{ alreadyInCatalog() === 1 ? 'crea' : 'crean' }}
-                porque su código ya existe. Con «Crear y actualizar» se actualizarían.
               </app-alert>
             }
 
@@ -326,8 +297,8 @@
 
             @if (nothingToLoad()) {
               <app-alert tone="error" title="No hay nada para cargar" data-testid="import-nothing">
-                Ninguna fila del archivo se puede cargar con «{{ modeLabel() }}». Corrija las de
-                abajo o cambie lo que se hace con los productos.
+                Ninguna fila del archivo se puede cargar. Corrija las de abajo y vuelva a subir el
+                archivo.
               </app-alert>
             }
 

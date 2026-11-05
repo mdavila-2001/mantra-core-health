@@ -21,7 +21,6 @@ const DIRECTORY: PharmacyDirectoryPage = {
 
 interface Internal {
   onFilesChange: (files: readonly File[]) => Promise<void>;
-  setMode: (mode: 'CREATE' | 'UPDATE' | 'UPSERT' | null) => void;
 }
 
 describe('EntityImport', () => {
@@ -187,18 +186,15 @@ describe('EntityImport', () => {
     expect(navigate).toHaveBeenCalledWith('/administration/pharmacy-catalog?tab=prices');
   });
 
-  it('cambiar el modo vuelve a pedir la vista previa con el modo nuevo', async () => {
+  it('no ofrece elegir el modo: siempre manda `UPSERT` y lo dice', async () => {
     mount('sites');
+    expect(root().querySelector('[aria-label="Qué hacer con las filas del archivo"]')).toBeNull();
+    expect(textOf('entity-import-upsert')).toContain('Lo nuevo se crea y lo que ya existe se actualiza');
+
     await upload('codigo,nombre\nSUR,Sucursal Sur\n');
-    answer(http.expectOne(bulkUrl('sites')));
-
-    internal().setMode('UPDATE');
-    fixture.detectChanges();
-
-    const again = http.expectOne(bulkUrl('sites'));
-    expect(again.request.body).toEqual({ mode: 'UPDATE', dryRun: true, rows: [{ code: 'SUR', name: 'Sucursal Sur' }] });
-    answer(again, () => ({ outcome: 'REJECTED', errors: [{ field: 'code', reason: 'NOT_FOUND' }] }));
-    expect(textOf('entity-import-rows')).toContain('No existe: eligió sólo actualizar.');
+    const preview = http.expectOne(bulkUrl('sites'));
+    expect(preview.request.body).toEqual({ mode: 'UPSERT', dryRun: true, rows: [{ code: 'SUR', name: 'Sucursal Sur' }] });
+    answer(preview);
   });
 
   it('un 413 se dice en pantalla y no deja aplicar', async () => {

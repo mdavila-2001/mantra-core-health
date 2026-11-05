@@ -15,8 +15,7 @@ import type {
   PharmacyProductSearchPage,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
-import type { ProductFields, LoadMode } from '../catalog-rules/catalog.rules';
-import { chooseSelectOption, selectOptionLabels } from '../../../../testing/select';
+import type { ProductFields } from '../catalog-rules/catalog.rules';
 import { PharmacyImport } from './pharmacy-import';
 import { afterAll, beforeAll } from 'vitest';
 import { environment } from '../../../../environments/environment';
@@ -26,7 +25,7 @@ import { environment } from '../../../../environments/environment';
  *
  * Migra los casos de importación del `PharmacyCatalog` de una sola tarjeta con
  * tres pestañas (`pharmacy-catalog.spec.ts`) y agrega los del recorrido nuevo:
- * el paso de columnas, el modo «sólo actualizar» y las categorías de la
+ * el paso de columnas, el upsert fijo y las categorías de la
  * farmacia. Se fija contra la API simulada con `HttpTestingController`: qué
  * petición sale, con qué cuerpo, en qué orden.
  *
@@ -94,12 +93,10 @@ function page(items: readonly PharmacyProduct[], truncated = false): PharmacyPro
 /** Lo que la spec toca del componente: señales y métodos protegidos. */
 interface Internal {
   step: () => string;
-  mode: () => LoadMode;
   onFilesChange: (files: readonly File[]) => Promise<void>;
   publish: () => void;
   stop: () => void;
   goTo: (step: 'file' | 'columns' | 'review') => void;
-  setMode: (mode: LoadMode | null) => void;
   choosePharmacy: (id: string | null) => void;
   downloadTemplate: () => void;
 }
@@ -516,85 +513,27 @@ describe('PharmacyImport', () => {
     });
   });
 
-  describe('modo', () => {
+  describe('upsert', () => {
     const MODE_CSV = ['codigo;marca', 'A-1;Nuevo', 'PAR-500;Ya está', ''].join('\n');
 
-    it('ofrece las tres opciones con sus rótulos y cambiarla en el desplegable cambia el modo', async () => {
+    it('no ofrece elegir el modo: dice que crea lo nuevo y actualiza lo que ya está', () => {
       mount();
 
-      const select = root().querySelector('app-select') as HTMLElement;
-      const labels = await selectOptionLabels(fixture, select);
-      expect(labels).toEqual(['Crear y actualizar', 'Sólo crear', 'Sólo actualizar']);
-      expect(text()).toContain('Los códigos nuevos se crean y los que ya están en su catálogo se actualizan');
-
-      await chooseSelectOption(fixture, select, 'Sólo actualizar');
-      fixture.detectChanges();
-
-      expect(internal().mode()).toBe('SOLO_ACTUALIZAR');
-      expect(text()).toContain('Sólo se actualizan los productos que ya están en su catálogo');
+      expect(root().querySelector('[aria-label="Qué hacer con los productos del archivo"]')).toBeNull();
+      expect(textOf('import-upsert')).toContain(
+        'Los códigos nuevos se crean y los que ya están en su catálogo se actualizan',
+      );
     });
 
-    it('«sólo actualizar» rechaza el código que no existe, con un mensaje claro, y actualiza el que sí', async () => {
-      mount();
-      internal().setMode('SOLO_ACTUALIZAR');
-      await upload(MODE_CSV);
-      review();
-
-      const revision = textOf('import-review');
-      expect(revision).toMatch(/0\s+productos nuevos/);
-      expect(revision).toMatch(/1\s+se actualiza/);
-      expect(revision).toMatch(/1\s+fila a corregir/);
-      expect(textOf('import-problems')).toContain('El código A-1 no está en su catálogo (eligió «sólo actualizar»).');
-      expect(textOf('import-not-in-catalog')).toMatch(/1\s+fila no se actualiza/);
-
-      publishByClick();
-      // Nada se da de alta: sólo viaja la actualización, en modo `UPDATE`.
-      http.expectNone(productsUrl(PHARMACY.id));
-      http.expectNone(`${productsUrl(PHARMACY.id)}/p-1`);
-      const bulk = http.expectOne(bulkUrl(PHARMACY.id));
-      expect(bulk.request.method).toBe('POST');
-      expect(bulk.request.body).toEqual({
-        mode: 'UPDATE',
-        rows: [{ productCode: 'PAR-500', brandName: 'Ya está', inStock: true }],
-      });
-      bulkAnswer(bulk, () => ({ outcome: 'UPDATED', id: 'p-1' }));
-      fixture.detectChanges();
-
-      expect(textOf('import-result')).toMatch(/1\s+actualizado/);
-      expect(textOf('import-result')).toMatch(/0\s+productos publicados/);
-      expect(textOf('import-result')).toMatch(/1\s+no enviados por errores del archivo/);
-    });
-
-    it('si ninguna fila se puede cargar en ese modo lo dice y no deja publicar', async () => {
-      mount();
-      internal().setMode('SOLO_ACTUALIZAR');
-      await upload('codigo;marca\nA-1;Nuevo\n');
-      review();
-
-      expect(byId('import-nothing')).not.toBeNull();
-      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
-    });
-
-    it('cambiar el modo con el archivo ya leído recalcula la revisión sin volver a pedir el catálogo', async () => {
+    it('un código nuevo se crea y uno que ya existe se actualiza, en el mismo envío `UPSERT`', async () => {
       mount();
       await upload(MODE_CSV);
-      review();
+      const [preview] = review();
+
       expect(textOf('import-review')).toMatch(/1\s+producto nuevo/);
       expect(textOf('import-review')).toMatch(/1\s+se actualiza/);
-
-      internal().setMode('SOLO_CREAR');
-      fixture.detectChanges();
-      // La vista previa del servidor se vuelve a pedir, con el modo nuevo.
-      const [again] = http.match(bulkUrl(PHARMACY.id));
-      expect(again!.request.body.mode).toBe('CREATE');
-      bulkAnswer(again!);
-      fixture.detectChanges();
-
-      expect(textOf('import-review')).toMatch(/1\s+producto nuevo/);
-      expect(textOf('import-review')).toMatch(/0\s+se actualizan/);
-      expect(textOf('import-review')).toMatch(/1\s+fila a corregir/);
-      expect(textOf('import-problems')).toContain('El código PAR-500 ya está en su catálogo');
-      http.expectNone((r) => r.url.endsWith('/pharmacy/products'));
+      expect(preview!.request.body.mode).toBe('UPSERT');
+      expect(preview!.request.body.dryRun).toBe(true);
     });
   });
 

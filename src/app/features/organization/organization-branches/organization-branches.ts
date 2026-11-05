@@ -107,7 +107,7 @@ export class OrganizationBranches {
   protected readonly tenantId = this.session.activeTenantId;
   /**
    * En una farmacia hay dos «sucursales» que no son la misma lista: éstas, de la
-   * organización, y las sedes de venta que se cargan en «Importación» y salen en
+   * organización, y las sedes de venta que se cargan con «Importar CSV» del catálogo y salen en
    * «Horario y turnos» y en «Dónde comprar». La pantalla lo dice.
    */
   protected readonly isPharmacy = computed(() => this.session.activeTenantType() === 'PHARMACY');
