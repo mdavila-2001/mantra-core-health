@@ -44,6 +44,7 @@
       <div
         class="results__drop"
         [class.results__drop--active]="dragging()"
+        [class.results__drop--picker-open]="pickerOpen()"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
@@ -68,6 +69,7 @@
         </div>
         <input
           #fileInput
+          appNativeFilePicker
           class="results__hidden-input"
           type="file"
           multiple
@@ -78,6 +80,7 @@
         />
         <input
           #folderInput
+          appNativeFilePicker
           class="results__hidden-input"
           type="file"
           multiple

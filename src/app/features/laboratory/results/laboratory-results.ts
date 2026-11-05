@@ -11,6 +11,7 @@ import {
   signal,
   untracked,
   viewChild,
+  viewChildren,
 } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
@@ -34,6 +35,7 @@ import { ContentDialog } from '../../../shared/components/organisms/content-dial
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
+import { NativeFilePicker } from '../../../shared/forms/native-file-picker';
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
 import type {
   LabResultFile,
@@ -126,6 +128,7 @@ const THUMBNAIL_MAX_BYTES = 15 * 1024 * 1024;
     Switch,
     Textarea,
     ViewStateHost,
+    NativeFilePicker,
   ],
   providers: [ResultUploadQueue],
   templateUrl: './laboratory-results.html',
@@ -152,6 +155,9 @@ export class LaboratoryResults {
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
   private readonly folderInput = viewChild<ElementRef<HTMLInputElement>>('folderInput');
+  private readonly pickers = viewChildren(NativeFilePicker);
+  /** Con «Elegir archivos» o «Elegir una carpeta» abiertos, la zona no acepta soltar. */
+  protected readonly pickerOpen = computed(() => this.pickers().some((picker) => picker.open()));
 
   /* ---- subida ----------------------------------------------------------- */
 
@@ -262,10 +268,11 @@ export class LaboratoryResults {
 
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
+    const blocked = this.pickerOpen();
     if (event.dataTransfer !== null) {
-      event.dataTransfer.dropEffect = 'copy';
+      event.dataTransfer.dropEffect = blocked ? 'none' : 'copy';
     }
-    this.dragging.set(true);
+    this.dragging.set(!blocked);
   }
 
   protected onDragLeave(event: DragEvent): void {
@@ -278,7 +285,7 @@ export class LaboratoryResults {
   protected async onDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
     this.dragging.set(false);
-    if (event.dataTransfer === null) {
+    if (event.dataTransfer === null || this.pickerOpen()) {
       return;
     }
     this.enqueue(await filesFromDrop(event.dataTransfer));

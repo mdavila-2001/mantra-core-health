@@ -41,6 +41,13 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+/* Con el diálogo nativo abierto la zona no invita a soltar: sin realce. */
+.dropzone.is-picker-open:hover,
+.dropzone.is-picker-open.is-dragging {
+  border-color: var(--border-strong);
+  background: var(--bg-surface);
+  box-shadow: none;
+}
 .dropzone.has-files {
   padding: var(--sp-3);
 }
