@@ -1,5 +1,6 @@
 import type { TenantSimulado } from '../fixtures/directory.types';
 import { withMembershipNames } from './directory.membership-names';
+import { registerLegalRepresentative, withCorrectedRepresentative } from './directory.legal-representative';
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, STATUS, ORGANIZATION_TYPE } from '../fixtures/concepts';
 import { ALCANCE_ACCESO, INVITACIONES_PENDIENTES, MEMBRESIAS_DEL_APOYO, ROL_TENANT, TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
@@ -496,7 +497,7 @@ function organizacionPropia(t: TenantSimulado, request: MockRequest) {
       : {}),
     // Lo que el alta registró, como lo devuelve `GET /tenants/me`: forma
     // societaria, NIT, carpeta legal, representante y gerencias.
-    ...(FICHA_DE_ALTA[t.id] ?? {}),
+    ...withCorrectedRepresentative(t.id, FICHA_DE_ALTA),
   };
 }
 
@@ -678,7 +679,7 @@ export function registrarDirectorio(router: MockRouter): void {
       createdAt: t.createdAt,
     };
   });
-
+  registerLegalRepresentative(router, (id, request) => { const t = tenants.get(id); return t && organizacionPropia(t, request).canAdminister; });
   router.get('/tenants/me', (request) => {
     const user = request.user;
     const items = tenants
