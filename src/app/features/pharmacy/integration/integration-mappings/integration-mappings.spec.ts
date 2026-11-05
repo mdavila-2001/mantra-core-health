@@ -172,11 +172,11 @@ describe('IntegrationMappings · corregir y deshacer', () => {
     expect(rows[1]).toContain('Sin unidad');
   });
 
-  it('«Deshacer» confirma, borra con DELETE y relee la tabla', async () => {
+  it('«Eliminar» confirma, borra con DELETE y relee la tabla', async () => {
     rowAction(0, 'undo').click();
     await fixture.whenStable();
 
-    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ destructive: true, confirmLabel: 'Deshacer' }));
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ destructive: true, confirmLabel: 'Eliminar' }));
     expect(String((confirm.mock.calls[0][0] as { message: string }).message)).toContain('se conserva');
     expectOne('DELETE', `${CONN}/product-mappings/m-1`).flush({ ...MAPPINGS[0] });
     fixture.detectChanges();
@@ -207,12 +207,12 @@ describe('IntegrationMappings · corregir y deshacer', () => {
     expect(text('integration-mappings-notice')).toContain('Ese vínculo ya no existe');
   });
 
-  it('«Corregir» abre el modal con el vínculo y manda sólo lo que cambió', () => {
+  it('«Editar» abre el modal con el vínculo y manda sólo lo que cambió', () => {
     rowAction(0, 'edit').click();
     fixture.detectChanges();
     answerDialog();
 
-    expect(text('integration-link-dialog')).toContain('Corregir el vínculo');
+    expect(text('integration-link-dialog')).toContain('Editar el vínculo');
     expect(unitInput().value).toBe('BOX');
     // Sin cambios no se puede guardar: la API respondería 400.
     expect(disabled('integration-link-save')).toBe(true);

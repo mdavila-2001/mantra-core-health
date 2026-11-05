@@ -326,7 +326,7 @@ export class PharmacyProducts {
             page.items.length > 0
               ? ready(page.items)
               : empty(
-                  { label: 'Use «Nuevo producto» o «Importación masiva»' },
+                  { label: 'Use «Nuevo producto» o «Importar CSV»' },
                   'Su catálogo todavía no tiene productos.',
                 ),
           );

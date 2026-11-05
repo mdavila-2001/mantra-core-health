@@ -302,7 +302,7 @@
       "lineas": 773
     },
     "src/app/features/pharmacy/import/pharmacy-import.ts": {
-      "lineas": 773
+      "lineas": 750
     },
     "src/app/core/mock/handlers/bulk-imports.handlers.ts": {
       "lineas": 770
@@ -728,7 +728,7 @@
       "lineas": 529
     },
     "src/app/features/pharmacy/inventory/pharmacy-inventory.ts": {
-      "lineas": 529
+      "lineas": 444
     },
     "src/app/shared/components/molecules/reference-combobox/reference-combobox.ts": {
       "lineas": 528
@@ -752,7 +752,7 @@
       "lineas": 519
     },
     "src/app/features/pharmacy/import/pharmacy-import.html": {
-      "lineas": 519
+      "lineas": 489
     },
     "src/app/features/glossary/glossary-anatomy-atlas.css": {
       "lineas": 517
@@ -1649,9 +1649,6 @@
       "lineas": 333
     },
     "src/app/features/clinical-record/patient-chart/observation-block/observation-block.ts": {
-      "lineas": 333
-    },
-    "src/app/features/pharmacy/prices/pharmacy-prices.ts": {
       "lineas": 333
     },
     "src/app/shared/styles/public-sheet.css": {

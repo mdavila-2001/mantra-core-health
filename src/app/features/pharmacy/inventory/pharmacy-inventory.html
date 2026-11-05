@@ -1,7 +1,7 @@
 @if (!embedded()) {
   <app-page-header
     title="Inventario"
-    subtitle="Llévelo con cantidades o sólo con un «hay / no hay». Lo que no tiene deja de ofrecerse a los pacientes. Puede editarlo acá o subirlo con un CSV."
+    subtitle="Llévelo con cantidades o sólo con un «hay / no hay». Lo que no tiene deja de ofrecerse a los pacientes. Edítelo fila por fila o súbalo con un CSV."
   />
 }
 
@@ -47,16 +47,6 @@
             <p class="inventory__nota" data-testid="inventory-ledger-notice">{{ notice }}</p>
           }
 
-          @if (errors().length > 0) {
-            <app-alert tone="error" title="Falta resolver esto" data-testid="inventory-errors">
-              <ul class="inventory__errors">
-                @for (error of errors(); track error) {
-                  <li>{{ error }}</li>
-                }
-              </ul>
-            </app-alert>
-          }
-
           <div class="inventory__mode">
             <span class="inventory__mode-label" id="inventory-mode-label">Cómo lleva su inventario</span>
             <app-segmented-control
@@ -76,7 +66,7 @@
             </div>
           </div>
 
-          <!-- Buscar, filtrar y guardar en un renglón desde 780 px: la tabla sube. -->
+          <!-- Buscar y filtrar en un renglón desde 780 px: la tabla sube. -->
           <div class="inventory__tools">
             <app-search-field
               label="Buscar en el inventario"
@@ -93,26 +83,6 @@
                 (checkedChange)="toggleAlerts($event)"
                 data-testid="inventory-only-alerts"
               />
-              <div class="inventory__save">
-                @if (dirtyCount() > 0) {
-                  <span class="inventory__dirty" role="status">
-                    {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
-                  </span>
-                  <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
-                    Descartar
-                  </button>
-                }
-                <button
-                  app-button
-                  type="button"
-                  [isLoading]="saving()"
-                  [disabled]="saving() || dirtyCount() === 0"
-                  (clicked)="save()"
-                  data-testid="inventory-save"
-                >
-                  Guardar cambios
-                </button>
-              </div>
             </div>
           </div>
 
@@ -176,38 +146,23 @@
 </ng-template>
 
 <ng-template #stockCell let-product>
-  <app-input
-    type="number"
-    inputMode="numeric"
-    [ariaLabel]="'Existencias de ' + name(product)"
-    [value]="stockOf(product)"
-    placeholder="Sin conteo"
-    (valueChange)="setStock(product, $event)"
-    [step]="1"
-    [testId]="'inventory-stock-' + product.productCode"
-  />
+  @if (product.stock === null || product.stock === undefined) {
+    <span class="inventory__muted">Sin conteo</span>
+  } @else {
+    <span class="inventory__number">{{ product.stock }}</span>
+  }
 </ng-template>
 
 <ng-template #minimumCell let-product>
-  <app-input
-    type="number"
-    inputMode="numeric"
-    [ariaLabel]="'Umbral de alerta de ' + name(product)"
-    [value]="minimumOf(product)"
-    (valueChange)="setMinimum(product, $event)"
-    [step]="1"
-    [testId]="'inventory-minimum-' + product.productCode"
-  />
+  <span class="inventory__number">{{ product.minStock ?? defaultMinimum }}</span>
 </ng-template>
 
 <ng-template #hasCell let-product>
-  <app-switch
-    [label]="hasNow(product) ? 'Hay' : 'No hay'"
-    [ariaLabel]="'¿Tiene ' + name(product) + '?'"
-    [checked]="hasNow(product)"
-    (checkedChange)="setHas(product, $event)"
-    [attr.data-testid]="'inventory-has-' + product.productCode"
-  />
+  @if (product.inStock !== false) {
+    <app-badge variant="success">Hay</app-badge>
+  } @else {
+    <app-badge variant="error">No hay</app-badge>
+  }
 </ng-template>
 
 <ng-template #availabilityCell let-product>
@@ -219,6 +174,31 @@
     <app-badge variant="success">Disponible</app-badge>
   }
 </ng-template>
+
+<ng-template #actionsCell let-product>
+  @if (busy().has(product.id)) {
+    <span class="inventory__muted" role="status">Guardando…</span>
+  } @else {
+    <app-row-actions
+      [actions]="actionsOf(product)"
+      [fila]="name(product)"
+      (actionSelected)="onRowAction($event, product)"
+    />
+  }
+</ng-template>
+
+@if (editing(); as product) {
+  @if (scope.pharmacyId(); as pharmacyId) {
+    <app-inventory-dialog
+      [pharmacyId]="pharmacyId"
+      [product]="product"
+      [view]="view()"
+      [notice]="ledgerNotice()"
+      (saved)="onSaved()"
+      (closed)="editing.set(null)"
+    />
+  }
+}
 
 @if (uploadOpen() && scope.pharmacyId(); as pharmacyId) {
   <app-inventory-upload-dialog
