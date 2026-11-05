@@ -227,6 +227,13 @@ describe('ficha de la organización — datos', () => {
           celular: null,
           correo: 'legal@erbol.bo',
           documento: '4872190 SC',
+          // Lo que la ficha puede corregir del nombre: las partes que el alta declaró.
+          partes: {
+            role: 'LEGAL_REPRESENTATIVE',
+            fullName: 'Mariana Siles',
+            email: 'legal@erbol.bo',
+            idNumber: '4872190 SC',
+          },
         },
         gerentes: [
           {
@@ -235,6 +242,7 @@ describe('ficha de la organización — datos', () => {
             celular: '+591 70000001',
             correo: null,
             documento: null,
+            partes: { role: 'GENERAL_MANAGER', fullName: 'Carlos Mendoza', phone: '+591 70000001' },
           },
         ],
       },

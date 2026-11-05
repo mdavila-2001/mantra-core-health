@@ -55,17 +55,9 @@ export interface MyOrganization extends TenantListItem {
    * decodificar `tenantTypeConceptId` — mismo principio que `isVerified`.
    */
   readonly payer?: PayerProfile;
-  /**
-   * Quién representa legalmente a la organización (subtarea 1.4). Al nivel
-   * de la organización y no dentro de `payer`: no es dato de aseguradora — el
-   * registro de procesos pide el mismo bloque para farmacia, laboratorio e
-   * imagenología.
-   *
-   * Sólo tipos por ahora: la pantalla «Mi organización» todavía no lo dibuja
-   * (deuda declarada en la tarjeta T-34 de la bóveda).
-   */
+  /** Quién representa legalmente a la organización (subtarea 1.4); de toda organización, no sólo de `payer`. */
   readonly legalRepresentative?: OrganizationContactPerson;
-  /** Las gerencias de contacto declaradas, en orden canónico. Ver {@link legalRepresentative}. */
+  /** Las gerencias de contacto declaradas, en orden canónico. */
   readonly executives?: readonly OrganizationContactPerson[];
   /**
    * Código de la forma societaria (`SRL`, `SA`, `US_LLC`…). Ausente si la
@@ -95,14 +87,18 @@ export interface OrganizationLegalDocument {
 }
 
 /**
- * Una persona que la organización declara como contacto: su representante
- * legal o una de sus gerencias (subtarea 1.4). No es una cuenta de la
- * plataforma: es a quién llamar.
+ * Una persona de contacto de la organización: su representante legal o una gerencia (subtarea 1.4).
+ * No es una cuenta de la plataforma: es a quién llamar.
  */
 export interface OrganizationContactPerson {
   /** El cargo, en su código canónico (`LEGAL_REPRESENTATIVE`, `GENERAL_MANAGER`…). */
   readonly role: string;
   readonly fullName: string;
+  /** Partes del nombre, si el alta las declaró (las filas antiguas sólo traen `fullName`). */
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
   readonly email?: string;
   readonly phone?: string;
   /** Documento de identidad, si se declaró (sólo el representante legal). */
@@ -503,15 +499,15 @@ export interface NewBranch {
 /**
  * Una membresía (`GET /tenants/{id}/memberships`). Los nulos del contrato
  * (`primaryBranchId`, fechas, `userName`) se normalizan a `undefined` en la frontera (`wire.ts`).
-  /** Nombre de la persona, para mostrarlo en vez del uuid. */
-  readonly userName?: string;
  */
-  /** El rol por su código (`OWNER`, `ADMIN`, `STAFF`); ausente si la API no lo rotula. */
-  readonly tenantRoleCode?: string;
 export interface MembershipListItem {
   readonly id: string;
   readonly userId: string;
+  /** Nombre de la persona, para mostrarlo en vez del uuid. */
+  readonly userName?: string;
   readonly tenantRoleConceptId: string;
+  /** El rol por su código (`OWNER`, `ADMIN`, `STAFF`); ausente si la API no lo rotula. */
+  readonly tenantRoleCode?: string;
   readonly statusConceptId: string;
   readonly accessScopeConceptId?: string;
   readonly primaryBranchId?: string;
