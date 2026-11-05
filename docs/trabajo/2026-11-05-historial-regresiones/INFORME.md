@@ -59,6 +59,24 @@ Ritmo en el front: 363 y 373 commits los días 30 y 31/10; 33 a 88 por día desd
 | A7 | modelo | `apply_all.sql` dejó fuera `05_constraints.sql`: los 6 CHECK de `tenant_medical_facilities` no existían en una base creada solo desde ese runner | `24c3af5` (28/10) |
 | A8 | front/API | Sincronías manuales entre ramas: `nivelar test y mockup`, `lleva dev a master — se descarta el chat de #1716`, `mockup absorbe dev (con traducción de renombres)` | decisiones tomadas a mano, sin evidencia de prueba |
 
+## Hallazgos de la noche del 05/11 (resolviendo los PRs en conflicto)
+
+| # | Qué se encontró | Evidencia |
+|---|---|---|
+| S11 | **El front de `dev` va por delante de la API de `dev`.** `8f29411a9` (04/11) ofrece «Cancelar» y «Rechazar» en órdenes de laboratorio e imagenología, pero la API de `dev` responde **422** a `CANCEL` («el ejecutor no tiene dónde registrar la anulación») y a `REJECT` en una orden sin muestra (`src/modules/diagnostics/README.md`). El PR #1977 (`canReject`, sin «Cancelar») coincide con la API; el front de `dev` no. El front que usa esas funciones depende del API #1336, que aún no está en `dev`. | README de diagnostics en `dev`; `git log -S askReason` |
+| S12 | **Tres pruebas rojas en `dev`**: `practitioner-profile-edit.spec.ts` › «edición aislada por pestaña» (cancela *Datos personales*, *Contacto*, *Facturación* sin restablecer otras pestañas). Fallan igual en un `dev` puro; no son de ningún PR abierto. | `ng test` sobre `origin/dev` limpio |
+| S13 | **`add/add` en el mismo archivo por dos sesiones**: `laboratory-prices.rules.ts` lo crearon a la vez `dev` y #1975. Cuatro sesiones (#1974, #1975, #1977, #1972) y cuatro del API (#1342, #1343, #1345, #1346) tocan las mismas pantallas de laboratorio. | `git merge-tree`, solapamiento de archivos |
+
+## Orden de merge propuesto (medido con el solapamiento real de archivos)
+
+Cada paso evita rehacer la resolución de conflictos de los siguientes.
+
+0. **Arreglar el build de `dev`** (`motivo-figura.ts`, S9). Sin esto ningún push que toque `src/` pasa el hook sin saltarlo.
+1. **API, el contrato antes que el consumidor:** #1336 (base; comparte archivos con #1342, #1343, #1345 y #1346) → #1337 (revisar si sigue haciendo falta tras tomar el helper `withTenantRls` de `dev`) → #1343 → #1345 → #1342 → #1346 → #1340 (independiente). #1338 queda idéntico a `dev`: cerrarlo.
+2. **Front, con su API ya en `dev`:** #1974 (⇄ API #1343) → #1975 (⇄ #1345) → #1977 (⇄ #1346) → #1972. #1975 y #1977 **se resuelven después** de que entren #1974 y #1975: comparten 7 y 2 archivos; resolverlos antes se rehace. #1971 → #1976 (comparten `register-imaging-center`).
+3. **Independientes, en cualquier momento tras el paso 0:** #1957, #1962, #1966, #1970, #1978. #1967 queda idéntico a `dev`: cerrarlo.
+4. **Al final, las puertas:** #1979 (front) y #1347 (API). Una vez mergeadas, todo push exige prueba real; mergearlas antes frenaría el resto.
+
 ## Qué tienen en común (causas raíz)
 
 1. **Merges entre ramas largas** (`dev`, `test`, `mockup`, `master`). Cuatro ramas
