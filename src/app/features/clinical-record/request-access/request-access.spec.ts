@@ -93,6 +93,16 @@ describe('RequestAccess', () => {
     expect(root().textContent).toContain('Pedir NO le da acceso todavía');
   });
 
+  it('el formulario va en UNA tarjeta y la acción en su pie (composición §5)', async () => {
+    await pintar();
+    const tarjetas = root().querySelectorAll('app-card');
+    expect(tarjetas).toHaveLength(1);
+    expect(tarjetas[0]!.querySelector('textarea')).not.toBeNull();
+    expect(
+      tarjetas[0]!.querySelector('.card__footer [data-testid="solicitar-acceso-enviar"]'),
+    ).not.toBeNull();
+  });
+
   it('sin elegir qué pide no deja pedir', async () => {
     await pintar();
     expect(boton().getAttribute('aria-disabled')).toBe('true');

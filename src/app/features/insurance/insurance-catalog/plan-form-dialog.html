@@ -45,7 +45,7 @@
     </ng-template>
     <ng-template appCampoPersonalizado="effectiveFrom">
 <app-form-field label="Vigente desde">
-        <app-input [formControl]="form.controls.effectiveFrom" type="date" testId="plan-effective-from" />
+        <app-date-string-picker [formControl]="form.controls.effectiveFrom"  testId="plan-effective-from" />
       </app-form-field>
     </ng-template>
     <ng-template appCampoPersonalizado="effectiveTo">
@@ -57,7 +57,7 @@
             : ''
         "
       >
-        <app-input [formControl]="form.controls.effectiveTo" type="date" testId="plan-effective-to" />
+        <app-date-string-picker [formControl]="form.controls.effectiveTo"  testId="plan-effective-to" />
       </app-form-field>
     </ng-template>
     <ng-template appCampoPersonalizado="currencyConceptId">

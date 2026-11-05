@@ -38,6 +38,7 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope } from '../pharmacy-scope';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** Lo que la sede dice de sus 24 h, como lo elige la persona. */
 type Declaracion24h = 'si' | 'no' | 'sin-declarar';
@@ -105,7 +106,7 @@ function mensajeDelServidor(error: unknown): string | null {
  */
 @Component({
   selector: 'app-pharmacy-opening-hours',
-  imports: [
+  imports: [DateStringPicker, 
     Alert,
     AppButton,
     Badge,

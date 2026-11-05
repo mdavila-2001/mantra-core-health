@@ -152,7 +152,8 @@
   </div>
 }
 
-<form [appFileDropTarget]="archivo" (fileDropRejected)="error.set($event)" class="composer" (submit)="$event.preventDefault(); enviar()">
+<!-- Los dos selectores nativos: con cualquiera abierto, el formulario no acepta soltar. -->
+<form [appFileDropTarget]="[archivo, camara]" (fileDropRejected)="error.set($event)" class="composer" (submit)="$event.preventDefault(); enviar()">
   <!-- Editando no se adjunta: la edición cambia el texto de un mensaje que ya
        salió, y agregarle un archivo sería otro mensaje. -->
   @if (editando() === null) {

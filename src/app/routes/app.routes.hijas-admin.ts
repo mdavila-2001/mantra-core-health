@@ -22,7 +22,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/insurance/insurance-claim-detail/insurance-claim-detail')
         .then((m) => m.InsuranceClaimDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/brokers/:brokerId',
@@ -30,7 +30,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/insurance/broker-detail/broker-detail')
         .then((m) => m.BrokerDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'onboarding',
@@ -39,7 +39,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/onboarding-practitioner/onboarding-practitioner')
         .then((m) => m.OnboardingPractitioner)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/edit',
@@ -48,7 +48,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
         .then((m) => m.PractitionerProfileEdit)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/profile/edit',
@@ -56,7 +56,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/account/my-profile/patient-profile-edit/patient-profile-edit')
         .then((m) => m.PatientProfileEdit)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/articles',
@@ -65,7 +65,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/account/my-profile/medical-articles/medical-articles')
         .then((m) => m.MedicalArticles)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   ...affiliationRoutes({ practitionerOnly: soloDeQuienAtiende, chunkFailed: chunkFallido }),
   ...inpatientRoutes({ chunkFailed: chunkFallido }),
@@ -73,7 +73,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     path: ADMISSION_DETAIL_PATH,
     title: `${APP_TITLE} - Revisión de admisión`,
     canActivate: [seccionRolesGuard],
-    loadComponent: () => loadAdmissionDetail().catch(() => chunkFallido()),
+    loadComponent: () => loadAdmissionDetail().catch(chunkFallido),
   },
   {
     path: 'administration/terminology/import',
@@ -82,7 +82,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/terminology/version-import/version-import')
         .then((m) => m.VersionImport)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/getting-started',
@@ -92,7 +92,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/getting-started/getting-started')
         .then((m) => m.GettingStarted)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'superadmin/qa-lab/plans/:planId',
@@ -101,7 +101,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/qa-lab/plan-detail/qa-plan-detail')
         .then((m) => m.QaPlanDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'superadmin/flows/:flowId',
@@ -110,7 +110,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/flows/flow-detail/flow-detail')
         .then((m) => m.FlowDetailPage)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'superadmin/data-catalog/:objectId',
@@ -119,7 +119,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/data-catalog/object-detail/catalog-object-detail')
         .then((m) => m.CatalogObjectDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/organizations/new',
@@ -128,7 +128,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/organizations/organization-new/organization-new')
         .then((m) => m.OrganizationNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/organizations/:tenantId/verify',
@@ -137,7 +137,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/organizations/organization-verify/organization-verify')
         .then((m) => m.OrganizationVerify)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/organizations/:tenantId/branches/new',
@@ -146,7 +146,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/organizations/branch-new/branch-new')
         .then((m) => m.BranchNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/organizations/:tenantId/memberships/new',
@@ -155,7 +155,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/organizations/membership-new/membership-new')
         .then((m) => m.MembershipNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/organizations/:tenantId/child-organizations/new',
@@ -164,7 +164,7 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/organizations/child-organization-new/child-organization-new')
         .then((m) => m.ChildOrganizationNew)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/organizations/:tenantId',
@@ -172,6 +172,6 @@ export const PANTALLAS_HIJAS_ADMIN: Routes = [
     loadComponent: () =>
       import('../features/admin/organizations/organization-detail/organization-detail')
         .then((m) => m.OrganizationDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
 ];

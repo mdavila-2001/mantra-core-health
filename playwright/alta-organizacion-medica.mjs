@@ -574,7 +574,7 @@ async function recorrer(browser, vp) {
   await ctx.close();
 }
 
-/** UNIPERSONAL: sin constitución ni poder; y un error real del simulador (409) con reintento. */
+/** UNIPERSONAL: sin constitución, pero con el poder (obligatorio para todas); y un 409 real del simulador con reintento. */
 async function unipersonalY409(browser) {
   const etiqueta = 'escritorio-1440';
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'es-BO' });
@@ -616,9 +616,14 @@ async function unipersonalY409(browser) {
   await nombre(p, 'medical-center-signup-legal-rep', 'Pedro', 'Paz');
   await llenar(p, 'medical-center-signup-legal-rep-id', '4872190');
   await continuar(p);
-  // Poder: opcional para una unipersonal, se avanza sin subirlo.
-  await p.getByTestId('medical-center-signup-doc-powerOfAttorneyFileId').waitFor({ timeout: 15_000 });
-  await foto(p, etiqueta, 'u2-unipersonal-poder-opcional');
+  // Poder: obligatorio también para una unipersonal (decisión del propietario, 05/11/2026).
+  const idPoderUni = 'medical-center-signup-doc-powerOfAttorneyFileId';
+  await p.getByTestId(idPoderUni).waitFor({ timeout: 15_000 });
+  const poderOpcional = await p.getByText('Poder del representante legal (opcional)').count();
+  ok('[unipersonal] el poder no se rotula «(opcional)»', poderOpcional === 0, `${poderOpcional} rótulos`);
+  await p.getByTestId(idPoderUni).setInputFiles(pdf('powerOfAttorneyFileId'));
+  await p.getByTestId(`${idPoderUni}-quitar`).waitFor({ timeout: 20_000 });
+  await foto(p, etiqueta, 'u2-unipersonal-poder-obligatorio');
   await continuar(p);
   for (let i = 0; i < 3; i += 1) await continuar(p); // gerencias vacías
   // El correo del representante es el usuario: se escribe con la contraseña. Uno que el simulador ya
@@ -642,9 +647,9 @@ async function unipersonalY409(browser) {
   const envios = await espiado(p);
   ok('[409] reintentar con otro correo funciona (el envío no queda trabado)', envios.length === 2 && Boolean(envios[1].respuesta), `${envios.length} envíos`);
   const org = envios[1].body.organization;
-  ok('[unipersonal] el cuerpo no lleva constitución, poder, gerencias ni sucursales',
+  ok('[unipersonal] el cuerpo no lleva constitución, gerencias ni sucursales, y sí el poder',
     !('constitutionFileId' in org.legalDocuments) &&
-      !('powerOfAttorneyFileId' in org.legalRepresentative) &&
+      Boolean(org.legalRepresentative.powerOfAttorneyFileId) &&
       !('executives' in org) &&
       !('branches' in org.medicalFacility));
   writeFileSync(`${SALIDA}/unipersonal-request.json`, JSON.stringify(envios[1].body, null, 2));
