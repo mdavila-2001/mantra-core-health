@@ -1,5 +1,11 @@
 import { inject } from '@angular/core';
-import { Router, type ActivatedRouteSnapshot, type CanActivateFn } from '@angular/router';
+import {
+  PRIMARY_OUTLET,
+  Router,
+  type ActivatedRouteSnapshot,
+  type CanActivateFn,
+  type RouterStateSnapshot,
+} from '@angular/router';
 
 import { SessionStore } from '../auth/session.store';
 import { tracedGuard } from '../observability/routing/guard-tracing';
@@ -71,7 +77,10 @@ export const seccionRolesGuard: CanActivateFn = tracedGuard('seccionRolesGuard',
   const session = inject(SessionStore);
   const router = inject(Router);
 
-  if (alcanza(route, state.url, session.roles(), session.tenants(), session.activeTenantType())) {
+  const accountKind = session.isOrganizationAccount() ? 'ORGANIZATION' : 'PERSON';
+  if (
+    alcanza(route, state, session.roles(), session.tenants(), session.activeTenantType(), accountKind)
+  ) {
     return true;
   }
 
@@ -80,18 +89,19 @@ export const seccionRolesGuard: CanActivateFn = tracedGuard('seccionRolesGuard',
 
 function alcanza(
   route: ActivatedRouteSnapshot,
-  url: string,
+  state: RouterStateSnapshot,
   roles: readonly string[],
   tenants: readonly string[],
   activeTenantType: string | null,
+  accountKind: 'ORGANIZATION' | 'PERSON',
 ): boolean {
   const propios = rolesDeLaRuta(route);
   if (propios !== undefined) {
     return rolesAlcanzan(propios, roles);
   }
 
-  const seccion = seccionDe(url);
-  return seccion === null || isVisibleTo(seccion, roles, tenants, activeTenantType);
+  const seccion = seccionDe(segmentosEmparejados(state));
+  return seccion === null || isVisibleTo(seccion, roles, tenants, activeTenantType, accountKind);
 }
 
 /**
@@ -116,14 +126,33 @@ function esListaDeTextos(valor: unknown): valor is readonly string[] {
 }
 
 /**
- * La sección a la que pertenece una URL, por la coincidencia **más larga**.
+ * Los segmentos de la **ruta emparejada**, de la raíz a la hoja de la cadena principal, tal como el `Router` los
+ * reconoció: sin parámetros matriciales (`;x=1`), sin parámetros de consulta ni fragmento (F2).
+ *
+ * No se parsea `state.url` como texto: con `/administration/support-team;x=1` el router empareja la misma ruta pero el
+ * texto ya no contiene `administration/support-team`, y la sección no se encontraba (y un guard que no encuentra sección
+ * deja pasar). Los segmentos emparejados son los mismos que decidieron qué pantalla se abre, así que no se pueden
+ * desincronizar de ella.
+ */
+function segmentosEmparejados(state: RouterStateSnapshot): readonly string[] {
+  const segmentos: string[] = [];
+  let nodo: ActivatedRouteSnapshot | undefined = state.root;
+  while (nodo !== undefined) {
+    for (const segmento of nodo.url) segmentos.push(segmento.path);
+    nodo = nodo.children.find((hijo) => hijo.outlet === PRIMARY_OUTLET);
+  }
+  return segmentos;
+}
+
+/**
+ * La sección a la que pertenecen unos segmentos de ruta, por la coincidencia **más larga**.
  *
  * Mismo criterio que usa `NavigationService` para marcar el menú y armar el
  * breadcrumb: `/my-account/appointments` tiene que resolver a «Mis turnos» y no
  * a «Mi perfil», que también es prefijo suyo.
  */
-function seccionDe(url: string): AppSection | null {
-  const ruta = url.split('?')[0].split('#')[0].replace(/^\//, '');
+function seccionDe(segmentos: readonly string[]): AppSection | null {
+  const ruta = segmentos.join('/');
 
   return (
     APP_SECTIONS.filter(

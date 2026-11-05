@@ -3,7 +3,7 @@ import { ACTIVITY, CANAL, STATUS, BOOKING_STATUS, BLOCK_TYPE, APPOINTMENT_TYPE }
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from './people';
 import { offers } from './offered-services';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
-import { TENANT_CLINICA } from '../mock-session';
+import { TENANT_CLINICA, TENANT_CONSULTORIO } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -86,6 +86,8 @@ export interface ReservaSimulada {
   readonly statusReason: { reasonText: string; actorKind: 'PATIENT' | 'PROVIDER'; toStateConceptId: string; changedAt: string } | null;
   readonly delayNotice: { delayMinutes: number; message: string; announcedAt: string } | null;
   readonly paymentState: { state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; label: string; conceptId: string; insuranceUsed: boolean; markedByUserId: string; markedAt: string } | null;
+  /** Importe del pago QR confirmado en la maqueta, en bolivianos. */
+  readonly paymentAmount?: string;
   /**
    * De qué cita salió ésta, si es una reconsulta (C4). `null` es lo corriente.
    *
@@ -210,6 +212,11 @@ export const recursos = new Coleccion<RecursoSimulado>([
         id: uuid(`resource-consultorio-${p.id}`),
         name: `Consultorio propio · ${p.displayName}`,
         practiceId: PRACTICE_CONSULTORIO,
+        // El consultorio propio es de SU organización, no de la clínica: con el
+        // listado aislado por tenant (como la API), heredar el de la clínica
+        // lo dejaba invisible justo en «Mi consultorio», que es el tenant que
+        // la sesión de la médica abre por omisión.
+        tenantId: TENANT_CONSULTORIO,
         site: SITIO_CONSULTORIO,
       },
     ];
@@ -655,6 +662,14 @@ const CUPO_POR_LIBERARSE = uuid('slot-a-punto-de-liberarse');
    cerraría un ciclo de importación —lo que `check-architecture` prohíbe—. Una
    prueba comprueba que los dos números coinciden. */
 const MINUTOS_DE_GRACIA = 10;
+
+/**
+ * El horario en que la médica atiende: fuera de él no se siembra nada. Sin este
+ * corte, abrir la maqueta de madrugada ofrecía «un turno de las 05:38» con la
+ * cardióloga, que nadie atiende a esa hora.
+ */
+const _ATIENDE_DESDE_LA_HORA = 8;
+const _ATIENDE_HASTA_LA_HORA = 18;
 
 function sembrarCupoPorLiberarse(): void {
   const inicio = masMinutos(ahora(), -(MINUTOS_DE_GRACIA - 1));

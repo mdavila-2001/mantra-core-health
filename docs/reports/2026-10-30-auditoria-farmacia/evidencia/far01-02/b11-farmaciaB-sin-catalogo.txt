@@ -1,0 +1,62 @@
+{
+ "tag": "b11-farmaciaB-sin-catalogo",
+ "state": "farmaciaB",
+ "requested": "/rx/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA",
+ "finalUrl": "http://localhost:4000/administration/pharmacy-orders/rx/<tok43>",
+ "httpStatus": 200,
+ "title": "AloVida - Abrir receta",
+ "robots": [],
+ "h": [
+  "Abrir receta",
+  "Receta compartida",
+  "Amoxicilina"
+ ],
+ "apiCalls": [
+  "POST /iam/auth/token/refresh → 200",
+  "GET /notifications/me?unread=true&limit=20 → 200",
+  "GET /notifications/me?limit=8 → 200",
+  "GET /community/profiles/me → 200",
+  "GET /community/profiles/me → 200",
+  "GET /pharmacy/prescription-shares/<tok43> → 200"
+ ],
+ "externalLinks": []
+}
+---- texto visible ----
+Saltar al contenido
+Solicitudes de retiro cargada
+AloVida
+Mi perfil
+Notificaciones
+Resumen
+Catálogo
+Horario y turnos
+Solicitudes de retiro
+Promociones
+Sucursales
+Red social
+FF
+Sesión de Far12 Farmacia B S.R.L.
+Panel
+/
+General
+/
+Solicitudes de retiro
+Abrir receta
+La receta que le compartió el paciente, cruzada con su catálogo y sus sedes.
+Receta compartida
+Recetó
+Andrés Rojas · matrícula MP-SCZ-48213 (en verificación)
+Emitida
+31/10/2026
+Paciente
+L. M.
+Documento
+terminado en 345
+Amoxicilina
+Paracetamol
+Amoxicilina
+far12-A1 amoxicilina 500 mg c/8h
+Recetado: 21
+·
+Sin control de cantidad
+No tiene este medicamento en su catálogo.

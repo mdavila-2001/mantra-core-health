@@ -1,0 +1,112 @@
+<section class="estab" aria-labelledby="estab-titulo">
+  <h2 id="estab-titulo" class="sr-only">Establecimiento</h2>
+
+  <app-view-state-host [state]="estado()" (retry)="recargar()" (refresh)="recargar()">
+    @if (sitio(); as s) {
+      <div class="estab__bloque">
+        <header class="estab__cabecera">
+          <div>
+            <h3 class="estab__titulo">{{ s.name }}</h3>
+            <p class="estab__bajada">Datos que exigen el SNIS y el SEDES para el establecimiento {{ s.code }}.</p>
+          </div>
+          @if (puedeEscribir() && catalogo()) {
+            <button app-button size="sm" variant="outline" (clicked)="abrir('regulatorio')" data-testid="estab-editar-regulatorio">
+              Editar datos regulatorios
+            </button>
+          }
+        </header>
+        <app-fact-list [hechos]="hechosRegulatorios()" etiqueta="Datos regulatorios" />
+        @if (obligatoriasFaltantes().length > 0) {
+          <app-alert tone="warning" title="La tipología exige espacios que no están activos" data-testid="estab-obligatorias">
+            Falta: {{ obligatoriasFaltantes().join(', ') }}. Registralos o activalos en Infraestructura.
+          </app-alert>
+        }
+      </div>
+
+      <div class="estab__bloque">
+        <header class="estab__cabecera">
+          <div>
+            <h3 class="estab__titulo">Capacidad declarada vs. real</h3>
+            <p class="estab__bajada">
+              La real se cuenta de los espacios activos; nadie la escribe.
+              @if (brechas() > 0) {
+                <strong data-testid="estab-brechas">{{ brechas() }} brecha(s)</strong> con lo habilitado.
+              }
+            </p>
+          </div>
+          @if (puedeEscribir() && catalogo()) {
+            <button app-button size="sm" variant="outline" (clicked)="abrir('capacidad')" data-testid="estab-declarar">
+              Declarar capacidad
+            </button>
+          }
+        </header>
+        <app-data-table
+          data-testid="estab-capacidad"
+          [state]="filasDeCapacidad()"
+          [columns]="columnasDeCapacidad()"
+          [trackBy]="porTipo"
+          caption="Capacidad declarada en la habilitación frente a la contada"
+          (retry)="recargar()"
+        />
+      </div>
+
+      <div class="estab__bloque">
+        <header class="estab__cabecera">
+          <div>
+            <h3 class="estab__titulo">Habilitaciones</h3>
+            <p class="estab__bajada">Resoluciones de funcionamiento y por servicio. «Vencida» se calcula sola al pasar la fecha.</p>
+          </div>
+          @if (puedeEscribir() && catalogo()) {
+            <button app-button size="sm" variant="outline" (clicked)="abrir('habilitacion')" data-testid="estab-nueva-habilitacion">
+              Registrar habilitación
+            </button>
+          }
+        </header>
+        <app-data-table
+          data-testid="estab-licencias"
+          [state]="licencias()"
+          [columns]="columnasDeLicencia()"
+          [trackBy]="porId"
+          caption="Habilitaciones del establecimiento"
+          (retry)="recargar()"
+        />
+      </div>
+
+      @if (catalogo(); as cat) {
+        @switch (dialogo()) {
+          @case ('regulatorio') {
+            <app-regulatorio-dialog [sitio]="s" [catalogo]="cat" (guardado)="alGuardar()" (cerrado)="abrir(null)" />
+          }
+          @case ('habilitacion') {
+            <app-habilitacion-dialog [siteId]="s.id" [catalogo]="cat" [unidades]="datos()?.estructura?.units ?? []" (guardado)="alGuardar()" (cerrado)="abrir(null)" />
+          }
+          @case ('capacidad') {
+            <app-capacidad-dialog [siteId]="s.id" [catalogo]="cat" (guardado)="alGuardar()" (cerrado)="abrir(null)" />
+          }
+        }
+      }
+    }
+  </app-view-state-host>
+</section>
+
+<ng-template #celdaLicencia let-l>
+  <span class="estab__nombre">{{ l.authorityName }}</span>
+  <span class="estab__secundario">
+    {{ l.resolutionNumber }}
+    @if (nombreDeUnidad(l.clinicalUnitId); as unidad) {
+      · alcance: {{ unidad }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #celdaVence let-l>
+  {{ l.expiresOn ?? 'Sin vencimiento' }}
+</ng-template>
+
+<ng-template #celdaEstadoLicencia let-l>
+  <app-badge [variant]="varianteDe(l.status)">{{ l.status.display }}</app-badge>
+</ng-template>
+
+<ng-template #celdaBrecha let-fila>
+  <app-badge [variant]="varianteDeBrecha(fila)">{{ textoDeBrecha(fila) }}</app-badge>
+</ng-template>

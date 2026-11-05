@@ -8,8 +8,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import type { Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map, type Observable } from 'rxjs';
+
+import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
+import { contextoDePedido } from '../../../../core/messaging/order-chat-context';
 
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyProduct } from '../../../../core/data-access/pharmacy/pharmacy.types';
@@ -25,20 +29,19 @@ import type {
   PedidoFarmacia,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/simulator/sample-data';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../../shared/components/molecules/radio-group/radio-group';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -53,21 +56,42 @@ import {
   type RenglonCubierto,
 } from '../pharmacy-inbox.fixtures';
 import { InvoiceSummary } from './invoice-summary/invoice-summary';
+import { StockDecision } from './stock-decision/stock-decision';
+import { StockConfirmationNotice } from './stock-confirmation-notice';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { lineAmount } from './line-amount';
+import { canConfirmLines, stockConfirmationError, type InboxLineAdjustment as AjusteEnEdicion } from './stock-confirmation';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
 const BANDEJA_ROUTE = '/administration/pharmacy-orders';
 
-/** Lo que el mostrador edita de un renglón antes de confirmar. */
-interface AjusteEnEdicion {
-  readonly decision: DecisionDeLinea;
-  readonly propuesta?: {
-    readonly productId: string;
-    readonly nombre: string;
-    readonly precio: null;
-  };
+/**
+ * Lo que se le dice al mostrador cuando la API no abre el chat del pedido.
+ *
+ * Los dos 422 tienen su frase porque piden cosas distintas: uno se arregla
+ * del lado de la farmacia (publicar la vitrina), el otro no tiene arreglo
+ * desde acá (el paciente tiene que crear su perfil). Un 403 es que esta cuenta
+ * no puede escribir como la farmacia —la API lo decide por la membresía—.
+ */
+export function motivoDeChatNoAbierto(error: unknown): string {
+  if (error instanceof ChatOcupadoError) {
+    return CHAT_YA_ABRIENDO;
+  }
+  if (error instanceof HttpErrorResponse) {
+    const reason = (error.error as { reason?: unknown } | null)?.reason;
+    if (reason === 'PATIENT_CHAT_PROFILE_MISSING') {
+      return 'El paciente todavía no tiene perfil de mensajería: no podemos abrirle el chat. Use el teléfono o el código de retiro.';
+    }
+    if (reason === 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE') {
+      return 'La farmacia no tiene vitrina pública activa: publíquela para poder chatear con los pacientes.';
+    }
+    if (error.status === 403) {
+      return 'Su cuenta no puede escribir como la farmacia. Pida a quien administra la farmacia que revise su rol.';
+    }
+  }
+  return 'No pudimos abrir el chat con el paciente. Intente de nuevo en un momento.';
 }
+
 
 interface SubstituteSearch {
   readonly status: 'idle' | 'loading' | 'ready' | 'error' | 'missing-concept';
@@ -106,6 +130,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
 @Component({
   selector: 'app-inbox-order',
   imports: [
+    AppButtonLink,
     Alert,
     AppButton,
     Badge,
@@ -115,9 +140,9 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
     FormField,
     Input,
     PageHeader,
-    Radio,
-    RadioGroup,
     InvoiceSummary,
+    StockDecision,
+    StockConfirmationNotice,
     RouterLink,
     Select,
     ViewStateHost,
@@ -127,6 +152,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InboxOrder {
+  protected readonly confirmationError = signal<string | null>(null);
 
   /**
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
@@ -140,11 +166,32 @@ export class InboxOrder {
   private readonly dialog = inject(DialogService);
   private readonly navigation = inject(NavigationService);
   private readonly toasts = inject(ToastService);
+  private readonly chat = inject(ChatStore);
+  private readonly router = inject(Router);
+
+  /** Se tocó «Chatear» y el store todavía no avisó cómo terminó. */
+  private readonly pidioChat = signal(false);
+
+  /**
+   * Mientras la API abre (o reutiliza) el hilo del pedido.
+   *
+   * Es lo pedido **y** lo que el store dice que sigue abriendo: si el store
+   * corta la apertura sin avisar —cambió la identidad o salió la cuenta—, o
+   * la respuesta termina sin traer el hilo, el botón deja de girar solo. El
+   * otro final, «ya estaba abriendo otro», el store lo avisa por `alFallar`
+   * con `ChatOcupadoError`.
+   */
+  protected readonly abriendoChat = computed(() => this.pidioChat() && this.chat.abriendo());
+
+  /** `true` cuando la pantalla ya se destruyó: ver `chatearConElPaciente`. */
+  private destruida = false;
+  /** Por qué no se abrió el chat, en palabras del mostrador. */
+  protected readonly errorDeChat = signal<string | null>(null);
 
   /**
    * Si la pantalla puede completar con ejemplos lo que el contrato no trae
    * (cobertura, factura, dirección). Sólo sobre la maqueta: contra la API
-   * real esas secciones no se dibujan. Ver `core/mock/sample-data.ts`.
+   * real esas secciones no se dibujan. Ver `core/simulator/sample-data.ts`.
    */
   private readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
@@ -343,19 +390,12 @@ export class InboxOrder {
    * Confirmar exige que cada genérico tenga nombre y que quede al menos un
    * renglón en pie — un pedido sin nada que preparar se rechaza con motivo.
    */
-  protected readonly puedeConfirmar = computed(() => {
-    const ajustes = this.ajustes();
-    if (ajustes.length === 0) {
-      return false;
-    }
-    const todoCaido = ajustes.every((ajuste) => ajuste.decision === 'NO_DISPONIBLE');
-    const hasUnresolvedSubstitute = ajustes.some(
-      (ajuste) => ajuste.decision === 'PROPONER_GENERICO' && ajuste.propuesta === undefined,
-    );
-    return !todoCaido && !hasUnresolvedSubstitute;
-  });
+  protected readonly puedeConfirmar = computed(() => canConfirmLines(this.ajustes()));
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.destruida = true;
+    });
     inject(ActivatedRoute)
       .paramMap.pipe(takeUntilDestroyed())
       .subscribe((params) => this.cargar(params.get('orderId') ?? ''));
@@ -378,12 +418,62 @@ export class InboxOrder {
     });
   }
 
+  /**
+   * «Chatear con el paciente»: la API abre —o reutiliza— el hilo del pedido
+   * entre el paciente y la vitrina de esta farmacia, y se entra a escribir
+   * **como la farmacia**, con la tarjeta del pedido puesta una sola vez.
+   *
+   * Quién puede lo decide el `POST`: personal con membresía activa. Mostrar el
+   * botón no autoriza nada.
+   */
+  protected chatearConElPaciente(): void {
+    const abierto = this.pedido();
+    if (abierto === null || this.abriendoChat()) {
+      return;
+    }
+    this.pidioChat.set(true);
+    this.errorDeChat.set(null);
+    const resolver = this.ordersClient
+      .abrirConversacion(abierto.id)
+      .pipe(
+        map((respuesta) => ({
+          conversationId: respuesta.conversationId,
+          profileId: respuesta.pharmacyProfileId,
+        })),
+      );
+    this.chat.abrirComoOrganizacion(
+      resolver,
+      abierto.farmacia,
+      (conversationId) => {
+        this.pidioChat.set(false);
+        // Abrir tarda tres peticiones: si mientras tanto el mostrador se fue
+        // a otra pantalla, el chat que termina de abrirse no lo arrastra.
+        if (this.destruida) {
+          return;
+        }
+        void this.router.navigate(['/messaging', conversationId]);
+      },
+      contextoDePedido(abierto),
+      (error) => {
+        this.pidioChat.set(false);
+        this.errorDeChat.set(motivoDeChatNoAbierto(error));
+      },
+    );
+  }
+
   protected cambiarDecision(indice: number, decision: unknown): void {
     const nextDecision = decision as DecisionDeLinea;
+    if (this.pedido()?.lineas[indice]?.porConfirmar && nextDecision === 'TAL_CUAL') return;
+    if (!this.pedido()?.lineas[indice]?.porConfirmar && nextDecision === 'CONFIRMAR_STOCK') return;
     this.actualizarAjuste(indice, () => ({ decision: nextDecision }));
     if (nextDecision === 'PROPONER_GENERICO') {
       this.loadSubstitutes(indice);
     }
+  }
+
+  protected setConfirmedQuantity(index: number, value: string | number | null): void {
+    const quantity = value === null || value === '' ? undefined : Number(value);
+    this.actualizarAjuste(index, (adjustment) => ({ ...adjustment, quantity }));
   }
 
   protected selectSubstitute(indice: number, productId: string | null): void {
@@ -412,12 +502,13 @@ export class InboxOrder {
 
   protected confirmar(): void {
     const abierto = this.pedido();
-    if (abierto === null || !this.puedeConfirmar()) {
+    if (abierto === null || !this.puedeConfirmar() || this.ocupado()) {
       return;
     }
     const ajustes: readonly AjusteDeLinea[] = this.ajustes().map((ajuste, indice) => ({
       indice,
       decision: ajuste.decision,
+      ...(ajuste.quantity === undefined ? {} : { quantity: ajuste.quantity }),
       ...(ajuste.propuesta === undefined ? {} : { propuesta: ajuste.propuesta }),
     }));
     this.ejecutar(this.ordersClient.confirmarPedido(abierto, ajustes));
@@ -509,6 +600,7 @@ export class InboxOrder {
   }
 
   private aplicar(pedido: PedidoFarmacia): void {
+    this.confirmationError.set(null);
     this.state.set(ready(pedido));
     this.reiniciarAjustes(pedido);
     this.reiniciarRetiro(pedido);
@@ -518,7 +610,7 @@ export class InboxOrder {
     this.substituteSearches.set({});
     this.ajustes.set(
       pedido.lineas.map((linea) => ({
-        decision: linea.disponible ? 'TAL_CUAL' : 'NO_DISPONIBLE',
+        decision: !linea.disponible ? 'NO_DISPONIBLE' : linea.porConfirmar ? 'CONFIRMAR_STOCK' : 'TAL_CUAL',
       })),
     );
   }
@@ -587,13 +679,19 @@ export class InboxOrder {
 
   private ejecutar(operacion: Observable<unknown>): void {
     this.ocupado.set(true);
-    operacion.subscribe({
+    this.confirmationError.set(null);
+    operacion.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.ocupado.set(false);
         this.cargar();
       },
       error: (error: unknown) => {
         this.ocupado.set(false);
+        const confirmationProblem = stockConfirmationError(error);
+        if (confirmationProblem !== null) {
+          this.confirmationError.set(confirmationProblem);
+          return;
+        }
         this.state.set(errorToViewState<PedidoFarmacia>(error));
       },
     });

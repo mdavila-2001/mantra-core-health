@@ -1,0 +1,118 @@
+:host {
+  display: block;
+}
+
+/* Una sola tarjeta, a lo ancho y centrada (regla del cliente §5): los tres pasos van
+   uno debajo del otro y el QR comparte renglón con el código escrito. */
+.mfa {
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-5);
+  margin-block-start: var(--sp-6);
+}
+
+.mfa__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.mfa__texto,
+.mfa__aviso {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.mfa__aviso {
+  font-size: var(--fs-caption);
+}
+
+.mfa__estado,
+.mfa__paso {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.mfa__pasos {
+  display: grid;
+  gap: var(--sp-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mfa__codigos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+
+.mfa__qr {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  justify-items: center;
+}
+
+/* Blanco fijo (`--surface-white` no cambia con el tema): el lector de la cámara necesita el contraste. */
+.mfa__qr canvas {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--surface-white);
+}
+
+.mfa__manual {
+  display: grid;
+  flex: 1 1 18rem;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+
+.mfa__secreto {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  font-family: var(--font-mono);
+  font-size: var(--fs-h3);
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.mfa__form {
+  display: grid;
+  gap: var(--sp-4);
+  max-inline-size: 28rem;
+}
+
+.mfa__factores {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mfa__factor {
+  display: grid;
+  gap: var(--sp-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.mfa__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}
+
+.mfa__quitar {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+}

@@ -76,6 +76,21 @@ export function preconditionFailed(message: string, details: unknown = {}): Mock
   });
 }
 
+/**
+ * 422 de precondición con su `reason`, como `PreconditionFailedException` de
+ * la API: el cliente ramifica sobre `reason`, nunca sobre el texto.
+ */
+export function precondition(message: string, reason: string, details: unknown = {}): MockReply {
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message,
+    reason,
+    error: 'Unprocessable Entity',
+    details,
+  });
+}
+
 export function forbidden(message = 'No tiene permiso para esta operación'): MockReply {
   return reply(403, { statusCode: 403, code: 'FORBIDDEN', message, error: 'Forbidden' });
 }
@@ -86,6 +101,23 @@ export function unauthorized(message = 'Credenciales inválidas'): MockReply {
     code: 'UNAUTHENTICATED',
     message,
     error: 'Unauthorized',
+  });
+}
+
+/**
+ * El rechazo del `ValidationPipe` de la API: una query o un cuerpo que no pasa
+ * `class-validator` vuelve con **400**, no con 422 (TAREA-41 §5, medido contra
+ * la API real el 2026-10-25). El 422 de `validation()` es el de las reglas de
+ * negocio que la API valida a mano.
+ */
+export function validationPipeRejected(message: string): MockReply {
+  return reply(400, {
+    statusCode: 400,
+    code: 'VALIDATION_FAILED',
+    message,
+    error: 'Bad Request',
+    reason: 'VALIDATION_PIPE_REJECTED',
+    details: { violations: [message] },
   });
 }
 
@@ -117,6 +149,23 @@ export function validation(message: string, issues: readonly ValidationIssue[] =
     message,
     error: 'Bad Request',
     details: { violations },
+  });
+}
+
+/**
+ * **422**, el de las reglas de negocio que la API valida a mano (no el del
+ * `ValidationPipe`, que es {@link validation}: 400). Lo usan los manejadores de
+ * la maqueta que modelan una regla de negocio —un horario sin días, un
+ * comprobante que no es imagen ni PDF—, cuyas pantallas y pruebas leen el 422
+ * con su lista `issues`.
+ */
+export function unprocessable(message: string, issues: readonly unknown[] = []): MockReply {
+  return reply(422, {
+    statusCode: 422,
+    code: 'VALIDATION_FAILED',
+    message,
+    error: 'Unprocessable Entity',
+    issues,
   });
 }
 
@@ -179,6 +228,38 @@ export class MockRouter {
 
   delete(pattern: string, handler: MockHandler): this {
     return this.on('DELETE', pattern, handler);
+  }
+
+  /**
+   * Envuelve el manejador **ya registrado** para ese método y patrón exacto.
+   *
+   * El envoltorio recibe la petición y `siguiente`, que es el manejador
+   * original: lo llama cuando la petición no es suya. Existe para que un
+   * dominio nuevo (el hospital piloto) pueda atender **sus** identificadores en
+   * una ruta que ya tiene dueño sin duplicar la ruta ni romper a los demás.
+   * Si el patrón no estaba registrado, se registra con un `siguiente` que
+   * responde 404.
+   */
+  wrap(
+    method: MockMethod,
+    pattern: string,
+    envoltorio: (request: MockRequest, siguiente: MockHandler) => MockReply | unknown,
+  ): this {
+    const segments = split(pattern);
+    const igual = (route: Route): boolean =>
+      route.method === method &&
+      route.segments.length === segments.length &&
+      route.segments.every((segment, i) => (segment.startsWith(':') && segments[i]!.startsWith(':')) || segment === segments[i]);
+    const indice = this.routes.findIndex(igual);
+    if (indice === -1) {
+      return this.on(method, pattern, (request) => envoltorio(request, () => notFound()));
+    }
+    const original = this.routes[indice]!;
+    this.routes[indice] = {
+      ...original,
+      handler: (request) => envoltorio(request, original.handler),
+    };
+    return this;
   }
 
   /** Todo lo registrado, para los barridos de prueba: método y patrón. */

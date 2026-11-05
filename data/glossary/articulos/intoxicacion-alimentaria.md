@@ -1,5 +1,6 @@
 ---
 slug: intoxicacion-alimentaria
+image: intoxicacion-alimentaria.svg | Secuencia de la intoxicación alimentaria y claves para prevenirla. | Flujo que va del alimento mal conservado a los síntomas digestivos, con cuatro claves de prevención y los signos de alarma como deshidratación o sangre en heces.
 ---
 
 ## [definition] Introducción

@@ -175,9 +175,11 @@ for (const tema of TEMAS) {
         );
         await ponerPinEnCoordenadas(page, '-17,7605', '-63,13');
 
+        // La calle sola: el barrio va en «Distrito o zona» (#1036).
         await expect(campo(page, 'registration-home-geocoding-notice')).toHaveValue(
-          'Avenida Virgen de Cotoca, Condominio Kerana I',
+          'Avenida Virgen de Cotoca',
         );
+        await expect(campo(page, `${MAPA}-distrito`)).toHaveValue('Condominio Kerana I');
         await expect(page.getByTestId(`${MAPA}-calle-caida`)).toHaveCount(0);
         expect(pedidos).toHaveLength(1);
         expect(pedidos[0]).toContain('lat=-17.7605');

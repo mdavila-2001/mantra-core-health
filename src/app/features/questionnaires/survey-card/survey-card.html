@@ -1,0 +1,56 @@
+<app-card variant="outlined" padding="lg">
+  <div class="tarjeta">
+    <span class="tarjeta__marca" aria-hidden="true"><app-nav-icon name="survey" /></span>
+
+    <div class="tarjeta__datos">
+      <h2 class="tarjeta__titulo">{{ encuesta().title }}</h2>
+      @if (encuesta().description) {
+        <p class="tarjeta__consigna">{{ encuesta().description }}</p>
+      }
+      <p class="tarjeta__meta">
+        Versión {{ encuesta().latestVersionNumber }} · {{ encuesta().questionCount }}
+        {{ encuesta().questionCount === 1 ? 'pregunta' : 'preguntas' }}
+        @if (!encuesta().published) {
+          · sin publicar
+        }
+      </p>
+      <ul class="tarjeta__servicios" data-testid="encuesta-servicios" aria-label="Servicios asociados">
+        @for (nombre of servicios(); track $index) {
+          <li><app-badge variant="info">{{ nombre }}</app-badge></li>
+        } @empty {
+          <li class="tarjeta__sin-servicios" data-testid="encuesta-sin-servicios">Sin servicio asociado</li>
+        }
+      </ul>
+    </div>
+
+    <div class="tarjeta__acciones">
+      @if (esBase()) {
+        <app-badge variant="secondary">Base del sistema</app-badge>
+      }
+      <app-badge [variant]="encuesta().tono">{{ encuesta().palabra }}</app-badge>
+      <a
+        app-button
+        variant="secondary"
+        size="sm"
+        [routerLink]="destinoRespuestas()"
+        [fragment]="fragmento()"
+        [attr.data-testid]="'respuestas-' + encuesta().id"
+      >
+        <app-nav-icon name="chat" aria-hidden="true" />
+        Ver respuestas
+      </a>
+      @if (!esBase()) {
+        <a
+          app-button
+          variant="secondary"
+          size="sm"
+          [routerLink]="encuesta().ruta"
+          [attr.data-testid]="'abrir-' + encuesta().id"
+          [attr.aria-label]="'Abrir: ' + encuesta().title"
+        >
+          Abrir
+        </a>
+      }
+    </div>
+  </div>
+</app-card>

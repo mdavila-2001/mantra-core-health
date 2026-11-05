@@ -7,8 +7,16 @@ import {
   PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/profiles/profiles.types';
-import { REFERRAL_CONTRACT_PENDING_KEYS } from '../../data-access/referrals/referrals.types';
-import { CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS } from '../../data-access/community/community.types';
+import { INFORMED_CONSENT_CONTRACT_PENDING_KEYS } from '../../data-access/informed-consents/informed-consents.types';
+import {
+  REFERRAL_CONTRACT_PENDING_KEYS,
+  REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
+} from '../../data-access/referrals/referrals.types';
+import { DIRECT_MESSAGE_CONTRACT_PENDING_KEYS } from '../../data-access/community/community.types';
+import { EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostic-units/equipment-location.types';
+import { INVENTORY_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/pharmacy/inventory-locations.types';
+import { SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS } from '../../data-access/diagnostics/sample-collection.types';
+import { TEMPLATE_CARE_SPACE_PENDING_KEYS } from '../../data-access/scheduling/scheduling.types';
 
 /* ============================================================================
     Claves que la maqueta acepta aunque el DTO de la API no las declare.
@@ -40,6 +48,19 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // A diferencia del resto, el cliente SÍ las manda a la API real — ver
   // `REFERRAL_CONTRACT_PENDING_KEYS` —; se borra al regenerar el contrato.
   'POST /referrals': REFERRAL_CONTRACT_PENDING_KEYS,
-  // Respuesta automática redactada por la IA: falta la columna del modo en el modelo.
-  'PUT /community/profiles/:profileId/auto-reply': CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
+  'PATCH /referrals/:id/respond': REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
+  // Consentimiento informado DIRIGIDO (v4266): mismo caso que el de arriba.
+  'POST /consent/treatment-informed-consents': INFORMED_CONSENT_CONTRACT_PENDING_KEYS,
+  // Infraestructura hospitalaria F5a/F5c (`CONTRATO-F2-F5.md`): sala, AE Title
+  // y botiquín por unidad. El cliente SÍ las manda; se borran al regenerar.
+  'PATCH /diagnostic-equipment/:id': EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS,
+  'POST /pharmacy/:siteId/inventory-locations': INVENTORY_LOCATION_CONTRACT_PENDING_KEYS,
+  // F5b/F5d: la web **no** las manda mientras `INFRA_INTEGRATION_FLAGS` esté
+  // apagada (la API las rechaza con 400); la maqueta las acepta para poder
+  // probar la pantalla con la bandera encendida.
+  // F5b: el punto de toma sugerido de la orden.
+  'POST /clinical/service-requests': SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS,
+  // F5d: el consultorio de la plantilla de horario.
+  'POST /scheduling/resources/:id/templates': TEMPLATE_CARE_SPACE_PENDING_KEYS,
+  'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,
 };

@@ -365,7 +365,7 @@ describe('RegisterMedicalCenter', () => {
       'La organización',
       'Datos del establecimiento',
       'Director médico',
-      'Documentación legal obligatoria (PDF)',
+      'Documentación legal (PDF)',
       'Dónde está la casa central',
       'Sus sucursales',
       'Representante legal',

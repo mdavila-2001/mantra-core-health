@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1406609
+image: wikidata-especialidad-q1406609.svg | La neurootología estudia la audición y el equilibrio del oído interno. | Cóclea y canales semicirculares unidos al cerebro por el nervio auditivo y vestibular, con los trastornos que atiende la especialidad y sus pruebas.
 ---
 
 ## [definition] Introducción

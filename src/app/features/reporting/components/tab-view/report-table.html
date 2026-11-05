@@ -1,0 +1,64 @@
+<section class="rt" [class.rt--cards]="asCards()" [class.rt--prose]="isProse()" [class.rt--wide]="table().columnas.length >= WIDE_COLUMNS" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'tabla-' + table().id">
+  <header class="rt__head">
+    <h3 class="rt__title" [id]="ids + '-t'">{{ table().titulo }}</h3>
+    @if (table().info; as info) {
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        size="sm"
+        [attr.aria-expanded]="infoOpen()"
+        [attr.aria-controls]="ids + '-info'"
+        data-testid="table-how"
+        (click)="infoOpen.set(!infoOpen())"
+      >
+        <app-nav-icon name="note" /> Cómo se calcula
+      </button>
+    }
+  </header>
+
+  @if (infoOpen() && table().info; as info) {
+    <app-calc-info [id]="ids + '-info'" [info]="info" [label]="table().titulo" />
+  } @else if (table().info === null && table().infoMotivo; as why) {
+    <p class="rt__note">Sin ficha de cálculo: {{ why }}</p>
+  }
+
+  @if (table().filas.length === 0) {
+    <p class="rt__empty" role="status" data-testid="table-empty">
+      No hay filas para mostrar con el periodo y los filtros actuales. Quite un filtro o amplíe el periodo.
+    </p>
+  } @else {
+    <div class="rt__scroll" tabindex="0" role="region" [attr.aria-label]="'Tabla: ' + table().titulo">
+      <table class="rt__table" role="table">
+        <caption class="rt__sr">{{ table().titulo }}</caption>
+        <thead role="rowgroup">
+          <tr role="row">
+            @for (column of table().columnas; track column.clave) {
+              <th scope="col" role="columnheader" [class.rt__num]="numericColumns().has(column.clave)" [attr.aria-sort]="ariaSort(column.clave)">
+                <button type="button" class="rt__sort" [attr.data-testid]="'sort-' + column.clave" (click)="toggleSort(column.clave)">
+                  {{ column.etiqueta }}<span class="rt__arrow" aria-hidden="true">{{ arrow(column.clave) }}</span>
+                </button>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody role="rowgroup">
+          @for (row of rows(); track $index) {
+            <tr role="row">
+              @for (column of table().columnas; track column.clave) {
+                @if ($first) {
+                  <th scope="row" role="rowheader" [class.rt__missing]="isMissing(row[column.clave])">{{ display(row[column.clave], column) }}</th>
+                } @else {
+                  <td role="cell" [class.rt__num]="numericColumns().has(column.clave)" [class.rt__missing]="isMissing(row[column.clave])" [class.rt__blank]="row[column.clave] === ''" [attr.data-label]="column.etiqueta">
+                    {{ display(row[column.clave], column) }}
+                  </td>
+                }
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="rt__hint">Deslice la tabla hacia los lados para ver todas las columnas.</p>
+  }
+</section>

@@ -1,0 +1,48 @@
+Evidencia H10 · «Instancias y herramientas» (31/10/2026)
+=========================================================
+Cómo se tomó: `yarn node playwright/h10-instancias-y-herramientas.mjs http://localhost:4321 <esta carpeta>`
+contra `ng serve --configuration development,demo --port 4321` (backend simulado), Chromium headless,
+sesión superadmin@alovida.mock, tema claro (prefers-color-scheme: light), es-BO / America/La_Paz.
+Escritorio 1440×900; móvil 390×844. Sin `networkidle`: se espera el `data-testid` de cada bloque.
+
+Capturas:
+  01-instancias-escritorio.png        pestaña Instancias: banner CRÍTICO, veredicto, contadores, antigüedad, tabla, «no medido»
+  02-herramientas-escritorio.png      pestaña Herramientas: banner rojo de críticas caídas, contadores Atlas, filtros, tabla
+  03-herramientas-filtro-criticas.png filtro «Críticas» aplicado (6 filas)
+  04-instancias-movil.png             pestaña Instancias apilada (390 px)
+  05-herramientas-movil.png           pestaña Herramientas apilada (390 px)
+  06-portada-escritorio.png           /dashboard del superadmin: tarjeta «Instancias y herramientas» y destino en «Uso y rendimiento»
+
+Lo que dejó el navegador (salida literal del script):
+sesión: http://localhost:4321/portal-selector
+escritorio · veredicto: Crítico
+escritorio · contadores: 9 vivas · 3 degradadas · 1 caídas · 3 sin dato · 16 en total
+escritorio · banner crítico presente: 1
+escritorio · medida tarjeta: {"tarjeta":1120,"contenedor":1120,"ventana":1440,"scrollX":false}
+captura: 01-instancias-escritorio.png
+herramientas · contadores: 7 operativas · 2 caídas · 3 sin chequeo en vivo · 3 no aplican · 6 críticas de 15
+herramientas · banner crítico: Error:Herramientas críticas caídasCorreo saliente (smtp): Simulado: la conexión al puerto 1025 fue rechazada (ECONNREFUSED) tras 3 000 ms. Impacto: Nadie recibe
+captura: 02-herramientas-escritorio.png
+herramientas · filas con filtro Críticas: 6
+captura: 03-herramientas-filtro-criticas.png
+móvil · medida tarjeta: {"tarjeta":366,"contenedor":366,"ventana":390,"scrollX":false}
+captura: 04-instancias-movil.png
+captura: 05-herramientas-movil.png
+portada · veredicto sonda: Crítico
+portada · herramientas caídas: 2
+portada · enlaces a /superadmin/instances: 3
+captura: 06-portada-escritorio.png
+
+consola (errores y avisos): 4
+  [warning] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505
+  [warning] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505
+  [warning] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505
+  [warning] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505
+red (fallidas o >= 400): 0
+
+Lectura de la consola: los únicos avisos son NG0505 (hidratación sin SSR), propios de `ng serve` en
+toda la aplicación y ajenos a esta pantalla. Ningún `console.error`, ningún `pageerror`, ninguna
+respuesta >= 400 ni petición fallida.
+
+Observación no corregida (fuera de alcance): en la captura de la portada a página completa la barra
+lateral fija tapa el inicio del título; es el marco de sesión en captura `fullPage`, no la tarjeta nueva.

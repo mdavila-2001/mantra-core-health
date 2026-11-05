@@ -1,0 +1,208 @@
+<section class="transfer-panel" aria-labelledby="referral-transfer-title" data-testid="referral-transfer">
+  <h3 id="referral-transfer-title" class="transfer-panel__title">Traslado</h3>
+
+  @if (serverError(); as message) {
+    <app-alert tone="error" data-testid="referral-transfer-error">{{ message }}</app-alert>
+  }
+
+  @switch (mode()) {
+    @case ('transfer') {
+      @if (attempted() && transferProblems().length > 0) {
+        <app-alert tone="error" title="Revise el traslado" role="alert" data-testid="referral-transfer-issues">
+          <ul class="transfer-panel__issues">
+            @for (p of transferProblems(); track $index) {
+              <li>{{ p.message }}</li>
+            }
+          </ul>
+        </app-alert>
+      }
+      <app-referral-transfer-form [(draft)]="draft" [issues]="transferProblems()" [showAll]="attempted()" />
+      <div class="transfer-panel__actions">
+        <button app-button variant="ghost" size="sm" type="button" [disabled]="working()" (clicked)="back()" data-testid="referral-transfer-back">
+          Volver al detalle
+        </button>
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          data-testid="referral-transfer-save"
+          [isLoading]="working()"
+          (clicked)="saveTransfer()"
+        >
+          Guardar datos del traslado
+        </button>
+      </div>
+    }
+    @case ('arrival') {
+      <div class="app-form-grid" data-testid="referral-arrival-form">
+        <app-form-field label="Llegada" [required]="true" [errorMessage]="arrivalError('arrivedAt')">
+          <app-date-picker
+            data-testid="referral-arrival-at"
+            mode="date-time"
+            [hasError]="arrivalError('arrivedAt') !== ''"
+            [(value)]="arrivedAt"
+          />
+        </app-form-field>
+        <app-form-field label="Estado al llegar" [required]="true" [errorMessage]="arrivalError('arrivalCondition')">
+          <app-radio-group
+            class="transfer-panel__inline"
+            data-testid="referral-arrival-condition"
+            [value]="arrivalCondition()"
+            [hasError]="arrivalError('arrivalCondition') !== ''"
+            (valueChange)="chooseArrivalCondition($event)"
+          >
+            @for (c of arrivalConditions; track c) {
+              <app-radio [value]="c" [label]="conditionLabels[c]" />
+            }
+          </app-radio-group>
+        </app-form-field>
+        <app-form-field
+          class="app-form-grid__ancho"
+          label="Notas de la llegada"
+          hint="Opcional. Novedades del trayecto y lo observado al recibirlo."
+          [errorMessage]="arrivalError('arrivalNotes')"
+        >
+          <app-textarea
+            data-testid="referral-arrival-notes"
+            [rows]="2"
+            [autoResize]="true"
+            [maxLength]="notesMax"
+            [(value)]="arrivalNotes"
+          />
+        </app-form-field>
+      </div>
+      <div class="transfer-panel__actions">
+        <button app-button variant="ghost" size="sm" type="button" [disabled]="working()" (clicked)="back()" data-testid="referral-arrival-back">
+          Volver al detalle
+        </button>
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          data-testid="referral-arrival-save"
+          [isLoading]="working()"
+          (clicked)="saveArrival()"
+        >
+          Registrar llegada
+        </button>
+      </div>
+    }
+    @default {
+      @if (transfer(); as t) {
+        <dl class="transfer-panel__data" data-testid="referral-transfer-data">
+          <div class="transfer-panel__row">
+            <dt>Se traslada</dt>
+            <dd data-testid="referral-transfer-required">
+              {{ t.required === false ? 'No: sin traslado físico' : t.required ? 'Sí' : 'Sin indicar' }}
+            </dd>
+          </div>
+          @if (t.departureCondition) {
+            <div class="transfer-panel__row">
+              <dt>Estado al salir</dt>
+              <dd data-testid="referral-transfer-condition">{{ conditionLabels[t.departureCondition] }}</dd>
+            </div>
+          }
+          @if (t.transportMode) {
+            <div class="transfer-panel__row">
+              <dt>Medio</dt>
+              <dd data-testid="referral-transfer-mode">
+                {{ modeLabels[t.transportMode] }}@if (t.transportDetail) { · {{ t.transportDetail }} }
+              </dd>
+            </div>
+          }
+          @if (escort(); as text) {
+            <div class="transfer-panel__row"><dt>Personal de salud</dt><dd>{{ text }}</dd></div>
+          }
+          @if (companion(); as text) {
+            <div class="transfer-panel__row"><dt>Acompañante</dt><dd>{{ text }}</dd></div>
+          }
+          @if (vitals(); as text) {
+            <div class="transfer-panel__row">
+              <dt>Signos vitales</dt>
+              <dd data-testid="referral-transfer-vitals">
+                {{ text }}
+                @if (t.vitals?.recordedAt) {
+                  <span class="transfer-panel__muted">— {{ t.vitals?.recordedAt | date: 'd MMM y, HH:mm' }}</span>
+                }
+              </dd>
+            </div>
+          }
+          @if (t.receiverContacted !== undefined) {
+            <div class="transfer-panel__row">
+              <dt>Aviso al receptor</dt>
+              <dd data-testid="referral-transfer-receiver">
+                @if (t.receiverContacted) {
+                  Sí{{ t.receiverContactName ? ', a ' + t.receiverContactName : '' }}
+                  @if (t.receiverContactedAt) {
+                    <span class="transfer-panel__muted">— {{ t.receiverContactedAt | date: 'd MMM y, HH:mm' }}</span>
+                  }
+                } @else {
+                  No
+                }
+              </dd>
+            </div>
+          }
+          @if (t.departedAt) {
+            <div class="transfer-panel__row">
+              <dt>Salida</dt>
+              <dd data-testid="referral-transfer-departed">{{ t.departedAt | date: 'd MMM y, HH:mm' }}</dd>
+            </div>
+          }
+          @if (t.arrivedAt) {
+            <div class="transfer-panel__row">
+              <dt>Llegada</dt>
+              <dd data-testid="referral-transfer-arrived">
+                {{ t.arrivedAt | date: 'd MMM y, HH:mm' }}
+                @if (t.arrivalCondition) {
+                  · {{ conditionLabels[t.arrivalCondition] }}
+                }
+              </dd>
+            </div>
+          }
+          @if (t.arrivalNotes) {
+            <div class="transfer-panel__row"><dt>Notas de la llegada</dt><dd>{{ t.arrivalNotes }}</dd></div>
+          }
+        </dl>
+      } @else {
+        <!-- S3: sin traslado registrado, y qué hacer si corresponde. -->
+        <p class="transfer-panel__muted" data-testid="referral-transfer-empty">
+          Sin datos de traslado.
+          @if (canCompleteTransfer()) {
+            Si el paciente viaja al destino, use «Completar traslado».
+          }
+        </p>
+      }
+
+      @if (canCompleteTransfer() || canRecordArrival()) {
+        <div class="transfer-panel__actions">
+          @if (canCompleteTransfer()) {
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              data-testid="referral-transfer-complete"
+              (clicked)="startTransfer()"
+            >
+              Completar traslado
+            </button>
+          }
+          @if (canRecordArrival()) {
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              data-testid="referral-arrival-start"
+              (clicked)="startArrival()"
+            >
+              Registrar llegada
+            </button>
+          }
+        </div>
+      }
+    }
+  }
+</section>

@@ -24,6 +24,7 @@ import {
   reasonCodeLabel,
 } from '@shared/admissions/admission-presentation';
 import { AppButton } from '@shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
@@ -120,6 +121,7 @@ const EVENT_LABELS: Readonly<Record<string, string>> = {
 @Component({
   selector: 'app-admission-detail',
   imports: [
+    AppButtonLink,
     Alert,
     AdmissionEvidenceGallery,
     AdmissionRequirements,

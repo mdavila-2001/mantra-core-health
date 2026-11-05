@@ -1,0 +1,57 @@
+<main class="rx-verify" aria-labelledby="rx-verify-title" [attr.data-testid]="testids.verifyPage">
+  <h1 id="rx-verify-title" class="rx-verify__title">Verificar receta</h1>
+
+  <app-view-state-host [state]="state()" (retry)="load()">
+    <div vsh-not-found [attr.data-testid]="testids.verifyNotFound">
+      <app-alert tone="warning" title="No encontramos esta receta">
+        Revise que la dirección esté completa. Si escaneó un código, vuelva a escanearlo: puede
+        que la receta no haya sido emitida en AloVida.
+      </app-alert>
+    </div>
+
+    @if (result(); as rx) {
+      @if (copy(); as copyText) {
+        <app-alert [tone]="copyText.tone" [title]="copyText.title" [attr.data-testid]="testids.verifyStatus">
+          <p class="rx-verify__detail">{{ copyText.detail }}</p>
+          @if (rx.contentHash) {
+            <p class="rx-verify__label">Sello digital</p>
+            <code class="rx-verify__hash" [attr.data-testid]="testids.verifyHash">{{
+              rx.contentHash
+            }}</code>
+            <p class="rx-verify__instruction" [attr.data-testid]="testids.verifySealInstruction">
+              {{ sealInstruction }}
+            </p>
+          }
+          <dl class="rx-verify__data">
+            <dt>Fecha de emisión</dt>
+            <dd>
+              @if (rx.issuedAt) {
+                {{ rx.issuedAt | date: "d 'de' MMMM 'de' y, HH:mm" }}
+              } @else {
+                Sin emitir
+              }
+            </dd>
+            <dt>Matrícula</dt>
+            <dd [attr.data-testid]="testids.verifyLicense">
+              @if (rx.prescriberLicense; as license) {
+                {{ license.number }}
+                @if (license.authority) {
+                  ({{ license.authority }})
+                }
+                @if (license.state === 'PENDING') {
+                  · en verificación
+                }
+              } @else {
+                Sin registrar
+              }
+            </dd>
+          </dl>
+        </app-alert>
+      }
+    }
+  </app-view-state-host>
+
+  <p class="rx-verify__back">
+    <a app-button variant="ghost" routerLink="/">Ir a AloVida</a>
+  </p>
+</main>

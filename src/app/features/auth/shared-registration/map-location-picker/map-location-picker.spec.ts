@@ -303,97 +303,10 @@ describe('UbicacionPicker', () => {
   });
   /* ---- sin puntero (WCAG 2.1.1) ------------------------------------------ */
 
-  describe('«Escribir coordenadas»: el pin sin puntero', () => {
+  describe('el pin: anuncio de cada punto nuevo', () => {
     function byTestId(id: string): HTMLElement | null {
       return raiz().querySelector(`[data-testid="${id}"]`);
     }
-
-    function escribir(id: string, valor: string): HTMLInputElement {
-      const campo = byTestId(id) as HTMLInputElement;
-      campo.value = valor;
-      campo.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      return campo;
-    }
-
-    function abrirCampos(): void {
-      component.markInMap();
-      fixture.detectChanges();
-      byTestId('location-coordinates-toggle')?.click();
-      fixture.detectChanges();
-    }
-
-    it('está plegado y se despliega con su botón, que dice si está abierto', () => {
-      component.markInMap();
-      fixture.detectChanges();
-      const boton = byTestId('location-coordinates-toggle') as HTMLElement;
-      expect(boton.getAttribute('aria-expanded')).toBe('false');
-      expect(byTestId('location-coordinates-lat')).toBeNull();
-
-      boton.click();
-      fixture.detectChanges();
-      expect(boton.getAttribute('aria-expanded')).toBe('true');
-      expect(byTestId('location-coordinates-lat')).not.toBeNull();
-    });
-
-    it('con coma o con punto decimal, pone el pin y lo avisa como un toque (D-06)', () => {
-      const elegidos: Coordinates[] = [];
-      component.puntoElegido.subscribe((p) => elegidos.push(p));
-      abrirCampos();
-
-      escribir('location-coordinates-lat', '-16,5');
-      escribir('location-coordinates-lng', '-68.15');
-      byTestId('location-coordinates-apply')?.click();
-      fixture.detectChanges();
-
-      expect(component.punto()).toEqual({ lat: -16.5, lng: -68.15 });
-      expect(elegidos).toEqual([{ lat: -16.5, lng: -68.15 }]);
-      // Sin confirmar, igual que el toque: la persona tiene que mirarlo.
-      expect(component.confirmed()).toBe(false);
-      expect(byTestId('location-announcement')?.textContent).toContain(
-        'Pin en latitud -16,50000, longitud -68,15000',
-      );
-    });
-
-    it('fuera de rango o no numérico no mueve nada y dice qué escribir', () => {
-      const elegidos: Coordinates[] = [];
-      component.puntoElegido.subscribe((p) => elegidos.push(p));
-      abrirCampos();
-
-      escribir('location-coordinates-lat', '95');
-      escribir('location-coordinates-lng', 'oeste');
-      byTestId('location-coordinates-apply')?.click();
-      fixture.detectChanges();
-
-      expect(component.punto()).toBeNull();
-      expect(elegidos).toEqual([]);
-      expect(raiz().textContent).toContain('Escriba un número entre −90 y 90');
-      expect(raiz().textContent).toContain('Escriba un número entre −180 y 180');
-      expect(byTestId('location-coordinates-lat')?.getAttribute('aria-invalid')).toBe('true');
-    });
-
-    it('Enter en un campo aplica y no envía el formulario de alta', () => {
-      abrirCampos();
-      escribir('location-coordinates-lat', '-17.7833');
-      const campo = escribir('location-coordinates-lng', '-63.1821');
-
-      const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
-      campo.dispatchEvent(enter);
-      fixture.detectChanges();
-
-      expect(enter.defaultPrevented).toBe(true);
-      expect(component.punto()).toEqual({ lat: -17.7833, lng: -63.1821 });
-    });
-
-    it('abiertos con un pin puesto, llegan llenos con su punto', () => {
-      component.pinPunto({ lat: -17.78, lng: -63.18 });
-      fixture.detectChanges();
-      byTestId('location-coordinates-toggle')?.click();
-      fixture.detectChanges();
-
-      expect((byTestId('location-coordinates-lat') as HTMLInputElement).value).toBe('-17,78000');
-      expect((byTestId('location-coordinates-lng') as HTMLInputElement).value).toBe('-63,18000');
-    });
 
     it('cada punto nuevo se anuncia, también el de un toque o de las flechas del mapa', () => {
       component.markInMap();

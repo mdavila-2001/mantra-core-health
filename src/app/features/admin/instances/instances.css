@@ -1,0 +1,77 @@
+.instancias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.instancias__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-block: var(--e3) var(--e4);
+}
+
+.instancias__contadores {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.instancias__ayuda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.instancias__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+  margin-block-end: var(--e3);
+}
+
+/* En teléfono cada selector ocupa su fila; compartiéndola, las opciones se
+   angostan hasta cortar su rótulo. */
+.instancias__filtros app-segmented-control {
+  flex: 1 1 18rem;
+  max-inline-size: 36rem;
+}
+
+.instancias__lista {
+  margin: 0;
+  padding-inline-start: var(--e4);
+}
+
+/* Dos renglones en una celda: el nombre y, debajo, el código o el detalle.
+   El contenedor en columna sobrevive a la tabla apilada de teléfono, donde la
+   celda es un flex en fila y los renglones sueltos quedarían uno al lado del otro. */
+.instancias__celda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.instancias__nombre,
+.instancias__causa {
+  display: block;
+  color: var(--text-primary);
+}
+
+.instancias__codigo {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+app-alert + app-alert,
+app-alert + .instancias__cabecera,
+app-data-table + app-alert {
+  margin-block-start: var(--e3);
+}

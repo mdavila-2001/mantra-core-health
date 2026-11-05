@@ -1,0 +1,236 @@
+<div class="transfer app-form-grid" data-testid="transfer-form">
+  <app-form-field
+    class="app-form-grid__ancho"
+    label="¿El paciente se traslada?"
+    hint="Una interconsulta o un estudio programado pueden no requerir traslado físico."
+  >
+    <app-switch
+      data-testid="transfer-required"
+      label="El paciente se traslada físicamente al destino"
+      [checked]="draft().required"
+      (checkedChange)="set('required', $event)"
+    />
+  </app-form-field>
+
+  @if (draft().required) {
+    <!-- El estado primero: es lo que decide qué más se exige (ambulancia,
+         personal de salud, aviso al receptor). -->
+    <app-form-field
+      class="app-form-grid__ancho"
+      label="Estado del paciente al salir"
+      [required]="true"
+      [errorMessage]="errorFor('departureCondition')"
+    >
+      <app-radio-group
+        class="transfer__inline"
+        data-testid="transfer-condition"
+        [value]="draft().departureCondition"
+        [hasError]="errorFor('departureCondition') !== ''"
+        (valueChange)="chooseCondition($event)"
+      >
+        @for (c of conditions; track c) {
+          <app-radio [value]="c" [label]="conditionLabels[c]" />
+        }
+      </app-radio-group>
+    </app-form-field>
+
+    @if (why(); as reason) {
+      <app-alert
+        class="app-form-grid__ancho"
+        tone="warning"
+        title="Por qué se exige ambulancia y personal de salud"
+        data-testid="transfer-unstable-why"
+      >
+        {{ reason }}
+      </app-alert>
+    }
+
+    <app-form-field
+      class="app-form-grid__ancho"
+      label="Medio de transporte"
+      [required]="true"
+      [hint]="unstable() ? 'Sólo ambulancia: básica, avanzada o aérea.' : 'Las ambulancias primero.'"
+      [errorMessage]="errorFor('transportMode')"
+    >
+      <app-radio-group
+        class="transfer__modes"
+        data-testid="transfer-mode"
+        [value]="draft().transportMode"
+        [hasError]="errorFor('transportMode') !== ''"
+        (valueChange)="chooseMode($event)"
+      >
+        <span class="transfer__group" aria-hidden="true">Ambulancia</span>
+        @for (m of ambulanceModes; track m) {
+          <app-radio [value]="m" [label]="modeLabels[m]" />
+        }
+        <span class="transfer__group" aria-hidden="true">Otros medios</span>
+        @for (m of otherModes; track m) {
+          <app-radio [value]="m" [label]="modeLabels[m]" />
+        }
+      </app-radio-group>
+    </app-form-field>
+
+    <app-form-field
+      [label]="draft().transportMode === 'OTHER' ? 'Cuál es el medio' : 'Unidad o detalle'"
+      [required]="draft().transportMode === 'OTHER'"
+      [hint]="draft().transportMode === 'OTHER' ? 'Describa el medio de transporte.' : 'Opcional. Placa o identificación de la unidad.'"
+      [errorMessage]="errorFor('transportDetail')"
+    >
+      <app-input
+        testId="transfer-detail"
+        autocomplete="off"
+        placeholder="Ej.: Ambulancia 3 · placa 2345-XYZ"
+        [value]="draft().transportDetail"
+        [hasError]="errorFor('transportDetail') !== ''"
+        (valueChange)="setText('transportDetail', $event)"
+        (blurred)="touch('transportDetail')"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Personal de salud que acompaña"
+      [required]="unstable()"
+      [hint]="unstable() ? 'Obligatorio con el paciente inestable o crítico.' : 'Opcional.'"
+      [errorMessage]="errorFor('escortProfessionalName')"
+    >
+      <app-input
+        testId="transfer-escort-name"
+        autocomplete="off"
+        placeholder="Ej.: Lic. Ana Suárez"
+        [value]="draft().escortProfessionalName"
+        [hasError]="errorFor('escortProfessionalName') !== ''"
+        (valueChange)="setText('escortProfessionalName', $event)"
+        (blurred)="touch('escortProfessionalName')"
+      />
+    </app-form-field>
+
+    <app-form-field label="Cargo del personal de salud" hint="Opcional. Médico, enfermería, paramédico…">
+      <app-input
+        testId="transfer-escort-role"
+        autocomplete="off"
+        [value]="draft().escortProfessionalRole"
+        (valueChange)="setText('escortProfessionalRole', $event)"
+      />
+    </app-form-field>
+
+    <app-form-field label="Acompañante" hint="Opcional. Familiar u otra persona que viaja con el paciente.">
+      <app-input
+        testId="transfer-companion-name"
+        autocomplete="off"
+        [value]="draft().companionName"
+        (valueChange)="setText('companionName', $event)"
+      />
+    </app-form-field>
+
+    @if (draft().companionName.trim() !== '') {
+      <app-form-field label="Parentesco del acompañante" hint="Opcional.">
+        <app-input
+          testId="transfer-companion-relationship"
+          autocomplete="off"
+          placeholder="Ej.: Hija"
+          [value]="draft().companionRelationship"
+          (valueChange)="setText('companionRelationship', $event)"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Teléfono del acompañante"
+        hint="Opcional. Se guarda en el expediente; sólo lo ven profesionales autorizados."
+      >
+        <app-input
+          testId="transfer-companion-phone"
+          inputMode="tel"
+          autocomplete="off"
+          [value]="draft().companionPhone"
+          (valueChange)="setText('companionPhone', $event)"
+        />
+      </app-form-field>
+    }
+
+    <!-- Signos vitales: grilla compacta, con la unidad en el rótulo y el
+         rango admitido debajo. Todos opcionales. -->
+    <fieldset class="transfer__vitals app-form-grid__ancho" data-testid="transfer-vitals">
+      <legend class="transfer__legend">Signos vitales al salir <span class="transfer__muted">(opcionales)</span></legend>
+      <div class="transfer__vitals-grid">
+        @for (v of vitalFields; track v.key) {
+          <app-form-field [label]="v.label + ' (' + v.unit + ')'" [hint]="v.range" [errorMessage]="errorFor(v.key)">
+            <app-input
+              [testId]="'transfer-vital-' + v.key"
+              [inputMode]="v.inputMode"
+              autocomplete="off"
+              [value]="draft().vitals[v.key]"
+              [hasError]="errorFor(v.key) !== ''"
+              (valueChange)="setVital(v.key, $event)"
+              (blurred)="touch(v.key)"
+            />
+          </app-form-field>
+        }
+      </div>
+      <!-- La hora de la toma en su propia fila: un selector de fecha y hora no cabe en una celda de signo. -->
+      <div class="transfer__vitals-at">
+        <app-form-field label="Tomados el" hint="Opcional. Fecha y hora de la toma.">
+          <app-date-picker
+            data-testid="transfer-vitals-at"
+            mode="date-time"
+            [value]="draft().vitalsRecordedAt"
+            (valueChange)="set('vitalsRecordedAt', $event)"
+          />
+        </app-form-field>
+      </div>
+    </fieldset>
+
+    <app-form-field
+      class="app-form-grid__ancho"
+      label="Aviso al establecimiento receptor"
+      [required]="unstable()"
+      [hint]="unstable() ? 'Obligatorio con el paciente inestable o crítico.' : 'Opcional con el paciente estable.'"
+      [errorMessage]="errorFor('receiverContacted')"
+    >
+      <app-switch
+        data-testid="transfer-receiver-contacted"
+        label="Se avisó al receptor antes de salir"
+        [checked]="draft().receiverContacted"
+        (checkedChange)="set('receiverContacted', $event); touch('receiverContacted')"
+      />
+    </app-form-field>
+
+    @if (draft().receiverContacted || unstable()) {
+      <app-form-field
+        label="Quién recibió el aviso"
+        [required]="unstable()"
+        [errorMessage]="errorFor('receiverContactName')"
+      >
+        <app-input
+          testId="transfer-receiver-name"
+          autocomplete="off"
+          placeholder="Ej.: Dr. Pérez, guardia de emergencias"
+          [value]="draft().receiverContactName"
+          [hasError]="errorFor('receiverContactName') !== ''"
+          (valueChange)="setText('receiverContactName', $event)"
+          (blurred)="touch('receiverContactName')"
+        />
+      </app-form-field>
+      <app-form-field label="Cuándo se avisó" hint="Opcional. Fecha y hora del aviso.">
+        <app-date-picker
+          data-testid="transfer-receiver-at"
+          mode="date-time"
+          [value]="draft().receiverContactedAt"
+          (valueChange)="set('receiverContactedAt', $event)"
+        />
+      </app-form-field>
+    }
+
+    <app-form-field label="Salida" hint="Opcional. Fecha y hora en que el paciente sale.">
+      <app-date-picker
+        data-testid="transfer-departed-at"
+        mode="date-time"
+        [value]="draft().departedAt"
+        (valueChange)="set('departedAt', $event)"
+      />
+    </app-form-field>
+  } @else {
+    <p class="transfer__muted app-form-grid__ancho" data-testid="transfer-not-required">
+      Sin traslado físico no hace falta cargar medio, acompañante ni signos vitales. Si el paciente viaja al destino,
+      active el interruptor.
+    </p>
+  }
+</div>

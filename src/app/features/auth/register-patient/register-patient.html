@@ -67,6 +67,7 @@
            navegador. -->
         <div class="registro__body">
           <!-- `iconOnlyNav`: excepción ADR-0012 §3 (D-05, 23/09), pasar de página; el motor pone aria-label y globo, y la última página dice «Crear cuenta». -->
+          <app-account-exists-dialog />
           <app-paginated-form
             data-testid="registro-form-paciente"
             [paginas]="paginasPaciente()"
@@ -100,6 +101,7 @@
                 >
                   <app-input
                     testId="registro-nombre"
+                    [inputFilter]="soloLetras"
                     autocomplete="given-name"
                     placeholder="Lucía"
                     [value]="valorDeNombre('name')"
@@ -120,6 +122,7 @@
                     testId="registro-segundo-nombre"
                     autocomplete="additional-name"
                     placeholder="Andrea"
+                    [inputFilter]="soloLetras"
                     [value]="valorDeNombre('middleName')"
                     (valueChange)="escribirNombre('middleName', $event)"
                   >
@@ -135,6 +138,7 @@
                   <app-input
                     testId="registro-tercer-nombre"
                     placeholder="María"
+                    [inputFilter]="soloLetras"
                     [value]="valorDeNombre('thirdName')"
                     (valueChange)="escribirNombre('thirdName', $event)"
                   >
@@ -154,6 +158,7 @@
                       <app-input
                         [testId]="'registro-nombre-extra-' + $index"
                         placeholder="Otro nombre"
+                        [inputFilter]="soloLetras"
                         [value]="extra"
                         (valueChange)="escribirNombreExtra($index, $event)"
                       >
@@ -284,6 +289,7 @@
                     >
                       <app-input
                         [formControl]="contacto.controls.name"
+                        [inputFilter]="soloLetras"
                         [hasError]="enRojo(contacto.controls.name, contactosExtra)"
                         [testId]="'registro-contacto-extra-nombre-' + $index"
                         placeholder="Luis Paz"

@@ -158,11 +158,7 @@ describe('DirectoryPage · tope progresivo', () => {
           .map((span) => span.textContent!.trim())
           .join(' '),
       ),
-    ).toEqual([
-      'Ver todo',
-      'Grupo 0 20',
-      'Grupo 20 20',
-    ]);
+    ).toEqual(['Ver todo', 'Grupo 0 20', 'Grupo 20 20']);
 
     opciones[2]!.click();
     f.detectChanges();
@@ -193,7 +189,7 @@ describe('DirectoryPage · tope progresivo', () => {
   });
 
   // Con reseñas en las tarjetas, el directorio ofrece ordenar por ellas.
-  it('«Mejor calificadas» pone primero la nota más alta y al final las sin reseñas', () => {
+  it('«Mejor puntuación» pone primero la nota más alta y al final las sin reseñas', () => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
     const f = TestBed.createComponent(DirectoryPage);
     f.componentRef.setInput('titulo', 'Directorio');
@@ -214,7 +210,7 @@ describe('DirectoryPage · tope progresivo', () => {
     f.detectChanges();
 
     const select = f.nativeElement.querySelector('.mercado__orden select') as HTMLSelectElement;
-    expect([...select.options].map((o) => o.text)).toContain('Mejor calificadas');
+    expect([...select.options].map((o) => o.text)).toContain('Mejor puntuación');
     select.value = 'calificacion';
     select.dispatchEvent(new Event('change'));
     f.detectChanges();
@@ -223,5 +219,128 @@ describe('DirectoryPage · tope progresivo', () => {
       f.nativeElement.querySelectorAll('.tarjeta-resultado__titulo a'),
     ).map((a) => a.textContent!.trim());
     expect(titulos).toEqual(['Cuatro cinco', 'Tres siete', 'Sin nota']);
+  });
+
+  describe('órdenes por cifra y por reseñas', () => {
+    function montarConCifras(entradas: Record<string, unknown> = {}) {
+      TestBed.configureTestingModule({ providers: [provideRouter([])] });
+      const f = TestBed.createComponent(DirectoryPage);
+      f.componentRef.setInput('titulo', 'Directorio de médicos');
+      f.componentRef.setInput('subtitulo', 'Sub');
+      f.componentRef.setInput('estado', { kind: 'ready', data: null });
+      f.componentRef.setInput('sustantivo', { singular: 'médico', plural: 'médicos' });
+      for (const [nombre, valor] of Object.entries(entradas)) {
+        f.componentRef.setInput(nombre, valor);
+      }
+      f.componentRef.setInput('grupos', [
+        {
+          id: 'g',
+          nombre: '',
+          resultados: [
+            { id: 'a', title: 'Sin datos', link: '/a' },
+            {
+              id: 'b',
+              title: 'Pocas consultas',
+              link: '/b',
+              stats: { encuentros: 3 },
+              rating: { average: 4.9, count: 2 },
+            },
+            {
+              id: 'c',
+              title: 'Muchas consultas',
+              link: '/c',
+              stats: { encuentros: 120 },
+              rating: { average: 4.1, count: 30 },
+            },
+            { id: 'd', title: 'Cero consultas', link: '/d', stats: { encuentros: 0 } },
+          ],
+        },
+      ]);
+      f.detectChanges();
+      return f;
+    }
+
+    const select = (f: ReturnType<typeof montarConCifras>) =>
+      f.nativeElement.querySelector('.mercado__orden select') as HTMLSelectElement;
+
+    function ordenarPor(f: ReturnType<typeof montarConCifras>, valor: string): string[] {
+      const s = select(f);
+      s.value = valor;
+      s.dispatchEvent(new Event('change'));
+      f.detectChanges();
+      return Array.from<HTMLElement>(
+        f.nativeElement.querySelectorAll('.tarjeta-resultado__titulo a'),
+      ).map((a) => a.textContent!.trim());
+    }
+
+    it('ofrece los criterios que declara el directorio, entre la nota y el nombre', () => {
+      const f = montarConCifras({
+        criteriosDeOrden: [{ clave: 'encuentros', etiqueta: 'Más encuentros atendidos' }],
+      });
+      expect([...select(f).options].map((o) => o.text.trim())).toEqual([
+        'Predeterminado',
+        'Mejor puntuación',
+        'Más reseñas',
+        'Más encuentros atendidos',
+        'Nombre: de la A a la Z',
+        'Nombre: de la Z a la A',
+      ]);
+    });
+
+    it('un criterio ordena de mayor a menor y deja al final a quien no tiene el dato', () => {
+      const f = montarConCifras({
+        criteriosDeOrden: [{ clave: 'encuentros', etiqueta: 'Más encuentros atendidos' }],
+      });
+      expect(ordenarPor(f, 'cifra:encuentros')).toEqual([
+        'Muchas consultas',
+        'Pocas consultas',
+        'Cero consultas',
+        'Sin datos',
+      ]);
+    });
+
+    it('«Más reseñas» manda por la cantidad, no por la nota', () => {
+      const f = montarConCifras();
+      expect(ordenarPor(f, 'resenas')).toEqual([
+        'Muchas consultas',
+        'Pocas consultas',
+        'Sin datos',
+        'Cero consultas',
+      ]);
+    });
+
+    it('un valor que no es una opción no cambia el orden', () => {
+      const f = montarConCifras();
+      expect(ordenarPor(f, 'cifra:inventada')).toEqual([
+        'Sin datos',
+        'Pocas consultas',
+        'Muchas consultas',
+        'Cero consultas',
+      ]);
+    });
+  });
+
+  // La guía de médicos: nadie opinó todavía y el orden se ofrece igual.
+  it('un directorio calificable ofrece la puntuación aunque nadie haya opinado', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    const f = TestBed.createComponent(DirectoryPage);
+    f.componentRef.setInput('titulo', 'Directorio');
+    f.componentRef.setInput('subtitulo', 'Sub');
+    f.componentRef.setInput('estado', { kind: 'ready', data: null });
+    f.componentRef.setInput('sustantivo', { singular: 'médico', plural: 'médicos' });
+    f.componentRef.setInput('grupos', [
+      { id: 'g', nombre: '', resultados: [{ id: 'a', title: 'Sin nota', link: '/a' }] },
+    ]);
+    f.detectChanges();
+    const opciones = () =>
+      [
+        ...(f.nativeElement.querySelector('.mercado__orden select') as HTMLSelectElement).options,
+      ].map((o) => o.text.trim());
+    expect(opciones()).not.toContain('Mejor puntuación');
+
+    f.componentRef.setInput('calificable', true);
+    f.detectChanges();
+    expect(opciones()).toContain('Mejor puntuación');
+    expect(opciones()).toContain('Más reseñas');
   });
 });

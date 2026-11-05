@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Audiología</title>
+  <desc id="d">A la izquierda, el recorrido del sonido por el oído externo, el tímpano y los huesecillos, la cóclea y el nervio auditivo, junto al sistema del equilibrio, y una audiometría que registra la audición por frecuencias. A la derecha, los problemas que atiende y las soluciones.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="440" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="240.0" y="50" text-anchor="middle" class="title">El recorrido del sonido</text>
+  <path d="M50 160 C40 100 90 80 110 120 C120 140 110 160 120 180 C130 200 120 230 100 240 C70 250 56 210 50 160 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <rect x="110" y="168" width="90" height="26" rx="6" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <line x1="200" y1="156" x2="200" y2="206" stroke="var(--vessel)" stroke-width="4"/>
+  <path d="M206 176 l14 -10 l14 8 l12 -8" fill="none" stroke="var(--bone)" stroke-width="4"/>
+  <path d="M270 150 C300 120 340 130 340 170 C340 210 300 216 286 196 C276 180 296 166 310 176" fill="none" stroke="var(--organ-d)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M300 120 C300 96 330 90 336 110 M316 116 C320 100 346 100 346 120" fill="none" stroke="var(--accent)" stroke-width="4"/>
+  <path d="M340 180 C370 190 390 210 410 230" fill="none" stroke="var(--nerve)" stroke-width="4"/>
+  <text x="90" y="280" text-anchor="middle" class="small">Oído externo</text>
+  <text x="225" y="280" text-anchor="middle" class="small" style="fill:var(--vessel)">Tímpano y</text>
+  <text x="225" y="296" text-anchor="middle" class="small" style="fill:var(--vessel)">huesecillos</text>
+  <text x="320" y="250" text-anchor="middle" class="small" style="fill:var(--organ-d)">Cóclea</text>
+  <text x="330" y="86" text-anchor="middle" class="small" style="fill:var(--accent)">Equilibrio</text>
+  <text x="410" y="254" text-anchor="end" class="small" style="fill:var(--nerve)">Nervio</text>
+  <rect x="40" y="320" width="400" height="100" rx="10" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="240" y="346" text-anchor="middle" class="step">Audiometría</text>
+  <line x1="70" y1="360" x2="70" y2="410" stroke="var(--muted)" stroke-width="1"/>
+  <line x1="70" y1="410" x2="410" y2="410" stroke="var(--muted)" stroke-width="1"/>
+  <path d="M80 372 L150 374 L220 378 L290 390 L360 402 L400 404" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+  <circle cx="80" cy="372" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <circle cx="150" cy="374" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <circle cx="220" cy="378" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <circle cx="290" cy="390" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <circle cx="360" cy="402" r="4" fill="var(--accent)" stroke="none" stroke-width="2"/>
+  <text x="400" y="396" text-anchor="end" class="small" style="fill:var(--muted)">Agudos</text>
+  <rect x="476" y="20" width="304" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="628.0" y="50" text-anchor="middle" class="title">Qué atiende</text>
+  <text x="496" y="80" class="small">• Pérdida de audición</text>
+  <text x="496" y="104" class="small">• Acúfenos o zumbidos</text>
+  <text x="496" y="128" class="small">• Vértigo y mareo</text>
+  <text x="496" y="152" class="small">• Cribado auditivo neonatal</text>
+  <rect x="496" y="192" width="264" height="230" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="512" y="218" class="step">Soluciones</text>
+  <text x="520" y="242" class="small">• Audífonos adaptados</text>
+  <text x="520" y="266" class="small">• Implantes cocleares</text>
+  <text x="520" y="290" class="small">• Rehabilitación auditiva</text>
+  <text x="520" y="314" class="small">• Terapia vestibular</text>
+  <text x="520" y="338" class="small">• Protección frente al ruido</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

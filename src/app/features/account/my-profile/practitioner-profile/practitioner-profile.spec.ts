@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { sinSolicitudDeAdmision } from '../../../../../testing/admissions';
 import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -168,7 +169,7 @@ describe('PractitionerProfile', () => {
       // señal alcanza a renderizarla y pide `ActivatedRoute`. Sin el router,
       // eso salía como `NG0201` no capturado: la suite quedaba en verde y el
       // proceso terminaba en 1, una de cada tres corridas.
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), sinSolicitudDeAdmision()],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -706,12 +707,17 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        sinSolicitudDeAdmision(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { practitionerProfileId: signal(profileId), userId: signal('u-1') },
+          useValue: {
+            practitionerProfileId: signal(profileId),
+            userId: signal('u-1'),
+            roles: signal<readonly string[]>([]),
+          },
         },
         { provide: DialogService, useValue: dialogs },
       ],
@@ -937,7 +943,7 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
 
     expect(operacion<() => string>('errorDeVitrina')()).toBe(
       'Su perfil público sigue mostrando la foto anterior. Puede volver a intentarlo desde aquí. ' +
-        '(Código de soporte: corr-vit-1)',
+        'El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-vit-1)',
     );
     responderLoQueDibujoLaFicha();
   });
@@ -1158,10 +1164,14 @@ describe('PractitionerProfile · el logo del consultorio', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        sinSolicitudDeAdmision(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        {
+          provide: AuthService,
+          useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1'), roles: signal<readonly string[]>([]) },
+        },
         { provide: DialogService, useValue: { confirm: vi.fn() } },
       ],
     });
@@ -1237,10 +1247,14 @@ describe('PractitionerProfile · la firma y el sello', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        sinSolicitudDeAdmision(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        {
+          provide: AuthService,
+          useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1'), roles: signal<readonly string[]>([]) },
+        },
         { provide: DialogService, useValue: { confirm: vi.fn() } },
       ],
     });

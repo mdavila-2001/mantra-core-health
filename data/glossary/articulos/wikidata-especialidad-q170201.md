@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q170201
+image: wikidata-especialidad-q170201.svg | La veterinaria cuida la salud animal, que está unida a la humana y a la del ambiente. | Tres círculos superpuestos de animales, personas y ambiente con las zoonosis en el centro, junto a los ámbitos de trabajo de la veterinaria y ejemplos de zoonosis.
 ---
 
 ## [definition] Introducción

@@ -25,9 +25,14 @@ await page.waitForFunction(() => document.querySelector('app-root')?.children.le
 await page.getByTestId('login-identifier').fill(process.env.E2E_IDENTIFICADOR ?? 'admin@alovida.mock');
 await page.getByTestId('login-password').fill(process.env.E2E_CLAVE ?? 'S3cret-passw0rd');
 await page.getByTestId('login-submit').click();
-await page.waitForURL(/\/(dashboard|auth\/organization)/);
+// El administrador con los dos accesos pasa por el selector de portal: tres destinos legítimos.
+await page.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/);
 if (page.url().includes('/auth/organization')) {
   await page.getByTestId('tenant-opcion').first().click();
+  await page.waitForURL(/\/(dashboard|portal-selector)/);
+}
+if (page.url().includes('/portal-selector')) {
+  await page.getByRole('link', { name: /Portal de administración/ }).click();
   await page.waitForURL(/\/dashboard/);
 }
 

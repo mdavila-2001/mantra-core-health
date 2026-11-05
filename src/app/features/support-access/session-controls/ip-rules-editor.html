@@ -1,0 +1,155 @@
+<app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+  <section class="redes" aria-labelledby="redes-titulo" data-testid="redes-panel">
+    <div class="redes__cabeza">
+      <h2 class="redes__titulo" id="redes-titulo">Redes de la organización</h2>
+      <p class="redes__texto">
+        Defina desde qué lugares puede entrar su personal. Cada regla es un rango de direcciones de internet: por ejemplo, la red de su sede central.
+      </p>
+    </div>
+
+    @if (sinReglasQueLaExijan()) {
+      <app-alert tone="info" title="Estas redes todavía no restringen a nadie" data-testid="redes-no-exigida">
+        Las reglas se guardan, pero solo se hacen cumplir donde la regla de sesión tenga encendida «Red de la organización». Hoy ninguna la tiene encendida: actívela en la pestaña de «Todas las cuentas», del personal o de un rol.
+      </app-alert>
+    } @else {
+      <app-alert tone="success" title="Estas redes se hacen cumplir" data-testid="redes-exigida">
+        Se exigen en: {{ exigidaTexto() }}. Rigen desde el próximo ingreso de cada persona.
+      </app-alert>
+    }
+
+    @if (miRed(); as red) {
+      <section class="redes__conexion" aria-labelledby="redes-conexion-titulo" data-testid="redes-mi-conexion">
+        <h3 class="redes__subtitulo" id="redes-conexion-titulo">Su conexión</h3>
+        @if (red.ip !== null) {
+          <p class="redes__texto" data-testid="redes-mi-ip">La API ve su conexión como <strong>{{ red.ip }}</strong>. Contra esa dirección se comparan las reglas.</p>
+          @if (reglaDeMiIp(); as propuesta) {
+            <p class="redes__texto">Para no quedar afuera, puede permitir solo esta conexión: <code>{{ propuesta.cidr }}</code>.</p>
+            <button app-button variant="outline" size="sm" type="button" [disabled]="llena()" (clicked)="usarMiIp()" data-testid="redes-usar-mi-ip">Usar mi IP</button>
+          } @else {
+            <p class="redes__texto" data-testid="redes-mi-ip-cargada">Esta conexión ya está entre las reglas que ve abajo.</p>
+          }
+        } @else {
+          <p class="redes__texto">La API no pudo leer la dirección de esta conexión.</p>
+        }
+        @if (avisoDeRed(); as aviso) {
+          <app-alert tone="warning" title="Revise cómo el servidor ve las conexiones" data-testid="redes-aviso-proxy">{{ aviso }}</app-alert>
+        }
+      </section>
+    }
+
+    <app-alert tone="warning" title="No se puede dejar a nadie afuera, tampoco a usted" data-testid="redes-aviso-bloqueo">
+      No se guarda un conjunto que deje fuera la red desde la que usted está trabajando ahora: si lo intenta, no se cambia nada y se le explica. Aun así, antes de guardar pruebe una dirección en la vista previa y confirme que la de su sede entra.
+    </app-alert>
+
+    <details class="redes__ayuda" data-testid="redes-ayuda">
+      <summary>¿Cómo se escribe una red? Ayuda en lenguaje simple</summary>
+      <ul class="redes__lista">
+        <li><strong>Una red</strong> se escribe con una dirección, una barra y un número: <code>190.129.0.0/16</code>. El número dice cuántas direcciones abarca: cuanto más chico, más grande la red.</li>
+        <li><strong>Una sola máquina</strong> termina en <code>/32</code>, por ejemplo <code>203.0.113.7/32</code>. Sin la barra y el número, el rango no sirve.</li>
+        <li><strong>Permitir</strong>: si hay alguna red permitida, solo se entra desde ellas. <strong>Bloquear</strong>: desde esa red no se entra nunca, aunque otra regla la permita.</li>
+        <li><strong>Sin ninguna regla</strong>, no se restringe a nadie. Por eso encender «Red de la organización» antes de cargar la primera red no deja a nadie afuera.</li>
+        <li><strong>Vigencia</strong>: si indica fechas, la regla rige solo entre esos días, ambos incluidos. Sirve para una visita o una obra de unos días.</li>
+        <li>Su proveedor de internet le puede decir qué rango usa su sede. Si su red cambia de dirección con frecuencia, pida una dirección fija antes de bloquear el resto.</li>
+      </ul>
+    </details>
+
+    @if (fallo(); as f) {
+      <app-alert tone="error" role="alert" [title]="f.kind === 'LOCK_OUT' ? 'Estas reglas lo dejarían afuera' : 'No se guardaron las redes'" data-testid="redes-error" [attr.data-kind]="f.kind">
+        {{ f.message }}
+      </app-alert>
+    }
+
+    @if (borrador().length === 0) {
+      <p class="redes__vacio" data-testid="redes-vacio">No hay redes cargadas: hoy no se restringe a nadie por su dirección.</p>
+    } @else {
+      <ul class="redes__filas" role="list" data-testid="redes-filas">
+        @for (regla of borrador(); track regla.uid; let i = $index) {
+          <li class="regla" [attr.data-testid]="'redes-fila-' + i">
+            <div class="regla__tipo">
+              <app-form-field label="Qué hace">
+                <app-select [options]="tipos" [value]="regla.type" (valueChange)="cambiarTipo(regla.uid, $event)" [searchable]="false" [ariaLabel]="'Qué hace la regla ' + (i + 1)" [attr.data-testid]="'redes-tipo-' + i" />
+              </app-form-field>
+            </div>
+            <div class="regla__rango">
+              <app-form-field label="Rango de red" [errorMessage]="problemaDe(i, 'cidr')">
+                <app-input
+                  [value]="regla.cidr"
+                  (valueChange)="cambiarRango(regla.uid, $event)"
+                  placeholder="190.129.0.0/16"
+                  [ariaLabel]="'Rango de red de la regla ' + (i + 1)"
+                  [hasError]="problemaDe(i, 'cidr') !== ''"
+                  [testId]="'redes-cidr-' + i"
+                />
+              </app-form-field>
+            </div>
+            <div class="regla__descripcion">
+              <app-form-field label="Para qué (opcional)" [errorMessage]="problemaDe(i, 'description')">
+                <app-input
+                  [value]="regla.description"
+                  (valueChange)="cambiarDescripcion(regla.uid, $event)"
+                  placeholder="Red de la sede central"
+                  [ariaLabel]="'Descripción de la regla ' + (i + 1)"
+                  [testId]="'redes-descripcion-' + i"
+                />
+              </app-form-field>
+            </div>
+            <div class="regla__fecha">
+              <app-form-field label="Desde (opcional)">
+                <app-input type="date" [value]="diaDesde(regla)" (valueChange)="cambiarDesde(regla, $event)" [ariaLabel]="'Rige desde, regla ' + (i + 1)" [testId]="'redes-desde-' + i" />
+              </app-form-field>
+            </div>
+            <div class="regla__fecha">
+              <app-form-field label="Hasta (opcional)" [errorMessage]="problemaDe(i, 'validity')">
+                <app-input type="date" [value]="diaHasta(regla)" (valueChange)="cambiarHasta(regla, $event)" [ariaLabel]="'Rige hasta, regla ' + (i + 1)" [hasError]="problemaDe(i, 'validity') !== ''" [testId]="'redes-hasta-' + i" />
+              </app-form-field>
+            </div>
+            <div class="regla__quitar">
+              <button app-button variant="ghost" size="sm" type="button" (clicked)="quitar(regla.uid)" [attr.aria-label]="'Quitar la regla ' + (i + 1)" [attr.data-testid]="'redes-quitar-' + i">Quitar</button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="redes__agregar">
+      <button app-button variant="outline" size="sm" type="button" [disabled]="llena()" (clicked)="agregar('ALLOW')" data-testid="redes-agregar-permitida">Agregar una red permitida</button>
+      <button app-button variant="outline" size="sm" type="button" [disabled]="llena()" (clicked)="agregar('DENY')" data-testid="redes-agregar-bloqueada">Agregar una red bloqueada</button>
+      @if (llena()) {
+        <span class="redes__texto" data-testid="redes-llena">Llegó al máximo de {{ maximo }} reglas.</span>
+      }
+    </div>
+
+    <aside class="vista" aria-labelledby="redes-vista-titulo" data-testid="redes-vista-previa">
+      <h3 class="vista__titulo" id="redes-vista-titulo">Vista previa</h3>
+      <p class="vista__resumen" data-testid="redes-resumen">{{ resumen() }}</p>
+      <app-form-field label="Pruebe una dirección" hint="Escriba la dirección de internet de una sede y vea si entraría con las reglas de arriba, antes de guardar.">
+        <app-input
+          [value]="direccionDePrueba()"
+          (valueChange)="direccionDePrueba.set('' + ($event ?? ''))"
+          placeholder="190.129.77.12"
+          ariaLabel="Dirección de internet para probar"
+          testId="redes-prueba-ip"
+        />
+      </app-form-field>
+      @if (prueba(); as p) {
+        <div class="vista__resultado" [class.vista__resultado--no]="!p.entra" role="status" data-testid="redes-prueba-resultado">
+          <strong>{{ !p.valida ? 'Revise la dirección' : p.entra ? 'Puede entrar' : 'No puede entrar' }}</strong>
+          <ul>
+            @for (linea of p.lineas; track linea) {
+              <li>{{ linea }}</li>
+            }
+          </ul>
+        </div>
+      }
+    </aside>
+
+    @if (intento() && problemas().length > 0) {
+      <app-alert tone="warning" title="Revise antes de guardar" data-testid="redes-problemas">Corrija los renglones marcados: no se puede guardar con un rango o una fecha que no valen.</app-alert>
+    }
+
+    <div class="redes__barra">
+      <button app-button variant="ghost" type="button" [disabled]="!hayCambios() || guardando()" (clicked)="descartar()" data-testid="redes-descartar">Descartar cambios</button>
+      <button app-button type="button" [isLoading]="guardando()" [disabled]="!hayCambios() || guardando()" (clicked)="guardar()" data-testid="redes-guardar">Guardar redes</button>
+    </div>
+  </section>
+</app-view-state-host>

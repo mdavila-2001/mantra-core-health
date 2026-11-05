@@ -8,17 +8,9 @@
  * texto exacto (el `numeric` de la base no cabe sin pérdida en un `number`).
  */
 
-/** Un concepto ya resuelto a su forma legible. */
-export interface PharmacyConcept {
-  readonly code: string;
-  readonly display: string;
-}
+import type { GeoPoint, PharmacyConcept } from './pharmacy-base.types';
 
-/** Un punto WGS84 desde donde medir distancias. */
-export interface GeoPoint {
-  readonly lat: number;
-  readonly lng: number;
-}
+export type { GeoPoint, PharmacyConcept } from './pharmacy-base.types';
 
 /**
  * Una farmacia del directorio publicado, tal como la lista `GET
@@ -99,6 +91,8 @@ export interface PharmacyProduct {
   readonly stock?: number | null;
   /** Debajo de este número el inventario avisa; `null` = el de por defecto. */
   readonly minStock?: number | null;
+  /** Marcado «no lo tengo» para toda la farmacia: gana sobre el conteo y sobre cada sucursal. */
+  readonly outOfStockDeclared?: boolean;
   /** Hasta {@link MAX_PRODUCT_IMAGES} archivos de `common.files`. */
   readonly imageFileIds?: readonly string[];
 }
@@ -142,19 +136,18 @@ export interface PharmacyProductSearchPage {
   readonly limit: number;
   /** `true` si quedaron productos afuera del tope. */
   readonly truncated: boolean;
+  /** Lo que se buscó en lugar de lo escrito, si la API corrigió el tipeo. */
+  readonly correctedQuery?: string | null;
 }
 
 /** Los filtros de la búsqueda de productos. Sin ninguno, lista lo publicado. */
 export interface PharmacyProductSearchQuery {
-  /** Texto a buscar en marca, genérico o código de producto. */
+  /** Marca, genérico, código o para qué se usa («dolor abdominal»). */
   readonly search?: string;
+  readonly exact?: boolean;
   /** Medicamento del vademécum (`medication_concept_id`). */
   readonly conceptId?: string;
-  /**
-   * Sólo lo publicado por esta farmacia. Lo agrega «Farmacia» (pestaña
-   * Comprar, 25/09/2026) para mostrar el catálogo de una sede elegida — sin
-   * este filtro la búsqueda mezcla las de todas.
-   */
+  /** Sólo lo publicado por esta farmacia (pestaña Comprar); sin él, se mezclan todas. */
   readonly pharmacyId?: string;
   /**
    * Con `true` lista **todo** el catálogo de la farmacia —borradores y
@@ -345,6 +338,11 @@ export interface PharmacyProductDraft {
   readonly strengthText?: string;
   readonly packageSizeText?: string;
   readonly requiresPrescription?: boolean;
+  /**
+   * Sólo en la carga masiva: el medicamento por su nombre en el catálogo con
+   * que se receta. Lo resuelve el servidor; el alta suelta no lo manda.
+   */
+  readonly medicationName?: string;
   readonly coldChainRequired?: boolean;
   readonly identifiers?: readonly PharmacyProductIdentifier[];
   /*
@@ -376,6 +374,11 @@ export interface PharmacyProductChanges {
   readonly strengthText?: string | null;
   readonly packageSizeText?: string | null;
   readonly requiresPrescription?: boolean | null;
+  /**
+   * El medicamento elegido del catálogo con que se receta: es lo que cruza el
+   * producto con una receta compartida. `null` lo desvincula.
+   */
+  readonly medicationConceptId?: string | null;
   /* Lo que administra la farmacia (P47 §3-5). */
   readonly unitPrice?: number | null;
   readonly category?: string | null;
@@ -460,6 +463,10 @@ export type {
   AvailabilityQuery,
   AvailabilityResult,
   AvailabilitySite,
+  MedicationAvailabilityProduct,
+  MedicationAvailabilityQuery,
+  MedicationAvailabilityResult,
+  MedicationAvailabilitySite,
 } from './pharmacy-availability.types';
 
 /**

@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { AccountSecurityClient } from '../../../core/data-access/iam/account-security.client';
@@ -11,6 +11,7 @@ import { LOGIN_ROUTE } from '../../../core/http/auth.interceptor';
 import { readApiError } from '../../../core/http/api-error';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -47,6 +48,7 @@ type EstadoDeSesiones = 'cargando' | 'listo' | 'error';
   selector: 'app-account-security',
   imports: [
     AppButton,
+    AppButtonLink,
     Alert,
     Card,
     DatePipe,
@@ -55,6 +57,7 @@ type EstadoDeSesiones = 'cargando' | 'listo' | 'error';
     Input,
     PageHeader,
     ReactiveFormsModule,
+    RouterLink,
     LoadingState,
   ],
   templateUrl: './security.html',

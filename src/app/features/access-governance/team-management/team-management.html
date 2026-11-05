@@ -1,0 +1,290 @@
+<app-page-header
+  title="Mi equipo"
+  subtitle="Las personas que usted administra y lo que puede darles, dentro de su techo."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-team-management">
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    @if (data(); as d) {
+      <section class="banner" aria-labelledby="team-banner-title" data-testid="team-banner">
+        <h2 id="team-banner-title" class="banner__titulo" data-testid="team-scope">
+          {{ sentence() }}
+        </h2>
+        @if (ceilingLines().length > 0) {
+          <ul class="banner__lista" data-testid="team-ceiling">
+            @for (line of ceilingLines(); track line) {
+              <li>{{ line }}</li>
+            }
+          </ul>
+        } @else if (d.abilities.mode === 'DELEGATED') {
+          <p class="banner__ayuda" data-testid="team-no-ceiling">
+            No tiene un techo de permisos asignado: puede ver a su equipo, pero para dar permisos
+            necesita al administrador de seguridad.
+          </p>
+        }
+      </section>
+
+      <div aria-live="polite" role="status" data-testid="team-notice">
+        @if (decisionNotice() !== '') {
+          <app-alert tone="success">{{ decisionNotice() }}</app-alert>
+        }
+      </div>
+
+      <app-tabs [(selectedIndex)]="tab">
+        <app-tab [label]="'Personas (' + d.members.length + ')'">
+          <app-data-table
+            caption="Personas que usted administra"
+            [state]="rowsState()"
+            [columns]="columns()"
+            [trackBy]="rowId"
+            [rowLabel]="rowLabel"
+            (retry)="load()"
+            (refresh)="load()"
+            data-testid="team-table"
+          />
+        </app-tab>
+
+        @if (canDecide()) {
+          <app-tab [label]="'Solicitudes (' + d.requests.length + ')'">
+            @if (decisionFailure(); as problem) {
+              <app-alert
+                tone="error"
+                [title]="problem.title"
+                role="alert"
+                data-testid="decision-failure"
+              >
+                {{ problem.message }}
+                @if (problem.help !== '') {
+                  <span class="ayuda"> {{ problem.help }}</span>
+                }
+              </app-alert>
+            }
+            @if (d.requests.length === 0) {
+              <p class="vacio" data-testid="requests-empty">
+                No hay solicitudes esperando su decisión. Cuando alguien pida acceso a lo que usted
+                administra, aparecerá acá.
+              </p>
+            } @else {
+              <ul class="solicitudes" role="list" data-testid="requests-list">
+                @for (request of d.requests; track request.id) {
+                  <li class="solicitud" [attr.data-testid]="'request-' + request.id">
+                    <header class="solicitud__cabeza">
+                      <div>
+                        <h3 class="solicitud__titulo">{{ request.requesterName }}</h3>
+                        <p class="solicitud__sub">
+                          {{
+                            request.parentEngagementId
+                              ? 'Pide ampliar su vínculo'
+                              : 'Pide un vínculo nuevo'
+                          }}
+                          · enviada el {{ day(request.createdAt) }} · {{ expires(request) }}
+                        </p>
+                      </div>
+                    </header>
+                    @if (request.message) {
+                      <blockquote class="solicitud__mensaje">«{{ request.message }}»</blockquote>
+                    }
+                    @if (request.otherItems > 0) {
+                      <app-alert
+                        tone="info"
+                        title="Hay ítems que no le tocan"
+                        [attr.data-testid]="'request-other-' + request.id"
+                      >
+                        Además hay {{ request.otherItems }}
+                        {{ request.otherItems === 1 ? 'ítem fuera' : 'ítems fuera' }} de lo que
+                        usted administra: los decide el administrador de seguridad y seguirán
+                        pendientes.
+                      </app-alert>
+                    }
+                    <ul class="items" role="list">
+                      @for (item of request.items; track item.id) {
+                        <li class="item" [attr.data-testid]="'item-' + item.id">
+                          <p class="item__nombre">{{ itemLabel(item) }}</p>
+                          <app-segmented-control
+                            [options]="decisions"
+                            [value]="decisionOf(request, item)"
+                            (valueChange)="decide(request, item, $event)"
+                            [ariaLabel]="'Decisión sobre ' + itemLabel(item)"
+                            [attr.data-testid]="'decision-' + item.id"
+                          />
+                          @if (draftOf(request, item).decision === 'ADJUSTED') {
+                            <app-support-action-picker
+                              [actions]="draftOf(request, item).actions"
+                              (actionsChange)="adjust(request, item, $event)"
+                              [idPrefix]="'adjust-' + item.id"
+                            />
+                          }
+                          @if (draftOf(request, item).decision === 'REJECTED') {
+                            <app-form-field label="Por qué lo rechaza" [required]="true">
+                              <app-textarea
+                                [value]="draftOf(request, item).comment"
+                                (valueChange)="comment(request, item, $event)"
+                                [rows]="2"
+                                [attr.data-testid]="'reject-reason-' + item.id"
+                              />
+                            </app-form-field>
+                          }
+                        </li>
+                      }
+                    </ul>
+                    @if (showProblems(request) && problems(request).length > 0) {
+                      <app-alert
+                        tone="warning"
+                        title="Falta decidir"
+                        [attr.data-testid]="'problems-' + request.id"
+                      >
+                        <ul class="items">
+                          @for (problem of problems(request); track problem) {
+                            <li>{{ problem }}</li>
+                          }
+                        </ul>
+                      </app-alert>
+                    }
+                    <div class="acciones">
+                      <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        (clicked)="approveAllIn(request)"
+                        [attr.data-testid]="'approve-all-' + request.id"
+                      >
+                        Aprobar todo lo mío como se pidió
+                      </button>
+                      <button
+                        app-button
+                        type="button"
+                        [isLoading]="saving() === request.id"
+                        [disabled]="saving() !== null"
+                        (clicked)="save(request)"
+                        [attr.data-testid]="'save-decision-' + request.id"
+                      >
+                        Guardar decisión
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
+        }
+
+        @if (canInvite()) {
+          <app-tab label="Invitar">
+            <form
+              class="invitar"
+              (submit)="$event.preventDefault(); invite()"
+              data-testid="invite-form"
+            >
+              <p class="ayuda">
+                Genera un código de un solo uso o de varios usos. Quien lo canjee entra a su equipo
+                con el rol que elija.
+              </p>
+              <app-form-field label="Rol que tendrá" [required]="true">
+                <app-select
+                  [value]="inviteTemplate()"
+                  (valueChange)="inviteTemplate.set($event)"
+                  [options]="templateOptions()"
+                  placeholder="Elija un rol"
+                  ariaLabel="Rol que tendrá"
+                  data-testid="invite-template"
+                />
+              </app-form-field>
+              <app-form-field label="Cuántas personas pueden usarlo" hint="De 1 a 500.">
+                <app-input
+                  type="number"
+                  [value]="inviteUses()"
+                  (valueChange)="inviteUses.set($event)"
+                  ariaLabel="Cuántas personas pueden usarlo"
+                  testId="invite-uses"
+                />
+              </app-form-field>
+              <app-form-field label="Cuántos días vale" hint="De 1 a 90.">
+                <app-input
+                  type="number"
+                  [value]="inviteDays()"
+                  (valueChange)="inviteDays.set($event)"
+                  ariaLabel="Cuántos días vale"
+                  testId="invite-days"
+                />
+              </app-form-field>
+              @if (inviteFailure(); as problem) {
+                <app-alert
+                  tone="error"
+                  [title]="problem.title"
+                  role="alert"
+                  data-testid="invite-failure"
+                >
+                  {{ problem.message }}
+                  @if (problem.help !== '') {
+                    <span class="ayuda"> {{ problem.help }}</span>
+                  }
+                </app-alert>
+              }
+              <div>
+                <button
+                  app-button
+                  type="submit"
+                  [isLoading]="inviting()"
+                  [disabled]="inviting() || inviteTemplate() === null"
+                  data-testid="invite-submit"
+                >
+                  Crear invitación
+                </button>
+              </div>
+            </form>
+            <div aria-live="polite" role="status" data-testid="invite-region">
+              @if (invitation(); as created) {
+                <app-alert
+                  tone="success"
+                  title="La invitación está lista"
+                  data-testid="invite-result"
+                >
+                  Entréguele este código a la persona:
+                  <strong class="codigo" data-testid="invite-code">{{ created.code }}</strong
+                  >. {{ expires(created) }}.
+                </app-alert>
+              }
+            </div>
+          </app-tab>
+        }
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>
+
+<ng-template #personCell let-row>
+  <span class="persona__nombre" [attr.data-testid]="'member-name-' + row.engagementId">{{
+    row.name
+  }}</span>
+  <span class="persona__sub">{{ row.role }}</span>
+</ng-template>
+
+<ng-template #statusCell let-row>
+  <app-badge
+    [variant]="statusTone(row.status)"
+    [attr.data-testid]="'member-status-' + row.engagementId"
+    >{{ status(row.status) }}</app-badge
+  >
+</ng-template>
+
+<ng-template #scopeCell let-row>
+  <span class="persona__sub" [attr.data-testid]="'member-scope-' + row.engagementId">
+    {{ row.grants }} {{ row.grants === 1 ? 'permiso suyo' : 'permisos suyos' }}
+    @if (row.other > 0) {
+      · otras funciones de esta persona: {{ row.other }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #actionsCell let-row>
+  <a
+    app-button
+    variant="outline"
+    size="sm"
+    [routerLink]="['/administration/team-management', row.engagementId]"
+    [attr.aria-label]="'Administrar a ' + row.name"
+    [attr.data-testid]="'member-open-' + row.engagementId"
+    >Administrar</a
+  >
+</ng-template>

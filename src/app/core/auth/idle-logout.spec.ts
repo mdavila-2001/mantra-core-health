@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { IdleLogout, IDLE_TIMEOUT_MS, IDLE_WARNING_MS } from './idle-logout';
+import { IdleLogout, IDLE_TIMEOUT_MS, IDLE_WARNING_MS, idleTimeoutFor } from './idle-logout';
 import { SessionStore } from './session.store';
 
 function jwt(payload: Record<string, unknown>): string {
@@ -114,5 +114,28 @@ describe('IdleLogout', () => {
     // Un aviso simultáneo al cierre sería inútil: la gracia es poder volver.
     expect(IDLE_WARNING_MS).toBeLessThan(IDLE_TIMEOUT_MS);
     expect(IDLE_WARNING_MS).toBeGreaterThan(0);
+  });
+
+  describe('política de sesión de la organización', () => {
+    it('sin el claim rige el plazo por omisión', () => {
+      expect(idleTimeoutFor(undefined)).toBe(IDLE_TIMEOUT_MS);
+    });
+
+    it('con el claim rige el plazo de la organización, nunca menos de tres avisos', () => {
+      expect(idleTimeoutFor(10)).toBe(10 * 60 * 1000);
+      expect(idleTimeoutFor(5)).toBe(IDLE_WARNING_MS * 3);
+    });
+
+    it('cierra la sesión al vencer el plazo que declara el token, no el de siempre', () => {
+      const corto = jwt({ sub: 'u-2', roles: [], tenants: ['t-1'], idleTimeoutMinutes: 10 });
+      session.start({ accessToken: corto, refreshToken: 'r-2' });
+      TestBed.tick();
+
+      vi.advanceTimersByTime(10 * 60 * 1000 - 1000);
+      http.expectNone(() => true);
+
+      vi.advanceTimersByTime(1000);
+      http.expectOne((request) => request.url.endsWith('/iam/auth/logout')).flush({});
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  accionSobreTabla,
   confianza,
   datosPersonales,
   ddlSource,
@@ -80,5 +81,11 @@ describe('portal-labels', () => {
     expect(decisionStep('OTRO')).toEqual({ label: 'OTRO', tone: 'secondary' });
     expect(ddlSource('NOSQL').label).toBe('Almacén no relacional');
     expect(processKind('CRITICO').label).toBe('Flujo crítico');
+  });
+
+  it('cada acceso a una tabla dice con un verbo qué le hace y uno nuevo se muestra tal cual', () => {
+    expect(accionSobreTabla('CREA').label).toBe('Crea');
+    expect(accionSobreTabla('BORRA').tone).toBe('error');
+    expect(accionSobreTabla('UPSERT')).toEqual({ label: 'UPSERT', tone: 'secondary' });
   });
 });

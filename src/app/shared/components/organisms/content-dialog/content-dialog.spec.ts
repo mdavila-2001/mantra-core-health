@@ -2,6 +2,7 @@ import { Component, signal, viewChild } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { ContentDialog } from './content-dialog';
+import { reemplazarAnimate } from '../../../../../testing/animate';
 
 @Component({
   imports: [ContentDialog],
@@ -207,22 +208,21 @@ describe('ContentDialog', () => {
     // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
     // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
     // Una salida que nunca termina deja a la vista si el gesto espera por ella.
-    let animarOriginal: typeof HTMLElement.prototype.animate;
+    let restaurarAnimate: () => void;
     let terminarSalida: () => void;
 
     beforeEach(() => {
-      animarOriginal = HTMLElement.prototype.animate;
       terminarSalida = () => undefined;
-      HTMLElement.prototype.animate = (() => ({
+      restaurarAnimate = reemplazarAnimate(() => ({
         finished: new Promise<void>((resolve) => {
           terminarSalida = resolve;
         }),
         cancel: () => undefined,
-      })) as unknown as typeof HTMLElement.prototype.animate;
+      }));
     });
 
     afterEach(() => {
-      HTMLElement.prototype.animate = animarOriginal;
+      restaurarAnimate();
     });
 
     it('`close(true)` —quien ya decidió— libera la página en el acto y devuelve el foco', async () => {

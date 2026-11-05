@@ -43,6 +43,14 @@
 </app-card>
 
 <h2 class="titulo-de-seccion">Mis vinculaciones</h2>
+@if (errorDeAccion(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="alerta-de-formulario" data-testid="error-de-accion">{{ mensaje }}</app-alert>
+}
+@if (avisoDeAccion(); as aviso) {
+  <app-alert appAnuncio [asertivo]="false" tone="success" class="alerta-de-formulario" data-testid="aviso-de-accion">
+    {{ aviso }}
+  </app-alert>
+}
 
 <!-- El organismo de tabla del sistema, en vez de la lista de tarjetas que el
      propietario marcó como «totalmente detonada» (2026-09-10). -->
@@ -120,7 +128,33 @@
   @if (fila.isPrimary) {
     <span class="vinculacion__principal">Principal</span>
   }
-  @if (fila.isFinal) {
+  @if (fila.canWithdraw) {
+    <button
+      app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      [disabled]="filaEnCurso() !== null"
+      [attr.aria-label]="'Retirarse de ' + fila.practiceName"
+      [attr.data-testid]="'retirarse-' + fila.id"
+      (clicked)="retirarse(fila)"
+    >
+      Retirarse
+    </button>
+  } @else if (fila.canLeaveQueue) {
+    <button
+      app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      [disabled]="filaEnCurso() !== null"
+      [attr.aria-label]="'Salir de la fila de ' + fila.practiceName"
+      [attr.data-testid]="'salir-de-la-fila-' + fila.id"
+      (clicked)="salirDeLaFila(fila)"
+    >
+      Salir de la fila
+    </button>
+  } @else if (fila.isFinal) {
     <button
       app-button
       type="button"

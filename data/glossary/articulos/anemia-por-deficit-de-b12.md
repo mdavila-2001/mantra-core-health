@@ -1,5 +1,6 @@
 ---
 slug: anemia-por-deficit-de-b12
+image: anemia-por-deficit-de-b12.svg | Sin vitamina B12 los glóbulos rojos salen grandes y escasos y se afectan los nervios. | Esquema de la absorción de la vitamina B12 desde los alimentos al estómago y el íleon, comparación de glóbulos rojos normales y grandes, y lista de síntomas.
 ---
 
 ## [definition] Introducción

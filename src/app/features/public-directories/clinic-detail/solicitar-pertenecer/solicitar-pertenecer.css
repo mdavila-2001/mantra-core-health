@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  margin-block-start: var(--sp-4);
+}
+
+.solicitar__titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+}
+
+.solicitar__nota {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+}

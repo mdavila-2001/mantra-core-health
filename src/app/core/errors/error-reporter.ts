@@ -1,6 +1,7 @@
 import { inject, Injectable, isDevMode, signal } from '@angular/core';
 
 import { ErrorTelemetry } from '../observability/errors/error-telemetry';
+import { redactShareTokens, sanitizeUrl } from '../observability/privacy/sanitize-url';
 
 /** Contexto mínimo que acompaña a un fallo. */
 export interface ErrorContext {
@@ -76,13 +77,19 @@ export class ErrorReporter {
    * el mundo, pretende que alguien lo pueda dictar. Se combina con la versión
    * del artefacto, que es lo que lo hace rastreable.
    */
-  report(error: unknown, context: ErrorContext): string {
+  report(error: unknown, rawContext: ErrorContext): string {
     this.contador += 1;
-    const id = `E-${context.commit}-${String(this.contador).padStart(3, '0')}`;
+    const id = `E-${rawContext.commit}-${String(this.contador).padStart(3, '0')}`;
 
+    /**
+     * La ruta y el mensaje pasan por la misma regla que la telemetría antes de
+     * llegar a la consola o al registro: en `/rx/<token>` la ruta es una
+     * credencial, y el mensaje de un `HttpErrorResponse` la cita entera.
+     */
+    const context: ErrorContext = { ...rawContext, route: sanitizeUrl(rawContext.route) };
     const registrado: ReportedError = {
       id,
-      message: mensajeDe(error),
+      message: redactShareTokens(mensajeDe(error)),
       context,
       at: new Date(),
     };

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ecografía transvaginal</title>
+  <desc id="d">A la izquierda, el útero con el endometrio, las trompas y los ovarios con folículos, y una sonda delgada con funda colocada en la vagina, cerca de esos órganos. A la derecha, cómo se realiza el estudio y para qué se utiliza.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Qué estructuras ve</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Cómo se hace y para qué</text>
+<path d="M150 110 C150 80 250 80 250 110 C250 150 230 180 215 200 L215 240 L185 240 L185 200 C170 180 150 150 150 110 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="200" cy="140" rx="16" ry="34" fill="var(--organ)" opacity=".5"/>
+<text x="200" y="74" text-anchor="middle" class="lab">Útero</text>
+<path d="M150 104 C120 100 100 110 88 130" fill="none" stroke="var(--organ)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M250 104 C280 100 300 110 312 130" fill="none" stroke="var(--organ)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="84" cy="150" rx="26" ry="18" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<ellipse cx="316" cy="150" rx="26" ry="18" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<circle cx="76" cy="148" r="4" fill="var(--panel)"/>
+<circle cx="90" cy="154" r="4" fill="var(--panel)"/>
+<circle cx="308" cy="146" r="4" fill="var(--panel)"/>
+<circle cx="322" cy="156" r="4" fill="var(--panel)"/>
+<text x="84" y="190" text-anchor="middle" class="small">Ovario</text>
+<text x="316" y="190" text-anchor="middle" class="small">Ovario</text>
+<text x="84" y="98" text-anchor="middle" class="small" style="fill:var(--muted)">Trompa</text>
+<text x="316" y="98" text-anchor="middle" class="small" style="fill:var(--muted)">Trompa</text>
+<text x="40" y="236" class="small">Endometrio</text>
+<line x1="108" y1="232" x2="188" y2="150" stroke="var(--muted)" stroke-width="1"/>
+<path d="M188 240 L178 360 L222 360 L212 240" fill="var(--skin)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="192" y="280" width="16" height="140" rx="8" fill="var(--accent)"/>
+<text x="222" y="330" class="small" style="fill:var(--accent)">Sonda con funda</text>
+<text x="222" y="346" class="small" style="fill:var(--accent)">y gel</text>
+<text x="40" y="300" class="small" style="fill:var(--muted)">Vagina</text>
+<text x="416" y="76" class="h">Cómo se hace</text>
+<text x="416" y="102" class="lab">• Acostada, con la vejiga vacía</text>
+<text x="416" y="126" class="lab">• La sonda se introduce unos cm</text>
+<text x="416" y="150" class="lab">• Suele durar de 10 a 20 minutos</text>
+<text x="416" y="174" class="lab">• Molestia leve; sin radiación</text>
+<text x="416" y="222" class="h">Para qué se usa</text>
+<text x="416" y="248" class="lab">• Dolor pélvico</text>
+<text x="416" y="272" class="lab">• Sangrado anormal</text>
+<text x="416" y="296" class="lab">• Quistes de ovario</text>
+<text x="416" y="320" class="lab">• Miomas y endometrio</text>
+<text x="416" y="344" class="lab">• Embarazo temprano</text>
+<text x="416" y="368" class="lab">• Fertilidad: folículos</text>
+<text x="416" y="410" class="small" style="fill:var(--muted)">Ve mejor la pelvis que la ecografía abdominal.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

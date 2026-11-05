@@ -8,6 +8,7 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
+import { soloLetrasDeNombre } from '../../../shared/forms/input-filters';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
 import {
@@ -22,7 +23,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { CORREO_CON_DOMINIO } from '../../../core/data-access/iam/strict-email';
+import { CORREO_ESTRICTO } from '../../../core/data-access/iam/strict-email';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
   BoEmployersCatalog,
@@ -63,7 +64,6 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import {
-  INVALID_IDENTITY_DOCUMENT_MESSAGE,
   identityDocumentValidators,
 } from '../shared-registration/national-id';
 import {
@@ -105,6 +105,8 @@ import { OnboardingDraftBanner } from '../../../shared/components/molecules/onbo
 import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
 import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -576,7 +578,7 @@ interface BorradorLocal {
 
 @Component({
   selector: 'app-register-patient',
-  imports: [RegistrationBadge, 
+  imports: [RegistrationBadge, AccountExistsDialog, 
     RouterLink,
     AppButton,
     NavIcon,
@@ -605,9 +607,13 @@ interface BorradorLocal {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
+  /** Nombres y apellidos no admiten dígitos. Ver `Input.inputFilter`. */
+  protected readonly soloLetras = soloLetrasDeNombre;
+
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
   private readonly draftService = inject(OnboardingDraftService);
   private readonly dialogs = inject(DialogService);
@@ -760,7 +766,7 @@ export class RegisterPatient {
         validators: [
           Validators.required,
           Validators.email,
-          Validators.pattern(CORREO_CON_DOMINIO),
+          Validators.pattern(CORREO_ESTRICTO),
         ],
       }),
       // El control guarda lo que `app-phone-input` compone —el prefijo del país
@@ -1434,6 +1440,7 @@ export class RegisterPatient {
           label: 'Apellido paterno',
           description: 'El apellido de su papá, como figura en su documento.',
           control: 'text',
+          soloLetras: true,
           required: true,
           autocomplete: 'family-name',
           placeholder: 'Mamani',
@@ -1448,6 +1455,7 @@ export class RegisterPatient {
           hint: 'Si no lleva, déjelo vacío.',
           description: 'El apellido de su mamá, tal como aparece en su documento.',
           control: 'text',
+          soloLetras: true,
           autocomplete: 'family-name',
           placeholder: 'Quispe',
           testId: 'registro-apellido-materno',
@@ -1456,6 +1464,7 @@ export class RegisterPatient {
         },
         {
           key: 'nationalId',
+          alSalir: (valor: string) => this.cuentaExistente.verificar('NATIONAL_ID', valor),
           label: 'Documento de identidad',
           hint: 'Con este número va a iniciar sesión.',
           description:
@@ -1465,9 +1474,10 @@ export class RegisterPatient {
           autocomplete: 'username',
           placeholder: '1234567',
           testId: 'registro-documento',
+          soloAlfanumerico: true,
           icono: 'patients',
           ancho: 'mitad',
-          mensajeDeError: INVALID_IDENTITY_DOCUMENT_MESSAGE,
+          mensajeDeError: 'Ingrese su documento: solo letras y números, sin espacios.',
         },
         this.campoDepartamentoEmisor('registro-departamento-ci'),
         {
@@ -1563,6 +1573,7 @@ export class RegisterPatient {
           hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
           description: 'A quién llamamos si le pasa algo y no puede responder usted.',
           control: 'text',
+          soloLetras: true,
           placeholder: 'Rosa Quispe',
           testId: 'registro-tutor-nombre',
           icono: 'people',
@@ -2830,7 +2841,7 @@ export class RegisterPatient {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });

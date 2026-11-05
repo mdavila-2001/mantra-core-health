@@ -1,0 +1,72 @@
+:host {
+  display: block;
+}
+
+.transfer {
+  padding-block: var(--sp-2);
+}
+
+/* Estable / Inestable / Crítico en una fila: tres opciones cortas. */
+.transfer__inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+/* Los medios en columnas según el ancho, con el rótulo de cada grupo a lo ancho. */
+.transfer__modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
+  gap: var(--sp-1) var(--sp-4);
+}
+
+.transfer__group {
+  grid-column: 1 / -1;
+  margin-block-start: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.transfer__group:first-child {
+  margin-block-start: 0;
+}
+
+/* Signos vitales: grilla compacta, más columnas que el resto del formulario (dos ya en un teléfono). */
+.transfer__vitals {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  min-inline-size: 0;
+}
+
+.transfer__legend {
+  padding-inline: var(--sp-1);
+  font-weight: 600;
+}
+
+.transfer__vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(6.5rem, 100%), 1fr));
+  gap: var(--sp-3);
+  /* Abajo: un rótulo que ocupa dos líneas no desalinea las casillas de la fila. */
+  align-items: end;
+}
+
+.transfer__vitals-at {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
+  margin-block-start: var(--sp-3);
+}
+
+.transfer__muted {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 400;
+}

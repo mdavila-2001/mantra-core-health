@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">La insulina y la glucosa en la diabetes</title>
+  <desc id="d">Tres paneles. En el primero, la insulina actúa como llave y la glucosa entra en la célula. En la diabetes tipo 1 falta insulina y la glucosa se queda en la sangre. En la diabetes tipo 2 hay insulina, pero la célula responde mal y la glucosa también se acumula.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --red:#c0392b; --red-l:#f3c9c3; --blue:#2f6fc0; --ok:#1f8a5b; --warn:#c77d12; --plasma:#f2d77a; --tissue:#e9edf2; --organ:#a8473b; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --red:#ef7467; --red-l:#5a2b28; --blue:#79a8ea; --ok:#4cc38a; --warn:#e2a54a; --plasma:#8a7432; --tissue:#2a3541; --organ:#c4685c; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <text x="400" y="44" text-anchor="middle" class="title">Cómo entra el azúcar en las células</text>
+  <rect x="20" y="64" width="245" height="300" rx="14" fill="var(--panel)" stroke="var(--ok)" stroke-width="2"/>
+  <rect x="277" y="64" width="245" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="535" y="64" width="245" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="142" y="92" text-anchor="middle" class="step" style="fill:var(--ok)">Sin diabetes</text>
+  <text x="399" y="92" text-anchor="middle" class="step">Diabetes tipo 1</text>
+  <text x="657" y="92" text-anchor="middle" class="step">Diabetes tipo 2</text>
+  <rect x="40" y="110" width="205" height="70" rx="8" fill="var(--red-l)"/>
+  <rect x="297" y="110" width="205" height="70" rx="8" fill="var(--red-l)"/>
+  <rect x="555" y="110" width="205" height="70" rx="8" fill="var(--red-l)"/>
+  <text x="50" y="126" class="small">Sangre</text>
+  <text x="307" y="126" class="small">Sangre</text>
+  <text x="565" y="126" class="small">Sangre</text>
+  <circle cx="90" cy="158" r="7" fill="var(--warn)"/>
+  <circle cx="195" cy="150" r="7" fill="var(--warn)"/>
+  <path d="M135 140 h18 v8 h-6 v6 h-6 v-6 h-6 Z" fill="var(--accent)"/>
+  <g fill="var(--warn)"><circle cx="320" cy="150" r="7"/><circle cx="345" cy="165" r="7"/><circle cx="370" cy="145" r="7"/><circle cx="400" cy="160" r="7"/><circle cx="430" cy="148" r="7"/><circle cx="455" cy="165" r="7"/><circle cx="480" cy="150" r="7"/></g>
+  <g fill="var(--warn)"><circle cx="578" cy="150" r="7"/><circle cx="603" cy="165" r="7"/><circle cx="700" cy="145" r="7"/><circle cx="725" cy="162" r="7"/><circle cx="748" cy="148" r="7"/></g>
+  <path d="M630 140 h18 v8 h-6 v6 h-6 v-6 h-6 Z" fill="var(--accent)"/>
+  <path d="M660 150 h18 v8 h-6 v6 h-6 v-6 h-6 Z" fill="var(--accent)"/>
+  <rect x="50" y="200" width="185" height="110" rx="40" fill="var(--tissue)" stroke="var(--line)" stroke-width="2"/>
+  <rect x="307" y="200" width="185" height="110" rx="40" fill="var(--tissue)" stroke="var(--line)" stroke-width="2"/>
+  <rect x="565" y="200" width="185" height="110" rx="40" fill="var(--tissue)" stroke="var(--line)" stroke-width="2"/>
+  <rect x="134" y="194" width="20" height="14" rx="3" fill="var(--ok)"/>
+  <rect x="390" y="194" width="20" height="14" rx="3" fill="var(--muted)"/>
+  <rect x="648" y="194" width="20" height="14" rx="3" fill="var(--muted)"/>
+  <path d="M144 214 v26" stroke="var(--ok)" stroke-width="3"/>
+  <polygon points="138,238 144,250 150,238" fill="var(--ok)"/>
+  <g fill="var(--warn)"><circle cx="110" cy="270" r="7"/><circle cx="144" cy="282" r="7"/><circle cx="178" cy="268" r="7"/></g>
+  <text x="142" y="300" text-anchor="middle" class="small">Célula con energía</text>
+  <text x="399" y="262" text-anchor="middle" class="small muted">Falta la «llave»</text>
+  <text x="399" y="280" text-anchor="middle" class="small muted">(insulina)</text>
+  <text x="657" y="262" text-anchor="middle" class="small muted">La cerradura</text>
+  <text x="657" y="280" text-anchor="middle" class="small muted">responde mal</text>
+  <text x="142" y="340" text-anchor="middle" class="lab">La insulina abre paso</text>
+  <text x="399" y="340" text-anchor="middle" class="lab">El páncreas no la fabrica</text>
+  <text x="657" y="340" text-anchor="middle" class="lab">Resistencia a la insulina</text>
+  <rect x="20" y="380" width="760" height="60" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="44" cy="402" r="7" fill="var(--warn)"/>
+  <text x="58" y="406" class="lab">Glucosa</text>
+  <path d="M130 396 h18 v8 h-6 v6 h-6 v-6 h-6 Z" fill="var(--accent)"/>
+  <text x="156" y="406" class="lab">Insulina</text>
+  <text x="240" y="406" class="lab">La glucosa que se queda en la sangre, con los años, daña vasos y nervios.</text>
+  <text x="58" y="428" class="small muted">Alimentación, actividad física, medicación y controles ayudan a mantenerla en el rango indicado por su equipo.</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

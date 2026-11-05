@@ -109,7 +109,7 @@ export class Dialog {
   });
   protected readonly phraseError = computed(() =>
     this.phraseTouched() && !this.phraseIsValid()
-      ? `Escribí exactamente «${this.phraseRequired()}» para confirmar.`
+      ? `Escriba exactamente «${this.phraseRequired()}» para confirmar.`
       : '',
   );
 

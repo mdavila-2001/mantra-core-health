@@ -38,6 +38,5 @@ describe('environment.production-api', () => {
     // uno resuelve `envFromProcess.telemetry` por su cuenta, así que sólo se fija
     // lo que tiene que ser igual pase lo que pase con el entorno del proceso.
     expect(productionApi.apiBaseUrl).toBe(produccion.apiBaseUrl);
-    expect(productionApi.aiBaseUrl).toBe(produccion.aiBaseUrl);
   });
 });

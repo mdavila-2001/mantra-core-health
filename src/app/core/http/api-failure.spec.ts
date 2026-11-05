@@ -2,13 +2,14 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, provideHttpClient, withInte
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { describeApiFailure, fieldErrorsOf, OFFLINE_MESSAGE } from './api-failure';
+import { apiExplainedFailure, describeApiFailure, fieldErrorsOf, OFFLINE_MESSAGE } from './api-failure';
 import {
   API_FAILURE_LOG_PREFIX,
   apiFailureLogInterceptor,
   describeForConsole,
 } from './api-failure-log.interceptor';
 import { errorToViewState } from './error-to-view-state';
+import { explanationOf } from './error-explanation';
 
 const FALLBACK = 'No se pudo guardar la cita.';
 
@@ -49,9 +50,11 @@ describe('describeApiFailure', () => {
     );
   });
 
-  it('en un 500 conserva el texto de la pantalla, nunca «Error interno del servidor»', () => {
+  it('en un 500 conserva el texto de la pantalla y suma por qué y qué hacer, nunca «Error interno del servidor»', () => {
     const error = apiError(500, 'INTERNAL', 'Error interno del servidor', 'abc-500');
-    expect(describeApiFailure(error, FALLBACK)).toBe(`${FALLBACK} (Código de soporte: abc-500)`);
+    const texto = describeApiFailure(error, FALLBACK);
+    expect(texto).toBe(`${FALLBACK} ${explanationOf('server').brief} (Código de soporte: abc-500)`);
+    expect(texto).not.toContain('Error interno del servidor');
   });
 
   it('en una validación no repite «Error de validación»: el detalle va por campo', () => {
@@ -70,7 +73,7 @@ describe('describeApiFailure', () => {
       error: '<html>Bad Gateway</html>',
       headers: new HttpHeaders({ 'x-request-id': 'nginx-77' }),
     });
-    expect(describeApiFailure(error, FALLBACK)).toBe(`${FALLBACK} (Código de soporte: nginx-77)`);
+    expect(describeApiFailure(error, FALLBACK)).toBe(`${FALLBACK} ${explanationOf('unavailable').brief} (Código de soporte: nginx-77)`);
   });
 
   it('algo que no es un error HTTP deja el texto de la pantalla', () => {
@@ -191,5 +194,18 @@ describe('apiFailureLogInterceptor', () => {
 
     expect(received).toBeInstanceOf(HttpErrorResponse);
     expect((received as HttpErrorResponse).status).toBe(400);
+  });
+});
+
+describe('apiExplainedFailure', () => {
+  const fallo = (status: number, body: unknown): HttpErrorResponse =>
+    new HttpErrorResponse({ status, error: body });
+
+  it('true sólo si la API dio un motivo escrito para la persona', () => {
+    expect(apiExplainedFailure(fallo(403, { code: 'FORBIDDEN', message: 'Esta persona no recibe mensajes suyos.' }))).toBe(true);
+    expect(apiExplainedFailure(fallo(403, null))).toBe(false);
+    expect(apiExplainedFailure(fallo(500, { code: 'INTERNAL', message: 'Internal server error' }))).toBe(false);
+    expect(apiExplainedFailure(fallo(0, null))).toBe(false);
+    expect(apiExplainedFailure(new Error('x'))).toBe(false);
   });
 });

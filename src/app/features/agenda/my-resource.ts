@@ -1,7 +1,11 @@
-import { map, type Observable } from 'rxjs';
+import { catchError, concatMap, first, from, map, of, type Observable } from 'rxjs';
 
 import type { SchedulingClient } from '@core/data-access/scheduling/scheduling.client';
-import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
+import type {
+  AgendaResource,
+  PublishedTemplate,
+  PublishedTemplatePage,
+} from '@core/data-access/scheduling/scheduling.types';
 import type { TenantScope } from '@core/data-access/scheduling/tenant-scope';
 
 /**
@@ -58,6 +62,16 @@ export function agendaResourceMy(
  *
  * El orden es el que devuelve la API, y es estable: sin un criterio explícito,
  * «la primera» al menos no cambia entre dos cargas.
+ *
+ * ## No hay «primera página» que se quede corta
+ *
+ * `GET /scheduling/resources` **no pagina**: el DTO de la API no tiene `cursor`
+ * ni `limit` y `SchedulingAgendaRepository.findResources` trae todas las del
+ * tenant (verificado en `mantra-core-health-api`, 2026-10-29). Tampoco filtra
+ * por `resourceRefId`, así que el filtro por perfil tiene que ser de acá. No se
+ * acota por `resourceType=PRACTITIONER` a propósito: el backend decide «es
+ * suya» por `resourceRefId` (`assertRecursoDelActor`), no por el tipo, y
+ * acotar por tipo podría esconder una agenda que el servidor sí le atribuye.
  */
 export function agendaResourcesMy(
   scheduling: SchedulingClient,
@@ -68,4 +82,33 @@ export function agendaResourcesMy(
   return scheduling
     .listResources({ tenantId }, scope)
     .pipe(map((pagina) => pagina.items.filter((r) => r.resourceRefId === practitionerProfileId)));
+}
+
+/** The schedule a template list holds in force: the newest one not retired. */
+export function liveTemplateOf(page: PublishedTemplatePage): PublishedTemplate | null {
+  return page.items.find((template) => !template.retired) ?? null;
+}
+
+/**
+ * The first of these agendas that has a schedule in force, with it.
+ *
+ * Not simply the first agenda: a publication that failed half-way leaves an
+ * empty agenda behind, and opening that one showed a blank form to someone who
+ * already had a schedule. A read that fails counts as «no schedule here».
+ */
+export function agendaWithLiveSchedule(
+  scheduling: SchedulingClient,
+  resources: readonly AgendaResource[],
+  scope?: TenantScope,
+): Observable<{ readonly resource: AgendaResource; readonly template: PublishedTemplate } | null> {
+  return from(resources).pipe(
+    concatMap((resource) =>
+      scheduling.listTemplates(resource.id, scope).pipe(
+        map((page) => liveTemplateOf(page)),
+        catchError(() => of(null)),
+        map((template) => (template === null ? null : { resource, template })),
+      ),
+    ),
+    first((found) => found !== null, null),
+  );
 }

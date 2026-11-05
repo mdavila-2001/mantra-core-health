@@ -1,0 +1,68 @@
+@if (selection().widened) {
+  <p class="pa__note" role="note">Hay pocas publicaciones en el periodo elegido: el análisis usa los últimos 30 días.</p>
+}
+
+@if (!enough()) {
+  <app-ins-panel title="Publicaciones" question="¿Qué formato, tema y horario conviene repetir?">
+    <p class="pa__none">No hay publicaciones suficientes de {{ names[platform()] }} para sacar conclusiones. Elija otra plataforma o un periodo más largo.</p>
+  </app-ins-panel>
+} @else {
+  <div class="pa__two">
+    <app-ins-panel title="Ranking de publicaciones" question="Las seis con mejor tasa de interacción.">
+      <ol class="pa__rank">
+        @for (p of ranking(); track p.id) {
+          <li><span class="pa__rank-t">{{ p.format }} · {{ p.topic }}</span> <span class="pa__rank-m">{{ day(p.date) }}, {{ p.hour }}:00</span> <strong>{{ pct(p.er) }}</strong></li>
+        }
+      </ol>
+    </app-ins-panel>
+    <app-ins-panel title="Mejor horario de publicación" question="Tasa de interacción por hora de publicación.">
+      <app-ins-bar-chart [data]="hourBars()" [sorted]="false" unit="percent" orientation="v" [ref]="average()" ariaLabel="Tasa de interacción por hora de publicación" />
+      <p class="pa__foot">
+        @if (bestHour(); as h) { Mejor momento: <strong>{{ h }}</strong>. } @else { Ninguna hora tiene publicaciones suficientes para elegir una. }
+        @if (anyFragile()) { Las horas con menos de {{ minPerHour }} publicaciones son cifras frágiles y no se eligen. }
+      </p>
+    </app-ins-panel>
+  </div>
+
+  <div class="pa__two">
+    <app-ins-panel title="Rendimiento por formato" question="¿Qué formato conecta mejor? Entre paréntesis, cuántas publicaciones.">
+      <app-ins-bar-chart [data]="byFormat()" unit="percent" orientation="h" [ref]="average()" ariaLabel="Tasa de interacción por formato" />
+    </app-ins-panel>
+    <app-ins-panel title="Rendimiento por tema" question="¿De qué conviene hablar? Entre paréntesis, cuántas publicaciones.">
+      <app-ins-bar-chart [data]="byTopic()" unit="percent" orientation="h" [ref]="average()" ariaLabel="Tasa de interacción por tema" />
+    </app-ins-panel>
+  </div>
+}
+
+<app-ins-panel title="Tabla comparativa de plataformas" question="Las siete cifras de cada plataforma, en el mismo periodo.">
+  <div class="pa__wrap">
+    <table class="pa__table">
+      <caption class="pa__sr">Comparación entre plataformas</caption>
+      <thead>
+        <tr>
+          <th scope="col">Plataforma</th>
+          @for (c of columns; track c) { <th scope="col" class="pa__n">{{ metricLabels[c].label }}</th> }
+          <th scope="col">Estado de la interacción</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of comparison(); track r.platform) {
+          <tr>
+            <th scope="row">{{ names[r.platform] }}</th>
+            @for (k of r.cells; track k.metric) { <td class="pa__n">{{ show(k.value, k.metric) }}</td> }
+            <td><app-ins-status [status]="r.status" [short]="true" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</app-ins-panel>
+
+<app-ins-panel title="Cómo se calcula" question="Las definiciones detrás de cada cifra.">
+  <dl class="pa__defs">
+    @for (c of columns; track c) {
+      <div><dt>{{ metricLabels[c].label }}</dt><dd>{{ metricLabels[c].definition }}</dd></div>
+    }
+  </dl>
+  <p class="pa__foot">Rendimiento por formato, tema u hora = interacciones del grupo ÷ impresiones del grupo. Estado: óptimo si alcanza la referencia, aceptable hasta 10 % por debajo, alerta hasta 25 % y crítico más abajo; sin estado con menos de 5 días de datos o sin referencia.</p>
+</app-ins-panel>

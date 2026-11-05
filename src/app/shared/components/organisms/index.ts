@@ -131,3 +131,4 @@ export type { TenantOption, TenantSwitcherVariant } from './tenant-switcher/tena
 export { ToastContainer } from './toast-container/toast-container';
 
 export { ViewStateHost } from './view-state-host/view-state-host';
+export * from './chart-panel';

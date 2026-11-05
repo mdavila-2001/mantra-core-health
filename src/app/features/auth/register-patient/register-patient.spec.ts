@@ -2134,8 +2134,18 @@ describe('RegisterPatient', () => {
         email: '',
       });
 
-      // Mismo `@Matches` que el DTO: letras, dígitos, punto y guion.
+      // The document allows letters, digits, dot and hyphen only (see `national-id.ts`).
       expect(component.formPaciente.controls.nationalId.invalid).toBe(true);
+    });
+
+    // Product decision pending (see `national-id.ts`): the strict cédula is NOT wired in. The form
+    // takes the backend's floor, so a passport or a `CI-…` document goes through.
+    it('el documento no es la cédula estricta: acepta pasaportes y «QA-123», a la espera de la decisión de producto', () => {
+      const control = component.formPaciente.controls.nationalId;
+      for (const valido of ['QA-123', '1234', '1234567890', '1.234.567', '0000000']) {
+        control.setValue(valido);
+        expect(control.valid, `«${valido}» pasa con el piso del backend`).toBe(true);
+      }
     });
 
     it('valida el documento: letras, dígitos, punto y guion, mínimo 4', () => {

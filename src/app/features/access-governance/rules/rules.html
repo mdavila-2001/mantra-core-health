@@ -1,0 +1,321 @@
+<app-page-header
+  title="Barandillas de la organización"
+  subtitle="Reglas propias que se suman a las de la plataforma: lo que nadie puede tener, lo máximo de cada rol, lo que se ve de un dato y los plazos de gobierno."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-rules">
+  <p class="anuncio" role="status" aria-live="polite" data-testid="rules-anuncio">
+    {{ anuncio() }}
+  </p>
+
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (datos(); as d) {
+      <app-tabs [(selectedIndex)]="pestana" data-testid="rules-pestanas">
+        <!-- ========================== Barandillas ========================== -->
+        <app-tab label="Barandillas">
+          <section
+            class="panel"
+            aria-labelledby="rules-barandillas-titulo"
+            data-testid="rules-barandillas"
+          >
+            <div class="panel__cabeza">
+              <h2 class="panel__titulo" id="rules-barandillas-titulo">
+                Barandillas de su organización
+              </h2>
+              @if (constructorAbierto() === null) {
+                <button
+                  app-button
+                  size="sm"
+                  type="button"
+                  (clicked)="abrirConstructor('DENY_PERMISSION')"
+                  data-testid="rules-nueva"
+                >
+                  Nueva barandilla
+                </button>
+              }
+            </div>
+            <p class="panel__ayuda">
+              Una barandilla solo agrega restricciones: no puede aflojar las de la plataforma. Rige
+              de inmediato para todas las personas.
+            </p>
+
+            @if (constructorAbierto(); as tipo) {
+              <app-rule-builder
+                [initialKind]="tipo"
+                [busy]="guardando()"
+                [failure]="falloDeGuardado()"
+                (submitted)="crear($event)"
+                (cancelled)="cerrarConstructor()"
+              />
+            }
+
+            @if (hayRetiradas()) {
+              <app-checkbox
+                [checked]="verRetiradas()"
+                (checkedChange)="verRetiradas.set($event)"
+                label="Ver también las retiradas"
+                data-testid="rules-ver-retiradas"
+              />
+            }
+            @if (falloDeRetiro(); as texto) {
+              <app-alert tone="error" role="alert" data-testid="rules-retiro-error">{{
+                texto
+              }}</app-alert>
+            }
+
+            <ul class="lista" role="list">
+              @for (r of barandillas(); track r.id) {
+                <li class="tarjeta" [attr.data-testid]="'rules-regla-' + r.id">
+                  <div class="tarjeta__cabeza">
+                    <h3 class="tarjeta__titulo">{{ tipoTexto(r.kind) }}</h3>
+                    <span class="tarjeta__marcas">
+                      <app-badge [variant]="estadoTono(r)" size="sm">{{
+                        estadoTexto(r)
+                      }}</app-badge>
+                    </span>
+                  </div>
+                  <p class="tarjeta__frase">{{ describir(r) }}</p>
+                  @if (r.message) {
+                    <p class="tarjeta__nota">Mensaje: «{{ r.message }}»</p>
+                  }
+                  <details class="detalle">
+                    <summary>Ver el detalle</summary>
+                    <dl class="detalle__lista">
+                      <dt>Permiso</dt>
+                      <dd>{{ r.permissionPattern }}</dd>
+                      @if (r.roleTemplateCode) {
+                        <dt>Rol</dt>
+                        <dd>{{ nombreDePlantilla(r.roleTemplateCode) }}</dd>
+                      }
+                      <dt>Versión</dt>
+                      <dd>{{ r.rowVersion }}</dd>
+                    </dl>
+                  </details>
+
+                  @if (editando()?.id === r.id) {
+                    <form
+                      class="edicion"
+                      (submit)="$event.preventDefault(); guardarMensaje()"
+                      novalidate
+                      data-testid="rules-edicion"
+                    >
+                      <app-form-field label="Mensaje para quien se encuentre con la regla">
+                        <app-textarea
+                          [value]="mensajeNuevo()"
+                          (valueChange)="mensajeNuevo.set($event)"
+                          [rows]="2"
+                          [maxLength]="300"
+                          data-testid="rules-edicion-mensaje"
+                        />
+                      </app-form-field>
+                      @if (falloDeMensaje(); as texto) {
+                        <app-alert tone="error" role="alert" data-testid="rules-edicion-error">{{
+                          texto
+                        }}</app-alert>
+                      }
+                      <div class="tarjeta__acciones">
+                        <button
+                          app-button
+                          size="sm"
+                          type="submit"
+                          [isLoading]="guardandoMensaje()"
+                          [disabled]="guardandoMensaje()"
+                          data-testid="rules-edicion-guardar"
+                        >
+                          Guardar el mensaje
+                        </button>
+                        <button
+                          app-button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          (clicked)="cancelarEdicion()"
+                          data-testid="rules-edicion-cancelar"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </form>
+                  } @else if (r.status === 'ACTIVE') {
+                    <div class="tarjeta__acciones">
+                      <button
+                        app-button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        (clicked)="editarMensaje(r)"
+                        [attr.aria-label]="'Cambiar el mensaje de la barandilla: ' + describir(r)"
+                        [attr.data-testid]="'rules-editar-' + r.id"
+                      >
+                        Cambiar el mensaje
+                      </button>
+                      <button
+                        app-button
+                        size="sm"
+                        variant="danger"
+                        type="button"
+                        [isLoading]="retirando() === r.id"
+                        [disabled]="retirando() !== null"
+                        (clicked)="retirar(r)"
+                        [attr.aria-label]="'Retirar la barandilla: ' + describir(r)"
+                        [attr.data-testid]="'rules-retirar-' + r.id"
+                      >
+                        Retirar
+                      </button>
+                    </div>
+                  }
+                </li>
+              } @empty {
+                <li class="vacio" data-testid="rules-sin-barandillas">
+                  Su organización aún no tiene barandillas propias. Con «Nueva barandilla» puede,
+                  por ejemplo, impedir que Recepción cobre o exigir que facturar se haga desde la
+                  red del hospital.
+                </li>
+              }
+            </ul>
+          </section>
+        </app-tab>
+
+        <!-- ======================= Techos por plantilla ======================= -->
+        <app-tab label="Techos por plantilla">
+          <section class="panel" aria-labelledby="rules-techos-titulo" data-testid="rules-techos">
+            <div class="panel__cabeza">
+              <h2 class="panel__titulo" id="rules-techos-titulo">
+                Lo máximo que cada rol puede tener
+              </h2>
+              @if (constructorAbierto() === null) {
+                <button
+                  app-button
+                  size="sm"
+                  type="button"
+                  (clicked)="abrirConstructor('CEILING')"
+                  data-testid="rules-nuevo-techo"
+                >
+                  Bajar un techo
+                </button>
+              }
+            </div>
+            <p class="panel__ayuda">
+              El techo de la plataforma siempre rige y no se edita. Su organización puede bajarlo
+              más para un rol; nunca subirlo.
+            </p>
+            <p class="panel__ayuda" data-testid="rules-techos-aviso">
+              Aquí se ven solo los límites que puso su organización: el sistema todavía no entrega
+              el techo de la plataforma de cada rol, así que no lo mostramos. El de la plataforma
+              siempre rige, se vea o no en esta pantalla.
+            </p>
+
+            @if (constructorAbierto() === 'CEILING') {
+              <app-rule-builder
+                initialKind="CEILING"
+                [busy]="guardando()"
+                [failure]="falloDeGuardado()"
+                (submitted)="crear($event)"
+                (cancelled)="cerrarConstructor()"
+              />
+            }
+
+            <div class="tabla-marco">
+              <table class="tabla" data-testid="rules-matriz">
+                <caption class="tabla__leyenda">
+                  Límites propios de su organización, por rol y categoría de permisos.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Rol</th>
+                    @for (c of categorias; track c.codigo) {
+                      <th scope="col">{{ c.nombre }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (fila of matriz(); track fila.plantilla) {
+                    <tr>
+                      <th scope="row">{{ fila.plantilla }}</th>
+                      @for (celda of fila.celdas; track celda.categoria) {
+                        <td [attr.data-estado]="celda.kind">
+                          <span
+                            class="celda"
+                            [class.celda--limitada]="celda.kind === 'LIMITED'"
+                            [class.celda--bloqueada]="celda.kind === 'BLOCKED'"
+                          >
+                            <span aria-hidden="true">{{
+                              celda.kind === 'NONE' ? '–' : celda.kind === 'BLOCKED' ? '✖' : '⚠'
+                            }}</span>
+                            {{ celda.text }}
+                          </span>
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <h3 class="panel__subtitulo">Techos que puso su organización</h3>
+            <ul class="lista" role="list">
+              @for (r of techos(); track r.id) {
+                <li class="tarjeta" [attr.data-testid]="'rules-techo-' + r.id">
+                  <div class="tarjeta__cabeza">
+                    <p class="tarjeta__frase">{{ describir(r) }}</p>
+                    <app-badge [variant]="estadoTono(r)" size="sm">{{ estadoTexto(r) }}</app-badge>
+                  </div>
+                  @if (r.message) {
+                    <p class="tarjeta__nota">Mensaje: «{{ r.message }}»</p>
+                  }
+                  @if (r.status === 'ACTIVE') {
+                    <div class="tarjeta__acciones">
+                      <button
+                        app-button
+                        size="sm"
+                        variant="danger"
+                        type="button"
+                        [isLoading]="retirando() === r.id"
+                        [disabled]="retirando() !== null"
+                        (clicked)="retirar(r)"
+                        [attr.aria-label]="'Retirar el techo: ' + describir(r)"
+                        [attr.data-testid]="'rules-retirar-' + r.id"
+                      >
+                        Quitar este techo
+                      </button>
+                    </div>
+                  }
+                </li>
+              } @empty {
+                <li class="vacio" data-testid="rules-sin-techos">
+                  Su organización aún no bajó ningún techo: rige el de la plataforma.
+                </li>
+              }
+            </ul>
+
+            <details class="detalle" data-testid="rules-plataforma">
+              <summary>Lo que la plataforma nunca deja dar al personal de apoyo</summary>
+              <ul class="detalle__simple">
+                @for (nombre of nuncaDa; track nombre) {
+                  <li>{{ nombre }}</li>
+                } @empty {
+                  <li>
+                    No hay permisos vedados de forma absoluta: el techo de cada rol los acota.
+                  </li>
+                }
+              </ul>
+            </details>
+          </section>
+        </app-tab>
+
+        <!-- ============================= Ajustes ============================= -->
+        <app-tab label="Ajustes">
+          <section class="panel" aria-labelledby="rules-ajustes-titulo" data-testid="rules-ajustes">
+            <h2 class="panel__titulo" id="rules-ajustes-titulo">Ajustes de gobierno</h2>
+            <app-governance-settings [response]="d.settings" (saved)="ajustesGuardados($event)" />
+          </section>
+        </app-tab>
+
+        <!-- ========================= Permisos antiguos ========================= -->
+        <app-tab label="Permisos antiguos">
+          <app-normalize-legacy />
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>

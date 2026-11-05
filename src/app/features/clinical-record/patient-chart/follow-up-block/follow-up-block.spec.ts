@@ -74,6 +74,8 @@ async function montar(
     reconsulta?: Record<string, unknown>;
     /** Los cupos libres del mes, que el calendario pide apenas se resuelve. */
     cupos?: readonly unknown[];
+    /** Las horas del horario flexible (P36) del mes, que van con los cupos. */
+    flexibles?: readonly unknown[];
   } = {},
 ) {
   await TestBed.configureTestingModule({
@@ -123,7 +125,7 @@ async function montar(
     // pintar de verde y de rojo. Con la reconsulta ya agendada no hay
     // formulario, así que no pide nada.
     if (opciones.reconsulta === undefined) {
-      responderCuposDelMes(http, opciones.cupos ?? []);
+      responderCuposDelMes(http, opciones.cupos ?? [], opciones.flexibles ?? []);
       fixture.detectChanges();
     }
   }
@@ -131,11 +133,26 @@ async function montar(
   return { fixture, http };
 }
 
-/** Responde la lectura de cupos del mes que dispara el calendario. */
-function responderCuposDelMes(http: HttpTestingController, cupos: readonly unknown[]): void {
+/**
+ * Responde la lectura de cupos del mes que dispara el calendario, y la de horas
+ * del horario flexible (P36) que va con ella.
+ */
+function responderCuposDelMes(
+  http: HttpTestingController,
+  cupos: readonly unknown[],
+  flexibles: readonly unknown[] = [],
+): void {
   http
     .expectOne((r) => r.url === '/scheduling/slots')
     .flush({ items: cupos, count: cupos.length, limit: 1500, truncated: false });
+  responderHorasFlexibles(http, flexibles);
+}
+
+/** Responde la lectura de horas del horario flexible de la agenda. */
+function responderHorasFlexibles(http: HttpTestingController, horas: readonly unknown[] = []): void {
+  http
+    .expectOne((r) => r.url === '/scheduling/resources/r-1/flexible-availability')
+    .flush({ resourceId: 'r-1', stepMinutes: 15, items: horas });
 }
 
 /** Una señal, una computada o un método del componente. */
@@ -157,7 +174,10 @@ function elegirDia(fixture: ComponentFixture<FollowUpBlock>): void {
 }
 
 describe('FollowUpBlock', () => {
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    vi.useRealTimers();
+    TestBed.resetTestingModule();
+  });
 
   /* ---- los tres estados ---------------------------------------------------- */
 
@@ -253,11 +273,18 @@ describe('FollowUpBlock', () => {
     expect(hasta.getDate()).toBe(1);
     expect(hasta.getTime()).toBeGreaterThan(desde.getTime());
     req.flush({ items: [], count: 0, limit: 1500, truncated: false });
+    responderHorasFlexibles(http);
     fixture.detectChanges();
     http.verify();
   });
 
   it('el calendario pinta de verde los días con lugar y de rojo los que no', async () => {
+    // El mes a la vista arranca en el de «mañana»: si hoy es el penúltimo día
+    // del mes, mañana es el único día en rango y no hay ninguno que pintar de
+    // rojo. Con el reloj fijo a mitad de mes la prueba no depende del día en
+    // que corra. Sólo se falsea `Date`: los temporizadores del test siguen reales.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 14, 10, 0, 0));
     const { fixture, http } = await montar({ cupos: [cupo('s-manana', manana(8, 30))] });
 
     const dias: HTMLButtonElement[] = Array.from(
@@ -312,6 +339,35 @@ describe('FollowUpBlock', () => {
         .getAttribute('aria-pressed'),
     ).toBe('true');
     http.verify();
+  });
+
+  /*
+   * Un día «Horario flexible» no tiene cupos fijos: sus horas las calcula la API
+   * al leer. Antes ese día salía en rojo, «Sin lugar», aunque el médico atendiera.
+   */
+  it('un día de horario flexible sale en verde y ofrece sus horas', async () => {
+    const hora = (desde: Date) => ({
+      templateId: 't-flex',
+      startAt: desde.toISOString(),
+      endAt: new Date(desde.getTime() + 30 * 60_000).toISOString(),
+    });
+    const { fixture, http } = await montar({ flexibles: [hora(manana(9)), hora(manana(9, 15))] });
+    elegirDia(fixture);
+
+    expect(fixture.nativeElement.querySelector('[data-testid="reconsulta-sin-cupos"]')).toBeNull();
+    const tarjetas: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="reconsulta-cupo-opcion"]'),
+    );
+    expect(tarjetas).toHaveLength(2);
+    expect(tarjetas[0]!.textContent).toContain('09:00 – 09:30');
+
+    // Se agenda como cualquier reconsulta: inicio y minutos de la hora elegida.
+    tarjetas[0]!.click();
+    fixture.detectChanges();
+    api(fixture)['agendar']();
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.body.startAt).toBe(manana(9).toISOString());
+    expect(req.request.body.durationMinutes).toBe(30);
   });
 
   it('un día sin cupos lo dice en vez de dejar el grupo vacío', async () => {
@@ -407,6 +463,7 @@ describe('FollowUpBlock', () => {
     http
       .expectOne((r) => r.url === '/scheduling/slots')
       .flush({ items: [], count: 0, limit: 500, truncated: false });
+    responderHorasFlexibles(http);
     fixture.detectChanges();
 
     const exito = fixture.nativeElement.querySelector('[data-testid="reconsulta-exito"]');
@@ -461,6 +518,38 @@ describe('FollowUpBlock', () => {
 });
 
 /* ---- la partición de la jornada, como función pura ------------------------ */
+
+/**
+ * Cambio de requisito (30/10/2026): la reconsulta se agenda sin formulario médico.
+ * La respuesta se ofrece; sólo con `exigeRespuesta` bloquea, como antes.
+ */
+describe('FollowUpBlock · la respuesta del formulario médico', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('ofrecerla no bloquea el agendado; exigirla sí, hasta que se elige una', async () => {
+    const { fixture, http } = await montar({});
+    const bloque = fixture.componentInstance as unknown as Record<string, () => boolean>;
+
+    fixture.componentRef.setInput('ofreceRespuesta', true);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(false);
+
+    fixture.componentRef.setInput('exigeRespuesta', true);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(true);
+
+    // Decisión del cliente: sólo el formulario deja de ser obligatorio; el encuentro sigue siéndolo.
+    fixture.componentRef.setInput('exigeRespuesta', false);
+    fixture.componentRef.setInput('encounterId', null);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(true);
+    // El selector de la respuesta lee las del encuentro al dibujarse.
+    for (const lectura of http.match((r) => r.url === '/forms/instances')) {
+      lectura.flush({ encounterId: 'enc-1', items: [], limit: 50, truncated: false });
+    }
+    http.verify();
+  });
+});
 
 describe('enFranjas', () => {
   const recurso = RECURSO as never;

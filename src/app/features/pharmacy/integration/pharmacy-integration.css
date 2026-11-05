@@ -1,0 +1,78 @@
+/* Integración con el sistema de la farmacia. Una sola tarjeta centrada y a lo
+   ancho (composition-rules §5), sin tope propio de ancho. Mobile-first. */
+
+:host {
+  display: block;
+}
+
+.integration {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.integration__pharmacy {
+  margin-block-end: var(--sp-4);
+}
+
+.integration__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.integration__section,
+.integration__connect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.integration__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.integration__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.integration__lead {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+.integration__chooser {
+  min-inline-size: 16rem;
+}
+
+/* El campo y el botón: uno sobre otro en móvil, en fila desde 780 px. */
+.integration__connect-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: var(--sp-4);
+}
+
+/* En una columna el botón ocupa el ancho: su rótulo, largo, pasa a dos renglones en vez de salirse. */
+.integration__connect-form > [app-button] {
+  height: auto;
+  white-space: normal;
+  text-align: center;
+}
+
+@media (min-width: 780px) {
+  .integration__connect-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}

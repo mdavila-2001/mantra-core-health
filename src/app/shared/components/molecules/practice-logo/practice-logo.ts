@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, linkedSignal } from '@angular/core';
 
+import { Spinner } from '../../atoms/spinner/spinner';
+
 /**
  * El logo del consultorio dentro de su caja de tamaño fijo.
  *
@@ -21,6 +23,7 @@ import { ChangeDetectionStrategy, Component, input, linkedSignal } from '@angula
  */
 @Component({
   selector: 'app-practice-logo',
+  imports: [Spinner],
   templateUrl: './practice-logo.html',
   styleUrl: './practice-logo.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +38,8 @@ export class PracticeLogo {
    * y para cualquier organización: cambia lo que se dice, no lo que se dibuja.
    */
   readonly etiqueta = input<string>('Logo del consultorio');
+  /** The new logo is being uploaded: a spinner covers the box until it lands. */
+  readonly uploading = input(false);
 
   /**
    * Una imagen rota no puede dejar un hueco: cae al marcador. `linkedSignal`

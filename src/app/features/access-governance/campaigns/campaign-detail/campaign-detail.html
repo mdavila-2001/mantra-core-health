@@ -1,0 +1,290 @@
+<app-page-header
+  title="Seguimiento de la campaña"
+  subtitle="Resultados, accesos pendientes y vencidos, y lo que se quitó por no revisarse a tiempo."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-campaign-detail">
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (vista(); as v) {
+      <header class="cabecera">
+        <div class="cabecera__titulo">
+          <h2 class="cabecera__nombre" data-testid="campana-nombre">{{ v.campaign.name }}</h2>
+          <p class="cabecera__datos">
+            <app-badge [variant]="estadoTonoDe(v.campaign.status)" data-testid="campana-estado">{{
+              estadoTextoDe(v.campaign.status)
+            }}</app-badge>
+            <span>{{ tipoDe(v.campaign) }}</span>
+            <span [class.vencida]="vencidaDe(v.campaign)" data-testid="campana-vence">{{
+              venceDe(v.campaign)
+            }}</span>
+          </p>
+        </div>
+
+        <div class="acciones" role="group" aria-label="Acciones de la campaña">
+          @if (v.campaign.status === 'DRAFT') {
+            <button
+              app-button
+              size="sm"
+              type="button"
+              [disabled]="ocupada()"
+              (clicked)="lanzar(v.campaign)"
+              data-testid="campana-lanzar"
+            >
+              Lanzar la campaña
+            </button>
+          }
+          @if (v.campaign.status === 'OPEN') {
+            <button
+              app-button
+              size="sm"
+              type="button"
+              [disabled]="ocupada()"
+              (clicked)="cerrar(v.campaign)"
+              data-testid="campana-cerrar"
+            >
+              Cerrar la campaña
+            </button>
+          }
+          @if (v.campaign.status === 'OPEN' || v.campaign.status === 'DRAFT') {
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              [disabled]="ocupada()"
+              (clicked)="cancelar(v.campaign)"
+              data-testid="campana-cancelar"
+            >
+              Cancelar la campaña
+            </button>
+          }
+          @if (v.campaign.status !== 'DRAFT' && !puedeExportar()) {
+            <p class="exportar__nota" data-testid="campana-exportar-solo-admin">
+              Exportar la campaña lo hace el administrador de seguridad.
+            </p>
+          }
+          @if (v.campaign.status !== 'DRAFT' && puedeExportar()) {
+            <app-select
+              class="exportar__motivo"
+              [options]="motivosDeExportacion"
+              [value]="motivoDeExportacion()"
+              (valueChange)="motivoDeExportacion.set($event ?? 'OTHER')"
+              ariaLabel="Para qué se exporta"
+              data-testid="campana-exportar-motivo"
+            />
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              [disabled]="ocupada()"
+              (clicked)="exportar(v.campaign, 'csv')"
+              data-testid="campana-exportar-csv"
+            >
+              Exportar CSV
+            </button>
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              [disabled]="ocupada()"
+              (clicked)="exportar(v.campaign, 'json')"
+              data-testid="campana-exportar-json"
+            >
+              Exportar JSON
+            </button>
+          }
+        </div>
+      </header>
+
+      <div class="avisos" aria-live="polite">
+        @if (aviso(); as a) {
+          <app-alert [tone]="a.tone" data-testid="campana-resultado">{{ a.text }}</app-alert>
+        }
+        @if (exportado(); as e) {
+          <app-alert tone="success" data-testid="campana-exportado">{{ e }}</app-alert>
+        }
+        @if (error(); as e) {
+          <app-alert tone="error" role="alert" data-testid="campana-error">{{ e }}</app-alert>
+        }
+      </div>
+
+      <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+        <app-tab label="Resultados">
+          <div class="panel">
+            @if (v.results; as r) {
+              <section
+                class="avance"
+                aria-labelledby="titulo-avance"
+                data-testid="resultados-avance"
+              >
+                <h3 class="panel__titulo" id="titulo-avance">Avance</h3>
+                <app-progress [value]="r.coveragePercent" label="Avance de la campaña" />
+                <p class="avance__cifra">
+                  <strong>{{ r.coveragePercent }} %</strong> de los accesos ya tiene decisión.
+                </p>
+              </section>
+
+              <dl class="cifras">
+                <div class="cifras__item">
+                  <dt>Accesos en la campaña</dt>
+                  <dd data-testid="resultados-total">{{ r.total }}</dd>
+                </div>
+                <div class="cifras__item">
+                  <dt>Pendientes</dt>
+                  <dd data-testid="resultados-pendientes">{{ r.pending }}</dd>
+                </div>
+                <div class="cifras__item">
+                  <dt>Vencidos sin decidir</dt>
+                  <dd data-testid="resultados-vencidos">{{ vencidos() }}</dd>
+                </div>
+                <div class="cifras__item">
+                  <dt>Tiempo medio de respuesta</dt>
+                  <dd data-testid="resultados-tiempo">{{ tiempoMedio() }}</dd>
+                </div>
+              </dl>
+
+              <div class="desgloses">
+                <section aria-labelledby="titulo-decision">
+                  <h3 class="panel__titulo" id="titulo-decision">Por decisión</h3>
+                  <ul class="desglose" data-testid="resultados-por-decision">
+                    @for (p of porDecision(); track p.clave) {
+                      <li>
+                        <span>{{ p.texto }}</span> <strong>{{ p.cantidad }}</strong>
+                      </li>
+                    }
+                  </ul>
+                </section>
+                <section aria-labelledby="titulo-revisor">
+                  <h3 class="panel__titulo" id="titulo-revisor">Por quién revisa</h3>
+                  <ul class="desglose" data-testid="resultados-por-revisor">
+                    @for (p of porRevisor(); track p.clave) {
+                      <li>
+                        <span>{{ p.texto }}</span> <strong>{{ p.cantidad }}</strong>
+                      </li>
+                    }
+                  </ul>
+                </section>
+                <section aria-labelledby="titulo-sensibilidad">
+                  <h3 class="panel__titulo" id="titulo-sensibilidad">Por riesgo</h3>
+                  <ul class="desglose" data-testid="resultados-por-sensibilidad">
+                    @for (p of porSensibilidad(); track p.clave) {
+                      <li>
+                        <span>{{ p.texto }}</span> <strong>{{ p.cantidad }}</strong>
+                      </li>
+                    }
+                  </ul>
+                </section>
+              </div>
+
+              <section aria-labelledby="titulo-auto">
+                <h3 class="panel__titulo" id="titulo-auto">Quitados por no revisarse a tiempo</h3>
+                <div data-testid="resultados-auto-revocados">
+                  @if (autoRevocados().length === 0) {
+                    <p class="panel__texto">Ningún acceso se quitó automáticamente.</p>
+                  } @else {
+                    <ul class="desglose">
+                      @for (nombre of autoRevocados(); track $index) {
+                        <li>{{ nombre }}</li>
+                      }
+                    </ul>
+                  }
+                </div>
+              </section>
+            } @else {
+              <p class="panel__texto" data-testid="resultados-borrador">
+                Aún no hay resultados: la campaña es un borrador. Al lanzarla se generan los accesos
+                para revisar y aquí verá el avance.
+              </p>
+            }
+          </div>
+        </app-tab>
+
+        <app-tab label="Accesos">
+          <div class="panel">
+            <app-segmented-control
+              [options]="filtros()"
+              [value]="filtro()"
+              (valueChange)="filtro.set($event)"
+              ariaLabel="Qué accesos ver"
+              data-testid="campana-items-filtro"
+            />
+            <app-data-table
+              caption="Accesos de la campaña"
+              [state]="itemsVisibles()"
+              [columns]="columnas()"
+              [trackBy]="rowId"
+              [rowLabel]="rowLabel"
+              data-testid="campana-items"
+            />
+          </div>
+        </app-tab>
+
+        <app-tab label="Configuración">
+          <dl class="config panel" data-testid="campana-configuracion">
+            <div>
+              <dt>Alcance</dt>
+              <dd data-testid="configuracion-alcance">{{ alcance(v.campaign) }}</dd>
+            </div>
+            <div>
+              <dt>Filtros</dt>
+              <dd data-testid="configuracion-filtros">{{ filtrosTexto(v.campaign) }}</dd>
+            </div>
+            <div>
+              <dt>Fecha límite</dt>
+              <dd data-testid="configuracion-fecha">{{ fechaLimite(v.campaign) }}</dd>
+            </div>
+            <div>
+              <dt>Días de gracia</dt>
+              <dd data-testid="configuracion-gracia">{{ graciaTexto(v.campaign) }}</dd>
+            </div>
+            <div>
+              <dt>Recordatorios</dt>
+              <dd data-testid="configuracion-recordatorios">{{ avisosTexto(v.campaign) }}</dd>
+            </div>
+            <div>
+              <dt>Se escala</dt>
+              <dd data-testid="configuracion-escalamiento">{{ escalaTexto(v.campaign) }}</dd>
+            </div>
+            <div>
+              <dt>Lo que no se certifique</dt>
+              <dd data-testid="configuracion-no-certificado">
+                {{ noCertificadoTexto(v.campaign) }}
+              </dd>
+            </div>
+          </dl>
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+
+  <a class="volver" [routerLink]="lista" data-testid="campana-volver">Volver a las campañas</a>
+</app-card>
+
+<ng-template #personaCell let-item>
+  <span class="item__nombre" [attr.data-testid]="'item-persona-' + item.id">{{
+    item.subjectName ?? 'Persona sin nombre'
+  }}</span>
+  @if (item.escalated) {
+    <app-badge variant="warning" [attr.data-testid]="'item-escalado-' + item.id"
+      >Escalado</app-badge
+    >
+  }
+</ng-template>
+
+<ng-template #revisorCell let-item>
+  <span [attr.data-testid]="'item-revisor-' + item.id">{{ revisor(item) }}</span>
+</ng-template>
+
+<ng-template #estadoCell let-item>
+  <app-badge [variant]="estadoTono(item)" [attr.data-testid]="'item-estado-' + item.id">{{
+    estadoTexto(item)
+  }}</app-badge>
+</ng-template>
+
+<ng-template #venceCell let-item>
+  <span [class.vencida]="esVencido(item)" [attr.data-testid]="'item-vence-' + item.id">{{
+    plazo(item)
+  }}</span>
+</ng-template>

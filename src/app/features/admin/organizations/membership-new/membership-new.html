@@ -1,8 +1,10 @@
 <app-page-header
   title="Sumar a alguien"
-  subtitle="Hasta que alguien más forme parte, sólo quien creó la organización puede trabajar dentro."
+  subtitle="Se le envía una invitación: hasta que la acepte no cuenta en la organización. Mientras nadie más forme parte, sólo quien la creó puede trabajar dentro."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver()" label="Volver a la organización" />
+</app-page-header>
 
 @if (errorMessage(); as mensaje) {
   <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-membresia-error">{{
@@ -57,7 +59,16 @@
     </app-form-field>
 
     @if (esPorSede()) {
-      @if (sinSedes()) {
+      @if (sedesFallaron()) {
+        <app-alert tone="error" data-testid="alta-membresia-sedes-error">
+          No pudimos traer las sedes de la organización. {{ mensajeDeSedes() }}
+          <div alert-actions>
+            <button app-button variant="outline" size="sm" (clicked)="reintentarSedes()">
+              Reintentar
+            </button>
+          </div>
+        </app-alert>
+      } @else if (sinSedes()) {
         <app-alert tone="warning" data-testid="alta-membresia-sin-sedes">
           La organización todavía no tiene sedes, así que no hay ninguna a la que acotar. Abra una
           primero, o deje el alcance en toda la organización.
@@ -88,7 +99,7 @@
     submitLabel="Sumar a la organización"
     cancelLabel="Cancelar"
     [pending]="enviando()"
-    [disabled]="sinSedes()"
+    [disabled]="bloqueadoPorSedes()"
     (submitted)="submit()"
     (cancelled)="cancelar()"
   />

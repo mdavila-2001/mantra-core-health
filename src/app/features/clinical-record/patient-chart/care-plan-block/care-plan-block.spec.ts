@@ -75,6 +75,11 @@ describe('CarePlanBlock', () => {
     for (const pendiente of http.match((r) => r.url === '/system-context/dynamic-enums')) {
       pendiente.flush(CATALOGO);
     }
+    // Con la respuesta del formulario ofrecida, el selector lee las del encuentro: es su
+    // asunto, no el de la hoja de ruta, así que acá sólo se drenan.
+    for (const lectura of http.match((r) => r.url === '/forms/instances')) {
+      lectura.flush({ encounterId: 'enc-1', items: [], limit: 50, truncated: false });
+    }
     http.verify();
   });
 
@@ -305,6 +310,54 @@ describe('CarePlanBlock', () => {
       señal<string | null>('respuestaDelFormulario').set('fi-1');
       fixture.detectChanges();
       expect(texto('plan-pendientes')).toBe('Lista para abrir');
+    });
+
+    /**
+     * Cambio de requisito (30/10/2026): en la consulta el origen se **ofrece**
+     * sin exigirse. El plan se abre sin formulario, el tramo «Origen» dice
+     * «opcional» y no cuenta como dato obligatorio pendiente.
+     */
+    it('con el origen ofrecido pero no exigido, no falta nada de él: dice «opcional»', () => {
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      fixture.componentRef.setInput('encounterId', 'enc-1');
+      dibujar();
+      señal<string>('meta').set('Bajar la presión.');
+      señal<string>('motivo').set('Control de presión');
+      fixture.detectChanges();
+
+      expect(texto('plan-pendientes')).toBe('Lista para abrir');
+      const origen = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.ruta__tramo'),
+      ).find((t) => t.textContent?.includes('Origen'));
+      expect(origen).toBeDefined();
+      expect(origen?.querySelector('h3 .sr-only')?.textContent).toContain('opcional');
+      // Sin respuesta elegida el tramo no se marca como resuelto: no hay con qué.
+      expect(origen?.classList).not.toContain('ruta__tramo--listo');
+
+      señal<string | null>('respuestaDelFormulario').set('fi-1');
+      fixture.detectChanges();
+      expect(origen?.classList).toContain('ruta__tramo--listo');
+    });
+
+    it('ofrecido sin encuentro abierto el origen sí falta: el encuentro sigue siendo obligatorio', () => {
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      fixture.componentRef.setInput('encounterId', null);
+      dibujar();
+      señal<string>('meta').set('Bajar la presión.');
+      señal<string>('motivo').set('Control de presión');
+      fixture.detectChanges();
+
+      expect(texto('plan-pendientes')).toBe('Falta 1 dato obligatorio');
+      expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
+    });
+
+    it('sin ofrecer ni exigir no dibuja el tramo «Origen» (el expediente)', () => {
+      dibujar();
+
+      const tramos = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.ruta__tramo'),
+      );
+      expect(tramos.some((t) => t.textContent?.includes('Origen'))).toBe(false);
     });
 
     /**

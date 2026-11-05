@@ -14,6 +14,7 @@ import { of, type Observable } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { listFreeStarts } from '../../../../core/data-access/scheduling/free-starts';
 import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import {
   motivoDeReconsulta,
@@ -25,6 +26,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -194,6 +196,7 @@ export interface DiaDelCalendario {
 @Component({
   selector: 'app-follow-up-block',
   imports: [
+    AppButtonLink,
     FormResponsePicker,
     Alert,
     AppButton,
@@ -241,11 +244,17 @@ export class FollowUpBlock {
    */
   readonly exigeRespuesta = input(false);
 
+  /** Ofrece la respuesta sin exigirla (30/10/2026): se emite sin formulario, no sin encuentro. */
+  readonly ofreceRespuesta = input(false);
+
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
   protected readonly faltaRespuesta = computed(
-    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+    () =>
+      (this.exigeRespuesta() && this.respuestaDelFormulario() === null) ||
+      // Sin formulario se emite, pero el encuentro abierto sigue siendo necesario.
+      (this.ofreceRespuesta() && this.encounterId() === null),
   );
 
   /** Se agendó algo y el expediente tiene que releerse. */
@@ -344,16 +353,16 @@ export class FollowUpBlock {
         if (resourceId === null || yaAgendada !== null) {
           return of(ready<readonly AgendaSlot[]>([]));
         }
-        return this.agenda
-          .listSlots({
-            resourceId,
-            from: mes,
-            to: mesSiguiente(mes),
-            onlyAvailable: true,
-            limit: CUPOS_POR_MES,
-          })
+        // Cupos fijos y horas del horario flexible (P36): un día «Horario
+        // flexible» no tiene cupos y antes salía en rojo aunque atendiera.
+        return listFreeStarts(this.agenda, {
+          resourceId,
+          from: mes,
+          to: mesSiguiente(mes),
+          limit: CUPOS_POR_MES,
+        })
           .pipe(
-            map((pagina) => ready<readonly AgendaSlot[]>(pagina.items)),
+            map((libres) => ready<readonly AgendaSlot[]>(libres)),
             startWith(loading()),
             catchError((error: unknown) => of(errorToViewState<readonly AgendaSlot[]>(error))),
           );

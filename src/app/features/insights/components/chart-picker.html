@@ -1,0 +1,40 @@
+<div class="cp">
+  <p class="cp__title" id="cp-title">Visualización</p>
+  <div class="cp__list" role="radiogroup" aria-labelledby="cp-title">
+    @for (o of options(); track o.chart) {
+      <button
+        type="button"
+        role="radio"
+        (keydown)="onKey($event)"
+        class="cp__opt"
+        [class.cp__opt--on]="o.chart === value()"
+        [class.cp__opt--rec]="o.recommended"
+        [attr.aria-checked]="o.chart === value()"
+        [attr.aria-disabled]="!o.available"
+        [attr.tabindex]="o.chart === value() ? 0 : -1"
+        [disabled]="!o.available"
+        [title]="o.available ? questions[o.chart] : 'No disponible: ' + o.note"
+        (click)="pick(o)"
+      >
+        {{ o.label }}
+        @if (o.recommended) {
+          <span class="cp__star" title="Recomendada para esta métrica">Recomendada</span>
+        }
+      </button>
+    }
+  </div>
+
+  <div class="cp__why" aria-live="polite">
+    @if (isRecommended()) {
+      <p class="cp__reason"><strong>Visualización recomendada: {{ current()?.label }}.</strong> {{ recommendation().reason }}</p>
+    } @else {
+      <p class="cp__reason">
+        <strong>Usted eligió «{{ current()?.label }}»</strong>: {{ questions[value()] }}
+        <button type="button" class="cp__back" (click)="useRecommended()">Volver a la recomendada</button>
+      </p>
+    }
+    @if (recommendation().caution) {
+      <p class="cp__caution">{{ recommendation().caution }}</p>
+    }
+  </div>
+</div>

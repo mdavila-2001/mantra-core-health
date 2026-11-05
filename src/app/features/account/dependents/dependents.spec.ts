@@ -228,6 +228,8 @@ describe('Dependents', () => {
     );
     expect(aceptar!.getAttribute('aria-disabled')).toBe('true');
 
+    expect(aceptar!.getAttribute('aria-disabled')).toBe('true');
+
     const relacion = raiz.querySelector<HTMLElement>('[data-testid="dependents-relacion-sol-1"]');
     // La amistad no se ofrece como relación de cuidado/dependencia.
     expect(await selectOptionLabels(fixture, relacion!)).not.toContain('Amistad');

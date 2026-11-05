@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Hipertiroidismo: síntomas en el cuerpo</title>
+  <desc id="d">Silueta humana con la glándula tiroides en el cuello y síntomas distribuidos alrededor: nerviosismo, palpitaciones, pérdida de peso, temblor, calor, bocio. Abajo, las causas principales, los análisis y los tratamientos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<path d="M348.0,140.6 Q309.0,143.2 303.8,183.5 L290.8,333.0 Q296.0,348.6 309.0,335.6 L319.4,203.0 L322.0,359.0 Q322.0,400.6 342.8,413.6 L457.2,413.6 Q478.0,400.6 478.0,359.0 L480.6,203.0 L491.0,335.6 Q504.0,348.6 509.2,333.0 L496.2,183.5 Q491.0,143.2 452.0,140.6 L415.6,135.4 L415.6,119.8 L384.4,119.8 L384.4,135.4 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="400" cy="91.2" r="31.2" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+<ellipse cx="390.1" cy="146" rx="7.2" ry="13.5" fill="var(--vessel-l)" stroke="var(--purple)" stroke-width="2" transform="rotate(-12 390.1 146)"/>
+<ellipse cx="409.9" cy="146" rx="7.2" ry="13.5" fill="var(--vessel-l)" stroke="var(--purple)" stroke-width="2" transform="rotate(12 409.9 146)"/>
+<rect x="394.6" y="148.7" width="10.8" height="6.3" rx="4" fill="var(--vessel-l)" stroke="var(--purple)" stroke-width="1"/>
+<text x="400" y="40" text-anchor="middle" class="title">Exceso de hormona tiroidea: todo se acelera</text>
+<text x="250" y="110" text-anchor="end" class="lab">Nerviosismo, insomnio</text>
+<line x1="256" y1="106" x2="330" y2="106" stroke="var(--line)" stroke-width="1.5"/>
+<text x="250" y="150" text-anchor="end" class="lab">Ojos saltones (Graves)</text>
+<line x1="256" y1="146" x2="330" y2="146" stroke="var(--line)" stroke-width="1.5"/>
+<text x="250" y="200" text-anchor="end" class="lab">Palpitaciones</text>
+<line x1="256" y1="196" x2="330" y2="196" stroke="var(--line)" stroke-width="1.5"/>
+<text x="250" y="250" text-anchor="end" class="lab">Pérdida de peso</text>
+<line x1="256" y1="246" x2="330" y2="246" stroke="var(--line)" stroke-width="1.5"/>
+<text x="250" y="300" text-anchor="end" class="lab">Diarrea</text>
+<line x1="256" y1="296" x2="330" y2="296" stroke="var(--line)" stroke-width="1.5"/>
+<text x="550" y="130" class="lab">Bocio: tiroides grande</text>
+<line x1="470" y1="126" x2="544" y2="126" stroke="var(--line)" stroke-width="1.5"/>
+<text x="550" y="190" class="lab">Temblor de manos</text>
+<line x1="470" y1="186" x2="544" y2="186" stroke="var(--line)" stroke-width="1.5"/>
+<text x="550" y="240" class="lab">Calor y sudoración</text>
+<line x1="470" y1="236" x2="544" y2="236" stroke="var(--line)" stroke-width="1.5"/>
+<text x="550" y="290" class="lab">Reglas irregulares</text>
+<line x1="470" y1="286" x2="544" y2="286" stroke="var(--line)" stroke-width="1.5"/>
+<text x="550" y="340" class="lab">Debilidad muscular</text>
+<line x1="470" y1="336" x2="544" y2="336" stroke="var(--line)" stroke-width="1.5"/>
+<rect x="40" y="370" width="330" height="56" rx="10" fill="var(--purple-l)" stroke-width="1"/>
+<text x="54" y="394" class="lab">Causas: enfermedad de Graves,</text>
+<text x="54" y="414" class="lab">nódulos tóxicos, tiroiditis</text>
+<rect x="430" y="370" width="330" height="56" rx="10" fill="var(--accent-l)" stroke-width="1"/>
+<text x="444" y="394" class="lab">Análisis: TSH baja, T4 y T3 altas</text>
+<text x="444" y="414" class="lab">Tratamiento: fármacos, yodo o cirugía</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1782
+image: medlineplus-es-1782.svg | Etapas del trasplante de progenitores hematopoyéticos. | Secuencia de cuatro pasos del trasplante de médula ósea, desde la obtención de células hasta el injerto, con una comparación entre trasplante autólogo y alogénico.
 ---
 
 ## [definition] Introducción

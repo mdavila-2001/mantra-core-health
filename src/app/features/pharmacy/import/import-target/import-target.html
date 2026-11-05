@@ -1,0 +1,27 @@
+<div class="import-target__choice">
+  <span class="import-target__label" aria-hidden="true">Qué va a importar</span>
+  <app-segmented-control
+    [options]="targets"
+    [value]="target()"
+    ariaLabel="Qué va a importar"
+    size="md"
+    wrap
+    (valueChange)="choose($event)"
+    data-testid="import-target"
+  />
+</div>
+
+@switch (target()) {
+  @case ('products') {
+    <app-pharmacy-import [embedded]="true" />
+  }
+  @case ('categories') {
+    <app-entity-import entity="categories" />
+  }
+  @case ('prices') {
+    <app-entity-import entity="prices" />
+  }
+  @case ('sites') {
+    <app-entity-import entity="sites" />
+  }
+}

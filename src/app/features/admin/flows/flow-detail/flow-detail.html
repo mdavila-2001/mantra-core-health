@@ -135,6 +135,14 @@
               </ul>
             }
           </app-tab>
+
+          <app-tab label="Datos que toca">
+            <!-- Un panel inactivo no se dibuja pero su contenido proyectado sí se crea: sin este @if las
+                 consultas al inventario saldrían al abrir el flujo y no al abrir la pestaña. -->
+            @if (pestana() === 4) {
+              <app-flow-data [nodes]="f.nodes" />
+            }
+          </app-tab>
         </app-tabs>
       </app-card>
     }

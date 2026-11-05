@@ -1,0 +1,15 @@
+<app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+  <app-tab label="Mis organizaciones">
+    @if (pestana() === 0) {
+      <app-memberships-tab />
+    }
+  </app-tab>
+
+  <!-- Sólo con la pestaña abierta, como «Mis organizaciones»: `app-tab`
+       proyecta su contenido aunque no se vea y se pediría la lista dos veces. -->
+  <app-tab [label]="etiquetaDelBuzon()">
+    @if (pestana() === 1) {
+      <app-solicitudes-de-ingreso (pendientes)="invitaciones.set($event)" />
+    }
+  </app-tab>
+</app-tabs>

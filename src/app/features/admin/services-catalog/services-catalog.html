@@ -27,6 +27,11 @@
   </button>
 </app-page-header>
 
+<!-- F5e: UNA tarjeta con pestañas (regla 6): los servicios de siempre y las
+     tarifas de espacios (día-cama y quirófano por tiempo). -->
+<app-card class="catalogo-tarjeta" padding="lg">
+  <app-tabs [selectedIndex]="catalogTab()" (selectedIndexChange)="changeCatalogTab($event)">
+    <app-tab label="Servicios">
 <div class="catalogo">
   <app-form-field icon="building" label="Práctica" hint="El catálogo es propio de cada práctica.">
     <app-select
@@ -127,6 +132,15 @@
     (retry)="recargar()"
   />
 </div>
+    </app-tab>
+    <app-tab label="Tarifas de espacios">
+      <!-- Diferida: sólo pide tarifas quien abre la pestaña. -->
+      @if (catalogTab() === 1) {
+        <app-space-tariffs data-testid="space-tariffs" />
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPrecio let-servicio>

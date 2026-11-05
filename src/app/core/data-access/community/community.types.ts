@@ -106,6 +106,22 @@ export interface PublicProfileDetail {
   readonly prestige?: PrestigeScore;
 }
 
+/**
+ * Una vitrina de organización con la que la sesión puede atender el chat
+ * (`GET /community/profiles/organization-showcases/me`).
+ *
+ * La lista la decide la API con la misma regla que autoriza escribir como la
+ * vitrina; tenerla no es un permiso, es la puerta que se ofrece.
+ */
+export interface OrganizationShowcase {
+  readonly profileId: string;
+  readonly slug: string;
+  readonly displayName: string;
+  readonly avatarFileId?: string;
+  readonly targetTypeConceptId: string;
+  readonly kind: 'ORGANIZATION' | 'PHARMACY';
+}
+
 // ─── Vitrina propia ──────────────────────────────────────────────────────────
 
 /**
@@ -740,6 +756,12 @@ export interface ConversationListItem {
    * bandeja.
    */
   readonly peers: readonly ConversationPeer[];
+  /**
+   * Solo para el doctor: su equipo derivó esta conversación porque el mensaje
+   * del paciente es clínico y solo él puede responderlo. **Propuesta**: lo
+   * deriva la API desde `community.conversation_assignments` (`WAITING_DOCTOR`).
+   */
+  readonly awaitingDoctor?: boolean;
 }
 
 /**
@@ -797,8 +819,8 @@ export interface ConversationPage {
   readonly nextCursor: string | null;
 }
 
-/** Cómo se muestra un mensaje. `AUTO_REPLY_AI`: la redactó la IA y la burbuja lo rotula. */
-export type DirectMessageContentType = 'TEXT' | 'MEDIA' | 'STICKER' | 'AUTO_REPLY_AI';
+/** Cómo se muestra un mensaje. */
+export type DirectMessageContentType = 'TEXT' | 'MEDIA' | 'STICKER';
 
 /** Un mensaje directo. */
 export interface DirectMessage {
@@ -846,6 +868,10 @@ export interface DirectMessage {
    * expone.
    */
   readonly receipts?: readonly MessageReceipt[];
+  /** Lo respondió el equipo en nombre del doctor y él decidió que se sepa (`disclosure_shown`). **Propuesta** de forma. */
+  readonly repliedByTeam?: boolean;
+  /** La autora real, solo para el doctor dueño del perfil: nunca para el paciente. **Propuesta** de forma. */
+  readonly teamAuthorName?: string;
 }
 
 /** Quiénes reaccionaron con un emoji a un mensaje. */
@@ -900,8 +926,26 @@ export interface NewDirectMessage {
   readonly bodyText: string;
   readonly replyToMessageId?: string;
   /** `MEDIA` con adjunto; `STICKER` si es uno propio (ver `DirectMessage`). */
-  readonly contentType?: Exclude<DirectMessageContentType, 'AUTO_REPLY_AI'>;
+  readonly contentType?: DirectMessageContentType;
   readonly attachmentFileId?: string;
+  /**
+   * Personal de apoyo que responde **en nombre de un doctor**: el perfil
+   * profesional del doctor. El paciente ve al doctor; la API guarda la autora
+   * real y comprueba la delegación (`may_reply_on_behalf`) — acá solo se manda.
+   * El contrato lo declara; el `openapi.json` todavía no lo trae, y la maqueta
+   * lo acepta por `SIMULATOR_EXTENSIONS` hasta que se regenere.
+   *
+   * **Es el perfil público (de chat) del doctor** —`doctorPublicProfileId` de la
+   * bandeja—, no su perfil profesional: igual que `senderProfileId`, que en ese caso es el
+   * mismo. Con el profesional el envío falla porque el remitente no es participante.
+   */
+  readonly onBehalfOfProfileId?: string;
+  /**
+   * Por dónde sale: `CHAT` (siempre) y `EMAIL`, que **solo** se acepta con
+   * `onBehalfOfProfileId` (sin él, 422 `EMAIL_CHANNEL_REQUIRES_ON_BEHALF`): el paciente
+   * recibe el correo a nombre del doctor.
+   */
+  readonly channels?: readonly ('CHAT' | 'EMAIL')[];
 }
 
 /**
@@ -939,14 +983,9 @@ export interface ChatAutoReplySettings {
    * —el turno noche—, y es válida.
    */
   readonly businessHoursTo?: string;
-  /** `FIXED` o `AI` (con `bodyText` de respaldo). Sólo maqueta: falta la columna en el modelo. */
-  readonly replyMode?: ChatAutoReplyMode;
   readonly updatedAt?: Date;
 }
 
-export type ChatAutoReplyMode = 'FIXED' | 'AI';
-/** Claves que el DTO de la API no declara (`forbidNonWhitelisted`): sólo van a la maqueta. */
-export const CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS: readonly string[] = ['replyMode'];
 
 /** Lo que se manda a `PUT /community/profiles/:id/auto-reply`. */
 export type UpsertChatAutoReply = Omit<
@@ -971,6 +1010,8 @@ export interface SentMessage {
   readonly id: string;
   readonly conversationId: string;
   readonly sentAt?: Date;
+  /** Solo si se pidió `EMAIL`: si quedó encolado o por qué se omitió. */
+  readonly email?: { readonly queued: boolean; readonly requestId?: string; readonly skippedReason?: string };
 }
 
 /** Hasta dónde se marcó leída una conversación. */
@@ -1430,3 +1471,6 @@ export interface ReviewableCare {
 export interface NewReviewResponse {
   readonly responseText: string;
 }
+
+/** Las claves de {@link NewDirectMessage} que el `openapi.json` aún no declara. */
+export const DIRECT_MESSAGE_CONTRACT_PENDING_KEYS: readonly string[] = ['onBehalfOfProfileId', 'channels'];

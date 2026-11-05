@@ -1,0 +1,166 @@
+/* Una tarjeta, a lo ancho de donde la pongan y centrada (composition-rules §5). */
+:host {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.consentimiento__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.consentimiento__titulos {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.consentimiento__titulo {
+  margin: 0;
+  font-size: var(--fs-h2);
+  font-weight: 600;
+}
+
+.consentimiento__objeto {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.consentimiento__objeto-tipo {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.consentimiento__estado,
+.consentimiento__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.consentimiento__norma {
+  margin: var(--sp-3) 0 var(--sp-4);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.consentimiento__pestanas {
+  display: block;
+  margin-block-start: var(--sp-4);
+}
+
+.consentimiento__grilla {
+  padding-block: var(--sp-4);
+}
+
+.consentimiento__siguiente,
+.consentimiento__enviar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.consentimiento__privacidad {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.consentimiento__error-suelto {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+}
+
+/* «Acepta» y «No acepta», lado a lado y del mismo tamaño: ninguna pesa más. */
+.consentimiento__decision {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.consentimiento__errores {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+.consentimiento__ir-al-error {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  min-block-size: 2.75rem;
+  text-align: start;
+}
+
+.consentimiento__ir-al-error:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.consentimiento__vacio {
+  margin: var(--sp-4) 0;
+  color: var(--text-secondary);
+}
+
+.consentimiento__historial {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.consentimiento__registro {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.consentimiento__registro-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.consentimiento__fecha {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.consentimiento__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  gap: var(--sp-2) var(--sp-4);
+  margin: var(--sp-3) 0 0;
+}
+
+.consentimiento__datos dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.consentimiento__datos dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* La próxima acción del S3: una indicación, no un botón (no hay a dónde ir
+   desde el modal), con la misma cápsula punteada que usa el anfitrión. */
+.consentimiento__proxima-accion {
+  margin: 0;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}

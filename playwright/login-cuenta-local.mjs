@@ -71,7 +71,8 @@ for (const vp of VIEWPORTS) {
       else ok('rellenar NO envía nada');
       if (!process.env.E2E_SIN_ENTRAR) {
         await page.getByTestId('login-submit').click();
-        await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+        // Con los dos accesos (administración y reportería) el destino legítimo es el selector de portal.
+        await page.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/, { timeout: 60_000 });
         ok(`«Entrar» inicia sesión (${new URL(page.url()).pathname})`);
       }
     }

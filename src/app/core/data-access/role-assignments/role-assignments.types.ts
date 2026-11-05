@@ -13,7 +13,11 @@ export interface RoleAssignmentRow {
   readonly practitionerProfileId: string;
   readonly practitionerName: string;
   readonly practiceId: string;
-  readonly practiceSiteId: string;
+  /**
+   * `null` en la solicitud de un doctor que canjeó un QR multiuso: nace sin sede ni servicio asignados y la organización
+   * decide. La pantalla la muestra en toda sede para que se pueda aprobar.
+   */
+  readonly practiceSiteId: string | null;
   readonly healthcareServiceId: string | null;
   readonly serviceConceptId: string | null;
   readonly serviceDisplay: string | null;

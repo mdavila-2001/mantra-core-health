@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 
 import { MembershipsTab } from './memberships-tab';
@@ -374,5 +375,103 @@ describe('MembershipsTab — Carril 33', () => {
     expect(filas[0]).toEqual(
       expect.objectContaining({ isFinal: true, statusLabel: 'Rechazada' }),
     );
+  });
+
+  describe('retirarse y salir de la fila', () => {
+    const ACTIVA = '15fb063e-479c-56e6-b5d1-ebd5a36b62db';
+    const PENDIENTE = '9705765a-52a0-5c34-b666-a71fda4d9a16';
+    let confirmacion: boolean;
+    let confirmaciones: { title: string }[];
+
+    function vinculacion(id: string, status: string) {
+      return {
+        id,
+        practiceId: `practice-${id}`,
+        practiceName: `Organización ${id}`,
+        practiceType: null,
+        practiceSiteId: null,
+        roleConceptId: 'role-attending',
+        specialtyConceptId: null,
+        status,
+        isPrimary: false,
+        validFrom: null,
+        validTo: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        avatarUrl: null,
+      };
+    }
+
+    function cargar(filas: object[]): void {
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush(filas);
+      http.expectOne((r) => r.url === '/practices').flush([]);
+      fixture.detectChanges();
+    }
+
+    const boton = (id: string): HTMLButtonElement | null =>
+      (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
+
+    beforeEach(() => {
+      confirmacion = true;
+      confirmaciones = [];
+      TestBed.inject(DialogService).confirm = (config) => {
+        confirmaciones.push({ title: config.title });
+        return Promise.resolve(confirmacion);
+      };
+    });
+
+    it('ofrece «Retirarse» en una vinculación activa y «Salir de la fila» en una pendiente', () => {
+      cargar([vinculacion('a', ACTIVA), vinculacion('p', PENDIENTE)]);
+
+      expect(boton('retirarse-a')?.textContent).toContain('Retirarse');
+      expect(boton('salir-de-la-fila-a')).toBeNull();
+      expect(boton('salir-de-la-fila-p')?.textContent).toContain('Salir de la fila');
+      expect(boton('retirarse-p')).toBeNull();
+    });
+
+    it('retirarse pide confirmación, llama a la API y vuelve a leer la lista', async () => {
+      cargar([vinculacion('a', ACTIVA)]);
+
+      boton('retirarse-a')!.click();
+      await fixture.whenStable();
+      expect(confirmaciones[0]?.title).toContain('Organización a');
+      http.expectOne('/practitioners/me/role-assignments/a/withdraw').flush({ id: 'a' });
+      http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Se retiró de Organización a');
+    });
+
+    it('salir de la fila llama a su propia ruta', async () => {
+      cargar([vinculacion('p', PENDIENTE)]);
+
+      boton('salir-de-la-fila-p')!.click();
+      await fixture.whenStable();
+      http.expectOne('/practitioners/me/role-assignments/p/leave-queue').flush({ id: 'p' });
+      http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
+    });
+
+    it('si no confirma no se manda nada', async () => {
+      confirmacion = false;
+      cargar([vinculacion('a', ACTIVA)]);
+
+      boton('retirarse-a')!.click();
+      await fixture.whenStable();
+
+      http.expectNone('/practitioners/me/role-assignments/a/withdraw');
+    });
+
+    it('si la API falla lo dice y no recarga como si hubiera salido', async () => {
+      cargar([vinculacion('a', ACTIVA)]);
+
+      boton('retirarse-a')!.click();
+      await fixture.whenStable();
+      http
+        .expectOne('/practitioners/me/role-assignments/a/withdraw')
+        .flush({ message: 'No se pudo' }, { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="error-de-accion"]')).not.toBeNull();
+    });
   });
 });

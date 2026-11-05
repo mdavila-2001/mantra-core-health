@@ -60,6 +60,33 @@ const PLANTILLA = {
   ],
 };
 
+/**
+ * Una plantilla con un campo de catálogo: `valueSetId` apunta al conjunto de
+ * valores de terminología, no a opciones tecleadas. Un `dataType: 'string'`
+ * a propósito — `valueSetId` convive con cualquier tipo, igual que en
+ * `ChartTemplateFieldDto`; no es el `dataType` el que decide si el campo es
+ * de catálogo.
+ */
+const _PLANTILLA_CATALOGO = {
+  id: 'tpl-cat',
+  specialtyConceptId: 'sp-1',
+  code: 'CATALOGO_INTAKE',
+  name: 'Ficha con catálogo',
+  version: 1,
+  statusConceptId: 'st-1',
+  fields: [
+    {
+      assignmentId: 'as-10',
+      fieldId: 'f-10',
+      code: 'habito_tabaquico',
+      name: '¿Fuma?',
+      dataType: 'string',
+      valueSetId: 'vs-tabaco',
+      required: true,
+    },
+  ],
+};
+
 describe('SpecialtyFormBlock', () => {
   let fixture: ComponentFixture<SpecialtyFormBlock>;
   let componente: SpecialtyFormBlock;
@@ -196,6 +223,11 @@ describe('SpecialtyFormBlock', () => {
 
   function peticionDePlantillas() {
     return http.expectOne((r) => r.url === '/charts/templates' && r.method === 'GET');
+  }
+
+  /** `GET /terminology/value-sets/:id/$expand` — las opciones de un campo de catálogo. */
+  function _peticionDeExpansion(valueSetId: string) {
+    return http.expectOne((r) => r.url === `/terminology/value-sets/${valueSetId}/$expand`);
   }
 
   function peticionDeRespuesta() {
@@ -1552,6 +1584,31 @@ describe('SpecialtyFormBlock', () => {
       http.expectOne('/forms/instances/inst-1/close').flush({ ok: true });
     }
 
+    /**
+     * La API recibe `verificationStatusConceptId` (un UUID), no la palabra
+     * `PROVISIONAL`: `ClinicalClient.createCondition` resuelve el concepto por
+     * su código antes de escribir. Este spec afirmaba el cuerpo con la palabra,
+     * que la API real rechaza con 400 (`forbidNonWhitelisted`).
+     */
+    function responderConceptoPresuntivo(): void {
+      http
+        .expectOne(
+          (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'COND_PROVISIONAL',
+        )
+        .flush({
+          items: [
+            {
+              conceptId: 'cid-presuntivo',
+              code: 'COND_PROVISIONAL',
+              display: 'Provisional',
+              codeSystemVersionId: 'v',
+            },
+          ],
+          count: 1,
+          limit: 50,
+        });
+    }
+
     it('se dibuja sólo con una plantilla de forms elegida, antes de las acciones', () => {
       peticionDePlantillas().flush([PLANTILLA]);
       fixture.detectChanges();
@@ -1579,29 +1636,6 @@ describe('SpecialtyFormBlock', () => {
       drenarLecturasDelBloque();
     });
 
-    it('las respuestas viajan a la IA en palabras: pregunta = campo, respuesta = valor', () => {
-      peticionDePlantillas().flush([PLANTILLA]);
-      const actualizar = interno<(fieldId: string, valor: unknown) => void>('actualizarValor');
-
-      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([]);
-      actualizar('f-1', 'Buena');
-      actualizar('f-2', true);
-
-      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([
-        { question: 'Tolerancia al ejercicio', answer: 'Buena' },
-        { question: 'Edema', answer: 'Sí' },
-      ]);
-    });
-
-    it('el odontograma no viaja a la IA: es un mapa de piezas, no una respuesta', () => {
-      peticionDePlantillas().flush([PLANTILLA_ODONTO]);
-      interno<(fdi: string) => void>('abrirPieza')('16');
-      interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
-
-      const respuestas = interno<() => { question: string }[]>('respuestasParaLaIa')();
-      expect(respuestas.some((r) => r.question === 'Odontograma')).toBe(false);
-    });
-
     it('completar encadena cerrar la ficha → diagnóstico tentativo → orden, en ese orden y con sus avisos', () => {
       const exito = vi.spyOn(TestBed.inject(ToastService), 'success');
       peticionDePlantillas().flush([PLANTILLA]);
@@ -1613,6 +1647,7 @@ describe('SpecialtyFormBlock', () => {
       interno<() => void>('completar')();
       guardarLaFicha();
 
+      responderConceptoPresuntivo();
       const alta = http.expectOne((r) => r.url === '/clinical/conditions' && r.method === 'POST');
       expect(alta.request.body).toEqual({
         custodianTenantId: 't-1',
@@ -1620,9 +1655,11 @@ describe('SpecialtyFormBlock', () => {
         codeConceptId: 'dx-1',
         encounterId: 'enc-1',
         noteText: 'Del formulario «Ficha de cardiología»',
-        // Tentativo: nace provisional hasta que el médico lo confirme.
-        verificationStatus: 'PROVISIONAL',
+        // Tentativo: nace provisional hasta que el médico lo confirme. Viaja el
+        // concepto del catálogo, nunca la palabra: la API la rechaza.
+        verificationStatusConceptId: 'cid-presuntivo',
       });
+      expect('verificationStatus' in (alta.request.body as object)).toBe(false);
       // La orden espera al diagnóstico: en serie, no en paralelo.
       http.expectNone('/clinical/service-requests');
       alta.flush({
@@ -1669,6 +1706,35 @@ describe('SpecialtyFormBlock', () => {
       expect(interno<() => readonly string[]>('fallosDelCierre')()).toEqual([]);
     });
 
+    it('si el catálogo no publica el concepto presuntivo, no se registra y se dice la causa real', () => {
+      peticionDePlantillas().flush([PLANTILLA]);
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fijarCierre(CIERRE);
+
+      interno<() => void>('completar')();
+      guardarLaFicha();
+
+      http
+        .expectOne(
+          (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'COND_PROVISIONAL',
+        )
+        .flush({ items: [], count: 0, limit: 50 });
+      http
+        .expectOne(
+          (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'CONDITION_PROVISIONAL',
+        )
+        .flush({ items: [], count: 0, limit: 50 });
+      // Ni el diagnóstico (que nacería firme) ni la orden que depende de él.
+      http.expectNone('/clinical/conditions');
+      http.expectNone('/clinical/service-requests');
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+
+      const fallos = interno<() => readonly string[]>('fallosDelCierre')();
+      expect(fallos[0]).toContain('No se registró el diagnóstico tentativo');
+      expect(fallos[0]).toContain('El catálogo no publica «COND_PROVISIONAL»');
+      expect(fallos[0]).not.toContain('sin-id');
+    });
+
     it('si falla el diagnóstico, la orden no se pide; la ficha queda guardada y se dice qué faltó', () => {
       const error = vi.spyOn(TestBed.inject(ToastService), 'error');
       peticionDePlantillas().flush([PLANTILLA]);
@@ -1680,6 +1746,7 @@ describe('SpecialtyFormBlock', () => {
       interno<() => void>('completar')();
       guardarLaFicha();
 
+      responderConceptoPresuntivo();
       http
         .expectOne((r) => r.url === '/clinical/conditions' && r.method === 'POST')
         .flush({ message: 'Se cayó' }, { status: 500, statusText: 'Server Error' });

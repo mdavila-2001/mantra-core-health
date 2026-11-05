@@ -1,0 +1,51 @@
+:host {
+  display: block;
+}
+
+app-card {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.pedido {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+
+.pedido__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.pedido__resumen {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}

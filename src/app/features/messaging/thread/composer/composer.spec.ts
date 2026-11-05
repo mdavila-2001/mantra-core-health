@@ -6,6 +6,8 @@ import { of } from 'rxjs';
 
 import { Composer } from './composer';
 import { ChatStore } from '../../../../core/messaging/chat.store';
+import { partitionFiles } from './attachment-draft';
+import { AttachmentPreparer } from './attachment-preparer';
 import { ImageEditor } from './image-editor/image-editor';
 import { PDF_PAGE_COUNTER } from './attachment-preview/pdf-page-count';
 
@@ -23,6 +25,11 @@ describe('Composer · adjuntos', () => {
     editando: ReturnType<typeof signal<null>>;
     respondiendoA: ReturnType<typeof signal<null>>;
     enviarAdjunto: ReturnType<typeof vi.fn>;
+    enviarAdjuntos: ReturnType<typeof vi.fn>;
+    activaId: ReturnType<typeof signal<string | null>>;
+    hiloCargado: ReturnType<typeof signal<boolean>>;
+    mensajes: ReturnType<typeof signal<readonly unknown[]>>;
+    pendientes: ReturnType<typeof signal<readonly { conversationId: string }[]>>;
     enviar: ReturnType<typeof vi.fn>;
     guardarBorrador: ReturnType<typeof vi.fn>;
     responder: ReturnType<typeof vi.fn>;
@@ -61,6 +68,11 @@ describe('Composer · adjuntos', () => {
       editando: signal(null),
       respondiendoA: signal(null),
       enviarAdjunto: vi.fn(),
+      enviarAdjuntos: vi.fn(),
+      activaId: signal<string | null>('c-1'),
+      hiloCargado: signal(true),
+      mensajes: signal<readonly unknown[]>([]),
+      pendientes: signal<readonly { conversationId: string }[]>([]),
       enviar: vi.fn(),
       guardarBorrador: vi.fn(),
       responder: vi.fn(),
@@ -73,6 +85,15 @@ describe('Composer · adjuntos', () => {
       providers: [
         { provide: ChatStore, useValue: store },
         { provide: PDF_PAGE_COUNTER, useValue: async () => null },
+        // Acá se prueba el flujo; el achicado y la limpieza de EXIF tienen su
+        // propia prueba en `prepare-image.spec.ts`. La validación es la real.
+        {
+          provide: AttachmentPreparer,
+          useValue: {
+            prepare: async (file: File) => file,
+            prepareAll: async (files: Iterable<File>, room?: number) => partitionFiles(files, room),
+          },
+        },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -97,7 +118,7 @@ describe('Composer · adjuntos', () => {
     fixture.nativeElement.remove();
   });
 
-  it('el «+» abre un menú flotante con Documento, Fotos y videos y Plantilla', async () => {
+  it('el «+» abre un menú flotante con Documento, Fotos y Plantilla', async () => {
     const mas = consultar('composer-adjuntar')!;
     expect(mas.getAttribute('aria-haspopup')).toBe('menu');
     mas.click();
@@ -109,7 +130,9 @@ describe('Composer · adjuntos', () => {
     const menu = document.body.querySelector(':scope > app-menu[role="menu"]');
     expect(menu).not.toBeNull();
     expect(menu?.textContent).toContain('Documento');
-    expect(menu?.textContent).toContain('Fotos y videos');
+    expect(menu?.textContent).toContain('Fotos');
+    // La API sólo guarda imágenes y documentos: no se ofrecen videos.
+    expect(menu?.textContent).not.toContain('videos');
     expect(menu?.textContent).toContain('Plantilla');
 
     menu!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -118,7 +141,7 @@ describe('Composer · adjuntos', () => {
     expect(document.activeElement).toBe(mas);
   });
 
-  it('«Fotos y videos» abre el selector con varias a la vez y sólo fotos y videos', async () => {
+  it('«Fotos» abre el selector con varias a la vez y sólo imágenes', async () => {
     const entrada = fixture.nativeElement.querySelector('input[type="file"]') as HTMLInputElement;
     const abrirSelector = vi.spyOn(entrada, 'click').mockImplementation(() => undefined);
     consultar('composer-adjuntar')!.click();
@@ -128,7 +151,7 @@ describe('Composer · adjuntos', () => {
 
     expect(abrirSelector).toHaveBeenCalled();
     expect(entrada.multiple).toBe(true);
-    expect(entrada.accept).toBe('image/*,video/*');
+    expect(entrada.accept).toBe('image/*');
   });
 
   it('elegir varias fotos abre la vista previa con una miniatura por foto', async () => {
@@ -138,12 +161,14 @@ describe('Composer · adjuntos', () => {
   });
 
   it('lo que no se puede mandar no entra, y se dice por qué', async () => {
-    await elegir([new File(['x'], 'nota.txt', { type: 'text/plain' })]);
+    await elegir([new File(['x'], 'clip.mp4', { type: 'video/mp4' })]);
     expect(consultar('composer-vista-previa')).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Puede mandar imágenes, videos, audios y PDF.');
+    expect(fixture.nativeElement.textContent).toContain(
+      '«clip.mp4» no se puede mandar. Puede mandar fotos, PDF, documentos de Word o Excel y archivos de texto.',
+    );
   });
 
-  it('cada foto sale por enviarAdjunto con su propio pie de foto', async () => {
+  it('las fotos salen juntas por enviarAdjuntos, cada una con su propio pie de foto', async () => {
     const a = foto('a.png');
     const b = foto('b.png');
     await elegir([a, b]);
@@ -155,10 +180,16 @@ describe('Composer · adjuntos', () => {
     consultar('vista-enviar')!.click();
     fixture.detectChanges();
 
-    expect(store.enviarAdjunto.mock.calls).toEqual([
-      [a, 'El lunar'],
-      [b, 'La receta'],
+    // Un solo lote: el store las sube en orden y con el perfil fijado al encolar.
+    expect(store.enviarAdjuntos.mock.calls).toEqual([
+      [
+        [
+          { archivo: a, leyenda: 'El lunar', vistaPrevia: null },
+          { archivo: b, leyenda: 'La receta', vistaPrevia: null },
+        ],
+      ],
     ]);
+    expect(store.enviarAdjunto).not.toHaveBeenCalled();
     expect(enviados).toBe(1);
     expect(consultar('composer-vista-previa')).toBeNull();
   });
@@ -178,7 +209,9 @@ describe('Composer · adjuntos', () => {
     // `ngModel` escribe el campo en una microtarea.
     await fixture.whenStable();
     fixture.detectChanges();
-    expect(store.enviarAdjunto).toHaveBeenCalledWith(expect.any(File), 'Le mando el análisis');
+    expect(store.enviarAdjuntos).toHaveBeenCalledWith([
+      expect.objectContaining({ archivo: expect.any(File), leyenda: 'Le mando el análisis' }),
+    ]);
     expect((consultar('hilo-texto') as HTMLTextAreaElement).value).toBe('');
     expect(store.guardarBorrador).toHaveBeenLastCalledWith('');
   });
@@ -194,6 +227,7 @@ describe('Composer · adjuntos', () => {
     fixture.detectChanges();
 
     expect(consultar('composer-vista-previa')).toBeNull();
+    expect(store.enviarAdjuntos).not.toHaveBeenCalled();
     expect(store.enviarAdjunto).not.toHaveBeenCalled();
     expect(enviados).toBe(0);
     expect((consultar('hilo-texto') as HTMLTextAreaElement).value).toBe('Borrador');
@@ -208,19 +242,24 @@ describe('Composer · adjuntos', () => {
 
     const editada = new File(['editada'], 'imagen-editada.png', { type: 'image/png' });
     (fixture.debugElement.query(By.directive(ImageEditor)).componentInstance as ImageEditor).applied.emit(editada);
+    // Lo que devuelve el editor también se prepara (sin EXIF) antes de quedar.
+    await fixture.whenStable();
     fixture.detectChanges();
     consultar('vista-enviar')!.click();
 
-    expect(store.enviarAdjunto).toHaveBeenCalledTimes(1);
-    expect(store.enviarAdjunto).toHaveBeenCalledWith(editada, 'Así está hoy');
+    expect(store.enviarAdjuntos).toHaveBeenCalledTimes(1);
+    expect(store.enviarAdjuntos).toHaveBeenCalledWith([
+      { archivo: editada, leyenda: 'Así está hoy', vistaPrevia: null },
+    ]);
   });
 
   it('si parte de lo elegido no entra, se abre igual y lo avisa adentro', async () => {
-    const grande = new File(['x'], 'video.mp4', { type: 'video/mp4' });
+    const grande = new File(['x'], 'estudio.pdf', { type: 'application/pdf' });
     Object.defineProperty(grande, 'size', { value: 25 * 1024 * 1024 });
     await elegir([foto('a.png'), grande]);
     expect(todos('vista-miniatura')).toHaveLength(1);
-    expect(consultar('composer-vista-previa')!.textContent).toContain('El archivo pesa más de 20 MB.');
+    // El tope es el de la API (10 MB), no uno propio del front.
+    expect(consultar('composer-vista-previa')!.textContent).toContain('«estudio.pdf» pesa más de 10 MB.');
   });
 
   it('editando un mensaje no se adjunta, ni soltando un archivo', async () => {
@@ -245,7 +284,8 @@ describe('Composer · adjuntos', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(store.enviarAdjunto).toHaveBeenCalledTimes(1);
+    expect(store.enviarAdjuntos).toHaveBeenCalledTimes(1);
+    expect((store.enviarAdjuntos.mock.calls[0] as [unknown[]])[0]).toHaveLength(1);
     expect((consultar('hilo-texto') as HTMLTextAreaElement).value).toBe('Le mando el análisis');
   });
 
@@ -254,6 +294,6 @@ describe('Composer · adjuntos', () => {
     await elegir([pdf]);
     expect(consultar('vista-documento')).not.toBeNull();
     consultar('vista-enviar')!.click();
-    expect(store.enviarAdjunto).toHaveBeenCalledWith(pdf, '');
+    expect(store.enviarAdjuntos).toHaveBeenCalledWith([{ archivo: pdf, leyenda: '', vistaPrevia: null }]);
   });
 });

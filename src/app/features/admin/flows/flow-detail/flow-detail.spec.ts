@@ -6,6 +6,7 @@ import { BehaviorSubject } from 'rxjs';
 
 import { esperarSinViolaciones } from '../../../../../testing/a11y';
 import type { FlowDetail } from '../../../../core/data-access/admin-portal/flows.types';
+import { billingTables, operationDetail } from '../../portal/portal.fixture';
 import { flujo } from '../flows.fixture';
 import { FlowDetailPage } from './flow-detail';
 
@@ -135,6 +136,24 @@ describe('FlowDetailPage', () => {
     expect(fuente).toContain('9.9 · Cobro');
     expect(fuente).toContain('/cobros');
     expect(q('[data-testid="flow-open-questions"]')!.textContent).toContain('Quién adjudica la autorización del seguro.');
+  });
+
+  it('«Datos que toca» no pide nada al inventario hasta que se abre la pestaña', () => {
+    montar();
+    responder();
+    http.expectNone((r) => r.url.startsWith('/admin/portal/'));
+    expect(q('[data-testid="flow-data"]')).toBeNull();
+  });
+
+  it('«Datos que toca» cruza el paso declarado con su operación y muestra las tablas que escribe y lee', () => {
+    montar();
+    responder();
+    abrirPestana(4);
+    http.expectOne('/admin/portal/operaciones/CobrosController_pagar').flush(operationDetail({ datos: billingTables() }));
+    fixture.detectChanges();
+    expect(q('[data-testid="flow-data-write-cobrar"]')!.textContent).toContain('billing.bills');
+    expect(q('[data-testid="flow-data-read-cobrar"]')!.textContent).toContain('billing.vendors');
+    expect(q('[data-testid="flow-data-summary"]')!.textContent).toContain('Suma de 1 de 1 operaciones cruzadas');
   });
 
   it('al pasar de un flujo a otro con la misma pantalla, pide el nuevo, vuelve al árbol y no deja datos del anterior', () => {

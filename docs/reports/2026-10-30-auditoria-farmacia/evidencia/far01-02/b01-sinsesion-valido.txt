@@ -1,0 +1,31 @@
+{
+ "tag": "b01-sinsesion-valido",
+ "state": "none",
+ "requested": "/rx/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA",
+ "finalUrl": "http://localhost:4000/rx/<tok43>",
+ "httpStatus": 200,
+ "title": "AloVida - Receta compartida",
+ "robots": [
+  "noindex, nofollow"
+ ],
+ "h": [
+  "Receta compartida"
+ ],
+ "apiCalls": [
+  "GET /public/prescription-shares/<tok43> → 200"
+ ],
+ "externalLinks": []
+}
+---- texto visible ----
+Receta compartida
+Éxito:
+Receta válida
+Emitida
+el 31 de octubre de 2026 por Andrés Rojas
+Matrícula
+MP-SCZ-48213 · en verificación
+Contenido
+2 medicamentos
+Cualquiera con este enlace puede comprobar que la receta es válida. Solo una farmacia con cuenta en AloVida ve los medicamentos.
+Soy farmacia: iniciar sesión
+Ir a AloVida

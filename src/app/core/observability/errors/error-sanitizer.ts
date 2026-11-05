@@ -1,3 +1,5 @@
+import { redactShareTokens } from '../privacy/sanitize-url';
+
 /**
  * Lo que se puede contar de un error, y nada más.
  *
@@ -88,11 +90,18 @@ function rawMessageOf(error: unknown): string {
   return 'sin mensaje';
 }
 
-/** Aplica las tapaduras y recorta. Exportada para poder probarla sola. */
+/**
+ * Aplica las tapaduras y recorta. Exportada para poder probarla sola.
+ *
+ * Primero, el token de una receta compartida que viaja en la **ruta** citada
+ * por el mensaje (el de un `HttpErrorResponse` la incluye entera): con la
+ * misma regla que `sanitizeUrl`, para que el mensaje no diga lo que el
+ * atributo de la ruta ya calla.
+ */
 export function redact(message: string): string {
   const redacted = REDACTIONS.reduce(
     (text, [pattern, replacement]) => text.replace(pattern, replacement),
-    message,
+    redactShareTokens(message),
   ).trim();
 
   return redacted.length > MAX_MESSAGE ? `${redacted.slice(0, MAX_MESSAGE)}…` : redacted;

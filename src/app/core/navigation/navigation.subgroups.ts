@@ -137,6 +137,14 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
      sección, que es exactamente lo que el párrafo de arriba dice que no se
      hace: «Archivo clínico» cuelga directo de Atención. */
   {
+    label: 'Marketing',
+    group: 'General',
+    icon: 'megaphone',
+    // Vive en General, a la vista, y no dentro de «Administración» (colapsado):
+    // el mockup tiene que mostrarlo sin buscar. Medir, comparar, entender y decidir: la inteligencia de marketing de AloVida.
+    paths: ['administration/marketing-insights'],
+  },
+  {
     label: 'Estudios y procedimientos',
     group: 'Atención',
     icon: 'scan',
@@ -146,12 +154,28 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: ['diagnostics', 'interventions'],
   },
   {
+    label: 'Internación',
+    group: 'Atención',
+    icon: 'hospital',
+    // F2/F3 (31/10/2026): las camas, su limpieza, el censo y sus indicadores.
+    paths: ['inpatient/bed-board', 'inpatient/cleaning', 'inpatient/census', 'inpatient/indicators'],
+  },
+  {
     label: 'Visitas',
     group: 'Atención',
     icon: 'route',
     // Atención que sale del consultorio, de los dos lados: la bandeja de quien
     // recibe la visita y la agenda de quien la hace.
     paths: ['lab-visits', 'my-visits'],
+  },
+  {
+    label: 'Equipo y accesos de apoyo',
+    group: 'Atención',
+    icon: 'people',
+    // El personal de apoyo visto desde quien lo tiene (el doctor) y desde quien
+    // lo es (la persona de apoyo). Para el doctor es una sola sección y el
+    // armazón la dibuja suelta.
+    paths: ['my-team', 'my-support', 'combined-agenda', 'support-inbox', 'my-reviews', 'administration/team-management'],
   },
   {
     label: 'Formularios y referencia',
@@ -203,6 +227,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/brokers',
       'administration/insurance-claims',
       'administration/received-claims',
+      // Quién pide sumarse como prestador, y qué se le respondió.
+      'administration/insurer-practitioner-requests',
       'administration/insurance-patients',
       'administration/insurance-analytics',
       'administration/insurance-campaigns',
@@ -215,8 +241,25 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Quién es quién y quién entra en nombre de quién.
     paths: [
       'administration/delegated-access',
+      'administration/session-controls',
       'administration/identity-providers',
       'administration/identity-assurance',
+    ],
+  },
+  {
+    label: 'Personal de apoyo',
+    group: 'Administración',
+    icon: 'people',
+    // El hospital como cuenta y quien le ayuda a administrar: lo que piden, el
+    // equipo, quién puede actuar sobre qué, y cómo se suma gente nueva.
+    paths: [
+      'administration/support-requests',
+      'administration/support-team',
+      'administration/support-access-lookup',
+      'administration/support-invitations',
+      'administration/support-review',
+      'administration/support-activity',
+      'administration/access-governance',
     ],
   },
   {
@@ -280,12 +323,16 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // se prueba, cómo la usan y si está lista para producción. «Observabilidad»
     // —la portada del dominio— va suelta arriba (ver `SUELTAS_A_PROPOSITO`).
     paths: [
+      'superadmin/measurement',
       'superadmin/data-catalog',
       'superadmin/portal',
       'superadmin/flows',
       'superadmin/qa-lab',
       'superadmin/web-analytics',
       'superadmin/operations',
+      'superadmin/instances',
+      'superadmin/bulk-imports',
+      'superadmin/catalog-editor',
     ],
   },
   {
@@ -318,10 +365,9 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'flask',
     paths: [
       'administration/laboratory',
-      'laboratory/reception',
-      'laboratory/queue',
-      'administration/laboratory-results',
+      'administration/laboratory-orders',
       'administration/laboratory-prices',
+      'administration/center-schedule',
       'administration/laboratory-branches',
     ],
   },
@@ -346,6 +392,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: [
       'my-account',
       'my-account/identity',
+      // Qué me confirmaron AloVida, las instituciones y las aseguradoras.
+      'my-account/verifications',
       'my-account/dependents',
       'my-account/security',
       // Quién ve mi historia y qué consentí: también es «quién soy» para la plataforma.

@@ -1,0 +1,115 @@
+<aside class="panel" aria-labelledby="panel-titulo" data-testid="agenda-panel">
+  <div class="panel__cabeza">
+    <h2 class="panel__titulo" id="panel-titulo" tabindex="-1" data-testid="panel-titulo">{{ title() }}</h2>
+    <button app-button variant="ghost" size="sm" type="button" (clicked)="closed.emit()" aria-label="Cerrar el detalle" data-testid="agenda-panel-cerrar">Cerrar</button>
+  </div>
+
+  <p class="panel__org" data-testid="panel-organizacion">
+    <span class="panel__org-sigla" [style.background]="orgColors().bg" [style.color]="orgColors().fg">{{ event().orgShort }}</span>
+    Actúa en <strong>{{ event().orgName }}</strong>
+  </p>
+
+  <dl class="panel__datos">
+    <dt>Día</dt><dd class="panel__dia">{{ dateText() }}, {{ clock(event().start) }} a {{ clock(event().end) }}</dd>
+    <dt>Doctor</dt><dd>{{ event().doctorName }}</dd>
+    <dt>Lugar</dt><dd>{{ event().careSpaceName }}</dd>
+    @if (event().serviceName) { <dt>Servicio</dt><dd>{{ event().serviceName }}</dd> }
+    @if (event().patientLabel) { <dt>Paciente</dt><dd data-testid="panel-paciente">{{ event().patientLabel }}</dd> }
+    @if (event().reasonLabel) { <dt>Motivo de consulta</dt><dd>{{ event().reasonLabel }}</dd> }
+    @if (event().waitlistCount) { <dt>Lista de espera</dt><dd>{{ event().waitlistCount }} en espera</dd> }
+  </dl>
+
+  @if (mode() === null) {
+    @if (offered().length > 0) {
+      <div class="panel__acciones" role="group" aria-label="Acciones sobre este horario">
+        @for (accion of offered(); track accion.id) {
+          <button
+            app-button
+            [variant]="accion.id === 'CANCEL' ? 'danger' : accion.id === 'CREATE' || accion.id === 'CHECK_IN' || accion.id === 'CONFIRM' ? 'primary' : 'outline'"
+            type="button"
+            [isLoading]="busy() && (accion.id === 'CHECK_IN' || accion.id === 'CONFIRM')"
+            [disabled]="busy()"
+            (clicked)="start(accion.id)"
+            [attr.data-testid]="accion.id === 'CREATE' ? 'agenda-crear-cita' : accion.id === 'CHECK_IN' ? 'agenda-registrar-llegada' : 'agenda-accion-' + accion.id.toLowerCase()"
+          >{{ accion.label }}</button>
+        }
+      </div>
+    }
+    @if (event().status === 'CHECKED_IN') {
+      <p class="panel__nota" data-testid="agenda-ya-llego">El paciente ya llegó.</p>
+    }
+    @if (createMissing()) {
+      <p class="panel__nota" data-testid="agenda-sin-crear">{{ note() }}</p>
+    } @else if (note(); as nota) {
+      <p class="panel__nota" data-testid="agenda-sin-permiso-nota">{{ nota }}</p>
+    }
+    @if (holding(); as retenido) {
+      @if (event().status === 'FREE' && offered().length > 0) {
+        <app-alert tone="info" data-testid="panel-paciente-en-mano">
+          Cita para <strong>{{ retenido.patient.displayName }}</strong>. Elija «Crear cita» para agendarla en este horario.
+        </app-alert>
+      }
+    }
+  } @else if (mode() === 'RESCHEDULE') {
+    <div class="panel__paso" data-testid="agenda-reprogramar">
+      <h3 class="panel__paso-titulo">Elija el nuevo horario</h3>
+      <p class="panel__nota">Solo se ofrecen horarios libres del mismo servicio, a futuro, donde su permiso incluye reprogramar. También puede arrastrar la cita sobre un horario libre.</p>
+      @if (byDay().length === 0) {
+        <app-alert tone="info" data-testid="agenda-sin-destinos">No hay horarios libres a los que mover esta cita en lo que se ve. Cambie de día o de semana, o quite filtros.</app-alert>
+      } @else {
+        <div class="destinos">
+          @for (dia of byDay(); track dia.label) {
+            <p class="destinos__dia">{{ dia.label }}</p>
+            <ul class="destinos__lista" role="list">
+              @for (destino of dia.items; track destino.id) {
+                <li>
+                  <button type="button" class="destino" (click)="reschedule.emit(destino)" [disabled]="busy()" [attr.data-testid]="'destino-' + destino.id">
+                    <strong>{{ hora(destino) }}</strong> {{ destino.doctorName }} · {{ destino.careSpaceName }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+      <button app-button variant="ghost" size="sm" type="button" (clicked)="back()">Volver</button>
+    </div>
+  } @else {
+    <div class="panel__paso" [attr.data-testid]="'agenda-paso-' + mode()!.toLowerCase()">
+      @if (patient(); as elegido) {
+        <p class="panel__paciente" data-testid="agenda-paciente-encontrado">
+          <strong>{{ elegido.patient.displayName }}</strong> · {{ elegido.patient.ageYears }} años · documento {{ elegido.patient.documentMasked }}
+          @if (elegido.representative; as rep) { <br /><small>Actúa por él: {{ rep.name }} ({{ rep.relationship }})</small> }
+          @if (elegido.registration; as alta) {
+            <br /><small class="panel__pendiente" data-testid="agenda-identidad-pendiente">Identidad pendiente de verificación</small>
+            @if (alta.guardianPending) {
+              <br /><small class="panel__pendiente" data-testid="agenda-representante-pendiente">El representante quedó registrado como contacto pendiente de verificación. La representación legal la establece la organización con un documento.</small>
+            }
+          }
+        </p>
+        @if (mode() !== 'WAITLIST') {
+          <app-form-field label="Motivo de la cita">
+            <app-input [value]="reason()" (valueChange)="setReason($event)" ariaLabel="Motivo de la cita" data-testid="agenda-motivo" />
+          </app-form-field>
+        }
+        <button app-button type="button" [isLoading]="busy()" [disabled]="busy()" (clicked)="confirmBook()" data-testid="agenda-confirmar-cita">{{ actionLabel() }}</button>
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="chosen() === null ? dropHeld.emit() : chosen.set(null)">Elegir a otro paciente</button>
+      } @else {
+        <h3 class="panel__paso-titulo">¿Para quién es?</h3>
+        <app-patient-finder [orgId]="event().orgId" [orgName]="event().orgName" [canRegister]="canRegister()" (picked)="pick($event)" />
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="back()">Volver</button>
+      }
+    </div>
+  }
+
+  @if (failure(); as mensaje) {
+    <app-alert tone="error" role="alert" data-testid="agenda-error">{{ mensaje }}</app-alert>
+    @if (explain(); as pregunta) {
+      <app-access-why-not [request]="pregunta" idPrefix="agenda-por-que" />
+    }
+    @if (placeRejected()) {
+      <p class="panel__nota" data-testid="agenda-elegir-otro-texto">Esto no se puede agendar con ese doctor en ese servicio o lugar. Puede elegir otro horario, otro doctor u otro servicio: la agenda sigue abierta.</p>
+      <button app-button variant="outline" size="sm" type="button" (clicked)="chooseAnother()" data-testid="agenda-elegir-otro">Elegir otro horario, doctor o servicio</button>
+    }
+  }
+</aside>

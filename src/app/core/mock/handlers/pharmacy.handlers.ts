@@ -1,7 +1,7 @@
 import { CATALOGO_MEDICAMENTOS, type CatalogFixtureRow } from '../fixtures/medication-catalog.generated';
 import { CORPUS_PHARMACIES } from '../fixtures/bolivia-central-axis';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
-import { showcases } from '../fixtures/community';
+import { CONCEPT, conversationList, showcaseOf, showcases } from '../fixtures/community';
 import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
 import { prescriptionList } from '../fixtures/clinic';
 import { PACIENTE, patientById, professionalById } from '../fixtures/people';
@@ -13,7 +13,8 @@ import {
   ID_ORDER_WITH_INSURANCE,
 } from '../fixtures/pharmacy-orders';
 import { horarioDeFarmacias } from './pharmacy-opening-hours.handlers';
-import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, precondition, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { sucursalesDelTenant } from './directory.handlers';
 import { TENANT_TYPES } from '../mock-session';
 import { haversineKm, withStockUpdatedAt } from './pharmacy-availability.mock';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
@@ -32,7 +33,10 @@ const BOB = c('BOB', 'Boliviano');
 
 interface FarmaciaSimulada {
   readonly id: string;
-  /** Slug de la ficha pública (`/pharmacies-directory/:slug`). */
+  /**
+   * Slug de la ficha pública (`/pharmacies-directory/:slug`) y de su vitrina:
+   * con quién se abre el chat de un pedido.
+   */
   readonly slug: string;
   readonly code: string;
   readonly name: string;
@@ -416,7 +420,7 @@ function nombreDeCategoriaInvalido() {
  */
 const STOCK_SIN_CONTEO = null;
 
-const productos = new Coleccion<ProductoSimulado>(
+export const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
     Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
       const display = displayOf(conceptId);
@@ -601,6 +605,27 @@ const SEDES_ADICIONALES: readonly SedeAdicional[] = (() => {
 
 const SEDE_CENTRAL_ID = FARMACIAS[0]!.siteId;
 
+/**
+ * Las sucursales que la farmacia cargó en «Sucursales» (a mano o por CSV) y
+ * que la bandeja todavía no conoce: aparecen como sedes del mostrador. Las
+ * que ya están —la central y las dos de `SEDES_ADICIONALES`, sembradas con el
+ * mismo nombre en el directorio— se reconocen por nombre y no se duplican.
+ */
+function sedesCargadas(pharmacyId: string, propias: readonly string[]) {
+  const conocidas = new Set([...propias, ...(pharmacyId === FARMACIAS[0]!.id ? SEDES_ADICIONALES.map((s) => s.name) : [])]);
+  return sucursalesDelTenant(pharmacyId)
+    .filter((s) => !conocidas.has(s.name))
+    .map((s) => ({
+      id: s.id,
+      code: s.code,
+      name: s.name,
+      addressText: s.description ?? null,
+      latitude: s.latitude ?? null,
+      longitude: s.longitude ?? null,
+      isHeadOffice: false,
+    }));
+}
+
 /** La sede de un pedido: la declarada, o la de su farmacia. */
 function sedeDelPedido(p: PedidoSimulado, farmacia: FarmaciaSimulada) {
   const adicional = SEDES_ADICIONALES.find((sede) => sede.siteId === p.siteId);
@@ -666,7 +691,7 @@ function pedidosDelTablero(): PedidoSimulado[] {
   ];
 }
 
-const pedidos = new Coleccion<PedidoSimulado>(
+export const pedidos = new Coleccion<PedidoSimulado>(
   (() => {
     const f0 = FARMACIAS[0]!;
     const f1 = FARMACIAS[1] ?? f0;
@@ -697,6 +722,50 @@ for (const suffix of ['partial', 'denied', 'pending']) {
   pedidos.agregar({ ...original, id: uuid(`pharmacy-copay-${suffix}`), estado: 'CONFIRMADO' });
 }
 
+/* ---- el pedido que llega mientras se mira la bandeja ----------------------
+
+   El registro de procesos (3.2) pide que el pedido *llegue* con alarma, «muy
+   similar a PEDIDOS YA». Con todo sembrado de antemano la alarma no suena
+   nunca: la bandeja toma lo que ve al abrir como punto de partida y sólo avisa
+   de lo que aparece después. Este pedido nace la primera vez que alguien mira
+   la casa matriz de Farmacia Vida, con la hora de creación unos segundos en
+   el futuro —menos que el sondeo de la bandeja (20 s)—; el listado esconde lo
+   que todavía no fue creado, así que entra en el sondeo siguiente y suena.
+   Una sola vez por sesión: queda en la colección. */
+
+const ID_PEDIDO_ENTRANTE = uuid('pharmacy-order-entrante');
+const SEGUNDOS_HASTA_EL_PEDIDO_ENTRANTE = 15;
+
+function sembrarPedidoEntrante(): void {
+  if (pedidos.get(ID_PEDIDO_ENTRANTE) !== undefined) return;
+  const f0 = FARMACIAS[0]!;
+  const llega = new Date(Date.parse(ahora()) + SEGUNDOS_HASTA_EL_PEDIDO_ENTRANTE * 1000).toISOString();
+  pedidos.agregar({
+    id: ID_PEDIDO_ENTRANTE,
+    estado: 'ENVIADO',
+    createdAt: llega,
+    expiresAt: masMinutos(llega, 60 * 72),
+    pharmacyId: f0.id,
+    // Una orden médica de verdad (3.2: «la ORDEN MEDICA»), para que el
+    // mostrador vea quién la prescribió.
+    medicationRequestId: prescriptionList.todos().find((r) => professionalById(r.prescriberProfileId) !== undefined)?.id ?? null,
+    patientProfileId: uuid('pid-p-montano'),
+    patientName: 'Carla Montaño Rivero',
+    pickupCode: 'AV-7315',
+    rejectionReasonText: null,
+    lineas: [
+      { productId: productoDe(f0.id, 'MED-PARACETAMOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' },
+      { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' },
+    ],
+    sustituciones: [],
+  });
+}
+
+/** Lo que ya existe: un pedido con la creación en el futuro todavía no llegó. */
+function yaLlego(p: PedidoSimulado): boolean {
+  return Date.parse(p.createdAt) <= Date.parse(ahora());
+}
+
 function settlementForOrder(order: PedidoSimulado) {
   if (['CANCELADO', 'RECHAZADO', 'VENCIDO'].includes(order.estado)) return { insuranceSettlement: null, insuranceSettlementAvailability: 'NOT_AVAILABLE' };
   if (order.sustituciones.some((substitution) => substitution.status === 'PROPOSED')) return { insuranceSettlement: null, insuranceSettlementAvailability: 'UNDER_REVIEW' };
@@ -711,6 +780,11 @@ function settlementForOrder(order: PedidoSimulado) {
     return { id: line.productId, name: product.brandName ?? product.genericName ?? product.productCode, unitAmount: product.price ?? '0.00', quantity: line.requestedQuantity };
   }));
   return { insuranceSettlement: null, insuranceSettlementAvailability: order.estado === 'ENVIADO' ? 'PENDING_PUBLICATION' : 'NOT_AVAILABLE' };
+}
+
+/** La vitrina pública de una farmacia del mostrador, si la tiene. */
+function vitrinaDeFarmacia(farmacia: FarmaciaSimulada) {
+  return showcases.todos().find((v) => v.kind === 'PHARMACY' && v.slug === farmacia.slug);
 }
 
 /** Un renglón con precio, como lo necesita la facturación SIMULADA. */
@@ -800,6 +874,9 @@ function dto(p: PedidoSimulado, owner = false) {
     ...sedeDelPedido(p, farmacia),
     pharmacyId: farmacia.id,
     pharmacyName: farmacia.name,
+    // La vitrina pública de la farmacia (contrato nuevo de la API, nullable).
+    pharmacyPublicProfileId: vitrinaDeFarmacia(farmacia)?.id ?? null,
+    pharmacyPublicSlug: vitrinaDeFarmacia(farmacia)?.slug ?? null,
     medicationRequestId: p.medicationRequestId,
     prescriber: prescriberOf(p),
     patientName: p.patientName,
@@ -840,7 +917,7 @@ export function registrarFarmacia(router: MockRouter): void {
     const propias = tenant !== null && TENANT_TYPES[tenant] === 'PHARMACY' ? FARMACIAS.filter((f) => f.id === tenant) : [];
     const visibles = propias.length > 0 ? propias : FARMACIAS;
     return {
-      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: f === FARMACIAS[0] ? 1 + SEDES_ADICIONALES.length : 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
+      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: (f === FARMACIAS[0] ? 1 + SEDES_ADICIONALES.length : 1) + sedesCargadas(f.id, [f.siteName]).length, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
       count: visibles.length,
     };
   });
@@ -863,7 +940,7 @@ export function registrarFarmacia(router: MockRouter): void {
       // el nombre comercial también como `legalName`.
       legalName: f0.name,
       type: null,
-      siteCount: sedes.length + (id === FARMACIAS[0]!.id ? SEDES_ADICIONALES.length : 0),
+      siteCount: sedes.length + (id === FARMACIAS[0]!.id ? SEDES_ADICIONALES.length : 0) + sedesCargadas(id, sedes.map((f) => f.siteName)).length,
       productCount: productos.filtrar((p) => p.pharmacyId === id).length,
       homeDeliveryAvailable: sedes.some((f) => f.homeDelivery),
       pickupAvailable: true,
@@ -890,6 +967,7 @@ export function registrarFarmacia(router: MockRouter): void {
               isHeadOffice: false,
             }))
           : []),
+        ...sedesCargadas(id, sedes.map((f) => f.siteName)),
       ],
       ...legalProfileOf(f0),
     };
@@ -1449,14 +1527,24 @@ export function registrarFarmacia(router: MockRouter): void {
     return { items, count: items.length };
   });
 
-  router.get('/pharmacy/orders', ({ query }) => {
+  router.get('/pharmacy/orders', ({ query, headers, user }) => {
     const status = texto(query, 'status');
+    // El mostrador ve sólo los pedidos de su farmacia, como la API (que acota
+    // por el tenant de la petición). La plataforma sigue viéndolos todos.
+    const soloSuFarmacia =
+      user !== null && user.roles.includes('PHARMACY_STAFF') && !user.roles.includes('SECURITY_ADMIN');
     const siteId = texto(query, 'siteId');
     const desde = texto(query, 'from');
     const hasta = texto(query, 'to');
     const tope = Number(texto(query, 'limit') ?? 100);
+    // Sólo para quien mira Farmacia Vida: otra farmacia no tiene por qué
+    // oír la alarma de un pedido que no es suyo.
+    const tenant = headers.get('X-Tenant-Id') ?? user?.tenants[0] ?? null;
+    if (tenant === FARMACIAS[0]!.id && (siteId === null || siteId === SEDE_CENTRAL_ID)) sembrarPedidoEntrante();
     const items = pedidos
       .todos()
+      .filter((p) => !soloSuFarmacia || user.tenants.includes(p.pharmacyId))
+      .filter(yaLlego)
       .filter((p) => status === null || p.estado === status || `PINV_ORDER_${p.estado}` === status)
       .filter((p) => siteId === null || dto(p).siteId === siteId)
       // Como la API: `from` inclusive y `to` exclusivo, sobre la creación.
@@ -1496,6 +1584,48 @@ export function registrarFarmacia(router: MockRouter): void {
   router.get('/pharmacy/orders/:id', (request) => {
     const p = pedidos.get(request.params['id']!);
     return p === undefined ? notFound('Pedido no encontrado') : dto(p, p.patientProfileId === request.user?.patientProfileId);
+  });
+
+  /**
+   * El chat del pedido: paciente ↔ vitrina de la farmacia. Idempotente.
+   *
+   * Lo pueden abrir el paciente dueño o el personal de la farmacia
+   * (`PHARMACY_STAFF` con el tenant del pedido); cualquier otro recibe 403. Es
+   * la regla del contrato nuevo de la API, y la maqueta la aplica para que la
+   * pantalla no pueda apoyarse en otra. Sin vitrina de un lado o del otro
+   * responde los mismos 422 con `reason` que la API.
+   */
+  router.post('/pharmacy/orders/:id/conversation', (request) => {
+    const p = pedidos.get(request.params['id']!);
+    if (p === undefined) return notFound('Pedido no encontrado');
+    const user = request.user;
+    const esDueno = user !== null && p.patientProfileId === user.patientProfileId;
+    const esPersonal =
+      user !== null && user.tenants.includes(p.pharmacyId) && user.roles.includes('PHARMACY_STAFF');
+    if (!esDueno && !esPersonal) return forbidden();
+    const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
+    const deLaFarmacia = vitrinaDeFarmacia(farmacia);
+    const delPaciente = showcaseOf(p.patientProfileId);
+    if (deLaFarmacia === undefined) {
+      return precondition('La farmacia no tiene una vitrina activa con la que conversar', 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE');
+    }
+    if (delPaciente === undefined) {
+      return precondition('El paciente todavía no tiene un perfil con el que conversar', 'PATIENT_CHAT_PROFILE_MISSING');
+    }
+    const participantes = [delPaciente.id, deLaFarmacia.id];
+    const existente = conversationList.filtrar(
+      (c) => c.participantes.length === 2 && participantes.every((id) => c.participantes.includes(id)),
+    )[0];
+    const conversacion =
+      existente ??
+      conversationList.agregar({
+        id: nuevoId('conv'),
+        conversationTypeConceptId: CONCEPT.conversationDirect,
+        groupId: null,
+        participantes,
+        noLeidosPor: {},
+      });
+    return { status: 201, body: { conversationId: conversacion.id, pharmacyProfileId: deLaFarmacia.id } };
   });
 
   router.post('/pharmacy/orders/:id/review', ({ params }) => cambiar(params['id']!, 'EN_REVISION'));

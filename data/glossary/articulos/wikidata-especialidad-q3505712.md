@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q3505712
+image: wikidata-especialidad-q3505712.svg | El médico de familia es el primer contacto y coordina la atención a lo largo de la vida. | Diagrama radial con el médico de familia en el centro unido a la persona, la familia, la comunidad, el hospital, los especialistas y la enfermería, junto a sus tareas y motivos de consulta.
 ---
 
 ## [definition] Introducción

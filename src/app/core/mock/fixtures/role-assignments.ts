@@ -5,6 +5,7 @@ import { MEDICAL, professionalById } from './people';
 import { CARGO, STATUS } from './concepts';
 import { PRACTICE_CM_NORTE, PRACTICE_CM_SUR, PROCEDURE_COLONOSCOPY, PROCEDURE_UPPER_ENDOSCOPY, SITE_CM_NORTE_1, SITE_CM_SUR_1, SITES_BY_PRACTICE } from './healthcare-services';
 import { reply, validation } from '../mock-router';
+import { DOCTORES_HOSPITAL } from './support-hospital';
 import { Coleccion, iso, nuevoId, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -122,6 +123,28 @@ export function createAffiliation(practiceId: string, practiceSiteId: string, he
   });
 }
 
+/**
+ * La solicitud de un doctor que canjeó un QR **multiuso** de la organización: nace pendiente del centro, sin sede ni
+ * servicio asignados (`practiceSiteId` y `serviceDisplay` en `null`) e `initiatedBy: 'PRACTITIONER'`. La organización la
+ * aprueba o rechaza en «Médicos del centro».
+ */
+export function createPendingQrAffiliation(practiceId: string, profileId: string): StoredRow {
+  return affiliations.agregar({
+    id: nuevoId('ra-qr'),
+    practitionerProfileId: profileId,
+    practitionerName: professionalById(profileId)?.displayName ?? 'Profesional',
+    practiceId,
+    practiceSiteId: null,
+    healthcareServiceId: null,
+    serviceConceptId: null,
+    serviceDisplay: null,
+    statusConceptId: STATUS_CONCEPT.ROLE_ASG_PENDING,
+    statusCode: 'ROLE_ASG_PENDING',
+    initiatedBy: 'PRACTITIONER',
+    createdAt: new Date().toISOString(),
+  });
+}
+
 /** Lo que `GET /practitioners/me/role-assignments` suma a las vinculaciones de siempre. */
 export function myAffiliations(profileId: string) {
   return affiliations.filtrar((f) => f.practitionerProfileId === profileId).map((f) => ({
@@ -144,4 +167,31 @@ export function requestAffiliation(practiceId: string, practiceSiteId: string | 
   const offer = findOffer(healthcareServiceId);
   const created = createAffiliation(practiceId, practiceSiteId ?? offer?.practiceSiteId ?? '', healthcareServiceId, profileId, 'ROLE_ASG_PENDING', 'PRACTITIONER');
   return created === undefined ? validation('Ese procedimiento no lo publica la sede') : reply(201, { ...toRow(created), status: created.statusConceptId, createdAt: created.createdAt });
+}
+
+/**
+ * La vinculación con el hospital piloto de un doctor con cuenta (`perez`, `suarez`, …). Su `id` es el
+ * `practitioner_role_assignment_id` que nombran los permisos de apoyo y que «Mi equipo» manda a `explain` del doctor
+ * (que solo responde sobre la propia agenda).
+ */
+export function hospitalRoleAssignmentsOf(userId: string | undefined) {
+  return DOCTORES_HOSPITAL.filter((d) => d.userId !== undefined && d.userId === userId).map(
+    (d) => ({
+      id: d.id,
+      practiceId: d.tenantId,
+      practiceName: 'Hospital Piloto Mantra',
+      practiceType: 'Hospital',
+      practiceSiteId: null,
+      roleConceptId: CARGO['ROLE-MEDICO']!,
+      specialtyConceptId: null,
+      status: ROLE_ASSIGNMENT_STATUS.ACTIVE,
+      statusCode: ROLE_ASSIGNMENT_STATUS_CODE.ACTIVE,
+      isPrimary: false,
+      validFrom: null,
+      validTo: null,
+      createdAt: iso(-60),
+      avatarUrl: null,
+      tenantId: d.tenantId,
+    }),
+  );
 }

@@ -2320,6 +2320,7 @@ export const SYMPTOMS: readonly Symptom[] = [
       'mamografia',
       'ecografia mamaria',
     ],
+    soloParaSexo: 'FEMALE',
     especialidades: [{ nombre: 'Ginecología', peso: 3 }],
   },
   {

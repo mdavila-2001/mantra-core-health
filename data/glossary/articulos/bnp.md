@@ -1,5 +1,6 @@
 ---
 slug: bnp
+image: bnp.svg | Origen del BNP y utilidad de su medición en sangre. | Corazón con ventrículos estirados que liberan BNP a la sangre, un tubo de muestra y una lista de lo que ayuda a evaluar, como la sospecha de insuficiencia cardíaca.
 ---
 
 ## [definition] Introducción

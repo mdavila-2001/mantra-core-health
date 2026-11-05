@@ -79,7 +79,7 @@
   right: calc(100% + var(--sp-2));
   transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 0.6875rem;
+  font-size: var(--fs-overline);
   line-height: 1;
   white-space: nowrap;
 }
@@ -149,7 +149,7 @@
   position: absolute;
   top: calc(100% + var(--sp-2));
   color: var(--text-secondary);
-  font-size: 0.6875rem;
+  font-size: var(--fs-overline);
   line-height: 1;
 }
 

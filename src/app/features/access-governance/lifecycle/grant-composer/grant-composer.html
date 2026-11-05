@@ -1,0 +1,89 @@
+<section class="composer" [attr.data-testid]="idPrefix() + '-composer'">
+  <div class="composer__top">
+    @if (lockTarget()) {
+      <div>
+        <p class="composer__label">Dónde rige</p>
+        <p class="composer__target" [attr.data-testid]="idPrefix() + '-target'">
+          {{ targetLabel() }}
+        </p>
+      </div>
+    } @else {
+      <app-form-field label="Dónde rige" [required]="true">
+        <app-select
+          [value]="draft().targetKey"
+          (valueChange)="setTarget($event)"
+          [options]="targetOptions()"
+          placeholder="Elija un servicio, ubicación o doctor"
+          [attr.data-testid]="idPrefix() + '-target'"
+        />
+      </app-form-field>
+    }
+
+    <app-form-field
+      label="Vale hasta (opcional)"
+      [hint]="
+        maxValidTo() === ''
+          ? 'Sin fecha, no vence.'
+          : 'Usted puede dar permisos hasta el ' + maxValidTo() + '.'
+      "
+      [errorMessage]="dateError()"
+    >
+      <app-input
+        type="date"
+        [value]="draft().validTo"
+        (valueChange)="setValidTo($event)"
+        [hasError]="dateError() !== ''"
+        ariaLabel="Vale hasta"
+        [testId]="idPrefix() + '-valid-to'"
+      />
+    </app-form-field>
+
+    @if (removable()) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        (clicked)="removed.emit()"
+        [attr.data-testid]="idPrefix() + '-remove'"
+      >
+        Quitar este permiso
+      </button>
+    }
+  </div>
+
+  <p class="composer__label">Qué puede hacer</p>
+  <app-accordion [multi]="true">
+    @for (category of categories(); track category.code) {
+      <app-accordion-panel
+        [heading]="
+          category.label +
+          (category.marked > 0
+            ? ' · ' + category.marked + (category.marked === 1 ? ' marcado' : ' marcados')
+            : '')
+        "
+        [level]="4"
+        [expanded]="isOpen(category)"
+        (expandedChange)="setOpen(category, $event)"
+      >
+        <ul class="composer__atoms" role="list">
+          @for (row of category.atoms; track row.meta.code) {
+            <li
+              class="atom"
+              [class.atom--blocked]="row.blockedReason !== null"
+              [attr.data-testid]="idPrefix() + '-atom-' + row.meta.code"
+            >
+              <app-checkbox
+                [checked]="row.checked"
+                (checkedChange)="toggle(row, $event)"
+                [disabled]="row.blockedReason !== null"
+                [label]="row.label"
+              />
+              <span class="atom__traits">{{ row.traits }}</span>
+            </li>
+          }
+        </ul>
+      </app-accordion-panel>
+    }
+  </app-accordion>
+</section>

@@ -135,6 +135,11 @@ describe('ProceduresBlock', () => {
     for (const pendiente of http.match((r) => r.url === '/terminology/concepts')) {
       pendiente.flush({ items: [] });
     }
+    // El estado del consentimiento dirigido de cada ítem se lee aparte: se
+    // responde vacío para que `verify()` siga hablando de lo que esta prueba mira.
+    for (const consentimiento of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
+      consentimiento.flush({ items: [] });
+    }
     http.verify();
   });
 
@@ -229,6 +234,24 @@ describe('ProceduresBlock', () => {
       expect(texto()).toContain('CQ-000001');
       expect(texto()).toContain('Abordaje');
       expect(texto()).toContain('Adherencias');
+    });
+
+    it('cada cirugía ofrece su consentimiento informado, atado a la atención abierta o a ninguna (S3)', () => {
+      arrancar({ casos: { items: [CASO], total: 1 }, detalles: [DETALLE] });
+      const pantalla = fixture.nativeElement as HTMLElement;
+      expect(pantalla.querySelector('[data-testid="surgery-consent"]')).not.toBeNull();
+
+      const componente = fixture.componentInstance as unknown as {
+        consentToSurgery(c: { id: string; numero: string }): void;
+        consent: { target: () => { id: string; label: string } | null; encounterId: () => string | null };
+      };
+      componente.consentToSurgery({ id: 'case-1', numero: 'CQ-000001' });
+      expect(componente.consent.target()).toEqual({ id: 'case-1', label: 'Cirugía · caso CQ-000001' });
+      // Sin atención abierta: el panel muestra el S3 «Falta la atención».
+      expect(componente.consent.encounterId()).toBeNull();
+
+      fixture.componentRef.setInput('encounterId', 'enc-abierto');
+      expect(componente.consent.encounterId()).toBe('enc-abierto');
     });
 
     /** El lote es lo que permite responder a un retiro del mercado. */

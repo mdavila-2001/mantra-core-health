@@ -29,14 +29,14 @@ function jwt(payload: Record<string, unknown>): string {
 
 const MENU_DEL_LABORATORIO = [
   '/administration/laboratory',
-  '/laboratory/reception',
-  '/laboratory/queue',
-  '/administration/laboratory-results',
+  '/administration/laboratory-orders',
   '/administration/laboratory-prices',
+  '/administration/center-schedule',
   '/administration/laboratory-branches',
 ];
 
-const FIJOS_DE_TODA_CUENTA = ['/my-account', '/notification-center'];
+// «Buzón de solicitudes» is for any role (added 2026-11-02), so every account has it.
+const FIJOS_DE_TODA_CUENTA = ['/my-account', '/notification-center', '/my-account/access-requests'];
 
 describe('Menú de la cuenta de laboratorio', () => {
   let service: NavigationService;
@@ -98,12 +98,21 @@ describe('Menú de la cuenta de laboratorio', () => {
     expect(grupos[0].aplanado).toBe(true);
     expect(grupos[0].items.map((item) => item.label)).toEqual([
       'Resumen',
-      'Recepción de muestras',
-      'Cola de trabajo',
-      'Resultados',
+      'Órdenes',
       'Precios',
+      'Horarios y equipos',
       'Sucursales',
     ]);
+  });
+
+  it('ya no ofrece recepción de muestras, cola de trabajo ni resultados', () => {
+    abrirSesion(['USER'], ['t-l'], { 't-l': 'DIAGNOSTIC_CENTER' });
+
+    const rutas = rutasDelMenu();
+
+    expect(rutas).not.toContain('/laboratory/reception');
+    expect(rutas).not.toContain('/laboratory/queue');
+    expect(rutas).not.toContain('/administration/laboratory-results');
   });
 
   it('no ve nada de aseguradora, de paciente ni los directorios', () => {

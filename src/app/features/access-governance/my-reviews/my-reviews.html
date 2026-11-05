@@ -1,0 +1,483 @@
+<app-page-header
+  [title]="itemId === null ? 'Mis revisiones' : 'Revisión de un acceso'"
+  [subtitle]="
+    itemId === null
+      ? 'Los accesos que le toca reconfirmar: mantenerlos, quitarlos o ajustarlos con la evidencia a la vista.'
+      : 'Lea la evidencia y decida: mantener, quitar o ajustar. Su decisión queda registrada.'
+  "
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-my-reviews">
+  @if (itemId === null) {
+    <!-- ---------------------------------------------------------------------------------------- la lista -->
+    <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+      @if (hayDatos()) {
+        <div class="barra">
+          <app-segmented-control
+            [options]="filtros"
+            [value]="filtro()"
+            (valueChange)="cambiarFiltro($event)"
+            ariaLabel="Qué revisiones ver"
+            data-testid="revisiones-filtro"
+          />
+          @if (filtro() !== 'DECIDED' && bajoRiesgo().length > 0) {
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              [disabled]="trabajandoEnLote()"
+              (clicked)="elegirBajoRiesgo()"
+              data-testid="revisiones-bajo-riesgo"
+            >
+              Elegir los de bajo riesgo
+            </button>
+          }
+        </div>
+
+        <div class="avisos" aria-live="polite">
+          @if (resultadoDeLote(); as r) {
+            <app-alert [tone]="r.tone" data-testid="revisiones-resultado">{{ r.text }}</app-alert>
+          }
+          @if (errorDeLote(); as e) {
+            <app-alert
+              tone="error"
+              role="alert"
+              title="No se pudo mantener en bloque"
+              data-testid="revisiones-lote-error"
+            >
+              {{ e.text }}
+              @if (impidenFilas().length > 0) {
+                <ul class="impiden">
+                  @for (f of impidenFilas(); track f.id) {
+                    <li [attr.data-testid]="'revisiones-lote-impide-' + f.id">
+                      {{ f.item === null ? 'Otro acceso' : nombreDe(f.item)
+                      }}{{ f.item === null ? '' : ' · ' + riesgo(f.item) }}
+                      <a [routerLink]="[base, f.id]">Revisar este acceso</a>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-alert>
+          }
+        </div>
+
+        @if (elegidos().length > 0) {
+          <div
+            class="lote"
+            role="group"
+            aria-label="Acciones sobre lo elegido"
+            data-testid="revisiones-lote"
+          >
+            <strong data-testid="revisiones-seleccionadas">{{
+              elegidos().length === 1 ? '1 seleccionado' : elegidos().length + ' seleccionados'
+            }}</strong>
+            <button
+              app-button
+              size="sm"
+              type="button"
+              [disabled]="trabajandoEnLote()"
+              (clicked)="mantenerLote()"
+              data-testid="revisiones-mantener-lote"
+            >
+              Mantener los seleccionados
+            </button>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              [disabled]="trabajandoEnLote()"
+              (clicked)="limpiarSeleccion()"
+              data-testid="revisiones-limpiar"
+            >
+              Quitar la selección
+            </button>
+            <span class="lote__nota"
+              >En bloque solo se mantiene lo de bajo riesgo con uso reciente, todo o nada.</span
+            >
+          </div>
+        }
+
+        <ul class="tarjetas" aria-label="Accesos para revisar">
+          @for (i of items(); track i.id) {
+            <li
+              class="tarjeta"
+              [class.tarjeta--impide]="impiden().has(i.id)"
+              [attr.data-testid]="'revision-tarjeta-' + i.id"
+            >
+              @if (i.state === 'PENDING') {
+                <app-checkbox
+                  [checked]="marcado(i.id)"
+                  (checkedChange)="alternar(i.id, $event)"
+                  [label]="'Elegir el acceso de ' + nombreDe(i)"
+                  [hideLabel]="true"
+                  [attr.data-testid]="'revision-marcar-' + i.id"
+                />
+              }
+              <div class="tarjeta__cuerpo">
+                <h3 class="tarjeta__persona" [attr.data-testid]="'revision-persona-' + i.id">
+                  {{ nombreDe(i) }}
+                </h3>
+                <p class="tarjeta__sub">
+                  {{ i.campaignName ?? 'Campaña de certificación' }} · {{ revisor(i) }}
+                </p>
+                <p class="tarjeta__datos">
+                  <app-badge
+                    [variant]="riesgoTono(i)"
+                    [attr.data-testid]="'revision-riesgo-' + i.id"
+                    >{{ riesgo(i) }}</app-badge
+                  >
+                  <app-badge
+                    [variant]="estadoTono(i)"
+                    [attr.data-testid]="'revision-estado-' + i.id"
+                    >{{ estado(i) }}</app-badge
+                  >
+                  @if (i.escalated) {
+                    <app-badge variant="warning" [attr.data-testid]="'revision-escalado-' + i.id"
+                      >Escalado</app-badge
+                    >
+                  }
+                  @if (impiden().has(i.id)) {
+                    <app-badge variant="error" [attr.data-testid]="'revision-impide-' + i.id"
+                      >Impide el bloque: se revisa de a uno</app-badge
+                    >
+                  }
+                  @if (i.state === 'PENDING') {
+                    <span
+                      [class.vencida]="vence(i).overdue"
+                      [attr.data-testid]="'revision-vence-' + i.id"
+                      >{{ vence(i).text }}</span
+                    >
+                  } @else {
+                    <span>Decidido el {{ dia(i.decidedAt) }}</span>
+                  }
+                </p>
+              </div>
+              <a
+                app-button
+                variant="outline"
+                size="sm"
+                [routerLink]="[base, i.id]"
+                [attr.aria-label]="'Revisar el acceso de ' + nombreDe(i)"
+                [attr.data-testid]="'revision-abrir-' + i.id"
+                >Revisar</a
+              >
+            </li>
+          }
+        </ul>
+      }
+    </app-view-state-host>
+  } @else {
+    <!-- ------------------------------------------------------------------------------------- el detalle -->
+    <app-view-state-host [state]="detalle()" (retry)="cargarDetalle()" (refresh)="cargarDetalle()">
+      @if (item(); as i) {
+        <div data-testid="revision-detalle">
+          <a class="volver" [routerLink]="base">Volver a mis revisiones</a>
+
+          <header class="cabecera">
+            <h2 class="cabecera__persona" data-testid="revision-persona-detalle">
+              {{ nombreDe(i) }}
+            </h2>
+            <p class="tarjeta__datos">
+              <app-badge [variant]="riesgoTono(i)" data-testid="evidencia-sensibilidad">{{
+                riesgo(i)
+              }}</app-badge>
+              <app-badge [variant]="estadoTono(i)" data-testid="revision-estado-detalle">{{
+                estado(i)
+              }}</app-badge>
+              @if (i.state === 'PENDING') {
+                <span [class.vencida]="vence(i).overdue" data-testid="revision-vence-detalle">{{
+                  vence(i).text
+                }}</span>
+              }
+              <span>{{ i.campaignName ?? 'Campaña de certificación' }} · {{ revisor(i) }}</span>
+            </p>
+            @if (i.escalated && i.state === 'PENDING') {
+              <app-alert tone="warning" data-testid="revision-escalado-detalle"
+                >Escalado: el plazo ya venció y esta revisión también les llegó a otras personas.
+                Cualquiera de ustedes puede decidir; la primera decisión cierra el
+                acceso.</app-alert
+              >
+            }
+          </header>
+
+          @if (i.evidence; as e) {
+            <section class="evidencia" aria-labelledby="t-evidencia">
+              <h3 class="evidencia__titulo" id="t-evidencia">La evidencia</h3>
+              <p class="evidencia__resumen" data-testid="evidencia-resumen">
+                {{ e.summary ?? 'Esta revisión no trae un resumen.' }}
+              </p>
+
+              <h4 class="evidencia__sub">Qué puede hacer</h4>
+              <ul class="permisos" data-testid="evidencia-permisos">
+                @for (a of atomos(); track a.code) {
+                  <li>
+                    <span>{{ a.name }}</span>
+                    @if (a.name !== a.code) {
+                      <code>{{ a.code }}</code>
+                    }
+                    <app-badge [variant]="riesgoTonoDeAtomo(a.sensitivity)">{{
+                      riesgoDeAtomo(a.sensitivity)
+                    }}</app-badge>
+                  </li>
+                }
+              </ul>
+
+              <h4 class="evidencia__sub">Cuánto lo usó en los últimos 90 días</h4>
+              <table class="uso" data-testid="evidencia-uso">
+                <caption class="sr-solo">
+                  Uso de cada permiso en los últimos 90 días
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Permiso</th>
+                    <th scope="col">Permitidos</th>
+                    <th scope="col">Negados</th>
+                    <th scope="col">Último uso</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (a of atomos(); track a.code) {
+                    <tr [attr.data-testid]="'uso-' + a.code">
+                      <th scope="row">{{ a.name }}</th>
+                      <td>{{ usoDe(a.code).permit }}</td>
+                      <td>{{ usoDe(a.code).deny }}</td>
+                      <td>
+                        {{
+                          lastUsed({
+                            atom: a.code,
+                            permit: usoDe(a.code).permit,
+                            deny: usoDe(a.code).deny,
+                            lastUsedAt: usoDe(a.code).lastUsedAt,
+                          })
+                        }}
+                        @if (sinUso().has(a.code)) {
+                          <app-badge variant="warning" [attr.data-testid]="'uso-sin-uso-' + a.code"
+                            >Sin uso</app-badge
+                          >
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+              <dl class="hallazgos">
+                <div>
+                  <dt>Alertas</dt>
+                  <dd data-testid="evidencia-alertas">
+                    {{
+                      (e.openAlerts ?? 0) === 0
+                        ? 'Sin alertas abiertas.'
+                        : e.openAlerts === 1
+                          ? '1 alerta abierta de esta persona.'
+                          : e.openAlerts + ' alertas abiertas de esta persona.'
+                    }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Conflictos de funciones</dt>
+                  <dd data-testid="evidencia-sod">
+                    @if ((e.sodFindings ?? []).length === 0) {
+                      Sin conflictos de funciones.
+                    } @else {
+                      <ul class="permisos">
+                        @for (f of e.sodFindings ?? []; track f.ruleCode) {
+                          <li>Regla {{ f.ruleCode }}: {{ accionDeSod(f.action) }}</li>
+                        }
+                      </ul>
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Techo del rol</dt>
+                  <dd data-testid="evidencia-techo">
+                    {{
+                      e.aboveCeiling === true
+                        ? 'Pasa el techo que su rol permite en esta organización.'
+                        : 'Dentro del techo de su rol.'
+                    }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Última certificación</dt>
+                  <dd data-testid="evidencia-ultima">
+                    {{
+                      e.lastCertifiedAt
+                        ? 'Se certificó el ' + dia(e.lastCertifiedAt) + '.'
+                        : 'Nunca se ha certificado.'
+                    }}
+                  </dd>
+                </div>
+              </dl>
+
+              <details class="tecnico" data-testid="evidencia-detalle-tecnico">
+                <summary>Ver el detalle técnico</summary>
+                <dl class="hallazgos">
+                  <div>
+                    <dt>Evidencia generada</dt>
+                    <dd>{{ dia(e.generatedAt) }}</dd>
+                  </div>
+                  @if (i.evidenceHash) {
+                    <div>
+                      <dt>Huella (SHA-256)</dt>
+                      <dd>
+                        <code>{{ i.evidenceHash }}</code>
+                      </dd>
+                    </div>
+                  }
+                </dl>
+              </details>
+            </section>
+          } @else {
+            <app-alert tone="info">Esta revisión no trae evidencia.</app-alert>
+          }
+
+          <div class="avisos" aria-live="polite">
+            @if (resultado(); as r) {
+              <app-alert [tone]="r.tone" data-testid="decision-resultado">{{ r.text }}</app-alert>
+            }
+            @if (errorDeDecision(); as e) {
+              <app-alert tone="error" role="alert" data-testid="decision-error">{{ e }}</app-alert>
+            }
+          </div>
+
+          @if (i.state === 'PENDING') {
+            <section class="decision" aria-labelledby="t-decision">
+              <h3 class="evidencia__titulo" id="t-decision">Su decisión</h3>
+              <div class="decision__botones" role="group" aria-label="Decisión sobre este acceso">
+                <button
+                  app-button
+                  [variant]="decision() === 'CERTIFY' ? 'primary' : 'outline'"
+                  type="button"
+                  [attr.aria-pressed]="decision() === 'CERTIFY'"
+                  (clicked)="elegir('CERTIFY')"
+                  data-testid="decision-mantener"
+                >
+                  Mantener
+                </button>
+                <button
+                  app-button
+                  [variant]="decision() === 'REVOKE' ? 'primary' : 'outline'"
+                  type="button"
+                  [attr.aria-pressed]="decision() === 'REVOKE'"
+                  (clicked)="elegir('REVOKE')"
+                  data-testid="decision-quitar"
+                >
+                  Quitar
+                </button>
+                <button
+                  app-button
+                  [variant]="decision() === 'ADJUST' ? 'primary' : 'outline'"
+                  type="button"
+                  [attr.aria-pressed]="decision() === 'ADJUST'"
+                  (clicked)="elegir('ADJUST')"
+                  data-testid="decision-ajustar"
+                >
+                  Ajustar
+                </button>
+              </div>
+
+              @if (avisoDeComentario(); as aviso) {
+                <p class="decision__aviso" data-testid="decision-aviso-comentario">{{ aviso }}</p>
+              }
+
+              @if (decision(); as d) {
+                @if (d === 'ADJUST') {
+                  <fieldset class="ajuste">
+                    <legend>Un ajuste solo reduce: deje marcado lo que la persona conserva</legend>
+                    @for (a of atomos(); track a.code) {
+                      <app-checkbox
+                        [checked]="conserva(a.code)"
+                        (checkedChange)="conservar(a.code, $event)"
+                        [label]="'Conserva: ' + a.name"
+                        [attr.data-testid]="'ajuste-permiso-' + a.code"
+                      />
+                    }
+                    <app-form-field
+                      label="Acortar la vigencia hasta"
+                      hint="Opcional. Debe ser una fecha futura y anterior al vencimiento actual."
+                    >
+                      <app-input
+                        type="date"
+                        [value]="hasta()"
+                        (valueChange)="hasta.set('' + ($event ?? ''))"
+                        testId="ajuste-fecha"
+                        ariaLabel="Acortar la vigencia hasta"
+                      />
+                    </app-form-field>
+                    @if (problemasDeAjuste().length > 0) {
+                      <ul class="error-lista" role="alert" data-testid="decision-ajuste-error">
+                        @for (p of problemasDeAjuste(); track p) {
+                          <li>{{ p }}</li>
+                        }
+                      </ul>
+                    }
+                  </fieldset>
+                }
+
+                <app-form-field
+                  [label]="requerido() ? 'Comentario (obligatorio)' : 'Comentario (opcional)'"
+                  [required]="requerido()"
+                  [hint]="
+                    requerido()
+                      ? 'Al menos ' +
+                        minComentario +
+                        ' caracteres. Queda registrado con su decisión.'
+                      : 'Queda registrado con su decisión.'
+                  "
+                >
+                  <app-textarea
+                    [value]="comentario()"
+                    (valueChange)="comentario.set($event)"
+                    [rows]="3"
+                    [maxLength]="1000"
+                    [hasError]="problemaDeComentario() !== null"
+                    data-testid="decision-comentario"
+                  />
+                </app-form-field>
+                @if (problemaDeComentario(); as p) {
+                  <p class="error" role="alert" data-testid="decision-comentario-error">{{ p }}</p>
+                }
+
+                <div class="decision__botones">
+                  <button
+                    app-button
+                    type="button"
+                    [isLoading]="enviando()"
+                    [disabled]="enviando()"
+                    (clicked)="enviar()"
+                    data-testid="decision-enviar"
+                  >
+                    {{ textoDelBoton() }}
+                  </button>
+                  <button
+                    app-button
+                    variant="ghost"
+                    type="button"
+                    [disabled]="enviando()"
+                    (clicked)="cancelarDecision()"
+                    data-testid="decision-cancelar"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              }
+            </section>
+          } @else {
+            <section class="decision" aria-labelledby="t-hecha">
+              <h3 class="evidencia__titulo" id="t-hecha">Decisión tomada</h3>
+              <p data-testid="decision-hecha">
+                {{ estado(i) }}{{ i.decidedAt ? ' el ' + dia(i.decidedAt) : '' }}.
+                @if (i.comment) {
+                  Comentario: «{{ i.comment }}»
+                }
+              </p>
+            </section>
+          }
+        </div>
+      }
+    </app-view-state-host>
+  }
+</app-card>

@@ -433,7 +433,7 @@ async function recorrer(browser, vp) {
   }
   const cinco = await p.locator('[data-testid^="medical-center-signup-doc-"][data-testid$="-quitar"]').count();
   ok(`[${etiqueta}] los cinco papeles caben en una sola vista`, cinco === 5, `${cinco} subidos en la misma página`);
-  await pagina(p, etiqueta, '10-papeles-subidos', 'Documentación legal obligatoria (PDF)');
+  await pagina(p, etiqueta, '10-papeles-subidos', 'Documentación legal (PDF)');
   await continuar(p);
 
   // 5 · Casa central

@@ -1,5 +1,6 @@
 ---
 slug: anemia-ferropenica
+image: anemia-ferropenica.svg | Sin hierro suficiente, los glóbulos rojos salen pequeños y pálidos. | Comparación entre glóbulos rojos normales y los pequeños y pálidos de la anemia ferropénica, con cuatro tarjetas de causas: pérdidas de sangre, más necesidad, poco aporte y mala absorción.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,70 @@
+<main class="shared-rx" aria-labelledby="shared-rx-title" [attr.data-testid]="testids.publicPage">
+  <h1 id="shared-rx-title" class="shared-rx__title">Receta compartida</h1>
+
+  <app-view-state-host [state]="state()" (retry)="load()">
+    <div vsh-not-found class="shared-rx__panel" [attr.data-testid]="testids.publicNotFound">
+      <app-alert tone="warning" title="Este enlace no existe">
+        Revise que la dirección esté completa. Si se la pasaron por mensaje, pida que se la vuelvan
+        a enviar.
+      </app-alert>
+    </div>
+
+    @if (share(); as rx) {
+      @if (copy(); as copyText) {
+        <div class="shared-rx__panel">
+          <app-alert [tone]="copyText.tone" [title]="copyText.title" [attr.data-testid]="testids.publicStatus">
+            @if (showsDetails()) {
+              <dl class="shared-rx__data">
+                <dt>Emitida</dt>
+                <dd [attr.data-testid]="testids.publicIssuer">
+                  @if (rx.issuedAt) {
+                    el {{ rx.issuedAt | date: "d 'de' MMMM 'de' y" }}
+                  }
+                  @if (rx.prescriberName) {
+                    por {{ rx.prescriberName }}
+                  }
+                  @if (!rx.issuedAt && !rx.prescriberName) {
+                    Sin registrar
+                  }
+                </dd>
+                <dt>Matrícula</dt>
+                <dd>
+                  @if (rx.prescriberLicense; as license) {
+                    {{ license.number }}
+                    @if (license.authority) {
+                      ({{ license.authority }})
+                    }
+                    @if (license.state === 'PENDING') {
+                      · en verificación
+                    }
+                  } @else {
+                    Sin registrar
+                  }
+                </dd>
+                <dt>Contenido</dt>
+                <dd [attr.data-testid]="testids.publicItemCount">
+                  {{ rx.itemCount }} {{ rx.itemCount === 1 ? 'medicamento' : 'medicamentos' }}
+                </dd>
+              </dl>
+            }
+          </app-alert>
+
+          @if (showsDetails()) {
+            <p class="shared-rx__note">
+              Cualquiera con este enlace puede comprobar que la receta es válida. Solo una farmacia con
+              cuenta en AloVida ve los medicamentos.
+            </p>
+          }
+          <p class="shared-rx__actions">
+            @if (showsDetails()) {
+              <a app-button variant="outline" routerLink="/auth" [queryParams]="loginQuery">
+                Soy farmacia: iniciar sesión
+              </a>
+            }
+            <a app-button variant="ghost" routerLink="/">Ir a AloVida</a>
+          </p>
+        </div>
+      }
+    }
+  </app-view-state-host>
+</main>

@@ -1,0 +1,127 @@
+:host {
+  display: block;
+}
+
+.dt__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.dt__search input {
+  min-block-size: 36px;
+  min-inline-size: 220px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font: inherit;
+}
+
+.dt__search input:focus-visible,
+.dt__export:focus-visible,
+.dt__pager button:focus-visible,
+.dt__table thead button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.dt__export,
+.dt__pager button {
+  min-block-size: 36px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font: inherit;
+  cursor: pointer;
+}
+
+.dt__export:hover,
+.dt__pager button:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.dt__pager button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dt__wrap {
+  overflow-x: auto;
+  margin-top: var(--sp-3);
+}
+
+.dt__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+
+.dt__table th,
+.dt__table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-default);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.dt__table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.dt__table thead button {
+  all: unset;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dt__table th[aria-sort='ascending'] button::after { content: ' ↑'; }
+.dt__table th[aria-sort='descending'] button::after { content: ' ↓'; }
+
+.dt__table .dt__n {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.dt__camp {
+  font-weight: 600;
+  max-inline-size: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dt__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.dt__pager-btns {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.dt__empty {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+}
+
+.dt__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

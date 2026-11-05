@@ -56,6 +56,7 @@
                 @if (caso.cuando) {
                   <span class="procedimientos__fecha">{{ caso.cuando | date: 'd MMM y' }}</span>
                 }
+                <app-informed-consent-badge [consent]="consent.consents.of('PROCEDURE', caso.id)" />
               </div>
 
               @if (caso.equipo.length > 0) {
@@ -100,6 +101,21 @@
                   }
                 </ul>
               }
+
+              <!-- El consentimiento de la cirugía: la API lo acepta con el id del
+                   caso quirúrgico (procedure_cases). -->
+              <div class="procedimientos__acciones">
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="surgery-consent"
+                  (clicked)="consentToSurgery(caso)"
+                >
+                  Consentimiento informado
+                </button>
+              </div>
             </li>
           }
         </ol>
@@ -160,6 +176,7 @@
                     {{ tratamiento.cuando | date: 'd MMM y' }}
                   </span>
                 }
+                <app-informed-consent-badge [consent]="consent.consents.of('PROCEDURE', tratamiento.id)" />
               </div>
               @if (tratamiento.piezas) {
                 <p class="procedimientos__secundario">
@@ -179,6 +196,16 @@
                   (clicked)="abrirAdjuntos(tratamiento.id)"
                 >
                   Adjuntar archivo…
+                </button>
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="dental-consent"
+                  (clicked)="consentToTreatment(tratamiento)"
+                >
+                  Consentimiento informado
                 </button>
               </div>
             </li>
@@ -292,5 +319,19 @@
     [linkVia]="enlazarAdjuntoAlTratamiento"
     heading="Adjuntar un archivo al tratamiento"
     (closed)="cerrarAdjuntos()"
+  />
+}
+
+<!-- El consentimiento DIRIGIDO al procedimiento elegido. -->
+@if (consent.target(); as target) {
+  <app-informed-consent-dialog
+    [patientProfileId]="patientProfileId()"
+    [encounterId]="consent.encounterId()"
+    targetType="PROCEDURE"
+    [targetId]="target.id"
+    [targetLabel]="target.label"
+    [defaults]="{ purposeText: target.label + '.' }"
+    (consentChanged)="consent.consents.upsert($event)"
+    (closed)="consent.target.set(null)"
   />
 }

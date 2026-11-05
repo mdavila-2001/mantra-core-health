@@ -1,0 +1,189 @@
+<section
+  class="vp"
+  aria-live="polite"
+  aria-label="Vista previa de los cambios"
+  data-testid="preview"
+>
+  @switch (view().kind) {
+    @case ('idle') {
+      <p class="vp__nota" data-testid="preview-idle">
+        Todavía no hay cambios que revisar. Elija o cambie permisos y aquí verá qué cambia, antes de
+        guardar.
+      </p>
+    }
+    @case ('loading') {
+      <p class="vp__nota" role="status" data-testid="preview-loading">Calculando qué cambiaría…</p>
+    }
+    @case ('error') {
+      <app-alert
+        tone="error"
+        title="No pudimos calcular la vista previa"
+        data-testid="preview-error"
+      >
+        <p class="vp__nota">{{ errorMessage() }}</p>
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          (clicked)="retry.emit()"
+          data-testid="preview-retry"
+        >
+          Calcular de nuevo
+        </button>
+      </app-alert>
+    }
+    @case ('ready') {
+      @if (response(); as r) {
+        @if (errors().length > 0) {
+          <div class="vp__bloque vp__bloque--error" data-testid="preview-errors">
+            <h3 class="vp__titulo">Corrija esto para poder guardar</h3>
+            <ul class="vp__lista" role="list">
+              @for (issue of errors(); track issue.path + issue.code) {
+                <li>
+                  <span>{{ issue.message }}</span>
+                  <button
+                    type="button"
+                    class="vp__ir"
+                    (click)="goTo.emit(issue)"
+                    [attr.data-testid]="'preview-goto-' + issue.code"
+                  >
+                    Ir al campo
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+        } @else {
+          <p class="vp__ok" data-testid="preview-valid">
+            <span aria-hidden="true">✔</span> Sin errores: se puede guardar.
+          </p>
+        }
+
+        @if (warnings().length > 0) {
+          <div class="vp__bloque vp__bloque--aviso" data-testid="preview-warnings">
+            <h3 class="vp__titulo">Avisos</h3>
+            <ul class="vp__lista" role="list">
+              @for (issue of warnings(); track issue.path + issue.code) {
+                <li>
+                  <span>{{ issue.message }}</span>
+                  <button type="button" class="vp__ir" (click)="goTo.emit(issue)">
+                    Ir al campo
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <div class="vp__bloque">
+          <h3 class="vp__titulo">En una oración</h3>
+          <ul class="vp__lista" role="list" data-testid="preview-summary">
+            @for (line of r.summary.plain; track $index) {
+              <li>{{ line }}</li>
+            }
+          </ul>
+        </div>
+
+        <div class="vp__bloque">
+          <h3 class="vp__titulo">Qué cambia</h3>
+          @if (r.summary.changes.length === 0) {
+            <p class="vp__nota" data-testid="preview-changes">
+              Nada cambia en lo que la persona puede hacer.
+            </p>
+          } @else {
+            <ul class="vp__lista" role="list" data-testid="preview-changes">
+              @for (line of r.summary.changes; track $index) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="vp__bloque">
+          <h3 class="vp__titulo">Impacto en casos reales de su organización</h3>
+          <dl class="vp__datos" data-testid="preview-impact">
+            <div>
+              <dt>Podrán hacerse ahora</dt>
+              <dd>{{ r.impact.newlyAllowed }}</dd>
+            </div>
+            <div>
+              <dt>Dejarán de poder hacerse</dt>
+              <dd>{{ r.impact.newlyDenied }}</dd>
+            </div>
+            <div>
+              <dt>Sin cambio</dt>
+              <dd>{{ r.impact.unchanged }}</dd>
+            </div>
+            <div>
+              <dt>Pedirán un paso más</dt>
+              <dd>{{ r.impact.challengesNew }}</dd>
+            </div>
+            <div>
+              <dt>Doctores cubiertos</dt>
+              <dd>{{ arrow(r.impact.doctorsCovered) }}</dd>
+            </div>
+            <div>
+              <dt>Servicios cubiertos</dt>
+              <dd>{{ arrow(r.impact.servicesCovered) }}</dd>
+            </div>
+            <div>
+              <dt>Espacios cubiertos</dt>
+              <dd>{{ arrow(r.impact.spacesCovered) }}</dd>
+            </div>
+          </dl>
+          @if (r.impact.effectiveAtoms.added.length > 0) {
+            <p class="vp__nota" data-testid="preview-added">
+              <strong>Se suman:</strong> {{ names(r.impact.effectiveAtoms.added) }}.
+            </p>
+          }
+          @if (r.impact.effectiveAtoms.removed.length > 0) {
+            <p class="vp__nota" data-testid="preview-removed">
+              <strong>Se quitan:</strong> {{ names(r.impact.effectiveAtoms.removed) }}.
+            </p>
+          }
+          @if (r.limits?.truncated) {
+            <p class="vp__nota">Se probaron los casos más representativos, no todos.</p>
+          }
+        </div>
+
+        @if (r.governance.sodFindings.length > 0) {
+          <div class="vp__bloque vp__bloque--aviso" data-testid="preview-sod">
+            <h3 class="vp__titulo">Conflictos de funciones</h3>
+            <ul class="vp__lista" role="list">
+              @for (finding of r.governance.sodFindings; track finding.ruleCode) {
+                <li>
+                  <strong>{{ sodLabel(finding.action) }}.</strong> {{ finding.message }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (r.governance.needsFourEyes.required) {
+          <app-alert
+            tone="info"
+            title="Conviene que lo revise otra persona"
+            data-testid="preview-four-eyes"
+          >
+            @for (reason of r.governance.needsFourEyes.reasons; track $index) {
+              <p class="vp__nota">{{ reason }}</p>
+            }
+          </app-alert>
+        }
+
+        <div class="vp__bloque">
+          <h3 class="vp__titulo">Puntaje de privilegios</h3>
+          <p class="vp__puntaje" data-testid="preview-score">
+            <span>{{ r.governance.privilegeScore.before }}</span>
+            <span aria-hidden="true">→</span>
+            <span class="sr-only">pasa a</span>
+            <strong>{{ r.governance.privilegeScore.after }}</strong>
+            <span>({{ signed(r.governance.privilegeScore.delta) }})</span>
+          </p>
+          <p class="vp__nota">Pesa más lo que toca dinero o datos de pacientes.</p>
+        </div>
+      }
+    }
+  }
+</section>

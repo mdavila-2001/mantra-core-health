@@ -1,0 +1,87 @@
+<app-page-header
+  title="Profesionales que piden sumarse"
+  subtitle="Piden trabajar con su aseguradora. Aprobar les da su sello oficial; rechazar, con un motivo, es lo que el profesional lee en su bandeja."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card padding="lg" class="pedidos__tarjeta" data-testid="aseguradora-pedidos">
+  @if (aviso(); as a) {
+    <app-alert appAnuncio [tone]="a.tono" data-testid="aseguradora-pedidos-aviso">{{
+      a.texto
+    }}</app-alert>
+  }
+
+  <app-view-state-host [state]="state()" (retry)="cargar()">
+    @if (state().status === 'ready') {
+      <!-- Lo que espera una decisión, aparte de lo ya decidido. -->
+      @for (grupo of grupos(); track grupo.clave) {
+        <section class="pedidos__grupo" [attr.aria-labelledby]="'pedidos-' + grupo.clave">
+          <h2 class="pedidos__grupo-titulo" [id]="'pedidos-' + grupo.clave">
+            {{ grupo.titulo }} <span class="pedidos__cuenta">{{ grupo.filas.length }}</span>
+          </h2>
+          <ul class="pedidos__lista" [attr.data-testid]="'aseguradora-grupo-' + grupo.clave">
+            @for (fila of grupo.filas; track fila.id) {
+              <li class="pedidos__fila" [attr.data-testid]="'aseguradora-pedido-' + fila.id">
+                <div class="pedidos__quien">
+                  <span class="pedidos__nombre">{{
+                    fila.practitionerName ?? 'Profesional sin nombre cargado'
+                  }}</span>
+                  @if (fila.professionalTitle) {
+                    <span class="pedidos__titulo">{{ fila.professionalTitle }}</span>
+                  }
+                  <span class="pedidos__fecha">
+                    Pidió el
+                    <time [attr.datetime]="fila.createdAt.toISOString()">{{
+                      fila.createdAt | date: 'dd/MM/yyyy'
+                    }}</time>
+                    @if (fila.decidedAt) {
+                      · decidida el
+                      <time [attr.datetime]="fila.decidedAt.toISOString()">{{
+                        fila.decidedAt | date: 'dd/MM/yyyy'
+                      }}</time>
+                    }
+                  </span>
+                  @if (fila.decisionReasonText) {
+                    <span class="pedidos__motivo">Su motivo: «{{ fila.decisionReasonText }}»</span>
+                  }
+                </div>
+
+                <!-- En «Por decidir» el estado ya lo dice el grupo: el sello va en lo decidido. -->
+                @if (fila.status !== 'PENDING') {
+                  <app-status-seal [variant]="sello[fila.status]" [label]="rotulo[fila.status]" />
+                }
+
+                @if (fila.status === 'PENDING') {
+                  <div class="pedidos__acciones">
+                    <button
+                      app-button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      data-testid="aseguradora-aprobar"
+                      [disabled]="enviando() !== null"
+                      (clicked)="aprobar(fila)"
+                    >
+                      Aprobar
+                    </button>
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      data-testid="aseguradora-rechazar"
+                      [disabled]="enviando() !== null"
+                      (clicked)="rechazar(fila)"
+                    >
+                      Rechazar
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  </app-view-state-host>
+</app-card>

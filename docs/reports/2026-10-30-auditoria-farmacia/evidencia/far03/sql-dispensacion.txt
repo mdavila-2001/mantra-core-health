@@ -1,0 +1,5 @@
+                 code                  | dispensed_quantity | product_code 
+---------------------------------------+--------------------+--------------
+ pharmacy_inventory:DISPENSE_DISPENSED |                  2 | far3-AMOX-RX
+(1 row)
+

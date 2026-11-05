@@ -1,0 +1,42 @@
+<app-ins-panel title="Objetivo frente a resultado" question="¿Cumple la campaña lo que se propuso?">
+  @if (campaign(); as c) {
+    <div class="ob__table-wrap">
+      <table class="ob__table">
+        <caption class="ob__sr">Objetivos de {{ c.name }}</caption>
+        <thead>
+          <tr><th scope="col">Métrica</th><th scope="col" class="ob__n">Resultado</th><th scope="col" class="ob__n">Objetivo</th><th scope="col">Cumplimiento</th><th scope="col">Estado</th></tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.id) {
+            <tr>
+              <th scope="row">{{ r.label }}</th>
+              <td class="ob__n">{{ fmt(r.actual, r) }}</td>
+              <td class="ob__n">{{ fmt(r.target, r) }}</td>
+              <td>
+                @if (r.attain !== null) {
+                  <span class="ob__meter" aria-hidden="true"><span class="ob__fill" [style.inline-size.%]="r.attain > 1 ? 100 : r.attain * 100"></span></span>
+                  <span class="ob__pct">{{ pct(r.attain) }}</span>
+                } @else {
+                  <span class="ob__gap" [title]="r.gap ?? r.reason">Sin cálculo</span>
+                }
+              </td>
+              <td><app-ins-status [status]="r.status" [short]="true" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (pace(); as p) {
+      <div class="ob__pace">
+        <p class="ob__pace-title">Ritmo de inversión · presupuesto {{ budget() }}</p>
+        <div class="ob__bars" role="img" [attr.aria-label]="'Gastado ' + pct(p.spentPct) + ' del presupuesto; transcurrido ' + pct(p.elapsedPct) + ' del calendario'">
+          <span class="ob__bar-label">Gastado</span><span class="ob__bar"><span class="ob__bar-fill ob__bar-fill--spend" [style.inline-size.%]="p.spentPct * 100"></span></span><span class="ob__bar-val">{{ pct(p.spentPct) }}</span>
+          <span class="ob__bar-label">Calendario</span><span class="ob__bar"><span class="ob__bar-fill ob__bar-fill--time" [style.inline-size.%]="p.elapsedPct * 100"></span></span><span class="ob__bar-val">{{ pct(p.elapsedPct) }}</span>
+        </div>
+        <p class="ob__verdict">{{ paceVerdict() }}</p>
+      </div>
+    }
+  } @else {
+    <p class="ob__none">El objetivo es propio de cada campaña. Seleccione <strong>una sola campaña</strong> en el filtro para ver su cumplimiento y el ritmo de su inversión.</p>
+  }
+</app-ins-panel>

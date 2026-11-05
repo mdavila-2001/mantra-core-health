@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Electrocardiograma: registro y ondas del latido</title>
+  <desc id="d">A la izquierda, la silueta de un torso con seis electrodos en el pecho y cuatro en brazos y piernas conectados a un electrocardiógrafo. A la derecha, el trazado de un latido ampliado con la onda P (aurículas), el complejo QRS (ventrículos) y la onda T (recuperación).</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --tissue:#e9edf2; --heart:#c0392b; --ok:#1f8a5b; --grid:#f3c9c9; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --tissue:#2a3541; --heart:#ef7467; --ok:#4cc38a; --grid:#4a2c30; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 16px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <rect x="20" y="20" width="330" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="185" y="50" text-anchor="middle" class="title">Dónde van los electrodos</text>
+  <!-- torso -->
+  <circle cx="160" cy="95" r="26" fill="var(--tissue)" stroke="var(--line)"/>
+  <path d="M100 130 H220 L250 300 H70 Z" fill="var(--tissue)" stroke="var(--line)"/>
+  <path d="M100 135 L60 260" stroke="var(--tissue)" stroke-width="22" stroke-linecap="round"/>
+  <path d="M220 135 L260 260" stroke="var(--tissue)" stroke-width="22" stroke-linecap="round"/>
+  <path d="M120 300 L115 400" stroke="var(--tissue)" stroke-width="26" stroke-linecap="round"/>
+  <path d="M200 300 L205 400" stroke="var(--tissue)" stroke-width="26" stroke-linecap="round"/>
+  <!-- corazón -->
+  <path d="M168 185 c-10 -16 -34 -6 -26 12 c6 12 26 26 26 26 c0 0 20 -14 26 -26 c8 -18 -16 -28 -26 -12 z" fill="var(--heart)" opacity=".8"/>
+  <!-- electrodos pecho -->
+  <g fill="var(--accent)">
+    <circle cx="150" cy="170" r="6"/><circle cx="176" cy="170" r="6"/><circle cx="168" cy="206" r="6"/>
+    <circle cx="190" cy="214" r="6"/><circle cx="208" cy="216" r="6"/><circle cx="226" cy="214" r="6"/>
+    <circle cx="62" cy="256" r="6"/><circle cx="258" cy="256" r="6"/><circle cx="115" cy="396" r="6"/><circle cx="205" cy="396" r="6"/>
+  </g>
+  <text x="185" y="324" text-anchor="middle" class="small muted">6 en el pecho · 4 en brazos y piernas</text>
+  <!-- aparato -->
+  <rect x="250" y="340" width="86" height="56" rx="8" fill="var(--accent)"/>
+  <text x="293" y="364" text-anchor="middle" class="small" style="fill:var(--on)">Electro-</text>
+  <text x="293" y="380" text-anchor="middle" class="small" style="fill:var(--on)">cardiógrafo</text>
+  <path d="M226 214 C260 240 280 300 286 340" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="185" y="425" text-anchor="middle" class="small muted">El aparato solo registra; no envía corriente</text>
+
+  <rect x="366" y="20" width="414" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="573" y="50" text-anchor="middle" class="title">Qué representa cada onda</text>
+  <!-- cuadrícula -->
+  <g stroke="var(--grid)" stroke-width="1">
+    <path d="M390 90 H756 M390 130 H756 M390 170 H756 M390 210 H756 M390 250 H756 M390 290 H756"/>
+    <path d="M390 90 V290 M430 90 V290 M470 90 V290 M510 90 V290 M550 90 V290 M590 90 V290 M630 90 V290 M670 90 V290 M710 90 V290 M750 90 V290"/>
+  </g>
+  <path d="M390 230 H440 C452 230 456 206 470 206 C484 206 488 230 500 230 H530 L540 244 L556 110 L572 262 L582 230 H620 C640 230 650 186 672 186 C694 186 704 230 724 230 H756" fill="none" stroke="var(--heart)" stroke-width="3.5" stroke-linejoin="round"/>
+  <text x="470" y="196" text-anchor="middle" class="big">P</text>
+  <text x="556" y="102" text-anchor="middle" class="big">QRS</text>
+  <text x="672" y="176" text-anchor="middle" class="big">T</text>
+  <!-- leyenda -->
+  <g class="lab">
+    <rect x="390" y="314" width="14" height="14" rx="3" fill="var(--accent-l)" stroke="var(--accent)"/>
+    <text x="412" y="326">P: se activan las aurículas</text>
+    <rect x="390" y="342" width="14" height="14" rx="3" fill="var(--accent-l)" stroke="var(--accent)"/>
+    <text x="412" y="354">QRS: se activan los ventrículos</text>
+    <rect x="390" y="370" width="14" height="14" rx="3" fill="var(--accent-l)" stroke="var(--accent)"/>
+    <text x="412" y="382">T: los ventrículos se recuperan</text>
+  </g>
+  <text x="573" y="420" text-anchor="middle" class="small muted">El trazado se repite con cada latido</text>
+</svg>

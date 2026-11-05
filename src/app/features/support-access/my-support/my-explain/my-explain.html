@@ -1,0 +1,81 @@
+<app-card padding="lg" data-testid="porque-card">
+  <h2 class="titulo">¿Por qué no puedo?</h2>
+  <p class="texto">
+    Cuéntenos qué quiso hacer y le explicamos, paso a paso, por qué se pudo o no. Es solo una
+    consulta: no cambia nada.
+  </p>
+
+  @if (organizations().length > 1) {
+    <app-form-field label="¿En qué organización?">
+      <app-select
+        [options]="organizations()"
+        [value]="tenantId()"
+        (valueChange)="pickOrganization($event)"
+        ariaLabel="¿En qué organización?"
+        data-testid="porque-organizacion"
+      />
+    </app-form-field>
+  }
+
+  @if (initial() !== null && session.state() === null) {
+    <p class="texto" data-testid="porque-lista">
+      Le dejamos la pregunta lista. Pulse «Explicar» para consultarla: no se envía sola.
+    </p>
+  }
+
+  <app-explain-question
+    prefix="porque"
+    submitLabel="Explicar"
+    doctorLabel="¿En la agenda de quién?"
+    whenLabel="¿Cuándo?"
+    [actions]="actions()"
+    [doctors]="doctors()"
+    [initial]="initial()"
+    [showPatient]="initial()?.patientProfileId !== undefined"
+    [showAppointment]="initial()?.at !== undefined"
+    [busy]="session.busy()"
+    (asked)="session.askFresh($event)"
+    (edited)="session.markStale()"
+  />
+
+  <div data-testid="porque-resultado">
+    @if (session.state(); as s) {
+      <app-view-state-host [state]="s" (retry)="session.repeat()" (refresh)="session.repeat()">
+        @if (session.current(); as respuesta) {
+          <app-explain-result
+            [result]="respuesta"
+            audience="self"
+            [busy]="session.busy()"
+            [assumed]="session.assumed()"
+            [(choices)]="session.choices"
+            (assumeChanged)="session.reask($event)"
+          >
+            <div explain-actions class="acciones">
+              @if (pendingOnboarding()) {
+                <button
+                  app-button
+                  type="button"
+                  [isLoading]="acknowledging()"
+                  [disabled]="acknowledging()"
+                  (clicked)="acknowledge()"
+                  data-testid="porque-compromiso"
+                >
+                  Aceptar mi compromiso de confidencialidad
+                </button>
+              }
+              @if (needsStepUp()) {
+                <a
+                  app-button
+                  variant="outline"
+                  [routerLink]="mfaRoute"
+                  data-testid="porque-segundo-paso"
+                  >Revisar mi verificación en dos pasos</a
+                >
+              }
+            </div>
+          </app-explain-result>
+        }
+      </app-view-state-host>
+    }
+  </div>
+</app-card>

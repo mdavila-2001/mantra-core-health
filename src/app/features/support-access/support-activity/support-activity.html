@@ -1,0 +1,72 @@
+<app-page-header [title]="textos.titulo" [subtitle]="textos.subtitulo" />
+
+<app-card class="actividad" padding="lg" data-testid="actividad-card">
+  <app-filter-bar
+    searchLabel="Buscar en la actividad"
+    searchPlaceholder="Un detalle de lo cargado"
+    [filters]="filtros()"
+    [wrap]="true"
+    (filtersChanged)="filtrosCambiaron()"
+  >
+    <button filter-bar-action app-button variant="outline" type="button" [isLoading]="exportando()" [disabled]="filtradas().length === 0 || exportando()" (clicked)="exportar()" data-testid="actividad-exportar">
+      Exportar a CSV
+    </button>
+  </app-filter-bar>
+
+  <div class="actividad__fechas">
+    <div class="actividad__fecha">
+      <span class="actividad__rotulo">Desde</span>
+      <app-input type="date" [value]="desde()" (valueChange)="cambiarFecha('desde', $event)" ariaLabel="Actividad desde el día" testId="actividad-desde" />
+    </div>
+    <div class="actividad__fecha">
+      <span class="actividad__rotulo">Hasta</span>
+      <app-input type="date" [value]="hasta()" (valueChange)="cambiarFecha('hasta', $event)" ariaLabel="Actividad hasta el día" testId="actividad-hasta" />
+    </div>
+  </div>
+
+  <p class="actividad__resumen" aria-live="polite" data-testid="actividad-resumen">
+    {{ filtradas().length }} {{ filtradas().length === 1 ? 'acción' : textos.resumen }}@if (cursor() !== null) { cargadas hasta ahora }
+  </p>
+
+  <app-data-table
+    caption="Actividad registrada"
+    [state]="filas()"
+    [columns]="columnas()"
+    [trackBy]="entryId"
+    [rowLabel]="entryLabel"
+    (retry)="cargar()"
+    (refresh)="cargar()"
+    data-testid="actividad-tabla"
+  />
+
+  @if (cursor() !== null) {
+    <div class="actividad__mas">
+      <button app-button variant="outline" type="button" [isLoading]="cargandoMas()" [disabled]="cargandoMas()" (clicked)="cargarMas()" data-testid="actividad-cargar-mas">Cargar más actividad</button>
+    </div>
+  }
+
+  @if (filtradas().length > 0) {
+    <app-pagination
+      [totalItems]="filtradas().length"
+      [(page)]="pagina"
+      [(pageSize)]="tamano"
+      [pageSizeOptions]="[10, 20, 50]"
+      data-testid="actividad-paginacion"
+    />
+  }
+</app-card>
+
+<ng-template #cuandoCell let-e><span data-testid="actividad-cuando">{{ cuando(e.createdAt) }}</span></ng-template>
+
+<ng-template #personaCell let-e><span class="actividad__nombre" data-testid="actividad-persona">{{ e.personName }}</span></ng-template>
+
+<ng-template #queCell let-e>
+  <span class="actividad__nombre" data-testid="actividad-accion">{{ accionTexto(e.action) }}@if (!e.success) { <app-badge variant="error" size="sm" data-testid="actividad-fallo">No se pudo</app-badge> }</span>
+  <span class="actividad__sub">{{ e.summary }}</span>
+</ng-template>
+
+<ng-template #doctorCell let-e>
+  @if (e.practitionerName) {
+    <span class="actividad__sub" data-testid="actividad-doctor">{{ e.practitionerName }}</span>
+  }
+</ng-template>

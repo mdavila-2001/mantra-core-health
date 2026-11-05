@@ -1,5 +1,6 @@
 ---
 slug: paralisis-facial-de-bell
+image: paralisis-facial-de-bell.svg | La inflamación del nervio facial debilita toda una mitad de la cara, incluida la frente. | Rostro con una mitad sana y la otra caída: ceja baja, ojo que no cierra bien y boca desviada, por inflamación del nervio facial. A la derecha, las características, el tratamiento y los signos que hacen pensar en un ictus.
 ---
 
 ## [definition] Introducción

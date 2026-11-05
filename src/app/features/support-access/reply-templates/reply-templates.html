@@ -1,0 +1,70 @@
+<app-page-header
+  title="Respuestas preparadas"
+  subtitle="Los textos que su personal de apoyo usa para responder mensajes administrativos de los pacientes en nombre del doctor."
+/>
+
+<app-card class="respuestas" padding="lg" data-testid="respuestas-card">
+  <app-alert tone="info" title="Solo respuestas administrativas" data-testid="respuestas-aviso">
+    Horarios, certificados, costos, qué traer a un estudio. Nada clínico: ni diagnósticos, ni medicamentos, ni resultados. En el texto, <code>{{ '{paciente}' }}</code> y <code>{{ '{doctor}' }}</code> se completan solos al usarla. Retirar una respuesta no la borra: deja de ofrecerse, y se puede reactivar.
+  </app-alert>
+
+  <div class="respuestas__barra">
+    <button app-button type="button" (clicked)="nueva()" data-testid="respuesta-nueva">Nueva respuesta</button>
+  </div>
+
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    <ul class="lista" role="list" data-testid="respuestas-lista">
+      @for (r of respuestas(); track r.id) {
+        <li class="respuesta" [class.respuesta--retirada]="r.retired" [attr.data-testid]="'respuesta-' + r.id">
+          <div class="respuesta__cabeza">
+            <h2 class="respuesta__titulo">{{ r.title }}</h2>
+            <span class="respuesta__marcas">
+              <app-badge variant="info" size="sm">{{ etiquetaDeCategoria(r.category) }}</app-badge>
+              @if (r.retired) {
+                <app-badge variant="secondary" size="sm" [attr.data-testid]="'respuesta-retirada-' + r.id">Retirada</app-badge>
+              }
+              @if (r.practitionerProfileId) {
+                <app-badge variant="secondary" size="sm">De un doctor</app-badge>
+              }
+            </span>
+          </div>
+          <p class="respuesta__texto">{{ r.bodyText }}</p>
+          <div class="respuesta__acciones">
+            <span class="respuesta__version" [attr.data-testid]="'respuesta-version-' + r.id">Versión {{ r.version ?? 1 }}</span>
+            <button app-button variant="outline" size="sm" type="button" (clicked)="editar(r)" [attr.aria-label]="'Editar «' + r.title + '»'" [attr.data-testid]="'respuesta-editar-' + r.id">Editar</button>
+            <button app-button variant="ghost" size="sm" type="button" [disabled]="ocupada() !== null" (clicked)="cambiarEstado(r)" [attr.aria-label]="(r.retired ? 'Reactivar «' : 'Retirar «') + r.title + '»'" [attr.data-testid]="'respuesta-estado-' + r.id">
+              {{ r.retired ? 'Reactivar' : 'Retirar' }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+</app-card>
+
+@if (borrador(); as b) {
+  <app-content-dialog [heading]="esEdicion() ? 'Editar la respuesta' : 'Nueva respuesta'" description="Una respuesta administrativa, sin contenido clínico." size="lg" closeLabel="Cerrar" (closed)="cerrar()">
+    <div class="formulario" data-testid="respuesta-formulario">
+      <app-form-field label="Categoría">
+        <app-select [options]="categorias" [value]="b.category" (valueChange)="cambiarCategoria($event)" [searchable]="false" ariaLabel="Categoría" data-testid="respuesta-categoria" />
+      </app-form-field>
+      <app-form-field label="Título" [required]="true" [errorMessage]="faltaTitulo() ? 'Escriba un título.' : ''" [hint]="'Hasta ' + maxTitulo + ' caracteres.'">
+        <app-input [value]="b.title" (valueChange)="cambiarTitulo($event)" ariaLabel="Título" [hasError]="faltaTitulo()" testId="respuesta-titulo" />
+      </app-form-field>
+      <app-form-field label="Texto de la respuesta" [required]="true" [errorMessage]="faltaTexto() ? 'Escriba el texto de la respuesta.' : ''" [hint]="'Hasta ' + maxTexto + ' caracteres. Use {paciente} y {doctor} donde corresponda.'">
+        <app-textarea [value]="b.bodyText" (valueChange)="cambiarTexto($event)" [rows]="5" data-testid="respuesta-texto" />
+      </app-form-field>
+
+      @if (fallo(); as f) {
+        <app-alert [tone]="f.kind === 'STALE' ? 'warning' : 'error'" role="alert" [title]="f.kind === 'STALE' ? 'Alguien más la cambió' : 'No se guardó'" data-testid="respuesta-error" [attr.data-kind]="f.kind">
+          {{ f.message }}
+          @if (f.kind === 'STALE') {
+            @if (f.currentVersion) { <span data-testid="respuesta-version-actual"> Hoy va por la versión {{ f.currentVersion }}.</span> }
+            <button app-button variant="outline" size="sm" type="button" (clicked)="cargarVersionActual()" data-testid="respuesta-cargar-actual">Cargar la versión actual</button>
+          }
+        </app-alert>
+      }
+    </div>
+    <button dialog-actions app-button type="button" [isLoading]="guardando()" [disabled]="guardando()" (clicked)="guardar()" data-testid="respuesta-guardar">Guardar</button>
+  </app-content-dialog>
+}

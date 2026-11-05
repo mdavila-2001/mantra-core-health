@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-1744
+image: medlineplus-es-1744.svg | La anestesia va desde adormecer una zona pequeña hasta la inconsciencia completa. | Cuatro columnas que comparan anestesia local, regional, sedación y general, con un dibujo de la zona afectada o del nivel de conciencia en cada caso.
 ---
 
 ## [definition] Introducción

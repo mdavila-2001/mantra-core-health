@@ -38,6 +38,7 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
   selector: 'app-pharmacies-directory',
   imports: [DirectoryPage, OpenNowPharmacies],
   templateUrl: './pharmacies-directory.html',
+  styleUrl: './pharmacies-directory.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmaciesDirectory extends PublicDirectoryListing {

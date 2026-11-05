@@ -278,8 +278,15 @@ describe('Glossary', () => {
     expect(lista?.getAttribute('role')).toBe('region');
   });
 
-  it('con miniatura, la tarjeta la muestra decorativa; el crédito vive en la ficha', async () => {
+  it('una miniatura sin aprobación de pertinencia no se muestra en la tarjeta', async () => {
     await responderLanding([{ ...TERMINO, imageThumbnailUrl: 'https://ejemplo.org/t.jpg' }]);
+    expect(html().querySelector('.glosario__entrada-foto')).toBeNull();
+  });
+
+  it('con miniatura, la tarjeta la muestra decorativa; el crédito vive en la ficha', async () => {
+    await responderLanding([
+      { ...TERMINO, imageThumbnailUrl: 'https://ejemplo.org/t.jpg', imageReviewStatus: 'approved' },
+    ]);
     const foto = html().querySelector<HTMLImageElement>('.glosario__entrada-foto');
     expect(foto?.getAttribute('src')).toBe('https://ejemplo.org/t.jpg');
     expect(foto?.getAttribute('alt')).toBe('');
@@ -306,6 +313,9 @@ describe('Glossary', () => {
     const req = pedidoDeTerminos();
     expect(req.request.params.get('offset')).toBe('24');
     expect(req.request.params.get('limit')).toBe('12');
+    harness.fixture.detectChanges();
+    // The pager stays and shows its spinner while the next page is in flight.
+    expect(html().querySelector('app-pagination [data-testid="pagination-loading"]')).not.toBeNull();
     req.flush({ items: [TERMINO_B], count: 1, limit: 12, offset: 24, total: 1200 });
   });
 
@@ -394,9 +404,33 @@ describe('Glossary', () => {
     ]);
   });
 
-  it('la rejilla sigue visible con un filtro puesto: es el mapa', async () => {
+  it('al buscar por texto las categorías desaparecen (pedido del propietario)', async () => {
+    await responderLanding();
+    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
+
+    await irA({ q: 'hiper' });
+    responderPagina();
+    await harness.fixture.whenStable();
+
+    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(0);
+    expect(html().querySelector('.glosario__categorias')).toBeNull();
+    expect(html().textContent).toContain('Resultados de «hiper»');
+  });
+
+  it('al borrar el texto las categorías vuelven', async () => {
     await responderLanding();
     await irA({ q: 'hiper' });
+    responderPagina();
+    await irA({});
+    responderPagina();
+    await harness.fixture.whenStable();
+
+    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
+  });
+
+  it('con una categoría elegida la rejilla sigue: es el mapa para cambiar de tema', async () => {
+    await responderLanding();
+    await irA({ category: 'glossary-category-disease' });
     responderPagina();
     await harness.fixture.whenStable();
 

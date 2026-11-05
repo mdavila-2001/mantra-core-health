@@ -1,0 +1,158 @@
+.cycle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+}
+
+.cycle__headline {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cycle__muted {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.cycle__route {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cycle__phases {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada fase es un carril; el conector vertical une sus etapas y la fase siguiente. */
+.cycle__phase {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-inline-start: var(--sp-6);
+}
+
+.cycle__phase::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(var(--sp-3) - 1px);
+  inset-block-start: var(--sp-5);
+  inset-block-end: calc(-1 * var(--sp-4));
+  border-inline-start: 2px solid var(--border-subtle);
+}
+
+.cycle__phase:last-child::before {
+  inset-block-end: 0;
+}
+
+.cycle__phase-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.cycle__phase-number {
+  position: absolute;
+  inset-inline-start: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--sp-6);
+  block-size: var(--sp-6);
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  border: 1px solid var(--st-primary-bd);
+  color: var(--st-primary-fg);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+}
+
+.cycle__stages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cycle__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* El veredicto también se ve en el borde, además del rótulo con texto. */
+.cycle__stage[data-applies='APLICA'] {
+  border-inline-start: 4px solid var(--st-success-bd);
+}
+
+.cycle__stage[data-applies='NO_APLICA'] {
+  border-inline-start: 4px solid var(--border-default);
+  color: var(--text-secondary);
+}
+
+.cycle__stage[data-applies='NO_DETERMINABLE'] {
+  border-inline-start: 4px solid var(--st-warning-bd);
+}
+
+/* Conector horizontal desde el carril hasta la tarjeta de la etapa. */
+.cycle__stage::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--sp-3) - 2px);
+  inset-block-start: var(--sp-5);
+  inline-size: var(--sp-3);
+  border-block-start: 2px solid var(--border-subtle);
+}
+
+.cycle__stage-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cycle__stage-number {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.cycle__stage-label {
+  color: var(--text-primary);
+}
+
+.cycle__reason {
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.cycle__source {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}

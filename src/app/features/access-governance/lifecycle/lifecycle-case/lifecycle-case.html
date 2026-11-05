@@ -1,0 +1,296 @@
+<app-page-header
+  [title]="title()"
+  subtitle="Lo que falta para cerrar este caso, el traspaso del trabajo y el registro que queda."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-lifecycle-case">
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    @if (view(); as v) {
+      <div class="resumen">
+        <app-badge [variant]="kindTone(v.detail.kind)" data-testid="case-kind">{{
+          kindLabel(v.detail.kind)
+        }}</app-badge>
+        <app-badge [variant]="statusTone(v.detail.status)" data-testid="case-status">{{
+          statusLabel(v.detail.status)
+        }}</app-badge>
+        <span class="resumen__texto"
+          >Persona: <strong>{{ v.person }}</strong> · vínculo
+          {{ engagementStatusText(v.engagementStatus).toLocaleLowerCase('es') }}</span
+        >
+        @if (v.detail.status === 'OPEN') {
+          <span
+            class="resumen__texto"
+            [class.resumen__vencido]="due(v.detail.dueAt).overdue"
+            data-testid="case-due"
+            >{{ due(v.detail.dueAt).text }}
+            @if (due(v.detail.dueAt).overdue) {
+              (vencido)
+            }
+          </span>
+        }
+      </div>
+
+      @if (engagementOpen()) {
+        <p class="enlaces">
+          <a
+            app-button
+            variant="outline"
+            size="sm"
+            [routerLink]="['/administration/support-team', v.detail.engagementId, 'move']"
+            data-testid="case-move-link"
+            >Cambiar de rol o alcance</a
+          >
+          <a
+            app-button
+            variant="outline"
+            size="sm"
+            [routerLink]="['/administration/support-team', v.detail.engagementId, 'offboard']"
+            data-testid="case-offboard-link"
+            >Dar de baja o suspender</a
+          >
+        </p>
+      }
+
+      <div aria-live="polite" role="status" data-testid="case-notice">
+        @if (notice() !== '') {
+          <app-alert tone="success">{{ notice() }}</app-alert>
+        }
+      </div>
+      @if (failure() !== '') {
+        <app-alert
+          tone="error"
+          title="No se pudo completar"
+          role="alert"
+          data-testid="case-failure"
+          >{{ failure() }}</app-alert
+        >
+      }
+
+      <app-tabs [(selectedIndex)]="tab">
+        <app-tab label="Lista de verificación">
+          <p class="avance" data-testid="checklist-progress">{{ progress().text }}</p>
+          @if (checklist().length === 0) {
+            <p class="vacio" data-testid="checklist-empty">
+              Este tipo de caso no tiene lista de verificación: se completa solo.
+            </p>
+          } @else {
+            <ol class="pasos" data-testid="checklist">
+              @for (row of checklist(); track row.code) {
+                <li
+                  class="paso"
+                  [attr.data-testid]="'step-' + row.code"
+                  [attr.data-done]="row.done"
+                >
+                  <div class="paso__cabeza">
+                    <p class="paso__nombre">
+                      {{ row.label }}
+                      @if (!row.required) {
+                        <span class="paso__opcional"> (informativo)</span>
+                      }
+                    </p>
+                    @if (row.done) {
+                      <app-badge variant="success" [attr.data-testid]="'step-status-' + row.code"
+                        >Hecho
+                        @if (row.completedAt) {
+                          el {{ day(row.completedAt) }}
+                        }
+                      </app-badge>
+                    } @else {
+                      <app-badge variant="warning" [attr.data-testid]="'step-status-' + row.code"
+                        >Pendiente</app-badge
+                      >
+                    }
+                  </div>
+                  @if (row.help !== '') {
+                    <p class="paso__ayuda">{{ row.help }}</p>
+                  }
+                  @if (!row.done && v.detail.status === 'OPEN') {
+                    @if (row.automatic) {
+                      <p class="paso__auto" [attr.data-testid]="'step-auto-' + row.code">
+                        Este paso se completa solo: no hace falta que usted haga nada.
+                      </p>
+                    } @else if (row.code === 'IDENTITY_VERIFIED') {
+                      <div class="paso__accion">
+                        <app-select
+                          [value]="identityMethod()"
+                          (valueChange)="identityMethod.set($event)"
+                          [options]="identityOptions"
+                          ariaLabel="Cómo se verificó la identidad"
+                          data-testid="identity-method"
+                        />
+                        <button
+                          app-button
+                          size="sm"
+                          type="button"
+                          [isLoading]="busy() === 'identity'"
+                          [disabled]="busy() !== null"
+                          (clicked)="registerIdentity()"
+                          data-testid="identity-register"
+                        >
+                          Registrar verificación
+                        </button>
+                      </div>
+                    } @else if (row.code === 'SUPERVISOR_ASSIGNED') {
+                      <div class="paso__accion">
+                        <app-select
+                          [value]="owner()"
+                          (valueChange)="owner.set($event)"
+                          [options]="recipientOptions()"
+                          placeholder="Elija al dueño"
+                          ariaLabel="Dueño de la cuenta"
+                          data-testid="owner-select"
+                        />
+                        <button
+                          app-button
+                          size="sm"
+                          type="button"
+                          [isLoading]="busy() === 'owner'"
+                          [disabled]="busy() !== null"
+                          (clicked)="assignOwner()"
+                          data-testid="owner-assign"
+                        >
+                          Asignar dueño
+                        </button>
+                      </div>
+                    } @else {
+                      <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        [isLoading]="busy() === 'done-' + row.code"
+                        [disabled]="busy() !== null"
+                        [attr.aria-label]="'Marcar como hecho: ' + row.label"
+                        (clicked)="markDone(row)"
+                        [attr.data-testid]="'step-done-' + row.code"
+                      >
+                        Marcar como hecho
+                      </button>
+                    }
+                  }
+                </li>
+              }
+            </ol>
+          }
+        </app-tab>
+
+        <app-tab label="Traspaso">
+          @if (handoverRows().length === 0) {
+            <p class="vacio" data-testid="handover-empty">
+              @if (v.detail.kind === 'LEAVER') {
+                Todavía no hay trabajo traspasado en este caso.
+              } @else {
+                Este caso no tiene trabajo para traspasar.
+              }
+            </p>
+          } @else {
+            <table class="tabla" data-testid="handover-table">
+              <caption class="sr-only">
+                Trabajo traspasado en este caso
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Qué</th>
+                  <th scope="col">De</th>
+                  <th scope="col">A</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Cuándo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of handoverRows(); track row.id) {
+                  <tr [attr.data-testid]="'handover-' + row.id">
+                    <td>{{ row.what }}</td>
+                    <td>{{ row.from }}</td>
+                    <td>{{ row.to }}</td>
+                    <td>
+                      <app-badge [variant]="handoverStatusTone(row.status)" size="sm">{{
+                        handoverStatusLabel(row.status)
+                      }}</app-badge>
+                    </td>
+                    <td>{{ row.when }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
+          @if (canAssignHandover()) {
+            <div class="asignar">
+              <p class="asignar__texto">
+                La baja ya es firme: el acceso terminó. Lo que quedó pendiente se puede pasar ahora
+                a otra persona.
+              </p>
+              <app-form-field label="¿Quién recibe el trabajo pendiente?" [required]="true">
+                <app-select
+                  [value]="recipient()"
+                  (valueChange)="recipient.set($event)"
+                  [options]="recipientOptions()"
+                  placeholder="Elija a la persona"
+                  data-testid="handover-recipient"
+                />
+              </app-form-field>
+              <button
+                app-button
+                type="button"
+                [isLoading]="busy() === 'handover'"
+                [disabled]="busy() !== null"
+                (clicked)="assignHandover()"
+                data-testid="handover-assign"
+              >
+                Asignar lo pendiente
+              </button>
+            </div>
+          }
+        </app-tab>
+
+        <app-tab label="Registro">
+          <dl class="datos" data-testid="case-record">
+            <div>
+              <dt>Tipo</dt>
+              <dd>{{ kindLabel(v.detail.kind) }}</dd>
+            </div>
+            <div>
+              <dt>Estado</dt>
+              <dd>{{ statusLabel(v.detail.status) }}</dd>
+            </div>
+            <div>
+              <dt>Abierto el</dt>
+              <dd>{{ dateTime(v.detail.openedAt) }}</dd>
+            </div>
+            @if (v.detail.completedAt) {
+              <div>
+                <dt>Cerrado el</dt>
+                <dd>{{ dateTime(v.detail.completedAt) }}</dd>
+              </div>
+            }
+            @if (v.detail.reason) {
+              <div>
+                <dt>Motivo</dt>
+                <dd>{{ v.detail.reason }}</dd>
+              </div>
+            }
+          </dl>
+          <button
+            app-button
+            variant="outline"
+            type="button"
+            [isLoading]="busy() === 'export'"
+            [disabled]="busy() !== null"
+            (clicked)="exportCase()"
+            data-testid="case-export"
+          >
+            Exportar el registro de transferencia
+          </button>
+          @if (exported(); as file) {
+            <app-alert tone="info" title="Registro exportado" data-testid="case-exported">
+              Se generó el {{ dateTime(file.exportedAt) }}. Huella de verificación:
+              <code class="huella">{{ file.sha256 }}</code>
+            </app-alert>
+          }
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>

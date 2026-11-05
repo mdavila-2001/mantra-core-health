@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,7 +17,6 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
-import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
 import { writeFailureMessage } from '../../write-message';
 import { AdditionalFields, entradasDelTexto } from '../additional-fields/additional-fields';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
@@ -67,7 +67,6 @@ import {
 import { Odontogram } from '../odontogram/odontogram';
 import { fieldsOf, templateByCoverage, responsesOf, type ResponseVisible } from './form-reading';
 import { esMapa, esVacio } from './form-values';
-import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
 import type { MapaDental } from '../odontogram/odontogram.types';
 
@@ -250,9 +249,8 @@ interface PasoDelCierre {
  * ## La ficha termina en un cierre (D4)
  *
  * Con una plantilla de `forms` elegida, debajo de los campos va el **cierre**
- * (`app-form-conclusion-block`): la IA sugiere diagnósticos tentativos y
- * análisis a partir de lo respondido, y quien atiende elige —opcionalmente—
- * un diagnóstico y una orden. Al completar se encadena, en este orden: cerrar
+ * (`app-form-conclusion-block`): quien atiende elige —opcionalmente y a
+ * mano— un diagnóstico y una orden. Al completar se encadena, en este orden: cerrar
  * la instancia → registrar el diagnóstico (nace presuntivo, dentro del
  * encuentro, con el nombre de la ficha como nota) → pedir la orden. Cada paso
  * avisa por su cuenta, y **un fallo no deshace el anterior**: la ficha ya
@@ -1201,30 +1199,6 @@ export class SpecialtyFormBlock {
    */
   protected readonly fallosDelCierre = signal<readonly string[]>([]);
 
-  /**
-   * Las preguntas de la ficha con lo respondido, en palabras, para la IA.
-   *
-   * Sólo lo respondido, y nunca el odontograma: es un mapa de piezas, no una
-   * respuesta que se pueda leer.
-   */
-  protected readonly respuestasParaLaIa = computed<readonly RespuestaDeFormulario[]>(() => {
-    const plantilla = this.plantillaElegida();
-    if (plantilla === null) return [];
-    const valores = this.valores();
-    const ocultos = this.ocultos();
-    const deLaPlantilla = plantilla.fields.flatMap((campo) => {
-      const valor = valores[campo.fieldId];
-      if (ocultos.has(campo.fieldId) || esVacio(valor) || esMapa(valor)) return [];
-      return [{ question: campo.name, answer: textoDeValor(valor, campo.dataType) }];
-    });
-    // Lo que el doctor sumó a mano también es parte de lo observado.
-    const adicionales = (this.adicionales()?.entradas() ?? []).map((fila) => ({
-      question: fila.label,
-      answer: fila.value,
-    }));
-    return [...deLaPlantilla, ...adicionales];
-  });
-
   /* -- Completar ---------------------------------------------------------- */
 
   protected readonly enviando = signal(false);
@@ -1437,9 +1411,13 @@ export class SpecialtyFormBlock {
   ): readonly string[] {
     const estado = errorToViewState<null>(error);
     const motivo =
-      estado.status === 'validation'
-        ? estado.issues.map((issue) => issue.message).join(' ')
-        : (writeFailureMessage(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
+      // Un fallo que no es de la API —el catálogo que no publica el concepto presuntivo— dice su
+      // causa: «error inesperado (sin-id)» no le sirve a quien atiende.
+      error instanceof Error && !(error instanceof HttpErrorResponse)
+        ? error.message
+        : estado.status === 'validation'
+          ? estado.issues.map((issue) => issue.message).join(' ')
+          : (writeFailureMessage(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
     const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
     this.toasts.error(mensaje, 'La ficha quedó guardada, pero no todo el cierre');
     return [

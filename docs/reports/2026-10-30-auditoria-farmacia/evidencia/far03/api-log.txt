@@ -1,0 +1,1104 @@
+[03:09:50Z] login admin.farmacia-chavez@alovida.test
+  POST /iam/auth/login
+  body: {"email": "admin.farmacia-chavez@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "aFnAuHj9vjq6H-ce7655pGsXMVnRiL3fGU4jYmGuaLzEnJlJTxe8KLwHGQxy7Gvq", "expiresAt": "2026-11-30T03:09:50.610Z"}
+
+[03:09:50Z] crear producto amox_rx
+  POST /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/products
+  body: {"productCode": "far3-AMOX-RX", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "requiresPrescription": true, "unitPrice": 40, "stock": 50}
+  -> 201
+  resp: {"id": "f7d7511e-41ca-4592-8091-a97c00e080e1", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "productCode": "far3-AMOX-RX", "status": "e4d62cab-56ca-59b9-a460-2e708d0cdbf0", "identifierCount": 0, "createdAt": "2026-10-31T03:09:50.641Z"}
+
+[03:09:50Z] precio amox_rx
+  POST /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/price-lists/ee2db63a-f6cb-4684-8d2a-892294f2b712/prices
+  body: {"pharmacyProductId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "unitAmount": 40}
+  -> 201
+  resp: {"id": "5f9d3676-a414-4340-86bb-e53238665eba", "pharmacyPriceListId": "ee2db63a-f6cb-4684-8d2a-892294f2b712", "pharmacyProductId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "versionNumber": 1, "unitAmount": "40", "status": "ee7b3457-b279-5134-b200-39b14e1e680d", "effectiveFrom": "2026-10-31T03:09:50.676Z"}
+
+[03:09:50Z] disponibilidad sede amox_rx
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/f7d7511e-41ca-4592-8091-a97c00e080e1/availability
+  body: {"available": true, "quantity": 20}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "available": true, "quantity": 20, "stockUpdatedAt": "2026-10-31T03:09:50.719Z"}
+
+[03:09:50Z] crear producto para_rx
+  POST /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/products
+  body: {"productCode": "far3-PARA-RX", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "requiresPrescription": true, "unitPrice": 25, "stock": 50}
+  -> 201
+  resp: {"id": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "productCode": "far3-PARA-RX", "status": "e4d62cab-56ca-59b9-a460-2e708d0cdbf0", "identifierCount": 0, "createdAt": "2026-10-31T03:09:50.742Z"}
+
+[03:09:50Z] precio para_rx
+  POST /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/price-lists/ee2db63a-f6cb-4684-8d2a-892294f2b712/prices
+  body: {"pharmacyProductId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "unitAmount": 25}
+  -> 201
+  resp: {"id": "9ebd737e-adb7-4e97-8bfb-dbd9ed0edc86", "pharmacyPriceListId": "ee2db63a-f6cb-4684-8d2a-892294f2b712", "pharmacyProductId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "versionNumber": 1, "unitAmount": "25", "status": "ee7b3457-b279-5134-b200-39b14e1e680d", "effectiveFrom": "2026-10-31T03:09:50.774Z"}
+
+[03:09:50Z] disponibilidad sede para_rx
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/c9efc809-caa8-4745-a9fd-16202ed0be6b/availability
+  body: {"available": true, "quantity": 20}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "available": true, "quantity": 20, "stockUpdatedAt": "2026-10-31T03:09:50.814Z"}
+
+[03:09:50Z] crear producto nomed_rx
+  POST /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/products
+  body: {"productCode": "far3-NOMED-RX", "requiresPrescription": true, "unitPrice": 30, "stock": 50}
+  -> 201
+  resp: {"id": "8d3e3cae-6b16-4fb0-b8d6-e10d4950687a", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "productCode": "far3-NOMED-RX", "status": "e4d62cab-56ca-59b9-a460-2e708d0cdbf0", "identifierCount": 0, "createdAt": "2026-10-31T03:09:50.837Z"}
+
+[03:09:50Z] precio nomed_rx
+  POST /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/price-lists/ee2db63a-f6cb-4684-8d2a-892294f2b712/prices
+  body: {"pharmacyProductId": "8d3e3cae-6b16-4fb0-b8d6-e10d4950687a", "unitAmount": 30}
+  -> 201
+  resp: {"id": "547afe06-7314-4bd4-9910-1945acd04743", "pharmacyPriceListId": "ee2db63a-f6cb-4684-8d2a-892294f2b712", "pharmacyProductId": "8d3e3cae-6b16-4fb0-b8d6-e10d4950687a", "versionNumber": 1, "unitAmount": "30", "status": "ee7b3457-b279-5134-b200-39b14e1e680d", "effectiveFrom": "2026-10-31T03:09:50.867Z"}
+
+[03:09:50Z] disponibilidad sede nomed_rx
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/8d3e3cae-6b16-4fb0-b8d6-e10d4950687a/availability
+  body: {"available": true, "quantity": 20}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "8d3e3cae-6b16-4fb0-b8d6-e10d4950687a", "available": true, "quantity": 20, "stockUpdatedAt": "2026-10-31T03:09:50.896Z"}
+
+[03:09:50Z] crear producto para_libre
+  POST /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/products
+  body: {"productCode": "far3-PARA-LIBRE", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "requiresPrescription": false, "unitPrice": 10, "stock": 50}
+  -> 201
+  resp: {"id": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "productCode": "far3-PARA-LIBRE", "status": "e4d62cab-56ca-59b9-a460-2e708d0cdbf0", "identifierCount": 0, "createdAt": "2026-10-31T03:09:50.918Z"}
+
+[03:09:50Z] precio para_libre
+  POST /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/price-lists/ee2db63a-f6cb-4684-8d2a-892294f2b712/prices
+  body: {"pharmacyProductId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "unitAmount": 10}
+  -> 201
+  resp: {"id": "136b2751-7d6a-4617-b431-7bc7603ceb37", "pharmacyPriceListId": "ee2db63a-f6cb-4684-8d2a-892294f2b712", "pharmacyProductId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "versionNumber": 1, "unitAmount": "10", "status": "ee7b3457-b279-5134-b200-39b14e1e680d", "effectiveFrom": "2026-10-31T03:09:50.948Z"}
+
+[03:09:51Z] disponibilidad sede para_libre
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/3521c5c0-e051-4d3d-a262-1ea800b4ba34/availability
+  body: {"available": true, "quantity": 20}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "available": true, "quantity": 20, "stockUpdatedAt": "2026-10-31T03:09:50.990Z"}
+
+[03:10:04Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "XPFmtTXvp-3IqGQgq3OED1bs6vC3YGJu3GuzGEu6IHtNyMtv0rIthMCvCQZf_FEi", "expiresAt": "2026-11-30T03:10:04.610Z"}
+
+[03:10:04Z] receta draft
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-draft", "quantityDecimal": 3, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f"}
+  -> 201
+  resp: {"id": "46734a32-1279-4490-8906-645642824c82", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:10:04.715Z"}
+
+[03:10:04Z] receta invalidated
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-invalidated", "quantityDecimal": 3, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f"}
+  -> 201
+  resp: {"id": "69b1234f-4bfc-4d8b-ad3b-412f708d640c", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:10:04.767Z"}
+
+[03:10:04Z] firmar invalidated
+  POST /clinical/medication-requests/69b1234f-4bfc-4d8b-ad3b-412f708d640c/sign
+  body: {}
+  -> 200
+  resp: {"id": "69b1234f-4bfc-4d8b-ad3b-412f708d640c", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:04.808Z", "createdAt": "2026-10-31T03:10:04.767Z"}
+
+[03:10:05Z] emitir invalidated
+  POST /clinical/medication-requests/69b1234f-4bfc-4d8b-ad3b-412f708d640c/issue
+  body: {}
+  -> 200
+  resp: {"id": "69b1234f-4bfc-4d8b-ad3b-412f708d640c", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:04.808Z", "createdAt": "2026-10-31T03:10:04.767Z"}
+
+[03:10:05Z] invalidar
+  POST /clinical/medication-requests/69b1234f-4bfc-4d8b-ad3b-412f708d640c/invalidate
+  body: {"reasonText": "far3 auditoria: anulada a proposito"}
+  -> 200
+  resp: {"id": "69b1234f-4bfc-4d8b-ad3b-412f708d640c", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "a1f3ab19-c5ab-5bb8-8d16-2c324c739a3d", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:04.808Z", "createdAt": "2026-10-31T03:10:04.767Z"}
+
+[03:10:05Z] receta ok-bottle3
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-ok-bottle3", "quantityDecimal": 3, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f"}
+  -> 201
+  resp: {"id": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:10:05.629Z"}
+
+[03:10:05Z] firmar ok-bottle3
+  POST /clinical/medication-requests/0418f19e-f92f-4d1b-a61d-1d8466bae7f9/sign
+  body: {}
+  -> 200
+  resp: {"id": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:05.707Z", "createdAt": "2026-10-31T03:10:05.629Z"}
+
+[03:10:05Z] emitir ok-bottle3
+  POST /clinical/medication-requests/0418f19e-f92f-4d1b-a61d-1d8466bae7f9/issue
+  body: {}
+  -> 200
+  resp: {"id": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:05.707Z", "createdAt": "2026-10-31T03:10:05.629Z"}
+
+[03:10:05Z] receta tablet21
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-tablet21", "quantityDecimal": 21, "unitConceptId": "a1b32150-765b-5a1e-8732-d6f3e54bef9b"}
+  -> 201
+  resp: {"id": "6a442090-b2ed-44b4-85f0-6cfd4d99b6ca", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:10:05.886Z"}
+
+[03:10:05Z] firmar tablet21
+  POST /clinical/medication-requests/6a442090-b2ed-44b4-85f0-6cfd4d99b6ca/sign
+  body: {}
+  -> 200
+  resp: {"id": "6a442090-b2ed-44b4-85f0-6cfd4d99b6ca", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:05.935Z", "createdAt": "2026-10-31T03:10:05.886Z"}
+
+[03:10:06Z] emitir tablet21
+  POST /clinical/medication-requests/6a442090-b2ed-44b4-85f0-6cfd4d99b6ca/issue
+  body: {}
+  -> 200
+  resp: {"id": "6a442090-b2ed-44b4-85f0-6cfd4d99b6ca", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:05.935Z", "createdAt": "2026-10-31T03:10:05.886Z"}
+
+[03:10:06Z] receta expired-past
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-expired-past", "quantityDecimal": 3, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f", "validTo": "2026-10-29T03:10:06.000Z"}
+  -> 201
+  resp: {"id": "4d8b6134-e4b2-41b9-a3e2-f88a3e891ad9", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:10:06.109Z"}
+
+[03:10:06Z] firmar expired-past
+  POST /clinical/medication-requests/4d8b6134-e4b2-41b9-a3e2-f88a3e891ad9/sign
+  body: {}
+  -> 200
+  resp: {"id": "4d8b6134-e4b2-41b9-a3e2-f88a3e891ad9", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:06.151Z", "createdAt": "2026-10-31T03:10:06.109Z"}
+
+[03:10:06Z] emitir expired-past
+  POST /clinical/medication-requests/4d8b6134-e4b2-41b9-a3e2-f88a3e891ad9/issue
+  body: {}
+  -> 200
+  resp: {"id": "4d8b6134-e4b2-41b9-a3e2-f88a3e891ad9", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:06.151Z", "createdAt": "2026-10-31T03:10:06.109Z"}
+
+[03:10:06Z] receta expired-soon
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-expired-soon", "quantityDecimal": 3, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f", "validTo": "2026-10-31T03:11:36.000Z"}
+  -> 201
+  resp: {"id": "676fffc2-141b-4f1d-bfb0-c36f22153f71", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:10:06.252Z"}
+
+[03:10:06Z] firmar expired-soon
+  POST /clinical/medication-requests/676fffc2-141b-4f1d-bfb0-c36f22153f71/sign
+  body: {}
+  -> 200
+  resp: {"id": "676fffc2-141b-4f1d-bfb0-c36f22153f71", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:06.282Z", "createdAt": "2026-10-31T03:10:06.252Z"}
+
+[03:10:06Z] emitir expired-soon
+  POST /clinical/medication-requests/676fffc2-141b-4f1d-bfb0-c36f22153f71/issue
+  body: {}
+  -> 200
+  resp: {"id": "676fffc2-141b-4f1d-bfb0-c36f22153f71", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:10:06.282Z", "createdAt": "2026-10-31T03:10:06.252Z"}
+
+[03:10:41Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "U1A3G_EHv-R_G4NCjLRu_ppYO-K3Krbjv6kYUrW9et3iod0yCeAH2mLXrJqnvmfG", "expiresAt": "2026-11-30T03:10:41.649Z"}
+
+[03:10:45Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "HNfHQanOXN3bGVvaHndnVMlCA6f20V656bj52LFNK1cP01naBBUcDeg95gKp7F2P", "expiresAt": "2026-11-30T03:10:45.066Z"}
+
+[03:10:45Z] 422? A draft+amox_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "46734a32-1279-4490-8906-645642824c82"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta ya no se puede usar: fue anulada, reemplazada o ya se entregó.", "correlationId": "a29d96c5-3536-4855-ab5e-458e05a142dd", "details": {"reason": "PRESCRIPTION_NOT_ACTIVE", "medicationRequestId": "46734a32-1279-4490-8906-645642824c82"}, "reason": "PRESCRIPTION_NOT_ACTIVE", "timestamp": "2026-10-31T03:10:45.306Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? B invalidada+amox_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "69b1234f-4bfc-4d8b-ad3b-412f708d640c"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta ya no se puede usar: fue anulada, reemplazada o ya se entregó.", "correlationId": "c154111b-8d30-4cb6-bbc5-9ce0dd412881", "details": {"reason": "PRESCRIPTION_NOT_ACTIVE", "medicationRequestId": "69b1234f-4bfc-4d8b-ad3b-412f708d640c"}, "reason": "PRESCRIPTION_NOT_ACTIVE", "timestamp": "2026-10-31T03:10:45.326Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? C vencida(pasado)+amox_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "4d8b6134-e4b2-41b9-a3e2-f88a3e891ad9"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta venció. Pida a su médico una nueva.", "correlationId": "f5755cc0-8cc2-4cee-81fe-9f5c24582310", "details": {"reason": "PRESCRIPTION_EXPIRED", "medicationRequestId": "4d8b6134-e4b2-41b9-a3e2-f88a3e891ad9"}, "reason": "PRESCRIPTION_EXPIRED", "timestamp": "2026-10-31T03:10:45.347Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? M draft+solo venta libre
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": 1}], "medicationRequestId": "46734a32-1279-4490-8906-645642824c82"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta ya no se puede usar: fue anulada, reemplazada o ya se entregó.", "correlationId": "e8ad5cbe-db30-4b2c-8457-4f62ca787e3c", "details": {"reason": "PRESCRIPTION_NOT_ACTIVE", "medicationRequestId": "46734a32-1279-4490-8906-645642824c82"}, "reason": "PRESCRIPTION_NOT_ACTIVE", "timestamp": "2026-10-31T03:10:45.368Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? D sin receta+amox_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Uno de los productos se vende solo con receta. Elíjalo desde «Mis recetas».", "correlationId": "0b43a19e-4a0b-4d84-a33e-1f0d09171e5f", "details": {"reason": "PRESCRIPTION_REQUIRED", "medicationRequestId": null, "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "PRESCRIPTION_REQUIRED", "timestamp": "2026-10-31T03:10:45.382Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? E sin receta+nomed_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "8d3e3cae-6b16-4fb0-b8d6-e10d4950687a", "quantity": 1}]}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Uno de los productos se vende solo con receta. Elíjalo desde «Mis recetas».", "correlationId": "0bd4ba23-cbae-4fc6-92f2-20c9b23d49e0", "details": {"reason": "PRESCRIPTION_REQUIRED", "medicationRequestId": null, "productIds": ["8d3e3cae-6b16-4fb0-b8d6-e10d4950687a"]}, "reason": "PRESCRIPTION_REQUIRED", "timestamp": "2026-10-31T03:10:45.397Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? F receta amox + para_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "quantity": 1}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Uno de los productos no es el medicamento de su receta. Quítelo del pedido para continuar.", "correlationId": "e92aff30-5444-4590-9f6b-1f71058a2cda", "details": {"reason": "PRODUCT_NOT_PRESCRIBED", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["c9efc809-caa8-4745-a9fd-16202ed0be6b"]}, "reason": "PRODUCT_NOT_PRESCRIBED", "timestamp": "2026-10-31T03:10:45.421Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? G receta amox + nomed_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "8d3e3cae-6b16-4fb0-b8d6-e10d4950687a", "quantity": 1}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Uno de los productos no es el medicamento de su receta. Quítelo del pedido para continuar.", "correlationId": "d5396d64-4fb7-432d-8daa-e90607a6b93d", "details": {"reason": "PRODUCT_NOT_PRESCRIBED", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["8d3e3cae-6b16-4fb0-b8d6-e10d4950687a"]}, "reason": "PRODUCT_NOT_PRESCRIBED", "timestamp": "2026-10-31T03:10:45.441Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? H receta amox(3 envases) + amox_rx x4
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 4}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "c306daed-e6d9-4053-8e8c-c96537b5586b", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:10:45.462Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? F2 receta amox + amox_rx x1 + para_rx x1 (mixto)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}, {"productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "quantity": 1}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Uno de los productos no es el medicamento de su receta. Quítelo del pedido para continuar.", "correlationId": "1cd99bd7-c937-4c14-83b7-2b27d94cf959", "details": {"reason": "PRODUCT_NOT_PRESCRIBED", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["c9efc809-caa8-4745-a9fd-16202ed0be6b"]}, "reason": "PRODUCT_NOT_PRESCRIBED", "timestamp": "2026-10-31T03:10:45.484Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? L receta inexistente
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "00000000-0000-4000-8000-000000000001"}
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Receta no encontrada", "correlationId": "774220f3-2570-40c8-8e43-8eb6dd4bbea9", "details": {"medicationRequestId": "00000000-0000-4000-8000-000000000001"}, "timestamp": "2026-10-31T03:10:45.500Z", "path": "/pharmacy/orders"}
+
+[03:10:45Z] 422? N cantidad 0
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 0}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 400
+  resp: {"code": "VALIDATION_FAILED", "message": "Error de validación", "correlationId": "c89ecbe8-62d6-4a9e-adf5-c70be69048ef", "details": {"violations": ["lines.0.quantity must be a positive number"], "fields": [{"field": "lines.0.quantity", "constraints": ["isPositive"], "messages": ["quantity must be a positive number"]}]}, "reason": "VALIDATION_PIPE_REJECTED", "timestamp": "2026-10-31T03:10:45.514Z", "path": "/pharmacy/orders"}
+
+[03:10:56Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "rr7l38utmmidURtrQqb_aPyCcw8dEIAHHvWVDNW1-PBe19tKtJos3TUz8GyNCFxa", "expiresAt": "2026-11-30T03:10:56.387Z"}
+
+[03:10:56Z] receta que vence en <90s, aun vigente
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "676fffc2-141b-4f1d-bfb0-c36f22153f71", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "fead0d05-a9c7-4e20-9637-eda31259122c", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "fd1e1ebd-4f74-49c3-a893-1171eed17fd0", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:10:56.414Z", "expiresAt": "2026-11-02T03:10:56.414Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "676fffc2-141b-4f1d-bfb0-c36f22153f71", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:11:03Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "5uf4lH8aZpDf3kkVZQiii7Nb1AnpYj_MZesUWnA4xc0cOzI1CidKrL8gNGowacgC", "expiresAt": "2026-11-30T03:11:03.802Z"}
+
+[03:11:03Z] 1 venta libre sin receta (para_libre x2)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": 2}]}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "6611fa29-7803-406e-8f0d-ccf70a9c633d", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": "2", "unitPriceAmount": "10.00", "billedAmount": "20.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "d904ec74-429a-412b-b3ee-5cf295fd34a7", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:11:03.849Z", "expiresAt": "2026-11-02T03:11:03.849Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": null, "prescriber": null, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "20.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 2, "reservedQuantity": 2, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:11:03Z] 2 receta(3 env) amox_rx x2 + para_libre x1 (D-4)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 2}, {"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": 1}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "4f0516b6-fa5b-41e5-976e-2b26eb7bbdb5", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": "1", "unitPriceAmount": "10.00", "billedAmount": "10.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}, {"id": "c74c85ab-45ba-43d9-b7c7-0995449344fc", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "2", "unitPriceAmount": "40.00", "billedAmount": "80.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "a4681da8-39f9-4b62-8c10-3e7f6d7cb7e8", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:11:03.917Z", "expiresAt": "2026-11-02T03:11:03.917Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "90.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 2, "reservedQuantity": 2, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}, {"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirme
+
+[03:11:04Z] 3 receta saldo 1: amox_rx x2 => debe 422
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 2}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "6a8051dc-b77e-4210-b615-ba7865089687", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:11:04.200Z", "path": "/pharmacy/orders"}
+
+[03:11:04Z] 4 receta saldo 1: amox_rx x1 => 201
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "9d5db9e1-1cc0-4e0a-84a5-527e4c8c8f91", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "8656e6c0-bde5-4ae7-b64f-1d960a86fbe6", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:11:04.232Z", "expiresAt": "2026-11-02T03:11:04.232Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:11:04Z] 5 receta saldo 0: amox_rx x1 => 422
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "6e9ab062-4700-4d00-963b-d15895114774", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:11:04.495Z", "path": "/pharmacy/orders"}
+
+[03:11:04Z] 6 cancelar pedido 2
+  POST /pharmacy/orders/a4681da8-39f9-4b62-8c10-3e7f6d7cb7e8/cancel
+  body: {}
+  -> 200
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [], "id": "a4681da8-39f9-4b62-8c10-3e7f6d7cb7e8", "status": {"code": "PINV_ORDER_CANCELADO", "display": "Order cancelled"}, "createdAt": "2026-10-31T03:11:03.917Z", "expiresAt": "2026-11-02T03:11:03.917Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "90.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 2, "reservedQuantity": 2, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_RELEASED", "display": "Reservation line released"}}, {"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_RELEASED", "display": "Reservation line released"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:11:04Z] 7 tras cancelar saldo 2: amox_rx x2 => 201
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 2}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "c0518481-aa3c-4c1f-ae24-03e7a2c1d4b8", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "2", "unitPriceAmount": "40.00", "billedAmount": "80.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "2945e826-e829-4799-84a4-271f5cbec858", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:11:04.788Z", "expiresAt": "2026-11-02T03:11:04.788Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "80.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 2, "reservedQuantity": 2, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:11:04Z] 8 saldo 0 otra vez: x1 => 422
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "706c7f59-13bf-4028-820f-7e2506725e69", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:11:04.869Z", "path": "/pharmacy/orders"}
+
+[03:11:04Z] 9 receta en comprimidos (no comparable) amox_rx x5 => 201 sin control
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 5}], "medicationRequestId": "6a442090-b2ed-44b4-85f0-6cfd4d99b6ca"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "a9185db1-dc20-4431-8df1-ef9718e25802", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "5", "unitPriceAmount": "40.00", "billedAmount": "200.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "05d6a37e-62a7-4958-acf5-5ead97d85a7c", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:11:04.887Z", "expiresAt": "2026-11-02T03:11:04.887Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "6a442090-b2ed-44b4-85f0-6cfd4d99b6ca", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "200.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 5, "reservedQuantity": 5, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:11:09Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "kfKNVzO0jO7yG-TnhdDAOgPZmWzxBtyb9pulISMX8WXE1xt2Z4h9Cm8k-Loytq6k", "expiresAt": "2026-11-30T03:11:09.326Z"}
+
+[03:11:09Z] misma receta, ya pasado su validTo (03:11:36Z)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "676fffc2-141b-4f1d-bfb0-c36f22153f71", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "f60243c0-d5b8-4134-8a91-6717368c5910", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "a94c75c3-c885-4784-bd53-2d154dd764c4", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:11:09.358Z", "expiresAt": "2026-11-02T03:11:09.358Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "676fffc2-141b-4f1d-bfb0-c36f22153f71", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:11:41Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "ut40e75iPPW5rfh3x3v-fvqa0FCAZ5Mt2ifzAwlhEZqV03JGgIdkLxWcy5yxeFvG", "expiresAt": "2026-11-30T03:11:41.437Z"}
+
+[03:11:41Z] misma receta, ya pasado su validTo (03:11:36Z)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "676fffc2-141b-4f1d-bfb0-c36f22153f71", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta venció. Pida a su médico una nueva.", "correlationId": "868ec5c1-859b-4a39-9ffe-a54bc013e9d0", "details": {"reason": "PRESCRIPTION_EXPIRED", "medicationRequestId": "676fffc2-141b-4f1d-bfb0-c36f22153f71"}, "reason": "PRESCRIPTION_EXPIRED", "timestamp": "2026-10-31T03:11:41.523Z", "path": "/pharmacy/orders"}
+
+[03:12:06Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "l4Jmdd5GfbhBMUliGx6OStFuQ50b5ngB9wLDYWnCsPb7GzIAw0bhUtNNjrWPS368", "expiresAt": "2026-11-30T03:12:06.495Z"}
+
+[03:12:06Z] receta replaced-orig
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-replaced-orig", "quantityDecimal": 3, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f"}
+  -> 201
+  resp: {"id": "ed6732ae-ef37-4151-80ff-a44820653f97", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:12:06.738Z"}
+
+[03:12:06Z] firmar replaced-orig
+  POST /clinical/medication-requests/ed6732ae-ef37-4151-80ff-a44820653f97/sign
+  body: {}
+  -> 200
+  resp: {"id": "ed6732ae-ef37-4151-80ff-a44820653f97", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:06.840Z", "createdAt": "2026-10-31T03:12:06.738Z"}
+
+[03:12:07Z] emitir replaced-orig
+  POST /clinical/medication-requests/ed6732ae-ef37-4151-80ff-a44820653f97/issue
+  body: {}
+  -> 200
+  resp: {"id": "ed6732ae-ef37-4151-80ff-a44820653f97", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:06.840Z", "createdAt": "2026-10-31T03:12:06.738Z"}
+
+[03:12:07Z] reemplazar
+  POST /clinical/medication-requests/ed6732ae-ef37-4151-80ff-a44820653f97/replace
+  body: {"reasonText": "far3 auditoria: correccion", "quantityDecimal": 3}
+  -> 201
+  resp: {"id": "74613a83-211a-4b69-81a9-3e29246557b4", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": "ed6732ae-ef37-4151-80ff-a44820653f97", "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:12:07.114Z"}
+
+[03:12:07Z] receta completed
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-completed", "quantityDecimal": 3, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f"}
+  -> 201
+  resp: {"id": "84c3acb0-3fa5-4bc3-aadd-ca923909e585", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:12:07.141Z"}
+
+[03:12:07Z] firmar completed
+  POST /clinical/medication-requests/84c3acb0-3fa5-4bc3-aadd-ca923909e585/sign
+  body: {}
+  -> 200
+  resp: {"id": "84c3acb0-3fa5-4bc3-aadd-ca923909e585", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:07.174Z", "createdAt": "2026-10-31T03:12:07.141Z"}
+
+[03:12:07Z] emitir completed
+  POST /clinical/medication-requests/84c3acb0-3fa5-4bc3-aadd-ca923909e585/issue
+  body: {}
+  -> 200
+  resp: {"id": "84c3acb0-3fa5-4bc3-aadd-ca923909e585", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:07.174Z", "createdAt": "2026-10-31T03:12:07.141Z"}
+
+[03:12:07Z] ultima dosis (cierra la receta)
+  POST /clinical/medication-records
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "requestId": "84c3acb0-3fa5-4bc3-aadd-ca923909e585", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseDecimal": 1, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f", "isFinalDose": true}
+  -> 201
+  resp: {"id": "e03e3e46-683b-49e9-9e93-5b9cf87c37fe", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "status": "6b9be8ab-bbec-559d-8cb5-6624e3123270", "requestId": "84c3acb0-3fa5-4bc3-aadd-ca923909e585", "createdAt": "2026-10-31T03:12:07.246Z"}
+
+[03:12:07Z] check-in encuentro nuevo
+  POST /clinical/encounters/check-in
+  body: {"patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "tenantId": "1befcfea-44c0-563a-81cd-337ec6acc840"}
+  -> 201
+  resp: {"id": "5dae21eb-ad61-454f-9b62-d7cd97852234", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "episodeId": null, "status": "281daa85-6561-5e8b-9802-de6ac76114fa", "participantIds": [], "locationIds": [], "startAt": "2026-10-31T03:12:07.265Z", "endAt": null, "createdAt": "2026-10-31T03:12:07.265Z", "contentHash": null, "sealedAt": null}
+
+[03:12:07Z] receta enc-A-amox2
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-enc-A-amox2", "quantityDecimal": 2, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f", "encounterId": "5dae21eb-ad61-454f-9b62-d7cd97852234"}
+  -> 201
+  resp: {"id": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:12:07.280Z"}
+
+[03:12:07Z] firmar enc-A-amox2
+  POST /clinical/medication-requests/9f236c3e-5145-4bfc-a2c5-31f5d209d4e8/sign
+  body: {}
+  -> 200
+  resp: {"id": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:07.299Z", "createdAt": "2026-10-31T03:12:07.280Z"}
+
+[03:12:07Z] emitir enc-A-amox2
+  POST /clinical/medication-requests/9f236c3e-5145-4bfc-a2c5-31f5d209d4e8/issue
+  body: {}
+  -> 200
+  resp: {"id": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:07.299Z", "createdAt": "2026-10-31T03:12:07.280Z"}
+
+[03:12:07Z] receta enc-B-para2-draft
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "doseText": "far3-enc-B-para2-draft", "quantityDecimal": 2, "unitConceptId": "ac6454f9-7783-5360-93f8-d22864f6642f", "encounterId": "5dae21eb-ad61-454f-9b62-d7cd97852234"}
+  -> 201
+  resp: {"id": "57a03a19-2e1b-49a7-9fb8-7824fae786f7", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:12:07.367Z"}
+
+[03:12:17Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "E3I2R8696i95yGv-SkGEVa-_L24QjpMMaW1Y19tO4-Z5TxyKQ5GJfh5DzZzWpBz-", "expiresAt": "2026-11-30T03:12:17.099Z"}
+
+[03:12:17Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "_nD92MQeMe1kKD-aoYWoYwIbsI9X6JtHPCQ2YC2jwjjC1oUCZ4mEbjA7qM6iiZjY", "expiresAt": "2026-11-30T03:12:17.184Z"}
+
+[03:12:17Z] R1 reemplazada (original) + amox_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "ed6732ae-ef37-4151-80ff-a44820653f97"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta ya no se puede usar: fue anulada, reemplazada o ya se entregó.", "correlationId": "93dfbcb4-de8c-4b51-af8b-1a527be09309", "details": {"reason": "PRESCRIPTION_NOT_ACTIVE", "medicationRequestId": "ed6732ae-ef37-4151-80ff-a44820653f97"}, "reason": "PRESCRIPTION_NOT_ACTIVE", "timestamp": "2026-10-31T03:12:17.210Z", "path": "/pharmacy/orders"}
+
+[03:12:17Z] R2 reemplazo aun BORRADOR + amox_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "74613a83-211a-4b69-81a9-3e29246557b4"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta ya no se puede usar: fue anulada, reemplazada o ya se entregó.", "correlationId": "a55e1dd4-16d9-4b95-a5d1-abeaed407ecf", "details": {"reason": "PRESCRIPTION_NOT_ACTIVE", "medicationRequestId": "74613a83-211a-4b69-81a9-3e29246557b4"}, "reason": "PRESCRIPTION_NOT_ACTIVE", "timestamp": "2026-10-31T03:12:17.227Z", "path": "/pharmacy/orders"}
+
+[03:12:17Z] firmar reemplazo
+  POST /clinical/medication-requests/74613a83-211a-4b69-81a9-3e29246557b4/sign
+  body: {}
+  -> 200
+  resp: {"id": "74613a83-211a-4b69-81a9-3e29246557b4", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": "ed6732ae-ef37-4151-80ff-a44820653f97", "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:17.237Z", "createdAt": "2026-10-31T03:12:07.114Z"}
+
+[03:12:17Z] emitir reemplazo
+  POST /clinical/medication-requests/74613a83-211a-4b69-81a9-3e29246557b4/issue
+  body: {}
+  -> 200
+  resp: {"id": "74613a83-211a-4b69-81a9-3e29246557b4", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": "ed6732ae-ef37-4151-80ff-a44820653f97", "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:17.237Z", "createdAt": "2026-10-31T03:12:07.114Z"}
+
+[03:12:17Z] R3 reemplazo EMITIDO + amox_rx x1 => 201
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "74613a83-211a-4b69-81a9-3e29246557b4"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "a2530554-3304-4541-b99d-dee7fae1980d", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "ac49637c-2b53-4acb-80da-95b65d40af4a", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:17.302Z", "expiresAt": "2026-11-02T03:12:17.302Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "74613a83-211a-4b69-81a9-3e29246557b4", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:12:17Z] K1 completada + amox_rx
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "84c3acb0-3fa5-4bc3-aadd-ca923909e585"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta ya no se puede usar: fue anulada, reemplazada o ya se entregó.", "correlationId": "012a25bb-e1c2-4668-8be4-ed79bf794307", "details": {"reason": "PRESCRIPTION_NOT_ACTIVE", "medicationRequestId": "84c3acb0-3fa5-4bc3-aadd-ca923909e585"}, "reason": "PRESCRIPTION_NOT_ACTIVE", "timestamp": "2026-10-31T03:12:17.394Z", "path": "/pharmacy/orders"}
+
+[03:12:17Z] E1 encuentro: A emitida, B borrador; pide para_rx => PRODUCT_NOT_PRESCRIBED
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "quantity": 1}], "medicationRequestId": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Uno de los productos no es el medicamento de su receta. Quítelo del pedido para continuar.", "correlationId": "9165e987-f93a-4807-badf-e3b6eabba826", "details": {"reason": "PRODUCT_NOT_PRESCRIBED", "medicationRequestId": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8", "productIds": ["c9efc809-caa8-4745-a9fd-16202ed0be6b"]}, "reason": "PRODUCT_NOT_PRESCRIBED", "timestamp": "2026-10-31T03:12:17.417Z", "path": "/pharmacy/orders"}
+
+[03:12:17Z] firmar B
+  POST /clinical/medication-requests/57a03a19-2e1b-49a7-9fb8-7824fae786f7/sign
+  body: {}
+  -> 200
+  resp: {"id": "57a03a19-2e1b-49a7-9fb8-7824fae786f7", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:17.430Z", "createdAt": "2026-10-31T03:12:07.367Z"}
+
+[03:12:17Z] emitir B
+  POST /clinical/medication-requests/57a03a19-2e1b-49a7-9fb8-7824fae786f7/issue
+  body: {}
+  -> 200
+  resp: {"id": "57a03a19-2e1b-49a7-9fb8-7824fae786f7", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:17.430Z", "createdAt": "2026-10-31T03:12:07.367Z"}
+
+[03:12:17Z] E2 encuentro: ahora B emitida; pide amox x1 + para x1 con id de A => 201
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}, {"productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "quantity": 1}], "medicationRequestId": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "e03d8d18-9e8e-44a3-bb28-273ee979b741", "productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "quantity": "1", "unitPriceAmount": "25.00", "billedAmount": "25.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}, {"id": "e6fb5948-24a6-40d7-bde0-fe9a35244edb", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "ff528614-6d8b-44e3-815b-3ec062ff88cc", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:17.498Z", "expiresAt": "2026-11-02T03:12:17.498Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "65.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}, {"productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "25.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}
+
+[03:12:17Z] E3 encuentro: para_rx x2 (queda 1) con id de A => EXCEEDS
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "quantity": 2}], "medicationRequestId": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "aa851b70-7275-4e17-bd86-e430b2df2901", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "9f236c3e-5145-4bfc-a2c5-31f5d209d4e8", "productIds": ["c9efc809-caa8-4745-a9fd-16202ed0be6b"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:12:17.584Z", "path": "/pharmacy/orders"}
+
+[03:12:17Z] E4 encuentro: pidiendo con id de B (hermana A) amox x1 => 201 (A queda 0)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "57a03a19-2e1b-49a7-9fb8-7824fae786f7"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "29a45def-2c46-4722-8ab8-b4660ed7bc38", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "742d789e-4931-41d2-8775-e1b47adb7257", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:17.601Z", "expiresAt": "2026-11-02T03:12:17.601Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "57a03a19-2e1b-49a7-9fb8-7824fae786f7", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:12:17Z] E5 encuentro: amox otra vez => EXCEEDS
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "medicationRequestId": "57a03a19-2e1b-49a7-9fb8-7824fae786f7"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "4fb5f2bd-f28a-495a-965d-e509303d6433", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "57a03a19-2e1b-49a7-9fb8-7824fae786f7", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:12:17.665Z", "path": "/pharmacy/orders"}
+
+[03:12:23Z] registrar paciente ajena far3-otra
+  POST /iam/auth/register-patient
+  body: {"nationalId": "7798123", "issuerAdministrativeAreaConceptId": "03433472-424c-5c7e-8ab4-16b25baa1c07", "residenceMunicipalityConceptId": "5132db42-8cb1-52d6-88f5-0e9a04bdc94c", "password": "Audit.Local.2026", "name": "Far3", "lastName": "Otra", "email": "far3-otra@alovida.test", "birthDate": "1988-02-02", "phone": "+591 71234000", "sexAtBirth": "FEMALE"}
+  -> 201
+  resp: {"userId": "4dcd03ef-d461-400b-88ad-16b5d5890daf", "personId": "7c81e667-ddc2-4116-ae8e-7e43be4663b5", "patientProfileId": "7c81e667-ddc2-4116-ae8e-7e43be4663b5", "patientCode": "PAT-f2428151-1728-49da-bd81-6ba40503eec5", "emailVerificationSent": true}
+
+[03:12:30Z] login far3-otra@alovida.test
+  POST /iam/auth/login
+  body: {"email": "far3-otra@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "VWtM_p-TTSyknc1oxLYEmSoy9us00y5nxb57sWueTL3Gsex1FfdxWGrhYdf6O2Fr", "expiresAt": "2026-11-30T03:12:30.590Z"}
+
+[03:12:30Z] F1 paciente AJENA usa receta de Lucia (ok)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Receta no encontrada", "correlationId": "0f8dd6b8-6044-431f-afa7-3bc31cb29059", "details": {"medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9"}, "timestamp": "2026-10-31T03:12:30.618Z", "path": "/pharmacy/orders"}
+
+[03:12:30Z] F2 paciente AJENA usa receta BORRADOR de Lucia (no debe filtrar estado)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "46734a32-1279-4490-8906-645642824c82", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Receta no encontrada", "correlationId": "b78add75-70bd-4ed7-b2e3-5f20619526b9", "details": {"medicationRequestId": "46734a32-1279-4490-8906-645642824c82"}, "timestamp": "2026-10-31T03:12:30.634Z", "path": "/pharmacy/orders"}
+
+[03:12:45Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "SxhWIZr89VLWW7AeDcN89OXqVgo0AMIzchQIsI3Q_liAN3GVquAXrBxDiqZKnuOq", "expiresAt": "2026-11-30T03:12:45.373Z"}
+
+[03:12:45Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "wLZVVSBWVRoQ-mspvIIGWkMIpOJ0dcZO_-zRabDhj35UjuGpfnP-m_Lh3JaIxYkG", "expiresAt": "2026-11-30T03:12:45.464Z"}
+
+[03:12:45Z] X1 producto de OTRA farmacia (requiere receta) con receta agotada
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "lines": [{"productId": "4ad3e063-465c-55b4-8ca3-019e053401ba", "quantity": 1}]}
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Producto no disponible en la sede", "correlationId": "38bd7c5e-d095-40c9-a1b0-2493c76c5cee", "details": {"productIds": ["4ad3e063-465c-55b4-8ca3-019e053401ba"]}, "timestamp": "2026-10-31T03:12:45.495Z", "path": "/pharmacy/orders"}
+
+[03:12:45Z] X2 producto ajeno que requiere receta, SIN receta (404 antes que PRESCRIPTION_REQUIRED?)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "4ad3e063-465c-55b4-8ca3-019e053401ba", "quantity": 1}]}
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Producto no disponible en la sede", "correlationId": "da5444c1-0cbb-4dad-b2b3-3d54baf6f0ec", "details": {"productIds": ["4ad3e063-465c-55b4-8ca3-019e053401ba"]}, "timestamp": "2026-10-31T03:12:45.511Z", "path": "/pharmacy/orders"}
+
+[03:12:45Z] receta idem-bottle1
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-idem-bottle1", "quantityDecimal": 1, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f"}
+  -> 201
+  resp: {"id": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:12:45.524Z"}
+
+[03:12:45Z] firmar idem-bottle1
+  POST /clinical/medication-requests/ebb1cdbe-4a20-4fad-abde-eff19a45c6ac/sign
+  body: {}
+  -> 200
+  resp: {"id": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:45.554Z", "createdAt": "2026-10-31T03:12:45.524Z"}
+
+[03:12:45Z] emitir idem-bottle1
+  POST /clinical/medication-requests/ebb1cdbe-4a20-4fad-abde-eff19a45c6ac/issue
+  body: {}
+  -> 200
+  resp: {"id": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:45.554Z", "createdAt": "2026-10-31T03:12:45.524Z"}
+
+[03:12:45Z] I1 pedido con idempotencyKey (saldo 1)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-idem-1793416365"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "3107258f-7f43-4513-9698-d12f34a4c857", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "136948b8-1dda-414b-8217-31723cafdf64", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:45.627Z", "expiresAt": "2026-11-02T03:12:45.627Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:12:45Z] I2 MISMA clave, saldo ya 0
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-idem-1793416365"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "3107258f-7f43-4513-9698-d12f34a4c857", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "136948b8-1dda-414b-8217-31723cafdf64", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:45.627Z", "expiresAt": "2026-11-02T03:12:45.627Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:12:45Z] invalidar receta idem
+  POST /clinical/medication-requests/ebb1cdbe-4a20-4fad-abde-eff19a45c6ac/invalidate
+  body: {"reasonText": "far3 auditoria idempotencia"}
+  -> 200
+  resp: {"id": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "a1f3ab19-c5ab-5bb8-8d16-2c324c739a3d", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:45.554Z", "createdAt": "2026-10-31T03:12:45.524Z"}
+
+[03:12:45Z] I3 MISMA clave, receta ya INVALIDADA
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-idem-1793416365"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "3107258f-7f43-4513-9698-d12f34a4c857", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "136948b8-1dda-414b-8217-31723cafdf64", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:45.627Z", "expiresAt": "2026-11-02T03:12:45.627Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:12:45Z] I4 clave NUEVA, receta invalidada => 422
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-idem-1793416365-otra"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Esta receta ya no se puede usar: fue anulada, reemplazada o ya se entregó.", "correlationId": "e8a11ab8-db96-407b-b756-e80c7af9a6de", "details": {"reason": "PRESCRIPTION_NOT_ACTIVE", "medicationRequestId": "ebb1cdbe-4a20-4fad-abde-eff19a45c6ac"}, "reason": "PRESCRIPTION_NOT_ACTIVE", "timestamp": "2026-10-31T03:12:45.776Z", "path": "/pharmacy/orders"}
+
+[03:12:45Z] receta race-bottle3
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-race-bottle3", "quantityDecimal": 3, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f"}
+  -> 201
+  resp: {"id": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:12:45.786Z"}
+
+[03:12:45Z] firmar race-bottle3
+  POST /clinical/medication-requests/7c2e5722-2972-40ae-99d2-8f9284db7fae/sign
+  body: {}
+  -> 200
+  resp: {"id": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:45.812Z", "createdAt": "2026-10-31T03:12:45.786Z"}
+
+[03:12:45Z] emitir race-bottle3
+  POST /clinical/medication-requests/7c2e5722-2972-40ae-99d2-8f9284db7fae/issue
+  body: {}
+  -> 200
+  resp: {"id": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:12:45.812Z", "createdAt": "2026-10-31T03:12:45.786Z"}
+
+[03:12:46Z] carrera hilo 0
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-race-0-1793416366"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "bdc7e766-b3c5-4360-b983-98e1bbf5cd42", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "d9124d60-c431-42d5-84f2-cf5c036fc57f", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:46.147Z", "expiresAt": "2026-11-02T03:12:46.147Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:12:46Z] carrera hilo 1
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-race-1-1793416366"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "9039eddc-422c-4473-a9b5-14a669f9d8f0", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "6c6e2cc6-f92e-4d59-a24f-94f871656c7a", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:46.190Z", "expiresAt": "2026-11-02T03:12:46.190Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:12:46Z] carrera hilo 3
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-race-3-1793416366"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "9018ca9d-834b-4a20-bbfa-22fd25c853fc", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:12:46.312Z", "path": "/pharmacy/orders"}
+
+[03:12:46Z] carrera hilo 2
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-race-2-1793416366"}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "1ed413c3-6e5b-4041-937d-865fcfce4e85", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "a6935d1c-5f59-4f00-8ba0-6eba21bf6b1c", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:46.243Z", "expiresAt": "2026-11-02T03:12:46.243Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:12:46Z] carrera hilo 4
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-race-4-1793416366"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "9c5b8bb5-4337-49bb-9b16-cdaa03c79eaa", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:12:46.321Z", "path": "/pharmacy/orders"}
+
+[03:12:46Z] carrera hilo 5
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}], "idempotencyKey": "far3-race-5-1793416366"}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "7c6081c4-cefc-4885-90ce-9cbd109283f8", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "7c2e5722-2972-40ae-99d2-8f9284db7fae", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:12:46.336Z", "path": "/pharmacy/orders"}
+
+[03:13:07Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "tYzGIo3FTnfC-lwIrVwvKiRu7EH4kB7GtX3d6mnxgfMnNNqBwqLc6TG67B3zj-Eq", "expiresAt": "2026-11-30T03:13:07.643Z"}
+
+[03:13:07Z] login admin.farmacia-chavez@alovida.test
+  POST /iam/auth/login
+  body: {"email": "admin.farmacia-chavez@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "qjZuY-w1320bhQl1Z1cxUtrmE_XAm8grk231AsaW-0A2K4hiLIwyBiYf8CVGlDNN", "expiresAt": "2026-11-30T03:13:07.792Z"}
+
+[03:13:07Z] reponer amox_rx
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/f7d7511e-41ca-4592-8091-a97c00e080e1/availability
+  body: {"available": true, "quantity": 40}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "available": true, "quantity": 40, "stockUpdatedAt": "2026-10-31T03:13:07.823Z"}
+
+[03:13:07Z] reponer para_rx
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/c9efc809-caa8-4745-a9fd-16202ed0be6b/availability
+  body: {"available": true, "quantity": 40}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "c9efc809-caa8-4745-a9fd-16202ed0be6b", "available": true, "quantity": 40, "stockUpdatedAt": "2026-10-31T03:13:07.851Z"}
+
+[03:13:07Z] reponer para_libre
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/3521c5c0-e051-4d3d-a262-1ea800b4ba34/availability
+  body: {"available": true, "quantity": 40}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "available": true, "quantity": 40, "stockUpdatedAt": "2026-10-31T03:13:07.876Z"}
+
+[03:13:07Z] check-in UI
+  POST /clinical/encounters/check-in
+  body: {"patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "tenantId": "1befcfea-44c0-563a-81cd-337ec6acc840"}
+  -> 201
+  resp: {"id": "523ea11b-617a-4379-a9d3-0cd7a029095e", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "episodeId": null, "status": "281daa85-6561-5e8b-9802-de6ac76114fa", "participantIds": [], "locationIds": [], "startAt": "2026-10-31T03:13:07.891Z", "endAt": null, "createdAt": "2026-10-31T03:13:07.891Z", "contentHash": null, "sealedAt": null}
+
+[03:13:07Z] receta ui-amox-bottle4
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "doseText": "far3-ui-amox-bottle4", "quantityDecimal": 4, "unitConceptId": "85be40c6-0158-528e-9f43-d3a7d6c6334f", "encounterId": "523ea11b-617a-4379-a9d3-0cd7a029095e"}
+  -> 201
+  resp: {"id": "0392b36d-5837-40f0-8a41-2249226d7f7a", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:13:07.914Z"}
+
+[03:13:07Z] firmar ui-amox-bottle4
+  POST /clinical/medication-requests/0392b36d-5837-40f0-8a41-2249226d7f7a/sign
+  body: {}
+  -> 200
+  resp: {"id": "0392b36d-5837-40f0-8a41-2249226d7f7a", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:13:07.944Z", "createdAt": "2026-10-31T03:13:07.914Z"}
+
+[03:13:08Z] emitir ui-amox-bottle4
+  POST /clinical/medication-requests/0392b36d-5837-40f0-8a41-2249226d7f7a/issue
+  body: {}
+  -> 200
+  resp: {"id": "0392b36d-5837-40f0-8a41-2249226d7f7a", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:13:07.944Z", "createdAt": "2026-10-31T03:13:07.914Z"}
+
+[03:13:08Z] receta ui-para-tube2
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "doseText": "far3-ui-para-tube2", "quantityDecimal": 2, "unitConceptId": "ac6454f9-7783-5360-93f8-d22864f6642f", "encounterId": "523ea11b-617a-4379-a9d3-0cd7a029095e"}
+  -> 201
+  resp: {"id": "a7f5078c-8b97-4629-b858-83289fc08364", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:13:08.018Z"}
+
+[03:13:08Z] firmar ui-para-tube2
+  POST /clinical/medication-requests/a7f5078c-8b97-4629-b858-83289fc08364/sign
+  body: {}
+  -> 200
+  resp: {"id": "a7f5078c-8b97-4629-b858-83289fc08364", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:13:08.044Z", "createdAt": "2026-10-31T03:13:08.018Z"}
+
+[03:13:08Z] emitir ui-para-tube2
+  POST /clinical/medication-requests/a7f5078c-8b97-4629-b858-83289fc08364/issue
+  body: {}
+  -> 200
+  resp: {"id": "a7f5078c-8b97-4629-b858-83289fc08364", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:13:08.044Z", "createdAt": "2026-10-31T03:13:08.018Z"}
+
+[03:14:13Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "2qo90VR4LcnGJz1RnhEMwhD1H7sl9Xu2SUeSxZ4vRTob6ddgo36ZfGsS-zo4w3-s", "expiresAt": "2026-11-30T03:14:13.800Z"}
+
+[03:14:13Z] etiquetas de estado
+  GET /terminology/concepts?ids=cce628c0-3334-50cb-9176-652c14f6f10c,e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c&lang=ES
+  body: -
+  -> 200
+  resp: {"items": [{"conceptId": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "code": "clinical:MEDICATION_REQUEST_DRAFT", "display": "Medication request draft", "definition": null, "selectable": true, "codeSystemVersionId": "ffda3cef-e77a-5002-8709-e79f32e62fb4", "translated": false}, {"conceptId": "cce628c0-3334-50cb-9176-652c14f6f10c", "code": "clinical:MEDICATION_REQUEST_ISSUED", "display": "Medication request issued", "definition": null, "selectable": true, "codeSystemVersionId": "ffda3cef-e77a-5002-8709-e79f32e62fb4", "translated": false}], "count": 2, "limit": 50}
+
+[03:17:32Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "XYbq3yM2s6qlvjHRWuR0HgGZK-sn4ocUVzPs3EJAQ2zvYzsJ0Pnffp2Xw1ZZNSTz", "expiresAt": "2026-11-30T03:17:32.929Z"}
+
+[03:17:32Z] detalle pedido propio, sin X-Tenant-Id
+  GET /pharmacy/orders/8b68ac56-130c-4fbd-8896-48140b838785
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "069c447d-68ee-477d-bf61-de4758cb0cd9", "details": {"id": "8b68ac56-130c-4fbd-8896-48140b838785"}, "timestamp": "2026-10-31T03:17:32.984Z", "path": "/pharmacy/orders/8b68ac56-130c-4fbd-8896-48140b838785"}
+
+[03:17:32Z] detalle pedido propio, tenant seed (activo del paciente)
+  GET /pharmacy/orders/8b68ac56-130c-4fbd-8896-48140b838785
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "57385867-273d-40a3-bf72-14582be26f63", "details": {"id": "8b68ac56-130c-4fbd-8896-48140b838785"}, "timestamp": "2026-10-31T03:17:32.995Z", "path": "/pharmacy/orders/8b68ac56-130c-4fbd-8896-48140b838785"}
+
+[03:17:33Z] detalle pedido propio, tenant de la farmacia
+  GET /pharmacy/orders/8b68ac56-130c-4fbd-8896-48140b838785
+  body: -
+  -> 403
+  resp: {"code": "FORBIDDEN", "message": "El actor no pertenece al tenant indicado en X-Tenant-Id", "correlationId": "47f49221-8c19-4b0c-9c3d-a772ceaae05b", "reason": "TENANT_MEMBERSHIP_REQUIRED", "timestamp": "2026-10-31T03:17:33.000Z", "path": "/pharmacy/orders/8b68ac56-130c-4fbd-8896-48140b838785"}
+
+[03:17:33Z] mis pedidos con tenant seed
+  GET /pharmacy/orders/me
+  body: -
+  -> 200
+  resp: {"items": [{"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "c7d9f967-0618-4d09-a0a7-286612a62756", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": "1", "unitPriceAmount": "10.00", "billedAmount": "10.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "8b68ac56-130c-4fbd-8896-48140b838785", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:17:16.951Z", "expiresAt": "2026-11-02T03:17:16.951Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": null, "prescriber": null, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}, {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "1ed413c3-6e5b-4041-937d-865fcfce4e85", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "a6935d1c-5f59-4f00-8ba0-6eba21bf6b1c", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:46.243Z", "expiresAt": "2026-11-02T03:12:46.243Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmac
+
+[03:17:33Z] mis pedidos sin tenant
+  GET /pharmacy/orders/me
+  body: -
+  -> 200
+  resp: {"items": [{"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "c7d9f967-0618-4d09-a0a7-286612a62756", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": "1", "unitPriceAmount": "10.00", "billedAmount": "10.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "8b68ac56-130c-4fbd-8896-48140b838785", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:17:16.951Z", "expiresAt": "2026-11-02T03:17:16.951Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": null, "prescriber": null, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}, {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "1ed413c3-6e5b-4041-937d-865fcfce4e85", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "a6935d1c-5f59-4f00-8ba0-6eba21bf6b1c", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:46.243Z", "expiresAt": "2026-11-02T03:12:46.243Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmac
+
+[03:17:37Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "ChkdJNWZ8mAGCxjsIO8mEIZH7CH3tb0VEhact5U5A_lceUmU-rQ_K-D5ah2uJ6nu", "expiresAt": "2026-11-30T03:17:37.824Z"}
+
+[03:17:37Z] lista
+  GET /pharmacy/orders/me
+  body: -
+  -> 200
+  resp: {"items": [{"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "c7d9f967-0618-4d09-a0a7-286612a62756", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": "1", "unitPriceAmount": "10.00", "billedAmount": "10.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "8b68ac56-130c-4fbd-8896-48140b838785", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:17:16.951Z", "expiresAt": "2026-11-02T03:17:16.951Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": null, "prescriber": null, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}, {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "1ed413c3-6e5b-4041-937d-865fcfce4e85", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "a6935d1c-5f59-4f00-8ba0-6eba21bf6b1c", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:46.243Z", "expiresAt": "2026-11-02T03:12:46.243Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmac
+
+[03:17:37Z] detalle 8b68ac56
+  GET /pharmacy/orders/8b68ac56-130c-4fbd-8896-48140b838785
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "a51f2969-1388-4b62-8e44-59be3320f341", "details": {"id": "8b68ac56-130c-4fbd-8896-48140b838785"}, "timestamp": "2026-10-31T03:17:37.926Z", "path": "/pharmacy/orders/8b68ac56-130c-4fbd-8896-48140b838785"}
+
+[03:17:37Z] detalle a6935d1c
+  GET /pharmacy/orders/a6935d1c-5f59-4f00-8ba0-6eba21bf6b1c
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "0316df9d-ee41-44df-b383-040393a2647a", "details": {"id": "a6935d1c-5f59-4f00-8ba0-6eba21bf6b1c"}, "timestamp": "2026-10-31T03:17:37.937Z", "path": "/pharmacy/orders/a6935d1c-5f59-4f00-8ba0-6eba21bf6b1c"}
+
+[03:17:37Z] detalle 6c6e2cc6
+  GET /pharmacy/orders/6c6e2cc6-f92e-4d59-a24f-94f871656c7a
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "678935e9-f80d-4630-9120-d6a81d0cde89", "details": {"id": "6c6e2cc6-f92e-4d59-a24f-94f871656c7a"}, "timestamp": "2026-10-31T03:17:37.948Z", "path": "/pharmacy/orders/6c6e2cc6-f92e-4d59-a24f-94f871656c7a"}
+
+[03:17:37Z] detalle d9124d60
+  GET /pharmacy/orders/d9124d60-c431-42d5-84f2-cf5c036fc57f
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "f061c3e6-fea6-4f75-ac88-f566aa5bd535", "details": {"id": "d9124d60-c431-42d5-84f2-cf5c036fc57f"}, "timestamp": "2026-10-31T03:17:37.963Z", "path": "/pharmacy/orders/d9124d60-c431-42d5-84f2-cf5c036fc57f"}
+
+[03:17:37Z] detalle 136948b8
+  GET /pharmacy/orders/136948b8-1dda-414b-8217-31723cafdf64
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "ce422dde-b55d-48ed-ab1d-1f43269863ec", "details": {"id": "136948b8-1dda-414b-8217-31723cafdf64"}, "timestamp": "2026-10-31T03:17:37.981Z", "path": "/pharmacy/orders/136948b8-1dda-414b-8217-31723cafdf64"}
+
+[03:17:38Z] detalle 742d789e
+  GET /pharmacy/orders/742d789e-4931-41d2-8775-e1b47adb7257
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "898a2e76-f6a9-4257-9930-7eeafb32d7be", "details": {"id": "742d789e-4931-41d2-8775-e1b47adb7257"}, "timestamp": "2026-10-31T03:17:37.994Z", "path": "/pharmacy/orders/742d789e-4931-41d2-8775-e1b47adb7257"}
+
+[03:17:38Z] detalle ff528614
+  GET /pharmacy/orders/ff528614-6d8b-44e3-815b-3ec062ff88cc
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "4c505016-d28a-4719-a3ed-3bd687843752", "details": {"id": "ff528614-6d8b-44e3-815b-3ec062ff88cc"}, "timestamp": "2026-10-31T03:17:38.013Z", "path": "/pharmacy/orders/ff528614-6d8b-44e3-815b-3ec062ff88cc"}
+
+[03:17:38Z] detalle ac49637c
+  GET /pharmacy/orders/ac49637c-2b53-4acb-80da-95b65d40af4a
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "b133d3fe-4210-429a-b644-bea065468e8c", "details": {"id": "ac49637c-2b53-4acb-80da-95b65d40af4a"}, "timestamp": "2026-10-31T03:17:38.024Z", "path": "/pharmacy/orders/ac49637c-2b53-4acb-80da-95b65d40af4a"}
+
+[03:17:38Z] detalle a94c75c3
+  GET /pharmacy/orders/a94c75c3-c885-4784-bd53-2d154dd764c4
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "aecc55a8-9a2e-4e6e-a392-dfb49389ae76", "details": {"id": "a94c75c3-c885-4784-bd53-2d154dd764c4"}, "timestamp": "2026-10-31T03:17:38.034Z", "path": "/pharmacy/orders/a94c75c3-c885-4784-bd53-2d154dd764c4"}
+
+[03:17:38Z] detalle 05d6a37e
+  GET /pharmacy/orders/05d6a37e-62a7-4958-acf5-5ead97d85a7c
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "e74b6532-9358-4f6b-9abf-31f2bfab6cf1", "details": {"id": "05d6a37e-62a7-4958-acf5-5ead97d85a7c"}, "timestamp": "2026-10-31T03:17:38.043Z", "path": "/pharmacy/orders/05d6a37e-62a7-4958-acf5-5ead97d85a7c"}
+
+[03:17:38Z] detalle 2945e826
+  GET /pharmacy/orders/2945e826-e829-4799-84a4-271f5cbec858
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "b51ace96-66f7-4d57-9547-3b90d83bbf9d", "details": {"id": "2945e826-e829-4799-84a4-271f5cbec858"}, "timestamp": "2026-10-31T03:17:38.051Z", "path": "/pharmacy/orders/2945e826-e829-4799-84a4-271f5cbec858"}
+
+[03:17:38Z] detalle 8656e6c0
+  GET /pharmacy/orders/8656e6c0-bde5-4ae7-b64f-1d960a86fbe6
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "8b41081b-fcd0-4482-81c8-eb6b73f8fa34", "details": {"id": "8656e6c0-bde5-4ae7-b64f-1d960a86fbe6"}, "timestamp": "2026-10-31T03:17:38.064Z", "path": "/pharmacy/orders/8656e6c0-bde5-4ae7-b64f-1d960a86fbe6"}
+
+[03:17:38Z] detalle a4681da8
+  GET /pharmacy/orders/a4681da8-39f9-4b62-8c10-3e7f6d7cb7e8
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "4dc9c924-64b3-450b-9060-a5d3ddedc7f9", "details": {"id": "a4681da8-39f9-4b62-8c10-3e7f6d7cb7e8"}, "timestamp": "2026-10-31T03:17:38.076Z", "path": "/pharmacy/orders/a4681da8-39f9-4b62-8c10-3e7f6d7cb7e8"}
+
+[03:17:38Z] detalle d904ec74
+  GET /pharmacy/orders/d904ec74-429a-412b-b3ee-5cf295fd34a7
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "c6fae1f1-9008-4f15-9e19-abcf8a96073a", "details": {"id": "d904ec74-429a-412b-b3ee-5cf295fd34a7"}, "timestamp": "2026-10-31T03:17:38.089Z", "path": "/pharmacy/orders/d904ec74-429a-412b-b3ee-5cf295fd34a7"}
+
+[03:17:38Z] detalle fd1e1ebd
+  GET /pharmacy/orders/fd1e1ebd-4f74-49c3-a893-1171eed17fd0
+  body: -
+  -> 404
+  resp: {"code": "NOT_FOUND", "message": "Pedido no encontrado", "correlationId": "f02c2024-2db5-42b9-bef7-0fc33bbcd233", "details": {"id": "fd1e1ebd-4f74-49c3-a893-1171eed17fd0"}, "timestamp": "2026-10-31T03:17:38.103Z", "path": "/pharmacy/orders/fd1e1ebd-4f74-49c3-a893-1171eed17fd0"}
+
+[03:19:01Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "VdfxWQ4eLoShVRFdofM-5Egx2aRuHnoS6iNGIbl4cEcJud2hllDUt2EksgfdaPPv", "expiresAt": "2026-11-30T03:19:01.144Z"}
+
+[03:19:01Z] lista paciente
+  GET /pharmacy/orders/me
+  body: -
+  -> 200
+  resp: {"items": [{"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "c7d9f967-0618-4d09-a0a7-286612a62756", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": "1", "unitPriceAmount": "10.00", "billedAmount": "10.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "8b68ac56-130c-4fbd-8896-48140b838785", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:17:16.951Z", "expiresAt": "2026-11-02T03:17:16.951Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": null, "prescriber": null, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}, {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "1ed413c3-6e5b-4041-937d-865fcfce4e85", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "a6935d1c-5f59-4f00-8ba0-6eba21bf6b1c", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:12:46.243Z", "expiresAt": "2026-11-02T03:12:46.243Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmac
+
+[03:20:40Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "qns3NOFc0OmlBFiC180JEvXP0M8nbPiwXgpRkLH_nLAILug2ilnOhj0v303mBw2N", "expiresAt": "2026-11-30T03:20:40.321Z"}
+
+[03:20:40Z] D1 receta ok: entregado 2 + reservado 1 (pedido o4): pide 1 => 422
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "5b37f4aa-c201-4aad-909d-2472f30d4a78", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:20:40.374Z", "path": "/pharmacy/orders"}
+
+[03:20:40Z] cancelar o4 (libera 1)
+  POST /pharmacy/orders/8656e6c0-bde5-4ae7-b64f-1d960a86fbe6/cancel
+  body: {}
+  -> 200
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [], "id": "8656e6c0-bde5-4ae7-b64f-1d960a86fbe6", "status": {"code": "PINV_ORDER_CANCELADO", "display": "Order cancelled"}, "createdAt": "2026-10-31T03:11:04.232Z", "expiresAt": "2026-11-02T03:11:04.232Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_RELEASED", "display": "Reservation line released"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:20:40Z] D2 saldo 1 (3-2 entregado): pide 2 => 422
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 2}]}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "14d2f5c5-5fbf-4b93-ad99-fac4d8aac523", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:20:40.510Z", "path": "/pharmacy/orders"}
+
+[03:20:40Z] D3 saldo 1: pide 1 => 201
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "7febf713-6bfd-4051-847c-5e629868d039", "productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": "1", "unitPriceAmount": "40.00", "billedAmount": "40.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "8c5971a2-37b8-473d-a0fa-e51212ece97f", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:20:40.539Z", "expiresAt": "2026-11-02T03:20:40.539Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "prescriber": {"name": "Andrés Rojas", "specialty": null}, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "far3-AMOX-RX", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "40.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:20:40Z] D4 saldo 0: pide 1 => 422
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "lines": [{"productId": "f7d7511e-41ca-4592-8091-a97c00e080e1", "quantity": 1}]}
+  -> 422
+  resp: {"code": "PRECONDITION_FAILED", "message": "Está pidiendo más de lo que le queda en su receta.", "correlationId": "6155f463-72c1-4d3a-a292-64b7639c480e", "details": {"reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "medicationRequestId": "0418f19e-f92f-4d1b-a61d-1d8466bae7f9", "productIds": ["f7d7511e-41ca-4592-8091-a97c00e080e1"]}, "reason": "QUANTITY_EXCEEDS_PRESCRIPTION", "timestamp": "2026-10-31T03:20:40.656Z", "path": "/pharmacy/orders"}
+
+[03:20:54Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "f7P4jgVLEGnGOXRyMngMcTKrld7_1I_hUZWRJACmdnN_Y9F6zavw0oeU0R9FNl-d", "expiresAt": "2026-11-30T03:20:54.097Z"}
+
+[03:20:54Z] login admin.farmacia-chavez@alovida.test
+  POST /iam/auth/login
+  body: {"email": "admin.farmacia-chavez@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "JOzWbjjDgLV-ZxS-QLXfnzb7bkGWLoIwrJUAGGJCszxEWkxdsaPzaEq1Fqt3Pf9L", "expiresAt": "2026-11-30T03:20:54.303Z"}
+
+[03:20:54Z] A1 farmacia marca NO LO TENGO en Sucursal Centro
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/3521c5c0-e051-4d3d-a262-1ea800b4ba34/availability
+  body: {"available": false}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "available": false, "quantity": 0, "stockUpdatedAt": "2026-10-31T03:20:54.334Z"}
+
+[03:20:54Z] A2 paciente consulta disponibilidad
+  GET /pharmacy-inventory/availability?products=3521c5c0-e051-4d3d-a262-1ea800b4ba34
+  body: -
+  -> 200
+  resp: {"requestedProductIds": ["3521c5c0-e051-4d3d-a262-1ea800b4ba34"], "items": [{"siteId": "368bda30-7ab6-46d4-99a9-08334b03b0e4", "siteName": "Casa central", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "addressText": "Av. Cañoto 123, Santa Cruz (simulado)", "latitude": -17.7833, "longitude": -63.1821, "distanceKm": null, "homeDeliveryAvailable": null, "pickupAvailable": null, "complete": true, "availableCount": 1, "missingProductIds": [], "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "products": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "availableQuantity": 50, "price": {"unitAmount": "10.00", "patientAmount": null, "currency": {"code": "BOB", "display": "Boliviano"}, "priceListCode": "CATALOGO"}}], "stockUpdatedAt": null}, {"siteId": "ffd8a0b5-a41d-4c3c-8db8-b89c6f92e196", "siteName": "Diez", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "addressText": null, "latitude": null, "longitude": null, "distanceKm": null, "homeDeliveryAvailable": null, "pickupAvailable": null, "complete": true, "availableCount": 1, "missingProductIds": [], "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "products": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "availableQuantity": 50, "price": {"unitAmount": "10.00", "patientAmount": null, "currency": {"code": "BOB", "display": "Boliviano"}, "priceListCode": "CATALOGO"}}], "stockUpdatedAt": null}, {"siteId": "838450c0-7615-473b-86cb-13af0806ab1e", "siteName": "Far45 Dos renombrada 2", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "addressText": null, "latitude": null, "longitude": null, "distanceKm": null, "homeDeliveryAvailable": true, "pickupAvailable": false, "complete": true, "availableCount": 1, "missingProductIds": [], "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "products": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "productCode": "far3-PARA-LIBRE", "bran
+
+[03:20:54Z] A3 paciente pide el producto que la sucursal marco 'no lo tengo'
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": 1}]}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [], "id": "a46eba41-0179-4df2-ae2c-269462e4cde5", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:20:54.697Z", "expiresAt": "2026-11-02T03:20:54.697Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": null, "prescriber": null, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": null, "currency": null, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 1, "reservedQuantity": 0, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_OUT_OF_STOCK", "display": "Reservation line out of stock"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:20:54Z] A4 farmacia marca LO TENGO (5)
+  PUT /pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/3521c5c0-e051-4d3d-a262-1ea800b4ba34/availability
+  body: {"available": true, "quantity": 5}
+  -> 200
+  resp: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "available": true, "quantity": 5, "stockUpdatedAt": "2026-10-31T03:20:54.795Z"}
+
+[03:20:55Z] A5 paciente consulta disponibilidad
+  GET /pharmacy-inventory/availability?products=3521c5c0-e051-4d3d-a262-1ea800b4ba34
+  body: -
+  -> 200
+  resp: {"requestedProductIds": ["3521c5c0-e051-4d3d-a262-1ea800b4ba34"], "items": [{"siteId": "368bda30-7ab6-46d4-99a9-08334b03b0e4", "siteName": "Casa central", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "addressText": "Av. Cañoto 123, Santa Cruz (simulado)", "latitude": -17.7833, "longitude": -63.1821, "distanceKm": null, "homeDeliveryAvailable": null, "pickupAvailable": null, "complete": true, "availableCount": 1, "missingProductIds": [], "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "products": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "availableQuantity": 50, "price": {"unitAmount": "10.00", "patientAmount": null, "currency": {"code": "BOB", "display": "Boliviano"}, "priceListCode": "CATALOGO"}}], "stockUpdatedAt": null}, {"siteId": "ffd8a0b5-a41d-4c3c-8db8-b89c6f92e196", "siteName": "Diez", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "addressText": null, "latitude": null, "longitude": null, "distanceKm": null, "homeDeliveryAvailable": null, "pickupAvailable": null, "complete": true, "availableCount": 1, "missingProductIds": [], "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "products": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "availableQuantity": 50, "price": {"unitAmount": "10.00", "patientAmount": null, "currency": {"code": "BOB", "display": "Boliviano"}, "priceListCode": "CATALOGO"}}], "stockUpdatedAt": null}, {"siteId": "838450c0-7615-473b-86cb-13af0806ab1e", "siteName": "Far45 Dos renombrada 2", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "addressText": null, "latitude": null, "longitude": null, "distanceKm": null, "homeDeliveryAvailable": true, "pickupAvailable": false, "complete": true, "availableCount": 1, "missingProductIds": [], "totalAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "products": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "productCode": "far3-PARA-LIBRE", "bran
+
+[03:20:55Z] A6 pide 3 (hay 5)
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": 3}]}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "2cdc1c3e-ed7b-44df-a871-772a055c98eb", "productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "quantity": "3", "unitPriceAmount": "10.00", "billedAmount": "30.00", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "3ea3e966-c260-4259-9b48-a800543b2743", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:20:55.131Z", "expiresAt": "2026-11-02T03:20:55.131Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": null, "prescriber": null, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "30.00", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "3521c5c0-e051-4d3d-a262-1ea800b4ba34", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "productCode": "far3-PARA-LIBRE", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_PARACETAMOL", "display": "Paracetamol"}, "requestedQuantity": 3, "reservedQuantity": 3, "fulfilledQuantity": 0, "unitPriceAmount": "10.00", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:21:11Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "xoTeLhR7rIxyaLLSKgUPvC64tUM8sGLSIwVm57Hb_6k1N5Tsfre_Vw9CVPTFI4cz", "expiresAt": "2026-11-30T03:21:11.301Z"}
+
+[03:21:11Z] paciente comparte receta UI (QR/enlace)
+  POST /clinical/prescription-shares
+  body: {"encounterId": "523ea11b-617a-4379-a9d3-0cd7a029095e"}
+  -> 201
+  resp: {"shareId": "848d9e6d-a73b-46d7-929e-7301a3df8184", "url": "http://localhost:4000/rx/SlS4xfnixh2WlrKJFFVFAWRrSmE_0Ii-vaqBYXmWf1s", "token": "SlS4xfnixh2WlrKJFFVFAWRrSmE_0Ii-vaqBYXmWf1s", "expiresAt": "2026-11-30T03:21:11.329Z", "itemCount": 2}
+
+[03:26:14Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "ZOHCZZ-vEfcQKU65-bpn1Yk9Eel0SaDP_BdZyczvSPR-NvYE2kkINW_3mnSAJmSO", "expiresAt": "2026-11-30T03:26:14.388Z"}
+
+[03:26:14Z] receta ui2
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "doseText": "far3-ui2-para-tube1", "quantityDecimal": 1, "unitConceptId": "ac6454f9-7783-5360-93f8-d22864f6642f"}
+  -> 201
+  resp: {"id": "99b07118-5e1d-41ec-944e-b67740bcff2a", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:26:14.428Z"}
+
+[03:26:14Z] firmar ui2
+  POST /clinical/medication-requests/99b07118-5e1d-41ec-944e-b67740bcff2a/sign
+  body: {}
+  -> 200
+  resp: {"id": "99b07118-5e1d-41ec-944e-b67740bcff2a", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:26:14.746Z", "createdAt": "2026-10-31T03:26:14.428Z"}
+
+[03:26:14Z] emitir ui2
+  POST /clinical/medication-requests/99b07118-5e1d-41ec-944e-b67740bcff2a/issue
+  body: {}
+  -> 200
+  resp: {"id": "99b07118-5e1d-41ec-944e-b67740bcff2a", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:26:14.746Z", "createdAt": "2026-10-31T03:26:14.428Z"}
+
+[03:26:25Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "5DszPRG79T2UbX3R9Csv3V3nylkifW9D5ztJ8RxMAf2DimLX5yRU9eUXdsxTyr0e", "expiresAt": "2026-11-30T03:26:25.798Z"}
+
+[03:26:25Z] invalidar receta con la pantalla ya abierta
+  POST /clinical/medication-requests/99b07118-5e1d-41ec-944e-b67740bcff2a/invalidate
+  body: {"reasonText": "far3 auditoria: invalidada mientras la paciente tenia la pantalla abierta"}
+  -> 200
+  resp: {"id": "99b07118-5e1d-41ec-944e-b67740bcff2a", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "a1f3ab19-c5ab-5bb8-8d16-2c324c739a3d", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:26:14.746Z", "createdAt": "2026-10-31T03:26:14.428Z"}
+
+[03:27:01Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "crekpJsu2mi2xU9kG_Kg7naQZULwHgCzzd5d6gtvDw6vO9t5G3AI3asI3u11KQvs", "expiresAt": "2026-11-30T03:27:01.453Z"}
+
+[03:27:01Z] receta ui2
+  POST /clinical/medication-requests
+  body: {"custodianTenantId": "1befcfea-44c0-563a-81cd-337ec6acc840", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "medicationConceptId": "3545c7c6-1a54-5903-86df-6a1621dc2640", "doseText": "far3-ui2-para-tube1", "quantityDecimal": 1, "unitConceptId": "ac6454f9-7783-5360-93f8-d22864f6642f"}
+  -> 201
+  resp: {"id": "a01def07-6a50-40ef-975b-6d72280bf606", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": null, "createdAt": "2026-10-31T03:27:01.507Z"}
+
+[03:27:01Z] firmar ui2
+  POST /clinical/medication-requests/a01def07-6a50-40ef-975b-6d72280bf606/sign
+  body: {}
+  -> 200
+  resp: {"id": "a01def07-6a50-40ef-975b-6d72280bf606", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:27:01.560Z", "createdAt": "2026-10-31T03:27:01.507Z"}
+
+[03:27:01Z] emitir ui2
+  POST /clinical/medication-requests/a01def07-6a50-40ef-975b-6d72280bf606/issue
+  body: {}
+  -> 200
+  resp: {"id": "a01def07-6a50-40ef-975b-6d72280bf606", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "cce628c0-3334-50cb-9176-652c14f6f10c", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:27:01.560Z", "createdAt": "2026-10-31T03:27:01.507Z"}
+
+[03:31:05Z] login paciente.lucia@alovida.test
+  POST /iam/auth/login
+  body: {"email": "paciente.lucia@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "3whNaGN905-2HjXXbu8pUZqLJxxZK6WlMH3LB0c5BrhcMGu5o3Ur8zGzT-eMUJ97", "expiresAt": "2026-11-30T03:31:03.892Z"}
+
+[03:31:07Z] N1 producto con requires_prescription NULL (AMOX-500) sin receta
+  POST /pharmacy/orders
+  body: {"siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "deliveryMode": "RETIRO", "lines": [{"productId": "01e96d54-d92d-465b-b13e-1890425840de", "quantity": 1}]}
+  -> 201
+  resp: {"insuranceSettlement": null, "insuranceSettlementAvailability": "NOT_AVAILABLE", "reservationLines": [{"id": "aabbbe85-eab4-4e18-855c-e36569430c14", "productId": "01e96d54-d92d-465b-b13e-1890425840de", "quantity": "1", "unitPriceAmount": "35.50", "billedAmount": "35.50", "currencyConceptId": "d2fe4f04-ea13-510a-9a10-dfee2302a98f"}], "id": "cab07dcf-ff8e-4bd1-a196-c9ad0bfd8e48", "status": {"code": "PINV_ORDER_ENVIADO", "display": "Order submitted"}, "createdAt": "2026-10-31T03:31:05.237Z", "expiresAt": "2026-11-02T03:31:05.237Z", "siteId": "864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf", "siteName": "Sucursal Centro (simulada)", "pharmacyId": "1a82de64-bb90-42cd-9ac0-221e313d76bf", "pharmacyName": "Farmacia Chavez S.A.", "medicationRequestId": null, "prescriber": null, "patientName": "Lucía Mamani", "deliveryMode": {"code": "PINV_DELIVERY_RETIRO", "display": "Pickup at pharmacy site"}, "deliveryAddressText": null, "pickupCode": null, "totalAmount": "35.50", "currency": {"code": "BOB", "display": "Boliviano"}, "rejectionReasonText": null, "substitutions": [], "lines": [{"productId": "01e96d54-d92d-465b-b13e-1890425840de", "medicationConceptId": "9d90da56-a6c4-5669-b791-1022acb2ba6e", "productCode": "AMOX-500", "brandName": null, "genericName": null, "strengthText": null, "packageSizeText": null, "medication": {"code": "clinical:MEDICATION_AMOXICILINA", "display": "Amoxicilina"}, "requestedQuantity": 1, "reservedQuantity": 1, "fulfilledQuantity": 0, "unitPriceAmount": "35.50", "currency": {"code": "BOB", "display": "Boliviano"}, "status": {"code": "PINV_RES_LINE_CONFIRMED", "display": "Reservation line confirmed"}}], "pharmacyPublicProfileId": "573d63c0-8655-4967-84dc-95522478534a", "pharmacyPublicSlug": "organization-54a6fa72-53d5-4819-8e1a-a4e559f5609a"}
+
+[03:32:35Z] login dr.andres@alovida.test
+  POST /iam/auth/login
+  body: {"email": "dr.andres@alovida.test", "password": "Audit.Local.2026"}
+  -> 200
+  resp: {"accessToken": "[JWT-REDACTADO]", "refreshToken": "fIpiPHAltZHJVNaRcvJi94-guwrIlswvct1euAtwnhI5JZX7Gq-umeeSrhnMCwHJ", "expiresAt": "2026-11-30T03:32:35.385Z"}
+
+[03:32:35Z] invalidar receta con la pantalla ya abierta
+  POST /clinical/medication-requests/a01def07-6a50-40ef-975b-6d72280bf606/invalidate
+  body: {"reasonText": "far3 auditoria: invalidada mientras la paciente tenia la pantalla abierta"}
+  -> 200
+  resp: {"id": "a01def07-6a50-40ef-975b-6d72280bf606", "patientProfileId": "8d00e3f7-53f7-492b-9c5c-501b201a6771", "formInstanceId": null, "status": "a1f3ab19-c5ab-5bb8-8d16-2c324c739a3d", "replacesRequestId": null, "replacedByRequestId": null, "renewedFromRequestId": null, "signedAt": "2026-10-31T03:27:01.560Z", "createdAt": "2026-10-31T03:27:01.507Z"}
+

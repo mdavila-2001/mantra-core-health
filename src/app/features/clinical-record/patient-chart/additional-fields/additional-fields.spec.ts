@@ -218,6 +218,211 @@ describe('AdditionalFields', () => {
   });
 });
 
+/**
+ * Lo que `AdditionalFields` ganó el 30/10/2026 para que el alta de un presuntivo
+ * la reutilice —sin duplicar el componente—: título y bajada propios, sin archivos
+ * ni texto libre, precarga de filas desde otra fuente y nota sin encuentro.
+ * Los valores por defecto **no cambian** el uso del formulario médico.
+ */
+describe('AdditionalFields reutilizado', () => {
+  let fixture: ComponentFixture<AdditionalFields>;
+  let componente: AdditionalFields;
+  let http: HttpTestingController;
+  const raiz = () => fixture.nativeElement as HTMLElement;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: AuthService,
+          useValue: { activeTenantId: signal('t-1'), practitionerProfileId: signal('hp-1') },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(AdditionalFields);
+    componente = fixture.componentInstance;
+    fixture.componentRef.setInput('patientProfileId', 'pac-1');
+    fixture.detectChanges();
+  });
+
+  afterEach(() => http.verify());
+
+  const filas = () =>
+    (componente as unknown as { filas(): readonly FilaAdicional[] }).filas();
+
+  it('por omisión sigue siendo la sección de siempre: título, archivos y texto libre', () => {
+    (componente as unknown as { agregarFila(): void }).agregarFila();
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('#adicionales-titulo')?.textContent).toContain(
+      'Campos adicionales del doctor',
+    );
+    expect(raiz().textContent).toContain('Se aceptan');
+    expect(raiz().querySelector('[data-testid="adicional-archivos"]')).not.toBeNull();
+    expect(raiz().querySelector('[data-testid="adicional-texto"]')).not.toBeNull();
+  });
+
+  it('con título y bajada propios, sin archivos ni texto libre', () => {
+    fixture.componentRef.setInput('titulo', 'Motivos del diagnóstico');
+    fixture.componentRef.setInput('ayuda', 'Cada fila es un campo y su valor.');
+    fixture.componentRef.setInput('conArchivos', false);
+    fixture.componentRef.setInput('conTextoLibre', false);
+    (componente as unknown as { agregarFila(): void }).agregarFila();
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('#adicionales-titulo')?.textContent).toContain(
+      'Motivos del diagnóstico',
+    );
+    expect(raiz().textContent).toContain('Cada fila es un campo y su valor.');
+    expect(raiz().textContent).not.toContain('Se aceptan');
+    expect(raiz().querySelector('[data-testid="adicional-archivos"]')).toBeNull();
+    expect(raiz().querySelector('[data-testid="adicional-texto"]')).toBeNull();
+    expect(raiz().querySelector('[data-testid="adicional-rotulo"]')).not.toBeNull();
+  });
+
+  describe('cargar', () => {
+    it('trae filas editables marcadas con su origen y devuelve 0 si entraron todas', () => {
+      const sobrantes = componente.cargar(
+        [
+          { label: 'Fiebre', value: '39 °C' },
+          { label: 'Tos', value: 'Productiva' },
+        ],
+        'formulario',
+      );
+
+      expect(sobrantes).toBe(0);
+      expect(filas().map((f) => [f.rotulo, f.valor, f.origen])).toEqual([
+        ['Fiebre', '39 °C', 'formulario'],
+        ['Tos', 'Productiva', 'formulario'],
+      ]);
+      expect(componente.tieneContenido()).toBe(true);
+    });
+
+    it('cargar otra vez reemplaza las del mismo origen y conserva las escritas a mano', () => {
+      (componente as unknown as { agregarFila(): void }).agregarFila();
+      const manual = filas()[0]!;
+      (componente as unknown as { fijarRotulo(c: number, v: string): void }).fijarRotulo(manual.clave, 'Mío');
+      (componente as unknown as { fijarValor(c: number, v: string): void }).fijarValor(manual.clave, 'a mano');
+      componente.cargar([{ label: 'A', value: '1' }], 'formulario');
+      componente.cargar([{ label: 'B', value: '2' }], 'formulario');
+
+      expect(filas().map((f) => f.rotulo)).toEqual(['Mío', 'B']);
+    });
+
+    it('quitarOrigen saca sólo lo traído', () => {
+      (componente as unknown as { agregarFila(): void }).agregarFila();
+      const manual = filas()[0]!;
+      (componente as unknown as { fijarRotulo(c: number, v: string): void }).fijarRotulo(manual.clave, 'Mío');
+      (componente as unknown as { fijarValor(c: number, v: string): void }).fijarValor(manual.clave, 'a mano');
+      componente.cargar([{ label: 'A', value: '1' }], 'formulario');
+
+      componente.quitarOrigen('formulario');
+
+      expect(filas().map((f) => f.rotulo)).toEqual(['Mío']);
+    });
+
+    it('respeta el tope de 40 filas y dice cuántas no entraron', () => {
+      const cuarenta = Array.from({ length: 43 }, (_, i) => ({ label: `Campo ${i}`, value: 'v' }));
+
+      const sobrantes = componente.cargar(cuarenta, 'formulario');
+
+      expect(filas()).toHaveLength(40);
+      expect(sobrantes).toBe(3);
+    });
+
+    it('una fila traída con un campo repetido se marca como cualquier otra', () => {
+      componente.cargar(
+        [
+          { label: 'Dolor', value: 'a' },
+          { label: 'dolor', value: 'b' },
+        ],
+        'formulario',
+      );
+
+      expect(componente.hayProblemas()).toBe(true);
+    });
+  });
+
+  describe('texto plano (espejo de @IsPlainText de la API)', () => {
+    const conFila = (rotulo: string, valor: string) => {
+      componente.cargar([{ label: rotulo, value: valor }], 'formulario');
+      fixture.detectChanges();
+    };
+
+    it('una etiqueta HTML marca la fila: la API la rechazaría con un 400 sin decir cuál', () => {
+      conFila('Nota', 'Ver <b>informe</b>');
+
+      expect(componente.hayProblemas()).toBe(true);
+      expect(raiz().textContent).toContain('Sólo admite texto plano');
+    });
+
+    it('un carácter de control también', () => {
+      conFila('Nota', 'dato\u0007raro');
+
+      expect(componente.hayProblemas()).toBe(true);
+    });
+
+    it('un valor clínico con «<» NO es HTML: «<140» y «PA < 140 y > 90» valen', () => {
+      conFila('PA', '<140');
+      expect(componente.hayProblemas()).toBe(false);
+
+      componente.limpiar();
+      conFila('PA', 'PA < 140 y > 90');
+      expect(componente.hayProblemas()).toBe(false);
+    });
+
+    it('el campo también se valida', () => {
+      conFila('<script>', 'x');
+
+      expect(componente.hayProblemas()).toBe(true);
+    });
+  });
+
+  it('como subsección el título es un h4; por omisión sigue siendo un h3', () => {
+    expect(raiz().querySelector('#adicionales-titulo')?.tagName).toBe('H3');
+
+    fixture.componentRef.setInput('subseccion', true);
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('#adicionales-titulo')?.tagName).toBe('H4');
+  });
+
+  describe('pasos', () => {
+    it('sin encuentro la nota se crea igual, sin `encounterId`', () => {
+      componente.cargar([{ label: 'Fiebre', value: '39 °C' }], 'formulario');
+
+      const [nota] = componente.pasos(null);
+      nota!.ejecutar().subscribe();
+
+      const req = http.expectOne('/charts/notes');
+      expect('encounterId' in (req.request.body as object)).toBe(false);
+      expect((req.request.body as { entries: unknown }).entries).toEqual([
+        { label: 'Fiebre', value: '39 °C' },
+      ]);
+      req.flush({ noteId: 'n-1', versionId: 'v-1', versionNumber: 1, lifecycleStatusConceptId: 'l', versionStatusConceptId: 'v' });
+    });
+
+    it('el encabezado abre el texto de la nota, y sin filas ni texto no crea ninguna', () => {
+      fixture.componentRef.setInput('encabezadoDeLaNota', 'Motivos del diagnóstico presuntivo «HTA»');
+      expect(componente.pasos('enc-1')).toEqual([]);
+
+      componente.cargar([{ label: 'Fiebre', value: '39 °C' }], 'formulario');
+      const [nota] = componente.pasos('enc-1');
+      nota!.ejecutar().subscribe();
+
+      const req = http.expectOne('/charts/notes');
+      expect((req.request.body as { subjectiveText: string }).subjectiveText).toBe(
+        'Motivos del diagnóstico presuntivo «HTA»',
+      );
+      expect((req.request.body as { encounterId: string }).encounterId).toBe('enc-1');
+      req.flush({ noteId: 'n-1', versionId: 'v-1', versionNumber: 1, lifecycleStatusConceptId: 'l', versionStatusConceptId: 'v' });
+    });
+  });
+});
+
 describe('las filas en el texto de la nota', () => {
   it('van y vuelven como «campo: valor», una por línea', () => {
     const filas = [

@@ -1,0 +1,14 @@
+:host {
+  display: block;
+}
+
+.explicar {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.explicar__texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}

@@ -212,8 +212,11 @@ function revisarRuta(
   if (ruta === undefined) {
     return [];
   }
+  // La query no es parte de la ruta: `?tab=memberships` abre una pestaña de
+  // una sección declarada, no una sección nueva.
+  const camino = ruta.split('?')[0];
   const conocida = [...RUTAS_CONOCIDAS].some(
-    (declarada) => ruta === declarada || ruta.startsWith(`${declarada}/`),
+    (declarada) => camino === declarada || camino.startsWith(`${declarada}/`),
   );
   return conocida
     ? []

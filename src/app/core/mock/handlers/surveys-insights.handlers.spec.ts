@@ -348,6 +348,12 @@ describe('simulador de encuestas: resumen del médico y asociación', () => {
 
   describe('emisión automática de la encuesta base al completar una atención', () => {
     const emisora = buscarUsuario('medica')!;
+    // Las invitaciones son memoria del módulo y el corredor no aísla los archivos de un mismo worker (`isolate: false`): las que
+    // otro archivo emitió al completar consultas agotaban las reservas «sin invitación» que estas pruebas necesitan.
+    beforeAll(async () => {
+      const { reiniciarLasInvitacionesDeEncuesta } = await import('./surveys-forms.handlers');
+      reiniciarLasInvitacionesDeEncuesta();
+    });
     const registro = new MockRouter();
     registrarEncuestas(registro);
 
@@ -385,6 +391,20 @@ describe('simulador de encuestas: resumen del médico y asociación', () => {
       emitirInvitacionDeAtencion(otra.id);
       emitirInvitacionDeAtencion(otra.id);
       expect(invitacionesDeLaPaciente().filter((i) => i.appointmentBookingId === otra.id)).toHaveLength(1);
+    });
+
+    it('reiniciar las invitaciones borra las que se emitieron y deja las de fábrica', async () => {
+      const { emitirInvitacionDeAtencion, reiniciarLasInvitacionesDeEncuesta } = await import('./surveys-forms.handlers');
+      const { reservas } = await import('../fixtures/agenda');
+      reiniciarLasInvitacionesDeEncuesta();
+      const deFabrica = invitacionesDeLaPaciente().length;
+      const conInvitacion = new Set(invitacionesDeLaPaciente().map((i) => i.appointmentBookingId));
+      const candidata = reservas.todos().find((r) => r.patientProfileId === paciente.patientProfileId && !conInvitacion.has(r.id))!;
+      emitirInvitacionDeAtencion(candidata.id);
+      expect(invitacionesDeLaPaciente().length).toBe(deFabrica + 1);
+      reiniciarLasInvitacionesDeEncuesta();
+      expect(invitacionesDeLaPaciente().length).toBe(deFabrica);
+      expect(invitacionesDeLaPaciente().some((i) => i.appointmentBookingId === candidata.id)).toBe(false);
     });
 
     it('una reserva inexistente no emite nada ni rompe', async () => {

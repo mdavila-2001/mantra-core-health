@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q4531629
+image: wikidata-especialidad-q4531629.svg | Vías que desencadenan las náuseas y el vómito | Diagrama con el centro del vómito en el tronco del encéfalo y cuatro fuentes de señales: estómago, zona gatillo, oído interno y corteza cerebral, junto a las situaciones que abarca la emetología
 ---
 
 ## [definition] Introducción

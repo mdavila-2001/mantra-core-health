@@ -1,0 +1,71 @@
+:host {
+  display: block;
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.estado {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.pasos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.pasos__actual {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.seccion {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.seccion__titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.ayuda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.resumen {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+
+.resumen__fila {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+}

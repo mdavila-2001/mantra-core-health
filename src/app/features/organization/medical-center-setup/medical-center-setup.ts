@@ -148,7 +148,13 @@ export class MedicalCenterSetup {
     const ficha = APP_SECTIONS.find((s) => `/${s.path}` === RUTA_MI_ORGANIZACION);
     const alcanzable =
       ficha !== undefined &&
-      isVisibleTo(ficha, this.session.roles(), this.session.tenants(), this.session.activeTenantType());
+      isVisibleTo(
+        ficha,
+        this.session.roles(),
+        this.session.tenants(),
+        this.session.activeTenantType(),
+        this.session.isOrganizationAccount() ? 'ORGANIZATION' : 'PERSON',
+      );
     return alcanzable
       ? { label: 'Ver los datos de su organización', route: RUTA_MI_ORGANIZACION }
       : { label: 'Volver al panel', route: RUTA_PANEL };

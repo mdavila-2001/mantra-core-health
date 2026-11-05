@@ -1,0 +1,350 @@
+<app-page-header
+  title="Separación de funciones"
+  subtitle="Hay tareas que no conviene que haga una misma persona, como cobrar y anular. Aquí ve las reglas, los conflictos de hoy y las excepciones."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-sod">
+  <p class="anuncio" role="status" aria-live="polite" data-testid="sod-anuncio">{{ anuncio() }}</p>
+
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (datos(); as d) {
+      <app-tabs [(selectedIndex)]="pestana" data-testid="sod-pestanas">
+        <!-- ============================ Reglas ============================ -->
+        <app-tab label="Reglas">
+          <section class="panel" aria-labelledby="sod-reglas-titulo" data-testid="sod-reglas">
+            <div class="panel__cabeza">
+              <h2 class="panel__titulo" id="sod-reglas-titulo">Reglas de la plataforma</h2>
+              <p class="panel__ayuda">Valen en todas las organizaciones y no se pueden editar.</p>
+            </div>
+            <ul class="lista" role="list">
+              @for (r of reglasDePlataforma(); track r.code) {
+                <li class="tarjeta" [attr.data-testid]="'sod-regla-' + r.code">
+                  <div class="tarjeta__cabeza">
+                    <h3 class="tarjeta__titulo">{{ r.name }}</h3>
+                    <span class="tarjeta__marcas">
+                      <app-badge [variant]="accionTono(r.action)" size="sm">{{
+                        accionTexto(r.action)
+                      }}</app-badge>
+                      @if (r.isHard) {
+                        <app-badge variant="secondary" size="sm">No admite excepciones</app-badge>
+                      }
+                    </span>
+                  </div>
+                  <p class="tarjeta__frase">{{ describir(r) }}</p>
+                  <p class="tarjeta__nota">{{ consecuencia(r) }}</p>
+                  <details class="detalle">
+                    <summary>Ver el detalle</summary>
+                    <dl class="detalle__lista">
+                      <dt>Código</dt>
+                      <dd>{{ r.code }}</dd>
+                      <dt>Dónde aplica</dt>
+                      <dd>{{ alcanceTexto(r.scope) }}</dd>
+                      @if (r.rationale) {
+                        <dt>Por qué</dt>
+                        <dd>{{ r.rationale }}</dd>
+                      }
+                      @if (r.maxExceptionDays) {
+                        <dt>Excepción máxima</dt>
+                        <dd>{{ r.maxExceptionDays }} días</dd>
+                      }
+                    </dl>
+                  </details>
+                </li>
+              }
+            </ul>
+
+            <div class="panel__cabeza panel__cabeza--aparte">
+              <h2 class="panel__titulo">Reglas de su organización</h2>
+              @if (!formularioAbierto()) {
+                <button
+                  app-button
+                  size="sm"
+                  type="button"
+                  (clicked)="nuevaRegla()"
+                  data-testid="sod-nueva-regla"
+                >
+                  Nueva regla
+                </button>
+              }
+            </div>
+
+            @if (formularioAbierto()) {
+              <app-sod-rule-form
+                [rule]="reglaEnEdicion()"
+                [platformRules]="reglasDePlataforma()"
+                [busy]="guardandoRegla()"
+                [failure]="falloDeRegla()"
+                (submitted)="guardarRegla($event)"
+                (cancelled)="cerrarFormulario()"
+              />
+            }
+
+            <ul class="lista" role="list">
+              @for (r of reglasPropias(); track r.code) {
+                <li class="tarjeta" [attr.data-testid]="'sod-regla-' + r.code">
+                  <div class="tarjeta__cabeza">
+                    <h3 class="tarjeta__titulo">{{ r.name }}</h3>
+                    <span class="tarjeta__marcas">
+                      <app-badge [variant]="accionTono(r.action)" size="sm">{{
+                        accionTexto(r.action)
+                      }}</app-badge>
+                      <app-badge variant="primary" size="sm">Propia</app-badge>
+                      @if (r.isHard) {
+                        <app-badge variant="secondary" size="sm">No admite excepciones</app-badge>
+                      }
+                    </span>
+                  </div>
+                  <p class="tarjeta__frase">{{ describir(r) }}</p>
+                  <p class="tarjeta__nota">{{ consecuencia(r) }}</p>
+                  <div class="tarjeta__acciones">
+                    <button
+                      app-button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      (clicked)="editarRegla(r)"
+                      [attr.aria-label]="'Editar la regla ' + r.name"
+                      [attr.data-testid]="'sod-editar-' + r.code"
+                    >
+                      Editar
+                    </button>
+                  </div>
+                </li>
+              } @empty {
+                @if (!formularioAbierto()) {
+                  <li class="vacio" data-testid="sod-sin-reglas-propias">
+                    Su organización aún no agregó reglas propias. Las de la plataforma ya la
+                    protegen; agregue una para ser más estricto.
+                  </li>
+                }
+              }
+            </ul>
+          </section>
+        </app-tab>
+
+        <!-- ======================= Conflictos de hoy ======================= -->
+        <app-tab [label]="'Conflictos hoy (' + conflictos() + ')'">
+          <section
+            class="panel"
+            aria-labelledby="sod-conflictos-titulo"
+            data-testid="sod-conflictos"
+          >
+            <h2 class="panel__titulo" id="sod-conflictos-titulo">
+              Quién reúne hoy funciones incompatibles
+            </h2>
+
+            @if (pedidoHecho(); as hecho) {
+              <app-alert
+                tone="success"
+                title="Pedido enviado"
+                role="status"
+                data-testid="sod-pedido-hecho"
+              >
+                La excepción de {{ hecho.persona }} a «{{ hecho.regla }}» queda pendiente de
+                {{ hecho.aprobador }}.
+                <a app-link routerLink="/administration/access-governance/approvals"
+                  >Ver aprobaciones</a
+                >
+              </app-alert>
+            }
+
+            <ul class="lista" role="list">
+              @for (f of d.findings; track f.engagementId + f.ruleCode) {
+                <li
+                  class="tarjeta"
+                  [attr.data-testid]="'sod-conflicto-' + f.ruleCode + '-' + f.engagementId"
+                >
+                  <div class="tarjeta__cabeza">
+                    <h3 class="tarjeta__titulo">
+                      {{ persona(f.engagementId, 'Una persona') }} · {{ f.ruleName }}
+                    </h3>
+                    <span class="tarjeta__marcas">
+                      <app-badge [variant]="resultadoTono(f)" size="sm">{{
+                        resultadoTexto(f)
+                      }}</app-badge>
+                      <app-badge [variant]="accionTono(f.action)" size="sm">{{
+                        accionTexto(f.action)
+                      }}</app-badge>
+                    </span>
+                  </div>
+                  <p class="tarjeta__frase">{{ f.message }}</p>
+                  <div class="tarjeta__acciones">
+                    @if (f.admitsException && f.outcome !== 'EXCEPTION_ACTIVE') {
+                      <button
+                        app-button
+                        size="sm"
+                        type="button"
+                        (clicked)="abrirPedido(f)"
+                        [attr.aria-label]="
+                          'Pedir una excepción para ' + persona(f.engagementId, 'la persona')
+                        "
+                        [attr.data-testid]="'sod-pedir-' + f.ruleCode"
+                      >
+                        Pedir excepción
+                      </button>
+                    }
+                    @if (f.outcome !== 'EXCEPTION_ACTIVE') {
+                      <a
+                        app-link
+                        [routerLink]="['/administration/support-team', f.engagementId]"
+                        [attr.aria-label]="
+                          'Resolver el conflicto de ' + persona(f.engagementId, 'la persona')
+                        "
+                        [attr.data-testid]="'sod-resolver-' + f.ruleCode"
+                        >Resolver</a
+                      >
+                    }
+                    @if (!f.admitsException && f.outcome !== 'EXCEPTION_ACTIVE') {
+                      <span class="tarjeta__nota"
+                        >Esta regla no admite excepciones: hay que quitar uno de los dos
+                        permisos.</span
+                      >
+                    }
+                  </div>
+
+                  @if (pidiendo(); as p) {
+                    @if (p.engagementId === f.engagementId && p.ruleCode === f.ruleCode) {
+                      <form
+                        class="pedido"
+                        (submit)="$event.preventDefault(); enviarPedido()"
+                        novalidate
+                        data-testid="sod-pedido"
+                      >
+                        <app-form-field
+                          label="Por qué hace falta la excepción"
+                          [required]="true"
+                          [hint]="'Al menos ' + 40 + ' caracteres. Lo verá quien la apruebe.'"
+                          [errorMessage]="
+                            intentoDePedido() && justificacionCorta()
+                              ? 'Escriba al menos 40 caracteres.'
+                              : ''
+                          "
+                        >
+                          <app-textarea
+                            [value]="justificacion()"
+                            (valueChange)="justificacion.set($event)"
+                            [rows]="3"
+                            [maxLength]="500"
+                            [hasError]="intentoDePedido() && justificacionCorta()"
+                            data-testid="sod-pedido-justificacion"
+                          />
+                        </app-form-field>
+                        <app-form-field
+                          label="Vale hasta"
+                          [required]="true"
+                          hint="Toda excepción vence."
+                        >
+                          <app-input
+                            type="date"
+                            [value]="hasta()"
+                            (valueChange)="hasta.set('' + ($event ?? ''))"
+                            ariaLabel="La excepción vale hasta"
+                            testId="sod-pedido-hasta"
+                          />
+                        </app-form-field>
+                        <p class="tarjeta__nota">
+                          Decide otra persona: usted no puede aprobar lo que pide.
+                        </p>
+                        @if (falloDePedido(); as texto) {
+                          <app-alert tone="error" role="alert" data-testid="sod-pedido-error">{{
+                            texto
+                          }}</app-alert>
+                        }
+                        <div class="tarjeta__acciones">
+                          <button
+                            app-button
+                            type="submit"
+                            [isLoading]="enviandoPedido()"
+                            [disabled]="enviandoPedido()"
+                            data-testid="sod-pedido-enviar"
+                          >
+                            Enviar para aprobación
+                          </button>
+                          <button
+                            app-button
+                            variant="outline"
+                            type="button"
+                            (clicked)="cancelarPedido()"
+                            data-testid="sod-pedido-cancelar"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </form>
+                    }
+                  }
+                </li>
+              } @empty {
+                <li class="vacio" data-testid="sod-sin-conflictos">
+                  Nadie reúne hoy funciones incompatibles. Todo en orden.
+                </li>
+              }
+            </ul>
+          </section>
+        </app-tab>
+
+        <!-- ========================== Excepciones ========================== -->
+        <app-tab [label]="'Excepciones (' + d.exceptions.length + ')'">
+          <section
+            class="panel"
+            aria-labelledby="sod-excepciones-titulo"
+            data-testid="sod-excepciones"
+          >
+            <h2 class="panel__titulo" id="sod-excepciones-titulo">
+              Excepciones aprobadas y pendientes
+            </h2>
+            @if (falloDeRevocacion(); as texto) {
+              <app-alert tone="error" role="alert" data-testid="sod-revocar-error">{{
+                texto
+              }}</app-alert>
+            }
+            <ul class="lista" role="list">
+              @for (e of d.exceptions; track e.id) {
+                <li class="tarjeta" [attr.data-testid]="'sod-excepcion-' + e.id">
+                  <div class="tarjeta__cabeza">
+                    <h3 class="tarjeta__titulo">
+                      {{ persona(e.engagementId, 'Una persona') }} · {{ nombreDeRegla(e.ruleCode) }}
+                    </h3>
+                    <app-badge
+                      [variant]="tonoDeExcepcion(e)"
+                      size="sm"
+                      [attr.data-testid]="'sod-excepcion-estado-' + e.id"
+                      >{{ estadoDeExcepcion(e) }}</app-badge
+                    >
+                  </div>
+                  <p class="tarjeta__frase">{{ e.justification }}</p>
+                  <p class="tarjeta__nota">
+                    Desde el {{ dia(e.validFrom) }} hasta el {{ dia(e.validTo) }}.
+                  </p>
+                  @if (revocable(e)) {
+                    <div class="tarjeta__acciones">
+                      <button
+                        app-button
+                        size="sm"
+                        variant="danger"
+                        type="button"
+                        [isLoading]="revocando() === e.id"
+                        [disabled]="revocando() !== null"
+                        (clicked)="revocar(e)"
+                        [attr.aria-label]="
+                          'Revocar la excepción de ' + persona(e.engagementId, 'la persona')
+                        "
+                        [attr.data-testid]="'sod-revocar-' + e.id"
+                      >
+                        Revocar
+                      </button>
+                    </div>
+                  }
+                </li>
+              } @empty {
+                <li class="vacio" data-testid="sod-sin-excepciones">
+                  No hay excepciones. Cuando pida una, aparecerá aquí con su estado.
+                </li>
+              }
+            </ul>
+          </section>
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>

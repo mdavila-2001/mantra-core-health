@@ -1,0 +1,89 @@
+<app-page-header
+  title="Campañas de certificación"
+  subtitle="Cada tanto, quien tiene autoridad sobre un acceso lo reconfirma con evidencia, o se retira solo. Acá ve el estado, el avance y el vencimiento de cada campaña."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-campaign-list">
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    @if (hayDatos()) {
+      <div class="pantalla__barra">
+        <app-segmented-control
+          [options]="filtros()"
+          [value]="filtro()"
+          (valueChange)="filtro.set($event)"
+          ariaLabel="Qué campañas ver"
+          data-testid="campanas-filtro"
+        />
+        <a app-button size="sm" [routerLink]="nueva" data-testid="campanas-nueva">Nueva campaña</a>
+      </div>
+
+      <app-data-table
+        caption="Campañas de certificación de accesos"
+        [state]="visibles()"
+        [columns]="columnas()"
+        [trackBy]="rowId"
+        [rowLabel]="rowLabel"
+        data-testid="campanas-tabla"
+      />
+    }
+  </app-view-state-host>
+</app-card>
+
+<ng-template #nombreCell let-fila>
+  <span class="campana__nombre" [attr.data-testid]="'campana-nombre-' + fila.campaign.id">{{
+    fila.campaign.name
+  }}</span>
+  <span class="campana__sub" [attr.data-testid]="'campana-tipo-' + fila.campaign.id"
+    >{{ tipo(fila) }} · {{ alcance(fila) }}</span
+  >
+</ng-template>
+
+<ng-template #estadoCell let-fila>
+  <app-badge
+    [variant]="estadoTono(fila)"
+    [attr.data-testid]="'campana-estado-' + fila.campaign.id"
+    >{{ estadoTexto(fila) }}</app-badge
+  >
+</ng-template>
+
+<ng-template #avanceCell let-fila>
+  <span class="campana__avance" [attr.data-testid]="'campana-avance-' + fila.campaign.id">
+    @if (fila.progress; as p) {
+      <app-progress [value]="p.coveragePercent" [label]="'Avance de ' + fila.campaign.name" />
+      <span class="campana__sub"
+        >{{ p.coveragePercent }} % ·
+        {{ p.pending === 1 ? '1 pendiente' : p.pending + ' pendientes' }}</span
+      >
+    } @else if (fila.campaign.status === 'DRAFT') {
+      <span class="campana__sub">Aún no se lanzó</span>
+    } @else if (fila.campaign.status === 'CANCELLED') {
+      <span class="campana__sub">Sin avance: se canceló</span>
+    } @else {
+      —
+    }
+  </span>
+</ng-template>
+
+<ng-template #venceCell let-fila>
+  <span
+    [class.campana__vencida]="cuentaAtras(fila).overdue"
+    [attr.data-testid]="'campana-vence-' + fila.campaign.id"
+    >{{ cuentaAtras(fila).text }}</span
+  >
+  @if (fila.campaign.status === 'OPEN' || fila.campaign.status === 'DRAFT') {
+    <span class="campana__sub">Fecha límite: {{ fechaLimite(fila) }}</span>
+  }
+</ng-template>
+
+<ng-template #accionesCell let-fila>
+  <a
+    app-button
+    variant="outline"
+    size="sm"
+    [routerLink]="['/administration/access-governance/campaigns', fila.campaign.id]"
+    [attr.aria-label]="'Ver el seguimiento de ' + fila.campaign.name"
+    [attr.data-testid]="'campana-ver-' + fila.campaign.id"
+  >
+    Ver seguimiento
+  </a>
+</ng-template>

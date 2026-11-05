@@ -1,3 +1,5 @@
+import { OwnPhotoStore } from '../../core/data-access/profiles/own-photo.store';
+import { personInitials } from '../../shared/text/initials';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -57,6 +59,10 @@ const PATIENT_STYLESHEET_HREF = 'paciente.css?v=2';
 import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
 import { MIS_CUESTIONARIOS_ROUTE } from '../account/questionnaires/questionnaires.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
+import { DeniedTenantsBanner } from './denied-tenants-banner/denied-tenants-banner';
+import { TenantMenu } from './tenant-menu/tenant-menu';
+import { UxConsentNotice } from '../ux-consent/ux-consent-notice';
+import { NewDeviceBanner } from './new-device-banner/new-device-banner';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -92,6 +98,9 @@ const DESTINOS_DE_LA_CABECERA: readonly string[] = [
 /** El panel. Constante y no literal suelto: lo miran dos cosas distintas acá. */
 const PANEL = '/dashboard';
 
+/** Un hilo de chat abierto: `/messaging/:conversationId`. */
+const HILO_DE_CHAT = /^\/messaging\/[^/]+$/u;
+
 /**
  * Armazón de todas las pantallas con sesión.
  *
@@ -114,6 +123,10 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
   PHARMACY: 'Farmacia',
   DIAGNOSTIC_CENTER: 'Laboratorio o centro de diagnóstico',
   PAYER: 'Aseguradora',
+  // Cuando la API declare `accountKind: 'ORGANIZATION'` para un hospital o una
+  // clínica, el menú de la cuenta tiene que nombrarla por lo que es.
+  HOSPITAL: 'Hospital',
+  CLINIC: 'Clínica',
 };
 
 @Component({
@@ -133,7 +146,11 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     BackLink,
     Badge,
     NavIcon,
+    NewDeviceBanner,
+    DeniedTenantsBanner,
+    TenantMenu,
     Tooltip,
+    UxConsentNotice,
   ],
   templateUrl: './shell-layout.html',
   styleUrl: './shell-layout.css',
@@ -310,6 +327,15 @@ export class ShellLayout {
       .some((seccion) => seccion.path === 'administration/medical-organization'),
   );
 
+  /**
+   * «Mis solicitudes» en la barra superior: misma regla que «Mis
+   * organizaciones», preguntándole a `visibleSections()`. La farmacia no la
+   * tiene (`hiddenForTenantTypes` de la sección, 30/10/2026).
+   */
+  protected readonly ofreceMisSolicitudes = computed(() =>
+    this.navigation.visibleSections().some((seccion) => seccion.path === 'my-account/requests'),
+  );
+
   /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
   protected readonly etiquetaCarrito = computed(() => {
     const unidades = this.unidadesDelCarrito();
@@ -363,6 +389,12 @@ export class ShellLayout {
        inicio le muestre el avance. Sólo para el paciente —a quien atiende no se
        le ofrece la lista— y sólo en el navegador, donde hay dónde guardarlo. */
     const destroyRef = inject(DestroyRef);
+    const fotoPropia = this.fotoPropia;
+    effect(() => {
+      if (this.esPacienteDelCarrito() || this.auth.practitionerProfileId() !== null) {
+        untracked(() => fotoPropia.load());
+      }
+    });
     effect(() => {
       if (this.esPacienteDelCarrito()) {
         untracked(() => this.firstSteps.track(this.router, destroyRef));
@@ -588,6 +620,17 @@ export class ShellLayout {
   protected readonly enElPanel = computed(() => this.urlActual() === PANEL);
 
   /**
+   * Si hay un hilo de chat abierto (`/messaging/:id`).
+   *
+   * En angosto el hilo ocupa la pantalla y trae su propia «‹» de vuelta a la
+   * bandeja, justo debajo de esta flecha: dos «volver» apilados que llevan a
+   * lugares distintos. Ahí, y sólo en angosto, la del armazón se esconde (por
+   * CSS, con el mismo corte en que el hilo pasa a pantalla completa). En ancho
+   * el hilo no tiene «‹» y la flecha del armazón se queda.
+   */
+  protected readonly enUnHilo = computed(() => HILO_DE_CHAT.test(this.urlActual()));
+
+  /**
    * Clic sobre el rótulo de un dominio.
    *
    * Con la barra desplegada no hace nada: el `<details>` pliega solo, que es
@@ -662,6 +705,7 @@ export class ShellLayout {
     if (
       esPaciente(roles) ||
       roles.includes('PRACTITIONER') ||
+      roles.includes('SUPERADMIN') ||
       this.auth.activeTenantType() === 'PAYER' ||
       this.auth.activeTenantType() === 'PHARMACY' ||
       this.auth.activeTenantType() === 'DIAGNOSTIC_CENTER'
@@ -699,18 +743,27 @@ export class ShellLayout {
   /** Nombre de la organización activa, para el rótulo del selector. */
   protected readonly organizacionActiva = computed(() => {
     const id = this.activeTenantId();
-    return id ? this.auth.tenantName(id) : 'Sin organización';
+    return id ? this.auth.tenantName(id) : this.auth.platformWide() ? 'Toda la plataforma' : 'Sin organización';
   });
 
   /** Iniciales para el avatar: dos, que es lo que entra en el círculo. */
-  protected readonly iniciales = computed(() =>
-    (this.user()?.displayName ?? '')
-      .trim()
+  protected readonly iniciales = computed(() => {
+    const nombre = (this.user()?.displayName ?? '').trim();
+    // Una persona: primer nombre y primer apellido, igual que en su perfil. Una
+    // organización conserva las dos primeras palabras de su nombre.
+    if (!this.auth.isOrganizationAccount()) {
+      return personInitials(nombre);
+    }
+    return nombre
       .split(/\s+/)
       .slice(0, 2)
       .map((parte) => parte[0]?.toUpperCase() ?? '')
-      .join(''),
-  );
+      .join('');
+  });
+
+  /** La foto de perfil de la persona, si la tiene; ver `OwnPhotoStore`. */
+  private readonly fotoPropia = inject(OwnPhotoStore);
+  protected readonly fotoDePerfil = this.fotoPropia.url;
 
   /**
    * Los roles del token, en una línea legible para el menú de la cuenta.
@@ -747,6 +800,7 @@ export class ShellLayout {
   }
 
   protected logout(): void {
+    this.fotoPropia.reset();
     this.auth.logout();
     void this.router.navigateByUrl(LOGIN_ROUTE);
   }
@@ -756,8 +810,12 @@ export class ShellLayout {
    * corresponde a la anterior. Se vuelve al panel en vez de recargar la vista actual, que podría
    * ser el detalle de un recurso que en esta organización no existe.
    */
-  protected changeTenant(tenantId: string): void {
-    this.auth.selectTenant(tenantId);
+  protected changeTenant(tenantId: string | null): void {
+    if (tenantId === null) {
+      this.auth.clearSelectedTenant();
+    } else {
+      this.auth.selectTenant(tenantId);
+    }
     void this.router.navigateByUrl('/dashboard');
   }
 

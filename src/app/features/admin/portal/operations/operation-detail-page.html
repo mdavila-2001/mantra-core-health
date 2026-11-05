@@ -15,6 +15,10 @@
           <app-badge [variant]="method(op.metodo).tone">{{ method(op.metodo).label }}</app-badge>
           <code class="operation__route">{{ op.ruta }}</code>
           <app-badge [variant]="risk(op.riesgo).tone">{{ risk(op.riesgo).label }}</app-badge>
+          <app-badge [variant]="kind(kindCode()).tone" data-testid="portal-operation-kind">{{ kind(kindCode()).label }}</app-badge>
+          @if (op.publica) {
+            <app-badge variant="warning">Pública</app-badge>
+          }
         </p>
 
         <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
@@ -63,8 +67,16 @@
             <app-portal-operation-contract [operation]="op" />
           </app-tab>
 
-          <app-tab label="Datos">
+          <app-tab label="Tablas afectadas">
             <app-portal-operation-data [operation]="op" [tableUrl]="tableUrl" />
+          </app-tab>
+
+          <app-tab label="Ciclo de la petición">
+            <app-portal-request-cycle [operation]="op" [tree]="treeOrNull()" />
+          </app-tab>
+
+          <app-tab label="Respuestas">
+            <app-portal-operation-responses [operation]="op" [mapRow]="mapRow()" />
           </app-tab>
 
           <app-tab label="Acceso">
@@ -86,7 +98,8 @@
                 <ul class="operation__list">
                   @for (req of op.requerimientos; track $index) {
                     <li>
-                      <strong>{{ req.tipo }}</strong> · {{ req.detalle }}
+                      <app-badge size="sm" [variant]="requirement(req.tipo).tone">{{ requirement(req.tipo).label }}</app-badge>
+                      {{ req.detalle }}
                       <span class="operation__source">{{ req.fuente }}</span>
                     </li>
                   }
@@ -94,6 +107,10 @@
               } @else {
                 <p class="operation__muted">El inventario no anotó requisitos.</p>
               }
+              <p class="operation__muted">
+                Dónde entran estas comprobaciones en el recorrido de la petición:
+                <a app-link [routerLink]="[]" [queryParams]="{ vista: 'ciclo' }" queryParamsHandling="merge">ver el ciclo de la petición</a>.
+              </p>
             </section>
           </app-tab>
 

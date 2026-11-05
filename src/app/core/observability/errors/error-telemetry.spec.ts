@@ -113,6 +113,24 @@ describe('ErrorTelemetry', () => {
     expect(span?.status.code).toBe(2);
   });
 
+  it('un fallo en /rx/<token> no lleva el token ni en la ruta ni en el mensaje (FAR-01)', () => {
+    montar();
+    const token = 'Q2hhcmxpZVN5bnRoZXRpY1Rva2VuMDEyMzQ1Njc4OWFi';
+    // El mensaje de un HttpErrorResponse relanzado como Error cita la URL entera.
+    const error = new Error(
+      `Http failure response for /public/prescription-shares/${token}: 500 Server Error`,
+    );
+
+    // `AppErrorHandler` pasa `location.pathname` crudo: el saneado es de acá.
+    telemetry.report(error, 'error-handler', 'E-abc1234-009', `/rx/${token}`);
+
+    const [span] = exporter.getFinishedSpans();
+    expect(span?.attributes['app.route.template']).toBe('/rx/:token');
+    expect(JSON.stringify(span?.attributes)).not.toContain(token);
+    expect(span?.status.message).not.toContain(token);
+    expect(span?.status.message).toContain('/public/prescription-shares/:token');
+  });
+
   it('lleva el código de soporte, que es lo que cierra el circuito con la persona', () => {
     montar();
 

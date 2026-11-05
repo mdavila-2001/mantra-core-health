@@ -1,0 +1,330 @@
+:host {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.barra,
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.controles {
+  justify-content: flex-start;
+}
+
+.controles app-form-field {
+  flex: 1 1 14rem;
+  max-inline-size: 22rem;
+}
+
+.controles__grupo {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.controles__rotulo {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ---- leyenda ---------------------------------------------------------------------------------------------------- */
+
+.leyenda {
+  list-style: none;
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ---- cuadrícula ------------------------------------------------------------------------------------------------ */
+
+.grilla {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xs);
+}
+
+.grilla:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.grilla__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+
+.grilla__titulo {
+  padding: var(--sp-3);
+  text-align: start;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.grilla__tabla th,
+.grilla__tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.grilla__columna {
+  min-inline-size: 8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-surface-alt);
+}
+
+.grilla__persona {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: var(--z-base);
+  min-inline-size: 12rem;
+  background: var(--bg-surface);
+}
+
+thead .grilla__persona {
+  background: var(--bg-surface-alt);
+}
+
+.grilla__orden {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.persona__nombre {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.persona__sub {
+  display: block;
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.celda {
+  font: inherit;
+  inline-size: 100%;
+  min-block-size: 2.25rem;
+  padding: var(--sp-1) var(--sp-2);
+  text-align: start;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xs);
+  cursor: pointer;
+}
+
+.celda:hover {
+  background: var(--bg-hover);
+}
+
+.celda[aria-pressed='true'] {
+  border-color: var(--brand-primary);
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
+
+.celda--FULL {
+  background: var(--st-success-bg);
+}
+
+.celda--CONDITIONAL {
+  background: var(--st-info-bg);
+}
+
+.celda--PARTIAL {
+  background: var(--st-warning-bg);
+}
+
+.celda--NONE {
+  color: var(--text-secondary);
+}
+
+.paginas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-3);
+}
+
+.paginas__resumen {
+  margin-inline-end: auto;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.sin-coincidencias {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+/* ---- exportar ---------------------------------------------------------------------------------------------------- */
+
+.exportar {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  margin-block-end: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xs);
+  background: var(--bg-surface-alt);
+}
+
+.exportar__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.exportar__texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.exportar__botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.huella {
+  display: block;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+/* ---- detalle y «¿por qué?» ------------------------------------------------------------------------------------- */
+
+.detalle__cuerpo {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.detalle__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.detalle__enlace {
+  margin: 0;
+}
+
+.datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--sp-3);
+}
+
+.datos__par {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xs);
+  background: var(--bg-surface-alt);
+}
+
+.datos dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.datos dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.porque {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.porque__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.porque__nota {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.resultado {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.resultado__decision,
+.resultado__resumen {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.resultado__decision {
+  font-size: var(--fs-body-lg);
+}
+
+.resultado__subtitulo {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.resultado__lista,
+.razones {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  display: grid;
+  gap: var(--sp-1);
+  color: var(--text-primary);
+}
+
+.razones {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+.razones__item[data-passed='false'] {
+  font-weight: 600;
+}

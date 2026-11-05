@@ -1,5 +1,6 @@
 ---
 slug: reflujo-gastroesofagico
+image: reflujo-gastroesofagico.svg | En el reflujo, el contenido ácido del estómago sube al esófago. | Esófago y estómago con el esfínter inferior debilitado y el ácido ascendiendo, junto a los síntomas típicos como el ardor, las medidas de estilo de vida y los signos de alarma.
 ---
 
 ## [definition] Introducción

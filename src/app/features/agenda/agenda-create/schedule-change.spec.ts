@@ -16,9 +16,10 @@ import {
   type CupoSimulado,
   type PlantillaSimulada,
 } from '../../../core/mock/fixtures/agenda';
+import { registrarPracticas } from '../../../core/mock/handlers/practice.handlers';
 import { registrarAgenda } from '../../../core/mock/handlers/scheduling.handlers';
 import { isMockReply, MockRouter, type MockMethod } from '../../../core/mock/mock-router';
-import { buscarUsuario, TENANT_CONSULTORIO } from '../../../core/mock/mock-session';
+import { buscarUsuario, TENANT_CLINICA } from '../../../core/mock/mock-session';
 import type { Coleccion } from '../../../core/mock/mock-store';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { DialogService } from '@shared/components/molecules/dialog/dialog-service';
@@ -45,6 +46,9 @@ const PAST_SATURDAYS = 'Sábados (temporada pasada)';
 
 /** El jueves de la tabla (`DIAS`, de lunes a domingo). */
 const THURSDAY_INDEX = 3;
+
+/** Replacing the schedule in force is confirmed first. */
+const REPLACE_TITLE = 'Reemplazar su horario actual';
 
 /** El aviso del retiro cuando hay alguien ya recibido: confirmarlo retira conservando las citas. */
 const PATIENT_PRESENT_TITLE = 'Hay un paciente ya recibido';
@@ -86,6 +90,8 @@ function restoreTable<T extends { readonly id: string }>(
 describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulador', () => {
   const simulator = new MockRouter();
   registrarAgenda(simulator);
+  // La pantalla también lee `GET /practices` (la práctica de un recurso nuevo).
+  registrarPracticas(simulator);
   const doctor = buscarUsuario('medica')!;
 
   let fixture: ComponentFixture<AgendaCreate>;
@@ -106,7 +112,7 @@ describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulado
   const dialogs = {
     confirm: (config: { readonly title: string }) => {
       asked.push(config.title);
-      return Promise.resolve(config.title === PATIENT_PRESENT_TITLE);
+      return Promise.resolve(config.title === PATIENT_PRESENT_TITLE || config.title === REPLACE_TITLE);
     },
   };
 
@@ -128,7 +134,10 @@ describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulado
           provide: AuthService,
           useValue: {
             roles: signal<readonly string[]>(doctor.roles),
-            activeTenantId: signal<string | null>(TENANT_CONSULTORIO),
+            // La agenda que se cambia (`RECURSO_MEDICA`) es de la clínica: con
+            // `GET /scheduling/resources` aislado por organización, como la API,
+            // desde «Mi consultorio» no se ve.
+            activeTenantId: signal<string | null>(TENANT_CLINICA),
             practitionerProfileId: signal<string | null>(doctor.practitionerProfileId ?? null),
             displayName: signal<string | null>(doctor.displayName),
           },
@@ -234,6 +243,7 @@ describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulado
     await settle();
 
     expect(screen.publicado()).toBe(true);
+    expect(asked[0]).toBe(REPLACE_TITLE);
     expect(asked.at(-1)).toBe('Listo, su horario quedó cambiado');
     // Se retira exactamente el horario que se estaba cambiando.
     expect(served.filter((line) => line.startsWith('DELETE '))).toEqual([

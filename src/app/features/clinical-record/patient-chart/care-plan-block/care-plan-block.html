@@ -22,22 +22,35 @@
          estado viaja también dentro del encabezado, como texto: el color y el
          ✓ solos no alcanzan, y quien navega por encabezados lo oye ahí. -->
     <ol class="ruta">
-      @if (exigeRespuesta()) {
-        <li class="ruta__tramo" [class.ruta__tramo--listo]="tramos().origen">
+      @if (exigeRespuesta() || ofreceRespuesta()) {
+        <li class="ruta__tramo" [class.ruta__tramo--listo]="origenListo()">
           <span class="ruta__nodo" aria-hidden="true">
-            <app-nav-icon [name]="tramos().origen ? 'check' : 'clipboard'" />
+            <app-nav-icon [name]="origenListo() ? 'check' : 'clipboard'" />
           </span>
           <div class="ruta__cuerpo">
             <h3 class="ruta__titulo">
               Origen
               <span class="sr-only"
-                >— {{ tramos().origen ? 'completo' : 'falta, obligatorio' }}</span
+                >— {{
+                  exigeRespuesta() || faltaRespuesta()
+                    ? tramos().origen
+                      ? 'completo'
+                      : 'falta, obligatorio'
+                    : 'opcional'
+                }}</span
               >
             </h3>
-            <p class="ruta__ayuda">La respuesta del formulario médico de la que sale el plan.</p>
+            <p class="ruta__ayuda">
+              {{
+                exigeRespuesta()
+                  ? 'La respuesta del formulario médico de la que sale el plan.'
+                  : 'Opcional: la respuesta del formulario médico de la que sale el plan. Sí hace falta el encuentro abierto.'
+              }}
+            </p>
             <!-- Viene cargada; con una sola respuesta el selector queda
                  deshabilitado. -->
             <app-form-response-picker
+              [opcional]="!exigeRespuesta()"
               [encounterId]="encounterId()"
               [(seleccionada)]="respuestaDelFormulario"
             />

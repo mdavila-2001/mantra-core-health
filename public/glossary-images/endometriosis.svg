@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Endometriosis: implantes fuera del útero</title>
+  <desc id="d">A la izquierda, el útero con las trompas y los ovarios, rodeado de puntos morados que señalan implantes de tejido parecido al endometrio en los ovarios, el peritoneo, la vejiga y el intestino. A la derecha, los síntomas frecuentes, cómo se diagnostica y las opciones de tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Dónde aparecen los implantes</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Síntomas y abordaje</text>
+<path d="M153.5 121.0 C107.0 105.5 76.0 121.0 60.5 152.0" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M246.5 121.0 C293.0 105.5 324.0 121.0 339.5 152.0" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="57.400000000000006" cy="176.8" rx="24.8" ry="17.05" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<ellipse cx="342.6" cy="176.8" rx="24.8" ry="17.05" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<path d="M147.3 114.8 C147.3 90 252.7 90 252.7 114.8 C252.7 167.5 227.9 198.5 221.7 214.0 L178.3 214.0 C172.1 198.5 147.3 167.5 147.3 114.8 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="178.3" y="214.0" width="43.4" height="24.8" rx="4" fill="var(--organ)"/>
+<path d="M181.4 238.8 L175.2 291.5 L224.8 291.5 L218.6 238.8" fill="var(--skin)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="200" y="150" text-anchor="middle" class="lab">Útero</text>
+<circle cx="64" cy="170" r="8" fill="var(--purple)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="342" cy="168" r="8" fill="var(--purple)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="300" cy="100" r="8" fill="var(--purple)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="110" cy="104" r="8" fill="var(--purple)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="230" cy="250" r="8" fill="var(--purple)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="150" cy="262" r="8" fill="var(--purple)" stroke="var(--panel)" stroke-width="2"/>
+<circle cx="196" cy="300" r="8" fill="var(--purple)" stroke="var(--panel)" stroke-width="2"/>
+<text x="52" y="214" class="small">Ovario</text>
+<text x="300" y="214" class="small">Ovario</text>
+<text x="200" y="330" text-anchor="middle" class="small" style="fill:var(--muted)">Peritoneo, vejiga, intestino</text>
+<circle cx="52" cy="364" r="8" fill="var(--purple)" stroke="var(--panel)" stroke-width="2"/>
+<text x="68" y="369" class="small">Tejido parecido al endometrio fuera del útero</text>
+<text x="40" y="398" class="small" style="fill:var(--muted)">Responde a las hormonas de cada ciclo: se</text>
+<text x="40" y="414" class="small" style="fill:var(--muted)">inflama y puede formar quistes y adherencias.</text>
+<text x="416" y="76" class="h">Síntomas frecuentes</text>
+<text x="416" y="102" class="lab">• Reglas muy dolorosas</text>
+<text x="416" y="126" class="lab">• Dolor pélvico crónico</text>
+<text x="416" y="150" class="lab">• Dolor en las relaciones</text>
+<text x="416" y="174" class="lab">• Dolor al orinar o defecar</text>
+<text x="427" y="198" class="lab">durante la regla</text>
+<text x="416" y="222" class="lab">• Dificultad para embarazarse</text>
+<text x="416" y="270" class="h">Diagnóstico</text>
+<text x="416" y="294" class="lab">Historia, exploración y ecografía o</text>
+<text x="416" y="312" class="lab">resonancia; a veces, laparoscopia.</text>
+<text x="416" y="348" class="h">Tratamiento</text>
+<text x="416" y="372" class="lab">Analgésicos, tratamiento hormonal</text>
+<text x="416" y="390" class="lab">o cirugía según el caso.</text>
+<text x="416" y="420" class="small" style="fill:var(--muted)">Es crónica, pero tiene control.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

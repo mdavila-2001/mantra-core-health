@@ -76,13 +76,16 @@ export class PractitionerAffiliations implements OnInit {
     this.sites().map((site) => ({ value: site.id, label: site.name })),
   );
 
-  /** Solo las filas de la sede elegida. */
+  /**
+   * Las filas de la sede elegida **y** las que no tienen sede (`practiceSiteId: null`: un doctor que canjeó un QR
+   * multiuso). Estas últimas se muestran siempre, bajo «Sin sede asignada», o la organización no podría aprobarlas.
+   */
   protected readonly siteRows = computed<ViewState<readonly RoleAssignmentRow[]>>(() => {
     const state = this.rows();
     const siteId = this.siteId();
     const all = dataOf(state);
     if (all === null || siteId === null) return state;
-    const mine = all.filter((row) => row.practiceSiteId === siteId);
+    const mine = all.filter((row) => row.practiceSiteId === siteId || row.practiceSiteId === null);
     return mine.length > 0
       ? ready(mine)
       : empty(
@@ -100,7 +103,17 @@ export class PractitionerAffiliations implements OnInit {
   ]);
 
   protected readonly rowId = (row: RoleAssignmentRow): string => row.id;
-  protected readonly rowLabel = (row: RoleAssignmentRow): string => `${row.practitionerName} · ${row.serviceDisplay ?? ''}`;
+  protected readonly rowLabel = (row: RoleAssignmentRow): string => `${row.practitionerName} · ${this.serviceText(row)}`;
+
+  /** El servicio en palabras: una solicitud de QR multiuso llega con `serviceDisplay: null` y no se lee «null». */
+  protected serviceText(row: RoleAssignmentRow): string {
+    return row.serviceDisplay ?? 'sin servicio asignado';
+  }
+
+  /** Dónde: las solicitudes sin sede se rotulan para que se vea por qué aparecen en cualquier sede. */
+  protected siteText(row: RoleAssignmentRow): string | null {
+    return row.practiceSiteId === null ? 'Sin sede asignada' : null;
+  }
 
   ngOnInit(): void {
     this.catalog.listPractices().subscribe({

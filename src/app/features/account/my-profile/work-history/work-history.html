@@ -27,7 +27,12 @@
       <p class="historial__intro">
         Los lugares donde atiende hoy: su consultorio, una clínica, un hospital o donde haga
         cualquiera de sus servicios. Es lo que ve un paciente al reservar y lo que la agenda usa
-        para decir dónde es la atención.
+        para decir dónde es la atención. Cada lugar lleva su dirección, su punto en el mapa y su QR
+        de cobro.
+      </p>
+      <p class="historial__intro" data-testid="sedes-no-es-trayectoria">
+        No es lo mismo que «Trayectoria»: aquella es su currículum y no le dice a un paciente dónde
+        atenderse. Si atiende en un lugar que ya figura en su trayectoria, cárguelo también acá.
       </p>
 
       <!-- Barra: sólo el buscador (nombre + dirección, normalizado). Sin
@@ -67,7 +72,7 @@
       @if (sedes().length === 0) {
         <p class="historial__vacio" data-testid="sedes-vacio">
           Todavía no cargó ningún lugar de atención. Sin uno, su ficha no dice dónde
-          encontrarle.
+          encontrarle, aunque el lugar figure en su trayectoria.
         </p>
       } @else if (sedesFiltradas().length === 0) {
         <p class="historial__vacio" data-testid="sedes-sin-resultados">
@@ -94,7 +99,8 @@
           <h3 class="historial__subtitulo">Agregar lugar de atención</h3>
           <p class="historial__intro">
             Búsquelo por su nombre en el padrón oficial de salud: clínicas, hospitales, consultorios y
-            laboratorios ya están cargados. Si es su consultorio y no aparece, cárguelo usted.
+            laboratorios ya están cargados. Al elegirlo se abre el formulario con el nombre puesto;
+            usted marca la puerta en el mapa. Si no aparece, cárguelo usted.
           </p>
           <app-form-field
             label="Buscar el establecimiento"
@@ -118,7 +124,6 @@
                 size="sm"
                 type="button"
                 data-testid="sede-padron-confirmar"
-                [isLoading]="vinculandoLugar()"
                 (clicked)="atiendoAca()"
               >
                 Atiendo en {{ lugar.label }}
@@ -165,6 +170,12 @@
           (dismissAttempt)="intentarCerrarAltaDeSede()"
           (closed)="intentarCerrarAltaDeSede()"
         >
+          @if (referenciaDelPadron(); as referencia) {
+            <p class="historial__intro" data-testid="sede-referencia-padron">
+              Según el padrón: {{ referencia }}. Marque la puerta en el mapa para que el paciente la
+              encuentre.
+            </p>
+          }
           @if (sedeEnEdicion()) {
             <p class="historial__intro" data-testid="sede-edicion-aviso">
               Los campos vienen con lo que ya tenía cargado: corrija lo que haga falta. Para
@@ -327,7 +338,7 @@
         [actions]="accionesDeSede(sede)"
         [fila]="sede.name"
         [attr.data-site-id]="sede.id"
-        data-testid="sede-acciones"
+        class="historial__sede-acciones" data-testid="sede-acciones"
         (actionSelected)="ejecutarAccionDeSede($event, sede)"
       />
     </ng-template>
@@ -340,8 +351,12 @@
     @if (layout() === 'flat' || layout() === 'tabla') {
       <h2 class="historial__titulo">Historial laboral</h2>
       <p class="historial__intro">
-        Los hospitales y entidades médicas donde ejerció. Lo administra usted: es su trayectoria,
-        no un dato que cargue la organización.
+        Los hospitales y entidades médicas donde ejerció o ejerce. Lo administra usted: es su
+        trayectoria, no un dato que cargue la organización.
+      </p>
+      <p class="historial__intro" data-testid="historial-no-es-donde-atiendo">
+        Es su currículum: no le dice a un paciente dónde atenderse ni lleva dirección o QR de cobro.
+        Eso se carga en «Dónde atiendo».
       </p>
     }
 
@@ -390,72 +405,6 @@
           />
         }
       }
-    }
-
-    <!-- ─── Lo que se puede corregir o retirar (sólo en «Trayectoria») ─────
-           La pestaña ya pinta la historia entera arriba, así que acá no se
-           repite: se lista únicamente lo accionable —lo declarado por el
-           profesional y lo que ninguna institución contestó todavía—, y va
-           pegado al formulario que es el que corrige. Sin nada que tocar, el
-           bloque no existe. -->
-    @if (layout() === 'timeline' && !historialEnTabla() && vinculosEditables().length > 0) {
-      <h3 class="historial__subtitulo">Corregir o retirar</h3>
-      <p class="historial__intro">
-        Lo que declaró usted, y las solicitudes que todavía nadie contestó. Lo que una institución
-        ya confirmó o rechazó no se edita desde acá.
-      </p>
-      <ul class="historial__lista" data-testid="vinculos-editables">
-        @for (afiliacion of vinculosEditables(); track afiliacion.id) {
-          <li class="historial__item">
-            <div class="historial__institucion">
-              <strong>{{ afiliacion.organizationName }}</strong>
-              @if (afiliacion.roleTitle) {
-                <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
-              }
-            </div>
-
-            <div class="historial__periodo">
-              <span class="historial__fechas">
-                {{ afiliacion.startDate | date: 'MM/yyyy' }} —
-                @if (afiliacion.endDate) {
-                  {{ afiliacion.endDate | date: 'MM/yyyy' }}
-                } @else {
-                  actualidad
-                }
-              </span>
-            </div>
-
-            <div class="historial__acciones-sede">
-              @if (puedeCorregirse(afiliacion)) {
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="vinculo-editar"
-                  [attr.aria-label]="'Corregir el vínculo con ' + afiliacion.organizationName"
-                  (clicked)="abrirEdicionDeVinculo(afiliacion)"
-                >
-                  Editar
-                </button>
-              }
-              @if (puedeRetirarse(afiliacion)) {
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="vinculo-retirar"
-                  [attr.aria-label]="'Retirar el vínculo con ' + afiliacion.organizationName"
-                  (clicked)="retirarVinculo(afiliacion)"
-                >
-                  Retirar
-                </button>
-              }
-            </div>
-          </li>
-        }
-      </ul>
     }
 
     <!-- ─── La línea de tiempo ──────────────────────────────────────────────
@@ -673,19 +622,22 @@
             </app-form-field>
           }
 
-          <app-form-field label="Desde" hint="Cuándo empezó." [required]="true">
-            <app-date-picker [(value)]="desde" />
-          </app-form-field>
+          <!-- Desde y Hasta en la misma fila: son un solo período. -->
+          <div class="historial__rango">
+            <app-form-field label="Desde" hint="Cuándo empezó." [required]="true">
+              <app-date-picker [(value)]="desde" />
+            </app-form-field>
 
-          <!-- El período invertido se marca en el propio campo y no como aviso
-               suelto: el error está ahí y ahí hay que corregirlo. -->
-          <app-form-field
-            label="Hasta"
-            hint="Déjelo vacío si sigue ejerciendo ahí."
-            [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
-          >
-            <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
-          </app-form-field>
+            <!-- El período invertido se marca en el propio campo y no como aviso
+                 suelto: el error está ahí y ahí hay que corregirlo. -->
+            <app-form-field
+              label="Hasta"
+              hint="Déjelo vacío si sigue ejerciendo ahí."
+              [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
+            >
+              <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
+            </app-form-field>
+          </div>
         </form>
 
         <button
@@ -793,6 +745,55 @@
   </div>
   @if (avisoDelVinculo(afiliacion); as aviso) {
     <p class="historial__estado">{{ aviso }}</p>
+  }
+  <ng-container
+    [ngTemplateOutlet]="llevarADondeAtiendoTpl"
+    [ngTemplateOutletContext]="{ $implicit: afiliacion }"
+  />
+</ng-template>
+
+<!-- Edit / retire / «¿Atiende acá?» for one timeline node. The Trayectoria tab
+     renders it inside its own nodes, so the actions sit on the item they act on
+     instead of repeating the whole list under «Experiencia histórica». -->
+<ng-template #accionesDelNodo let-id>
+  @if (vinculoPorId(id); as afiliacion) {
+    <div class="historial__nodo-acciones" data-testid="vinculo-acciones">
+      <ng-container [ngTemplateOutlet]="llevarADondeAtiendoTpl" [ngTemplateOutletContext]="{ $implicit: afiliacion }" />
+      <div class="historial__acciones-sede">
+        @if (puedeCorregirse(afiliacion)) {
+          <button app-button variant="ghost" size="sm" type="button" data-testid="vinculo-editar"
+            [attr.aria-label]="'Corregir el vínculo con ' + afiliacion.organizationName"
+            (clicked)="abrirEdicionDeVinculo(afiliacion)">Editar</button>
+        }
+        @if (puedeRetirarse(afiliacion)) {
+          <button app-button variant="ghost" size="sm" type="button" data-testid="vinculo-retirar"
+            [attr.aria-label]="'Retirar el vínculo con ' + afiliacion.organizationName"
+            (clicked)="retirarVinculo(afiliacion)">Retirar</button>
+        }
+      </div>
+    </div>
+  }
+</ng-template>
+
+<!-- «¿Atiende acá?»: el paso de la trayectoria a «Dónde atiendo». Va como
+     pregunta junto al período, y no como una acción más de la fila: es otra
+     clase de cosa —no corrige ni retira el vínculo— y en el menú quedaría
+     escondida justo para quien no sabe que las dos pestañas son distintas. -->
+<ng-template #llevarADondeAtiendoTpl let-afiliacion>
+  @if (puedeLlevarseADondeAtiendo(afiliacion)) {
+    <p class="historial__donde-atiende" data-testid="vinculo-donde-atiende">
+      <span>¿Atiende acá?</span>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        [attr.aria-label]="'Agregar ' + afiliacion.organizationName + ' a Dónde atiendo'"
+        (clicked)="llevarADondeAtiendo.emit(afiliacion.organizationName)"
+      >
+        Agregar a Dónde atiendo
+      </button>
+    </p>
   }
 </ng-template>
 

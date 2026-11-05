@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q286452
+image: wikidata-especialidad-q286452.svg | Tendones, túnel carpiano y nervio mediano de la mano. | Palma de la mano con tendones flexores, túnel carpiano y nervio mediano señalados, junto a las afecciones que atiende la cirugía de la mano y sus métodos de trabajo.
 ---
 
 ## [definition] Introducción

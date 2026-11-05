@@ -69,14 +69,24 @@ describe('PharmacyInventory', () => {
     fixture.detectChanges();
   }
 
-  function mount(items: readonly PharmacyProduct[]): void {
+  /** Sin sedes no hay selector: es la pantalla de siempre. */
+  function mount(items: readonly PharmacyProduct[], sites: readonly { siteId: string; siteName: string }[] = []): void {
     fixture = TestBed.createComponent(PharmacyInventory);
     fixture.detectChanges();
     http
       .expectOne((r) => r.url.endsWith('/pharmacy/pharmacies'))
       .flush({ items: [{ ...PHARMACY, code: 'FC', siteCount: 1, productCount: 1 }], count: 1 });
     fixture.detectChanges();
+    flushSites(sites);
     expectListing(items);
+  }
+
+  function flushSites(sites: readonly { siteId: string; siteName: string }[]): void {
+    http.expectOne(`/pharmacies/${PHARMACY.id}/opening-hours`).flush({
+      pharmacyId: PHARMACY.id,
+      asOf: '2026-10-30T00:00:00Z',
+      sites: sites.map((site) => ({ ...site, timeZone: 'America/La_Paz', open24h: null, shifts: [] })),
+    });
   }
 
   beforeEach(() => {
@@ -100,12 +110,53 @@ describe('PharmacyInventory', () => {
     expect(host.querySelector('app-page-header')).toBeNull();
   });
 
-  it('avisa que con la sincronización pasará a sólo lectura', () => {
+  it('no promete una sincronización futura: ya existe en «Integración»', () => {
     mount([product({})]);
 
-    expect(root().querySelector('[data-testid="inventory-sync-notice"]')?.textContent).toContain(
-      'sólo de lectura',
+    expect(root().querySelector('[data-testid="inventory-sync-notice"]')).toBeNull();
+    expect(root().textContent).not.toContain('Cuando exista la sincronización');
+  });
+
+  it('con el listado cortado en 500 lo dice: la tabla, las alertas y el CSV ven sólo esos', () => {
+    fixture = TestBed.createComponent(PharmacyInventory);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.endsWith('/pharmacy/pharmacies'))
+      .flush({ items: [{ ...PHARMACY, code: 'FC', siteCount: 1, productCount: 1 }], count: 1 });
+    fixture.detectChanges();
+    flushSites([]);
+    http.expectOne((r) => r.url.endsWith('/pharmacy/products')).flush({ items: [product({})], limit: 500, truncated: true });
+    fixture.detectChanges();
+
+    expect(root().querySelector('[data-testid="inventory-truncated"]')?.textContent).toContain(
+      'Se muestran los primeros 500',
     );
+  });
+
+  it('sin corte no hay aviso, la tabla es compacta y avisa al catálogo de lo escrito sin guardar', () => {
+    mount([product({})]);
+    const inventory = fixture.componentInstance;
+
+    expect(root().querySelector('[data-testid="inventory-truncated"]')).toBeNull();
+    expect(root().querySelector('[data-testid="inventory-table"]')?.classList).toContain('data-table--dense');
+    expect(inventory.hasUnsavedChanges()).toBe(false);
+    internal().setStock(product({}), '3');
+    expect(inventory.hasUnsavedChanges()).toBe(true);
+  });
+
+  it('ordena por existencias desde el encabezado', async () => {
+    mount([
+      product({ id: 'p-1', productCode: 'A', brandName: 'Alfa', stock: 9 }),
+      product({ id: 'p-2', productCode: 'B', brandName: 'Beta', stock: 1 }),
+    ]);
+    const names = (): (string | undefined)[] =>
+      [...root().querySelectorAll('.inventory__main')].map((name) => name.textContent?.trim());
+    expect(names()).toEqual(['Alfa', 'Beta']);
+
+    (root().querySelector('[data-testid="tabla-ordenar"][data-columna="stock"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(names()).toEqual(['Beta', 'Alfa']);
   });
 
   it('no lista los retirados: no tienen inventario que llevar', () => {
@@ -306,6 +357,7 @@ describe('PharmacyInventory', () => {
       expect(disabled('inventory-upload')).toBe('true');
       expect(disabled('inventory-export')).toBe('true');
 
+      flushSites([]);
       expectListing([product({})]);
 
       expect(disabled('inventory-upload')).not.toBe('true');
@@ -319,6 +371,138 @@ describe('PharmacyInventory', () => {
       fixture.detectChanges();
 
       expect(root().querySelector('[data-testid="inventory-upload-dialog"]')).not.toBeNull();
+    });
+  });
+  describe('sucursal', () => {
+    const SITES = [
+      { siteId: 's-1', siteName: 'Casa central' },
+      { siteId: 's-2', siteName: 'Sucursal Norte' },
+    ];
+
+    function flushSiteStock(siteId: string, productIds: readonly string[]): void {
+      http.expectOne(`/pharmacy-inventory/sites/${siteId}/stock`).flush({
+        siteId,
+        siteName: SITES.find((site) => site.siteId === siteId)?.siteName ?? '',
+        pharmacyId: PHARMACY.id,
+        pharmacyName: PHARMACY.name,
+        items: productIds.map((productId) => ({
+          productId,
+          productCode: productId,
+          brandName: null,
+          genericName: null,
+          strengthText: null,
+          packageSizeText: null,
+          medication: null,
+          onHandQuantity: 4,
+          reservedQuantity: 0,
+          availableQuantity: 4,
+          locationCount: 1,
+        })),
+        count: productIds.length,
+      });
+      fixture.detectChanges();
+    }
+
+    const siteSelect = (): HTMLElement | null => root().querySelector('[data-testid="inventory-site"]');
+
+    it('lista «Todas» y las sedes de opening-hours; con «Todas», la tabla de siempre', () => {
+      mount([product({})], SITES);
+
+      const options = (fixture.componentInstance as unknown as { sites: { options: () => { label: string }[] } }).sites
+        .options()
+        .map((option) => option.label);
+      expect(options).toEqual(['Todas (lo declarado en el catálogo)', 'Casa central', 'Sucursal Norte']);
+      expect(siteSelect()).not.toBeNull();
+      expect(root().querySelector('[data-testid="inventory-table"]')).not.toBeNull();
+      expect(root().querySelector('[data-testid="inventory-save"]')).not.toBeNull();
+      expect(root().querySelector('app-site-stock-panel')).toBeNull();
+    });
+
+    it('abrir la pestaña no lee el stock de cada sede: lo lee al empezar a cambiar algo, una sola vez', () => {
+      mount([product({})], SITES);
+      expect(http.match((r) => r.url.includes('/pharmacy-inventory/sites/'))).toHaveLength(0);
+
+      internal().setStock(product({}), '3');
+      fixture.detectChanges();
+      flushSiteStock('s-1', []);
+      flushSiteStock('s-2', []);
+
+      internal().setMinimum(product({}), '2');
+      fixture.detectChanges();
+      expect(http.match((r) => r.url.includes('/pharmacy-inventory/sites/'))).toHaveLength(0);
+    });
+
+    it('«Subir CSV» también lee el stock de las sedes antes de abrir el diálogo', () => {
+      mount([product({})], SITES);
+
+      (root().querySelector('[data-testid="inventory-upload"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      flushSiteStock('s-1', ['p-1']);
+      flushSiteStock('s-2', []);
+      expect(root().querySelector('[data-testid="inventory-ledger-notice"]')?.textContent).toContain('Casa central');
+    });
+
+    it('con «Todas», al cambiar algo avisa qué sede tiene stock propio', () => {
+      mount([product({})], SITES);
+      internal().setStock(product({}), '3');
+      fixture.detectChanges();
+      flushSiteStock('s-1', ['p-1']);
+      flushSiteStock('s-2', []);
+
+      const notice = root().querySelector('[data-testid="inventory-ledger-notice"]')?.textContent ?? '';
+      expect(notice).toContain(
+        'Casa central tiene stock propio en algunos productos: en esos, lo que cambie en "Todas" no la afecta',
+      );
+      expect(notice).not.toContain('Sucursal Norte');
+    });
+
+    it('sin ninguna sede que lleve su stock, no hay aviso', () => {
+      mount([product({})], SITES);
+      internal().setStock(product({}), '3');
+      fixture.detectChanges();
+      flushSiteStock('s-1', []);
+      flushSiteStock('s-2', []);
+
+      expect(root().querySelector('[data-testid="inventory-ledger-notice"]')).toBeNull();
+    });
+
+    it('elegir una sede cambia la tabla por la del stock de esa sede, y «Todas» la devuelve', () => {
+      mount([product({})], SITES);
+
+      (fixture.componentInstance as unknown as { chooseSite: (id: string | null) => void }).chooseSite('s-1');
+      fixture.detectChanges();
+      flushSiteStock('s-1', ['p-1']);
+
+      expect(root().querySelector('app-site-stock-panel')).not.toBeNull();
+      expect(root().querySelector('[data-testid="inventory-table"]')).toBeNull();
+      expect(root().querySelector('[data-testid="site-stock-ledger-notice"]')).not.toBeNull();
+
+      (fixture.componentInstance as unknown as { chooseSite: (id: string | null) => void }).chooseSite('all');
+      fixture.detectChanges();
+      expect(root().querySelector('[data-testid="inventory-table"]')).not.toBeNull();
+    });
+
+    it('si no se pueden leer las sucursales, queda la tabla de siempre y se puede reintentar', () => {
+      fixture = TestBed.createComponent(PharmacyInventory);
+      fixture.detectChanges();
+      http
+        .expectOne((r) => r.url.endsWith('/pharmacy/pharmacies'))
+        .flush({ items: [{ ...PHARMACY, code: 'FC', siteCount: 1, productCount: 1 }], count: 1 });
+      fixture.detectChanges();
+      http
+        .expectOne(`/pharmacies/${PHARMACY.id}/opening-hours`)
+        .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Error' });
+      expectListing([product({})]);
+
+      expect(root().querySelector('[data-testid="inventory-sites-failed"]')).not.toBeNull();
+      expect(siteSelect()).toBeNull();
+      expect(root().querySelector('[data-testid="inventory-table"]')).not.toBeNull();
+
+      (root().querySelector('[data-testid="inventory-sites-failed"] button') as HTMLButtonElement).click();
+      flushSites(SITES);
+      fixture.detectChanges();
+      expect(siteSelect()).not.toBeNull();
     });
   });
 });

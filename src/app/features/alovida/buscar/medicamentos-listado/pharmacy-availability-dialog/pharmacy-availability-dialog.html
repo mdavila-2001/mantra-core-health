@@ -46,8 +46,8 @@
         <dt>Dosis máxima recomendada</dt>
         <dd data-testid="ficha-dosis-maxima">
           <span class="ficha-medicamento__sin-fuente">Sin fuente oficial cargada todavía.</span>
-          Se mostrará la de la ficha técnica, con su cita. Mientras, seguí a tu médico o al
-          prospecto.
+          Se mostrará la de la ficha técnica, con su cita. Mientras, siga las indicaciones de su
+          médico o del prospecto.
         </dd>
       </div>
     </dl>
@@ -161,6 +161,22 @@
               <app-badge variant="warning" size="sm">Con receta</app-badge>
             }
           </div>
+
+          <!-- «¿Me lo guardan?», «¿llega hoy?»: lo que la fila no contesta se
+               le pregunta a esa farmacia, con el producto ya puesto en el
+               chat. Por fila y no uno solo: el chat es con una farmacia. -->
+          <button
+            class="farmacia__chat"
+            app-button
+            variant="secondary"
+            type="button"
+            data-testid="consultar-oferta-por-chat"
+            [attr.aria-label]="'Consultar por chat a ' + oferta.pharmacyName"
+            (clicked)="consultarPorChat(oferta)"
+          >
+            <app-nav-icon name="chat" />
+            Consultar por chat
+          </button>
         </li>
       }
     </ul>

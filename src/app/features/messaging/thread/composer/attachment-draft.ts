@@ -7,11 +7,48 @@
  * «+». Las dos puertas tienen que decir que no a lo mismo.
  */
 
-/** Lo más grande que se deja adjuntar. Más que esto no sube por el móvil. */
-export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+import { UPLOAD_MAX_BYTES } from '../../../../core/data-access/files/upload-policy';
 
-/** Lo que el chat acepta adjuntar. */
-export const ACCEPTED_ATTACHMENT_TYPES = ['image/', 'audio/', 'video/', 'application/pdf'] as const;
+/**
+ * Lo más grande que sube, **por archivo**: espejo de `FILE_STORAGE_MAX_SIZE_BYTES`
+ * de la API (`src/common/storage/storage.env.ts`, 10 MB por omisión). La
+ * autoridad es la API: ofrecer más era prometer una subida que vuelve con 422.
+ *
+ * Las fotos no se miden contra este tope al elegirlas: se achican antes de
+ * subir (`prepare-image.ts`) y recién lo que no entra aun achicado se rechaza.
+ */
+export const MAX_ATTACHMENT_BYTES = UPLOAD_MAX_BYTES;
+
+/**
+ * Los documentos que el chat deja adjuntar: lo que la API acepta en la
+ * categoría `DOCUMENT` (`UPLOAD_MIME_ALLOWLIST`, en
+ * `src/common/storage/upload-content-type.ts`), que deduce el tipo por los
+ * primeros bytes. PDF, Word (`.docx`), Excel (`.xlsx`) y texto plano o CSV.
+ *
+ * Audio y video **no**: la API no los reconoce por firma y los rechaza, así
+ * que el chat no los ofrece. Las notas de voz salen por otra puerta (el
+ * grabador) y no pasan por acá.
+ */
+export const ACCEPTED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'text/csv',
+] as const;
+
+/** El `accept` del selector cuando se buscan fotos. */
+export const PHOTO_ACCEPT = 'image/*';
+
+/** El `accept` del selector de «Documento»: tipos y extensiones, para el diálogo del sistema. */
+export const DOCUMENT_ACCEPT = [...ACCEPTED_DOCUMENT_TYPES, '.pdf', '.docx', '.xlsx', '.txt', '.csv'].join(',');
+
+/**
+ * Lo que acepta el selector por omisión y, con él, el arrastre sobre la barra
+ * (`appFileDropTarget` filtra por este `accept`). `image/*` y no la lista
+ * exacta de la API: un HEIC, un BMP o un AVIF se convierten a JPEG antes de subir.
+ */
+export const ATTACHMENT_ACCEPT = `${PHOTO_ACCEPT},${DOCUMENT_ACCEPT}`;
 
 /**
  * Cuántos archivos entran en un mismo envío.
@@ -63,14 +100,20 @@ export function isEditableImage(file: File): boolean {
 /**
  * Por qué no se puede adjuntar, o `null` si se puede.
  *
- * Mismos textos que tenía el composer: son los que la gente ya vio.
+ * Una imagen de cualquier formato y peso pasa: se prepara después (se achica,
+ * se convierte a JPEG si hace falta y se le quitan los metadatos) y es esa
+ * preparación la que dice que no si no hay forma de hacerla entrar.
  */
 export function rejectionReason(file: File): string | null {
-  if (file.size > MAX_ATTACHMENT_BYTES) {
-    return 'El archivo pesa más de 20 MB.';
+  const type = file.type.toLowerCase();
+  if (type.startsWith('image/')) {
+    return null;
   }
-  if (!ACCEPTED_ATTACHMENT_TYPES.some((type) => file.type.startsWith(type))) {
-    return 'Puede mandar imágenes, videos, audios y PDF.';
+  if (!(ACCEPTED_DOCUMENT_TYPES as readonly string[]).includes(type)) {
+    return `«${file.name}» no se puede mandar. Puede mandar fotos, PDF, documentos de Word o Excel y archivos de texto.`;
+  }
+  if (file.size > MAX_ATTACHMENT_BYTES) {
+    return `«${file.name}» pesa más de 10 MB.`;
   }
   return null;
 }

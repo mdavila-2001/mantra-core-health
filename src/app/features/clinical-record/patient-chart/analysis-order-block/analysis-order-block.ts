@@ -10,6 +10,7 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -40,6 +41,10 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { writeFailureMessage } from '../../write-message';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { consentTargetState } from '../informed-consent/consent-target';
+import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import {
@@ -51,6 +56,7 @@ import {
 } from './analysis-order-block.helpers';
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
 import { PerformerSelector } from './performer-selector/performer-selector';
+import { CollectionPointSelect } from './collection-point-select/collection-point-select';
 import { createStudyCategoryState } from './study-category';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
 
@@ -132,6 +138,7 @@ const TOPE = 25;
   imports: [
     FormResponsePicker,
     Alert,
+    AppButton,
     Card,
     ConceptSelect,
     DatePipe,
@@ -139,6 +146,9 @@ const TOPE = 25;
     FormActions,
     FormField,
     PerformerSelector,
+    InformedConsentBadge,
+    InformedConsentDialog,
+    CollectionPointSelect,
   ],
   templateUrl: './analysis-order-block.html',
   styleUrl: './analysis-order-block.css',
@@ -171,6 +181,9 @@ export class AnalysisOrderBlock {
    */
   readonly exigeRespuesta = input(false);
 
+  /** Ofrece la respuesta sin exigirla (30/10/2026): se emite sin formulario, no sin encuentro. */
+  readonly ofreceRespuesta = input(false);
+
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
@@ -186,9 +199,18 @@ export class AnalysisOrderBlock {
 
   protected readonly faltaRespuesta = computed(
     () =>
-      this.exigeRespuesta() &&
-      this.respuestaDelFormulario() === null &&
-      this.notaDelFormularioLibre() === null,
+      (this.exigeRespuesta() &&
+        this.respuestaDelFormulario() === null &&
+        this.notaDelFormularioLibre() === null) ||
+      // Sin formulario se pide, pero el encuentro abierto sigue siendo necesario.
+      (this.ofreceRespuesta() && this.encounterId() === null),
+  );
+
+  /* -- Consentimiento informado dirigido a cada orden (CPE art. 44) ------- */
+
+  protected readonly consent = consentTargetState<EstudioEnFicha>(
+    () => this.patientProfileId(),
+    (study) => [study?.encounterId, this.encounterId()],
   );
 
   protected readonly targetEstudio = TARGET_ESTUDIO;
@@ -226,6 +248,9 @@ export class AnalysisOrderBlock {
   protected readonly pidiendo = signal(false);
 
   /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
+  /** F5b: el punto de toma sugerido (sólo en sedes que tienen puntos). */
+  private readonly collectionPoint = viewChild(CollectionPointSelect);
+
   protected readonly performer = createPerformerOrderState({
     category: this.tipo.conceptId,
     study: this.estudio,
@@ -501,6 +526,7 @@ export class AnalysisOrderBlock {
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
       ...performerFields,
+      ...(this.collectionPoint()?.fields() ?? {}),
       ...decision,
     };
 
@@ -591,6 +617,7 @@ export class AnalysisOrderBlock {
     this.estudio.set(null);
     this.prioridad.set(null);
     this.performer.reset();
+    this.collectionPoint()?.reset();
   }
 
   /**
@@ -625,6 +652,8 @@ export class AnalysisOrderBlock {
           ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
           : null,
       justificacion: orden.duplicateOverrideReason ?? null,
+      collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
+      ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
     };
   }
 

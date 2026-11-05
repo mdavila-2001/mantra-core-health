@@ -3,11 +3,13 @@ import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
-import { Alert } from '../../shared/components/molecules/alert/alert';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
-import { rolesAlcanzan } from '../../core/navigation/navigation.types';
+import { esPerfilDeGestion } from '../../core/navigation/navigation.management';
+import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from '../../core/navigation/navigation.map';
+import { isVisibleTo, rolesAlcanzan } from '../../core/navigation/navigation.types';
 import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
@@ -15,12 +17,16 @@ import { StaggerList } from '../../shared/motion/stagger-list.directive';
 import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { AppVisible } from '../../core/visibility/visible.directive';
+import { DASHBOARD_UI } from './dashboard.ui-elements';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { AdmissionStatusCard } from '../account/admission-status-card/admission-status-card';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
 import { TodayAgenda } from './today-agenda/today-agenda';
 import { SummaryConsultations } from './consultations-summary/consultations-summary';
 import { PatientHome } from './patient-home/patient-home';
+import { PlatformHome } from './platform-home/platform-home';
+import { type OnboardingProgress, PractitionerWelcome } from './practitioner-welcome/practitioner-welcome';
 
 /**
  * Los roles con los que se viene a trabajar, no a atenderse.
@@ -76,23 +82,22 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     TodayAgenda,
     Card,
     SummaryConsultations,
-    Alert,
+    NavIcon,
+    PractitionerWelcome,
     AppButtonLink,
     PageHeader,
     RouterLink,
     Skeleton,
     StaggerList,
-    // Faltaba de la lista aunque la plantilla lo usa en dos elementos: el
-    // atributo `appTutorialTarget` se renderizaba como un atributo cualquiera,
-    // la directiva no aplicaba, y el tutorial del panel no encontraba ni el
-    // título ni la rejilla de accesos —se salteaba los pasos en silencio, que
-    // es justo lo que la directiva existe para evitar—. `yarn lint` lo venía
-    // reportando como import sin usar desde antes de este carril.
+    // Sin él, `appTutorialTarget` es un atributo cualquiera y el tutorial
+    // del panel se saltea sus pasos en silencio.
     TutorialTarget,
     ViewStateHost,
     PatientHome,
+    PlatformHome,
     SetupNotice,
     AdmissionStatusCard,
+    AppVisible,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -101,6 +106,9 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 export class Dashboard {
   private readonly auth = inject(AuthService);
   private readonly profiles = inject(ProfilesClient);
+
+  /** Las claves de visibilidad de lo que este panel puede ocultar por regla (`dashboard.ui-elements.ts`). */
+  protected readonly ui = DASHBOARD_UI;
 
   protected readonly roles = this.auth.roles;
   protected readonly activeTenantId = this.auth.activeTenantId;
@@ -123,6 +131,28 @@ export class Dashboard {
   protected readonly atiendePacientes = computed(() => this.auth.practitionerProfileId() !== null);
 
   /**
+   * «Mis verificaciones» con el mismo criterio que su ruta (rol de quien
+   * atiende) y además perfil profesional: ofrecer una puerta que el guard
+   * cierra sería mandar a la persona de vuelta al panel sin explicación.
+   */
+  protected readonly veMisVerificaciones = computed(
+    () => this.atiendePacientes() && rolesAlcanzan(ROLES_DE_QUIEN_ATIENDE, this.auth.roles()),
+  );
+
+  /**
+   * La bandeja de la aseguradora está fuera de su menú cerrado: se ofrece acá
+   * a quien la sección le es visible —el mismo filtro que el menú, por rol y
+   * por tipo de organización activa—. No autoriza: eso lo hace la API.
+   */
+  protected readonly veProfesionalesQuePidenSumarse = computed(() => {
+    const seccion = APP_SECTIONS.find((s) => s.path === 'administration/insurer-practitioner-requests');
+    return (
+      seccion !== undefined &&
+      isVisibleTo(seccion, this.auth.roles(), this.auth.tenants(), this.auth.activeTenantType())
+    );
+  });
+
+  /**
    * El título saluda por el nombre, igual que el panel del paciente.
    *
    * Si el token no trae nombre vuelve a «Panel»: un «Hola, » colgando se lee
@@ -132,6 +162,11 @@ export class Dashboard {
     const nombre = this.auth.displayName() ?? '';
     return nombre === '' ? 'Panel' : `Hola, ${nombre}`;
   });
+
+  /** Quien atiende entra por su portada; el resto, por el encabezado de siempre. */
+  protected readonly veBienvenida = computed(
+    () => this.esProfesional() || this.veMisVerificaciones(),
+  );
 
   /** El subtítulo dice lo que la pantalla trae, y eso depende de quién entró. */
   protected readonly subtituloDelPanel = computed(() =>
@@ -169,6 +204,9 @@ export class Dashboard {
    * siempre. Al revés dejaría a un profesional sin su tablero el día que alguien
    * le cargue una ficha de paciente.
    */
+  /** Quien sólo gestiona la plataforma entra por su portada, no por el panel clínico. */
+  protected readonly esGestion = computed(() => esPerfilDeGestion(this.roles()));
+
   protected readonly esPaciente = computed(() => {
     const roles = this.roles();
     if (!roles.includes('PATIENT')) return false;
@@ -182,12 +220,7 @@ export class Dashboard {
    * lectura falló. En los tres casos el aviso no se muestra — un banner que
    * aparece por un error de red sería peor que no avisar.
    */
-  protected readonly altaPendiente = signal<{
-    /** Cuántas etapas cumplió. */
-    readonly cumplidas: number;
-    /** De cuántas. */
-    readonly total: number;
-  } | null>(null);
+  protected readonly altaPendiente = signal<OnboardingProgress | null>(null);
 
   protected readonly pacientes = signal<ViewState<PatientPageResumen>>(loading());
 
@@ -204,7 +237,9 @@ export class Dashboard {
 
   constructor() {
     this.cargarAltaPendiente();
-    if (this.puedeVerPacientes()) {
+    // Quien sólo gestiona la plataforma entra por su portada, que no lista pacientes:
+    // una tarjeta que no se dibuja no gasta una lectura.
+    if (this.puedeVerPacientes() && !this.esGestion()) {
       this.loadPacientes();
     }
   }
@@ -223,7 +258,7 @@ export class Dashboard {
       next: (avance) => {
         if (avance.firstIncomplete === 'done') return;
         this.altaPendiente.set({
-          cumplidas: avance.steps.filter((paso) => paso.complete).length,
+          completed: avance.steps.filter((paso) => paso.complete).length,
           total: avance.steps.length,
         });
       },

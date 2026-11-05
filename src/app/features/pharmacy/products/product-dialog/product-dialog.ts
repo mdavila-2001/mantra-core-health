@@ -56,6 +56,7 @@ import {
   sellablePresentations,
   type OfficialView,
 } from '../catalog-view';
+import { MedicationLink } from '../medication-link/medication-link';
 import { productName, productStatus } from '../product-view';
 
 /** Las pestañas del modal, en el orden en que se dibujan. */
@@ -112,6 +113,7 @@ const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
     FileInput,
     FormField,
     Input,
+    MedicationLink,
     ReferenceCombobox,
     Select,
     Tab,
@@ -163,6 +165,8 @@ export class ProductDialog implements OnInit {
   protected readonly selectedProduct = signal<CatalogProduct | null>(null);
   protected readonly presentationCode = signal('');
   protected readonly skuTouched = signal(false);
+  /** El medicamento elegido al editar; `undefined` = no se tocó y no se manda. */
+  protected readonly medicationChoice = signal<string | null | undefined>(undefined);
   /** Fotos oficiales que no cargaron: se dibuja el marcador, no un cuadro roto. */
   protected readonly brokenPhotos = signal<ReadonlySet<string>>(new Set());
   protected readonly catalogSearchLimit = CATALOG_SEARCH_LIMIT;
@@ -447,6 +451,9 @@ export class ProductDialog implements OnInit {
         : this.pharmacy.updateProduct(this.pharmacyId(), editing.id, {
             ...draftChanges(review.borrador, true, this.isLinked()),
             ...extras,
+            ...(this.medicationChoice() === undefined
+              ? {}
+              : { medicationConceptId: this.medicationChoice() }),
           });
     const unsaved = droppedSimulatorExtensions(
       { ...review.borrador, ...extras },
@@ -512,6 +519,7 @@ export class ProductDialog implements OnInit {
       this.imageIds(),
       this.selectedProduct()?.id ?? null,
       this.presentationCode(),
+      String(this.medicationChoice()),
     ]);
   }
 

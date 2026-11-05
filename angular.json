@@ -100,6 +100,14 @@
               "sourceMap": true,
               "fileReplacements": [
                 {
+                  "replace": "src/app/core/simulator/simulator.ts",
+                  "with": "src/app/core/mock/simulator.enabled.ts"
+                },
+                {
+                  "replace": "src/app/simulator-routes.ts",
+                  "with": "src/app/simulator-routes.enabled.ts"
+                },
+                {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.development.ts"
                 }
@@ -116,6 +124,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.e2e-real.ts"
+                },
+                {
+                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
+                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
                 }
               ]
             },
@@ -130,6 +142,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.real-api.ts"
+                },
+                {
+                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
+                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
                 }
               ]
             },
@@ -160,6 +176,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.production-api.ts"
+                },
+                {
+                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
+                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
                 }
               ],
               "security": {
@@ -177,6 +197,14 @@
               "outputMode": "static",
               "prerender": false,
               "fileReplacements": [
+                {
+                  "replace": "src/app/core/simulator/simulator.ts",
+                  "with": "src/app/core/mock/simulator.enabled.ts"
+                },
+                {
+                  "replace": "src/app/simulator-routes.ts",
+                  "with": "src/app/simulator-routes.enabled.ts"
+                },
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.demo.ts"

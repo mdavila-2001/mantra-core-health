@@ -1,0 +1,181 @@
+$ psql -x -c "select * from delegated_access.shared_access_links where id='30344167-5df4-46a2-8312-c2312ce14be1'"
+-[ RECORD 1 ]-------------+-----------------------------------------------------------------
+id                        | 30344167-5df4-46a2-8312-c2312ce14be1
+tenant_id                 | 1befcfea-44c0-563a-81cd-337ec6acc840
+patient_profile_id        | 8d00e3f7-53f7-492b-9c5c-501b201a6771
+resource_type_concept_id  | 88f218a6-ca11-57f4-9415-7e7dab8c66cf
+resource_id               | 4736d5fb-adbc-4c96-8bf9-9368ed309f21
+token_hash                | 550ea465f31878e0dc87472306ec2ffd18b361f60aac4da6ede24341bd2061a3
+scope_concept_id          | 00ea830f-b99d-5296-aa94-7e84239ce68a
+recipient_kind_concept_id | 
+recipient_label           | 
+purpose_of_use_concept_id | 
+expires_at                | 2026-11-30 03:11:36.251+00
+revoked_at                | 
+revoked_by_user_id        | 
+revoke_reason_text        | 
+status_concept_id         | 38a1d301-f40d-5b17-a695-5e6d605f8b19
+created_at                | 2026-10-31 03:11:36.256+00
+updated_at                | 2026-10-31 03:11:36.256+00
+created_by_user_id        | 78321cc2-b8d4-4036-b21f-b56c7fffa0ae
+updated_by_user_id        | 78321cc2-b8d4-4036-b21f-b56c7fffa0ae
+row_version               | 1
+
+--- sha256(token) calculado fuera de la base:
+550ea465f31878e0dc87472306ec2ffd18b361f60aac4da6ede24341bd2061a3  -
+--- longitud token: 43
+--- ¿el token en claro aparece en alguna columna de texto de la fila? (grep en el volcado de la fila)
+0
+--- conceptos de la fila
+ERROR:  relation "terminology.concepts" does not exist
+LINE 1: select 'resource_type' k, code, display from terminology.con...
+                                                     ^
+audit.users_history 0
+audit.patient_profiles_history 0
+audit.health_practitioner_profiles_history 0
+audit.professional_credentials_history 0
+audit.jurisdiction_authorizations_history 0
+audit.consents_history 0
+audit.patient_identity_links_history 0
+audit.diagnostic_reports_history 0
+audit.imaging_studies_history 0
+audit.public_profiles_history 0
+audit.social_posts_history 0
+audit.service_reviews_history 0
+audit.moderation_events 0
+audit.patient_content_access_log 0
+audit.pharmacy_product_prices_history 0
+audit.pharmacy_inventory_access_log 0
+audit.conditions_history 0
+audit.allergy_intolerances_history 0
+audit.medication_requests_history 0
+audit.practices_history 0
+audit.clinical_note_headers_history 0
+audit.diagnostic_study_prices_history 0
+audit.insurance_decision_access_log 0
+audit.identity_verification_access_log 0
+audit.delegated_access_audit_log 0
+audit.analytics_governance_log 0
+audit.care_teams_history 0
+audit.referrals_history 0
+audit.clinical_alerts_history 0
+audit.cds_rules_history 0
+audit.order_sets_history 0
+audit.provider_connections_history 0
+audit.integration_endpoints_history 0
+audit.outbound_messages_history 0
+audit.inbound_messages_history 0
+audit.document_records_history 0
+audit.journal_transactions_history 0
+audit.assets_history 0
+audit.liabilities_history 0
+audit.invoices_history 0
+audit.bills_history 0
+audit.insurance_claims_history 0
+audit.message_templates_history 0
+audit.provider_channel_configs_history 0
+audit.event_subscriptions_history 0
+audit.accounts_history 0
+audit.trackable_subjects_history 0
+audit.shipments_history 0
+audit.contracts_history 0
+audit.employment_records_history 0
+audit.departments_history 0
+audit.positions_history 0
+audit.report_definitions_history 0
+audit.report_schedules_history 0
+audit.identity_providers_history 0
+audit.test_cases_history 0
+audit.federated_identities_history 0
+audit.schedule_templates_history 0
+audit.booking_policies_history 0
+audit.appointment_bookings_history 0
+audit.payment_methods_history 0
+audit.payment_intents_history 0
+audit.payment_transactions_history 0
+audit.payouts_history 0
+audit.ad_accounts_history 0
+audit.provider_tenant_bindings_history 0
+audit.procedure_cases_history 0
+audit.ad_sets_history 0
+audit.ads_history 0
+audit.ad_creatives_history 0
+audit.custom_audiences_history 0
+audit.wallets_history 0
+audit.subscription_plans_history 0
+audit.subscriptions_history 0
+audit.connected_accounts_history 0
+audit.insurance_products_history 0
+audit.catalog_products_history 0
+audit.product_sets_history 0
+audit.automated_rules_history 0
+audit.custom_conversions_history 0
+audit.ad_experiments_history 0
+audit.comments_history 0
+audit.groups_history 0
+audit.topics_history 0
+audit.conversations_history 0
+audit.product_catalogs_history 0
+audit.courses_history 0
+audit.course_versions_history 0
+audit.enrollments_history 0
+audit.certificates_history 0
+audit.agents_history 0
+audit.agent_versions_history 0
+audit.workflows_history 0
+audit.guardrail_policies_history 0
+audit.record_automations_history 0
+audit.moderation_decisions_history 0
+audit.opportunities_history 0
+audit.partnerships_history 0
+audit.partnership_agreements_history 0
+audit.segments_history 0
+audit.marketing_campaigns_history 0
+audit.journeys_history 0
+audit.loyalty_programs_history 0
+audit.loyalty_memberships_history 0
+audit.promotions_history 0
+audit.contacts_history 0
+audit.informational_materials_history 0
+audit.medical_visitors_history 0
+audit.pharmacovigilance_reports_history 0
+audit.pharma_labs_history 0
+audit.pharma_lab_staff_history 0
+audit.pharma_products_history 0
+audit.regulatory_documents_history 0
+audit.visit_requests_history 0
+audit.referral_programs_history 0
+audit.dsar_requests 0
+audit.practitioner_role_assignments_history 0
+audit.organization_affiliations_history 0
+audit.care_plans_history 0
+audit.message_retries_history 0
+audit.test_suites_history 0
+audit.provider_protocol_configs_history 0
+audit.campaigns_history 0
+audit.payment_mandates_history 0
+audit.verified_badges_history 0
+audit.crm_accounts_history 0
+audit.coupons_history 0
+audit.audit_log 0
+audit.data_access_log 0
+audit.tenants_history 0
+audit.practice_sites_history 0
+audit.clinical_units_history 0
+audit.care_spaces_history 0
+delegated_access.practitioner_delegate_assignments 0
+delegated_access.organization_user_assignments 0
+delegated_access.delegated_permission_set_items 0
+delegated_access.delegated_access_grants 0
+delegated_access.delegated_access_approval_requests 0
+delegated_access.delegation_events 0
+delegated_access.shared_access_link_uses 0
+delegated_access.delegated_permission_sets 0
+delegated_access.shared_access_links 0
+                  id                  |                          code                          
+--------------------------------------+--------------------------------------------------------
+ 00ea830f-b99d-5296-aa94-7e84239ce68a | delegated_access:SHARE_SCOPE_PHARMACY_DISPENSE
+ 38a1d301-f40d-5b17-a695-5e6d605f8b19 | ACTIVE
+ 88f218a6-ca11-57f4-9415-7e7dab8c66cf | delegated_access:SHARE_RESOURCE_PRESCRIPTION_ENCOUNTER
+(3 rows)
+

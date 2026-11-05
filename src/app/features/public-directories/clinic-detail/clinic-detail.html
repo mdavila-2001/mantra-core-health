@@ -11,6 +11,9 @@
           <p class="ficha-publica__bio">{{ perfil.biography }}</p>
         }
       </app-card>
+
+      <!-- Sólo se dibuja para un profesional; la API decide si procede. -->
+      <app-solicitar-pertenecer [nombre]="perfil.displayName" [practiceId]="perfil.practiceId" />
     }
   </app-view-state-host>
 
@@ -81,6 +84,22 @@
                     }
                   </dd>
                 </dl>
+
+                <!-- Lo que el precio de referencia no contesta —si incluye tal
+                     cosa, si hay turno esta semana— se pregunta con el
+                     servicio ya puesto en el chat. -->
+                <button
+                  class="ficha-publica__chat"
+                  app-button
+                  variant="secondary"
+                  type="button"
+                  data-testid="consultar-servicio-por-chat"
+                  [attr.aria-label]="'Consultar por chat sobre ' + servicio.name"
+                  (clicked)="consultarServicio(servicio)"
+                >
+                  <app-nav-icon name="chat" />
+                  Consultar por chat
+                </button>
               </article>
             </li>
           }

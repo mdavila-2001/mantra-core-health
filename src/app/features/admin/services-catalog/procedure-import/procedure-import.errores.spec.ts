@@ -89,7 +89,7 @@ describe('ProcedureImport — fallo al importar', () => {
     importar(ITEM);
 
     const mensaje = (avisos.mock.lastCall?.[0] as { message: string }).message;
-    expect(mensaje).toBe('No se pudo importar «Electrocardiograma». Intente de nuevo. (Código de soporte: corr-imp)');
+    expect(mensaje).toBe('No se pudo importar «Electrocardiograma». Intente de nuevo. El problema fue del servidor, no de lo que usted ingresó. (Código de soporte: corr-imp)');
     expect(mensaje).not.toMatch(/permiso/);
   });
 

@@ -1,0 +1,167 @@
+.medicion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.medicion__ventana {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+}
+
+/* En teléfono el selector ocupa su propia fila: compartiéndola con «Actualizar»
+   cada opción se angosta hasta cortar su rótulo. */
+.medicion__ventana app-segmented-control {
+  flex: 1 1 20rem;
+  max-inline-size: 26rem;
+}
+
+.medicion__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+  margin-block-end: var(--e2);
+}
+
+.medicion__filtros app-select {
+  flex: 1 1 14rem;
+  max-inline-size: 20rem;
+}
+
+.medicion__filtros app-segmented-control {
+  flex: 1 1 20rem;
+  max-inline-size: 28rem;
+}
+
+.medicion__totales {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--e3);
+  margin-block-end: var(--e4);
+}
+
+.medicion__ayuda {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.medicion__subtitulo {
+  margin-block: var(--e4) var(--e2);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.medicion__moneda + .medicion__moneda {
+  margin-block-start: var(--e4);
+}
+
+.medicion__sin-medir {
+  margin: 0;
+  padding-inline-start: var(--e4);
+}
+
+.medicion__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-block: var(--e3) var(--e2);
+}
+
+.medicion__resumen-mapa {
+  margin-block: 0 var(--e3);
+  color: var(--text-primary);
+}
+
+.medicion__mapa {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.medicion__celda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--e3);
+  border: 1px solid var(--border-default);
+  border-inline-start-width: 4px;
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* El nivel también va en el borde, pero nunca solo: la insignia lo dice con palabras. */
+.medicion__celda[data-nivel='success'] {
+  border-inline-start-color: var(--st-success-fg);
+}
+
+.medicion__celda[data-nivel='warning'] {
+  border-inline-start-color: var(--st-warning-fg);
+}
+
+.medicion__celda[data-nivel='error'] {
+  border-inline-start-color: var(--st-error-fg);
+  background: var(--st-error-bg);
+}
+
+.medicion__celda-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.medicion__celda-nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.medicion__celda-valor {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.medicion__celda-puntaje {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--text-primary);
+}
+
+.medicion__celda-metrica {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.medicion__barra {
+  display: block;
+  block-size: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-subtle);
+}
+
+.medicion__barra-relleno {
+  display: block;
+  block-size: 100%;
+  background: var(--text-primary);
+}
+
+/* La barra sólo se anima si la persona no pidió menos movimiento. */
+@media (prefers-reduced-motion: no-preference) {
+  .medicion__barra-relleno {
+    transition: inline-size 0.2s ease;
+  }
+}

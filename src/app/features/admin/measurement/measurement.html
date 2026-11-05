@@ -1,0 +1,196 @@
+<app-page-header
+  title="Medición por funcionalidad"
+  subtitle="Cuánto se usa cada herramienta de la app, cuánto dinero mueve y dónde se atasca la gente. Calculado en el servidor; lo que no se puede medir se dice, nunca se muestra como cero."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="medicion">
+  <section class="medicion__ventana" aria-label="Ventana de análisis">
+    <app-segmented-control ariaLabel="Ventana de tiempo" [options]="opcionesRango" [value]="rango()" (valueChange)="cambiarRango($event)" />
+    <button app-button variant="secondary" size="sm" (clicked)="cargar()" data-testid="measurement-refresh">Actualizar</button>
+    <span class="medicion__ayuda">«Hoy» empieza a las 00:00 UTC (las 20:00 del día anterior en La Paz).</span>
+  </section>
+
+  <app-card variant="outlined" padding="md">
+    <app-tabs [(selectedIndex)]="pestana" data-testid="measurement-tabs">
+      <!-- ================= Uso ================= -->
+      <app-tab label="Uso">
+        <app-view-state-host [state]="estadoUso()" (retry)="cargarUso()">
+          @if (estadoUso(); as estado) {
+            @if (estado.status === 'ready') {
+              @let t = totalesUso();
+              <div class="medicion__totales" data-testid="measurement-usage-totals">
+                <app-metric-card label="Funcionalidades con tráfico" [value]="t.funcionalidades" />
+                <app-metric-card label="Solicitudes" [value]="t.requests" />
+                <app-metric-card label="Fallidas (4xx y 5xx)" [value]="t.fallidas" [tone]="t.fallidas === 0 ? 'neutral' : 'warning'" />
+                <app-metric-card label="Tasa de error" [value]="porcentaje(t.tasa)" />
+              </div>
+              @if (estado.data.truncated) {
+                <app-alert tone="warning" title="Cifras incompletas" data-testid="measurement-truncated">
+                  La API devolvió los {{ estado.data.items.length }} endpoints con más solicitudes y hay más. Las funcionalidades de poco tráfico pueden faltar o estar subcontadas: lo que ve es un mínimo, no el total.
+                </app-alert>
+              }
+            }
+          }
+        </app-view-state-host>
+
+        <app-data-table
+          [state]="filasUso()"
+          [columns]="columnasUso"
+          [trackBy]="porId"
+          [rowLabel]="nombreDeFilaUso"
+          [sort]="ordenUso()"
+          stackedOnMobile
+          fitContainer
+          caption="Uso, fallos y latencia por funcionalidad"
+          data-testid="measurement-usage"
+          (sortChanged)="ordenar($event)"
+          (retry)="cargarUso()"
+        />
+        @if (endpoints(); as estado) {
+          @if (estado.status === 'ready') {
+            <p class="medicion__ayuda" data-testid="measurement-method">
+              Cada endpoint se asigna a una funcionalidad por el prefijo de su ruta (tabla en <code>measurement-groups.ts</code>). Solicitudes y fallidas se suman;
+              la latencia <strong>no</strong>: «Peor p95» es el p95 más alto entre los endpoints de la funcionalidad, porque un percentil no se promedia. La tasa de error cuenta 4xx y 5xx.
+            </p>
+          }
+        }
+      </app-tab>
+
+      <!-- ================= Dinero ================= -->
+      <app-tab label="Dinero">
+        <app-view-state-host [state]="dinero()" (retry)="cargarDinero()">
+          @if (dinero(); as estado) {
+            @if (estado.status === 'ready') {
+              <p class="medicion__ayuda" data-testid="measurement-money-method">
+                Ventana {{ estado.data.window.from | date: 'dd/MM HH:mm' : 'UTC' }} – {{ estado.data.window.to | date: 'dd/MM HH:mm' : 'UTC' }} UTC.
+                Cada moneda va en su propia tabla y no se convierte ni se suma con otra. Facturado, cobrado y cotizado son importes distintos: tampoco se suman entre sí.
+              </p>
+
+              @for (tabla of tablasDeDinero(); track tabla.currency) {
+                <section class="medicion__moneda" [attr.aria-label]="'Importes en ' + tabla.currency" [attr.data-testid]="'measurement-money-' + tabla.currency">
+                  <h3 class="medicion__subtitulo">Importes en {{ tabla.currency }}</h3>
+                  <app-data-table
+                    [state]="tabla.state"
+                    [columns]="columnasDinero(tabla.currency)"
+                    [trackBy]="porId"
+                    [rowLabel]="nombreDeFilaDinero"
+                    stackedOnMobile
+                    fitContainer
+                    [caption]="'Dinero que mueve cada funcionalidad, en ' + tabla.currency"
+                  />
+                </section>
+              } @empty {
+                <app-alert tone="info" title="Sin importes medidos" data-testid="measurement-money-empty">
+                  La API no devolvió ningún importe en esta ventana. Eso no significa que se haya movido cero: significa que no hay nada medido para mostrar.
+                </app-alert>
+              }
+
+              @if (estado.data.notMeasured.length > 0) {
+                <app-alert tone="info" title="Sin medir (no es cero)">
+                  <ul class="medicion__sin-medir" data-testid="measurement-money-not-measured">
+                    @for (n of estado.data.notMeasured; track n.module) {
+                      <li><strong>{{ n.module }}:</strong> sin medir. {{ n.reason }}</li>
+                    }
+                  </ul>
+                </app-alert>
+              }
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <!-- ================= Mapa de calor ================= -->
+      <app-tab label="Mapa de calor">
+        <section class="medicion__filtros" aria-label="Filtros del mapa de calor">
+          <app-select ariaLabel="Tipo de alta" [options]="opcionesTipoAlta" [value]="tipoAlta()" (valueChange)="cambiarTipoAlta($event)" />
+          <app-segmented-control ariaLabel="Qué medir en el mapa de calor" [options]="opcionesMetricaCalor" [value]="metricaCalor()" (valueChange)="cambiarMetrica($event)" />
+        </section>
+        <p class="medicion__ayuda">
+          Dónde se traba la gente al darse de alta. «Hoy» y «24 h» miden las últimas 24 h; «7 días», la última semana. La intensidad es relativa (0 a 100) dentro de cada formulario.
+        </p>
+
+        <app-view-state-host [state]="embudo()" (retry)="cargarCalor()">
+          @if (embudo(); as estado) {
+            @if (estado.status === 'ready') {
+              <div class="medicion__totales" data-testid="measurement-funnel">
+                <app-metric-card label="Iniciaron el alta" [value]="estado.data.totalStarted" />
+                <app-metric-card label="La completaron" [value]="estado.data.totalCompleted" />
+                <app-metric-card label="Conversión" [value]="porcentaje(estado.data.overallConversion)" />
+                <app-metric-card
+                  label="Paso donde más se pierde"
+                  [value]="estado.data.bottleneckStepNumber === null ? 'Sin dato' : 'Paso ' + estado.data.bottleneckStepNumber"
+                />
+              </div>
+            }
+          }
+        </app-view-state-host>
+
+        <app-view-state-host [state]="estadoCalor()" (retry)="cargarCalor()">
+          @if (estadoCalor(); as estado) {
+            @if (estado.status === 'ready') {
+              <div class="medicion__leyenda" aria-label="Leyenda del mapa de calor" data-testid="measurement-heatmap-legend">
+                <app-badge variant="success">Baja fricción</app-badge>
+                <app-badge variant="warning">Fricción moderada</app-badge>
+                <app-badge variant="error">Punto crítico</app-badge>
+                <span class="medicion__ayuda">El color nunca va solo: cada campo dice su nivel y su valor con palabras y con una barra.</span>
+              </div>
+              <p class="medicion__resumen-mapa" id="medicion-resumen-mapa" data-testid="measurement-heatmap-summary">{{ resumenDelMapa() }}</p>
+              <ul class="medicion__mapa" aria-describedby="medicion-resumen-mapa" data-testid="measurement-heatmap">
+                @for (campo of camposDeCalor(); track campo.clave) {
+                  <li class="medicion__celda" [attr.data-nivel]="campo.nivel.tone" [attr.aria-label]="campo.descripcion" tabindex="0">
+                    <div class="medicion__celda-cabecera">
+                      <span class="medicion__celda-nombre">{{ campo.etiqueta }}</span>
+                      <app-badge [variant]="campo.nivel.tone">{{ campo.nivel.label }}</app-badge>
+                    </div>
+                    <div class="medicion__celda-valor">
+                      <span class="medicion__celda-puntaje">{{ campo.puntaje }}</span>
+                      <span class="medicion__ayuda">de 100 · paso {{ campo.paso }}</span>
+                    </div>
+                    <span class="medicion__barra" aria-hidden="true"><span class="medicion__barra-relleno" [style.inline-size]="ancho(campo.puntaje)"></span></span>
+                    <span class="medicion__celda-metrica">{{ campo.valorMetrica }}</span>
+                    <span class="medicion__ayuda">{{ campo.detalle }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <!-- ================= No medido ================= -->
+      <app-tab label="No medido">
+        <app-view-state-host [state]="resumen()" (retry)="cargarUso()">
+          @if (resumen(); as estado) {
+            @if (estado.status === 'ready') {
+              <app-alert tone="info" title="Esto no está medido (no es cero)">
+                <ul class="medicion__sin-medir" data-testid="measurement-not-measured">
+                  @for (n of estado.data.notMeasured; track n.metric) {
+                    <li><strong>{{ noMedido(n.metric) }}:</strong> {{ n.reason }}</li>
+                  }
+                </ul>
+              </app-alert>
+            }
+          }
+        </app-view-state-host>
+
+        <h3 class="medicion__subtitulo">Endpoints sin funcionalidad asignada («Otros»)</h3>
+        <p class="medicion__ayuda">
+          Nada se descarta: lo que ningún prefijo de la tabla reclama —y las rutas inexistentes (UNMATCHED)— queda acá, a la vista, para ubicarlo en
+          <code>measurement-groups.ts</code>.
+        </p>
+        <app-data-table
+          [state]="filasOtros()"
+          [columns]="columnasOtros"
+          [trackBy]="porId"
+          [rowLabel]="nombreDeFilaOtros"
+          stackedOnMobile
+          fitContainer
+          caption="Endpoints que no pertenecen a ninguna funcionalidad declarada"
+          data-testid="measurement-others"
+          (retry)="cargarUso()"
+        />
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>

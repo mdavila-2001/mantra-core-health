@@ -157,5 +157,24 @@ describe('PageHeader', () => {
       expect(baseColapsable).toMatch(/__secondary--collapsible\s*\{\s*display:\s*none/);
       expect(baseColapsable).toMatch(/__overflow\s*\{\s*display:\s*block/);
     });
+
+    /**
+     * Notificaciones, 2026-10-29: con un subtítulo largo las acciones se
+     * apilaban una sobre otra y medían 40 y 32 px. Contrato: 44 px táctiles
+     * para todo botón del membrete (por el gancho del átomo), y desde tablet
+     * una fila que no encoge, centrada en alto con el título y pegada a la
+     * derecha.
+     */
+    it('el CSS da 44 px a los botones y, desde tablet, una fila a la derecha', () => {
+      const css = readFileSync(PAGE_HEADER_CSS, 'utf8');
+      const base = css.slice(0, css.indexOf('@media'));
+      const tablet = css.slice(css.indexOf('@media (min-width: 780px)'));
+
+      expect(base).toMatch(/\.page-header__actions\s*\{[^}]*--btn-min-block:\s*44px/);
+      expect(base).toMatch(/\.page-header__actions:empty\s*\{\s*display:\s*none/);
+      expect(tablet).toMatch(/\.page-header__row\s*\{[^}]*align-items:\s*center/);
+      expect(tablet).toMatch(/\.page-header__actions\s*\{[^}]*justify-content:\s*flex-end/);
+      expect(tablet).toMatch(/\.page-header__actions\s*\{[^}]*--btn-flex:\s*0 0 auto/);
+    });
   });
 });

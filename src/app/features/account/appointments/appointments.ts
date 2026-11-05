@@ -19,6 +19,8 @@ import { PatientContextService } from '../../../core/patient-context/patient-con
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 // El sello de reconsulta (C4): los dos campos y su predicado viven en los tipos congelados de `scheduling`.
 import { esReconsulta } from '../../../core/data-access/scheduling/scheduling.types';
+import type { BookableResource } from '../../../core/data-access/scheduling/bookable-resources.client';
+import type { TenantScope } from '../../../core/data-access/scheduling/tenant-scope';
 import type {
   AgendaResource,
   AgendaSlot,
@@ -34,15 +36,13 @@ import type {
   ValueSetOption,
 } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../core/view-state/view-state';
+import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { Select } from '../../../shared/components/atoms/select/select';
-import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
-import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
@@ -54,8 +54,17 @@ import { SearchField } from '../../../shared/components/molecules/search-field/s
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import {
+  VACIO_ELEGIR_AGENDA,
+  VACIO_ELEGIR_LABORATORIO,
+  VACIO_SIN_CITAS,
+  VACIO_SIN_HORARIOS,
+  vacioSinHorariosDeServicio,
+} from './appointments-empty-states';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
+import { ProfessionalPicker } from './professional-picker/professional-picker';
 import { BookingPaymentReceipts } from './booking-payment-receipts/booking-payment-receipts';
 import { AppointmentPaymentBadge, AppointmentReceiptUpload } from './appointment-payment/payment';
 import { changeNotice, delayNotice } from './appointment-notices';
@@ -70,6 +79,7 @@ import {
   reservaDelPortalRoute,
 } from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
+import { SessionPayment } from './session-payment/session-payment';
 import { hasEnded, splitUpcomingAndPast } from './upcoming-and-past';
 
 /**
@@ -172,9 +182,6 @@ const PARAM_DE_TURNO = 'turno';
  */
 export const RESOURCE_PARAM = 'resource';
 
-/** El vacío de horarios antes de elegir con quién; su par de laboratorio abajo. */
-const ELEGIR_CON_QUIEN = 'Elija con quién se quiere atender para ver los horarios libres.';
-const ELEGIR_LABORATORIO = 'Elija un laboratorio para ver los horarios libres.';
 export const LAB_RESOURCE = 'lab';
 
 /* ---- FT-05 · los cuatro filtros, también en la URL ------------------------ */
@@ -190,6 +197,8 @@ const PARAM_HASTA = 'hasta';
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
   readonly id: string;
+  /** La organización de la agenda del turno; `''` si la API no la dijo. */
+  readonly tenantId: string;
   readonly cuando: Date | null;
   readonly hasta: Date | null;
   /** El uuid del catálogo. Se conserva para poder reetiquetar cuando llegue. */
@@ -392,6 +401,7 @@ const SEDE_CUALQUIERA = 'cualquiera';
     AppButton,
     AppButtonLink,
     AppointmentCalendar,
+    SessionPayment,
     AppointmentPaymentBadge,
     AppointmentReceiptUpload,
     Badge,
@@ -401,10 +411,11 @@ const SEDE_CUALQUIERA = 'cualquiera';
     FormField,
     PageHeader,
     DatePicker,
-    ReferenceCombobox,
+    ProfessionalPicker,
     RouterLink,
     SearchField,
     Select,
+    ViewStateHost,
   ],
   templateUrl: './appointments.html',
   styleUrl: './appointments.css',
@@ -458,8 +469,22 @@ export class Appointments {
    */
   protected readonly rutaDeAgenda = AGENDA_ROUTE;
 
-  /** La organización, que `GET /scheduling/resources` exige explícita. */
-  protected readonly organizacion = this.auth.activeTenantId;
+  /** La organización que la persona eligió para pedir cita; `null` = la activa de la sesión. */
+  private readonly organizacionElegida = signal<string | null>(null);
+
+  /** La organización con la que se pide cita, que `GET /scheduling/resources` exige explícita. */
+  protected readonly organizacion = computed(
+    () => this.organizacionElegida() ?? this.auth.activeTenantId(),
+  );
+
+  /**
+   * Como qué organización se habla con la agenda: la elegida, que puede no ser
+   * la activa. La API sólo lo acepta de una cuenta de paciente.
+   */
+  private readonly alcance = computed<TenantScope>(() => {
+    const tenantId = this.organizacion();
+    return tenantId === null ? {} : { tenantId };
+  });
 
   /** Etiquetas de los conceptos de estado, para no mostrar uuid. */
   private readonly etiquetas = signal<ConceptLabels>(new Map());
@@ -760,6 +785,10 @@ export class Appointments {
     this.seleccionado.set(id);
   }
 
+  protected alternarSesion(id: string): void {
+    this.seleccionado.update((actual) => actual === id ? null : id);
+  }
+
   /* ---- mis turnos --------------------------------------------------------- */
 
   protected readonly turnos = signal<ViewState<readonly TurnoVisible[]>>(loading());
@@ -880,10 +909,6 @@ export class Appointments {
     if (clave === null) return null;
     return this.agendas().find((agenda) => agenda.clave === clave) ?? null;
   });
-
-  protected readonly opcionesDeRecurso = computed<readonly SelectOption<string>[]>(() =>
-    this.agendas().map((agenda) => ({ value: agenda.clave, label: agenda.etiqueta })),
-  );
 
   /**
    * Los lugares donde atiende quien se eligió.
@@ -1006,7 +1031,7 @@ export class Appointments {
     this.queQuiere.set(PEDIR_CONSULTA);
     const perfil = this.recursosEnFoco()[0]?.resourceRefId;
     if (this.esLaboratorio() || perfil === undefined) return;
-    this.scheduling.listServiceOfferings(perfil).subscribe({
+    this.scheduling.listServiceOfferings(perfil, this.alcance()).subscribe({
       next: (lista) => {
         this.ofertasDelProfesional.set(lista);
         this.aplicarEnlaceDelServicio(lista);
@@ -1045,60 +1070,12 @@ export class Appointments {
     this.elegirQueQuiere(pedido);
   }
 
-  /**
-   * Lo tecleado en el buscador de profesional.
-   *
-   * El listado ya está en memoria, así que filtrar es local: no se consulta a
-   * la API por cada letra. Vacío = se ofrecen todos, que es como se comportaba
-   * el desplegable.
-   */
-  protected readonly busquedaDeRecurso = signal('');
+  protected readonly horarios = signal<ViewState<readonly HorarioVisible[]>>(VACIO_ELEGIR_AGENDA);
 
-  /**
-   * Las opciones del buscador, acotadas por lo tecleado.
-   *
-   * Con una organización de pocos profesionales daba igual, pero con un listado
-   * largo había que recorrerlo a mano hasta encontrar al propio (F-13). Se busca
-   * por lo que la persona conoce —el nombre— y también por el rótulo de la
-   * agenda, que suele traer sede o especialidad.
-   */
-  protected readonly opcionesBuscadas = computed<readonly ReferenceOption[]>(() => {
-    const termino = normalizar(this.busquedaDeRecurso());
-    const todas = this.opcionesDeRecurso().map((opcion) => ({
-      value: opcion.value,
-      label: opcion.label,
-    }));
-    if (termino === '') return todas;
-    return todas.filter((opcion) => normalizar(opcion.label).includes(termino));
-  });
-
-  /** El profesional elegido, con la forma que pide el buscador. */
-  protected readonly recursoSeleccionado = computed<ReferenceOption | null>(() => {
-    const id = this.agendaElegida();
-    if (id === null) return null;
-    return this.opcionesDeRecurso().find((opcion) => opcion.value === id) ?? null;
-  });
-
-  /** La organización todavía no cargó ninguna agenda que ofrecer. */
-  protected readonly sinRecursos = signal(false);
-
-  /**
-   * La próxima acción de todo vacío de esta pantalla es la misma: elegir una
-   * agenda. No lleva `route` porque el control ya está acá arriba, en la misma
-   * vista: mandar a otra ruta para volver al mismo lugar sería un rodeo.
-   */
-  private readonly pasoElegirAgenda = { label: 'Elija una agenda' } as const;
-
-  protected readonly horarios = signal<ViewState<readonly HorarioVisible[]>>(
-    empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN),
-  );
-
-  /** El mensaje del vacío, que la plantilla no puede sacar del estado tipada. */
-  protected readonly mensajeDeHorariosVacios = computed(() => {
+  /** What the slots section renders: laboratory mode asks for a laboratory, not "whom to book with". */
+  protected readonly horariosVista = computed<ViewState<readonly HorarioVisible[]>>(() => {
     const estado = this.horarios();
-    const mensaje = estado.status === 'empty' ? (estado.message ?? '') : '';
-    // En modo laboratorio no se elige «con quién»: se elige un laboratorio.
-    return mensaje === ELEGIR_CON_QUIEN && this.esLaboratorio() ? ELEGIR_LABORATORIO : mensaje;
+    return estado === VACIO_ELEGIR_AGENDA && this.esLaboratorio() ? VACIO_ELEGIR_LABORATORIO : estado;
   });
 
   /** Todos los turnos del titular, **sin** filtrar. */
@@ -1322,7 +1299,7 @@ export class Appointments {
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
-            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pidió ninguna cita.'));
+            this.turnos.set(VACIO_SIN_CITAS);
             return;
           }
           this.traducirEstados(pagina.items);
@@ -1358,9 +1335,40 @@ export class Appointments {
     this.agendaElegida.set(null);
     this.sedeElegida.set(SEDE_CUALQUIERA);
     this.recursos.set([]);
-    this.busquedaDeRecurso.set('');
     this.ofertasDelProfesional.set([]);
     this.queQuiere.set(PEDIR_CONSULTA);
+    this.cargarRecursos();
+  }
+
+  /** The agenda to open once the chosen practitioner's organization has loaded. */
+  private agendaPendiente: string | null = null;
+
+  /**
+   * The patient picks a person from every organization; the organization comes
+   * with it. Same organization: open the agenda. Another one: switch to it,
+   * dropping what belonged to the previous one, and open it once loaded.
+   *
+   * @param elegido - The picker's entry; `null` clears the choice.
+   */
+  protected elegirProfesional(elegido: BookableResource | null): void {
+    if (elegido === null) {
+      this.elegirAgenda(null);
+      return;
+    }
+    const clave = claveDeAgenda({ id: elegido.resourceId, ...elegido });
+    const yaCargada = this.agendas().some((agenda) => agenda.clave === clave);
+    if (this.organizacion() === elegido.tenantId && yaCargada) {
+      this.elegirAgenda(clave);
+      return;
+    }
+    this.agendaPendiente = clave;
+    this.organizacionElegida.set(elegido.tenantId);
+    this.agendaElegida.set(null);
+    this.sedeElegida.set(SEDE_CUALQUIERA);
+    this.recursos.set([]);
+    this.ofertasDelProfesional.set([]);
+    this.queQuiere.set(PEDIR_CONSULTA);
+    this.horarios.set(VACIO_ELEGIR_AGENDA);
     this.cargarRecursos();
   }
 
@@ -1370,7 +1378,9 @@ export class Appointments {
       return;
     }
 
-    this.scheduling.listResources({ tenantId, resourceType: this.tipoDeRecurso() }).subscribe({
+    this.scheduling
+      .listResources({ tenantId, resourceType: this.tipoDeRecurso() }, this.alcance())
+      .subscribe({
       next: (pagina) => {
         this.recursos.set(pagina.items);
         this.catalogoDeRecursos.update((previo) => {
@@ -1380,16 +1390,18 @@ export class Appointments {
           }
           return mezcla;
         });
-        this.sinRecursos.set(pagina.items.length === 0);
         this.aplicarEnlaceDelProfesional();
+        if (this.agendaPendiente !== null) {
+          this.elegirAgenda(this.agendaPendiente);
+          this.agendaPendiente = null;
+        }
         // Los turnos pueden haberse pintado antes que esto: las dos lecturas
         // del arranque salen a la vez. Se rehacen para que tomen el nombre de
         // su agenda, igual que con las etiquetas de estado.
         this.reetiquetarTurnos();
       },
-      // Un fallo acá no se cuenta como «no hay agendas»: eso mandaría a la
-      // persona a esperar a que la organización cargue algo que quizá ya tiene.
-      error: () => this.sinRecursos.set(false),
+      // A failure is not «no agendas»: the picker already lists who has hours.
+      error: () => undefined,
     });
   }
 
@@ -1405,7 +1417,7 @@ export class Appointments {
     if (clave === null) {
       this.ofertasDelProfesional.set([]);
       this.queQuiere.set(PEDIR_CONSULTA);
-      this.horarios.set(empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN));
+      this.horarios.set(VACIO_ELEGIR_AGENDA);
       return;
     }
     this.cargarOfertas();
@@ -1457,17 +1469,20 @@ export class Appointments {
     forkJoin(
       enFoco.map((recurso) =>
         forkJoin([
-          this.scheduling.listSlots({
-            resourceId: recurso.id,
-            from: desde,
-            to: hasta,
-            onlyAvailable: true,
-            limit: TOPE_DE_HORARIOS,
-          }),
+          this.scheduling.listSlots(
+            {
+              resourceId: recurso.id,
+              from: desde,
+              to: hasta,
+              onlyAvailable: true,
+              limit: TOPE_DE_HORARIOS,
+            },
+            this.alcance(),
+          ),
           // P36 · las horas del horario flexible de la misma agenda. Vacío si
           // publicó turnos fijos. Que esta lectura falle no esconde los turnos
           // fijos: se avisa como lista incompleta y se sigue.
-          this.scheduling.getFlexibleAvailability(recurso.id, { from: desde, to: hasta }).pipe(
+          this.scheduling.getFlexibleAvailability(recurso.id, { from: desde, to: hasta }, this.alcance()).pipe(
             map((disponibilidad) => disponibilidad.items),
             catchError(() => {
               this.horariosIncompletos.set(true);
@@ -1518,12 +1533,7 @@ export class Appointments {
           .sort((a, b) => a.desde.getTime() - b.desde.getTime())
           .slice(0, TOPE_DE_HORARIOS);
         if (libres.length === 0) {
-          this.horarios.set(
-            empty(
-              { label: 'Pruebe con otra agenda' },
-              'No hay horarios libres en las próximas dos semanas.',
-            ),
-          );
+          this.horarios.set(VACIO_SIN_HORARIOS);
           return;
         }
         this.horarios.set(ready(libres));
@@ -1551,12 +1561,15 @@ export class Appointments {
     forkJoin(
       enFoco.map((recurso) =>
         this.scheduling
-          .getServiceAvailability({
-            offeringId: servicio.id,
-            resourceId: recurso.id,
-            from: desde,
-            to: hasta,
-          })
+          .getServiceAvailability(
+            {
+              offeringId: servicio.id,
+              resourceId: recurso.id,
+              from: desde,
+              to: hasta,
+            },
+            this.alcance(),
+          )
           .pipe(
             map((disponibilidad) =>
               disponibilidad.items.map(
@@ -1592,12 +1605,7 @@ export class Appointments {
           .sort((a, b) => a.desde.getTime() - b.desde.getTime())
           .slice(0, TOPE_DE_HORARIOS);
         if (libres.length === 0) {
-          this.horarios.set(
-            empty(
-              { label: 'Pruebe con otro servicio o profesional' },
-              `No hay horarios para ${servicio.serviceName} en las próximas dos semanas.`,
-            ),
-          );
+          this.horarios.set(vacioSinHorariosDeServicio(servicio.serviceName));
           return;
         }
         this.horarios.set(ready(libres));
@@ -1665,13 +1673,17 @@ export class Appointments {
 
     this.anotandose.set(true);
     this.scheduling
-      .enrollWaitlist({
-        tenantId,
-        patientProfileId: perfil,
-        resourceId,
-        desiredFrom: desde,
-        desiredTo: hasta,
-      })
+      .enrollWaitlist(
+        {
+          tenantId,
+          patientProfileId: perfil,
+          resourceId,
+          desiredFrom: desde,
+          desiredTo: hasta,
+        },
+        undefined,
+        this.alcance(),
+      )
       .subscribe({
         next: () => {
           this.anotandose.set(false);
@@ -1742,7 +1754,13 @@ export class Appointments {
 
     this.operando.set(turno.id);
     this.scheduling
-      .cancelBooking(turno.id, { cancelledBy: 'PATIENT', reasonText: motivo })
+      .cancelBooking(
+        turno.id,
+        { cancelledBy: 'PATIENT', reasonText: motivo },
+        undefined,
+        // La cita puede ser de otra organización que la elegida para pedir una nueva.
+        turno.tenantId === '' ? undefined : { tenantId: turno.tenantId },
+      )
       .subscribe({
         next: () => {
           this.operando.set(null);
@@ -1880,6 +1898,8 @@ export class Appointments {
       recurso: horario.resourceId,
       desde: horario.desde.toISOString(),
       hasta: horario.hasta.toISOString(),
+      // La reserva habla con la organización de la agenda, que puede no ser la activa.
+      ...(this.organizacion() === null ? {} : { org: this.organizacion() as string }),
       ...(horario.ofertaId === undefined ? {} : { oferta: horario.ofertaId }),
       ...(horario.flexible === true ? { flexible: '1' } : {}),
     };
@@ -1892,6 +1912,7 @@ export class Appointments {
     const resourceId = cita.resourceId ?? '';
     return {
       id: cita.id,
+      tenantId: cita.tenantId ?? '',
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       statusConceptId: cita.statusConceptId,

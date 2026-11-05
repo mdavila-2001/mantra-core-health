@@ -1,0 +1,232 @@
+/* Reservar el estudio de una orden. Una sola tarjeta a lo ancho (regla 8 del
+   sistema de diseño), mobile-first: la lista de centros y los horarios se
+   apilan en el teléfono y se abren en filas desde el corte de tableta. */
+
+:host {
+  display: block;
+}
+
+.reserva {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.reserva__orden {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--st-info-bd);
+  border-radius: var(--r-md);
+  background: var(--st-info-bg);
+}
+
+.reserva__rotulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.reserva__estudio {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reserva__secundario {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.reserva__pasos,
+.reserva__aviso {
+  display: block;
+  margin-block-start: var(--sp-4);
+}
+
+.reserva__seccion {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.reserva__cabecera app-segmented-control {
+  /* Crece y no se encoge: a 390 px el segmentado reparte la fila entera
+     (su propia regla angosta) en vez de cortar los rótulos. */
+  flex: 1 0 auto;
+  /* Por debajo de 30rem sus opciones tienen base 0: sin un mínimo, el
+     tamaño «auto» queda en el mínimo y corta los rótulos. */
+  min-inline-size: 16rem;
+}
+
+.reserva__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reserva__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.reserva__centros {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.centro {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.centro__datos {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.centro__nombre {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.centro__hechos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.centro__precio {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.centro__preparacion {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+}
+
+.reserva__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-tertiary);
+}
+
+.reserva__dias {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.dia {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.dia__titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Sólo la primera letra: `capitalize` subía también el «De» de «6 de octubre». */
+.dia__titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.reserva__mas {
+  justify-self: start;
+}
+
+/* Rejilla de columnas iguales: con flex, la última hora quedaba sola en una
+   fila y las columnas no se alineaban entre días. */
+.dia__horarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dia__horarios button {
+  inline-size: 100%;
+}
+
+.resumen {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.resumen__fila {
+  display: grid;
+  gap: var(--sp-1);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.resumen__fila dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.resumen__fila dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.reserva__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}
+
+.reserva__listo {
+  padding: var(--sp-4);
+  border: 1px solid var(--st-success-bd);
+  border-radius: var(--r-md);
+  background: var(--st-success-bg);
+}
+
+.reserva__listo .reserva__titulo {
+  color: var(--st-success-fg);
+}
+
+/* Tableta (--bp-md, 780 px): el centro en una fila, con el botón a la derecha. */
+@media (min-width: 780px) {
+  .centro {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .resumen__fila {
+    grid-template-columns: 12rem 1fr;
+    align-items: baseline;
+  }
+}
+
+.reserva__aviso-accion {
+  margin-block-start: var(--sp-3);
+}

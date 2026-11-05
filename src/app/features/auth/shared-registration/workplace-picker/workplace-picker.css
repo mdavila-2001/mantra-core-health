@@ -1,0 +1,93 @@
+/* Dos bloques: en pantalla ancha lado a lado, en angosta uno debajo del otro.
+   Son dos preguntas distintas —dónde atiende y quién le paga— y apilarlas en
+   ancho dejaba la mitad derecha vacía. */
+.lugares {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+  width: 100%;
+}
+
+@media (min-width: 780px) {
+  .lugares {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.lugares__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.lugares__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--text-primary);
+}
+
+.lugares__explica,
+.lugares__nota,
+.lugares__cargando {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+.lugares__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lugares__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.lugares__item-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lugares__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.lugares__ciudad {
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+/* Los dos sellos debajo del nombre, a lo ancho de la fila: el botón de quitar
+   queda arriba a la derecha. */
+.lugares__sellos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.lugares__item > button {
+  grid-column: 2;
+  grid-row: 1;
+}

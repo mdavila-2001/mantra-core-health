@@ -1,0 +1,112 @@
+<div class="preview" [attr.data-testid]="idPrefix()">
+  @if (preview().valid) {
+    <app-alert tone="success" title="El cambio es válido" [attr.data-testid]="idPrefix() + '-valid'"
+      >Cumple las barandillas, los techos y las reglas de la organización.</app-alert
+    >
+  } @else {
+    <app-alert
+      tone="error"
+      title="Hay que corregir antes de guardar"
+      [attr.data-testid]="idPrefix() + '-invalid'"
+    >
+      <ul class="lista">
+        @for (issue of preview().validation.errors; track issue.path + issue.code) {
+          <li>{{ issue.message }}</li>
+        }
+      </ul>
+    </app-alert>
+  }
+
+  @if (preview().validation.warnings.length > 0) {
+    <app-alert tone="warning" title="Avisos" [attr.data-testid]="idPrefix() + '-warnings'">
+      <ul class="lista">
+        @for (issue of preview().validation.warnings; track issue.path + issue.code) {
+          <li>{{ issue.message }}</li>
+        }
+      </ul>
+    </app-alert>
+  }
+
+  <div class="bloque">
+    <h3 class="titulo">En palabras simples</h3>
+    <ul class="lista" [attr.data-testid]="idPrefix() + '-plain'">
+      @for (line of preview().summary.plain; track line) {
+        <li>{{ line }}</li>
+      }
+    </ul>
+    @if (preview().summary.changes.length > 0) {
+      <h3 class="titulo">Qué cambia</h3>
+      <ul class="lista" [attr.data-testid]="idPrefix() + '-changes'">
+        @for (line of preview().summary.changes; track line) {
+          <li>{{ line }}</li>
+        }
+      </ul>
+    }
+  </div>
+
+  <dl class="impacto" [attr.data-testid]="idPrefix() + '-impact'">
+    <div>
+      <dt>Casos que pasan a estar permitidos</dt>
+      <dd>{{ preview().impact.newlyAllowed }}</dd>
+    </div>
+    <div>
+      <dt>Casos que dejan de estar permitidos</dt>
+      <dd>{{ preview().impact.newlyDenied }}</dd>
+    </div>
+    <div>
+      <dt>Casos que no cambian</dt>
+      <dd>{{ preview().impact.unchanged }}</dd>
+    </div>
+    <div>
+      <dt>Doctores que cubre</dt>
+      <dd>
+        {{ preview().impact.doctorsCovered.before }} → {{ preview().impact.doctorsCovered.after }}
+      </dd>
+    </div>
+  </dl>
+
+  <p class="puntaje" [attr.data-testid]="idPrefix() + '-score'">
+    Puntaje de privilegios:
+    <strong
+      >{{ preview().governance.privilegeScore.before }} →
+      {{ preview().governance.privilegeScore.after }}</strong
+    >
+    ({{ preview().governance.privilegeScore.delta >= 0 ? '+' : ''
+    }}{{ preview().governance.privilegeScore.delta }}). Pesa más lo que toca dinero o datos de
+    pacientes.
+  </p>
+
+  @if (preview().governance.sodFindings.length > 0) {
+    <div [attr.data-testid]="idPrefix() + '-sod'">
+      <h3 class="titulo">Conflictos de funciones</h3>
+      <ul class="lista">
+        @for (finding of preview().governance.sodFindings; track finding.ruleCode) {
+          <li>
+            <strong>{{ sodActionText[finding.action] }}:</strong> {{ finding.message }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (preview().governance.needsFourEyes.required) {
+    <app-alert
+      tone="warning"
+      title="Necesita la aprobación de otra persona"
+      [attr.data-testid]="idPrefix() + '-four-eyes'"
+    >
+      <ul class="lista">
+        @for (why of preview().governance.needsFourEyes.reasons; track why) {
+          <li>{{ why }}</li>
+        }
+      </ul>
+    </app-alert>
+  } @else {
+    <app-alert
+      tone="info"
+      title="Se aplica de inmediato"
+      [attr.data-testid]="idPrefix() + '-immediate'"
+      >Este cambio no sube el privilegio de forma importante.</app-alert
+    >
+  }
+</div>

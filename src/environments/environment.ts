@@ -4,15 +4,15 @@ import { envFromProcess } from './env.generated';
 /** API real. Las demostraciones se habilitan solo con la configuracion demo. */
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
-  aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
   refreshCookie: envFromProcess.refreshCookie ?? false,
   demoPresets: false,
   paymentDemo: false,
   loyaltyDemo: false,
   campaignsDemo: false,
   billingSiatDemo: false,
-  billingSimulatedApi: false,
+  billingSimulatedApi: true,
   designMockups: false,
+  reportingMockEnabled: envFromProcess.reportingMockEnabled ?? false,
   mockBackend: false,
   telemetry: {
     enabled: envFromProcess.telemetry?.enabled ?? false,

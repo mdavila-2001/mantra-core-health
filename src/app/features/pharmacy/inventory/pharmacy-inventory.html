@@ -20,93 +20,151 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="inventory" padding="lg" data-testid="inventory-card">
+    <div class="inventory" data-testid="inventory-card">
       <div class="inventory__panel">
-        <p class="inventory__nota" data-testid="inventory-sync-notice">
-          Cuando exista la sincronización con su sistema, esta pantalla pasa a ser sólo de lectura.
-        </p>
-
-        @if (errors().length > 0) {
-          <app-alert tone="error" title="Falta resolver esto" data-testid="inventory-errors">
-            <ul class="inventory__errors">
-              @for (error of errors(); track error) {
-                <li>{{ error }}</li>
-              }
-            </ul>
-          </app-alert>
+        @if (sites.status() === 'failed') {
+          <p class="inventory__nota" data-testid="inventory-sites-failed">
+            No se pudieron leer las sucursales: por ahora se ve lo declarado en el catálogo.
+            <button app-button variant="ghost" size="sm" type="button" (clicked)="retrySites()">
+              Reintentar
+            </button>
+          </p>
+        } @else if (sites.sites().length > 0) {
+          <div class="inventory__site">
+            <app-form-field label="Sucursal">
+              <app-select
+                [options]="sites.options()"
+                [value]="site()"
+                (valueChange)="chooseSite($event)"
+                data-testid="inventory-site"
+              />
+            </app-form-field>
+          </div>
         }
 
-        <div class="inventory__mode">
-          <span class="inventory__mode-label" id="inventory-mode-label">Cómo lleva su inventario</span>
-          <app-segmented-control
-            ariaLabel="Cómo lleva su inventario"
-            [options]="viewOptions"
-            [value]="view()"
-            (valueChange)="setView($event)"
-            data-testid="inventory-view"
-          />
-          <div class="inventory__csv">
-            <button app-button variant="outline" size="sm" type="button" [disabled]="!canUseCsv()" (clicked)="exportCsv()" data-testid="inventory-export">
-              Exportar CSV
-            </button>
-            <button app-button variant="outline" size="sm" type="button" [disabled]="!canUseCsv()" (clicked)="openUpload()" data-testid="inventory-upload">
-              Subir CSV
-            </button>
-          </div>
-        </div>
+        @if (site() === allSites) {
+          @if (ledgerNotice(); as notice) {
+            <p class="inventory__nota" data-testid="inventory-ledger-notice">{{ notice }}</p>
+          }
 
-        <app-search-field
-          label="Buscar en el inventario"
-          placeholder="Marca, genérico o código"
-          [value]="term()"
-          (searched)="search($event)"
-        />
+          @if (errors().length > 0) {
+            <app-alert tone="error" title="Falta resolver esto" data-testid="inventory-errors">
+              <ul class="inventory__errors">
+                @for (error of errors(); track error) {
+                  <li>{{ error }}</li>
+                }
+              </ul>
+            </app-alert>
+          }
 
-        <div class="inventory__bar">
-          <app-switch
-            [label]="alertsLabel()"
-            [ariaLabel]="alertsLabel()"
-            [checked]="onlyAlerts()"
-            (checkedChange)="toggleAlerts($event)"
-            data-testid="inventory-only-alerts"
-          />
-          <div class="inventory__save">
-            @if (dirtyCount() > 0) {
-              <span class="inventory__dirty" role="status">
-                {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
-              </span>
-              <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
-                Descartar
+          <div class="inventory__mode">
+            <span class="inventory__mode-label" id="inventory-mode-label">Cómo lleva su inventario</span>
+            <app-segmented-control
+              ariaLabel="Cómo lleva su inventario"
+              [options]="viewOptions"
+              [value]="view()"
+              (valueChange)="setView($event)"
+              data-testid="inventory-view"
+            />
+            <div class="inventory__csv">
+              <button app-button variant="outline" size="sm" type="button" [disabled]="!canUseCsv()" (clicked)="exportCsv()" data-testid="inventory-export">
+                Exportar CSV
               </button>
-            }
+              <button app-button variant="outline" size="sm" type="button" [disabled]="!canUseCsv()" (clicked)="openUpload()" data-testid="inventory-upload">
+                Subir CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Buscar, filtrar y guardar en un renglón desde 780 px: la tabla sube. -->
+          <div class="inventory__tools">
+            <app-search-field
+              label="Buscar en el inventario"
+              placeholder="Marca, genérico o código"
+              [value]="term()"
+              (searched)="search($event)"
+            />
+
+            <div class="inventory__bar">
+              <app-switch
+                [label]="alertsLabel()"
+                [ariaLabel]="alertsLabel()"
+                [checked]="onlyAlerts()"
+                (checkedChange)="toggleAlerts($event)"
+                data-testid="inventory-only-alerts"
+              />
+              <div class="inventory__save">
+                @if (dirtyCount() > 0) {
+                  <span class="inventory__dirty" role="status">
+                    {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
+                  </span>
+                  <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
+                    Descartar
+                  </button>
+                }
+                <button
+                  app-button
+                  type="button"
+                  [isLoading]="saving()"
+                  [disabled]="saving() || dirtyCount() === 0"
+                  (clicked)="save()"
+                  data-testid="inventory-save"
+                >
+                  Guardar cambios
+                </button>
+              </div>
+            </div>
+          </div>
+
+          @if (truncated()) {
+            <app-alert tone="warning" title="Se muestran los primeros 500" data-testid="inventory-truncated">
+              Su catálogo tiene más productos de los que entran en un listado: la tabla, «Sólo con
+              alertas» y «Exportar CSV» ven sólo los primeros 500. Busque por marca, genérico o código
+              para llegar a los demás.
+            </app-alert>
+          }
+
+          <app-data-table
+            caption="Inventario de su farmacia"
+            [state]="pageRows()"
+            [columns]="columns()"
+            [trackBy]="rowId"
+            [rowLabel]="rowLabel"
+            stackedOnMobile
+            dense
+            [sort]="sort()"
+            (sortChanged)="sortBy($event)"
+            [cursor]="cursor()"
+            (cursorChanged)="goToCursor($event)"
+            (retry)="reload()"
+            (refresh)="reload()"
+            data-testid="inventory-table"
+          />
+        } @else if (scope.pharmacyId(); as pharmacyId) {
+          <div class="inventory__csv">
             <button
               app-button
+              variant="outline"
+              size="sm"
               type="button"
-              [isLoading]="saving()"
-              [disabled]="saving() || dirtyCount() === 0"
-              (clicked)="save()"
-              data-testid="inventory-save"
+              [disabled]="!canUseCsv()"
+              (clicked)="openUpload()"
+              data-testid="inventory-site-upload"
             >
-              Guardar cambios
+              Subir CSV de esta sucursal
             </button>
           </div>
-        </div>
-
-        <app-data-table
-          caption="Inventario de su farmacia"
-          [state]="pageRows()"
-          [columns]="columns()"
-          [trackBy]="rowId"
-          [rowLabel]="rowLabel"
-          stackedOnMobile
-          [cursor]="cursor()"
-          (cursorChanged)="goToCursor($event)"
-          (retry)="reload()"
-          (refresh)="reload()"
-          data-testid="inventory-table"
-        />
+          <app-site-stock-panel
+            [pharmacyId]="pharmacyId"
+            [siteId]="site()"
+            [siteName]="sites.nameOf(site())"
+            [products]="products()"
+            (modeRead)="sites.markMode($event.siteId, $event.ledger)"
+            (catalogRetry)="reload()"
+          />
+        }
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 
@@ -166,7 +224,8 @@
   <app-inventory-upload-dialog
     [pharmacyId]="pharmacyId"
     [products]="allProducts()"
-    (applied)="reload()"
+    [site]="site() === allSites ? null : { siteId: site(), siteName: sites.nameOf(site()) }"
+    (applied)="uploadApplied()"
     (closed)="closeUpload()"
   />
 }

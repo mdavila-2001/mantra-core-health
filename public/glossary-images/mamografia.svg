@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se hace una mamografía</title>
+  <desc id="d">Vista lateral del equipo: tubo de rayos X, placa de compresión, mama y detector. A la derecha, las dos proyecciones habituales, craneocaudal y oblicua, y los hallazgos que busca la prueba.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Cómo se hace</text>
+<rect x="110" y="70" width="120" height="46" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="170" y="98" text-anchor="middle" class="small" style="fill:var(--on)">Tubo de rayos X</text>
+<path d="M140,116 L200,116 L250,320 L90,320 Z" fill="var(--beam)" stroke="none" stroke-width="0" stroke-linecap="round" stroke-linejoin="round" opacity=".4"/>
+<rect x="70" y="190" width="220" height="12" rx="3" fill="var(--muted)" stroke-width="1"/>
+<text x="298" y="200" class="small">Compresión</text>
+<path d="M80,202 L280,202 Q290,250 270,290 L80,290 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="200" cy="240" r="8" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1.5"/>
+<circle cx="160" cy="262" r="2" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<circle cx="166" cy="256" r="2" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<circle cx="172" cy="264" r="2" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<rect x="70" y="290" width="220" height="22" rx="4" fill="var(--accent)" stroke-width="1"/>
+<text x="300" y="306" class="small">Detector</text>
+<text x="200" y="346" text-anchor="middle" class="lab">La mama se comprime unos segundos para</text>
+<text x="200" y="366" text-anchor="middle" class="lab">ver mejor con menos radiación.</text>
+<text x="200" y="404" text-anchor="middle" class="small" style="fill:var(--muted)">Puede molestar, pero dura poco.</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Dos proyecciones por mama</text>
+<ellipse cx="520" cy="130" rx="44" ry="50" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+<line x1="470" y1="130" x2="570" y2="130" stroke="var(--accent)" stroke-width="3"/>
+<text x="520" y="206" text-anchor="middle" class="small">Craneocaudal</text>
+<ellipse cx="680" cy="130" rx="44" ry="50" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+<line x1="646" y1="90" x2="716" y2="170" stroke="var(--accent)" stroke-width="3"/>
+<text x="680" y="206" text-anchor="middle" class="small">Oblicua</text>
+<rect x="456" y="226" width="304" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="248" class="step">Qué busca</text>
+<text x="468" y="272" class="lab">• Nódulos o masas</text>
+<text x="468" y="294" class="lab">• Microcalcificaciones</text>
+<text x="468" y="316" class="lab">• Distorsión del tejido</text>
+<text x="456" y="354" class="lab">Se usa para cribado y para estudiar</text>
+<text x="456" y="374" class="lab">síntomas. Si hace falta se completa</text>
+<text x="456" y="394" class="lab">con ecografía o biopsia.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

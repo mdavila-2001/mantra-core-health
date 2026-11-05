@@ -28,6 +28,8 @@ export interface NewPatientProfile {
   readonly sexAtBirthConceptId?: string;
   /** Código del índice maestro de pacientes. Único en toda la instalación. */
   readonly masterPatientIndexCode?: string;
+  /** The operator confirmed a homonym is another person (skips the 409). */
+  readonly allowHomonym?: boolean;
 }
 
 export interface PatientProfile {
@@ -516,16 +518,13 @@ export interface PatientListItem {
   readonly personId: string;
   readonly patientCode: string;
   readonly displayName?: string;
-  /**
-   * El documento de identidad y el teléfono, que es lo que el médico usa para
-   * reconocer y llamar a la persona (propietario, 19/09/2026).
-   *
-   * **Opcionales porque sólo los sirve la maqueta de `mockup`:**
-   * `PatientListItemDto` no los declara. Donde falten, la celda lo dice con
-   * palabras en vez de dejar el hueco.
-   */
+  /** Full document and phone: only the `mockup` build serves them. */
   readonly nationalId?: string;
   readonly phone?: string;
+  /** Masked document (last digits) the API serves to tell homonyms apart. */
+  readonly nationalIdMasked?: string;
+  /** Own portal account: without one a link request reaches nobody. */
+  readonly hasAccount?: boolean;
   readonly birthDate?: Date;
   readonly personStatusConceptId?: string;
   /**
@@ -1113,12 +1112,21 @@ export interface PractitionerListItem {
    */
   readonly workplaces: readonly string[];
   /**
-   * La media de las reseñas publicadas y cuántas son. **Opcionales: la API
-   * no los manda en el listado** (P61) —sólo en la ficha—; sin ellos la tarjeta dice «Sin reseñas todavía», nunca una nota
-   * inventada.
+   * La media de las reseñas publicadas y cuántas son (P61). Opcionales: una
+   * API anterior no los manda en el listado, y sin ellos la tarjeta dice «Sin
+   * reseñas todavía», nunca una nota inventada.
    */
   readonly ratingAverage?: number | null;
   readonly ratingCount?: number;
+  /**
+   * Lo que asentó en la plataforma: las mismas cuatro cuentas que la pestaña
+   * «Actividad» de su ficha. Es por lo que la guía ordena «más encuentros
+   * atendidos», «más recetas emitidas»… Opcional por el mismo motivo.
+   */
+  readonly activity?: Pick<
+    PractitionerActivity,
+    'encounters' | 'medicationRequests' | 'clinicalNotes' | 'documents'
+  >;
 }
 
 /**

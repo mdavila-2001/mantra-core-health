@@ -1,0 +1,121 @@
+<app-page-header
+  title="Mis verificaciones"
+  subtitle="Cada sello le dice a sus pacientes que sus datos están confirmados. Vea cuáles ya tiene y cuál es su siguiente paso."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada (composition-rules.md §5). -->
+<app-card padding="lg" class="verif__tarjeta">
+  <app-view-state-host [state]="state()" (retry)="cargar()">
+    <div vsh-skeleton class="verif__esqueleto" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+
+    @if (state().status === 'ready') {
+      <app-tabs
+        [selectedIndex]="pestana()"
+        (selectedIndexChange)="elegirPestana($event)"
+        data-testid="verif-pestanas"
+      >
+        <!-- ─── Hoja de ruta ─────────────────────────────────────────── -->
+        <app-tab [label]="pestanas[0]">
+          <app-verification-roadmap
+            [steps]="pasos()"
+            [pending]="pendientes()"
+            [labelsFailed]="etiquetasIlegibles()"
+            (retry)="cargar()"
+            (openRequests)="irABandeja()"
+          />
+        </app-tab>
+
+        <!-- ─── Solicitudes enviadas, como un chat ──────────────────────── -->
+        <app-tab [label]="pestanas[1]">
+          @if (avisoDeEnvio(); as aviso) {
+            <app-alert appAnuncio [tone]="aviso.tono" data-testid="verif-aviso">{{
+              aviso.texto
+            }}</app-alert>
+          }
+
+          @if (segurosIlegibles()) {
+            <app-alert tone="warning" data-testid="verif-seguros-error">
+              No pudimos leer sus solicitudes a aseguradoras; las de instituciones se ven abajo.
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                size="sm"
+                data-testid="verif-seguros-reintentar"
+                (clicked)="cargar()"
+              >
+                <app-nav-icon name="refresh" />
+                Reintentar
+              </button>
+            </app-alert>
+          }
+
+          <section class="verif__pedir" aria-labelledby="verif-pedir-titulo">
+            <h2 id="verif-pedir-titulo" class="verif__pedir-titulo">
+              <app-nav-icon name="heart" /> Trabaje con más aseguradoras
+            </h2>
+            <p class="verif__pedir-bajada">
+              Cada aseguradora que confirma su solicitud le da su sello oficial: es la prueba de que
+              trabaja con ella.
+            </p>
+            <div class="verif__nueva" data-testid="verif-nueva-aseguradora">
+              <app-form-field
+                class="verif__nueva-campo"
+                label="Pedir trabajar con otra aseguradora"
+              >
+                <app-select
+                  ariaLabel="Aseguradora"
+                  placeholder="Elija una aseguradora"
+                  [options]="aseguradorasDisponibles()"
+                  [disabled]="sinAseguradoras() !== null || enviando()"
+                  [value]="aseguradoraNueva()"
+                  (valueChange)="aseguradoraNueva.set($event)"
+                />
+              </app-form-field>
+              <button
+                app-button
+                type="button"
+                variant="primary"
+                data-testid="verif-enviar-aseguradora"
+                [disabled]="aseguradoraNueva() === null || enviando()"
+                (clicked)="pedirAseguradora()"
+              >
+                <app-nav-icon name="mail" />
+                Enviar solicitud
+              </button>
+            </div>
+            <!-- Fuera del campo para que el botón se alinee con el selector. -->
+            <p class="verif__nueva-ayuda" data-testid="verif-nueva-ayuda">
+              {{
+                sinAseguradoras() ??
+                  'Elija una aseguradora y envíe: ella recibe su solicitud y la confirma o la rechaza.'
+              }}
+            </p>
+          </section>
+
+          @if (hilos().length === 0 && !segurosIlegibles()) {
+            <app-empty-state
+              title="Todavía no envió ninguna solicitud"
+              description="Pida trabajar con una aseguradora con el campo de arriba, o declare la institución donde atiende desde su perfil."
+            >
+              <a empty-actions app-button variant="secondary" size="sm" routerLink="/my-account"
+                ><app-nav-icon name="edit" /> Ir a mi perfil</a
+              >
+            </app-empty-state>
+          } @else {
+            <app-request-inbox
+              [threads]="hilos()"
+              [busy]="enviando()"
+              [(openId)]="hiloElegidoId"
+              (withdraw)="retirar($event)"
+              (requestAgain)="volverAPedir($event)"
+            />
+          }
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>

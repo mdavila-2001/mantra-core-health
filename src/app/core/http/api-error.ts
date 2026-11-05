@@ -40,8 +40,21 @@ export interface ApiErrorBody {
   readonly correlationId?: string;
   /** Contexto específico del error — por ejemplo `reason` o el campo inválido. */
   readonly details?: Record<string, unknown>;
+  /**
+   * Sub-código de negocio estable (`STEP_UP_REQUIRED`, `APPROVAL_REQUIRED`, `REASON_REQUIRED`, …): la API lo manda arriba y en
+   * `details.reason`. Es lo que distingue **cuál** 403 o 422 fue; el desafío de acceso (`core/access-challenge`) ramifica por él.
+   */
+  readonly reason?: string;
   readonly timestamp: string;
   readonly path: string;
+}
+
+/** El `reason` de un cuerpo de error: arriba o, en su defecto, dentro de `details`. */
+function reasonOf(candidate: Record<string, unknown>): string | undefined {
+  if (typeof candidate['reason'] === 'string' && candidate['reason'] !== '') return candidate['reason'];
+  const details = candidate['details'];
+  if (isRecord(details) && typeof details['reason'] === 'string' && details['reason'] !== '') return details['reason'];
+  return undefined;
 }
 
 /**
@@ -73,6 +86,7 @@ export function readApiError(error: HttpErrorResponse): ApiErrorBody | null {
       ? {}
       : { correlationId: String(candidate['correlationId']) }),
     ...(isRecord(candidate['details']) ? { details: candidate['details'] } : {}),
+    ...(reasonOf(candidate) === undefined ? {} : { reason: reasonOf(candidate)! }),
   };
 }
 

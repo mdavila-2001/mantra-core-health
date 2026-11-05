@@ -1,6 +1,6 @@
 import { HttpBackend, HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, throwError, type Observable } from 'rxjs';
+import { catchError, map, throwError, timeout, TimeoutError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 
@@ -54,10 +54,25 @@ export const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/revers
  */
 function proveedorCaido(error: unknown): boolean {
   return (
-    error instanceof HttpErrorResponse &&
-    (error.status === 0 || error.status === 429 || error.status >= 500)
+    error instanceof TimeoutError ||
+    (error instanceof HttpErrorResponse &&
+      (error.status === 0 || error.status === 429 || error.status >= 500))
   );
 }
+
+/**
+ * Cuánto se espera a la API antes de preguntar desde el navegador (30/10/2026).
+ *
+ * Con los proveedores colgados —no rechazando— la API tardaba 6 s por cada uno
+ * antes de responder 503, y las pantallas se rendían antes (el alta de
+ * paciente espera 10 s; el selector del mapa, 20): el respaldo nunca llegaba a
+ * correr y la calle seguía «No disponible por ahora.». Una API sana responde
+ * en uno o dos segundos.
+ */
+export const API_BUDGET_MS = 4_000;
+
+/** Cuánto se espera a Nominatim desde el navegador: los dos topes suman menos de 10 s. */
+export const BROWSER_BUDGET_MS = 5_000;
 
 /**
  * Del punto del mapa a la línea de dirección (pedido del cliente del 26/10/2026:
@@ -95,6 +110,7 @@ export class ReverseGeocodingClient {
         longitude,
       })
       .pipe(
+        timeout(API_BUDGET_MS),
         catchError((error: unknown) =>
           proveedorCaido(error)
             ? this.desdeElNavegador(latitude, longitude)
@@ -115,7 +131,7 @@ export class ReverseGeocodingClient {
           'accept-language': 'es',
         },
       })
-      .pipe(map(nominatimToStreet));
+      .pipe(timeout(BROWSER_BUDGET_MS), map(nominatimToStreet));
   }
 }
 

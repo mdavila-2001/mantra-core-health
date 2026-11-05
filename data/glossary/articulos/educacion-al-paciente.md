@@ -1,5 +1,6 @@
 ---
 slug: educacion-al-paciente
+image: educacion-al-paciente.svg | La educación se integra en el proceso de cuidados: se valora, se planifica, se enseña, se evalúa y se registra. | Ciclo de cinco pasos alrededor del paciente y su familia: valorar necesidades, planificar objetivos, enseñar, evaluar y registrar. A la derecha, técnicas útiles y el método de enseñar y devolver para comprobar lo aprendido.
 ---
 
 ## [definition] Introducción

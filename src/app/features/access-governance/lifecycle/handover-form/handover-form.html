@@ -1,0 +1,45 @@
+<div class="handover" data-testid="handover-form">
+  @if (rows().length === 0) {
+    <app-alert tone="success" title="No tiene trabajo en las manos" data-testid="handover-empty">
+      No hay conversaciones, tareas, citas pendientes ni cuentas que traspasar. Puede continuar.
+    </app-alert>
+  } @else {
+    <ul class="handover__list" role="list">
+      @for (row of rows(); track row.kind) {
+        <li class="handover__row" [attr.data-testid]="'handover-row-' + row.kind">
+          <div>
+            <p class="handover__count" [attr.data-testid]="'handover-count-' + row.kind">
+              {{ row.text }}
+            </p>
+            <p class="handover__help">{{ row.help }}</p>
+          </div>
+          @if (row.supervised) {
+            <app-form-field
+              label="Nuevo dueño de la cuenta"
+              [required]="true"
+              [errorMessage]="ownerError()"
+            >
+              <app-select
+                [value]="draft().supervisedTo === '' ? null : draft().supervisedTo"
+                (valueChange)="setOwner($event)"
+                [options]="ownerOptions()"
+                placeholder="Elija quién será responsable"
+                [hasError]="ownerError() !== ''"
+                [attr.data-testid]="'handover-owner'"
+              />
+            </app-form-field>
+          } @else {
+            <app-form-field label="¿A quién se lo pasa?">
+              <app-select
+                [value]="targetOf(row.kind)"
+                (valueChange)="setTarget(row.kind, $event)"
+                [options]="workOptions()"
+                [attr.data-testid]="'handover-target-' + row.kind"
+              />
+            </app-form-field>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

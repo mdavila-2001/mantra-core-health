@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+app-card {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

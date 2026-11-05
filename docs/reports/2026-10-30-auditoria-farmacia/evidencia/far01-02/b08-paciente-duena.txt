@@ -1,0 +1,93 @@
+{
+ "tag": "b08-paciente-duena",
+ "state": "paciente",
+ "requested": "/rx/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA",
+ "finalUrl": "http://localhost:4000/my-account/pharmacy/prescriptions?share=30344167-5df4-46a2-8312-c2312ce14be1",
+ "httpStatus": 200,
+ "title": "AloVida - Mis recetas",
+ "robots": [],
+ "h": [
+  "¿A quién quiere llamar?",
+  "¿A quién quiere llamar?",
+  "Mis recetas"
+ ],
+ "apiCalls": [
+  "POST /iam/auth/token/refresh → 200",
+  "GET /notifications/me?unread=true&limit=20 → 200",
+  "GET /clinical/prescription-shares/by-token/<tok43> → 200",
+  "GET /profiles/patients/me/dependents → 200",
+  "GET /community/profiles/me → 200",
+  "GET /surveys/me/invitations → 200",
+  "GET /notifications/me?limit=8 → 200",
+  "GET /community/profiles/me → 200",
+  "GET /clinical/prescription-shares?patientProfileId=8d00e3f7-53f7-492b-9c5c-501b201a6771 → 200",
+  "GET /clinical/patients/8d00e3f7-53f7-492b-9c5c-501b201a6771/summary?limit=50 → 200",
+  "GET /terminology/concepts?ids=9d90da56-a6c4-5669-b791-1022acb2ba6e,3545c7c6-1a54-5903-86df-6a1621dc2640&lang=ES → 200"
+ ],
+ "externalLinks": [
+  "https://www.minsalud.gob.bo/3026-bolivia-presenta-numero-unico-de-emergencias-168-para-todo-el-pais rel=noopener noreferrer target=_blank",
+  "https://www.gmsantacruz.gob.bo/Agenda-Telefonica/ rel=noopener noreferrer target=_blank",
+  "https://lapaz.bo/turismo/emergencia/ rel=noopener noreferrer target=_blank",
+  "https://www.minsalud.gob.bo/3026-bolivia-presenta-numero-unico-de-emergencias-168-para-todo-el-pais rel=noopener noreferrer target=_blank",
+  "https://www.gmsantacruz.gob.bo/Agenda-Telefonica/ rel=noopener noreferrer target=_blank",
+  "https://lapaz.bo/turismo/emergencia/ rel=noopener noreferrer target=_blank"
+ ]
+}
+---- texto visible ----
+Saltar al contenido
+Farmacia cargada
+AloVida
+Mi perfil
+Notificaciones
+Directorios
+Dependientes
+Mi privacidad
+Mis citas
+Farmacia
+Mi historia clínica
+Mis resultados
+Mis órdenes
+Cotizaciones
+Red social
+Chats
+Mis solicitudes
+Mis gastos
+Carrito
+Ajustes
+21
+LM
+Sesión de Lucía Mamani
+Mis recetas
+Elija una receta y le mostramos dónde comprarla completa, ordenado por precio y por distancia.
+Recetas
+Enlaces compartidos
+Receta compartida
+Vencido
+Creado el 31/10/2026 · vence el 30/11/2026 · 0 aperturas de farmacia
+Revocar
+Receta del 31 octubre 2026
+Vencido
+Creado el 31/10/2026 · vence el 30/11/2026 · 2 aperturas de farmacia
+Revocar
+Receta del 31 octubre 2026
+Vencido
+Creado el 31/10/2026 · vence el 31/10/2026 · 2 aperturas de farmacia
+Revocar
+Receta del 31 octubre 2026
+Revocado
+Creado el 31/10/2026 · vence el 30/11/2026 · 1 apertura de farmacia
+Receta compartida
+Revocado
+Creado el 31/10/2026 · vence el 30/11/2026 · 0 aperturas de farmacia
+Receta del 31 octubre 2026
+Revocado
+Creado el 31/10/2026 · vence el 30/11/2026 · 0 aperturas de farmacia
+Receta del 31 octubre 2026
+Vigente
+El enlace que acaba de abrir
+Creado el 31/10/2026 · vence el 30/11/2026 · 9 aperturas de farmacia
+Revocar
+Receta del 31 octubre 2026
+Vigente
+Creado el 31/10/2026 · vence el 30/11/2026 · 4 aperturas de farmacia
+Revocar

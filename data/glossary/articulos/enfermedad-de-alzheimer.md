@@ -1,5 +1,6 @@
 ---
 slug: enfermedad-de-alzheimer
+image: enfermedad-de-alzheimer.svg | Cambios cerebrales y fases de la enfermedad de Alzheimer | Comparación entre un cerebro sano y uno con alzhéimer más atrofiado, con el detalle de placas de amiloide y ovillos de tau y las tres fases de la enfermedad
 ---
 
 ## [definition] Introducción

@@ -59,7 +59,7 @@
         <span aria-hidden="true">☰</span>
       </button>
 
-      <ol class="portal__migas" aria-label="Dónde estás">
+      <ol class="portal__migas" aria-label="Dónde está">
         @for (miga of migas(); track miga.label; let ultima = $last) {
           <li class="portal__miga" [attr.aria-current]="ultima ? 'page' : null">
             @if (miga.url && !ultima) {

@@ -1,0 +1,14 @@
+<dialog #dlg class="cp" aria-label="Buscar en AloVida Insights" (close)="closed.emit()">
+  <input #field class="cp__input" type="search" role="combobox" aria-expanded="true" aria-controls="cp-list" aria-label="Buscar un módulo, campaña, alerta o métrica" placeholder="Buscar un módulo, campaña, alerta o métrica" autocomplete="off" [value]="query()" (input)="type($event)" (keydown)="key($event)" />
+  <ul id="cp-list" class="cp__list" role="listbox" aria-label="Resultados">
+    @for (r of results(); track r.kind + r.label + r.url; let i = $index) {
+      <li role="option" class="cp__item" [class.cp__item--active]="i === active()" [attr.aria-selected]="i === active()" tabindex="-1" (click)="go(r)" (keydown.enter)="go(r)" (mouseenter)="active.set(i)">
+        <span class="cp__kind">{{ r.kind }}</span>
+        <span class="cp__label">{{ r.label }}</span>
+      </li>
+    } @empty {
+      <li class="cp__none">Nada coincide con «{{ query() }}». Pruebe con otra palabra.</li>
+    }
+  </ul>
+  <p class="cp__foot">↑ ↓ para moverse · Enter para ir · Esc para cerrar</p>
+</dialog>

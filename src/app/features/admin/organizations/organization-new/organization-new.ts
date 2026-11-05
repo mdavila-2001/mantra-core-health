@@ -28,14 +28,21 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { searchConceptOptions } from '../concept-search';
 import { crearBuscadorDePersonas } from '../people-search';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
+
+/** S6 del alta: lo único referenciado por id es la cuenta del owner. */
+const OWNER_NO_ENCONTRADO =
+  'No encontramos la cuenta que eligió como owner: puede que ya no exista. Elíjala de nuevo y reintente.';
 
 /** Largos que declara `CreateTenantDto`. */
 const MAX_CODIGO = 100;
@@ -116,6 +123,7 @@ const CAMPOS_DE_CORREDOR = ['brokerCode', 'licenseNumber'] as const;
     Alert,
     AnnounceOnAppear,
     CustomField,
+    BackLink,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -130,6 +138,20 @@ export class OrganizationNew {
   private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+
+  /** Si ya se avisó que la búsqueda de personas no está en la API. */
+  private busquedaNoDisponibleAvisada = false;
+
+  /**
+   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
+   * §2): se dice qué falta, una sola vez y no en cada tecla.
+   */
+  private avisarBusquedaNoDisponible(error: unknown): void {
+    const aviso = unavailableMessageOf(error);
+    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
+    this.busquedaNoDisponibleAvisada = true;
+    this.toast.warning(aviso);
+  }
 
   /** El último escalón se reemplaza: desde el alta, se vuelve al listado. */
   protected readonly breadcrumbs = computed<readonly BreadcrumbItem[]>(() => {
@@ -488,22 +510,18 @@ export class OrganizationNew {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Sólo una cuenta SUPERADMIN puede dar de alta organizaciones.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * El mensaje del fallo del envío, con el criterio común (`errorMessageOf`).
+   * Antes cada alta repetía su propia copia, y las cinco olvidaban el `404`:
+   * el formulario quedaba mudo cuando la organización ya no existía.
+   */
+  protected readonly errorMessage = computed<string | null>(() =>
+    errorMessageOf(
+      this.state(),
+      'Sólo una cuenta SUPERADMIN puede dar de alta organizaciones.',
+      OWNER_NO_ENCONTRADO,
+    ),
+  );
 
   /**
    * Si el fallo apunta al código: es el único campo con clave única global,
@@ -542,6 +560,9 @@ export class OrganizationNew {
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = ORGANIZATIONS_ROUTE;
 
   protected cancelar(): void {
     void this.router.navigateByUrl(ORGANIZATIONS_ROUTE);

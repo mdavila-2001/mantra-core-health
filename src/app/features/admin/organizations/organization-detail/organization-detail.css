@@ -20,23 +20,23 @@
   gap: var(--sp-8);
 }
 
+/* UNA tarjeta con pestañas, centrada y a lo ancho del área de contenido
+   (composition-rules.md §5): sin tope propio, el tope lo pone
+   `.app-main__inner`. */
+.organizacion__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
 /* Ficha compacta del registro cuyo id gobierna las tres pestañas. Fondo inset
-   —no tarjeta blanca— para que se lea como ámbito y no como una sección más. */
+   —no otra tarjeta— para que se lea como ámbito y no como una sección más. */
 .organizacion__ambito {
+  margin-block-end: var(--sp-6);
   padding: var(--sp-6);
   background: var(--bg-inset);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
-}
-
-.organizacion__ambito--error {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-5);
-  background: var(--st-error-bg);
-  color: var(--st-error-fg);
-  border-color: var(--st-error-bd);
 }
 
 .organizacion__datos {
@@ -62,10 +62,6 @@
    vistazo sin que los dígitos bailen. */
 .organizacion__codigo {
   font-variant-numeric: tabular-nums;
-}
-
-.organizacion__cargando {
-  color: var(--text-secondary);
 }
 
 /* Segunda línea de una celda: el dato que acompaña sin competir. */

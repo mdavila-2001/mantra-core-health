@@ -5,6 +5,8 @@ import { map, type Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
+import { newDeviceOf, type NewDeviceBody } from './iam-new-device';
+import { deniedTenantsOfBody } from './tenant-denial';
 import type {
   AccountActivation,
   ActivationResult,
@@ -39,6 +41,9 @@ interface TokenResponseBody {
   readonly accessToken: string;
   readonly refreshToken: string;
   readonly expiresAt: string;
+  readonly newDevice?: NewDeviceBody;
+  readonly mfaEnrollmentRequired?: boolean;
+  readonly deniedTenants?: readonly { readonly tenantId: string; readonly reason: string }[];
 }
 
 interface UserResponseBody {
@@ -278,6 +283,14 @@ export class IamClient {
       // El consultorio propio. Va acá por lo mismo que los tres de arriba: lo
       // que el contrato declara y esta lista no repita se descarta en silencio.
       ...(registration.ownSite === undefined ? {} : { ownSite: registration.ownSite }),
+      // Dónde dice trabajar: instituciones (slugs públicos) y aseguradoras.
+      // Mismo motivo que el consultorio: sin este renglón no viajarían.
+      ...(registration.institutionSlugs === undefined
+        ? {}
+        : { institutionSlugs: registration.institutionSlugs }),
+      ...(registration.insurerCarrierIds === undefined
+        ? {}
+        : { insurerCarrierIds: registration.insurerCarrierIds }),
       licenseNumber: registration.licenseNumber,
       sedesLicenseNumber: registration.sedesLicenseNumber,
       ...(registration.regulatoryAuthority === undefined
@@ -702,13 +715,12 @@ export class IamClient {
    * orquestación ni reanudación que hacer.
    */
   assistedRegistration(
-    registration: AssistedPatientRegistration,
+    registration: AssistedPatientRegistration & { readonly allowHomonym?: boolean },
   ): Observable<AssistedRegistrationResult> {
     return this.http
       .post<AssistedRegistrationBody>(this.url('/iam/users/assisted-registration'), {
-        // El nombre viaja en partes y el backend compone el que se muestra: si
-        // el front lo compusiera, la cuenta guardaría una versión y el contrato
-        // otra.
+        // The name travels in parts and the backend composes the visible one:
+        // composing it here would leave the account and the contract disagreeing.
         name: registration.name,
         lastName: registration.lastName,
         ...(registration.middleName === undefined ? {} : { middleName: registration.middleName }),
@@ -724,6 +736,7 @@ export class IamClient {
         ...(registration.legalRepresentativeUserId === undefined
           ? {}
           : { legalRepresentativeUserId: registration.legalRepresentativeUserId }),
+        ...(registration.allowHomonym ? { allowHomonym: true } : {}),
       })
       .pipe(map(toAssistedResult));
   }
@@ -755,10 +768,42 @@ export class IamClient {
     );
   }
 
+  /**
+   * `GET /iam/users/:id` — la ficha de una cuenta, reducida a lo que la vista
+   * usa (la misma forma que una fila del listado).
+   *
+   * Es lo que deja mostrar **a quién** corresponde un `userId` crudo, como el
+   * que devuelve la plantilla de una organización. Exige `SECURITY_ADMIN`:
+   * quien no lo tiene recibe `403`, y la pantalla tiene que degradar a «nombre
+   * no disponible», nunca al uuid.
+   */
+  /**
+   * `GET /iam/auth/identifier-exists?kind=…&value=…`. Pregunta, **antes** de
+   * enviar el alta, si ese documento, correo o nombre de institución ya tiene
+   * cuenta. Es público (se usa sin sesión) y sólo responde `{ exists }`: no
+   * devuelve de quién es, para no filtrar datos de terceros.
+   */
+  identifierExists(kind: IdentifierKind, value: string): Observable<boolean> {
+    return this.http
+      .get<{ exists: boolean }>(this.url('/iam/auth/identifier-exists'), {
+        params: { kind, value },
+      })
+      .pipe(map((respuesta) => respuesta.exists === true));
+  }
+
+  getUser(userId: string): Observable<UserListItem> {
+    return this.http
+      .get<ConNulos<WireUserListItem>>(this.url(`/iam/users/${encodeURIComponent(userId)}`))
+      .pipe(map(toUserListItem));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
 }
+
+/** Qué se pregunta en {@link IamClient.identifierExists}. */
+export type IdentifierKind = 'NATIONAL_ID' | 'EMAIL' | 'ORG_NAME';
 
 /* ---- transporte del listado de usuarios ---------------------------------- */
 
@@ -794,6 +839,9 @@ function toSession(body: TokenResponseBody): Session {
     accessToken: body.accessToken,
     refreshToken: body.refreshToken,
     expiresAt: new Date(body.expiresAt),
+    ...newDeviceOf(body.newDevice),
+    ...(body.mfaEnrollmentRequired === true ? { mfaEnrollmentRequired: true } : {}),
+    ...(deniedTenantsOfBody(body.deniedTenants).length === 0 ? {} : { deniedTenants: deniedTenantsOfBody(body.deniedTenants) }),
   };
 }
 

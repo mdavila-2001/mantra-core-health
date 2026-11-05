@@ -12,6 +12,7 @@ import {
   type ReservaSimulada,
 } from '../fixtures/agenda';
 import { TIPO_CITA_RECONSULTA } from '../fixtures/agenda';
+import { TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
 import {
   ACTIVITY,
   CANAL,
@@ -25,6 +26,7 @@ import {
 import { encounterList, type SimulatedEncounter } from '../fixtures/clinic';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
+import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
 import { writeFromSupport } from './community.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { patientById, patientList } from '../fixtures/people';
@@ -49,6 +51,7 @@ import {
   liberarSobranteDeServicio,
   ofertaDelCupo,
 } from './service-offerings.handlers';
+import { bookingCareSpace, claimAppointmentSpace, rememberAppointmentSpace, rememberTemplateSpace, validateTemplateSpace } from './care-space-agenda.handlers';
 
 /** El motivo con el que la API cancela al cambiar el horario (`SCHEDULE_CHANGE_CANCELLATION_REASON`). */
 const MOTIVO_CAMBIO_DE_HORARIO = 'Cambio en el horario de atención del profesional';
@@ -208,6 +211,36 @@ function cambiarEstado(
   const r = reservas.get(id);
   if (r === undefined) return undefined;
   return reservas.actualizar(id, { statusConceptId: BOOKING_STATUS[estado]!, ...extra });
+}
+
+/**
+ * Confirma una solicitud y se lo avisa al paciente por el chat de la app. Es
+ * lo que hace «Aceptar la solicitud» de la agenda del profesional, y lo que la
+ * maqueta hace sola con las solicitudes del portal (ver
+ * {@link activarAceptacionDeDemostracion}).
+ */
+function _aceptarYAvisar(id: string): void {
+  const r = reservas.get(id);
+  if (r === undefined || r.statusConceptId !== BOOKING_STATUS['BK-REQUESTED']) return;
+  cambiarEstado(id, 'BK-CONFIRMED', { confirmedAt: ahora(), appointmentId: nuevoId('appointment') });
+  const quien = recursos.get(r.resourceId)?.practitionerName ?? null;
+  avisarPorChatDeSoporte(
+    r.patientProfileId,
+    `${quien === null ? 'Su cita' : `Su solicitud de cita con ${quien}`} fue aceptada para el ${fechaDelAviso(r.startAt)}. Puede ver el detalle en «Mis citas».`,
+  );
+}
+
+/**
+ * En la maqueta no hay un profesional del otro lado que acepte a tiempo para
+ * una demostración: con esto encendido, una solicitud del portal se acepta
+ * sola a los pocos segundos y el paciente recibe la confirmación por chat.
+ * Lo enciende `crearRouterSimulado()`, o sea la app; las pruebas que arman su
+ * propio router no lo encienden y siguen viendo la solicitud pendiente.
+ */
+let _aceptacionDeDemostracionMs: number | null = null;
+
+export function activarAceptacionDeDemostracion(ms = 6000): void {
+  _aceptacionDeDemostracionMs = ms;
 }
 
 /**
@@ -392,13 +425,40 @@ function textoDeChat(encabezado: string, cuerpoDelAviso: string, cierre: string,
 }
 
 export function registrarAgenda(router: MockRouter): void {
+  // Como la API: las organizaciones con algún recurso activo, de todas las
+  // organizaciones (es la lectura que le permite a un paciente pedir cita con la
+  // que tiene a su profesional). La maqueta no genera cupos por organización, así
+  // que «con cupos» se aproxima a «con una agenda activa».
+  router.get('/scheduling/bookable-organizations', () => {
+    const porOrganizacion = new Map<string, { practitionerCount: number; roomCount: number }>();
+    for (const recurso of recursos.todos()) {
+      if (recurso.stateConceptId !== STATUS['ST-ACTIVE']) continue;
+      const cuenta = porOrganizacion.get(recurso.tenantId) ?? { practitionerCount: 0, roomCount: 0 };
+      if (recurso.resourceTypeConceptId === uuid('concept-resource-room')) cuenta.roomCount += 1;
+      else cuenta.practitionerCount += 1;
+      porOrganizacion.set(recurso.tenantId, cuenta);
+    }
+    const items = [...porOrganizacion.entries()]
+      .map(([tenantId, cuenta]) => ({
+        tenantId,
+        name: TENANTS_DEL_APOYO.find((tenant) => tenant.id === tenantId)?.tradeName ?? 'Organización',
+        ...cuenta,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    return { items, count: items.length };
+  });
+
   router.get('/scheduling/resources', ({ query }) => {
     const tenantId = texto(query, 'tenantId');
     const practiceId = texto(query, 'practiceId');
     const includeInactive = query.get('includeInactive') === 'true';
     const items = recursos
       .todos()
-      .filter((r) => tenantId === null || r.tenantId === tenantId || true)
+      // Aislado por organización, como la API (`findResources` filtra
+      // `where.tenantId` siempre): el `|| true` que había acá le mostraba a
+      // cualquier sesión las agendas de todas las organizaciones, y tapaba en
+      // la maqueta las pantallas que piden con el tenant equivocado.
+      .filter((r) => tenantId === null || r.tenantId === tenantId)
       .filter((r) => practiceId === null || r.practiceId === practiceId)
       .filter((r) => includeInactive || r.stateConceptId === STATUS['ST-ACTIVE'])
       .map(({ tenantId: _t, ...r }) => r);
@@ -597,7 +657,7 @@ export function registrarAgenda(router: MockRouter): void {
     // estado sin que la cita se entere.
     const items = todos
       .slice(0, limit)
-      .map((r) => ({ ...conReconsulta(r), insuranceClaim: solicitudDeLaCita(r) }));
+      .map((r) => ({ ...conReconsulta(r), insuranceClaim: solicitudDeLaCita(r), careSpace: bookingCareSpace(r.id) }));
     return { items, count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
   });
 
@@ -902,6 +962,9 @@ export function registrarAgenda(router: MockRouter): void {
     }
 
     const endAt = masMinutos(startAt, datos.durationMinutes ?? 30);
+    // F5d: la cita hereda el consultorio de la plantilla; si otra cita lo ocupa, 409.
+    const consultorio = claimAppointmentSpace(datos.resourceId ?? '', startAt, endAt);
+    if (!('careSpaceId' in consultorio)) return consultorio;
     const pisados = cupos.filtrar(
       (c) => c.resourceId === datos.resourceId && c.startAt < endAt && c.endAt > startAt,
     );
@@ -965,6 +1028,7 @@ export function registrarAgenda(router: MockRouter): void {
       createdAt: ahora(),
     };
     reservas.agregar(nueva);
+    rememberAppointmentSpace(nueva.id, consultorio.careSpaceId);
     return {
       status: 201,
       body: {
@@ -1014,8 +1078,10 @@ export function registrarAgenda(router: MockRouter): void {
         durationMinutes: number;
         reasonText?: string;
         channel?: string;
+        startAttention?: boolean;
       }>(request);
       const patientData = data.patient ?? {};
+      const startsAttention = data.startAttention !== false;
 
       const missing = [
         ...(['name', 'lastName', 'nationalId', 'phone'] as const)
@@ -1137,7 +1203,7 @@ export function registrarAgenda(router: MockRouter): void {
         typeConceptId: APPOINTMENT_TYPE['APT-PRIMERA']!,
         startAt,
         endAt,
-        statusConceptId: BOOKING_STATUS['BK-IN-PROGRESS']!,
+        statusConceptId: BOOKING_STATUS[startsAttention ? 'BK-IN-PROGRESS' : 'BK-CONFIRMED']!,
         serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
         bookingChannelConceptId:
           data.channel === 'TELECONSULTA'
@@ -1146,7 +1212,7 @@ export function registrarAgenda(router: MockRouter): void {
               ? CANAL['CH-DOMICILIO']!
               : CANAL['CH-PRESENCIAL']!,
         confirmedAt: ahora(),
-        checkedInAt: ahora(),
+        checkedInAt: startsAttention ? ahora() : null,
         reasonText: data.reasonText ?? 'Turno de mostrador',
         patientName: displayName,
         insuranceCarrierName: null,
@@ -1158,6 +1224,20 @@ export function registrarAgenda(router: MockRouter): void {
         createdAt: ahora(),
       };
       reservas.agregar(booking);
+
+      // Agendado para su hora: sin encuentro hasta que se inicie la atención.
+      if (!startsAttention) {
+        return reply(201, {
+          patientProfileId,
+          personId: newPatient.personId,
+          patientCode: newPatient.patientCode,
+          bookingId: booking.id,
+          bookableSlotId: slot.id,
+          appointmentId: booking.appointmentId,
+          statusConceptId: booking.statusConceptId,
+          retractedSlots: overlapped.length,
+        });
+      }
 
       // El encuentro abierto, que es a donde el médico entra a registrar la
       // atención apenas se cierra el alta.
@@ -1210,7 +1290,11 @@ export function registrarAgenda(router: MockRouter): void {
       validFrom?: string;
       validTo?: string;
       flexibleHours?: boolean;
+      careSpaceId?: string;
     }>(request);
+    // F5d: el consultorio de la plantilla (404 / 422 como la API).
+    const espacio = validateTemplateSpace(request, request.params['id']!, datos.careSpaceId, datos.rules ?? []);
+    if (espacio !== null) return espacio;
     const nueva = plantillas.agregar({
       id: nuevoId('template'),
       resourceId: request.params['id']!,
@@ -1224,6 +1308,7 @@ export function registrarAgenda(router: MockRouter): void {
       bookingPolicyId: datos.bookingPolicyId ?? POLITICA_ESTANDAR,
       statusConceptId: STATUS['ST-PUBLISHED']!,
     });
+    rememberTemplateSpace(nueva.id, nueva.resourceId, datos.careSpaceId, nueva.rules);
     return {
       status: 201,
       body: {
@@ -1728,5 +1813,22 @@ export function registrarAgenda(router: MockRouter): void {
       status: 201,
       body: { id: nueva.id, priority: nueva.priority, statusConceptId: nueva.statusConceptId },
     };
+  });
+}
+
+/** Sincroniza un pago QR confirmado con el estado de la cita del mock. */
+export function registrarPagoConfirmadoDeReserva(referencia: string, amount: string): void {
+  const reserva = reservas.todos().find((r) => r.id === referencia || r.appointmentId === referencia);
+  if (reserva === undefined) return;
+  reservas.actualizar(reserva.id, {
+    paymentState: {
+      state: 'PAID',
+      label: 'Pagada',
+      conceptId: STATUS['ST-COMPLETED']!,
+      insuranceUsed: false,
+      markedByUserId: 'confirmacion-pago-demo',
+      markedAt: ahora(),
+    },
+    paymentAmount: amount,
   });
 }

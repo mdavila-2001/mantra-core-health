@@ -30,6 +30,15 @@
         }
       </section>
 
+      @if (rechazo(); as r) {
+        <app-alert tone="warning" title="No se pudo hacer" role="alert" data-testid="caja-rechazo">
+          {{ r.mensaje }}
+          @if (r.pregunta; as pregunta) {
+            <app-access-why-not [request]="pregunta" idPrefix="caja-por-que" />
+          }
+        </app-alert>
+      }
+
       <!-- Las dos cifras de la pizarra -->
       <section class="cifras" aria-label="Resumen">
         <app-card>
@@ -294,47 +303,53 @@
                   <button app-button variant="secondary" size="sm" (clicked)="descargarXml(f)">Descargar XML (SIMULADO)</button>
                 </div>
 
-                <form class="acciones" [formGroup]="formularioDeCorreo" (ngSubmit)="enviarPorCorreo(f)">
-                  <app-form-field label="Enviar XML y PDF a" hint="Bandeja simulada: no se envía ningún correo">
-                    <app-input formControlName="to" type="email" />
-                  </app-form-field>
-                  <button app-button variant="outline" size="sm" type="submit" [disabled]="operando() !== null">
-                    Enviar (SIMULADO)
-                  </button>
-                </form>
+                @if (!soloSusConsultas()) {
+                  <form class="acciones" [formGroup]="formularioDeCorreo" (ngSubmit)="enviarPorCorreo(f)">
+                    <app-form-field label="Enviar XML y PDF a" hint="Bandeja simulada: no se envía ningún correo">
+                      <app-input formControlName="to" type="email" />
+                    </app-form-field>
+                    <button app-button variant="outline" size="sm" type="submit" [disabled]="operando() !== null">
+                      Enviar (SIMULADO)
+                    </button>
+                  </form>
+                }
               }
 
-              @if (f.status === 'VALIDATED' || f.status === 'OBSERVED') {
-                <form class="acciones" [formGroup]="formularioDeAnulacion" (ngSubmit)="anular(f)" data-testid="formulario-de-anulacion">
-                  <app-form-field label="Motivo de anulación" hint="Catálogo simulado · plazo: día 9 del mes siguiente">
-                    <app-select formControlName="reasonCode" [options]="opcionesDeMotivo()" placeholder="Elija un motivo" />
-                  </app-form-field>
-                  <button app-button variant="danger" size="sm" type="submit" [disabled]="operando() !== null">
-                    Anular (SIMULADO)
+              @if (!soloSusConsultas()) {
+                @if (f.status === 'VALIDATED' || f.status === 'OBSERVED') {
+                  <form class="acciones" [formGroup]="formularioDeAnulacion" (ngSubmit)="anular(f)" data-testid="formulario-de-anulacion">
+                    <app-form-field label="Motivo de anulación" hint="Catálogo simulado · plazo: día 9 del mes siguiente">
+                      <app-select formControlName="reasonCode" [options]="opcionesDeMotivo()" placeholder="Elija un motivo" />
+                    </app-form-field>
+                    <button app-button variant="danger" size="sm" type="submit" [disabled]="operando() !== null">
+                      Anular (SIMULADO)
+                    </button>
+                  </form>
+                }
+                @if (f.status === 'ANNULLED') {
+                  <button app-button variant="outline" size="sm" [disabled]="operando() !== null" (clicked)="revertirAnulacion(f)">
+                    Revertir anulación (SIMULADO)
                   </button>
-                </form>
-              }
-              @if (f.status === 'ANNULLED') {
-                <button app-button variant="outline" size="sm" [disabled]="operando() !== null" (clicked)="revertirAnulacion(f)">
-                  Revertir anulación (SIMULADO)
-                </button>
+                }
               }
             </section>
           }
         </section>
       }
 
-      <section class="bloque" aria-labelledby="titulo-bandeja">
-        <h2 id="titulo-bandeja">Bandeja de correo simulada</h2>
-        <p class="nota">Lo que se «enviaría» al comprador: XML y representación gráfica. Nada sale de esta pantalla.</p>
-        @for (e of bandeja(); track e.id) {
-          <p class="nota" data-testid="entrada-de-bandeja">
-            {{ e.queuedAt.slice(0, 16) }} · {{ e.to }} · {{ e.attachments.join(', ') }} · No enviado (SIMULADO)
-          </p>
-        } @empty {
-          <p class="nota">Todavía no hay envíos simulados.</p>
-        }
-      </section>
+      @if (!soloSusConsultas()) {
+        <section class="bloque" aria-labelledby="titulo-bandeja">
+          <h2 id="titulo-bandeja">Bandeja de correo simulada</h2>
+          <p class="nota">Lo que se «enviaría» al comprador: XML y representación gráfica. Nada sale de esta pantalla.</p>
+          @for (e of bandeja(); track e.id) {
+            <p class="nota" data-testid="entrada-de-bandeja">
+              {{ e.queuedAt.slice(0, 16) }} · {{ e.to }} · {{ e.attachments.join(', ') }} · No enviado (SIMULADO)
+            </p>
+          } @empty {
+            <p class="nota">Todavía no hay envíos simulados.</p>
+          }
+        </section>
+      }
     }
   </app-view-state-host>
 }

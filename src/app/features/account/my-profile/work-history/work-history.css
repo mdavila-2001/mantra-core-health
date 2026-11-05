@@ -116,6 +116,22 @@
   max-inline-size: 68ch;
 }
 
+/* En el modal el ancho ya lo pone el diálogo: con el tope de 68ch los campos
+   terminaban 16 px antes del borde del cuerpo (28/10/2026). */
+app-content-dialog .historial__formulario {
+  max-inline-size: none;
+}
+
+/* Desde y Hasta lado a lado; una sola columna cuando no entran dos de 12rem.
+   No es `.historial__periodo`: ese nombre ya es el de la fecha de cada fila de
+   la lista, alineada a la derecha. */
+.historial__rango {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+
 /* La salida hacia el texto libre. Discreta a propósito: es la excepción, no el
    camino, y competir visualmente con el buscador invitaría a saltearlo. */
 .historial__escape {
@@ -130,6 +146,21 @@
 
 /* El aviso del trámite. Sólo aparece cuando hay algo que decir, así que puede
    ocupar su propia línea sin competir con el resto de la ficha. */
+/* «¿Atiende acá?»: el paso de la trayectoria a «Dónde atiendo». En la lista
+   de la ficha ocupa su propio renglón (`flex-basis: 100%`) para no competir
+   con el período; en la celda de la tabla queda debajo del aviso. */
+.historial__donde-atiende {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 .historial__vinculo {
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-caption);

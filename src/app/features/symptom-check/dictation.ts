@@ -68,9 +68,8 @@ const STATUS_BY_ERROR: Readonly<Record<string, DictationStatus>> = {
  *
  * Lo que el navegador transcribe se entrega a quien llamó a `empezar` —y a
  * nadie más—. **No se registra ni se guarda**: la transcripción la hace el
- * reconocedor del navegador. Después, como lo tecleado, el texto se manda al
- * servicio de triage para entenderlo mejor (`TriageIaClient`), que lo analiza
- * sin guardarlo ni registrarlo; es lo que el aviso de la pantalla le dice a la
+ * reconocedor del navegador, y el texto lo lee el motor local de la pantalla
+ * igual que lo tecleado; es lo que el aviso de la pantalla le dice a la
  * persona antes de que hable (Q-M1). Ni un `console.*` en este archivo: lo que
  * alguien dicta sobre su salud es dato de salud (regla 90.2.1).
  *

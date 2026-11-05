@@ -11,10 +11,7 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '@shared/forms/form-control.context';
+import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
 import { createValueAccessorBridge } from '@shared/forms/value-accessor';
 import type { InputComboboxAria, InputType } from './input.types';
 
@@ -67,6 +64,16 @@ export class Input implements ControlValueAccessor {
    * escritorio, y sin valor no se emite ninguno.
    */
   readonly inputMode = input<string | null>(null);
+
+  /**
+   * Filtra lo que se teclea o pega, antes de que llegue al formulario.
+   *
+   * Escribe el resultado en el `<input>` del DOM: no basta con devolver el
+   * valor limpio al formulario, porque si coincide con el anterior (tecleó una
+   * letra en un campo de dígitos ya lleno) nada se vuelve a pintar y el
+   * carácter rechazado se queda a la vista.
+   */
+  readonly inputFilter = input<((valor: string) => string) | null>(null);
   readonly placeholder = input<string>('');
   readonly value = model<string | number | null>('');
   readonly disabled = input<boolean>(false);
@@ -137,9 +144,7 @@ export class Input implements ControlValueAccessor {
   );
 
   /** El error puede venir del propio control o del campo que lo envuelve. */
-  protected readonly invalid = computed(
-    () => this.hasError() || this.field?.invalid() === true,
-  );
+  protected readonly invalid = computed(() => this.hasError() || this.field?.invalid() === true);
 
   /** El tipo real del `<input>`: `password` alterna a `text` al revelarse. */
   protected readonly effectiveType = computed(() => {
@@ -203,6 +208,18 @@ export class Input implements ControlValueAccessor {
     const target = event.target as HTMLInputElement;
 
     if (this.type() !== 'number') {
+      const filtro = this.inputFilter();
+      if (filtro) {
+        const limpio = filtro(target.value);
+        if (limpio !== target.value) {
+          const quitados = target.value.length - limpio.length;
+          // `type="email"` has no selection API: selectionStart is null and setSelectionRange throws.
+          const inicio = target.selectionStart;
+          const cursor = Math.max(0, (inicio ?? limpio.length) - quitados);
+          target.value = limpio;
+          if (inicio !== null) target.setSelectionRange(cursor, cursor);
+        }
+      }
       this.commit(target.value);
       return;
     }

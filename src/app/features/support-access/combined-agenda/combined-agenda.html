@@ -1,0 +1,267 @@
+<app-page-header
+  title="Agenda combinada"
+  subtitle="Los doctores que cubre, juntos. Toque un horario libre para agendar, o una cita para confirmarla, moverla (también arrastrándola) o registrar la llegada. Lo que no le corresponde se ve atenuado y dice por qué."
+/>
+
+<p class="sr-only" role="status" aria-live="polite" data-testid="agenda-anuncio">{{ announcement() }}</p>
+
+<button
+  type="button"
+  class="filtros-boton"
+  [attr.aria-expanded]="filtersOpen()"
+  aria-controls="agenda-lateral"
+  (click)="filtersOpen.set(!filtersOpen())"
+  data-testid="agenda-filtros-boton"
+>
+  Calendario, doctores y filtros{{ chips().length > 0 ? ' (' + chips().length + ')' : '' }}
+</button>
+
+<div class="agenda" [class.agenda--con-panel]="selectedEvent() !== null">
+  <aside id="agenda-lateral" class="agenda__lateral" [class.agenda__lateral--abierto]="filtersOpen()" aria-label="Calendario, doctores y filtros">
+    <app-agenda-sidebar
+      [date]="anchor()"
+      [today]="now()"
+      [orgs]="orgs()"
+      [orgValue]="orgValue()"
+      [orgOptions]="orgOptions()"
+      [doctors]="doctors()"
+      [hidden]="hiddenSet()"
+      [locations]="locations()"
+      [locationId]="url().location"
+      [serviceOptions]="serviceOptions()"
+      [serviceId]="url().service"
+      [showDenied]="url().showDenied"
+      [showFree]="url().showFree"
+      [multiOrg]="multiOrg()"
+      (dateChange)="goTo($event)"
+      (orgChange)="setOrg($event)"
+      (doctorToggle)="toggleDoctor($event)"
+      (allDoctors)="setAllDoctors($event)"
+      (locationChange)="setUrl({ location: $event })"
+      (serviceChange)="setUrl({ service: $event })"
+      (showDeniedChange)="setUrl({ showDenied: $event })"
+      (showFreeChange)="setUrl({ showFree: $event })"
+    />
+  </aside>
+
+  <section class="agenda__principal" aria-label="Agenda">
+    <div class="barra" role="toolbar" aria-label="Moverse por la agenda">
+      <div class="barra__nav">
+        <button app-button variant="outline" size="sm" type="button" (clicked)="step(-1)" [attr.aria-label]="days().length > 1 ? 'Semana anterior' : 'Día anterior'" data-testid="agenda-dia-anterior">‹</button>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="goToday()" aria-keyshortcuts="T" data-testid="agenda-hoy">Hoy</button>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="step(1)" [attr.aria-label]="days().length > 1 ? 'Semana siguiente' : 'Día siguiente'" data-testid="agenda-dia-siguiente">›</button>
+        <h2 class="barra__titulo" aria-live="polite" data-testid="agenda-titulo">{{ title() }}</h2>
+        <label class="fecha">
+          <span class="sr-only">Ir a una fecha</span>
+          <input type="date" [value]="url().date" (change)="onDateInput($event)" data-testid="agenda-fecha" />
+        </label>
+      </div>
+      <div class="barra__acciones">
+        <button app-button size="sm" type="button" (clicked)="openFinder('new')" aria-keyshortcuts="N" data-testid="agenda-nueva-cita">Nueva cita <kbd>N</kbd></button>
+        <button app-button variant="outline" size="sm" type="button" (clicked)="openFinder('search')" aria-keyshortcuts="/" data-testid="agenda-buscar">Buscar paciente <kbd>/</kbd></button>
+        <details class="atajos" data-testid="agenda-atajos">
+          <summary>Atajos</summary>
+          <dl class="atajos__lista">
+            <dt><kbd>N</kbd></dt><dd>Nueva cita</dd>
+            <dt><kbd>/</kbd></dt><dd>Buscar un paciente (búsqueda exacta)</dd>
+            <dt><kbd>T</kbd></dt><dd>Ir a hoy</dd>
+            <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Día o semana anterior y siguiente</dd>
+            <dt><kbd>Esc</kbd></dt><dd>Cerrar el panel o cancelar</dd>
+            <dt>Arrastrar</dt><dd>Mueva una cita sobre un horario libre para reprogramarla</dd>
+          </dl>
+        </details>
+      </div>
+    </div>
+
+    <div class="barra barra--vista">
+      <app-segmented-control [options]="vistas" [value]="url().view" [wrap]="isMobile()" (valueChange)="setView($event)" ariaLabel="Cómo ver la agenda" data-testid="agenda-vista" />
+      @if (url().view !== 'WEEK') {
+        <app-segmented-control [options]="agrupaciones" [value]="url().group" [wrap]="isMobile()" (valueChange)="setGroup($event)" ariaLabel="Cómo agrupar" data-testid="agenda-agrupar" />
+      }
+      @if (url().view === 'TIMELINE') {
+        <app-segmented-control [options]="rangos" [value]="url().span === 7 ? '7' : '1'" (valueChange)="setSpan($event)" ariaLabel="Cuántos días mostrar" data-testid="agenda-rango" />
+      }
+    </div>
+
+    @if (chips().length > 0) {
+      <div class="chips" role="group" aria-label="Filtros activos" data-testid="agenda-chips">
+        @for (chip of chips(); track chip.id) {
+          <app-chip variant="neutral" [removable]="true" [label]="chip.label" (removed)="removeChip(chip.id)" [attr.data-testid]="'chip-' + chip.id">{{ chip.label }}</app-chip>
+        }
+        <button type="button" class="enlace" (click)="clearFilters()" data-testid="agenda-limpiar">Limpiar todo</button>
+      </div>
+    }
+
+    @if (partialFailures().length > 0) {
+      <app-alert tone="warning" data-testid="agenda-fallo-parcial">No pudimos cargar la agenda de {{ partialFailures().join(', ') }}. Lo que ve es de las demás organizaciones.</app-alert>
+    }
+
+    @if (holding(); as h) {
+      <app-alert tone="info" data-testid="agenda-nueva-cita-banner">
+        <span class="banner">
+          <span>Nueva cita para <strong>{{ h.picked.patient.displayName }}</strong>@if (h.picked.registration) { <small data-testid="agenda-banner-identidad-pendiente">(identidad pendiente de verificación)</small> } en <strong>{{ holdingOrg()?.name }}</strong>. Elija un horario libre (los posibles van con borde verde discontinuo).</span>
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="cancelHolding()" data-testid="agenda-nueva-cita-cancelar">Cancelar</button>
+        </span>
+      </app-alert>
+    }
+
+    @if (finderOpen(); as intent) {
+      <section class="buscar" aria-labelledby="buscar-titulo" data-testid="agenda-buscador">
+        <div class="buscar__cabeza">
+          <h3 class="buscar__titulo" id="buscar-titulo">{{ intent === 'new' ? 'Nueva cita: ¿para quién es?' : 'Buscar a un paciente' }}</h3>
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="closeFinder()" data-testid="agenda-buscador-cerrar">Cerrar</button>
+        </div>
+        @if (selectedOrgs().length > 1) {
+          <label class="buscar__org">
+            <span>En qué organización</span>
+            <select [value]="finderOrg()?.id" (change)="finderOrgId.set($any($event.target).value)" data-testid="agenda-buscador-org">
+              @for (o of finderOrgOptions(); track o.value) {
+                <option [value]="o.value" [selected]="o.value === finderOrg()?.id">{{ o.label }}</option>
+              }
+            </select>
+          </label>
+        }
+        @if (finderOrg(); as org) {
+          @if (!foundPatient() || intent === 'new') {
+            <app-patient-finder [orgId]="org.id" [orgName]="org.name" [canRegister]="finderCanRegister()" (picked)="finderPicked($event)" />
+          } @else {
+            @if (foundPatient(); as encontrado) {
+              <div class="encontrado" data-testid="agenda-encontrado">
+                <p><strong>{{ encontrado.patient.displayName }}</strong> · {{ encontrado.patient.ageYears }} años · documento {{ encontrado.patient.documentMasked }}</p>
+                <button app-button size="sm" type="button" (clicked)="startBooking()" data-testid="agenda-agendarle">Agendarle una cita</button>
+                @if (foundEvents().length === 0) {
+                  <p class="nota">No tiene citas en lo que se está viendo. Cambie de día o de semana para buscarlas.</p>
+                } @else {
+                  <ul class="encontrado__citas" role="list" aria-label="Citas de este paciente en la agenda que se ve">
+                    @for (e of foundEvents(); track e.id) {
+                      <li><button type="button" class="enlace" (click)="showPatientEvent(e)">{{ e.start.slice(0, 10) }} · {{ e.doctorName }} · {{ e.careSpaceName }}</button></li>
+                    }
+                  </ul>
+                }
+                <button app-button variant="ghost" size="sm" type="button" (clicked)="foundPatient.set(null)">Buscar a otro</button>
+              </div>
+            }
+          }
+        }
+      </section>
+    }
+
+    <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+      @if (isMobile() && url().view === 'DAY' && columns().length > 1) {
+        <div class="pestanas" role="group" aria-label="Elegir columna" data-testid="agenda-pestanas">
+          @for (columna of columns(); track columna.key) {
+            <button type="button" class="pestana" [attr.aria-pressed]="currentColumn() === columna.key" [class.pestana--activa]="currentColumn() === columna.key" (click)="showColumn(columna.key)">{{ columna.label }}</button>
+          }
+        </div>
+      }
+
+      @if (!hasEvents() && url().view !== 'TIMELINE') {
+        <div class="vacio" data-testid="agenda-sin-horarios">
+          <p>No hay horarios para mostrar en {{ url().view === 'WEEK' ? 'esta semana' : 'este día' }} con estos filtros.</p>
+          @if (noScheduleNames() !== '') {
+            <p class="vacio__motivo" data-testid="agenda-sin-permiso-de-agenda">
+              Su vínculo en {{ noScheduleNames() }} no incluye permisos de agenda, y la agenda solo muestra lo que su vínculo permite ver: por eso llega vacía, no como un error. Si necesita trabajar con la agenda, pida a su organización que se lo agregue en «Mis accesos».
+            </p>
+          } @else {
+            <p class="vacio__motivo" data-testid="agenda-vacia-explicacion">La agenda solo muestra las citas y los horarios que su vínculo permite ver. Si esperaba ver más, revise sus permisos en «Mis accesos».</p>
+          }
+          @if (chips().length > 0) {
+            <button app-button variant="outline" size="sm" type="button" (clicked)="clearFilters()">Quitar los filtros</button>
+          } @else {
+            <button app-button variant="outline" size="sm" type="button" (clicked)="step(1)">Ver {{ url().view === 'WEEK' ? 'la semana siguiente' : 'el día siguiente' }}</button>
+          }
+        </div>
+      } @else if (url().view === 'TIMELINE') {
+        <app-agenda-timeline
+          [groups]="timelineGroups()"
+          [days]="days()"
+          [window]="timeWindow()"
+          [now]="now()"
+          [doctors]="doctors()"
+          [multiOrg]="multiOrg()"
+          [selectedId]="selectedId()"
+          [pxPerMinute]="url().span === 7 ? 0.9 : 2.2"
+          [touch]="isMobile()"
+          [ariaLabel]="regionLabel()"
+          [rowKind]="rowKind()"
+          [dragSourceId]="dragSourceId()"
+          [dragOverId]="dragOverId()"
+          [dragOverOk]="dragOverOk()"
+          [dropTargets]="dropTargets()"
+          (pick)="pick($event)"
+          (eventPointerDown)="pointerDown($event)"
+        />
+      } @else {
+        <app-agenda-grid
+          [columns]="columns()"
+          [window]="timeWindow()"
+          [now]="now()"
+          [doctors]="doctors()"
+          [multiOrg]="multiOrg()"
+          [selectedId]="selectedId()"
+          [pxPerMinute]="isMobile() ? 1.5 : url().view === 'WEEK' ? 1.15 : 1.4"
+          [subline]="url().view === 'WEEK' ? 'DOCTOR_SPACE' : url().group === 'DOCTOR' ? 'SPACE' : url().group === 'SPACE' ? 'DOCTOR' : 'DOCTOR_SPACE'"
+          [snap]="isMobile() && url().view === 'DAY'"
+          [dense]="url().view === 'WEEK'"
+          [ariaLabel]="regionLabel()"
+          [dragSourceId]="dragSourceId()"
+          [dragOverId]="dragOverId()"
+          [dragOverOk]="dragOverOk()"
+          [dropTargets]="dropTargets()"
+          [focusColumn]="focusColumn()"
+          [class.semana]="url().view === 'WEEK'"
+          (pick)="pick($event)"
+          (eventPointerDown)="pointerDown($event)"
+          (columnSeen)="activeColumn.set($event)"
+        />
+      }
+
+      <ul class="leyenda" role="list" aria-label="Cómo leer la agenda">
+        <li><span class="muestra muestra--libre"></span> Libre</li>
+        <li><span class="muestra muestra--reservada"></span> Reservada, por confirmar</li>
+        <li><span class="muestra muestra--confirmada"></span> Confirmada</li>
+        <li><span class="muestra muestra--llego"></span> Ya llegó</li>
+        <li><span class="muestra muestra--sin-permiso"></span> Sin permiso (pase el mouse o enfoque para ver el motivo)</li>
+      </ul>
+    </app-view-state-host>
+  </section>
+
+  @if (selectedEvent(); as event) {
+    <div class="agenda__panel">
+      @if (reservedBlock(event)) {
+        <app-agenda-reserved [event]="event" (closed)="closePanel()" />
+      } @else {
+        <app-agenda-panel
+          [event]="event"
+          [candidates]="candidates()"
+          [busy]="busy()"
+          [failure]="failure()"
+          [explain]="explainRequest()"
+          [holding]="panelHolding()"
+          (closed)="closePanel()"
+          (checkIn)="checkIn()"
+          (confirmBooking)="confirmBooking()"
+          (cancelBooking)="cancelBooking()"
+          (reschedule)="reschedule($event)"
+          (book)="book($event)"
+          (dropHeld)="cancelHolding()"
+        />
+      }
+    </div>
+  }
+</div>
+
+@if (drag.state(); as arrastre) {
+  <div class="fantasma" [style.left.px]="arrastre.x + 16" [style.top.px]="arrastre.y + 16" aria-hidden="true" data-testid="agenda-fantasma">
+    <strong>{{ arrastre.label }}</strong>
+    @if (arrastre.verdict; as veredicto) {
+      @if (veredicto.ok) {
+        <span class="fantasma__ok">Suelte aquí para reprogramar{{ veredicto.warnings.length > 0 ? '. ' + veredicto.warnings.join(' ') : '' }}</span>
+      } @else {
+        <span class="fantasma__no">{{ veredicto.reason }}</span>
+      }
+    } @else {
+      <span>Suéltela sobre un horario libre</span>
+    }
+  </div>
+}

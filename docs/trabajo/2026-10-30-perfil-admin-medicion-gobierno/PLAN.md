@@ -190,9 +190,49 @@ Precedente a seguir: `terminology-import-template.controller.ts` (`GET terminolo
 
 **Riesgo principal:** datos de salud reales. Se prueba solo con datos sintéticos declarados como tales; ningún dato real de paciente entra a este repositorio, a capturas ni a reportes.
 
+## H8 — Entrada del admin: portal administrativo y portal de reportería
+
+**Estado (31/10/2026):** `VERIFIED_FUNCTIONAL_ONLY` contra el simulador; ahora con tarjetas de Instancias, Herramientas críticas y Dispositivos (capturas en `evidencia/capturas-h8/`, 0 errores de consola). `src/app/features/dashboard/platform-home/` + `dashboard.ts/html`: quien sólo gestiona la plataforma aterriza en el «Centro de la plataforma» (dos portales con áreas filtradas por lo que la sesión puede abrir y, debajo, API hoy, preparación para producción, incidentes, despliegues, pruebas y respaldos, cada bloque con su propio estado de carga/error). `dashboard.spec.ts` actualizado al nuevo contrato (no se debilitó: la rama clínica se prueba con un rol clínico) y 2 pruebas nuevas; 248 pruebas de panel y navegación en verde. Capturas: `evidencia/capturas-h1/portada-*.png`. **Falta:** doble revisión por otro agente, API real, dispositivos (sin endpoint de desglose en la API), herramientas e instancias, sonda.
+**Estado:** `VERIFIED_FUNCTIONAL_ONLY` contra el simulador (30/10/2026). `src/app/features/dashboard/platform-home/` + `dashboard.ts/html`: quien sólo gestiona la plataforma aterriza en el «Centro de la plataforma» (dos portales con áreas filtradas por lo que la sesión puede abrir y, debajo, API hoy, preparación para producción, incidentes, despliegues, pruebas y respaldos, cada bloque con su propio estado de carga/error). `dashboard.spec.ts` actualizado al nuevo contrato (no se debilitó: la rama clínica se prueba con un rol clínico) y 2 pruebas nuevas; 248 pruebas de panel y navegación en verde. Capturas: `evidencia/capturas-h1/portada-*.png`. **Falta:** doble revisión por otro agente, API real, dispositivos (sin endpoint de desglose en la API), herramientas e instancias, sonda.
+Supuesto (ambigüedad): «portal admin / portal de reportería» = las dos puertas de la portada; no había definición escrita en el repo. Confirmar con Usuario.
+
+## H9 — Detalle estilo Atlas: flujos, árboles, endpoints, tablas afectadas, ciclo
+
+Fuente: `descubrimiento/01-flujos-y-arboles.md` y `02-endpoints-agrupados-y-ciclo.md` (peldaño `DISCOVERED`, sin ejecutar).
+- La API ya calcula tablas afectadas para 1565 de 1627 operaciones (`GET /admin/portal/operaciones/:id`, `datos[]` con tabla, operación, confianza, `via`, `fuente`). El front no pinta `fuente`, `llamadaPor` ni separa lee/escribe → franja de front sin tocar la API.
+- Faltan en la API: capas servicio/repositorio/guard/error en el grafo, `guards[]`, eventos/outbox (102 de 1642 declaran eventos), `respuestasPosibles`, frescura. Inventario desfasado: regenerar, quitar el duplicado `admin-catalog.json`, 27 operaciones de 5 controladores omitidas.
+- Faltan 28 de 31 flujos de usuario del catálogo QA (sólo 3 curados). Hallazgos a corregir: el agendado real es `holds/{token}/request` y no `confirm`; `maquinas.json` atribuye mal por colisión de `TRANSITIONS`.
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H9.S1.M1 | Pintar `fuente`, `llamadaPor` y lee/escribe en la ficha de operación | spec + captura | TODO |
+| H9.S1.M2 | Join por `operationId` de los nodos de flujo con `getOperation()` (verificar antes que el id coincide) | spec + salida real | TODO |
+| H9.S2.M1 | API: `guards[]`, eventos y errores del contrato en la ficha; regenerar inventario | specs de API | TODO |
+| H9.S2.M2 | Curar los flujos de usuario que faltan (empezar por login, registro, agendar, cobro) | revisión de negocio | TODO |
+| H9.S3.M1 | Diagrama por operación (ciclo de la petición, 21 etapas verificadas) | ADR si hace falta librería de grafos + captura | TODO |
+
+## H10 — Herramientas, instancias y sonda de vida
+
+> **Estado real (31/10/2026).** API: sonda de vida (203 pruebas), registro de herramientas (59) y dispositivos (43) escritos y subidos, `TESTED` contra dobles: **ninguno se ejecutó contra Postgres ni Redis reales ni se rompió una instancia a propósito**. Front: pantalla «Instancias y herramientas» con tres pestañas y tres tarjetas en el Centro, `VERIFIED_FUNCTIONAL_ONLY` contra el simulador (datos marcados «SIMULADO»). Bloqueado/pendiente: `OPS_LIVENESS_REQUIRED_WORKERS` en `docker-compose.coolify.yml` (decisión de despliegue); columnas de criticidad/variables/procedencia en `tool_registry` (modelo); regenerar `openapi/` de la API; la API real nunca se levantó.
+> H9.S1 (detalle del portal y flujos): escrito, 238 pruebas verdes, capturas en `evidencia/capturas-h8/`. Pendiente H9.S2/S3 (API: guards, eventos, frescura; flujos faltantes; diagrama por operación).
+> H6/H7: motor de cargas masivas en la API (`bulk_import`, 177 pruebas contra dobles; 10 plantillas CSV y JSON). Sin persistencia durable ni altas reales: bloqueado por la tabla del lote, los permisos `bulk_import.*` y decisiones de negocio. Falta toda la UI.
+
+Fuente: `descubrimiento/03-herramientas-e-instancias.md` y `04-sonda-de-vida.md` (`DISCOVERED`).
+- `docker-compose.yml`: 36 servicios (API, 25 workers, 5 de datos, 2 init, ClamAV, mock-provider); Coolify despliega 15. Los workers sólo tienen salud en memoria (`:9100` en loopback): **hoy no hay latido** que la API pueda leer. `/readiness` sólo sondea Postgres, Mongo, Redis, OpenSearch y RLS; nadie mide MinIO, ClamAV ni proveedores.
+- Existen entidades `platform_ops` (`tool_registry`, `service_components`, `health_checks`, `health_check_runs`) y `integrations.external_providers` sin ningún `@Get` ni seed.
+- Diseño de la sonda: latido empujado cada 15 s (`POST /internal/ops/heartbeats`), la API guarda su propio reloj; `GET /admin/ops/instances/liveness` con estados VIVA ≤30 s, DEGRADADA 30–60 s, CAIDA >60 s, SIN_DATO si nunca se vio. **Nunca «viva» sin evidencia.** Umbrales 15/30/60 s: propuesta, confirmar con SRE. Hace falta estado deseado vs reportado para no pintar de rojo los workers apagados a propósito.
+- Hallazgos de seguridad a revisar (sin valores): `.env.example` versiona valores no vacíos y el compose de desarrollo publica Redis/OpenSearch/Mongo/Postgres sin protección.
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H10.S1.M1 | Dominio puro y registro de latidos con las reglas de umbral | 24 pruebas unitarias (bordes 30000/30001/60000/60001 ms) | TODO |
+| H10.S1.M2 | Ingesta y lectura en `ops_console` (rol SYSTEM, ruta fuera del conteo de tráfico) | 12 pruebas de contrato + no falsificable | TODO |
+| H10.S1.M3 | Emisor en `worker/bootstrap.ts` | parar un worker → CAIDA observada de verdad | TODO |
+| H10.S2.M1 | Cliente, mock y pantalla «Instancias» + tarjeta en el Centro de la plataforma | spec + captura | TODO |
+| H10.S2.M2 | Registro de herramientas (`tool_registry`) con seeder idempotente y procedencia | 2.ª corrida sin inserciones | TODO |
+| H10.S3.M1 | Endpoint de dispositivos (`client_contexts`: tipo, SO, navegador, versión; sin bots) y tarjeta | spec + salida real | TODO |
+
 ## Orden de franjas (dependencias)
 
-1. H1 (menú) → 2. H2 (medición) → 3. H3 (catálogos) → 4. H4 (gobernanza) → 5. H5 (permisos y gobierno) → 6. H6 (altas masivas, usa permisos de H5) → 7. H7 (historias clínicas masivas, usa el motor de H6, permisos de H5 y la regla T1).
+1. H1 (menú) → 2. H2 (medición) → 3. H3 (catálogos) → 4. H4 (gobernanza) → 5. H5 (permisos y gobierno) → 6. H6 (altas masivas, usa permisos de H5) → 7. H7 (historias clínicas masivas, usa el motor de H6, permisos de H5 y la regla T1). H8 (entrada) ya está escrita; H9 y H10 se intercalan tras H2 porque alimentan el Centro de la plataforma.
 Una franja a la vez; cada una cierra con su evidencia y sus dos PRs antes de abrir la siguiente.
 
 ## Gates por franja

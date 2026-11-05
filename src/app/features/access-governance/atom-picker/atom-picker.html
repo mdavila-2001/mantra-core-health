@@ -1,0 +1,56 @@
+<fieldset class="selector" [class.selector--error]="hasError()" [attr.data-testid]="idPrefix()">
+  <legend class="selector__titulo">{{ label() }}</legend>
+
+  <ul
+    class="selector__elegidos"
+    role="list"
+    aria-live="polite"
+    [attr.data-testid]="idPrefix() + '-elegidos'"
+  >
+    @for (e of elegidos(); track e.code) {
+      <li class="selector__chip">
+        <span>{{ e.name }}</span>
+        <button
+          type="button"
+          class="selector__quitar"
+          (click)="quitar(e.code)"
+          [attr.aria-label]="'Quitar «' + e.name + '»'"
+          [attr.data-testid]="idPrefix() + '-quitar-' + e.code"
+        >
+          Quitar
+        </button>
+      </li>
+    } @empty {
+      <li class="selector__vacio">Todavía no eligió ningún permiso.</li>
+    }
+  </ul>
+
+  <app-input
+    type="search"
+    [value]="filtro()"
+    (valueChange)="filtro.set('' + ($event ?? ''))"
+    placeholder="Buscar un permiso"
+    [ariaLabel]="'Buscar un permiso para: ' + label()"
+    [testId]="idPrefix() + '-buscar'"
+  />
+
+  <div
+    class="selector__lista"
+    role="group"
+    [attr.aria-label]="'Permisos disponibles para: ' + label()"
+  >
+    @for (g of grupos(); track g.category) {
+      <p class="selector__categoria">{{ g.label }}</p>
+      @for (a of g.atoms; track a.code) {
+        <app-checkbox
+          [checked]="estaElegido(a.code)"
+          (checkedChange)="alternar(a.code, $event)"
+          [label]="a.name"
+          [attr.data-testid]="idPrefix() + '-opcion-' + a.code"
+        />
+      }
+    } @empty {
+      <p class="selector__vacio">Ningún permiso coincide con lo que escribió.</p>
+    }
+  </div>
+</fieldset>

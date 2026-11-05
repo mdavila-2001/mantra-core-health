@@ -1,0 +1,119 @@
+@import './chart-tokens.css';
+
+:host {
+  display: block;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+.st__svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.st__grid {
+  stroke: var(--ins-grid);
+}
+
+.st__tick {
+  fill: var(--ins-axis);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.st__seg {
+  stroke: var(--bg-surface);
+  stroke-width: 1.5;
+  outline: none;
+}
+
+.st__seg--hover,
+.st__seg:focus-visible {
+  stroke: var(--text-primary);
+  stroke-width: 2.5;
+}
+
+.st__num {
+  fill: var(--text-inverse);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: color-mix(in srgb, var(--text-primary) 55%, transparent);
+  stroke-width: 2px;
+}
+
+.st__legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.st__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.st__key {
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 2px;
+}
+
+.st__table {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.st__table summary {
+  cursor: pointer;
+  inline-size: fit-content;
+  padding-block: var(--sp-1);
+}
+
+.st__wrap {
+  max-block-size: 240px;
+  overflow: auto;
+  margin-top: var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+}
+
+.st__table table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.st__table th,
+.st__table td {
+  padding: var(--sp-1) var(--sp-3);
+  text-align: end;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.st__table thead th {
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+}
+
+.st__table th:first-child {
+  text-align: start;
+}
+
+.st__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

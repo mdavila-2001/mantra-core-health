@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q128406
+image: wikidata-especialidad-q128406.svg | La farmacología estudia el recorrido de los fármacos por el cuerpo y cómo actúan. | Secuencia de absorción, distribución, metabolismo y eliminación de un fármaco, un esquema de un fármaco que se une a su receptor y los usos prácticos de la farmacología.
 ---
 
 ## [definition] Introducción

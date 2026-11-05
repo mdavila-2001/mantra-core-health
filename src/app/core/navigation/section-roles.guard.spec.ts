@@ -1,9 +1,13 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
+  DefaultUrlSerializer,
+  PRIMARY_OUTLET,
   provideRouter,
   Router,
   UrlTree,
   type ActivatedRouteSnapshot,
+  type Routes,
   type RouterStateSnapshot,
 } from '@angular/router';
 
@@ -32,10 +36,15 @@ function token(
 const RUTA = {} as ActivatedRouteSnapshot;
 
 /**
- * El guard sólo mira `state.url`: es lo que le permite resolver la sección por
- * prefijo, igual que hace el breadcrumb.
+ * Un estado con el árbol de rutas **emparejadas** que el guard lee: los segmentos
+ * (sin parámetros matriciales) de cada ruta de la cadena primaria. Es lo que el
+ * `Router` real le entrega; el caso con `Router` real está más abajo.
  */
-const estadoDe = (url: string): RouterStateSnapshot => ({ url }) as RouterStateSnapshot;
+const estadoDe = (url: string): RouterStateSnapshot => {
+  const grupo = new DefaultUrlSerializer().parse(url).root.children[PRIMARY_OUTLET];
+  const hoja = { outlet: PRIMARY_OUTLET, url: grupo?.segments ?? [], children: [] };
+  return { url, root: { outlet: PRIMARY_OUTLET, url: [], children: [hoja] } } as unknown as RouterStateSnapshot;
+};
 
 /**
  * Carril 02 — que el menú esconda una sección no la protege.
@@ -262,5 +271,65 @@ describe('seccionRolesGuard', () => {
 
   it('sin el claim de tipo, la puerta sigue abierta: es el guard de hoy', () => {
     expect(ejecutar('/my-account/appointments', ['USER'])).toBe(true);
+  });
+});
+
+/**
+ * F2 (revisión de seguridad del front): la sección sale de los segmentos de la
+ * **ruta emparejada**, no del texto de `state.url`. Con un parámetro matricial
+ * (`;x=1`) el router empareja la misma ruta pero el texto ya no contiene
+ * `administration/support-team`: el guard antiguo no encontraba sección y dejaba pasar.
+ */
+@Component({ selector: 'app-pantalla-prueba', template: 'pantalla' })
+class PantallaPrueba {}
+
+describe('seccionRolesGuard con parámetros matriciales (Router real)', () => {
+  const rutas: Routes = [
+    { path: 'administration/support-team', canActivate: [seccionRolesGuard], component: PantallaPrueba },
+    { path: 'administration/support-team/:engagementId', canActivate: [seccionRolesGuard], component: PantallaPrueba },
+    { path: 'my-team', canActivate: [seccionRolesGuard], component: PantallaPrueba },
+    { path: 'my-team/reviews', canActivate: [seccionRolesGuard], component: PantallaPrueba },
+    { path: 'schedule', canActivate: [seccionRolesGuard], component: PantallaPrueba },
+    { path: 'dashboard', component: PantallaPrueba },
+    { path: '**', component: PantallaPrueba },
+  ];
+  let router: Router;
+  let session: SessionStore;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(rutas)] });
+    router = TestBed.inject(Router);
+    session = TestBed.inject(SessionStore);
+  });
+
+  async function navegar(url: string, roles: readonly string[]): Promise<string> {
+    session.start({ accessToken: token(roles), refreshToken: 'r-1' });
+    await router.navigateByUrl(url);
+    return router.url;
+  }
+
+  const ESCAPES = [
+    '/administration/support-team',
+    '/administration/support-team;x=1',
+    '/administration/support-team/abc;x=1',
+    '/administration;x=1/support-team',
+    '/administration/support-team;x=1/abc',
+    '/my-team',
+    '/my-team;x=1',
+    '/my-team;x=1/reviews',
+    '/my-team/reviews;x=1',
+  ];
+
+  it.each(ESCAPES)('quien no tiene el rol rebota al panel también con parámetros matriciales: %s', async (url) => {
+    expect(await navegar(url, ['USER'])).toBe(SECCION_DENEGADA_ROUTE);
+  });
+
+  it('con el rol, la misma ruta con parámetros matriciales abre y los conserva', async () => {
+    expect(await navegar('/schedule;x=1', ['PRACTITIONER'])).toBe('/schedule;x=1');
+    expect(await navegar('/my-team;x=1/reviews', ['PRACTITIONER'])).toBe('/my-team;x=1/reviews');
+  });
+
+  it('los parámetros de consulta y el fragmento siguen sin confundir la resolución', async () => {
+    expect(await navegar('/administration/support-team?filter=ownerless#x', ['USER'])).toBe(SECCION_DENEGADA_ROUTE);
   });
 });

@@ -1,8 +1,8 @@
 /* ============================================================================
     Consulta de un grupo médico. UNA tarjeta centrada y a lo ancho del área de
     contenido, sin medida propia: el tope lo pone `.app-main__inner` y nadie
-    más (composition-rules.md §5). Mobile-first: una columna; el equipo se
-    reparte en dos desde 780 px y en tres desde 1120 px.
+    más (composition-rules.md §5). Mobile-first: una columna; el equipo es una tabla
+    que se apila en pantallas angostas.
     ========================================================================== */
 
 :host {
@@ -27,8 +27,7 @@
 }
 
 .consulta__cabecera,
-.consulta__acciones,
-.consulta__integrante-fila {
+.consulta__acciones {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -87,33 +86,21 @@
   overflow-wrap: anywhere;
 }
 
-.consulta__equipo {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+/* La barra del equipo: el total acordado a la izquierda, «Agregar» a la derecha. */
+.consulta__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
-.consulta__integrante {
-  display: grid;
-  align-content: start;
+.consulta__nota--celda {
+  display: block;
+}
+
+/* Las acciones de una fila de la tabla van pegadas al borde final. */
+.consulta__acciones--fila {
+  justify-content: flex-end;
   gap: var(--sp-1);
-  padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  overflow-wrap: anywhere;
-}
-
-@media (min-width: 780px) {
-  .consulta__equipo {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1120px) {
-  .consulta__equipo {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }

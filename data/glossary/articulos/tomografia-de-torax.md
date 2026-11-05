@@ -1,5 +1,6 @@
 ---
 slug: tomografia-de-torax
+image: tomografia-de-torax.svg | El tomógrafo y un corte axial del tórax | Tomógrafo con el tubo que gira alrededor de la persona tumbada, junto a un corte axial esquemático del tórax con los pulmones, el corazón, la aorta y la columna
 ---
 
 ## [definition] Introducción

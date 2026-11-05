@@ -11,6 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
@@ -19,11 +20,22 @@ import { debounceTime, filter, map, Subject } from 'rxjs';
 import { ChatStore, SIN_NOMBRE } from '../../core/messaging/chat.store';
 import { ChatPreferences } from '../../core/messaging/chat-preferences';
 import { conversationLabel } from '../../core/messaging/conversation-label';
+import type { ContextoDeChat } from '../../core/messaging/chat-context';
+import {
+  almacenDeLaPestana,
+  destinoDeLaQuery,
+  nonceDeLaQuery,
+  tomarContexto,
+  type DestinoDeChat,
+} from '../../core/messaging/chat-link';
+import { PharmacyOrdersClient } from '../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Avatar } from '../../shared/components/atoms/avatar/avatar';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
+import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
 import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 
@@ -31,6 +43,15 @@ import { LoadingState } from '../../shared/components/molecules/loading-state/lo
 const FILTROS = ['todos', 'no-leidos', 'favoritos', 'grupos'] as const;
 
 type Filtro = (typeof FILTROS)[number];
+
+/**
+ * Con quién se escribe: `'propio'` o el `profileId` de una vitrina de
+ * organización (puede haber más de una: quien atiende dos farmacias).
+ */
+type PerfilElegible = string;
+
+/** El valor del selector para el perfil propio. */
+const PERFIL_PROPIO = 'propio';
 
 /** Cuánto se espera antes de preguntarle al directorio, al tipear. */
 const ESPERA_DE_BUSQUEDA_MS = 300;
@@ -67,7 +88,9 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
     ConversationList,
     EmptyState,
     FormsModule,
+    NgTemplateOutlet,
     RouterOutlet,
+    SegmentedControl,
     LoadingState,
   ],
   templateUrl: './messaging.html',
@@ -86,6 +109,16 @@ export class Messaging {
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
   private readonly titulo = inject(Title);
+  private readonly pedidos = inject(PharmacyOrdersClient);
+  /** Donde los botones «Chatear» dejan el contexto; `null` en el servidor. */
+  private readonly almacen = almacenDeLaPestana();
+
+  /**
+   * `true` cuando la pantalla ya se destruyó. Abrir un chat tarda dos o tres
+   * peticiones; si mientras tanto la persona se fue a otra pantalla, el hilo
+   * que termina de abrirse no la puede arrastrar de vuelta a Chats.
+   */
+  private destruida = false;
 
   protected readonly filtros = FILTROS;
 
@@ -161,14 +194,83 @@ export class Messaging {
     });
   });
 
-  /** Cuántas sin leer hay, para el chip. */
+  /**
+   * «Yo» y cada vitrina de organización que la sesión puede atender: las
+   * identidades con las que se puede escribir. Vacío —sin selector— para
+   * quien no atiende ninguna.
+   */
+  protected readonly opcionesDePerfil = computed<readonly SegmentedOption<PerfilElegible>[]>(() => {
+    const vitrinas = this.store.vitrinasDeOrganizacion();
+    return vitrinas.length === 0
+      ? []
+      : [
+          { value: PERFIL_PROPIO, label: 'Yo' },
+          ...vitrinas.map((v) => ({ value: v.profileId, label: v.nombre })),
+        ];
+  });
+
+  protected readonly perfilElegido = computed<PerfilElegible>(() =>
+    this.store.actuandoComoOrganizacion() ? (this.store.perfil() ?? PERFIL_PROPIO) : PERFIL_PROPIO,
+  );
+
+  /**
+   * El nombre de la vitrina con la que se escribe, o `null` si se escribe como
+   * uno mismo. En ese modo el buscador sólo filtra los chats que ya hay: la
+   * API no deja buscar contactos ni iniciar chats con la vitrina.
+   */
+  protected readonly comoOrganizacion = computed<string | null>(() =>
+    this.store.actuandoComoOrganizacion() ? (this.store.vitrinaDeOrganizacion()?.nombre ?? null) : null,
+  );
+
+  protected readonly textoDelBuscador = computed(() => {
+    const nombre = this.comoOrganizacion();
+    return nombre === null ? 'Buscar un chat o iniciar uno nuevo' : `Buscar en los chats de ${nombre}`;
+  });
+
+  /**
+   * Cambia de identidad. Con un hilo abierto se vuelve primero a la bandeja:
+   * ese hilo es de la otra identidad y, con la nueva, puede no existir.
+   */
+  protected elegirPerfil(valor: PerfilElegible): void {
+    const destino = valor === PERFIL_PROPIO ? null : valor;
+    if (destino !== null && !this.store.vitrinasDeOrganizacion().some((v) => v.profileId === destino)) {
+      return;
+    }
+    const cambiar = (): void => this.store.actuarComo(destino);
+    if (this.hayHiloAbierto()) {
+      void this.router.navigate(['/messaging']).then(cambiar);
+    } else {
+      cambiar();
+    }
+  }
+
+  /**
+   * Cuántos **chats** tienen algo sin leer. Es la unidad de la píldora de la
+   * cabecera y del chip «No leídos»: antes la píldora contaba mensajes y el
+   * chip conversaciones, y «4 sin leer» al lado de «No leídos 2» parecía un
+   * error.
+   */
   protected readonly noLeidas = computed(
     () => this.store.conversaciones().filter((c) => c.unreadCount > 0).length,
   );
 
-  protected readonly vacio = computed(
-    () => this.store.bandejaCargada() && this.visibles().length === 0,
-  );
+  /** «1 chat sin leer», «3 chats sin leer». */
+  protected readonly rotuloNoLeidas = computed(() => {
+    const n = this.noLeidas();
+    return n === 1 ? '1 chat sin leer' : `${n} chats sin leer`;
+  });
+
+  /**
+   * «Tiene 3 chats archivados». Con todo archivado la bandeja **no** está
+   * vacía: decir «Todavía no tiene chats» (S3) sería mentir, y la salida es
+   * abrir el cajón, no ir a buscar con quién hablar.
+   */
+  protected readonly rotuloArchivadas = computed(() => {
+    const n = this.archivadas().length;
+    return n === 1 ? 'Tiene 1 chat archivado.' : `Tiene ${n} chats archivados.`;
+  });
+
+  protected readonly vacio = computed(() => this.visibles().length === 0);
 
   /** Para el nombre de quien se muestra en «Bloqueados» sin ficha resuelta. */
   protected readonly sinNombre = SIN_NOMBRE;
@@ -178,12 +280,12 @@ export class Messaging {
     () => this.consulta().trim() !== '' && this.visibles().length === 0,
   );
 
-  /** El `?escribirA=` que espera al perfil propio para abrir su hilo. */
-  private readonly slugPendiente = signal<string | null>(null);
-
   constructor() {
     this.store.iniciar();
-    inject(DestroyRef).onDestroy(() => this.store.detener());
+    inject(DestroyRef).onDestroy(() => {
+      this.destruida = true;
+      this.store.detener();
+    });
 
     // El carril de filtros nace cuando se resuelve el perfil: se mide al
     // aparecer y cada vez que cambia de ancho, para prender las flechas justas.
@@ -207,22 +309,28 @@ export class Messaging {
     // El `?escribirA=<slug>` con el que llegan el botón «Enviar mensaje» de una
     // ficha pública y «Hablar con el broker» del directorio de aseguradoras. Se
     // atiende cuando el perfil propio ya está resuelto: sin eso no hay con qué
-    // abrir el hilo. Por eso el slug queda **pendiente** y lo abre el efecto de
-    // abajo: la ruta llega antes que el perfil, y atenderlo en el acto lo
-    // descartaba en silencio —la bandeja quedaba abierta sin hilo—.
+    // abrir el hilo. La ruta llega antes que el perfil; la espera la hace el
+    // store (`escribirA` y `abrirConversacion` esperan al perfil propio, y sin
+    // él retoman al crearlo), así que acá se despacha en el acto.
+    //
+    // Los botones del marketplace («Chatear con la farmacia», «Consultar por
+    // chat») dejan de qué se trata en `sessionStorage` y mandan sólo su nonce
+    // (`ctx=`): la tarjeta sale **sólo** si el nonce existe en esta pestaña
+    // —un enlace de afuera no puede fabricarlo— y se consume al leerlo. Sin
+    // nonce válido el hilo se abre igual, sin tarjeta. Al abrir se navega al
+    // hilo **reemplazando** esta dirección.
+    //
+    // `?pedido=<id>` es el chat de un pedido de farmacia: el hilo lo abre la
+    // API (`POST /pharmacy/orders/:id/conversation`), no la bandeja.
     this.ruta.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
-      const slug = query.get('escribirA');
-      if (slug !== null && slug !== '') {
-        this.slugPendiente.set(slug);
+      const destino = destinoDeLaQuery(query);
+      if (destino !== null) {
+        // Leído, borrado y validado otra vez (`tomarContexto`), y sólo si el
+        // botón lo dejó para este mismo destino.
+        const contexto =
+          tomarContexto(nonceDeLaQuery(query), destino, this.almacen) ?? undefined;
+        this.abrirDesdeEnlace(destino, contexto);
       }
-    });
-    effect(() => {
-      const slug = this.slugPendiente();
-      if (slug === null || this.store.perfil() === null) return;
-      untracked(() => {
-        this.slugPendiente.set(null);
-        this.abrirDesdeEnlace(slug);
-      });
     });
 
     // «(3) AloVida - Chats» en la pestaña mientras haya sin leer, como
@@ -371,17 +479,26 @@ export class Messaging {
 
   /** Abre el contacto autenticado sin resolverlo otra vez por slug público. */
   protected escribirAPerfil(profileId: string): void {
-    this.store.escribirAPerfil(profileId, (conversationId) => {
-      this.limpiarBusqueda();
-      void this.router.navigate(['/messaging', conversationId]);
-    });
+    this.store.escribirAPerfil(profileId, (conversationId) => this.irAlHilo(conversationId));
   }
 
   private abrirConSlug(slug: string): void {
-    this.store.escribirA(slug, (conversationId) => {
-      this.limpiarBusqueda();
-      void this.router.navigate(['/messaging', conversationId]);
-    });
+    this.store.escribirA(slug, (conversationId) => this.irAlHilo(conversationId));
+  }
+
+  /**
+   * Navega al hilo recién abierto. `reemplazar` cuando se llegó por un enlace
+   * (ver {@link abrirDesdeEnlace}); desde el buscador, la bandeja queda atrás.
+   */
+  private irAlHilo(conversationId: string, reemplazar = false): void {
+    // La apertura terminó con la pantalla ya cerrada: no se navega.
+    if (this.destruida) {
+      return;
+    }
+    this.limpiarBusqueda();
+    // Sin `queryParams`: la dirección del hilo no hereda `escribirA` ni el
+    // contexto, que ya se mandó.
+    void this.router.navigate(['/messaging', conversationId], { replaceUrl: reemplazar });
   }
 
   /**
@@ -393,11 +510,17 @@ export class Messaging {
    * la primera, que reabría el hilo: quien tocaba «Hablar con el broker» no
    * podía salir del chat. Reemplazando, atrás vuelve a la ficha de donde vino.
    */
-  private abrirDesdeEnlace(slug: string): void {
-    this.store.escribirA(slug, (conversationId) => {
-      this.limpiarBusqueda();
-      void this.router.navigate(['/messaging', conversationId], { replaceUrl: true });
-    });
+  private abrirDesdeEnlace(destino: DestinoDeChat, contexto: ContextoDeChat | undefined): void {
+    const alAbrir = (conversationId: string): void => this.irAlHilo(conversationId, true);
+    if ('pedido' in destino) {
+      this.store.abrirConversacion(
+        this.pedidos.abrirConversacion(destino.pedido).pipe(map((r) => r.conversationId)),
+        alAbrir,
+        contexto,
+      );
+    } else {
+      this.store.escribirA(destino.escribirA, alAbrir, contexto);
+    }
   }
 }
 

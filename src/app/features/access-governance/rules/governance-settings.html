@@ -1,0 +1,101 @@
+<form
+  class="ajustes"
+  (submit)="$event.preventDefault(); guardar()"
+  novalidate
+  data-testid="ajustes"
+  aria-label="Ajustes de gobierno de accesos"
+>
+  <p class="ajustes__estado" role="status" aria-live="polite" data-testid="ajustes-estado">
+    @if (response().isDefault) {
+      Su organización usa los valores por omisión. Al guardar, quedan como ajustes propios.
+    } @else {
+      Ajustes propios de su organización.
+    }
+  </p>
+  <p class="ajustes__anuncio" role="status" aria-live="polite" data-testid="ajustes-anuncio">
+    {{ anuncio() }}
+  </p>
+
+  <fieldset class="ajustes__grupo">
+    <legend>Ingreso de personas nuevas</legend>
+    <app-switch
+      [checked]="obligatorio()"
+      (checkedChange)="obligatorio.set($event)"
+      label="Exigir el compromiso de confidencialidad y la verificación en dos pasos al ingresar"
+      data-testid="ajuste-onboardingRequired"
+    />
+    <app-form-field
+      label="Rige desde"
+      hint="Quienes ya trabajan reciben un plazo; la fecha marca desde cuándo se exige."
+    >
+      <app-input
+        type="date"
+        [value]="desde()"
+        (valueChange)="desde.set('' + ($event ?? ''))"
+        ariaLabel="La exigencia de ingreso rige desde"
+        testId="ajuste-onboardingRequiredSince"
+      />
+    </app-form-field>
+  </fieldset>
+
+  <fieldset class="ajustes__grupo">
+    <legend>Revisión de accesos</legend>
+    <app-form-field label="Cada cuánto se revisan los accesos">
+      <app-select
+        [options]="cadencias"
+        [value]="cadencia()"
+        (valueChange)="cadencia.set($event ?? 6)"
+        ariaLabel="Cada cuánto se revisan los accesos"
+        data-testid="ajuste-reviewCadenceMonths"
+      />
+    </app-form-field>
+  </fieldset>
+
+  <fieldset class="ajustes__grupo">
+    <legend>Plazos y umbrales</legend>
+    @for (c of campos; track c.key) {
+      <app-form-field [label]="c.label" [hint]="c.hint" [errorMessage]="errorDe(c.key)">
+        <app-input
+          type="number"
+          [value]="valorDe(c.key)"
+          (valueChange)="escribir(c.key, $event)"
+          [ariaLabel]="c.label"
+          [hasError]="errorDe(c.key) !== ''"
+          [testId]="'ajuste-' + c.key"
+        />
+      </app-form-field>
+    }
+  </fieldset>
+
+  @if (fallo(); as texto) {
+    <app-alert tone="error" role="alert" data-testid="ajustes-error">{{ texto }}</app-alert>
+  }
+
+  <div class="ajustes__acciones">
+    <button
+      app-button
+      type="submit"
+      [isLoading]="guardando()"
+      [disabled]="guardando() || !hayAlgoEscrito()"
+      data-testid="ajustes-guardar"
+    >
+      Guardar los ajustes
+    </button>
+    <button
+      app-button
+      variant="outline"
+      type="button"
+      [disabled]="guardando() || !hayAlgoEscrito()"
+      (clicked)="descartar()"
+      data-testid="ajustes-descartar"
+    >
+      Descartar los cambios
+    </button>
+    <span class="ajustes__cuenta" aria-live="polite" data-testid="ajustes-cuenta">{{
+      hayCambios()
+        ? cuantosCambios() +
+          (cuantosCambios() === 1 ? ' cambio sin guardar' : ' cambios sin guardar')
+        : 'Sin cambios'
+    }}</span>
+  </div>
+</form>

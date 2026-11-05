@@ -1,5 +1,6 @@
 ---
 slug: factor-reumatoideo
+image: factor-reumatoideo.svg | Qué detecta el análisis de factor reumatoide | Esquema de un autoanticuerpo que se une a la base de otro anticuerpo, con los pasos del análisis y una mano con articulaciones hinchadas para recordar su uso en la artritis reumatoide
 ---
 
 ## [definition] Introducción

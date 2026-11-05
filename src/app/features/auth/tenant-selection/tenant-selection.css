@@ -118,3 +118,33 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }
+
+/* Una organización que no deja entrar ahora: se ve, pero apagada y con su motivo debajo. */
+.tenant__option--negada,
+.tenant__option--negada:hover {
+  background: var(--bg-surface-alt);
+  border-color: var(--border-default);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.tenant__option--negada::after {
+  content: '';
+}
+
+.tenant__motivo {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.tenant__aviso {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--st-info-bd);
+  border-radius: var(--r-md);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  font-size: var(--fs-body);
+}

@@ -85,9 +85,14 @@ async function main() {
   await pagina.getByTestId('login-identifier').fill('admin@alovida.mock');
   await pagina.getByTestId('login-password').fill('mockup');
   await pagina.getByTestId('login-submit').click();
-  await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  // El administrador con los dos accesos pasa por el selector de portal: tres destinos legítimos.
+  await pagina.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/, { timeout: 60_000 });
   if (pagina.url().includes('/auth/organization')) {
     await pagina.getByTestId('tenant-opcion').first().click();
+    await pagina.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 60_000 });
+  }
+  if (pagina.url().includes('/portal-selector')) {
+    await pagina.getByRole('link', { name: /Portal de administración/ }).click();
     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
 

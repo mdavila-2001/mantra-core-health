@@ -1,0 +1,26 @@
+origen: Distancias en línea recta, medidas desde su casa. Puede cambiar el punto en la pestaña Farmacias.
+pendientes: Procedimientos pendientes: Endoscopia digestiva alta, Colonoscopia
+[por defecto (solo completos)] tarjetas=1
+   1. Clínica Norte Av. Banzer, 4to anillo, Santa Cruz de la Sierra 4,9 km en línea recta Endoscopia digestiva alta 650,00 Bs Referencia: 380,00 UMA Colonoscopia 900,00 Bs Referencia: 520,00 UMA Total: 1.550,00 Bs Tiene todos Cómo llegar (se abre en una pestaña nueva)
+botón parciales: Ver el que tiene una parte · aria-pressed=false
+[con los que tienen una parte] tarjetas=2
+   1. Clínica Norte Av. Banzer, 4to anillo, Santa Cruz de la Sierra 4,9 km en línea recta Endoscopia digestiva alta 650,00 Bs Referencia: 380,00 UMA Colonoscopia 900,00 Bs Referencia: 520,00 UMA Total: 1.550,00 Bs Tiene todos Cómo llegar (se abre en una pestaña nueva)
+   2. Centro Médico Sur Av. Santos Dumont, 2do anillo, Santa Cruz de la Sierra 2,5 km en línea recta Endoscopia digestiva alta 580,00 Bs Referencia: 380,00 UMA Le falta: Colonoscopia Le falta algo Su médico trabaja en este centro Cómo llegar (se abre en una pestaña nueva)
+botón tras click: Mostrar solo los que tienen todo · aria-pressed=true
+faltantes: Le falta: Colonoscopia
+Cómo llegar: [{"href":"https://www.openstreetmap.org/directions?route=%3B-17.7381%2C-63.1659","target":"_blank","rel":"noopener noreferrer"},{"href":"https://www.openstreetmap.org/directions?route=%3B-17.8021%2C-63.1778","target":"_blank","rel":"noopener noreferrer"}]
+clases de tarjeta: ["centros__centro","centros__centro"]
+distintivos: ["Tiene todos","Le falta algo","Su médico trabaja en este centro"]
+botón de origen en Farmacias: Dejar de usar este punto
+origen tras quitar: Sin un punto de partida no se calculan distancias. Puede elegirlo en la pestaña Farmacias: su casa, una ciudad o su ubicación actual.
+[sin origen] tarjetas=2
+   1. Clínica Norte Av. Banzer, 4to anillo, Santa Cruz de la Sierra Endoscopia digestiva alta 650,00 Bs Referencia: 380,00 UMA Colonoscopia 900,00 Bs Referencia: 520,00 UMA Total: 1.550,00 Bs Tiene todos Cómo llegar (se abre en una pestaña nueva)
+   2. Centro Médico Sur Av. Santos Dumont, 2do anillo, Santa Cruz de la Sierra Endoscopia digestiva alta 580,00 Bs Referencia: 380,00 UMA Le falta: Colonoscopia Le falta algo Su médico trabaja en este centro Cómo llegar (se abre en una pestaña nueva)
+[390x844 light] fondo=rgb(255, 255, 255) desborde=0px tarjetas=2
+[390x844 dark] fondo=rgb(8, 22, 28) desborde=0px tarjetas=2
+[768x1024 light] fondo=rgb(255, 255, 255) desborde=0px tarjetas=2
+[1024x768 light] fondo=rgb(255, 255, 255) desborde=0px tarjetas=2
+[1440x900 light] fondo=rgb(255, 255, 255) desborde=0px tarjetas=2
+[1440x900 dark] fondo=rgb(8, 22, 28) desborde=0px tarjetas=2
+[1920x1080 light] fondo=rgb(255, 255, 255) desborde=0px tarjetas=2
+errores de página: []

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Origen y evolución del cáncer de cuello uterino</title>
+  <desc id="d">Útero visto de frente con trompas y ovarios y el cuello uterino resaltado entre el útero y la vagina. A la derecha, la evolución desde la infección persistente por el virus del papiloma humano hasta la lesión precancerosa y el cáncer invasor, con las medidas de prevención y los síntomas tardíos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Cáncer de cuello uterino: una evolución lenta y prevenible</text>
+  <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="170.0" y="88" text-anchor="middle" class="h">Dónde se origina</text>
+  <path d="M100 130 C100 110 240 110 240 130 C240 190 210 230 190 250 L190 300 L150 300 L150 250 C130 230 100 190 100 130 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <path d="M100 140 C80 130 60 140 46 160 M240 140 C260 130 280 140 294 160" fill="none" stroke="var(--red)" stroke-width="4"/>
+  <ellipse cx="46" cy="168" rx="14" ry="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <ellipse cx="294" cy="168" rx="14" ry="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <rect x="146" y="250" width="48" height="56" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="3"/>
+  <path d="M150 306 L140 400 L200 400 L190 306" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <text x="170" y="170" text-anchor="middle" class="lab b">Útero</text>
+  <text x="170" y="360" text-anchor="middle" class="small">Vagina</text>
+  <line x1="196" y1="278" x2="240" y2="278" stroke="var(--muted)" stroke-width="1"/>
+  <text x="244" y="274" class="lab b">Cuello</text>
+  <text x="244" y="290" class="lab b">uterino</text>
+  <text x="170" y="428" text-anchor="middle" class="small muted">Trompas y ovarios a los lados</text>
+  <rect x="336" y="60" width="444" height="210" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="558.0" y="88" text-anchor="middle" class="title">Cómo avanza</text>
+  <rect x="352" y="104" width="128" height="70" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="416.0" y="136.0" text-anchor="middle" class="lab b">Infección VPH</text>
+  <text x="416.0" y="153.0" text-anchor="middle" class="small muted">persistente</text>
+  <line x1="482" y1="139.0" x2="500" y2="139.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="502" y="104" width="128" height="70" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="566.0" y="136.0" text-anchor="middle" class="lab b">Lesión</text>
+  <text x="566.0" y="153.0" text-anchor="middle" class="small muted">precancerosa</text>
+  <line x1="632" y1="139.0" x2="650" y2="139.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="652" y="104" width="128" height="70" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="716.0" y="136.0" text-anchor="middle" class="lab b">Cáncer</text>
+  <text x="716.0" y="153.0" text-anchor="middle" class="small muted">invasor</text>
+  <path d="M352 200 L760 200" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="556" y="222" text-anchor="middle" class="small">Suele tardar muchos años</text>
+  <text x="556" y="248" text-anchor="middle" class="small muted">En etapas precoces no da síntomas</text>
+  <rect x="336" y="286" width="214" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="443.0" y="314" text-anchor="middle" class="h">Prevención</text>
+  <text x="352" y="346" class="small">• Vacuna contra el VPH</text>
+  <text x="352" y="370" class="small">• Prueba de VPH</text>
+  <text x="352" y="394" class="small">• Citología (Papanicolau)</text>
+  <text x="352" y="418" class="small">• Tratar lesiones previas</text>
+  <rect x="566" y="286" width="214" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="673.0" y="314" text-anchor="middle" class="h">Síntomas tardíos</text>
+  <text x="582" y="346" class="small">• Sangrado tras</text>
+  <text x="593" y="370" class="small">relaciones</text>
+  <text x="582" y="394" class="small">• Sangrado entre reglas</text>
+  <text x="582" y="418" class="small">• Flujo anómalo</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

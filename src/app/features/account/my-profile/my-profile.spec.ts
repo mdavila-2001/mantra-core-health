@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { SessionStore } from '../../../core/auth/session.store';
 import { LoyaltyClient } from '../../../core/data-access/loyalty/loyalty.client';
 import { resolverEstadosDeCaso } from '../../../../testing/case-status';
+import { sinSolicitudDeAdmision } from '../../../../testing/admissions';
 import { libretaInmediata } from '../../../../testing/address-book';
 import { PatientAddressBookClient } from '../../../core/data-access/profiles/patient-address-book.client';
 import { MyProfile } from './my-profile';
@@ -104,7 +105,7 @@ describe('MyProfile', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -730,7 +731,7 @@ describe('MyProfile · orden del historial', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -796,6 +797,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
       providers: [
+        sinSolicitudDeAdmision(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
@@ -1033,7 +1035,7 @@ describe('MyProfile · foto de perfil', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     }).compileComponents();
 
     TestBed.inject(SessionStore).start({
@@ -1228,7 +1230,7 @@ describe('MyProfile · foto de perfil', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     });
     TestBed.inject(SessionStore).start({
       accessToken: jwt({
@@ -1300,7 +1302,7 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(false)],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(false), sinSolicitudDeAdmision()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -1402,7 +1404,7 @@ describe('MyProfile · los accesos de quien atiende', () => {
   it('el perfil ya no tiene enlaces sueltos a otras pantallas', () => {
     TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     });
     TestBed.inject(SessionStore).start({
       accessToken: jwt({

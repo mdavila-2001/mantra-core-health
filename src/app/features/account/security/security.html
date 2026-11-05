@@ -5,6 +5,30 @@
 />
 
 <div class="seguridad">
+  <app-card class="seguridad__tarjeta" data-testid="seguridad-dos-pasos">
+    <h2 class="seguridad__titulo">Verificación en dos pasos</h2>
+    <p class="seguridad__ayuda">
+      Además de su contraseña, se le pide un código de la aplicación de su teléfono. Aunque alguien conozca su contraseña, sin su teléfono no puede entrar.
+    </p>
+    <div class="seguridad__acciones">
+      <a app-button variant="secondary" routerLink="/my-account/security/mfa" data-testid="seguridad-dos-pasos-enlace">
+        Ver o activar la verificación en dos pasos
+      </a>
+    </div>
+  </app-card>
+
+  <app-card class="seguridad__tarjeta" data-testid="seguridad-invitaciones">
+    <h2 class="seguridad__titulo">Invitaciones de organizaciones</h2>
+    <p class="seguridad__ayuda">
+      Una organización no puede sumarlo a su equipo sin que usted lo acepte: la invitación queda pendiente hasta que la responda.
+    </p>
+    <div class="seguridad__acciones">
+      <a app-button variant="secondary" routerLink="/my-account/security/organization-invitations" data-testid="seguridad-invitaciones-enlace">
+        Ver mis invitaciones
+      </a>
+    </div>
+  </app-card>
+
   <app-card class="seguridad__tarjeta">
     <h2 class="seguridad__titulo">Cambiar la contraseña</h2>
     <p class="seguridad__ayuda">

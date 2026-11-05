@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1423517
+image: wikidata-especialidad-q1423517.svg | Al bajar bajo el agua aumenta la presión y el aire se comprime. | Columna de agua con niveles de profundidad y presión y un globo de aire que se reduce al bajar, junto a los problemas del buceo que atiende la especialidad y la cámara hiperbárica.
 ---
 
 ## [definition] Introducción

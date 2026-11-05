@@ -85,6 +85,7 @@ describe('MedicalCenterSetup', () => {
             roles: signal(['USER']),
             tenants: signal([TENANT]),
             activeTenantType: signal('CLINIC'),
+            isOrganizationAccount: signal(false),
           },
         },
         { provide: PracticeOnboardingClient, useValue: { createPractice } },
@@ -278,6 +279,7 @@ describe('MedicalCenterSetup · organización todavía no verificada (S3)', () =
             roles: signal(roles),
             tenants: signal(activa === null ? [] : [activa]),
             activeTenantType: signal('MEDICAL_OFFICE'),
+            isOrganizationAccount: signal(false),
           },
         },
         { provide: PracticeOnboardingClient, useValue: { createPractice: vi.fn() } },
@@ -348,7 +350,7 @@ describe('MedicalCenterSetup · organización todavía no verificada (S3)', () =
     const raiz = f.nativeElement as HTMLElement;
 
     expect(raiz.querySelector('[data-testid="medical-center-setup-form"]')).toBeNull();
-    expect(raiz.textContent).toContain('Algo salió mal');
+    expect(raiz.textContent).toContain('No pudimos completar la operación');
   });
 });
 

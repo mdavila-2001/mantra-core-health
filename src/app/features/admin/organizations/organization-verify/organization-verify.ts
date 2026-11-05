@@ -21,6 +21,11 @@ import { FormSection } from '../../../../shared/components/organisms/form-sectio
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 import { searchConceptOptions } from '../concept-search';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
+
+/** S6 del envío: la organización de la ruta no está (o no se puede ver). */
+const ORGANIZACION_NO_ENCONTRADA =
+  'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
 
 /** Cuántos candidatos trae cada búsqueda de concepto. */
 const CANDIDATOS_POR_BUSQUEDA = 10;
@@ -125,24 +130,18 @@ export class OrganizationVerify {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return (
-        state.message || 'Sólo una cuenta con administración de seguridad puede verificar.'
-      );
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * El mensaje del fallo del envío, con el criterio común (`errorMessageOf`).
+   * Antes cada alta repetía su propia copia, y las cinco olvidaban el `404`:
+   * el formulario quedaba mudo cuando la organización ya no existía.
+   */
+  protected readonly errorMessage = computed<string | null>(() =>
+    errorMessageOf(
+      this.state(),
+      'Sólo una cuenta con administración de seguridad puede verificar.',
+      ORGANIZACION_NO_ENCONTRADA,
+    ),
+  );
 
   protected buscarPais(texto: string): void {
     searchConceptOptions(

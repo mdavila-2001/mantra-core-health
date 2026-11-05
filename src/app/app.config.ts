@@ -16,19 +16,24 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { ThemeService } from './core/tokens/theme.service';
+import { ACCESS_CHALLENGE_RESOLVER } from './core/access-challenge/access-challenge';
+import { accessChallengeInterceptor } from './core/http/access-challenge.interceptor';
 import { authInterceptor } from './core/http/auth.interceptor';
+import { deviceIdInterceptor } from './core/http/device-id.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { apiFailureLogInterceptor } from './core/http/api-failure-log.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { SESSION_CLEANERS } from './core/auth/session-cleanup';
 import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
+import { UiVisibilityService } from './core/visibility/ui-visibility.service';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
+import { AccessChallengeService } from './features/access-governance/access-challenge/access-challenge.service';
 import { provideDependentLinkNotificationActions } from './features/account/dependents/dependent-link-notification-actions';
 import { provideUxAnalytics } from './core/observability/ux/ux-analytics.providers';
-import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
+import { simulatorInterceptors } from './core/simulator/simulator';
 import { environment } from '../environments/environment';
 import { ROUTE_VIEW_TRANSITION_OPTIONS } from './shared/motion/route-transition';
 
@@ -108,21 +113,31 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       // El simulado va último: la petición ya lleva trazas, tiempo de espera y
       // credenciales cuando llega a él, igual que si fuera la red. Con la
-      // configuración real (`production-api`, `real-api`, `e2e-real`) no se
-      // registra: la petición sale a la red desde el interceptor anterior, sin
-      // pasar por un interceptor que existe sólo para la maqueta (H1.S2.M2).
+      // configuración real (`production`, `production-api`, `real-api`,
+      // `e2e-real`) no se registra: la petición sale a la red desde el
+      // interceptor anterior, sin pasar por un interceptor que existe sólo para
+      // la maqueta (H1.S2.M2). En esas compilaciones `simulatorInterceptors`
+      // viene vacío de la versión neutra de `core/simulator/simulator.ts`, así
+      // que el simulador ni siquiera entra al paquete (O3-4).
       withInterceptors([
         apiFailureLogInterceptor,
         tracingInterceptor,
         timeoutInterceptor,
         authInterceptor,
-        ...(environment.mockBackend ? [mockBackendInterceptor] : []),
+        deviceIdInterceptor,
+        // Resuelve los desafíos de acceso (motivo, segundo paso, aprobación) de las peticiones que lo piden con
+        // `withAccessChallenge()`. Va **dentro** de `authInterceptor` (el reintento ya lleva la sesión) y **fuera** del
+        // simulado, para que vea también los 403/422 del mock.
+        accessChallengeInterceptor,
+        ...(environment.mockBackend ? simulatorInterceptors : []),
       ]),
     ),
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
     // arranque y, con la telemetría apagada, no engancha nada.
     provideObservability(),
     // Qué hacen los botones de las notificaciones (`core/notifications/notification-actions.ts`).
+    // Quién abre el diálogo de desafío de acceso cuando la API pide motivo, segundo paso o aprobación (`core/access-challenge`).
+    { provide: ACCESS_CHALLENGE_RESOLVER, useExisting: AccessChallengeService },
     provideDependentLinkNotificationActions(),
     // Interacciones para los mapas de calor (`POST /telemetry/activity-events`).
     // Independiente de las trazas: se enciende con `PUBLIC_UX_ANALYTICS_*`.
@@ -141,9 +156,24 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => {
         const injector = inject(Injector);
         return () =>
-          void import('./session-cleanup.lazy').then((m) =>
-            m.olvidarLoSensibleDelNavegador(injector),
-          );
+          void import('./session-cleanup.lazy')
+            .then((m) => m.olvidarLoSensibleDelNavegador(injector))
+            // Sin red o con un despliegue nuevo el chunk puede no cargar: la sesión ya se cerró, y un rechazo
+            // sin capturar solo ensuciaría la consola de quien se va.
+            .catch(() => undefined);
+      },
+    },
+    // Las sedes y el personal que leyeron las pantallas de quirófano y
+    // facturación de espacios (F4/F5) no pasan a la cuenta siguiente.
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () =>
+          void import('./core/data-access/operating-rooms/site-context.store')
+            .then((m) => injector.get(m.SiteContextStore).clear())
+            .catch(() => undefined);
       },
     },
     // Los avisos push de la cuenta que se va no deben seguir llegando a este
@@ -155,9 +185,10 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => {
         const injector = inject(Injector);
         return () =>
-          void import('./core/notifications/web-push.service').then((m) =>
-            injector.get(m.WebPushService).forgetBrowser(),
-          );
+          void import('./core/notifications/web-push.service')
+            .then((m) => injector.get(m.WebPushService).forgetBrowser())
+            // Mismo criterio que el limpiador de arriba: sin red el chunk puede no cargar y la sesión ya se cerró.
+            .catch(() => undefined);
       },
     },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se
@@ -186,6 +217,12 @@ export const appConfig: ApplicationConfig = {
     // pantalla quedaba en pie sin token y ninguna acción funcionaba.
     provideAppInitializer(() => {
       inject(SessionEndedRedirect);
+    }),
+    // Las reglas de visibilidad de la interfaz (`GET /me/ui-visibility`) siguen a la sesión: se piden al abrirla y se
+    // vuelven a pedir si cambia la persona o la organización. Presentación, no seguridad: la API autoriza igual. No
+    // bloquea el arranque —es un seguimiento reactivo— y, si el pedido falla, no se oculta nada.
+    provideAppInitializer(() => {
+      inject(UiVisibilityService).start();
     }),
   ],
 };

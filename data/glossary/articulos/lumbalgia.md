@@ -1,5 +1,6 @@
 ---
 slug: lumbalgia
+image: lumbalgia.svg | La lumbalgia es el dolor en la parte baja de la espalda; casi siempre es inespecífica. | Silueta con las vértebras lumbares y la zona baja de la espalda resaltada, medidas que ayudan a mejorar y una lista de señales de alarma.
 ---
 
 ## [definition] Introducción

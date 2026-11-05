@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
 import type { MyClaimsView } from '@core/data-access/insurance/insurance.types';
 
@@ -112,6 +112,24 @@ describe('MyRequests', () => {
     expect(texto()).toContain('Consulta de especialidad');
     expect(texto()).toContain('En revisión');
     expect(texto()).not.toContain('Ecografía');
+  });
+
+  it('la tercera pestaña es «Solicitudes de vínculo» y sólo pide la bandeja al abrirla', () => {
+    responder('PATIENT', []);
+    const vinculos = pestanas()[2]!;
+    expect(vinculos.textContent).toContain('Solicitudes de vínculo');
+    // Hidden tab: nothing of the care-relationship inbox is requested yet.
+    http.expectNone((r) => r.url.endsWith('/authz/care-relationships/requests/mine'));
+
+    vinculos.click();
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url.endsWith('/authz/care-relationships/requests/mine')).flush([]);
+    http.match(() => true).forEach((r) => r.flush([]));
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('[data-testid="mis-solicitudes-vinculos"]')).not.toBeNull();
+    expect(texto()).toContain('No tiene solicitudes pendientes');
   });
 
   it('«Ver decisión» muestra el motivo de la aseguradora', () => {
@@ -267,5 +285,32 @@ describe('MyRequests', () => {
 
     expect(enDetalle('mis-solicitudes-objecion-sello')).not.toBeNull();
     expect(enDetalle('mis-solicitudes-objetar')).toBeNull();
+  });
+});
+
+describe('MyRequests — enlace del aviso', () => {
+  it('con ?pestana=vinculos abre directo en «Solicitudes de vínculo»', () => {
+    TestBed.configureTestingModule({
+      imports: [MyRequests],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ pestana: 'vinculos' }) } },
+        },
+      ],
+    });
+    const http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(MyRequests);
+    fixture.detectChanges();
+
+    const tabs = (fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]');
+    expect(tabs[2]?.getAttribute('aria-selected')).toBe('true');
+    http.expectOne((r) => r.url.endsWith('/authz/care-relationships/requests/mine')).flush([]);
+    http.match(() => true).forEach((r) => r.flush(r.request.url.endsWith('/insurance/my-claims')
+      ? { view: 'PATIENT', items: [], truncated: false }
+      : []));
   });
 });

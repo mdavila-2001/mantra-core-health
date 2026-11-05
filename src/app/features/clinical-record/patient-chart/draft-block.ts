@@ -22,6 +22,14 @@ import { InjectionToken, type Signal } from '@angular/core';
  */
 export interface DraftBlock {
   readonly tieneCambiosPendientes: Signal<boolean>;
+
+  /**
+   * Si el borrador **ya dejó algo registrado** (p. ej. el diagnóstico existe y sólo
+   * falló la nota), lo que hay que decir al descartar: «Todavía no se registró» sería
+   * falso. `null` o ausente: no se registró nada y vale el texto de siempre. Con un
+   * mensaje, el anfitrión además **relee** al descartar, porque el servidor ya tiene algo.
+   */
+  readonly mensajeDeDescarte?: Signal<string | null>;
 }
 
 export const DRAFT_BLOCK = new InjectionToken<DraftBlock>('DraftBlock');

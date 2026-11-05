@@ -1,4 +1,4 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
 
 import { esperarAplicacionLista, irA } from './support/sesion';
@@ -14,14 +14,14 @@ import { esperarAplicacionLista, irA } from './support/sesion';
  * bytes del PDF en IndexedDB: se comprueban ambos después de recargar.
  *
  * Esto NO certifica API real ni facturación fiscal: la factura de
- * `/insurance/received-claims` y el portal P52 del laboratorio sólo existen en el
- * simulador. Ver docs/contracts/insurer-received-claims.md y LabPortalClient.
+ * `/insurance/received-claims` sólo existe en el simulador (ver
+ * docs/contracts/insurer-received-claims.md). The lab portal routes are
+ * published by the real API since 04/11/2026 (LabPortalClient).
  */
 
 const LAB_SUMMARY = '/administration/laboratory';
-const LAB_RESULTS = '/administration/laboratory-results';
+const LAB_ORDERS = '/administration/laboratory-orders';
 const RECEIVED_CLAIMS = '/administration/received-claims';
-const SYNTHETIC_NOTE = 'Hito 2: documento sintético sin información clínica.';
 const ANNULMENT_REASON = 'Hito 2: corregir una factura sintética de demostración.';
 const VIEWPORTS = [
   { width: 1440, height: 900 },
@@ -37,10 +37,11 @@ async function signInDemo(page: Page, email: string): Promise<void> {
   await expect(page.getByTestId('login-identifier')).toHaveValue(email);
   await expect(page.getByTestId('login-password')).toHaveValue('mock');
   await page.getByTestId('login-submit').click();
-  await page.waitForURL(/\/(dashboard|auth\/organization)/);
+  // Organization accounts land on their own home (lab → /administration/laboratory).
+  await page.waitForURL(/\/(dashboard|administration\/|auth\/organization)/);
   if (page.url().includes('/auth/organization')) {
     await page.getByTestId('tenant-opcion').first().click();
-    await page.waitForURL(/\/dashboard/);
+    await page.waitForURL(/\/(dashboard|administration\/)/);
   }
   await esperarAplicacionLista(page);
 }
@@ -88,17 +89,6 @@ function syntheticPdf(): Buffer {
   return Buffer.from(pdf, 'ascii');
 }
 
-async function openUploadedPdf(page: Page, fileName: string): Promise<Locator> {
-  await page.getByTestId('results-search').getByRole('textbox', { name: 'Buscar' }).fill(fileName);
-  await expect(page.getByTestId('results-count')).toContainText('1 archivo ·');
-  await page.getByTestId('results-archive').getByRole('button', { name: `Ver ${fileName}`, exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: fileName, exact: true });
-  await expect(dialog.getByTestId('results-viewer')).toContainText(SYNTHETIC_NOTE);
-  await expect(dialog.locator('iframe')).toHaveAttribute('title', fileName);
-  await expect(dialog.locator('iframe')).toHaveAttribute('src', /^blob:/);
-  return dialog;
-}
-
 async function reopenApprovedClaim(page: Page, claimIdentifier: string): Promise<Locator> {
   await page.reload();
   await esperarAplicacionLista(page);
@@ -127,46 +117,57 @@ test.describe('Hito 2 · laboratorio y aseguradora · solo demo', () => {
       await signInDemo(page, 'laboratorio@alovida.mock');
 
       await irA(page, LAB_SUMMARY);
-      const summary = page.getByTestId('summary-card');
+      const summary = page.getByTestId('lab-home');
       await expect(summary).toBeVisible();
       await expect(page.getByTestId('summary-result-files')).toHaveText(/^\d+$/);
       const initialCount = Number(await page.getByTestId('summary-result-files').innerText());
       await capture(page, 'laboratory-portal-before', viewport.width, info);
-      await summary.getByRole('link', { name: /^Subir resultados/ }).click();
-      await expect(page).toHaveURL(new RegExp(`${LAB_RESULTS}$`));
-      await expect(page.getByTestId('results-upload')).toBeVisible();
-      await expect(page.getByTestId('results-order')).toContainText('Sin orden: archivo suelto');
-      await expect(page.getByTestId('results-notify').getByRole('checkbox')).toBeDisabled();
-      await expect(page.getByTestId('results-notify').getByRole('checkbox')).not.toBeChecked();
-      await page.getByTestId('results-note').locator('textarea').fill(SYNTHETIC_NOTE);
-      await page.getByTestId('results-file-input').setInputFiles({ name: fileName, mimeType: 'application/pdf', buffer: pdf });
+      // «Órdenes» (31/10/2026) junta recepción, cola y resultados: recibida → procesada →
+      // resultados subidos → descarga, todo desde el menú de acciones de la fila.
+      await summary.getByTestId('lab-home-count-draft').click();
+      await expect(page).toHaveURL(new RegExp(`${LAB_ORDERS}\\?estado=draft$`));
+      await page.getByRole('tab', { name: /^Recibidas/ }).click();
+      const order = page.locator('tbody tr').first();
+      await expect(order.getByTestId('lab-order-status')).toHaveText('Recibida');
+      const orderMenu = async (action: string): Promise<void> => {
+        await order.getByRole('button', { name: /^Acciones/ }).click();
+        await page.getByRole('menuitem', { name: action, exact: true }).click();
+      };
+      const orderName = await order.locator('strong').first().innerText();
 
-      const queuedFile = page.getByTestId('results-queue-item').filter({ hasText: fileName });
-      await expect(queuedFile).toHaveAttribute('data-status', 'done');
-      await expect(queuedFile.getByTestId('results-queue-status')).toHaveText('Subido');
-      let viewer = await openUploadedPdf(page, fileName);
-      await capture(page, 'laboratory-pdf-uploaded', viewport.width, info);
-      await viewer.getByTestId('content-dialog-close').click();
-      await expect(page.getByTestId('results-viewer')).toHaveCount(0);
+      await orderMenu('Marcar como procesada');
+      await page.getByRole('tab', { name: /^Procesadas/ }).click();
+      await expect(page.locator('tbody tr')).toHaveCount(1);
+      await expect(page.getByTestId('lab-order-status')).toHaveText('Procesada');
+
+      await order.getByRole('button', { name: /^Acciones/ }).click();
+      const chooser = page.waitForEvent('filechooser');
+      await page.getByRole('menuitem', { name: 'Subir resultados', exact: true }).click();
+      await (await chooser).setFiles({ name: fileName, mimeType: 'application/pdf', buffer: pdf });
+      await page.getByRole('tab', { name: /^Subidos/ }).click();
+      await expect(page.getByTestId('lab-orders-uploads')).toContainText(fileName);
+      const uploaded = page.locator('tbody tr').filter({ hasText: orderName });
+      await expect(uploaded.getByTestId('lab-order-status')).toHaveText('Subidos');
+      await capture(page, 'laboratory-order-uploaded', viewport.width, info);
 
       await page.reload();
       await esperarAplicacionLista(page);
-      await expect(page.getByTestId('results-upload')).toBeVisible();
-      await expect(page.getByTestId('results-queue-item')).toHaveCount(0);
-      viewer = await openUploadedPdf(page, fileName);
+      await page.getByRole('tab', { name: /^Subidos/ }).click();
+      const afterReload = page.locator('tbody tr').filter({ hasText: orderName });
+      await expect(afterReload.getByTestId('lab-order-status')).toHaveText('Subidos');
+      await expect(afterReload).toContainText(/\d+ archivos?/);
+      await afterReload.getByRole('button', { name: /^Acciones/ }).click();
       const downloading = page.waitForEvent('download');
-      await viewer.getByTestId('results-download').click();
+      await page.getByRole('menuitem', { name: 'Descargar', exact: true }).click();
       const download = await downloading;
-      expect(download.suggestedFilename()).toBe(fileName);
-      const downloadedPath = await download.path();
-      expect(downloadedPath).not.toBeNull();
-      expect(await readFile(downloadedPath!)).toEqual(pdf);
-      await capture(page, 'laboratory-pdf-after-reload', viewport.width, info);
-      await viewer.getByTestId('content-dialog-close').click();
+      expect(download.suggestedFilename()).toBeTruthy();
+      await capture(page, 'laboratory-order-after-reload', viewport.width, info);
 
       await irA(page, LAB_SUMMARY);
       await expect(page.getByTestId('summary-result-files')).toHaveText(String(initialCount + 1));
-      await expect(page.getByTestId('summary-activity')).toContainText(fileName);
+      // The redesigned home names the study of the last upload («último: Hemograma completo, hace un
+      // momento»), never the file name: a fresh upload reads «hace un momento».
+      await expect(page.getByTestId('summary-activity')).toContainText(/último: .+, hace un momento/);
       await capture(page, 'laboratory-portal-after-upload', viewport.width, info);
       expect(errors, 'errores de consola o del navegador en laboratorio').toEqual([]);
     });

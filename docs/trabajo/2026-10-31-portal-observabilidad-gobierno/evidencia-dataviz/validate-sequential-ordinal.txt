@@ -1,0 +1,55 @@
+# Rampa secuencial --chart-seq-1..5 (styles.css:228-229 claro · 335-336/408-409 oscuro) con --ordinal (SKILL: la categórica FALLA por diseño sobre una rampa; el chequeo correcto es monotonía de L, ΔL ≥ 0,06, extremo claro ≥ 2:1, un solo matiz)
+# fecha: 2026-10-31T06:53:52Z
+
+## claro, superficie #FFFFFF
+
+Palette (light, surface #FFFFFF, ordinal ramp): 5 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [PASS] Adjacent ΔL            all gaps >= 0.06
+  [FAIL] Light-end contrast     #cde2fb at 1.32:1 vs surface — below 2:1 floor
+  [PASS] Single hue             hue spread 4°
+
+  → FAILED — fix the marked checks  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 1
+
+## oscuro, superficie #0A2B3D
+
+Palette (dark, surface #0A2B3D, ordinal ramp): 5 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [FAIL] Adjacent ΔL            steps too close: [["#184f95","#1c5cab",0.047]]
+  [FAIL] Light-end contrast     #184f95 at 1.82:1 vs surface — below 2:1 floor
+  [PASS] Single hue             hue spread 3°
+
+  → FAILED — fix the marked checks  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 1
+
+## escala --heat-1..4 (petrol-100/200/400/600 claro; petrol-800/700/300/200 oscuro) como rampa ordinal
+
+Palette (light, surface #FFFFFF, ordinal ramp): 4 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [PASS] Adjacent ΔL            all gaps >= 0.06
+  [FAIL] Light-end contrast     #C2D5DF at 1.51:1 vs surface — below 2:1 floor
+  [PASS] Single hue             hue spread 9°
+
+  → FAILED — fix the marked checks  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 1
+
+Palette (dark, surface #0A2B3D, ordinal ramp): 4 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [FAIL] Adjacent ΔL            steps too close: [["#0A2B3D","#0B3953",0.053]]
+  [FAIL] Light-end contrast     #0A2B3D at 1.00:1 vs surface — below 2:1 floor
+  [PASS] Single hue             hue spread 6°
+
+  → FAILED — fix the marked checks  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 1
+
+## rampa petrol del sistema 100..700 como alternativa de marca (claro)
+
+Palette (light, surface #FFFFFF, ordinal ramp): 7 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [FAIL] Adjacent ΔL            steps too close: [["#0B557E","#0B4768",0.05],["#0B4768","#0B3953",0.051]]
+  [FAIL] Light-end contrast     #C2D5DF at 1.51:1 vs surface — below 2:1 floor
+  [PASS] Single hue             hue spread 10°
+
+  → FAILED — fix the marked checks  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 1

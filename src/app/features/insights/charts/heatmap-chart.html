@@ -1,0 +1,44 @@
+<div class="hm" role="group" [attr.aria-label]="ariaLabel()">
+  <div class="hm__scroll">
+    <div class="hm__grid" [style.grid-template-columns]="gridTemplate()">
+      <span class="hm__corner"></span>
+      @if (rowMeta()) {
+        <span class="hm__colhead hm__colhead--meta">{{ rowMetaLabel() }}</span>
+      }
+      @for (c of cols(); track $index) {
+        <span class="hm__colhead">{{ $index % colLabelEvery() === 0 ? c : '' }}</span>
+      }
+
+      @for (r of rows(); track $index; let ri = $index) {
+        <span class="hm__rowhead">{{ r }}</span>
+        @if (rowMeta()) {
+          <span class="hm__rowmeta">{{ rowMeta()![ri] }}</span>
+        }
+        @for (cell of cells()[ri]; track $index; let ci = $index) {
+          <button
+            type="button"
+            [class]="'hm__cell hm__cell--' + level(cell.value)"
+            [class.hm__cell--best]="isBest(ri, ci)"
+            [attr.aria-label]="tip(ri, ci, cell)"
+            [title]="tip(ri, ci, cell)"
+            (click)="pick(ri, ci)"
+          >
+            @if (showValues()) {
+              <span class="hm__num">{{ text(cell) }}</span>
+            }
+          </button>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="hm__legend" aria-hidden="true">
+    <span>Menor {{ valueName().toLowerCase() }}</span>
+    @for (s of legendSteps; track s) {
+      <span [class]="'hm__swatch hm__cell--' + s"></span>
+    }
+    <span>Mayor</span>
+    <span class="hm__swatch hm__cell--0"></span>
+    <span>Sin dato suficiente</span>
+  </div>
+</div>

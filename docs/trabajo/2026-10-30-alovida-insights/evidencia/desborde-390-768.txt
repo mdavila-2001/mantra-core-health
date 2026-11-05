@@ -1,0 +1,16 @@
+390 campaigns {"vw":390,"scrollW":390,"bad":["div.hm__grid r=910","span.hm__colhead r=415","span.hm__colhead r=448","span.hm__colhead r=481","span.hm__colhead r=514"]}
+390 funnel {"vw":390,"scrollW":390,"bad":[]}
+390 app-usage {"vw":390,"scrollW":390,"bad":["div.hm__grid r=689","span.hm__colhead r=414","span.hm__colhead r=469","span.hm__colhead r=524","span.hm__colhead r=579"]}
+390 social {"vw":390,"scrollW":390,"bad":[]}
+390 opinion {"vw":390,"scrollW":390,"bad":[]}
+390 reports {"vw":390,"scrollW":390,"bad":[]}
+390 observatory {"vw":390,"scrollW":390,"bad":[]}
+390 alerts {"vw":390,"scrollW":390,"bad":[]}
+768 campaigns {"vw":768,"scrollW":768,"bad":["div.hm__grid r=918","span.hm__colhead r=786","span.hm__colhead r=819","span.hm__colhead r=852","span.hm__colhead r=885"]}
+768 funnel {"vw":768,"scrollW":768,"bad":[]}
+768 app-usage {"vw":768,"scrollW":768,"bad":[]}
+768 social {"vw":768,"scrollW":768,"bad":[]}
+768 opinion {"vw":768,"scrollW":768,"bad":[]}
+768 reports {"vw":768,"scrollW":768,"bad":[]}
+768 observatory {"vw":768,"scrollW":768,"bad":[]}
+768 alerts {"vw":768,"scrollW":768,"bad":[]}

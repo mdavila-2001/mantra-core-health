@@ -1,0 +1,15 @@
+{
+  "input": "../docs/progress/evidence/lane-41/F9/s3-farmacos/out/articles.ndjson",
+  "sourceSha256": "a794380f7fe15cfab6a6674a3c312e3c0d0880fd1a0f901ec2004bfeaaaec036",
+  "source": "docs/trabajo/2026-10-16-glossary-ingestion/PHARMA-POLICY.json",
+  "license": "según política por fuente",
+  "accepted": 2819,
+  "skippedNoSections": 14,
+  "omittedUnversionedSections": 254,
+  "existing": 0,
+  "newArticles": 2819,
+  "imagesHiddenPendingReview": 4643,
+  "buckets": 256,
+  "outputSha256": "630440dd95cae99476a7fc256ea9e057686fea8d1a0fae15b1e8e70035008b20",
+  "dryRun": false
+}

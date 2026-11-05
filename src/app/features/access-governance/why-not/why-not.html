@@ -1,0 +1,58 @@
+<div class="por-que" [attr.data-testid]="idPrefix()">
+  <button
+    app-button
+    size="sm"
+    variant="outline"
+    type="button"
+    [isLoading]="trabajando()"
+    [disabled]="trabajando()"
+    [attr.aria-expanded]="abierto()"
+    (clicked)="preguntar()"
+    [attr.data-testid]="idPrefix() + '-boton'"
+  >
+    {{ label() }}
+  </button>
+
+  <div class="por-que__respuesta" aria-live="polite" [attr.data-testid]="idPrefix() + '-respuesta'">
+    @if (abierto()) {
+      @if (respuesta(); as r) {
+        <app-alert
+          [tone]="r.decision.effect === 'PERMIT' ? 'success' : 'info'"
+          title="Esto es lo que pasa"
+        >
+          <p class="por-que__resumen" [attr.data-testid]="idPrefix() + '-resumen'">
+            {{ r.summary }}
+          </p>
+          @if (pasos().length > 0) {
+            <p class="por-que__titulo">Qué puede hacer usted:</p>
+            <ul class="por-que__lista" [attr.data-testid]="idPrefix() + '-pasos'">
+              @for (paso of pasos(); track paso) {
+                <li>{{ paso }}</li>
+              }
+            </ul>
+          }
+          @if (r.askAdmin) {
+            <p class="por-que__admin" [attr.data-testid]="idPrefix() + '-admin'">
+              {{ r.askAdmin }}
+            </p>
+          }
+          <button
+            app-button
+            size="sm"
+            variant="ghost"
+            type="button"
+            (clicked)="cerrar()"
+            [attr.data-testid]="idPrefix() + '-cerrar'"
+          >
+            Entendido
+          </button>
+        </app-alert>
+      }
+      @if (fallo(); as texto) {
+        <app-alert tone="warning" role="alert" [attr.data-testid]="idPrefix() + '-error'">{{
+          texto
+        }}</app-alert>
+      }
+    }
+  </div>
+</div>

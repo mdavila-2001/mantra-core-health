@@ -66,6 +66,8 @@ import {
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
+import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 import { medicalCenterBody } from './medical-center-body';
 import {
   CLAVES_DE_PAPELES,
@@ -148,6 +150,7 @@ const AVISO_GERENCIAS =
 @Component({
   selector: 'app-register-medical-center',
   imports: [
+    AccountExistsDialog,
     Alert,
     AnnounceOnAppear,
     AppButton,
@@ -175,6 +178,7 @@ export class RegisterMedicalCenter {
   private readonly context = inject(SystemContextClient);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
   private readonly router = inject(Router);
+  private readonly cuentaExistente = inject(AccountExistsCheck);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly draftService = inject(OnboardingDraftService);
 
@@ -230,6 +234,7 @@ export class RegisterMedicalCenter {
     const opcionales = documentosOpcionales(this.tipoSocietario());
     const lang = uiLanguage();
     return medicalCenterPages({
+      alSalirNombre: (valor) => this.cuentaExistente.verificar('ORG_NAME', valor),
       tiposDeOrganizacion: this.tiposDeOrganizacion(),
       tiposSocietarios: this.tiposSocietarios(),
       // Los que el tipo societario permite omitir salen «(opcional)» y sin mensaje de obligatorio.

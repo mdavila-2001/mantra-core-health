@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { redact, sanitizeError, typeOf } from './error-sanitizer';
 
 /**
@@ -78,5 +79,37 @@ describe('redact', () => {
 
     expect(largo.length).toBeLessThanOrEqual(201);
     expect(largo.endsWith('…')).toBe(true);
+  });
+});
+
+/**
+ * El mensaje de un `HttpErrorResponse` cita la URL entera, y la del enlace de
+ * una receta compartida lleva el token en la **ruta** (FAR-01).
+ */
+describe('redact · token de la receta compartida', () => {
+  const token = 'Q2hhcmxpZVN5bnRoZXRpY1Rva2VuMDEyMzQ1Njc4OWFi';
+
+  it('un HttpErrorResponse no es un Error: su mensaje (que cita la URL) ni siquiera viaja', () => {
+    const error = new HttpErrorResponse({
+      url: `https://api.example.test/clinical/prescription-shares/by-token/${token}`,
+      status: 404,
+      statusText: 'Not Found',
+    });
+
+    expect(sanitizeError(error).message).toBe('sin mensaje');
+  });
+
+  it('lo tapa en el mensaje de un Error que cita esa URL (el de un HttpErrorResponse relanzado)', () => {
+    const error = new Error(
+      `Http failure response for https://api.example.test/clinical/prescription-shares/by-token/${token}: 404 Not Found`,
+    );
+
+    const { message } = sanitizeError(error);
+    expect(message).not.toContain(token);
+    expect(message).toContain('/clinical/prescription-shares/by-token/:token');
+  });
+
+  it('lo tapa también en una ruta del front citada en el texto', () => {
+    expect(redact(`fallo al abrir /rx/${token}: sin datos`)).toBe('fallo al abrir /rx/:token: sin datos');
   });
 });

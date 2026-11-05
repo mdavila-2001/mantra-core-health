@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Oncología: equipo y recorrido del cuidado</title>
+  <desc id="d">Un círculo central con el paciente y su familia rodeado de cinco disciplinas: oncología médica, radioterapia, cirugía oncológica, patología e imagen y cuidados paliativos. A la derecha, el recorrido del cuidado del cáncer: prevención, detección precoz, diagnóstico, tratamiento y seguimiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Oncología: un equipo alrededor del paciente con cáncer</text>
+<circle cx="242" cy="236" r="52" fill="var(--tissue)" stroke="var(--line)" stroke-width="2"/>
+<text x="242" y="232" text-anchor="middle" class="lab">Paciente</text>
+<text x="242" y="250" text-anchor="middle" class="small" style="fill:var(--muted)">y familia</text>
+<line x1="242.0" y1="184.0" x2="242.0" y2="128.0" stroke="var(--accent)" stroke-width="2"/>
+<rect x="170.0" y="88.0" width="144" height="40" rx="8" fill="var(--accent)"/>
+<text x="242.0" y="112.3" text-anchor="middle" class="small" style="fill:var(--on)">Oncología médica</text>
+<text x="242.0" y="80.0" text-anchor="middle" class="small" style="fill:var(--muted)">fármacos</text>
+<line x1="291.5" y1="219.9" x2="337.1" y2="202.6" stroke="var(--warn)" stroke-width="2"/>
+<rect x="303.1" y="176.4" width="144" height="40" rx="8" fill="var(--warn)"/>
+<text x="375.1" y="200.7" text-anchor="middle" class="small" style="fill:var(--on)">Radioterapia</text>
+<text x="375.1" y="232.4" text-anchor="middle" class="small" style="fill:var(--muted)">radiación dirigida</text>
+<line x1="272.6" y1="278.1" x2="300.8" y2="323.4" stroke="var(--vessel)" stroke-width="2"/>
+<rect x="252.3" y="319.6" width="144" height="40" rx="8" fill="var(--vessel)"/>
+<text x="324.3" y="343.9" text-anchor="middle" class="small" style="fill:var(--on)">Cirugía oncológica</text>
+<text x="324.3" y="375.6" text-anchor="middle" class="small" style="fill:var(--muted)">extirpar el tumor</text>
+<line x1="211.4" y1="278.1" x2="183.2" y2="323.4" stroke="var(--purple)" stroke-width="2"/>
+<rect x="87.7" y="319.6" width="144" height="40" rx="8" fill="var(--purple)"/>
+<text x="159.7" y="343.9" text-anchor="middle" class="small" style="fill:var(--on)">Patología e imagen</text>
+<text x="159.7" y="375.6" text-anchor="middle" class="small" style="fill:var(--muted)">diagnóstico</text>
+<line x1="192.5" y1="219.9" x2="146.9" y2="202.6" stroke="var(--ok)" stroke-width="2"/>
+<rect x="36.9" y="176.4" width="144" height="40" rx="8" fill="var(--ok)"/>
+<text x="108.9" y="200.7" text-anchor="middle" class="small" style="fill:var(--on)">Cuidados paliativos</text>
+<text x="108.9" y="232.4" text-anchor="middle" class="small" style="fill:var(--muted)">alivio y calidad de vida</text>
+<text x="490" y="80" class="h">Recorrido del cuidado</text>
+<rect x="490" y="100" width="270" height="50" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="490" y="100" width="8" height="50" rx="3" fill="var(--accent)" opacity="0.40"/>
+<text x="510" y="122" class="step">Prevención</text>
+<text x="510" y="140" class="small" style="fill:var(--muted)">tabaco, vacunas, sol</text>
+<line x1="625" y1="151" x2="625" y2="163" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="490" y="164" width="270" height="50" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="490" y="164" width="8" height="50" rx="3" fill="var(--accent)" opacity="0.55"/>
+<text x="510" y="186" class="step">Detección precoz</text>
+<text x="510" y="204" class="small" style="fill:var(--muted)">cribados</text>
+<line x1="625" y1="215" x2="625" y2="227" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="490" y="228" width="270" height="50" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="490" y="228" width="8" height="50" rx="3" fill="var(--accent)" opacity="0.70"/>
+<text x="510" y="250" class="step">Diagnóstico</text>
+<text x="510" y="268" class="small" style="fill:var(--muted)">biopsia y estadio</text>
+<line x1="625" y1="279" x2="625" y2="291" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="490" y="292" width="270" height="50" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="490" y="292" width="8" height="50" rx="3" fill="var(--accent)" opacity="0.85"/>
+<text x="510" y="314" class="step">Tratamiento</text>
+<text x="510" y="332" class="small" style="fill:var(--muted)">plan del comité</text>
+<line x1="625" y1="343" x2="625" y2="355" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="490" y="356" width="270" height="50" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="490" y="356" width="8" height="50" rx="3" fill="var(--accent)" opacity="1.00"/>
+<text x="510" y="378" class="step">Seguimiento</text>
+<text x="510" y="396" class="small" style="fill:var(--muted)">controles y rehabilitación</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

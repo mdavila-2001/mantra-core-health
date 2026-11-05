@@ -1,5 +1,6 @@
 import { verificationOf } from '../../../core/verification/verification-status';
 import type { PractitionerListItem } from '../../../core/data-access/profiles/profiles.types';
+import { ACTIVITY_COUNTERS } from '../../account/my-profile/activity-counters';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
 import { initialsOf } from '../../../shared/text/initials';
@@ -46,6 +47,22 @@ function especialidadesDe(
     .map((especialidad) => etiquetas.get(especialidad.specialtyConceptId)?.display)
     .filter((nombre): nombre is string => nombre !== undefined && nombre !== '');
   return nombres.length === 0 ? undefined : [...new Set(nombres)].join(' · ');
+}
+
+/**
+ * Las cifras por las que la guía ordena, con las mismas claves que
+ * {@link ACTIVITY_COUNTERS}: el orden y la ficha hablan de lo mismo.
+ * Sin `activity` —una API que todavía no la manda— no hay cifras, y esas
+ * tarjetas van al final de cualquier orden por actividad.
+ */
+function cifrasDe(fila: PractitionerListItem): Readonly<Record<string, number>> | undefined {
+  const actividad = fila.activity;
+  if (actividad === undefined) {
+    return undefined;
+  }
+  return Object.fromEntries(
+    ACTIVITY_COUNTERS.map((contador) => [contador.clave, actividad[contador.campo]]),
+  );
 }
 
 export function porNombre(a: SearchResultItem, b: SearchResultItem): number {
@@ -98,6 +115,21 @@ export function toResultado(
     });
   }
 
+  // Cuántas veces atendió, cuando atendió alguna: es la cifra por la que se
+  // ordena «más encuentros atendidos», y ordenar por un número que no se ve
+  // obliga a abrir la ficha para entender el orden. En cero no se dice: «0
+  // encuentros» de un médico del padrón que nunca usó la plataforma se lee
+  // como que no atiende.
+  const encuentros = fila.activity?.encounters ?? 0;
+  if (encuentros > 0) {
+    meta.push({
+      text: `${encuentros} ${encuentros === 1 ? 'encuentro atendido' : 'encuentros atendidos'}`,
+      iconKey: 'actividad',
+    });
+  }
+
+  const cifras = cifrasDe(fila);
+
   const sellos = [];
   // La verificación ya no es un sello de texto: la dice la insignia junto al nombre
   // (`verification`), una sola fuente visual. Antes había acá un «Matrícula verificada»
@@ -140,5 +172,6 @@ export function toResultado(
     verification: verificacion,
     meta,
     seals: sellos,
+    ...(cifras === undefined ? {} : { stats: cifras }),
   };
 }

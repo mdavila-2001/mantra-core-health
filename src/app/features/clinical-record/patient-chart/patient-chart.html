@@ -1,20 +1,24 @@
 <app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
   <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
-       entera: sin eso el documento se llevaría el menú lateral. -->
-  <app-pdf-export-button
-    page-actions
-    [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
-    [title]="titulo()"
-    [subtitle]="subtitulo()"
-    kind="Expediente clínico"
-    [target]="raizExportable()"
-  />
+       entera: sin eso el documento se llevaría el menú lateral. Sólo con el
+       expediente leído: sin él no hay nada que exportar. -->
+  @if (expediente().status === 'ready') {
+    <app-pdf-export-button
+      page-actions
+      [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
+      [title]="titulo()"
+      [subtitle]="subtitulo()"
+      kind="Expediente clínico"
+      [target]="raizExportable()"
+    />
+  }
 </app-page-header>
 
 <!-- El anfitrión resuelve los nueve estados del M34 sobre la lectura entera:
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
   <div class="expediente" data-pdf-root #raizPdf>
+    <app-chart-access-scope [patientProfileId]="pacienteDeLaFicha()" />
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
@@ -189,9 +193,31 @@
             />
           </app-tab>
         }
+
+        <!-- Derivaciones: el mismo bloque que la casilla «Derivar» de la
+             consulta (lista, emisión, detalle, respuesta y consentimiento
+             dirigido). No sale de `bloques()` porque no viaja en el resumen
+             clínico: tiene su lectura (`GET /referrals?patientProfileId=`). Se
+             emite atado a la atención abierta; sin ella, el bloque lo dice. -->
+        <app-tab label="Derivaciones">
+          @if (activeTab() === bloques().length) {
+            <app-referral-block
+              data-testid="expediente-derivaciones"
+              [patientProfileId]="pacienteDeLaFicha()"
+              [encounterId]="openEncounterId()"
+              [canWrite]="puedeEscribir()"
+              [appointments]="citasParaElDiagnostico()"
+              [referrals]="chartReferrals.state()"
+              [refreshError]="chartReferrals.refreshError()"
+              (cambio)="chartReferrals.reload()"
+              (retry)="chartReferrals.reload()"
+            />
+          }
+        </app-tab>
+
         <!-- Servicios recibidos (intervenciones y vacunas): lo proyectado se crea aun cerrado, por eso el @if. -->
         <app-tab label="Servicios recibidos">
-          @if (activeTab() === bloques().length) {
+          @if (activeTab() === bloques().length + 1) {
             <app-received-services-panel data-testid="expediente-servicios" [patientProfileId]="pacienteDeLaFicha()" />
           }
         </app-tab>
@@ -559,6 +585,37 @@
   </app-content-dialog>
 }
 
+<!-- El consentimiento DIRIGIDO a la receta o al plan de la fila: su estado y la
+     acción que lo abre en modal (composition-rules §6). -->
+<ng-template #celdaConsentimiento let-fila>
+  <span class="expediente__consentimiento">
+    <app-informed-consent-badge [consent]="consents.of(consentTypeOf(fila), fila.id)" />
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      data-testid="chart-consent"
+      (clicked)="openConsent(fila)"
+    >
+      Consentimiento
+    </button>
+  </span>
+</ng-template>
+
+@if (consentTarget(); as target) {
+  <app-informed-consent-dialog
+    [patientProfileId]="pacienteDeLaFicha()"
+    [encounterId]="consentEncounterId()"
+    [targetType]="target.type"
+    [targetId]="target.id"
+    [targetLabel]="target.label"
+    [defaults]="{ purposeText: target.label + '.' }"
+    (consentChanged)="consents.upsert($event)"
+    (closed)="consentTarget.set(null)"
+  />
+}
+
 <!-- Adjuntar, para cualquier bloque que lo admita. Abre el modal en vez de
      desplegarse dentro de la fila: el desplegable inline hacía crecer la celda
      y deformaba la tabla. -->
@@ -700,4 +757,3 @@
      dicen sigue estando en su pestaña —«Diagnósticos», donde se cargan las
      alergias desde el 02/10/2026, y «Encuentros»—: el toast avisa, no es el
      único lugar donde consta. -->
-

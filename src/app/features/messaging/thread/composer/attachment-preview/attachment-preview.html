@@ -125,6 +125,8 @@
     @if (error(); as mensaje) {
       <p class="vista__error" role="alert">{{ mensaje }}</p>
     }
+    <!-- Siempre en el documento: una región viva que aparece con su texto no se anuncia. -->
+    <p class="vista__preparando" role="status" data-testid="vista-preparando">@if (preparing() > 0) {Preparando los archivos…}</p>
 
     <label class="vista__comentario">
       <span class="solo-lectores">Comentario para {{ selectedName() }}</span>
@@ -137,6 +139,7 @@
         [value]="selectedCaption()"
         (input)="updateCaption($any($event.target).value)"
         (keydown)="captionKey($event)"
+        (paste)="paste($event)"
       ></textarea>
     </label>
 
@@ -157,6 +160,8 @@
               @switch (kind(draft.file)) {
                 @case ('image') {
                   <img [src]="urlFor(draft.file)" alt="" />
+                  <!-- El peso de lo que va a subir, ya achicado. -->
+                  <span class="vista__miniatura-peso" data-testid="vista-miniatura-peso" aria-hidden="true">{{ size(draft.file) }}</span>
                 }
                 @case ('video') {
                   <video [src]="urlFor(draft.file)" muted preload="metadata" aria-hidden="true"></video>
@@ -199,6 +204,7 @@
         class="vista__enviar"
         data-testid="vista-enviar"
         [attr.aria-label]="sendLabel()"
+        [attr.aria-disabled]="preparing() > 0 ? 'true' : null"
         [appTooltip]="sendLabel()"
         (click)="submit()"
       >

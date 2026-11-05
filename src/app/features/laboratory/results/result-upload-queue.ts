@@ -7,13 +7,14 @@ import type {
   LabResultFile,
   LabResultUploadSession,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
+import { contentTypeOf, messageOf, rejectionOf, type UploadRejection } from './upload-rules';
 
 /** En qué anda un archivo de la cola. */
 export type UploadStatus = 'queued' | 'uploading' | 'paused' | 'done' | 'error' | 'canceled';
 
 /** A qué orden va un archivo, y qué se avisa al terminar. */
 export interface UploadTarget {
-  readonly orderId: string | null;
+  readonly orderId: string;
   readonly note: string | null;
   readonly notify: boolean;
 }
@@ -115,21 +116,32 @@ export class ResultUploadQueue {
     });
   }
 
-  /** Suma archivos a la cola y arranca los que entren. */
-  add(files: readonly PickedFile[], target: UploadTarget): void {
-    const nuevos = files.map((picked) => ({
-      localId: `upload-${++this.sequence}`,
-      file: picked.file,
-      displayName: picked.path === '' ? picked.file.name : picked.path,
-      target,
-      status: 'queued' as const,
-      sentBytes: 0,
-      bytesPerSecond: null,
-      error: null,
-      result: null,
-    }));
+  /** Queues the files; those the API would refuse (format, over 10 MB) come back with the reason. */
+  add(files: readonly PickedFile[], target: UploadTarget): readonly UploadRejection[] {
+    const rejected: UploadRejection[] = [];
+    const nuevos = files.flatMap((picked) => {
+      const refused = rejectionOf(picked.file, picked.path || picked.file.name);
+      if (refused !== null) {
+        rejected.push(refused);
+        return [];
+      }
+      return [
+        {
+          localId: `upload-${++this.sequence}`,
+          file: picked.file,
+          displayName: picked.path === '' ? picked.file.name : picked.path,
+          target,
+          status: 'queued' as const,
+          sentBytes: 0,
+          bytesPerSecond: null,
+          error: null,
+          result: null,
+        },
+      ];
+    });
     this.itemsState.update((items) => [...items, ...nuevos]);
     this.pump();
+    return rejected;
   }
 
   pause(localId: string): void {
@@ -201,7 +213,7 @@ export class ResultUploadQueue {
         session = await firstValueFrom(
           this.lab.startUpload({
             fileName: item.file.name,
-            contentType: item.file.type,
+            contentType: contentTypeOf(item.file),
             sizeBytes: item.file.size,
             orderId: item.target.orderId,
             note: item.target.note,
@@ -310,18 +322,4 @@ export class ResultUploadQueue {
       items.map((item) => (item.localId === localId ? { ...item, ...changes } : item)),
     );
   }
-}
-
-function messageOf(error: unknown): string {
-  if (error instanceof HttpErrorResponse) {
-    if (error.status === 0) {
-      return 'Se cortó la conexión. Reintente: sigue desde donde quedó.';
-    }
-    const body = error.error as { message?: unknown } | null;
-    if (body !== null && typeof body === 'object' && typeof body.message === 'string') {
-      return body.message;
-    }
-    return `El servidor respondió ${error.status}.`;
-  }
-  return 'No se pudo subir el archivo.';
 }

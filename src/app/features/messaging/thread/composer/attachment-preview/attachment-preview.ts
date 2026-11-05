@@ -25,14 +25,15 @@ import { inertBackground, trapTabKey } from '../../../../../shared/a11y/modal-fo
 import { formatearTamano } from '../../../../../core/data-access/files/upload-policy';
 import { typeName as mimeTypeName } from '../../../../../core/messaging/attachment-metadata';
 import {
+  ATTACHMENT_ACCEPT,
   type AttachmentDraft,
   attachmentKind,
   createDraft,
   isEditableImage,
   MAX_DRAFTS,
-  partitionFiles,
-  rejectionReason,
+  PHOTO_ACCEPT,
 } from '../attachment-draft';
+import { AttachmentPreparer } from '../attachment-preparer';
 import { type EditorTool, ImageEditor } from '../image-editor/image-editor';
 import { PDF_PAGE_COUNTER } from './pdf-page-count';
 
@@ -75,6 +76,7 @@ export class AttachmentPreview {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly countPages = inject(PDF_PAGE_COUNTER);
+  private readonly preparer = inject(AttachmentPreparer);
 
   /** Los archivos esperando salir. Nunca vacía mientras la vista está abierta. */
   readonly drafts = model.required<readonly AttachmentDraft[]>();
@@ -92,6 +94,16 @@ export class AttachmentPreview {
   protected readonly editing = signal<EditorTool | null>(null);
   protected readonly error = linkedSignal(() => this.notice());
   protected readonly pages = signal<Readonly<Record<string, number>>>({});
+
+  /**
+   * Cuántos archivos se están preparando (sumados con el «+», soltados,
+   * pegados o recién editados). Mientras haya alguno no se envía: saldría la
+   * tanda sin él, o la edición sin aplicar.
+   */
+  protected readonly preparing = signal(0);
+
+  /** Cerrada, una preparación que termina tarde no toca la lista (ya es del composer). */
+  private destroyed = false;
 
   /** El que se ve en grande. Si se quitó el elegido, el primero que quede. */
   protected readonly selected = computed<AttachmentDraft | null>(() => {
@@ -113,9 +125,9 @@ export class AttachmentPreview {
   protected readonly selectedCaption = computed(() => this.selected()?.caption ?? '');
   protected readonly canUndoEdit = computed(() => (this.selected()?.history.length ?? 0) > 0);
 
-  /** Fotos y videos se suman con fotos y videos; documentos, con documentos. */
+  /** A fotos se suman fotos; si ya hay un documento, cualquier cosa que la API acepte. */
   protected readonly acceptMore = computed(() =>
-    this.drafts().some((draft) => attachmentKind(draft.file) === 'document') ? '*/*' : 'image/*,video/*',
+    this.drafts().some((draft) => attachmentKind(draft.file) === 'document') ? ATTACHMENT_ACCEPT : PHOTO_ACCEPT,
   );
 
   protected readonly sendLabel = computed(() => {
@@ -143,6 +155,7 @@ export class AttachmentPreview {
       this.caption()?.nativeElement.focus();
     });
     inject(DestroyRef).onDestroy(() => {
+      this.destroyed = true;
       // Primero se devuelve el fondo: el foco no puede volver a algo inerte.
       restoreBackground?.();
       for (const url of this.urls.values()) URL.revokeObjectURL(url);
@@ -196,7 +209,12 @@ export class AttachmentPreview {
   }
 
   protected thumbnailLabel(draft: AttachmentDraft, index: number): string {
-    return `Archivo ${index + 1} de ${this.drafts().length}: ${draft.file.name}`;
+    return `Archivo ${index + 1} de ${this.drafts().length}: ${draft.file.name}, ${formatearTamano(draft.file.size)}`;
+  }
+
+  /** El peso de lo que de verdad va a subir: decide si conviene mandarlo por datos. */
+  protected size(file: File): string {
+    return formatearTamano(file.size);
   }
 
   /* --- Acciones ------------------------------------------------------------ */
@@ -226,25 +244,35 @@ export class AttachmentPreview {
     if (this.canEdit()) this.editing.set(tool);
   }
 
-  /** La edición vuelve como un archivo nuevo, que reemplaza al que había. */
-  protected applyEdit(file: File): void {
+  /**
+   * La edición vuelve como un archivo nuevo, que reemplaza al que había.
+   *
+   * Pasa por la misma preparación que lo elegido: el lienzo no copia EXIF,
+   * pero una foto exportada a PNG puede pasar el tope o el lado máximo, y eso
+   * se resuelve (o se dice) acá y no cuando la subida ya falló.
+   */
+  protected async applyEdit(file: File): Promise<void> {
     const selected = this.selected();
     this.editing.set(null);
     this.focusCaptionSoon();
     if (selected === null) return;
-    // La misma puerta que al elegir: una foto exportada a PNG puede pasar el
-    // tope, y eso se dice acá y no cuando la subida ya falló.
-    const reason = rejectionReason(file);
-    if (reason !== null) {
+    this.preparing.update((count) => count + 1);
+    try {
+      const ready = await this.preparer.prepare(file);
+      if (this.destroyed) return;
+      this.error.set('');
+      this.drafts.update((drafts) =>
+        drafts.map((draft) =>
+          draft.id === selected.id ? { ...draft, file: ready, history: [...draft.history, draft.file] } : draft,
+        ),
+      );
+    } catch (error) {
+      if (this.destroyed) return;
+      const reason = error instanceof Error ? error.message : `No pudimos preparar «${file.name}».`;
       this.error.set(`No se pudo usar la edición: ${reason}`);
-      return;
+    } finally {
+      this.preparing.update((count) => Math.max(0, count - 1));
     }
-    this.error.set('');
-    this.drafts.update((drafts) =>
-      drafts.map((draft) =>
-        draft.id === selected.id ? { ...draft, file, history: [...draft.history, draft.file] } : draft,
-      ),
-    );
   }
 
   protected cancelEdit(): void {
@@ -277,11 +305,11 @@ export class AttachmentPreview {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
     input.value = '';
-    this.add(files);
+    void this.add(files);
   }
 
   protected submit(): void {
-    if (this.editing() === null && this.drafts().length > 0) this.send.emit();
+    if (this.editing() === null && this.preparing() === 0 && this.drafts().length > 0) this.send.emit();
   }
 
   /* --- Teclado y arrastre -------------------------------------------------- */
@@ -302,27 +330,48 @@ export class AttachmentPreview {
     }
   }
 
+  /** Ctrl+V de una imagen sobre el pie de foto la suma al envío, como en WhatsApp Web. */
+  protected paste(event: ClipboardEvent): void {
+    const data = event.clipboardData;
+    const files = Array.from(data?.files ?? []);
+    if (files.length === 0) return;
+    if (!Array.from(data?.types ?? []).includes('text/plain')) event.preventDefault();
+    void this.add(files);
+  }
+
   protected dragOver(event: DragEvent): void {
     if (event.dataTransfer?.types.includes('Files')) event.preventDefault();
   }
 
   protected drop(event: DragEvent): void {
     event.preventDefault();
-    this.add(Array.from(event.dataTransfer?.files ?? []));
+    void this.add(Array.from(event.dataTransfer?.files ?? []));
   }
 
   /* --- Internos ------------------------------------------------------------ */
 
-  private add(files: readonly File[]): void {
+  /**
+   * Suma archivos: los valida y prepara (achicar, quitar metadatos) con la
+   * misma puerta que el composer. Devuelve la promesa para las pruebas.
+   */
+  private async add(files: readonly File[]): Promise<void> {
     // Soltar archivos mientras se edita cambiaría la imagen bajo el editor y
     // la edición en curso se perdería sin aviso.
     if (files.length === 0 || this.editing() !== null) return;
-    const { accepted, rejection } = partitionFiles(files, MAX_DRAFTS - this.drafts().length);
-    this.error.set(rejection ?? '');
-    if (accepted.length === 0) return;
-    const added = accepted.map((file) => createDraft(file));
-    this.drafts.update((drafts) => [...drafts, ...added]);
-    this.selectedId.set(added[0].id);
+    this.preparing.update((count) => count + 1);
+    try {
+      const { accepted, rejection } = await this.preparer.prepareAll(files, MAX_DRAFTS - this.drafts().length);
+      if (this.destroyed) return;
+      this.error.set(rejection ?? '');
+      // Lugar contado de nuevo: mientras se preparaba pudo entrar otra tanda.
+      const room = MAX_DRAFTS - this.drafts().length;
+      const added = accepted.slice(0, Math.max(0, room)).map((file) => createDraft(file));
+      if (added.length === 0) return;
+      this.drafts.update((drafts) => [...drafts, ...added]);
+      this.selectedId.set(added[0].id);
+    } finally {
+      this.preparing.update((count) => Math.max(0, count - 1));
+    }
   }
 
   /** Una vuelta después: el pie de foto reaparece cuando el editor ya se fue. */

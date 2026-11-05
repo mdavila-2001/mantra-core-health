@@ -100,4 +100,22 @@ describe('ErrorReporter', () => {
 
     expect(consola).toHaveBeenCalled();
   });
+
+  it('un fallo en /rx/<token> no deja el token en la consola ni en el registro (FAR-01)', () => {
+    const token = 'Q2hhcmxpZVN5bnRoZXRpY1Rva2VuMDEyMzQ1Njc4OWFi';
+    // El mensaje de un HttpErrorResponse relanzado como Error cita la URL entera.
+    const error = new Error(
+      `Http failure response for /clinical/prescription-shares/by-token/${token}: 500 Server Error`,
+    );
+
+    reporter.report(error, { ...contexto, route: `/rx/${token}` });
+
+    expect(reporter.ultimo()?.context.route).toBe('/rx/:token');
+    expect(JSON.stringify(reporter.ultimo())).not.toContain(token);
+    // La línea que se escribe siempre, también en producción. El objeto crudo
+    // que se agrega en desarrollo (`isDevMode`) queda fuera a propósito.
+    const lines = consola.mock.calls.map((call: unknown[]) => call[0]).filter((first: unknown) => typeof first === 'string');
+    expect(lines.join('\n')).toContain('/rx/:token');
+    expect(lines.join('\n')).not.toContain(token);
+  });
 });

@@ -1,0 +1,47 @@
+<form class="reauth" (submit)="$event.preventDefault(); submit()" novalidate [attr.data-testid]="prefix() + '-form'">
+  <h2 class="reauth__titulo">Confirme que es usted</h2>
+  <p class="reauth__texto">{{ reason() }} Por seguridad le pedimos que lo confirme: así nadie con su sesión abierta puede cambiar sus métodos de verificación.</p>
+
+  @if (canUseCode()) {
+    <div class="reauth__modos" role="group" aria-label="Cómo confirmar">
+      <button type="button" class="reauth__modo" [attr.aria-pressed]="mode() === 'PASSWORD'" (click)="setMode('PASSWORD')" [attr.data-testid]="prefix() + '-modo-contrasena'">Con mi contraseña</button>
+      <button type="button" class="reauth__modo" [attr.aria-pressed]="mode() === 'CODE'" (click)="setMode('CODE')" [attr.data-testid]="prefix() + '-modo-codigo'">Con el código de mi aplicación</button>
+    </div>
+  }
+
+  @if (mode() === 'PASSWORD') {
+    <app-form-field label="Contraseña actual" [required]="true" [errorMessage]="tried() && missing() ? 'Escriba su contraseña actual.' : ''">
+      <app-input
+        type="password"
+        [value]="password()"
+        (valueChange)="password.set('' + ($event ?? ''))"
+        autocomplete="current-password"
+        ariaLabel="Contraseña actual"
+        [hasError]="(tried() && missing()) || failure() !== null"
+        [testId]="prefix() + '-contrasena'"
+      />
+    </app-form-field>
+  } @else {
+    <app-form-field label="Código de su aplicación" [required]="true" [errorMessage]="tried() && missing() ? 'Escriba los 6 dígitos que muestra la aplicación.' : ''">
+      <app-input
+        [value]="code()"
+        (valueChange)="code.set('' + ($event ?? ''))"
+        inputMode="numeric"
+        autocomplete="one-time-code"
+        placeholder="000000"
+        ariaLabel="Código de su aplicación"
+        [hasError]="(tried() && missing()) || failure() !== null"
+        [testId]="prefix() + '-codigo'"
+      />
+    </app-form-field>
+  }
+
+  @if (failure(); as fallo) {
+    <app-alert tone="error" role="alert" [attr.data-testid]="prefix() + '-error'">{{ fallo }}</app-alert>
+  }
+
+  <div class="reauth__acciones">
+    <button app-button variant="ghost" type="button" [disabled]="busy()" (clicked)="cancelled.emit()" [attr.data-testid]="prefix() + '-cancelar'">Cancelar</button>
+    <button app-button type="submit" [isLoading]="busy()" [disabled]="busy()" [attr.data-testid]="prefix() + '-enviar'">{{ submitLabel() }}</button>
+  </div>
+</form>

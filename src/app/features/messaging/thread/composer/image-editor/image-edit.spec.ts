@@ -90,10 +90,13 @@ describe('attachment-draft', () => {
 
   it('separa lo que se puede mandar y dice por qué no lo otro', () => {
     const foto = new File(['x'], 'a.png', { type: 'image/png' });
-    const texto = new File(['x'], 'b.txt', { type: 'text/plain' });
-    const { accepted, rejection } = partitionFiles([foto, texto]);
+    // Lo que la API no guarda (un video) queda afuera; un texto sí entra.
+    const video = new File(['x'], 'b.mp4', { type: 'video/mp4' });
+    const { accepted, rejection } = partitionFiles([foto, video]);
     expect(accepted).toEqual([foto]);
-    expect(rejection).toBe('Puede mandar imágenes, videos, audios y PDF.');
+    expect(rejection).toBe(
+      '«b.mp4» no se puede mandar. Puede mandar fotos, PDF, documentos de Word o Excel y archivos de texto.',
+    );
   });
 
   it('no deja pasar más del tope por envío', () => {

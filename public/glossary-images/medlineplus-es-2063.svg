@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Donación de órganos y tejidos</title>
+  <desc id="d">A la izquierda, una silueta humana con los órganos y tejidos que pueden donarse: córneas, pulmones, corazón, hígado, páncreas, riñones, intestino, piel y hueso. A la derecha, los pasos desde el donante fallecido hasta el trasplante: coordinación, extracción y conservación en frío, y la nota de que una persona viva puede donar un riñón o parte del hígado.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Qué se puede donar</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Del donante al receptor</text>
+<circle cx="200" cy="92.0" r="22.0" fill="var(--tissue)" stroke="var(--line)"/>
+<path d="M188.0 112.0 L150.0 126.0 C140.0 130.0 138.0 140.0 137.0 150.0 L128.0 240.0 L142.0 242.0 L154.0 162.0 L156.0 230.0 L154.0 370.0 L186.0 370.0 L196.0 250.0 L204.0 250.0 L214.0 370.0 L246.0 370.0 L244.0 230.0 L246.0 162.0 L258.0 242.0 L272.0 240.0 L263.0 150.0 C262.0 140.0 260.0 130.0 250.0 126.0 L212.0 112.0 Z" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round"/>
+<circle cx="192" cy="88" r="4" fill="var(--accent)"/>
+<circle cx="208" cy="88" r="4" fill="var(--accent)"/>
+<path d="M184 126 q-12 0 -12 28 q10 6 18 -2 Z M216 126 q12 0 12 28 q-10 6 -18 -2 Z" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M204 136 c4 -8 14 -4 10 6 l-8 10 l-8 -10 c-4 -10 6 -14 6 -6 Z" fill="var(--vessel)" stroke="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M174 172 q22 -8 30 4 q-8 14 -30 6 Z" fill="var(--organ)" stroke="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="214" cy="190" rx="12" ry="5" fill="var(--yellow)"/>
+<ellipse cx="182" cy="210" rx="6" ry="9" fill="var(--organ)"/>
+<ellipse cx="220" cy="210" rx="6" ry="9" fill="var(--organ)"/>
+<path d="M184 232 q8 -8 16 0 t16 0 q-8 10 -16 4 t-16 4 Z" fill="var(--warn)" stroke="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="192" y1="88" x2="94.4" y2="78" stroke="var(--muted)" stroke-width="1"/>
+<text x="40" y="82" class="small">Córneas</text>
+<line x1="210" y1="140" x2="256" y2="106" stroke="var(--muted)" stroke-width="1"/>
+<text x="260" y="110" class="small">Corazón</text>
+<line x1="180" y1="134" x2="101.6" y2="124" stroke="var(--muted)" stroke-width="1"/>
+<text x="40" y="128" class="small">Pulmones</text>
+<line x1="186" y1="178" x2="87.2" y2="172" stroke="var(--muted)" stroke-width="1"/>
+<text x="40" y="176" class="small">Hígado</text>
+<line x1="214" y1="190" x2="256" y2="166" stroke="var(--muted)" stroke-width="1"/>
+<text x="260" y="170" class="small">Páncreas</text>
+<line x1="222" y1="210" x2="256" y2="218" stroke="var(--muted)" stroke-width="1"/>
+<text x="260" y="222" class="small">Riñones</text>
+<line x1="200" y1="236" x2="108.8" y2="232" stroke="var(--muted)" stroke-width="1"/>
+<text x="40" y="236" class="small">Intestino</text>
+<line x1="236" y1="320" x2="256" y2="326" stroke="var(--muted)" stroke-width="1"/>
+<text x="260" y="330" class="small">Piel y hueso</text>
+<text x="200" y="400" text-anchor="middle" class="lab">Una sola persona donante puede ayudar</text>
+<text x="200" y="418" text-anchor="middle" class="lab">a varias personas.</text>
+<rect x="416" y="70" width="140" height="58" rx="8" fill="var(--purple)"/>
+<text x="486.0" y="103.3" text-anchor="middle" class="small" style="fill:var(--on)">Donante fallecido</text>
+<text x="572" y="94" class="small">Tras confirmar la muerte</text>
+<text x="572" y="112" class="small" style="fill:var(--muted)">y el consentimiento</text>
+<line x1="486" y1="130" x2="486" y2="154" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="416" y="156" width="140" height="58" rx="8" fill="var(--accent)"/>
+<text x="486.0" y="189.3" text-anchor="middle" class="small" style="fill:var(--on)">Coordinación</text>
+<text x="572" y="180" class="small">Compatibilidad y lista</text>
+<text x="572" y="198" class="small" style="fill:var(--muted)">de espera</text>
+<line x1="486" y1="216" x2="486" y2="240" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="416" y="242" width="140" height="58" rx="8" fill="var(--warn)"/>
+<text x="486.0" y="275.3" text-anchor="middle" class="small" style="fill:var(--on)">Extracción</text>
+<text x="572" y="266" class="small">Los órganos se conservan</text>
+<text x="572" y="284" class="small" style="fill:var(--muted)">en frío</text>
+<line x1="486" y1="302" x2="486" y2="326" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="416" y="328" width="140" height="58" rx="8" fill="var(--ok)"/>
+<text x="486.0" y="361.3" text-anchor="middle" class="small" style="fill:var(--on)">Trasplante</text>
+<text x="572" y="352" class="small">El receptor recibe el</text>
+<text x="572" y="370" class="small" style="fill:var(--muted)">órgano y lo cuida</text>
+<text x="416" y="424" class="small" style="fill:var(--muted)">Donante vivo: un riñón o parte del hígado.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

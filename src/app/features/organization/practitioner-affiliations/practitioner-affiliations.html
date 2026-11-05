@@ -70,7 +70,10 @@
 
 <ng-template #practitionerCell let-row>
   <span class="affiliations__main" [attr.data-testid]="'affiliation-name-' + row.id">{{ row.practitionerName }}</span>
-  <span class="affiliations__service" [attr.data-testid]="'affiliation-service-' + row.id">{{ row.serviceDisplay }}</span>
+  <span class="affiliations__service" [attr.data-testid]="'affiliation-service-' + row.id">{{ serviceText(row) }}</span>
+  @if (siteText(row); as sede) {
+    <span class="affiliations__muted" [attr.data-testid]="'affiliation-site-' + row.id">{{ sede }}</span>
+  }
   <span class="affiliations__state">
     <app-badge [variant]="statusTone(row)" [attr.data-testid]="'affiliation-status-' + row.id">{{ statusText(row) }}</app-badge>
   </span>
@@ -81,7 +84,7 @@
         type="button"
         size="sm"
         [disabled]="busyRowId() !== null"
-        [attr.aria-label]="'Aprobar a ' + row.practitionerName + ' para ' + row.serviceDisplay"
+        [attr.aria-label]="'Aprobar a ' + row.practitionerName + ' para ' + serviceText(row)"
         [attr.data-testid]="'affiliation-approve-' + row.id"
         (clicked)="approve(row)"
       >
@@ -93,7 +96,7 @@
         variant="outline"
         size="sm"
         [disabled]="busyRowId() !== null"
-        [attr.aria-label]="'Rechazar a ' + row.practitionerName + ' para ' + row.serviceDisplay"
+        [attr.aria-label]="'Rechazar a ' + row.practitionerName + ' para ' + serviceText(row)"
         [attr.data-testid]="'affiliation-reject-' + row.id"
         (clicked)="reject(row)"
       >

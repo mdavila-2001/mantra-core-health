@@ -1,5 +1,6 @@
 ---
 slug: insuficiencia-venosa-cronica
+image: insuficiencia-venosa-cronica.svg | Cuando las válvulas venosas fallan, la sangre se acumula en las piernas. | Comparación entre una vena sana con válvulas que dirigen la sangre hacia arriba y una vena dilatada con válvulas abiertas donde la sangre se estanca, con listas de síntomas y cuidados.
 ---
 
 ## [definition] Introducción

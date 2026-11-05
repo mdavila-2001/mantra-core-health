@@ -56,7 +56,73 @@ import { read, SRC_ROOT, scanEndpoints, walk } from './lib/scan.mjs';
 const CONOCIDAS = [
   // `community.client.ts` pide el detalle de una conversación; el mock sólo
   // tiene la lista, la creación y sus mensajes — AG-26 del informe de brechas.
-  { method: 'GET', endpoint: '/community/conversations/:conversationId', prompt: 'AG-26 (sin asignar)' },
+  {
+    method: 'GET',
+    endpoint: '/community/conversations/:conversationId',
+    prompt: 'AG-26 (sin asignar)',
+  },
+  // B7c: brechas que ya estaban en HEAD cuando el cierre del gobierno de accesos corrió el gate (12 operaciones de clientes que
+  // ningún manejador del simulador cubre; ninguna es del gobierno de accesos). Se borra cada una al escribirle su manejador.
+  {
+    method: 'POST',
+    endpoint: '/billing/service-catalog/import-procedures',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'GET',
+    endpoint: '/billing/service-catalog/procedure-specialties/mine',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'POST',
+    endpoint: '/community/conversations/contacts/search',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'POST',
+    endpoint: '/iam/auth/upload-registration-signature-image',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'GET',
+    endpoint: '/identity/verification-cases/:caseId',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'POST',
+    endpoint: '/insurance/patients/conversation',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'GET',
+    endpoint: '/insurance/patients/options',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'POST',
+    endpoint: '/insurance/patients/search',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'DELETE',
+    endpoint: '/notifications/web-push/subscription',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'PUT',
+    endpoint: '/notifications/web-push/subscription',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'GET',
+    endpoint: '/tenants/:tenantId/logo/content',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
+  {
+    method: 'GET',
+    endpoint: '/terminology/concepts/:conceptId/glossary-neighborhood',
+    prompt: 'B7c (heredada de HEAD, sin asignar)',
+  },
 ];
 
 /** Los manejadores del simulador: método y patrón, leídos de `router.<verbo>('/…'`. */
@@ -111,12 +177,24 @@ const nuevasSinManejador = sinManejador.filter(
 
 if (modoJson) {
   console.log(
-    JSON.stringify({ operaciones: operaciones.length, manejadores: manejadores.length, sinManejador, nuevasSinManejador, yaCubiertas }, null, 2),
+    JSON.stringify(
+      {
+        operaciones: operaciones.length,
+        manejadores: manejadores.length,
+        sinManejador,
+        nuevasSinManejador,
+        yaCubiertas,
+      },
+      null,
+      2,
+    ),
   );
 } else if (nuevasSinManejador.length > 0 || yaCubiertas.length > 0) {
   console.error(`\n✗ check-mock-vs-client\n`);
   if (nuevasSinManejador.length > 0) {
-    console.error(`  ${nuevasSinManejador.length} operación(es) sin manejador y SIN registrar en CONOCIDAS:\n`);
+    console.error(
+      `  ${nuevasSinManejador.length} operación(es) sin manejador y SIN registrar en CONOCIDAS:\n`,
+    );
     for (const op of nuevasSinManejador) {
       console.error(`    ${op.method} ${op.endpoint}  (${op.client}, ${op.path})`);
     }
@@ -127,7 +205,9 @@ if (modoJson) {
     );
   }
   if (yaCubiertas.length > 0) {
-    console.error(`  ${yaCubiertas.length} entrada(s) de CONOCIDAS que ya tienen manejador — hay que borrarlas:\n`);
+    console.error(
+      `  ${yaCubiertas.length} entrada(s) de CONOCIDAS que ya tienen manejador — hay que borrarlas:\n`,
+    );
     for (const c of yaCubiertas) {
       console.error(`    ${c.method} ${c.endpoint}  (${c.prompt})`);
     }

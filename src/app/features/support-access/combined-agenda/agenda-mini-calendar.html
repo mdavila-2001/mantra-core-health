@@ -1,0 +1,37 @@
+<div class="mini" data-testid="agenda-mini-calendario">
+  <div class="mini__cabeza">
+    <button type="button" class="mini__flecha" (click)="move(-1)" aria-label="Mes anterior">‹</button>
+    <span class="mini__titulo" aria-live="polite">{{ title() }}</span>
+    <button type="button" class="mini__flecha" (click)="move(1)" aria-label="Mes siguiente">›</button>
+  </div>
+  <table class="mini__tabla" role="grid" [attr.aria-label]="'Calendario de ' + title()">
+    <thead>
+      <tr>
+        @for (cabeza of heads; track $index) {
+          <th scope="col" [attr.abbr]="headNames[$index]"><span aria-hidden="true">{{ cabeza }}</span><span class="sr-only">{{ headNames[$index] }}</span></th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (semana of weeks(); track $index) {
+        <tr [class.mini__semana--marcada]="semana[0]!.inWeek">
+          @for (celda of semana; track celda.key) {
+            <td>
+              <button
+                type="button"
+                class="mini__dia"
+                [class.mini__dia--fuera]="!celda.inMonth"
+                [class.mini__dia--hoy]="celda.today"
+                [class.mini__dia--elegido]="celda.selected"
+                [attr.aria-label]="label(celda.day)"
+                [attr.aria-current]="celda.today ? 'date' : null"
+                [attr.aria-pressed]="celda.selected"
+                (click)="pick(celda.day)"
+              >{{ celda.day.getDate() }}</button>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

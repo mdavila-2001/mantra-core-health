@@ -19,6 +19,16 @@
             ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
         </div>
+        @if (pedidosEnviados() > 0) {
+          <!-- Lo que el alta pidió en su nombre, dicho una vez: si no, quien eligió
+               tres clínicas no sabe si se mandó algo ni dónde mirarlo. -->
+          <p class="registro__pedidos" data-testid="registro-pedidos-enviados">
+            Registramos {{ pedidosEnviados() }}
+            {{ pedidosEnviados() === 1 ? 'vínculo' : 'vínculos' }} con las instituciones y
+            aseguradoras que eligió; las que confirman vínculos ya recibieron su pedido. Cuando
+            inicie sesión, sigue cada uno en <strong>Mis verificaciones</strong>.
+          </p>
+        }
         <button
           app-button
           variant="primary"
@@ -57,6 +67,7 @@
            con búsqueda— y el aviso del departamento, sólo cuando su lectura
            falló, que es cuando el campo deja de ser un `select`. -->
         <div class="registro__body">
+          <app-account-exists-dialog />
           <app-paginated-form
             data-testid="registro-form-profesional"
             [paginas]="paginasProfesional()"
@@ -459,12 +470,9 @@
             </ng-template>
 
             <!--
-              Las tres habilitaciones —matrícula, SEDES y colegio de la
-              profesión—, cada una en SU renglón: número, fecha de inscripción y
-              respaldo. Una fecha o un archivo sueltos no dicen de cuál de los
-              tres registros son, y quien verifica tiene que saberlo sin
-              abrirlos. El rótulo, el asterisco y el error del número los pone
-              el motor; el renglón es el mismo para los tres.
+              One row per licence —matrícula, SEDES, profession college—: number and
+              date side by side, the backup file below. All three fields are
+              mandatory; label, asterisk and page-level error come from the engine.
             -->
             <ng-template #renglonDeHabilitacion let-renglon>
               <div class="registro-habilitacion" [attr.data-habilitacion]="renglon.clave">
@@ -487,8 +495,9 @@
                   </app-form-field>
                   <app-form-field
                     class="registro-habilitacion__fecha"
-                    label="Fecha de inscripción (opcional)"
+                    label="Fecha de inscripción"
                     hint="Cuándo se registró, no cuándo vence."
+                    [errorMessage]="faltaEnHabilitacion(renglon.control, 'licenceDate') ? 'Ingrese la fecha de inscripción.' : ''"
                   >
                     <app-date-picker
                       [attr.data-testid]="'registro-pro-fecha-' + renglon.clave"
@@ -497,8 +506,10 @@
                       [maxDate]="hoy"
                     />
                   </app-form-field>
-                  <!-- Sin `hint`: la zona de carga ya dice «PDF · Máximo 5 MB». -->
-                  <app-form-field class="registro-habilitacion__respaldo" label="Respaldo (opcional)">
+                  <!-- No `hint`: the upload zone already says «PDF · Máximo 5 MB». -->
+                  <app-form-field class="registro-habilitacion__respaldo" label="Respaldo"
+                    [errorMessage]="faltaEnHabilitacion(renglon.control, 'licenceFile') ? 'Adjunte el respaldo en PDF.' : ''"
+                  >
                     <app-file-input
                       [files]="attachmentFiles()[renglon.clave] ?? []"
                       [accept]="formatosDeRespaldo"
@@ -1104,6 +1115,17 @@
                 [inicial]="gpsConsultorio()"
                 (confirmado)="confirmarGpsConsultorio($event)"
                 (localidad)="aplicarLocalidadConsultorio($event)"
+              />
+            </ng-template>
+
+            <!-- Instituciones y aseguradoras: un solo campo proyectado con sus
+                 dos bloques. Lo elegido vive en dos señales y viaja en el alta. -->
+            <ng-template appCampoPersonalizado="lugaresDeTrabajo">
+              <app-workplace-picker
+                [institutions]="institucionesElegidas()"
+                (institutionsChange)="institucionesElegidas.set($event)"
+                [insurerIds]="aseguradorasElegidas()"
+                (insurerIdsChange)="aseguradorasElegidas.set($event)"
               />
             </ng-template>
           </app-paginated-form>

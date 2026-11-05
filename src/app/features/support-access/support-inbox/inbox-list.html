@@ -1,0 +1,106 @@
+<ul class="lista" role="list" data-testid="bandeja-lista">
+  @for (item of items(); track item.conversationId) {
+    <li
+      class="fila"
+      [class.fila--seleccionada]="item.conversationId === selectedId()"
+      [class.fila--clinica]="item.isClinical"
+      [style.--doctor-color]="color(item).borde"
+      [style.--doctor-fondo]="color(item).fondo"
+      [attr.data-testid]="'conv-' + item.conversationId"
+      [attr.data-estado]="item.status"
+      [attr.data-doctor]="item.practitionerName"
+    >
+      @if (reservado(item)) {
+        <div
+          class="fila__abrir fila__reservado"
+          [attr.data-testid]="'reservado-' + item.conversationId"
+        >
+          <span class="fila__arriba">
+            <span class="fila__paciente">{{ reservadoLabel }}</span>
+          </span>
+          <span class="fila__adelanto"
+            >El contenido de esta conversación no está disponible para usted.</span
+          >
+          <span class="fila__doctor">
+            <span class="fila__punto" aria-hidden="true"></span>
+            <span class="fila__doctor-nombre">{{ item.practitionerName }}</span>
+            <span class="fila__hace">· {{ elapsed(item) }}</span>
+          </span>
+        </div>
+        <div class="fila__pie">
+          <app-access-why-not
+            [request]="pregunta(item)"
+            [idPrefix]="'por-que-' + item.conversationId"
+          />
+        </div>
+      } @else {
+        <button
+          type="button"
+          class="fila__abrir"
+          [attr.aria-current]="item.conversationId === selectedId() ? 'true' : null"
+          [attr.data-testid]="'abrir-' + item.conversationId"
+          (click)="open.emit(item.conversationId)"
+        >
+          <span class="fila__arriba">
+            <span class="fila__paciente">{{ item.patientLabel }}</span>
+            @if (item.isClinical) {
+              <app-badge variant="error" size="sm" data-testid="marca-clinico">Clínico</app-badge>
+            }
+          </span>
+          @if (hidden(item)) {
+            <span
+              class="fila__adelanto fila__adelanto--oculto"
+              [attr.data-testid]="'oculto-' + item.conversationId"
+              >Contenido clínico oculto: lo ve quien tiene acceso clínico temporal aprobado.</span
+            >
+          } @else if (item.previewHidden === true) {
+            <span
+              class="fila__adelanto fila__adelanto--oculto"
+              [attr.data-testid]="'previa-retenida-' + item.conversationId"
+              >Abra la conversación para leer el mensaje.</span
+            >
+          } @else {
+            <span class="fila__adelanto">{{ item.lastMessagePreview }}</span>
+          }
+          <span class="fila__doctor">
+            <span class="fila__punto" aria-hidden="true"></span>
+            <span class="fila__doctor-nombre">{{ item.practitionerName }}</span>
+            <span class="fila__hace">· {{ elapsed(item) }}</span>
+          </span>
+        </button>
+
+        <div class="fila__pie">
+          <span class="fila__dueno" [attr.data-testid]="'dueno-' + item.conversationId">{{
+            owner(item)
+          }}</span>
+          @if (sla(item); as plazo) {
+            @if (plazo.kind !== 'none') {
+              <span
+                class="plazo"
+                [class]="'plazo plazo--' + plazo.kind"
+                [attr.data-testid]="'plazo-' + item.conversationId"
+                [attr.data-plazo]="plazo.kind"
+              >
+                {{ plazo.label }}
+              </span>
+            }
+          }
+          @if (item.status === 'NEW') {
+            <button
+              app-button
+              size="sm"
+              type="button"
+              [isLoading]="busyId() === item.conversationId"
+              [disabled]="busyId() !== null"
+              [attr.aria-label]="'Tomar la conversación de ' + item.patientLabel"
+              [attr.data-testid]="'tomar-' + item.conversationId"
+              (clicked)="take.emit(item.conversationId)"
+            >
+              Tomar
+            </button>
+          }
+        </div>
+      }
+    </li>
+  }
+</ul>

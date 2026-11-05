@@ -1,0 +1,121 @@
+:host {
+  display: block;
+}
+
+.horario {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.horario__controles {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(2, minmax(0, 12rem));
+  align-items: end;
+}
+
+.horario__atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  grid-column: 1 / -1;
+}
+
+.horario__campo {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.horario__rotulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.horario__resumen {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.semana {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.semana__horas {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.semana__marcas {
+  display: flex;
+  justify-content: space-between;
+}
+
+.semana__dia {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.semana__dia:hover {
+  border-color: var(--border-strong);
+}
+
+.semana__dia:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.semana__dia--activo {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.semana__nombre {
+  font-weight: 600;
+}
+
+.semana__pista {
+  position: relative;
+  block-size: 1.25rem;
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.semana__tramo {
+  position: absolute;
+  inset-block: 0;
+  background: var(--brand-primary);
+  opacity: 0.85;
+}
+
+@media (max-width: 40rem) {
+  .horario__controles {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .semana__horas,
+  .semana__dia {
+    grid-template-columns: 5rem minmax(0, 1fr);
+  }
+}
+
+.horario__problema {
+  margin: 0;
+  color: var(--st-error-fg);
+  font-size: var(--fs-caption);
+}

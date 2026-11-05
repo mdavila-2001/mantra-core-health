@@ -40,6 +40,9 @@ import { AttachmentDialog } from '../../../../shared/components/organisms/attach
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
 import { writeFailureMessage } from '../../write-message';
+import { consentTargetState } from '../informed-consent/consent-target';
+import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
 
 /**
  * Cuántos casos quirúrgicos se traen, y de cuántos se pide el detalle.
@@ -94,6 +97,8 @@ export interface TratamientoEnPantalla {
   readonly piezas: string;
   readonly nota: string;
   readonly cuando: Date | null;
+  /** La consulta en la que se hizo, si la lectura la trae. Ata su consentimiento. */
+  readonly encounterId?: string;
 }
 
 /**
@@ -144,6 +149,8 @@ export interface TratamientoEnPantalla {
     DatePipe,
     FormActions,
     FormField,
+    InformedConsentBadge,
+    InformedConsentDialog,
     Odontogram,
     Select,
     Textarea,
@@ -183,6 +190,25 @@ export class ProceduresBlock {
    * sigue existiendo por si algún consumidor futuro quiere las dos juntas.
    */
   readonly modo = input<'ambos' | 'cirugia' | 'odontologia'>('ambos');
+
+  /* -- Consentimiento informado dirigido a cada procedimiento y cirugía -----
+     La API valida `PROCEDURE` contra `clinical.procedures` (odontología) y,
+     si no, contra `procedures_perioperative.procedure_cases` (cirugía), del
+     mismo paciente. El caso quirúrgico no trae encuentro: usa el del contexto. */
+
+  protected readonly consent = consentTargetState<{ readonly id: string; readonly label: string; readonly encounterId?: string }>(
+    () => this.patientProfileId(),
+    (item) => [item?.encounterId, this.encounterId()],
+  );
+
+  protected consentToTreatment(t: TratamientoEnPantalla): void {
+    const label = t.piezas === '' ? t.que : `${t.que} · pieza ${t.piezas}`;
+    this.consent.target.set({ id: t.id, label, ...(t.encounterId === undefined ? {} : { encounterId: t.encounterId }) });
+  }
+
+  protected consentToSurgery(surgicalCase: { readonly id: string; readonly numero: string }): void {
+    this.consent.target.set({ id: surgicalCase.id, label: `Cirugía · caso ${surgicalCase.numero}` });
+  }
 
   /* -- Lo quirúrgico ------------------------------------------------------- */
 
@@ -272,6 +298,7 @@ export class ProceduresBlock {
         .join(', '),
       nota: tratamiento.noteText ?? '',
       cuando: tratamiento.performedAt ?? tratamiento.createdAt,
+      ...(tratamiento.encounterId === undefined ? {} : { encounterId: tratamiento.encounterId }),
     })),
   );
 

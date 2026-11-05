@@ -80,11 +80,15 @@ try {
   // `Entrar` exacto: «Iniciar sesión» es el encabezado de la tarjeta, no el
   // control, y un `first()` sobre una expresión laxa lo tomaba a él.
   await pagina.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  // Un `SUPERADMIN` tiene los dos accesos: puede pasar por el selector de portal y por la elección de organización.
+  await pagina.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/, { timeout: 60_000 });
 
-  // Un `SUPERADMIN` puede tener que elegir organización antes de entrar.
   if (pagina.url().includes('/auth/organization')) {
     await pagina.getByRole('button').first().click();
+    await pagina.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 60_000 });
+  }
+  if (pagina.url().includes('/portal-selector')) {
+    await pagina.getByRole('link', { name: /Portal de administración/ }).click();
     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
   paso('Sesión abierta contra la API real', true, pagina.url());

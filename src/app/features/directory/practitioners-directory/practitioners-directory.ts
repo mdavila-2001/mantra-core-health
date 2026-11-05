@@ -7,6 +7,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { SpecialtyImages } from '../../../core/data-access/terminology/specialty-images.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
@@ -25,7 +26,11 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { SpecialtyIcon } from '../../../shared/components/atoms/specialty-icon/specialty-icon';
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
 import { DirectoryPage } from '../../../shared/components/organisms/directory-page/directory-page';
-import type { SustantivoDelDirectorio } from '../../../shared/components/organisms/directory-page/directory-page.types';
+import type {
+  CriterioDeOrden,
+  SustantivoDelDirectorio,
+} from '../../../shared/components/organisms/directory-page/directory-page.types';
+import { ACTIVITY_COUNTERS } from '../../account/my-profile/activity-counters';
 import {
   SEARCH_PARAM,
   type FilterDef,
@@ -37,7 +42,6 @@ import {
   type CortesDeLaGuia,
 } from './practitioner-filters';
 import { porNombre, toResultado } from './practitioner-card';
-import { specialtyPhoto } from '../../../shared/utils/directory-photo';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
 interface TarjetaDeEspecialidad {
@@ -218,7 +222,7 @@ export class PractitionersDirectory {
       Object.keys(this.cortes()).length === 0,
   );
 
-  protected readonly photoOf = specialtyPhoto;
+  protected readonly photoOf = inject(SpecialtyImages).of;
 
   /**
    * Para qué especialidad está cargada la lista, o `undefined` si todavía no
@@ -240,6 +244,15 @@ export class PractitionersDirectory {
   );
 
   protected readonly sustantivo = SUSTANTIVO;
+
+  /**
+   * Los órdenes por actividad del «Ordenar por», además de nombre y nota: los
+   * cuatro contadores de la ficha, de mayor a menor. Las claves son las de
+   * `cifrasDe` en la tarjeta.
+   */
+  protected readonly criteriosDeOrden: readonly CriterioDeOrden[] = ACTIVITY_COUNTERS.map(
+    (contador) => ({ clave: contador.clave, etiqueta: `Más ${contador.rotulo.toLowerCase()}` }),
+  );
 
   protected readonly estado = signal<ViewState<readonly GrupoDeEspecialidad[]>>(loading());
 

@@ -1,0 +1,30 @@
+<app-page-header
+  title="Simulador y «¿por qué?»"
+  subtitle="Entienda por qué una persona puede o no puede hacer algo, y vea qué cambiaría un permiso antes de guardarlo."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-simulator">
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    @if (data(); as ref) {
+      <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
+        <app-tab label="¿Por qué puede o no puede?">
+          <app-explain-panel
+            [engagements]="ref.engagements"
+            [catalog]="ref.catalog"
+            [permissionCatalog]="ref.permissionCatalog"
+            [prefill]="prefill()"
+          />
+        </app-tab>
+        <app-tab label="¿Qué pasa si cambio permisos?">
+          <app-draft-panel
+            [engagements]="ref.engagements"
+            [catalog]="ref.catalog"
+            [permissionCatalog]="ref.permissionCatalog"
+            [initialEngagementId]="draftPerson()"
+            (explainRequested)="explainCase($event)"
+          />
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>

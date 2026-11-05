@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { catchError, map, of, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
@@ -72,7 +72,17 @@ export class PracticeSitesClient {
   listMyRoleAssignments(): Observable<readonly MyRoleAssignment[]> {
     return this.http
       .get<readonly ConNulos<WireRoleAssignment>[]>(this.url('/practitioners/me/role-assignments'))
-      .pipe(map((items) => items.map(aVinculacion)));
+      .pipe(
+        map((items) => items.map(aVinculacion)),
+        catchError((err: unknown) => {
+          // 404: no practitioner profile, so no assignments. Any other failure is a failure and not
+          // «none»: showing it as empty hides an outage behind «you have no memberships».
+          if (err instanceof HttpErrorResponse && err.status === 404) {
+            return of([]);
+          }
+          throw err;
+        }),
+      );
   }
 
   /**
@@ -220,6 +230,7 @@ interface WireRoleAssignment {
   readonly validTo: string | null;
   readonly createdAt: string;
   readonly avatarUrl: string | null;
+  readonly tenantId?: string | null;
 }
 
 interface WireRoleAssignmentResult {
@@ -231,9 +242,11 @@ interface WireRoleAssignmentResult {
 }
 
 function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
-  const { validFrom, validTo, createdAt, avatarUrl, ...resto } = body;
+  const { validFrom, validTo, createdAt, avatarUrl, tenantId, ...resto } = body;
   return {
     ...sinNulos(resto),
+    // Como `avatarUrl`: `MyRoleAssignmentResponseDto.tenantId` es siempre presente y `null` si la práctica no tiene organización.
+    tenantId: tenantId ?? null,
     ...(maybeDateOnly(validFrom) === undefined ? {} : { validFrom: maybeDateOnly(validFrom) }),
     ...(maybeDateOnly(validTo) === undefined ? {} : { validTo: maybeDateOnly(validTo) }),
     createdAt: maybeDate(createdAt) ?? new Date(createdAt as string),

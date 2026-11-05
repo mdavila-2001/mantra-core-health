@@ -1,0 +1,55 @@
+<article class="rc" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'report-card-' + report().id">
+  <header class="rc__head">
+    <p class="rc__vertical">{{ verticalLabel() }}</p>
+    <button
+      type="button"
+      class="rc__fav"
+      [attr.aria-pressed]="favorite()"
+      data-testid="report-favorite"
+      (click)="favoriteToggled.emit(report())"
+    >
+      <span aria-hidden="true">{{ favorite() ? '★' : '☆' }}</span>
+      Favorito<span class="rc__sr"> {{ report().nombre }}</span>
+    </button>
+  </header>
+
+  <h3 class="rc__title" [id]="ids + '-t'">{{ report().nombre }}</h3>
+  <p class="rc__desc">{{ report().descripcion }}</p>
+
+  <ul class="rc__badges" aria-label="Estado del reporte">
+    @if (report().certificado) {
+      <li><app-badge variant="success">Certificado</app-badge></li>
+    } @else {
+      <li><app-badge variant="secondary">Sin certificar</app-badge></li>
+    }
+    @if (report().enDiseno) {
+      <li><app-badge variant="warning">En diseño</app-badge></li>
+    }
+    @if (existingScreen()) {
+      <li><app-badge variant="info">Pantalla existente</app-badge></li>
+    }
+  </ul>
+
+  <dl class="rc__meta">
+    <div>
+      <dt>Responsable</dt>
+      <dd>{{ report().responsable }}</dd>
+    </div>
+    <div>
+      <dt>Frescura</dt>
+      <dd data-testid="report-freshness">{{ freshness() }}</dd>
+    </div>
+  </dl>
+
+  <a
+    app-button
+    variant="primary"
+    size="sm"
+    class="rc__open"
+    [routerLink]="report().ruta"
+    data-testid="report-open"
+    (click)="opened.emit(report())"
+  >
+    Abrir reporte<span class="rc__sr"> {{ report().nombre }}</span>
+  </a>
+</article>

@@ -1,0 +1,63 @@
+<ol class="hilo" aria-label="Mensajes y notas de la conversación" data-testid="conversacion-hilo">
+  @for (entry of entries(); track $index) {
+    @if (entry.kind === 'message') {
+      @let m = entry.message;
+      <li
+        class="burbuja"
+        [class.burbuja--paciente]="m.from === 'PATIENT'"
+        [class.burbuja--doctor]="m.from === 'DOCTOR_SIDE'"
+        [class.burbuja--clinica]="m.isClinical"
+        [class.burbuja--oculta]="m.contentHidden"
+        [attr.data-testid]="'mensaje-' + m.id"
+        [attr.data-clinico]="m.isClinical"
+      >
+        <p class="burbuja__quien">
+          <span class="sr-only">{{ m.from === 'PATIENT' ? 'Paciente' : 'Respuesta' }}: </span>
+          <strong>{{ speaker(m) }}</strong>
+          @if (m.isClinical) {
+            <app-badge variant="error" size="sm" data-testid="mensaje-clinico">Clínico</app-badge>
+          }
+          <span class="burbuja__hora">{{ when(m.sentAt) }}</span>
+        </p>
+        @if (m.contentHidden) {
+          <div class="oculto" role="note" [attr.data-testid]="'oculto-' + m.id">
+            <p class="oculto__titulo"><strong>Contenido clínico oculto</strong></p>
+            <p class="oculto__texto">Quien lo escribió no tiene cita en la agenda de {{ doctorName() }}, y un mensaje de alguien que no es su paciente puede ser clínico: por eso no se muestra su texto. No es un error ni algo que usted haya hecho mal.</p>
+            <p class="oculto__texto">Para leerlo hace falta un acceso clínico temporal aprobado por {{ doctorName() }}. Mientras no lo autorice, este mensaje no se puede leer desde acá.</p>
+            @switch (clinicalAccess()) {
+              @case ('PENDING') {
+                <p class="oculto__texto" [attr.data-testid]="'oculto-pendiente-' + m.id">Ya pidió acceso: {{ doctorName() }} todavía no lo decidió.</p>
+              }
+              @case ('APPROVED') {
+                <p class="oculto__texto">El acceso ya fue autorizado: vuelva a abrir la conversación para leer el mensaje.</p>
+              }
+              @default {
+                @if (canRequestAccess()) {
+                  <button app-button variant="outline" size="sm" type="button" (clicked)="askAccess.emit()" [attr.data-testid]="'oculto-pedir-' + m.id">Pedir acceso a la historia clínica</button>
+                }
+              }
+            }
+          </div>
+        } @else {
+          <p class="burbuja__texto">{{ m.bodyText }}</p>
+        }
+        @if (m.from === 'DOCTOR_SIDE' && m.authoredByName) {
+          <p class="burbuja__autora" data-testid="autora-real">
+            Respondió {{ m.authoredByName }} en nombre de {{ doctorName() }}.
+            {{ m.disclosureShown ? 'El paciente ve «respondido por su equipo».' : 'El paciente no ve el aviso.' }}
+          </p>
+        }
+      </li>
+    } @else {
+      @let n = entry.note;
+      <li class="nota" [attr.data-testid]="'nota-' + n.id">
+        <p class="nota__cabeza">
+          <app-badge variant="warning" size="sm">Nota interna</app-badge>
+          <span class="nota__aviso">Solo el equipo la ve. El paciente nunca.</span>
+        </p>
+        <p class="nota__texto">{{ n.bodyText }}</p>
+        <p class="nota__autora">{{ n.authorName }} · {{ when(n.createdAt) }}</p>
+      </li>
+    }
+  }
+</ol>

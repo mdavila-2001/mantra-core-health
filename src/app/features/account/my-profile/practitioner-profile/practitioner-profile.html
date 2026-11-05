@@ -45,6 +45,23 @@
         </div>
       </app-alert>
     }
+    <!-- «Mis verificaciones» (28/10/2026): está fuera del menú cerrado del médico,
+         y acá es donde uno viene a ver cómo lo ven y qué le falta. Un enlace,
+         no un botón: se puede abrir en otra pestaña y se anuncia como tal. -->
+    @if (veMisVerificaciones()) {
+      <p class="perfil__verificaciones">
+        <a
+          app-button
+          variant="secondary"
+          size="sm"
+          routerLink="/my-account/verifications"
+          data-testid="perfil-mis-verificaciones"
+        >
+          <app-nav-icon name="shield" aria-hidden="true" />
+          Mis verificaciones: el avance de su sello y sus solicitudes
+        </a>
+      </p>
+    }
     <!-- Las tres entradas de abajo son el estado de operaciones que ocurren
          ACÁ —subir la foto, y por eso su curso y su fallo—; las tres salidas
          son intenciones, no resultados: la vista pide, este contenedor decide

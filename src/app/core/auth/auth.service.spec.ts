@@ -1,8 +1,10 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { AuthService } from './auth.service';
+import { SESSION_CLEANERS } from './session-cleanup';
 import { RefreshTokenStorage } from './refresh-token.storage';
 
 function makeToken(claims: Record<string, unknown>): string {
@@ -61,7 +63,15 @@ class AlmacenFalso {
     this.tenant = tenantId;
   }
 
-  onClearedInAnotherTab(): () => void {
+  clearSelectedTenant(): void {
+    this.tenant = null;
+  }
+
+  /** El aviso que el servicio registró: la prueba lo dispara como si otra pestaña hubiera cerrado sesión. */
+  avisoOtraPestana: (() => void) | null = null;
+
+  onClearedInAnotherTab(alCerrar?: () => void): () => void {
+    this.avisoOtraPestana = alCerrar ?? null;
     return () => {
       this.bajas += 1;
     };
@@ -90,6 +100,31 @@ describe('AuthService', () => {
 
   afterEach(() => {
     http.verify();
+  });
+
+  describe('cerrar sesión desde otra pestaña', () => {
+    it('da de baja la sesión local y corre los limpiadores (lo que cada pestaña guarda en memoria)', () => {
+      const limpiador = vi.fn();
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          { provide: RefreshTokenStorage, useValue: almacen },
+          { provide: SESSION_CLEANERS, multi: true, useValue: limpiador },
+        ],
+      });
+      const otro = TestBed.inject(AuthService);
+      otro.watchSessionClosedElsewhere();
+      expect(almacen.avisoOtraPestana).not.toBeNull();
+
+      almacen.avisoOtraPestana?.();
+
+      expect(otro.isAuthenticated()).toBe(false);
+      expect(limpiador).toHaveBeenCalledTimes(1);
+      // `afterEach` verifica HTTP con el controlador del módulo anterior: se vuelve a tomar el actual.
+      http = TestBed.inject(HttpTestingController);
+    });
   });
 
   describe('login', () => {
@@ -284,6 +319,46 @@ describe('AuthService', () => {
 
       expect(auth.activeTenantId()).toBe('t-2');
       expect(auth.needsTenantSelection()).toBe(false);
+    });
+
+    describe('alcance de plataforma (H1/H3)', () => {
+      const PLATAFORMA = makeToken({ sub: 'u-1', sid: 's-1', roles: ['PLATFORM_ADMIN'], tenants: ['t-1', 't-2'] });
+
+      function entrar(accessToken: string): void {
+        auth.login({ kind: 'email', email: 'a@b.test', password: 'p' }).subscribe();
+        http.expectOne('/iam/auth/login').flush({ ...RESPUESTA_TOKENS, accessToken });
+      }
+
+      it('con alcance de plataforma y 2 organizaciones no exige elegir y queda «en toda la plataforma»', () => {
+        entrar(PLATAFORMA);
+
+        expect(auth.needsTenantSelection()).toBe(false);
+        expect(auth.hasPlatformScope()).toBe(true);
+        expect(auth.platformWide()).toBe(true);
+        expect(auth.activeTenantId()).toBeNull();
+      });
+
+      it('clearSelectedTenant suelta la organización y borra la recordada', () => {
+        entrar(PLATAFORMA);
+        auth.selectTenant('t-2');
+        expect(almacen.tenant).toBe('t-2');
+
+        auth.clearSelectedTenant();
+
+        expect(auth.activeTenantId()).toBeNull();
+        expect(auth.platformWide()).toBe(true);
+        expect(almacen.tenant).toBeNull();
+      });
+
+      it('NEGATIVO: sin alcance de plataforma clearSelectedTenant no hace nada (hay que seguir con una organización)', () => {
+        entrar(TOKEN_DOS_TENANTS);
+        auth.selectTenant('t-2');
+
+        auth.clearSelectedTenant();
+
+        expect(auth.activeTenantId()).toBe('t-2');
+        expect(almacen.tenant).toBe('t-2');
+      });
     });
   });
 });

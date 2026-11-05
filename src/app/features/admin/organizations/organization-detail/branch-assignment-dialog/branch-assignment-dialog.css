@@ -1,0 +1,35 @@
+/* Modal de asignación de sede. Sólo ritmo y tipografía: el panel, el fondo y
+   el pie los pone `app-content-dialog`. */
+
+.asignacion__vigentes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-6);
+}
+
+.asignacion__titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.asignacion__lista {
+  margin: 0;
+  padding-inline-start: var(--sp-6);
+  color: var(--text-primary);
+}
+
+.asignacion__vacio {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.asignacion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}

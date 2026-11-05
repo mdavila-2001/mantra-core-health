@@ -10,8 +10,8 @@
 
     Todas las rutas cuelgan de `/diagnostics/lab/…` y no llevan el id del
     laboratorio: lo decide el servidor con el tenant del contexto
-    (`X-Tenant-Id`), igual que la recepción de muestras. La API real no tiene
-    ninguna (P52): las responde sólo el simulador.
+    (`X-Tenant-Id`), igual que la recepción de muestras. The real API publishes
+    them (04/11/2026); the simulator mirrors them for `development,demo`.
     ========================================================================== */
 
 /** En qué punto de su vida está un servicio del catálogo. */
@@ -156,7 +156,7 @@ export interface LabSummary {
   readonly resultFiles: number;
   /** Bytes de todo lo subido (sin los retirados). */
   readonly resultBytes: number;
-  readonly byCategory: readonly { readonly category: string; readonly count: number }[];
+  readonly byCategory: readonly { readonly category: string; readonly categoryId: string | null; readonly count: number }[];
   readonly recentActivity: readonly LabActivityEntry[];
 }
 
@@ -207,12 +207,12 @@ export interface LabResultFilePage {
   readonly totalBytes: number;
 }
 
-/** Lo que se declara al empezar una subida. No hay tope de tamaño. */
+/** Declared when an upload starts: the API requires the order and allows 10 MB of pdf/image/docx/xlsx/txt (422). */
 export interface LabResultUploadStart {
   readonly fileName: string;
   readonly contentType: string;
   readonly sizeBytes: number;
-  readonly orderId?: string | null;
+  readonly orderId: string;
   readonly note?: string | null;
   /** Avisar al médico y al paciente cuando termine. */
   readonly notify?: boolean;
@@ -245,4 +245,54 @@ export interface LabResultTarget {
 export interface LabResultTargetPage {
   readonly items: readonly LabResultTarget[];
   readonly count: number;
+}
+
+/* ---- órdenes (31/10/2026) ------------------------------------------------ */
+
+/**
+ * En qué punto está una orden que le derivaron al laboratorio o al centro de
+ * imagenología. El camino es `DRAFT → RECEIVED → PROCESSED → UPLOADED`;
+ * `CANCELLED` y `REJECTED` son las salidas de una orden ya recibida.
+ *
+ * `UPLOADED` no se guarda: lo decide el servidor cuando una orden procesada
+ * tiene al menos un resultado subido y disponible. Es el único estado desde el
+ * que se descarga.
+ */
+export type LabOrderStatus =
+  | 'DRAFT'
+  | 'RECEIVED'
+  | 'PROCESSED'
+  | 'UPLOADED'
+  | 'CANCELLED'
+  | 'REJECTED';
+
+/** Lo que el personal le hace a una orden desde su fila. */
+export type LabOrderAction = 'RECEIVE' | 'PROCESS' | 'CANCEL' | 'REJECT';
+
+/** Un resultado ya subido, lo justo para descargarlo. */
+export interface LabOrderFile {
+  readonly id: string;
+  readonly fileName: string;
+  readonly sizeBytes: number;
+}
+
+/** Una orden de la bandeja, con su estado y los archivos que ya tiene. */
+export interface LabOrder {
+  readonly orderId: string;
+  readonly studyName: string;
+  readonly patientName: string;
+  readonly requesterName: string;
+  readonly requestedAt: string;
+  readonly status: LabOrderStatus;
+  /** El motivo de una orden cancelada o rechazada, si se dio. */
+  readonly reason: string | null;
+  readonly files: readonly LabOrderFile[];
+}
+
+export interface LabOrderPage {
+  readonly items: readonly LabOrder[];
+  /** The lab's TOTAL orders, not `items.length`. */
+  readonly count: number;
+  /** Cursor of the next page; absent on the last one. */
+  readonly nextCursor?: string;
 }

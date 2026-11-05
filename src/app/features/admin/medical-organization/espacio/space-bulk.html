@@ -1,0 +1,79 @@
+<app-page-header
+  title="Alta masiva de espacios"
+  subtitle="Varios espacios iguales de una vez, con un patrón de código: «301-{A..H}» o «CAMA-{1..12}»."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="contexto()" (retry)="cargar()">
+  @if (fallo(); as estado) {
+    <app-view-state-host class="masiva__fallo" data-testid="masiva-fallo" [state]="estado" (retry)="enviar()" />
+  }
+  @if (datos()) {
+    <app-card class="masiva" padding="lg" data-testid="masiva">
+      <form class="masiva__rejilla" [formGroup]="form" (ngSubmit)="enviar()">
+        <fieldset class="masiva__campos">
+          <legend class="masiva__titulo">Qué se crea</legend>
+          <app-form-field label="Dentro de" [required]="true" hint="El padre de todos los espacios nuevos.">
+            <app-select formControlName="parentSpaceId" [options]="padres()" placeholder="Elegí el padre" data-testid="masiva-padre" />
+          </app-form-field>
+          <app-form-field label="Forma" [required]="true">
+            <app-select formControlName="formCode" [options]="formas()" placeholder="Elegí la forma" data-testid="masiva-forma" />
+          </app-form-field>
+          <app-form-field label="Función" [required]="true">
+            <app-select formControlName="functionCode" [options]="funciones()" placeholder="Elegí la función" data-testid="masiva-funcion" />
+          </app-form-field>
+          <app-form-field label="Patrón de código" [required]="true" [hint]="'Un solo rango entre llaves. Máximo ' + tope + '.'">
+            <app-input formControlName="codePattern" placeholder="301-{A..H}" data-testid="masiva-codigo" />
+          </app-form-field>
+          <app-form-field label="Patrón de nombre" [required]="true" hint="Con el mismo rango, o un nombre base que se completa: «Cama» → «Cama A».">
+            <app-input formControlName="namePattern" placeholder="Cama 301-{A..H}" data-testid="masiva-nombre" />
+          </app-form-field>
+          @if (esCama()) {
+            <app-form-field label="Categoría de cama">
+              <app-select formControlName="bedCategoryCode" [options]="categorias()" placeholder="Sin declarar" />
+            </app-form-field>
+          }
+        </fieldset>
+
+        <section class="masiva__previa" aria-labelledby="masiva-previa-titulo" aria-live="polite" data-testid="masiva-previa">
+          <h2 id="masiva-previa-titulo" class="masiva__titulo">Vista previa</h2>
+          @if (vistaPrevia(); as p) {
+            @if (p.error) {
+              <app-alert tone="error" title="El patrón no sirve">{{ p.error }}</app-alert>
+            } @else {
+              <p class="masiva__total">
+                Se van a crear <strong>{{ p.total }}</strong> espacio(s), planificados.
+                @if (p.ocupados > 0) {
+                  <strong class="masiva__ocupado-texto">{{ p.ocupados }} código(s) ya existen.</strong>
+                }
+              </p>
+              <ul class="masiva__codigos">
+                @for (fila of p.filas; track fila.code) {
+                  <li [class.masiva__ocupado]="fila.ocupado">
+                    <code>{{ fila.code }}</code>
+                    <span>{{ fila.name }}</span>
+                    @if (fila.ocupado) {
+                      <span class="masiva__marca">ya existe</span>
+                    }
+                  </li>
+                }
+              </ul>
+              @if (p.total > p.filas.length) {
+                <p class="masiva__total">y {{ p.total - p.filas.length }} más.</p>
+              }
+            }
+          } @else {
+            <p class="masiva__total">Escribí el patrón de código para ver qué se va a crear.</p>
+          }
+        </section>
+
+        <div class="masiva__acciones">
+          <button app-button variant="ghost" type="button" (clicked)="cancelar()">Cancelar</button>
+          <button app-button type="submit" [disabled]="!puedeEnviar() || enviando()" data-testid="masiva-crear">
+            {{ enviando() ? 'Creando…' : 'Crear ' + (vistaPrevia()?.total ?? 0) + ' espacio(s)' }}
+          </button>
+        </div>
+      </form>
+    </app-card>
+  }
+</app-view-state-host>

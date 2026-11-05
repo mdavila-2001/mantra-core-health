@@ -1,5 +1,6 @@
 ---
 slug: dengue
+image: dengue.svg | El mosquito Aedes transmite el virus del dengue entre personas. | Ciclo en el que un mosquito Aedes pica a una persona infectada y luego a una sana, junto a las fases de la enfermedad y las señales de alarma del dengue.
 ---
 
 ## [definition] Introducción

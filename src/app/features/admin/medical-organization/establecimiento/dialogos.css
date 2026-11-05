@@ -1,0 +1,22 @@
+/* Los modales de Establecimiento: campos en rejilla, dos columnas desde tablet. */
+.dialogo__rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3) var(--sp-4);
+  margin-block-start: var(--sp-3);
+}
+
+@media (min-width: 780px) {
+  .dialogo__rejilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dialogo__ancho {
+    grid-column: 1 / -1;
+  }
+}
+
+.dialogo__lista {
+  margin: var(--sp-2) 0;
+  padding-inline-start: var(--sp-5);
+}

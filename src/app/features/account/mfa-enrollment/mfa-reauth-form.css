@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.reauth {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.reauth__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.reauth__texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.reauth__modos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.reauth__modo {
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.reauth__modo[aria-pressed='true'] {
+  border-color: var(--focus-ring);
+  background: var(--bg-active);
+  font-weight: 600;
+}
+
+.reauth__modo:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.reauth__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}

@@ -1,0 +1,59 @@
+@if (errorDeAccion(); as mensaje) {
+  <app-alert tone="error" data-testid="buzon-error">{{ mensaje }}</app-alert>
+}
+
+<!-- Un buzón, no una consola: sólo lo que otra parte espera o resolvió. El
+     estado de la lista (S1–S9) lo dibuja la tabla, con su reintento. -->
+<app-data-table
+  [state]="estado()"
+  [columns]="columnas()"
+  [trackBy]="porId"
+  [fitContainer]="true"
+  [wrapHeaders]="true"
+  caption="Solicitudes de ingreso a organizaciones"
+  data-testid="buzon-solicitudes"
+  (retry)="cargar()"
+/>
+
+<ng-template #celdaOrg let-fila>
+  <span class="buzon__nombre">{{ fila.practiceName }}</span>
+  @if (fila.detalle) {
+    <span class="buzon__secundario">{{ fila.detalle }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  <app-badge [variant]="fila.estadoTono">{{ fila.estadoTexto }}</app-badge>
+</ng-template>
+
+<ng-template #celdaAcciones let-fila>
+  @if (fila.estado === 'INVITED') {
+    <span class="buzon__acciones">
+      <button
+        app-button
+        type="button"
+        size="sm"
+        [disabled]="filaEnCurso() !== null"
+        [attr.aria-label]="'Aceptar la invitación de ' + fila.practiceName"
+        [attr.data-testid]="'buzon-aceptar-' + fila.id"
+        (clicked)="aceptar(fila)"
+      >
+        Aceptar
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        size="sm"
+        [disabled]="filaEnCurso() !== null"
+        [attr.aria-label]="'Rechazar la invitación de ' + fila.practiceName"
+        [attr.data-testid]="'buzon-rechazar-' + fila.id"
+        (clicked)="rechazar(fila)"
+      >
+        Rechazar
+      </button>
+    </span>
+  } @else {
+    <span class="buzon__secundario">—</span>
+  }
+</ng-template>

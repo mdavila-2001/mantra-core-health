@@ -26,6 +26,7 @@ function mine(id: string, statusCode: string, extra: Partial<MyRoleAssignment> =
     isPrimary: false,
     createdAt: new Date('2026-10-01'),
     avatarUrl: null,
+    tenantId: null,
     ...extra,
   };
 }

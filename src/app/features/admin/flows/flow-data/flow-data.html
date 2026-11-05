@@ -1,0 +1,113 @@
+@let p = plan();
+
+<section class="datos" aria-label="Datos que toca cada llamada a la API del flujo" data-testid="flow-data">
+  <app-view-state-host [state]="overall()">
+    @if (flowTables(); as t) {
+      <section class="datos__resumen" aria-label="Tablas afectadas por el flujo" data-testid="flow-data-summary">
+        <h3 class="datos__subtitulo">Tablas afectadas por el flujo</h3>
+        <dl class="datos__conteos">
+          <div class="datos__conteo">
+            <dt>Tablas distintas</dt>
+            <dd data-testid="flow-data-distinct">{{ t.groups.resumen.distintas }}</dd>
+          </div>
+          <div class="datos__conteo">
+            <dt>Escribe</dt>
+            <dd data-testid="flow-data-writes">{{ t.groups.resumen.escribe }}</dd>
+          </div>
+          <div class="datos__conteo">
+            <dt>Lee</dt>
+            <dd data-testid="flow-data-reads">{{ t.groups.resumen.lee }}</dd>
+          </div>
+        </dl>
+        <p class="datos__ayuda">
+          Suma de {{ t.crossed }} de {{ p.operationIds.length }} operaciones cruzadas con el inventario; cada tabla cuenta una vez.
+        </p>
+      </section>
+    }
+
+    <ul class="datos__pasos" data-testid="flow-data-steps">
+      @for (call of p.calls; track call.nodeId) {
+        <li class="datos__paso">
+          <p class="datos__cabecera">
+            <strong>{{ call.step }}</strong>
+            <app-badge size="sm" [variant]="method(call.method).tone">{{ method(call.method).label }}</app-badge>
+            <code>{{ call.path }}</code>
+          </p>
+          <p class="datos__ayuda">
+            Operación <a app-link [routerLink]="operationUrl(call.operationId)">{{ call.operationId }}</a>
+          </p>
+          <!-- Sin ficha en el inventario: una línea con el camino, no un estado vacío de página entera
+               repetido por cada paso. -->
+          @if (stateOf(call.operationId); as faltante) {
+            @if (faltante.status === 'empty') {
+              <p class="datos__ayuda" data-testid="flow-data-missing">
+                {{ faltante.message }}
+                <a app-link [routerLink]="faltante.nextAction.route" [queryParams]="faltante.nextAction.queryParams">{{ faltante.nextAction.label }}</a>.
+              </p>
+            }
+          }
+          @if (stateOf(call.operationId).status !== 'empty') {
+          <app-view-state-host [state]="stateOf(call.operationId)" (retry)="retry(call.operationId)">
+            @if (stateOf(call.operationId); as s) {
+              @if (s.status === 'ready') {
+                @let g = groupsOf(s.data);
+                @if (s.data.datos.length === 0) {
+                  <p class="datos__ayuda">
+                    {{ s.data.sinTablas ? 'No toca tablas: ' + s.data.sinTablas : 'El inventario no encontró tablas que toque.' }}
+                  </p>
+                } @else {
+                  <div class="datos__tablas">
+                    <div>
+                      <p class="datos__rotulo">Escribe ({{ g.resumen.escribe }})</p>
+                      @if (g.escribe.length > 0) {
+                        <ul class="datos__chips" [attr.data-testid]="'flow-data-write-' + call.nodeId">
+                          @for (table of g.escribe; track table.clave) {
+                            <li><a app-link [routerLink]="tableUrl(table.schema, table.tabla)">{{ table.clave }}</a></li>
+                          }
+                        </ul>
+                      } @else {
+                        <p class="datos__ayuda">Ninguna: sólo consulta.</p>
+                      }
+                    </div>
+                    <div>
+                      <p class="datos__rotulo">Lee ({{ g.resumen.lee }})</p>
+                      @if (g.lee.length > 0) {
+                        <ul class="datos__chips" [attr.data-testid]="'flow-data-read-' + call.nodeId">
+                          @for (table of g.lee; track table.clave) {
+                            <li><a app-link [routerLink]="tableUrl(table.schema, table.tabla)">{{ table.clave }}</a></li>
+                          }
+                        </ul>
+                      } @else {
+                        <p class="datos__ayuda">Ninguna.</p>
+                      }
+                    </div>
+                  </div>
+                  @if (s.data.eventos.length > 0 || s.data.trabajos.length > 0) {
+                    <p class="datos__ayuda">
+                      @if (s.data.eventos.length > 0) {
+                        Emite: <code>{{ s.data.eventos.join(', ') }}</code>.
+                      }
+                      @if (s.data.trabajos.length > 0) {
+                        Encola: <code>{{ s.data.trabajos.join(', ') }}</code>.
+                      }
+                    </p>
+                  }
+                }
+              }
+            }
+          </app-view-state-host>
+          }
+        </li>
+      }
+      @for (step of p.uncrossable; track step.nodeId) {
+        <li class="datos__paso" data-testid="flow-data-uncrossable">
+          <p class="datos__cabecera">
+            <strong>{{ step.step }}</strong>
+            <app-badge size="sm" variant="warning">Sin operación en el contrato</app-badge>
+          </p>
+          <p class="datos__ayuda">{{ step.reason }}</p>
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+</section>

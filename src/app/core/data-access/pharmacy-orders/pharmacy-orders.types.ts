@@ -58,11 +58,29 @@ export interface LineaDePedido {
   /** «500 mg · caja x 20», o `null` si el directorio no lo publica. */
   readonly presentacion: string | null;
   readonly cantidad: number;
+  /**
+   * Lo que declara la receta para ese medicamento («4»), en la unidad que
+   * recetó el médico, que no tiene por qué ser la del envase. Ausente si la
+   * receta no declara cantidad.
+   */
+  readonly cantidadDeclarada?: number;
   /** Precio unitario como texto exacto, o `null` sin precio publicado. */
   readonly precio: string | null;
   readonly moneda: string | null;
   /** `false` = la sede no puede confirmar este renglón; se dice claro. */
   readonly disponible: boolean;
+  /**
+   * `true` si la sede elegida no tiene este medicamento: el renglón se
+   * muestra por su nombre, pero no viaja en el pedido — no hay un producto de
+   * esa sede que mandar, y uno de otra farmacia la API lo rechaza.
+   */
+  readonly missingAtSite?: boolean;
+  /**
+   * `true` si la sede ofrecía el producto por su catálogo, sin existencias
+   * cargadas: entra al pedido sin reservar, y la farmacia dice al confirmar
+   * si lo tiene y cuántos.
+   */
+  readonly porConfirmar?: boolean;
   /** Cantidad acumulada que la API ya registró como entregada. */
   readonly fulfilledQuantity?: number;
   /** Cantidad realmente reservada; el saldo es reservada menos entregada. */
@@ -194,6 +212,11 @@ export interface PedidoFarmacia extends PatientSettlementFields {
    * re-pedir uno vencido necesita reconstruir el borrador entero.
    */
   readonly pharmacyId: string;
+  /**
+   * El slug de la vitrina pública de la farmacia (`pharmacyPublicSlug`).
+   * Ausente cuando no tiene: sin él no se ofrece el chat del pedido.
+   */
+  readonly slugDeFarmacia?: string;
 }
 
 /**
@@ -227,7 +250,12 @@ export interface EnvioDePedido {
 /* ─── El lado del mostrador (carril FAR-I3, contrato de FAR-E2) ─────────── */
 
 /** Qué decide la farmacia sobre un renglón al confirmar el pedido. */
-export const DECISIONES_DE_LINEA = ['TAL_CUAL', 'PROPONER_GENERICO', 'NO_DISPONIBLE'] as const;
+export const DECISIONES_DE_LINEA = [
+  'TAL_CUAL',
+  'PROPONER_GENERICO',
+  'NO_DISPONIBLE',
+  'CONFIRMAR_STOCK',
+] as const;
 
 export type DecisionDeLinea = (typeof DECISIONES_DE_LINEA)[number];
 
@@ -240,6 +268,7 @@ export interface AjusteDeLinea {
   /** Índice (base 0) del renglón dentro de `PedidoFarmacia.lineas`. */
   readonly indice: number;
   readonly decision: DecisionDeLinea;
+  readonly quantity?: number;
   readonly propuesta?: {
     /** Producto real elegido del catálogo. */
     readonly productId?: string;

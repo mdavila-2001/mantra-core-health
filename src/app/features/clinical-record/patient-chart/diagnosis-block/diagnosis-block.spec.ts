@@ -3,24 +3,36 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { By } from '@angular/platform-browser';
+
 import { SessionStore } from '../../../../core/auth/session.store';
 import { DiagnosisBlock } from './diagnosis-block';
+import { PresuntivoForm } from './presuntivo-form/presuntivo-form';
 
 /**
- * La tabla de presuntivos (C3), sola en el bloque desde el 2026-09-25 —
- * ver el comentario de la clase en `diagnosis-block.ts` para por qué el
- * formulario de alta que este bloque tenía se sacó entero. Lo que estas
- * pruebas fijan:
+ * El alta corta de un presuntivo (2026-10-30) y la tabla de presuntivos (C3).
  *
- * 1. **El bloque sólo tiene la tabla.** Sin `<form>`, sin barra de casos de
- *    demostración: lo único que se pinta es «Diagnósticos de esta persona».
+ * El 2026-09-25 el bloque quedó sólo con la tabla; el 2026-10-30 el cliente
+ * pidió volver a poder crear un presuntivo desde «Diagnóstico», más práctico
+ * que antes, **sin quitar la tabla**. Esos tres tests de entonces —«no hay
+ * formulario»— codificaban el requisito viejo y se reescriben acá por cambio
+ * de requisito, no por debilitamiento. Lo que estas pruebas fijan:
+ *
+ * 1. **El bloque tiene el alta y la tabla.** La tabla y sus Confirmar/Rechazar
+ *    siguen como estaban.
  * 2. **El estado sale del catálogo, no de la etiqueta.** Sólo un presuntivo
  *    («En estudio») ofrece Confirmar/Rechazar.
  * 3. **Confirmar/Rechazar relee la lista del servidor** y avisa al
  *    expediente — nunca se pinta la fila a mano con la respuesta.
- * 4. **Sin borrador que perder.** `tieneCambiosPendientes` (contrato de
- *    `DraftBlock`) es siempre `false`: no hay formulario que deje algo a
- *    medio escribir.
+ * 4. **El borrador es fiel.** `tieneCambiosPendientes` (contrato de
+ *    `DraftBlock`) es `true` en cuanto hay algo escrito: el modal pregunta
+ *    antes de tirarlo.
+ * 5. **El alta nace presuntivo con el contrato real**: el concepto se resuelve
+ *    por código y viaja como `verificationStatusConceptId`, nunca como la
+ *    palabra `PROVISIONAL` (que la API rechaza con 400).
+ * 6. **Un fallo parcial no duplica ni pierde**: si la nota de los motivos
+ *    falla, el diagnóstico ya existe, lo escrito se conserva y reintentar sólo
+ *    repite la nota.
  */
 
 /** El resumen clínico sin diagnósticos: lo que la tabla lee por omisión. */
@@ -114,7 +126,7 @@ describe('DiagnosisBlock', () => {
     });
     http = TestBed.inject(HttpTestingController);
     TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] }),
+      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' }),
       refreshToken: 'r-1',
     });
     fixture = TestBed.createComponent(DiagnosisBlock);
@@ -153,6 +165,16 @@ describe('DiagnosisBlock', () => {
     return elemento().querySelector(`[data-testid="${id}"]`);
   }
 
+  /** La relectura de la tabla tras un alta. */
+  function responderRelectura(resumen: unknown = RESUMEN): void {
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(resumen as object);
+    fixture.detectChanges();
+    for (const etiquetas of http.match((r) => r.url === '/terminology/concepts')) {
+      etiquetas.flush(ETIQUETAS);
+    }
+    fixture.detectChanges();
+  }
+
   /** Pinta el bloque: resumen y etiquetas de la tabla. */
   function cargar(resumen: unknown = RESUMEN): void {
     fixture.detectChanges();
@@ -164,16 +186,13 @@ describe('DiagnosisBlock', () => {
     fixture.detectChanges();
   }
 
-  it('el bloque sólo tiene la tabla: no hay formulario de alta', () => {
+  it('el bloque ofrece el alta del presuntivo y, debajo, la tabla de siempre', () => {
     cargar();
+    expect(porTestId('diagnostico-alta')).not.toBeNull();
+    expect(elemento().querySelector('form')).not.toBeNull();
     expect(porTestId('diagnostico-tabla')).not.toBeNull();
-    expect(elemento().querySelector('form')).toBeNull();
-  });
-
-  it('tieneCambiosPendientes es siempre falso: no hay formulario que deje borrador', () => {
-    expect(componente.tieneCambiosPendientes()).toBe(false);
-    cargar();
-    expect(componente.tieneCambiosPendientes()).toBe(false);
+    // La tabla conserva su comportamiento: el presuntivo se confirma o rechaza.
+    expect(porTestId('diagnostico-confirmar-c-1')).not.toBeNull();
   });
 
   it('lista los diagnósticos con su estado, y sólo el presuntivo se puede confirmar o rechazar', () => {
@@ -190,11 +209,11 @@ describe('DiagnosisBlock', () => {
     expect(porTestId('diagnostico-rechazar-c-2')).toBeNull();
   });
 
-  it('sin diagnósticos lo dice, sin ofrecer ningún formulario', () => {
+  it('sin diagnósticos lo dice, y el alta sigue ofrecida para el primero', () => {
     cargar(RESUMEN_VACIO);
 
     expect(elemento().textContent).toContain('todavía no tiene diagnósticos registrados');
-    expect(elemento().querySelector('form')).toBeNull();
+    expect(porTestId('diagnostico-alta')).not.toBeNull();
   });
 
   it('si la lectura del resumen falla, la tabla lo cuenta', () => {
@@ -263,5 +282,60 @@ describe('DiagnosisBlock', () => {
 
     expect(avisos).toBe(1);
     expect(porTestId('diagnostico-confirmar-c-1')).toBeNull();
+  });
+
+  /* ---- el alta de un presuntivo vive en `presuntivo-form` ------------------ */
+
+  describe('el alta de un presuntivo (delegada en `app-presuntivo-form`)', () => {
+    const formulario = () =>
+      fixture.debugElement.query(By.directive(PresuntivoForm)).componentInstance as PresuntivoForm;
+
+    it('el borrador del bloque es el del formulario: nada escrito, nada que perder', () => {
+      cargar();
+
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+      expect(componente.mensajeDeDescarte()).toBeNull();
+
+      (formulario() as unknown as { hallazgos: { set(v: string): void } }).hallazgos.set('Cuadro febril');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('con el diagnóstico ya registrado y motivos sin guardar, el aviso de descarte llega al anfitrión', () => {
+      cargar();
+
+      (formulario() as unknown as { registrado: { set(v: unknown): void } }).registrado.set({
+        id: 'c-9',
+        patientProfileId: 'p-1',
+        clinicalStatus: null,
+        verificationStatus: null,
+        clinicalCourse: null,
+        createdAt: new Date(),
+      });
+
+      expect(componente.mensajeDeDescarte()).toContain('ya quedó registrado');
+    });
+
+    it('cuando el diagnóstico se crea, la tabla relee aunque el modal siga abierto', () => {
+      cargar();
+      let avisos = 0;
+      componente.cambio.subscribe(() => (avisos += 1));
+
+      formulario().diagnosticoCreado.emit();
+      responderRelectura();
+
+      // La tabla se actualizó, pero el anfitrión NO se enteró: cerraría el modal con el aviso de
+      // la nota fallida adentro.
+      expect(avisos).toBe(0);
+    });
+
+    it('cuando el alta termina, el bloque avisa al anfitrión', () => {
+      cargar();
+      let avisos = 0;
+      componente.cambio.subscribe(() => (avisos += 1));
+
+      formulario().terminado.emit();
+
+      expect(avisos).toBe(1);
+    });
   });
 });

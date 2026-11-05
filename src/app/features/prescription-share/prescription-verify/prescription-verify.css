@@ -1,0 +1,63 @@
+:host {
+  display: block;
+}
+
+/* Misma forma que `verify/portability`: un aviso centrado fuera del armazón. */
+.rx-verify {
+  display: grid;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  max-inline-size: 60ch;
+  margin-inline: auto;
+  padding: var(--sp-8) var(--sp-4);
+}
+
+.rx-verify__title {
+  margin: 0;
+  font-size: var(--fs-h2);
+  text-align: center;
+}
+
+.rx-verify__detail {
+  margin: 0;
+}
+
+.rx-verify__data {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-1);
+  margin: var(--sp-3) 0;
+}
+
+.rx-verify__data dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.rx-verify__data dd {
+  margin: 0;
+}
+
+.rx-verify__label {
+  margin: var(--sp-3) 0 var(--sp-1);
+  font-weight: 600;
+}
+
+.rx-verify__hash {
+  display: block;
+  font-family: var(--font-mono);
+  word-break: break-all;
+  user-select: all;
+}
+
+.rx-verify__back {
+  margin: 0;
+  text-align: center;
+}
+
+/* La instrucción va pegada al sello: sin compararlo, la pantalla no prueba nada. */
+.rx-verify__instruction {
+  margin: var(--sp-2) 0 0;
+  font-weight: 600;
+}

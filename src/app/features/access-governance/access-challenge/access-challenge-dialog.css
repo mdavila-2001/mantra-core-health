@@ -1,0 +1,25 @@
+.desafio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.desafio__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.desafio__texto,
+.desafio__ejemplos {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.desafio__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}

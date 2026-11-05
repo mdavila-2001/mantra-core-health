@@ -2,7 +2,11 @@ import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.t
 import { SIN_CARA_DE_ASEGURADORA } from './navigation.payer';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
+import { SECCIONES_DE_LABORATORIO } from './navigation.laboratory';
+import { INSIGHTS_SECTIONS } from './navigation.insights';
+import { ACCESS_REQUESTS_SECTIONS } from './navigation.access-requests';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
+import { SECCIONES_DE_APOYO } from './navigation.support';
 import type { AppSection } from './navigation.types';
 
 /* ============================================================================
@@ -532,10 +536,65 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Intervenciones',
     group: 'Atención',
     icon: 'scalpel',
-    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN'],
+    // F4 (`CONTRATO-F2-F5.md` §F4.3): Facturación y la administración leen la
+    // agenda de quirófanos y la utilización. La API decide cada acción.
+    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN', 'BILLING', 'SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Mire las intervenciones programadas y confirme su participación.',
     module: 'M53 procedures_perioperative',
+  },
+  /* Internación (F2/F3, 31/10/2026). El permiso real no es un rol del token:
+     es una asignación operativa (enfermería, admisión, limpieza, mantenimiento)
+     que resuelve la API en `/practice/infrastructure-access/me`; por eso las
+     secciones existen sólo en un hospital y cada pantalla muestra S5 si la API
+     no le da a la persona la acción. La autoridad es la API. */
+  {
+    path: 'inpatient/bed-board',
+    label: 'Tablero de camas',
+    group: 'Atención',
+    icon: 'hospital',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    onlyForTenantTypes: ['HOSPITAL'],
+    availability: 'disponible',
+    summary: 'Mire el estado de cada cama por unidad, bloquéela, pídala limpiar o ingrese a un paciente.',
+    module: 'M14 practice · M08 clinical',
+  },
+  {
+    path: 'inpatient/cleaning',
+    label: 'Cola de limpieza',
+    group: 'Atención',
+    icon: 'shield',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    onlyForTenantTypes: ['HOSPITAL'],
+    availability: 'disponible',
+    summary: 'Tome, termine e inspeccione las limpiezas pendientes de camas y salas.',
+    module: 'M14 practice',
+  },
+  {
+    path: 'inpatient/census',
+    label: 'Censo diario',
+    group: 'Atención',
+    icon: 'clipboard',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    onlyForTenantTypes: ['HOSPITAL'],
+    availability: 'disponible',
+    summary: 'Revise y cierre el censo de camas del día; corrija con ajustes que conservan el original.',
+    module: 'M08 clinical',
+  },
+  {
+    path: 'inpatient/indicators',
+    label: 'Indicadores de internación',
+    group: 'Atención',
+    icon: 'chart',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    onlyForTenantTypes: ['HOSPITAL'],
+    availability: 'disponible',
+    summary: 'Ocupación, estancia media, giro y rotación de cama con las fórmulas de la OPS.',
+    module: 'M08 clinical',
   },
   {
     // Carril 17. La bandeja de visitas de laboratorio del doctor.
@@ -687,15 +746,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
-    // FT-21 (carril 21). El equipo de un servicio de salud: cargos, pago
-    // acordado por cargo y un expediente que se cierra una semana después de
-    // realizado. Renglón propio por el mismo criterio que «Cotizaciones»: es
-    // un destino al que se vuelve —responder invitaciones, cargar las notas
-    // del ejercicio—, no un paso que se hace una vez.
-    //
-    // La ruta es `my-medical-groups` y no `medical-groups`: ese es el prefijo
-    // del módulo en la API y el proxy compara por inicio de ruta.
+    // FT-21. Pestaña de «Grupos y foros» (`GroupsHub`, 01/11/2026): se unifican
+    // comunidades y equipos médicos. `/my-medical-groups` sigue abriendo.
+    // La ruta es `my-medical-groups` y no `medical-groups` por el proxy de API.
     path: 'my-medical-groups',
+    fueraDelMenuPara: ['PRACTITIONER', 'CLINICIAN'],
     label: 'Grupos médicos',
     group: 'Atención',
     icon: 'people',
@@ -886,6 +941,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // La bandeja de LA ASEGURADORA para los profesionales que piden sumarse a
+    // ella (28/10/2026): aprobar es el sello oficial que el médico ve en «Mis
+    // verificaciones». Mismo acceso que «Solicitudes recibidas» —la autoridad
+    // es la membresía en la aseguradora, que resuelve la API—, y fuera del
+    // menú: el de la aseguradora es una lista cerrada que fijó la propietaria.
+    // Se llega desde el panel de la aseguradora (franja de dashboard.html).
+    path: 'administration/insurer-practitioner-requests',
+    label: 'Profesionales que piden sumarse',
+    group: 'Administración',
+    icon: 'people',
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    fueraDelMenuPara: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Apruebe o rechace a los profesionales que piden trabajar con su aseguradora.',
+    module: 'M26 insurance',
+  },
+  {
     // La cara de LA ASEGURADORA de las solicitudes de seguro: lo que cada
     // prestador le presentó, con paciente, médico, servicio, monto y fechas.
     // «Solicitudes de seguro» (arriba) es la cara del prestador; ésta es la de
@@ -958,6 +1033,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Delegue acceso con alcance y vigencia, y administre sus permisos.',
     module: 'M29 delegated_access',
   },
+  ...SECCIONES_DE_APOYO,
   {
     // W2/F4 (M40): primer uso de `IDENTITY_ADMIN` en el mapa — los doce
     // comandos del backend lo exigen (`AUTH_SERVICE` también puede, pero es un
@@ -1036,6 +1112,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M19 community',
   },
   ...SECCIONES_DE_PLATAFORMA,
+  ...INSIGHTS_SECTIONS,
   {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
     // resolve`— y doce comandos, así que la sección entra como panel de
@@ -1090,7 +1167,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Catálogo de servicios',
     group: 'Administración',
     icon: 'tag',
-    roles: ['SECURITY_ADMIN'],
+    // F5e: Facturación carga las tarifas de espacios y revisa el día-cama.
+    roles: ['SECURITY_ADMIN', 'BILLING'],
     availability: 'disponible',
     summary: 'Mantenga la lista fija de servicios sobre la que se arman los presupuestos.',
     module: 'M17 billing',
@@ -1188,9 +1266,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Facturación',
     group: 'Facturación',
     icon: 'billing',
-    roles: ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN'],
+    // El médico entra para cobrar y facturar SUS consultas: la API
+    // (`billing-simulated.access.ts`) le acota los cobros y le niega anular,
+    // revertir, el correo y la bandeja.
+    roles: ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN', 'PRACTITIONER', 'CLINICIAN'],
     // FACT-SIAT-MOCK: la pantalla existe; lo fiscal va contra el SIAT SIMULADO
-    // y, sin `billingSiatDemo`, dice que la facturación no está conectada.
+    // y, sin `billingSimulatedApi` ni `billingSiatDemo`, dice que la
+    // facturación no está conectada.
     availability: 'disponible',
     summary: 'Emita comprobantes y siga los cobros de la organización.',
     module: 'M26 billing · M42 payments',
@@ -1261,6 +1343,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Y a ninguna cuenta de organización (el hospital incluido): es de una persona.
+    hiddenForAccountKind: 'ORGANIZATION',
     // Es del paciente: a quien atiende no se le ofrece.
     hiddenFor: ['PRACTITIONER'],
     label: 'Dependientes',
@@ -1307,13 +1391,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M07 consent',
   },
   {
-    // BR-20 · CV-19: quién ve la historia del paciente y la revocación. Reemplaza
-    // a las maquetas estáticas de `features/alovida/accesos`, que quedan fuera de
-    // este menú (DECISIONES.md, BR-20).
     path: 'my-account/clinical-access',
-    // Sin renglón propio desde el 27/10/2026: es la vista `?ver=historia` de
-    // «Mi privacidad». La ruta redirige (`SECCIONES_REDIRIGIDAS`) y la sección
-    // queda registrada para que los enlaces guardados sigan resolviendo.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Quién ve mi historia',
     group: 'Mi cuenta',
@@ -1323,12 +1401,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Quién ve su historia clínica, y revóquelo.',
     module: 'M06 authz',
   },
+  ...ACCESS_REQUESTS_SECTIONS,
   {
-    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones. De
-    // cualquier persona con sesión (`ANY_ROLE`); la API no exige rol y resuelve
-    // todo por el `id` del token. Fuera del menú lateral —al médico le
-    // desaparece «Mi cuenta» a propósito, y una entrada más lo traería de
-    // vuelta—: se entra por el menú de la cuenta, en el encabezado.
+    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones.
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/security',
     label: 'Seguridad',
@@ -1352,6 +1427,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Y a ninguna cuenta de organización (el hospital incluido): es de una persona.
+    hiddenForAccountKind: 'ORGANIZATION',
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1375,6 +1452,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Y a ninguna cuenta de organización (el hospital incluido): es de una persona.
+    hiddenForAccountKind: 'ORGANIZATION',
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1398,6 +1477,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Y a ninguna cuenta de organización (el hospital incluido): es de una persona.
+    hiddenForAccountKind: 'ORGANIZATION',
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1420,6 +1501,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Y a ninguna cuenta de organización (el hospital incluido): es de una persona.
+    hiddenForAccountKind: 'ORGANIZATION',
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1436,6 +1519,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Y a ninguna cuenta de organización (el hospital incluido): es de una persona.
+    hiddenForAccountKind: 'ORGANIZATION',
     hiddenFor: ['PRACTITIONER'],
     label: 'Cotizaciones',
     group: 'Mi cuenta',
@@ -1696,6 +1781,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     //
     // La sirve `GET /insurance/my-claims`, sobre la misma tabla que dictamina
     // la aseguradora en «Solicitudes recibidas» (P56).
+    //
+    // **No existe para la farmacia** (propietario, 30/10/2026: «arreglá el
+    // menú de la farmacia»). La lista del pedido no la incluye y una farmacia
+    // no presenta solicitudes de seguro: el paraguas en su barra era una
+    // sección de paciente colgada en su cuenta. Se oculta por el tipo de la
+    // organización activa, así que admin y superadmin no cambian.
+    hiddenForTenantTypes: ['PHARMACY'],
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/requests',
     label: 'Mis solicitudes',
@@ -1705,6 +1797,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Sus solicitudes de seguro y lo que decidió la aseguradora: si cubre, cuánto y por qué.',
     module: 'M26 insurance',
+  },
+  {
+    // «Mis verificaciones» (propietario, 28/10/2026): la hoja de ruta de la
+    // verificación del profesional —perfil, matrícula, títulos,
+    // especialidades, instituciones, seguros— y la bandeja de las solicitudes
+    // que mandó, contada como un chat.
+    //
+    // Fuera del menú lateral: el menú del médico es una lista cerrada de nueve.
+    // Se llega desde el panel, desde «Mi perfil» y desde el final del alta.
+    path: 'my-account/verifications',
+    label: 'Mis verificaciones',
+    group: 'Mi cuenta',
+    icon: 'shield',
+    // Sin rol propio, como «Mi identidad»: «Mi cuenta» es autoservicio y no
+    // admite roles de gestión. La ruta la cierra a quien atiende
+    // (`SECCIONES_DE_QUIEN_ATIENDE` en app.routes.ts) y la API decide qué ve.
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Siga el avance de su verificación y las solicitudes que envió a instituciones y aseguradoras.',
+    module: 'M05 profiles · M26 insurance',
   },
   {
     // **«Mi consultorio propio»** (propietario, 2026-10-13), en el lugar que
@@ -1735,7 +1848,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // herramientas» del panel, su otra puerta, se retiró el 28/10/2026).
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Creá y editá tu consultorio: dirección, mapa, teléfono y horario.',
+    summary: 'Cree y edite su consultorio: dirección, mapa, teléfono y horario.',
     module: 'M14 practice',
   },
   {
@@ -1939,126 +2052,5 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M04 directory',
   },
 
-  {
-    // El portal de la cuenta de laboratorio (30/09/2026): el mismo menú plano que
-    // tiene la farmacia desde el 29/09, adaptado a quien vende servicios y no
-    // productos. Rutas bajo `administration/` por la misma razón que las de la
-    // farmacia: nada de prefijos que el proxy se coma (check-route-prefixes).
-    path: 'administration/laboratory',
-    // Sólo la cuenta de laboratorio (30/09/2026): su menú es plano y cerrado,
-    // como el del mostrador de la farmacia. La autoridad sigue siendo la API.
-    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
-    roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Resumen',
-    group: 'General',
-    icon: 'home',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'Cómo va su laboratorio: servicios, órdenes sin resultado y lo último que pasó.',
-    module: 'M20 diagnostics',
-  },
-  {
-    // La recepción de muestras del laboratorio: la bandeja de órdenes que
-    // otras organizaciones le dirigieron (`POST /diagnostics/service-requests/inbox`)
-    // y los dos actos que la vacían —recibir la muestra y acesionarla—. Es el
-    // paso que falta **antes** de «Laboratorio e imagen», cuya cola arranca
-    // cuando la acesión ya existe.
-    //
-    // Quien la opera es el personal de un centro de diagnóstico, que no tiene
-    // rol propio en el token: el dueño entra con `USER` y su autoridad es la
-    // membresía. La API decide con `LabStaffGuard` (miembro activo de un tenant
-    // `DIAGNOSTIC_CENTER`, o `CLINICIAN`/`PRACTITIONER` del tenant activo); el
-    // menú sólo puede mirar el tipo de la organización activa, y es lo que
-    // mira. El paciente queda afuera también por rol: su membresía en el
-    // tenant por defecto no lo vuelve personal de nadie.
-    path: 'laboratory/reception',
-    label: 'Recepción de muestras',
-    // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
-    // de laboratorio, como los del mostrador de la farmacia.
-    group: 'General',
-    icon: 'flask',
-    roles: [ANY_ROLE],
-    requiresTenant: true,
-    hiddenFor: ['PATIENT'],
-    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
-    availability: 'disponible',
-    summary: 'Reciba las muestras de las órdenes que le derivaron y registre su acesión.',
-    module: 'M20 diagnostics',
-  },
-  {
-    // La cola de trabajo del laboratorio, para su propio personal. Es la misma
-    // pantalla que «Laboratorio e imagen» (`GET /diagnostics/work-orders`),
-    // pero aquélla exige `CLINICIAN`/`PRACTITIONER` y el personal de un centro
-    // de diagnóstico no tiene rol en el token: la API la abre con
-    // `LabStaffGuard` (membresía en un `DIAGNOSTIC_CENTER`), y el menú, igual
-    // que la recepción, mira el tipo de la organización activa. Dos secciones
-    // y no una con dos reglas: `isVisibleTo` no sabe decir «este rol **o**
-    // este tipo de organización», y enseñárselo para una sola pantalla sería
-    // una regla nueva en el corazón del menú.
-    path: 'laboratory/queue',
-    label: 'Cola de trabajo',
-    // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
-    // de laboratorio, como los del mostrador de la farmacia.
-    group: 'General',
-    icon: 'scan',
-    roles: [ANY_ROLE],
-    requiresTenant: true,
-    hiddenFor: ['PATIENT'],
-    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
-    availability: 'disponible',
-    summary: 'Siga las órdenes de trabajo de las muestras que acesionaste.',
-    module: 'M20 diagnostics',
-  },
-  {
-    // Los resultados: el laboratorio sube archivos de cualquier formato y sin
-    // tope de tamaño (por partes), y ve todo lo subido con su visor.
-    path: 'administration/laboratory-results',
-    // Sólo la cuenta de laboratorio (30/09/2026): su menú es plano y cerrado,
-    // como el del mostrador de la farmacia. La autoridad sigue siendo la API.
-    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
-    roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Resultados',
-    group: 'General',
-    icon: 'results',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'Suba los resultados en cualquier formato y mire todo lo que ya subió.',
-    module: 'M20 diagnostics',
-  },
-  {
-    // Los precios del laboratorio (01/10/2026): precio de lista y descuento
-    // AloVida de cada servicio, editables en una tabla y guardados juntos.
-    path: 'administration/laboratory-prices',
-    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
-    roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Precios',
-    group: 'General',
-    icon: 'tag',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'El precio de lista y el descuento AloVida de cada servicio.',
-    module: 'M20 diagnostics',
-  },
-  {
-    // Las sucursales del laboratorio (01/10/2026): la misma pantalla que la de la
-    // farmacia, sobre la organización activa.
-    path: 'administration/laboratory-branches',
-    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
-    roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Sucursales',
-    group: 'General',
-    icon: 'pin',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'Edite sus sucursales o suba varias de una vez con un CSV.',
-    module: 'M04 directory',
-  },
+  ...SECCIONES_DE_LABORATORIO,
 ];

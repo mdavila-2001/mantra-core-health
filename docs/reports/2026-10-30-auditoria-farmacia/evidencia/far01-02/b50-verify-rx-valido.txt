@@ -1,0 +1,31 @@
+{
+ "tag": "b50-verify-rx-valido",
+ "state": "none",
+ "requested": "/verify/rx/c89a88cc-5009-4ec1-a5d8-3e84f48755a4",
+ "finalUrl": "http://localhost:4000/verify/rx/c89a88cc-5009-4ec1-a5d8-3e84f48755a4",
+ "httpStatus": 200,
+ "title": "AloVida - Verificar receta",
+ "robots": [
+  "noindex, nofollow"
+ ],
+ "h": [
+  "Verificar receta"
+ ],
+ "apiCalls": [
+  "GET /public/prescriptions/c89a88cc-5009-4ec1-a5d8-3e84f48755a4/verify → 200"
+ ],
+ "externalLinks": []
+}
+---- texto visible ----
+Verificar receta
+Éxito:
+Receta emitida
+Fue emitida en AloVida y no fue anulada ni reemplazada.
+Sello digital
+d9c25245160cc6937360e1d7b97d24d39bb67f26e9260bf0a00ef43317966954
+Compare este sello con el impreso al pie de la receta. Si no es exactamente igual, la receta fue alterada: no la acepte.
+Fecha de emisión
+31 de octubre de 2026, 02:30
+Matrícula
+MP-SCZ-48213 · en verificación
+Ir a AloVida

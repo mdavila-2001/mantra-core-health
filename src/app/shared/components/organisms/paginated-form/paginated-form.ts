@@ -1,4 +1,5 @@
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+import { filtroDeCampo } from '../../../forms/input-filters';
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -205,6 +206,15 @@ type RespuestaSiNo = 'si' | 'no' | '';
   },
 })
 export class PaginatedForm {
+  /** Ver `FieldDef.soloLetras` and `filtroDeCampo`. */
+  protected readonly filtroDe = filtroDeCampo;
+
+  /** Ver `FieldDef.alSalir`: pasa el valor ya escrito del campo, recortado. */
+  protected alSalirDe(campo: { key: string; alSalir?: (valor: string) => void }): void {
+    const valor = this.form().get(campo.key)?.value;
+    campo.alSalir?.(typeof valor === 'string' ? valor.trim() : '');
+  }
+
   private readonly platformId = inject(PLATFORM_ID);
   private readonly dialogs = inject(DialogService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -440,9 +450,7 @@ export class PaginatedForm {
   });
 
   readonly mostrarPasos = computed(
-    () =>
-      this.total() > 1 &&
-      (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
+    () => this.total() > 1 && (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
   );
 
   /**

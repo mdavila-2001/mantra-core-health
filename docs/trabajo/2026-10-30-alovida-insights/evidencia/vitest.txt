@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /home/user/mantra-core-health
+
+
+ Test Files  4 passed (4)
+      Tests  59 passed (59)
+   Start at  08:23:31
+   Duration  1.18s (transform 1.12s, setup 0ms, import 1.57s, tests 764ms, environment 1ms)
+

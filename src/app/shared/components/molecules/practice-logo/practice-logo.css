@@ -16,6 +16,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   overflow: hidden;
+  position: relative;
 }
 
 /* Blanco fijo también en oscuro: un logo se diseña para papel. */
@@ -44,4 +45,14 @@
 .logo-consultorio__icono {
   inline-size: 28px;
   block-size: 28px;
+}
+
+/* In-flight upload: a veil with the spinner over the same fixed box. */
+.logo-consultorio__subiendo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg-surface) 75%, transparent);
+  color: var(--brand-primary);
 }

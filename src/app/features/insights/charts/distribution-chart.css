@@ -1,0 +1,94 @@
+@import './chart-tokens.css';
+
+:host {
+  display: block;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+.dc__svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.dc__grid {
+  stroke: var(--ins-grid);
+}
+
+.dc__tick,
+.dc__cat {
+  fill: var(--ins-axis);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.dc__cat {
+  fill: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dc__bin {
+  fill: var(--ins-s1);
+  outline: none;
+}
+
+.dc__bin:hover,
+.dc__bin:focus-visible {
+  fill-opacity: 0.8;
+  stroke: var(--text-primary);
+  stroke-width: 2;
+}
+
+.dc__mean {
+  stroke: var(--st-warning-fg);
+  stroke-width: 2;
+}
+
+.dc__median {
+  stroke: var(--text-primary);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+}
+
+.dc__lab {
+  fill: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+}
+
+.dc__lab--med {
+  fill: var(--text-primary);
+}
+
+.dc__whisker {
+  stroke: var(--text-secondary);
+  stroke-width: 1.5;
+}
+
+.dc__box {
+  fill: color-mix(in srgb, var(--ins-s1) 28%, var(--bg-surface));
+  stroke: var(--ins-s1);
+  stroke-width: 1.75;
+}
+
+.dc__med {
+  stroke: var(--text-primary);
+  stroke-width: 2.5;
+}
+
+.dc__out {
+  fill: var(--bg-surface);
+  stroke: var(--st-error-fg);
+  stroke-width: 2;
+}
+
+.dc__note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+g:focus-visible {
+  outline: 2px solid var(--focus-ring);
+}

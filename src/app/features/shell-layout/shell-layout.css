@@ -43,9 +43,13 @@
     scrollbar-width: none;
   }
 
-  .app-header__derecha::-webkit-scrollbar {
-    display: none;
-  }
+  .app-header__derecha::-webkit-scrollbar { display: none; }
+
+  /* The account menu hung inside this scroll strip, which also clips vertically:
+     tapping the avatar opened it invisibly (04/11/2026). Anchored to the sticky
+     header instead, like «Más accesos» below, the strip no longer clips it. */
+  .app-header__derecha .menu-anclaje { position: static; }
+  .app-header__derecha .menu-anclaje .app-menu { right: var(--e2); }
 
   /* Las acciones van a la derecha, como en cualquier barra de app: con la
      tira alineada al principio, en un teléfono de 400–700 px quedaban todas
@@ -59,9 +63,7 @@
 
   /* En modo cajón el nombre ya viaja en aria-label y en el globo. El texto
      visible vuelve en escritorio, donde sí hay lugar para leerlo. */
-  .app-header__red-social-texto {
-    display: none;
-  }
+  .app-header__red-social-texto { display: none; }
 }
 
 @media (max-width: 400px) {
@@ -69,6 +71,16 @@
     gap: var(--e1);
     padding-inline: var(--e2);
   }
+}
+
+/*
+ * En un hilo de chat, en angosto, el hilo trae su «‹» a la bandeja justo
+ * debajo de esta flecha: dos «volver» apilados. Se esconde la del armazón, y
+ * sólo ahí. El corte es el mismo en que `messaging.css` pasa el hilo a
+ * pantalla completa (60rem); por encima el hilo no tiene «‹» y ésta se queda.
+ */
+@media (max-width: 60rem) {
+  .app-header__volver--hilo { display: none; }
 }
 
 .app-header__rapidos {

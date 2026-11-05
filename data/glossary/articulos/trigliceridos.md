@@ -1,5 +1,6 @@
 ---
 slug: trigliceridos
+image: trigliceridos.svg | Los triglicéridos llegan a la sangre desde el intestino y el hígado. | Diagrama del origen de los triglicéridos en el intestino y el hígado, su paso a la sangre y su reserva en células de grasa, con un tubo de sangre y listas de causas y riesgos.
 ---
 
 ## [definition] Introducción

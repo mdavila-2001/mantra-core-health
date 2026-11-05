@@ -189,6 +189,14 @@
   margin-block-end: var(--sp-3);
 }
 
+/* La celda del consentimiento: el estado y la acción, juntos y sin romper la fila. */
+.expediente__consentimiento {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+}
+
 /* «Enfermedades activas» (C3): una tarjeta por enfermedad, dos columnas desde
    tablet para no dejar la lista angosta y larga en pantallas anchas. */
 .expediente__activas-titulo {

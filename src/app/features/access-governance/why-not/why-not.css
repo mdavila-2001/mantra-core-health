@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.por-que {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+
+.por-que__respuesta {
+  inline-size: 100%;
+}
+
+.por-que__respuesta:empty {
+  display: none;
+}
+
+.por-que__resumen,
+.por-que__titulo,
+.por-que__admin {
+  margin: 0 0 var(--sp-2);
+}
+
+.por-que__titulo {
+  font-weight: 600;
+}
+
+.por-que__lista {
+  margin: 0 0 var(--sp-2);
+  padding-inline-start: var(--sp-4);
+}

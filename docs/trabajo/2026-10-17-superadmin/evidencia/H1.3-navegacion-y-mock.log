@@ -1,0 +1,6 @@
+$ yarn test --include navegación + app.routes + handlers del portal
+     × reparte el registro entero: ninguna sección se queda sin bloque por descuido 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   mantra-core-health  src/app/core/navigation/navigation.subgroups.spec.ts > NAV_SUBGROUPS > reparte el registro entero: ninguna sección se queda sin bloque por descuido
+ Test Files  1 failed | 54 passed (55)
+      Tests  1 failed | 784 passed (785)

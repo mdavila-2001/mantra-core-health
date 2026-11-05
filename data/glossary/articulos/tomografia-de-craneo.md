@@ -1,5 +1,6 @@
 ---
 slug: tomografia-de-craneo
+image: tomografia-de-craneo.svg | La tomografía de cráneo obtiene cortes de la cabeza con rayos X que giran a su alrededor. | Tomógrafo en anillo con la cabeza del paciente en el centro y un haz que gira, un corte axial del cráneo con el hueso en blanco, y la lista de situaciones que permite valorar.
 ---
 
 ## [definition] Introducción

@@ -40,7 +40,7 @@
             label="Elegir el comprobante"
             [accept]="accept"
             [maxSizeBytes]="maxBytes"
-            [disabled]="uploading()"
+            [uploading]="uploading()" uploadingLabel="Subiendo comprobante…"
             [(files)]="files"
           />
         </app-form-field>

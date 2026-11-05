@@ -1,5 +1,6 @@
 ---
 slug: vaginitis-aguda
+image: vaginitis-aguda.svg | La vaginitis tiene varias causas y cada una necesita su propio tratamiento. | Tres tarjetas con las causas de la vaginitis, vaginosis bacteriana, candidiasis y tricomoniasis, con su microorganismo y el tipo de flujo, junto a los síntomas comunes y las recomendaciones.
 ---
 
 ## [definition] Introducción

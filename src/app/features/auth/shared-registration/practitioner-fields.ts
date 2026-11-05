@@ -38,6 +38,8 @@ export interface PractitionerFieldsContext {
   readonly professionalTitle: string;
   /** El departamento de emisión depende del estado de su catálogo en cada pantalla. */
   readonly departmentIssuerField: (testId: string) => CampoDeFormulario;
+  /** Se llama al salir del correo personal —el de acceso—: la pantalla pregunta si ya tiene cuenta. */
+  readonly alSalirCorreoPersonal?: (valor: string) => void;
 }
 
 /** El teléfono personal del alta es obligatorio y debe estar completo. */
@@ -215,6 +217,7 @@ export function practitionerFields(
         },
         {
           key: 'personalEmail',
+          alSalir: context.alSalirCorreoPersonal,
           label: 'Su correo personal — con éste entra',
           hint: 'Es su identidad de acceso, no sólo un dato de contacto.',
           description:
@@ -296,22 +299,6 @@ export function practitionerFields(
           mensajeDeError: 'El número está incompleto para el país elegido.',
         },
         {
-          key: 'email',
-          label: 'Correo de trabajo (opcional)',
-          hint: 'El institucional, si tiene. No es con el que entra.',
-          description:
-            'Es un dato de contacto del consultorio: lo ve quien necesita escribirle por trabajo.',
-          control: 'email',
-          // `email` y no `username`: el identificador de acceso es el correo
-          // personal del paso anterior. Marcar los dos como `username` haría
-          // que el navegador guardara el equivocado.
-          autocomplete: 'email',
-          placeholder: 'matricula@hospital.bo',
-          testId: 'registro-pro-correo',
-          icono: 'mail',
-          mensajeDeError: 'Ingrese un correo válido.',
-        },
-        {
           key: 'gpsTrabajo',
           label: 'Ubicación GPS del trabajo (opcional)',
           hint: 'Confirme el punto para guardar la ubicación laboral.',
@@ -365,6 +352,24 @@ export function practitionerFields(
           key: 'officeLogo',
           label: 'Logo del consultorio (opcional)',
           hint: 'Sale en el membrete de sus PDF. PNG, JPG o WebP, de hasta 2 MB.',
+          control: 'custom',
+        },
+      ],
+    },
+    // Dónde trabaja y con qué seguros (propietario, 28/10/2026). Una sola
+    // página para las dos preguntas: son la misma —«con quién trabaja»— y el
+    // alta ya se había juntado de quince páginas a nueve. Va después del
+    // consultorio propio: primero lo que no depende de nadie, después lo que
+    // otro tiene que confirmar.
+    {
+      titulo: 'Dónde trabaja y con qué seguros',
+      clave: 'workplaces',
+      icon: 'building',
+      hint: 'Opcional. Cada aseguradora y cada institución que confirma vínculos recibe su pedido; su confirmación es el sello oficial.',
+      campos: [
+        {
+          key: 'lugaresDeTrabajo',
+          label: '',
           control: 'custom',
         },
       ],
@@ -423,10 +428,10 @@ export function practitionerFields(
       // La autoridad emisora ya no se pregunta (propietario, 26/10/2026): el
       // colegio se completa solo con el título profesional
       // (`syncCollegeWithProfession`) y se puede corregir desde el perfil.
-      hint: 'Sin matrícula, registro del SEDES y registro del colegio no podemos darle de alta. Las fechas y los respaldos son opcionales.',
+      hint: 'Sin matrícula, registro del SEDES y registro del colegio no podemos darle de alta. Cada registro lleva su número, su fecha de inscripción y su respaldo en PDF.',
       campos: [
-        // Cada registro es UN renglón con su número, su fecha de inscripción y
-        // su respaldo (propietario, 27/10/2026): una fecha y un archivo sueltos
+        // Each registry is ONE row with its number, registration date and backup;
+        // all three are mandatory (owner, 04/11/2026): una fecha y un archivo sueltos
         // no dicen de cuál de las tres habilitaciones son. El renglón lo
         // proyecta la pantalla bajo la `key` del número, así el motor sigue
         // validando el obligatorio y sabe a qué página volver.
@@ -441,7 +446,7 @@ export function practitionerFields(
           placeholder: placeholderMatricula,
           testId: 'registro-pro-matricula',
           icono: 'shield',
-          mensajeDeError: 'Ingrese su matrícula profesional.',
+          mensajeDeError: 'Complete la matrícula, su fecha de inscripción y su respaldo.',
         },
         {
           key: 'sedesLicenseNumber',
@@ -452,7 +457,7 @@ export function practitionerFields(
           placeholder: 'T.I. 538/14',
           testId: 'registro-pro-credencial',
           icono: 'briefcase',
-          mensajeDeError: 'Ingrese su número de registro del SEDES.',
+          mensajeDeError: 'Complete el registro del SEDES, su fecha de inscripción y su respaldo.',
         },
         {
           key: 'collegeLicenseNumber',
@@ -467,7 +472,8 @@ export function practitionerFields(
           placeholder: esOdontologo ? 'COB-12345' : 'CMB-12345',
           testId: 'registro-pro-colegio',
           icono: 'building',
-          mensajeDeError: 'Ingrese su número de registro en el colegio.',
+          mensajeDeError:
+            'Complete el registro del colegio, su fecha de inscripción y su respaldo.',
         },
       ],
     },

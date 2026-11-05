@@ -18,8 +18,14 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
+
+/** S6 del envío: la organización de la ruta no está (o no se puede ver). */
+const ORGANIZACION_NO_ENCONTRADA =
+  'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
 
 /** Largos que declara `CreateBranchDto`. */
 const MAX_CODIGO = 100;
@@ -65,7 +71,7 @@ const ETIQUETAS_DE_TIPO: Readonly<Record<BranchTypeCode, string>> = {
  */
 @Component({
   selector: 'app-branch-new',
-  imports: [Alert, AnnounceOnAppear, PageHeader, PaginatedForm],
+  imports: [Alert, AnnounceOnAppear, BackLink, PageHeader, PaginatedForm],
   templateUrl: './branch-new.html',
   styleUrl: './branch-new.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -234,22 +240,18 @@ export class BranchNew {
     return (latitude == null) !== (longitude == null);
   });
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message || 'Necesita pertenecer a esta organización para abrir una sede.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * El mensaje del fallo del envío, con el criterio común (`errorMessageOf`).
+   * Antes cada alta repetía su propia copia, y las cinco olvidaban el `404`:
+   * el formulario quedaba mudo cuando la organización ya no existía.
+   */
+  protected readonly errorMessage = computed<string | null>(() =>
+    errorMessageOf(
+      this.state(),
+      'Necesita pertenecer a esta organización para abrir una sede.',
+      ORGANIZACION_NO_ENCONTRADA,
+    ),
+  );
 
   /** El código es único dentro de la organización: un `409` sólo viene de él. */
   protected readonly codigoEnConflicto = computed(() => {
@@ -281,6 +283,9 @@ export class BranchNew {
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = computed(() => organizationDetailRoute(this.tenantId()));
 
   protected cancelar(): void {
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));

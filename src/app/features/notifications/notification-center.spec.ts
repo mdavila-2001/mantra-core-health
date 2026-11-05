@@ -227,9 +227,17 @@ describe('NotificationCenter', () => {
       .flush(pagina([consulta, mensaje, receta, red], null));
     fixture.detectChanges();
 
+    const preferencias = fixture.nativeElement.querySelector(
+      'a[routerLink="/settings"]',
+    ) as HTMLAnchorElement | null;
+    expect(preferencias?.textContent).toContain('Preferencias');
+    // Sin `AppButtonLink` importado el ancla quedaba sin clases: texto suelto,
+    // sin el contorno de `outline` (2026-10-29).
+    expect(preferencias?.classList).toContain('btn--outline');
     expect(
-      fixture.nativeElement.querySelector('a[routerLink="/settings"]')?.textContent,
-    ).toContain('Preferencias');
+      (fixture.nativeElement.querySelector('.page-header__subtitle') as HTMLElement | null)
+        ?.textContent,
+    ).toContain('sus citas');
     const pestañas = fixture.nativeElement.querySelectorAll(
       '[data-testid="avisos-pestanas"] [role="tab"]',
     ) as NodeListOf<HTMLElement>;

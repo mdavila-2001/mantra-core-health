@@ -1,0 +1,46 @@
+<app-card padding="lg" data-testid="mis-aprobaciones">
+  <h2 class="titulo">Mis pedidos de aprobación</h2>
+  <p class="texto">
+    Cuando una acción necesita que otra persona la apruebe, el pedido queda acá. Puede retirarlo
+    mientras espera.
+  </p>
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    <ul class="lista" role="list" aria-live="polite">
+      @for (a of items(); track a.id) {
+        <li class="pedido" [attr.data-testid]="'aprobacion-' + a.id" [attr.data-estado]="a.status">
+          <div class="pedido__cabeza">
+            <app-badge [variant]="statusOf(a.status).tone" size="sm">{{
+              statusOf(a.status).label
+            }}</app-badge>
+            <span class="texto">Pedido el {{ when(a.createdAt) }}</span>
+          </div>
+          <p class="pedido__resumen">{{ a.summary }}</p>
+          @if (a.status === 'PENDING') {
+            <p class="texto">Vence el {{ when(a.expiresAt) }}.</p>
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              [disabled]="busy() !== null"
+              [isLoading]="busy() === a.id"
+              (clicked)="withdraw(a)"
+              [attr.aria-label]="'Retirar mi pedido: ' + a.summary"
+              [attr.data-testid]="'aprobacion-retirar-' + a.id"
+            >
+              Retirar mi pedido
+            </button>
+          }
+          @if (a.status === 'APPROVED' && a.approvedUntil) {
+            <p class="texto">
+              Vale hasta el {{ when(a.approvedUntil) }}. Repita la acción para usarla.
+            </p>
+          }
+          @if (a.status === 'REJECTED' && a.decisionComment) {
+            <p class="texto">Motivo: {{ a.decisionComment }}</p>
+          }
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+</app-card>

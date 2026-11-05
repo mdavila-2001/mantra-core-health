@@ -1,11 +1,14 @@
+import type { TenantSimulado } from '../fixtures/directory.types';
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, STATUS, ORGANIZATION_TYPE } from '../fixtures/concepts';
+import { ALCANCE_ACCESO, INVITACIONES_PENDIENTES, MEMBRESIAS_DEL_APOYO, ROL_TENANT, TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
 import { affiliationList, MEDICAL, PROFESSIONALS, professionalById } from '../fixtures/people';
 import {
   conflict,
   forbidden,
   notFound,
   validation,
+  type MockReply,
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
@@ -40,34 +43,16 @@ import {
     la agenda de la organización.
     ========================================================================== */
 
-interface TenantSimulado {
-  readonly id: string;
-  readonly code: string;
-  readonly legalName: string;
-  readonly tradeName: string;
-  readonly tenantTypeConceptId: string;
-  readonly statusConceptId: string;
-  readonly verificationStatusConceptId: string;
-  readonly parentTenantId: string | null;
-  readonly createdAt: string;
-  readonly timeZone: string;
-}
+export { ALCANCE_ACCESO, ROL_TENANT };
 
-export const ROL_TENANT = {
-  OWNER: uuid('concept-tenant-role-owner'),
-  ADMIN: uuid('concept-tenant-role-admin'),
-  STAFF: uuid('concept-tenant-role-staff'),
-} as const;
-export const ALCANCE_ACCESO = {
-  ALL_TENANT: uuid('concept-access-scope-all'),
-  BRANCH: uuid('concept-access-scope-branch'),
-} as const;
+export type { TenantSimulado } from '../fixtures/directory.types';
+
 const TIPO_SUCURSAL = {
   CLINIC: uuid('concept-branch-clinic'),
   OFFICE: uuid('concept-branch-office'),
 } as const;
 
-const tenants = new Coleccion<TenantSimulado>([
+export const tenants = new Coleccion<TenantSimulado>([
   {
     id: TENANT_CONSULTORIO,
     code: 'ROJAS',
@@ -104,6 +89,7 @@ const tenants = new Coleccion<TenantSimulado>([
     createdAt: iso(-800),
     timeZone: 'America/La_Paz',
   },
+  ...TENANTS_DEL_APOYO,
   {
     id: TENANT_FARMACIA,
     code: 'FARVIDA',
@@ -234,9 +220,101 @@ const sucursales = new Coleccion<{
     timeZone: 'America/La_Paz',
     createdAt: iso(-300),
   },
+  // Laboratorio Central: su sede principal, la misma que publica la vitrina
+  // (Calle Sucre N.º 210). Antes «Sucursales» del laboratorio no tenía ni una.
+  {
+    id: uuid('branch-laboratorio-central-principal'),
+    tenantId: TENANT_LABORATORIO,
+    code: 'PRINCIPAL',
+    name: 'Sede principal',
+    branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    timeZone: 'America/La_Paz',
+    createdAt: iso(-900),
+    description: 'Toma de muestras y laboratorio · Calle Sucre N.º 210',
+    latitude: -17.784,
+    longitude: -63.1815,
+    locationUrl: 'https://www.openstreetmap.org/?mlat=-17.784&mlon=-63.1815#map=17/-17.784/-63.1815',
+  },
+  // Farmacia Vida: las mismas tres sedes que ofrece la bandeja del mostrador
+  // («Sede») en `pharmacy.handlers`. Antes «Sucursales» decía «Todavía no
+  // cargaste sucursales» mientras la bandeja ya repartía pedidos entre tres.
+  ...(
+    [
+      ['central', 'CENTRAL', 'Sucursal Central', 'Casa matriz · Av. Alemana N.º 2100', -17.769, -63.165, -700],
+      ['equipetrol', 'EQ', 'Sucursal Equipetrol', 'Av. San Martín, Equipetrol', -17.76, -63.199, -420],
+      ['plan3000', 'P3', 'Sucursal Plan 3000', 'Av. Paraguá, Plan 3000', -17.814, -63.137, -210],
+    ] as const
+  ).map(([clave, code, name, description, latitude, longitude, dias]) => ({
+    id: uuid(`branch-farmacia-vida-${clave}`),
+    tenantId: TENANT_FARMACIA,
+    code,
+    name,
+    branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    timeZone: 'America/La_Paz',
+    createdAt: iso(dias),
+    description,
+    latitude,
+    longitude,
+    locationUrl: `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=17/${latitude}/${longitude}`,
+  })),
 ]);
 
-const membresias = new Coleccion<{
+/**
+ * Suma las sucursales que una farmacia declaró en su alta pública, para que
+ * «Sucursales» las muestre al entrar: el alta las pide (3.1, «ubicación GPS de
+ * cada sucursal») y perderlas obligaba a cargarlas dos veces. Una que ya
+ * existe con el mismo nombre no se repite.
+ */
+export function sumarSucursalesDelAlta(
+  tenantId: string,
+  declaradas: readonly {
+    readonly name: string;
+    readonly description?: string;
+    readonly latitude?: number;
+    readonly longitude?: number;
+    readonly locationUrl?: string;
+  }[],
+): void {
+  for (const d of declaradas) {
+    const existentes = sucursales.filtrar((s) => s.tenantId === tenantId);
+    if (existentes.some((s) => s.name === d.name)) continue;
+    const base = d.name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    const usados = new Set(existentes.map((s) => s.code));
+    const raiz = base === '' ? 'SUC' : base;
+    let code = raiz;
+    for (let n = 2; usados.has(code); n++) code = `${raiz}-${n}`;
+    sucursales.agregar({
+      id: nuevoId('branch'),
+      tenantId,
+      code,
+      name: d.name,
+      branchTypeConceptId: TIPO_SUCURSAL.OFFICE,
+      statusConceptId: STATUS['ST-ACTIVE']!,
+      timeZone: 'America/La_Paz',
+      createdAt: ahora(),
+      ...(d.latitude === undefined ? {} : { latitude: d.latitude }),
+      ...(d.longitude === undefined ? {} : { longitude: d.longitude }),
+      ...(d.description === undefined ? {} : { description: d.description }),
+      ...(d.locationUrl === undefined ? {} : { locationUrl: d.locationUrl }),
+    });
+  }
+}
+
+/** Las sucursales activas de una organización, como las carga «Sucursales». */
+export function sucursalesDelTenant(tenantId: string) {
+  return sucursales.filtrar(
+    (s) => s.tenantId === tenantId && s.statusConceptId === STATUS['ST-ACTIVE'],
+  );
+}
+
+export const membresias = new Coleccion<{
   id: string;
   tenantId: string;
   userId: string;
@@ -337,6 +415,7 @@ const membresias = new Coleccion<{
     endDate: null,
     createdAt: iso(-200),
   },
+  ...MEMBRESIAS_DEL_APOYO,
   {
     id: uuid('membership-laboratorio-owner'),
     tenantId: TENANT_LABORATORIO,
@@ -349,6 +428,7 @@ const membresias = new Coleccion<{
     endDate: null,
     createdAt: iso(-200),
   },
+  ...INVITACIONES_PENDIENTES,
 ]);
 
 const asignaciones = new Coleccion<{
@@ -417,6 +497,32 @@ function organizacionPropia(t: TenantSimulado, request: MockRequest) {
     // societaria, NIT, carpeta legal, representante y gerencias.
     ...(FICHA_DE_ALTA[t.id] ?? {}),
   };
+}
+
+/**
+ * `assertCanRead` de la API (`TenantAdministrationService`): las lecturas de
+ * `/tenants/:id/**` no piden rol global, pero sí pertenecer a la organización
+ * —o ser de la plataforma—. Sin esto la maqueta le mostraba la ficha de
+ * cualquier organización a cualquier sesión, y el estado «no tenés acceso»
+ * (S5) de la ficha no se podía ni mirar.
+ *
+ * @returns El `403` que respondería la API, o `null` si puede leer.
+ */
+export function sinLecturaDe(tenantId: string, request: MockRequest): MockReply | null {
+  const user = request.user;
+  if (user === null) return forbidden('Se requiere pertenecer a la organización');
+  if (user.roles.includes('SECURITY_ADMIN') || user.roles.includes('SUPERADMIN')) return null;
+  const pertenece =
+    user.tenants.includes(tenantId) ||
+    membresias.filtrar(
+      (m) =>
+        m.tenantId === tenantId &&
+        m.userId === user.id &&
+        m.statusConceptId === STATUS['ST-ACTIVE'],
+    ).length > 0;
+  return pertenece
+    ? null
+    : forbidden('Se requiere pertenecer a la organización, o ser administrador de la plataforma');
 }
 
 /** Lo registrado en el alta de las organizaciones que tienen cuenta propia en la maqueta. */
@@ -585,8 +691,10 @@ export function registrarDirectorio(router: MockRouter): void {
     return { items };
   });
 
-  router.get('/tenants/:id', ({ params }) => {
-    const t = tenants.get(params['id']!);
+  router.get('/tenants/:id', (request) => {
+    const denegado = sinLecturaDe(request.params['id']!, request);
+    if (denegado !== null) return denegado;
+    const t = tenants.get(request.params['id']!);
     return t === undefined
       ? notFound('Organización no encontrada')
       : { ...t, parentTenantId: t.parentTenantId ?? undefined };
@@ -621,15 +729,17 @@ export function registrarDirectorio(router: MockRouter): void {
     return { fileId };
   });
 
-  router.get('/tenants/:id/child-tenants', ({ params, query }) =>
-    paginar(
+  router.get('/tenants/:id/child-tenants', (request) => {
+    const denegado = sinLecturaDe(request.params['id']!, request);
+    if (denegado !== null) return denegado;
+    return paginar(
       tenants
-        .filtrar((t) => t.parentTenantId === params['id'])
+        .filtrar((t) => t.parentTenantId === request.params['id'])
         .map((t) => ({ ...t, parentTenantId: t.parentTenantId ?? undefined })),
-      query,
+      request.query,
       25,
-    ),
-  );
+    );
+  });
 
   router.post('/tenants/:id/child-tenants', (request) => {
     const datos = cuerpo<{ code: string; legalName: string }>(request);
@@ -659,7 +769,10 @@ export function registrarDirectorio(router: MockRouter): void {
     };
   });
 
-  router.get('/tenants/:id/branches', ({ params }) => {
+  router.get('/tenants/:id/branches', (request) => {
+    const { params } = request;
+    const denegado = sinLecturaDe(params['id']!, request);
+    if (denegado !== null) return denegado;
     const items = sucursales
       .filtrar((s) => s.tenantId === params['id'])
       .map(({ tenantId: _t, ...s }) => s);
@@ -736,7 +849,10 @@ export function registrarDirectorio(router: MockRouter): void {
     return resto;
   });
 
-  router.get('/tenants/:id/memberships', ({ params, query }) => {
+  router.get('/tenants/:id/memberships', (request) => {
+    const { params, query } = request;
+    const denegado = sinLecturaDe(params['id']!, request);
+    if (denegado !== null) return denegado;
     const status = texto(query, 'statusConceptId');
     const items = membresias
       .filtrar((m) => m.tenantId === params['id'])
@@ -757,7 +873,9 @@ export function registrarDirectorio(router: MockRouter): void {
       tenantId: request.params['id']!,
       userId: datos.userId ?? '',
       tenantRoleConceptId: ROL_TENANT[datos.role ?? 'STAFF'],
-      statusConceptId: STATUS['ST-ACTIVE']!,
+      // La membresía nace PENDIENTE de aceptación: hasta que la persona la acepte no cuenta para su token, sus políticas,
+      // la lectura de la organización ni los vínculos de apoyo. Canjear un QR o una invitación dirigida sí activa al instante.
+      statusConceptId: STATUS['DIR_MEMBERSHIP_PENDING_ACCEPTANCE']!,
       accessScopeConceptId: ALCANCE_ACCESO[datos.accessScope ?? 'ALL_TENANT'],
       primaryBranchId: datos.primaryBranchId ?? null,
       startDate: isoDia(0),
@@ -791,7 +909,9 @@ export function registrarDirectorio(router: MockRouter): void {
 
   router.get('/tenants/:id/practitioner-requests', ({ params }) => {
     const nombre = TENANT_NAMES[params['id']!] ?? '';
-    return affiliationList
+    // `{ items }`, como lo lee `listPractitionerRequests`: con el arreglo pelado la
+    // bandeja caía entera en «Algo salió mal».
+    const items = affiliationList
       .filtrar((a) => a.organizationName === nombre && a.statusKind === 'pendiente')
       .concat(
         params['id'] === TENANT_CLINICA
@@ -844,6 +964,7 @@ export function registrarDirectorio(router: MockRouter): void {
           createdAt: a.createdAt,
         };
       });
+    return { items };
   });
 
   router.post('/tenants/:id/practitioner-requests/:affiliationId/approve', ({ params }) => {

@@ -1,6 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  Injector,
+  signal,
+  untracked,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -44,6 +55,9 @@ import { professionalSubtitle } from '../professional-subtitle';
 const SIN_DATO = 'Sin registrar';
 
 
+
+/** El `id` de «Sedes y horarios» en la plantilla: el contrato de los enlaces con ancla. */
+const ANCLA_HORARIOS = 'horarios';
 
 /** El perfil crudo junto a lo que se resolvió aparte para pintarlo. */
 interface PerfilResuelto {
@@ -95,6 +109,9 @@ interface PerfilResuelto {
 })
 export class PractitionerDetail {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
+  private readonly injector = inject(Injector);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly files = inject(FilesClient);
@@ -125,7 +142,28 @@ export class PractitionerDetail {
 
   private profileId: string | null = null;
 
+  /** Ya se bajó al ancla de esta visita: no se vuelve a saltar si el estado se recarga. */
+  private anclaAtendida = false;
+
   constructor() {
+    // `anchorScrolling` del router salta en cuanto cambia la URL, y «Sedes y
+    // horarios» recién se dibuja cuando llega el perfil: el salto caía en el
+    // vacío y la ficha se quedaba arriba. Se baja acá, ya con la sección
+    // pintada. Sirve a «Reservar cita» de la tarjeta de cabecera y a
+    // «Revisar disponibilidad» de la guía, que comparten el ancla.
+    effect(() => {
+      if (this.estado().status !== 'ready') return;
+      untracked(() => {
+        if (this.anclaAtendida) return;
+        if (this.router.parseUrl(this.router.url).fragment !== ANCLA_HORARIOS) return;
+        this.anclaAtendida = true;
+        afterNextRender(
+          () => this.document.getElementById(ANCLA_HORARIOS)?.scrollIntoView({ block: 'start' }),
+          { injector: this.injector },
+        );
+      });
+    });
+
     // Por `paramMap` y no por `snapshot`: al navegar de una ficha a otra el
     // router reutiliza el componente, y con el snapshot quedaría mostrando al
     // profesional anterior.

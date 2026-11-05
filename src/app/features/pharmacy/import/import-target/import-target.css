@@ -1,0 +1,22 @@
+/* El selector «Qué va a importar» arriba de la pantalla elegida, a lo ancho. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+}
+
+.import-target__choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.import-target__label {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}

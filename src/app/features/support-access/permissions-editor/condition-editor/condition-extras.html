@@ -1,0 +1,167 @@
+@switch (section()) {
+  @case ('amount') {
+    <app-switch
+      [checked]="has(['amount'])"
+      (checkedChange)="toggleAmount($event)"
+      label="Poner topes de monto"
+      data-testid="cond-amount"
+    />
+    @if (has(['amount'])) {
+      <div class="frase">
+        <span>Hasta Bs</span>
+        <app-input
+          type="number"
+          [value]="numberAt(['amount', 'perTransactionMax'])"
+          (valueChange)="setNumber(['amount', 'perTransactionMax'], $event)"
+          ariaLabel="Tope por operación en bolivianos"
+          testId="cond-amount-op"
+        />
+        <span>por operación y Bs</span>
+        <app-input
+          type="number"
+          [value]="numberAt(['amount', 'perDayMax'])"
+          (valueChange)="setNumber(['amount', 'perDayMax'], $event)"
+          ariaLabel="Tope por día en bolivianos"
+          testId="cond-amount-day"
+        />
+        <span>por día; descuento de hasta</span>
+        <app-input
+          type="number"
+          [value]="numberAt(['amount', 'maxDiscountPercent'])"
+          (valueChange)="setNumber(['amount', 'maxDiscountPercent'], $event)"
+          ariaLabel="Descuento máximo en porcentaje"
+          testId="cond-amount-discount"
+        />
+        <span>%; si se pasa:</span>
+        <app-select
+          [options]="onExceed"
+          [value]="str(['amount', 'onExceed']) ?? 'DENY'"
+          (valueChange)="set(['amount', 'onExceed'], $event)"
+          ariaLabel="Qué pasa si se pasa del tope"
+          data-testid="cond-amount-exceed"
+        />
+      </div>
+    }
+  }
+
+  @case ('controls') {
+    <div class="bloque">
+      <app-switch
+        [checked]="has(['obligations', 'requireReason'])"
+        (checkedChange)="toggleObligation('requireReason', $event)"
+        label="Pedir motivo"
+        data-testid="cond-reason"
+      />
+      @if (has(['obligations', 'requireReason'])) {
+        <div class="frase">
+          <span>Motivo de al menos</span>
+          <app-input
+            type="number"
+            [value]="numberAt(['obligations', 'requireReason', 'minLength'])"
+            (valueChange)="setNumber(['obligations', 'requireReason', 'minLength'], $event)"
+            ariaLabel="Largo mínimo del motivo"
+            testId="cond-reason-min"
+          />
+          <span>caracteres.</span>
+        </div>
+      }
+    </div>
+    <div class="bloque">
+      <app-switch
+        [checked]="has(['obligations', 'stepUp'])"
+        (checkedChange)="toggleObligation('stepUp', $event)"
+        label="Pedir verificación en dos pasos"
+        data-testid="cond-stepup"
+      />
+      @if (has(['obligations', 'stepUp'])) {
+        <div class="frase">
+          <span>Verificada hace no más de</span>
+          <app-input
+            type="number"
+            [value]="numberAt(['obligations', 'stepUp', 'maxAgeMinutes'])"
+            (valueChange)="setNumber(['obligations', 'stepUp', 'maxAgeMinutes'], $event)"
+            ariaLabel="Antigüedad máxima de la verificación en minutos"
+            testId="cond-stepup-age"
+          />
+          <span>minutos.</span>
+        </div>
+      }
+    </div>
+    <div class="bloque">
+      <app-switch
+        [checked]="has(['obligations', 'approval'])"
+        (checkedChange)="toggleObligation('approval', $event)"
+        label="Pedir aprobación"
+        data-testid="cond-approval"
+      />
+      @if (has(['obligations', 'approval'])) {
+        <div class="frase">
+          <span>Aprobación de</span>
+          <app-select
+            [options]="approvers"
+            [value]="str(['obligations', 'approval', 'by']) ?? 'DOCTOR'"
+            (valueChange)="set(['obligations', 'approval', 'by'], $event)"
+            ariaLabel="Quién aprueba"
+            data-testid="cond-approval-by"
+          />
+          <span>; vale</span>
+          <app-input
+            type="number"
+            [value]="numberAt(['obligations', 'approval', 'ttlMinutes'])"
+            (valueChange)="setNumber(['obligations', 'approval', 'ttlMinutes'], $event)"
+            ariaLabel="Minutos de vigencia de la aprobación"
+            testId="cond-approval-ttl"
+          />
+          <span>minutos.</span>
+        </div>
+      }
+    </div>
+  }
+
+  @case ('ceiling') {
+    <fieldset class="grupo">
+      <legend>Puede dar permisos de</legend>
+      @for (a of areas; track a.value) {
+        <app-checkbox
+          [label]="a.label"
+          [checked]="hasIn('allowAtoms', a.value)"
+          (checkedChange)="toggleIn('allowAtoms', a.value, $event)"
+          [attr.data-testid]="'cond-ceiling-allow-' + a.value"
+        />
+      }
+    </fieldset>
+    <fieldset class="grupo">
+      <legend>A personas con el rol</legend>
+      @for (t of templates; track t.value) {
+        <app-checkbox
+          [label]="t.label"
+          [checked]="hasIn('templates', t.value)"
+          (checkedChange)="toggleIn('templates', t.value, $event)"
+          [attr.data-testid]="'cond-ceiling-template-' + t.value"
+        />
+      }
+    </fieldset>
+    <fieldset class="grupo">
+      <legend>Nunca puede dar</legend>
+      @for (a of areas; track a.value) {
+        <app-checkbox
+          [label]="a.label"
+          [checked]="hasIn('forbidAtoms', a.value)"
+          (checkedChange)="toggleIn('forbidAtoms', a.value, $event)"
+          [attr.data-testid]="'cond-ceiling-forbid-' + a.value"
+        />
+      }
+    </fieldset>
+    <div class="frase">
+      <span>Por hasta</span>
+      <app-input
+        type="number"
+        [value]="numberAt(['delegationCeiling', 'maxValidDays'])"
+        (valueChange)="setNumber(['delegationCeiling', 'maxValidDays'], $event)"
+        ariaLabel="Días máximos de vigencia de lo que da"
+        testId="cond-ceiling-days"
+      />
+      <span>días.</span>
+    </div>
+  }
+}

@@ -1,0 +1,58 @@
+<!-- El clic en el fondo es el atajo de ratón; el de teclado es Escape, que
+     llega por `(keydown)` y por el `(cancel)` del diálogo nativo. -->
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #dialogo
+  class="visor"
+  data-testid="hilo-visor"
+  aria-label="Imágenes de la conversación"
+  (cancel)="alCancelar($event)"
+  (keydown)="alTeclear($event)"
+  (click)="alTocarFondo($event)"
+>
+  @if (actual(); as imagen) {
+    <header class="visor__barra">
+      <div class="visor__pie">
+        <p class="visor__autor">{{ imagen.pie }}</p>
+        @if (posicion()) {
+          <p class="visor__posicion" data-testid="hilo-visor-posicion" aria-live="polite">{{ posicion() }}</p>
+        }
+      </div>
+      <div class="visor__acciones">
+        @if (imagen.accionable) {
+          <button class="visor__boton" type="button" data-testid="hilo-visor-responder" aria-label="Responder a esta imagen" (click)="alResponder(imagen)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 6 6v5" /></svg>
+          </button>
+          <button class="visor__boton" type="button" data-testid="hilo-visor-reenviar" aria-label="Reenviar esta imagen" (click)="alReenviar(imagen)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5" /><path d="M20 9H10a6 6 0 0 0-6 6v5" /></svg>
+          </button>
+        }
+        <a class="visor__boton" data-testid="hilo-visor-descargar" aria-label="Descargar la imagen" [href]="imagen.url" [download]="imagen.nombreArchivo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></svg>
+        </a>
+        <button #cerrar class="visor__boton" type="button" data-testid="hilo-visor-cerrar" aria-label="Cerrar la imagen" (click)="terminar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="visor__escena">
+      @if (hayAnterior()) {
+        <button class="visor__boton visor__paso visor__paso--anterior" type="button" data-testid="hilo-visor-anterior" aria-label="Imagen anterior" (click)="anterior()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+      }
+      <img class="visor__foto" data-testid="hilo-visor-foto" [src]="imagen.url" [alt]="imagen.alt" />
+      @if (haySiguiente()) {
+        <button class="visor__boton visor__paso visor__paso--siguiente" type="button" data-testid="hilo-visor-siguiente" aria-label="Imagen siguiente" (click)="siguiente()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+      }
+    </div>
+  } @else {
+    <!-- La foto dejó de estar (se descartó mientras se miraba): se puede cerrar igual. -->
+    <button #cerrar class="visor__boton" type="button" aria-label="Cerrar" (click)="terminar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+  }
+</dialog>

@@ -9,22 +9,31 @@
   font-weight: 600;
 }
 
-/* Dos columnas desde tablet: seis indicadores en una sola columna obligan a
-   recorrer media pantalla para compararlos, que es justo para lo que están. */
+/* At most three columns: the track minimum never drops below a third of the
+   row, so six indicators land 3x2 wide, 2x3 medium and 1x6 on a phone, with
+   no orphans on the last row. */
 .calidad__lista {
+  --_cal-gap: var(--sp-3);
+
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: var(--sp-3);
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, max(15rem, (100% - 2 * var(--_cal-gap)) / 3)), 1fr)
+  );
+  gap: var(--_cal-gap);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Same box as the KPI tiles above (app-card outlined, padding md). */
 .calidad__item {
-  padding: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
-  background: var(--surface-raised);
+  background: var(--bg-surface);
 }
 
 .calidad__rotulo {
@@ -64,8 +73,10 @@
   background: var(--st-success-fg);
 }
 
+/* Pushed to the bottom so details line up across a row. */
 .calidad__detalle {
-  margin: var(--sp-2) 0 0;
+  margin: auto 0 0;
+  padding-block-start: var(--sp-2);
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }

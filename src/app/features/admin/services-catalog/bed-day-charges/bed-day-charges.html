@@ -1,0 +1,66 @@
+<app-page-header title="Cargos de día-cama" subtitle="Un cargo por cada medianoche en una cama, con la tarifa vigente en ese día." [breadcrumbs]="breadcrumbs()">
+  <div page-actions>
+    <a app-button variant="ghost" size="sm" routerLink="/administration/services-catalog" [queryParams]="{ tab: 'space-tariffs' }">Tarifas de espacios</a>
+  </div>
+</app-page-header>
+
+<app-card class="bed-day" padding="lg" data-testid="bed-day">
+  <app-site-switch class="bed-day__site" />
+  <app-view-state-host [state]="stays()" (retry)="reload()">
+    <div class="bed-day__bar">
+      <app-form-field label="Internación" class="bed-day__stay">
+        <app-select [options]="stayOptions()" [value]="encounterId()" placeholder="Elija una internación" ariaLabel="Internación" data-testid="bed-day-stay" (valueChange)="chooseStay($event)" />
+      </app-form-field>
+      @if (encounterId()) {
+        <button app-button [isLoading]="running()" (clicked)="run()" data-testid="bed-day-run">Devengar hasta hoy</button>
+      }
+    </div>
+
+    @if (lastRun(); as r) {
+      <app-alert tone="success" title="Devengo hecho" data-testid="bed-day-result">
+        {{ r.created }} cargos nuevos; {{ r.skipped }} días ya estaban devengados (no se duplican).
+      </app-alert>
+    }
+    @if (failure(); as f) {
+      <app-view-state-host [state]="f" data-testid="bed-day-failure" />
+    }
+    @if (missingTariff()) {
+      <app-alert tone="warning" title="Hay días sin tarifa vigente">Esos cargos quedan pendientes sin precio. Cargue la tarifa de la categoría y vigencia que falta.</app-alert>
+    }
+
+    @if (asOf(); as at) {
+      <p class="bed-day__muted" data-testid="bed-day-as-of">Datos de las {{ timeOf(at) }} · se muestran los cargos pendientes de revisión.</p>
+    }
+
+    <app-data-table [state]="charges()" [columns]="columns()" [trackBy]="byId" caption="Cargos de la estancia" data-testid="bed-day-table" (retry)="reload()" />
+
+    @if (encounterId() && total() !== '0.00') {
+      <p class="bed-day__total" data-testid="bed-day-total">Total pendiente: {{ total() }}</p>
+    }
+  </app-view-state-host>
+</app-card>
+
+<ng-template #dateCell let-c>
+  <span class="bed-day__strong">{{ c.serviceDate }}</span>
+  <span class="bed-day__muted">Día-cama · {{ c.idempotencyKey }}</span>
+</ng-template>
+
+<ng-template #bedCell let-c>
+  <span class="bed-day__strong">{{ bedOf(c.careSpaceId) }}</span>
+  <span class="bed-day__muted">{{ categoryOf(c) }}</span>
+</ng-template>
+
+<ng-template #priceCell let-c>
+  <span [class.bed-day__missing]="c.unitPrice === null">{{ amount(c) }}</span>
+</ng-template>
+
+<ng-template #statusCell let-c>
+  <app-badge [variant]="statusOf(c).variant" size="sm">{{ statusOf(c).label }}</app-badge>
+  <span class="bed-day__muted">{{ costCenterOf(c) }}</span>
+</ng-template>
+
+<ng-template #actionsCell let-c>
+  @if (c.status === 'CHG_PENDING') {
+    <button app-button variant="ghost" size="sm" (clicked)="voidCharge(c)">Anular</button>
+  }
+</ng-template>

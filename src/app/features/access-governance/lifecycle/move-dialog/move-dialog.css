@@ -1,0 +1,65 @@
+:host {
+  display: block;
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.pasos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.seccion {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.seccion__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.seccion__ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.conservada {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-card);
+}
+
+.conservada__texto {
+  margin: 0;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.lista {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}

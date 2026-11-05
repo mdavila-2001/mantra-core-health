@@ -41,28 +41,15 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
+import { PresuntivoForm } from './presuntivo-form/presuntivo-form';
 
-/**
- * La columna que gobierna el diagnóstico.
- *
- * Se mantiene exportada porque es el `target` real de `clinical.conditions.code_concept_id`
- * — `enums-del-diagnostico.spec.ts` verifica contra este valor que el simulador
- * resuelve el catálogo correcto, independientemente de si esta pantalla ofrece
- * o no un selector para él.
- */
-export const TARGET_DIAGNOSTICO = 'clinical.conditions.code_concept_id';
-
-/** La categoría del registro (`clinical.conditions.category_concept_id`). Mismo criterio. */
-export const TARGET_CATEGORIA = 'clinical.conditions.category_concept_id';
-
-/** La severidad (`clinical.conditions.severity_concept_id`). Mismo criterio. */
-export const TARGET_SEVERIDAD = 'clinical.conditions.severity_concept_id';
-
-/** La lateralidad (`clinical.conditions.laterality_concept_id`). Mismo criterio. */
-export const TARGET_LATERALIDAD = 'clinical.conditions.laterality_concept_id';
-
-/** El curso clínico (`clinical.conditions.clinical_course_concept_id`). Mismo criterio. */
-export const TARGET_CURSO_CLINICO = 'clinical.conditions.clinical_course_concept_id';
+export {
+  TARGET_CATEGORIA,
+  TARGET_CURSO_CLINICO,
+  TARGET_DIAGNOSTICO,
+  TARGET_LATERALIDAD,
+  TARGET_SEVERIDAD,
+} from './diagnosis-targets';
 
 /**
  * Una cita del paciente.
@@ -107,6 +94,7 @@ const TONO_DEL_ESTADO: Readonly<Record<DiagnosisState, Tone>> = Object.freeze({
 });
 
 const SIN_ETIQUETA = 'Diagnóstico sin etiqueta en el catálogo';
+
 const LARGO_DEL_MOTIVO = 60;
 
 /** Qué respaldó la decisión, en dos palabras, y el motivo recortado. */
@@ -199,6 +187,13 @@ function conceptosDe(conditions: readonly Condition[]): string[] {
  *   presuntivos que hoy llegan «En estudio» es una pregunta de negocio que
  *   este cambio no contesta ni necesita contestar.
  *
+ * ## Vuelve el alta, más práctica (2026-10-30)
+ *
+ * Arriba de la tabla va `app-presuntivo-form`: un formulario corto para registrar un diagnóstico
+ * **presuntivo** (diagnóstico, motivos «campo: valor» o traídos de un formulario ya llenado, y
+ * hallazgos). Este bloque sigue siendo la tabla y el diálogo de verificación; del formulario sólo
+ * toma el contrato de `DraftBlock` y reenvía su `terminado` como `cambio`.
+ *
  * ## La tabla de presuntivos (C3, 2026-09-26)
  *
  * Diagnóstico · Estado · Evidencia · Acciones. El estado lo decide
@@ -208,7 +203,7 @@ function conceptosDe(conditions: readonly Condition[]): string[] {
  */
 @Component({
   selector: 'app-diagnosis-block',
-  imports: [AppButton, Badge, Card, DataTable, DiagnosisVerifyDialog],
+  imports: [AppButton, Badge, Card, DataTable, DiagnosisVerifyDialog, PresuntivoForm],
   providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => DiagnosisBlock) }],
   templateUrl: './diagnosis-block.html',
   styleUrl: './diagnosis-block.css',
@@ -234,8 +229,16 @@ export class DiagnosisBlock implements DraftBlock {
   /** Algo se escribió y el expediente tiene que releerse. */
   readonly cambio = output<void>();
 
-  /** Contrato de `DraftBlock`. Sin formulario no hay borrador que perder. */
-  readonly tieneCambiosPendientes = computed(() => false);
+  /** El alta del presuntivo: de él depende el borrador (contrato de `DraftBlock`). */
+  private readonly formulario = viewChild(PresuntivoForm);
+
+  /** Hay algo escrito en el alta que se perdería al cerrar el modal. */
+  readonly tieneCambiosPendientes = computed(
+    () => this.formulario()?.tieneCambiosPendientes() ?? false,
+  );
+
+  /** Si el alta ya dejó algo registrado, lo que hay que decir al descartar (ver `DraftBlock`). */
+  readonly mensajeDeDescarte = computed(() => this.formulario()?.mensajeDeDescarte() ?? null);
 
   /* -- La tabla de presuntivos (C3) ----------------------------------------- */
 

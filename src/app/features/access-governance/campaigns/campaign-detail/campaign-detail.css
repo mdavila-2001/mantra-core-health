@@ -1,0 +1,170 @@
+:host {
+  display: block;
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.cabecera__nombre {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.cabecera__datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.avisos {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.avisos:empty {
+  display: none;
+}
+
+.panel {
+  display: grid;
+  gap: var(--sp-5);
+  padding-block-start: var(--sp-4);
+}
+
+.panel__titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.panel__texto {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.avance {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.avance__cifra {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.cifras__item {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.cifras__item dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.cifras__item dd {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.desgloses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--sp-4);
+}
+
+.desglose {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desglose li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  color: var(--text-secondary);
+}
+
+.config {
+  margin: 0;
+}
+
+.config div {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) 1fr;
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.config dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.config dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.item__nombre {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Lo vencido se dice con palabras; el peso y el tono solo acompañan. */
+.vencida {
+  font-weight: 600;
+  color: var(--st-warning-fg);
+}
+
+.volver {
+  justify-self: start;
+}
+
+@media (max-width: 40rem) {
+  .config div {
+    grid-template-columns: 1fr;
+  }
+}
+.exportar__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

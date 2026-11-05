@@ -1,0 +1,188 @@
+<section
+  class="normalizar"
+  aria-labelledby="normalizar-titulo"
+  data-testid="normalizar"
+  [attr.data-fase]="fase()"
+>
+  <h2 class="normalizar__titulo" id="normalizar-titulo">
+    Pasar los permisos antiguos a permisos precisos
+  </h2>
+  <p class="normalizar__texto">
+    Los permisos de siempre (los 15 paquetes) se convierten en permisos más precisos, sin darle a
+    nadie nada nuevo. Primero haga un simulacro: no cambia nada y le dice qué pasaría con cada
+    persona.
+  </p>
+  <p class="normalizar__anuncio" role="status" aria-live="polite" data-testid="normalizar-anuncio">
+    {{ anuncio() }}
+  </p>
+
+  @if (fallo(); as texto) {
+    <app-alert tone="error" role="alert" data-testid="normalizar-error">{{ texto }}</app-alert>
+  }
+
+  @switch (fase()) {
+    @case ('INICIO') {
+      <div class="normalizar__acciones">
+        <button
+          app-button
+          type="button"
+          [isLoading]="trabajando() === 'simulacro'"
+          [disabled]="trabajando() !== null"
+          (clicked)="simular()"
+          data-testid="normalizar-simular"
+        >
+          Hacer un simulacro
+        </button>
+      </div>
+    }
+
+    @case ('SIMULACRO') {
+      @if (plan(); as p) {
+        <div class="normalizar__bloque" data-testid="normalizar-plan">
+          <p class="normalizar__resumen" data-testid="normalizar-resumen">
+            <strong>Simulacro:</strong> {{ resumen(p) }} No se cambió nada.
+          </p>
+
+          @if (estrechamientos() > 0) {
+            <app-alert
+              tone="warning"
+              title="Esto exige más a algunas personas"
+              data-testid="normalizar-estrechamientos"
+            >
+              <p class="normalizar__nota">
+                Después del cambio, estas personas necesitarán un paso más para hacer lo mismo de
+                siempre. Revíselo antes de aplicar.
+              </p>
+              <ul class="normalizar__lista">
+                @for (e of p.engagements; track e.engagementId) {
+                  @for (t of e.tightening; track t.atom) {
+                    <li [attr.data-testid]="'normalizar-estrechamiento-' + t.atom">
+                      <strong>{{ persona(e) }}:</strong> {{ t.message }}
+                    </li>
+                  }
+                }
+              </ul>
+            </app-alert>
+          }
+
+          <ul class="normalizar__personas" role="list">
+            @for (e of p.engagements; track e.engagementId) {
+              <li class="persona" [attr.data-testid]="'normalizar-persona-' + e.engagementId">
+                <h3 class="persona__nombre">{{ persona(e) }}</h3>
+                @for (g of e.grants; track g.grantId) {
+                  <p class="persona__fila">
+                    Pasa de
+                    {{
+                      g.aliases.length === 1
+                        ? 'un permiso antiguo'
+                        : g.aliases.length + ' permisos antiguos'
+                    }}
+                    a {{ g.atomsAfter.length }}
+                    {{ g.atomsAfter.length === 1 ? 'permiso preciso' : 'permisos precisos' }}.
+                    @if (g.atomsAdded.length > 0) {
+                      Se agrega: {{ g.atomsAdded.map(nombreDelPermiso).join(', ') }}.
+                    }
+                  </p>
+                  @for (o of g.newObligations; track o.atom) {
+                    <p class="persona__obligacion">
+                      <app-badge variant="info" size="sm">Nuevo requisito</app-badge>
+                      {{ o.message }}
+                    </p>
+                  }
+                }
+              </li>
+            } @empty {
+              <li class="normalizar__vacio" data-testid="normalizar-vacio">
+                No hay permisos antiguos que convertir. Todo está al día.
+              </li>
+            }
+          </ul>
+
+          @if (p.requiresAcknowledgement) {
+            <app-checkbox
+              [checked]="reconocido()"
+              (checkedChange)="reconocido.set($event)"
+              label="Revisé lo que exige más a algunas personas y quiero continuar"
+              data-testid="normalizar-reconozco"
+            />
+          }
+
+          <div class="normalizar__acciones">
+            <button
+              app-button
+              type="button"
+              [isLoading]="trabajando() === 'aplicar'"
+              [disabled]="trabajando() !== null || !puedeAplicar()"
+              (clicked)="aplicar()"
+              data-testid="normalizar-aplicar"
+            >
+              Aplicar el cambio
+            </button>
+            <button
+              app-button
+              variant="outline"
+              type="button"
+              [disabled]="trabajando() !== null"
+              (clicked)="volverAEmpezar()"
+              data-testid="normalizar-descartar"
+            >
+              Descartar el simulacro
+            </button>
+          </div>
+        </div>
+      }
+    }
+
+    @case ('APLICADO') {
+      @if (aplicado(); as r) {
+        <app-alert tone="success" title="Cambio aplicado" data-testid="normalizar-aplicado">
+          {{ resumen(r) }} Si algo no es como esperaba, puede revertir el lote.
+          <p class="normalizar__nota">
+            Lote: <code data-testid="normalizar-lote">{{ r.batchId }}</code>
+          </p>
+        </app-alert>
+        <div class="normalizar__acciones">
+          <button
+            app-button
+            variant="danger"
+            type="button"
+            [isLoading]="trabajando() === 'revertir'"
+            [disabled]="trabajando() !== null"
+            (clicked)="revertir()"
+            data-testid="normalizar-revertir"
+          >
+            Revertir este lote
+          </button>
+          <button
+            app-button
+            variant="outline"
+            type="button"
+            [disabled]="trabajando() !== null"
+            (clicked)="volverAEmpezar()"
+            data-testid="normalizar-listo"
+          >
+            Listo
+          </button>
+        </div>
+      }
+    }
+
+    @case ('REVERTIDO') {
+      @if (revertido(); as r) {
+        <app-alert tone="info" title="Lote revertido" data-testid="normalizar-revertido">
+          Se restauraron {{ r.restoredAliasRows }} permisos antiguos.
+        </app-alert>
+        <div class="normalizar__acciones">
+          <button
+            app-button
+            type="button"
+            (clicked)="volverAEmpezar()"
+            data-testid="normalizar-otro"
+          >
+            Hacer otro simulacro
+          </button>
+        </div>
+      }
+    }
+  }
+</section>

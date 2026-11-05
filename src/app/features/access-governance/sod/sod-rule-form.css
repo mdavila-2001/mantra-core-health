@@ -1,0 +1,47 @@
+:host {
+  display: block;
+}
+
+.regla-form {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.regla-form__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.regla-form__ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+.regla-form__fila {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--sp-4);
+}
+
+.regla-form__error {
+  margin: calc(var(--sp-2) * -1) 0 0;
+  color: var(--text-danger);
+  font-size: var(--fs-body);
+}
+
+.regla-form__lista {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+.regla-form__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}

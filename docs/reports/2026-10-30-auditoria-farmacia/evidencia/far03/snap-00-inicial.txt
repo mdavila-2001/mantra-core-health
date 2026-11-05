@@ -1,0 +1,14 @@
+reservas(paciente) | 0
+lineas | 0
+ledger(total) | 32
+outbox(reservas) | 0
+outbox(total) | 16
+  product_code   | on_hand | reserved | available 
+-----------------+---------+----------+-----------
+ AMOX-500        |      24 |        0 |        24
+ far3-AMOX-RX    |      20 |        0 |        20
+ far3-NOMED-RX   |      20 |        0 |        20
+ far3-PARA-LIBRE |      20 |        0 |        20
+ far3-PARA-RX    |      20 |        0 |        20
+(5 rows)
+

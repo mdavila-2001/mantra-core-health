@@ -1,5 +1,6 @@
 ---
 slug: sifilis
+image: sifilis.svg | La sífilis evoluciona por fases que pueden pasar inadvertidas. | Línea de tiempo con las fases primaria, secundaria, latente y terciaria de la sífilis y su signo principal, junto al diagnóstico por análisis de sangre y el tratamiento.
 ---
 
 ## [definition] Introducción

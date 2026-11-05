@@ -1,3 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import type { Provider } from '@angular/core';
+import { throwError } from 'rxjs';
+
+import { AdmissionsClient } from '../app/core/data-access/admissions/admissions.client';
 import type {
   WireAdmissionDetail,
   WireAdmissionPage,
@@ -209,5 +214,20 @@ export function wireMine(overrides: Partial<WireMyAdmission> = {}): WireMyAdmiss
     canResubmit: false,
     canWithdraw: true,
     ...overrides,
+  };
+}
+
+/**
+ * Para las pruebas de una pantalla que monta la tarjeta «Estado de su
+ * verificación» sin ser la pantalla de la tarjeta: la persona no tiene solicitud
+ * (404), así que la tarjeta no se dibuja y la prueba no ve ninguna petición de
+ * más. La tarjeta tiene su propia spec.
+ */
+export function sinSolicitudDeAdmision(): Provider {
+  return {
+    provide: AdmissionsClient,
+    useValue: {
+      myAdmission: () => throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })),
+    },
   };
 }

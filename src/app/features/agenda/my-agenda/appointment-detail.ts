@@ -84,5 +84,9 @@ export function appointmentDetail(
   if (cita.reasonText !== undefined) {
     pares.push({ label: 'Motivo', value: cita.reasonText });
   }
+  // F5d: dónde se atiende, si la agenda tiene consultorio.
+  if (cita.careSpace) {
+    pares.push({ label: 'Consultorio', value: `${cita.careSpace.code} · ${cita.careSpace.name}` });
+  }
   return pares;
 }

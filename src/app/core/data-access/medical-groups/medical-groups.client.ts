@@ -13,6 +13,9 @@ import type {
   MedicalGroupPage,
   MedicalGroupTab,
   NewMedicalGroup,
+  NewMedicalGroupMember,
+  UpdateMedicalGroup,
+  UpdateMedicalGroupMember,
 } from './medical-groups.types';
 
 /** Lo que llega por la red: las fechas todavía son texto ISO. */
@@ -71,6 +74,52 @@ export class MedicalGroupsClient {
   /** `POST /medical-groups` — crea el grupo e invita al equipo. */
   create(group: NewMedicalGroup): Observable<MedicalGroup> {
     return this.http.post<WireGroup>(this.url('/medical-groups'), group).pipe(map(toGroup));
+  }
+
+  /** `PATCH /medical-groups/:id` — el creador corrige el lugar o las notas. */
+  update(id: string, changes: UpdateMedicalGroup): Observable<MedicalGroup> {
+    return this.http
+      .patch<WireGroup>(this.url(`/medical-groups/${encodeURIComponent(id)}`), changes)
+      .pipe(map(toGroup));
+  }
+
+  /** `DELETE /medical-groups/:id` — el creador elimina el grupo y su equipo. */
+  remove(id: string): Observable<void> {
+    return this.http.delete<void>(this.url(`/medical-groups/${encodeURIComponent(id)}`));
+  }
+
+  /** `POST /medical-groups/:id/members` — suma un cargo; queda sin responder. */
+  addMember(groupId: string, member: NewMedicalGroupMember): Observable<MedicalGroup> {
+    return this.http
+      .post<WireGroup>(this.url(`/medical-groups/${encodeURIComponent(groupId)}/members`), member)
+      .pipe(map(toGroup));
+  }
+
+  /** `PATCH /medical-groups/:id/members/:memberId` — cambia cargo, pago o términos. */
+  updateMember(
+    groupId: string,
+    memberId: string,
+    changes: UpdateMedicalGroupMember,
+  ): Observable<MedicalGroup> {
+    return this.http
+      .patch<WireGroup>(
+        this.url(
+          `/medical-groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}`,
+        ),
+        changes,
+      )
+      .pipe(map(toGroup));
+  }
+
+  /** `DELETE /medical-groups/:id/members/:memberId` — quita un cargo del equipo. */
+  removeMember(groupId: string, memberId: string): Observable<MedicalGroup> {
+    return this.http
+      .delete<WireGroup>(
+        this.url(
+          `/medical-groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}`,
+        ),
+      )
+      .pipe(map(toGroup));
   }
 
   /**

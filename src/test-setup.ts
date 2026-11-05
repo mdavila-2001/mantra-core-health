@@ -119,3 +119,16 @@ if (typeof atob !== 'function' || typeof TextDecoder !== 'function') {
     'El entorno de pruebas no expone `atob` o `TextDecoder`, que la lectura del JWT necesita.',
   );
 }
+
+/**
+ * AloVida Insights: el dominio no inventa datos, los recibe ya cargados (`InsightsData`).
+ * Las pruebas de dominio instalan el mismo conjunto de ejemplo que sirve el simulador, para
+ * medir contra los datos que ve la pantalla y no contra un doble.
+ */
+import { MOCK_CATALOG } from './app/core/mock/handlers/insights/catalog.dataset';
+import { mockCampaignFacts } from './app/core/mock/handlers/insights/facts.dataset';
+import { installCatalog } from './app/features/insights/domain/campaigns.data';
+import { installFacts } from './app/features/insights/domain/facts-source';
+
+installCatalog(MOCK_CATALOG);
+installFacts(mockCampaignFacts());

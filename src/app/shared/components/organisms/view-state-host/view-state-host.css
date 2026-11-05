@@ -40,17 +40,17 @@
     font-weight: 600;
 }
 
-.view-state-host__request-id {
+/* S9 · qué hacer. Párrafo propio debajo de la causa: se lee como el paso
+   siguiente y no se pierde dentro de la explicación. */
+.view-state-host__hint {
     margin: var(--sp-2) 0 0;
 }
 
-.view-state-host__request-id code {
-    /* el código se distingue y se selecciona fácil: es lo que se dicta por teléfono */
-    padding: 2px var(--sp-2);
-    border-radius: var(--r-xs);
-    background: color-mix(in srgb, var(--tone-fg) 12%, transparent);
-    user-select: all;
+.view-state-host__hint-label {
+    font-weight: 600;
 }
+
+/* El código de soporte lo dibuja `app-support-code` (el mismo en toda la app). */
 
 /* El foco programático de S4 no debe dibujar el anillo de foco de teclado:
    llega por script, no por Tab. */
@@ -85,4 +85,11 @@
     flex-shrink: 0;
     /* la flecha es el gesto, no la información: la palabra ya lo dice todo */
     opacity: 0.7;
+}
+
+/* Las acciones del error se proyectan dentro de UN contenedor: el `gap` del alert no llega a los botones. */
+[alert-actions] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }

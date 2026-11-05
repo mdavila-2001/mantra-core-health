@@ -1,0 +1,264 @@
+<app-page-header
+  title="Anomalías"
+  subtitle="Uso fuera de lo habitual: revíselo, descártelo o escálelo."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-anomalies">
+  <div class="filtros" role="group" aria-label="Filtros de la lista">
+    <app-form-field label="Estado">
+      <app-select
+        [options]="statusOptions"
+        [value]="statusFilter()"
+        (valueChange)="setStatus($event)"
+        ariaLabel="Estado de las anomalías"
+        data-testid="anomaly-filter-status"
+      />
+    </app-form-field>
+    <app-form-field label="Tipo">
+      <app-select
+        [options]="kindOptions"
+        [value]="kindFilter()"
+        (valueChange)="setKind($event)"
+        ariaLabel="Tipo de anomalía"
+        data-testid="anomaly-filter-kind"
+      />
+    </app-form-field>
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      type="button"
+      (clicked)="load()"
+      data-testid="anomalies-refresh"
+    >
+      Actualizar
+    </button>
+  </div>
+
+  <app-data-table
+    caption="Anomalías de actividad de la organización"
+    [state]="tableState()"
+    [columns]="columns()"
+    [trackBy]="rowId"
+    [rowLabel]="rowLabel"
+    [sort]="sort()"
+    [cursor]="cursor()"
+    [pageSummary]="pageSummary()"
+    (sortChanged)="changeSort($event)"
+    (cursorChanged)="changePage($event)"
+    (retry)="load()"
+    (refresh)="load()"
+    data-testid="anomalies-table"
+  />
+</app-card>
+
+@if (selected(); as a) {
+  <app-card class="detalle" padding="lg">
+    <section
+      #detail
+      tabindex="-1"
+      class="detalle__cuerpo"
+      aria-labelledby="anomaly-detail-title"
+      data-testid="anomaly-detail"
+    >
+      <header class="detalle__cabeza">
+        <h2 id="anomaly-detail-title" class="detalle__titulo">
+          {{ kind(a) }} · {{ personName(a) }}
+        </h2>
+        <span aria-live="polite" data-testid="anomaly-detail-status">
+          <app-badge [variant]="statusTone(a.status)"
+            ><span aria-hidden="true">{{ statusGlyph(a.status) }}</span>
+            {{ statusText(a.status) }}</app-badge
+          >
+        </span>
+      </header>
+
+      @if (resolvedNotice(); as notice) {
+        <app-alert tone="success" role="status" data-testid="anomaly-resolved">{{
+          notice
+        }}</app-alert>
+      }
+
+      <dl class="datos">
+        <div class="datos__par">
+          <dt>Ventana</dt>
+          <dd>{{ windowText(a) }}</dd>
+        </div>
+        <div class="datos__par">
+          <dt>Observado</dt>
+          <dd>{{ a.observed }}</dd>
+        </div>
+        <div class="datos__par">
+          <dt>Habitual</dt>
+          <dd>{{ a.baseline === null ? 'Sin línea base' : a.baseline }}</dd>
+        </div>
+        <div class="datos__par">
+          <dt>Umbral</dt>
+          <dd>{{ a.threshold }}</dd>
+        </div>
+      </dl>
+
+      @if (chart(); as c) {
+        <figure class="grafico" data-testid="anomaly-chart">
+          <figcaption class="grafico__texto" data-testid="anomaly-description">
+            {{ c.description }}
+          </figcaption>
+          @if (c.metric || c.unitText) {
+            <p class="grafico__eje">
+              {{ c.metric }}{{ c.metric && c.unitText ? ' · ' : '' }}{{ c.unitText }}
+            </p>
+          }
+          <ol class="barras">
+            @for (bar of c.bars; track $index) {
+              <li class="barra" [class.barra--sobre]="bar.flag !== null" data-testid="anomaly-bar">
+                <span class="barra__rotulo">{{ bar.label }}</span>
+                <span class="barra__valor">{{ bar.value }}</span>
+                <span class="barra__plano" aria-hidden="true">
+                  <span class="barra__columna" [style.height.%]="bar.heightPct"></span>
+                  @if (c.baselinePct !== null) {
+                    <span class="barra__base" [style.bottom.%]="c.baselinePct"></span>
+                  }
+                  <span class="barra__umbral" [style.bottom.%]="c.thresholdPct"></span>
+                </span>
+                @if (bar.flag !== null) {
+                  <span class="barra__aviso"
+                    ><span aria-hidden="true">▲</span>
+                    {{ bar.flag === 'over' ? 'supera el umbral' : 'llega al umbral' }}</span
+                  >
+                }
+              </li>
+            }
+          </ol>
+          <p class="leyenda">
+            @if (c.baseline !== null) {
+              <span class="leyenda__item" data-testid="anomaly-baseline"
+                ><span class="leyenda__trazo leyenda__trazo--base" aria-hidden="true"></span> Línea
+                base: {{ c.baseline }}</span
+              >
+            }
+            <span class="leyenda__item"
+              ><span class="leyenda__trazo leyenda__trazo--umbral" aria-hidden="true"></span>
+              Umbral: {{ c.threshold }}</span
+            >
+          </p>
+        </figure>
+      }
+
+      @if (a.status === 'OPEN') {
+        <form
+          class="accion"
+          (submit)="$event.preventDefault()"
+          aria-label="Qué hacer con esta anomalía"
+        >
+          <app-form-field
+            label="Comentario"
+            [errorMessage]="commentError() ?? ''"
+            hint="Obligatorio para descartar o escalar (al menos 10 caracteres). Al reconocer es opcional. No escriba datos de pacientes."
+          >
+            <app-textarea
+              [value]="comment()"
+              (valueChange)="changeComment($event)"
+              [rows]="3"
+              [maxLength]="1000"
+              [hasError]="commentError() !== null"
+              data-testid="anomaly-comment"
+            />
+          </app-form-field>
+          @if (actionError(); as failure) {
+            <app-alert tone="error" role="alert" data-testid="anomaly-error">{{
+              failure
+            }}</app-alert>
+          }
+          <div class="accion__botones">
+            <button
+              app-button
+              variant="primary"
+              type="button"
+              [disabled]="busy() !== null"
+              [isLoading]="busy() === 'ACKNOWLEDGED'"
+              (clicked)="resolve('ACKNOWLEDGED')"
+              data-testid="anomaly-ack"
+            >
+              Reconocer
+            </button>
+            <button
+              app-button
+              variant="outline"
+              type="button"
+              [disabled]="busy() !== null"
+              [isLoading]="busy() === 'DISMISSED'"
+              (clicked)="resolve('DISMISSED')"
+              data-testid="anomaly-dismiss"
+            >
+              Descartar
+            </button>
+            <button
+              app-button
+              variant="outline"
+              type="button"
+              [disabled]="busy() !== null"
+              [isLoading]="busy() === 'ESCALATED'"
+              (clicked)="resolve('ESCALATED')"
+              data-testid="anomaly-escalate"
+            >
+              Escalar
+            </button>
+          </div>
+          <p class="accion__ayuda">
+            <strong>Reconocer</strong>: la vio y la da por atendida. <strong>Descartar</strong>: no
+            es un problema. <strong>Escalar</strong>: sugiere suspender a la persona; nadie queda
+            suspendido solo.
+          </p>
+        </form>
+      } @else {
+        <p class="resuelta">
+          Esta anomalía ya está {{ statusText(a.status).toLowerCase() }}
+          @if (resolvedAt(a); as when) {
+            el {{ when }}
+          }
+          .
+          @if (a.resolutionComment) {
+            <span class="resuelta__comentario">Comentario: {{ a.resolutionComment }}</span>
+          }
+        </p>
+      }
+    </section>
+  </app-card>
+}
+
+<ng-template #personCell let-row>
+  <span class="persona" [attr.data-testid]="'anomaly-person-' + row.id">{{ personName(row) }}</span>
+</ng-template>
+
+<ng-template #kindCell let-row>
+  <span class="tipo" [attr.data-testid]="'anomaly-kind-' + row.id">{{ kind(row) }}</span>
+  <span class="tipo__numeros">{{ compactText(row) }}</span>
+</ng-template>
+
+<ng-template #windowCell let-row>
+  <span>{{ windowText(row) }}</span>
+</ng-template>
+
+<ng-template #statusCell let-row>
+  <span [attr.data-testid]="'anomaly-status-' + row.id">
+    <app-badge [variant]="statusTone(row.status)"
+      ><span aria-hidden="true">{{ statusGlyph(row.status) }}</span>
+      {{ statusText(row.status) }}</app-badge
+    >
+  </span>
+</ng-template>
+
+<ng-template #actionCell let-row>
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    type="button"
+    [attr.aria-pressed]="selected()?.id === row.id"
+    [attr.aria-label]="'Ver el detalle de ' + personName(row) + ': ' + kind(row)"
+    [attr.data-testid]="'anomaly-view-' + row.id"
+    (clicked)="open(row)"
+  >
+    Ver el detalle
+  </button>
+</ng-template>

@@ -1,7 +1,7 @@
 /* ============================================================================
     Consola de administración del laboratorio — CARRIL 16.
 
-    Sólo el ámbito, el selector, los avisos, la cobertura y las líneas de celda:
+    Sólo el ámbito, el selector, los avisos y las líneas de celda:
     todo lo demás lo ponen los organismos del banco. Vocabulario de tokens
     `--sp-*`, `--fs-*`/`--lh-*`, `--r-*`, `--text-*`, `--bg-*`, `--border-*` y
     `--st-*-bg`/`--st-*-fg`/`--st-*-bd`.
@@ -68,6 +68,7 @@
   color: var(--st-warning-fg);
   border: 1px solid var(--st-warning-bd);
   border-radius: var(--r-md);
+  margin-block: var(--sp-4);
 }
 
 .laboratorio__avisos p {
@@ -95,30 +96,6 @@
 .laboratorio__precio {
   display: block;
   font-variant-numeric: tabular-nums;
-}
-
-/* El chrome de la cobertura —fondo, borde, título— lo pone ahora el propio
-   `app-accordion`. Acá queda sólo el peso del texto: es una nota al pie de la
-   pantalla, no contenido de la misma jerarquía que el catálogo. */
-.laboratorio__cobertura {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
-.laboratorio__cobertura dl {
-  display: grid;
-  gap: var(--sp-4);
-  margin: 0;
-}
-
-.laboratorio__cobertura dt {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.laboratorio__cobertura dd {
-  margin: var(--sp-1) 0 0;
 }
 
 /* Llamado a publicar, dentro de la ficha. Se separa de los datos con una línea
@@ -216,4 +193,10 @@
    de la disciplina sale de las hojas compartidas. */
 .laboratorio__rejilla {
   --rejilla-min: 18rem;
+}
+
+/* El paginador de cada pestaña: separado de la tabla y alineado a su ancho. */
+.laboratorio__paginador {
+  display: block;
+  margin-top: var(--sp-4);
 }

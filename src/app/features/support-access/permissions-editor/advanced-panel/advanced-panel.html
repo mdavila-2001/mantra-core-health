@@ -1,0 +1,158 @@
+<section class="av" data-testid="advanced-panel" aria-labelledby="av-titulo">
+  <h2 id="av-titulo" class="av__titulo" tabindex="-1" data-testid="advanced-heading">
+    Permisos precisos y condiciones
+  </h2>
+
+  @if (row(); as fila) {
+    @if (rows().length > 1) {
+      <div
+        class="av__filas"
+        role="group"
+        aria-label="Permiso que está editando"
+        data-testid="row-chooser"
+      >
+        @for (r of rows(); track r.key) {
+          <button
+            type="button"
+            class="av__fila"
+            [attr.aria-pressed]="r.key === fila.key"
+            (click)="pick(r.key)"
+            [attr.data-testid]="'row-pick-' + r.key"
+          >
+            {{ rowLabel()(r) }}
+            @if (r.effect === 'DENY') {
+              <span class="av__marca"> · Denegar</span>
+            }
+          </button>
+        }
+      </div>
+    }
+    <p class="av__ayuda">
+      Está editando <strong>{{ rowLabel()(fila) }}</strong
+      >.
+      @if (fila.conditionsSummary) {
+        Hoy: {{ fila.conditionsSummary }}
+      }
+    </p>
+
+    @for (issue of generalIssues(); track issue.path + issue.code) {
+      <app-alert
+        [tone]="issue.severity === 'error' ? 'error' : 'warning'"
+        role="alert"
+        data-testid="advanced-general-issue"
+        >{{ issue.message }}</app-alert
+      >
+    }
+
+    <div class="av__bloque">
+      <app-switch
+        [checked]="isDeny()"
+        (checkedChange)="onEffect($event)"
+        label="Denegar en lugar de permitir"
+        data-testid="effect-deny"
+      />
+      <p class="av__nota">
+        @if (isDeny()) {
+          <strong>Denegar:</strong> estos permisos quedan prohibidos para esta persona aquí, y la
+          prohibición gana a cualquier permiso que los dé.
+        } @else {
+          <strong>Permitir:</strong> da estos permisos a la persona.
+        }
+        @if (fila.id) {
+          Pasar de permitir a denegar reemplaza el permiso: el actual se retira y se crea uno nuevo.
+        }
+      </p>
+    </div>
+
+    @if (aliasLabels().length > 0) {
+      <app-alert tone="info" title="Este permiso usa nombres antiguos" data-testid="legacy-notice">
+        <p class="av__nota">
+          Hoy dice: {{ aliasLabels().join('; ') }}. Se mostrarán como están y se normalizarán a
+          permisos precisos al guardar o cuando su organización lo decida; lo que la persona puede
+          hacer no cambia, salvo lo que cada permiso preciso exige (motivo, segundo paso,
+          aprobación).
+        </p>
+        @for (issue of aliasIssues(); track issue.path + issue.code) {
+          <p class="av__error" role="alert">{{ issue.message }}</p>
+        }
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          (clicked)="onExpandAliases()"
+          data-testid="legacy-expand"
+        >
+          Verlos como permisos precisos
+        </button>
+      </app-alert>
+    }
+
+    <div class="av__bloque">
+      <div class="av__vigencia">
+        <span>Vence el</span>
+        @for (version of [vigenciaVersion()]; track version) {
+          <app-input
+            type="date"
+            [value]="validToDate()"
+            (valueChange)="onValidTo($event)"
+            ariaLabel="Fecha de vencimiento del permiso"
+            testId="valid-to"
+          />
+        }
+      </div>
+      <p class="av__nota">
+        Opcional. Un permiso crítico necesita fecha de vencimiento (hasta 90 días).
+      </p>
+    </div>
+
+    <div class="av__bloque">
+      <h3 class="av__sub">Qué permisos incluye</h3>
+      <app-atom-picker
+        [catalog]="catalog()"
+        [selected]="selectedAtoms()"
+        [issues]="atomIssues()"
+        (toggled)="onToggle($event)"
+      />
+    </div>
+
+    <div class="av__bloque">
+      <h3 class="av__sub">
+        Condiciones
+        <span class="av__cuenta" data-testid="conditions-count">({{ conditionCount() }})</span>
+      </h3>
+      <div class="av__alcance">
+        <span id="av-alcance">Condiciones de:</span>
+        <app-select
+          [options]="scopeOptions()"
+          [value]="activeScope()"
+          (valueChange)="onScope($event)"
+          ariaLabel="A qué parte del permiso se aplican las condiciones"
+          data-testid="condition-scope"
+        />
+      </div>
+      @if (selectedAtoms().length === 0) {
+        <p class="av__nota" data-testid="conditions-empty">
+          Marque al menos un permiso para ponerle condiciones.
+        </p>
+      } @else {
+        @for (
+          k of [fila.key + '|' + activeScope() + '|' + (isDeny() ? 'deny' : 'allow')];
+          track k
+        ) {
+          <app-condition-editor
+            [condition]="scopeCondition()"
+            [atoms]="scopeAtoms()"
+            [deny]="isDeny()"
+            [issues]="conditionIssues()"
+            (conditionChange)="onCondition($event)"
+          />
+        }
+      }
+    </div>
+  } @else {
+    <p class="av__nota" data-testid="advanced-empty">
+      Elija un doctor, un servicio o una ubicación para empezar.
+    </p>
+  }
+</section>

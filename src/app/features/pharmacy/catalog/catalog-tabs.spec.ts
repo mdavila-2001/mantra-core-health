@@ -3,14 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { CATALOG_TABS, CATALOG_TAB_LABELS, tabIndexOf, tabKeyOf } from './catalog-tabs';
 
 describe('pestañas del catálogo', () => {
-  it('son cinco, en el orden en que se dibujan', () => {
-    expect(CATALOG_TABS).toEqual(['products', 'categories', 'prices', 'inventory', 'import']);
+  it('son seis, en el orden en que se dibujan', () => {
+    expect(CATALOG_TABS).toEqual(['products', 'categories', 'prices', 'inventory', 'import', 'integration']);
     expect(CATALOG_TABS.map((tab) => CATALOG_TAB_LABELS[tab])).toEqual([
       'Productos',
       'Categorías',
       'Precios',
       'Inventario',
       'Importación',
+      'Integración',
     ]);
   });
 
@@ -21,7 +22,12 @@ describe('pestañas del catálogo', () => {
     });
   });
 
-  it.each([null, undefined, '', 'foo', 'integration', 'PRODUCTS'])(
+  it('`integration` abre la sexta pestaña, Integración', () => {
+    expect(tabIndexOf('integration')).toBe(5);
+    expect(CATALOG_TAB_LABELS[tabKeyOf(5)]).toBe('Integración');
+  });
+
+  it.each([null, undefined, '', 'foo', 'INTEGRATION', 'PRODUCTS'])(
     'con %s abre Productos',
     (raw) => {
       expect(tabIndexOf(raw)).toBe(0);

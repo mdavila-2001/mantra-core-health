@@ -1,0 +1,21 @@
+<dialog #dlg class="st" aria-labelledby="st-title" (close)="closed.emit()">
+  <header class="st__head">
+    <h2 id="st-title" class="st__title">Ajustes</h2>
+    <button type="button" class="st__x" aria-label="Cerrar los ajustes" (click)="closed.emit()">×</button>
+  </header>
+  <fieldset class="st__group">
+    <legend>Densidad</legend>
+    @for (d of densities; track d.value) {
+      <label class="st__opt"><input type="radio" name="density" [value]="d.value" [checked]="prefs.density() === d.value" (change)="prefs.setDensity(d.value)" /> {{ d.label }}</label>
+    }
+  </fieldset>
+  <fieldset class="st__group">
+    <legend>Tema</legend>
+    @for (t of themes; track t.value) {
+      <label class="st__opt"><input type="radio" name="theme" [value]="t.value" [checked]="prefs.themeChoice() === t.value" (change)="prefs.setTheme(t.value)" /> {{ t.label }}</label>
+    }
+  </fieldset>
+  <p class="st__note">Zona horaria: America/La_Paz. Estos ajustes se guardan en su cuenta.</p>
+  @if (prefs.saving()) { <p class="st__note" role="status">Guardando…</p> }
+  @if (prefs.error(); as e) { <p class="st__err" role="alert">{{ e }}</p> }
+</dialog>

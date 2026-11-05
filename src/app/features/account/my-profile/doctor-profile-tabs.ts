@@ -256,6 +256,11 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
  * decisión.
  */
 export const ENROLLMENT_WITHOUT_TAB_FIELDS: Readonly<Record<string, string>> = {
+  lugaresDeTrabajo:
+    'Las instituciones y aseguradoras elegidas en el alta (28/10/2026). No son datos del ' +
+    'perfil sino pedidos a un tercero, con su respuesta: se siguen en «Mis verificaciones» ' +
+    '(`my-account/verifications`), y los vínculos con institución también figuran en la ' +
+    'pestaña «Trayectoria».',
   password:
     'Una contraseña no se muestra nunca. La ficha ofrece el camino para cambiarla ' +
     '(«Cambiar contraseña»), que es lo único que se puede hacer con ella.',

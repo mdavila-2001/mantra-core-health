@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { FormField } from '../../molecules/form-field/form-field';
 
 import { DatePicker } from './date-picker';
+import { reemplazarAnimate } from '../../../../../testing/animate';
 
 describe('DatePicker', () => {
   let fixture: ComponentFixture<DatePicker>;
@@ -134,11 +135,10 @@ describe('DatePicker', () => {
       // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
       // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
       // Una salida que nunca termina deja a la vista si confirmar espera por ella.
-      const original = HTMLElement.prototype.animate;
-      HTMLElement.prototype.animate = (() => ({
+      const restaurar = reemplazarAnimate(() => ({
         finished: new Promise<void>(() => undefined),
         cancel: () => undefined,
-      })) as unknown as typeof HTMLElement.prototype.animate;
+      }));
       try {
         await abrir();
         dias().find((day) => !day.classList.contains('other-month') && !day.disabled)!.click();
@@ -152,19 +152,18 @@ describe('DatePicker', () => {
         expect(dialog()).toBeNull();
         expect(trigger().getAttribute('aria-expanded')).toBe('false');
       } finally {
-        HTMLElement.prototype.animate = original;
+        restaurar();
       }
     });
 
     it('descartar sí anima la salida: Cancelar espera a que el panel se vaya', async () => {
-      const original = HTMLElement.prototype.animate;
       let terminar: () => void = () => undefined;
-      HTMLElement.prototype.animate = (() => ({
+      const restaurar = reemplazarAnimate(() => ({
         finished: new Promise<void>((resolve) => {
           terminar = resolve;
         }),
         cancel: () => undefined,
-      })) as unknown as typeof HTMLElement.prototype.animate;
+      }));
       try {
         await abrir();
 
@@ -179,7 +178,7 @@ describe('DatePicker', () => {
         await fixture.whenStable();
         expect(dialog()).toBeNull();
       } finally {
-        HTMLElement.prototype.animate = original;
+        restaurar();
       }
     });
   });

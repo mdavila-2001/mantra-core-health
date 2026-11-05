@@ -1,0 +1,105 @@
+<div class="site-stock" data-testid="site-stock-panel">
+  @if (ledger() === true) {
+    <p class="site-stock__note" data-testid="site-stock-ledger-notice">
+      Los productos con stock propio en esta sucursal no siguen lo que cambie en "Todas"; los demás muestran lo
+      declarado en el catálogo.
+    </p>
+  } @else if (ledger() === false) {
+    <p class="site-stock__note" data-testid="site-stock-catalog-notice">
+      Esta sucursal muestra lo declarado en el catálogo ("Todas"). El producto que cambie acá pasa a llevar su propio
+      stock en esta sucursal; los demás siguen el catálogo.
+    </p>
+  }
+
+  <app-search-field
+    [label]="'Buscar en ' + siteName()"
+    placeholder="Nombre o código"
+    [value]="term()"
+    (searched)="search($event)"
+  />
+
+  <div class="site-stock__bar">
+    @if (dirtyCount() > 0) {
+      <span class="site-stock__dirty" role="status">
+        {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
+      </span>
+      <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">Descartar</button>
+    }
+    <button
+      app-button
+      type="button"
+      [isLoading]="saving()"
+      [disabled]="saving() || dirtyCount() === 0"
+      (clicked)="save()"
+      data-testid="site-stock-save"
+    >
+      Guardar cambios
+    </button>
+  </div>
+
+  <app-data-table
+    [caption]="'Stock de ' + siteName()"
+    [state]="pageRows()"
+    [columns]="columns()"
+    [trackBy]="rowId"
+    [rowLabel]="rowLabel"
+    stackedOnMobile
+    [cursor]="cursor()"
+    (cursorChanged)="goToCursor($event)"
+    (retry)="reload()"
+    (refresh)="reload()"
+    data-testid="site-stock-table"
+  />
+</div>
+
+<ng-template #nameCell let-row>
+  <span class="site-stock__product">
+    <span class="site-stock__name">{{ row.name }}</span>
+    <code class="site-stock__code">{{ row.productCode }}</code>
+  </span>
+</ng-template>
+
+<ng-template #hasCell let-row>
+  <div class="site-stock__has" [attr.data-testid]="'site-stock-row-' + row.productCode">
+    @if (row.kind === 'DECLARED_OUT') {
+      <app-badge variant="error">Marcado sin stock en el catálogo</app-badge>
+    } @else {
+      <app-switch
+        [label]="editOf(row).available ? 'Lo tengo' : 'No lo tengo'"
+        [ariaLabel]="'¿Tiene ' + row.name + ' en ' + siteName() + '?'"
+        [checked]="editOf(row).available"
+        [disabled]="saving()"
+        (checkedChange)="setAvailable(row, $event)"
+        [attr.data-testid]="'site-stock-has-' + row.productCode"
+      />
+      @if (row.kind === 'CATALOG' && ledger() === true) {
+        <span class="site-stock__source" [attr.data-testid]="'site-stock-catalog-' + row.productCode">
+          Como en el catálogo
+        </span>
+      }
+    }
+    @if (rowErrors()[row.productId]; as problem) {
+      <p class="site-stock__row-error" [attr.data-testid]="'site-stock-error-' + row.productCode">{{ problem }}</p>
+    }
+  </div>
+</ng-template>
+
+<ng-template #quantityCell let-row>
+  @if (row.kind !== 'DECLARED_OUT' && editOf(row).available) {
+    <app-input
+      type="number"
+      inputMode="numeric"
+      [ariaLabel]="'Cantidad de ' + row.name + ' en ' + siteName()"
+      [value]="editOf(row).quantity"
+      placeholder="Del catálogo"
+      [disabled]="saving()"
+      [hasError]="rowErrors()[row.productId] !== undefined"
+      (valueChange)="setQuantity(row, $event)"
+      [step]="1"
+      [testId]="'site-stock-quantity-' + row.productCode"
+    />
+  } @else {
+    <span class="site-stock__none" aria-hidden="true">—</span>
+    <span class="sr-only">Sin cantidad</span>
+  }
+</ng-template>

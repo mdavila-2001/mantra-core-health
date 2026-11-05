@@ -1,5 +1,6 @@
 ---
 slug: apendicitis-aguda
+image: apendicitis-aguda.svg | El apéndice se encuentra en la parte inferior derecha del abdomen. | Abdomen con el intestino grueso y el apéndice inflamado abajo a la derecha, la migración típica del dolor desde el ombligo y los pasos que llevan de la obstrucción a la perforación.
 ---
 
 ## [definition] Introducción

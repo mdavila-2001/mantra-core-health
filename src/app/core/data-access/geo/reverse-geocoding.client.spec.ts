@@ -2,7 +2,11 @@ import { HttpInterceptorFn, provideHttpClient, withInterceptors } from '@angular
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { vi } from 'vitest';
+
 import {
+  API_BUDGET_MS,
+  BROWSER_BUDGET_MS,
   NOMINATIM_REVERSE_URL,
   OSM_ATTRIBUTION,
   ReverseGeocodingClient,
@@ -120,6 +124,37 @@ describe('ReverseGeocodingClient', () => {
       expect(salida.valor?.line).toBe('Calle 2');
     });
   }
+
+  describe('con la API colgada', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('correcto: si la API no contesta a tiempo, el navegador pregunta sin esperarla', () => {
+      const salida = pedir();
+      const api = http.expectOne((r) => r.url.endsWith('/public/geo/reverse'));
+
+      vi.advanceTimersByTime(API_BUDGET_MS);
+
+      expect(api.cancelled).toBe(true);
+      http
+        .expectOne((r) => r.url === NOMINATIM_REVERSE_URL)
+        .flush({ address: { road: 'Calle 3', suburb: 'Centro' } });
+      expect(salida.valor?.line).toBe('Calle 3, Centro');
+    });
+
+    it('límite: con los dos colgados, la pantalla se entera antes de los 10 s del alta', () => {
+      const salida = pedir();
+      http.expectOne((r) => r.url.endsWith('/public/geo/reverse'));
+      vi.advanceTimersByTime(API_BUDGET_MS);
+      const externo = http.expectOne((r) => r.url === NOMINATIM_REVERSE_URL);
+
+      vi.advanceTimersByTime(BROWSER_BUDGET_MS);
+
+      expect(externo.cancelled).toBe(true);
+      expect(salida.error).toBeDefined();
+      expect(API_BUDGET_MS + BROWSER_BUDGET_MS).toBeLessThan(10_000);
+    });
+  });
 
   it('inválido: un 400 de la API se informa como error y no sale a un tercero', () => {
     const salida = pedir();

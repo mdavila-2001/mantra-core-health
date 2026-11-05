@@ -1,0 +1,30 @@
+:host {
+  /* Not a flex item of `.app-main__inner` while empty: an empty block host
+     still adds the column's 32px gap above every screen. */
+  display: contents;
+}
+
+.avisos {
+  margin-block-end: var(--sp-4);
+}
+
+.avisos__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+  color: var(--text-primary);
+}
+
+.avisos__nota {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.avisos__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

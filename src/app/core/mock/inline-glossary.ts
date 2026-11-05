@@ -62,13 +62,18 @@ function taxonomyOf(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
 /**
  * La imagen publicable de una fila, o `undefined`.
  *
- * Mismo criterio que `imageFromProperty` de la API: sin URL, atribución o
- * licencia no se publica. Una foto sin crédito no se muestra.
+ * Exige aprobación explícita de pertinencia además de URL, atribución y licencia.
+ * Las imágenes importadas automáticamente no tienen esa aprobación.
  */
 export function imageOf(fila: FilaDeGlosario) {
   // Los importadores escriben `null` donde no hay imagen (SCHEMA.md): null y
   // ausente valen lo mismo.
-  if (!fila.imageUrl || !fila.imageAttribution || !fila.imageLicense) {
+  if (
+    fila.properties?.['image_review_status'] !== 'approved' ||
+    !fila.imageUrl ||
+    !fila.imageAttribution ||
+    !fila.imageLicense
+  ) {
     return undefined;
   }
   return {
@@ -141,6 +146,17 @@ export function inlineFacets(manifiesto: ManifiestoDelGlosario) {
   return { categories, tags, total: manifiesto.total };
 }
 
+/**
+ * El resumen llano de la fila, o `''` si es una plantilla repetida en muchos
+ * términos (ver `genericSummaries` en el manifiesto). Una plantilla no explica
+ * el término: mostrarla como si lo hiciera es peor que no mostrar nada.
+ */
+function resumenPropio(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario): string {
+  return manifiesto.genericSummaries?.includes(fila.plainSummaryEs) === true
+    ? ''
+    : fila.plainSummaryEs;
+}
+
 /** Una entrada de la lista, como la devuelve la búsqueda del glosario. */
 export function inlineTerm(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosario) {
   const { categoria, etiquetas } = taxonomyOf(fila, manifiesto);
@@ -156,14 +172,17 @@ export function inlineTerm(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosar
     // (no se redacta nada), así que cae a la frase descriptiva oficial de la
     // fuente y, si tampoco, a la definición verbatim (la tarjeta la corta a
     // cuatro líneas). Todo texto de la fuente, ninguno escrito acá.
-    shortDefinition: fila.plainSummaryEs || fila.metaDescription || fila.definition,
+    shortDefinition: resumenPropio(fila, manifiesto) || fila.metaDescription || fila.definition,
     tags: etiquetas.map((etiqueta) => etiqueta.name),
     relationsCount: fila.relations.length,
     status: 'active' as const,
     valueSets: [PARAGUAS_DEL_GLOSARIO, categoria, ...etiquetas].map(reference),
     ...(imagen === undefined
       ? {}
-      : { imageThumbnailUrl: imagen.thumbnailSource ?? imagen.source }),
+      : {
+          imageThumbnailUrl: imagen.thumbnailSource ?? imagen.source,
+          imageReviewStatus: 'approved' as const,
+        }),
   };
 }
 
@@ -237,9 +256,9 @@ export function inlineSheet(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosa
     ...(fila.definition === ''
       ? {}
       : { clinicalDefinition: { text: fila.definition, translated: fila.lang !== 'en' } }),
-    ...(fila.plainSummaryEs === ''
+    ...(resumenPropio(fila, manifiesto) === ''
       ? {}
-      : { plainSummary: { text: fila.plainSummaryEs, translated: true } }),
+      : { plainSummary: { text: resumenPropio(fila, manifiesto), translated: true } }),
     relations: fila.relations.map((relacion) => ({
       type: relacion.type,
       conceptId: relacion.targetId,
@@ -248,5 +267,109 @@ export function inlineSheet(fila: FilaDeGlosario, manifiesto: ManifiestoDelGlosa
     })),
     properties: propertiesOf(fila),
     ...(imagen === undefined ? {} : { image: imagen }),
+  };
+}
+
+/* ---- vecindario del mapa (TAREA-41 §5) ------------------------------------- */
+
+/** Los tipos de relación que el contrato publica; uno desconocido no viaja. */
+export const TIPOS_DEL_VECINDARIO: ReadonlySet<string> = new Set([
+  'RELATED_TERM',
+  'DISEASE',
+  'PROCEDURE',
+  'TREATMENT',
+  'ANATOMY',
+  'DIAGNOSTIC_TEST',
+  'SYMPTOM',
+  'SPECIALTY',
+  'INCLUDES',
+  'PERFORMS',
+  'SENDS_DATA_TO',
+]);
+
+export const VECINOS_POR_GRUPO = { porDefecto: 8, minimo: 1, maximo: 50 } as const;
+export const PAGINA_DE_GRUPO = { porDefecto: 50, minimo: 1, maximo: 200 } as const;
+
+/** Un vecino ya resuelto, venga de una relación saliente o entrante. */
+export interface VecinoSimulado {
+  readonly type: string;
+  readonly direction: 'outgoing' | 'incoming';
+  readonly conceptId: string;
+  readonly slug: string;
+  readonly display: string;
+  readonly categoryKey: string | null;
+}
+
+/** Qué parte del vecindario se pidió. */
+export type PedidoDeVecindario =
+  | { readonly modo: 'muestra'; readonly porGrupo: number }
+  | {
+      readonly modo: 'grupo';
+      readonly type: string;
+      readonly direction: 'outgoing' | 'incoming';
+      readonly offset: number;
+      readonly limit: number;
+    };
+
+/**
+ * El vecindario como lo devuelve `GET /terminology/concepts/:id/glossary-neighborhood`.
+ *
+ * Agrupa por tipo y sentido, descarta las autorreferencias y los tipos que el
+ * contrato no publica, y saca los repetidos dentro de un grupo. El orden es
+ * alfabético (`es`) hasta que las relaciones traigan peso (TAREA-41 F1).
+ */
+export function vecindarioEnLinea(
+  foco: FilaDeGlosario,
+  manifiesto: ManifiestoDelGlosario,
+  vecinos: readonly VecinoSimulado[],
+  pedido: PedidoDeVecindario,
+) {
+  const grupos = new Map<string, Map<string, VecinoSimulado>>();
+  for (const vecino of vecinos) {
+    if (vecino.conceptId === foco.id || !TIPOS_DEL_VECINDARIO.has(vecino.type)) continue;
+    if (
+      pedido.modo === 'grupo' &&
+      (vecino.type !== pedido.type || vecino.direction !== pedido.direction)
+    ) {
+      continue;
+    }
+    const clave = `${vecino.type}|${vecino.direction}`;
+    if (!grupos.has(clave)) grupos.set(clave, new Map());
+    grupos.get(clave)!.set(vecino.conceptId, vecino);
+  }
+
+  const categoria = (key: string | null) => {
+    const encontrada = key === null ? undefined : manifiesto.categories.find((c) => c.key === key);
+    return encontrada === undefined
+      ? null
+      : { internalCode: encontrada.internalCode, name: encontrada.name };
+  };
+  const termino = inlineTerm(foco, manifiesto);
+
+  return {
+    focus: {
+      conceptId: termino.conceptId,
+      slug: termino.slug,
+      display: termino.display,
+      category: termino.category,
+      shortDefinition: termino.shortDefinition ?? '',
+    },
+    groups: [...grupos.values()].map((porId) => {
+      const todos = [...porId.values()].sort((a, b) => a.display.localeCompare(b.display, 'es'));
+      const desde = pedido.modo === 'grupo' ? pedido.offset : 0;
+      const cuantos = pedido.modo === 'grupo' ? pedido.limit : pedido.porGrupo;
+      const primero = todos[0]!;
+      return {
+        type: primero.type,
+        direction: primero.direction,
+        total: todos.length,
+        items: todos.slice(desde, desde + cuantos).map((vecino) => ({
+          conceptId: vecino.conceptId,
+          slug: vecino.slug,
+          display: vecino.display,
+          category: categoria(vecino.categoryKey),
+        })),
+      };
+    }),
   };
 }

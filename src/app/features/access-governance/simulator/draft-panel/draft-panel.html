@@ -1,0 +1,276 @@
+<div class="borrador" data-testid="borrador-panel">
+  <h2 class="borrador__titulo">Arme un borrador de permisos</h2>
+  <app-form-field
+    label="¿A quién se le cambiarían los permisos?"
+    [required]="true"
+    [errorMessage]="personError()"
+  >
+    <app-select
+      [options]="personOptions()"
+      [value]="engagementId()"
+      (valueChange)="pickPerson($event)"
+      placeholder="Elija a una persona del equipo"
+      ariaLabel="¿A quién se le cambiarían los permisos?"
+      [searchable]="true"
+      [hasError]="personError() !== ''"
+      data-testid="borrador-persona"
+    />
+  </app-form-field>
+
+  @if (grants(); as g) {
+    <app-view-state-host
+      [state]="g"
+      (retry)="pickPerson(engagementId())"
+      (refresh)="pickPerson(engagementId())"
+    >
+      <section class="bloque" aria-labelledby="bor-hoy">
+        <h3 id="bor-hoy" class="bloque__titulo">Lo que tiene hoy</h3>
+        @if (currentGrants().length === 0) {
+          <p class="texto">
+            Esta persona todavía no tiene permisos: todo lo que agregue será nuevo.
+          </p>
+        } @else {
+          <ul class="lista" role="list" data-testid="borrador-actuales">
+            @for (item of currentGrants(); track item.id) {
+              <li class="tarjeta" [attr.data-testid]="'actual-' + item.id">
+                <div class="tarjeta__texto">
+                  <p class="tarjeta__titulo">
+                    {{ grantTitle(item) }}
+                    <app-badge [variant]="item.effect === 'DENY' ? 'error' : 'success'" size="sm">{{
+                      item.effect === 'DENY' ? 'Denegar' : 'Permitir'
+                    }}</app-badge>
+                  </p>
+                  <p class="texto">
+                    {{ grantAtomsText(item) }}
+                    @if (item.conditionsSummary) {
+                      · {{ item.conditionsSummary }}
+                    }
+                  </p>
+                </div>
+                @if (mode() === 'PATCH') {
+                  <app-checkbox
+                    [checked]="isRemoved(item.id)"
+                    (checkedChange)="toggleRemoved(item.id, $event)"
+                    [label]="'Quitar este permiso (' + grantTitle(item) + ')'"
+                    [attr.data-testid]="'quitar-' + item.id"
+                  />
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </app-view-state-host>
+  }
+
+  <app-form-field label="Cómo se aplica el borrador">
+    <app-segmented-control
+      [options]="modes"
+      [value]="mode()"
+      (valueChange)="mode.set($event)"
+      ariaLabel="Cómo se aplica el borrador"
+    />
+  </app-form-field>
+
+  <app-form-field
+    label="¿Cambia de rol?"
+    hint="Elija un rol solo si quiere simular un cambio de rol completo."
+  >
+    <app-select
+      [options]="templateOptions"
+      [value]="template()"
+      (valueChange)="template.set($event)"
+      placeholder="No cambia de rol"
+      ariaLabel="¿Cambia de rol?"
+      data-testid="borrador-plantilla"
+    />
+  </app-form-field>
+
+  <section class="bloque" aria-labelledby="bor-nuevo">
+    <h3 id="bor-nuevo" class="bloque__titulo">Permisos del borrador</h3>
+    <app-segmented-control
+      [options]="effects"
+      [value]="newEffect()"
+      (valueChange)="newEffect.set($event)"
+      ariaLabel="Qué hace el permiso nuevo"
+    />
+    <app-form-field label="Agregar un permiso">
+      <app-select
+        [options]="actions()"
+        [value]="atomPick()"
+        (valueChange)="pickAtom($event)"
+        placeholder="Busque un permiso"
+        ariaLabel="Agregar un permiso"
+        [searchable]="true"
+        data-testid="borrador-permiso"
+      />
+    </app-form-field>
+    @if (newAtoms().length > 0) {
+      <ul
+        class="chips"
+        role="list"
+        aria-label="Permisos que va a agregar"
+        data-testid="borrador-elegidos"
+      >
+        @for (a of newAtoms(); track a) {
+          <li class="chip">
+            <span
+              >{{ atomLabel(a) }} <span class="tenue">({{ atomSensitivity(a) }})</span></span
+            >
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="dropAtom(a)"
+              [attr.aria-label]="'Quitar ' + atomLabel(a) + ' de la lista'"
+            >
+              Quitar
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    @if (newEffect() === 'ALLOW') {
+      <app-switch
+        [checked]="officeHours()"
+        (checkedChange)="officeHours.set($event)"
+        label="Solo en horario de oficina (lunes a viernes)"
+        data-testid="borrador-horario"
+      />
+      @if (officeHours()) {
+        <div class="fila">
+          <app-form-field label="Desde"
+            ><app-input
+              type="time"
+              [value]="hoursFrom()"
+              (valueChange)="hoursFrom.set('' + ($event ?? ''))"
+              ariaLabel="Hora de inicio del horario"
+              [testId]="'borrador-desde'"
+          /></app-form-field>
+          <app-form-field label="Hasta"
+            ><app-input
+              type="time"
+              [value]="hoursTo()"
+              (valueChange)="hoursTo.set('' + ($event ?? ''))"
+              ariaLabel="Hora de fin del horario"
+              [testId]="'borrador-hasta'"
+          /></app-form-field>
+        </div>
+      }
+    }
+    <div class="acciones">
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        [disabled]="!canAddItem()"
+        (clicked)="addItem()"
+        data-testid="borrador-agregar"
+      >
+        Agregar al borrador
+      </button>
+    </div>
+    @if (items().length > 0) {
+      <ul
+        class="lista"
+        role="list"
+        aria-label="Lo que lleva el borrador"
+        data-testid="borrador-items"
+      >
+        @for (item of items(); track $index) {
+          <li class="tarjeta">
+            <p class="tarjeta__titulo">{{ itemText(item) }}</p>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="dropItem($index)"
+              [attr.aria-label]="'Quitar del borrador: ' + itemText(item)"
+            >
+              Quitar
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    @if (emptyDraft()) {
+      <app-alert tone="warning" data-testid="borrador-vacio"
+        >Agregue o quite al menos un permiso, o elija otro rol, para poder simular.</app-alert
+      >
+    }
+  </section>
+
+  <section class="bloque" aria-labelledby="bor-casos">
+    <h3 id="bor-casos" class="bloque__titulo">Casos de prueba</h3>
+    <app-switch
+      [checked]="auto()"
+      (checkedChange)="auto.set($event)"
+      label="Agregar casos típicos automáticamente (fuera de horario, menores, pacientes reservados…)"
+      data-testid="borrador-auto"
+    />
+    <app-explain-question
+      prefix="caso"
+      submitLabel="Agregar este caso de prueba"
+      [actions]="actions()"
+      [doctors]="doctors()"
+      [showPatient]="true"
+      [showAppointment]="true"
+      whenLabel="¿Cuándo ocurre el caso?"
+      (asked)="addScenario($event)"
+    />
+    @if (scenarios().length > 0) {
+      <ul
+        class="lista"
+        role="list"
+        aria-label="Casos de prueba propios"
+        data-testid="borrador-casos"
+      >
+        @for (s of scenarios(); track $index) {
+          <li class="tarjeta">
+            <p class="tarjeta__titulo">{{ s.label }}</p>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="dropScenario($index)"
+              [attr.aria-label]="'Quitar el caso ' + s.label"
+            >
+              Quitar
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <div class="acciones">
+    <button
+      app-button
+      type="button"
+      [isLoading]="busy()"
+      [disabled]="busy()"
+      (clicked)="simulate()"
+      data-testid="borrador-simular"
+    >
+      Ver qué cambiaría
+    </button>
+  </div>
+
+  <div class="resultado" data-testid="borrador-resultado">
+    @if (state(); as s) {
+      <app-view-state-host [state]="s" (retry)="simulate()" (refresh)="simulate()">
+        @if (result(); as r) {
+          <app-simulation-result
+            [result]="r"
+            [ownScenarios]="scenarios().length"
+            (explainScenario)="explainOwn($event)"
+          />
+        }
+      </app-view-state-host>
+    }
+  </div>
+</div>

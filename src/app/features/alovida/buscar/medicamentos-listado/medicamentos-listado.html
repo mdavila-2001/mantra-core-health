@@ -18,8 +18,8 @@
 
     <div class="vitrina-hero__buscador">
       <app-search-field
-        label="Busque por principio activo, marca o código ATC"
-        placeholder="Paracetamol, Losartán, C09CA01…"
+        label="Busque por medicamento, marca o para qué sirve"
+        placeholder="Paracetamol, Buscapina, dolor abdominal…"
         [value]="texto()"
         (searched)="buscar($event)"
       />
@@ -32,7 +32,7 @@
         @if (origen(); as punto) {
           con farmacia a menos de {{ radioKm }} km de {{ punto.etiqueta }}
         } @else {
-          publicados por las farmacias de la red
+          encontrados
         }
       </p>
     }
@@ -150,6 +150,13 @@
 <section class="app-view-state-host" app-view-state-host="" aria-label="Medicamentos publicados">
   @switch (estado()) {
     @case ('datos') {
+      <app-vitrina-search-notice
+        [term]="texto()"
+        [correctedQuery]="corregido()"
+        [medications]="medicamentos()"
+        (literalRequested)="buscar($event, true)"
+      />
+
       <div class="vitrina-vista">
         <app-segmented-control
           ariaLabel="Cómo ver los resultados"
@@ -159,7 +166,16 @@
         />
       </div>
 
-      @if (vista() === 'arbol') {
+      @if (vista() === 'grafo') {
+        <div data-estado="datos">
+          <app-medication-graph
+            [medications]="medicamentos()"
+            [origin]="origenGeo()"
+            [searchTerm]="texto()"
+            (pharmaciesRequested)="abrirDetalle($event)"
+          />
+        </div>
+      } @else if (vista() === 'arbol') {
         <div data-estado="datos">
           <app-medication-tree
             [medications]="medicamentos()"
@@ -173,16 +189,18 @@
         <ul class="centros__grilla" data-estado="datos" data-testid="vitrina-grilla">
           @for (item of tarjetas(); track item.id) {
             <li app-centro-card [centro]="item.card">
-              <button
-                app-button
-                variant="secondary"
-                size="sm"
-                type="button"
-                data-testid="vitrina-ver-farmacias"
-                (clicked)="abrirDetalle(item.medication)"
-              >
-                Ver farmacias donde está disponible
-              </button>
+              @if (item.medication.pharmacyCount > 0) {
+                <button
+                  app-button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  data-testid="vitrina-ver-farmacias"
+                  (clicked)="abrirDetalle(item.medication)"
+                >
+                  Ver farmacias donde está disponible
+                </button>
+              }
               <app-card-detail-panel
                 [heading]="item.medication.genericName"
                 [rows]="item.details"
@@ -277,6 +295,8 @@
     }
   }
 </section>
+
+<app-official-medicines [products]="oficiales()" />
 
 <!-- ─── Dónde conseguirlo: lista + mapa, en un modal (AC-06-9 a AC-06-12) ──── -->
 @if (abierto(); as medicamento) {

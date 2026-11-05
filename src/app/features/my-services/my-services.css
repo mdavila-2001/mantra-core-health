@@ -12,18 +12,59 @@
     de estudios del laboratorio y del centro de imagenología pasó a mostrarse
     con esta misma tarjeta. Era la misma pinta escrita dos veces.
 
-    Lo que queda acá es lo único que esta pantalla no comparte con nadie: el
-    ancho de la columna y el respiro de la cabecera.
+    Lo que queda acá es lo único que esta pantalla no comparte con nadie: la
+    tarjeta con pestañas, el renglón de práctica y buscador, el ancho de la
+    columna y el área táctil en el teléfono.
     ========================================================================== */
 
 :host {
   display: block;
 }
 
+/* Una sola tarjeta con pestañas, a lo ancho y centrada. Sin tope de ancho
+   propio: lo pone `.app-main__inner` y nadie más
+   (`docs/components/composition-rules.md` §5). */
+.mis-servicios__card {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+/* El panel de cada pestaña. */
 .mis-servicios {
   display: grid;
   gap: var(--sp-4);
-  margin-block-start: var(--sp-6);
+}
+
+/* Práctica y buscador en un renglón cuando caben, y uno debajo del otro en el
+   teléfono. `flex-wrap` y no una rejilla de columnas fijas: sin selector de
+   práctica (una sola) el buscador toma todo el ancho en vez de quedar en una
+   columna angosta con otra vacía al lado. */
+.mis-servicios__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.mis-servicios__practica {
+  flex: 0 1 18rem;
+  min-inline-size: 0;
+}
+
+.mis-servicios__buscador {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+/* En el teléfono los botones de la tarjeta y «Cargar más» miden 44 px de alto:
+   `size="sm"` mide 32 y un pulgar no acierta. El botón lee el gancho
+   `--btn-min-block`; desde 780 px vuelve su talle de siempre. */
+@media (max-width: 779px) {
+  .tarjeta-servicio__acciones,
+  .tarjeta-servicio__mas {
+    --btn-min-block: 44px;
+  }
 }
 
 /* 18rem y no las 14 de la portada de un directorio: acá la tarjeta no es un

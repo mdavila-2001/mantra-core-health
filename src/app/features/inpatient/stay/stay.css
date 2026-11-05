@@ -1,0 +1,9 @@
+:host { display: block; }
+.stay { display: block; inline-size: 100%; margin-inline: auto; margin-block-start: var(--sp-4); }
+.stay__failure { display: block; margin-block-end: var(--sp-4); }
+.stay__panel { display: grid; gap: var(--sp-4); padding-block-start: var(--sp-4); }
+.stay__form { display: grid; gap: var(--sp-4); }
+@media (min-width: 780px) { .stay__form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stay__form app-form-actions { grid-column: 1 / -1; } }
+@media (min-width: 1120px) { .stay__form { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.stay__note, .stay__muted { margin: 0; color: var(--text-muted); font-size: var(--fs-caption); }
+.stay__muted { display: block; }

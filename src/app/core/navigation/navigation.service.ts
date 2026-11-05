@@ -4,6 +4,8 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
+import { navScreenKey } from '../visibility/ui-element-keys';
+import { UiVisibilityService } from '../visibility/ui-visibility.service';
 import { APP_SECTIONS } from './navigation.map';
 import { esPerfilDeGestion, seccionDeGestion } from './navigation.management';
 import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
@@ -42,6 +44,15 @@ import {
 export class NavigationService {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly visibility = inject(UiVisibilityService);
+
+  /**
+   * Si una regla de visibilidad (`GET /me/ui-visibility`) le oculta la sección a la sesión. Presentación, no
+   * seguridad: la API sigue autorizando. Falla abierto —sin reglas leídas no se oculta nada—. Un grupo oculto ya
+   * oculta a sus secciones: la cascada la resuelve el servidor, y un grupo sin ítems no se dibuja.
+   */
+  private readonly mostrar = (section: AppSection): boolean =>
+    this.visibility.isVisible(navScreenKey(section.path));
 
   /**
    * La URL actual como señal.
@@ -59,12 +70,26 @@ export class NavigationService {
     { initialValue: this.router.url },
   );
 
+  /**
+   * La clase de cuenta de la sesión, para las secciones que existen solo para
+   * una organización o solo para una persona (`AppSection.onlyForAccountKind`).
+   * Es presentación: el claim `accountKind` o, sin él, la deducción de
+   * `SessionStore.isOrganizationAccount`.
+   */
+  private readonly accountKind = computed<'ORGANIZATION' | 'PERSON'>(() =>
+    this.auth.isOrganizationAccount() ? 'ORGANIZATION' : 'PERSON',
+  );
+
   /** Las secciones que esta sesión puede ver, sin agrupar. */
   readonly visibleSections = computed<readonly AppSection[]>(() => {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
-    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles, tenants, activeTenantType));
+    const accountKind = this.accountKind();
+    return APP_SECTIONS.filter(
+      (section) =>
+        isVisibleTo(section, roles, tenants, activeTenantType, accountKind) && this.mostrar(section),
+    );
   });
 
   /**
@@ -87,6 +112,7 @@ export class NavigationService {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
+    const accountKind = this.accountKind();
     // Las fijas salen **antes** de repartir, no después: si se descontaran al
     // final, `items` y la suma de los `blocks` dejarían de coincidir, que es
     // justo el invariante que fija la prueba de este servicio.
@@ -95,7 +121,8 @@ export class NavigationService {
     const deGestion = esPerfilDeGestion(roles);
     const enElMenu = APP_SECTIONS.filter(
       (section) =>
-        apareceEnElMenu(section, roles, tenants, activeTenantType) &&
+        apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind) &&
+        this.mostrar(section) &&
         section.pinnedTop !== true &&
         (!deGestion || seccionDeGestion(section)),
     );
@@ -130,9 +157,12 @@ export class NavigationService {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
+    const accountKind = this.accountKind();
     return APP_SECTIONS.filter(
       (section) =>
-        section.pinnedTop === true && apareceEnElMenu(section, roles, tenants, activeTenantType),
+        section.pinnedTop === true &&
+        apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind) &&
+        this.mostrar(section),
     ).map(menuItemOf);
   });
 

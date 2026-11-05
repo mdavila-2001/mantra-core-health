@@ -25,6 +25,7 @@ function mine(id: string, statusCode: string, practiceId: string, siteId: string
     isPrimary: false,
     createdAt: new Date('2026-10-01'),
     avatarUrl: null,
+    tenantId: null,
     ...extra,
   };
 }

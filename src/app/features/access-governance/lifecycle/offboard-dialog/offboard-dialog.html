@@ -1,0 +1,350 @@
+<app-page-header
+  [title]="title()"
+  subtitle="Dar de baja con traspaso del trabajo, suspender por un tiempo o pedir que se reactive."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-offboard-dialog">
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    @if (data(); as d) {
+      <p class="estado" data-testid="offboard-status">
+        {{ d.engagement.personName }} · vínculo
+        <strong>{{ statusText(d.engagement.status).toLocaleLowerCase('es') }}</strong>
+      </p>
+
+      <app-tabs [(selectedIndex)]="tab">
+        <app-tab label="Dar de baja">
+          @if (offboarded(); as done) {
+            <div aria-live="polite" role="status" data-testid="offboard-result">
+              <app-alert tone="success" title="La baja está hecha">
+                El acceso terminó el {{ dateTime(done.revokedAt) }}: primero se revocó y después se
+                reasignó el trabajo.
+                @if (done.handover.pending > 0) {
+                  Quedan <strong>{{ done.handover.pending }}</strong> elementos por traspasar: el
+                  caso sigue abierto.
+                } @else {
+                  No quedó nada pendiente.
+                }
+                @if (done.caseId) {
+                  <a
+                    [routerLink]="['/administration/access-governance/lifecycle', done.caseId]"
+                    data-testid="offboard-case-link"
+                    >Ver el registro de transferencia</a
+                  >.
+                }
+              </app-alert>
+            </div>
+          } @else if (isEnded()) {
+            <p class="ayuda">Esta persona ya está dada de baja.</p>
+          } @else {
+            <ol class="pasos" aria-label="Pasos de la baja">
+              <li
+                [attr.aria-current]="step() === 1 ? 'step' : null"
+                [class.pasos__actual]="step() === 1"
+              >
+                1. Qué tiene en las manos
+              </li>
+              <li
+                [attr.aria-current]="step() === 2 ? 'step' : null"
+                [class.pasos__actual]="step() === 2"
+              >
+                2. ¿A quién se lo pasa?
+              </li>
+              <li
+                [attr.aria-current]="step() === 3 ? 'step' : null"
+                [class.pasos__actual]="step() === 3"
+              >
+                3. Confirmar
+              </li>
+            </ol>
+
+            @switch (step()) {
+              @case (1) {
+                <section aria-labelledby="off-step-1" data-testid="offboard-step-1">
+                  <h2 id="off-step-1" class="seccion__titulo">Qué tiene en las manos</h2>
+                  @if (d.preview === null) {
+                    <app-alert
+                      tone="warning"
+                      title="No pudimos ver su trabajo pendiente"
+                      data-testid="offboard-preview-failed"
+                    >
+                      Puede dar de baja de todos modos y traspasar después desde el caso, pero
+                      conviene volver a intentarlo.
+                      <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        (clicked)="load()"
+                      >
+                        Volver a intentar
+                      </button>
+                    </app-alert>
+                  } @else if (summary().length === 0) {
+                    <app-alert
+                      tone="success"
+                      title="No tiene trabajo en las manos"
+                      data-testid="offboard-nothing"
+                      >No hay conversaciones, tareas, citas pendientes ni cuentas que
+                      traspasar.</app-alert
+                    >
+                  } @else {
+                    <ul class="resumen" data-testid="offboard-summary">
+                      @for (row of summary(); track row.kind) {
+                        <li class="resumen__fila" [attr.data-testid]="'offboard-count-' + row.kind">
+                          <strong>{{ row.text }}</strong>
+                          <span class="ayuda">{{ row.help }}</span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                  <div class="acciones">
+                    <button app-button type="button" (clicked)="next()" data-testid="offboard-next">
+                      Continuar
+                    </button>
+                    <a app-button variant="outline" routerLink="/administration/support-team"
+                      >Volver al equipo de apoyo</a
+                    >
+                  </div>
+                </section>
+              }
+              @case (2) {
+                <section aria-labelledby="off-step-2" data-testid="offboard-step-2">
+                  <h2 id="off-step-2" class="seccion__titulo">¿A quién se lo pasa?</h2>
+                  @if (d.preview !== null) {
+                    <app-handover-form
+                      [preview]="d.preview"
+                      [people]="options()"
+                      [draft]="draft()"
+                      [showIssues]="attempted()"
+                      (draftChange)="draft.set($event)"
+                    />
+                  }
+                  @if (attempted() && issues().length > 0) {
+                    <app-alert
+                      tone="warning"
+                      role="alert"
+                      title="Falta un dato"
+                      data-testid="offboard-issues"
+                      >{{ issues()[0] }}</app-alert
+                    >
+                  }
+                  <div class="acciones">
+                    <button
+                      app-button
+                      variant="outline"
+                      type="button"
+                      (clicked)="back()"
+                      data-testid="offboard-back"
+                    >
+                      Atrás
+                    </button>
+                    <button app-button type="button" (clicked)="next()" data-testid="offboard-next">
+                      Continuar
+                    </button>
+                  </div>
+                </section>
+              }
+              @case (3) {
+                <section aria-labelledby="off-step-3" data-testid="offboard-step-3">
+                  <h2 id="off-step-3" class="seccion__titulo">Confirmar</h2>
+                  <app-alert
+                    tone="warning"
+                    title="Esto no se puede deshacer"
+                    data-testid="offboard-fixed-text"
+                  >
+                    El acceso termina <strong>ahora</strong>. Las citas se mantienen y su gestión
+                    pasa a la recepción.
+                  </app-alert>
+                  <app-form-field
+                    label="Motivo de la baja"
+                    [required]="true"
+                    [errorMessage]="reasonError()"
+                    hint="Queda en el registro de transferencia."
+                  >
+                    <app-textarea
+                      [value]="reason()"
+                      (valueChange)="reason.set($event)"
+                      [rows]="3"
+                      [maxLength]="500"
+                      [hasError]="reasonError() !== ''"
+                      data-testid="offboard-reason"
+                    />
+                  </app-form-field>
+                  @if (failure() !== '') {
+                    <app-alert
+                      tone="error"
+                      title="No se pudo dar de baja"
+                      role="alert"
+                      data-testid="offboard-failure"
+                      >{{ failure() }}</app-alert
+                    >
+                  }
+                  <div class="acciones">
+                    <button
+                      app-button
+                      variant="outline"
+                      type="button"
+                      (clicked)="back()"
+                      data-testid="offboard-back"
+                    >
+                      Atrás
+                    </button>
+                    <button
+                      app-button
+                      variant="danger"
+                      type="button"
+                      [isLoading]="busy() === 'offboard'"
+                      [disabled]="busy() !== null"
+                      (clicked)="offboard(true)"
+                      data-testid="offboard-confirm"
+                    >
+                      Dar de baja y traspasar
+                    </button>
+                    <button
+                      app-button
+                      variant="outline"
+                      type="button"
+                      [disabled]="busy() !== null"
+                      (clicked)="offboard(false)"
+                      data-testid="offboard-only"
+                    >
+                      Solo dar de baja ahora
+                    </button>
+                  </div>
+                  <p class="ayuda">
+                    «Solo dar de baja ahora» corta el acceso primero y deja el traspaso abierto en
+                    el caso, a la vista en el tablero.
+                  </p>
+                </section>
+              }
+            }
+          }
+        </app-tab>
+
+        <app-tab label="Suspender o reactivar">
+          <div aria-live="polite" role="status" data-testid="life-region">
+            @if (suspendDone(); as done) {
+              <app-alert
+                tone="success"
+                title="La persona quedó suspendida"
+                data-testid="suspend-result"
+              >
+                Su acceso se cortó ahora. Sus permisos quedan guardados para cuando se reactive.
+                @if (done.caseId) {
+                  <a [routerLink]="['/administration/access-governance/lifecycle', done.caseId]"
+                    >Ver el caso</a
+                  >.
+                }
+              </app-alert>
+            }
+            @if (reactivateDone(); as done) {
+              <app-alert
+                tone="info"
+                title="La reactivación espera aprobación"
+                data-testid="reactivate-result"
+              >
+                Otra persona debe aprobarla; hasta entonces sigue suspendida.
+                @if (done.approvalId) {
+                  <a
+                    [routerLink]="['/administration/access-governance/approvals']"
+                    data-testid="reactivate-approvals-link"
+                    >Ver las aprobaciones pendientes</a
+                  >.
+                }
+              </app-alert>
+            }
+          </div>
+          @if (lifeFailure() !== '') {
+            <app-alert
+              tone="error"
+              role="alert"
+              title="No se pudo completar"
+              data-testid="life-failure"
+              >{{ lifeFailure() }}</app-alert
+            >
+          }
+
+          @if (isEnded()) {
+            <p class="ayuda">
+              Esta persona ya está dada de baja: no se puede suspender ni reactivar.
+            </p>
+          } @else if (isSuspended()) {
+            <section class="seccion" aria-labelledby="react-title" data-testid="reactivate-form">
+              <h2 id="react-title" class="seccion__titulo">Reactivar</h2>
+              <p class="ayuda">
+                Reactivar siempre necesita la aprobación de otra persona. Si la suspensión fue por
+                una investigación, solo el administrador de seguridad puede aprobarla.
+              </p>
+              <app-form-field
+                label="Motivo de la reactivación"
+                [required]="true"
+                [errorMessage]="reactivateError()"
+              >
+                <app-textarea
+                  [value]="reactivateReason()"
+                  (valueChange)="reactivateReason.set($event)"
+                  [rows]="3"
+                  [maxLength]="500"
+                  [hasError]="reactivateError() !== ''"
+                  data-testid="reactivate-reason"
+                />
+              </app-form-field>
+              <div>
+                <button
+                  app-button
+                  type="button"
+                  [isLoading]="busy() === 'reactivate'"
+                  [disabled]="busy() !== null"
+                  (clicked)="reactivate()"
+                  data-testid="reactivate-submit"
+                >
+                  Pedir la reactivación
+                </button>
+              </div>
+            </section>
+          } @else {
+            <section class="seccion" aria-labelledby="susp-title" data-testid="suspend-form">
+              <h2 id="susp-title" class="seccion__titulo">Suspender ahora</h2>
+              <p class="ayuda">
+                La suspensión es inmediata y no necesita aprobación: corta el acceso por ahora y
+                deja los permisos guardados.
+              </p>
+              <app-form-field label="Por qué se suspende" [required]="true">
+                <app-select
+                  [value]="suspendCode()"
+                  (valueChange)="suspendCode.set($event)"
+                  [options]="suspensionOptions"
+                  ariaLabel="Por qué se suspende"
+                  data-testid="suspend-reason-code"
+                />
+              </app-form-field>
+              <app-form-field label="Nota (opcional)">
+                <app-textarea
+                  [value]="suspendNote()"
+                  (valueChange)="suspendNote.set($event)"
+                  [rows]="2"
+                  [maxLength]="500"
+                  data-testid="suspend-note"
+                />
+              </app-form-field>
+              <div>
+                <button
+                  app-button
+                  variant="danger"
+                  type="button"
+                  [isLoading]="busy() === 'suspend'"
+                  [disabled]="busy() !== null"
+                  (clicked)="suspend()"
+                  data-testid="suspend-submit"
+                >
+                  Suspender ahora
+                </button>
+              </div>
+            </section>
+          }
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>

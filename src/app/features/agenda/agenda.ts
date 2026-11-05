@@ -31,6 +31,7 @@ import {
   patientChartRoute,
 } from '../clinical-record/clinical-record.routes';
 import { ClinicalClient } from '../../core/data-access/clinical/clinical.client';
+import { bookingChangeDeniedText } from '../../core/data-access/scheduling/booking-change-denied';
 import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
 import { esReconsulta } from '../../core/data-access/scheduling/scheduling.types';
 import type {
@@ -1739,7 +1740,7 @@ export class Agenda {
         },
         error: (error: unknown) => {
           this.operando.set(null);
-          this.avisarFallo(error, 'No se pudo cancelar la cita.');
+          this.avisarFallo(error, 'No se pudo cancelar la cita.', 'cancelar');
         },
       });
   }
@@ -1877,7 +1878,7 @@ export class Agenda {
       error: (error: unknown) => {
         this.operando.set(null);
         this.cupoDestino.set(null);
-        this.avisarFallo(error, 'No se pudo mover la cita.');
+        this.avisarFallo(error, 'No se pudo mover la cita.', 'mover');
       },
     });
   }
@@ -2116,11 +2117,24 @@ export class Agenda {
       )
       .sort((a, b) => b.startAt.getTime() - a.startAt.getTime())[0];
 
+    // Desde una cuenta de profesional, `GET /scheduling/bookings?patientProfileId=` devuelve solo SU agenda (salvo su propio
+    // paciente o apoderado): «última consulta» es la última con usted, no la del paciente con cualquier colega.
+    const conUsted = this.soloSuAgenda() ? ' con usted' : '';
     if (ultima === undefined) {
-      return `${cita.paciente} · Sin consultas anteriores`;
+      return `${cita.paciente} · Sin consultas anteriores${conUsted}`;
     }
     const fecha = formatDate(ultima.startAt, 'd MMM y', this.idioma);
-    return `${cita.paciente} · Última consulta: ${fecha} · ${ultima.reasonText ?? 'Sin motivo registrado'}`;
+    return `${cita.paciente} · Última consulta${conUsted}: ${fecha} · ${ultima.reasonText ?? 'Sin motivo registrado'}`;
+  }
+
+  /**
+   * ¿Quien mira es una cuenta de profesional? Entonces la API acota el historial por paciente a su propia agenda
+   * (G1, ronda 2): el historial y la «última consulta» son «con usted», y la pantalla lo dice en vez de sugerir que es todo
+   * lo que el paciente tiene en la organización.
+   */
+  protected soloSuAgenda(): boolean {
+    const roles = this.auth.roles();
+    return roles.includes('PRACTITIONER') && !roles.includes('SUPERADMIN');
   }
 
   private codigoDeEstado(cita: Booking): string {
@@ -2176,12 +2190,19 @@ export class Agenda {
       };
     });
 
+    const soloSuya = this.soloSuAgenda();
     await this.dialogs.confirm({
-      title: `Historial de ${cita.paciente}`,
+      title: soloSuya ? `Historial de ${cita.paciente} con usted` : `Historial de ${cita.paciente}`,
       message:
         ordenadas.length === 0
-          ? 'Esta persona todavía no pidió ninguna cita acá.'
-          : `${ordenadas.length} ${ordenadas.length === 1 ? 'solicitud' : 'solicitudes'}, de la más reciente a la más vieja. Incluye las rechazadas y canceladas.`,
+          ? soloSuya
+            ? 'Esta persona todavía no pidió ninguna cita en su agenda. Aquí solo se ven las citas con usted, no las que tenga con otros profesionales.'
+            : 'Esta persona todavía no pidió ninguna cita acá.'
+          : `${ordenadas.length} ${ordenadas.length === 1 ? 'solicitud' : 'solicitudes'}, de la más reciente a la más vieja. Incluye las rechazadas y canceladas.${
+              soloSuya
+                ? ' Son solo las citas con usted: las que la persona tenga con otros profesionales no se muestran aquí.'
+                : ''
+            }`,
       details: detalles,
       confirmLabel: 'Cerrar',
       cancelLabel: 'Volver',
@@ -2610,7 +2631,13 @@ export class Agenda {
    * El fallo de una acción de fila sale por toast, no pisando la tabla: la
    * agenda que sí se leyó sigue siendo cierta aunque un botón haya fallado.
    */
-  private avisarFallo(error: unknown, generico: string): void {
+  private avisarFallo(error: unknown, generico: string, accion?: 'cancelar' | 'mover'): void {
+    // La cita de un colega: la API responde 403 (SEG V-1); se dice de quién es y a quién pedirla.
+    const ajena = accion === undefined ? null : bookingChangeDeniedText(error, accion);
+    if (ajena !== null) {
+      this.toast.error(ajena, 'Agenda');
+      return;
+    }
     const estado = errorToViewState<null>(error);
     const detalle =
       estado.status === 'validation'

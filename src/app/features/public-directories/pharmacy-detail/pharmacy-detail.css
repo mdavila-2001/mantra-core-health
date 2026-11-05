@@ -1,0 +1,37 @@
+/* ============================================================================
+    La ficha de una farmacia: UNA tarjeta con pestañas, centrada y a lo ancho.
+
+    Sin tope de ancho propio: lo pone `.app-main__inner` y nadie más
+    (`docs/components/composition-rules.md` §5). La rejilla, la tarjeta de cada
+    medicamento y los encabezados de sección salen de las hojas compartidas
+    (`card-grid.css`, `public-sheet.css`); acá sólo está la caja de la ficha.
+    ========================================================================== */
+
+.ficha-card {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+  margin-block-start: var(--sp-4);
+}
+
+/* El resumen de la farmacia queda arriba, siempre a la vista; las pestañas
+   empiezan debajo con su aire. */
+.ficha-card__tabs {
+  margin-block-start: var(--sp-5);
+}
+
+/* «Reintentar» bajo el aviso de que la búsqueda de la receta falló. */
+.ficha-card__reintento {
+  display: flex;
+  margin-block-start: var(--sp-2);
+}
+
+/* Objetivos táctiles de 44 px en lo propio de la ficha cuando se toca con el
+   dedo: los chips de filtro y el «Cómo llegar» de cada sucursal son más chicos
+   que eso en su versión de escritorio. */
+@media (max-width: 779px), (pointer: coarse) {
+  .ficha-card .ficha-publica__filtros app-chip,
+  .ficha-card .enlace-chip {
+    min-block-size: 44px;
+  }
+}

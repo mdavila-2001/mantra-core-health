@@ -26,6 +26,16 @@ export const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 export const IDLE_WARNING_MS = 2 * 60 * 1000;
 
 /**
+ * El plazo que rige para esta sesión: el que declara el token (política de
+ * sesión de la organización) o, sin él, {@link IDLE_TIMEOUT_MS}. Nunca baja de
+ * tres veces el aviso, para que el aviso tenga sentido.
+ */
+export function idleTimeoutFor(minutes: number | undefined): number {
+  if (minutes === undefined) return IDLE_TIMEOUT_MS;
+  return Math.max(minutes * 60 * 1000, IDLE_WARNING_MS * 3);
+}
+
+/**
  * Los eventos que cuentan como «la persona sigue ahí».
  *
  * `scroll` y `keydown` cubren leer y escribir; `pointerdown` cubre el ratón y
@@ -112,9 +122,10 @@ export class IdleLogout {
       this.zone.run(() => this.porVencer.set(false));
     }
 
+    const plazo = this.plazo();
     this.temporizadorAviso = setTimeout(
       () => this.zone.run(() => this.porVencer.set(true)),
-      IDLE_TIMEOUT_MS - IDLE_WARNING_MS,
+      plazo - IDLE_WARNING_MS,
     );
 
     this.temporizadorCierre = setTimeout(
@@ -125,8 +136,14 @@ export class IdleLogout {
           // es lo que corresponde: la sesión se cierra aunque la red falle.
           this.auth.logout();
         }),
-      IDLE_TIMEOUT_MS,
+      plazo,
     );
+  }
+
+  /** El plazo de inactividad de esta sesión: la política de la organización, si el token la trae. */
+  private plazo(): number {
+    const claims = typeof this.session.claims === 'function' ? this.session.claims() : null;
+    return idleTimeoutFor(claims?.idleTimeoutMinutes);
   }
 
   private arrancar(): void {

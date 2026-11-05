@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+.estab {
+  margin-block-start: var(--sp-4);
+}
+
+.estab__bloque {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.estab__bloque:last-of-type {
+  border-block-end: 0;
+}
+
+.estab__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.estab__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.estab__bajada,
+.estab__secundario {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.estab__nombre {
+  display: block;
+  font-weight: 600;
+}
+
+.estab__secundario {
+  display: block;
+}

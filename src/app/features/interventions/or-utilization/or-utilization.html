@@ -1,0 +1,41 @@
+<app-page-header title="Utilización de quirófanos" subtitle="Cuánto de la sesión se usa y cuánto se aprovechan los bloques, por sala." [breadcrumbs]="breadcrumbs()" />
+
+<app-card class="or-utilization" padding="lg" data-testid="or-utilization">
+  <div class="or-utilization__toolbar">
+    <app-site-switch />
+    <app-segmented-control [options]="ranges" [value]="range()" ariaLabel="Período" (valueChange)="range.set($event)" />
+    @if (data(); as d) {
+      <span class="or-utilization__muted" data-testid="or-utilization-as-of">Del {{ shortDateOf(d.data.from + 'T12:00:00') }} al {{ shortDateOf(d.data.to + 'T12:00:00') }} · dato de las {{ timeOf(d.asOf) }} ({{ ageOf(d.asOf) }})</span>
+    }
+  </div>
+
+  <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+    @if (data(); as d) {
+      @if (d.data.totals; as t) {
+        <div class="or-utilization__kpis">
+          <app-metric-card label="Utilización de sala" [value]="percentOf(t.roomUtilizationPct)" [hint]="'Tiempo útil ' + durationOf(t.touchMinutes) + ' de ' + durationOf(t.sessionMinutes) + ' de sesión'" data-testid="or-utilization-room-pct" />
+          <app-metric-card label="Utilización de bloque" [value]="percentOf(t.blockUtilizationPct)" [hint]="'Tiempo útil ÷ (asignado ' + durationOf(t.blockAllocated) + ' − liberado ' + durationOf(t.blockReleased) + ')'" />
+          <app-metric-card label="Recambio (mediana)" [value]="durationOf(t.turnoverMinutesP50)" hint="Salida de un paciente → entrada del siguiente" />
+        </div>
+      }
+
+      <h2 class="or-utilization__heading">Por sala</h2>
+      <app-data-table [state]="roomsState()" [columns]="roomColumns()" [trackBy]="byRoom" caption="Utilización por sala" data-testid="or-utilization-rooms" />
+    }
+  </app-view-state-host>
+</app-card>
+
+<ng-template #roomCell let-r>
+  <span class="or-utilization__strong">{{ r.code }}</span>
+  <span class="or-utilization__muted">recambio {{ durationOf(r.turnoverMinutesP50) }}</span>
+</ng-template>
+
+<ng-template #pctRoomCell let-r>
+  <span class="or-utilization__bar"><span [style.width.%]="barOf(r.roomUtilizationPct)"></span></span>
+  {{ percentOf(r.roomUtilizationPct) }}
+</ng-template>
+
+<ng-template #pctBlockCell let-r>
+  <span class="or-utilization__bar"><span [style.width.%]="barOf(r.blocks.blockUtilizationPct)"></span></span>
+  {{ percentOf(r.blocks.blockUtilizationPct) }}
+</ng-template>

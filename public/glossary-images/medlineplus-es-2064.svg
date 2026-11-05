@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Trasplante de órganos</title>
+  <desc id="d">Silueta humana con los órganos que se trasplantan: pulmones, corazón, hígado, páncreas, riñones e intestino. A la derecha, el paso de donante a receptor y una balanza entre el rechazo y los fármacos inmunosupresores.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="210.0" y="50" text-anchor="middle" class="title">Órganos que se trasplantan</text>
+<path d="M148.0,136.6 Q109.0,139.2 103.8,179.5 L90.8,329.0 Q96.0,344.6 109.0,331.6 L119.4,199.0 L122.0,355.0 Q122.0,396.6 142.8,409.6 L257.2,409.6 Q278.0,396.6 278.0,355.0 L280.6,199.0 L291.0,331.6 Q304.0,344.6 309.2,329.0 L296.2,179.5 Q291.0,139.2 252.0,136.6 L215.6,131.4 L215.6,115.8 L184.4,115.8 L184.4,131.4 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="200" cy="87.2" r="31.2" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+<circle cx="186" cy="170" r="16" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5"/>
+<text x="60" y="150" class="small">Pulmones</text>
+<line x1="116" y1="146" x2="170" y2="170" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="214" cy="186" r="12" fill="var(--vessel)" stroke="var(--organ-d)" stroke-width="1.5"/>
+<text x="340" y="172" text-anchor="end" class="small">Corazón</text>
+<line x1="280" y1="168" x2="226" y2="186" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="174" cy="226" r="18" fill="var(--organ-d)" stroke="var(--organ-d)" stroke-width="1.5"/>
+<text x="60" y="226" class="small">Hígado</text>
+<line x1="116" y1="222" x2="156" y2="226" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="226" cy="236" r="10" fill="var(--beam)" stroke="var(--organ-d)" stroke-width="1.5"/>
+<text x="340" y="236" text-anchor="end" class="small">Páncreas</text>
+<line x1="280" y1="232" x2="236" y2="236" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="170" cy="262" r="9" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5"/>
+<text x="60" y="280" class="small">Riñones</text>
+<line x1="116" y1="276" x2="161" y2="262" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="200" cy="290" r="14" fill="var(--ok-l)" stroke="var(--organ-d)" stroke-width="1.5"/>
+<text x="340" y="300" text-anchor="end" class="small">Intestino</text>
+<line x1="280" y1="296" x2="214" y2="290" stroke="var(--muted)" stroke-width="1"/>
+<circle cx="230" cy="262" r="9" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5"/>
+<text x="200" y="426" text-anchor="middle" class="small" style="fill:var(--muted)">También tejidos: córnea, piel, hueso</text>
+<rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="598.0" y="50" text-anchor="middle" class="title">Rechazo e inmunosupresión</text>
+<rect x="436" y="62" width="150" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="511.0" y="93.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Donante vivo</text>
+<text x="511.0" y="109.5" text-anchor="middle" class="lab" style="fill:var(--ink)">o fallecido</text>
+<line x1="590" y1="97" x2="616" y2="97" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="620" y="62" width="140" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="690.0" y="93.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Receptor</text>
+<text x="690.0" y="109.5" text-anchor="middle" class="lab" style="fill:var(--ink)">compatible</text>
+<path d="M500,250 L700,250" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M600,250 L585,280 L615,280 Z" fill="var(--muted)" stroke="none" stroke-width="0" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="470" y="180" width="110" height="56" rx="8" fill="var(--vessel)" stroke-width="1"/>
+<text x="525.0" y="197.2" text-anchor="middle" class="small" style="fill:var(--on)">Rechazo:</text>
+<text x="525.0" y="212.2" text-anchor="middle" class="small" style="fill:var(--on)">las defensas</text>
+<text x="525.0" y="227.2" text-anchor="middle" class="small" style="fill:var(--on)">atacan</text>
+<rect x="620" y="180" width="110" height="56" rx="8" fill="var(--ok)" stroke-width="1"/>
+<text x="675.0" y="197.2" text-anchor="middle" class="small" style="fill:var(--on)">Fármacos</text>
+<text x="675.0" y="212.2" text-anchor="middle" class="small" style="fill:var(--on)">inmuno-</text>
+<text x="675.0" y="227.2" text-anchor="middle" class="small" style="fill:var(--on)">supresores</text>
+<text x="598" y="304" text-anchor="middle" class="lab">Hay que mantener el equilibrio</text>
+<text x="436" y="338" class="lab">• Medicación de por vida</text>
+<text x="436" y="362" class="lab">• Más riesgo de infecciones</text>
+<text x="436" y="386" class="lab">• Controles y análisis periódicos</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -335,6 +335,23 @@ describe('BookingPaymentReceipts', () => {
       expect(byTestId('booking-receipts-form')).not.toBeNull();
     });
 
+    it('while the receipt uploads, the dropzone shows its spinner', () => {
+      const fileUpload = new Subject<{ id: string }>();
+      uploadFile.mockReturnValue(fileUpload);
+      list.mockReturnValue(of([]));
+      mount();
+      form().files.set([new File(['x'], 'foto.png', { type: 'image/png' })]);
+      fixture.detectChanges();
+      expect(byTestId('file-input-uploading')).toBeNull();
+
+      submit();
+      expect(byTestId('file-input-uploading')?.textContent).toContain('Subiendo comprobante…');
+
+      fileUpload.error(new Error('offline'));
+      fixture.detectChanges();
+      expect(byTestId('file-input-uploading')).toBeNull();
+    });
+
     it('una subida que termina con otra cita abierta va a la suya y no cae en la que se mira', () => {
       const fileUpload = new Subject<{ id: string }>();
       const receiptUpload = new Subject<PaymentReceipt>();

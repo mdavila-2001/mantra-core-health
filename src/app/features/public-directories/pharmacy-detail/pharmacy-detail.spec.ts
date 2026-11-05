@@ -1,12 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router, type ParamMap } from '@angular/router';
 import { of } from 'rxjs';
 
 import { CARGADOR_DE_LEAFLET } from '@shared/components/organisms/map/map';
 
 import { PharmacyDetail } from './pharmacy-detail';
+import { destinoDeLaQuery, tomarContexto } from '../../../core/messaging/chat-link';
 
 const SLUG = 'farmacia-vida';
 
@@ -231,7 +232,7 @@ describe('PharmacyDetail', () => {
   let fixture: ComponentFixture<PharmacyDetail>;
   let http: HttpTestingController;
 
-  function montar(slug: string | null = SLUG): void {
+  function montar(slug: string | null = SLUG, tab: string | null = null): void {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -245,7 +246,10 @@ describe('PharmacyDetail', () => {
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
         {
           provide: ActivatedRoute,
-          useValue: { paramMap: of(convertToParamMap({ slug: slug ?? '' })) },
+          useValue: {
+            paramMap: of(convertToParamMap({ slug: slug ?? '' })),
+            queryParamMap: of(convertToParamMap(tab === null ? {} : { tab })),
+          },
         },
       ],
     });
@@ -254,10 +258,10 @@ describe('PharmacyDetail', () => {
     fixture.detectChanges();
   }
 
-  function responder(sucursales: unknown = SUCURSALES): void {
+  function responder(sucursales: unknown = SUCURSALES, catalogo: unknown = CATALOGO): void {
     http.expectOne(`/public/profiles/f/${SLUG}`).flush(PERFIL);
     http.expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/products`).flush(
-      CATALOGO,
+      catalogo as object,
     );
     http.expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/branches`).flush(
       sucursales as object,
@@ -304,6 +308,33 @@ describe('PharmacyDetail', () => {
     expect(boton).toBeDefined();
     boton?.click();
     fixture.detectChanges();
+  }
+
+  /** Los rótulos de las pestañas, en el orden en que se dibujan. */
+  function rotulosDeLasPestanas(): readonly string[] {
+    return [
+      ...(fixture.nativeElement.querySelectorAll('[role="tab"]') as NodeListOf<HTMLElement>),
+    ].map((pestana) => (pestana.textContent ?? '').trim());
+  }
+
+  /**
+   * Toca una pestaña por su rótulo. El router se sustituye por un doble que
+   * sólo anota la navegación: lo que se prueba acá es qué pestaña queda abierta
+   * y qué se escribe en la URL, no el enrutado.
+   */
+  function abrirPestana(rotulo: string): ReturnType<typeof vi.spyOn> {
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const pestana = [
+      ...(fixture.nativeElement.querySelectorAll('[role="tab"]') as NodeListOf<HTMLElement>),
+    ].find((candidata) => (candidata.textContent ?? '').trim().startsWith(rotulo));
+    expect(pestana).toBeDefined();
+    pestana?.click();
+    fixture.detectChanges();
+    return navegar;
+  }
+
+  function abrirSucursales(): ReturnType<typeof vi.spyOn> {
+    return abrirPestana('Sucursales y receta');
   }
 
   /** Los nombres de las sucursales, en el orden en que se dibujan. */
@@ -454,6 +485,7 @@ describe('PharmacyDetail', () => {
   it('lista todas las sucursales de la cadena, con la que se mira rotulada', () => {
     montar();
     responder();
+    abrirSucursales();
 
     expect(sucursalesVisibles()).toEqual(['Centro', 'Norte', 'Sur']);
     const texto = fixture.nativeElement.textContent as string;
@@ -469,6 +501,7 @@ describe('PharmacyDetail', () => {
   it('con la ubicación, ordena por cercanía y señala la más cercana', () => {
     montar();
     responder();
+    abrirSucursales();
 
     // Un punto al sur: la sucursal Sur queda primera y la Norte última.
     conUbicacion(-17.8, -63.16);
@@ -490,6 +523,7 @@ describe('PharmacyDetail', () => {
       ...SUCURSALES,
       items: [centro, norte, { ...sur, id: 'sede-sur-2', slug: norte.slug }],
     });
+    abrirSucursales();
 
     conUbicacion(-17.8, -63.16);
 
@@ -503,6 +537,7 @@ describe('PharmacyDetail', () => {
   it('dice que no pudo leer la ubicación sin llevarse puesta la sección', () => {
     montar();
     responder();
+    abrirSucursales();
 
     Object.defineProperty(window.navigator, 'geolocation', {
       configurable: true,
@@ -520,6 +555,7 @@ describe('PharmacyDetail', () => {
   it('busca la receta entre las sucursales y recomienda la primera que trae el servidor', () => {
     montar();
     responder();
+    abrirSucursales();
 
     escribirReceta('Paracetamol');
     tocarBoton('Buscar en las sucursales');
@@ -561,6 +597,7 @@ describe('PharmacyDetail', () => {
   it('manda la ubicación con la búsqueda cuando ya la tiene', () => {
     montar();
     responder();
+    abrirSucursales();
 
     conUbicacion(-17.8, -63.16);
     escribirReceta('Paracetamol, Losartán');
@@ -584,6 +621,7 @@ describe('PharmacyDetail', () => {
   it('sin receta escrita no busca nada', () => {
     montar();
     responder();
+    abrirSucursales();
 
     const boton = [
       ...(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>),
@@ -627,12 +665,62 @@ describe('PharmacyDetail', () => {
     responder();
 
     // Se mira DENTRO de las tarjetas: fuera de ellas sí hay controles —el
-    // buscador y los chips—, y ninguno toca el catálogo.
+    // buscador y los chips—, y ninguno toca el catálogo. El único botón de la
+    // tarjeta es «Consultar por chat», que no edita nada: lleva al chat.
     const controles = fixture.nativeElement.querySelectorAll(
-      '[data-testid="pharmacy-product"] button, [data-testid="pharmacy-product"] input',
+      '[data-testid="pharmacy-product"] button:not([data-testid="consultar-producto-por-chat"]), [data-testid="pharmacy-product"] input',
     );
     expect(controles.length).toBe(0);
     expect(fixture.nativeElement.textContent as string).not.toContain('Editar precio');
+  });
+
+  /** La vuelta al chat que guardó el paso por el login (la prueba no tiene sesión). */
+  function vueltaAlChat(navegar: ReturnType<typeof vi.spyOn>): ParamMap {
+    expect(navegar).toHaveBeenCalledOnce();
+    const [, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    const router = TestBed.inject(Router);
+    return router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
+  }
+
+  it('«Consultar por chat» sobre un medicamento manda UNA tarjeta: la del producto', () => {
+    montar();
+    responder();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const boton = fixture.nativeElement.querySelector(
+      '[data-testid="consultar-producto-por-chat"]',
+    ) as HTMLElement;
+    boton.click();
+
+    const vuelta = vueltaAlChat(navegar);
+    expect(vuelta.get('escribirA')).toBe(SLUG);
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    expect(vuelta.has('titulo')).toBe(false);
+    expect(vuelta.getAll('ctx')).toHaveLength(1);
+    // Un solo contexto guardado, y es el del producto: la farmacia va en el
+    // renglón de detalle, no como una segunda tarjeta.
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
+    expect(contexto?.tipo).toBe('producto');
+    expect(contexto?.titulo).not.toBe('Farmacia Vida');
+    expect(contexto?.detalle).toContain('Farmacia Vida');
+  });
+
+  it('«Chatear con la farmacia» manda UNA tarjeta: la de la farmacia', () => {
+    montar();
+    responder();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    (fixture.nativeElement.querySelector('[data-testid="chatear-con-la-farmacia"]') as HTMLElement).click();
+
+    const vuelta = vueltaAlChat(navegar);
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
+    expect(contexto?.tipo).toBe('farmacia');
+    expect(contexto?.titulo).toBe('Farmacia Vida');
   });
 
   it('conserva la ficha cuando el catálogo falla', () => {
@@ -664,6 +752,7 @@ describe('PharmacyDetail', () => {
         { ...SUCURSALES.items[2], slug: SLUG, isCurrent: false },
       ],
     });
+    abrirSucursales();
 
     const lista = fixture.nativeElement.querySelector(
       '[data-testid="pharmacy-branches"]',
@@ -690,12 +779,201 @@ describe('PharmacyDetail', () => {
   it('una farmacia sin sucursales publicadas dice por qué y qué hacer, no se queda muda', () => {
     montar();
     responder({ items: [], nextCursor: null, totalHint: 0, generatedAt: '2026-10-26T00:00:00.000Z' });
+    abrirSucursales();
 
     const texto = fixture.nativeElement.textContent as string;
     expect(texto).toContain('Esta farmacia todavía no publicó sus sucursales');
     expect(texto).toContain('Ver otras farmacias');
-    // El catálogo sigue ahí.
+    // El catálogo sigue ahí, en su pestaña.
+    abrirPestana('Medicamentos');
     expect(nombresVisibles()).toEqual(TODOS);
+  });
+
+  /* ==========================================================================
+      Una tarjeta con pestañas (composition-rules.md §5).
+      ========================================================================== */
+
+  it('la ficha es UNA tarjeta con dos pestañas, con la cuenta de medicamentos en la primera', () => {
+    montar();
+    responder();
+
+    const tarjetas = fixture.nativeElement.querySelectorAll('app-card') as NodeListOf<HTMLElement>;
+    expect(tarjetas.length).toBe(1);
+    expect(tarjetas[0].getAttribute('data-testid')).toBe('pharmacy-card');
+    expect(fixture.nativeElement.querySelectorAll('app-tabs').length).toBe(1);
+    expect(rotulosDeLasPestanas()).toEqual(['Medicamentos (7)', 'Sucursales y receta']);
+    // El resumen de la farmacia está dentro de la misma tarjeta, no en otra.
+    expect(tarjetas[0].textContent).toContain('Av. Alemana N.º 2100');
+    expect(tarjetas[0].textContent).toContain('Genéricos y de marca, entrega en menos de una hora.');
+  });
+
+  it('abre Medicamentos y sólo ese panel existe: las sucursales no se dibujan hasta abrir la suya', () => {
+    montar();
+    responder();
+
+    expect(fixture.nativeElement.querySelector('#medicamentos')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="pharmacy-branches"]')).toBeNull();
+
+    abrirSucursales();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pharmacy-branches"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="pharmacy-products"]')).toBeNull();
+  });
+
+  it('la pestaña abierta se escribe en la URL, sólo con `tab`', () => {
+    montar();
+    responder();
+
+    const navegar = abrirSucursales();
+
+    expect(navegar).toHaveBeenCalledOnce();
+    const [destino, extras] = navegar.mock.calls[0] as [
+      unknown[],
+      { queryParams: Record<string, string>; replaceUrl: boolean },
+    ];
+    expect(destino).toEqual([]);
+    expect(extras.queryParams).toEqual({ tab: 'sucursales' });
+    expect(extras.replaceUrl).toBe(true);
+  });
+
+  it('`?tab=sucursales` abre las sucursales y no dibuja el catálogo', () => {
+    montar(SLUG, 'sucursales');
+    responder();
+
+    expect(sucursalesVisibles()).toEqual(['Centro', 'Norte', 'Sur']);
+    expect(nombresVisibles()).toEqual([]);
+  });
+
+  it('un `?tab=` desconocido abre Medicamentos', () => {
+    montar(SLUG, 'inexistente');
+    responder();
+
+    expect(nombresVisibles()).toEqual(TODOS);
+    expect(sucursalesVisibles()).toEqual([]);
+  });
+
+  it('volver a Medicamentos conserva el buscador, los filtros y lo que se escribió en la receta', () => {
+    montar();
+    responder();
+
+    buscar('inti');
+    tocarChip('Sin receta');
+    expect(nombresVisibles()).toEqual(['Ibuprofeno', 'Paracetamol']);
+
+    abrirSucursales();
+    escribirReceta('Paracetamol');
+    abrirPestana('Medicamentos');
+
+    // El panel se vuelve a dibujar, pero el estado vive en el componente.
+    expect(nombresVisibles()).toEqual(['Ibuprofeno', 'Paracetamol']);
+    expect(
+      (fixture.nativeElement.querySelector('.ficha-publica__buscador input') as HTMLInputElement).value,
+    ).toBe('inti');
+
+    abrirSucursales();
+    expect((fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement).value).toBe(
+      'Paracetamol',
+    );
+  });
+
+  it('las sucursales que fallan no se llevan puesto el catálogo y su pestaña no dibuja la lista', () => {
+    montar();
+    http.expectOne(`/public/profiles/f/${SLUG}`).flush(PERFIL);
+    http.expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/products`).flush(
+      CATALOGO,
+    );
+    http
+      .expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/branches`)
+      .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    abrirSucursales();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pharmacy-branches"]')).toBeNull();
+    // La búsqueda de la receta sigue disponible: no depende de la lista.
+    expect(fixture.nativeElement.querySelector('textarea')).not.toBeNull();
+  });
+
+  /* ==========================================================================
+      Estados: vacío que orienta, error que se puede reintentar.
+      ========================================================================== */
+
+  it('un catálogo vacío dice por qué y ofrece consultar por chat o ver otras farmacias', () => {
+    montar();
+    responder(SUCURSALES, { items: [], nextCursor: null, totalHint: 0, generatedAt: CATALOGO.generatedAt });
+
+    const vacio = fixture.nativeElement.querySelector('[data-testid="catalogo-vacio"]') as HTMLElement | null;
+    expect(vacio).not.toBeNull();
+    expect(vacio?.textContent).toContain('Esta farmacia todavía no publicó su catálogo de medicamentos.');
+    expect(vacio?.querySelector('[data-testid="catalogo-vacio-chatear"]')).not.toBeNull();
+    const enlace = [...(vacio?.querySelectorAll('a') ?? [])].find((a) =>
+      (a.textContent ?? '').includes('Ver otras farmacias'),
+    );
+    expect(enlace?.getAttribute('href')).toBe('/pharmacies-directory');
+    // Sin catálogo no hay nada que filtrar: ni buscador ni chips.
+    expect(fixture.nativeElement.querySelector('.ficha-publica__filtros')).toBeNull();
+  });
+
+  it('cuando la búsqueda de la receta falla lo dice y «Reintentar» la vuelve a pedir', () => {
+    montar();
+    responder();
+    abrirSucursales();
+
+    escribirReceta('Paracetamol');
+    tocarBoton('Buscar en las sucursales');
+    http
+      .expectOne((peticion) => peticion.url === `/public/profiles/f/${SLUG}/branch-availability`)
+      .flush({ code: 'INTERNAL' }, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent as string).toContain('No pudimos consultar las sucursales');
+    // Lo escrito no se pierde.
+    expect((fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement).value).toBe('Paracetamol');
+
+    (fixture.nativeElement.querySelector('[data-testid="receta-reintentar"]') as HTMLElement).click();
+    const reintento = http.expectOne(
+      (peticion) => peticion.url === `/public/profiles/f/${SLUG}/branch-availability`,
+    );
+    expect(reintento.request.body).toEqual({ items: ['Paracetamol'] });
+    reintento.flush(DISPONIBILIDAD);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="receta-reintentar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="pharmacy-recommended"]')).not.toBeNull();
+  });
+
+  it('una receta que ninguna sucursal tiene lo dice y no deja la pantalla muda', () => {
+    montar();
+    responder();
+    abrirSucursales();
+
+    escribirReceta('Omeprazol');
+    tocarBoton('Buscar en las sucursales');
+    http
+      .expectOne((peticion) => peticion.url === `/public/profiles/f/${SLUG}/branch-availability`)
+      .flush({ items: [], count: 0, generatedAt: DISPONIBILIDAD.generatedAt });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="receta-sin-resultados"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="pharmacy-recommended"]')).toBeNull();
+  });
+
+  it('una ficha que no existe (404) lo dice dentro de la tarjeta y no rompe las pestañas', () => {
+    montar();
+    http
+      .expectOne(`/public/profiles/f/${SLUG}`)
+      .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    http
+      .expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/products`)
+      .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    http
+      .expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/branches`)
+      .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('app-card').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('[data-testid="chatear-con-la-farmacia"]')).toBeNull();
+    expect(rotulosDeLasPestanas()).toEqual(['Medicamentos', 'Sucursales y receta']);
   });
 
   it('no llama a la API cuando la ruta no trae slug', () => {

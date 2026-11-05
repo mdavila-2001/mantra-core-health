@@ -2,6 +2,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { TreeSelect } from './tree-select';
 import type { TreeSelectGroup } from './tree-select.types';
+import { reemplazarAnimate } from '../../../../../testing/animate';
 
 /**
  * Un recorte del árbol real: dos departamentos, y un nombre repetido entre
@@ -283,22 +284,21 @@ describe('TreeSelect', () => {
     // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
     // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
     // Una salida que nunca termina deja a la vista si el gesto espera por ella.
-    let animarOriginal: typeof HTMLElement.prototype.animate;
+    let restaurarAnimate: () => void;
     let terminarSalida: () => void;
 
     beforeEach(() => {
-      animarOriginal = HTMLElement.prototype.animate;
       terminarSalida = () => undefined;
-      HTMLElement.prototype.animate = (() => ({
+      restaurarAnimate = reemplazarAnimate(() => ({
         finished: new Promise<void>((resolve) => {
           terminarSalida = resolve;
         }),
         cancel: () => undefined,
-      })) as unknown as typeof HTMLElement.prototype.animate;
+      }));
     });
 
     afterEach(() => {
-      HTMLElement.prototype.animate = animarOriginal;
+      restaurarAnimate();
     });
 
     it('elegir una hoja cierra en el acto, sin esperar la salida del panel', async () => {

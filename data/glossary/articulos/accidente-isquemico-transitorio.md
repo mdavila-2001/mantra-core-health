@@ -1,5 +1,6 @@
 ---
 slug: accidente-isquemico-transitorio
+image: accidente-isquemico-transitorio.svg | Qué ocurre en un AIT y cuáles son sus señales de alarma | Esquema de un cerebro con una arteria bloqueada por un coágulo pasajero que luego se reabre, junto a las señales de alarma de cara, brazo, habla, visión y equilibrio
 ---
 
 ## [definition] Introducción

@@ -195,3 +195,12 @@
   justify-self: start;
   align-self: flex-start;
 }
+
+/* El chat del pedido: el botón y, si la API no lo abrió, el motivo debajo. */
+.mostrador__chat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-2);
+}

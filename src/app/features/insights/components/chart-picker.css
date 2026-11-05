@@ -1,0 +1,111 @@
+:host {
+  display: block;
+}
+
+.cp {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.cp__title {
+  margin: 0;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cp__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.cp__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 36px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.cp__opt:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.cp__opt:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.cp__opt--on {
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  border-color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.cp__opt:disabled {
+  color: var(--text-muted);
+  border-style: dashed;
+  border-color: var(--border-default);
+  cursor: not-allowed;
+}
+
+.cp__star {
+  padding: 0 6px;
+  border-radius: var(--r-full);
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+  border: 1px solid var(--st-success-bd);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+}
+
+.cp__why {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.cp__reason,
+.cp__caution {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.cp__reason strong {
+  color: var(--text-primary);
+}
+
+.cp__caution {
+  color: var(--st-warning-fg);
+}
+
+.cp__back {
+  margin-inline-start: var(--sp-2);
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--brand-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.cp__back:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

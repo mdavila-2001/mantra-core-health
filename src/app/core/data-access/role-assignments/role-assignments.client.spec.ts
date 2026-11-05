@@ -83,6 +83,22 @@ describe('RoleAssignmentsClient', () => {
     expect(rows[0]!.serviceDisplay).toBeNull();
   });
 
+  it('conserva el null de la sede: una solicitud de QR multiuso llega sin sede ni servicio y no se pierde', () => {
+    let rows: readonly RoleAssignmentRow[] = [];
+    client.listForPractice('pr-1').subscribe((r) => (rows = r));
+
+    http.expectOne('/practices/pr-1/role-assignments').flush({
+      items: [{ ...ROW, practiceSiteId: null, healthcareServiceId: null, serviceConceptId: null, serviceDisplay: null, initiatedBy: 'PRACTITIONER' }],
+      count: 1,
+      limit: 50,
+      nextCursor: null,
+    });
+
+    expect(rows[0]!.practiceSiteId).toBeNull();
+    expect(rows[0]).toHaveProperty('practiceSiteId', null);
+    expect(rows[0]!.serviceDisplay).toBeNull();
+  });
+
   it('invita con el cuerpo exacto del contrato', () => {
     let rows: readonly RoleAssignmentRow[] = [];
     const input = { practitionerProfileId: 'pp-1', practiceSiteId: 'site-1', healthcareServiceIds: ['hs-1', 'hs-2'] };

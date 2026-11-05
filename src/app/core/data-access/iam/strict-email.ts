@@ -24,3 +24,12 @@ const TLD_COMO_LA_API = /\.(?:[a-z¡-¨ª-퟿豈-﷏ﷰ-￯]{2,}|xn[a-z0-9-]{2,}
 export function esCorreoComoLaApi(correo: string): boolean {
   return CORREO_CON_DOMINIO.test(correo) && TLD_COMO_LA_API.test(correo);
 }
+
+/**
+ * Strict email for self-registration (same rule as the API's `IsStrictEmail`):
+ * the local part is ASCII letters and digits, with single `.`, `_` or `-` only
+ * between them (no leading, trailing or repeated symbols, no `+`); domain
+ * labels of letters and digits with inner single hyphens; a TLD of 2+ letters.
+ */
+export const CORREO_ESTRICTO =
+  /^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*@[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*(?:\.[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)*\.[A-Za-z]{2,}$/;

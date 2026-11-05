@@ -1,0 +1,161 @@
+:host {
+  display: block;
+}
+
+.infra {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+}
+
+.infra__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.infra__sitio {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.infra__sitio select {
+  min-block-size: 40px;
+  padding-inline: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+}
+
+.infra__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}
+
+.infra__nota,
+.infra__resumen {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.infra__resumen strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.infra__refrescar {
+  margin-inline-start: var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.infra__refrescar:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  border-radius: var(--r-xs);
+}
+
+.infra__cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-3);
+}
+
+/* Desde tablet horizontal el panel acompaña al árbol en lugar de quedar
+   debajo, que en un hospital de cientos de nodos es una pantalla de distancia. */
+@media (min-width: 1024px) {
+  .infra__cuerpo {
+    grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+    align-items: start;
+  }
+
+  .infra__panel {
+    position: sticky;
+    inset-block-start: var(--sp-4);
+  }
+}
+
+.infra__arbol {
+  min-inline-size: 0;
+  max-block-size: 70vh;
+  overflow: auto;
+  padding: var(--sp-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  background: var(--bg-surface);
+}
+
+.infra__panel {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  background: var(--bg-surface-alt);
+  min-inline-size: 0;
+}
+
+.infra__panel-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.infra__panel-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  overflow-wrap: anywhere;
+}
+
+.infra__panel-subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.infra__panel-dato,
+.infra__panel-vacio,
+.infra__secundario {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.infra__panel-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.infra__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.infra__lista li {
+  display: grid;
+  gap: var(--sp-1);
+}

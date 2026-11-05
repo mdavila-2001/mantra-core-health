@@ -212,6 +212,14 @@ describe('Textarea', () => {
       expect(textarea().style.height).toBe('120px');
     });
 
+    it('encendido y sin caja (pestaña oculta), no lo aplasta a 0 px: deja el alto de rows', async () => {
+      await setInputs({ autoResize: true });
+      fijarScrollHeight(0);
+      await escribir('linea\nlinea\nlinea');
+
+      expect(textarea().style.height).toBe('');
+    });
+
     it('encendido, también crece cuando el valor llega por la entrada y no por teclado', async () => {
       await setInputs({ autoResize: true, readonly: true });
       fijarScrollHeight(96);

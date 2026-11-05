@@ -1,0 +1,39 @@
+<article class="in" [attr.aria-labelledby]="'in-' + insight().id">
+  <header class="in__head">
+    <span class="in__tag">Interpretación</span>
+    <h3 class="in__title" [id]="'in-' + insight().id">{{ insight().title }}</h3>
+    <span class="in__conf" [class]="'in__conf in__conf--' + insight().confidence" [title]="insight().confidenceFactors.join(' · ')">
+      Confianza {{ confidenceLabels[insight().confidence].toLowerCase() }}
+    </span>
+  </header>
+
+  <ul class="in__list">
+    @for (s of insight().statements; track $index) {
+      <li class="in__row">
+        <span [class]="'in__level in__level--' + s.level">{{ evidenceLabels[s.level] }}</span>
+        <span class="in__text">{{ s.text }}</span>
+      </li>
+    }
+  </ul>
+
+  <footer class="in__foot">
+    <button type="button" class="in__trace" [attr.aria-expanded]="open()" [attr.aria-controls]="'in-trace-' + insight().id" (click)="open.set(!open())">
+      {{ open() ? 'Ocultar el origen' : '¿De dónde salió esto?' }}
+    </button>
+    @let t = target();
+    <a class="in__go" [routerLink]="t.link" [queryParams]="t.query">{{ insight().action.label }} <span aria-hidden="true">→</span></a>
+  </footer>
+
+  @if (open()) {
+    <section class="in__trace-box" [id]="'in-trace-' + insight().id" aria-label="Trazabilidad del hallazgo">
+      <p class="in__trace-row"><strong>Periodo analizado</strong> {{ insight().trace.period }}</p>
+      <p class="in__trace-row"><strong>Método</strong> {{ insight().trace.method }}</p>
+      <ul class="in__sources">
+        @for (src of insight().trace.sources; track src.label) {
+          <li><strong>{{ int(src.count) }}</strong> {{ src.unit }} · {{ src.label }}</li>
+        }
+      </ul>
+      <p class="in__trace-row"><strong>Por qué esta confianza</strong> {{ insight().confidenceFactors.join('; ') }}.</p>
+    </section>
+  }
+</article>

@@ -1,0 +1,137 @@
+:host {
+  display: block;
+}
+
+.compositor {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.aviso {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--st-info-bd);
+  border-inline-start: 4px solid var(--st-info-fg);
+  border-radius: var(--r-md);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  font-size: var(--fs-body);
+}
+
+.compositor__ayuda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--st-warning-fg);
+}
+
+.plantillas {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.plantillas__abrir {
+  justify-self: start;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+
+.plantillas__abrir:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.plantillas__abrir:focus-visible,
+.plantilla:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.plantillas__abrir:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.plantillas__lista {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.grupo__titulo {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.grupo__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.plantilla {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+
+.plantilla:hover {
+  background: var(--bg-hover);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.correo {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* Celular: plantillas y modo de respuesta se tocan con el pulgar, y las acciones ocupan la fila entera. El rótulo
+   «Enviar como <doctor>» no se corta ni desborda con un nombre largo (el botón trae `white-space: nowrap`). */
+@media (max-width: 779px) {
+  .plantillas__abrir,
+  .plantilla {
+    min-block-size: 44px;
+  }
+
+  .compositor > app-segmented-control ::ng-deep .segmentado__opcion {
+    position: relative;
+    min-block-size: 38px;
+  }
+
+  .compositor > app-segmented-control ::ng-deep .segmentado__opcion::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
+
+  .acciones > button {
+    flex: 1 1 14rem;
+    max-inline-size: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}

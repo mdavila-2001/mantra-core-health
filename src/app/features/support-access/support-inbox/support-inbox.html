@@ -1,0 +1,91 @@
+<app-page-header
+  title="Bandeja"
+  subtitle="Los mensajes de pacientes a los doctores que cubre. Tome una conversación para responderla en nombre del doctor; si el mensaje es clínico, derívelo."
+/>
+
+<p class="sr-only" role="status" aria-live="polite" data-testid="bandeja-anuncio">{{ anuncio() }}</p>
+
+<app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+  <div vsh-skeleton class="esqueleto" aria-hidden="true">
+    @for (n of [1, 2, 3, 4]; track n) {
+      <div class="esqueleto__fila"></div>
+    }
+  </div>
+
+  <div class="bandeja" [class.bandeja--con-conversacion]="abierta() !== null" data-testid="bandeja">
+    <section class="bandeja__lista" aria-label="Conversaciones">
+      <app-card padding="md">
+        <div class="filtros">
+          @if (organizaciones().length > 1) {
+            <app-form-field label="Organización">
+              <app-select
+                [options]="opcionesDeOrganizacion()"
+                [value]="organizacion()"
+                (valueChange)="elegirOrganizacion($event)"
+                [searchable]="false"
+                ariaLabel="Organización"
+                data-testid="bandeja-organizacion"
+              />
+            </app-form-field>
+          } @else {
+            <p class="filtros__org" data-testid="bandeja-organizacion-nombre">
+              <span class="filtros__org-rotulo">Organización</span>
+              <strong>{{ nombreDeLaOrganizacion() }}</strong>
+            </p>
+          }
+          <app-form-field label="Doctor">
+            <app-select
+              [options]="opcionesDeDoctor()"
+              [value]="doctor()"
+              (valueChange)="elegirDoctor($event)"
+              [searchable]="false"
+              ariaLabel="Filtrar por doctor"
+              data-testid="bandeja-doctor"
+            />
+          </app-form-field>
+        </div>
+
+        <app-inbox-tabs
+          class="bandeja__pestanas"
+          [tabs]="opcionesDePestana()"
+          [value]="pestana()"
+          panelId="bandeja-panel"
+          (valueChange)="elegirPestana($event)"
+          data-testid="bandeja-pestanas"
+        />
+
+        @if (fallo(); as mensaje) {
+          <app-alert tone="error" role="alert" data-testid="bandeja-error">{{ mensaje }}</app-alert>
+        }
+
+        <div id="bandeja-panel" role="tabpanel" [attr.aria-labelledby]="'pestana-' + pestana()" tabindex="-1">
+          @if (visibles().length === 0) {
+            <app-empty-state variant="empty" title="Nada por acá" [description]="textoVacio()" data-testid="bandeja-vacia" />
+          } @else {
+            <app-inbox-list
+              [items]="visibles()"
+              [doctors]="doctores()"
+              [selectedId]="abierta()"
+              [now]="ahora()"
+              [busyId]="tomando()"
+              (open)="abrir($event)"
+              (take)="tomar($event)"
+            />
+          }
+        </div>
+      </app-card>
+    </section>
+
+    <section class="bandeja__conversacion" aria-label="Conversación abierta">
+      @if (abierta(); as id) {
+        @if (organizacion(); as org) {
+          <app-support-conversation [conversationId]="id" [org]="org" [now]="ahora()" (changed)="refrescar()" (closed)="cerrar()" />
+        }
+      } @else {
+        <app-card padding="lg">
+          <app-empty-state variant="empty" title="Elija una conversación" description="Al abrirla ve el hilo completo, con quién respondió cada mensaje, y puede responder en nombre del doctor." data-testid="bandeja-sin-seleccion" />
+        </app-card>
+      }
+    </section>
+  </div>
+</app-view-state-host>

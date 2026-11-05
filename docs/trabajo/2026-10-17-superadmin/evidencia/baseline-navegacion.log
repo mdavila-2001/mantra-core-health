@@ -1,0 +1,272 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  622 componentes · 3 otros · 372 pantallas · 138 maquetas · 23 atomos · 48 moleculas · 38 organismos
+  207 con algo que mirar
+  relaciones: 2787 template-instantiates · 5 imports-available sin instanciar · 67 type-only · 237 dynamic-loads
+  nivel: 0 declarado · 622 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 622/622 · con escenario 3/622 · verificados visualmente 3/622 · bloqueados 83/622 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                    | Names                                               |  Raw size
+styles.css                                             | styles                                              | 182.46 kB | 
+chunk-N7WCFIW3.js                                      | -                                                   | 124.33 kB | 
+chunk-U2RLBCVC.js                                      | -                                                   | 120.81 kB | 
+chunk-XK4WBPBN.js                                      | -                                                   |  97.08 kB | 
+chunk-ER6IJCVQ.js                                      | -                                                   |  71.52 kB | 
+chunk-FJET5RQW.js                                      | -                                                   |  67.96 kB | 
+chunk-A66D6T3A.js                                      | -                                                   |  66.44 kB | 
+chunk-DKEHTIHQ.js                                      | -                                                   |  55.88 kB | 
+chunk-OLGQEDDA.js                                      | -                                                   |  54.23 kB | 
+chunk-7YLHTKLD.js                                      | -                                                   |  53.03 kB | 
+chunk-5ZYOVLTM.js                                      | -                                                   |  52.91 kB | 
+chunk-3HFKBJKJ.js                                      | -                                                   |  47.25 kB | 
+chunk-35MOPAHW.js                                      | -                                                   |  47.17 kB | 
+chunk-TAQYZIXX.js                                      | -                                                   |  40.17 kB | 
+chunk-F4Z6W67L.js                                      | -                                                   |  39.77 kB | 
+chunk-RXBJCRDF.js                                      | -                                                   |  38.82 kB | 
+chunk-HXQ63D74.js                                      | -                                                   |  37.00 kB | 
+chunk-WBF7EN6B.js                                      | -                                                   |  36.63 kB | 
+chunk-W7BKDDNP.js                                      | -                                                   |  36.62 kB | 
+chunk-4GHIEGAW.js                                      | -                                                   |  36.21 kB | 
+chunk-SLS5RE2C.js                                      | -                                                   |  35.57 kB | 
+chunk-6PVXE2PD.js                                      | -                                                   |  34.17 kB | 
+chunk-L6IYUIG3.js                                      | -                                                   |  30.45 kB | 
+chunk-H4NRWJZ2.js                                      | -                                                   |  29.75 kB | 
+chunk-KATUMODW.js                                      | -                                                   |  29.04 kB | 
+chunk-S2CFE7S5.js                                      | -                                                   |  27.64 kB | 
+chunk-56CNUBF2.js                                      | -                                                   |  27.55 kB | 
+chunk-6AHAKWDJ.js                                      | -                                                   |  26.72 kB | 
+chunk-3KFEAYXQ.js                                      | -                                                   |  26.66 kB | 
+spec-app-core-navigation-navigation.service.js         | spec-app-core-navigation-navigation.service         |  25.92 kB | 
+chunk-JD2JOD52.js                                      | -                                                   |  25.61 kB | 
+chunk-VEFX6HCZ.js                                      | -                                                   |  25.11 kB | 
+spec-app-app.routes.js                                 | spec-app-app.routes                                 |  24.38 kB | 
+chunk-D5O4X2OY.js                                      | -                                                   |  23.74 kB | 
+chunk-OQZSIGEJ.js                                      | -                                                   |  22.97 kB | 
+chunk-LZ7IHQUX.js                                      | -                                                   |  20.96 kB | 
+chunk-XCQKQQKI.js                                      | -                                                   |  20.56 kB | 
+chunk-IQFKEIYD.js                                      | -                                                   |  19.80 kB | 
+chunk-CETCFXXW.js                                      | -                                                   |  19.15 kB | 
+chunk-JDS2K2TG.js                                      | -                                                   |  19.06 kB | 
+chunk-C7HJJ2MD.js                                      | -                                                   |  18.51 kB | 
+chunk-O6XU6YIO.js                                      | -                                                   |  17.87 kB | 
+chunk-N2KVSULO.js                                      | -                                                   |  17.74 kB | 
+chunk-4NGTYPOQ.js                                      | -                                                   |  16.70 kB | 
+chunk-ARPVOI4L.js                                      | -                                                   |  16.46 kB | 
+chunk-IJ3DSXL5.js                                      | -                                                   |  16.34 kB | 
+spec-app-core-navigation-navigation.map.js             | spec-app-core-navigation-navigation.map             |  16.15 kB | 
+chunk-4GZT7YZQ.js                                      | -                                                   |  16.10 kB | 
+chunk-HIABF527.js                                      | -                                                   |  14.68 kB | 
+chunk-LTZQHGXL.js                                      | -                                                   |  14.42 kB | 
+chunk-DSJGRIHA.js                                      | -                                                   |  14.29 kB | 
+chunk-DTJ3XWXP.js                                      | -                                                   |  14.25 kB | 
+chunk-MJEZGK6P.js                                      | -                                                   |  14.16 kB | 
+chunk-B2VIIDGY.js                                      | -                                                   |  14.02 kB | 
+chunk-73EYPF52.js                                      | -                                                   |  13.98 kB | 
+chunk-X2XOBNUJ.js                                      | -                                                   |  13.86 kB | 
+chunk-YBMOENHO.js                                      | -                                                   |  13.54 kB | 
+chunk-TK7TPBL3.js                                      | -                                                   |  13.39 kB | 
+chunk-YVTQIPBF.js                                      | -                                                   |  12.79 kB | 
+chunk-SQO567L7.js                                      | -                                                   |  12.59 kB | 
+chunk-V4PP2ERB.js                                      | -                                                   |  12.48 kB | 
+chunk-N66OPALK.js                                      | -                                                   |  12.46 kB | 
+chunk-C4Z4HBIR.js                                      | -                                                   |  12.46 kB | 
+chunk-6226LZXV.js                                      | -                                                   |  12.40 kB | 
+chunk-UJA2SST4.js                                      | -                                                   |  12.38 kB | 
+chunk-F5EBNL6W.js                                      | -                                                   |  12.37 kB | 
+chunk-RIQRYGMF.js                                      | -                                                   |  12.18 kB | 
+chunk-VDPOUI5W.js                                      | -                                                   |  11.74 kB | 
+chunk-PXHNY2QQ.js                                      | -                                                   |  11.30 kB | 
+chunk-AWLXPS7M.js                                      | -                                                   |  11.09 kB | 
+chunk-GIG6XMVK.js                                      | -                                                   |  10.49 kB | 
+spec-app-core-navigation-access-tree.js                | spec-app-core-navigation-access-tree                |   9.52 kB | 
+chunk-AU53KL47.js                                      | -                                                   |   9.48 kB | 
+chunk-EDLZ6GUD.js                                      | -                                                   |   9.43 kB | 
+chunk-ULARPTAI.js                                      | -                                                   |   9.36 kB | 
+chunk-YRAPG6KD.js                                      | -                                                   |   9.18 kB | 
+chunk-PQRWY4D7.js                                      | -                                                   |   9.15 kB | 
+chunk-OOFA7GPK.js                                      | -                                                   |   8.77 kB | 
+chunk-HMMFAZWF.js                                      | -                                                   |   8.55 kB | 
+chunk-Z7PW66M3.js                                      | -                                                   |   7.93 kB | 
+spec-app-core-navigation-section-roles.guard.js        | spec-app-core-navigation-section-roles.guard        |   7.91 kB | 
+chunk-6QD7XR74.js                                      | -                                                   |   7.58 kB | 
+chunk-FFZ3J7X6.js                                      | -                                                   |   7.44 kB | 
+chunk-NFQXYM2J.js                                      | -                                                   |   7.39 kB | 
+chunk-WRXA7GA7.js                                      | -                                                   |   7.25 kB | 
+spec-app-app.routes.design-mockups.js                  | spec-app-app.routes.design-mockups                  |   7.12 kB | 
+chunk-6HLS6C23.js                                      | -                                                   |   7.06 kB | 
+chunk-QL3BUQU2.js                                      | -                                                   |   6.78 kB | 
+chunk-EVSD7SGK.js                                      | -                                                   |   6.54 kB | 
+chunk-LE5XIVVF.js                                      | -                                                   |   6.46 kB | 
+spec-app-core-navigation-navigation.pharmacy.js        | spec-app-core-navigation-navigation.pharmacy        |   6.40 kB | 
+chunk-MV3NJII7.js                                      | -                                                   |   6.07 kB | 
+chunk-NIOWT4XL.js                                      | -                                                   |   5.72 kB | 
+chunk-AT373JF6.js                                      | -                                                   |   5.55 kB | 
+chunk-6H7D6FPJ.js                                      | -                                                   |   5.45 kB | 
+spec-app-core-navigation-navigation.laboratory.js      | spec-app-core-navigation-navigation.laboratory      |   5.44 kB | 
+chunk-S5PIEUUR.js                                      | -                                                   |   5.32 kB | 
+chunk-26JSAF6G.js                                      | -                                                   |   5.30 kB | 
+chunk-HZXEPMDQ.js                                      | -                                                   |   5.27 kB | 
+chunk-DTBGYUMH.js                                      | -                                                   |   5.23 kB | 
+spec-app-app.routes.pharmacy.js                        | spec-app-app.routes.pharmacy                        |   5.20 kB | 
+chunk-CWT63GH6.js                                      | -                                                   |   5.01 kB | 
+chunk-FX3KY6PO.js                                      | -                                                   |   5.01 kB | 
+chunk-7SUB3B4F.js                                      | -                                                   |   4.81 kB | 
+chunk-2K5NMIDH.js                                      | -                                                   |   4.75 kB | 
+chunk-7Y534UOS.js                                      | -                                                   |   4.66 kB | 
+chunk-EZIXQ436.js                                      | -                                                   |   4.63 kB | 
+chunk-5WKAPOG2.js                                      | -                                                   |   4.24 kB | 
+chunk-HVY6JTUW.js                                      | -                                                   |   4.01 kB | 
+spec-app-core-navigation-navigation-history.service.js | spec-app-core-navigation-navigation-history.service |   3.76 kB | 
+chunk-4EXGYCWQ.js                                      | -                                                   |   3.75 kB | 
+chunk-DJZ4WH3M.js                                      | -                                                   |   3.69 kB | 
+spec-app-core-navigation-navigation.subgroups.js       | spec-app-core-navigation-navigation.subgroups       |   3.26 kB | 
+chunk-DM464ZDJ.js                                      | -                                                   |   3.24 kB | 
+chunk-Q476RS35.js                                      | -                                                   |   2.96 kB | 
+chunk-ME7JOAMQ.js                                      | -                                                   |   2.93 kB | 
+chunk-JOKTOOSI.js                                      | -                                                   |   2.88 kB | 
+chunk-QYNBLSJC.js                                      | -                                                   |   2.85 kB | 
+chunk-27RWLQ3Z.js                                      | -                                                   |   2.81 kB | 
+chunk-XKFEDRTS.js                                      | -                                                   |   2.80 kB | 
+chunk-JGO6EDGH.js                                      | -                                                   |   2.80 kB | 
+chunk-7PIWT5CU.js                                      | -                                                   |   2.79 kB | 
+chunk-TALFS2Y6.js                                      | -                                                   |   2.66 kB | 
+spec-app-core-navigation-search-memory.service.js      | spec-app-core-navigation-search-memory.service      |   2.66 kB | 
+chunk-TLZIG6VA.js                                      | -                                                   |   2.43 kB | 
+chunk-T7BV7X2Y.js                                      | -                                                   |   2.28 kB | 
+chunk-SQOEIKWV.js                                      | -                                                   |   2.27 kB | 
+chunk-GDH4RNSR.js                                      | -                                                   |   2.21 kB | 
+chunk-JSYBAYTX.js                                      | -                                                   |   2.11 kB | 
+chunk-UHZ7TR4E.js                                      | -                                                   |   2.03 kB | 
+chunk-2SE6REI7.js                                      | -                                                   |   1.94 kB | 
+chunk-3MSOSGHT.js                                      | -                                                   |   1.86 kB | 
+chunk-4QYIHMEK.js                                      | -                                                   |   1.74 kB | 
+chunk-3VZWS6NZ.js                                      | -                                                   |   1.71 kB | 
+chunk-DDIM2HCA.js                                      | -                                                   |   1.71 kB | 
+chunk-LYMOWT5U.js                                      | -                                                   |   1.51 kB | 
+init-testbed.js                                        | init-testbed                                        |   1.21 kB | 
+chunk-3BW3LGGC.js                                      | -                                                   |   1.18 kB | 
+chunk-AMQ6ERPS.js                                      | -                                                   |   1.07 kB | 
+chunk-6VSVAURP.js                                      | -                                                   | 998 bytes | 
+chunk-OVC5PIJV.js                                      | -                                                   | 995 bytes | 
+setup-test-setup.js                                    | setup-test-setup                                    | 984 bytes | 
+chunk-FIKS5ITZ.js                                      | -                                                   | 977 bytes | 
+vitest-mock-patch.js                                   | vitest-mock-patch                                   | 974 bytes | 
+chunk-TLGGM4Y6.js                                      | -                                                   | 963 bytes | 
+chunk-YDSSWSDS.js                                      | -                                                   | 780 bytes | 
+chunk-R2AV37AP.js                                      | -                                                   | 769 bytes | 
+chunk-6RTKCTCP.js                                      | -                                                   | 742 bytes | 
+chunk-7TBCHB2R.js                                      | -                                                   | 697 bytes | 
+chunk-JZKWLLDS.js                                      | -                                                   | 668 bytes | 
+chunk-QGSCJ2MW.js                                      | -                                                   | 633 bytes | 
+chunk-H6KZE6RA.js                                      | -                                                   | 543 bytes | 
+chunk-5H2SSRQL.js                                      | -                                                   | 501 bytes | 
+chunk-RTBZPI2L.js                                      | -                                                   | 488 bytes | 
+chunk-LGVMVNUS.js                                      | -                                                   | 377 bytes | 
+chunk-DLPBMKRA.js                                      | -                                                   | 369 bytes | 
+chunk-EUSTMOKT.js                                      | -                                                   | 269 bytes | 
+chunk-56VEEUJQ.js                                      | -                                                   | 249 bytes | 
+chunk-NLXS4FJ2.js                                      | -                                                   | 211 bytes | 
+chunk-MYSBD2DV.js                                      | -                                                   | 198 bytes | 
+chunk-BSHSZ7KU.js                                      | -                                                   | 190 bytes | 
+
+                                                       | Initial total                                       |   2.59 MB
+
+Lazy chunk files                                       | Names                                               |  Raw size
+chunk-NYFXA54T.js                                      | component-stock                                     |   1.99 MB | 
+chunk-WTBJXXGA.js                                      | universities-by-country-generated                   | 737.04 kB | 
+chunk-D547FIFY.js                                      | practitioner-profile-edit                           | 355.27 kB | 
+chunk-HVMJMF2V.js                                      | -                                                   | 349.14 kB | 
+chunk-2UX55JAX.js                                      | register-practitioner                               | 252.08 kB | 
+chunk-XNTUG2ZS.js                                      | -                                                   | 241.65 kB | 
+chunk-GC7R2PTY.js                                      | design-system-sample                                | 225.46 kB | 
+chunk-MFX62YWG.js                                      | agenda                                              | 210.14 kB | 
+chunk-CBG2R7BK.js                                      | register-patient                                    | 207.45 kB | 
+chunk-2BVJM2BH.js                                      | -                                                   | 201.30 kB | 
+chunk-BUWA5MCZ.js                                      | appointments                                        | 181.37 kB | 
+chunk-G3QYLKFK.js                                      | thread                                              | 173.44 kB | 
+chunk-6KV5EX7F.js                                      | -                                                   | 173.23 kB | 
+chunk-O7N4PCSJ.js                                      | cockpit                                             | 172.62 kB | 
+chunk-WDQ6SX3L.js                                      | portada                                             | 167.57 kB | 
+...and 952 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [97.815 seconds] - 2026-10-17T04:19:25.672Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+      135 │ ..., AppButton, Badge, BodyMap, Card, Chip, EmergencyPanel, FormF...
+          ╵                                 ~~~~
+
+
+
+ RUN  v4.1.10 /home/user/mantra-core-health
+
+ ❯  mantra-core-health  src/app/core/navigation/navigation.subgroups.spec.ts (9 tests | 1 failed) 19ms
+     × reparte el registro entero: ninguna sección se queda sin bloque por descuido 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL   mantra-core-health  src/app/core/navigation/navigation.subgroups.spec.ts > NAV_SUBGROUPS > reparte el registro entero: ninguna sección se queda sin bloque por descuido
+AssertionError: expected [ 'psychological-help' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "psychological-help",
++ ]
+
+ ❯ src/app/core/navigation/navigation.subgroups.spec.ts:58:23
+     56|     // declararla suelta arriba, que también es una decisión—, y eso e…
+     57|     // línea, no un arreglo de código.
+     58|     expect(sinBloque).toEqual([]);
+       |                       ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  1 failed | 284 passed (285)
+   Start at  04:19:26
+   Duration  8.88s (transform 100.52s, setup 2.05s, import 7.59s, tests 10.05s, environment 11.88s)
+

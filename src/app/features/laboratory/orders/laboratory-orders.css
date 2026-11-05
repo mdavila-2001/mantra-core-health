@@ -1,0 +1,106 @@
+/* Órdenes: una tarjeta con pestañas a lo ancho. Sin tope de ancho propio: lo
+   pone `.app-main__inner` y nadie más (`composition-rules.md` §5). */
+:host {
+  display: block;
+}
+
+.orders__card {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.orders {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+.orders__search {
+  max-inline-size: 40rem;
+}
+
+.orders__patient {
+  display: block;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.orders__secondary {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.orders__uploads {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.orders__uploads-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.orders__uploads-list {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.orders__upload {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: center;
+}
+
+.orders__upload-name {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.orders__upload-meta {
+  grid-column: 1;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.orders__upload[data-status='error'] .orders__upload-meta {
+  color: var(--st-error-fg, var(--text-primary));
+}
+
+.orders__upload-btn {
+  min-block-size: 2.75rem;
+  padding-inline: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* El botón de cada archivo vive en la columna de la derecha, a lo alto de sus dos renglones. */
+.orders__upload > .orders__upload-btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+/* «Limpiar la lista» es del panel, no de un archivo: a su tamaño, a la izquierda. */
+.orders__uploads > .orders__upload-btn {
+  justify-self: start;
+}
+
+.orders__upload-bar {
+  grid-column: 1;
+  inline-size: 100%;
+  block-size: 0.5rem;
+}

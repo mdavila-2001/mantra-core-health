@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Fosfatasa alcalina en sangre</title>
+  <desc id="d">Cuatro fuentes de la enzima, hígado y vías biliares, hueso, placenta e intestino, que confluyen en un tubo de sangre. A la derecha, los problemas de origen hepático y óseo que ayuda a evaluar y las situaciones normales en que está más alta.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">De dónde procede la enzima</text>
+<rect x="40" y="62" width="56" height="48" rx="12" fill="var(--organ-d)" stroke="var(--line)" stroke-width="1"/>
+<text x="108" y="92" class="lab">Hígado y vías biliares</text>
+<line x1="268" y1="86" x2="316" y2="230" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="40" y="134" width="56" height="48" rx="12" fill="var(--bone)" stroke="var(--line)" stroke-width="1"/>
+<text x="108" y="164" class="lab">Hueso (osteoblastos)</text>
+<line x1="268" y1="158" x2="316" y2="230" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="40" y="206" width="56" height="48" rx="12" fill="var(--organ)" stroke="var(--line)" stroke-width="1"/>
+<text x="108" y="236" class="lab">Placenta</text>
+<line x1="268" y1="230" x2="316" y2="230" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="40" y="278" width="56" height="48" rx="12" fill="var(--beam)" stroke="var(--line)" stroke-width="1"/>
+<text x="108" y="308" class="lab">Intestino</text>
+<line x1="268" y1="302" x2="316" y2="230" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="330" y="194" width="30" height="96" rx="12" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+<rect x="333" y="229.5" width="24" height="57.50000000000001" rx="10" fill="var(--vessel)" stroke-width="1" opacity=".8"/>
+<rect x="327" y="180" width="36" height="18" rx="4" fill="var(--vessel)" stroke-width="1"/>
+<text x="345" y="312" text-anchor="middle" class="lab">Sangre</text>
+<text x="230" y="370" text-anchor="middle" class="lab">El análisis mide la actividad total de la</text>
+<text x="230" y="390" text-anchor="middle" class="lab">fosfatasa alcalina que llega a la sangre.</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Qué ayuda a evaluar</text>
+<rect x="476" y="56" width="284" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="488" y="78" class="step">Origen hepático</text>
+<text x="488" y="102" class="lab">• Bilis que no fluye bien</text>
+<text x="488" y="124" class="lab">• (obstrucción, cálculos)</text>
+<text x="488" y="146" class="lab">• Enfermedad del hígado</text>
+<rect x="476" y="172" width="284" height="78" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="488" y="194" class="step">Origen óseo</text>
+<text x="488" y="218" class="lab">• Paget, fracturas en curación</text>
+<text x="488" y="240" class="lab">• Metástasis óseas, raquitismo</text>
+<rect x="476" y="268" width="284" height="98" rx="10" fill="var(--ok-l)" stroke-width="1"/>
+<text x="490" y="292" class="step">Más alta sin enfermedad</text>
+<text x="490" y="316" class="lab">• niños y adolescentes que crecen</text>
+<text x="490" y="338" class="lab">• tercer trimestre del embarazo</text>
+<text x="476" y="396" class="small">La GGT o las isoenzimas ayudan</text>
+<text x="476" y="414" class="small">a saber si viene del hígado o del hueso.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

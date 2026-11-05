@@ -1,0 +1,278 @@
+:host {
+  display: block;
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.avisos {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+}
+
+.avisos:empty {
+  display: none;
+  margin: 0;
+}
+
+.impiden {
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.lote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.lote__nota {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.tarjetas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tarjeta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* El acceso que impide el lote se marca con borde grueso y con texto («Impide el bloque»), no solo con color. */
+.tarjeta--impide {
+  border: 2px solid var(--st-error-fg);
+}
+
+.tarjeta__cuerpo {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.tarjeta__persona {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--text-primary);
+}
+
+.tarjeta__sub {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+}
+
+.tarjeta__datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+}
+
+/* Lo vencido se dice con palabras («Venció hace 4 días»); el peso y el tono solo acompañan. */
+.vencida {
+  font-weight: 600;
+  color: var(--st-warning-fg);
+}
+
+.volver {
+  display: inline-block;
+  margin-block-end: var(--sp-3);
+}
+
+.cabecera {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-5);
+}
+
+.cabecera__persona {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.evidencia {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.evidencia__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.evidencia__sub {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.evidencia__resumen {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--text-primary);
+}
+
+.permisos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.permisos li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-primary);
+}
+
+.uso {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.uso th,
+.uso td {
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+  text-align: start;
+  color: var(--text-primary);
+}
+
+.uso thead th {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.sr-solo {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.hallazgos {
+  display: grid;
+  margin: 0;
+}
+
+.hallazgos div {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) 1fr;
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.hallazgos dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.hallazgos dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.tecnico summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.decision {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-5);
+  max-inline-size: 44rem;
+}
+
+.decision__botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.decision__aviso {
+  margin: 0;
+  font-weight: 600;
+  color: var(--st-warning-fg);
+}
+
+.ajuste {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.ajuste legend {
+  padding-inline: var(--sp-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.error,
+.error-lista {
+  margin: 0;
+  font-weight: 600;
+  color: var(--st-error-fg);
+}
+
+.error-lista {
+  padding-inline-start: var(--sp-5);
+}
+
+@media (max-width: 40rem) {
+  .tarjeta {
+    flex-wrap: wrap;
+  }
+
+  .hallazgos div {
+    grid-template-columns: 1fr;
+  }
+}

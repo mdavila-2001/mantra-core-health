@@ -34,9 +34,14 @@
   @if (errorMessage(); as mensaje) {
     <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
   }
+  @if (errorDeNodos(); as mensaje) {
+    <app-alert tone="warning" class="m29__alert" data-testid="asignacion-nodos-error">
+      {{ mensaje }}
+    </app-alert>
+  }
 
   <app-paginated-form
-    [paginas]="paginas"
+    [paginas]="paginas()"
     [form]="form"
     label="Nueva asignación de organización"
     submitLabel="Crear asignación"

@@ -1,0 +1,41 @@
+<form class="fb" role="search" aria-label="Filtros globales de la pantalla" (submit)="$event.preventDefault()">
+  <p class="fb__scope">Filtros globales · aplican a toda la pantalla</p>
+  <div class="fb__row">
+    @if (has('campaign')) {
+      <app-ins-multi-select class="fb__c fb__c--wide" label="Campaña" allLabel="Todas las campañas" [options]="campaignOptions" [selected]="ctx.state().campaignIds" (changed)="setCampaigns($event)" />
+    }
+    @if (has('period')) {
+      <div class="fb__c">
+        <span class="fb__label" id="fb-period">Periodo</span>
+        <app-select ariaLabel="Periodo" [value]="ctx.state().period" [options]="periodOptions" (valueChange)="setPeriod($event)" />
+        <span class="fb__range">{{ rangeText() }}</span>
+      </div>
+      @if (ctx.state().period === 'custom') {
+        <label class="fb__c fb__date">
+          <span class="fb__label">Desde</span>
+          <input type="date" [value]="ctx.state().custom.from" [max]="ctx.state().custom.to" (change)="setCustom('from', $event)" />
+        </label>
+        <label class="fb__c fb__date">
+          <span class="fb__label">Hasta</span>
+          <input type="date" [value]="ctx.state().custom.to" [min]="ctx.state().custom.from" (change)="setCustom('to', $event)" />
+        </label>
+      }
+    }
+    @if (has('channel')) {
+      <app-ins-multi-select class="fb__c" label="Canal" allLabel="Todos los canales" [options]="channelOptions()" [selected]="selectedChannels()" (changed)="setChannels($event)" />
+    }
+    @if (has('metric')) {
+      <div class="fb__c">
+        <span class="fb__label">Métrica</span>
+        <app-select ariaLabel="Métrica" [value]="ctx.state().metric" [options]="metricOptions()" (valueChange)="setMetric($event)" />
+        <span class="fb__range">{{ metricHelp() }}</span>
+      </div>
+    }
+    @if (has('grain')) {
+      <div class="fb__c">
+        <span class="fb__label">Agrupar por</span>
+        <app-segmented-control ariaLabel="Agrupación temporal" [options]="grainOptions" [value]="ctx.state().grain" (valueChange)="setGrain($event)" />
+      </div>
+    }
+  </div>
+</form>

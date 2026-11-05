@@ -1,0 +1,377 @@
+### [C1 paciente dueña crea (encuentro A, 2 ítems)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}'
+HTTP 201 | Cache-Control: no-store
+{"shareId":"30344167-5df4-46a2-8312-c2312ce14be1","url":"http://localhost:4000/rx/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA","token":"ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA","expiresAt":"2026-11-30T03:11:36.251Z","itemCount":2}
+### [C2a cuerpo vacío]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{}'
+HTTP 400 | Cache-Control: no-store
+{"code":"VALIDATION_FAILED","message":"Indicá la consulta o el medicamento que querés compartir, uno de los dos.","correlationId":"e9fe1b1f-187c-4cfa-907d-d73ac0b4b08e","details":{"reason":"PRESCRIPTION_SHARE_TARGET_INVALID"},"reason":"PRESCRIPTION_SHARE_TARGET_INVALID","timestamp":"2026-10-31T03:11:36.356Z","path":"/clinical/prescription-shares"}
+### [C2b ambos ids]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21","medicationRequestId":"5ee1801b-6256-4e8e-b8a6-652344e2c9ba"}'
+HTTP 400 | Cache-Control: no-store
+{"code":"VALIDATION_FAILED","message":"Indicá la consulta o el medicamento que querés compartir, uno de los dos.","correlationId":"d6d57395-93e6-46fd-ad07-624a1af11873","details":{"reason":"PRESCRIPTION_SHARE_TARGET_INVALID"},"reason":"PRESCRIPTION_SHARE_TARGET_INVALID","timestamp":"2026-10-31T03:11:36.396Z","path":"/clinical/prescription-shares"}
+### [C3a paciente B (otro paciente) sobre encuentro de Lucía]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TPB' -d '{"encounterId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}'
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Receta no encontrada","correlationId":"2d3da41b-72ef-447e-9744-36c80bf21754","timestamp":"2026-10-31T03:11:36.440Z","path":"/clinical/prescription-shares"}
+### [C3b paciente B sobre medicationRequest de Lucía]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TPB' -d '{"medicationRequestId":"5ee1801b-6256-4e8e-b8a6-652344e2c9ba"}'
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Receta no encontrada","correlationId":"d3af877b-c042-4110-97a6-cdc2caea2d79","timestamp":"2026-10-31T03:11:36.466Z","path":"/clinical/prescription-shares"}
+### [C3c receta inexistente (uuid aleatorio)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"11111111-2222-4333-8444-555555555555"}'
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Receta no encontrada","correlationId":"55c15b22-df57-4228-a6b5-10766d2dc25e","timestamp":"2026-10-31T03:11:36.488Z","path":"/clinical/prescription-shares"}
+### [C4 médica B (no emitió) ]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TDB' -d '{"encounterId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}'
+HTTP 403 | Cache-Control: no-store
+{"code":"FORBIDDEN","message":"Solo el paciente o quien emitió la receta pueden compartirla.","correlationId":"63bdd8d0-1e84-4e22-82e1-c40080214945","timestamp":"2026-10-31T03:11:36.510Z","path":"/clinical/prescription-shares"}
+### [C7 farmacia intenta crear]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TF' -d '{"encounterId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"e27b6b2f-583a-43c3-836a-1ce643fd39bf","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:11:36.524Z","path":"/clinical/prescription-shares"}
+### [C8 sin sesión]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -d '{"encounterId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}'
+HTTP 401 | 
+{"code":"UNAUTHENTICATED","message":"Unauthorized","correlationId":"29c5ee58-c5eb-484a-b0f2-52c648903c60","timestamp":"2026-10-31T03:11:36.537Z","path":"/clinical/prescription-shares"}
+### [C6 receta con solo borrador (dueña)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"117af886-9932-485e-a372-246890a768a1"}'
+HTTP 422 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"La receta no tiene medicamentos emitidos y vigentes para compartir.","correlationId":"ebd03732-e7a1-40f3-8a0b-e61153e8000e","details":{"reason":"PRESCRIPTION_SHARE_NO_ACTIVE_ITEMS"},"reason":"PRESCRIPTION_SHARE_NO_ACTIVE_ITEMS","timestamp":"2026-10-31T03:11:36.588Z","path":"/clinical/prescription-shares"}
+### [C6b receta con solo borrador (médica emisora)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TD' -d '{"encounterId":"117af886-9932-485e-a372-246890a768a1"}'
+HTTP 422 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"La receta no tiene medicamentos emitidos y vigentes para compartir.","correlationId":"1fc5cf98-df42-41ce-9bbd-6e5c92e6cc60","details":{"reason":"PRESCRIPTION_SHARE_NO_ACTIVE_ITEMS"},"reason":"PRESCRIPTION_SHARE_NO_ACTIVE_ITEMS","timestamp":"2026-10-31T03:11:36.615Z","path":"/clinical/prescription-shares"}
+### [C5 médica emisora crea]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TD' -d '{"encounterId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}'
+HTTP 201 | Cache-Control: no-store
+{"shareId":"87c73f34-9f0d-46c6-8e71-66a24ee16713","url":"http://localhost:4000/rx/2XfGd77LRaolwMeFdIp6-yvrPoT_bXb1KVpNNZ4n_EY","token":"2XfGd77LRaolwMeFdIp6-yvrPoT_bXb1KVpNNZ4n_EY","expiresAt":"2026-11-30T03:11:36.636Z","itemCount":2}
+### [C9 un solo fármaco (medicationRequestId)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"medicationRequestId":"5ee1801b-6256-4e8e-b8a6-652344e2c9ba"}'
+HTTP 201 | Cache-Control: no-store
+{"shareId":"8a07b5f3-b97a-418a-8fe1-bfb71f50de49","url":"http://localhost:4000/rx/sYMdZPRVAa9qTDkUvqU5X288nds5mNTRWpp9_Di9DA4","token":"sYMdZPRVAa9qTDkUvqU5X288nds5mNTRWpp9_Di9DA4","expiresAt":"2026-11-30T03:11:36.720Z","itemCount":1}
+### [P1 vista pública sin sesión (token válido TA)]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA
+HTTP 200 | Cache-Control: no-store
+{"status":"VALID","issuedAt":"2026-10-31T03:11:06.894Z","prescriberName":"Andrés Rojas","prescriberLicense":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"},"itemCount":2}
+### [P2a token desconocido bien formado (43 car.)]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"eafad3ec-4e54-45e9-ac81-3690ad4ec0a4","timestamp":"2026-10-31T03:12:22.091Z","path":"/public/prescription-shares/[token]"}
+### [P2b token mal formado]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/abc
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"66afe61e-becc-4694-8035-fa6c649a20e7","timestamp":"2026-10-31T03:12:22.232Z","path":"/public/prescription-shares/[token]"}
+### [P2c token válido pero con 1 carácter cambiado]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkX
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"50896de0-16f4-44fd-93f3-173e807bcbbe","timestamp":"2026-10-31T03:12:22.264Z","path":"/public/prescription-shares/[token]"}
+### [F1 farmacia Chavez abre TA (2 ítems)]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TF'
+HTTP 200 | Cache-Control: no-store
+{"shareId":"30344167-5df4-46a2-8312-c2312ce14be1","issuedAt":"2026-10-31T03:11:06.894Z","validTo":null,"prescriber":{"name":"Andrés Rojas","license":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"}},"patient":{"maskedName":"L. M.","documentLast3":"345"},"items":[{"medicationRequestId":"5ee1801b-6256-4e8e-b8a6-652344e2c9ba","medicationConceptId":"9d90da56-a6c4-5669-b791-1022acb2ba6e","display":"Amoxicilina","dosageText":"far12-A1 amoxicilina 500 mg c/8h","prescribedQuantity":21,"unitCode":null,"dispensedQuantity":null,"remainingQuantity":null,"matches":[{"pharmacyId":"1a82de64-bb90-42cd-9ac0-221e313d76bf","pharmacyProductId":"01e96d54-d92d-465b-b13e-1890425840de","name":"AMOX-500","price":"35.50","currencyCode":"BOB","requiresPrescription":false,"outOfStockDeclared":false,"sites":[{"siteId":"368bda30-7ab6-46d4-99a9-08334b03b0e4","siteName":"Casa central","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"ffd8a0b5-a41d-4c3c-8db8-b89c6f92e196","siteName":"Diez","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"838450c0-7615-473b-86cb-13af0806ab1e","siteName":"Far45 Dos renombrada 2","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"ad5826c6-591e-4dfa-8efa-42211bbded10","siteName":"Far45 Sede Uno","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"a3c28016-53aa-4361-855f-174395e0ccda","siteName":"Nueva9","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"957cfac6-c5df-406e-b9ff-807561526044","siteName":"SC 0","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"b95195a2-c6f2-4f3b-b8f8-f608f5f22ac6","siteName":"SC 1","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"ad44dc32-88c7-42f1-927e-cd084652a5ba","siteName":"SC 2","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"3d5f4df1-0936-4d4f-adfb-c3434d709c6b","siteName":"SC 3","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"d190bf7d-0f31-4078-a7b7-c466b4b1e942","siteName":"SC 4","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf","siteName":"Sucursal Centro (simulada)","available":true,"quantity":24,"stockUpdatedAt":"2026-10-31T02:32:05.052Z"},{"siteId":"ea19ffb9-da4a-495f-9aff-53b6f6306f26","siteName":"far67 Centro 2","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"a2dada00-c42d-4e97-b992-f940da0c8a66","siteName":"far67 Sucursal Este","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"75faf0d1-a6a6-4d0f-b399-2437b5e3fb46","siteName":"far67 Sucursal Norte","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"42b5d034-3ae6-4447-be66-ef774e78124c","siteName":"far67 Sucursal Oeste","available":true,"quantity":40,"stockUpdatedAt":null},{"siteId":"171a8924-7f43-4483-963c-46ab670a7d18","siteName":"far67 Sucursal Sur","available":true,"quantity":40,"stockUpdatedAt":null}]},{"pharmacyId":"1a82de64-bb90-42cd-9ac0-221e313d76bf","pharmacyProductId":"f7d7511e-41ca-4592-8091-a97c00e080e1","name":"far3-AMOX-RX","price":"40.00","currencyCode":"BOB","requiresPrescription":true,"outOfStockDeclared":false,"sites":[{"siteId":"368bda30-7ab6-46d4-99a9-08334b03b0e4","siteName":"Casa central","available":true,"quantity":50,"stockUpdatedAt":null},{"siteId":"ffd8a0b5-a41d-4c3c-8db8-b89c6f92e196","siteName":"Diez","available":true,"quantity":50,"stockUpdatedAt":null},{"siteId":"838450c0-7615-473b-86cb-13af0806ab1e","siteName":"Far45 Dos renombrada 2","available":true,"quantity":50,"sto
+### [F2 TP abre TA]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TP'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"86904f3b-13cf-45b1-837f-bdced9233a53","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:12:34.157Z","path":"/pharmacy/prescription-shares/[token]"}
+### [F2 TPB abre TA]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TPB'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"d4dc0b9d-6f67-4c53-b7e3-d2157f269160","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:12:34.173Z","path":"/pharmacy/prescription-shares/[token]"}
+### [F2 TD abre TA]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TD'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"827829c8-79e2-4015-bf8a-40c035381ef5","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:12:34.190Z","path":"/pharmacy/prescription-shares/[token]"}
+### [F2 TDB abre TA]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TDB'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"66e66397-c600-4dc6-82f3-7cd674883d3f","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:12:34.212Z","path":"/pharmacy/prescription-shares/[token]"}
+### [F2 TADM abre TA]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TADM'
+HTTP 422 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"La operación requiere un tenant: indique X-Tenant-Id.","correlationId":"1e57378d-36e3-43e4-b74d-1cbb91b8305d","details":{"reason":"TENANT_REQUIRED"},"reason":"TENANT_REQUIRED","timestamp":"2026-10-31T03:12:34.231Z","path":"/pharmacy/prescription-shares/[token]"}
+### [F2 sin sesión]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA
+HTTP 401 | 
+{"code":"UNAUTHENTICATED","message":"Unauthorized","correlationId":"77b5b552-99c4-40bb-b075-446a65767d0e","timestamp":"2026-10-31T03:12:34.257Z","path":"/pharmacy/prescription-shares/[token]"}
+### [F3 farmacia C (sin verificar) abre TA]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TFC'
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Esta organización no tiene una farmacia verificada.","correlationId":"4d7bdf6c-4c92-4159-bd16-8605851c177c","details":{"reason":"PHARMACY_INVENTORY_RESOURCE_NOT_AVAILABLE"},"reason":"PHARMACY_INVENTORY_RESOURCE_NOT_AVAILABLE","timestamp":"2026-10-31T03:12:34.420Z","path":"/pharmacy/prescription-shares/[token]"}
+### [F4 farmacia B (verificada, sin catálogo) abre TA]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TFB'
+HTTP 200 | Cache-Control: no-store
+{"shareId":"30344167-5df4-46a2-8312-c2312ce14be1","issuedAt":"2026-10-31T03:11:06.894Z","validTo":null,"prescriber":{"name":"Andrés Rojas","license":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"}},"patient":{"maskedName":"L. M.","documentLast3":"345"},"items":[{"medicationRequestId":"5ee1801b-6256-4e8e-b8a6-652344e2c9ba","medicationConceptId":"9d90da56-a6c4-5669-b791-1022acb2ba6e","display":"Amoxicilina","dosageText":"far12-A1 amoxicilina 500 mg c/8h","prescribedQuantity":21,"unitCode":null,"dispensedQuantity":null,"remainingQuantity":null,"matches":[]},{"medicationRequestId":"3963827f-f981-440d-a87a-3c0b7b7d4119","medicationConceptId":"3545c7c6-1a54-5903-86df-6a1621dc2640","display":"Paracetamol","dosageText":"far12-A2 paracetamol 500 mg c/6h","prescribedQuantity":12,"unitCode":null,"dispensedQuantity":null,"remainingQuantity":null,"matches":[]}]}
+### [F5 token desconocido, farmacia]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA -H 'Authorization: Bearer $TF'
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"5d4f6cd8-249e-49d8-b9e4-1c33ceb5d7f2","timestamp":"2026-10-31T03:12:34.798Z","path":"/pharmacy/prescription-shares/[token]"}
+### [F5b token mal formado, farmacia]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/abc -H 'Authorization: Bearer $TF'
+HTTP 404 | Cache-Control: no-store
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"20257333-07fe-46a5-bfea-d4834a6cc2a0","timestamp":"2026-10-31T03:12:34.860Z","path":"/pharmacy/prescription-shares/[token]"}
+$ curl -sS -o - -w ' HTTP %{http_code}' -H 'Authorization: Bearer $TADM' -H 'X-Tenant-Id: 1befcfea-44c0-563a-81cd-337ec6acc840' localhost:3000/pharmacy/prescription-shares/$TA
+{"code":"NOT_FOUND","message":"Esta organización no tiene una farmacia verificada.","correlationId":"76d8bc82-4ccb-4c93-8d12-decc60456acf","details":{"reason":"PHARMACY_INVENTORY_RESOURCE_NOT_AVAILABLE"},"reason":"PHARMACY_INVENTORY_RESOURCE_NOT_AVAILABLE","timestamp":"2026-10-31T03:12:45.890Z","pa
+$ curl -sS -o - -w ' HTTP %{http_code}' -H 'Authorization: Bearer $TADM' -H 'X-Tenant-Id: 54a6fa72-53d5-4819-8e1a-a4e559f5609a' localhost:3000/pharmacy/prescription-shares/$TA
+{"shareId":"30344167-5df4-46a2-8312-c2312ce14be1","issuedAt":"2026-10-31T03:11:06.894Z","validTo":null,"prescriber":{"name":"Andrés Rojas","license":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"}},"patient":{"maskedName":"L. M.","documentLast3":"345"},"items":[{"medicationRequestId":"
+### [O1 by-token dueña]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TP'
+HTTP 200 | Cache-Control: private, no-store
+{"shareId":"30344167-5df4-46a2-8312-c2312ce14be1","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}
+### [O2a by-token otro paciente]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TPB'
+HTTP 404 | Cache-Control: private, no-store
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"01eab577-43b7-4ddd-9393-64d63eb06748","timestamp":"2026-10-31T03:13:05.960Z","path":"/clinical/prescription-shares/by-token/[token]"}
+### [O2b by-token médica emisora sobre enlace de la paciente (TA)]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TD'
+HTTP 404 | Cache-Control: private, no-store
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"785ce094-e8cf-49cd-891f-3f07fc78424a","timestamp":"2026-10-31T03:13:05.988Z","path":"/clinical/prescription-shares/by-token/[token]"}
+### [O2c by-token médica emisora sobre su propio enlace (TAD)]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/2XfGd77LRaolwMeFdIp6-yvrPoT_bXb1KVpNNZ4n_EY -H 'Authorization: Bearer $TD'
+HTTP 200 | Cache-Control: private, no-store
+{"shareId":"87c73f34-9f0d-46c6-8e71-66a24ee16713","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}
+### [O2d by-token médica B sobre TAD]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/2XfGd77LRaolwMeFdIp6-yvrPoT_bXb1KVpNNZ4n_EY -H 'Authorization: Bearer $TDB'
+HTTP 404 | Cache-Control: private, no-store
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"4cdb5335-4cb7-42c2-b6e4-87cf82449ec9","timestamp":"2026-10-31T03:13:06.030Z","path":"/clinical/prescription-shares/by-token/[token]"}
+### [O2e by-token farmacia]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA -H 'Authorization: Bearer $TF'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"2670a301-e337-4449-90fc-c732995c3a8b","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:13:06.044Z","path":"/clinical/prescription-shares/by-token/[token]"}
+### [O2f by-token sin sesión]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/ZNEh5goTNni9HfCrjjthLJwXlkxguifQpwMmhHsHAkA
+HTTP 401 | 
+{"code":"UNAUTHENTICATED","message":"Unauthorized","correlationId":"61039277-1ecb-43bb-8e8e-30018e99a547","timestamp":"2026-10-31T03:13:06.057Z","path":"/clinical/prescription-shares/by-token/[token]"}
+### [O2g by-token paciente dueña, token del enlace de la médica (TAD) -> dueño del paciente]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/2XfGd77LRaolwMeFdIp6-yvrPoT_bXb1KVpNNZ4n_EY -H 'Authorization: Bearer $TP'
+HTTP 200 | Cache-Control: private, no-store
+{"shareId":"87c73f34-9f0d-46c6-8e71-66a24ee16713","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21"}
+### [L1 lista dueña]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares?patientProfileId=8d00e3f7-53f7-492b-9c5c-501b201a6771 -H 'Authorization: Bearer $TP'
+HTTP 200 | Cache-Control: private, no-store
+[{"shareId":"8a07b5f3-b97a-418a-8fe1-bfb71f50de49","resourceType":"MEDICATION_REQUEST","resourceId":"5ee1801b-6256-4e8e-b8a6-652344e2c9ba","createdAt":"2026-10-31T03:11:36.722Z","expiresAt":"2026-11-30T03:11:36.720Z","status":"VALID","uses":0},{"shareId":"87c73f34-9f0d-46c6-8e71-66a24ee16713","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21","createdAt":"2026-10-31T03:11:36.638Z","expiresAt":"2026-11-30T03:11:36.636Z","status":"VALID","uses":0},{"shareId":"30344167-5df4-46a2-8312-c2312ce14be1","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21","createdAt":"2026-10-31T03:11:36.256Z","expiresAt":"2026-11-30T03:11:36.251Z","status":"VALID","uses":5},{"shareId":"1d2f54db-abea-4083-8ae7-221f66ace469","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"c24cade3-9738-406c-9ea5-9944185aa097","createdAt":"2026-10-31T02:31:01.460Z","expiresAt":"2026-11-30T02:31:01.456Z","status":"VALID","uses":4}]
+### [L2 lista otro paciente pide la de Lucía]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares?patientProfileId=8d00e3f7-53f7-492b-9c5c-501b201a6771 -H 'Authorization: Bearer $TPB'
+HTTP 404 | Cache-Control: private, no-store
+{"code":"NOT_FOUND","message":"Paciente no encontrado","correlationId":"98b3053a-52c3-4bb9-a330-8732308eeb0f","timestamp":"2026-10-31T03:13:06.151Z","path":"/clinical/prescription-shares"}
+### [L3 lista médica emisora (solo los que creó)]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares?patientProfileId=8d00e3f7-53f7-492b-9c5c-501b201a6771 -H 'Authorization: Bearer $TD'
+HTTP 200 | Cache-Control: private, no-store
+[{"shareId":"87c73f34-9f0d-46c6-8e71-66a24ee16713","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"4736d5fb-adbc-4c96-8bf9-9368ed309f21","createdAt":"2026-10-31T03:11:36.638Z","expiresAt":"2026-11-30T03:11:36.636Z","status":"VALID","uses":0}]
+### [L4 lista médica B]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares?patientProfileId=8d00e3f7-53f7-492b-9c5c-501b201a6771 -H 'Authorization: Bearer $TDB'
+HTTP 200 | Cache-Control: private, no-store
+[]
+### [L5 lista farmacia]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares?patientProfileId=8d00e3f7-53f7-492b-9c5c-501b201a6771 -H 'Authorization: Bearer $TF'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"e4c8656d-e4e6-4761-9928-06eed38f1fbe","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:13:06.291Z","path":"/clinical/prescription-shares"}
+### [L6 lista sin patientProfileId]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP'
+HTTP 400 | Cache-Control: private, no-store
+{"code":"VALIDATION_FAILED","message":"Error de validación","correlationId":"844b1152-473d-48a5-915d-a8ddea57d4b6","details":{"violations":["patientProfileId must be a UUID"],"fields":[{"field":"patientProfileId","constraints":["isUuid"],"messages":["patientProfileId must be a UUID"]}]},"reason":"VALIDATION_PIPE_REJECTED","timestamp":"2026-10-31T03:13:06.333Z","path":"/clinical/prescription-shares"}
+### [R0 dueña crea enlace para receta REV]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"be95b712-16ed-467c-8191-506cc7f52756"}'
+HTTP 201 | Cache-Control: no-store
+{"shareId":"c4147cee-aea7-4d17-81a0-fb0786ceecaf","url":"http://localhost:4000/rx/9ME4ZT4Njb15oevpYdybvSIZ6RJnQzaMosRj6hTVY_A","token":"9ME4ZT4Njb15oevpYdybvSIZ6RJnQzaMosRj6hTVY_A","expiresAt":"2026-11-30T03:13:25.089Z","itemCount":1}
+### [R0b antes de revocar: farmacia abre TR]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/9ME4ZT4Njb15oevpYdybvSIZ6RJnQzaMosRj6hTVY_A -H 'Authorization: Bearer $TF'
+HTTP 200 | Cache-Control: no-store
+{"shareId":"c4147cee-aea7-4d17-81a0-fb0786ceecaf","issuedAt":"2026-10-31T03:11:07.286Z","validTo":null,"prescriber":{"name":"Andrés Rojas","license":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"}},"patient":{"maskedName":"L. M.","documentLast3":"345"},"items":[{"medicationRequestId":"a059ede6-8519-4672-8567-9fa783313eaf","medicationConceptId":"9d90da56-a6c4-5669-b791-1022acb2ba6e","display":"Amoxicilina","dosageText":"far12-REV amoxicilina","prescribedQuantity":10,"unitCode":null,"dispensedQuantity":null,"remainingQuantity":null,"matches":[{"pharmacyId":"1a82de64-bb90-42cd-9ac0-
+### [R1 paciente B revoca SR]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke -H 'Authorization: Bearer $TPB'
+HTTP 404 | 
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"0aac6077-822e-4f89-90cc-68fa97bddf35","timestamp":"2026-10-31T03:13:25.326Z","path":"/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke"}
+### [R2 médica B revoca SR]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke -H 'Authorization: Bearer $TDB'
+HTTP 404 | 
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"f6a63ef0-fbad-4b60-a01d-f851b977e250","timestamp":"2026-10-31T03:13:25.353Z","path":"/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke"}
+### [R3 farmacia revoca SR]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke -H 'Authorization: Bearer $TF'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"38449db2-1080-4b26-b791-43da0cd25c6b","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:13:25.367Z","path":"/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke"}
+### [R3b sin sesión revoca SR]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke
+HTTP 401 | 
+{"code":"UNAUTHENTICATED","message":"Unauthorized","correlationId":"6dd91587-5ba3-44d0-b696-ae91302a66d7","timestamp":"2026-10-31T03:13:25.381Z","path":"/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke"}
+### [R4 médica emisora revoca enlace de la paciente (SR, no lo creó ella)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke -H 'Authorization: Bearer $TD'
+HTTP 404 | 
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"65fb7662-3ed9-48ef-927c-5c23a05121f8","timestamp":"2026-10-31T03:13:25.402Z","path":"/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke"}
+### [R5 id inexistente]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/11111111-2222-4333-8444-555555555555/revoke -H 'Authorization: Bearer $TP'
+HTTP 404 | 
+{"code":"NOT_FOUND","message":"Enlace no encontrado","correlationId":"3d7a4cc3-dfd1-449c-8ce0-782e6c06c9fd","timestamp":"2026-10-31T03:13:25.422Z","path":"/clinical/prescription-shares/11111111-2222-4333-8444-555555555555/revoke"}
+### [R5b id no uuid]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/abc/revoke -H 'Authorization: Bearer $TP'
+HTTP 400 | 
+{"code":"VALIDATION_FAILED","message":"Validation failed (uuid is expected)","correlationId":"7bcbe933-2b55-44e1-af32-6fe8c9eafe3c","timestamp":"2026-10-31T03:13:25.441Z","path":"/clinical/prescription-shares/abc/revoke"}
+### [R6 dueña revoca SR]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke -H 'Authorization: Bearer $TP'
+HTTP 204 | 
+
+### [R7 revocar de nuevo (idempotente)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke -H 'Authorization: Bearer $TP'
+HTTP 204 | 
+
+### [R8 público TR revocado]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/9ME4ZT4Njb15oevpYdybvSIZ6RJnQzaMosRj6hTVY_A
+HTTP 200 | Cache-Control: no-store
+{"status":"REVOKED","issuedAt":null,"prescriberName":null,"prescriberLicense":null,"itemCount":0}
+### [R9 farmacia TR revocado]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/9ME4ZT4Njb15oevpYdybvSIZ6RJnQzaMosRj6hTVY_A -H 'Authorization: Bearer $TF'
+HTTP 410 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"El paciente dejó de compartir esta receta.","correlationId":"d9bc835c-208f-4880-bda1-47b6ca88f2a8","details":{"reason":"PRESCRIPTION_SHARE_REVOKED"},"reason":"PRESCRIPTION_SHARE_REVOKED","timestamp":"2026-10-31T03:13:27.046Z","path":"/pharmacy/prescription-shares/[token]"}
+### [R10 by-token dueña sobre TR revocado]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/9ME4ZT4Njb15oevpYdybvSIZ6RJnQzaMosRj6hTVY_A -H 'Authorization: Bearer $TP'
+HTTP 200 | Cache-Control: private, no-store
+{"shareId":"c4147cee-aea7-4d17-81a0-fb0786ceecaf","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"be95b712-16ed-467c-8191-506cc7f52756"}
+### [R11 médica emisora revoca su propio enlace TAD (creado por ella)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/87c73f34-9f0d-46c6-8e71-66a24ee16713/revoke -H 'Authorization: Bearer $TD'
+HTTP 204 | 
+
+### [R12 TAD tras revocar: público]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/2XfGd77LRaolwMeFdIp6-yvrPoT_bXb1KVpNNZ4n_EY
+HTTP 200 | Cache-Control: no-store
+{"status":"REVOKED","issuedAt":null,"prescriberName":null,"prescriberLicense":null,"itemCount":0}
+### [R13 dueña revoca enlace creado por la médica (TM es de dueña; probar SM)]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/8a07b5f3-b97a-418a-8fe1-bfb71f50de49/revoke -H 'Authorization: Bearer $TP'
+HTTP 204 | 
+
+### [R14 lista de la dueña]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares?patientProfileId=8d00e3f7-53f7-492b-9c5c-501b201a6771 -H 'Authorization: Bearer $TP'
+HTTP 200 | Cache-Control: private, no-store
+[{"shareId":"c4147cee-aea7-4d17-81a0-fb0786ceecaf","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"be95b712-16ed-467c-8191-506cc7f52756","createdAt":"2026-10-31T03:13:25.092Z","expiresAt":"2026-11-30T03:13:25.089Z","status":"REVOKED","uses":1},{"shareId":"8a07b5f3-b97a-418a-8fe1-bfb71f50de49","resourceType":"MEDICATION_REQUEST","resourceId":"5ee1801b-6256-4e8e-b8a6-652344e2c9ba","createdAt":"2026-10-31T03:11:36.722Z","expiresAt":"2026-11-30T03:11:36.720Z","status":"REVOKED","uses":0},{"shareId":"87c73f34-9f0d-46c6-8e71-66a24ee16713","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"4
+### [R7b revocar otra vez]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares/c4147cee-aea7-4d17-81a0-fb0786ceecaf/revoke -H 'Authorization: Bearer $TP'
+HTTP 204 | 
+
+### [E1 dueña comparte receta que vence en ~50 s]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"e1a92363-9704-41ed-92af-217cd0150df9"}'
+HTTP 201 | Cache-Control: no-store
+{"shareId":"d752a159-9c88-4e91-8996-16aaeba1aa78","url":"http://localhost:4000/rx/2eHR61jEkAm5RUGBAvCzRyPX41S7eiKHWyJn8RFZ0Yo","token":"2eHR61jEkAm5RUGBAvCzRyPX41S7eiKHWyJn8RFZ0Yo","expiresAt":"2026-10-31T03:14:46.000Z","itemCount":1}
+### [E2 público antes de vencer]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/2eHR61jEkAm5RUGBAvCzRyPX41S7eiKHWyJn8RFZ0Yo
+HTTP 200 | Cache-Control: no-store
+{"status":"VALID","issuedAt":"2026-10-31T03:13:56.195Z","prescriberName":"Andrés Rojas","prescriberLicense":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"},"itemCount":1}
+### [E3 farmacia antes de vencer]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/2eHR61jEkAm5RUGBAvCzRyPX41S7eiKHWyJn8RFZ0Yo -H 'Authorization: Bearer $TF'
+HTTP 200 | Cache-Control: no-store
+### [E4 público tras vencer]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/2eHR61jEkAm5RUGBAvCzRyPX41S7eiKHWyJn8RFZ0Yo
+HTTP 200 | Cache-Control: no-store
+{"status":"EXPIRED","issuedAt":"2026-10-31T03:13:56.195Z","prescriberName":"Andrés Rojas","prescriberLicense":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"},"itemCount":0}
+### [E5 farmacia tras vencer]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/2eHR61jEkAm5RUGBAvCzRyPX41S7eiKHWyJn8RFZ0Yo -H 'Authorization: Bearer $TF'
+HTTP 410 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"Esta receta venció.","correlationId":"c77ec91a-550f-47f9-84a2-7eb81a7e2171","details":{"reason":"PRESCRIPTION_SHARE_EXPIRED"},"reason":"PRESCRIPTION_SHARE_EXPIRED","timestamp":"2026-10-31T03:14:59.334Z","path":"/pharmacy/prescription-shares/[token]"}
+### [E6 lista dueña (estado efectivo)]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares?patientProfileId=8d00e3f7-53f7-492b-9c5c-501b201a6771 -H 'Authorization: Bearer $TP'
+HTTP 200 | Cache-Control: private, no-store
+[{"shareId":"d752a159-9c88-4e91-8996-16aaeba1aa78","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"e1a92363-9704-41ed-92af-217cd0150df9","createdAt":"2026-10-31T03:13:56.303Z","expiresAt":"2026-10-31T03:14:46.000Z","status":"EXPIRED","uses":2},{"shareId":"c4147cee-aea7-4d17-81a0-fb0786ceecaf","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"be95b712-16ed-467c-8191-506cc7f52756","createdAt":"2026-10-31T03:13:25.092Z","expiresAt":"2026-11-30T03:13:25.089Z","status":"REVOKED","uses":1},{"shareId":"8a07b5f3-b97a-418a-8fe1-bfb71f50de49","resourceType":"MEDICATION_REQUEST","resourceId":"5
+### [E7 by-token dueña sobre vencido]
+$ curl -sS -X GET http://localhost:3000/clinical/prescription-shares/by-token/2eHR61jEkAm5RUGBAvCzRyPX41S7eiKHWyJn8RFZ0Yo -H 'Authorization: Bearer $TP'
+HTTP 200 | Cache-Control: private, no-store
+{"shareId":"d752a159-9c88-4e91-8996-16aaeba1aa78","resourceType":"PRESCRIPTION_ENCOUNTER","resourceId":"e1a92363-9704-41ed-92af-217cd0150df9"}
+### [E8 dueña crea enlace sobre receta ya vencida]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"e1a92363-9704-41ed-92af-217cd0150df9"}'
+HTTP 422 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"La receta no tiene medicamentos emitidos y vigentes para compartir.","correlationId":"6446009b-3c5a-4001-a305-488c19c0eae7","details":{"reason":"PRESCRIPTION_SHARE_NO_ACTIVE_ITEMS"},"reason":"PRESCRIPTION_SHARE_NO_ACTIVE_ITEMS","timestamp":"2026-10-31T03:14:59.707Z","path":"/clinical/prescription-shares"}
+### [I1 dueña comparte encuentro INV]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"17926b58-a0d9-42bb-a829-e613c4740227"}'
+HTTP 201 | Cache-Control: no-store
+{"shareId":"e3b455d9-cf3f-446c-958c-91070187927b","url":"http://localhost:4000/rx/AX8944pWlxdgO28Lchci_JLtIRaPgdQeWvmyYFDW-t4","token":"AX8944pWlxdgO28Lchci_JLtIRaPgdQeWvmyYFDW-t4","expiresAt":"2026-11-30T03:15:13.984Z","itemCount":1}
+### [I1b dueña comparte solo el fármaco INV]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"medicationRequestId":"13148050-379d-49d6-bdf6-6e56cb878c0f"}'
+HTTP 201 | Cache-Control: no-store
+{"shareId":"14d75361-029f-4a94-b312-99cbdf2ad6db","url":"http://localhost:4000/rx/OZWjgVL8JMWLsnU9xCUcp-6IVOoILVRU67VjSNUWX5w","token":"OZWjgVL8JMWLsnU9xCUcp-6IVOoILVRU67VjSNUWX5w","expiresAt":"2026-11-30T03:15:14.081Z","itemCount":1}
+### [I2 médica reemplaza el ítem]
+$ curl -sS -X POST http://localhost:3000/clinical/medication-requests/13148050-379d-49d6-bdf6-6e56cb878c0f/replace -H 'Authorization: Bearer $TD' -d '{"reasonText":"far12 reemplazo para auditoría","doseText":"far12-INV reemplazado c/12h"}'
+HTTP 201 | 
+{"id":"789fb931-5632-4be5-93e3-1fe345808e02","patientProfileId":"8d00e3f7-53f7-492b-9c5c-501b201a6771","formInstanceId":null,"status":"e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c","replacesRequestId":"13148050-379d-49d6-bdf6-6e56cb878c0f","replacedByRequestId":null,"renewedFromRequestId":null,"signedAt":null,"createdAt":"2026-10-31T03:15:14.188Z"}
+### [I3 público encuentro (debe seguir VALID con el reemplazo)]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/AX8944pWlxdgO28Lchci_JLtIRaPgdQeWvmyYFDW-t4
+HTTP 200 | Cache-Control: no-store
+{"status":"EXPIRED","issuedAt":"2026-10-31T03:11:07.911Z","prescriberName":"Andrés Rojas","prescriberLicense":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"},"itemCount":0}
+### [I4 público solo-fármaco original (REPLACED)]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/OZWjgVL8JMWLsnU9xCUcp-6IVOoILVRU67VjSNUWX5w
+HTTP 200 | Cache-Control: no-store
+{"status":"EXPIRED","issuedAt":"2026-10-31T03:11:07.911Z","prescriberName":"Andrés Rojas","prescriberLicense":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"},"itemCount":0}
+### [I5 farmacia solo-fármaco original]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/OZWjgVL8JMWLsnU9xCUcp-6IVOoILVRU67VjSNUWX5w -H 'Authorization: Bearer $TF'
+HTTP 410 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"Esta receta venció.","correlationId":"2a531b6a-c9f2-4011-a65d-5654bc616d69","details":{"reason":"PRESCRIPTION_SHARE_EXPIRED"},"reason":"PRESCRIPTION_SHARE_EXPIRED","timestamp":"2026-10-31T03:15:14.339Z","path":"/pharmacy/prescription-shares/[token]"}
+### [I6 farmacia encuentro (ve solo el reemplazo)]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/AX8944pWlxdgO28Lchci_JLtIRaPgdQeWvmyYFDW-t4 -H 'Authorization: Bearer $TF'
+HTTP 410 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"Esta receta venció.","correlationId":"f61a567f-de8b-4a80-8159-24e01e57055a","details":{"reason":"PRESCRIPTION_SHARE_EXPIRED"},"reason":"PRESCRIPTION_SHARE_EXPIRED","timestamp":"2026-10-31T03:15:14.364Z","path":"/pharmacy/prescription-shares/[token]"}
+### [I7 sign reemplazo]
+$ curl -sS -X POST http://localhost:3000/clinical/medication-requests/789fb931-5632-4be5-93e3-1fe345808e02/sign -H 'Authorization: Bearer $TD' -d '{}'
+HTTP 200 | 
+{"id":"789fb931-5632-4be5-93e3-1fe345808e02","patientProfileId":"8d00e3f7-53f7-492b-9c5c-501b201a6771","formInstanceId":null,"status":"e21a9c9a-ffd2-5bb4-8e60-beb7a10a8d8c","replacesRequestId":"13148050-379d-49d6-bdf6-6e56cb878c0f","replacedByRequestId":null,"renewedFromRequestId":null,"signedAt":"2026-10-31T03:15:22.273Z","createdAt":"2026-10-31T03:15:14.188Z"}
+### [I7 issue reemplazo]
+$ curl -sS -X POST http://localhost:3000/clinical/medication-requests/789fb931-5632-4be5-93e3-1fe345808e02/issue -H 'Authorization: Bearer $TD' -d '{}'
+HTTP 200 | 
+{"id":"789fb931-5632-4be5-93e3-1fe345808e02","patientProfileId":"8d00e3f7-53f7-492b-9c5c-501b201a6771","formInstanceId":null,"status":"cce628c0-3334-50cb-9176-652c14f6f10c","replacesRequestId":"13148050-379d-49d6-bdf6-6e56cb878c0f","replacedByRequestId":null,"renewedFromRequestId":null,"signedAt":"2026-10-31T03:15:22.273Z","createdAt":"2026-10-31T03:15:14.188Z"}
+### [I8 público encuentro tras emitir el reemplazo]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/AX8944pWlxdgO28Lchci_JLtIRaPgdQeWvmyYFDW-t4
+HTTP 200 | Cache-Control: no-store
+{"status":"VALID","issuedAt":"2026-10-31T03:15:22.320Z","prescriberName":"Andrés Rojas","prescriberLicense":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"},"itemCount":1}
+### [I9 público solo-fármaco original]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/OZWjgVL8JMWLsnU9xCUcp-6IVOoILVRU67VjSNUWX5w
+HTTP 200 | Cache-Control: no-store
+{"status":"EXPIRED","issuedAt":"2026-10-31T03:11:07.911Z","prescriberName":"Andrés Rojas","prescriberLicense":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"},"itemCount":0}
+### [I10 invalidar el reemplazo]
+$ curl -sS -X POST http://localhost:3000/clinical/medication-requests/789fb931-5632-4be5-93e3-1fe345808e02/invalidate -H 'Authorization: Bearer $TD' -d '{"reasonText":"far12 invalidar"}'
+HTTP 200 | 
+{"id":"789fb931-5632-4be5-93e3-1fe345808e02","patientProfileId":"8d00e3f7-53f7-492b-9c5c-501b201a6771","formInstanceId":null,"status":"a1f3ab19-c5ab-5bb8-8d16-2c324c739a3d","replacesRequestId":"13148050-379d-49d6-bdf6-6e56cb878c0f","replacedByRequestId":null,"renewedFromRequestId":null,"signedAt":"2026-10-31T03:15:22.273Z","createdAt":"2026-10-31T03:15:14.188Z"}
+### [I11 público encuentro tras invalidar]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/AX8944pWlxdgO28Lchci_JLtIRaPgdQeWvmyYFDW-t4
+HTTP 200 | Cache-Control: no-store
+{"status":"EXPIRED","issuedAt":"2026-10-31T03:11:07.911Z","prescriberName":"Andrés Rojas","prescriberLicense":{"number":"MP-SCZ-48213","authority":null,"state":"PENDING"},"itemCount":0}
+### [I11b farmacia tras invalidar]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/AX8944pWlxdgO28Lchci_JLtIRaPgdQeWvmyYFDW-t4 -H 'Authorization: Bearer $TF'
+HTTP 410 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"Esta receta venció.","correlationId":"6b22d4c6-a016-4a76-baf7-875fb5b2c576","details":{"reason":"PRESCRIPTION_SHARE_EXPIRED"},"reason":"PRESCRIPTION_SHARE_EXPIRED","timestamp":"2026-10-31T03:15:22.625Z","path":"/pharmacy/prescription-shares/[token]"}
+### [T1 paciente consulta disponibilidad]
+$ curl -sS -X GET http://localhost:3000/pharmacy-inventory/availability?products=01e96d54-d92d-465b-b13e-1890425840de&limit=50 -H 'Authorization: Bearer $TP'
+HTTP 200 | 
+{"requestedProductIds":["01e96d54-d92d-465b-b13e-1890425840de"],"items":[{"siteId":"368bda30-7ab6-46d4-99a9-08334b03b0e4","siteName":"Casa central","pharmacyId":"1a82de64-bb90-42cd-9ac0-221e313d76bf","pharmacyName":"Farmacia Chavez S.A.","addressText":"Av. Cañoto 123, Santa Cruz (simulado)","latitude":-17.7833,"longitude":-63.1821,"distanceKm":null,"homeDeliveryAvailable":null,"pickupAvailable":null,"complete":true,"availableCount":1,"missingProductIds":[],"totalAmount":"35.50","currency":{"code":"BOB","display":"Boliviano"},"products":[{"productId":"01e96d54-d92d-465b-b13e-1890425840de","productCode":"AMOX-500","brandName":null,"genericName":null,"strengthText":null,"packageSizeText":null,"medication":{"code":"clinical:MEDICATION_AMOXICILINA","display":"Amoxicilina"},"availableQuantity":40,"price":{"unitAmount":"35.50","patientAmount":null,"currency":{"code":"BOB","display":"Boliviano"},"priceListCode":"CATALOGO"}}],"stockUpdatedAt":null},{"siteId":"ffd8a0b5-a41d-4c3c-8db8-b89c6f92e196","siteName":"Diez","pharmacyId":"1a82de64-bb90-42cd-9ac0-221e313d76bf","pharmacyName":"Farmacia Chavez S.A.","addressText":null,"latitude":null,"longitude":null,"distanceKm":null,"homeDeliveryAvail
+### [T1 paciente consulta disponibilidad (tras No lo tengo)]
+$ curl -sS -X GET http://localhost:3000/pharmacy-inventory/availability?products=01e96d54-d92d-465b-b13e-1890425840de&limit=50 -H 'Authorization: Bearer $TP'
+HTTP 200 | 
+{"requestedProductIds":["01e96d54-d92d-465b-b13e-1890425840de"],"items":[{"siteId":"368bda30-7ab6-46d4-99a9-08334b03b0e4","siteName":"Casa central","pharmacyId":"1a82de64-bb90-42cd-9ac0-221e313d76bf","pharmacyName":"Farmacia Chavez S.A.","addressText":"Av. Cañoto 123, Santa Cruz (simulado)","latitu
+### [T2 paciente consulta disponibilidad (tras Lo tengo)]
+$ curl -sS -X GET http://localhost:3000/pharmacy-inventory/availability?products=01e96d54-d92d-465b-b13e-1890425840de&limit=50 -H 'Authorization: Bearer $TP'
+HTTP 200 | 
+{"requestedProductIds":["01e96d54-d92d-465b-b13e-1890425840de"],"items":[{"siteId":"368bda30-7ab6-46
+### [T3 farmacia B (otra) apaga stock de farmacia A]
+$ curl -sS -X PUT http://localhost:3000/pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/01e96d54-d92d-465b-b13e-1890425840de/availability -H 'Authorization: Bearer $TFB' -d '{"available":false}'
+HTTP 404 | 
+{"code":"NOT_FOUND","message":"Recurso de farmacia no disponible","correlationId":"772eff01-876b-48eb-95d4-55e0a16de564","reason":"PHARMACY_INVENTORY_RESOURCE_NOT_AVAILABLE","timestamp":"2026-10-31T03:21:18.419Z","path":"/pharmacies/1a82de64-bb90-42c
+### [T4 paciente apaga stock de farmacia A]
+$ curl -sS -X PUT http://localhost:3000/pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/01e96d54-d92d-465b-b13e-1890425840de/availability -H 'Authorization: Bearer $TP' -d '{"available":false}'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"c7fdc108-a8dd-40f0-a5a9-d8a55745a4ce","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:21:18.435Z","path":"/pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/si
+### [T5 médica apaga stock]
+$ curl -sS -X PUT http://localhost:3000/pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/01e96d54-d92d-465b-b13e-1890425840de/availability -H 'Authorization: Bearer $TD' -d '{"available":false}'
+HTTP 403 | 
+{"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"f305a307-f18f-4de4-bbe4-b8ea1c7f26c9","reason":"ROLE_INSUFFICIENT","timestamp":"2026-10-31T03:21:18.449Z","path":"/pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/si
+### [T6 sin sesión]
+$ curl -sS -X PUT http://localhost:3000/pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/products/01e96d54-d92d-465b-b13e-1890425840de/availability -d '{"available":false}'
+HTTP 401 | 
+{"code":"UNAUTHENTICATED","message":"Unauthorized","correlationId":"3bd6f667-8db1-464e-b54b-fa0d1f376946","timestamp":"2026-10-31T03:21:18.463Z","path":"/pharmacies/1a82de64-bb90-42cd-9ac0-221e313d76bf/sites/864f4eb5-6196-496e-8d5c-2ddd5f1e4cbf/produ
+### [U1 público del enlace revocado desde la UI]
+$ curl -sS -X GET http://localhost:3000/public/prescription-shares/6ETjeMMVpxKSwu7sXJPx7gC2AQ95J4rimutF7p8B0M4
+HTTP 200 | Cache-Control: no-store
+{"status":"REVOKED","issuedAt":null,"prescriberName":null,"prescriberLicense":null,"itemCount":0}
+### [U2 farmacia del enlace revocado desde la UI]
+$ curl -sS -X GET http://localhost:3000/pharmacy/prescription-shares/6ETjeMMVpxKSwu7sXJPx7gC2AQ95J4rimutF7p8B0M4 -H 'Authorization: Bearer $TF'
+HTTP 410 | Cache-Control: no-store
+{"code":"PRECONDITION_FAILED","message":"El paciente dejó de compartir esta receta.","correlationId":"ea8fb9b9-9911-4678-848e-6e26f9cd984e","details":{"reason":"PRESCRIPTION_SHARE_REVOKED"},"reason":"PRESCRIPTION_SHARE_REVOKED","timestamp":"2026-10-31T03:23:57.097Z","path":"/pharmacy/prescription-shares/[token]"}
+### [Q1 dueña comparte receta far3 con unidad envase]
+$ curl -sS -X POST http://localhost:3000/clinical/prescription-shares -H 'Authorization: Bearer $TP' -d '{"encounterId":"523ea11b-617a-4379-a9d3-0cd7a029095e"}'
+HTTP 201 | Cache-Control: no-store
+{"shareId":"400e359f-8a15-4ee5-8b00-943086024d59","url":"http://localhost:4000/rx/FmlBvMunWcr0ejUTR3gmffHqoytD1-LR5LRW-dYunaw","token":"FmlBvMunWcr0ejUTR3gmffHqoytD1-LR5LRW-dYunaw","expiresAt":"2026-11-30T03:25:38.211Z","itemCount":2}
+Amoxicilina far3-ui-amox-bottle4 recetado 4 unit clinical:MEDICATION_UNIT_BOTTLE entregado 0 restante 4
+Paracetamol far3-ui-para-tube2 recetado 2 unit clinical:MEDICATION_UNIT_TUBE entregado 0 restante 2

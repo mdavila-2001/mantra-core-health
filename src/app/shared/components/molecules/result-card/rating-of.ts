@@ -6,7 +6,7 @@ import type { SearchResultItem, SearchResultRating } from '../search-result/sear
  * Sin reseñas, `null`.
  *
  * Vive aparte porque la leen dos: la tarjeta, para dibujar las estrellas, y el
- * directorio, para ordenar por «Mejor calificadas». Si cada uno la leyera a su
+ * directorio, para ordenar por «Mejor puntuación». Si cada uno la leyera a su
  * manera, el orden y lo que se ve podrían no coincidir.
  *
  * Antes había un respaldo que inventaba una nota con un hash del nombre para

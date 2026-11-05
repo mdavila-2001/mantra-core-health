@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { OrganizationList } from './organization-list';
@@ -203,5 +203,20 @@ describe('OrganizationList', () => {
     harness.detectChanges();
 
     expect(estado().status).toBe('offline');
+  });
+  it('el listado lleva a la ficha: enlace en el nombre y fila navegable', () => {
+    // Antes no había forma de llegar a la ficha desde el listado: ni enlace ni
+    // fila que respondiera, y la ficha sólo se abría tipeando el uuid.
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    responder([FILA]);
+
+    const raiz = harness.routeNativeElement as HTMLElement;
+    const enlace = raiz.querySelector<HTMLAnchorElement>('[data-testid="organizaciones-abrir"]');
+    expect(enlace?.getAttribute('href')).toBe('/administration/organizations/t-1');
+
+    const celda = raiz.querySelector<HTMLElement>('tbody tr td');
+    celda?.click();
+    expect(navegar).toHaveBeenCalledWith('/administration/organizations/t-1');
   });
 });

@@ -20,11 +20,12 @@ const context = {
 };
 
 describe('practitionerFields', () => {
-  it('agrupa el alta en nueve páginas, con el correo y la contraseña juntos', () => {
+  it('agrupa el alta en diez páginas, con el correo y la contraseña juntos', () => {
     const pages = practitionerFields(context);
 
-    // Eran quince; el propietario pidió juntarlas (26/10/2026).
-    expect(pages.length).toBe(9);
+    // Eran quince; el propietario pidió juntarlas (26/10/2026). La décima es
+    // «Dónde trabaja y con qué seguros» (28/10/2026).
+    expect(pages.length).toBe(10);
     expect(pages.every((page) => page.campos.length <= 6)).toBe(true);
     const access = pages.find((page) => page.clave === 'access')?.campos.map((c) => c.key);
     expect(access).toContain('personalEmail');
@@ -35,6 +36,13 @@ describe('practitionerFields', () => {
     );
     expect(pages[0].clave).toBe('name');
     expect(pages.map((page) => page.clave)).toContain('specialties');
+    // Instituciones y seguros van juntos, en un solo campo proyectado, después
+    // del consultorio propio.
+    const claves = pages.map((page) => page.clave);
+    expect(claves.indexOf('workplaces')).toBe(claves.indexOf('own-office') + 1);
+    expect(pages.find((page) => page.clave === 'workplaces')?.campos.map((c) => c.key)).toEqual([
+      'lugaresDeTrabajo',
+    ]);
   });
 
   it('cambia el rótulo de la matrícula según el título profesional', () => {

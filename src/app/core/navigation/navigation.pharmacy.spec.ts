@@ -84,13 +84,14 @@ describe('Menú de la cuenta de farmacia', () => {
     ];
   }
 
-  it('ofrece los seis renglones de la farmacia, en orden, y nada de otra cuenta', () => {
+  // The «Buzón de solicitudes» left the menu (owner, 04/11/2026): it is a tab of «Mis solicitudes».
+  it('ofrece los seis renglones de farmacia, sin otra cuenta', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const rutas = rutasDelMenu();
 
     expect(rutas.filter((ruta) => !FIJOS_DE_TODA_CUENTA.includes(ruta))).toEqual(
-      MENU_DE_LA_FARMACIA,
+      [...MENU_DE_LA_FARMACIA],
     );
     expect(rutas.filter((ruta) => FIJOS_DE_TODA_CUENTA.includes(ruta)).sort()).toEqual(
       [...FIJOS_DE_TODA_CUENTA].sort(),
@@ -132,6 +133,22 @@ describe('Menú de la cuenta de farmacia', () => {
     expect(rutas).not.toContain('/administration/my-organization');
     expect(rutas).not.toContain('/my-account/appointments');
     expect(rutas).not.toContain('/directories');
+  });
+
+  it('«Mis solicitudes» (de seguro) no existe para la farmacia: ni atajo ni puerta', () => {
+    abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
+    expect(service.visibleSections().map((s) => s.path)).not.toContain('my-account/requests');
+
+    // Las cuentas del pedido del 01/10/2026 la conservan.
+    abrirSesion(['PATIENT'], []);
+    expect(service.visibleSections().map((s) => s.path)).toContain('my-account/requests');
+    abrirSesion(['PRACTITIONER'], ['t-c'], { 't-c': 'CLINIC' });
+    expect(service.visibleSections().map((s) => s.path)).toContain('my-account/requests');
+    abrirSesion(['USER'], ['t-l'], { 't-l': 'DIAGNOSTIC_CENTER' });
+    expect(service.visibleSections().map((s) => s.path)).toContain('my-account/requests');
+    // Superadmin no pierde nada: se oculta por el tipo de la organización activa.
+    abrirSesion(['SUPERADMIN'], ['t-c'], { 't-c': 'CLINIC' });
+    expect(service.visibleSections().map((s) => s.path)).toContain('my-account/requests');
   });
 
   it('las secciones de farmacia no se ofrecen a una clínica ni a una aseguradora', () => {

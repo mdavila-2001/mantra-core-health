@@ -51,6 +51,7 @@ const FILAS_CON_HUECO: readonly Paciente[] = [
       [maxHeight]="maxHeight()"
       [fitContainer]="fitContainer()"
       [stackedOnMobile]="apilada()"
+      [dense]="dense()"
       [heading]="encabezado()"
       [totalCount]="total()"
       [pageSummary]="resumen()"
@@ -74,6 +75,7 @@ class HostComponent {
   readonly maxHeight = signal<string | null>(null);
   readonly fitContainer = signal(false);
   readonly apilada = signal(false);
+  readonly dense = signal(false);
   readonly encabezado = signal('');
   readonly total = signal<number | null>(null);
   readonly resumen = signal('');
@@ -352,6 +354,33 @@ describe('DataTable', () => {
       expect(host.cursores).toEqual(['cur-sig', 'cur-ant']);
     });
 
+    it('the cursor spinner also clears when the answer keeps the same rows (stale)', async () => {
+      host.cursor.set({ prevCursor: 'cur-ant', nextCursor: 'cur-sig' });
+      await fixture.whenStable();
+
+      botonPorTexto('Siguiente')?.click();
+      await fixture.whenStable();
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-busy')).toBe('true');
+
+      host.state.set(stale(FILAS, new Date('2026-08-01T10:00:00Z')));
+      await fixture.whenStable();
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('the pressed cursor button shows its spinner until the new rows land', async () => {
+      host.cursor.set({ prevCursor: 'cur-ant', nextCursor: 'cur-sig' });
+      await fixture.whenStable();
+
+      botonPorTexto('Siguiente')?.click();
+      await fixture.whenStable();
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-busy')).toBe('true');
+      expect(botonPorTexto('Anterior')?.getAttribute('aria-busy')).not.toBe('true');
+
+      host.state.set(ready([{ id: 'p-9', apellido: 'Vaca', documento: '1', obraSocial: 'Particular' }]));
+      await fixture.whenStable();
+      expect(botonPorTexto('Siguiente')?.getAttribute('aria-busy')).not.toBe('true');
+    });
+
     describe('giro de página (pulse.md §7)', () => {
       const OTRAS: readonly Paciente[] = [
         { id: 'p-3', apellido: 'Rojas', documento: '1102938', obraSocial: 'Particular' },
@@ -617,6 +646,22 @@ describe('DataTable', () => {
       expect(css).toContain('@media not all and (min-width: 40.0625rem)');
       expect(css).toContain(':host(.data-table--apilada) .data-table__row > td::before');
       expect(css).toContain('content: attr(data-label)');
+    });
+  });
+
+  describe('filas compactas (dense)', () => {
+    it('no marca el host si no se pide', () => {
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--dense')).toBe(false);
+    });
+
+    it('marca el host y el CSS le quita relleno a cada celda, también en escritorio', async () => {
+      host.dense.set(true);
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--dense')).toBe(true);
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain(':host(.data-table--dense) .data-table__cell');
+      expect(css).toMatch(/:host\(\.data-table--dense\) \.data-table__cell \{\s+padding: var\(--sp-1\) var\(--sp-2\);/);
     });
   });
 });

@@ -67,10 +67,24 @@ class Anfitrion {
 describe('Sistema de movimiento', () => {
   let fixture: ComponentFixture<Anfitrion>;
   let pedidos: Pedido[];
-  const animateOriginal = Element.prototype.animate;
+  // Se guardan los descriptores, no los valores: jsdom no trae ni `animate` ni
+  // `matchMedia`, y reasignar `undefined` dejaría una propiedad propia que tapa
+  // a los dobles de otros specs. Con `isolate: false` el `window` se comparte
+  // entre los archivos de un mismo hilo, así que este spec lo deja como estaba.
+  const animatePropio = Object.getOwnPropertyDescriptor(Element.prototype, 'animate');
+  const matchMediaPropio = Object.getOwnPropertyDescriptor(window, 'matchMedia');
 
   afterEach(() => {
-    Element.prototype.animate = animateOriginal;
+    if (animatePropio) {
+      Object.defineProperty(Element.prototype, 'animate', animatePropio);
+    } else {
+      delete (Element.prototype as { animate?: unknown }).animate;
+    }
+    if (matchMediaPropio) {
+      Object.defineProperty(window, 'matchMedia', matchMediaPropio);
+    } else {
+      delete (window as { matchMedia?: unknown }).matchMedia;
+    }
     quitarTokens();
   });
 

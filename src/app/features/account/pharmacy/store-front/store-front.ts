@@ -34,31 +34,15 @@ import {
   normalizeTerm,
   PharmacySearchService,
 } from '../search/pharmacy-search.service';
-import type {
-  ProductHit,
-  SearchMode,
-  SearchResult,
-  SearchSort,
-  StoreHit,
-} from '../search/pharmacy-search.types';
+import type { ProductHit, SearchMode, SearchSort, StoreHit } from '../search/pharmacy-search.types';
 import { StoreResults } from '../search/store-results';
+import { CatalogMatches } from '../search/catalog-matches/catalog-matches';
+import { SearchCorrection } from '../../../../shared/components/molecules/search-correction/search-correction';
+import { NADA, type Consulta, type Resultado } from './store-front.types';
 import { RecentOrders } from './recent-orders';
 
 /** La pestaña de Cotizaciones del hub viejo, que ahora es su propia pantalla. */
 const COTIZACIONES_ROUTE = '/my-account/quotations';
-
-/** Lo que la búsqueda en curso le pide al servicio. */
-interface Consulta {
-  readonly termino: string;
-  readonly modo: SearchMode;
-  readonly orden: SearchSort;
-  readonly origen: SearchOrigin | null;
-  readonly abiertas: boolean;
-  readonly intento: number;
-}
-
-/** Una búsqueda que no llegó a consultar nada. */
-const NADA = { items: [], sinOrigen: false } as const;
 
 /**
  * **Farmacia** — la tienda del paciente (carril 43).
@@ -95,6 +79,7 @@ const NADA = { items: [], sinOrigen: false } as const;
   imports: [
     AppButtonLink,
     Card,
+    CatalogMatches,
     Chip,
     FormField,
     Link,
@@ -102,6 +87,7 @@ const NADA = { items: [], sinOrigen: false } as const;
     ProductResults,
     RecentOrders,
     RouterLink,
+    SearchCorrection,
     SearchField,
     SearchOriginPicker,
     SegmentedControl,
@@ -127,6 +113,8 @@ export class StoreFront {
   protected readonly rutaDePedidos = MIS_PEDIDOS_ROUTE;
 
   protected readonly termino = signal('');
+  /** `true` after «Buscar X tal cual»: search what was typed, no typo fix. */
+  protected readonly exacto = signal(false);
   protected readonly modo = signal<SearchMode>('products');
   /**
    * P34 · en el modo Farmacias, sólo las abiertas ahora: 24 h declaradas o de
@@ -186,6 +174,7 @@ export class StoreFront {
     toObservable(
       computed<Consulta>(() => ({
         termino: this.termino(),
+        exacto: this.exacto(),
         modo: this.modo(),
         orden: this.orden(),
         origen: this.origen(),
@@ -204,7 +193,12 @@ export class StoreFront {
         // `pipe`, y el modo ya decidió cuál de los dos es.
         const fuente: Observable<Resultado> =
           consulta.modo === 'products'
-            ? this.busqueda.searchProducts(consulta.termino, consulta.origen, consulta.orden)
+            ? this.busqueda.searchProducts(
+                consulta.termino,
+                consulta.origen,
+                consulta.orden,
+                consulta.exacto,
+              )
             : this.busqueda.searchStores(
                 consulta.termino,
                 consulta.origen,
@@ -229,6 +223,12 @@ export class StoreFront {
     return actual.status === 'ready' && this.modo() === 'products'
       ? (actual.data.items as readonly ProductHit[])
       : [];
+  });
+
+  /** The text the API searched instead of what was typed, if it corrected it. */
+  protected readonly corregido = computed(() => {
+    const actual = this.lectura();
+    return actual.status === 'ready' ? (actual.data.correctedQuery ?? null) : null;
   });
 
   protected readonly filasDeSede = computed<readonly StoreHit[]>(() => {
@@ -256,7 +256,9 @@ export class StoreFront {
     if (actual.status !== 'ready') {
       return actual;
     }
-    if (this.esperandoTermino() || actual.data.items.length > 0) {
+    // Products with no pharmacy offer: `CatalogMatches` shows what the
+    // vademécum and the registry have, or its own «no encontramos nada».
+    if (this.esperandoTermino() || actual.data.items.length > 0 || this.modo() === 'products') {
       return actual;
     }
     if (this.modo() === 'stores' && this.soloAbiertas()) {
@@ -267,9 +269,7 @@ export class StoreFront {
     }
     return empty(
       { label: 'Pruebe con otra palabra' },
-      this.modo() === 'products'
-        ? 'Ninguna farmacia publica algo con ese nombre.'
-        : 'Ninguna farmacia coincide con ese nombre.',
+      'Ninguna farmacia coincide con ese nombre.',
     );
   });
 
@@ -277,8 +277,10 @@ export class StoreFront {
     this.redirigirTabHeredado();
   }
 
-  protected buscar(texto: string): void {
+  /** @param literal - `true` searches what was typed, without typo correction. */
+  protected buscar(texto: string, literal = false): void {
     this.termino.set(texto);
+    this.exacto.set(literal);
   }
 
   protected cambiarModo(modo: SearchMode): void {
@@ -314,13 +316,3 @@ export class StoreFront {
     }
   }
 }
-
-/**
- * Lo que la lectura devuelve, en los dos modos.
- *
- * Es una unión y no un genérico porque el estado del anfitrión es **uno** y
- * tiene que poder llevar cualquiera de los dos: la pantalla separa las filas
- * en {@link StoreFront.filasDeProducto} y {@link StoreFront.filasDeSede}, que
- * es donde el modo ya se conoce.
- */
-type Resultado = SearchResult<ProductHit> | SearchResult<StoreHit>;

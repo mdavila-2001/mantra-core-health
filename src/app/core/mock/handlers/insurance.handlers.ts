@@ -443,6 +443,20 @@ export function administraCatalogo(request: MockRequest): boolean {
   );
 }
 
+/**
+ * La aseguradora del catálogo con ese id, para quien necesita su nombre sin
+ * conocer el arreglo (las solicitudes médico → aseguradora).
+ */
+export function aseguradoraDelCatalogo(
+  id: string,
+): { readonly id: string; readonly name: string; readonly legalName: string } | undefined {
+  const a = ASEGURADORAS.find((x) => x.id === id);
+  return a === undefined ? undefined : { id: a.id, name: a.name, legalName: a.legalName };
+}
+
+/** La compañía de la aseguradora de la sesión simulada (`TENANT_ASEGURADORA`). */
+export const CARRIER_DE_LA_SESION = uuid('carrier-andina');
+
 /** Exportado: es también el guardián de `GET /insurance/analytics/loss-ratio`. */
 export function perteneceALaAseguradora(request: MockRequest): boolean {
   return request.user?.tenants.includes(TENANT_ASEGURADORA) ?? false;
@@ -1631,6 +1645,7 @@ export function registrarSeguros(router: MockRouter): void {
     });
     return { status: 201, body: { id: nueva.id, status: 'SUBMITTED' } };
   });
+
 
   /**
    * Seguros de una persona, para quien cobra. Con la forma de la API real: sin

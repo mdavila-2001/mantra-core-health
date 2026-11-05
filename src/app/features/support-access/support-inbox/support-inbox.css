@@ -1,0 +1,79 @@
+:host {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.bandeja {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+/* En pantallas angostas se ve una cosa a la vez: la lista o la conversación abierta. */
+.bandeja--con-conversacion .bandeja__lista {
+  display: none;
+}
+
+.bandeja:not(.bandeja--con-conversacion) .bandeja__conversacion {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .bandeja {
+    grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr);
+  }
+  .bandeja--con-conversacion .bandeja__lista,
+  .bandeja:not(.bandeja--con-conversacion) .bandeja__conversacion {
+    display: block;
+  }
+}
+
+.bandeja__lista app-card,
+.bandeja__lista app-card > * {
+  min-inline-size: 0;
+}
+
+.filtros {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.filtros__org {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.filtros__org-rotulo {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.bandeja__pestanas {
+  display: block;
+  margin-block-end: var(--sp-3);
+}
+
+.esqueleto {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.esqueleto__fila {
+  block-size: 5.5rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-hover);
+}
+
+/* Celular: los botones `size="sm"` de la lista, la conversación y el compositor miden 44 px de alto (el talle mide 32 y un
+   pulgar no acierta). Cuelgan todos de este árbol, así que el gancho `--btn-min-block` se declara una vez acá. */
+@media (max-width: 779px) {
+  :host {
+    --btn-min-block: 44px;
+  }
+}

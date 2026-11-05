@@ -5,6 +5,15 @@
     está mirando los chats.
   </p>
 
+  <!-- Es la de la persona, no la de la farmacia: lo dice mientras se escribe
+       como la vitrina, para que nadie crea que configuró la de la farmacia. -->
+  @if (comoOrganizacion(); as nombre) {
+    <p class="chat-prefs__aviso" data-testid="chat-prefs-personal">
+      Esta es su respuesta automática personal, no la de {{ nombre }}: no se manda cuando
+      escribe como {{ nombre }}.
+    </p>
+  }
+
   <!-- Lo que se promete cambia según dónde esté guardada, y se dice en la
        pantalla y no sólo en el código. -->
   @if (errorDeLectura()) {
@@ -65,48 +74,15 @@
           </span>
         </label>
 
-        <label
-          class="chat-prefs__modo"
-          [class.is-elegido]="modo() === 'ia'"
-          [class.is-apagado]="!iaDisponible"
-        >
-          <input
-            type="radio"
-            name="chat-prefs-modo"
-            value="ia"
-            data-testid="chat-prefs-modo-ia"
-            [checked]="modo() === 'ia'"
-            [disabled]="!iaDisponible"
-            (change)="elegirModo('ia')"
-          />
-          <span class="chat-prefs__modo-texto">
-            <span class="chat-prefs__modo-nombre">Responder con IA</span>
-            <span class="ajustes__detalle">
-              @if (iaDisponible) {
-                La IA de AloVida responde con un mensaje breve según lo que le escriban, en nombre de {{ sujeto() }}.
-              } @else {
-                Todavía no está disponible en AloVida. Mientras tanto puede usar un mensaje fijo.
-              }
-            </span>
-          </span>
-        </label>
       </fieldset>
 
       @if (modo() !== 'apagado') {
         <div class="chat-prefs__campos">
-          @if (modo() === 'ia') {
-            <!-- Lo que la IA no hace, a la vista y no escondido. -->
-            <p class="chat-prefs__limites" data-testid="chat-prefs-ia-limites">
-              La IA no diagnostica, no indica medicamentos ni dosis, y ante signos de alarma le pide a
-              la persona que acuda a Emergencia.
-            </p>
-          }
-
           <!-- El error y el contador van fuera de la etiqueta: dentro, el lector
                los leería como parte del nombre del campo. -->
           <div class="chat-prefs__campo">
             <label class="ajustes__nombre" for="chat-prefs-texto">
-              {{ modo() === 'ia' ? 'Si la IA no está disponible, se enviará este mensaje' : 'El mensaje que se envía' }}
+              El mensaje que se envía
             </label>
             <textarea
               id="chat-prefs-texto"
@@ -296,22 +272,6 @@
               <span class="chat-prefs__etiqueta">Respuesta automática</span>
               <p class="chat-prefs__texto-libre" data-testid="chat-prefs-previa-texto">{{ borrador().texto }}</p>
             </div>
-          }
-          @case ('ia') {
-            <div class="chat-prefs__burbuja chat-prefs__burbuja--respuesta">
-              <span class="chat-prefs__etiqueta chat-prefs__etiqueta--ia" data-testid="chat-prefs-previa-etiqueta">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>
-                Respuesta automática generada por IA
-              </span>
-              <p>
-                Buenas noches, gracias por escribir. En este momento no podemos atenderle por aquí;
-                le responderemos apenas sea posible para coordinar su cita. Si tiene una urgencia,
-                acuda a Emergencia.
-              </p>
-            </div>
-            <p class="chat-prefs__previa-nota">
-              Es un ejemplo: la IA escribe cada respuesta según el mensaje que recibe.
-            </p>
           }
         }
       </div>

@@ -24,6 +24,8 @@
   [preventDuplicateNavigation]="true"
   [portada]="showsLanding()"
   vistaPorDefecto="lista"
+  [criteriosDeOrden]="criteriosDeOrden"
+  [calificable]="true"
   claveDeVista="alovida.directorio.vista.medicos"
   (filtrosCambiaron)="filtrar($event)"
   (reintentar)="recargar()"

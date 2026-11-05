@@ -1,5 +1,6 @@
 import { uuid } from './mock-store';
 import type { TenantTypeCode } from '../data-access/directory/directory.types';
+import type { MockUser } from '../simulator/simulator.types';
 
 /* ============================================================================
     Las cuentas del backend simulado y sus tokens.
@@ -10,41 +11,27 @@ import type { TenantTypeCode } from '../data-access/directory/directory.types';
     decorativa: nadie la verifica en esta rama.
     ========================================================================== */
 
-export interface MockUser {
-  /** La clave con la que se identifica en el login (correo) y dentro del token. */
-  readonly key: string;
-  readonly id: string;
-  readonly email: string;
-  readonly nationalId: string;
-  readonly displayName: string;
-  readonly roles: readonly string[];
-  readonly tenants: readonly string[];
-  readonly tenantNames: Readonly<Record<string, string>>;
-  /**
-   * Roles con ámbito de organización, por tenant: el claim `scopedRoles` que firma
-   * la API (un código que figura acá sólo vale en esos tenants; uno que no, es
-   * global). El simulador firma exactamente las claves de la API: no hay
-   * `ownTenantId`.
-   */
-  readonly scopedRoles?: Readonly<Record<string, readonly string[]>>;
-  readonly patientProfileId?: string;
-  readonly practitionerProfileId?: string;
-  readonly personId: string;
-  /**
-   * Clase de cuenta que firmaría la API. Sin valor, el token no trae el claim y
-   * la sesión lo deduce (cuentas de paciente, que no pasan por esta lista).
-   */
-  readonly accountKind?: 'PERSON' | 'ORGANIZATION';
-}
+/** La forma de una cuenta de prueba vive fuera del simulador (O3-4). */
+export type { MockUser };
 
 export const TENANT_CLINICA = uuid('tenant-clinica-los-olivos');
 export const TENANT_HOSPITAL = uuid('tenant-hospital-san-lucas');
 export const TENANT_PLATAFORMA = uuid('tenant-plataforma-alovida');
 export const TENANT_FARMACIA = uuid('tenant-farmacia-vida');
 export const TENANT_LABORATORIO = uuid('tenant-laboratorio-central');
+/** El Centro de Imagen Sur: el centro de imagen con el que el paciente reserva sus estudios. */
+export const TENANT_IMAGEN_SUR = uuid('tenant-imagen-sur');
 export const TENANT_ASEGURADORA = uuid('tenant-seguros-andina');
 /** El consultorio propio de la médica: su organización por defecto. */
 export const TENANT_CONSULTORIO = uuid('tenant-consultorio-rojas');
+/**
+ * **Hospital Piloto Mantra** (ficticio): la cuenta de organización del diseño de
+ * «personal de apoyo». Es el hospital como **cuenta** (`accountKind:
+ * 'ORGANIZATION'`), no una persona que lo administra.
+ */
+export const TENANT_HOSPITAL_PILOTO = uuid('tenant-hospital-piloto-mantra');
+/** El consultorio privado de la Dra. Paola Céspedes, donde trabaja Rosa. Organización aparte. */
+export const TENANT_CESPEDES = uuid('tenant-consultorio-cespedes');
 
 export const TENANT_NAMES: Readonly<Record<string, string>> = {
   [TENANT_CONSULTORIO]: 'Consultorio Dra. Rojas',
@@ -53,7 +40,10 @@ export const TENANT_NAMES: Readonly<Record<string, string>> = {
   [TENANT_PLATAFORMA]: 'AloVida Plataforma',
   [TENANT_FARMACIA]: 'Farmacia Vida',
   [TENANT_LABORATORIO]: 'Laboratorio Central',
+  [TENANT_IMAGEN_SUR]: 'Centro de Imagen Sur',
   [TENANT_ASEGURADORA]: 'Seguros Andina',
+  [TENANT_HOSPITAL_PILOTO]: 'Hospital Piloto Mantra',
+  [TENANT_CESPEDES]: 'Consultorio Dra. Paola Céspedes',
 };
 
 /**
@@ -84,7 +74,10 @@ export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode | 'DIAGNOSTIC_
   // `TENANT_TYPE_CODES` —esa lista es la del alta administrativa— pero sí en el
   // claim, y es lo que abre «Recepción de muestras» en el menú.
   [TENANT_LABORATORIO]: 'DIAGNOSTIC_CENTER',
+  [TENANT_IMAGEN_SUR]: 'DIAGNOSTIC_CENTER',
   [TENANT_ASEGURADORA]: 'PAYER',
+  [TENANT_HOSPITAL_PILOTO]: 'HOSPITAL',
+  [TENANT_CESPEDES]: 'MEDICAL_OFFICE',
 };
 
 /** Perfiles que aparecen en toda la aplicación (agenda, expediente, red). */
@@ -112,6 +105,10 @@ export const IDS = {
     userId: uuid('user-visitador'),
     personId: uuid('person-visitador'),
   },
+  marketing: {
+    userId: uuid('user-marketing'),
+    personId: uuid('person-marketing'),
+  },
   aseguradora: {
     userId: uuid('user-aseguradora-owner'),
     personId: uuid('person-aseguradora-owner'),
@@ -123,6 +120,10 @@ export const IDS = {
   laboratorio: {
     userId: uuid('user-laboratorio-staff'),
     personId: uuid('person-laboratorio-staff'),
+  },
+  imagen: {
+    userId: uuid('user-imagen-sur-staff'),
+    personId: uuid('person-imagen-sur-staff'),
   },
   farmacia: {
     userId: uuid('user-farmacia-vida'),
@@ -136,6 +137,42 @@ export const IDS = {
     userId: uuid('user-sinespecialidad'),
     personId: uuid('person-sinespecialidad'),
     practitionerProfileId: uuid('hpid-sinespecialidad'),
+  },
+  orManager: {
+    userId: uuid('user-jefe-quirofano'),
+    personId: uuid('person-jefe-quirofano'),
+    // Un perfil profesional real del padrón de San Lucas (el demo 02, de
+    // `PROFESSIONALS_REGISTERED_DEMO`): firma las fases del check-list y el
+    // armazón encuentra su resumen, en vez de un 404 en cada pantalla.
+    practitionerProfileId: uuid('hpid-demo-registered-practitioner-02'),
+  },
+  billingClerk: {
+    userId: uuid('user-facturacion-hospital'),
+    personId: uuid('person-facturacion-hospital'),
+  },
+  // Hospital Piloto Mantra (personal de apoyo): la cuenta de la organización,
+  // las cuatro personas de apoyo y dos doctores del hospital.
+  hospitalPiloto: {
+    userId: uuid('user-hospital-piloto'),
+    personId: uuid('person-hospital-piloto'),
+  },
+  ana: { userId: uuid('user-ana-gutierrez'), personId: uuid('person-ana-gutierrez') },
+  lucia: { userId: uuid('user-lucia-paz'), personId: uuid('person-lucia-paz') },
+  marcos: { userId: uuid('user-marcos-ribera'), personId: uuid('person-marcos-ribera') },
+  rosa: { userId: uuid('user-rosa-quiroga'), personId: uuid('person-rosa-quiroga') },
+  // La otra secretaria del hospital: comparte con Ana al Dr. Pérez, y por eso
+  // sirve para ver que una conversación tomada por una no la toma la otra.
+  mariela: { userId: uuid('user-mariela-soliz'), personId: uuid('person-mariela-soliz') },
+  elena: { userId: uuid('user-elena-camacho'), personId: uuid('person-elena-camacho') },
+  perez: {
+    userId: uuid('user-andres-perez'),
+    personId: uuid('person-andres-perez'),
+    practitionerProfileId: uuid('hpid-andres-perez'),
+  },
+  suarez: {
+    userId: uuid('user-martin-suarez'),
+    personId: uuid('person-martin-suarez'),
+    practitionerProfileId: uuid('hpid-martin-suarez'),
   },
 } as const;
 
@@ -195,6 +232,9 @@ export const MOCK_USERS: readonly MockUser[] = [
       // Revisa las admisiones; la decisión final la toma otra persona
       // (`aprobador@alovida.mock`): cuatro ojos.
       'ADMISSIONS_REVIEWER',
+      // Portal de reportería (30/10/2026): administra los reportes. Además de
+      // éste, `BUSINESS_ADMIN` y `PLATFORM_ADMIN` ya lo abren por sí solos.
+      'REPORTING_ADMIN',
     ],
     tenants: [TENANT_CLINICA],
     tenantNames: TENANT_NAMES,
@@ -206,7 +246,7 @@ export const MOCK_USERS: readonly MockUser[] = [
     email: 'superadmin@alovida.mock',
     nationalId: '9998887',
     displayName: 'Soporte AloVida',
-    roles: ['SUPERADMIN', 'SECURITY_ADMIN', 'PLATFORM_ADMIN'],
+    roles: ['SUPERADMIN', 'SECURITY_ADMIN', 'PLATFORM_ADMIN', 'REPORTING_ADMIN'],
     tenants: [TENANT_PLATAFORMA, TENANT_CLINICA, TENANT_HOSPITAL],
     tenantNames: TENANT_NAMES,
     personId: IDS.superadmin.personId,
@@ -251,6 +291,22 @@ export const MOCK_USERS: readonly MockUser[] = [
     accountKind: 'PERSON',
   },
   {
+    // Gerencia de marketing de la plataforma: entra directo a AloVida Insights. En la API
+    // `MARKETING_MANAGER` es un rol con ámbito de tenant (`scopedRoles`), así que el
+    // simulador lo firma igual: el dato de Insights es de plataforma, el rol vale en su tenant.
+    key: 'marketing',
+    id: IDS.marketing.userId,
+    email: 'marketing@alovida.mock',
+    nationalId: '5557778',
+    displayName: 'Mateo Rojas Arce',
+    roles: ['MARKETING_MANAGER'],
+    tenants: [TENANT_PLATAFORMA],
+    tenantNames: TENANT_NAMES,
+    scopedRoles: { [TENANT_PLATAFORMA]: ['MARKETING_MANAGER'] },
+    personId: IDS.marketing.personId,
+    accountKind: 'PERSON',
+  },
+  {
     key: 'aseguradora',
     id: IDS.aseguradora.userId,
     email: 'aseguradora@alovida.mock',
@@ -291,21 +347,270 @@ export const MOCK_USERS: readonly MockUser[] = [
     accountKind: 'ORGANIZATION',
   },
   {
+    // El Centro de Imagen Sur (mockup, 2026-10-06): la cuenta con la que el
+    // centro configura sus horarios por modalidad y el estado de sus equipos.
+    // Mismo molde que `laboratorio`: `USER` y la membresía de su tenant
+    // `DIAGNOSTIC_CENTER`.
+    key: 'imagen',
+    id: IDS.imagen.userId,
+    email: 'imagen@alovida.mock',
+    nationalId: '7002002',
+    displayName: 'Centro de Imagen Sur',
+    roles: ['USER'],
+    tenants: [TENANT_IMAGEN_SUR],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.imagen.personId,
+    accountKind: 'ORGANIZATION',
+  },
+  {
     // La encargada de Farmacia Vida: `USER` y la membresía del tenant
     // `PHARMACY`, igual que la API. Es la cuenta con la que la maqueta recorre
     // lo que hace una farmacia: su catálogo, sus pedidos y sus promociones.
+    // Con `PHARMACY_STAFF` atiende además el chat de los pedidos **como la
+    // farmacia**: no tiene vitrina personal —el personal de una farmacia no la
+    // necesita para atender—, así que en Chats escribe como «Farmacia Vida».
     key: 'farmacia',
     id: IDS.farmacia.userId,
     email: 'farmacia@alovida.mock',
     nationalId: '7003001',
     displayName: 'Farmacia Vida',
-    roles: ['USER'],
+    roles: ['USER', 'PHARMACY_STAFF'],
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.farmacia.personId,
     accountKind: 'ORGANIZATION',
   },
+  {
+    // Infraestructura hospitalaria F4: la jefatura del bloque quirúrgico de San
+    // Lucas. Asigna y libera bloques, programa y registra el día del caso.
+    key: 'quirofano',
+    id: IDS.orManager.userId,
+    email: 'quirofano@alovida.mock',
+    nationalId: '7007001',
+    displayName: 'Lic. Patricia Vargas · Jefatura de quirófano',
+    roles: ['PERIOP_ADMIN', 'SURGERY_SCHEDULER', 'PERIOP_NURSE'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.orManager.practitionerProfileId,
+    personId: IDS.orManager.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Infraestructura hospitalaria F5e: facturación de San Lucas (tarifas de
+    // espacios y cargos de día-cama). Ve la utilización, no opera la sala.
+    key: 'facturacion',
+    id: IDS.billingClerk.userId,
+    email: 'facturacion@alovida.mock',
+    nationalId: '7007002',
+    displayName: 'Rodrigo Suárez · Facturación',
+    roles: ['BILLING'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.billingClerk.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Hospital Piloto Mantra como **cuenta de organización**: quien entra es el
+    // hospital, no una persona que lo administra. Su rol de token es `USER` más
+    // `SECURITY_ADMIN`
+    // —igual que farmacia, laboratorio y aseguradora—; lo que lo habilita en
+    // «Equipo de apoyo» es la cuenta, y la autoridad la tiene la API.
+    key: 'hospital_piloto',
+    id: IDS.hospitalPiloto.userId,
+    email: 'hospital.piloto@alovida.mock',
+    nationalId: '7004001',
+    displayName: 'Hospital Piloto Mantra',
+    // `SECURITY_ADMIN` porque la API lo exige en todas las rutas `/org/*` del personal
+    // de apoyo (`@Roles('SECURITY_ADMIN')`); `USER` solo no alcanza.
+    roles: ['USER', 'SECURITY_ADMIN'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.hospitalPiloto.personId,
+    accountKind: 'ORGANIZATION',
+  },
+  {
+    // Ana Gutiérrez, secretaria del hospital. Persona, rol `USER`: su acceso
+    // no es un rol global sino un **vínculo de apoyo** con permisos por objetivo.
+    key: 'ana',
+    id: IDS.ana.userId,
+    email: 'ana.gutierrez@alovida.mock',
+    nationalId: '7005001',
+    displayName: 'Ana Gutiérrez',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.ana.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    key: 'lucia',
+    id: IDS.lucia.userId,
+    email: 'lucia.paz@alovida.mock',
+    nationalId: '7005002',
+    displayName: 'Lucía Paz',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.lucia.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    key: 'marcos',
+    id: IDS.marcos.userId,
+    email: 'marcos.ribera@alovida.mock',
+    nationalId: '7005003',
+    displayName: 'Marcos Ribera',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.marcos.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Silvia Soria: cajera del hospital piloto con el vínculo **suspendido** por no
+    // recertificarse a tiempo (ver `support-hospital-review.ts`). Es la cuenta con la
+    // que se ve «Suspendido: pida a su organización que lo renueve».
+    key: 'silvia',
+    id: uuid('user-silvia-soria'),
+    email: 'silvia-soria@alovida.mock',
+    nationalId: '7005008',
+    displayName: 'Silvia Soria',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: uuid('person-silvia-soria'),
+    accountKind: 'PERSON',
+  },
+  {
+    // Sofía Camacho, jefa de Ecografía del hospital piloto (gobierno de accesos, §10.1): persona de apoyo con la plantilla
+    // `ORG_MANAGEMENT` y una concesión `SERVICE` con átomos `team.*` y techo de delegación. Administra a **su** gente por
+    // `/org/team/*`; no es `SECURITY_ADMIN`. Con ella se ve «Mi equipo (administración)».
+    key: 'sofia',
+    id: uuid('user-sofia-camacho'),
+    email: 'sofia.camacho@alovida.mock',
+    nationalId: '7005011',
+    displayName: 'Sofía Camacho',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: uuid('person-sofia-camacho'),
+    accountKind: 'PERSON',
+  },
+  {
+    // Mario Salvatierra, caja del hospital piloto (gobierno de accesos, §10.1): persona de apoyo con el cobro (`billing.payment.collect`)
+    // y un tope de monto. Es la cuenta con la que se ve la caja y sus desafíos (monto, descuento y anulación con paso extra).
+    key: 'mario',
+    id: uuid('user-mario-salvatierra'),
+    email: 'mario.salvatierra@alovida.mock',
+    nationalId: '7005012',
+    displayName: 'Mario Salvatierra',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: uuid('person-mario-salvatierra'),
+    accountKind: 'PERSON',
+  },
+  {
+    key: 'mariela',
+    id: IDS.mariela.userId,
+    email: 'mariela.soliz@alovida.mock',
+    nationalId: '7005005',
+    displayName: 'Mariela Soliz',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.mariela.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Rosa trabaja para una **organización aparte**: el consultorio privado de
+    // la Dra. Céspedes. No pertenece al hospital: su token no lo trae.
+    key: 'rosa',
+    id: IDS.rosa.userId,
+    email: 'rosa.quiroga@alovida.mock',
+    nationalId: '7005004',
+    displayName: 'Rosa Quiroga',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_CESPEDES],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.rosa.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Elena trabaja en **dos organizaciones** (el hospital y el consultorio de
+    // la Dra. Céspedes): con ella se ve la agenda combinada de varias.
+    key: 'elena',
+    id: IDS.elena.userId,
+    email: 'elena.camacho@alovida.mock',
+    nationalId: '7005005',
+    displayName: 'Elena Camacho',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO, TENANT_CESPEDES],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.elena.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // El Dr. Andrés Pérez, cardiólogo del hospital piloto.
+    key: 'perez',
+    id: IDS.perez.userId,
+    email: 'andres.perez@alovida.mock',
+    nationalId: '7006001',
+    displayName: 'Dr. Andrés Pérez',
+    roles: ['PRACTITIONER'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.perez.practitionerProfileId,
+    personId: IDS.perez.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // El Dr. Martín Suárez, pediatra del hospital piloto: es quien recibe la
+    // solicitud de ampliación de Ana en el recorrido de la demostración.
+    key: 'suarez',
+    id: IDS.suarez.userId,
+    email: 'martin.suarez@alovida.mock',
+    nationalId: '7006002',
+    displayName: 'Dr. Martín Suárez',
+    // Solo `PRACTITIONER`, como todo doctor: canjea el QR de doctores en «Mis accesos», que se abre también a su rol.
+    roles: ['PRACTITIONER'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.suarez.practitionerProfileId,
+    personId: IDS.suarez.personId,
+    accountKind: 'PERSON',
+  },
+
+  // Infraestructura F2/F3 (31/10/2026): el personal del Hospital San Lucas, una
+  // cuenta por rol operativo. El token no trae el rol —es una fila de
+  // `organization_user_assignments` que resuelve la API (`fixtures/inpatient.ts`)—.
+  ...inpatientAccounts(),
 ];
+
+/** Las seis cuentas operativas del hospital (enfermería, supervisión, admisión, limpieza…). */
+function inpatientAccounts(): MockUser[] {
+  const filas: readonly [key: string, nombre: string, ci: string, semilla: string][] = [
+    ['enfermeria', 'Lic. Rosa Vargas Terrazas', '8100101', 'user-enfermeria-sanlucas'],
+    ['supervision', 'Lic. Carmen Justiniano Paz', '8100102', 'user-supervision-enfermeria-sanlucas'],
+    ['admision', 'Luis Fernández Rivero', '8100103', 'user-admision-sanlucas'],
+    ['limpieza', 'Juana Choque Mamani', '8100104', 'user-limpieza-sanlucas'],
+    // Sin punto en la clave: el refresh token simulado es `mock-refresh.<clave>.<marca>`.
+    ['supervisora-limpieza', 'Teresa Aguilera Saucedo', '8100105', 'user-supervisora-limpieza-sanlucas'],
+    ['mantenimiento', 'Óscar Suárez Montaño', '8100106', 'user-mantenimiento-sanlucas'],
+  ];
+  return filas.map(([key, displayName, nationalId, semilla]) => ({
+    key,
+    id: uuid(semilla),
+    email: `${key.replace('-', '.')}@alovida.mock`,
+    nationalId,
+    displayName,
+    roles: ['USER'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    personId: uuid(`person-${semilla}`),
+    accountKind: 'PERSON',
+  }));
+}
 
 /**
  * Las cuentas de los pacientes del padrón, que no están en {@link MOCK_USERS}.
@@ -326,21 +631,59 @@ export function resolverCuentasDePacientes(resolver: ResolverDeCuentas): void {
   cuentaDePaciente = resolver;
 }
 
+/**
+ * Las cuentas que nacen de un alta pública durante el recorrido (hoy, la de
+ * farmacia). Mismo mecanismo que {@link resolverCuentasDePacientes}: las
+ * guarda quien atiende el alta (`auth.handlers`) y se resuelven acá, así el
+ * login, el token y la renovación las reconocen igual que a las sembradas.
+ */
+let cuentaRegistrada: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasRegistradas(resolver: ResolverDeCuentas): void {
+  cuentaRegistrada = resolver;
+}
+
+/**
+ * Las cuentas de personal de apoyo dadas de alta en la maqueta
+ * (`/iam/auth/register-support-staff`). Las resuelve
+ * `support-staff.handlers`, igual que las de pacientes: este archivo no puede
+ * importar sus tablas sin armar un ciclo.
+ */
+let cuentaDeApoyo: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasDeApoyo(resolver: ResolverDeCuentas): void {
+  cuentaDeApoyo = resolver;
+}
+
+/**
+ * Correos con los que se conoce, fuera del simulador, a una cuenta de
+ * demostración. `admin@alovidasalud.com` es el superadministrador local con el
+ * que se probó la Superadministración contra la API real (sólo local y dev):
+ * quien lo escribe acá entra a la cuenta `superadmin` del simulador, con
+ * cualquier contraseña no vacía como el resto.
+ */
+export const ALIAS_DE_CUENTA: Readonly<Record<string, string>> = {
+  'admin@alovidasalud.com': 'superadmin',
+};
+
 export function buscarUsuario(identificador: string): MockUser | undefined {
-  const limpio = identificador.trim().toLocaleLowerCase('es');
+  const escrito = identificador.trim().toLocaleLowerCase('es');
+  const limpio = ALIAS_DE_CUENTA[escrito] ?? escrito;
+  // Primero lo exacto, en todas las fuentes; recién al final el atajo «la
+  // parte antes de la arroba es la clave» (`farmacia@…` → la cuenta demo).
+  // Al revés, `farmacia@sanmartin.bo`, registrada en el recorrido, entraba a
+  // la cuenta de demostración.
   return (
-    MOCK_USERS.find(
-      (u) =>
-        u.email === limpio ||
-        u.nationalId === limpio ||
-        u.key === limpio ||
-        u.key === limpio.replace(/@.*$/, ''),
-    ) ?? cuentaDePaciente({ identificador: limpio })
+    MOCK_USERS.find((u) => u.email === limpio || u.nationalId === limpio || u.key === limpio) ??
+    cuentaDePaciente({ identificador: limpio }) ??
+    cuentaRegistrada({ identificador: limpio }) ??
+    cuentaDeApoyo({ identificador: limpio }) ??
+    MOCK_USERS.find((u) => u.key === limpio.replace(/@.*$/, ''))
   );
 }
 
 export function usuarioPorId(userId: string): MockUser | undefined {
-  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId });
+  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaRegistrada({ id: userId }) ?? cuentaDeApoyo({ id: userId });
 }
 
 /* ---- tokens ---------------------------------------------------------------- */
@@ -368,7 +711,15 @@ export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
       tenantNames: user.tenantNames,
       ...(Object.keys(tenantTypes).length === 0 ? {} : { tenantTypes }),
       ...(user.scopedRoles === undefined ? {} : { scopedRoles: user.scopedRoles }),
-      ...(user.accountKind === undefined ? {} : { accountKind: user.accountKind }),
+      // Como la API real: `accountKind` es la clase de cuenta de las ORGANIZACIONES de la persona (el hospital en modo organización
+      // firma `ORGANIZATION` para todos los que entran por él, también su secretaria), y `tenantAccountKinds` la de cada una.
+      ...(user.accountKind === undefined
+        ? {}
+        : {
+            accountKind: user.tenants.includes(TENANT_HOSPITAL_PILOTO)
+              ? 'ORGANIZATION'
+              : user.accountKind,
+          }),
       ...(user.patientProfileId === undefined ? {} : { pid: user.patientProfileId }),
       ...(user.practitionerProfileId === undefined ? {} : { hpid: user.practitionerProfileId }),
       iat: Math.floor(ahora / 1000),
@@ -385,7 +736,7 @@ export function emitirRefreshToken(user: MockUser): string {
 export function usuarioDeRefreshToken(refreshToken: string): MockUser | undefined {
   const [prefijo, key] = refreshToken.split('.');
   if (prefijo !== 'mock-refresh' || key === undefined) return undefined;
-  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key });
+  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaRegistrada({ key }) ?? cuentaDeApoyo({ key });
 }
 
 export function usuarioDeAccessToken(token: string): MockUser | undefined {

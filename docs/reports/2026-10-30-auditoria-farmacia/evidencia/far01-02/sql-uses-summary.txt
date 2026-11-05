@@ -1,0 +1,11 @@
+  share   | opened | denied |               action               
+----------+--------+--------+------------------------------------
+ 30344167 |     15 |      0 | delegated_access:SHARE_ACTION_OPEN
+ 6504257f |      0 |      2 | delegated_access:SHARE_ACTION_OPEN
+ 87c73f34 |      0 |      1 | delegated_access:SHARE_ACTION_OPEN
+ 8a07b5f3 |      0 |      0 | 
+ c4147cee |      1 |      5 | delegated_access:SHARE_ACTION_OPEN
+ d752a159 |      2 |      5 | delegated_access:SHARE_ACTION_OPEN
+ e3b455d9 |      2 |      5 | delegated_access:SHARE_ACTION_OPEN
+(7 rows)
+

@@ -1,0 +1,112 @@
+<div class="rg" data-testid="report-grid">
+  <app-page-header
+    title="Reportes"
+    subtitle="Elija un reporte para ver sus indicadores. Los marcados como favoritos y los abiertos hace poco quedan arriba."
+  />
+
+  <app-view-state-host [state]="state()" (retry)="load()">
+    <div vsh-skeleton class="rg__cards" aria-hidden="true" data-testid="report-grid-loading">
+      @for (n of skeletonCards; track n) {
+        <app-skeleton variant="rect" height="15rem" />
+      }
+    </div>
+
+    <app-empty-state
+      vsh-empty
+      variant="empty"
+      title="Aún no hay reportes para su rol"
+      description="Cuando se publique un reporte que usted pueda ver, aparecerá aquí."
+      data-testid="report-grid-empty"
+    >
+      <span empty-actions>Pida acceso a la persona que administra su organización.</span>
+    </app-empty-state>
+
+    @if (state().status === 'ready') {
+      <div class="rg__toolbar">
+        <app-search-field
+          class="rg__search"
+          label="Buscar reportes"
+          placeholder="Buscar por nombre, tema o responsable"
+          [(value)]="query"
+        />
+        <div class="rg__chips" role="group" aria-label="Filtrar por vertical">
+          <button
+            type="button"
+            class="rg__chip"
+            [attr.aria-pressed]="vertical() === 'all'"
+            data-testid="vertical-all"
+            (click)="pickVertical('all')"
+          >
+            Todos <span class="rg__count">{{ totalMatching() }}</span>
+          </button>
+          @for (chip of chips(); track chip.vertical) {
+            <button
+              type="button"
+              class="rg__chip"
+              [attr.aria-pressed]="vertical() === chip.vertical"
+              [attr.data-testid]="'vertical-' + chip.vertical"
+              (click)="pickVertical(chip.vertical)"
+            >
+              {{ verticalLabels[chip.vertical] }} <span class="rg__count">{{ chip.count }}</span>
+            </button>
+          }
+        </div>
+        @if (filtering()) {
+          <button app-button type="button" variant="ghost" size="sm" class="rg__clear" data-testid="grid-clear" (click)="clearFilters()">
+            Limpiar filtros
+          </button>
+        }
+      </div>
+
+      @if (favoriteReports().length > 0) {
+        <section class="rg__section" aria-labelledby="rg-fav">
+          <h2 class="rg__heading" id="rg-fav">Favoritos</h2>
+          <div class="rg__cards" data-testid="grid-favorites">
+            @for (report of favoriteReports(); track report.id) {
+              <app-report-card
+                [report]="report"
+                [favorite]="true"
+                (favoriteToggled)="toggleFavorite($event)"
+                (opened)="opened($event)"
+              />
+            }
+          </div>
+        </section>
+      }
+
+      @if (recentReports().length > 0) {
+        <section class="rg__section" aria-labelledby="rg-recent">
+          <h2 class="rg__heading" id="rg-recent">Recientes</h2>
+          <ul class="rg__recents" data-testid="grid-recents">
+            @for (report of recentReports(); track report.id) {
+              <li><a class="rg__recent" [routerLink]="report.ruta" (click)="opened(report)">{{ report.nombre }}</a></li>
+            }
+          </ul>
+        </section>
+      }
+
+      <section class="rg__section" aria-labelledby="rg-all">
+        <h2 class="rg__heading" id="rg-all">
+          Todos los reportes <span class="rg__total" data-testid="grid-total">({{ results().length }})</span>
+        </h2>
+        @if (results().length > 0) {
+          <div class="rg__cards" data-testid="grid-all">
+            @for (report of results(); track report.id) {
+              <app-report-card
+                [report]="report"
+                [favorite]="prefs.favorites().includes(report.id)"
+                (favoriteToggled)="toggleFavorite($event)"
+                (opened)="opened($event)"
+              />
+            }
+          </div>
+        } @else {
+          <div class="rg__none" role="status" data-testid="grid-no-results">
+            <p>Ningún reporte coincide con la búsqueda o la vertical elegida.</p>
+            <button app-button type="button" variant="outline" size="sm" (click)="clearFilters()">Limpiar filtros</button>
+          </div>
+        }
+      </section>
+    }
+  </app-view-state-host>
+</div>

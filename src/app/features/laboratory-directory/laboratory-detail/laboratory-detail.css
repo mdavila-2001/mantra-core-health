@@ -1,0 +1,14 @@
+/* Sin tope de ancho propio: lo pone `.app-main__inner` y nadie más
+   (`docs/components/composition-rules.md` §5). La tarjeta va centrada y a todo
+   el ancho del área de contenido. */
+.ficha-lab__card {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+/* El resumen del centro termina; las pestañas empiezan con su aire. */
+.ficha-lab__tabs {
+  display: block;
+  margin-block-start: var(--sp-5);
+}

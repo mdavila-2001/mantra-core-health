@@ -113,7 +113,10 @@
             </app-form-field>
           }
 
+          <!-- A lo ancho: entre el medicamento y la solicitud no tiene pareja, y a
+               media columna dejaba un hueco al lado (28/10/2026). -->
           <app-form-field
+            class="product-dialog__wide"
             label="Código interno (SKU)"
             [hint]="'Su propio código. Único en su catálogo, hasta ' + codeMaxLength + ' caracteres: letras, números, punto, guion o barra.'"
             [required]="true"
@@ -273,6 +276,15 @@
             />
           </app-form-field>
         }
+        @if (product(); as editing) {
+          <app-medication-link
+            class="product-dialog__wide"
+            [current]="editing.medication"
+            [requiresPrescription]="editing.requiresPrescription === true"
+            [locked]="isLinked() && editing.medication !== null"
+            (chosen)="medicationChoice.set($event)"
+          />
+        }
         <app-form-field
           label="Código de barras (GTIN)"
           hint="Opcional. Los 8, 12, 13 o 14 dígitos impresos bajo las barras."
@@ -349,14 +361,12 @@
             [maxSizeBytes]="imageMaxBytes"
             [multiple]="true"
             [maxFiles]="maxImages - imageIds().length"
-            [disabled]="uploading()"
+            [uploading]="uploading()"
+            uploadingLabel="Subiendo imagen…"
             [files]="[]"
             (filesChange)="addImages($event)"
             testId="product-image-input"
           />
-          @if (uploading()) {
-            <p class="product-dialog__note" role="status">Subiendo…</p>
-          }
         }
       </div>
     </app-tab>

@@ -1,0 +1,66 @@
+/* Sin tope de ancho propio: lo pone `.app-main__inner` y nadie más
+   (`docs/components/composition-rules.md` §5). */
+.verif__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.verif__esqueleto {
+  display: grid;
+  gap: var(--e3);
+}
+
+.verif__esqueleto span {
+  display: block;
+  block-size: var(--e8);
+  border-radius: var(--r-ctrl);
+  background: var(--filete-2);
+}
+
+/* ─── Solicitudes enviadas ──────────────────────────────────────────────── */
+
+/* The «ask another insurer» box: the tab's primary action, set apart. */
+.verif__pedir {
+  margin-block-end: var(--e5);
+  padding: var(--e4) var(--e5);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-card);
+  background: linear-gradient(135deg, var(--info-bg), var(--sup-tarjeta) 70%);
+}
+
+.verif__pedir-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0 0 var(--e1);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.verif__pedir-bajada {
+  margin: 0 0 var(--e3);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+.verif__nueva {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e3);
+}
+
+.verif__nueva-ayuda {
+  margin-block: var(--e2) 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.verif__nueva-campo {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}

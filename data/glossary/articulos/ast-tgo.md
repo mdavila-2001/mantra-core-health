@@ -1,5 +1,6 @@
 ---
 slug: ast-tgo
+image: ast-tgo.svg | Qué mide el análisis de AST y de dónde procede la enzima | Esquema de células del hígado dañadas que liberan la enzima AST a la sangre, con los pasos del análisis y los tejidos que pueden aportarla
 ---
 
 ## [definition] Introducción

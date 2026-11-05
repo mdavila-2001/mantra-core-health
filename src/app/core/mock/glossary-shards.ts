@@ -86,6 +86,11 @@ export interface ManifiestoDelGlosario {
   readonly translatedTotal?: number;
   /** Las cubetas del índice de búsqueda que existen (dos letras por palabra). */
   readonly searchBuckets?: readonly string[];
+  /**
+   * Resúmenes llanos que se repiten en varios términos: plantillas de su tipo,
+   * no la explicación de ninguno. Las pantallas no los muestran como definición.
+   */
+  readonly genericSummaries?: readonly string[];
   readonly categories: readonly CategoriaDelManifiesto[];
   readonly tags: readonly EtiquetaDelManifiesto[];
 }
@@ -97,6 +102,15 @@ export interface RelacionDeFila {
   readonly targetId: string;
   readonly targetName: string;
 }
+
+/** Una relación entrante, como la escribe `buildIncomingIndex`: el origen ya pintable. */
+export type RelacionEntrante = readonly [
+  sourceId: string,
+  type: string,
+  sourceSlug: string,
+  sourceName: string,
+  sourceCategoryKey: string,
+];
 
 /** Una fila de shard (esquema de `data/glossary/00_README.md` + `SCHEMA.md`). */
 export interface FilaDeGlosario {
@@ -186,6 +200,27 @@ function palabrasDe(texto: string): string[] {
   return normalizar(texto)
     .split(/[^\p{L}\p{N}]+/u)
     .filter((palabra) => palabra !== '');
+}
+
+/**
+ * Qué tan arriba va un término en los resultados de una búsqueda; menor es
+ * mejor. `texto` es el nombre, luego los sinónimos y el código, sin tildes.
+ *
+ * - 0: el nombre empieza exactamente con lo escrito («hipertension arterial»).
+ * - 1: el nombre empieza con la primera palabra buscada.
+ * - 2: lo escrito aparece más adelante, en el nombre, un sinónimo o el código.
+ *
+ * Dentro de cada grupo un nombre más corto va antes: «Diabetes» es más lo que
+ * se buscó que «Diabetes mellitus gestacional con complicaciones».
+ */
+function puntajeDeRelevancia(texto: string, palabras: readonly string[]): number {
+  const frase = palabras.join(' ');
+  const suyas = texto.split(' ');
+  const largo = Math.min(suyas.length, 99) / 100;
+  if (texto === frase || texto.startsWith(`${frase} `)) return 0 + largo;
+  const primera = palabras[0];
+  if (primera !== undefined && suyas[0]?.startsWith(primera) === true) return 1 + largo;
+  return 2 + largo;
 }
 
 /** El id de un value set del glosario: la misma fórmula que usaban los fixtures. */
@@ -291,6 +326,29 @@ export class AlmacenDeGlosario {
    * tarjeta no carga (secciones, presentaciones); la de la tarjeta conserva lo
    * que calculó el constructor (id, relaciones resueltas, etiquetas).
    */
+  /**
+   * Las relaciones que APUNTAN a este término (`mock/incoming/<hh>.json`).
+   *
+   * Una raíz generada antes de que existiera el índice no lo tiene: devuelve
+   * `[]` y el vecindario muestra sólo las salientes, en vez de fallar.
+   */
+  async entrantes(id: string): Promise<readonly RelacionEntrante[]> {
+    const cubeta = await this.archivoOVacio<Record<string, RelacionEntrante[]>>(
+      `mock/incoming/${id.slice(0, 2).toLowerCase()}.json`,
+      {},
+    );
+    return cubeta[id] ?? [];
+  }
+
+  /** La categoría de un término sin abrir su shard: la saca de `mock/ids`. */
+  async categoriaDe(id: string): Promise<string | null> {
+    const cubeta = await this.archivoOVacio<Record<string, RefDeFila>>(
+      `mock/ids/${id.slice(0, 2).toLowerCase()}.json`,
+      {},
+    );
+    return cubeta[id]?.[0] ?? null;
+  }
+
   async porId(id: string): Promise<FilaDeGlosario | null> {
     const cubeta = await this.archivoOVacio<Record<string, RefDeFila>>(
       `mock/ids/${id.slice(0, 2).toLowerCase()}.json`,
@@ -407,8 +465,20 @@ export class AlmacenDeGlosario {
           const suyas = texto.split(' ');
           return palabras.every((buscada) => suyas.some((suya) => suya.startsWith(buscada)));
         })
-        .map(([categoria, pagina, indice]) => [categoria, pagina, indice] as const);
-      return { lista };
+        .map((entrada) => ({
+          entrada,
+          puntaje: puntajeDeRelevancia(entrada[3], palabras),
+        }));
+      // Sin esto los resultados salían en orden alfabético del corpus: buscar
+      // «diabetes» traía primero cualquier nombre que *contuviera* la palabra
+      // en un sinónimo. `sort` es estable: a igual puntaje se conserva el orden
+      // castellano de la fuente.
+      lista.sort((a, b) => a.puntaje - b.puntaje);
+      return {
+        lista: lista.map(
+          ({ entrada: [categoria, pagina, indice] }) => [categoria, pagina, indice] as const,
+        ),
+      };
     }
 
     if (pedido.tagKey !== undefined) {

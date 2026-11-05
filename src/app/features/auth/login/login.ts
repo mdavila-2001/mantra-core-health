@@ -12,8 +12,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
+import { safeReturnUrl } from '../../../core/auth/return-url';
+import { MFA_ENROLLMENT_ROUTE } from '../../../core/auth/mfa-enrollment-route';
 import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
 import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
+import { entryDestination, PORTAL_ADMINISTRACION_ROUTE } from '../../reporting/reporting-access';
 import type { LoginCredentials } from '../../../core/data-access/iam/iam.types';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -22,17 +25,29 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { FormTracing } from '../../../core/observability/business/form-tracing';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { AccountIcon } from '../../../shared/components/atoms/account-icon/account-icon';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 import { localLoginHint, type LocalLoginHint } from './local-login-hint';
+import { loginPolicyOutcome } from './login-policy-reasons';
+import { markPageAsNoIndex } from '../../prescription-share/no-index';
+import { isShareTokenRoute } from '../../prescription-share/share-return-url';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
+/**
+ * El inicio de las cuentas de organización que tienen un panel propio: la
+ * farmacia y el centro de diagnóstico empiezan en su «Resumen», no en el
+ * panel general («Pacientes y equipo», «Directorios»).
+ */
+const INICIO_POR_TIPO: Readonly<Record<string, string>> = {
+  PHARMACY: '/administration/pharmacy',
+  DIAGNOSTIC_CENTER: '/administration/laboratory',
+};
 
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
@@ -69,11 +84,11 @@ const MY_ORGANIZATIONS_ROUTE = '/administration/medical-organization?tab=members
     Input,
     Link,
     FormField,
+    AccountIcon,
     NavIcon,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
-    PointerScene,
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',
@@ -136,6 +151,11 @@ export class Login {
 
   constructor() {
     afterNextRender(() => this.localHint.set(localLoginHint()));
+    // Desde «Soy farmacia» el `returnUrl` lleva el token de la receta: con la
+    // política general, cada petición de esta pantalla lo mandaría en su `Referer`.
+    if (isShareTokenRoute(this.retornoPedido())) {
+      markPageAsNoIndex();
+    }
   }
 
   /** Rellena el formulario con la cuenta local; no envía: entrar sigue siendo un clic. */
@@ -197,17 +217,59 @@ export class Login {
     void this.router.navigateByUrl(this.destinoDespuesDeEntrar());
   }
 
-  /** El destino que corresponde a esta sesión. */
+  /**
+   * El destino que corresponde a esta sesión.
+   *
+   * Si una política de la organización exige el segundo paso y la cuenta no lo
+   * tiene, la API **deja entrar** (`mfaEnrollmentRequired`): lo primero es darlo de
+   * alta, y la aplicación queda restringida hasta entonces. Al terminar se vuelve
+   * al destino que habría correspondido.
+   */
   private destinoDespuesDeEntrar(): string {
+    // Con el token de alcance limitado no hay organizaciones que mirar (el token no las trae): se vuelve al destino pedido o al
+    // inicio, y el destino real lo decide el token completo que se emite al confirmar el factor.
+    if (this.auth.mfaEnrollmentRequired()) {
+      return `${MFA_ENROLLMENT_ROUTE}?returnUrl=${encodeURIComponent(this.retornoPedido() ?? '/')}`;
+    }
+    return this.destinoNormal();
+  }
+
+  private destinoNormal(): string {
     if (this.auth.needsTenantSelection()) {
-      return TENANT_SELECTION_ROUTE;
+      // El enlace pedido viaja a la elección de organización y se usa después
+      // de elegir: la farmacia que escaneó una receta vuelve a ella.
+      const requested = this.retornoPedido();
+      return requested === null
+        ? TENANT_SELECTION_ROUTE
+        : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(requested)}`;
     }
     if (this.auth.tenants().length === 0) {
-      return rolesAlcanzan(['SUPERADMIN'], this.auth.roles())
-        ? GETTING_STARTED_ROUTE
-        : MY_ORGANIZATIONS_ROUTE;
+      if (rolesAlcanzan(['SUPERADMIN'], this.auth.roles())) {
+        return GETTING_STARTED_ROUTE;
+      }
+      // Alcance de plataforma sin ninguna organización: opera sin ella, entra al Centro de la plataforma.
+      return this.auth.hasPlatformScope() ? '/' : MY_ORGANIZATIONS_ROUTE;
     }
-    return this.retornoPedido() ?? HOME_ROUTE;
+    // Un enlace pedido a mano manda sobre la pantalla de elección: quien venía
+    // a una página concreta no tiene que elegir portal para llegar a ella.
+    const requested = this.retornoPedido();
+    if (requested !== null) {
+      return requested;
+    }
+    // El alcance de plataforma no pasa por la elección de organización (arriba, `needsTenantSelection`). Ver
+    // `entryDestination`: sin la maqueta de reportería todos entran a `/` (el Centro de la plataforma), salvo marketing puro.
+    // Quien entraría al panel general entra al inicio de su tipo de cuenta (ver `inicioDeLaCuenta`).
+    const entrada = entryDestination(this.auth.roles());
+    return entrada === PORTAL_ADMINISTRACION_ROUTE ? this.inicioDeLaCuenta() : entrada;
+  }
+
+  /**
+   * Dónde empieza el día cada cuenta. La farmacia y el laboratorio entraban
+   * al «Panel» general, que no les dice nada de su trabajo; su inicio es su
+   * «Resumen». Ver {@link INICIO_POR_TIPO}.
+   */
+  private inicioDeLaCuenta(): string {
+    return INICIO_POR_TIPO[this.auth.activeTenantType() ?? ''] ?? HOME_ROUTE;
   }
 
   /**
@@ -229,16 +291,13 @@ export class Login {
    * como host externo aunque parezca una ruta—. Tampoco se acepta `/\`, que
    * varios navegadores normalizan igual que `//`.
    *
-   * Se ignora cuando hay que elegir organización o cuando no hay ninguna: en
-   * los dos casos el destino no es negociable.
+   * Cuando hay que elegir organización pasa a esa pantalla, que lo usa después
+   * de la elección. Se ignora cuando no hay ninguna: ahí el destino no es
+   * negociable.
    */
   private retornoPedido(): string | null {
     const pedido = this.route.snapshot.queryParamMap.get('returnUrl');
-    if (pedido === null || pedido === '') {
-      return null;
-    }
-    const externo = !pedido.startsWith('/') || /^\/[/\\]/.test(pedido);
-    return externo ? null : pedido;
+    return safeReturnUrl(pedido);
   }
 
   /**
@@ -253,18 +312,13 @@ export class Login {
   private toState(error: unknown): ViewState<null> {
     if (error instanceof HttpErrorResponse) {
       const body = readApiError(error);
-      const reason = body?.details?.['reason'];
-      if (body?.code === 'UNAUTHENTICATED' && (reason === 'MFA_REQUIRED' || reason === 'MFA_INVALID')) {
-        this.mfaRequired.set(true);
-        return validation([
-          {
-            message:
-              reason === 'MFA_REQUIRED'
-                ? 'Ingrese el código de verificación de su aplicación de autenticación.'
-                : 'El código de verificación no es válido. Revíselo y vuelva a intentar.',
-            code: body.code,
-          },
-        ]);
+      // La política de sesión de la organización: pide el código o bloquea la
+      // entrada con una razón que se le explica a la persona. Ver
+      // `login-policy-reasons.ts`.
+      const politica = loginPolicyOutcome(body?.details?.['reason']);
+      if (body !== null && politica !== null) {
+        this.mfaRequired.set(politica.kind === 'ask-code');
+        return validation([{ message: politica.message, code: body.code }]);
       }
       if (body?.code === 'UNAUTHENTICATED') {
         return validation([{ message: 'Las credenciales no son válidas.', code: body.code }]);

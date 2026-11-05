@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { DialogService } from './dialog-service';
 import type { DialogConfig } from './dialog.types';
 import { CONFIRMAR_CAMBIOS, CONFIRMAR_DESCARTE } from './dialog.types';
+import { reemplazarAnimate } from '../../../../../testing/animate';
 
 const CONFIRMACION: DialogConfig = {
   title: 'Anular la orden',
@@ -106,22 +107,21 @@ describe('DialogService', () => {
     // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
     // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
     // Una salida que nunca termina deja a la vista si el gesto espera por ella.
-    let animarOriginal: typeof HTMLElement.prototype.animate;
+    let restaurarAnimate: () => void;
     let terminarSalida: () => void;
 
     beforeEach(() => {
-      animarOriginal = HTMLElement.prototype.animate;
       terminarSalida = () => undefined;
-      HTMLElement.prototype.animate = (() => ({
+      restaurarAnimate = reemplazarAnimate(() => ({
         finished: new Promise<void>((resolve) => {
           terminarSalida = resolve;
         }),
         cancel: () => undefined,
-      })) as unknown as typeof HTMLElement.prototype.animate;
+      }));
     });
 
     afterEach(() => {
-      HTMLElement.prototype.animate = animarOriginal;
+      restaurarAnimate();
     });
 
     it('Confirmar libera la página en el acto, sin esperar la salida del panel', async () => {

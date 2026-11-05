@@ -52,18 +52,39 @@
     display: none;
 }
 
+/* ---- acciones --------------------------------------------------------------
+   Una sola fila con una sola medida. Los botones del membrete miden lo mismo
+   —44 px, el área táctil— sea `sm` o `md`, venga la acción proyectada o de
+   `secondaryActions`: antes convivían 32, 40 y 44 en la misma fila y la fila
+   se leía desalineada. El organismo no alcanza a los botones proyectados con
+   su hoja (encapsulación), así que se lo pide por los ganchos del átomo
+   (`--btn-*`, ver `atoms/button/button.css`).
+
+   Base móvil: debajo del título, desde la izquierda, y cada botón crece para
+   repartirse la fila. Un botón que cae solo a la segunda línea ocupa esa línea
+   entera en vez de quedar huérfano con un hueco al lado. */
 .page-header__actions {
+    --btn-min-block: 44px;
+    --btn-font-size: var(--fs-body);
+    --btn-flex: 1 1 auto;
+
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: var(--sp-2);
+    gap: var(--sp-2) var(--sp-3);
+}
+
+/* Sin acciones no queda un hueco con su `gap` al lado del título. */
+.page-header__actions:empty {
+    display: none;
 }
 
 .page-header__secondary {
     display: flex;
+    flex: 1 1 auto;
     align-items: center;
     flex-wrap: wrap;
-    gap: var(--sp-2);
+    gap: var(--sp-2) var(--sp-3);
 }
 
 /* Base móvil: con más de dos secundarias, los botones ceden su lugar al menú.
@@ -77,12 +98,41 @@
     display: block;
 }
 
-/* ≥ tablet: entran los botones y el menú deja de hacer falta. */
+/* ≥ tablet (`--bp-md`): el título a la izquierda y las acciones a la derecha,
+   en UNA fila, centradas en alto con el bloque del título. Entran los botones
+   y el menú deja de hacer falta.
+
+   El título pide 20rem y crece; las acciones toman su ancho natural y no se
+   encogen. Antes las dos columnas encogían a la par y la de acciones, que no
+   tenía piso, se partía en una pila de botones —lo que se veía en
+   Notificaciones con un subtítulo largo—. Si en una caja angosta las acciones
+   no entran al lado del título, la fila se parte y bajan enteras, alineadas
+   al borde derecho. */
 @media (min-width: 780px) {
     .page-header__row {
         flex-direction: row;
-        align-items: flex-start;
+        flex-wrap: wrap;
+        align-items: center;
         justify-content: space-between;
+        column-gap: var(--sp-6);
+    }
+
+    .page-header__heading {
+        flex: 1 1 20rem;
+        min-width: 0;
+    }
+
+    .page-header__actions {
+        --btn-flex: 0 0 auto;
+
+        flex: 0 1 auto;
+        justify-content: flex-end;
+        margin-inline-start: auto;
+    }
+
+    .page-header__secondary {
+        flex: 0 1 auto;
+        justify-content: flex-end;
     }
 
     .page-header__secondary--collapsible {

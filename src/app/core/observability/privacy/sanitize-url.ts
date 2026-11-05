@@ -45,12 +45,12 @@ export function sanitizeUrl(url: string): string {
   const [withoutQuery = ''] = withoutFragment.split('?');
 
   if (!withoutQuery.includes('://')) {
-    return withoutQuery === '' ? '/' : withoutQuery;
+    return withoutQuery === '' ? '/' : redactShareTokens(withoutQuery);
   }
 
   try {
     // `usuario:contraseña@` no sobrevive: `pathname` no lo incluye.
-    return new URL(withoutQuery).pathname;
+    return redactShareTokens(new URL(withoutQuery).pathname);
   } catch {
     // Una URL que no se puede analizar no se adivina: se descarta entera. Un
     // recorte a mano de algo con forma desconocida es cómo se filtra un token.
@@ -114,3 +114,33 @@ export function apiRouteTemplate(url: string): string {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Los segmentos detrás de los cuales la **ruta** lleva una credencial: el
+ * token del enlace de una receta compartida (FAR-01), que abre la receta a
+ * una farmacia con sesión.
+ *
+ * - API: `/public/prescription-shares/<token>`,
+ *   `/clinical/prescription-shares/by-token/<token>` y
+ *   `/pharmacy/prescription-shares/<token>`;
+ * - front: `/rx/<token>` y `/administration/pharmacy-orders/rx/<token>`.
+ *
+ * Es una búsqueda con lookbehind y no por segmentos para que la misma regla
+ * sirva en una ruta y en un texto libre que la cita (el `message` de un
+ * `HttpErrorResponse`: «Http failure response for /public/prescription-shares/…»).
+ */
+const SHARE_TOKEN = /(?<=\/(?:prescription-shares|by-token|rx)\/)[\w-]+/gi;
+
+/**
+ * Reemplaza por `:token` el segmento que sigue a `prescription-shares`,
+ * `by-token` o `rx`, en una ruta o en un texto que contiene una.
+ *
+ * Quedan como están el literal `by-token` y un uuid: el uuid no es el token
+ * (que es base64url de 43 caracteres) sino un id —el `shareId` de revocar, la
+ * receta de `/verify/rx/:id`— y sigue el camino de siempre.
+ */
+export function redactShareTokens(text: string): string {
+  return text.replace(SHARE_TOKEN, (segment) =>
+    segment.toLowerCase() === 'by-token' || UUID.test(segment) ? segment : ':token',
+  );
+}

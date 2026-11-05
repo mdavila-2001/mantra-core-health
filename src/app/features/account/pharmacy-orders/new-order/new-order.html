@@ -207,6 +207,9 @@
                       Recetado: hasta {{ renglon.cantidadRecetada }}
                     } @else if (sinReceta) {
                       Hasta {{ renglon.cantidadRecetada }} unidades por producto
+                    } @else if (renglon.linea.cantidadDeclarada) {
+                      Recetado: {{ renglon.linea.cantidadDeclarada }} · se pide de a
+                      {{ renglon.cantidadRecetada }} envase y la farmacia confirma cuántos corresponden
                     } @else {
                       Hasta {{ renglon.cantidadRecetada }}: la receta no declara cantidades
                     }

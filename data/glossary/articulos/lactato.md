@@ -1,5 +1,6 @@
 ---
 slug: lactato
+image: lactato.svg | De dónde procede el lactato y qué indica | Célula en la que la glucosa pasa a piruvato y, sin oxígeno, a lactato que sale a la sangre, con los pasos del análisis y las situaciones en que se eleva
 ---
 
 ## [definition] Introducción

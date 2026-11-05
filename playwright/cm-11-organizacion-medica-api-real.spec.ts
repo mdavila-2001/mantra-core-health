@@ -407,7 +407,7 @@ async function paginasDelEstablecimiento(page: Page): Promise<void> {
 }
 
 /**
- * Del número del SEDES a los cinco PDF, que van en una sola página («Documentación legal obligatoria»).
+ * Del número del SEDES a los cinco PDF, que van en una sola página («Documentación legal (PDF)»).
  * Deja el asistente en «Dónde está la casa central».
  */
 async function paginaDocumentos(page: Page): Promise<void> {

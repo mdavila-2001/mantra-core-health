@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Signos vitales y dónde se miden</title>
+  <desc id="d">Silueta humana en el centro unida a cinco recuadros: temperatura con termómetro, pulso, frecuencia respiratoria, presión arterial con tensiómetro y saturación de oxígeno con pulsioxímetro en el dedo. Un recuadro añade el dolor y el nivel de conciencia.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Los signos vitales</text>
+<circle cx="400" cy="100.9" r="20.9" fill="var(--skin)" stroke="var(--line)"/>
+<path d="M388.6 119.9 L352.5 133.2 C343.0 137.0 341.1 146.5 340.1 156.0 L331.6 241.5 L344.9 243.4 L356.3 167.4 L358.2 232.0 L356.3 365.0 L386.7 365.0 L396.2 251.0 L403.8 251.0 L413.3 365.0 L443.7 365.0 L441.8 232.0 L443.7 167.4 L455.1 243.4 L468.4 241.5 L459.9 156.0 C458.9 146.5 457.0 137.0 447.5 133.2 L411.4 119.9 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round"/>
+<rect x="40" y="80" width="200" height="80" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+<text x="54" y="110" class="h" style="fill:var(--warn)">Temperatura</text>
+<text x="54" y="134" class="small" style="fill:var(--muted)">Termómetro</text>
+<line x1="240" y1="120" x2="392" y2="100" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="392" cy="100" r="5" fill="var(--warn)"/>
+<rect x="40" y="210" width="200" height="80" rx="10" fill="var(--bad-l)" stroke="var(--vessel)"/>
+<text x="54" y="240" class="h" style="fill:var(--vessel)">Pulso</text>
+<text x="54" y="264" class="small" style="fill:var(--muted)">Frecuencia cardíaca</text>
+<line x1="240" y1="250" x2="342" y2="236" stroke="var(--vessel)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="342" cy="236" r="5" fill="var(--vessel)"/>
+<rect x="40" y="340" width="200" height="80" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+<text x="54" y="370" class="h" style="fill:var(--accent)">Respiración</text>
+<text x="54" y="394" class="small" style="fill:var(--muted)">Frecuencia respiratoria</text>
+<line x1="240" y1="380" x2="392" y2="170" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="392" cy="170" r="5" fill="var(--accent)"/>
+<rect x="560" y="80" width="200" height="80" rx="10" fill="var(--purple-l)" stroke="var(--purple)"/>
+<text x="574" y="110" class="h" style="fill:var(--purple)">Presión arterial</text>
+<text x="574" y="134" class="small" style="fill:var(--muted)">Tensiómetro</text>
+<line x1="560" y1="120" x2="452" y2="150" stroke="var(--purple)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="452" cy="150" r="5" fill="var(--purple)"/>
+<rect x="560" y="210" width="200" height="80" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+<text x="574" y="240" class="h" style="fill:var(--ok)">Oxigenación</text>
+<text x="574" y="264" class="small" style="fill:var(--muted)">Pulsioxímetro en el dedo</text>
+<line x1="560" y1="250" x2="464" y2="244" stroke="var(--ok)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="464" cy="244" r="5" fill="var(--ok)"/>
+<rect x="560" y="340" width="200" height="80" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+<text x="574" y="366" class="lab">A veces se suman</text>
+<text x="574" y="386" class="lab">el dolor y el nivel</text>
+<text x="574" y="404" class="lab">de conciencia.</text>
+<text x="400" y="410" text-anchor="middle" class="small" style="fill:var(--muted)">Se interpretan según la edad y la situación</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

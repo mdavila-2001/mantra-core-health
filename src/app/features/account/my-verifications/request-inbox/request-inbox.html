@@ -1,0 +1,131 @@
+<div class="verif__chat">
+  <!-- La bandeja: una fila por solicitud, como la lista de un chat. -->
+  <ul class="verif__bandeja" aria-label="Solicitudes enviadas" data-testid="verif-bandeja">
+    @for (hilo of threads(); track hilo.id) {
+      <li>
+        <button
+          type="button"
+          class="verif__conversacion"
+          [class.is-abierta]="abierto()?.id === hilo.id"
+          [attr.aria-current]="abierto()?.id === hilo.id ? 'true' : null"
+          [attr.data-testid]="'verif-hilo-' + hilo.id"
+          (click)="abrir(hilo.id)"
+        >
+          <span class="verif__avatar" aria-hidden="true">
+            <app-nav-icon [name]="hilo.kind === 'insurer' ? 'heart' : 'building'" />
+          </span>
+          <span class="verif__conversacion-texto">
+            <span class="verif__conversacion-cabeza">
+              <span class="verif__contraparte">{{ hilo.counterpart }}</span>
+              <time class="verif__hora" [attr.datetime]="hilo.lastAt.toISOString()">{{
+                hilo.lastAt | date: 'dd/MM'
+              }}</time>
+            </span>
+            <span class="verif__vista-previa">{{ hilo.preview }}</span>
+            <span class="verif__estado verif__estado--{{ hilo.state }}">
+              {{ hilo.kind === 'insurer' ? 'Aseguradora' : 'Institución' }} ·
+              {{ hilo.stateLabel }}
+            </span>
+          </span>
+        </button>
+      </li>
+    }
+  </ul>
+
+  <!-- El hilo abierto: lo que pidió y lo que le respondieron. -->
+  @if (abierto(); as hilo) {
+    <section
+      #hiloAbierto
+      tabindex="-1"
+      class="verif__hilo"
+      [attr.aria-label]="'Conversación con ' + hilo.counterpart"
+      data-testid="verif-hilo-abierto"
+    >
+      <header class="verif__hilo-cabeza">
+        <span class="verif__avatar" aria-hidden="true">
+          <app-nav-icon [name]="hilo.kind === 'insurer' ? 'heart' : 'building'" />
+        </span>
+        <div>
+          <h2 class="verif__hilo-titulo">{{ hilo.counterpart }}</h2>
+          <p class="verif__hilo-sub">
+            {{ hilo.kind === 'insurer' ? 'Aseguradora' : 'Institución' }} ·
+            {{ hilo.stateLabel }}
+          </p>
+        </div>
+      </header>
+
+      <ol class="verif__mensajes" aria-label="Mensajes">
+        @for (m of hilo.messages; track $index) {
+          <li
+            class="verif__burbuja verif__burbuja--{{ m.speaker }}"
+            [attr.data-testid]="'verif-mensaje-' + m.speaker"
+          >
+            <span class="sr-only">{{
+              m.speaker === 'me'
+                ? 'Usted: '
+                : m.speaker === 'them'
+                  ? hilo.counterpart + ': '
+                  : 'AloVida: '
+            }}</span>
+            @if (m.seal === 'approved') {
+              <app-status-seal variant="approved" label="Sello oficial" />
+            } @else if (m.seal === 'rejected') {
+              <app-status-seal variant="rejected" label="Rechazado" />
+            }
+            <p class="verif__burbuja-texto">{{ m.text }}</p>
+            @if (m.at !== null || m.ticks) {
+              <span class="verif__meta">
+                @if (m.at !== null) {
+                  <time [attr.datetime]="m.at.toISOString()">{{
+                    m.at | date: 'dd/MM/yyyy HH:mm'
+                  }}</time>
+                }
+                @if (m.ticks === 'answered') {
+                  <span class="verif__ticks is-leido" aria-hidden="true">✓✓</span>
+                  <span class="sr-only">Respondida</span>
+                } @else if (m.ticks === 'sent') {
+                  <span class="verif__ticks" aria-hidden="true">✓</span>
+                  <span class="sr-only">Enviada</span>
+                }
+              </span>
+            }
+          </li>
+        }
+      </ol>
+
+      <footer class="verif__hilo-acciones">
+        @if (hilo.canWithdraw) {
+          <button
+            app-button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="verif-retirar"
+            [disabled]="busy()"
+            (clicked)="withdraw.emit(hilo)"
+          >
+            Retirar la solicitud
+          </button>
+        }
+        @if (hilo.canRequestAgain) {
+          <button
+            app-button
+            type="button"
+            variant="secondary"
+            size="sm"
+            data-testid="verif-volver-a-pedir"
+            [disabled]="busy()"
+            (clicked)="requestAgain.emit(hilo)"
+          >
+            Volver a pedir
+          </button>
+        }
+        @if (hilo.kind === 'institution') {
+          <a app-button variant="ghost" size="sm" routerLink="/my-account">
+            Ver en mi trayectoria
+          </a>
+        }
+      </footer>
+    </section>
+  }
+</div>

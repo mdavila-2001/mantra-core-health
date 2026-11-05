@@ -5,8 +5,13 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { CarePlanBlock } from '../patient-chart/care-plan-block/care-plan-block';
+import { DiagnosisBlock } from '../patient-chart/diagnosis-block/diagnosis-block';
+import { PresuntivoForm } from '../patient-chart/diagnosis-block/presuntivo-form/presuntivo-form';
 import { FormResponsePicker } from '../patient-chart/form-response-picker/form-response-picker';
+import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { ReferralBlock } from '../patient-chart/referral-block/referral-block';
 import { Consultation } from './consultation';
 import { CONSULTATION_FORBIDDEN_MESSAGE } from './consultation-forbidden';
 
@@ -15,9 +20,10 @@ import { CONSULTATION_FORBIDDEN_MESSAGE } from './consultation-forbidden';
  *
  * Lo que fijan estas pruebas:
  *
- * 1. **Están las ocho posibilidades** —sin Medición ni Internación,
- *    retiradas el 25/09/2026, ni Nota médica ni Documento, que absorbió el
- *    formulario médico el 26/09/2026—, en orden y con cantidades leídas.
+ * 1. **Están las nueve posibilidades** —sin Medición, retirada el 25/09/2026,
+ *    ni Nota médica ni Documento, que absorbió el formulario médico el
+ *    26/09/2026; con Internación, que volvió el 04/11/2026 junto a Derivar—,
+ *    en orden y con cantidades leídas.
  *    Órdenes, reconsulta y Pagos no agregan lecturas para ofrecer una cifra.
  * 2. **Cada casilla abre su formulario en modal**, y uno solo a la vez.
  * 3. **El check-in manda lo que el contrato pide y nada más.** Un motivo en
@@ -62,6 +68,8 @@ const CLAVES = [
   // «Derivar» entró el 24/10/2026 por pedido del propietario: recomendar a otro
   // profesional, con aviso a la persona. Va junto a la reconsulta.
   'derivacion',
+  // «Internación» vuelve el 04/11/2026 (propietario), al lado de «Derivar».
+  'internacion',
   'pagos',
 ];
 const TITULOS = [
@@ -72,6 +80,7 @@ const TITULOS = [
   'Plan de cuidados',
   'Reconsulta',
   'Derivar',
+  'Internación',
   'Pagos',
 ];
 
@@ -150,7 +159,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las ocho posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las nueve posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas =
@@ -169,11 +178,25 @@ describe('Consultation', () => {
     // expediente, y un número pedido acá podría discrepar del que muestra el
     // propio bloque al abrirse.
     expect(casillas.find((c) => c.clave === 'pagos')?.cantidad).toBeNull();
+    // Internación cuenta los episodios del resumen ya leído.
+    expect(casillas.find((c) => c.clave === 'internacion')?.cantidad).toBe(0);
 
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(8);
+    expect(botones).toHaveLength(9);
+  });
+
+  it('«Internación» abre el bloque de internación, con la persona de la ficha', async () => {
+    await responderLectura();
+
+    (componente as unknown as { abrir(clave: string): void }).abrir('internacion');
+    harness.detectChanges();
+
+    expect(interno<() => string>('tituloDelModal')()).toBe('Internar a la persona');
+    expect(harness.routeNativeElement!.querySelector('app-admission-block')).not.toBeNull();
+    // Whatever the block asks for is answered empty: this test is about the tile.
+    http.match(() => true).forEach((req) => req.flush([]));
   });
 
   it('«Derivar» abre su bloque en el modal, con el encabezado y la bajada propios', async () => {
@@ -185,7 +208,13 @@ describe('Consultation', () => {
     expect(interno<() => string>('tituloDelModal')()).toBe(
       'Derivar a otro profesional u organización',
     );
-    expect(interno<() => string>('descripcionDelModal')()).toContain('Le avisamos en su campana');
+    // La API no dice si el aviso salió (cuenta de portal, destino activo): la
+    // bajada no lo promete.
+    expect(interno<() => string>('descripcionDelModal')()).toContain(
+      'La derivación queda registrada en su historia',
+    );
+    // Neutral: no contradice al éxito de un destino externo, que no recibe aviso.
+    expect(interno<() => string>('descripcionDelModal')()).not.toContain('aviso');
     expect(interno<() => string>('descripcionDelModal')()).toContain('organización médica');
     expect(harness.routeNativeElement!.querySelector('app-referral-block')).not.toBeNull();
     // El bloque recibe la misma lectura que cuenta la casilla.
@@ -291,8 +320,12 @@ describe('Consultation', () => {
     ).not.toContain('alergias');
   });
 
-  /** El plan de cuidados se vincula a la respuesta del formulario médico. */
-  it('el plan de cuidados exige la respuesta del formulario médico, y viene cargada', async () => {
+  /**
+   * Cambio de requisito (30/10/2026, pedido del cliente): el médico puede
+   * emitir sin haber llenado el formulario médico. La respuesta se **ofrece**,
+   * viene cargada y se puede desvincular, pero ya no se exige.
+   */
+  it('el plan de cuidados ofrece la respuesta del formulario médico, sin exigirla, y viene cargada', async () => {
     await responderLectura({
       encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }],
     });
@@ -301,7 +334,8 @@ describe('Consultation', () => {
 
     const plan = harness.fixture.debugElement.query(By.directive(CarePlanBlock))
       .componentInstance as CarePlanBlock;
-    expect(plan.exigeRespuesta()).toBe(true);
+    expect(plan.exigeRespuesta()).toBe(false);
+    expect(plan.ofreceRespuesta()).toBe(true);
 
     const pedido = http.expectOne(
       (r) =>
@@ -326,13 +360,14 @@ describe('Consultation', () => {
 
     const picker = harness.fixture.debugElement.query(By.directive(FormResponsePicker))
       .componentInstance as FormResponsePicker;
-    // Una sola respuesta: elegida sola, y el selector no se puede tocar.
+    // Una sola respuesta: elegida sola. El selector queda habilitado porque ya
+    // no es obligatorio: «Sin formulario médico» es una opción real.
     expect(picker.seleccionada()).toBe('inst-1');
     const selector = harness.routeNativeElement!.querySelector(
       '[data-testid="respuesta-del-formulario"]',
     );
     expect(selector).not.toBeNull();
-    expect(selector!.querySelector('[disabled], [aria-disabled="true"]')).not.toBeNull();
+    expect(selector!.querySelector('[disabled], [aria-disabled="true"]')).toBeNull();
   });
 
   it('destruye el modal al cerrar y permite reabrir la misma casilla de inmediato', async () => {
@@ -355,6 +390,100 @@ describe('Consultation', () => {
     expect(reopened).not.toBe(previous);
     expect(reopened.open).toBe(true);
     expect(harness.routeNativeElement!.querySelectorAll('dialog')).toHaveLength(1);
+  });
+
+  /**
+   * El modal de una casilla no tiraba en silencio lo escrito sólo si nadie lo escribía: no
+   * tenía guarda de borrador (el expediente sí). Con el alta de un presuntivo, que carga
+   * filas de motivos, `Escape` o la X perdían todo sin preguntar.
+   */
+  describe('cerrar una casilla con algo escrito', () => {
+    /**
+     * Devuelve el alta del presuntivo, que es quien guarda lo escrito (`hallazgos`,
+     * `registrado`): el `DiagnosisBlock` sólo reenvía su `DraftBlock`.
+     */
+    async function abrirDiagnostico(): Promise<PresuntivoForm> {
+      await responderLectura();
+      interno<(clave: string) => void>('abrir').call(componente, 'diagnosticos');
+      await harness.fixture.whenStable();
+      // Lo que el bloque lee al montarse: su tabla y los catálogos del selector.
+      http
+        .match((r) => r.url === '/clinical/patients/p-1/summary')
+        .forEach((r) =>
+          r.flush({ patientProfileId: 'p-1', conditions: [], allergies: [], medicationRequests: [], observations: [], encounters: [], careEpisodes: [], limit: 50, truncated: [] }),
+        );
+      http
+        .match((r) => r.url === '/system-context/dynamic-enums')
+        .forEach((r) =>
+          r.flush({ code: 'x', name: 'x', definitionId: 'd', valueSetId: 'v', allowCustomValue: false, options: [] }),
+        );
+      http
+        .match((r) => r.url === '/terminology/concepts')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 200 }));
+      await harness.fixture.whenStable();
+      expect(harness.fixture.debugElement.query(By.directive(DiagnosisBlock))).not.toBeNull();
+      return harness.fixture.debugElement.query(By.directive(PresuntivoForm))
+        .componentInstance as PresuntivoForm;
+    }
+
+    it('sin nada escrito se cierra sin preguntar', async () => {
+      await abrirDiagnostico();
+
+      expect(interno<() => boolean>('casillaSinCambios')()).toBe(true);
+    });
+
+    it('con algo escrito no se cierra solo: pregunta, y si se confirma descarta', async () => {
+      const bloque = await abrirDiagnostico();
+      (bloque as unknown as { hallazgos: { set(v: string): void } }).hallazgos.set('Cuadro febril');
+      harness.fixture.detectChanges();
+      expect(interno<() => boolean>('casillaSinCambios')()).toBe(false);
+
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(true);
+      await interno<() => Promise<void>>('pedirDescarteDeLaCasilla').call(componente);
+
+      expect(confirmar).toHaveBeenCalledOnce();
+      expect(confirmar.mock.calls[0]?.[0].message).toContain('Todavía no se registró');
+    });
+
+    it('si el diagnóstico ya quedó registrado el aviso no miente y, al descartar, relee la consulta', async () => {
+      const bloque = await abrirDiagnostico();
+      (bloque as unknown as { registrado: { set(v: unknown): void } }).registrado.set({
+        id: 'c-9',
+        patientProfileId: 'p-1',
+        clinicalStatus: null,
+        verificationStatus: null,
+        clinicalCourse: null,
+        createdAt: new Date(),
+      });
+      harness.fixture.detectChanges();
+
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(true);
+      await interno<() => Promise<void>>('pedirDescarteDeLaCasilla').call(componente);
+
+      const mensaje = confirmar.mock.calls[0]?.[0].message ?? '';
+      expect(mensaje).toContain('ya quedó registrado');
+      expect(mensaje).not.toContain('Todavía no se registró');
+      // El servidor ya tiene el diagnóstico: la consulta vuelve a leer sus dos lecturas.
+      expect(
+        http.match((r) => r.url === '/clinical/patients/p-1/summary').length,
+      ).toBeGreaterThanOrEqual(1);
+      http.match(() => true);
+    });
+
+    it('si se elige «Seguir escribiendo» no se cierra ni se relee', async () => {
+      const bloque = await abrirDiagnostico();
+      (bloque as unknown as { hallazgos: { set(v: string): void } }).hallazgos.set('Cuadro febril');
+      vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+
+      await interno<() => Promise<void>>('pedirDescarteDeLaCasilla').call(componente);
+
+      expect(interno<() => string | null>('casillaAbierta')()).toBe('diagnosticos');
+      http.expectNone((r) => r.url === '/clinical/patients/p-1/summary');
+    });
   });
 
   it('distingue la reserva de reconsulta de la cita clínica del check-in', async () => {
@@ -576,6 +705,122 @@ describe('Consultation', () => {
     );
     expect(seccion?.innerHTML ?? '').not.toMatch(
       /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    );
+  });
+
+  /* ---- Derivar: casilla, cierre con el envío en vuelo y salida al encuentro */
+
+  interface TileUnderTest {
+    clave: string;
+    cantidad: number | null;
+    rotuloDeCantidad: string;
+    lecturaDeCantidad: string | null;
+  }
+  const referralTile = (): TileUnderTest =>
+    interno<() => readonly TileUnderTest[]>('casillas')().find((c) => c.clave === 'derivacion')!;
+
+  it('la casilla «Derivar» nombra lo que cuenta: derivaciones, no «en la historia»', async () => {
+    await responderLectura({}, {}, [], [REFERRAL, { ...REFERRAL, id: 'ref-2' }]);
+    harness.detectChanges();
+    expect(referralTile().rotuloDeCantidad).toBe('derivaciones');
+    expect(
+      interno<() => readonly TileUnderTest[]>('casillas')().find((c) => c.clave === 'diagnosticos')
+        ?.rotuloDeCantidad,
+    ).toBe('en la historia');
+    expect(
+      harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-derivacion"]')?.textContent,
+    ).toMatch(/2\s+derivaciones/);
+  });
+
+  it('la casilla «Derivar» distingue «leyendo» de «no se pudo leer»', async () => {
+    // Antes de responder: se está leyendo.
+    expect(referralTile().lecturaDeCantidad).toBe('loading');
+    http
+      .expectOne((r) => r.url === '/referrals')
+      .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
+    await flushChartReadsOnly();
+    harness.detectChanges();
+    expect(referralTile().lecturaDeCantidad).toBe('failed');
+    const uncounted = harness.routeNativeElement!.querySelector(
+      '[data-testid="consulta-casilla-derivacion-uncounted"]',
+    );
+    expect(uncounted).not.toBeNull();
+    // Con tono de aviso, no el gris de «Contando…».
+    expect(uncounted?.classList.contains('consulta__casilla-cantidad--fallida')).toBe(true);
+  });
+
+  it('las migas no repiten «Consulta» mientras no se conoce el nombre (NG0955)', () => {
+    // Antes de leer el perfil, `nombre()` es '' y el título vale «Consulta».
+    const labels = interno<() => readonly { label: string }[]>('breadcrumbs')().map((b) => b.label);
+    expect(labels.length).toBeGreaterThan(1);
+    expect(new Set(labels).size).toBe(labels.length);
+    expect(labels.at(-1)).toBe('Consulta');
+  });
+
+  it('si la relectura falla con cifra, la casilla dice «al menos N» con tono de aviso', async () => {
+    await responderLectura({}, {}, [], [REFERRAL]);
+    interno<{ reload(): void }>('referrals').reload();
+    http
+      .expectOne((r) => r.url === '/referrals')
+      .flush({ code: 'INTERNAL', message: 'x', correlationId: 'r' }, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+    expect(referralTile().lecturaDeCantidad).toBe('stale');
+    const stalePill = harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-derivacion-stale"]');
+    expect(stalePill?.textContent).toMatch(/al menos\s+1\s+derivación/);
+    expect(stalePill?.classList.contains('consulta__casilla-cantidad--fallida')).toBe(true);
+  });
+
+  it('cerrar el modal con la derivación en vuelo igual relee la lista y la cifra', async () => {
+    await responderLectura({ encounters: [ENCUENTRO_ABIERTO] }, {}, [], []);
+    (componente as unknown as { abrir(clave: string): void }).abrir('derivacion');
+    harness.detectChanges();
+    const block = harness.fixture.debugElement.query(By.directive(ReferralBlock))
+      .componentInstance as unknown as Record<string, unknown>;
+    const call = <T>(name: string) => (block[name] as (...a: unknown[]) => T).bind(block);
+
+    call('search')('lu');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({
+      items: [{ kind: 'PRACTITIONER', id: 'hp-1', displayName: 'Dra. Lucía', tenantId: 't', subtitle: null }],
+    });
+    call('choose')((call<readonly ReferenceOption[]>('targetOptions'))()[0]);
+    http.expectOne((r) => r.url === '/referrals/target-services').flush({
+      items: [{ id: 's-1', code: 'S', name: 'Servicio', description: null, price: 100, currency: 'BOB', tenantId: 't', practiceName: null }],
+    });
+    (block['selectedService'] as { set(v: string): void }).set('s-1');
+    (block['referralType'] as { set(v: string): void }).set('CONSULTATION');
+    call('submit')();
+    const post = http.expectOne((r) => r.url === '/referrals' && r.method === 'POST');
+
+    // El médico cierra el modal antes de que vuelva la respuesta.
+    interno<() => void>('cerrarCasilla').call(componente);
+    expect(harness.routeNativeElement!.querySelector('app-referral-block')).toBeNull();
+
+    post.flush({ id: 'ref-9', patientProfileId: 'p-1', statusConceptId: 'st', createdAt: '2026-10-31T10:00:00Z' });
+    http.expectOne((r) => r.url === '/referrals' && r.method === 'GET').flush([REFERRAL]);
+    expect(referralTile().cantidad).toBe(1);
+  });
+
+  it('sin encuentro, «Ir a abrir el encuentro» cierra el modal y deja el foco en el encuentro', async () => {
+    await responderLectura();
+    (componente as unknown as { abrir(clave: string): void }).abrir('derivacion');
+    harness.detectChanges();
+    http
+      .match((r) => r.url === '/terminology/concepts')
+      .forEach((req) => req.flush({ items: [], count: 0, limit: 200 }));
+    harness.detectChanges();
+
+    const ir = harness.routeNativeElement!.querySelector<HTMLElement>('[data-testid="referral-open-encounter"]');
+    expect(ir).not.toBeNull();
+    ir!.click();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    expect(interno<() => string | null>('casillaAbierta')()).toBeNull();
+    // En esta prueba no hay organización activa: «Abrir encuentro» no se puede
+    // usar y la sección dice qué falta, así que el foco va a la sección. Con
+    // organización, va al botón (`enfocarAperturaDelEncuentro`).
+    expect(document.activeElement).toBe(
+      harness.routeNativeElement!.querySelector('[data-testid="consulta-encuentro"]'),
     );
   });
 });

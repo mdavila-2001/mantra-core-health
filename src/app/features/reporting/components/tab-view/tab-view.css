@@ -1,0 +1,26 @@
+/* El ancho útil depende del menú lateral y del panel del asistente, no de la ventana:
+   por eso las columnas se deciden por el ancho del propio contenedor. */
+:host { display: block; min-width: 0; container-type: inline-size; }
+
+.tv { display: flex; flex-direction: column; gap: var(--sp-6); min-width: 0; }
+.tv__section { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.tv__heading { margin: 0; font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; color: var(--text-primary); }
+.tv__lead { margin: calc(var(--sp-1) * -1) 0 0; font-size: var(--fs-body); color: var(--text-secondary); max-width: 70ch; }
+
+.tv__kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); gap: var(--sp-3); }
+
+.tv__charts { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+.tv__notice-title { margin: 0 0 var(--sp-1); font-weight: 600; }
+.tv__notices { list-style: disc; margin: 0; padding-inline-start: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-1); }
+.tv__cell { min-width: 0; }
+
+@container (min-width: 60rem) {
+  .tv__charts { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: dense; }
+  .tv__cell--full { grid-column: 1 / -1; }
+}
+
+.tv__more { margin-top: var(--sp-3); }
+.tv__more > summary { cursor: pointer; width: fit-content; padding: var(--sp-2) var(--sp-3); border: 1px solid var(--border-strong); border-radius: var(--r-full); font-size: var(--fs-caption); font-weight: 600; color: var(--text-secondary); list-style-position: inside; }
+.tv__more > summary:hover { background: var(--bg-surface-alt); }
+.tv__more > summary:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+.tv__more[open] > summary { margin-bottom: var(--sp-3); }

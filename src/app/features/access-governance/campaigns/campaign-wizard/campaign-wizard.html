@@ -1,0 +1,468 @@
+<app-page-header
+  title="Nueva campaña de certificación"
+  subtitle="Elija qué accesos revisar, vea de antemano cuántos son y quién los revisa, y fije los plazos. Nada se crea hasta el último paso."
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-campaign-wizard">
+  <app-view-state-host [state]="catalogo()" (retry)="cargarCatalogo()" (refresh)="cargarCatalogo()">
+    @if (catalogo().status === 'ready' || catalogo().status === 'stale') {
+      <app-stepper [steps]="pasosVisibles()" label="Pasos para crear la campaña" />
+      <p class="paso" aria-live="polite" data-testid="asistente-paso">
+        Paso {{ paso() }} de 4: {{ tituloDelPaso() }}
+      </p>
+
+      @switch (paso()) {
+        @case (1) {
+          <section class="seccion" aria-labelledby="t-paso-1">
+            <h2 class="seccion__titulo" id="t-paso-1" tabindex="-1">Qué revisar</h2>
+
+            <app-form-field
+              label="Nombre de la campaña"
+              [required]="true"
+              [errorMessage]="mensaje('name')"
+              hint="Por ejemplo: Certificación Q4-2026. De 3 a 120 caracteres."
+            >
+              <app-input
+                [value]="form().name"
+                (valueChange)="cambiar({ name: '' + ($event ?? '') })"
+                [hasError]="mensaje('name') !== ''"
+                testId="campana-nombre"
+                ariaLabel="Nombre de la campaña"
+              />
+            </app-form-field>
+            @if (mensaje('name'); as m) {
+              <p class="error" role="alert" data-testid="campana-error-name">{{ m }}</p>
+            }
+
+            <app-form-field label="Tipo de campaña" [description]="descripcionDelTipo()">
+              <app-select
+                [options]="opcionesDeTipo"
+                [value]="form().kind"
+                (valueChange)="cambiarTipo($event)"
+                ariaLabel="Tipo de campaña"
+                data-testid="campana-tipo"
+              />
+            </app-form-field>
+
+            <app-form-field label="Alcance" description="Qué accesos entran en la campaña.">
+              <app-select
+                [options]="opcionesDeAlcance"
+                [value]="form().scopeKind"
+                (valueChange)="cambiarAlcance($event)"
+                ariaLabel="Alcance de la campaña"
+                data-testid="campana-alcance"
+              />
+            </app-form-field>
+
+            @switch (form().scopeKind) {
+              @case ('PRACTITIONER') {
+                <fieldset
+                  class="lista"
+                  [attr.aria-describedby]="mensaje('scope') ? 'e-alcance' : null"
+                >
+                  <legend>Elija uno o más doctores</legend>
+                  @for (
+                    d of catalogo().status === 'ready' ? $any(catalogo()).data.doctors : [];
+                    track d.id
+                  ) {
+                    <app-checkbox
+                      [checked]="marcado(form().doctorIds, d.id)"
+                      (checkedChange)="alternar('doctorIds', d.id, $event)"
+                      [label]="d.name + ' · ' + d.specialty"
+                      [attr.data-testid]="'alcance-doctor-' + d.id"
+                    />
+                  }
+                </fieldset>
+              }
+              @case ('SERVICE') {
+                <fieldset
+                  class="lista"
+                  [attr.aria-describedby]="mensaje('scope') ? 'e-alcance' : null"
+                >
+                  <legend>Elija uno o más servicios</legend>
+                  @for (
+                    s of catalogo().status === 'ready' ? $any(catalogo()).data.services : [];
+                    track s.id
+                  ) {
+                    <app-checkbox
+                      [checked]="marcado(form().serviceIds, s.id)"
+                      (checkedChange)="alternar('serviceIds', s.id, $event)"
+                      [label]="s.name"
+                      [attr.data-testid]="'alcance-servicio-' + s.id"
+                    />
+                  }
+                </fieldset>
+              }
+              @case ('LOCATION') {
+                <fieldset
+                  class="lista"
+                  [attr.aria-describedby]="mensaje('scope') ? 'e-alcance' : null"
+                >
+                  <legend>Elija una o más ubicaciones</legend>
+                  @for (
+                    l of catalogo().status === 'ready' ? $any(catalogo()).data.locations : [];
+                    track l.id
+                  ) {
+                    <app-checkbox
+                      [checked]="marcado(form().locationIds, l.id)"
+                      (checkedChange)="alternar('locationIds', l.id, $event)"
+                      [label]="l.name"
+                      [attr.data-testid]="'alcance-ubicacion-' + l.id"
+                    />
+                  }
+                </fieldset>
+              }
+              @case ('TEMPLATE') {
+                <fieldset
+                  class="lista"
+                  [attr.aria-describedby]="mensaje('scope') ? 'e-alcance' : null"
+                >
+                  <legend>Elija uno o más roles</legend>
+                  @for (r of roles; track r.code) {
+                    <app-checkbox
+                      [checked]="marcado(form().templateCodes, r.code)"
+                      (checkedChange)="alternar('templateCodes', r.code, $event)"
+                      [label]="r.label"
+                      [attr.data-testid]="'alcance-rol-' + r.code"
+                    />
+                  }
+                </fieldset>
+              }
+            }
+            @if (mensaje('scope'); as m) {
+              <p class="error" id="e-alcance" role="alert" data-testid="campana-error-scope">
+                {{ m }}
+              </p>
+            }
+          </section>
+        }
+
+        @case (2) {
+          <section class="seccion" aria-labelledby="t-paso-2">
+            <h2 class="seccion__titulo" id="t-paso-2" tabindex="-1">Filtros y vista previa</h2>
+            <p class="texto">
+              Los filtros son opcionales y se combinan. Cada cambio vuelve a calcular la vista
+              previa.
+            </p>
+
+            <div class="filtros">
+              <app-form-field label="Riesgo mínimo" hint="Deja fuera lo de menor riesgo.">
+                <app-select
+                  [options]="opcionesDeSensibilidad"
+                  [value]="form().minSensitivity"
+                  (valueChange)="cambiarSensibilidad($event)"
+                  ariaLabel="Riesgo mínimo de los accesos"
+                  data-testid="filtro-sensibilidad"
+                />
+              </app-form-field>
+              <app-form-field
+                label="Sin uso en los últimos (días)"
+                [errorMessage]="mensaje('unusedDays')"
+                hint="Déjelo vacío para no filtrar por uso."
+              >
+                <app-input
+                  type="number"
+                  [value]="form().unusedDays"
+                  (valueChange)="cambiarSinUso($event)"
+                  [hasError]="mensaje('unusedDays') !== ''"
+                  testId="filtro-sin-uso"
+                  ariaLabel="Días sin uso"
+                />
+              </app-form-field>
+            </div>
+            <div class="interruptores">
+              <app-switch
+                [checked]="form().onlyAboveCeiling"
+                (checkedChange)="alternarFiltro('onlyAboveCeiling', $event)"
+                label="Solo lo que pasa el techo de su rol"
+                data-testid="filtro-techo"
+              />
+              <app-switch
+                [checked]="form().onlySodFindings"
+                (checkedChange)="alternarFiltro('onlySodFindings', $event)"
+                label="Solo personas con conflictos de funciones"
+                data-testid="filtro-sod"
+              />
+              <app-switch
+                [checked]="form().includeSuspended"
+                (checkedChange)="alternarFiltro('includeSuspended', $event)"
+                label="Incluir personas suspendidas"
+                data-testid="filtro-suspendidos"
+              />
+            </div>
+
+            <section
+              class="previa"
+              aria-labelledby="t-previa"
+              aria-live="polite"
+              data-testid="vista-previa"
+            >
+              <h3 class="previa__titulo" id="t-previa">
+                Vista previa: qué se revisaría y quién lo revisa
+              </h3>
+              <app-view-state-host
+                [state]="vistaPrevia()"
+                (retry)="pedirVistaPrevia(0)"
+                (refresh)="pedirVistaPrevia(0)"
+              >
+                @if (previa(); as p) {
+                  <p class="previa__total" data-testid="vista-previa-total">
+                    {{ p.total === 1 ? '1 acceso por revisar' : p.total + ' accesos por revisar' }}
+                  </p>
+                  <ul class="revisores" data-testid="vista-previa-revisores">
+                    @for (r of revisores(); track r.kind) {
+                      <li>
+                        {{ r.texto }}: <strong>{{ r.n }}</strong>
+                      </li>
+                    }
+                  </ul>
+                  @if (sinRevisor() > 0) {
+                    <app-alert tone="warning" data-testid="vista-previa-sin-revisor">
+                      {{
+                        sinRevisor() === 1
+                          ? '1 acceso no tiene quien lo revise'
+                          : sinRevisor() + ' accesos no tienen quien los revise'
+                      }}: nadie elegible puede decidirlos sin ser parte del conflicto. Quedarán a
+                      cargo de la administración de seguridad.
+                    </app-alert>
+                  }
+                  <app-data-table
+                    caption="Accesos que entrarían en la campaña"
+                    [state]="filas()"
+                    [columns]="columnas()"
+                    [trackBy]="rowId"
+                    [rowLabel]="rowLabel"
+                    data-testid="vista-previa-lista"
+                  />
+                  @if (recortada() > 0) {
+                    <p class="texto">Se muestran los primeros 50; faltan {{ recortada() }} más.</p>
+                  }
+                }
+              </app-view-state-host>
+            </section>
+          </section>
+        }
+
+        @case (3) {
+          <section class="seccion" aria-labelledby="t-paso-3">
+            <h2 class="seccion__titulo" id="t-paso-3" tabindex="-1">
+              Plazos y qué pasa con lo no certificado
+            </h2>
+
+            <app-form-field
+              label="Fecha límite"
+              [required]="true"
+              [errorMessage]="mensaje('dueDate')"
+              hint="Hasta el final de ese día pueden decidir los revisores."
+            >
+              <app-input
+                type="date"
+                [value]="form().dueDate"
+                (valueChange)="cambiar({ dueDate: '' + ($event ?? '') })"
+                [hasError]="mensaje('dueDate') !== ''"
+                testId="campana-fecha"
+                ariaLabel="Fecha límite"
+              />
+            </app-form-field>
+            @if (mensaje('dueDate'); as m) {
+              <p class="error" role="alert" data-testid="campana-error-dueDate">{{ m }}</p>
+            }
+
+            <div class="filtros">
+              <app-form-field
+                label="Días de gracia"
+                [errorMessage]="mensaje('graceDays')"
+                hint="Tiempo extra después de la fecha límite (0 a 30)."
+              >
+                <app-input
+                  type="number"
+                  [value]="form().graceDays"
+                  (valueChange)="cambiarNumero('graceDays', $event)"
+                  [hasError]="mensaje('graceDays') !== ''"
+                  testId="campana-gracia"
+                  ariaLabel="Días de gracia"
+                />
+              </app-form-field>
+              <app-form-field
+                label="Escalar a los (días)"
+                [errorMessage]="mensaje('escalateAfterDays')"
+                hint="Días después del vencimiento para avisar a otra persona (1 a 30)."
+              >
+                <app-input
+                  type="number"
+                  [value]="form().escalateAfterDays"
+                  (valueChange)="cambiarNumero('escalateAfterDays', $event)"
+                  [hasError]="mensaje('escalateAfterDays') !== ''"
+                  testId="campana-escalar"
+                  ariaLabel="Días para escalar"
+                />
+              </app-form-field>
+            </div>
+
+            <fieldset class="lista">
+              <legend>Recordatorios antes de la fecha límite</legend>
+              @for (d of recordatoriosPosibles; track d) {
+                <app-checkbox
+                  [checked]="form().reminderDays.includes(d)"
+                  (checkedChange)="alternarRecordatorio(d, $event)"
+                  [label]="d === 1 ? '1 día antes' : d + ' días antes'"
+                  [attr.data-testid]="'recordatorio-' + d"
+                />
+              }
+            </fieldset>
+
+            <app-form-field
+              label="Lo que nadie certifique a tiempo"
+              description="Qué pasa con los accesos sin decisión al cerrar la campaña."
+            >
+              <app-radio-group
+                [value]="form().uncertifiedAction"
+                (valueChange)="cambiarAccion($event)"
+              >
+                @if (permiteRevocar()) {
+                  <app-radio
+                    value="UNCERTIFIED_REVOKE"
+                    label="Se quita automáticamente (recomendado)"
+                    data-testid="campana-accion-revocar"
+                  />
+                }
+                <app-radio
+                  value="UNCERTIFIED_ESCALATE"
+                  label="No cambia: se escala y la campaña se cierra a mano"
+                  data-testid="campana-accion-escalar"
+                />
+              </app-radio-group>
+            </app-form-field>
+            @if (mensaje('uncertifiedAction'); as m) {
+              <p class="error" role="alert" data-testid="campana-error-uncertifiedAction">{{ m }}</p>
+            }
+            @if (!permiteRevocar() && !sinPermisoParaQuitar()) {
+              <p class="texto" data-testid="campana-solo-escala">
+                Las campañas de cambio de rol solo escalan: nunca se quita un acceso sin que alguien
+                lo vea.
+              </p>
+            }
+          </section>
+        }
+
+        @case (4) {
+          <section class="seccion" aria-labelledby="t-paso-4">
+            <h2 class="seccion__titulo" id="t-paso-4" tabindex="-1">Revisar y lanzar</h2>
+            <p class="texto">
+              Revise el resumen. «Crear y lanzar» genera los accesos para revisar y avisa a cada
+              revisor; «Crear como borrador» solo guarda la campaña.
+            </p>
+            <dl class="resumen">
+              <div>
+                <dt>Nombre</dt>
+                <dd data-testid="resumen-nombre">{{ resumen().nombre }}</dd>
+              </div>
+              <div>
+                <dt>Tipo</dt>
+                <dd data-testid="resumen-tipo">{{ resumen().tipo }}</dd>
+              </div>
+              <div>
+                <dt>Alcance</dt>
+                <dd data-testid="resumen-alcance">{{ resumen().alcance }}</dd>
+              </div>
+              <div>
+                <dt>Filtros</dt>
+                <dd data-testid="resumen-filtros">{{ resumen().filtros }}</dd>
+              </div>
+              <div>
+                <dt>Qué se revisa</dt>
+                <dd data-testid="resumen-items">{{ resumen().items }}</dd>
+              </div>
+              <div>
+                <dt>Fecha límite</dt>
+                <dd data-testid="resumen-fecha">{{ resumen().fecha }}</dd>
+              </div>
+              <div>
+                <dt>Plazos</dt>
+                <dd data-testid="resumen-plazos">{{ resumen().plazos }}</dd>
+              </div>
+              <div>
+                <dt>Lo no certificado</dt>
+                <dd data-testid="resumen-no-certificado">{{ resumen().noCertificado }}</dd>
+              </div>
+            </dl>
+          </section>
+        }
+      }
+
+      <div class="avisos" aria-live="polite">
+        @if (error(); as e) {
+          <app-alert tone="error" role="alert" data-testid="campana-error">
+            {{ e }}
+            @if (borradorCreado(); as id) {
+              <a [routerLink]="[lista, id]" data-testid="campana-abrir-borrador"
+                >Abrir el borrador</a
+              >
+            }
+          </app-alert>
+        }
+      </div>
+
+      <div class="pie">
+        <a class="pie__cancelar" [routerLink]="lista">Cancelar</a>
+        @if (paso() > 1) {
+          <button
+            app-button
+            variant="outline"
+            type="button"
+            [disabled]="trabajando()"
+            (clicked)="atras()"
+            data-testid="asistente-atras"
+          >
+            Atrás
+          </button>
+        }
+        @if (paso() < 4) {
+          <button
+            app-button
+            type="button"
+            [disabled]="paso() === 2 && !puedeSeguirDelPaso2()"
+            (clicked)="siguiente()"
+            data-testid="asistente-siguiente"
+          >
+            Siguiente
+          </button>
+        } @else {
+          <button
+            app-button
+            variant="outline"
+            type="button"
+            [disabled]="trabajando()"
+            (clicked)="crear(false)"
+            data-testid="campana-crear-borrador"
+          >
+            Crear como borrador
+          </button>
+          <button
+            app-button
+            type="button"
+            [isLoading]="trabajando()"
+            [disabled]="trabajando()"
+            (clicked)="crear(true)"
+            data-testid="campana-crear-lanzar"
+          >
+            Crear y lanzar
+          </button>
+        }
+      </div>
+    }
+  </app-view-state-host>
+</app-card>
+
+<ng-template #personaCell let-fila>
+  <span class="persona">{{ fila.persona }}</span>
+  @if (fila.item.suggestRevoke) {
+    <app-badge variant="warning">Se sugiere quitar</app-badge>
+  }
+</ng-template>
+
+<ng-template #revisorCell let-fila>{{ revisorTexto(fila) }}</ng-template>
+
+<ng-template #riesgoCell let-fila>
+  <app-badge [variant]="riesgoTono(fila)">{{ riesgoTexto(fila) }}</app-badge>
+</ng-template>

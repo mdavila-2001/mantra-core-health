@@ -333,7 +333,7 @@ describe('DayView', () => {
     // El cupo tomado sin cita encima es justo lo que deja una lectura de citas
     // fallida: la médica atiende y tiene un paciente que la pantalla no ve.
     montar([{ ...cupo(9), remainingCapacity: 0 }]);
-    fixture.componentRef.setInput('incompleteLoad', true);
+    fixture.componentRef.setInput('dayState', 'error');
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
@@ -345,7 +345,7 @@ describe('DayView', () => {
 
   it('con la lectura caída y sin cupos tampoco dice «No atiende este día»', () => {
     montar([]);
-    fixture.componentRef.setInput('incompleteLoad', true);
+    fixture.componentRef.setInput('dayState', 'error');
     fixture.detectChanges();
 
     const texto: string = fixture.nativeElement.textContent;
@@ -364,6 +364,67 @@ describe('DayView', () => {
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dia-horario-flexible"]'),
     ).not.toBeNull();
+  });
+
+  it('loading with no slots or bookings says it is loading: no "No atiende", no create button', () => {
+    montar([]);
+    fixture.componentRef.setInput('horarioFlexible', '09:00 a 13:00');
+    fixture.componentRef.setInput('dayState', 'loading');
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('Cargando los horarios de este día…');
+    expect(texto).not.toContain('No atiende este día');
+    expect(texto).not.toContain('Horario flexible');
+    // The header always has an «Agregar»: look at the empty-day button instead.
+    expect(texto).not.toContain('Agregar una cita o un rato ocupado');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dia-cargando"]'),
+    ).not.toBeNull();
+  });
+
+  it('ready with nothing still says «No atiende este día»', () => {
+    montar([]);
+    fixture.componentRef.setInput('dayState', 'ready');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('No atiende este día');
+    expect(fixture.nativeElement.textContent).not.toContain('Cargando los horarios');
+  });
+
+  it('loading with slots already drawn (same-day reload) draws them and shows no loading row', () => {
+    montar([cupo(9), cupo(10)]);
+    fixture.componentRef.setInput('dayState', 'loading');
+    fixture.detectChanges();
+
+    expect(bloques().length).toBeGreaterThan(0);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dia-cargando"]'),
+    ).toBeNull();
+  });
+
+  it('loading with only a busy stretch shows a loading row above the line, and the stretch below', () => {
+    montar(
+      [],
+      [],
+      [
+        {
+          id: 'exc-1',
+          desde: new Date(2026, 7, 25, 13, 0),
+          hasta: new Date(2026, 7, 25, 14, 0),
+          motivo: 'x',
+        },
+      ],
+    );
+    fixture.componentRef.setInput('dayState', 'loading');
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-day-loading-note')).not.toBeNull();
+    expect(host.querySelector('[data-testid="dia-cargando"]')?.getAttribute('tabindex')).toBe('-1');
+    expect(tipos()).toContain('ocupado');
+    expect(host.textContent).toContain('Cargando los horarios de este día…');
+    expect(host.textContent).not.toContain('No atiende este día');
   });
 
   it('un día sin nada lo dice con palabras, y deja crear', () => {
@@ -686,6 +747,89 @@ describe('DayView', () => {
       await fixture.whenStable();
 
       expect((document.activeElement as HTMLElement).getAttribute('data-linea')).toBe('s26-13-30');
+    });
+    it('←/→ while the next day loads keeps the focus on the loading row, then moves it to the slots', async () => {
+      montar([cupo(9), cupo(14)]);
+      controles()[2].focus();
+      tecla('ArrowRight');
+
+      // What the agenda does: the next day arrives loading, with no slots yet.
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 26));
+      fixture.componentRef.setInput('cupos', []);
+      fixture.componentRef.setInput('dayState', 'loading');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect((document.activeElement as HTMLElement).getAttribute('data-testid')).toBe('dia-cargando');
+
+      // The slots arrive: the focus is still pending and lands on the nearest one.
+      fixture.componentRef.setInput('cupos', [
+        {
+          ...cupo(13, 30, 's26-13-30'),
+          startAt: new Date(2026, 7, 26, 13, 30),
+          endAt: new Date(2026, 7, 26, 14, 0),
+        },
+      ]);
+      fixture.componentRef.setInput('dayState', 'ready');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect((document.activeElement as HTMLElement).getAttribute('data-linea')).toBe('s26-13-30');
+    });
+
+    it('←/→ with a load slower than the focus wait still lands on the slots', async () => {
+      montar([cupo(9), cupo(14)]);
+      controles()[2].focus();
+      tecla('ArrowRight');
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 26));
+      fixture.componentRef.setInput('cupos', []);
+      fixture.componentRef.setInput('dayState', 'loading');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // The API takes longer than the 5 s wait: the wait must not run out while loading.
+      const later = Date.now() + 6000;
+      const now = vi.spyOn(Date, 'now').mockReturnValue(later);
+      fixture.componentRef.setInput('cupos', [
+        {
+          ...cupo(13, 30, 's26-13-30'),
+          startAt: new Date(2026, 7, 26, 13, 30),
+          endAt: new Date(2026, 7, 26, 14, 0),
+        },
+      ]);
+      fixture.componentRef.setInput('dayState', 'ready');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      now.mockRestore();
+      expect((document.activeElement as HTMLElement).getAttribute('data-linea')).toBe('s26-13-30');
+    });
+
+    it('opening another day while one loads drops the wait: coming back later does not steal the focus', async () => {
+      montar([cupo(9), cupo(14)]);
+      controles()[2].focus();
+      tecla('ArrowRight');
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 26));
+      fixture.componentRef.setInput('cupos', []);
+      fixture.componentRef.setInput('dayState', 'loading');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // "Ayer" is clicked before the day arrives: the pending wait belongs to a day no longer open.
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 25));
+      fixture.componentRef.setInput('dayState', 'ready');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Later the person comes back to that day: the old wait must not move the focus.
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 26));
+      fixture.componentRef.setInput('cupos', [
+        {
+          ...cupo(13, 30, 's26-13-30'),
+          startAt: new Date(2026, 7, 26, 13, 30),
+          endAt: new Date(2026, 7, 26, 14, 0),
+        },
+      ]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect((document.activeElement as HTMLElement).getAttribute('data-linea')).not.toBe('s26-13-30');
     });
   });
 

@@ -13,6 +13,8 @@ export const TEST_ID = 'medical-center-signup';
 
 /** Lo que las páginas necesitan saber del momento: catálogos y papeles según el tipo societario. */
 export interface PaginasDeAlta {
+  /** Se llama al salir de la razón social: la pantalla pregunta si ya existe. */
+  readonly alSalirNombre?: (valor: string) => void;
   readonly tiposDeOrganizacion: readonly SelectOption<string>[];
   readonly tiposSocietarios: readonly SelectOption<string>[];
   /** Los cinco papeles de la empresa, con los que el tipo societario omite marcados «(opcional)». */
@@ -55,6 +57,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
         },
         {
           key: 'legalName',
+          alSalir: ctx.alSalirNombre,
           label: 'Razón social',
           control: 'text' as const,
           required: true,
@@ -160,7 +163,9 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       ],
     },
     {
-      titulo: 'Documentación legal obligatoria (PDF)',
+      // Sin «obligatoria»: según el tipo societario, la escritura y la
+      // matrícula pueden ser opcionales (decisión del propietario, 30/10/2026).
+      titulo: 'Documentación legal (PDF)',
       clave: 'documentos-legales',
       icon: 'folder' as const,
       hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',

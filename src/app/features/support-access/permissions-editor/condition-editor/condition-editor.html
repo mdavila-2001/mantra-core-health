@@ -1,0 +1,462 @@
+<div class="cond" data-testid="condition-editor">
+  <p class="cond__resumen" role="status" data-testid="cond-total">
+    @if (total() === 0) {
+      Sin condiciones: el permiso rige siempre que se cumplan los demás requisitos.
+    } @else {
+      {{ total() }} {{ total() === 1 ? 'condición activa' : 'condiciones activas' }}.
+    }
+  </p>
+  @for (issue of loose(); track issue.path + issue.code) {
+    <p class="cond__issue" role="alert">{{ issue.message }}</p>
+  }
+
+  @for (section of sections(); track section) {
+    <section
+      class="sec"
+      [attr.data-testid]="'cond-section-' + section"
+      [attr.data-invalid]="isInvalid(section) ? 'true' : null"
+    >
+      <h4 class="sec__cabeza">
+        <button
+          type="button"
+          class="sec__boton"
+          [attr.aria-expanded]="isOpen(section)"
+          [attr.data-testid]="'cond-toggle-' + section"
+          (click)="toggle(section)"
+        >
+          <span>{{ title(section) }}</span>
+          <span aria-hidden="true">{{ isOpen(section) ? '▾' : '▸' }}</span>
+        </button>
+      </h4>
+      @if (issuesOf(section).length > 0) {
+        <ul class="sec__issues" role="alert" [attr.data-testid]="'cond-issues-' + section">
+          @for (issue of issuesOf(section); track issue.path + issue.code) {
+            <li [class.sec__issue--aviso]="issue.severity === 'warning'">
+              <strong>{{ issue.severity === 'error' ? 'Corrija: ' : 'Aviso: ' }}</strong
+              >{{ issue.message }}
+            </li>
+          }
+        </ul>
+      }
+
+      @if (isOpen(section)) {
+        <div class="sec__cuerpo">
+          @switch (section) {
+            @case ('when') {
+              @for (w of windows(); track $index; let i = $index) {
+                <div class="frase" [attr.data-testid]="'cond-time-' + i">
+                  <span>Solo de</span>
+                  <app-select
+                    [options]="dayPresets"
+                    [value]="daysPreset(w, i)"
+                    (valueChange)="setDaysPreset(i, $event)"
+                    ariaLabel="Días de la franja"
+                    [attr.data-testid]="'cond-time-days-' + i"
+                  />
+                  <span>de</span>
+                  <app-input
+                    type="time"
+                    [value]="w.from"
+                    (valueChange)="setTime(i, 'from', $event)"
+                    ariaLabel="Hora de inicio"
+                    [step]="300"
+                    testId="cond-time-from-{{ i }}"
+                  />
+                  <span>a</span>
+                  <app-input
+                    type="time"
+                    [value]="w.to"
+                    (valueChange)="setTime(i, 'to', $event)"
+                    ariaLabel="Hora de fin"
+                    [step]="300"
+                    testId="cond-time-to-{{ i }}"
+                  />
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    (clicked)="removeWindow(i)"
+                    [attr.aria-label]="'Quitar la franja ' + (i + 1)"
+                    [attr.data-testid]="'cond-time-remove-' + i"
+                  >
+                    Quitar
+                  </button>
+                </div>
+                @if (daysPreset(w, i) === 'custom') {
+                  <div class="dias" role="group" [attr.aria-label]="'Días de la franja ' + (i + 1)">
+                    @for (d of weekdays; track d.day) {
+                      <app-checkbox
+                        [label]="d.name"
+                        [checked]="w.days.includes(d.day)"
+                        (checkedChange)="toggleDay(i, d.day, $event)"
+                        [attr.data-testid]="'cond-time-day-' + i + '-' + d.day"
+                      />
+                    }
+                  </div>
+                }
+              }
+              <div class="sec__acciones">
+                <button
+                  app-button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="windows().length >= 14"
+                  (clicked)="addWindow()"
+                  data-testid="cond-time-add"
+                >
+                  {{ windows().length === 0 ? 'Poner un horario' : 'Agregar otra franja' }}
+                </button>
+              </div>
+              <p class="sec__ayuda">
+                Las horas son de la zona horaria de su organización. Fuera de las franjas el permiso
+                no rige.
+              </p>
+            }
+
+            @case ('limits') {
+              @for (m of metrics; track m.metric) {
+                <div class="bloque">
+                  <app-switch
+                    [checked]="limit(m.metric) !== undefined"
+                    (checkedChange)="toggleLimit(m.metric, $event)"
+                    [label]="
+                      m.metric === 'ACTIONS'
+                        ? 'Limitar cuántas veces puede hacerlo'
+                        : 'Limitar a cuántos pacientes distintos'
+                    "
+                    [attr.data-testid]="'cond-limit-' + m.metric"
+                  />
+                  @if (limit(m.metric); as l) {
+                    <div class="frase">
+                      <span>{{ m.lead }}</span>
+                      <app-input
+                        type="number"
+                        [value]="l.max"
+                        (valueChange)="setLimitMax(m.metric, $event)"
+                        ariaLabel="Tope"
+                        testId="cond-limit-max-{{ m.metric }}"
+                      />
+                      <span>{{ m.noun }} por</span>
+                      <app-select
+                        [options]="per"
+                        [value]="l.per"
+                        (valueChange)="patchLimit(m.metric, { per: $any($event) })"
+                        ariaLabel="Período del límite"
+                        [attr.data-testid]="'cond-limit-per-' + m.metric"
+                      />
+                      <span>; si se pasa:</span>
+                      <app-select
+                        [options]="onExceed"
+                        [value]="exceedOf(l.onExceed)"
+                        (valueChange)="patchLimit(m.metric, { onExceed: $any($event) })"
+                        ariaLabel="Qué pasa si se pasa del límite"
+                        [attr.data-testid]="'cond-limit-exceed-' + m.metric"
+                      />
+                    </div>
+                  }
+                </div>
+              }
+            }
+
+            @case ('patients') {
+              <div class="frase">
+                <span>Solo pacientes</span>
+                <app-select
+                  [options]="patientScopes"
+                  [value]="str(['patients', 'scope']) ?? 'ANY'"
+                  (valueChange)="setPatientScope($event)"
+                  ariaLabel="Alcance de pacientes"
+                  data-testid="cond-patients-scope"
+                />
+              </div>
+              @if (str(['patients', 'scope']) === 'WITH_APPOINTMENT_WINDOW') {
+                <div class="frase">
+                  <span>con cita desde hace</span>
+                  <app-input
+                    type="number"
+                    [value]="numberAt(['patients', 'appointmentWindow', 'daysBefore'])"
+                    (valueChange)="
+                      setNumber(['patients', 'appointmentWindow', 'daysBefore'], $event, 0)
+                    "
+                    ariaLabel="Días hacia atrás"
+                    testId="cond-patients-before"
+                  />
+                  <span>días hasta dentro de</span>
+                  <app-input
+                    type="number"
+                    [value]="numberAt(['patients', 'appointmentWindow', 'daysAfter'])"
+                    (valueChange)="
+                      setNumber(['patients', 'appointmentWindow', 'daysAfter'], $event, 0)
+                    "
+                    ariaLabel="Días hacia adelante"
+                    testId="cond-patients-after"
+                  />
+                  <span>días.</span>
+                </div>
+              }
+              <div class="frase">
+                <span>Solo</span>
+                <app-select
+                  [options]="coverage"
+                  [value]="str(['patients', 'coverage', 'mode']) ?? 'ANY'"
+                  (valueChange)="
+                    set(
+                      ['patients', 'coverage'],
+                      $event === 'ANY' || $event === null ? undefined : { mode: $event }
+                    )
+                  "
+                  ariaLabel="Seguro del paciente"
+                  data-testid="cond-patients-coverage"
+                />
+              </div>
+              <fieldset class="grupo">
+                <legend>No con</legend>
+                <app-checkbox
+                  label="Menores de edad"
+                  [checked]="isTrue(['patients', 'exclude', 'minors'])"
+                  (checkedChange)="
+                    set(['patients', 'exclude', 'minors'], $event ? true : undefined)
+                  "
+                  data-testid="cond-exclude-minors"
+                />
+                @for (f of flags; track f.value) {
+                  <app-checkbox
+                    [label]="'Pacientes reservados: ' + f.label"
+                    [checked]="hasFlag(f.value)"
+                    (checkedChange)="toggleFlag(f.value, $event)"
+                    [attr.data-testid]="'cond-exclude-flag-' + f.value"
+                  />
+                }
+              </fieldset>
+            }
+
+            @case ('appointment') {
+              @if (!deny()) {
+                <div class="bloque">
+                  <app-switch
+                    [checked]="has(['appointment', 'window'])"
+                    (checkedChange)="
+                      set(
+                        ['appointment', 'window'],
+                        $event ? { daysBefore: 1, daysAfter: 14 } : undefined
+                      )
+                    "
+                    label="Solo citas de ciertas fechas"
+                    data-testid="cond-appt-window"
+                  />
+                  @if (has(['appointment', 'window'])) {
+                    <div class="frase">
+                      <span>Citas desde hace</span>
+                      <app-input
+                        type="number"
+                        [value]="numberAt(['appointment', 'window', 'daysBefore'])"
+                        (valueChange)="
+                          setNumber(['appointment', 'window', 'daysBefore'], $event, 0)
+                        "
+                        ariaLabel="Días hacia atrás"
+                        testId="cond-appt-before"
+                      />
+                      <span>días hasta dentro de</span>
+                      <app-input
+                        type="number"
+                        [value]="numberAt(['appointment', 'window', 'daysAfter'])"
+                        (valueChange)="setNumber(['appointment', 'window', 'daysAfter'], $event, 0)"
+                        ariaLabel="Días hacia adelante"
+                        testId="cond-appt-after"
+                      />
+                      <span>días.</span>
+                    </div>
+                  }
+                </div>
+              }
+              <div class="bloque">
+                <app-switch
+                  [checked]="has(['appointment', 'leadTime'])"
+                  (checkedChange)="
+                    set(
+                      ['appointment', 'leadTime'],
+                      $event ? { minHours: 24, onViolation: 'REQUIRE_APPROVAL' } : undefined
+                    )
+                  "
+                  label="Cancelar o reprogramar solo con anticipación"
+                  data-testid="cond-lead"
+                />
+                @if (has(['appointment', 'leadTime'])) {
+                  <div class="frase">
+                    <span>Con al menos</span>
+                    <app-input
+                      type="number"
+                      [value]="numberAt(['appointment', 'leadTime', 'minHours'])"
+                      (valueChange)="setNumber(['appointment', 'leadTime', 'minHours'], $event)"
+                      ariaLabel="Horas de anticipación"
+                      testId="cond-lead-hours"
+                    />
+                    <span>horas de anticipación; si no:</span>
+                    <app-select
+                      [options]="onExceed"
+                      [value]="str(['appointment', 'leadTime', 'onViolation']) ?? 'DENY'"
+                      (valueChange)="set(['appointment', 'leadTime', 'onViolation'], $event)"
+                      ariaLabel="Qué pasa si falta anticipación"
+                      data-testid="cond-lead-exceed"
+                    />
+                  </div>
+                }
+              </div>
+              @if (!deny()) {
+                <div class="bloque">
+                  <app-switch
+                    [checked]="has(['appointment', 'horizon'])"
+                    (checkedChange)="
+                      set(['appointment', 'horizon'], $event ? { maxDaysAhead: 90 } : undefined)
+                    "
+                    label="No crear citas muy adelante"
+                    data-testid="cond-horizon"
+                  />
+                  @if (has(['appointment', 'horizon'])) {
+                    <div class="frase">
+                      <span>No crear citas a más de</span>
+                      <app-input
+                        type="number"
+                        [value]="numberAt(['appointment', 'horizon', 'maxDaysAhead'])"
+                        (valueChange)="
+                          setNumber(['appointment', 'horizon', 'maxDaysAhead'], $event)
+                        "
+                        ariaLabel="Días hacia adelante"
+                        testId="cond-horizon-days"
+                      />
+                      <span>días.</span>
+                    </div>
+                  }
+                </div>
+              }
+            }
+
+            @case ('channel') {
+              <fieldset class="grupo">
+                <legend>Solo por</legend>
+                @for (c of channels; track c.value) {
+                  <app-checkbox
+                    [label]="c.label"
+                    [checked]="hasChannel(c.value)"
+                    (checkedChange)="toggleChannel(c.value, $event)"
+                    [attr.data-testid]="'cond-channel-' + c.value"
+                  />
+                }
+              </fieldset>
+              <p class="sec__ayuda">Sin ninguno marcado, puede responder por cualquier canal.</p>
+            }
+
+            @case ('fields') {
+              @for (a of fieldAtoms(); track a.code) {
+                <div class="frase" [attr.data-testid]="'cond-field-' + a.code">
+                  <span>{{ a.name }}:</span>
+                  <app-select
+                    [options]="masks"
+                    [value]="mask(a.code)"
+                    (valueChange)="setMask(a.code, $event)"
+                    [ariaLabel]="'Cuánto se ve: ' + a.name"
+                    [attr.data-testid]="'cond-field-mask-' + a.code"
+                  />
+                  <span class="ejemplo" [attr.data-testid]="'cond-field-example-' + a.code"
+                    >Ejemplo: <q>{{ example(a.code) }}</q></span
+                  >
+                </div>
+              }
+            }
+
+            @case ('amount') {
+              <app-condition-extras
+                section="amount"
+                [condition]="condition()"
+                (conditionChange)="forward($event)"
+              />
+            }
+            @case ('where') {
+              <app-switch
+                [checked]="str(['network', 'require']) === 'ORG_RULES'"
+                (checkedChange)="onOff(['network', 'require'], $event, 'ORG_RULES')"
+                label="Solo desde la red de la organización"
+                data-testid="cond-network"
+              />
+              <p class="sec__ayuda">
+                Si su organización aún no definió redes permitidas, el sistema no deja guardar esta
+                condición: defínalas primero en la seguridad de la organización.
+              </p>
+              <app-switch
+                [checked]="isTrue(['device', 'knownOnly'])"
+                (checkedChange)="onOff(['device', 'knownOnly'], $event, true)"
+                label="Solo desde un equipo de confianza"
+                data-testid="cond-device"
+              />
+              <div class="bloque">
+                <app-switch
+                  [checked]="has(['session', 'maxSessionMinutes'])"
+                  (checkedChange)="onOff(['session', 'maxSessionMinutes'], $event, 240)"
+                  label="Limitar cuánto dura la sesión"
+                  data-testid="cond-session"
+                />
+                @if (has(['session', 'maxSessionMinutes'])) {
+                  <div class="frase">
+                    <span>Máximo</span>
+                    <app-select
+                      [options]="sessionHours"
+                      [value]="sessionValue()"
+                      (valueChange)="setSession($event)"
+                      ariaLabel="Duración máxima de la sesión"
+                      data-testid="cond-session-hours"
+                    />
+                    <span>por sesión.</span>
+                  </div>
+                }
+              </div>
+            }
+
+            @case ('presence') {
+              <app-switch
+                [checked]="str(['presence', 'doctor']) === 'ONLINE'"
+                (checkedChange)="onOff(['presence', 'doctor'], $event, 'ONLINE')"
+                label="Solo con el doctor conectado"
+                data-testid="cond-presence"
+              />
+            }
+
+            @case ('controls') {
+              <app-condition-extras
+                section="controls"
+                [condition]="condition()"
+                (conditionChange)="forward($event)"
+              />
+            }
+
+            @case ('ceiling') {
+              <app-condition-extras
+                section="ceiling"
+                [condition]="condition()"
+                (conditionChange)="forward($event)"
+              />
+            }
+
+            @case ('deny') {
+              <div class="frase">
+                <span>No puede, cuando el paciente</span>
+                <app-select
+                  [options]="denyPatients"
+                  [value]="denyPatient()"
+                  (valueChange)="setDenyPatient($event)"
+                  ariaLabel="Cuándo se niega según el paciente"
+                  data-testid="cond-deny-patient"
+                />
+              </div>
+              <p class="sec__ayuda">
+                Una prohibición gana siempre a cualquier permiso. Sin condiciones, niega en todos
+                los casos.
+              </p>
+            }
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

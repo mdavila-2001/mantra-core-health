@@ -2,7 +2,7 @@ import { DOCUMENT, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 
 /** Dónde se guarda lo que la persona marcó, en este navegador. */
-const KEY = 'alovida.chat-preferencias';
+const KEY = 'alovida.chat-preferences';
 
 /** Cuántos emojis recientes se recuerdan. */
 const RECENT_LIMIT = 24;

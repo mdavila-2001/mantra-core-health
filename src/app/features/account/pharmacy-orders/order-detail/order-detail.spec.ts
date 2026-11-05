@@ -1,10 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { environment } from '../../../../../environments/environment';
+import { explanationOf } from '../../../../core/http/error-explanation';
 
 import {
   PHARMACY_ORDER_TEST_IDS,
@@ -14,6 +15,7 @@ import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-ord
 import { uuid } from '../../../../core/mock/mock-store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { OrderDetail } from './order-detail';
+import { destinoDeLaQuery, tomarContexto } from '../../../../core/messaging/chat-link';
 
 describe('OrderDetail with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
@@ -36,7 +38,11 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
 
   afterEach(() => {
     Object.assign(environment, { mockBackend: originalMockBackend });
-    http.verify();
+    try {
+      http.verify();
+    } finally {
+      TestBed.resetTestingModule();
+    }
   });
 
   /** La lectura de avisos que el detalle hace una sola vez por pedido. */
@@ -88,6 +94,24 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     harness.detectChanges();
   }
 
+  it('pending explica confirmación de sucursal y deja de mostrarla al releer la línea confirmada', async () => {
+    const base = pharmacyOrderDtoFixture();
+    await mount(pharmacyOrderDtoFixture({
+      status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      lines: [{ ...base.lines[0], reservedQuantity: 0, status: { code: 'PINV_RES_LINE_PENDING_CONFIRMATION', display: 'Por confirmar' } }],
+    }));
+    expect(byTestId('order-line-pending-confirmation')?.textContent).toContain('La sucursal confirma la disponibilidad');
+    const component = harness.routeDebugElement?.componentInstance as { cargar: () => void };
+    component.cargar();
+    http.expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`).flush(pharmacyOrderDtoFixture({
+      status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
+    }));
+    http.expectOne(AVISOS_URL).flush(paginaDeAvisos([]));
+    harness.detectChanges();
+    expect(byTestId('order-line-pending-confirmation')).toBeNull();
+    expect(byTestId('pedido-estado-badge')?.textContent).toContain('En preparación');
+  });
+
   it('renders the API 404 as not found instead of null data', async () => {
     harness = await RouterTestingHarness.create();
     const navigation = harness.navigateByUrl(
@@ -112,6 +136,47 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     expect(text()).toContain('La farmacia todavía no abrió su pedido');
     expect(harness.routeNativeElement?.querySelector('[data-testid="pedido-demo"]')).toBeNull();
     expect(text()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f-]{27}/i);
+  });
+
+  it('sin vitrina de la farmacia no ofrece el chat del pedido', async () => {
+    await mount(pharmacyOrderDtoFixture({ pharmacyPublicSlug: null, pharmacyPublicProfileId: null }));
+    expect(byTestId('pedido-chatear')).toBeNull();
+  });
+
+  it('«Chatear con la farmacia» lleva al chat DEL PEDIDO con la tarjeta puesta', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ pharmacyPublicSlug: 'farmacia-vida', pharmacyPublicProfileId: 'pp-f' }),
+    );
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    click('pedido-chatear');
+
+    // Sin sesión en la prueba: pasa por el login y vuelve al chat.
+    const [destino, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    expect(destino).toEqual(['/auth']);
+    const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
+    expect(vuelta.get('pedido')).toBe(PHARMACY_ORDER_TEST_IDS.order);
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
+    expect(contexto?.tipo).toBe('pedido');
+    expect(contexto?.ruta).toBe(`/my-account/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}`);
+    expect(contexto?.titulo).toContain(' · ');
+    expect(contexto?.detalle).toMatch(/^\d+ productos?/u);
+  });
+
+  it('«Chatear con la farmacia» es secundario y va junto a la farmacia, no sobre la decisión', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ pharmacyPublicSlug: 'farmacia-vida', pharmacyPublicProfileId: 'pp-f' }),
+    );
+    const boton = byTestId('pedido-chatear') as HTMLElement;
+    // Al lado del nombre de la farmacia, dentro de la sección del estado —
+    // no en las acciones de la página, por encima del título del pedido.
+    expect(boton.closest('section.pedido__estado')).not.toBeNull();
+    expect(boton.closest('app-page-header')).toBeNull();
+    expect(boton.classList).toContain('btn--secondary');
+    expect(boton.classList).not.toContain('btn--primary');
   });
 
   it('preserves newest-first substitutions and accepts them through the API', async () => {
@@ -522,7 +587,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         expect(bloque?.textContent).not.toContain('Su pedido está en revisión');
       });
 
-      it('A → B con el pedido en error: A no sobrevive y el error es el de siempre', async () => {
+      it('A → B con el pedido en error: A no sobrevive y conserva la explicación dev', async () => {
         await navegar(PHARMACY_ORDER_TEST_IDS.order, [avisoWire()]);
         expect(text()).toContain(FARMACIA.A);
 
@@ -530,8 +595,10 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
 
         expect(text()).not.toContain(FARMACIA.A);
         expect(byTestId('pedido-detalle')).toBeNull();
-        // El comportamiento de error de la pantalla no cambia.
-        expect(text()).toContain('Algo salió mal');
+        const explanation = explanationOf('server');
+        expect(text()).toContain(explanation.title);
+        expect(text()).toContain(explanation.cause);
+        expect(text()).toContain(explanation.action);
         expect(text()).toContain('Reintentar');
       });
 
