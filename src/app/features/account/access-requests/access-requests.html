@@ -1,67 +1,45 @@
 @if (!embebido()) {
-  <app-page-header
-    title="Solicitudes de vínculo"
-    subtitle="Profesionales que pidieron acceder a su historia clínica. Usted elige qué áreas autoriza."
-    [breadcrumbs]="breadcrumbs()"
-  />
+  <app-page-header title="Buzón de solicitudes" [subtitle]="copy().subtitle" [breadcrumbs]="breadcrumbs()" />
 }
 
-<div class="solicitudes">
-  @if (errorDeCarga(); as mensaje) {
-    <app-alert tone="error" data-testid="access-requests-error">
-      {{ mensaje }}
-      <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="cargar()">
-        Volver a intentar
-      </button>
-    </app-alert>
-  } @else if (!cargando() && solicitudes().length === 0) {
-    <app-empty-state
-      title="No tiene solicitudes pendientes"
-      description="Cuando un profesional pida acceder a su historia, la va a ver acá."
-    />
-  }
-
-  @for (item of solicitudes(); track item.solicitud.id) {
-    <app-card class="solicitud">
-      <p class="solicitud__quien">
-        <strong>{{ item.profesional }}</strong> pide ver su historia clínica
-        <span class="solicitud__cuando">(desde el {{ item.solicitud.validFrom | date: 'dd/MM/yyyy' }})</span>
-      </p>
-
-      <fieldset class="solicitud__especialidades">
-        <legend>Elija qué especialidades le autoriza</legend>
-        @if (errorDeEspecialidades(); as mensaje) {
-          <app-alert tone="error" data-testid="access-requests-specialties-error">
-            {{ mensaje }}
-            <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="cargarEspecialidades()">
-              Volver a intentar
-            </button>
-          </app-alert>
-        }
-        @for (especialidad of especialidades(); track especialidad.id) {
-          <app-checkbox
-            [label]="especialidad.nombre"
-            [checked]="marcada(item, especialidad.id)"
-            [disabled]="item.decidiendo"
-            (checkedChange)="alternar(item, especialidad.id, $event)"
-          />
-        }
-      </fieldset>
-
-      <div class="solicitud__acciones">
-        <button
-          app-button
-          type="button"
-          variant="secondary"
-          [disabled]="item.decidiendo"
-          (click)="rechazar(item)"
-        >
-          Rechazar
+<div class="inbox">
+  <!-- Loading, empty with its next action, forbidden, offline and error with
+       its request id: the nine states of the system, not hand-made ones. -->
+  <app-view-state-host [state]="state()" (retry)="retry()">
+    @if (specialtiesError(); as message) {
+      <app-alert tone="error" data-testid="access-requests-specialties-error">
+        {{ message }}
+        <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="loadSpecialties()">
+          Volver a intentar
         </button>
-        <button app-button type="button" [disabled]="item.decidiendo" (click)="aceptar(item)">
-          Autorizar lo elegido
-        </button>
-      </div>
+      </app-alert>
+    }
+
+    <app-card class="inbox__card">
+      <app-tabs appearance="browser" [(selectedIndex)]="activeTab">
+        @for (section of sections(); track section.key) {
+          <app-tab [label]="section.label">
+            @if (section.items.length === 0) {
+              <app-empty-state [title]="section.none" />
+            } @else {
+              <ul class="inbox__list" [attr.data-testid]="'access-requests-' + section.key">
+                @for (item of section.items; track item.id) {
+                  <li>
+                    <app-access-request-card
+                      [item]="item"
+                      [role]="role()"
+                      [specialtyNames]="specialtyNames()"
+                      [busy]="busyId() === item.id"
+                      (decided)="decide(item, $event)"
+                      (revoked)="revoke(item)"
+                    />
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
+        }
+      </app-tabs>
     </app-card>
-  }
+  </app-view-state-host>
 </div>

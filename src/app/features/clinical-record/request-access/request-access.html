@@ -43,10 +43,52 @@
   }
 
   <app-alert tone="info">
-    Pedir NO le da acceso todavía: el paciente recibe un aviso y elige qué
-    especialidades autorizarle. Puede seguir buscando mientras espera su
-    decisión.
+    Pedir NO le da acceso todavía: el paciente recibe un aviso y decide.
+    @switch (scope()) {
+      @case ('CABECERA') {
+        Si acepta, usted queda como su médico de cabecera.
+      }
+      @case ('GRANULAR') {
+        Puede autorizarle todas las especialidades que pide o sólo algunas.
+      }
+    }
+    Puede seguir buscando mientras espera su decisión.
   </app-alert>
+
+  <div class="solicitar-acceso__alcance">
+    <p class="solicitar-acceso__pregunta" aria-hidden="true">Qué le pide al paciente</p>
+    <app-segmented-control
+      data-testid="request-access-scope"
+      ariaLabel="Qué le pide al paciente"
+      size="md"
+      [options]="scopes"
+      [value]="scope()"
+      (valueChange)="scope.set($event)"
+    />
+  </div>
+
+  @if (scope() === 'GRANULAR') {
+    @if (specialtiesError(); as message) {
+      <app-alert tone="error" data-testid="request-access-specialties-error">
+        {{ message }}
+        <button alert-actions app-button type="button" variant="outline" size="sm" (clicked)="loadSpecialties()">
+          Volver a intentar
+        </button>
+      </app-alert>
+    }
+    <app-form-field
+      label="Especialidades que pide"
+      hint="El paciente ve esta lista y decide cuáles le autoriza."
+      class="solicitar-acceso__especialidades"
+    >
+      <app-checkbox-group
+        data-testid="request-access-specialties"
+        [options]="specialtyOptions()"
+        [value]="chosenSpecialties()"
+        (valueChange)="chosenSpecialties.set($event)"
+      />
+    </app-form-field>
+  }
 
   <app-form-field icon="note" label="Motivo (opcional)" hint="El paciente va a ver este texto en el aviso.">
     <app-textarea

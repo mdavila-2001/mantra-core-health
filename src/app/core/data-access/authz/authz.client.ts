@@ -1,12 +1,15 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
+import { TENANT_HEADER } from '../../http/auth.interceptor';
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
+  AccessRequestItem,
   AuthzScopeQuery,
   BreakTheGlassInput,
   CareRelationship,
+  CareRelationshipDecision,
   CareRelationshipRequestInput,
   CareRelationshipRespondInput,
   LegalRepresentation,
@@ -72,19 +75,51 @@ export class AuthzClient {
   }
 
   /**
-   * `GET /authz/care-relationships/requests/mine` — la bandeja del paciente:
-   * sus solicitudes todavía pendientes (FT-07-R06). El sujeto sale de la
-   * sesión, por eso no lleva parámetros.
+   * `GET /authz/me/access-requests` — the patient's inbox: received, sent and
+   * decided requests of every kind, for the active tenant. The subject is the
+   * session, so it takes no parameters.
    */
-  listMyPendingCareRelationshipRequests(): Observable<readonly CareRelationship[]> {
+  listMyAccessRequests(): Observable<readonly AccessRequestItem[]> {
     return this.http
-      .get<readonly WireCareRelationship[]>(this.url('/authz/care-relationships/requests/mine'))
-      .pipe(map((items) => items.map(toCareRelationship)));
+      .get<readonly WireAccessRequestItem[]>(this.url('/authz/me/access-requests'))
+      .pipe(map((items) => items.map(toAccessRequestItem)));
+  }
+
+  /** `GET /authz/practitioners/me/access-requests` — the same inbox, seen by the practitioner. */
+  listPractitionerAccessRequests(): Observable<readonly AccessRequestItem[]> {
+    return this.http
+      .get<readonly WireAccessRequestItem[]>(this.url('/authz/practitioners/me/access-requests'))
+      .pipe(map((items) => items.map(toAccessRequestItem)));
   }
 
   /**
-   * `POST /authz/care-relationships/:id/respond` — el paciente acepta (con
-   * las áreas que autoriza) o rechaza (FT-07-R06/R07).
+   * `POST /authz/me/primary-practitioner-requests` — the patient asks a
+   * practitioner to be their primary practitioner. It is born `PENDING` until
+   * the practitioner accepts. `X-Tenant-Id` is the practitioner's organization,
+   * not the patient's active one: the interceptor keeps a header it finds.
+   */
+  requestPrimaryPractitioner(practitionerProfileId: string, tenantId: string): Observable<void> {
+    return this.http
+      .post(
+        this.url('/authz/me/primary-practitioner-requests'),
+        { practitionerProfileId },
+        { headers: new HttpHeaders({ [TENANT_HEADER]: tenantId }) },
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /** `POST /authz/practitioners/me/care-relationships/:id/respond` — the practitioner answers a patient's request. */
+  respondAsPractitioner(id: string, decision: CareRelationshipDecision): Observable<void> {
+    return this.http
+      .post(this.url(`/authz/practitioners/me/care-relationships/${encodeURIComponent(id)}/respond`), {
+        decision,
+      })
+      .pipe(map(() => undefined));
+  }
+
+  /**
+   * `POST /authz/care-relationships/:id/respond` — el paciente acepta o
+   * rechaza la solicitud de un profesional (FT-07-R06/R07).
    */
   respondToCareRelationshipRequest(
     id: string,
@@ -194,6 +229,19 @@ function toCareRelationship({
   ...resto
 }: WireCareRelationship): CareRelationship {
   return { ...resto, validFrom: new Date(validFrom), ...hasta(validTo) };
+}
+
+type WireAccessRequestItem = Omit<AccessRequestItem, 'requestedAt' | 'decidedAt'> & {
+  readonly requestedAt: string;
+  readonly decidedAt?: string | null;
+};
+
+function toAccessRequestItem({ requestedAt, decidedAt, ...rest }: WireAccessRequestItem): AccessRequestItem {
+  return {
+    ...rest,
+    requestedAt: new Date(requestedAt),
+    ...(decidedAt === null || decidedAt === undefined ? {} : { decidedAt: new Date(decidedAt) }),
+  };
 }
 
 function toLegalRepresentation({
