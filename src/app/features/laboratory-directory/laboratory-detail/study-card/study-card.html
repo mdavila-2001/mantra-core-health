@@ -1,0 +1,47 @@
+<article class="rejilla__tarjeta study-card" data-testid="unit-study">
+  <div class="study-card__head">
+    <app-service-icon class="rejilla__icono" [servicio]="study().name" />
+    <!-- Only the exception gets a badge: labelling every study that needs no
+         order would leave the grid with nothing to look at. -->
+    @if (study().requiresMedicalOrder === true) {
+      <app-badge variant="warning" size="sm" value="Requiere orden médica" />
+    }
+  </div>
+
+  <h3 class="rejilla__nombre">{{ study().name }}</h3>
+  <p class="rejilla__dato">{{ reference() }}</p>
+
+  @if (description(); as text) {
+    <p class="rejilla__resumen">{{ text }}</p>
+  }
+
+  @if (study().preparationInstructions; as preparation) {
+    <p class="study-card__prep">
+      <app-nav-icon class="study-card__prep-icon" name="clipboard" />
+      <span><strong>Preparación:</strong> {{ preparation }}</span>
+    </p>
+  }
+
+  <div class="study-card__foot">
+    <!-- The label is decided by the schedule: «Precio público» only when the
+         centre published it, never for a demo or reference figure. -->
+    <dl class="study-card__price">
+      <dt class="study-card__price-label">{{ priceLabel() }}</dt>
+      <dd class="study-card__amount tabular-nums" data-testid="unit-study-price">
+        @if (price(); as amount) {
+          {{ amount }}
+        } @else {
+          <span class="study-card__no-price">Sin precio publicado</span>
+        }
+      </dd>
+    </dl>
+
+    @if (turnaround(); as eta) {
+      <p class="study-card__eta">
+        <app-nav-icon name="clock" />
+        <span class="sr-only">Resultado en</span>
+        {{ eta }}
+      </p>
+    }
+  </div>
+</article>
