@@ -38,6 +38,7 @@ import {
   comoMotivoDeConsulta,
 } from '../../../core/symptom-notes/symptom-observations.store';
 import { AGENDA_ROUTE } from '../agenda.routes';
+import { MotivoFigura } from './motivo-figura/motivo-figura';
 import type { TenantScope } from '../../../core/data-access/scheduling/tenant-scope';
 import { FLEXIBLE_PARAM, releerHoraFlexible, retenerHoraFlexible } from './flexible-booking';
 
@@ -111,6 +112,7 @@ type Entrada = 'DESK' | 'PORTAL';
     FormActions,
     FormField,
     FormSection,
+    MotivoFigura,
     PageHeader,
     ReactiveFormsModule,
     ReferenceCombobox,
