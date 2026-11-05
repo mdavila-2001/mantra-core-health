@@ -49,6 +49,10 @@ los datos nuevos (`UI → request → persistencia → recarga → UI`). En el e
 hay daemon de Docker ni Mongo, MinIO u OpenSearch, que el API exige para arrancar, y el simulador
 no cierra ese ciclo (la cuenta nace pendiente de verificación). Queda para el despliegue en `dev`:
 registrar un centro de imagenología con sus cuatro PDF y abrir «Mi perfil». Tampoco tema oscuro ni
-otros navegadores. Queda una limitación de la API, fuera de este cambio: en laboratorio y farmacia los
-papeles son opcionales, y la API sólo persiste el NIT como número del documento tributario, así que
-un alta sin el PDF del NIT sigue sin tenerlo en la ficha hasta que se adjunte.
+otros navegadores.
+
+**NIT sin PDF.** En laboratorio y farmacia los papeles son opcionales, y la API sólo guardaba el NIT
+como número del documento tributario: sin el PDF, se perdía. Lo arregla el PR del API
+[mdavila-2001/mantra-core-health-api#1350](https://github.com/mdavila-2001/mantra-core-health-api/pull/1350),
+que guarda el NIT en `common.identifiers` haya PDF o no. Este front ya lo manda en las cuatro altas;
+con los dos PR en `dev`, la ficha lo muestra aunque no se haya adjuntado el papel.
