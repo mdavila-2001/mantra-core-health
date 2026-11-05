@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormGroup } from '@angular/forms';
 
+import { fieldKindMessage } from '../../../../shared/forms/field-kinds';
 import { InlineNameFields } from './inline-name-fields';
 import { executivesControls } from '../executives';
 import { nameGroup, completeName } from '../name-fields/person-name';
@@ -155,6 +156,27 @@ describe('CamposDeNombreEnLinea', () => {
     const { grupo } = montar();
     grupo.patchValue({ name: 'A'.repeat(100), lastName: 'B'.repeat(100), motherLastName: 'C'.repeat(10) });
     expect(grupo.hasError('nombreCompletoLargo')).toBe(true);
+  });
+
+  it('con dígitos en el nombre dice qué se admite, no «escriba el primer nombre»', () => {
+    const { fixture, grupo } = montar();
+    grupo.patchValue({ name: 'holaLTAD1', lastName: 'Paz' });
+    grupo.markAllAsTouched();
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain(fieldKindMessage('personName'));
+    expect(texto).not.toContain('Escriba el primer nombre.');
+  });
+
+  it('un segundo nombre mal escrito dice qué tiene de malo y se marca', () => {
+    const { fixture, grupo, raiz } = montar();
+    grupo.controls.middleName.setValue('Lucía2');
+    grupo.controls.middleName.markAsTouched();
+    fixture.detectChanges();
+
+    expect(raiz.textContent).toContain(fieldKindMessage('personName'));
+    expect(raiz.querySelector('[data-testid="t-segundo-nombre"]')?.getAttribute('aria-invalid')).toBe('true');
   });
 
   it('con `obligatorio` falso el grupo vacío es válido (las gerencias)', () => {

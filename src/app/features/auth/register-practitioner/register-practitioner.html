@@ -90,7 +90,7 @@
               <div class="registro__nombres">
                 <app-form-field class="registro__nombre" label="Primer nombre" [required]="true">
                   <app-input
-                    testId="registro-pro-nombre"
+                    testId="registro-pro-nombre" fieldKind="personName"
                     autocomplete="given-name"
                     placeholder="Ana"
                     [value]="valorDeNombre('name')"
@@ -105,7 +105,7 @@
                   hint="Si no tiene, déjelo vacío."
                 >
                   <app-input
-                    testId="registro-pro-segundo-nombre"
+                    testId="registro-pro-segundo-nombre" fieldKind="personName"
                     autocomplete="additional-name"
                     placeholder="Lucía"
                     [value]="valorDeNombre('middleName')"
@@ -115,7 +115,7 @@
 
                 <app-form-field class="registro__nombre" label="Tercer nombre">
                   <app-input
-                    testId="registro-pro-tercer-nombre"
+                    testId="registro-pro-tercer-nombre" fieldKind="personName"
                     placeholder="María"
                     [value]="valorDeNombre('thirdName')"
                     (valueChange)="escribirNombre('thirdName', $event)"
@@ -128,7 +128,7 @@
                   <app-form-field class="registro__nombre" [label]="'Nombre ' + ($index + 4)">
                     <div class="registro__nombre-extra">
                       <app-input
-                        [testId]="'registro-pro-nombre-extra-' + $index"
+                        [testId]="'registro-pro-nombre-extra-' + $index" fieldKind="personName"
                         placeholder="Otro nombre"
                         [value]="extra"
                         (valueChange)="escribirNombreExtra($index, $event)"

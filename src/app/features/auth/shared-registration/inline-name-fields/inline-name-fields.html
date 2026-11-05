@@ -7,6 +7,7 @@
   >
     <app-input
       type="text"
+      fieldKind="personName"
       formControlName="name"
       autocomplete="given-name"
       [hasError]="errorOf('name') !== ''"
@@ -14,29 +15,36 @@
     />
   </app-form-field>
 
-  <app-form-field class="nombres__campo nombres__campo--mitad" label="Segundo nombre (opcional)">
+  <app-form-field class="nombres__campo nombres__campo--mitad" label="Segundo nombre (opcional)"
+    [errorMessage]="errorOfExtra(grupo().controls.middleName)">
     <app-input
       type="text"
+      fieldKind="personName"
       formControlName="middleName"
+      [hasError]="errorOfExtra(grupo().controls.middleName) !== ''"
       autocomplete="additional-name"
       [testId]="prefijoTestId() + '-segundo-nombre'"
     />
   </app-form-field>
 
-  <app-form-field class="nombres__campo nombres__campo--mitad" label="Tercer nombre (opcional)">
+  <app-form-field class="nombres__campo nombres__campo--mitad" label="Tercer nombre (opcional)"
+    [errorMessage]="errorOfExtra(grupo().controls.thirdName)">
     <app-input
       type="text"
+      fieldKind="personName"
       formControlName="thirdName"
+      [hasError]="errorOfExtra(grupo().controls.thirdName) !== ''"
       [testId]="prefijoTestId() + '-tercer-nombre'"
     />
   </app-form-field>
 
   @for (extra of extra(); track extra; let i = $index) {
     <app-form-field class="nombres__campo nombres__campo--mitad" [label]="'Nombre ' + (i + 4)"
-      [errorMessage]="extra.invalid && (extra.dirty || extra.touched) ? 'El nombre no puede pasar de 100 caracteres.' : ''">
+      [errorMessage]="errorOfExtra(extra)">
       <div class="nombres__extra">
         <app-input
           type="text"
+          fieldKind="personName"
           placeholder="Otro nombre"
           [formControl]="extra"
           [hasError]="extra.invalid && (extra.dirty || extra.touched)"
@@ -80,6 +88,7 @@
   >
     <app-input
       type="text"
+      fieldKind="personName"
       formControlName="lastName"
       autocomplete="family-name"
       [hasError]="errorOf('lastName') !== ''"
@@ -87,10 +96,13 @@
     />
   </app-form-field>
 
-  <app-form-field class="nombres__campo nombres__campo--mitad" label="Apellido materno (opcional)">
+  <app-form-field class="nombres__campo nombres__campo--mitad" label="Apellido materno (opcional)"
+    [errorMessage]="errorOfExtra(grupo().controls.motherLastName)">
     <app-input
       type="text"
+      fieldKind="personName"
       formControlName="motherLastName"
+      [hasError]="errorOfExtra(grupo().controls.motherLastName) !== ''"
       [testId]="prefijoTestId() + '-apellido-materno'"
     />
   </app-form-field>
