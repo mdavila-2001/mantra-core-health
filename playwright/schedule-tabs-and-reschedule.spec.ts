@@ -7,7 +7,8 @@
  * 2. She moves a booking from her calendar: «Mover a otro horario» keeps the
  *    mode on the day, whose free slots offer «Mover acá». The «Cupos» tab
  *    never shows up. Leaving the mode moves nothing; picking a slot asks for
- *    the reason and moves the booking.
+ *    the reason and moves the booking. Both are read on the screen: the
+ *    simulator answers inside the app, so there is no request to watch.
  * 3. A doctor with no published agenda does not see «Cupos» either.
  * 4. Who hands out appointments keeps «Consultas» and «Cupos».
  * 5. The patient sees neither.
@@ -22,7 +23,7 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { capturar } from './support/captura';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
@@ -53,17 +54,6 @@ function watchConsole(page: Page): string[] {
   return errors;
 }
 
-/** The POSTs that move a booking, to prove when nothing moved. */
-function watchMoves(page: Page): string[] {
-  const moves: string[] = [];
-  page.on('request', (request) => {
-    if (request.method() === 'POST' && request.url().includes('/reschedule')) {
-      moves.push(request.url());
-    }
-  });
-  return moves;
-}
-
 async function openSchedule(page: Page, account: string, path = '/schedule'): Promise<void> {
   // The app skips view transitions under reduced motion: captures stay clean.
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -84,21 +74,42 @@ async function waitForTabs(page: Page): Promise<void> {
   await expect(page.locator('app-agenda [role="tab"]').first()).toBeVisible({ timeout: 60_000 });
 }
 
+/** The day's bookings that carry actions: one `<li>` of the day line each. */
+function bookings(page: Page): Locator {
+  return page.locator('li[data-tipo="cita"]').filter({ has: page.getByTestId('dia-acciones') });
+}
+
+/** «Atender a Ana Pérez, viernes 6 de noviembre, 15:00 a 15:20, …»: who, which day, what time. */
+async function bookingName(booking: Locator): Promise<string> {
+  const name = await booking.getByTestId('dia-ir-a-atender').getAttribute('aria-label');
+  if (name === null) throw new Error('A booking on the day line has no accessible name');
+  return name;
+}
+
+/** The day and the time inside an accessible name: «viernes 6 de noviembre, 15:00 a 15:20». */
+function slotOf(accessibleName: string): string {
+  const slot = /\p{L}+ \d{1,2} de \p{L}+, \d{2}:\d{2} a \d{2}:\d{2}/u.exec(accessibleName)?.[0];
+  if (slot === undefined) throw new Error(`No day and time in «${accessibleName}»`);
+  return slot;
+}
+
 /**
  * Picks «Mover a otro horario» on the first booking of the open day that offers
- * it. With three or more actions they live in a menu hung from `<body>`.
+ * it and returns that booking's accessible name, or `null` if none does. With
+ * three or more actions they live in a menu hung from `<body>`.
  */
-async function startMovingABooking(page: Page): Promise<boolean> {
-  const cards = page.getByTestId('dia-acciones');
-  const total = await cards.count();
+async function startMovingABooking(page: Page): Promise<string | null> {
+  const list = bookings(page);
+  const total = await list.count();
   for (let index = 0; index < total; index += 1) {
-    const card = cards.nth(index);
-    const inline = card.locator('[data-action="agenda-reprogramar"]');
+    const booking = list.nth(index);
+    const name = await bookingName(booking);
+    const inline = booking.locator('[data-action="agenda-reprogramar"]');
     if ((await inline.count()) > 0) {
       await inline.first().click();
-      return true;
+      return name;
     }
-    const trigger = card.getByTestId('row-actions-trigger');
+    const trigger = booking.getByTestId('row-actions-trigger');
     if ((await trigger.count()) === 0) continue;
     await trigger.click();
     const item = page.locator('[data-action="agenda-reprogramar"]').first();
@@ -108,19 +119,39 @@ async function startMovingABooking(page: Page): Promise<boolean> {
     );
     if (offered) {
       await item.click();
-      return true;
+      return name;
     }
     await page.keyboard.press('Escape');
   }
-  return false;
+  return null;
 }
 
-async function enterMoveMode(page: Page): Promise<void> {
+/** How far ahead the doctor looks for a day to move a booking on. */
+const DAYS_AHEAD = 21;
+
+/**
+ * Opens the doctor's calendar and walks forward, day by day, to the first one
+ * with a booking she can move and a free slot to move it to; there it starts
+ * moving that booking and returns its accessible name.
+ *
+ * The simulator builds the agenda around today, so which day that is depends
+ * on the date (today may have no office hours at all); the walk does not.
+ * Not finding one in three weeks fails: it is the feature under test, and
+ * skipping would hide it.
+ */
+async function enterMoveMode(page: Page): Promise<string> {
   await openSchedule(page, 'medica');
   await expect(page.getByTestId('agenda-calendario')).toBeVisible({ timeout: 60_000 });
-  test.skip(
-    !(await startMovingABooking(page)),
-    'El día que abre el calendario de la maqueta no tiene una cita vigente que mover.',
+  for (let day = 0; day < DAYS_AHEAD; day += 1) {
+    if ((await page.getByTestId('day-view-free-slot').count()) > 0) {
+      const booking = await startMovingABooking(page);
+      if (booking !== null) return booking;
+    }
+    await page.getByTestId('dia-siguiente').click();
+    await esperarAQueSeAsiente(page);
+  }
+  throw new Error(
+    `In ${DAYS_AHEAD} days no day has both a booking that offers «Mover a otro horario» and a free slot.`,
   );
 }
 
@@ -160,8 +191,7 @@ test.describe('Agenda · quien atiende no tiene «Cupos»', () => {
     page,
   }) => {
     const errors = watchConsole(page);
-    const moves = watchMoves(page);
-    await enterMoveMode(page);
+    const booking = await enterMoveMode(page);
 
     const banner = page.getByTestId('agenda-reprogramando');
     await expect(banner).toBeVisible();
@@ -170,35 +200,43 @@ test.describe('Agenda · quien atiende no tiene «Cupos»', () => {
     expect(await tabLabels(page)).toEqual(['Consultas', 'Mis horarios']);
     expect(new URL(page.url()).searchParams.get('vista')).not.toBe('cupos');
     mkdirSync(EVIDENCE, { recursive: true });
+    await banner.scrollIntoViewIfNeeded();
     await capturar(page, join(EVIDENCE, 'doctor-moving-1440.png'));
+    await page.getByTestId('dia-mover-aca').first().scrollIntoViewIfNeeded();
+    await capturar(page, join(EVIDENCE, 'doctor-moving-day-1440.png'));
 
     await page.getByTestId('agenda-reprogramando-salir').click();
     await expect(banner).toHaveCount(0);
-    expect(moves).toEqual([]);
+    // Nothing moved: the booking is still in its slot, and the day offers no «Mover acá».
+    await expect(page.getByRole('button', { name: booking, exact: true })).toHaveCount(1);
+    await expect(page.getByTestId('dia-mover-aca')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 
   test('«Mover acá» en un rato libre pide el motivo y mueve la cita', async ({ page }) => {
     const errors = watchConsole(page);
-    await enterMoveMode(page);
+    const booking = await enterMoveMode(page);
+    // «Atender a Ana Pérez»: the booking's name up to its day and time.
+    const attendPatient = booking.slice(0, booking.indexOf(', '));
+    const oldSlot = slotOf(booking);
 
     const moveHere = page.getByTestId('dia-mover-aca').first();
-    test.skip(
-      (await moveHere.count()) === 0,
-      'El día que abre el calendario de la maqueta no tiene horarios libres.',
-    );
+    const newSlot = slotOf((await moveHere.getAttribute('aria-label')) ?? '');
     await moveHere.click();
     await page.getByLabel('Motivo del cambio').fill('Se cruzó con una cirugía');
-    const moved = page.waitForResponse(
-      (response) =>
-        response.request().method() === 'POST' && response.url().includes('/reschedule'),
-    );
     await page.getByRole('button', { name: 'Mover la cita' }).click();
 
-    expect((await moved).ok()).toBe(true);
-    await expect(page.getByTestId('agenda-reprogramando')).toHaveCount(0);
     await expect(page.getByText('La cita quedó en el horario nuevo.')).toBeVisible();
+    await expect(page.getByTestId('agenda-reprogramando')).toHaveCount(0);
+    // The booking sits in the new slot, and the old one is free again.
+    const moved = page.getByRole('button', { name: `${attendPatient}, ${newSlot}` });
+    await expect(moved).toHaveCount(1);
+    await expect(page.getByRole('button', { name: booking, exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: `Disponible: ${oldSlot}` })).toHaveCount(1);
     expect(await tabLabels(page)).toEqual(['Consultas', 'Mis horarios']);
+    mkdirSync(EVIDENCE, { recursive: true });
+    await moved.scrollIntoViewIfNeeded();
+    await capturar(page, join(EVIDENCE, 'doctor-moved-1440.png'));
     expect(errors).toEqual([]);
   });
 
