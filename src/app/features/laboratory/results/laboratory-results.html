@@ -55,7 +55,9 @@
           <polyline points="7 9 12 4 17 9" />
           <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
         </svg>
-        <p class="results__drop-title">Arrastre archivos o carpetas enteras acá</p>
+        <p class="results__drop-title">
+          {{ pickerOpen() ? 'Elija en la ventana de su dispositivo' : 'Arrastre archivos o carpetas enteras acá' }}
+        </p>
         <p class="results__drop-hint">
           Cualquier formato —PDF, imágenes, DICOM, video, audio, planillas, HL7, ZIP…— y
           <strong>sin límite de tamaño</strong>. Los archivos grandes se suben por partes: puede pausar y

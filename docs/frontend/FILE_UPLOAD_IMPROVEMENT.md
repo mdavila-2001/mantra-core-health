@@ -96,14 +96,14 @@ pantalla que las reutilice la hereda sin hacer nada:
 | Superficie | Con el diálogo abierto |
 |---|---|
 | `app-file-input` (y `app-dropzone-pdf`, `app-attachment-uploader`, registros, ficha clínica…) | `dragover` con `dropEffect = 'none'`, sin realce; `drop` ignorado; el texto dice «Elija el archivo en la ventana de su dispositivo». Clase `is-picker-open` en la zona. |
-| `appFileDropTarget` (foto, firma, sello, portada, comentarios, chat) | `dragover` con `dropEffect = 'none'`, sin realce; `drop` ignorado. |
-| Resultados de laboratorio («Elegir archivos» / «Elegir una carpeta») | Igual; clase `results__drop--picker-open` en la zona. |
+| `appFileDropTarget` (foto, firma, sello, portada, comentarios, chat) | `dragover` con `dropEffect = 'none'`, sin realce; `drop` ignorado. Acepta un input o una lista (`[archivo, camara]` en el compositor del chat): cualquiera abierto bloquea, lo soltado va al primero. |
+| Resultados de laboratorio («Elegir archivos» / «Elegir una carpeta») | Igual; clase `results__drop--picker-open` (borde sólido apagado) y el título pasa a «Elija en la ventana de su dispositivo». |
 
 En ningún caso se suelta el `preventDefault` del `dragover`: sin él, soltar
 sobre la página la reemplaza por el archivo.
 
 Evidencia: pruebas unitarias en `native-file-picker.spec.ts`,
-`file-input.spec.ts` («con el diálogo nativo abierto») y
-`file-drop-target.spec.ts`. El diálogo nativo en sí no se puede abrir desde
+`file-input.spec.ts` («con el diálogo nativo abierto»),
+`file-drop-target.spec.ts` y `laboratory-results.spec.ts`. El diálogo nativo en sí no se puede abrir desde
 Playwright (lo intercepta), así que el cierre por `cancel`/`focus` se prueba
 con eventos sintéticos y no con captura de navegador.
