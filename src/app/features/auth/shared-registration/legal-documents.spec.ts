@@ -1,6 +1,8 @@
 import { REGISTRATION_LEGAL_DOCUMENT_ROLES } from '../../../core/i18n/legal-documents.dictionary';
 import {
+  KEY_NOTARIZED_POWER,
   legalDocumentsFields,
+  notarizedPowerField,
   RECORD_LEGAL_DOCUMENTS,
   MESSAGE_REQUIRED_DOCUMENT,
 } from './legal-documents';
@@ -63,5 +65,28 @@ describe('camposDeDocumentosLegales', () => {
     expect(enBolivia.map((c) => c.key)).toEqual(enBrasil.map((c) => c.key));
     expect(enBolivia[2]?.label).not.toBe(enBrasil[2]?.label);
     expect(enBrasil[2]?.label).toContain('Junta Comercial');
+  });
+});
+
+describe('notarizedPowerField', () => {
+  // Decisión del propietario (05/11/2026): el poder del representante es
+  // obligatorio para toda organización y nunca se rotula «(opcional)».
+  it('es un campo custom obligatorio, a ancho completo, con el mensaje acordado', () => {
+    const campo = notarizedPowerField('BO', 'es');
+
+    expect(campo.key).toBe(KEY_NOTARIZED_POWER);
+    expect(campo.control).toBe('custom');
+    expect(campo.ancho).toBe('completo');
+    expect(campo.required).toBe(true);
+    expect(campo.mensajeDeError).toBe(MESSAGE_REQUIRED_DOCUMENT);
+  });
+
+  it('su rótulo nunca dice «(opcional)», en ningún país ni idioma', () => {
+    for (const pais of ['BO', 'BR', 'US', 'AR']) {
+      for (const lang of ['es', 'en', 'pt'] as const) {
+        expect(notarizedPowerField(pais, lang).label).not.toMatch(/opcional|optional/i);
+      }
+    }
+    expect(notarizedPowerField('BO', 'es').label).toBe('Poder del representante legal');
   });
 });

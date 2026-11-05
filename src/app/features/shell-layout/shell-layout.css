@@ -261,6 +261,28 @@
   }
 }
 
+/*
+ * El menú de la cuenta tiene que poder abrirse en el teléfono (04/11/2026).
+ *
+ * Mismo origen que «Más accesos»: `.menu-anclaje` (position: relative) vive
+ * dentro de `.app-header__derecha`, que a ≤ 900 px es una tira desplazable
+ * (`overflow-x: auto`) y recorta también en vertical. El menú se abría
+ * (`aria-expanded`) pero no se veía, y «Cerrar sesión» quedaba inalcanzable.
+ * Se ancla a la cabecera (sticky, contenedor de posición): un absoluto cuyo
+ * bloque contenedor es ancestro de la tira no lo recorta su `overflow`, y
+ * queda pegado al borde derecho de la pantalla.
+ */
+@media (max-width: 900px) {
+  .app-header .app-header__derecha .menu-anclaje {
+    position: static;
+  }
+
+  .app-header .app-header__derecha .menu-anclaje .app-menu {
+    right: var(--e2);
+    max-width: calc(100vw - var(--e4));
+  }
+}
+
 @media (max-width: 640px) {
   .app-header .app-header__rapidos {
     position: static;

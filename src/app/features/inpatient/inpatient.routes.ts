@@ -38,19 +38,19 @@ export const INPATIENT_SCREENS: Readonly<Record<string, () => Promise<Type<unkno
 };
 
 /** El ingreso y la ficha de una internación (cuelgan del armazón). */
-export function inpatientRoutes(options: { readonly chunkFailed: () => Type<unknown> }): Routes {
+export function inpatientRoutes(options: { readonly chunkFailed: (error?: unknown) => Type<unknown> }): Routes {
   return [
     {
       path: 'inpatient/admissions/new',
       title: `${APP_TITLE} - Nuevo ingreso`,
       canActivate: [seccionRolesGuard, inpatientChildGuard],
-      loadComponent: () => import('./admission-new/admission-new').then((m) => m.AdmissionNew).catch(() => options.chunkFailed()),
+      loadComponent: () => import('./admission-new/admission-new').then((m) => m.AdmissionNew).catch(options.chunkFailed),
     },
     {
       path: 'inpatient/stays/:encounterId',
       title: `${APP_TITLE} - Internación`,
       canActivate: [seccionRolesGuard, inpatientChildGuard],
-      loadComponent: () => import('./stay/stay').then((m) => m.Stay).catch(() => options.chunkFailed()),
+      loadComponent: () => import('./stay/stay').then((m) => m.Stay).catch(options.chunkFailed),
     },
   ];
 }

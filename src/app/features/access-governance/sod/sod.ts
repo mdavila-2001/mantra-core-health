@@ -25,7 +25,6 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -53,6 +52,7 @@ import {
   sodScopeText,
 } from './sod-labels';
 import { SodRuleForm, type SodRuleSubmission } from './sod-rule-form';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** Lo que la pantalla muestra: las tres listas y quién es quién (para nombrar a las personas). */
 export interface SodData {
@@ -90,13 +90,12 @@ const MINIMO_JUSTIFICACION = 40;
  */
 @Component({
   selector: 'app-sod',
-  imports: [
+  imports: [DateStringPicker, 
     Alert,
     AppButton,
     Badge,
     Card,
     FormField,
-    Input,
     Link,
     PageHeader,
     RouterLink,

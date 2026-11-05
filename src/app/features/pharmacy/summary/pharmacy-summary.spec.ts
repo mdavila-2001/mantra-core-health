@@ -38,6 +38,8 @@ describe('PharmacySummaryPage', () => {
   function mount(summary: PharmacySummary = SUMMARY): void {
     fixture = TestBed.createComponent(PharmacySummaryPage);
     fixture.detectChanges();
+    // The welcome's counter panel asks for the open orders on its own.
+    http.expectOne((r) => r.url.endsWith('/pharmacy/orders')).flush({ items: [] });
     http
       .expectOne((r) => r.url.endsWith('/pharmacy/pharmacies'))
       .flush({ items: [{ ...PHARMACY, code: 'FC', siteCount: 1, productCount: 1 }], count: 1 });
@@ -89,6 +91,12 @@ describe('PharmacySummaryPage', () => {
   it('muestra la actividad reciente, y si no hay dice cuándo aparece', () => {
     mount();
     expect(root().querySelector('[data-testid="summary-activity"]')?.textContent).toContain('Publicó «Ibuprofeno».');
+  });
+
+  it('abre con la bienvenida de la farmacia, con su nombre y el mostrador al costado', () => {
+    mount();
+    expect(root().querySelector('[data-testid="pharmacy-welcome"] h1')?.textContent).toContain(PHARMACY.name);
+    expect(root().querySelector('[data-testid="counter-today"]')).not.toBeNull();
   });
 
   it('sin actividad lo dice en vez de dejar un hueco', () => {

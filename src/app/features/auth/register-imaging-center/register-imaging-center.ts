@@ -50,6 +50,7 @@ import type {
   OrganizationContactPerson,
   OrganizationExecutives,
 } from '../../../core/data-access/iam/iam.types';
+import { MESSAGE_REQUIRED_DOCUMENT } from '../shared-registration/legal-documents';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -318,7 +319,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
-        'Adjúntelo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+        'Adjúntelo acá, junto a los datos del representante. Es obligatorio para toda organización, cualquiera sea su tipo de sociedad.',
     },
   ],
   'gerencia-general': [
@@ -422,10 +423,10 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  *   que la plataforma puede hacer hoy. Opcional no es «cualquier cosa»: un
  *   correo escrito a medias sigue frenando, porque un correo inválido cargado
  *   es peor que el campo vacío —parece que hay a quién escribirle—.
- * - **Constitución de la empresa y poder del representante**: una
- *   **unipersonal** no tiene ninguno de los dos —no constituye sociedad y el
- *   titular se representa a sí mismo—. Exigirlos dejaría afuera a un tipo
- *   societario que la propia lista ofrece.
+ * - **Constitución de la empresa**: una **unipersonal** no la tiene —no
+ *   constituye sociedad—. Exigirla dejaría afuera a un tipo societario que la
+ *   propia lista ofrece. El **poder del representante**, en cambio, sí frena
+ *   a todas: decisión del propietario (05/11/2026), ver `notarizedPowerField`.
  * - **NIT en PDF**: el número ya se pide escrito; el papel es respaldo.
  * - **Autorización de radioprotección**: no la necesita un centro que sólo
  *   hace ecografía o resonancia, que no usan radiación ionizante.
@@ -559,20 +560,15 @@ export class RegisterImagingCenter {
       this.draftService.trackEvent('start', 'imaging-center', 0);
     }
 
-    // La constitución de la empresa (y el poder de su representante) se exigen
-    // salvo a una unipersonal.
+    // La constitución se exige salvo a una unipersonal; el poder es obligatorio siempre.
     this.form.controls.companyType.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
       const constitucion = this.form.controls.constitucionFile;
-      const poder = this.form.controls.poderFile;
       if (tipo === 'UNIPERSONAL' || tipo === null) {
         constitucion.removeValidators(Validators.required);
-        poder.removeValidators(Validators.required);
       } else {
         constitucion.addValidators(Validators.required);
-        poder.addValidators(Validators.required);
       }
       constitucion.updateValueAndValidity();
-      poder.updateValueAndValidity();
     });
 
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
@@ -654,7 +650,9 @@ export class RegisterImagingCenter {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(4), Validators.maxLength(50)],
     }),
-    poderFile: new FormControl<AdjuntoDeclarado | null>(null),
+    poderFile: new FormControl<AdjuntoDeclarado | null>(null, {
+      validators: [Validators.required],
+    }),
     // --- 1.9 a 1.17 · los tres cargos, todos opcionales --------------------
     generalManagerName: nameGroup(false),
     generalManagerPhone: new FormControl('', {
@@ -886,12 +884,14 @@ export class RegisterImagingCenter {
           testId: 'registro-imagen-representante-correo',
           mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
         },
-        // El poder (1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
+        // El poder (1.8.1) va con quien lo firma. Obligatorio para todas (propietario, 05/11/2026).
         {
           key: 'poderFile',
-          label: 'Poder del representante legal (opcional)',
-          hint: 'No hace falta si el titular se representa a sí mismo.',
+          label: 'Poder del representante legal',
+          hint: 'Otorgado ante notaría e inscrito en SEPREC.',
           control: 'custom' as const,
+          required: true,
+          mensajeDeError: MESSAGE_REQUIRED_DOCUMENT,
         },
       ],
     },

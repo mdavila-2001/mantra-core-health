@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ErrorTelemetry } from '../observability/errors/error-telemetry';
 import { AppErrorHandler } from './app-error-handler';
 import { ErrorReporter } from './error-reporter';
+import { StaleBuildRecovery } from './stale-build-recovery';
 
 /** Un token sintético con la forma del real (base64url, 43 caracteres). */
 const TOKEN = 'Q2hhcmxpZVN5bnRoZXRpY1Rva2VuMDEyMzQ1Njc4OWFi';
@@ -46,5 +47,26 @@ describe('AppErrorHandler', () => {
     );
     const logged = consoleError.mock.calls.map((call: unknown[]) => String(call[0]));
     expect(logged.join('\n')).not.toContain(TOKEN);
+  });
+});
+
+describe('AppErrorHandler · trozo de una construcción que ya no existe', () => {
+  it('registra el fallo y le pasa el error a StaleBuildRecovery', () => {
+    const recoverFromBackground = vi.fn().mockResolvedValue(false);
+    TestBed.configureTestingModule({
+      providers: [
+        AppErrorHandler,
+        { provide: ErrorTelemetry, useValue: { report: vi.fn() } },
+        { provide: StaleBuildRecovery, useValue: { recoverFromBackground } },
+      ],
+    });
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = new Error('NG0750');
+
+    TestBed.inject(AppErrorHandler).handleError(error);
+
+    expect(TestBed.inject(ErrorReporter).ultimo()?.message).toContain('NG0750');
+    expect(recoverFromBackground).toHaveBeenCalledWith(error);
+    consoleError.mockRestore();
   });
 });

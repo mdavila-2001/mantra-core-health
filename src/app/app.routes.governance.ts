@@ -1,7 +1,7 @@
 import type { Type } from '@angular/core';
 import type { Routes } from '@angular/router';
 
-import { ErrorRecovery } from './features/error-recovery/error-recovery';
+import { chunkFallido } from './routes/chunk-fallido';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import { APP_TITLE } from './core/navigation/navigation.types';
 
@@ -22,7 +22,7 @@ function pantalla(seccion: string, subpath: string, titulo: string, loader: () =
     path: `${seccion}/${subpath}`,
     title: `${APP_TITLE} - ${titulo}`,
     canActivate: [seccionRolesGuard],
-    loadComponent: () => loader().catch(() => ErrorRecovery),
+    loadComponent: () => loader().catch(chunkFallido),
   };
 }
 

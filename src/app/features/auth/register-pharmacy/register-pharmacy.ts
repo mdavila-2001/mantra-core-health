@@ -1,6 +1,6 @@
 import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal, PLATFORM_ID } from '@angular/core';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -235,13 +235,18 @@ export class RegisterPharmacy {
         Validators.pattern(NIT_VALIDO),
       ],
     }),
-    // --- 1.1.2, 1.2.1, 1.3, 1.4, 1.5, 1.8.1 · los seis papeles, todos opcionales
+    // --- 1.1.2, 1.2.1, 1.3, 1.4, 1.5, 1.8.1 · los seis papeles: los cinco de
+    // la empresa son opcionales (D2); el poder del representante es obligatorio
+    // para toda organización (decisión del propietario, 05/11/2026)
     constitutionFileId: new FormControl('', { nonNullable: true }),
     taxIdentifierFileId: new FormControl('', { nonNullable: true }),
     commerceRegistryFileId: new FormControl('', { nonNullable: true }),
     operatingLicenseFileId: new FormControl('', { nonNullable: true }),
     healthAuthorityCertificateFileId: new FormControl('', { nonNullable: true }),
-    powerOfAttorneyFileId: new FormControl('', { nonNullable: true }),
+    powerOfAttorneyFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     // --- 1.6 · dirección legal de la central ---------------------------------
     // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
     // la central, ver `escribirLocalidadCentral`. Sigue obligatoria porque la
@@ -320,10 +325,9 @@ export class RegisterPharmacy {
   /**
    * El poder del representante (1.8.1) no va con los papeles de la empresa:
    * se pide en la misma página que el representante, junto a quien lo firma.
+   * Obligatorio para toda organización, sin excepción por tipo societario.
    */
-  private readonly campoDelPoder = computed(() =>
-    notarizedPowerField(PAIS, uiLanguage(), this.poderObligatorio()),
-  );
+  private readonly campoDelPoder = notarizedPowerField(PAIS, uiLanguage());
 
   readonly paginas = computed<readonly PaginaDeFormulario[]>(() =>
     paginateFields([
@@ -435,7 +439,7 @@ export class RegisterPharmacy {
             testId: 'registro-farmacia-representante-correo',
             mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
           },
-          this.campoDelPoder(),
+          this.campoDelPoder,
         ],
       },
       ...this.paginasDeGerencia(),
@@ -573,9 +577,9 @@ export class RegisterPharmacy {
     return this.documentosSubidos()[clave] ?? null;
   }
 
-  /** El rótulo ya resuelto del documento (sin el sufijo «(opcional)», acá es siempre opcional). */
+  /** El rótulo ya resuelto del documento, sin el sufijo «(opcional)» de los papeles de la empresa. */
   protected etiquetaDeDocumento(clave: EnrollmentDocumentKey): string {
-    const campo = [...this.camposDeDocumentos, this.campoDelPoder()].find((c) => c.key === clave);
+    const campo = [...this.camposDeDocumentos, this.campoDelPoder].find((c) => c.key === clave);
     return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 
@@ -592,21 +596,6 @@ export class RegisterPharmacy {
    * los escribe {@link fijarGpsCentral}.
    */
   readonly gpsCentral = signal<Coordinates | null>(null);
-  /** El tipo societario elegido: decide si el poder del representante es obligatorio. */
-  private readonly tipoSocietario = toSignal(this.form.controls.companyType.valueChanges, {
-    initialValue: this.form.controls.companyType.value,
-  });
-
-  /**
-   * La API exige el poder notariado del representante salvo a una empresa
-   * unipersonal (BR-09, 422 «sólo una empresa unipersonal puede omitirlo»).
-   * Mismo criterio que imagenología: sin tipo elegido todavía, no se exige.
-   */
-  private poderObligatorio(): boolean {
-    const tipo = this.tipoSocietario();
-    return tipo !== null && tipo !== 'UNIPERSONAL';
-  }
-
   /** Guarda el borrador del avance del formulario en caché y backend. */
   guardarBorrador(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -693,16 +682,6 @@ export class RegisterPharmacy {
       }
       this.draftService.trackEvent('start', 'pharmacy', 0);
     }
-
-    this.form.controls.companyType.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
-      const poder = this.form.controls.powerOfAttorneyFileId;
-      if (tipo === null || tipo === 'UNIPERSONAL') {
-        poder.removeValidators(Validators.required);
-      } else {
-        poder.addValidators(Validators.required);
-      }
-      poder.updateValueAndValidity();
-    });
 
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.guardarBorrador();

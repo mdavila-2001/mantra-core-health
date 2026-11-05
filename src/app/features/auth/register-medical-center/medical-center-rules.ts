@@ -23,14 +23,14 @@ export const AVISO_CATALOGO =
  * la API (`assertLegalDocumentsForEntityType`, 422 nombrando el documento);
  * decisión del propietario del 28/10/2026. El resto de los tipos sube los cinco.
  *
- * El poder del representante lo omite sólo una **unipersonal** (el titular se
- * representa a sí mismo): la API lo exige a todo el resto, profesional
- * independiente incluido.
+ * El poder del representante **no lo omite nadie**: es obligatorio para toda
+ * organización por decisión del propietario (05/11/2026), aunque la API deje
+ * pasar a una unipersonal sin él (BR-09). Por eso ningún tipo lo lista acá.
  */
 export const DOCUMENTOS_OPCIONALES_POR_TIPO: Readonly<
   Record<string, readonly EnrollmentDocumentKey[]>
 > = {
-  UNIPERSONAL: ['constitutionFileId', 'powerOfAttorneyFileId'],
+  UNIPERSONAL: ['constitutionFileId'],
   PROFESIONAL_INDEPENDIENTE: ['constitutionFileId', 'commerceRegistryFileId'],
 };
 

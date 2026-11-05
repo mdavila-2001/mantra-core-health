@@ -255,8 +255,8 @@
               [errorMessage]="mensaje('dueDate')"
               hint="Hasta el final de ese día pueden decidir los revisores."
             >
-              <app-input
-                type="date"
+              <app-date-string-picker
+                
                 [value]="form().dueDate"
                 (valueChange)="cambiar({ dueDate: '' + ($event ?? '') })"
                 [hasError]="mensaje('dueDate') !== ''"

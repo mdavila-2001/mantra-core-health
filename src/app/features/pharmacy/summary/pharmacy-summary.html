@@ -1,7 +1,4 @@
-<app-page-header
-  title="Resumen"
-  subtitle="Cómo está su catálogo hoy: qué está publicado, qué se acaba y qué le falta terminar."
-/>
+<app-pharmacy-welcome [pharmacyName]="scope.name()" />
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
   @if (scope.hasSeveral()) {
@@ -22,6 +19,7 @@
       @if (data(); as s) {
         <app-card class="summary" padding="lg" data-testid="summary-card">
           <div class="summary__panel">
+            <h2 class="summary__title">Su catálogo hoy</h2>
             <ul class="summary__indicators" aria-label="Indicadores del catálogo" data-testid="summary-indicators">
               <li class="summary__indicator">
                 <span class="summary__label">Publicados</span>
