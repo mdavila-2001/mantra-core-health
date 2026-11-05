@@ -34,6 +34,8 @@ describe('handlers de operación de camas (F2)', () => {
   const limpieza = u('limpieza');
   const supervisoraLimpieza = u('supervisora.limpieza@alovida.mock');
   const mantenimiento = u('mantenimiento');
+  /** Someone who does not administer the site: operative roles no longer exist (2026-11-05). */
+  const sinAcceso = u('medica');
   const superadmin = u('superadmin');
 
   interface Opciones {
@@ -82,24 +84,22 @@ describe('handlers de operación de camas (F2)', () => {
     expect(t.generatedAt).toBeTypeOf('string');
   });
 
-  it('enfermería ve iniciales del paciente; limpieza y soporte no (§F2.3 y F2.5 #6)', () => {
+  it('el admin de la sede ve iniciales del paciente; la plataforma no (§F2.3 y F2.5 #6)', () => {
     expect(celda('301-A').occupancy.patient?.initials).toMatch(/^[A-Z]{2,3}$/);
-    expect(celda('301-A', limpieza).occupancy.patient).toBeUndefined();
-    expect(celda('301-A', limpieza).occupancy.encounterId).toBeNull();
-    expect(Object.keys(celda('301-A', limpieza).occupancy)).not.toContain('encounterLocationId');
-    expect(Object.keys(celda('301-A', limpieza).occupancy)).not.toContain('patient');
+    expect(celda('301-A', limpieza).occupancy.patient?.initials).toMatch(/^[A-Z]{2,3}$/);
     expect(celda('301-A').occupancy.encounterLocationId).toBeTypeOf('string');
     expect(celda('301-A', superadmin).occupancy.patient).toBeUndefined();
-    expect(tablero(limpieza).units.flatMap((x) => x.cells).every((c) => c.occupancy.patient === undefined)).toBe(true);
+    expect(celda('301-A', superadmin).occupancy.encounterId).toBeNull();
+    expect(Object.keys(celda('301-A', superadmin).occupancy)).not.toContain('patient');
+    expect(tablero(superadmin).units.flatMap((x) => x.cells).every((c) => c.occupancy.patient === undefined)).toBe(true);
   });
 
   it('el acceso del actor dice sus roles y acciones por sede', () => {
     const acceso = call('GET', '/practice/infrastructure-access/me', { usuario: limpieza }).body as InfrastructureAccess;
     expect(acceso.sites).toHaveLength(1);
-    expect(acceso.sites[0]!.roles).toEqual(['HOUSEKEEPING']);
-    expect(acceso.sites[0]!.actions).toContain('f2.cleaning.work');
-    expect(acceso.sites[0]!.actions).not.toContain('f3.adt.place');
-    expect(acceso.sites[0]!.actions).not.toContain('f3.adt.read');
+    expect(acceso.sites[0]!.roles).toEqual(['SITE_ADMIN']);
+    expect(acceso.sites[0]!.actions).toEqual(expect.arrayContaining(['f2.cleaning.work', 'f2.cleaning.inspect', 'f3.adt.place', 'f3.adt.read', 'f3.census.close']));
+    expect(acceso.sites[0]!.actions).not.toContain('f2.isolation.cohort-approve');
     expect(acceso.sites[0]).toMatchObject({ practiceId: expect.any(String), globalRoles: [], grants: [] });
     const medica = call('GET', '/practice/infrastructure-access/me', { usuario: u('medica') }).body as InfrastructureAccess;
     expect(medica.sites).toEqual([]);
@@ -115,11 +115,11 @@ describe('handlers de operación de camas (F2)', () => {
     expect(reasonOf(viejo)).toBe('OPS_VERSION_MISMATCH');
   });
 
-  it('limpieza no bloquea (403 con los roles requeridos)', () => {
+  it('quien no administra la sede no bloquea (403 con los roles requeridos)', () => {
     const cama = celda('301-B', limpieza);
-    const r = call('POST', `/care-spaces/${cama.id}/availability`, { usuario: limpieza, ifMatchOps: cama.opsVersion, body: { action: 'block', kindCode: 'BLOCK_CLINICAL', reasonCode: 'BLOCK_RSN_STAFF_SHORTAGE' } });
+    const r = call('POST', `/care-spaces/${cama.id}/availability`, { usuario: sinAcceso, ifMatchOps: cama.opsVersion, body: { action: 'block', kindCode: 'BLOCK_CLINICAL', reasonCode: 'BLOCK_RSN_STAFF_SHORTAGE' } });
     expect(r.status).toBe(403);
-    expect((r.body as { details: { requiredRoles: string[] } }).details.requiredRoles).toEqual(['NURSE']);
+    expect((r.body as { details: { requiredRoles: string[] } }).details.requiredRoles).toEqual(['ORG_ADMIN', 'SITE_ADMIN']);
   });
 
   it('bloqueo: motivo, texto de «Otro», fecha estimada de mantenimiento, cama ocupada (F2.5 #2)', () => {
@@ -176,9 +176,10 @@ describe('handlers de operación de camas (F2)', () => {
     expect(terminada.statusCode).toBe('CLN_DONE');
     expect(terminada.inspectionRequired).toBe(true);
     expect(celda('303-A').assignable).toBe(false);
-    // La limpiadora no tiene la acción de inspeccionar (403); la supervisora que
-    // además limpió, tampoco puede inspeccionar lo suyo (422).
-    expect(paso('inspect', terminada, limpieza, { result: 'PASS' }).status).toBe(403);
+    // Quien limpió no puede inspeccionar lo suyo (422), ni el admin de la sede.
+    expect(paso('inspect', terminada, limpieza, { result: 'PASS' }).status).toBe(422);
+    expect(reasonOf(paso('inspect', terminada, limpieza, { result: 'PASS' }))).toBe('INSPECTION_BY_CLEANER_NOT_ALLOWED');
+    expect(paso('inspect', terminada, sinAcceso, { result: 'PASS' }).status).toBe(403);
     expect(reasonOf(paso('inspect', terminada, supervisoraLimpieza, { result: 'FAIL' }))).toBe('INSPECTION_REASON_REQUIRED');
     const ok = paso('inspect', terminada, supervisoraLimpieza, { result: 'PASS' });
     expect(ok.status).toBe(200);
@@ -207,7 +208,7 @@ describe('handlers de operación de camas (F2)', () => {
   it('marcar sucia con orden abierta → 409; contaminada la escala a TERMINAL', () => {
     const r1 = celda('REC-1');
     expect(reasonOf(call('POST', `/care-spaces/${r1.id}/hygiene`, { usuario: limpieza, ifMatchOps: r1.opsVersion, body: { action: 'mark-dirty' } }))).toBe('CLEANING_ORDER_ALREADY_OPEN');
-    expect(call('POST', `/care-spaces/${r1.id}/hygiene`, { usuario: limpieza, ifMatchOps: r1.opsVersion, body: { action: 'mark-contaminated' } }).status).toBe(403);
+    expect(call('POST', `/care-spaces/${r1.id}/hygiene`, { usuario: sinAcceso, ifMatchOps: r1.opsVersion, body: { action: 'mark-contaminated' } }).status).toBe(403);
     const r = call('POST', `/care-spaces/${r1.id}/hygiene`, { ifMatchOps: r1.opsVersion, body: { action: 'mark-contaminated', reasonText: 'Derrame de fluidos' } });
     expect((r.body as { cell: BedBoardCell }).cell).toMatchObject({ v2Code: 'K', hygiene: { terminalRequired: true } });
     expect(cola().find((o) => o.careSpaceId === r1.id)?.typeCode).toBe('CLEAN_TERMINAL');

@@ -803,7 +803,7 @@ export function transitionCleaningOrder(request: MockRequest, action: string): u
       if (yo !== null && yo === orden.finishedByUserId) {
         return precondition('INSPECTION_BY_CLEANER_NOT_ALLOWED', 'Quien terminó la limpieza no puede inspeccionarla: la inspecciona otra persona.');
       }
-      const supervisor = rolesIn(request, sitio).some((r) => r === 'NURSE_SUPERVISOR' || r === 'HOUSEKEEPING_SUPERVISOR');
+      const supervisor = rolesIn(request, sitio).some((r) => r === 'ORG_ADMIN' || r === 'SITE_ADMIN');
       if (orden.typeCode === 'CLEAN_TERMINAL' && !supervisor) return forbiddenAction('f2.cleaning.inspect', 'TERMINAL_INSPECTION_REQUIRES_SUPERVISOR');
       if (datos.result === 'FAIL') {
         const reasonRow = typeof datos.reasonText === 'string' ? datos.reasonText.trim() : '';

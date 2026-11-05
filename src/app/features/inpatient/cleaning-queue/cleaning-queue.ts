@@ -9,7 +9,7 @@ import type { CleaningOrder, CleaningOrderPage, CleaningOrderResult, CleaningPri
 import { opsLabel } from '../../../core/data-access/infrastructure-ops/ops-labels';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, empty, forbidden, loading, ready, stale } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready, stale } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -26,7 +26,7 @@ import { FilterBar, type FilterDef } from '../../../shared/components/organisms/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { InpatientAccessStore } from '../inpatient-access.store';
-import { BED_BOARD_ROUTE, CLOCK_TICK_MS, POLL_INTERVAL_MS, STALE_AFTER_MS, relativeAge } from '../inpatient-presentation';
+import { BED_BOARD_ROUTE, CLOCK_TICK_MS, POLL_INTERVAL_MS, STALE_AFTER_MS, relativeAge, noSiteAccess } from '../inpatient-presentation';
 import { NewOrderDialog } from './new-order-dialog';
 
 type Scope = 'all' | 'mine';
@@ -94,7 +94,7 @@ export class CleaningQueue {
     const a = this.access.state();
     if (a.status !== 'ready') return a as ViewState<string>;
     const s = this.site();
-    return s === null ? forbidden({ message: 'Su rol no incluye la cola de limpieza de ningún establecimiento de esta organización.' }) : ready(s.siteId);
+    return s === null ? noSiteAccess('la cola de limpieza') : ready(s.siteId);
   });
 
   protected readonly queryKey = computed<string | null>(() => {

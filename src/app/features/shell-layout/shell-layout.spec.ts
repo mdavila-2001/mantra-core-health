@@ -268,7 +268,6 @@ describe('ShellLayout', () => {
       //
       // La verificación de identidad y su historial salieron del menú mientras
       // el producto no la ofrezca: ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
-      '/design-system',
     ]);
   });
 
@@ -280,8 +279,9 @@ describe('ShellLayout', () => {
     expect(rutasDelMenu()).toContain('/administration/users');
   });
 
-  it('la vitrina queda al final: es herramienta de quien construye, no del producto', () => {
-    expect(rutasDelMenu().at(-1)).toBe('/design-system');
+  it('el menú no trae el grupo «Herramientas» ni la vitrina (2026-11-05)', () => {
+    expect(rutasDelMenu()).not.toContain('/design-system');
+    expect(rotulosDelMenu()).not.toContain('Herramientas');
   });
 
   function rotulosDelMenu(): readonly string[] {
@@ -290,15 +290,13 @@ describe('ShellLayout', () => {
     return secciones.flatMap((s) => [...s.items].map((i) => i.label));
   }
 
-  it('al paciente no se le ofrece la vitrina; a quien administra, sí', () => {
-    // H-07: el paciente nunca ve vocabulario de sistema, y «Sistema de diseño»
-    // es una herramienta de desarrollo, no algo de su cuenta.
+  it('la vitrina no se ofrece a nadie, tampoco a quien administra (2026-11-05)', () => {
     abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
     expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
     expect(rutasDelMenu()).not.toContain('/design-system');
 
     abrirSesion({ sub: 'u-2', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
-    expect(rotulosDelMenu()).toContain('Sistema de diseño');
+    expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
   });
 
   it('tampoco a la aseguradora: es tan ajena a su trabajo como al del médico (2026-09-25)', () => {
@@ -909,7 +907,7 @@ describe('ShellLayout', () => {
       expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(
         secciones.filter((s) => s.aplanado === true).length,
       );
-      // Sin sesión sólo quedan las secciones sin roles, más la vitrina.
+      // Sin sesión sólo quedan las secciones sin roles.
       const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
         a.getAttribute('data-route'),
       );
@@ -917,7 +915,7 @@ describe('ShellLayout', () => {
       // del armazón ya lleva a `/dashboard`): no está entre los destinos
       // pintados, aunque la ruta sigue existiendo y siendo alcanzable.
       expect(destinos).not.toContain('/dashboard');
-      expect(destinos).toContain('/design-system');
+      expect(destinos).not.toContain('/design-system');
     });
 
     it('la barra de la aseguradora: ocho renglones sueltos, ningún plegable (2026-09-25, +1 el 2026-09-27; aplanada el 2026-10-01; +1 el directorio de pacientes; +1 el buzón de solicitudes el 2026-11-02)', () => {

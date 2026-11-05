@@ -8,7 +8,7 @@ import type { CensusAdjustment, CensusDayView, CensusField } from '../../../core
 import { InfrastructureClient } from '../../../core/data-access/infrastructure/infrastructure.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, empty, forbidden, loading, mapData, ready } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -21,7 +21,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { InpatientAccessStore } from '../inpatient-access.store';
-import { BED_BOARD_ROUTE, DEFAULT_TIME_ZONE, dateKey, keyToDate, shortDate, shortDateTime, siteToday, validDateKey } from '../inpatient-presentation';
+import { BED_BOARD_ROUTE, DEFAULT_TIME_ZONE, dateKey, keyToDate, shortDate, shortDateTime, siteToday, validDateKey, noSiteAccess } from '../inpatient-presentation';
 import { AdjustDialog } from './adjust-dialog';
 import { CENSUS_CLOSE_GRACE_MS, CENSUS_LABEL, censusFieldLabel } from './census-fields';
 
@@ -86,7 +86,7 @@ export class Census {
     const a = this.access.state();
     if (a.status !== 'ready') return a as ViewState<string>;
     const s = this.site();
-    return s === null ? forbidden({ message: 'Su rol no incluye el censo de ningún establecimiento de esta organización.' }) : ready(s.siteId);
+    return s === null ? noSiteAccess('el censo diario') : ready(s.siteId);
   });
 
   private readonly reloads = signal(0);

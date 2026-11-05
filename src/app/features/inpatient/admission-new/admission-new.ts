@@ -75,7 +75,7 @@ export class AdmissionNew {
     if (a.status !== 'ready') return a as ViewState<string>;
     const s = this.site();
     return s === null
-      ? forbidden({ message: 'Ingresar pacientes es tarea de enfermería o admisión. Su rol en este establecimiento no lo permite.', nextAction: { label: 'Volver al tablero', route: BED_BOARD_ROUTE } })
+      ? forbidden({ message: 'Ingresar pacientes lo hace quien administra la organización o la sede. Su cuenta no lo permite.', nextAction: { label: 'Volver al tablero', route: BED_BOARD_ROUTE } })
       : ready(s.siteId);
   });
 

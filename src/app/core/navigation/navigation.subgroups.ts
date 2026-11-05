@@ -292,7 +292,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // es configurar la clínica, el laboratorio o la planta como institución.
     paths: [
       'administration/medical-organization',
-      'administration/medical-center-setup',
       'administration/medical-laboratory',
       'administration/pharma-lab',
     ],

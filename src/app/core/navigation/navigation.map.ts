@@ -1218,7 +1218,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
     label: 'Configurar práctica',
-    group: 'Administración',
+    // Moved out of «Administración» into «Atención» on 2026-11-05 (owner request).
+    group: 'Atención',
     icon: 'hospital',
     requiresTenant: true,
     availability: 'disponible',
