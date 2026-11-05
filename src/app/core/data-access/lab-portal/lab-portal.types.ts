@@ -10,8 +10,7 @@
 
     Todas las rutas cuelgan de `/diagnostics/lab/…` y no llevan el id del
     laboratorio: lo decide el servidor con el tenant del contexto
-    (`X-Tenant-Id`), igual que la recepción de muestras. The real API publishes
-    them (04/11/2026); the simulator mirrors them for `development,demo`.
+    (`X-Tenant-Id`). The real API publishes them; the simulator mirrors them.
     ========================================================================== */
 
 /** En qué punto de su vida está un servicio del catálogo. */
@@ -286,6 +285,8 @@ export interface LabOrder {
   readonly status: LabOrderStatus;
   /** El motivo de una orden cancelada o rechazada, si se dio. */
   readonly reason: string | null;
+  /** The API admits REJECT now: received, with an open specimen (imaging never). */
+  readonly canReject?: boolean;
   readonly files: readonly LabOrderFile[];
 }
 

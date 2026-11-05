@@ -71,8 +71,7 @@
 
 .modalidades,
 .excepciones__lista,
-.resumen,
-.equipos {
+.resumen {
   display: grid;
   gap: var(--sp-3);
   margin: 0;
@@ -216,53 +215,8 @@
   justify-content: flex-end;
 }
 
-.equipo {
+.centro__publicar {
   display: grid;
-  gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-}
-
-.equipo__datos {
-  display: grid;
-  gap: var(--sp-1);
-}
-
-.equipo__datos p {
-  margin: 0;
-}
-
-.equipo__nombre {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.equipo__mapa summary {
-  cursor: pointer;
-}
-
-.equipo__mapa app-glossary-data-flow {
-  margin-block-start: var(--sp-2);
-  font-size: var(--fs-body);
-}
-
-.equipo__mapa {
-  color: var(--text-link);
-  font-size: var(--fs-caption);
-}
-
-/* Tableta (--bp-md, 780 px): el equipo en una fila, con su estado a la derecha. */
-@media (min-width: 780px) {
-  .equipo {
-    grid-template-columns: 1fr auto;
-    /* Arriba y no al centro: con el mapa de datos abierto, el estado quedaba
-       flotando a mitad de la tarjeta, lejos del nombre del equipo. */
-    align-items: start;
-  }
-}
-
-.equipo__estado {
-  min-inline-size: 12rem;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-6);
 }

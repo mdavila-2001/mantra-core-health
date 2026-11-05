@@ -6,6 +6,7 @@ import {
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
+import { ORDER_CATEGORY } from '../fixtures/concepts';
 import { TENANT_LABORATORIO } from '../mock-session';
 import { Coleccion, cuerpo } from '../mock-store';
 import { labInboxOrders } from './diagnostics.handlers';
@@ -112,6 +113,9 @@ function ordenDeRespuesta(orderId: string, deps: DependenciasDeOrdenes): LabOrde
     sizeBytes: r.sizeBytes,
   }));
   const status = guardado?.status ?? 'DRAFT';
+  // Like the API: REJECT is recorded against the specimen, so only a received
+  // laboratory order (imaging has no specimen) can be rejected.
+  const conMuestra = orden.categoryConceptId === ORDER_CATEGORY['SRQ-LAB'];
   return {
     orderId,
     studyName: destino.studyName,
@@ -120,6 +124,7 @@ function ordenDeRespuesta(orderId: string, deps: DependenciasDeOrdenes): LabOrde
     requestedAt: orden.requestedAt,
     status: status === 'PROCESSED' && files.length > 0 ? 'UPLOADED' : status,
     reason: guardado?.reason ?? null,
+    canReject: status === 'RECEIVED' && conMuestra,
     files,
   };
 }

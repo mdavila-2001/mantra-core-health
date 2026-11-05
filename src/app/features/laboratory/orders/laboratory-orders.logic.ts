@@ -58,13 +58,16 @@ export const ORDER_STATUS_BADGE: Readonly<
   REJECTED: { label: 'Rechazada', variant: 'error' },
 };
 
-/** Los códigos estables de las cuatro acciones de la fila. */
-export type OrderActionCode = 'receive' | 'process' | 'upload' | 'download';
+/** Los códigos estables de las acciones de la fila. */
+export type OrderActionCode = 'receive' | 'process' | 'upload' | 'download' | 'reject';
 
 /**
- * Las cuatro acciones, y nada más: recibir, marcar como procesada, subir
- * resultados y descargar. Cada una sólo está habilitada en el paso del camino
- * que le toca; una orden cancelada o rechazada no tiene ninguna.
+ * Recibir, marcar como procesada, subir resultados, descargar y rechazar (con
+ * motivo; sólo si la API dice `canReject`: lo registra contra la muestra, así
+ * que una orden de imagenología nunca lo trae). Cada
+ * una sólo está habilitada en el paso del camino que le toca; una orden
+ * cancelada o rechazada no tiene ninguna. Anular no se ofrece: la orden es de
+ * quien la pidió y la API todavía no deja que el laboratorio la anule.
  *
  * Es presentación: la API revalida cada paso y responde 409 si no corresponde.
  */
@@ -90,6 +93,10 @@ export function actionsOf(order: LabOrder): readonly RowAction[] {
       icon: 'download',
       disabled: order.status !== 'UPLOADED' || order.files.length === 0,
     },
+    // Only when the API says so: rejecting is recorded against the specimen.
+    ...(order.canReject === true
+      ? [{ code: 'reject', label: 'Rechazar', icon: 'close', destructive: true } satisfies RowAction]
+      : []),
   ];
 }
 

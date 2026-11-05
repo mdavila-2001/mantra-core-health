@@ -1381,9 +1381,6 @@
     "src/app/features/account/pharmacy-hub/pharmacy-shop/pharmacy-shop.ts": {
       "lineas": 366
     },
-    "src/app/features/laboratory/center-schedule/center-schedule.ts": {
-      "lineas": 366
-    },
     "src/app/features/shell-layout/shell-layout.css": {
       "lineas": 365
     },

@@ -30,6 +30,7 @@ import { RowActions } from '../../../shared/components/molecules/row-actions/row
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
@@ -51,6 +52,7 @@ import {
   ordersOfTab,
   type OrderActionCode,
 } from './laboratory-orders.logic';
+import { saveBlob } from './save-blob';
 
 /**
  * **Órdenes** del laboratorio y del centro de imagenología, en una sola
@@ -106,6 +108,7 @@ export class LaboratoryOrders {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toasts = inject(ToastService);
+  private readonly dialogs = inject(DialogService);
   protected readonly queue = inject(ResultUploadQueue);
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
@@ -157,6 +160,7 @@ export class LaboratoryOrders {
       (order) =>
         query === '' ||
         order.patientName.toLocaleLowerCase('es').includes(query) ||
+        order.requesterName.toLocaleLowerCase('es').includes(query) ||
         order.studyName.toLocaleLowerCase('es').includes(query),
     );
     if (rows.length > 0) return ready(rows);
@@ -257,12 +261,23 @@ export class LaboratoryOrders {
         return;
       case 'download':
         return this.download(order);
+      case 'reject':
+        void this.reject(order);
     }
   }
 
-  private transition(order: LabOrder, action: LabOrderAction, done: string): void {
+  /** Rejecting needs the reason: the requester reads it on the order. */
+  private async reject(order: LabOrder): Promise<void> {
+    const reason = await this.dialogs.confirmWithReason(
+      { title: 'Rechazar la orden', message: `${order.studyName} de ${order.patientName}. El médico verá el motivo.`, confirmLabel: 'Rechazar', destructive: true },
+      { label: 'Motivo del rechazo', hint: 'Por ejemplo: muestra hemolizada o insuficiente.' },
+    );
+    if (reason !== null) this.transition(order, 'REJECT', 'Orden rechazada.', reason);
+  }
+
+  private transition(order: LabOrder, action: LabOrderAction, done: string, reason?: string): void {
     this.busyOrderId.set(order.orderId);
-    this.lab.transitionOrder(order.orderId, action).subscribe({
+    this.lab.transitionOrder(order.orderId, action, ...((reason === undefined ? [] : [reason]) as [string?])).subscribe({
       next: () => {
         this.busyOrderId.set(null);
         this.toasts.success(done);
@@ -303,15 +318,6 @@ export class LaboratoryOrders {
 
   /** Pide los bytes del archivo y lo baja con su nombre. */
   private fetchAndSave(id: string, fileName: string): Observable<void> {
-    return this.lab.resultContent(id).pipe(
-      map((blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        link.click();
-        URL.revokeObjectURL(url);
-      }),
-    );
+    return this.lab.resultContent(id).pipe(map((blob) => saveBlob(blob, fileName)));
   }
 }

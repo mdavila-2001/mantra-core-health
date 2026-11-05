@@ -1,0 +1,57 @@
+<div class="equipos">
+  <p class="equipos__ayuda">
+    Cada equipo operativo es una línea: atiende a un paciente por turno mientras su turno está abierto. Si uno se rompe o entra en
+    mantenimiento, márquelo y el cupo baja solo. Un turno propio se publica con «Publicar horarios».
+  </p>
+
+  @if (error(); as mensaje) {
+    <app-alert tone="error" title="No se guardó" data-testid="centro-equipo-error" dismissible (dismissed)="error.set(null)">{{ mensaje }}</app-alert>
+  }
+  @if ((centro().bookingsWithoutEquipment ?? 0) > 0) {
+    <app-alert tone="warning" title="Hay turnos sin equipo" data-testid="centro-turnos-sin-equipo">
+      {{ centro().bookingsWithoutEquipment }} turno(s) ya reservado(s) no tienen una línea abierta que los atienda. Avísele a cada paciente y
+      reprográmelo, o vuelva a poner el equipo en servicio.
+    </app-alert>
+  }
+
+  @if (editando() === 'nuevo') {
+    <app-equipment-form [guardando]="ocupado()" (guardar)="guardar($event)" (cancelar)="editando.set(null)" />
+  } @else {
+    <div class="equipos__barra">
+      <button app-button variant="outline" data-testid="centro-equipo-agregar" [disabled]="ocupado()" (click)="editando.set('nuevo')">
+        Agregar equipo
+      </button>
+    </div>
+  }
+
+  @for (g of grupos(); track g.code) {
+    <section class="equipos__grupo" [attr.aria-label]="g.label">
+      <h2 class="equipos__titulo">{{ g.label }}</h2>
+      <ul class="equipos__lista" role="list">
+        @for (e of g.equipos; track e.id) {
+          <li>
+            @if (editando() === e.id) {
+              <app-equipment-form [equipo]="equipoEditado()" [guardando]="ocupado()" (guardar)="guardar($event)" (cancelar)="editando.set(null)" />
+            } @else {
+              <app-equipment-line
+                [equipo]="e"
+                [turno]="turnoDe(e)"
+                [turnoBase]="turnoBase(e)"
+                [cola]="colaDe(e)"
+                [limitaTurnos]="e.modalityCode !== null"
+                [ocupado]="ocupado()"
+                [veGlosario]="veGlosario()"
+                (estadoChange)="cambiarEstado(e, $event)"
+                (turnoChange)="fijarTurno(e, $event)"
+                (editar)="editando.set(e.id)"
+                (quitar)="quitar(e)"
+              />
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  } @empty {
+    <p class="equipos__ayuda">Todavía no cargó equipos: sus servicios usan el cupo declarado del centro.</p>
+  }
+</div>

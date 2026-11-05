@@ -76,6 +76,14 @@ describe('órdenes del laboratorio: acciones por estado', () => {
     }
   });
 
+  it('Rechazar aparece sólo cuando la API dice canReject (orden recibida con su muestra)', () => {
+    const recibida = { ...order('RECEIVED'), canReject: true };
+    expect(habilitadas(recibida)).toEqual(['process', 'reject']);
+    const rechazar = actionsOf(recibida).find((a) => a.code === 'reject');
+    expect(rechazar).toMatchObject({ label: 'Rechazar', destructive: true });
+    expect(actionsOf(order('RECEIVED')).some((a) => a.code === 'reject')).toBe(false);
+  });
+
   it('una orden cancelada o rechazada no tiene acciones', () => {
     expect(actionsOf(order('CANCELLED'))).toEqual([]);
     expect(actionsOf(order('REJECTED'))).toEqual([]);

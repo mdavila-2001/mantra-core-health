@@ -849,8 +849,14 @@ el pedido al backend está en `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS).
 
 - El horario se resuelve **estudio → modalidad → general**: lo que no tiene
   horario propio usa el general, que entonces se llama «Resto de servicios».
-- El cupo de cada turno es la cantidad de equipos **operativos** de la
-  modalidad (`diagnostic_equipment.operational_status` en el modelo).
+- Cada equipo es una **línea de producción**: atiende a un paciente por turno
+  mientras su turno está abierto. Un equipo puede tener **turno propio**
+  (`schedule.equipment[]`, guardado como plantilla `EQUIPMENT:<id>` del
+  recurso del centro); sin él, sigue el horario de su estudio. El cupo de cada
+  turno es la cantidad de equipos **operativos** de la modalidad con su turno
+  abierto en ese horario (`diagnostic_equipment.operational_status`).
+- `GET /diagnostic-units/me/bookings` dice en `equipmentId` qué línea atiende
+  cada turno (por orden de llegada); `null` si ninguna línea abierta puede.
 - La reserva no lleva motivo ni descripción: la orden ya dice qué estudio es.
   Un turno ocupado responde `409` con `details.slotTaken`.
 - Las tres operaciones de la orden cuelgan de `/diagnostic-results/me/orders`,
@@ -862,7 +868,11 @@ el pedido al backend está en `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS).
 | `GET` | `/diagnostic-units/me/schedule` | `CenterSchedulePage` |
 | `GET` | `/diagnostic-units/:unitId/schedule` | `CenterSchedulePage` |
 | `PUT` | `/diagnostic-units/:unitId/schedule` | `CenterSchedulePage` (`422` validación · `409` con `affectedBookings`) |
-| `PATCH` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `CenterSchedulePage` (estado del equipo) |
+| `PATCH` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `CenterEquipmentTab` (estado del equipo) |
+| `POST` | `/diagnostic-units/:unitId/equipment` | `CenterEquipmentTab` (alta; `422` modalidad sin tipo de equipo en el catálogo) |
+| `PUT` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `CenterEquipmentTab` (nombre, fabricante, serie, modalidad) |
+| `DELETE` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `CenterEquipmentTab` (`409` si ya tiene registros: se marca fuera de servicio) |
+| `GET` | `/diagnostic-units/me/bookings` | `CenterEquipmentTab` (cola de hoy por equipo), resumen del laboratorio |
 | `GET` | `/diagnostic-units/:unitId/study-availability` | `OrderBooking` |
 | `GET` | `/diagnostic-results/me/orders/:orderId/booking-options` | `OrderBooking` (centros, precio, distancia) |
 | `POST` | `/diagnostic-results/me/orders/:orderId/booking` | `OrderBooking` |
