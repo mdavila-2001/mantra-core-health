@@ -124,6 +124,7 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
 
     await page.getByTestId('registro-correo').fill(`paciente-${Date.now()}@alovida.test`);
     await page.getByTestId('registro-password').fill('Alta-Paciente1!');
+    await page.getByTestId('registro-password-confirm').fill('Alta-Paciente1!');
 
     const enviar = page.getByTestId('paginated-form-continuar');
     await expect(enviar).toHaveText(/Crear cuenta/);
@@ -147,10 +148,12 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await continuarHasta(page, 'Representante legal');
 
     await escribirNombre(page, 'registro-lab-representante', 'Mariana', 'Siles');
-    await page.getByTestId('registro-lab-representante-correo').fill(`legal-${Date.now()}@lab-andino.test`);
     await continuarHasta(page, 'Su acceso');
 
+    await page.getByTestId('registro-lab-representante-correo').fill(`legal-${Date.now()}@lab-andino.test`);
+
     await page.getByTestId('registro-lab-password').fill('secreto12');
+    await page.getByTestId('registro-lab-password-confirm').fill('secreto12');
     await continuar(page);
 
     await expect(page.getByTestId('registro-lab-exito')).toBeVisible({ timeout: 20_000 });
@@ -188,12 +191,14 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await continuarHasta(page, 'Representante legal');
 
     await escribirNombre(page, 'registro-imagen-representante', 'Rodrigo', 'Vaca');
+    await continuarHasta(page, 'Su acceso');
+
     await page
       .getByTestId('registro-imagen-representante-correo')
       .fill(`legal-${Date.now()}@imagen-oriente.test`);
-    await continuarHasta(page, 'Su acceso');
 
     await page.getByTestId('registro-imagen-password').fill('secreto12');
+    await page.getByTestId('registro-imagen-password-confirm').fill('secreto12');
     await continuar(page);
 
     await expect(page.getByTestId('registro-imagen-exito')).toBeVisible({ timeout: 20_000 });

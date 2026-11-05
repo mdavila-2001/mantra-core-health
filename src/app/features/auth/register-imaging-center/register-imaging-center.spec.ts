@@ -99,6 +99,7 @@ describe('RegisterImagingCenter', () => {
       legalRepEmail: 'ana.paz@imagenoriente.test',
       legalRepIdNumber: '4872190',
       password: 'secreto12',
+      confirmPassword: 'secreto12',
     });
     component.updateAttachment('nitFile', [archivo('nit.pdf', 'application/pdf', 10)]);
     component.updateAttachment('seprecFile', [archivo('seprec.pdf', 'application/pdf', 10)]);
@@ -356,10 +357,11 @@ describe('RegisterImagingCenter', () => {
     expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
       'legalRepName',
       'legalRepIdNumber',
-      'legalRepEmail',
       'poderFile',
     ]);
     expect(pagina('radioproteccion')?.campos.map((c) => c.key)).not.toContain('poderFile');
+    // The access email sits with the password and its confirmation.
+    expect(pagina('acceso')?.campos.map((c) => c.key)).toEqual(['legalRepEmail', 'password', 'confirmPassword']);
   });
 
   it('el NIT en PDF frena el alta: viaja junto con los otros papeles', () => {

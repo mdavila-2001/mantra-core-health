@@ -272,6 +272,7 @@ test.describe('Carril 04 — visuales del alta de paciente', () => {
 
     await page.getByTestId('registro-correo').fill(`carril04.${Date.now()}@example.com`);
     await page.getByTestId('registro-password').fill('Clave-Segura-2026');
+    await page.getByTestId('registro-password-confirm').fill('Clave-Segura-2026');
     await page.getByTestId('paginated-form-continuar').click();
 
     await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 30_000 });

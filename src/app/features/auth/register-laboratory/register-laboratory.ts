@@ -54,10 +54,7 @@ import {
   RECORD_LEGAL_DOCUMENTS,
   type EnrollmentDocumentKey,
 } from '../shared-registration/legal-documents';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
@@ -199,12 +196,6 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   ],
   representante: [
     {
-      icono: 'mail',
-      titulo: 'Con este correo se entra',
-      texto:
-        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
-    },
-    {
       icono: 'folder',
       titulo: 'El poder va con quien lo firma',
       texto:
@@ -236,6 +227,12 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     },
   ],
   acceso: [
+    {
+      icono: 'mail',
+      titulo: 'Con este correo se entra',
+      texto:
+        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
+    },
     {
       icono: 'lock',
       titulo: 'Una clave nueva, no la del correo',
@@ -415,10 +412,7 @@ export class RegisterLaboratory {
       validators: [Validators.email],
     }),
     // --- la cuenta ---------------------------------------------------------
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [...passwordValidators],
-    }),
+    ...passwordWithConfirmation(),
   });
 
   /**
@@ -534,17 +528,6 @@ export class RegisterLaboratory {
             testId: 'registro-lab-representante-documento',
             mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
           },
-          {
-            key: 'legalRepEmail',
-            label: 'Correo del representante legal',
-            hint: 'Con este correo va a entrar a la plataforma.',
-            control: 'email' as const,
-            required: true,
-            icono: 'mail' as const,
-            autocomplete: 'username',
-            testId: 'registro-lab-representante-correo',
-            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
-          },
           // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
           notarizedPowerField(PAIS, uiLanguage(), this.poderObligatorio()),
         ],
@@ -644,18 +627,21 @@ export class RegisterLaboratory {
         clave: 'acceso',
         icon: 'lock' as const,
         hint: 'Entra con el correo del representante legal y esta contraseña.',
+        disposicion: 'dos-columnas' as const,
         campos: [
           {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
+            key: 'legalRepEmail',
+            ancho: 'completo' as const,
+            label: 'Correo de acceso',
+            hint: 'El del representante legal: con este correo va a entrar a la plataforma.',
+            control: 'email' as const,
             required: true,
-            icono: 'lock' as const,
-            autocomplete: 'new-password',
-            testId: 'registro-lab-password',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
+            icono: 'mail' as const,
+            autocomplete: 'username',
+            testId: 'registro-lab-representante-correo',
+            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
           },
+          ...accessPasswordFields('registro-lab-password'),
         ],
       },
     ]),

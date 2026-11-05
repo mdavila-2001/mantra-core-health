@@ -78,10 +78,7 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
@@ -750,10 +747,7 @@ export class RegisterPatient {
       // arriba.
       lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       motherLastName: new FormControl('', { nonNullable: true }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [...passwordValidators],
-      }),
+      ...passwordWithConfirmation(),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
       // tu documento»— y el documento sigue siendo el identificador de acceso.
@@ -1671,23 +1665,13 @@ export class RegisterPatient {
           testId: 'registro-correo',
           icono: 'mail',
           mensajeDeError: 'Ingrese un correo válido.',
-          ancho: 'mitad',
         },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
+        ...accessPasswordFields('registro-password', {
           description:
             'Se guarda cifrada: ni el equipo de AloVida puede verla, y por eso nunca se la vamos a pedir por teléfono ni por correo.',
-          control: 'password',
-          required: true,
-          autocomplete: 'new-password',
           placeholder: 'Su contraseña',
-          testId: 'registro-password',
-          icono: 'lock',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
           ancho: 'mitad',
-        },
+        }),
         this.campoSeguro('privado'),
         this.campoSeguro('publico'),
         {

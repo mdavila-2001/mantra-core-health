@@ -66,10 +66,7 @@ import {
   nameGroup,
   completeName,
 } from '../shared-registration/name-fields/person-name';
-import {
-  MESSAGE_SHORT_PASSWORD,
-  passwordValidators,
-} from '../shared-registration/password-policy';
+import { accessPasswordFields, passwordWithConfirmation } from '../shared-registration/password-confirmation';
 import {
   MapLocationPicker,
   type Coordinates,
@@ -177,8 +174,8 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * representante legal (no hay un punto «correo de acceso» separado en la
  * fuente): el correo del representante (1.8.2) es el mismo con el que se
  * inicia sesión, igual que decide el molde de laboratorio en su página
- * «Representante legal» («Con este correo se entra»). Por eso «Tu acceso»
- * sólo pide la contraseña.
+ * «Representante legal» («Con este correo se entra»). Por eso «Su acceso»
+ * pide ese correo junto con la contraseña y su confirmación.
  */
 @Component({
   selector: 'app-register-pharmacy',
@@ -296,7 +293,7 @@ export class RegisterPharmacy {
       validators: [Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
     // --- la cuenta -------------------------------------------------------------
-    password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
+    ...passwordWithConfirmation(),
   });
 
   readonly state = signal<ViewState<null>>(ready(null));
@@ -424,17 +421,6 @@ export class RegisterPharmacy {
             testId: 'registro-farmacia-representante-documento',
             mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
           },
-          {
-            key: 'legalRepEmail',
-            label: 'Correo del representante legal',
-            hint: 'Con este correo va a entrar a la plataforma.',
-            control: 'email' as const,
-            required: true,
-            icono: 'mail' as const,
-            autocomplete: 'username',
-            testId: 'registro-farmacia-representante-correo',
-            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
-          },
           this.campoDelPoder(),
         ],
       },
@@ -444,18 +430,21 @@ export class RegisterPharmacy {
         clave: 'acceso',
         icon: 'lock' as const,
         hint: 'Entra con el correo del representante legal y esta contraseña.',
+        disposicion: 'dos-columnas' as const,
         campos: [
           {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
+            key: 'legalRepEmail',
+            ancho: 'completo' as const,
+            label: 'Correo de acceso',
+            hint: 'El del representante legal: con este correo va a entrar a la plataforma.',
+            control: 'email' as const,
             required: true,
-            icono: 'lock' as const,
-            autocomplete: 'new-password',
-            testId: 'registro-farmacia-password',
-            mensajeDeError: MESSAGE_SHORT_PASSWORD,
+            icono: 'mail' as const,
+            autocomplete: 'username',
+            testId: 'registro-farmacia-representante-correo',
+            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
           },
+          ...accessPasswordFields('registro-farmacia-password'),
         ],
       },
     ]),

@@ -218,6 +218,7 @@ for (const view of VIEWPORTS) {
       // Página 12 · el usuario (el correo del representante) y la clave. «Crear cuenta» envía.
       await escribir(page, 'medical-center-signup-legal-rep-email', `marta${Date.now()}@centro-norte.test`);
       await escribir(page, 'medical-center-signup-password', 'S3cret-passw0rd');
+      await escribir(page, 'medical-center-signup-password-confirm', 'S3cret-passw0rd');
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-05b-signup-password`);
       await page.getByTestId('paginated-form-continuar').click();

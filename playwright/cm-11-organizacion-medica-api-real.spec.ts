@@ -446,6 +446,7 @@ async function paginaCuenta(page: Page, correo: string, password: string): Promi
   // El correo del representante es el usuario de la cuenta: va con la contraseña, en la última página.
   await escribir(page, 'medical-center-signup-legal-rep-email', correo);
   await escribir(page, 'medical-center-signup-password', password);
+  await escribir(page, 'medical-center-signup-password-confirm', password);
 }
 
 /** Envía la última página y devuelve la respuesta del alta. */
