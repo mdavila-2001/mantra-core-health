@@ -26,6 +26,7 @@ import {
 import { encounterList, type SimulatedEncounter } from '../fixtures/clinic';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
+import { requiresApproval } from './booking-approval.handlers';
 import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
 import { writeFromSupport } from './community.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
@@ -561,14 +562,11 @@ export function registrarAgenda(router: MockRouter): void {
       request,
     );
     const paciente = patientById(datos.patientProfileId ?? request.user?.patientProfileId ?? '');
-    // v4.2.40 — el cupo de un servicio manda sobre el pedido: de la oferta salen la
-    // modalidad, lo que el paciente acepta y si la reserva espera aprobación. Un
-    // servicio que NO requiere aprobación nace confirmado aunque el paciente "pida".
+    // A service slot follows its offering; a plain slot, its agenda (v4.2.40, v4.2.88).
     const delServicio = ofertaDelCupo(cupo);
+    const needsApproval = delServicio?.oferta.requiresApproval ?? requiresApproval(cupo.resourceId);
     const estadoFinal: 'BK-CONFIRMED' | 'BK-REQUESTED' =
-      delServicio !== undefined && estado === 'BK-REQUESTED' && !delServicio.oferta.requiresApproval
-        ? 'BK-CONFIRMED'
-        : estado;
+      estado === 'BK-REQUESTED' && !needsApproval ? 'BK-CONFIRMED' : estado;
     const nueva: ReservaSimulada = {
       id: nuevoId('booking'),
       patientProfileId: paciente?.id ?? datos.patientProfileId ?? '',
@@ -631,6 +629,7 @@ export function registrarAgenda(router: MockRouter): void {
         bookableSlotId: cupo.id,
         statusConceptId: nueva.statusConceptId,
         remindersScheduled: estadoFinal === 'BK-CONFIRMED' ? 2 : 0,
+        ...(nueva.confirmedAt === null ? {} : { confirmedAt: nueva.confirmedAt }),
       },
     };
   };
