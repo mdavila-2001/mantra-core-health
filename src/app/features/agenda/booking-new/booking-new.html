@@ -209,7 +209,12 @@
           </div>
 
           <aside class="reserva__figura" aria-label="Figura del cuerpo">
-            <app-motivo-figura [control]="motivo" [maximo]="maxMotivo" [editable]="!retencion()" />
+            <app-motivo-figura
+              [control]="motivo"
+              [maximo]="maxMotivo"
+              [editable]="!retencion()"
+              [pacienteId]="paciente()?.value ?? null"
+            />
           </aside>
         </div>
       }
