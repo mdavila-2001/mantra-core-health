@@ -70,6 +70,7 @@ import {
   type DraftForm,
   type DraftProblem,
 } from '../campaign-draft';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 const LISTA = '/administration/access-governance/campaigns';
 const PASOS = ['Qué revisar', 'Filtros y vista previa', 'Plazos', 'Revisar y lanzar'] as const;
@@ -157,7 +158,7 @@ interface FilaPrevia {
  */
 @Component({
   selector: 'app-campaign-wizard',
-  imports: [
+  imports: [DateStringPicker, 
     Alert,
     AppButton,
     Badge,

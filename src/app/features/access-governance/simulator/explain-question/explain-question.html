@@ -77,8 +77,8 @@
     <legend class="pregunta__leyenda">{{ whenLabel() }}</legend>
     <div class="pregunta__fila">
       <app-form-field label="Fecha" [errorMessage]="whenError()">
-        <app-input
-          type="date"
+        <app-date-string-picker
+          
           [value]="date()"
           (valueChange)="set(date, '' + ($event ?? ''))"
           ariaLabel="Fecha de la consulta"
@@ -105,8 +105,8 @@
       <legend class="pregunta__leyenda">Si es sobre una cita: ¿cuándo empieza?</legend>
       <div class="pregunta__fila">
         <app-form-field label="Fecha de la cita" [errorMessage]="appointmentError()">
-          <app-input
-            type="date"
+          <app-date-string-picker
+            
             [value]="appointmentDate()"
             (valueChange)="set(appointmentDate, '' + ($event ?? ''))"
             ariaLabel="Fecha de la cita"

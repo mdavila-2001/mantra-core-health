@@ -1,23 +1,14 @@
-/* Seis columnas para repartir tercios (nombres) y mitades (apellidos) sin que
-   ninguna quede más angosta que lo que se escribe adentro; una sola columna
-   en pantalla angosta. */
+/* Two fields per row: first/second name, third name/extra names, then the two
+   surnames (pedido del cliente, 2026-11-05); one column on a narrow screen. */
 .nombres {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3);
   width: 100%;
 }
 
-.nombres__campo--tercio {
-  grid-column: span 2;
-}
-
-.nombres__campo--mitad {
-  grid-column: span 3;
-}
-
 .nombres__agregar {
-  grid-column: 1 / -1;
+  align-self: end;
 }
 
 /* La casilla agregada y su botón de quitar, en la misma línea. */
@@ -35,10 +26,5 @@
 @media (max-width: 768px) {
   .nombres {
     grid-template-columns: 1fr;
-  }
-
-  .nombres__campo--tercio,
-  .nombres__campo--mitad {
-    grid-column: auto;
   }
 }

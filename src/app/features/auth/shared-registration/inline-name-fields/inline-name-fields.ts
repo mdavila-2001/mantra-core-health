@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, type AbstractControl } from '@angular/forms';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { fieldKindErrorMessage } from '../../../../shared/forms/field-kinds';
 import { mensajeDeError } from '../../../../shared/forms/paginated/error-message';
 import { nameExtraControl, type NameGroup } from '../name-fields/person-name';
 
@@ -59,11 +60,18 @@ export class InlineNameFields {
     this.version.update((v) => v + 1);
   }
 
+  /** An optional name part's error: what is wrong with it, once it was touched. */
+  protected errorOfExtra(control: AbstractControl): string {
+    if (control.valid || !(control.dirty || control.touched)) return '';
+    return fieldKindErrorMessage(control.errors) ?? 'El nombre no puede pasar de 100 caracteres.';
+  }
+
   protected errorOf(clave: 'name' | 'lastName'): string {
     const esNombre = clave === 'name';
+    // Only for the empty case: a malformed name gets the field-kind catalog message.
     const propio = mensajeDeError(this.grupo().controls[clave], {
       label: esNombre ? 'Primer nombre' : 'Apellido paterno',
-      mensajeDeError: esNombre ? 'Escriba el primer nombre.' : 'Escriba el apellido paterno.',
+      mensajeSiFalta: esNombre ? 'Escriba el primer nombre.' : 'Escriba el apellido paterno.',
     });
     if (propio !== '' || esNombre) return propio;
     const grupo = this.grupo();

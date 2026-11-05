@@ -332,4 +332,58 @@ describe('LaboratoryResults', () => {
       expect(visor.querySelector('iframe, object, embed, svg[onload]')).toBeNull();
     });
   });
+
+  describe('la zona de soltar con un selector nativo abierto', () => {
+    const page = () => fixture.componentInstance as unknown as { uploadOrder: { set(id: string | null): void } };
+    const dropzone = (): HTMLElement => q('results-dropzone')!;
+
+    function dragOverEvent(): DragEvent & { dataTransfer: { dropEffect: string } } {
+      const event = new Event('dragover', { bubbles: true, cancelable: true }) as DragEvent & {
+        dataTransfer: { dropEffect: string };
+      };
+      Object.defineProperty(event, 'dataTransfer', { value: { dropEffect: 'copy', files: [] } });
+      return event;
+    }
+
+    async function conOrdenElegida(): Promise<void> {
+      await montar();
+      page().uploadOrder.set('o-1');
+      fixture.detectChanges();
+    }
+
+    it.each(['results-file-input', 'results-folder-input'])(
+      'con %s abierto no se ilumina, el cursor dice que no y cambia el título',
+      async (testId) => {
+        await conOrdenElegida();
+        q(testId)!.dispatchEvent(new Event('click', { bubbles: true }));
+        fixture.detectChanges();
+        const event = dragOverEvent();
+
+        dropzone().dispatchEvent(event);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(event.dataTransfer.dropEffect).toBe('none');
+        expect(dropzone().classList.contains('results__drop--active')).toBe(false);
+        expect(dropzone().classList.contains('results__drop--picker-open')).toBe(true);
+        expect(dropzone().textContent).toContain('Elija en la ventana de su dispositivo');
+      },
+    );
+
+    it('al cerrarse el diálogo vuelve a aceptar arrastrar', async () => {
+      await conOrdenElegida();
+      q('results-folder-input')!.dispatchEvent(new Event('click', { bubbles: true }));
+      q('results-folder-input')!.dispatchEvent(new Event('cancel', { bubbles: true }));
+      fixture.detectChanges();
+      const event = dragOverEvent();
+
+      dropzone().dispatchEvent(event);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(event.dataTransfer.dropEffect).toBe('copy');
+      expect(dropzone().classList.contains('results__drop--active')).toBe(true);
+      expect(dropzone().textContent).toContain('Arrastre archivos o carpetas enteras acá');
+    });
+  });
 });

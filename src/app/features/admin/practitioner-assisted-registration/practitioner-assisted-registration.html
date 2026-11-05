@@ -107,7 +107,7 @@
                 [required]="true"
                 [errorMessage]="errorOf(form.controls.email, 'Ingrese un correo válido.', 'email')"
               >
-                <app-input formControlName="email" type="email" testId="alta-medico-correo" />
+                <app-input formControlName="email" type="email" fieldKind="email" testId="alta-medico-correo" />
               </app-form-field>
             </app-form-section>
           </app-tab>
@@ -122,7 +122,7 @@
                 [required]="true"
                 [errorMessage]="errorOf(form.controls.nationalId, 'Escriba la cédula de identidad.', 'nationalId')"
               >
-                <app-input formControlName="nationalId" type="text" testId="alta-medico-cedula" />
+                <app-input formControlName="nationalId" type="text" fieldKind="identityDocument" testId="alta-medico-cedula" />
               </app-form-field>
 
               <app-form-field

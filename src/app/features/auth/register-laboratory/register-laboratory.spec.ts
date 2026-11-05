@@ -240,7 +240,7 @@ describe('RegisterLaboratory', () => {
       displayName: 'Ana Paz Rojas',
     });
     // Lo opcional que no se completó no viaja: ni papeles ni cargos. El poder sí:
-    // una S.R.L. no puede omitirlo (BR-09).
+    // es obligatorio para toda organización (decisión del propietario, 05/11/2026).
     expect(cuerpo.organization).not.toHaveProperty('legalDocuments');
     expect(cuerpo.organization).not.toHaveProperty('executives');
     expect(component.registered()).toBe(true);
@@ -700,26 +700,30 @@ describe('RegisterLaboratory', () => {
       mimeType: 'application/pdf',
     };
 
-    it('keeps all six papers optional for UNIPERSONAL', () => {
+    it('keeps the five company papers optional for UNIPERSONAL, but still requires the power of attorney', () => {
       completarLoObligatorio();
       component.form.controls.companyType.setValue('UNIPERSONAL');
-      component.form.controls.powerOfAttorneyFileId.setValue('');
       for (const key of documentKeys) {
+        if (key === 'powerOfAttorneyFileId') continue;
         expect(component.form.controls[key].value).toBe('');
         expect(component.form.controls[key].valid).toBe(true);
       }
       expect(component.form.valid).toBe(true);
       const body = enviarConExito();
       expect(body.organization).not.toHaveProperty('legalDocuments');
-      expect(body.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
+      expect(body.organization['legalRepresentative']).toHaveProperty(
+        'powerOfAttorneyFileId',
+        'file-poder',
+      );
       // La API exige el documento del representante en toda alta de organización.
       expect(body.organization['legalRepresentative']).toHaveProperty('idNumber', '4872190');
     });
 
-    // BR-09: la API rechaza con 422 una S.R.L. sin poder notariado.
-    it('requires the power of attorney for SRL, as the API does', () => {
+    // Decisión del propietario (05/11/2026): el poder es obligatorio para toda
+    // organización, también la unipersonal que la API (BR-09) dejaría pasar sin él.
+    it.each(['SRL', 'UNIPERSONAL'])('requires the power of attorney for %s', (tipo) => {
       completarLoObligatorio();
-      component.form.controls.companyType.setValue('SRL');
+      component.form.controls.companyType.setValue(tipo);
       component.form.controls.powerOfAttorneyFileId.setValue('');
       expect(component.form.controls.powerOfAttorneyFileId.valid).toBe(false);
       expect(component.form.valid).toBe(false);

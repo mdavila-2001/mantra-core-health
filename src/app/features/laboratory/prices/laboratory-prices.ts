@@ -1,79 +1,45 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-  viewChild,
-  type TemplateRef,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
 import type { LabService } from '../../../core/data-access/lab-portal/lab-portal.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { withDisplayCurrency } from '../../../core/money/display-currency';
 import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
-import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
-import type {
-  ColumnDef,
-  CursorState,
-} from '../../../shared/components/organisms/data-table/data-table.types';
+import type { CursorState } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { changesOf, discountText, type PriceEdit, parseAmount, parseDiscount, reasonOf } from './laboratory-prices.rules';
+import {
+  changesOf,
+  discountText,
+  reasonOf,
+  withEdit,
+  withoutIds,
+  type PriceEdits,
+  type PriceRejection,
+} from './laboratory-prices.rules';
+import { LabModalitiesPanel } from './modalities/lab-modalities-panel';
+import { LabPriceTable, type RowEdit } from './price-table/lab-price-table';
 import { LabServicesImport } from './services-import/lab-services-import';
 
-/** Filas por página. */
 const PAGE_SIZE = 10;
 
-/** Un servicio que no se pudo guardar, con su motivo. */
-interface PriceRejection {
-  readonly name: string;
-  readonly reason: string;
-}
-
 /**
- * **Precios** del laboratorio: el precio de lista de cada servicio y el
- * descuento para usuarios de AloVida, editables en la tabla y guardados junto
- * con «Guardar cambios».
- *
- * Son los precios que ven los pacientes en la plataforma. La columna «Precio
- * AloVida» se recalcula mientras se escribe, con la misma cuenta del servidor
- * (precio menos el descuento, a dos decimales), para que se vea qué va a
- * pagar el paciente antes de guardar.
- *
- * Guardar manda **sólo** las filas que cambiaron, una por una y en serie, con
- * `PATCH /diagnostics/lab/services/:id` (P52, sólo simulador). Una que falla no
- * frena a las demás: al final se dice cuáles no entraron y por qué. Los
- * retirados no aparecen.
- *
- * «Importar análisis (CSV)» carga o actualiza el catálogo entero desde la
- * planilla del laboratorio (registro de procesos 4.2), con
- * `POST /diagnostics/lab/services/import`; ver `services-import/`.
+ * «Precios»: list price and AloVida discount per service, saved together with
+ * «Guardar cambios», one `PATCH /diagnostics/lab/services/:id` per changed
+ * row. A refused row keeps what was typed and shows the API's reason; the
+ * saved ones are proven by re-reading the list. The modalities declared at
+ * registration (`kind: 'MODALITY'`) are not priced: they get their own tab.
  */
 @Component({
   selector: 'app-laboratory-prices',
-  imports: [
-    Alert,
-    AppButton,
-    Badge,
-    Card,
-    DataTable,
-    Input,
-    LabServicesImport,
-    PageHeader,
-    SearchField,
-    Switch,
-  ],
+  imports: [Alert, AppButton, Card, LabModalitiesPanel, LabPriceTable, LabServicesImport, PageHeader, SearchField, Tab, Tabs],
   templateUrl: './laboratory-prices.html',
   styleUrl: './laboratory-prices.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,39 +48,40 @@ export class LaboratoryPrices {
   private readonly lab = inject(LabPortalClient);
   private readonly toasts = inject(ToastService);
 
-  protected readonly services = signal<ViewState<readonly LabService[]>>(loading());
-  /** Lo escrito y sin guardar, por servicio. */
-  protected readonly edits = signal<Readonly<Record<string, PriceEdit>>>({});
+  protected readonly catalog = signal<ViewState<readonly LabService[]>>(loading());
+  protected readonly edits = signal<PriceEdits>({});
   protected readonly term = signal('');
   protected readonly errors = signal<readonly string[]>([]);
   protected readonly rejected = signal<readonly PriceRejection[]>([]);
   protected readonly saving = signal(false);
   protected readonly offset = signal(0);
-  /** El diálogo «Importar análisis (CSV)». */
   protected readonly importOpen = signal(false);
-
-  /** The service whose «Disponible hoy» switch is saving. */
-  protected readonly togglingId = signal<string | null>(null);
-  /** What the switches show while their PATCH is in flight; removing the entry reverts a failed one. */
-  private readonly pendingAvailability = signal<Readonly<Record<string, boolean>>>({});
+  protected readonly tab = signal(0);
 
   protected readonly dirtyCount = computed(() => Object.keys(this.edits()).length);
+  protected readonly rejectedById = computed(() =>
+    Object.fromEntries(this.rejected().map((rejection) => [rejection.id, rejection.reason])),
+  );
+  protected readonly modalities = computed(
+    () => dataOf(this.catalog())?.filter((service) => service.kind === 'MODALITY') ?? [],
+  );
 
   private readonly visible = computed<ViewState<readonly LabService[]>>(() => {
-    const state = this.services();
+    const state = this.catalog();
     if (state.status !== 'ready') {
       return state;
     }
     const term = this.term().trim().toLocaleLowerCase('es');
     const list = state.data.filter(
       (service) =>
-        term === '' ||
-        [service.name, service.code, service.categoryName].some((text) =>
-          (text ?? '').toLocaleLowerCase('es').includes(term),
-        ),
+        service.kind === 'SERVICE' &&
+        (term === '' || [service.name, service.code].some((text) => text.toLocaleLowerCase('es').includes(term))),
     );
-    return list.length > 0
-      ? ready(list)
+    if (list.length > 0) {
+      return ready(list);
+    }
+    return term === ''
+      ? empty({ label: 'Importar análisis (CSV)' }, 'Todavía no hay estudios a los que ponerles precio.')
       : empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${this.term().trim()}».`);
   });
 
@@ -130,56 +97,20 @@ export class LaboratoryPrices {
     };
   });
 
-  private readonly nameCell = viewChild.required<TemplateRef<{ $implicit: LabService }>>('nameCell');
-  private readonly priceCell = viewChild.required<TemplateRef<{ $implicit: LabService }>>('priceCell');
-  private readonly discountCell =
-    viewChild.required<TemplateRef<{ $implicit: LabService }>>('discountCell');
-  private readonly alovidaCell =
-    viewChild.required<TemplateRef<{ $implicit: LabService }>>('alovidaCell');
-  private readonly statusCell = viewChild.required<TemplateRef<{ $implicit: LabService }>>('statusCell');
-  private readonly availableCell =
-    viewChild.required<TemplateRef<{ $implicit: LabService }>>('availableCell');
-
-  protected readonly columns = computed<readonly ColumnDef<LabService>[]>(() => [
-    { key: 'name', header: 'Servicio', priority: 1, cell: this.nameCell() },
-    { key: 'price', header: 'Precio de lista (Bs)', priority: 1, cell: this.priceCell() },
-    { key: 'discount', header: 'Descuento AloVida (%)', priority: 2, cell: this.discountCell() },
-    { key: 'alovida', header: 'Precio AloVida', priority: 2, cell: this.alovidaCell() },
-    { key: 'status', header: 'En la vitrina', priority: 3, cell: this.statusCell() },
-    { key: 'available', header: 'Disponible hoy', priority: 2, cell: this.availableCell() },
-  ]);
-
-  protected readonly rowId = (service: LabService): string => service.id;
-  protected readonly rowLabel = (service: LabService): string => service.name;
-
   constructor() {
     this.reload();
   }
 
+  /** Re-reads the catalog. Unsaved edits and the last rejections are kept on purpose. */
   protected reload(): void {
-    this.services.set(loading());
+    this.catalog.set(loading());
     this.offset.set(0);
     this.lab.listServices().subscribe({
-      next: (page) => {
-        const alive = page.items.filter((service) => service.status !== 'WITHDRAWN');
-        this.services.set(
-          alive.length > 0
-            ? ready(alive)
-            : empty(
-                { label: 'Cargue sus servicios en el catálogo del laboratorio' },
-                'Todavía no hay servicios a los que ponerles precio.',
-              ),
-        );
-      },
-      error: (error: unknown) => this.services.set(errorToViewState<readonly LabService[]>(error)),
+      next: (page) => this.catalog.set(ready(page.items.filter((service) => service.status !== 'WITHDRAWN'))),
+      error: (error: unknown) => this.catalog.set(errorToViewState<readonly LabService[]>(error)),
     });
   }
 
-  /**
-   * Al cerrar la importación se relee la lista si la API llegó a cargar algo:
-   * los análisis nuevos aparecen con su precio. Lo escrito y sin guardar se
-   * conserva, porque la relectura no lo toca.
-   */
   protected importClosed(imported: boolean): void {
     this.importOpen.set(false);
     if (imported) {
@@ -196,105 +127,29 @@ export class LaboratoryPrices {
     this.offset.set(0);
   }
 
-  /* ─── Lo escrito ──────────────────────────────────────────────────────── */
-
-  protected priceOf(service: LabService): string {
-    return this.edits()[service.id]?.price ?? service.price;
+  protected setPrice({ service, value }: RowEdit): void {
+    this.edits.update((edits) =>
+      withEdit(edits, service, { price: value, discount: edits[service.id]?.discount ?? discountText(service) }),
+    );
   }
 
-  protected discountOf(service: LabService): string {
-    return this.edits()[service.id]?.discount ?? discountText(service);
-  }
-
-  protected setPrice(service: LabService, value: string | number | null): void {
-    this.edit(service, { price: value === null ? '' : String(value), discount: this.discountOf(service) });
-  }
-
-  protected setDiscount(service: LabService, value: string | number | null): void {
-    this.edit(service, { price: this.priceOf(service), discount: value === null ? '' : String(value) });
-  }
-
-  private edit(service: LabService, edit: PriceEdit): void {
-    const unchanged =
-      parseAmount(edit.price) === Number(service.price) &&
-      parseDiscount(edit.discount) === (service.alovidaDiscountPercent ?? null);
-    this.edits.update((current) => {
-      const next = { ...current };
-      // Volver al valor de origen deja la fila como no editada.
-      if (unchanged) {
-        delete next[service.id];
-      } else {
-        next[service.id] = edit;
-      }
-      return next;
-    });
-  }
-
-  protected isEdited(service: LabService): boolean {
-    return this.edits()[service.id] !== undefined;
-  }
-
-  /** Lo que pagaría un usuario de AloVida con lo escrito, o `null` si no se puede calcular. */
-  protected alovidaPriceOf(service: LabService): string | null {
-    const edit = this.edits()[service.id];
-    if (edit === undefined) {
-      return withDisplayCurrency(service.alovidaPrice);
-    }
-    const price = parseAmount(edit.price);
-    const discount = parseDiscount(edit.discount);
-    if (price === 'invalid' || discount === 'invalid') {
-      return null;
-    }
-    return withDisplayCurrency(((price * (100 - (discount ?? 0))) / 100).toFixed(2));
+  protected setDiscount({ service, value }: RowEdit): void {
+    this.edits.update((edits) =>
+      withEdit(edits, service, { price: edits[service.id]?.price ?? service.price ?? '', discount: value }),
+    );
   }
 
   protected discard(): void {
     this.edits.set({});
     this.errors.set([]);
-  }
-
-  /**
-   * «Disponible hoy» saves on its own, with its PATCH: it is not a price, so it
-   * does not wait for «Guardar cambios» and does not touch what was typed.
-   */
-  protected toggleAvailable(service: LabService, available: boolean): void {
-    this.togglingId.set(service.id);
     this.rejected.set([]);
-    this.setPending(service.id, available);
-    this.lab.updateService(service.id, { available }).subscribe({
-      next: (updated) => {
-        this.togglingId.set(null);
-        this.services.update((state) =>
-          mapData(state, (list) => list.map((row) => (row.id === updated.id ? updated : row))),
-        );
-        this.setPending(service.id, null);
-        this.toasts.success(
-          available ? `«${service.name}» vuelve a estar disponible hoy.` : `«${service.name}» no se ofrece hoy.`,
-        );
-      },
-      error: (error: unknown) => {
-        this.togglingId.set(null);
-        this.setPending(service.id, null);
-        this.rejected.set([{ name: service.name, reason: reasonOf(error) }]);
-      },
-    });
   }
-
-  protected availableOf(service: LabService): boolean {
-    return this.pendingAvailability()[service.id] ?? service.available;
-  }
-
-  private setPending(id: string, value: boolean | null): void {
-    this.pendingAvailability.update(({ [id]: _old, ...rest }) => (value === null ? rest : { ...rest, [id]: value }));
-  }
-
-  /* ─── Guardar ─────────────────────────────────────────────────────────── */
 
   protected save(): void {
     if (this.saving() || this.dirtyCount() === 0) {
       return;
     }
-    const { changes, problems } = changesOf(dataOf(this.services()) ?? [], this.edits());
+    const { changes, problems } = changesOf(dataOf(this.catalog()) ?? [], this.edits());
     this.errors.set(problems);
     this.rejected.set([]);
     if (problems.length > 0) {
@@ -306,7 +161,7 @@ export class LaboratoryPrices {
         concatMap(({ service, changes: body }) =>
           this.lab.updateService(service.id, body).pipe(
             map(() => null),
-            catchError((error: unknown) => of({ name: service.name, reason: reasonOf(error) })),
+            catchError((error: unknown) => of({ id: service.id, name: service.name, reason: reasonOf(error) })),
           ),
         ),
         toArray(),
@@ -314,15 +169,15 @@ export class LaboratoryPrices {
       .subscribe((results) => {
         this.saving.set(false);
         const rejected = results.filter((result): result is PriceRejection => result !== null);
-        const saved = results.length - rejected.length;
-        if (saved > 0) {
+        const saved = changes.map((c) => c.service.id).filter((id) => !rejected.some((r) => r.id === id));
+        if (saved.length > 0) {
           this.toasts.success(
-            saved === 1 ? 'Guardó el precio de 1 servicio.' : `Guardó el precio de ${saved} servicios.`,
+            saved.length === 1 ? 'Guardó el precio de 1 servicio.' : `Guardó el precio de ${saved.length} servicios.`,
           );
         }
+        // Refused rows keep their text so the person can fix it; saved rows are proven by the re-read.
         this.rejected.set(rejected);
-        this.edits.set({});
-        // La prueba es la tabla releída de la API.
+        this.edits.update((edits) => withoutIds(edits, saved));
         this.reload();
       });
   }

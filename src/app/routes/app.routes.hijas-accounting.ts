@@ -15,7 +15,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/billing-setup/billing-setup')
         .then((m) => m.BillingSetup)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/accounting/cockpit',
@@ -24,7 +24,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/accounting/cockpit/cockpit')
         .then((m) => m.Cockpit)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/accounting/assets-liabilities',
@@ -34,7 +34,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/assets-liabilities/assets-liabilities')
         .then((m) => m.AssetsLiabilities)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'administration/accounting/books',
@@ -43,7 +43,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/accounting/accounting')
         .then((m) => m.Accounting)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'groups/:groupId',
@@ -52,7 +52,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/groups/group-detail/group-detail')
         .then((m) => m.GroupDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'questionnaires/:surveyId',
@@ -61,7 +61,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/questionnaires/survey-detail/survey-detail')
         .then((m) => m.SurveyDetailScreen)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/questionnaires/:invitationId',
@@ -69,7 +69,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/questionnaires/answer/answer')
         .then((m) => m.QuestionnaireAnswer)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/medical-record/where-to-buy/:requestId',
@@ -77,7 +77,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/medical-record/where-to-buy/where-to-buy')
         .then((m) => m.WhereToBuy)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/pharmacy/prescriptions',
@@ -86,7 +86,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/pharmacy/prescriptions/prescriptions-page')
         .then((m) => m.PrescriptionsPage)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/pharmacy/cart',
@@ -95,7 +95,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/pharmacy/cart/cart-page')
         .then((m) => m.CartPage)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/pharmacy-orders/new',
@@ -104,7 +104,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/pharmacy-orders/new-order/new-order')
         .then((m) => m.NewOrder)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/pharmacy-orders/checkout',
@@ -113,7 +113,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/pharmacy-orders/checkout/checkout')
         .then((m) => m.Checkout)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/diagnostic-orders/:orderId/book',
@@ -122,7 +122,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/diagnostic-orders/order-booking/order-booking')
         .then((m) => m.OrderBooking)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/pharmacy-orders/:orderId',
@@ -131,7 +131,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/pharmacy-orders/order-detail/order-detail')
         .then((m) => m.OrderDetail)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/pharmacy-orders/:orderId/receipt',
@@ -140,7 +140,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/pharmacy-orders/order-receipt/order-receipt')
         .then((m) => m.OrderReceipt)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   {
     path: 'my-account/pharmacy-orders/:orderId/invoice',
@@ -149,7 +149,7 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/account/pharmacy-orders/order-invoice/order-invoice')
         .then((m) => m.OrderInvoice)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
   ...prescriptionDispenseRoutes(chunkFallido),
   {
@@ -159,6 +159,6 @@ export const PANTALLAS_HIJAS_ACCOUNTING: Routes = [
     loadComponent: () =>
       import('../features/organization/pharmacy-inbox/inbox-order/inbox-order')
         .then((m) => m.InboxOrder)
-        .catch(() => chunkFallido()),
+        .catch(chunkFallido),
   },
 ];

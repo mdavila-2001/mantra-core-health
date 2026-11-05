@@ -17,13 +17,13 @@ import type { AssignableRole } from '../../../../../core/data-access/authz-admin
 import { DirectoryClient } from '../../../../../core/data-access/directory/directory.client';
 import type { TenantListItem } from '../../../../../core/data-access/directory/directory.types';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
-import { Input } from '../../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../../../shared/components/organisms/content-dialog/content-dialog';
 import { assignmentFailure } from './access.model';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** Cuántas organizaciones se ofrecen para acotar una asignación. */
 const TENANT_OPTIONS_LIMIT = 100;
@@ -37,7 +37,7 @@ const WHOLE_PLATFORM = '';
  */
 @Component({
   selector: 'app-portal-assign-role-dialog',
-  imports: [ReactiveFormsModule, AppButton, Input, Select, Alert, FormField, ContentDialog],
+  imports: [DateStringPicker, ReactiveFormsModule, AppButton, Select, Alert, FormField, ContentDialog],
   template: `
     <app-content-dialog
       heading="Asignar un rol"
@@ -78,10 +78,10 @@ const WHOLE_PLATFORM = '';
         </app-form-field>
         <div class="assign-form__dates">
           <app-form-field label="Vale desde" hint="Opcional. Sin fecha, desde ahora.">
-            <app-input type="date" formControlName="validFrom" ariaLabel="Vale desde" />
+            <app-date-string-picker  formControlName="validFrom" ariaLabel="Vale desde" />
           </app-form-field>
           <app-form-field label="Vale hasta" hint="Opcional. Sin fecha, hasta que se revoque.">
-            <app-input type="date" formControlName="validTo" ariaLabel="Vale hasta" />
+            <app-date-string-picker  formControlName="validTo" ariaLabel="Vale hasta" />
           </app-form-field>
         </div>
       </form>

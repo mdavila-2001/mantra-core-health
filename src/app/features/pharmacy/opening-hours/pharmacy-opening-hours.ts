@@ -40,6 +40,7 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope } from '../pharmacy-scope';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 import { OpeningHoursAllSites } from './all-sites/opening-hours-all-sites';
 import {
   BORRADOR_VACIO,
@@ -86,7 +87,7 @@ function mensajeDelServidor(error: unknown): string | null {
  */
 @Component({
   selector: 'app-pharmacy-opening-hours',
-  imports: [
+  imports: [DateStringPicker, 
     Alert,
     AppButton,
     Badge,

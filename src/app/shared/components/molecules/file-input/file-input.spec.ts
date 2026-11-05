@@ -152,6 +152,74 @@ describe('FileInput', () => {
     expect(fixture.componentInstance.files().length).toBe(0);
   });
 
+  describe('con el diálogo nativo abierto (eligió «desde su dispositivo»)', () => {
+    function inputNativo(): HTMLInputElement {
+      return fixture.nativeElement.querySelector('input[type=file]');
+    }
+
+    function dragOverEvent(): DragEvent & { dataTransfer: { dropEffect: string } } {
+      const event = new Event('dragover', { bubbles: true, cancelable: true }) as DragEvent & {
+        dataTransfer: { dropEffect: string };
+      };
+      Object.defineProperty(event, 'dataTransfer', { value: { dropEffect: 'copy', files: [] } });
+      return event;
+    }
+
+    async function abrirDialogo(): Promise<void> {
+      inputNativo().dispatchEvent(new Event('click', { bubbles: true }));
+      await fixture.whenStable();
+    }
+
+    it('no se ilumina al arrastrar por encima y el cursor dice que no se puede', async () => {
+      await abrirDialogo();
+      const event = dragOverEvent();
+
+      dropzone().dispatchEvent(event);
+      await fixture.whenStable();
+
+      expect(event.dataTransfer.dropEffect).toBe('none');
+      expect(dropzone().classList.contains('is-dragging')).toBe(false);
+      expect(dropzone().classList.contains('is-picker-open')).toBe(true);
+    });
+
+    it('ignora lo que se suelte mientras el diálogo sigue abierto', async () => {
+      await abrirDialogo();
+
+      await soltar([archivo('a.pdf', 'application/pdf')]);
+
+      expect(fixture.componentInstance.files().length).toBe(0);
+    });
+
+    it('explica en pantalla que se elige en la ventana del dispositivo', async () => {
+      await abrirDialogo();
+
+      const texto = fixture.nativeElement.querySelector('.dropzone-text').textContent;
+      expect(texto).toContain('Elija el archivo en la ventana de su dispositivo');
+      expect(texto).not.toContain('Arrastre');
+    });
+
+    it('vuelve a aceptar soltar en cuanto el diálogo se cierra sin elegir', async () => {
+      await abrirDialogo();
+      inputNativo().dispatchEvent(new Event('cancel', { bubbles: true }));
+      await fixture.whenStable();
+
+      await soltar([archivo('a.pdf', 'application/pdf')]);
+
+      expect(fixture.componentInstance.files().length).toBe(1);
+      expect(dropzone().classList.contains('is-picker-open')).toBe(false);
+    });
+
+    it('sin diálogo abierto, arrastrar por encima sí ilumina la zona', async () => {
+      const event = dragOverEvent();
+
+      dropzone().dispatchEvent(event);
+      await fixture.whenStable();
+
+      expect(event.dataTransfer.dropEffect).toBe('copy');
+      expect(dropzone().classList.contains('is-dragging')).toBe(true);
+    });
+  });
+
   it('el input nativo tiene nombre accesible por su label', async () => {
     const label: HTMLLabelElement = fixture.nativeElement.querySelector('.dropzone-content');
     const input: HTMLInputElement = fixture.nativeElement.querySelector('input[type=file]');
