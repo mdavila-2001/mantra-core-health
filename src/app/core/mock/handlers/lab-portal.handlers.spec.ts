@@ -3,6 +3,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { crearRouterSimulado } from './index';
 import { estadosDeOrden } from './lab-orders.handlers';
 import { TAMANO_DE_PARTE, tipoDeResultado } from './lab-portal.handlers';
+import { orderList } from '../fixtures/clinic';
 import { buscarUsuario, TENANT_LABORATORIO } from '../mock-session';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 
@@ -251,6 +252,38 @@ describe('handlers del portal de laboratorio', () => {
     expect(estado(pedir('DELETE', `${categoryPath}/${category.id}`))).toBe(200);
   });
 
+  it('categorías como la API: duplicada 409, borrar con servicios 409 con serviceCount, y el resumen trae el categoryId', () => {
+    const categoryPath = '/diagnostics/lab/categories';
+    const categorias = cuerpo<{ items: { id: string; name: string; serviceCount: number }[] }>(pedir('GET', categoryPath)).items;
+    const conServicios = categorias.find((c) => c.serviceCount > 0)!;
+
+    const repetida = pedir('POST', categoryPath, { name: conServicios.name });
+    expect(estado(repetida)).toBe(409);
+    expect(cuerpo<{ message: string }>(repetida).message).toBe(`Ya existe la categoría «${conServicios.name}».`);
+
+    const borrar = pedir('DELETE', `${categoryPath}/${conServicios.id}`);
+    expect(estado(borrar)).toBe(409);
+    expect(cuerpo<{ message: string; details: { serviceCount: number } }>(borrar)).toMatchObject({
+      message: `«${conServicios.name}» tiene ${conServicios.serviceCount} servicios. Muévalos a otra categoría antes de borrarla.`,
+      details: { serviceCount: conServicios.serviceCount },
+    });
+
+    const { byCategory } = cuerpo<{ byCategory: { category: string; categoryId: string | null; count: number }[] }>(pedir('GET', '/diagnostics/lab/summary'));
+    expect(byCategory.find((row) => row.category === conServicios.name)?.categoryId).toBe(conServicios.id);
+    expect(byCategory.every((row) => row.categoryId === null || categorias.some((c) => c.id === row.categoryId))).toBe(true);
+  });
+
+  it('un servicio no disponible hoy se guarda tal cual (sin 422) y el tipo de muestra es texto libre', () => {
+    const path = '/diagnostics/lab/services';
+    const creado = cuerpo<{ id: string; available: boolean; sampleType: string | null }>(
+      pedir('POST', path, { code: 'QA-NO-HOY', name: 'Estudio que hoy no se hace', price: 10, available: false, sampleType: 'Líquido pleural (tubo especial)' }),
+    );
+    expect(creado).toMatchObject({ available: false, sampleType: 'Líquido pleural (tubo especial)' });
+    const vuelto = cuerpo<{ available: boolean }>(pedir('PATCH', `${path}/${creado.id}`, { available: true }));
+    expect(vuelto.available).toBe(true);
+    expect(estado(pedir('DELETE', `${path}/${creado.id}`))).toBe(200);
+  });
+
   it('rechaza datos inválidos y acceso ajeno sin mutar el catálogo', () => {
     const path = '/diagnostics/lab/services';
     const draft = { code: 'QA-LAB-INVALID', name: 'Estudio sintético', price: 10 };
@@ -264,12 +297,15 @@ describe('handlers del portal de laboratorio', () => {
       { ...draft, alovidaDiscountPercent: 101 },
       { ...draft, turnaroundHours: 1.5 },
       { ...draft, turnaroundHours: -1 },
-      { ...draft, categoryId: 'missing-category' },
       { ...draft, status: 'UNKNOWN' },
     ];
     for (const body of invalid) {
       expect(estado(pedir('POST', path, body))).toBe(400);
     }
+    // A category that is not this lab's is a 422 with the API's message (the old simulator said 400).
+    const foranea = pedir('POST', path, { ...draft, categoryId: 'missing-category' });
+    expect(estado(foranea)).toBe(422);
+    expect(cuerpo<{ message: string }>(foranea).message).toBe('La categoría no existe.');
     expect(estado(pedir('POST', path, draft, farmacia))).toBe(403);
     expect(estado(pedir('GET', '/diagnostics/lab/categories', {}, farmacia))).toBe(403);
     expect(estado(pedir('PATCH', `${path}/missing`, draft))).toBe(404);
@@ -365,7 +401,7 @@ describe('handlers del portal de laboratorio', () => {
 
       expect(estado(paso(borrador, 'PROCESS'))).toBe(409);
       expect(estado(paso(cancelada, 'RECEIVE'))).toBe(409);
-      expect(estado(paso(borrador, 'REJECT'))).toBe(409);
+      expect(estado(paso(borrador, 'REJECT', 'Muestra insuficiente'))).toBe(409);
       expect(estadoDe(borrador)).toBe('DRAFT');
       expect(estadoDe(cancelada)).toBe('CANCELLED');
     });
@@ -388,17 +424,32 @@ describe('handlers del portal de laboratorio', () => {
       expect(estadoDe(id)).toBe('UPLOADED');
     });
 
-    it('cancelar no lo admite la API (422); rechazar sólo se puede con la orden recibida', () => {
+    it('cancelar (borrador o recibida) y rechazar (recibida) funcionan, con el motivo guardado', () => {
       const borrador = ordenEn('DRAFT', 0);
-      const cancelar = paso(borrador, 'CANCEL', 'Pedida por error');
-      expect(estado(cancelar)).toBe(422);
-      expect(cuerpo<{ code: string }>(cancelar).code).toBe('DIAGNOSTICS_LAB_ORDER_ACTION_UNSUPPORTED');
-      expect(estadoDe(borrador)).toBe('DRAFT');
+      const cancelada = cuerpo<Orden>(paso(borrador, 'CANCEL', 'Pedida por error'));
+      expect(cancelada.status).toBe('CANCELLED');
+      expect(cancelada.reason).toBe('Pedida por error');
+      expect(estadoDe(borrador)).toBe('CANCELLED');
 
       const recibida = ordenEn('RECEIVED', 1);
       const rechazada = cuerpo<Orden>(paso(recibida, 'REJECT', 'Muestra insuficiente'));
       expect(rechazada.status).toBe('REJECTED');
       expect(rechazada.reason).toBe('Muestra insuficiente');
+
+      expect(estado(paso(ordenEn('RECEIVED', 0), 'CANCEL', 'Duplicada'))).toBe(200);
+    });
+
+    it('cancelar y rechazar sin motivo es un 400, y un paso que el estado no admite es un 409 con el estado actual', () => {
+      const borrador = ordenEn('DRAFT', 0);
+      expect(estado(paso(borrador, 'CANCEL'))).toBe(400);
+      expect(estado(paso(borrador, 'CANCEL', '   '))).toBe(400);
+      expect(estadoDe(borrador)).toBe('DRAFT');
+
+      const procesada = ordenEn('PROCESSED', 1);
+      const rechazo = paso(procesada, 'REJECT', 'Tarde');
+      expect(estado(rechazo)).toBe(409);
+      expect(cuerpo<{ details: { currentStatus: string } }>(rechazo).details.currentStatus).toBe('PROCESSED');
+      expect(estado(paso(procesada, 'CANCEL', 'Tarde'))).toBe(409);
     });
 
     it('rechaza un paso inventado y una cuenta ajena al laboratorio', () => {
@@ -409,6 +460,24 @@ describe('handlers del portal de laboratorio', () => {
       expect(estado(paso('no-existe', 'RECEIVE'))).toBe(404);
       expect(estadoDe(id)).toBe('DRAFT');
     });
+  });
+
+  it('reservar una orden que el laboratorio canceló o rechazó es un 404 «Orden no encontrada»', () => {
+    const paciente = buscarUsuario('paciente')!;
+    const opciones = (orderId: string) => pedir('GET', `/diagnostic-results/me/orders/${orderId}/booking-options`, {}, paciente);
+    const reservable = orderList.todos().find((o) => estado(opciones(o.id)) === 200);
+    expect(reservable, 'una orden reservable del paciente de ejemplo').toBeDefined();
+    const id = reservable!.id;
+
+    estadosDeOrden.agregar({ id, status: 'RECEIVED', reason: null });
+    expect(estado(opciones(id))).toBe(200);
+    for (const status of ['CANCELLED', 'REJECTED'] as const) {
+      estadosDeOrden.agregar({ id, status, reason: 'Motivo' });
+      expect(estado(opciones(id))).toBe(404);
+      expect(estado(pedir('POST', `/diagnostic-results/me/orders/${id}/booking`, { unitId: 'x', startAt: 'x' }, paciente))).toBe(404);
+      expect(cuerpo<{ message: string }>(opciones(id)).message).toBe('Orden no encontrada');
+    }
+    estadosDeOrden.borrar(id);
   });
 
   it('decide cómo mirar un archivo por extensión y, si no, por tipo', () => {
