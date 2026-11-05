@@ -170,7 +170,7 @@
       "lineas": 1017
     },
     "src/app/core/mock/handlers/lab-portal.handlers.ts": {
-      "lineas": 1015
+      "lineas": 1009
     },
     "src/app/shared/utils/pdf-export/pdf-blocks.ts": {
       "lineas": 1013
@@ -1440,9 +1440,6 @@
     },
     "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.html": {
       "lineas": 358
-    },
-    "src/app/features/laboratory/prices/laboratory-prices.ts": {
-      "lineas": 359
     },
     "src/app/features/laboratory/results/laboratory-results.html": {
       "lineas": 359
