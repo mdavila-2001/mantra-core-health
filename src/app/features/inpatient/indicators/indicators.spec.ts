@@ -68,7 +68,7 @@ describe('Indicators', () => {
     expect(raiz().querySelector('[data-testid=indicators-missing]')?.textContent).toContain('30/10/2026');
   });
 
-  it('S9 con requestId y S5 para Limpieza', async () => {
+  it('S9 con requestId y S5 sin acceso a la sede', async () => {
     const { harness, acceso, maqueta, raiz, http } = await montar();
     await harness.navigateByUrl('/inpatient/indicators');
     acceso.listo(maqueta.acceso());
@@ -77,8 +77,8 @@ describe('Indicators', () => {
     http.match((r) => r.url.endsWith('/clinical-units')).forEach((r) => r.cancelled || r.flush([]));
     harness.detectChanges();
     expect(raiz().textContent).toContain('req-ind-4');
-    acceso.listo(new MaquetaDeInternacion(buscarUsuario('limpieza')!).acceso());
+    acceso.listo(new MaquetaDeInternacion(buscarUsuario('medica')!).acceso());
     harness.detectChanges();
-    expect(raiz().textContent).toContain('Su rol no incluye los indicadores');
+    expect(raiz().textContent).toContain('no administra ningún establecimiento');
   });
 });

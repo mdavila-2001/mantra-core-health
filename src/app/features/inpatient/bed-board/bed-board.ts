@@ -10,7 +10,7 @@ import { InfrastructureClient } from '../../../core/data-access/infrastructure/i
 import type { CareSpaceNode } from '../../../core/data-access/infrastructure/infrastructure.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, empty, forbidden, loading, ready, stale } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready, stale } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -28,7 +28,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { BedActions } from '../bed-actions/bed-actions';
 import { InpatientAccessStore } from '../inpatient-access.store';
-import { ADMISSION_NEW_ROUTE, CLEANING_ROUTE, CLOCK_TICK_MS, DEFAULT_TIME_ZONE, POLL_INTERVAL_MS, STALE_AFTER_MS, cellToTile, relativeAge } from '../inpatient-presentation';
+import { ADMISSION_NEW_ROUTE, CLEANING_ROUTE, CLOCK_TICK_MS, DEFAULT_TIME_ZONE, POLL_INTERVAL_MS, STALE_AFTER_MS, cellToTile, relativeAge, noSiteAccess } from '../inpatient-presentation';
 import { BedPanel } from './bed-panel';
 import { badgeOf, boardFilters, countsOf, FILTER_KEYS, LEGEND, toRow, unitKey, VIEWS, type BoardRow, type BoardView } from './bed-board.view';
 
@@ -91,14 +91,12 @@ export class BedBoard {
   protected readonly siteId = computed(() => this.site()?.siteId ?? null);
   protected readonly timeZone = computed(() => this.site()?.timeZone ?? DEFAULT_TIME_ZONE);
 
-  /** S1 hasta saber qué puede la persona; S5 si no tiene rol operativo en ninguna sede. */
+  /** S1 hasta saber qué puede la persona; S5 si no administra ninguna sede. */
   protected readonly gate = computed<ViewState<string>>(() => {
     const a = this.access.state();
     if (a.status !== 'ready') return a as ViewState<string>;
     const s = this.site();
-    return s === null
-      ? forbidden({ message: 'Su cuenta no tiene un rol operativo (enfermería, admisión, limpieza o mantenimiento) en ningún establecimiento de esta organización.' })
-      : ready(s.siteId);
+    return s === null ? noSiteAccess('el tablero de camas') : ready(s.siteId);
   });
 
   /** Sólo las claves que filtran (M8): la pestaña, la vista o la cama elegida no recargan. */

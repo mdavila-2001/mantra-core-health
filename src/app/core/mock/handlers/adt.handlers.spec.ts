@@ -25,6 +25,8 @@ describe('handlers de internación / ADT (F3)', () => {
   const supervision = u('supervision');
   const admision = u('admision');
   const limpieza = u('limpieza');
+  /** Someone who does not administer the site: operative roles no longer exist (2026-11-05). */
+  const sinAcceso = u('medica');
   const supervisoraLimpieza = u('supervisora.limpieza@alovida.mock');
   const ATTENDING = uuid('hpid-medica');
   const patientId = (clave: string) => uuid(`pid-${clave}`);
@@ -80,13 +82,13 @@ describe('handlers de internación / ADT (F3)', () => {
     expect(reasonOf(r)).toBe('BED_NOT_ASSIGNABLE');
   });
 
-  it('limpieza no ingresa (403) y otro tenant no ve la internación (404) (F3.5 #9)', () => {
-    expect(call('POST', '/clinical/admissions', { usuario: limpieza, body: ingreso({ patientProfileId: patientId('p-rocha') }) }).status).toBe(403);
+  it('quien no administra la sede no ingresa (403) y otro tenant no ve la internación (404) (F3.5 #9)', () => {
+    expect(call('POST', '/clinical/admissions', { usuario: sinAcceso, body: ingreso({ patientProfileId: patientId('p-rocha') }) }).status).toBe(403);
     expect(call('GET', `/clinical/encounters/${torrez}/stay`, { tenant: TENANT_CLINICA }).status).toBe(404);
-    expect(call('GET', `/clinical/encounters/${torrez}/stay`, { usuario: limpieza }).status).toBe(403);
+    expect(call('GET', `/clinical/encounters/${torrez}/stay`, { usuario: sinAcceso }).status).toBe(403);
   });
 
-  it('incompatible forzable → 422; enfermería sin supervisión → 403; supervisión → 201 + incidente (F3.5 #5)', () => {
+  it('incompatible forzable → 422; sin acceso → 403; el admin de la sede fuerza → 201 + incidente (F3.5 #5)', () => {
     const cama = celda('301-B');
     expect(cama.assignable).toBe(true);
     // Una mujer en la 301, que comparte con un varón: regla de alojamiento del mismo sexo.
@@ -104,7 +106,7 @@ describe('handlers de internación / ADT (F3)', () => {
     const override = { justification: 'Única cama libre; acompañante permanente autorizado', ruleCodes: ['AGE'] };
     const corta = call('POST', '/clinical/admissions', { usuario: supervision, body: ingreso({ patientProfileId: varon, bed: { careSpaceId: cama.id, mode: 'ASSIGN' }, override: { ...override, justification: 'corta' } }) });
     expect(reasonOf(corta)).toBe('OVERRIDE_JUSTIFICATION_TOO_SHORT');
-    expect(call('POST', '/clinical/admissions', { usuario: enfermeria, body: ingreso({ patientProfileId: varon, bed: { careSpaceId: cama.id, mode: 'ASSIGN' }, override }) }).status).toBe(403);
+    expect(call('POST', '/clinical/admissions', { usuario: sinAcceso, body: ingreso({ patientProfileId: varon, bed: { careSpaceId: cama.id, mode: 'ASSIGN' }, override }) }).status).toBe(403);
     const ok = call('POST', '/clinical/admissions', { usuario: supervision, body: ingreso({ patientProfileId: varon, bed: { careSpaceId: cama.id, mode: 'ASSIGN' }, override }) });
     expect(ok.status).toBe(201);
     const res = ok.body as AdtResult;
@@ -187,7 +189,7 @@ describe('handlers de internación / ADT (F3)', () => {
     const hoy = siteDate(Date.now());
     const ayer = shiftDate(hoy, -1);
     expect(reasonOf(call('POST', `/sites/${SITIO}/census/${hoy}/close`, { usuario: supervision }))).toBe('CENSUS_DATE_NOT_ENDED');
-    expect(call('POST', `/sites/${SITIO}/census/${ayer}/close`, { usuario: enfermeria }).status).toBe(403);
+    expect(call('POST', `/sites/${SITIO}/census/${ayer}/close`, { usuario: sinAcceso }).status).toBe(403);
     const previa = call('GET', `/sites/${SITIO}/census`, { query: `date=${ayer}` }).body as CensusDayView[];
     expect(Array.isArray(previa)).toBe(true);
     expect(previa[0]).toMatchObject({ status: 'OPEN', id: null, date: ayer });
@@ -228,7 +230,7 @@ describe('handlers de internación / ADT (F3)', () => {
     const withGap = call('GET', `/sites/${SITIO}/inpatient-indicators`, { query: `from=${shiftDate(hoy, -12)}&to=${shiftDate(hoy, -2)}` }).body as InpatientIndicators;
     expect(withGap.coverage.daysMissing).toHaveLength(4);
     expect(reasonOf(call('GET', `/sites/${SITIO}/inpatient-indicators`, { query: 'from=2024-01-01&to=2026-01-01' }))).toBe('INDICATOR_RANGE_TOO_LONG');
-    expect(call('GET', `/sites/${SITIO}/inpatient-indicators`, { usuario: limpieza }).status).toBe(403);
+    expect(call('GET', `/sites/${SITIO}/inpatient-indicators`, { usuario: sinAcceso }).status).toBe(403);
   });
 
   it('el expediente ve la internación en curso del paciente', () => {
@@ -236,6 +238,6 @@ describe('handlers de internación / ADT (F3)', () => {
     expect(mamani.movements.find((m) => m.status === 'LOCATION_ACTIVE')?.careSpaceId).toBe(celda('302-A').id);
     // Sin internación en curso: el mismo 404 uniforme de la API («sin estancia visible»).
     expect(call('GET', `/clinical/patients/${patientId('p-torrez')}/inpatient-stay`).status).toBe(404);
-    expect(call('GET', `/clinical/patients/${patientId('p-mamani')}/inpatient-stay`, { usuario: limpieza }).status).toBe(404);
+    expect(call('GET', `/clinical/patients/${patientId('p-mamani')}/inpatient-stay`, { usuario: sinAcceso }).status).toBe(404);
   });
 });

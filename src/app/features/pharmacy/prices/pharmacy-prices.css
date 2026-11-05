@@ -11,12 +11,7 @@
   gap: var(--sp-4);
 }
 
-.prices__list {
-  margin: 0;
-  padding-left: var(--sp-5);
-}
-
-/* Buscar y la barra de guardar comparten renglón desde 780 px. */
+/* Buscar y la barra de exportar comparten renglón desde 780 px. */
 .prices__tools {
   display: grid;
   gap: var(--sp-3);
@@ -40,18 +35,6 @@
 
 .prices__hint {
   margin: 0;
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
-.prices__save {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.prices__dirty {
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }

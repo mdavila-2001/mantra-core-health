@@ -167,6 +167,7 @@
                         } @else {
                           <app-input
                             [type]="campo.control"
+                            fieldKind="email"
                             [formControl]="controlDeGerencia(gerencia.key, campo.key)"
                             [hasError]="errorDeGerencia(gerencia.key, campo) !== ''"
                             [autocomplete]="campo.autocomplete ?? null"

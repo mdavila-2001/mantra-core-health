@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { AuthzClient } from './authz.client';
-import type { CareRelationship } from './authz.types';
+import type { AccessRequestItem, CareRelationship } from './authz.types';
 
 const ALCANCE = { tenantId: 't-1', patientProfileId: 'p-1' };
 
@@ -90,7 +90,7 @@ describe('AuthzClient', () => {
   });
   /* ---- FT-07 · el vínculo por consentimiento ---------------------------- */
 
-  it('requestCareRelationship publica el pedido sin especialidades: las elige el paciente', () => {
+  it('requestCareRelationship publica el pedido sin especialidades: el pedido por especialidad es otro circuito', () => {
     client
       .requestCareRelationship({ tenantId: 't-1', patientProfileId: 'p-1', reasonText: 'Seguimiento' })
       .subscribe();
@@ -106,28 +106,70 @@ describe('AuthzClient', () => {
     req.flush({ id: 'cr-1' });
   });
 
-  it('listMyPendingCareRelationshipRequests no manda parámetros: el sujeto es la sesión', () => {
-    let pendientes: readonly CareRelationship[] = [];
-    client.listMyPendingCareRelationshipRequests().subscribe((r) => (pendientes = r));
+  it('requestCareRelationship con cabecera manda relationshipType PRIMARY', () => {
+    client
+      .requestCareRelationship({ tenantId: 't-1', patientProfileId: 'p-1', relationshipType: 'PRIMARY' })
+      .subscribe();
 
-    const req = http.expectOne('/authz/care-relationships/requests/mine');
+    const req = http.expectOne('/authz/care-relationships/request');
+    expect(req.request.body).toEqual({ tenantId: 't-1', patientProfileId: 'p-1', relationshipType: 'PRIMARY' });
+    req.flush({ id: 'cr-1' });
+  });
+
+  /* ---- el buzón unificado ------------------------------------------------ */
+
+  const INBOX_ROW = {
+    id: 'ar-1',
+    kind: 'GRANULAR',
+    direction: 'RECEIVED',
+    counterpart: { profileId: 'pro-1', displayName: 'Dra. Rojas' },
+    requestedAt: '2026-11-01T12:00:00.000Z',
+    decidedAt: null,
+    status: 'PENDING',
+    requestedSpecialtyConceptIds: ['esp-1', 'esp-2'],
+    authorizedSpecialtyConceptIds: [],
+  };
+
+  it('listMyAccessRequests no manda parámetros y convierte las fechas; sin decisión no declara decidedAt', () => {
+    let rows: readonly AccessRequestItem[] = [];
+    client.listMyAccessRequests().subscribe((r) => (rows = r));
+
+    const req = http.expectOne('/authz/me/access-requests');
     expect(req.request.method).toBe('GET');
     expect(req.request.params.keys()).toEqual([]);
-    req.flush([
-      {
-        id: 'cr-2',
-        patientProfileId: 'p-1',
-        practitionerProfileId: 'pro-1',
-        relationshipTypeConceptId: 'tipo-1',
-        statusConceptId: 'estado-pendiente',
-        validFrom: '2026-09-05T12:00:00.000Z',
-        validTo: null,
-      },
-    ]);
+    req.flush([INBOX_ROW, { ...INBOX_ROW, id: 'ar-2', status: 'ACTIVE', decidedAt: '2026-11-02T09:00:00.000Z' }]);
 
-    expect(pendientes.length).toBe(1);
-    expect(pendientes[0].validFrom).toBeInstanceOf(Date);
-    expect('validTo' in pendientes[0]).toBe(false);
+    expect(rows[0].requestedAt).toBeInstanceOf(Date);
+    expect('decidedAt' in rows[0]).toBe(false);
+    expect(rows[1].decidedAt).toBeInstanceOf(Date);
+    expect(rows[0].counterpart.displayName).toBe('Dra. Rojas');
+  });
+
+  it('listPractitionerAccessRequests lee la bandeja del profesional', () => {
+    client.listPractitionerAccessRequests().subscribe();
+
+    const req = http.expectOne('/authz/practitioners/me/access-requests');
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
+  it('requestPrimaryPractitioner manda el profesional y la organización del profesional en X-Tenant-Id', () => {
+    client.requestPrimaryPractitioner('pro-1', 't-medico').subscribe();
+
+    const req = http.expectOne('/authz/me/primary-practitioner-requests');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ practitionerProfileId: 'pro-1' });
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-medico');
+    req.flush({ id: 'cr-9' }, { status: 201, statusText: 'Created' });
+  });
+
+  it('respondAsPractitioner lleva sólo la decisión a la ruta del profesional', () => {
+    client.respondAsPractitioner('cr/9', 'ACCEPT').subscribe();
+
+    const req = http.expectOne('/authz/practitioners/me/care-relationships/cr%2F9/respond');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ decision: 'ACCEPT' });
+    req.flush({ ok: true });
   });
 
   it('respondToCareRelationshipRequest lleva la decisión y las áreas al id de la solicitud', () => {

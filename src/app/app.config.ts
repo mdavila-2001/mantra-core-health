@@ -10,7 +10,12 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
+import {
+  provideRouter,
+  withInMemoryScrolling,
+  withNavigationErrorHandler,
+  withViewTransitions,
+} from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -28,6 +33,8 @@ import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { UiVisibilityService } from './core/visibility/ui-visibility.service';
 import { AppErrorHandler } from './core/errors/app-error-handler';
+import { StaleBuildRecovery } from './core/errors/stale-build-recovery';
+import { BuildVersionWatcher } from './core/build/build-version-watcher';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
 import { AccessChallengeService } from './features/access-governance/access-challenge/access-challenge.service';
@@ -85,6 +92,10 @@ export const appConfig: ApplicationConfig = {
       routes,
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
       withViewTransitions(ROUTE_VIEW_TRANSITION_OPTIONS),
+      // A lazy route whose chunk is gone after a redeploy: full load of the target.
+      withNavigationErrorHandler(({ error, url }) => {
+        inject(StaleBuildRecovery).recoverFrom(error, url);
+      }),
     ),
     provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
@@ -223,6 +234,10 @@ export const appConfig: ApplicationConfig = {
     // bloquea el arranque —es un seguimiento reactivo— y, si el pedido falla, no se oculta nada.
     provideAppInitializer(() => {
       inject(UiVisibilityService).start();
+    }),
+    // Notice a redeploy from an open tab before it requests chunks that are gone.
+    provideAppInitializer(() => {
+      inject(BuildVersionWatcher).start();
     }),
   ],
 };

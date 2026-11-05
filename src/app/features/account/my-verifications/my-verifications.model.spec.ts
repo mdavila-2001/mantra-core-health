@@ -25,7 +25,13 @@ const etiquetas: ConceptLabels = new Map([
   concepto('c-cred-verified', 'CRED_VERIFIED'),
   concepto('c-cred-rejected', 'CRED_REJECTED'),
   concepto('c-spec-rejected', 'SPECIALTY_REJECTED'),
+  concepto('c-type-degree', 'CREDENTIAL_TYPE_DEGREE'),
+  concepto('c-type-diploma', 'CREDENTIAL_TYPE_DIPLOMA'),
+  concepto('c-type-master', 'CREDENTIAL_TYPE_MASTER'),
 ]);
+
+/** A university degree, the only credential the admission requires. */
+const degree = (over: Record<string, unknown>) => ({ credentialTypeConceptId: 'c-type-degree', ...over });
 
 function afiliacion(over: Partial<PractitionerAffiliation>): PractitionerAffiliation {
   return {
@@ -120,6 +126,94 @@ describe('buildRoadmap', () => {
     expect(de('licenses').detail).toContain('1 de 2');
   });
 
+  describe('«Títulos» es obligatorio, como en el catálogo de requisitos de la API', () => {
+    const credentialsStep = (credentials: unknown[]) =>
+      buildRoadmap(perfil({ credentials } as unknown as Partial<OwnPractitionerProfile>), etiquetas, []).find(
+        (p) => p.key === 'credentials',
+      )!;
+
+    it('no se presenta como opcional', () => {
+      const step = credentialsStep([]);
+      expect(step.optional).toBe(false);
+      expect(step.detail).not.toContain('Opcional');
+      expect(step.detail).toContain('título universitario');
+    });
+
+    it('sin títulos invita a cargar uno; con uno rechazado, a revisarlos; verificado, no pide nada', () => {
+      expect(credentialsStep([]).action?.label).toBe('Cargar un título');
+      expect(credentialsStep([degree({ id: 'c-1', stateConceptId: 'c-cred-rejected' })]).action?.label).toBe(
+        'Revisar mis títulos',
+      );
+      expect(credentialsStep([degree({ id: 'c-1', stateConceptId: 'c-cred-verified' })]).action).toBeUndefined();
+    });
+
+    it('sólo un diplomado verificado no cumple el paso: falta el título universitario', () => {
+      const step = credentialsStep([
+        { id: 'c-1', credentialTypeConceptId: 'c-type-diploma', stateConceptId: 'c-cred-verified' },
+      ]);
+      expect(step.state).not.toBe('approved');
+      expect(step.state).toBe('not-started');
+      expect(step.detail).toContain('Cargue su título universitario');
+      expect(step.detail).toContain('1 título más, opcional');
+      expect(step.action?.label).toBe('Cargar un título');
+    });
+
+    it('un título universitario verificado cumple el paso', () => {
+      const step = credentialsStep([degree({ id: 'c-1', stateConceptId: 'c-cred-verified' })]);
+      expect(step.state).toBe('approved');
+      expect(step.detail).toBe('1 de 1 título universitario con sello');
+      expect(step.action).toBeUndefined();
+    });
+
+    it('una maestría pendiente no baja el paso: el título universitario verificado lo sigue cumpliendo', () => {
+      const step = credentialsStep([
+        degree({ id: 'c-1', stateConceptId: 'c-cred-verified' }),
+        { id: 'c-2', credentialTypeConceptId: 'c-type-master', stateConceptId: 'c-pending' },
+      ]);
+      expect(step.state).toBe('approved');
+      // The master's stays in sight, as information.
+      expect(step.detail).toBe('1 de 1 título universitario con sello · 1 título más, opcional');
+      expect(step.action).toBeUndefined();
+    });
+
+    it('un título de tipo ilegible no da el paso por cumplido ni lo da por vacío', () => {
+      const step = credentialsStep([
+        degree({ id: 'c-1', stateConceptId: 'c-cred-verified' }),
+        { id: 'c-2', credentialTypeConceptId: 'c-type-unresolved', stateConceptId: 'c-cred-verified' },
+      ]);
+      expect(step.state).toBe('unknown');
+      expect(credentialsStep([{ id: 'c-2', credentialTypeConceptId: 'c-type-unresolved' }]).state).toBe(
+        'unknown',
+      );
+    });
+  });
+
+  describe('cada salida lleva a su sección exacta de «Editar perfil»', () => {
+    const steps = buildRoadmap(perfil({ licenses: [] }), etiquetas, []);
+    const stepOf = (key: string) => steps.find((p) => p.key === key)!;
+
+    it.each([
+      ['licenses', 5, 'licenses'],
+      ['credentials', 5, 'credentials'],
+      ['specialties', 0, 'specialties'],
+    ] as const)('%s: pestaña %d, ancla #%s', (key, tab, fragment) => {
+      expect(stepOf(key).action).toMatchObject({
+        route: '/my-account/edit',
+        queryParams: { pestana: tab },
+        fragment,
+      });
+    });
+
+    it('«Especialidades» tiene su salida mientras no estén verificadas', () => {
+      expect(stepOf('specialties').action?.label).toBe('Revisar mis especialidades');
+    });
+
+    it('un tramo verificado no ofrece salida', () => {
+      const withLicense = buildRoadmap(perfil(), etiquetas, []);
+      expect(withLicense.find((p) => p.key === 'licenses')!.action).toBeUndefined();
+    });
+  });
+
   it('las instituciones cuentan sólo los pedidos que alguien puede confirmar', () => {
     const pasos = buildRoadmap(
       perfil({
@@ -151,8 +245,8 @@ describe('buildRoadmap', () => {
     const pasos = buildRoadmap(
       perfil({
         credentials: [
-          { id: 'c1', stateConceptId: 'c-cred-rejected', verifiedAt: new Date('2026-10-01') },
-          { id: 'c2', stateConceptId: 'c-cred-verified', verifiedAt: new Date('2026-10-01') },
+          degree({ id: 'c1', stateConceptId: 'c-cred-rejected', verifiedAt: new Date('2026-10-01') }),
+          degree({ id: 'c2', stateConceptId: 'c-cred-verified', verifiedAt: new Date('2026-10-01') }),
         ],
       } as unknown as Partial<OwnPractitionerProfile>),
       etiquetas,
@@ -167,7 +261,7 @@ describe('buildRoadmap', () => {
     const pasos = buildRoadmap(
       perfil({
         credentials: [
-          { id: 'c1', stateConceptId: 'c-cred-verified', expiryDate: new Date('2026-01-01') },
+          degree({ id: 'c1', stateConceptId: 'c-cred-verified', expiryDate: new Date('2026-01-01') }),
         ],
       } as unknown as Partial<OwnPractitionerProfile>),
       etiquetas,

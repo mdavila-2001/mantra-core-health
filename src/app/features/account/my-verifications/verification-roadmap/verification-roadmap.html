@@ -68,7 +68,14 @@
       }
       <div class="ruta__acciones">
         @if (next()?.action; as accion) {
-          <a app-button variant="primary" data-testid="verif-siguiente" [routerLink]="accion.route">
+          <a
+            app-button
+            variant="primary"
+            data-testid="verif-siguiente"
+            [routerLink]="accion.route"
+            [queryParams]="accion.queryParams"
+            [fragment]="accion.fragment"
+          >
             {{ accion.label }}
             <app-nav-icon name="arrow-right" />
           </a>
@@ -131,7 +138,15 @@
         [label]="s.step.stateLabel"
       />
       @if (s.step.action && s.step !== next()) {
-        <a app-button variant="ghost" size="sm" [routerLink]="s.step.action.route">
+        <a
+          app-button
+          variant="ghost"
+          size="sm"
+          [routerLink]="s.step.action.route"
+          [queryParams]="s.step.action.queryParams"
+          [fragment]="s.step.action.fragment"
+          [attr.data-testid]="'verif-step-action-' + s.step.key"
+        >
           {{ s.step.action.label }}
           <app-nav-icon name="arrow-right" />
         </a>

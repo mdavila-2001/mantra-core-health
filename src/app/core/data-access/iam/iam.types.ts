@@ -621,6 +621,7 @@ export interface DiagnosticCenterRegistration {
   readonly tradeName?: string;
   readonly timeZone?: string;
   readonly openingHours?: readonly OpeningHoursShift[];
+  readonly taxIdentifier: string;
   /** Los tipos territoriales exigen país y jurisdicción (422 `missing` si faltan). */
   readonly countryConceptId: string;
   readonly jurisdictionConceptId: string;

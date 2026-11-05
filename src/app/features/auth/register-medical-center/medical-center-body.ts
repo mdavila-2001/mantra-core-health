@@ -16,6 +16,7 @@ export const TIME_ZONE = 'America/La_Paz';
 export interface MedicalCenterRaw extends ExecutivesRaw {
   readonly legalName: string;
   readonly legalEntityType: string;
+  readonly tradeName: string;
   readonly taxId: string;
   readonly healthFacilityRegistrationNumber: string;
   readonly medicalDirectorName: NameValue;
@@ -71,6 +72,7 @@ export function medicalCenterBody(
 ): MedicalCenterRegistration {
   const representante = nameParts(raw.legalRepName);
   const director = nameParts(raw.medicalDirectorName);
+  const nombreComercial = raw.tradeName.trim();
   const telefonoRepresentante = raw.legalRepPhone.trim();
   const telefonoDirector = raw.medicalDirectorPhone.trim();
   const gerencias = executivesFrom(raw);
@@ -91,6 +93,7 @@ export function medicalCenterBody(
     tenantType: tipo,
     legalName: raw.legalName.trim(),
     legalEntityType: raw.legalEntityType,
+    ...(nombreComercial === '' ? {} : { tradeName: nombreComercial }),
     timeZone: TIME_ZONE,
     openingHours: toShifts(raw.openingHours.headquarters),
     legalDocuments: {

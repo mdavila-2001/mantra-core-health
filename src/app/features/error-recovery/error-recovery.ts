@@ -1,8 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, PLATFORM_ID } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ErrorHandler,
+  inject,
+  PLATFORM_ID,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 import { BUILD_INFO, buildLabel } from '../../core/build/build-info';
 import { ErrorReporter } from '../../core/errors/error-reporter';
+import { StaleBuildRecovery, takeRouteChunkFailure } from '../../core/errors/stale-build-recovery';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 
@@ -40,6 +48,16 @@ export class ErrorRecovery {
 
   /** El código de soporte, o `null` si se llegó acá sin un fallo registrado. */
   protected readonly codigo = computed(() => this.ultimo()?.id ?? null);
+
+  constructor() {
+    // Reached through a route whose chunk failed (`chunkFallido`): log it so the
+    // support code below exists, and reload once if it is an older build.
+    const pending = takeRouteChunkFailure();
+    if (pending !== null) {
+      inject(ErrorHandler).handleError(pending.error);
+      inject(StaleBuildRecovery).recoverFrom(pending.error);
+    }
+  }
 
   /**
    * Recarga desde el servidor.

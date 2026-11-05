@@ -62,7 +62,7 @@ const MODES: readonly SegmentedOption<BedMode>[] = [
             @if (canOverride()) {
               <button app-button class="bed-picker__force" variant="danger" size="sm" type="button" data-testid="bed-force" (clicked)="force()">Forzar con justificación</button>
             } @else {
-              <p class="bed-picker__note" data-testid="bed-force-unavailable">Forzar la compatibilidad lo puede hacer supervisión de enfermería. Elija otra cama o pídaselo.</p>
+              <p class="bed-picker__note" data-testid="bed-force-unavailable">Forzar la compatibilidad lo puede hacer quien administra la organización o la sede. Elija otra cama o pídaselo.</p>
             }
           }
           @if (override(); as o) {

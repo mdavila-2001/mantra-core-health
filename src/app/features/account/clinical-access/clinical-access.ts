@@ -118,7 +118,7 @@ export class AccountClinicalAccess {
     }
     this.revocando.set(relacion.id);
     this.authz.revokeMyCareRelationship(relacion.id).subscribe({
-      next: () => this.terminarRevocacion(`Revocaste el vínculo con ${quien}.`),
+      next: () => this.terminarRevocacion(`Revocó el vínculo con ${quien}.`),
       error: () => this.fallarRevocacion(),
     });
   }
@@ -140,7 +140,7 @@ export class AccountClinicalAccess {
     }
     this.revocando.set(acceso.id);
     this.authz.revokeMyClinicalGrant(acceso.id).subscribe({
-      next: () => this.terminarRevocacion(`Revocaste el acceso de ${quien}.`),
+      next: () => this.terminarRevocacion(`Revocó el acceso de ${quien}.`),
       error: () => this.fallarRevocacion(),
     });
   }

@@ -6,6 +6,12 @@
   margin-inline: auto;
 }
 
+/* The verification request sits above the roadmap card, at the same width. */
+.verif__admission {
+  display: block;
+  margin-block-end: var(--e5);
+}
+
 .verif__esqueleto {
   display: grid;
   gap: var(--e3);

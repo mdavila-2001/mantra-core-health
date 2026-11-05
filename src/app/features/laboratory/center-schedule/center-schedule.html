@@ -128,115 +128,46 @@
                 </ul>
               </section>
 
-              @if (problemas().length > 0) {
-                <app-alert tone="error" title="No se pudo publicar" data-testid="centro-problemas">
-                  <ul class="problemas">
-                    @for (p of problemas(); track p) {
-                      <li>{{ p }}</li>
-                    }
-                  </ul>
-                </app-alert>
-              }
-              @if (publicado()) {
-                <app-alert tone="success" title="Horarios publicados" data-testid="centro-publicado">
-                  Los pacientes ya ven los horarios nuevos.
-                </app-alert>
-              }
-
-              <div class="centro__acciones">
-                <button app-button variant="ghost" [disabled]="!hayCambios()" (click)="descartar()">Descartar cambios</button>
-                <button
-                  app-button
-                  variant="primary"
-                  data-testid="centro-publicar"
-                  [disabled]="!hayCambios()"
-                  [isLoading]="guardando()"
-                  (click)="publicar()"
-                >
-                  Publicar horarios
-                </button>
-              </div>
             </div>
           </app-tab>
 
           <!-- ─── Equipos ──────────────────────────────────────────────── -->
           <app-tab label="Equipos">
-            <div class="centro__panel">
-              <p class="seccion__ayuda">
-                Cada equipo operativo atiende a un paciente por turno. Si uno se rompe o entra en mantenimiento, márquelo: el cupo baja solo.
-              </p>
-              @if (errorDeEquipo(); as error) {
-                <app-alert tone="error" title="No se cambió el estado" data-testid="centro-equipo-error">{{ error }}</app-alert>
-              }
-              @if ((c.bookingsWithoutEquipment ?? 0) > 0) {
-                <app-alert tone="warning" title="Hay turnos sin equipo" data-testid="centro-turnos-sin-equipo">
-                  {{ c.bookingsWithoutEquipment }} turno{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} ya reservado{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} no
-                  tiene{{ c.bookingsWithoutEquipment === 1 ? '' : 'n' }} un equipo operativo que lo{{ c.bookingsWithoutEquipment === 1 ? '' : 's' }} atienda. Avísele a cada
-                  paciente y reprográmelo, o vuelva a poner el equipo en servicio.
-                </app-alert>
-              }
-              @for (m of modalidades(); track m.code) {
-                <section class="seccion" [attr.aria-label]="m.label">
-                  <h2 class="seccion__titulo">{{ m.label }} <span class="resumen__origen">· {{ m.operativos }} de {{ m.total }} {{ m.total === 1 ? 'operativo' : 'operativos' }}</span></h2>
-                  <ul class="equipos" role="list">
-                    @for (e of equiposDe(m.code); track e.id) {
-                      <li class="equipo" [attr.data-testid]="'centro-equipo-' + e.id">
-                        <div class="equipo__datos">
-                          <p class="equipo__nombre">{{ e.name }}</p>
-                          @if (e.manufacturer || e.model) {
-                            <p class="seccion__ayuda">{{ e.manufacturer }} {{ e.model }}</p>
-                          }
-                          @if (e.glossaryConceptId) {
-                            <details class="equipo__mapa" (toggle)="alternarMapa(e.id, $event)">
-                              <summary>Cómo se conectan sus datos</summary>
-                              @if (mapasAbiertos().has(e.id)) {
-                                <app-glossary-data-flow [conceptoId]="e.glossaryConceptId" [enlazar]="veGlosario()" />
-                              }
-                            </details>
-                          }
-                        </div>
-                        <app-select
-                          class="equipo__estado"
-                          [ariaLabel]="'Estado de ' + e.name"
-                          [options]="estados"
-                          [value]="e.status"
-                          [disabled]="cambiandoEquipo() !== null"
-                          (valueChange)="$event !== null && cambiarEstado(e, $event)"
-                          [attr.data-testid]="'centro-estado-' + e.id"
-                        />
-                      </li>
-                    } @empty {
-                      <li class="seccion__ayuda">Sin {{ m.equipoPlural }} cargados: esta modalidad no da turnos.</li>
-                    }
-                  </ul>
-                </section>
-              }
-              @if (otrosEquipos().length > 0) {
-                <section class="seccion" aria-label="Otros equipos">
-                  <h2 class="seccion__titulo">Otros equipos <span class="resumen__origen">· no limitan los horarios</span></h2>
-                  <ul class="equipos" role="list">
-                    @for (e of otrosEquipos(); track e.id) {
-                      <li class="equipo">
-                        <div class="equipo__datos">
-                          <p class="equipo__nombre">{{ e.name }}</p>
-                          @if (e.glossaryConceptId) {
-                            <details class="equipo__mapa" (toggle)="alternarMapa(e.id, $event)">
-                              <summary>Cómo se conectan sus datos</summary>
-                              @if (mapasAbiertos().has(e.id)) {
-                                <app-glossary-data-flow [conceptoId]="e.glossaryConceptId" [enlazar]="veGlosario()" />
-                              }
-                            </details>
-                          }
-                        </div>
-                        <span class="seccion__ayuda">{{ etiquetaDeEstado(e.status) }}</span>
-                      </li>
-                    }
-                  </ul>
-                </section>
-              }
-            </div>
+            <app-center-equipment [centro]="c" [borrador]="b" (vistaChange)="alCambiarVista($event)" (borradorChange)="fijarBorrador($event)" />
           </app-tab>
         </app-tabs>
+
+        <!-- Publishing covers both tabs: a device's own shift is part of the schedule. -->
+        <div class="centro__publicar">
+          @if (problemas().length > 0) {
+            <app-alert tone="error" title="No se pudo publicar" data-testid="centro-problemas">
+              <ul class="problemas">
+                @for (p of problemas(); track p) {
+                  <li>{{ p }}</li>
+                }
+              </ul>
+            </app-alert>
+          }
+          @if (publicado()) {
+            <app-alert tone="success" title="Horarios publicados" data-testid="centro-publicado">
+              Los pacientes ya ven los horarios nuevos.
+            </app-alert>
+          }
+
+          <div class="centro__acciones">
+            <button app-button variant="ghost" [disabled]="!hayCambios()" (click)="descartar()">Descartar cambios</button>
+            <button
+              app-button
+              variant="primary"
+              data-testid="centro-publicar"
+              [disabled]="!hayCambios()"
+              [isLoading]="guardando()"
+              (click)="publicar()"
+            >
+              Publicar horarios
+            </button>
+          </div>
+        </div>
       </app-card>
     }
   }

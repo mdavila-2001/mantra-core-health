@@ -18,6 +18,14 @@
     <app-chat-preferences />
   </app-tab>
 
+  <!-- Only for whoever attends patients (2026-11-05): whether booking requests
+       confirm themselves. Set once, so it lives in Settings, not in the agenda. -->
+  @if (attendsPatients()) {
+    <app-tab label="Agenda">
+      <app-agenda-preferences />
+    </app-tab>
+  }
+
   <app-tab label="Apariencia">
     <section class="ajustes__bloque">
       <h2 class="ajustes__titulo">Tema</h2>

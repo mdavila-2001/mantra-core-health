@@ -1218,7 +1218,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
     label: 'Configurar práctica',
-    group: 'Administración',
+    // Moved out of «Administración» into «Atención» on 2026-11-05 (owner request).
+    group: 'Atención',
     icon: 'hospital',
     requiresTenant: true,
     availability: 'disponible',
@@ -1953,10 +1954,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
   {
     // P34 (26/10/2026): qué sucursales abren las 24 h y sus turnos de guardia.
     // Lo ven los pacientes al elegir farmacia y en «Abiertas ahora».
+    // No longer a menu entry (05/11/2026, owner request): it is the "Horario y
+    // turnos" tab of Sucursales. The old route redirects to
+    // `/administration/pharmacy-branches?tab=horario` (`SECCIONES_REDIRIGIDAS`);
+    // the section stays registered so saved links keep resolving.
     path: 'administration/pharmacy-hours',
     onlyForTenantTypes: ['PHARMACY'],
     roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
+    fueraDelMenuPara: [ANY_ROLE],
     hiddenFor: ['PATIENT'],
     label: 'Horario y turnos',
     group: 'General',
@@ -2048,7 +2053,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'pin',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Edite sus sucursales o suba varias de una vez con un CSV.',
+    summary: 'Sus sucursales, su horario de 24 h y sus turnos de guardia, por sucursal o en todas.',
     module: 'M04 directory',
   },
 

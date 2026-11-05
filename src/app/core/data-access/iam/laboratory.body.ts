@@ -14,8 +14,10 @@ export function laboratoryBody(registration: LaboratoryOrganizationRegistration)
     organization: {
       code: registration.code,
       legalName: registration.legalName,
+      ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
       legalEntityType: registration.legalEntityType,
       tenantType: 'DIAGNOSTIC_CENTER',
+      taxIdentifier: registration.taxIdentifier,
       countryConceptId: registration.countryConceptId,
       jurisdictionConceptId: registration.jurisdictionConceptId,
       diagnosticUnit: {

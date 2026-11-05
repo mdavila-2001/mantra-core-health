@@ -49,6 +49,7 @@ export interface PharmacyBranchRegistration {
 export interface PharmacyOrganizationRegistration {
   readonly code: string;
   readonly legalName: string;
+  readonly tradeName?: string;
   /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
   readonly legalEntityType: string;
   /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
@@ -136,11 +137,13 @@ export interface DiagnosticUnitBranchRegistration {
 export interface LaboratoryOrganizationRegistration {
   readonly code: string;
   readonly legalName: string;
+  readonly tradeName?: string;
   /** Tipo societario del diccionario `VS_LEGAL_ENTITY_TYPE`, p. ej. `SRL`. */
   readonly legalEntityType: string;
   /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
   readonly countryConceptId: string;
   readonly jurisdictionConceptId: string;
+  readonly taxIdentifier: string;
   /** La unidad diagnóstica que nace con el alta: la central y, si hay, sus sucursales. */
   readonly diagnosticUnit: {
     readonly name: string;

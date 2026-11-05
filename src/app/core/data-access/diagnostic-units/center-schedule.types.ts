@@ -4,8 +4,8 @@ import type { ModalityCode } from './modalidades';
     Horarios y equipos de un centro de diagnóstico, y la reserva de un estudio
     a partir de una orden médica.
 
-    Contrato que el simulador implementa y la API real todavía no publica: ver
-    `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS). Los nombres siguen el modelo
+    The real API publishes this contract (`diagnostic_units/center-schedule`);
+    the simulator mirrors it for `development,demo`. Los nombres siguen el modelo
     (`diagnostic_study_offerings`, `diagnostic_equipment`).
     ========================================================================== */
 
@@ -34,6 +34,12 @@ export interface StudySchedule {
   readonly schedule: ScheduleBlock;
 }
 
+/** Own shift of one device: a production line that only attends inside it. */
+export interface EquipmentSchedule {
+  readonly equipmentId: string;
+  readonly schedule: ScheduleBlock;
+}
+
 /**
  * El horario completo de un centro. Sin horarios propios, `general` vale para
  * todo; con alguno, `general` pasa a ser el de «Resto de servicios».
@@ -42,6 +48,8 @@ export interface CenterSchedule {
   readonly general: ScheduleBlock;
   readonly modalities: readonly ModalitySchedule[];
   readonly studies: readonly StudySchedule[];
+  /** Devices with a shift of their own; the rest follow their study's block. */
+  readonly equipment?: readonly EquipmentSchedule[];
 }
 
 export type EquipmentStatus = 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE';
@@ -52,6 +60,7 @@ export interface CenterEquipment {
   readonly name: string;
   readonly manufacturer: string | null;
   readonly model: string | null;
+  readonly serialNumber?: string | null;
   /** `null`: no limita turnos (un analizador, una centrífuga). */
   readonly modalityCode: ModalityCode | null;
   readonly status: EquipmentStatus;
@@ -67,6 +76,15 @@ export interface CenterStudy {
   readonly price: number | null;
   readonly currency: string | null;
   readonly preparation: string | null;
+}
+
+/** Body of `POST|PUT /diagnostic-units/{unitId}/equipment[/{equipmentId}]`. */
+export interface CenterEquipmentInput {
+  readonly name: string;
+  readonly manufacturer: string | null;
+  readonly serialNumber: string | null;
+  /** `null`: an analyzer, which never limits appointments. */
+  readonly modalityCode: ModalityCode | null;
 }
 
 /** Respuesta de `GET /diagnostic-units/{unitId}/schedule`. */
@@ -160,6 +178,8 @@ export interface CenterBooking {
   readonly siteName: string | null;
   /** Booking status code as the API sends it (`BOOKED`, `ARRIVED`, `FULFILLED`…). */
   readonly status: string;
+  /** The device (production line) that attends it; `null` when no open line can. */
+  readonly equipmentId?: string | null;
 }
 
 /** Response of `GET /diagnostic-units/me/bookings?from&to` (both required, at most 31 days apart). */

@@ -417,7 +417,7 @@ for (const ancho of ANCHOS) {
       await captura(page, '67-s6-not-found', ancho.nombre);
       await fallos(page, []);
 
-      // S5: la médica, en el hospital, no tiene rol operativo.
+      // S5: la médica no administra ningún establecimiento del hospital.
       await entrar(page, 'medica@alovida.mock');
       await page.goto('/inpatient/bed-board', { waitUntil: 'domcontentloaded' });
       await expect(page.getByText('No tiene acceso a esta sección')).toBeVisible({ timeout: 60_000 });
@@ -437,20 +437,18 @@ for (const ancho of ANCHOS) {
       await page.clock.install();
       await page.goto('/auth', { waitUntil: 'domcontentloaded', timeout: 120_000 });
       await entrar(page, 'limpieza@alovida.mock');
-      // Limpieza ve el tablero sin un solo dato de paciente (ni iniciales, ni sexo, ni edad).
+      // Los roles operativos ya no existen: el personal de la sede administra y ve al paciente y las acciones de la cama.
       await tablero(page);
-      await expect(page.getByTestId('bed-board')).not.toContainText(/ · [MFO] · \d+ a| · sin dato · /);
       await tile(page, '301-A').click();
       await expect(page.getByTestId('bed-panel')).toBeVisible();
-      await expect(page.getByTestId('bed-panel')).not.toContainText(/masculino|femenino/);
-      await expect(page.getByTestId('bed-actions')).toHaveCount(0);
+      await expect(page.getByTestId('bed-actions')).toHaveCount(1);
       await page.getByTestId('cajon-cerrar').click();
       await congelarNavegacion(page, 'Cola de limpieza', '77-queue', ancho.nombre);
       await page.goto('/inpatient/cleaning', { waitUntil: 'domcontentloaded' });
       await expect(page.getByTestId('queue-table')).toContainText('REC-1', { timeout: 60_000 });
       expect(await desborde(page)).toBeLessThanOrEqual(0);
       await captura(page, '71-queue', ancho.nombre);
-      // Limpieza no tiene inspección: la orden en curso ofrece sólo terminar.
+      // Se fuerza un conflicto al empezar la limpieza.
       await fallos(page, [{ patron: '/cleaning-orders/', modo: 'conflict', metodos: ['POST'] }]);
       await rowAction(page, page.locator('tr, [role=row]', { hasText: 'REC-1' }).first(), 'Empezar');
       await expect(page.getByTestId('queue-failure')).toContainText('Revise lo ingresado');
@@ -476,7 +474,7 @@ for (const ancho of ANCHOS) {
       await page.goto('/inpatient/cleaning?scope=mine', { waitUntil: 'domcontentloaded' });
       await expect(page.getByText('No tiene limpiezas asignadas.')).toBeVisible({ timeout: 60_000 });
       await captura(page, '78-s3-mine-empty', ancho.nombre);
-      await entrar(page, 'mantenimiento@alovida.mock');
+      await entrar(page, 'medica@alovida.mock');
       await page.goto('/inpatient/cleaning', { waitUntil: 'domcontentloaded' });
       await expect(page.getByText('No tiene acceso a esta sección')).toBeVisible({ timeout: 60_000 });
       await captura(page, '79-s5-queue-forbidden', ancho.nombre);
@@ -487,11 +485,11 @@ for (const ancho of ANCHOS) {
       escuchar(page);
       await page.goto('/auth', { waitUntil: 'domcontentloaded', timeout: 120_000 });
 
-      // S5 del ingreso para limpieza.
-      await entrar(page, 'limpieza@alovida.mock');
+      // S5 del ingreso para quien no administra la sede.
+      await entrar(page, 'medica@alovida.mock');
       await page.goto('/inpatient/admissions/new', { waitUntil: 'domcontentloaded' });
       await expect(page.getByText('No tiene acceso a esta sección')).toBeVisible({ timeout: 60_000 });
-      await captura(page, '80-s5-admission-housekeeping', ancho.nombre);
+      await captura(page, '80-s5-admission-no-access', ancho.nombre);
 
       // Compatibilidad forzable: una mujer en la 301 (comparte con un varón).
       await entrar(page, 'supervision@alovida.mock');

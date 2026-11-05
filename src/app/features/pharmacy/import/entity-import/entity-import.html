@@ -26,15 +26,9 @@
               guardar nada; recién «Aplicar» escribe.
             </p>
 
-            <app-form-field label="¿Qué hago con las filas del archivo?" [hint]="modeHint()">
-              <app-select
-                [options]="modeOptions"
-                [value]="mode()"
-                (valueChange)="setMode($event)"
-                [disabled]="phase() === 'applying' || applied()"
-                ariaLabel="Qué hacer con las filas del archivo"
-              />
-            </app-form-field>
+            <p class="entity-import__secondary" data-testid="entity-import-upsert">
+              Lo nuevo se crea y lo que ya existe se actualiza con lo que traiga el archivo.
+            </p>
 
             <app-file-input
               label="Elegir archivo CSV"

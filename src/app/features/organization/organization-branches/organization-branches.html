@@ -1,17 +1,27 @@
-<app-page-header
-  title="Sucursales"
-  subtitle="Las sedes de su organización: nombre, descripción y ubicación. Edite cada una o suba varias de una vez con un CSV."
-/>
+@if (embedded()) {
+  <div class="branches" data-testid="branches-card">
+    <ng-container [ngTemplateOutlet]="panel" />
+  </div>
+} @else {
+  <app-page-header
+    title="Sucursales"
+    subtitle="Las sedes de su organización: nombre, descripción y ubicación. Edite cada una o suba varias de una vez con un CSV."
+  />
 
-<app-card class="branches" padding="lg" data-testid="branches-card">
+  <app-card class="branches" padding="lg" data-testid="branches-card">
+    <ng-container [ngTemplateOutlet]="panel" />
+  </app-card>
+}
+
+<ng-template #panel>
   <div class="branches__panel">
     <div class="branches__bar">
       <p class="branches__note">
         El código de cada sucursal no se edita: es cómo la reconoce el sistema.
         @if (isPharmacy()) {
           <span data-testid="branches-pharmacy-sites-note">
-            Las sedes de venta que suba en Catálogo → Importación → Sucursales no aparecen acá: son
-            las de «Horario y turnos» y «Dónde comprar», donde los pacientes las ven.
+            Las sedes de venta que suba en Catálogo → Importar CSV → Sucursales no aparecen acá: son
+            las de la pestaña «Horario y turnos» y de «Dónde comprar», donde los pacientes las ven.
           </span>
         }
       </p>
@@ -61,7 +71,7 @@
       data-testid="branches-table"
     />
   </div>
-</app-card>
+</ng-template>
 
 <ng-template #nameCell let-branch>
   <span class="branches__main">{{ branch.name }}</span>

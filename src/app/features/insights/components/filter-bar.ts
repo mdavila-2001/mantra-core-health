@@ -10,6 +10,7 @@ import { CHANNEL_LABELS, CHANNELS } from '../domain/insights.types';
 import { ALL_METRICS, METRIC_CATALOG } from '../domain/metric-catalog';
 import { InsightsContext, PERIOD_LABELS, type PeriodPreset } from '../insights-context';
 import { MultiSelect, type MultiOption } from './multi-select';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 export type FilterControl = 'campaign' | 'period' | 'channel' | 'metric' | 'grain';
 
@@ -21,7 +22,7 @@ export type FilterControl = 'campaign' | 'period' | 'channel' | 'metric' | 'grai
  */
 @Component({
   selector: 'app-ins-filter-bar',
-  imports: [Select, SegmentedControl, MultiSelect],
+  imports: [DateStringPicker, Select, SegmentedControl, MultiSelect],
   templateUrl: './filter-bar.html',
   styleUrl: './filter-bar.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,8 +77,8 @@ export class FilterBar {
   protected setGrain(g: string): void {
     this.ctx.update({ g: g === 'auto' ? null : g });
   }
-  protected setCustom(edge: 'from' | 'to', event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+  protected setCustom(edge: 'from' | 'to', raw: string | number | null): void {
+    const value = String(raw ?? '');
     if (value) this.ctx.update({ [edge]: value });
   }
   protected selectedChannels(): readonly Channel[] {

@@ -58,11 +58,11 @@ describe('BedActions', () => {
     expect(raiz.querySelector('[data-testid=bed-stay-link]')).not.toBeNull();
   });
 
-  it('Limpieza y Mantenimiento: ninguna acción de internación', () => {
+  it('Limpieza y Mantenimiento ya no existen: todo el personal de la sede administra y ve las acciones', () => {
     for (const u of ['limpieza', 'mantenimiento']) {
       TestBed.resetTestingModule();
       const { raiz } = montar(u, (c) => c.occupancy.code === 'OCC_OCCUPIED');
-      expect(raiz.querySelector('[data-testid=bed-actions]'), u).toBeNull();
+      expect(raiz.querySelector('[data-testid=bed-actions]'), u).not.toBeNull();
     }
   });
 

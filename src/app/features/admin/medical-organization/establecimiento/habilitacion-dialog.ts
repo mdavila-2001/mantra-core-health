@@ -17,6 +17,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { opcionesDe } from './regulatorio-dialog';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /**
  * Alta de una habilitación — `POST /sites/:siteId/licenses`.
@@ -26,7 +27,7 @@ import { opcionesDe } from './regulatorio-dialog';
  */
 @Component({
   selector: 'app-habilitacion-dialog',
-  imports: [AppButton, ContentDialog, FormField, Input, ReactiveFormsModule, Select, Textarea, ViewStateHost],
+  imports: [DateStringPicker, AppButton, ContentDialog, FormField, Input, ReactiveFormsModule, Select, Textarea, ViewStateHost],
   template: `
     <app-content-dialog
       size="lg"
@@ -46,10 +47,10 @@ import { opcionesDe } from './regulatorio-dialog';
           <app-input formControlName="resolutionNumber" />
         </app-form-field>
         <app-form-field label="Emitida el" [required]="true" errorMessage="Falta la fecha.">
-          <app-input type="date" formControlName="issuedOn" />
+          <app-date-string-picker  formControlName="issuedOn" />
         </app-form-field>
         <app-form-field label="Vence el" hint="Vacío si no vence.">
-          <app-input type="date" formControlName="expiresOn" />
+          <app-date-string-picker  formControlName="expiresOn" />
         </app-form-field>
         <app-form-field label="Estado" [required]="true">
           <app-select formControlName="statusCode" [options]="estados()" />

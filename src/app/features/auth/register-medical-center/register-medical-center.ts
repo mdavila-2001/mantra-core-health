@@ -244,7 +244,7 @@ export class RegisterMedicalCenter {
         return { ...resto, label: `${campo.label} (opcional)` };
       }),
       gerenciasEnUso: this.gerenciasEnUso(),
-      campoDePoder: notarizedPowerField(COUNTRY_CODE, lang, !opcionales.includes(KEY_NOTARIZED_POWER)),
+      campoDePoder: notarizedPowerField(COUNTRY_CODE, lang),
     });
   });
 

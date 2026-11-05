@@ -25,3 +25,8 @@ export const BUILD_INFO = new InjectionToken<BuildInfo>('BUILD_INFO', {
 export function buildLabel(info: BuildInfo): string {
   return `${info.version} · ${info.commit}`;
 }
+
+/** Identifies the running build; `builtAt` tells builds apart even when the commit is `desconocido`. */
+export function buildFingerprint(build: Pick<BuildInfo, 'commit' | 'builtAt'>): string {
+  return `${build.commit}|${build.builtAt}`;
+}

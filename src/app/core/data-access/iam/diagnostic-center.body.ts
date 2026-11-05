@@ -17,6 +17,7 @@ export function cuerpoDeCentroDiagnostico(registration: DiagnosticCenterRegistra
       ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
       tenantType: 'DIAGNOSTIC_CENTER',
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
+      taxIdentifier: registration.taxIdentifier,
       countryConceptId: registration.countryConceptId,
       jurisdictionConceptId: registration.jurisdictionConceptId,
       diagnosticUnit: {

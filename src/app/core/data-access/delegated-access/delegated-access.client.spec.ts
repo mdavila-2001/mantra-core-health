@@ -29,11 +29,11 @@ describe('DelegatedAccessClient', () => {
   const CREADO = { id: 'r-1', status: 'concepto-uuid', createdAt: '2026-08-07T12:00:00.000Z' };
 
   it('el alta de asignación lleva la membresía en la ruta, no en el cuerpo', () => {
-    client.createOrgUserAssignment('tm-1', { role: 'NURSE', accessScope: 'SITE' }).subscribe();
+    client.createOrgUserAssignment('tm-1', { role: 'BILLING', accessScope: 'SITE' }).subscribe();
 
     const req = http.expectOne('/org/tm-1/user-assignments');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ role: 'NURSE', accessScope: 'SITE' });
+    expect(req.request.body).toEqual({ role: 'BILLING', accessScope: 'SITE' });
 
     req.flush(CREADO);
   });

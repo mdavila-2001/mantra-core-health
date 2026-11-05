@@ -127,21 +127,7 @@
   color: var(--text-primary);
 }
 
-.fecha input {
-  min-block-size: 2rem;
-  padding: 0 var(--sp-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--fs-caption);
-}
 
-.fecha input:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-}
 
 kbd {
   display: inline-block;

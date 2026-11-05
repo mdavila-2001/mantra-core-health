@@ -30,6 +30,7 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { AdmissionStatusCard } from '../admission-status-card/admission-status-card';
 import { RequestInbox } from './request-inbox/request-inbox';
 import { VerificationRoadmap } from './verification-roadmap/verification-roadmap';
 import { conceptosDe } from '../my-profile/practitioner-profile/practitioner-seal';
@@ -76,6 +77,7 @@ const PESTANA = { ruta: 0, bandeja: 1 } as const;
 @Component({
   selector: 'app-my-verifications',
   imports: [
+    AdmissionStatusCard,
     Alert,
     AnnounceOnAppear,
     AppButton,

@@ -25,6 +25,7 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { patientDetailRoute, PATIENTS_ROUTE } from '../patients.routes';
 
 /** Largos que declara `CreatePatientDto`. */
@@ -68,6 +69,7 @@ const MAX_MPI = 100;
     FormSection,
     HomonymWarning,
     Input,
+    BackLink,
     PageHeader,
     ReactiveFormsModule,
   ],
@@ -208,6 +210,9 @@ export class PatientNew {
       },
     });
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = PATIENTS_ROUTE;
 
   protected cancelar(): void {
     void this.router.navigateByUrl(PATIENTS_ROUTE);

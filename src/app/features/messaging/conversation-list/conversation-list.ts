@@ -20,7 +20,6 @@ import { chatTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -67,7 +66,7 @@ export interface AccionDeFila {
  */
 @Component({
   selector: 'app-conversation-list',
-  imports: [AppButton, AppButtonLink, Avatar, EmptyState, RouterLink, Skeleton, VerificationBadge, ViewStateHost],
+  imports: [AppButton, Avatar, EmptyState, RouterLink, Skeleton, VerificationBadge, ViewStateHost],
   templateUrl: './conversation-list.html',
   styleUrl: './conversation-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

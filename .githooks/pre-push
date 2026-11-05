@@ -51,9 +51,10 @@
 
 set -eu
 
+# SALTAR_BUILD solo salta la construcción de abajo: la puerta (pre-push-gate) no se salta con esto.
+saltar_build=0
 if [ "${SALTAR_BUILD:-}" = "1" ]; then
-  echo "pre-push: salteado por SALTAR_BUILD=1."
-  exit 0
+  saltar_build=1
 fi
 
 # Los archivos que pueden mover el paquete. El resto no justifica una
@@ -80,6 +81,14 @@ while read -r ref_local sha_local ref_remota sha_remoto; do
     continue
   fi
 
+  # La puerta: prueba válida para ESTE commit contra el dev actual (docs/trabajo/2026-11-05-historial-regresiones).
+  if ! node scripts/pre-push-gate.mjs verify --base "${GATE_BASE:-dev}" --sha "$sha_local"; then
+    echo ""
+    echo "  ✗ pre-push-gate bloquea el empuje. Corre: node scripts/pre-push-gate.mjs run --pw <spec>"
+    echo ""
+    exit 1
+  fi
+
   # Rama nueva en el remoto: no hay contra qué comparar, así que se toma como
   # base la bifurcación desde `dev`. Si tampoco existe, se construye y punto:
   # ante la duda, verificar.
@@ -103,6 +112,11 @@ while read -r ref_local sha_local ref_remota sha_remoto; do
 
   [ "$hay_que_construir" = "1" ] && break
 done
+
+if [ "$saltar_build" = "1" ]; then
+  echo "pre-push: construcción salteada por SALTAR_BUILD=1 (la puerta sí corrió)."
+  exit 0
+fi
 
 if [ "$hay_que_construir" = "0" ]; then
   echo "pre-push: nada de lo empujado mueve el paquete. No se construye."

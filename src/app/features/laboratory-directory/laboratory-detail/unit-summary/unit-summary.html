@@ -1,0 +1,41 @@
+<div class="unit-summary" [class.unit-summary--split]="stats().length > 0" data-testid="unit-summary">
+  <div class="unit-summary__lead">
+    <span class="unit-summary__emblem" aria-hidden="true">
+      <app-nav-icon [name]="icon()" />
+    </span>
+
+    <div class="unit-summary__intro">
+      <h2 class="unit-summary__title">Lo que ofrece este centro</h2>
+
+      @if (services().length > 0) {
+        <ul class="unit-summary__services" aria-label="Modalidades de atención">
+          @for (service of services(); track service) {
+            <li>
+              <app-nav-icon name="check-circle" />
+              {{ service }}
+            </li>
+          }
+        </ul>
+      }
+
+      <p class="unit-summary__code">Código del centro: <span class="tabular-nums">{{ unit().code }}</span></p>
+    </div>
+  </div>
+
+  @if (stats().length > 0) {
+  <dl class="unit-summary__stats">
+    @for (stat of stats(); track stat.label) {
+      <div class="unit-summary__stat">
+        <dt class="unit-summary__label">
+          <app-nav-icon [name]="stat.icon" />
+          {{ stat.label }}
+        </dt>
+        <dd class="unit-summary__value tabular-nums">{{ stat.value }}</dd>
+        @if (stat.note) {
+          <dd class="unit-summary__note">{{ stat.note }}</dd>
+        }
+      </div>
+    }
+  </dl>
+  }
+</div>

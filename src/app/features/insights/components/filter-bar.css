@@ -51,20 +51,7 @@
   line-height: var(--lh-caption);
 }
 
-.fb__date input {
-  min-block-size: 40px;
-  padding: 0 var(--sp-3);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  font: inherit;
-}
 
-.fb__date input:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
 
 @media (max-width: 649px) {
   .fb__c--wide {

@@ -9,13 +9,12 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, finalize, map, of, switchMap, timer, type Observable } from 'rxjs';
+import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
-import { TriageIaClient } from '@core/data-access/triage-ia/triage-ia.client';
 import {
   SymptomObservationsStore,
   type ObservacionDeSintomas,
@@ -25,7 +24,6 @@ import { bodyPartsIn, withNamedParts } from './body-parts';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Chip } from '@shared/components/atoms/chip/chip';
-import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
@@ -57,23 +55,10 @@ import {
 } from './symptoms';
 import { Dictation } from './dictation';
 import { SymptomRecommendations } from './symptom-recommendations/symptom-recommendations';
-import {
-  combine,
-  currentReading,
-  readingSymptoms,
-  readingZones,
-  type TextReading,
-} from './ai-reading';
 import { ultimaFrase } from './text';
 import { fitsSex, withSpecialtiesForSex } from './sex-filter';
 import { EmergencyPanel } from '../emergency/emergency-panel/emergency-panel';
 
-/**
- * Cuánto se espera a que la persona haga una pausa antes de preguntarle al
- * servicio de triage. Mientras tanto el motor local ya pintó lo suyo: esto sólo
- * evita una petición por tecla.
- */
-const PAUSA_PARA_LEER_MS = 600;
 
 /** Tope por página del listado de profesionales. */
 const POR_PAGINA = 50;
@@ -140,7 +125,6 @@ const VACIO: ReadonlyMap<string, string> = new Map();
     EmergencyPanel,
     FormField,
     RouterLink,
-    Spinner,
     SymptomRecommendations,
     Textarea,
   ],
@@ -155,7 +139,6 @@ export class SymptomCheck {
   private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
-  private readonly triageIa = inject(TriageIaClient);
   protected readonly dictado = inject(Dictation);
   private readonly observacionesStore = inject(SymptomObservationsStore);
 
@@ -271,67 +254,9 @@ export class SymptomCheck {
     return [...delTexto, ...puestas.filter((sintoma) => !yaEstan.has(sintoma.id))];
   });
 
-  /**
-   * Lo que entendió el servicio de triage (AlovidaAIService) del último texto
-   * en el que la persona hizo una pausa, junto con ese texto.
-   *
-   * El motor local reconoce las filas de la tabla al instante; el servicio suma
-   * lo que la tabla no tiene —«me duele la pantorrilla», «manchas en la
-   * espalda»— y ubica lo que sí tiene («hormigueo · mano izquierda»). Ver
-   * `ai-reading.ts`.
-   *
-   * Con menos de tres letras no se pregunta nada, y así en el servidor (texto
-   * vacío) no se programa ni un temporizador. Si el servicio falla o tarda,
-   * `TriageIaClient` devuelve `null` y la pantalla sigue con lo local.
-   */
-  private readonly lecturaGuardada = toSignal(
-    toObservable(this.texto).pipe(
-      map((texto) => texto.trim()),
-      switchMap((texto) =>
-        texto.length < 3
-          ? of(null)
-          : timer(PAUSA_PARA_LEER_MS).pipe(
-              switchMap(() => this.triageIa.analizar(texto)),
-              map((lectura): TextReading | null => (lectura === null ? null : { texto, lectura })),
-              // Con respuesta, sin ella (falla o espera vencida) o cancelada porque se
-              // siguió escribiendo: la consulta de ESTE texto ya no está en curso.
-              finalize(() => this.textoLeido.set(texto)),
-            ),
-      ),
-    ),
-    { initialValue: null },
-  );
-
-  /** El último texto cuya consulta al servicio terminó. */
-  private readonly textoLeido = signal('');
-
-  /**
-   * El servicio todavía está leyendo lo escrito. Con MedGemma en el servidor,
-   * lo que el motor local no entiende tarda 10–25 s; sin este estado la
-   * pantalla decía «No reconocimos ningún síntoma» mientras tanto y parecía
-   * rota. Cubre también la pausa previa a la consulta, para no titilar
-   * mientras la persona escribe.
-   */
-  protected readonly leyendoConIa = computed(() => {
-    const texto = this.texto().trim();
-    return texto.length >= 3 && this.textoLeido() !== texto;
-  });
-
-  /** La lectura del servicio que todavía vale para lo escrito. */
-  private readonly lecturaVigente = computed(() =>
-    currentReading(this.lecturaGuardada(), this.texto()),
-  );
-
-  /** Mensaje seguro del servicio; el texto local mantiene una respuesta amable con servicios viejos. */
-  protected readonly respuestaDelServicio = computed(() => this.lecturaVigente()?.response ?? null);
-
   protected readonly respuestaEmpatica = computed(() => {
     if (this.alarmas().length > 0 || this.texto().trim() === '') {
       return null;
-    }
-    const respuesta = this.respuestaDelServicio();
-    if (respuesta !== null) {
-      return respuesta;
     }
     if (this.sintomas().length === 0) {
       return 'Gracias por contarnos cómo se siente. A veces cuesta encontrar las palabras, y lo que siente merece atención. Un médico general puede escucharle y ayudarle a decidir el próximo paso.';
@@ -339,26 +264,16 @@ export class SymptomCheck {
     return 'Gracias por contarnos cómo se siente. Entendemos que esto puede preocuparle. No podemos determinar la causa por este medio, pero un profesional puede escucharle, evaluar sus síntomas y orientarle sobre los próximos pasos.';
   });
 
-  /** Los hallazgos del servicio que todavía valen para lo escrito. */
-  private readonly deLaLectura = computed(() => readingSymptoms(this.lecturaVigente()));
-
   /**
    * Las zonas del cuerpo de lo que se contó: la silueta las ilumina mientras
    * la persona escribe o dicta, y las pastillas «Piel», «Ánimo» y «General»
    * también.
    *
-   * Manda la ubicación del servicio cuando la hay («hormigueo · mano» es la
-   * mano); si no, la primera zona de la tabla que ofrece ese síntoma.
+   * Each symptom marks the first table zone that offers it.
    */
   protected readonly zonasMarcadas = computed<readonly string[]>(() => {
-    const delServicio = readingZones(this.lecturaVigente());
     const marcadas = new Set<string>();
     for (const sintoma of this.sintomas()) {
-      const ubicadas = delServicio.get(sintoma.id);
-      if (ubicadas !== undefined && ubicadas.length > 0) {
-        ubicadas.forEach((zona) => marcadas.add(zona));
-        continue;
-      }
       const deLaTabla = BODY_ZONES.find((zona) => zona.sintomas.includes(sintoma.id));
       if (deLaTabla !== undefined) marcadas.add(deLaTabla.madre ?? deLaTabla.id); // no invented side
     }
@@ -371,16 +286,13 @@ export class SymptomCheck {
   }
 
   /**
-   * Los chips: lo reconocido en el texto —acá y por el servicio—, menos lo
-   * quitado, más lo agregado.
+   * Los chips: lo reconocido en el texto, menos lo quitado, más lo agregado.
    *
-   * El orden es el de aparición en el texto, después lo que sólo vio el
-   * servicio y al final los agregados: ver el porqué en `reconocer` y en
-   * `combinar`.
+   * El orden es el de aparición en el texto y al final los agregados.
    */
   protected readonly sintomas = computed<readonly Sintoma[]>(() => {
     const quitados = this.quitados();
-    const delTexto = combine(recognize(this.texto()), this.deLaLectura()).filter(
+    const delTexto = recognize(this.texto()).filter(
       (s) => !quitados.has(s.id),
     );
     const yaEstan = new Set(delTexto.map((s) => s.id));
@@ -399,11 +311,7 @@ export class SymptomCheck {
    * Por qué la lectura no es segura, o `null` si lo es. Sin certeza la
    * respuesta por defecto es Medicina general (ver `conMedicinaGeneralPrimero`):
    *
-   * - el texto no se reconoció y la IA ya terminó de leerlo;
-   * - todo lo reconocido lo interpretó la IA (`source: 'model'` o `'semantic'`): el motor
-   *   local no vio nada en el texto ni se eligió nada a mano o en la figura.
-   *   Lo que el servicio lee con sus tablas («manchas en la espalda» →
-   *   Dermatología) es determinista y no entra acá.
+   * - el texto no se reconoció.
    *
    * Lo negado a secas («no tengo fiebre») no cuenta: ahí la pantalla ya dice
    * qué entendió y pide lo que sí se siente.
@@ -439,16 +347,10 @@ export class SymptomCheck {
     if (this.texto().trim() === '' || this.agregados().length > 0) {
       return null;
     }
-    if (this.sintomas().length === 0) {
-      return this.leyendoConIa() || this.descartados() !== ''
-        ? null
-        : 'No pudimos identificar con certeza qué le pasa: un médico general le evalúa y le deriva si hace falta.';
+    if (this.sintomas().length === 0 && this.descartados() === '') {
+      return 'No pudimos identificar con certeza qué le pasa: un médico general le evalúa y le deriva si hace falta.';
     }
-    const fuente = this.lecturaVigente()?.source;
-    const soloIa = recognize(this.texto()).length === 0 && (fuente === 'model' || fuente === 'semantic');
-    return soloIa
-      ? 'Lo que escribió lo interpretamos con IA y puede no ser exacto: un médico general le evalúa y le deriva si hace falta.'
-      : null;
+    return null;
   });
 
   protected readonly recomendaciones = computed<readonly Recommendation[]>(() => {
@@ -576,6 +478,7 @@ export class SymptomCheck {
 
   /** Abre una zona, o la cierra si ya lo estaba. */
   protected alternarZona(zona: BodyZone): void {
+    this.haceFalta.set(true);
     const abre = this.zonaAbierta() !== zona.id;
     this.zonaAbierta.set(abre ? zona.id : null);
     if (abre) {
@@ -599,6 +502,20 @@ export class SymptomCheck {
       this.texto.set('');
     }
   }
+
+  /** Specialists of an open shapeless category (skin, mood, general) before any symptom is picked. */
+  protected readonly especialistasDeLaCategoria = computed<readonly Recommendation[]>(() => {
+    const abierta = this.zonaAbierta();
+    const ocupada = this.sintomas().length > 0 || this.texto().trim() !== '';
+    if (abierta === null || ZONAS_CON_SILUETA.has(abierta) || ocupada) {
+      return [];
+    }
+    const disponibles = new Set(this.especialidadesDisponibles().keys());
+    const sexo = this.siluetaSexo();
+    const lista = recommend(this.sintomasDeLaZona().map((s) => withSpecialtiesForSex(s, sexo)), disponibles);
+    const breves = lista.map((r) => ({ ...r, porque: r.porque.slice(0, 2) }));
+    return withMedicineFirstGeneral(breves, FIRST_GENERAL, disponibles);
+  });
 
   /**
    * Las zonas tal como las entiende la silueta: `id` y nombre, nada más.
