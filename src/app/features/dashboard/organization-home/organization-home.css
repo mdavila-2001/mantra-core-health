@@ -5,11 +5,6 @@
   margin-block-start: var(--sp-4);
 }
 
-.inicio__estado {
-  display: grid;
-  gap: var(--sp-3);
-}
-
 .inicio__encabezado {
   display: flex;
   flex-wrap: wrap;
@@ -18,12 +13,25 @@
 }
 
 .inicio__titulo {
-  margin: 0;
+  margin: 0 0 var(--sp-3);
   font-size: var(--fs-h3);
 }
 
-.inicio__nota {
+.inicio__encabezado .inicio__titulo {
   margin: 0;
+}
+
+.inicio__encabezado,
+app-organization-checklist {
+  margin-block-end: var(--sp-4);
+}
+
+app-organization-checklist {
+  display: block;
+}
+
+.inicio__nota {
+  margin: 0 0 var(--sp-4);
   color: var(--text-secondary);
 }
 
