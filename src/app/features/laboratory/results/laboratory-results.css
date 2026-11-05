@@ -80,6 +80,15 @@
   background: var(--bg-hover);
 }
 
+/* Con «Elegir archivos» o «Elegir una carpeta» abiertos la zona no invita a soltar. */
+.results__drop--picker-open {
+  border-style: solid;
+  border-color: var(--border-default);
+}
+.results__drop--picker-open .results__drop-title {
+  color: var(--text-secondary);
+}
+
 .results__drop-icon {
   inline-size: 2.5rem;
   block-size: 2.5rem;

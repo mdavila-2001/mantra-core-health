@@ -159,13 +159,6 @@ export interface PracticeSitePage {
     esta pantalla.
     ========================================================================== */
 
-/** Una organización a la que el profesional puede pedir vincularse. */
-export interface JoinablePractice {
-  readonly id: string;
-  readonly name: string;
-  readonly practiceType: string | null;
-}
-
 /** Una vinculación del profesional con una organización, en cualquier estado. */
 export interface MyRoleAssignment {
   readonly id: string;

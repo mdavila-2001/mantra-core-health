@@ -23,22 +23,16 @@ export type OrgAccessScope = 'TENANT' | 'PRACTICE' | 'SITE' | 'UNIT' | 'SPACE';
 
 /** Rol de una asignación de usuario de organización. */
 /**
- * Los cinco de siempre más los roles de §0.3 de `CONTRATO-F2-F5.md` (F5g):
- * supervisión de enfermería, admisión, limpieza y su supervisión,
- * mantenimiento (incluye biomédica), jefatura de quirófano, control de
- * infecciones y jefatura de servicio. La API los resuelve a `DA_ASSIGN_*`.
+ * Los de siempre más los roles de §0.3 de `CONTRATO-F2-F5.md` (F5g): jefatura
+ * de quirófano, control de infecciones y jefatura de servicio. Los roles
+ * operativos (enfermería, admisión, limpieza, mantenimiento) se eliminaron el
+ * 2026-11-05. La API los resuelve a `DA_ASSIGN_*`.
  */
 export type OrgAssignmentRole =
   | 'STAFF'
   | 'SECRETARY'
   | 'ASSISTANT'
-  | 'NURSE'
   | 'BILLING'
-  | 'NURSE_SUPERVISOR'
-  | 'ADMISSION'
-  | 'HOUSEKEEPING'
-  | 'HOUSEKEEPING_SUPERVISOR'
-  | 'MAINTENANCE'
   | 'OR_MANAGER'
   | 'INFECTION_CONTROL'
   | 'UNIT_HEAD';

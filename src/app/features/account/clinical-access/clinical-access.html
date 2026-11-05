@@ -9,10 +9,11 @@
       app-button
       variant="outline"
       size="sm"
-      routerLink="/my-account/access-requests"
+      routerLink="/my-account/requests"
+      [queryParams]="{ pestana: 'vinculos' }"
       data-testid="acceso-ir-buzon"
     >
-      Buzón de solicitudes
+      Solicitudes de vínculo
     </a>
   </app-page-header>
 }

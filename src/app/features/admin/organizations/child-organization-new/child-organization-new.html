@@ -2,7 +2,9 @@
   title="Nueva sub-organización"
   subtitle="Una unidad con identidad propia dentro de esta organización. Puede ser de otro tipo que su madre."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver()" label="Volver a la organización" />
+</app-page-header>
 
 @if (errorMessage(); as mensaje) {
   <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-filial-error">{{

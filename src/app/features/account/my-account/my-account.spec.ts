@@ -22,11 +22,23 @@ class FalsoOrganizationProfile {}
 
 describe('MyAccount', () => {
   const esOrganizacion = signal(false);
+  const tipoActivo = signal<string | null>(null);
+  const pid = signal<string | null>(null);
+  const hpid = signal<string | null>(null);
 
   beforeEach(async () => {
     esOrganizacion.set(false);
+    tipoActivo.set(null);
+    pid.set(null);
+    hpid.set(null);
     await TestBed.configureTestingModule({
-      providers: [{ provide: AuthService, useValue: { isOrganizationAccount: esOrganizacion } }],
+      providers: [{ provide: AuthService, useValue: {
+            isOrganizationAccount: esOrganizacion,
+            activeTenantType: tipoActivo,
+            patientProfileId: pid,
+            practitionerProfileId: hpid,
+          },
+        }],
     })
       // Se sustituyen las dos pantallas reales por marcas: lo que se prueba es
       // cuál de las dos monta `MyAccount`, no lo que cada una dibuja.
@@ -58,5 +70,22 @@ describe('MyAccount', () => {
 
     expect(dom.querySelector('[data-testid="organizacion"]')).not.toBeNull();
     expect(dom.querySelector('[data-testid="persona"]')).toBeNull();
+  });
+
+  it('el dueño de una organización médica, sin perfil de paciente ni profesional, ve la ficha de la organización', async () => {
+    tipoActivo.set('CLINIC');
+    const dom = await render();
+
+    expect(dom.querySelector('[data-testid="organizacion"]')).not.toBeNull();
+    expect(dom.querySelector('[data-testid="persona"]')).toBeNull();
+  });
+
+  it('un médico que dirige su clínica sigue viendo su perfil de persona', async () => {
+    tipoActivo.set('CLINIC');
+    hpid.set('hp-1');
+    const dom = await render();
+
+    expect(dom.querySelector('[data-testid="persona"]')).not.toBeNull();
+    expect(dom.querySelector('[data-testid="organizacion"]')).toBeNull();
   });
 });

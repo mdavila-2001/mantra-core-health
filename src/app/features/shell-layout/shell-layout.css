@@ -43,9 +43,13 @@
     scrollbar-width: none;
   }
 
-  .app-header__derecha::-webkit-scrollbar {
-    display: none;
-  }
+  .app-header__derecha::-webkit-scrollbar { display: none; }
+
+  /* The account menu hung inside this scroll strip, which also clips vertically:
+     tapping the avatar opened it invisibly (04/11/2026). Anchored to the sticky
+     header instead, like «Más accesos» below, the strip no longer clips it. */
+  .app-header__derecha .menu-anclaje { position: static; }
+  .app-header__derecha .menu-anclaje .app-menu { right: var(--e2); }
 
   /* Las acciones van a la derecha, como en cualquier barra de app: con la
      tira alineada al principio, en un teléfono de 400–700 px quedaban todas
@@ -59,9 +63,7 @@
 
   /* En modo cajón el nombre ya viaja en aria-label y en el globo. El texto
      visible vuelve en escritorio, donde sí hay lugar para leerlo. */
-  .app-header__red-social-texto {
-    display: none;
-  }
+  .app-header__red-social-texto { display: none; }
 }
 
 @media (max-width: 400px) {
@@ -78,9 +80,7 @@
  * pantalla completa (60rem); por encima el hilo no tiene «‹» y ésta se queda.
  */
 @media (max-width: 60rem) {
-  .app-header__volver--hilo {
-    display: none;
-  }
+  .app-header__volver--hilo { display: none; }
 }
 
 .app-header__rapidos {
@@ -258,6 +258,28 @@
 
   .app-shell--redesign .app-header .app-header__rapidos-lista {
     inset-inline-end: var(--e2);
+  }
+}
+
+/*
+ * El menú de la cuenta tiene que poder abrirse en el teléfono (04/11/2026).
+ *
+ * Mismo origen que «Más accesos»: `.menu-anclaje` (position: relative) vive
+ * dentro de `.app-header__derecha`, que a ≤ 900 px es una tira desplazable
+ * (`overflow-x: auto`) y recorta también en vertical. El menú se abría
+ * (`aria-expanded`) pero no se veía, y «Cerrar sesión» quedaba inalcanzable.
+ * Se ancla a la cabecera (sticky, contenedor de posición): un absoluto cuyo
+ * bloque contenedor es ancestro de la tira no lo recorta su `overflow`, y
+ * queda pegado al borde derecho de la pantalla.
+ */
+@media (max-width: 900px) {
+  .app-header .app-header__derecha .menu-anclaje {
+    position: static;
+  }
+
+  .app-header .app-header__derecha .menu-anclaje .app-menu {
+    right: var(--e2);
+    max-width: calc(100vw - var(--e4));
   }
 }
 

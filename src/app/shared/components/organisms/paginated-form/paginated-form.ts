@@ -1,5 +1,5 @@
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
-import { soloLetrasDeNombre, soloLetrasYNumeros } from '../../../forms/input-filters';
+import { fieldKindOf } from '../../../forms/field-kinds';
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -206,12 +206,8 @@ type RespuestaSiNo = 'si' | 'no' | '';
   },
 })
 export class PaginatedForm {
-  /** Ver `FieldDef.soloLetras`. */
-  protected filtroDe(campo: { soloLetras?: boolean; soloAlfanumerico?: boolean }) {
-    if (campo.soloLetras) return soloLetrasDeNombre;
-    if (campo.soloAlfanumerico) return soloLetrasYNumeros;
-    return null;
-  }
+  /** See `CampoDeFormulario.fieldKind` and `fieldKindOf`. */
+  protected readonly fieldKindDe = fieldKindOf;
 
   /** Ver `FieldDef.alSalir`: pasa el valor ya escrito del campo, recortado. */
   protected alSalirDe(campo: { key: string; alSalir?: (valor: string) => void }): void {
@@ -454,9 +450,7 @@ export class PaginatedForm {
   });
 
   readonly mostrarPasos = computed(
-    () =>
-      this.total() > 1 &&
-      (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
+    () => this.total() > 1 && (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
   );
 
   /**

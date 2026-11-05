@@ -1,7 +1,6 @@
 import {
   affiliations,
   changeStatus,
-  CM_PRACTICES,
   createAffiliation,
   publishedOffer,
   toRow,
@@ -9,9 +8,9 @@ import {
   type StatusCode,
 } from '../fixtures/role-assignments';
 import { offers } from './healthcare-services.handlers';
-import { PRACTICAS, TIPO_PRACTICA } from './practice.handlers';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { cuerpo } from '../mock-store';
+import { terminarVinculacionPropia } from './practice.handlers';
 
 /* ============================================================================
     Afiliación médico-centro por procedimiento (CM-07). Ninguna fila llega a
@@ -30,6 +29,19 @@ function transition(id: string, from: StatusCode, to: StatusCode, owner?: string
   return toRow(changeStatus(id, to)!);
 }
 
+/**
+ * Retirarse / salir de la fila: la lista del médico mezcla dos colecciones, así
+ * que se prueba primero la de sus vinculaciones propias y después `affiliations`.
+ */
+function terminar(request: MockRequest, desde: 'ACTIVE' | 'PENDING', desdeConcepto: StatusCode) {
+  const id = request.params['roleId']!;
+  const propia = terminarVinculacionPropia(id, desde, practitionerOf(request));
+  if (propia === 'terminada') return { id, status: 'ROLE_ASG_ENDED' };
+  if (propia === 'otra-persona') return forbidden();
+  if (propia === 'estado') return conflict(`Solo se puede terminar una vinculación en ${desde}`);
+  return transition(id, desdeConcepto, 'ROLE_ASG_ENDED', practitionerOf(request));
+}
+
 function practitionerOf(request: MockRequest): string | undefined {
   return request.user?.practitionerProfileId;
 }
@@ -37,15 +49,6 @@ function practitionerOf(request: MockRequest): string | undefined {
 export function registerRoleAssignments(router: MockRouter): void {
   // Los procedimientos publicados son los del doble de CM-06; las sedes y el catálogo los sirve él.
   useOfferLookup((id) => offers.get(id));
-
-  // A qué organizaciones se puede pedir vincularse: de cualquier tenant, sin consultorios propios (como la API).
-  router.get('/practitioners/me/joinable-practices', () =>
-    [...PRACTICAS.filter((p) => p.typeConceptId !== TIPO_PRACTICA.OFFICE), ...CM_PRACTICES].map((p) => ({
-      id: p.id,
-      name: p.name,
-      practiceType: p.typeConceptId,
-    })),
-  );
 
   // Con la forma real de la API: una página `{ items, count, limit, nextCursor }`.
   router.get('/practices/:practiceId/role-assignments', ({ params }) => {
@@ -76,10 +79,10 @@ export function registerRoleAssignments(router: MockRouter): void {
     transition(request.params['roleId']!, 'ROLE_ASG_INVITED', 'ROLE_ASG_REJECTED', practitionerOf(request)),
   );
   router.post('/practitioners/me/role-assignments/:roleId/withdraw', (request) =>
-    transition(request.params['roleId']!, 'ROLE_ASG_ACTIVE', 'ROLE_ASG_ENDED', practitionerOf(request)),
+    terminar(request, 'ACTIVE', 'ROLE_ASG_ACTIVE'),
   );
   router.post('/practitioners/me/role-assignments/:roleId/leave-queue', (request) =>
-    transition(request.params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ENDED', practitionerOf(request)),
+    terminar(request, 'PENDING', 'ROLE_ASG_PENDING'),
   );
   router.post('/role-assignments/:roleId/approve', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ACTIVE'));
   router.post('/role-assignments/:roleId/reject', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_REJECTED'));

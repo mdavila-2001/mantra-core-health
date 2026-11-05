@@ -256,6 +256,16 @@
         }
       </ul>
 
+      <!-- Tapping a category shows its specialists right here, where the tap happened. -->
+      @if (especialistasDeLaCategoria().length > 0) {
+        <div class="sintomas__recomendaciones" data-testid="sintomas-especialistas-categoria">
+          <app-symptom-recommendations
+            [recomendaciones]="especialistasDeLaCategoria()"
+            (elegir)="verProfesionales($event)"
+          />
+        </div>
+      }
+
       <!-- El texto libre vive acá, bajo la figura y al lado de ella: la figura es
            alta y esta columna quedaba medio vacía. Antes era una fila entera debajo
            de las dos, que alargaba la pantalla. -->
@@ -284,12 +294,11 @@
              hay botón, porque un botón que al tocarlo dice «acá no se puede» es
              peor que ninguno. El aviso va ANTES del botón y siempre a la vista:
              quien va a hablar de su salud tiene que saber a dónde va lo que dice
-             antes de decirlo (Q-M1). Lo transcribe el navegador; después el
-             servicio de triage lo analiza sin guardarlo, como a lo tecleado. -->
+             antes de decirlo (Q-M1). Lo transcribe el navegador. -->
         @if (dictado.supported) {
           <div class="sintomas__dictado" data-testid="sintomas-dictado">
             <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
-              Lo que dicta lo transcribe su navegador y lo analizamos para entenderle; no lo guardamos.
+              Lo que dicta lo transcribe su navegador; no lo guardamos.
             </p>
             <button
               app-button
@@ -400,50 +409,14 @@
               </p>
             }
 
-              <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
-              <!-- Pedido del cliente (27/10/2026): la MISMA tarjeta del buscador de
-                   especialidades de `/directory` —foto, ícono, nombre—, de
-                   `shared/styles/card-grid.css`. La tarjeta entera lleva a quién
-                   atiende, como allá; acá suma el porqué, que es lo que hace que la
-                   recomendación no sea una caja negra, y marca por cuál empezar. -->
-              <ul class="rejilla sintomas__rejilla" data-testid="sintomas-recomendaciones">
-                @for (recomendacion of recomendaciones(); track recomendacion.nombre; let primera = $first) {
-                  <li>
-                    <button
-                      type="button"
-                      class="rejilla__tarjeta sintomas__tarjeta"
-                      [class.sintomas__tarjeta--primera]="primera"
-                      [attr.data-testid]="'sintomas-especialidad-' + $index"
-                      [attr.aria-label]="
-                        'Ver quién atiende ' + recomendacion.nombre + '. ' + explicacionDe(recomendacion)
-                      "
-                      (click)="verProfesionales(recomendacion.nombre)"
-                    >
-                      <img class="rejilla__foto" [src]="fotoDe(recomendacion.nombre)" alt="" loading="lazy" />
-                      <span class="sintomas__tarjeta-cabeza">
-                        <app-specialty-icon
-                          class="rejilla__icono"
-                          aria-hidden="true"
-                          [especialidad]="recomendacion.nombre"
-                        />
-                        @if (primera && recomendaciones().length > 1) {
-                          <app-badge variant="primary">Empiece por acá</app-badge>
-                        }
-                      </span>
-                      <span class="rejilla__nombre">{{ recomendacion.nombre }}</span>
-                      <span class="rejilla__resumen">{{ explicacionDe(recomendacion) }}</span>
-                      <span class="sintomas__tarjeta-accion" aria-hidden="true">Ver quién atiende →</span>
-                    </button>
-                  </li>
-                }
-              </ul>
+              <!-- Client request (27/10/2026): same card as `/directory`; shown as a
+                   manual carousel so it is clear more specialties follow. -->
+              <app-symptom-recommendations
+                [recomendaciones]="recomendaciones()"
+                (elegir)="verProfesionales($event)"
+              />
 
           </div>
-        } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
-          <p class="sintomas__leyendo" role="status" data-testid="sintomas-leyendo">
-            <app-spinner size="sm" decorative />
-            <span>Estamos leyendo lo que escribió… puede tardar unos segundos.</span>
-          </p>
         } @else if (texto().trim() !== '' && sintomas().length === 0) {
           <p class="sintomas__sin-coincidencias" role="status">
             @if (descartados() !== '') {
@@ -603,9 +576,7 @@
     <!-- Alarma médica general no psiquiátrica -->
     <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
       <app-alert tone="error" title="Esto no puede esperar a un turno">
-        @if (respuestaDelServicio(); as respuesta) {
-          <p class="sintomas__respuesta-ia" data-testid="sintomas-respuesta-ia">{{ respuesta }}</p>
-        } @else if (mensajeDeAlarma(); as mensaje) {
+        @if (mensajeDeAlarma(); as mensaje) {
           <p>{{ mensaje }}</p>
         } @else {
           <p>

@@ -11,10 +11,9 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '@shared/forms/form-control.context';
+import { FieldKindDirective } from '@shared/forms/field-kind.directive';
+import { fieldKindFilter, fieldKindInputMode, fieldKindNormalize } from '@shared/forms/field-kinds';
+import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
 import { createValueAccessorBridge } from '@shared/forms/value-accessor';
 import type { InputComboboxAria, InputType } from './input.types';
 
@@ -28,6 +27,7 @@ import type { InputComboboxAria, InputType } from './input.types';
     '[class.app-input-host]': 'true',
     '[class.is-disabled]': 'isDisabled()',
   },
+  hostDirectives: [{ directive: FieldKindDirective, inputs: ['fieldKind'] }],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -125,6 +125,10 @@ export class Input implements ControlValueAccessor {
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
 
+  private readonly kind = inject(FieldKindDirective);
+  protected readonly effectiveInputMode = computed(() => this.inputMode() ?? fieldKindInputMode(this.kind.fieldKind()));
+  private readonly effectiveFilter = computed(() => this.inputFilter() ?? fieldKindFilter(this.kind.fieldKind()));
+
   protected readonly isFocused = signal(false);
   protected readonly passwordVisible = signal(false);
 
@@ -147,9 +151,7 @@ export class Input implements ControlValueAccessor {
   );
 
   /** El error puede venir del propio control o del campo que lo envuelve. */
-  protected readonly invalid = computed(
-    () => this.hasError() || this.field?.invalid() === true,
-  );
+  protected readonly invalid = computed(() => this.hasError() || this.field?.invalid() === true);
 
   /** El tipo real del `<input>`: `password` alterna a `text` al revelarse. */
   protected readonly effectiveType = computed(() => {
@@ -213,14 +215,16 @@ export class Input implements ControlValueAccessor {
     const target = event.target as HTMLInputElement;
 
     if (this.type() !== 'number') {
-      const filtro = this.inputFilter();
+      const filtro = this.effectiveFilter();
       if (filtro) {
         const limpio = filtro(target.value);
         if (limpio !== target.value) {
           const quitados = target.value.length - limpio.length;
-          const cursor = Math.max(0, (target.selectionStart ?? limpio.length) - quitados);
+          // `type="email"` has no selection API: selectionStart is null and setSelectionRange throws.
+          const inicio = target.selectionStart;
+          const cursor = Math.max(0, (inicio ?? limpio.length) - quitados);
           target.value = limpio;
-          target.setSelectionRange(cursor, cursor);
+          if (inicio !== null) target.setSelectionRange(cursor, cursor);
         }
       }
       this.commit(target.value);
@@ -267,7 +271,7 @@ export class Input implements ControlValueAccessor {
     if (typeof raw !== 'string') {
       return;
     }
-    const trimmed = raw.trim();
+    const trimmed = fieldKindNormalize(this.kind.fieldKind())(raw);
     if (!trimmed) {
       return;
     }

@@ -50,15 +50,12 @@
       </app-form-field>
       <div class="review-dialog__campo">
         <label class="review-dialog__rotulo" for="rd-consulted-at">Fecha de la consulta</label>
-        <input
-          id="rd-consulted-at"
-          class="review-dialog__select"
-          type="date"
-          data-testid="admission-review-consulted-at"
+        <app-date-string-picker
+          testId="admission-review-consulted-at"
+          ariaLabel="Fecha de la consulta"
           [value]="consultedAt()"
-          
-          [attr.aria-invalid]="touched() && dateProblem() !== null"
-          (input)="onDate($event)"
+          [hasError]="touched() && dateProblem() !== null"
+          (valueChange)="onDate($event)"
         />
         @if (touched() && dateProblem(); as problema) {
           <p class="review-dialog__error" role="alert">{{ problema }}</p>

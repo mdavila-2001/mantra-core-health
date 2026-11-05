@@ -9,15 +9,14 @@ import {
 } from '@angular/core';
 import { catchError, of } from 'rxjs';
 
+import { AccountingClient } from '../../../../core/data-access/accounting/accounting.client';
+import type { Practice } from '../../../../core/data-access/accounting/accounting.types';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import {
   ROLE_ASSIGNMENT_STATUS,
   roleAssignmentStatusLabel,
 } from '../../../../core/data-access/practice-sites/role-assignment-concepts';
-import type {
-  JoinablePractice,
-  MyRoleAssignment,
-} from '../../../../core/data-access/practice-sites/practice-sites.types';
+import type { MyRoleAssignment } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { roleAssignmentState } from '../../../../core/data-access/role-assignments/role-assignment-status';
 import { RoleAssignmentsClient } from '../../../../core/data-access/role-assignments/role-assignments.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
@@ -134,6 +133,7 @@ const FORMATO_DIA = new Intl.DateTimeFormat('es-BO', {
 })
 export class MembershipsTab {
   private readonly practiceSites = inject(PracticeSitesClient);
+  private readonly accounting = inject(AccountingClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly assignments = inject(RoleAssignmentsClient);
   private readonly dialogs = inject(DialogService);
@@ -220,7 +220,7 @@ export class MembershipsTab {
       this.filas().length === 0,
   );
 
-  private readonly practicas = signal<readonly JoinablePractice[] | undefined>(undefined);
+  private readonly practicas = signal<readonly Practice[] | undefined>(undefined);
 
   /**
    * Por qué no hay organizaciones para elegir; vacío si la lista llegó.
@@ -256,7 +256,7 @@ export class MembershipsTab {
   /** Vuelve a pedir la lista de organizaciones que se pueden elegir. */
   protected cargarOrganizaciones(): void {
     this.errorDeOrganizaciones.set('');
-    this.practiceSites.listJoinablePractices().subscribe({
+    this.accounting.listPractices().subscribe({
       next: (practicas) => this.practicas.set(practicas),
       error: (error: unknown) => {
         this.practicas.set([]);

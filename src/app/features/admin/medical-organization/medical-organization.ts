@@ -363,11 +363,7 @@ export class MedicalOrganization {
    * alta». Una caída de red no cuenta: ahí no se sabe qué es, y la pantalla dice
    * que falló.
    */
-  protected readonly esMedico = computed(() => {
-    if (this.session.practitionerProfileId() === null) return false;
-    const { status } = this.practicas();
-    return status === 'empty' || status === 'forbidden' || status === 'not-found';
-  });
+  protected readonly esMedico = computed(() => this.session.practitionerProfileId() !== null);
 
   protected readonly subtitulo = computed(() =>
     this.esMedico()

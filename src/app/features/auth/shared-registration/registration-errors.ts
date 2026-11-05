@@ -363,7 +363,7 @@ function businessRule(body: ApiErrorBody, codigo: string): ViewState<null> {
   if (documento === 'powerOfAttorneyFileId' || /poder notariado/i.test(texto)) {
     return pide(
       'powerOfAttorneyFileId',
-      'Falta el poder notariado del representante legal. Sólo una empresa unipersonal puede registrarse sin él. Adjúntelo en el paso «Representante legal» (PDF, hasta 10 MB) y vuelva a enviar.',
+      'Falta el poder notariado del representante legal. Es obligatorio para toda organización. Adjúntelo en el paso «Representante legal» (PDF, hasta 10 MB) y vuelva a enviar.',
     );
   }
   if (documento === 'constitutionFileId' || /escritura de constitución/i.test(texto)) {

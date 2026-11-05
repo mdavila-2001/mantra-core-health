@@ -119,7 +119,7 @@
       </ng-template>
       <ng-template appCampoPersonalizado="validFrom">
 <app-form-field label="Vigente desde" [required]="true">
-          <app-input [formControl]="form.controls.validFrom" type="date" testId="campaign-form-valid-from" />
+          <app-date-string-picker [formControl]="form.controls.validFrom"  testId="campaign-form-valid-from" />
         </app-form-field>
       </ng-template>
       <ng-template appCampoPersonalizado="validTo">
@@ -134,7 +134,7 @@
               : ''
           "
         >
-          <app-input [formControl]="form.controls.validTo" type="date" testId="campaign-form-valid-to" />
+          <app-date-string-picker [formControl]="form.controls.validTo"  testId="campaign-form-valid-to" />
         </app-form-field>
       </ng-template>
       @for (group of partners.controls; track group; let i = $index) {

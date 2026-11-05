@@ -10,7 +10,7 @@
         <app-input [value]="fullName()" (valueChange)="fullName.set('' + ($event ?? ''))" ariaLabel="Nombre y apellido completos" autocomplete="off" placeholder="Juan Pérez Rojas" data-testid="buscador-nombre" />
       </app-form-field>
       <app-form-field label="Fecha de nacimiento">
-        <app-input type="date" [value]="birthDate()" (valueChange)="birthDate.set('' + ($event ?? ''))" ariaLabel="Fecha de nacimiento" autocomplete="off" data-testid="buscador-nacimiento" />
+        <app-date-string-picker  [value]="birthDate()" (valueChange)="birthDate.set('' + ($event ?? ''))" ariaLabel="Fecha de nacimiento" data-testid="buscador-nacimiento" />
       </app-form-field>
     } @else {
       <app-form-field [label]="textLabel()">

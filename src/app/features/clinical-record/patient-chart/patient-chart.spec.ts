@@ -259,6 +259,10 @@ describe('PatientChart', () => {
     for (const referrals of http.match((r) => r.url === '/referrals')) {
       if (!referrals.cancelled) referrals.flush([]);
     }
+    // The access-scope notice reads the practitioner's inbox once the chart is ready.
+    for (const inbox of http.match((r) => r.url === '/authz/practitioners/me/access-requests')) {
+      if (!inbox.cancelled) inbox.flush([]);
+    }
     http.verify();
   });
 

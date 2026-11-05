@@ -133,10 +133,13 @@ function parseDateOnly(text: string): Date | null {
   const trimmed = text.trim();
   if (!trimmed || trimmed === MASK_TEMPLATE || /[DMA]/.test(trimmed)) return null;
   const match = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/.exec(trimmed);
-  if (!match) return null;
-  const day = Number.parseInt(match[1], 10);
-  const month = Number.parseInt(match[2], 10);
-  const year = Number.parseInt(match[3], 10);
+  // `AAAA-MM-DD`: lo que pega o autocompleta el navegador y lo que ya guardan
+  // las pantallas como texto.
+  const iso = match ? null : /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(trimmed);
+  if (!match && !iso) return null;
+  const day = Number.parseInt(match ? match[1] : iso![3], 10);
+  const month = Number.parseInt(match ? match[2] : iso![2], 10);
+  const year = Number.parseInt(match ? match[3] : iso![1], 10);
   if (month < 1 || month > 12 || year < 1 || year > 9999 || day < 1) {
     return null;
   }
@@ -283,6 +286,12 @@ export class DatePicker {
   readonly maxDate = input<Date | string | null>(null);
   readonly allowKeyboard = input<boolean>(true);
 
+  /** Nombre accesible cuando el selector va suelto, sin `app-form-field`. Dentro de un campo manda su `<label>`. */
+  readonly ariaLabel = input<string>('');
+
+  /** `data-testid` del `<input>` real: sobre `<app-date-picker>` se quedaría en el host. */
+  readonly testId = input<string | null>(null);
+
   /**
    * Avisa cuando lo escrito a mano se rechaza, y con `null` cuando deja de
    * estarlo. El modelo no alcanza: una fecha fuera de rango deja `value` en
@@ -378,6 +387,9 @@ export class DatePicker {
     return rotulo ? `${this.triggerTextId} ${rotulo}` : null;
   });
   protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
+  protected readonly accessibleLabel = computed(() =>
+    this.field !== null ? null : this.ariaLabel() || null,
+  );
   protected readonly invalid = computed(
     () => this.hasError() || this.field?.invalid() === true || this.parseError(),
   );

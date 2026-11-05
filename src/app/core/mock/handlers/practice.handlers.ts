@@ -14,7 +14,7 @@ import { ahora, avatarSvg, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, pa
     organización médica.
     ========================================================================== */
 
-export const TIPO_PRACTICA = { CLINIC: uuid('concept-practice-type-clinic'), HOSPITAL: uuid('concept-practice-type-hospital'), OFFICE: uuid('concept-practice-type-office') } as const;
+const TIPO_PRACTICA = { CLINIC: uuid('concept-practice-type-clinic'), HOSPITAL: uuid('concept-practice-type-hospital'), OFFICE: uuid('concept-practice-type-office') } as const;
 
 /** La práctica sirve a tres clientes con formas distintas: se devuelven todos los campos que alguno espera. */
 export const PRACTICAS = [
@@ -187,6 +187,26 @@ const vinculaciones = new Coleccion<VinculacionSimulada>([
   { id: uuid('ra-japones'), practiceId: uuid('practice-japones'), practiceName: 'Hospital Japonés', practiceType: 'Hospital', practiceSiteId: null, roleConceptId: CARGO['ROLE-RESIDENTE']!, specialtyConceptId: null, status: 'ENDED', isPrimary: false, validFrom: isoDia(-3000), validTo: isoDia(-1500), createdAt: iso(-3000), avatarUrl: null, practitionerProfileId: MEDICAL.id },
   { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: SPECIALTY['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICAL.id },
 ]);
+
+/**
+ * Termina una vinculación de `vinculaciones` —las que lista `GET
+ * /practitioners/me/role-assignments` junto a las de `affiliations`— si hoy
+ * está en `desde`. Devuelve `undefined` si el id no es de esta colección, para
+ * que el llamador pruebe con la otra; `'otra-persona'` o `'estado'` si existe
+ * pero no corresponde.
+ */
+export function terminarVinculacionPropia(
+  id: string,
+  desde: 'ACTIVE' | 'PENDING',
+  practitionerProfileId: string | undefined,
+): 'terminada' | 'otra-persona' | 'estado' | undefined {
+  const actual = vinculaciones.filtrar((v) => v.id === id)[0];
+  if (actual === undefined) return undefined;
+  if (actual.practitionerProfileId !== practitionerProfileId) return 'otra-persona';
+  if (actual.status !== desde) return 'estado';
+  vinculaciones.actualizar(id, { status: 'ENDED', validTo: isoDia(0) });
+  return 'terminada';
+}
 
 const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string; contactPhone: string | null; bankQrFileId: string | null; logoFileId: string | null }>([
   // Sólo el consultorio propio arranca con QR bancario cargado: las otras tres

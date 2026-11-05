@@ -114,3 +114,23 @@ describe('toMedicationCard · para qué sirve', () => {
     expect(sinUso.card.atributos.some((a) => a.clave === 'grupo')).toBe(false);
   });
 });
+
+describe('toMedicationCard · sin farmacia que lo publique', () => {
+  it('no inventa precio y dice que ninguna farmacia lo publica', () => {
+    const tarjeta = toMedicationCard(
+      medicamento({
+        priceFrom: null,
+        priceTo: null,
+        currency: null,
+        pharmacyCount: 0,
+        nearestKm: null,
+        uses: ['Dolor abdominal y cólicos'],
+      }),
+    );
+    expect(tarjeta.card.atributos.map((a) => a.texto)).toEqual([
+      'Sirve para: Dolor abdominal y cólicos',
+      'Ninguna farmacia de la red lo publica todavía',
+    ]);
+    expect(hasPriceRange(tarjeta.medication)).toBe(false);
+  });
+});

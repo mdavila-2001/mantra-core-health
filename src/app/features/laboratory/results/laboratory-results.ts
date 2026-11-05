@@ -11,6 +11,7 @@ import {
   signal,
   untracked,
   viewChild,
+  viewChildren,
 } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
@@ -34,6 +35,7 @@ import { ContentDialog } from '../../../shared/components/organisms/content-dial
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
+import { NativeFilePicker } from '../../../shared/forms/native-file-picker';
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
 import type {
   LabResultFile,
@@ -49,6 +51,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { formatBytes } from '../file-size';
 import { filesFromDrop, filesFromInput } from './picked-files';
 import { ResultUploadQueue, type UploadItem } from './result-upload-queue';
+import { ACCEPT_ATTRIBUTE, type UploadRejection } from './upload-rules';
 
 type ViewMode = 'grid' | 'list';
 type KindFilter = LabResultKind | 'ALL';
@@ -88,7 +91,6 @@ const VIEW_OPTIONS: readonly SegmentedOption<ViewMode>[] = [
   { value: 'list', label: 'Lista', description: 'Ver como lista detallada' },
 ];
 
-const NO_ORDER = '__none__';
 const VIEW_KEY = 'alovida.lab-results.view';
 /** Lo más que el visor lee de un archivo de texto: el resto se descarga. */
 const TEXT_PREVIEW_BYTES = 2 * 1024 * 1024;
@@ -126,6 +128,7 @@ const THUMBNAIL_MAX_BYTES = 15 * 1024 * 1024;
     Switch,
     Textarea,
     ViewStateHost,
+    NativeFilePicker,
   ],
   providers: [ResultUploadQueue],
   templateUrl: './laboratory-results.html',
@@ -148,28 +151,31 @@ export class LaboratoryResults {
   protected readonly formatBytes = formatBytes;
   protected readonly kindOptions = KIND_OPTIONS;
   protected readonly viewOptions = VIEW_OPTIONS;
-  protected readonly noOrder = NO_ORDER;
+  protected readonly acceptedFormats = ACCEPT_ATTRIBUTE;
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
   private readonly folderInput = viewChild<ElementRef<HTMLInputElement>>('folderInput');
+  private readonly pickers = viewChildren(NativeFilePicker);
+  /** Con «Elegir archivos» o «Elegir una carpeta» abiertos, la zona no acepta soltar. */
+  protected readonly pickerOpen = computed(() => this.pickers().some((picker) => picker.open()));
 
   /* ---- subida ----------------------------------------------------------- */
 
   protected readonly targets = signal<ViewState<readonly LabResultTarget[]>>(loading());
-  protected readonly uploadOrder = signal<string>(NO_ORDER);
+  /** The API requires an order to upload: nothing is enabled until one is chosen. */
+  protected readonly uploadOrder = signal<string | null>(null);
+  /** Files refused before sending (format or size), with the reason. */
+  protected readonly rejections = signal<readonly UploadRejection[]>([]);
   protected readonly uploadNote = signal('');
   protected readonly uploadNotify = signal(true);
   protected readonly dragging = signal(false);
 
   protected readonly targetOptions = computed<readonly SelectOption<string>[]>(() => [
-    { value: NO_ORDER, label: 'Sin orden: archivo suelto' },
     ...(dataOf(this.targets()) ?? []).map((t) => ({
       value: t.orderId,
       label: `${t.studyName} · ${t.patientName} · ${t.requesterName}${t.fileCount > 0 ? ` (ya tiene ${t.fileCount})` : ''}`,
     })),
   ]);
-
-  protected readonly hasOrder = computed(() => this.uploadOrder() !== NO_ORDER);
 
   /* ---- todo lo subido --------------------------------------------------- */
 
@@ -262,10 +268,11 @@ export class LaboratoryResults {
 
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
+    const blocked = this.pickerOpen();
     if (event.dataTransfer !== null) {
-      event.dataTransfer.dropEffect = 'copy';
+      event.dataTransfer.dropEffect = blocked ? 'none' : 'copy';
     }
-    this.dragging.set(true);
+    this.dragging.set(!blocked);
   }
 
   protected onDragLeave(event: DragEvent): void {
@@ -278,23 +285,21 @@ export class LaboratoryResults {
   protected async onDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
     this.dragging.set(false);
-    if (event.dataTransfer === null) {
+    if (event.dataTransfer === null || this.pickerOpen()) {
       return;
     }
     this.enqueue(await filesFromDrop(event.dataTransfer));
   }
 
   private enqueue(picked: ReturnType<typeof filesFromInput>): void {
-    if (picked.length === 0) {
+    const orderId = this.uploadOrder();
+    if (picked.length === 0 || orderId === null) {
       return;
     }
-    const orderId = this.hasOrder() ? this.uploadOrder() : null;
     const note = this.uploadNote().trim();
-    this.queue.add(picked, {
-      orderId,
-      note: note === '' ? null : note,
-      notify: orderId !== null && this.uploadNotify(),
-    });
+    this.rejections.set(
+      this.queue.add(picked, { orderId, note: note === '' ? null : note, notify: this.uploadNotify() }),
+    );
   }
 
   protected statusLabel(item: UploadItem): string {

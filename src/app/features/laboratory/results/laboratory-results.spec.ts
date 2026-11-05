@@ -1,6 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -79,6 +79,7 @@ describe('LaboratoryResults', () => {
   let listResultFiles: ReturnType<typeof vi.fn>;
   let withdrawResult: ReturnType<typeof vi.fn>;
   let confirmWithReason: ReturnType<typeof vi.fn>;
+  let startUpload: ReturnType<typeof vi.fn>;
   let objetos: Map<string, Blob>;
   const original = { crear: URL.createObjectURL, revocar: URL.revokeObjectURL };
 
@@ -119,6 +120,8 @@ describe('LaboratoryResults', () => {
     );
     withdrawResult = vi.fn(() => of(undefined));
     confirmWithReason = vi.fn(async () => 'Era de otro paciente');
+    // Never answers: these tests only look at what is declared, not at the transfer.
+    startUpload = vi.fn(() => NEVER);
 
     TestBed.configureTestingModule({
       providers: [
@@ -130,6 +133,7 @@ describe('LaboratoryResults', () => {
             listResultFiles,
             resultContent: vi.fn(() => of(content)),
             withdrawResult,
+            startUpload,
           },
         },
         { provide: DialogService, useValue: { confirmWithReason } },
@@ -185,6 +189,62 @@ describe('LaboratoryResults', () => {
 
       expect(q('results-grid')).toBeNull();
       expect(root().textContent).not.toContain('Todavía no subió resultados.');
+    });
+  });
+
+  describe('subir: la API exige una orden, hasta 10 MB y sólo ciertos formatos', () => {
+    const page = () => fixture.componentInstance as unknown as { uploadOrder: { set(id: string | null): void } };
+    const chooseFiles = (list: File[]): void => {
+      const input = q('results-file-input') as HTMLInputElement;
+      Object.defineProperty(input, 'files', { configurable: true, value: list });
+      input.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+    };
+    const big = (): File => {
+      const file = new File(['x'], 'informe.pdf');
+      Object.defineProperty(file, 'size', { value: 10 * 1024 * 1024 + 1 });
+      return file;
+    };
+
+    it('sin orden elegida no se puede elegir nada, y un archivo que llegue igual no se manda', async () => {
+      await montar();
+
+      // `app-button` disables with `aria-disabled` and swallows the click.
+      expect(q('results-choose-files')?.getAttribute('aria-disabled')).toBe('true');
+      expect(q('results-choose-folder')?.getAttribute('aria-disabled')).toBe('true');
+      expect(root().textContent).toContain('Elija primero la orden');
+
+      chooseFiles([new File(['x'], 'hemograma.pdf')]);
+      expect(startUpload).not.toHaveBeenCalled();
+      expect(q('results-queue')).toBeNull();
+    });
+
+    it('con una orden elegida se habilita, y el archivo se declara a ESA orden', async () => {
+      await montar();
+      page().uploadOrder.set('o-1');
+      fixture.detectChanges();
+
+      expect(q('results-choose-files')?.getAttribute('aria-disabled')).toBe('false');
+      chooseFiles([new File(['x'], 'hemograma.pdf', { type: 'application/pdf' })]);
+
+      expect(startUpload).toHaveBeenCalledTimes(1);
+      expect(startUpload.mock.calls[0]![0]).toMatchObject({ orderId: 'o-1', contentType: 'application/pdf', fileName: 'hemograma.pdf' });
+    });
+
+    it('un formato no admitido o de más de 10 MB no se manda: cada archivo dice por qué', async () => {
+      await montar();
+      page().uploadOrder.set('o-1');
+      fixture.detectChanges();
+
+      chooseFiles([new File(['x'], 'eco.mp4', { type: 'video/mp4' }), big()]);
+
+      const messages = [...root().querySelectorAll('[data-testid="results-rejected"]')].map((m) => m.textContent?.trim());
+      expect(messages).toEqual([
+        'eco.mp4: formato no admitido. Se aceptan PDF, JPG, PNG, WEBP, GIF, DOCX, XLSX y TXT.',
+        'informe.pdf: pesa 10,0 MB y supera el máximo de 10 MB.',
+      ]);
+      expect(startUpload).not.toHaveBeenCalled();
+      expect(q('results-queue')).toBeNull();
     });
   });
 
@@ -270,6 +330,60 @@ describe('LaboratoryResults', () => {
       const visor = q('results-viewer')!;
       expect(visor.querySelector('img')?.getAttribute('src')?.startsWith('blob:')).toBe(true);
       expect(visor.querySelector('iframe, object, embed, svg[onload]')).toBeNull();
+    });
+  });
+
+  describe('la zona de soltar con un selector nativo abierto', () => {
+    const page = () => fixture.componentInstance as unknown as { uploadOrder: { set(id: string | null): void } };
+    const dropzone = (): HTMLElement => q('results-dropzone')!;
+
+    function dragOverEvent(): DragEvent & { dataTransfer: { dropEffect: string } } {
+      const event = new Event('dragover', { bubbles: true, cancelable: true }) as DragEvent & {
+        dataTransfer: { dropEffect: string };
+      };
+      Object.defineProperty(event, 'dataTransfer', { value: { dropEffect: 'copy', files: [] } });
+      return event;
+    }
+
+    async function conOrdenElegida(): Promise<void> {
+      await montar();
+      page().uploadOrder.set('o-1');
+      fixture.detectChanges();
+    }
+
+    it.each(['results-file-input', 'results-folder-input'])(
+      'con %s abierto no se ilumina, el cursor dice que no y cambia el título',
+      async (testId) => {
+        await conOrdenElegida();
+        q(testId)!.dispatchEvent(new Event('click', { bubbles: true }));
+        fixture.detectChanges();
+        const event = dragOverEvent();
+
+        dropzone().dispatchEvent(event);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(event.dataTransfer.dropEffect).toBe('none');
+        expect(dropzone().classList.contains('results__drop--active')).toBe(false);
+        expect(dropzone().classList.contains('results__drop--picker-open')).toBe(true);
+        expect(dropzone().textContent).toContain('Elija en la ventana de su dispositivo');
+      },
+    );
+
+    it('al cerrarse el diálogo vuelve a aceptar arrastrar', async () => {
+      await conOrdenElegida();
+      q('results-folder-input')!.dispatchEvent(new Event('click', { bubbles: true }));
+      q('results-folder-input')!.dispatchEvent(new Event('cancel', { bubbles: true }));
+      fixture.detectChanges();
+      const event = dragOverEvent();
+
+      dropzone().dispatchEvent(event);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(event.dataTransfer.dropEffect).toBe('copy');
+      expect(dropzone().classList.contains('results__drop--active')).toBe(true);
+      expect(dropzone().textContent).toContain('Arrastre archivos o carpetas enteras acá');
     });
   });
 });

@@ -23,9 +23,9 @@ describe('rutaDeNotificacion', () => {
     );
   });
 
-  it('lleva el pedido de vínculo de un profesional a la bandeja del paciente (FT-07)', () => {
+  it('lleva el pedido de vínculo a la pestaña de vínculos de «Mis solicitudes» (FT-07)', () => {
     expect(rutaDeNotificacion({ type: 'CARE_RELATIONSHIP_REQUEST', id: 'cr-1' })).toBe(
-      '/my-account/access-requests',
+      '/my-account/requests?pestana=vinculos',
     );
   });
 

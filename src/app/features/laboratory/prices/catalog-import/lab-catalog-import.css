@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+/* Full width, one row (stacks on narrow screens): the price rule on the left,
+   the batch action on the right. */
+.catalog__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
+.catalog__rule {
+  flex: 1 1 20rem;
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.catalog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.catalog__list {
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-5);
+}

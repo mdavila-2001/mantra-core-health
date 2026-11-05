@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { MembershipInvitationsClient } from '../../../core/data-access/directory/membership-invitations.client';
@@ -87,6 +87,29 @@ describe('OrganizationInvitations', () => {
     expect(byId('invitacion-m-1')).toBeNull();
     expect(byId('invitacion-m-2')).not.toBeNull();
     expect(byId('invitaciones-resultado')!.textContent).toContain('Aceptó la invitación de Consultorio Céspedes');
+  });
+
+  it('la lista se vuelve a leer DESPUÉS de renovar la sesión, no a la vez', async () => {
+    await abrir();
+    const renovada = new Subject<object>();
+    refresh.mockReturnValue(renovada);
+
+    await clic(fila('m-1').querySelector('[data-testid="invitacion-aceptar"]'));
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(list).toHaveBeenCalledTimes(1);
+
+    renovada.next({});
+    await refrescar();
+    expect(list).toHaveBeenCalledTimes(2);
+  });
+
+  it('si la renovación falla, la lista igual se vuelve a leer: la invitación ya está aceptada', async () => {
+    await abrir();
+    refresh.mockReturnValue(throwError(() => new Error('sin sesión')));
+
+    await clic(fila('m-1').querySelector('[data-testid="invitacion-aceptar"]'));
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(byId('invitacion-m-1')).toBeNull();
   });
 
   it('rechazar pide confirmación, descarta la invitación y no renueva la sesión', async () => {

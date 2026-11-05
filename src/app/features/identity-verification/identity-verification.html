@@ -63,9 +63,12 @@
       <div class="verificar__formulario">
         <app-form-field label="¿Qué quiere verificar?" [required]="true">
           <app-radio-group [value]="tramite()" [disabled]="enviando()" (valueChange)="alElegirTramite($event)">
-            <app-radio value="patient" label="Mi identidad como paciente" />
-            <app-radio value="practitioner" label="Mi identidad como profesional" />
-            <app-radio value="license" label="Mi matrícula profesional" />
+            @if (esProfesional()) {
+              <app-radio value="practitioner" label="Mi identidad como profesional" />
+              <app-radio value="license" label="Mi matrícula profesional" />
+            } @else {
+              <app-radio value="patient" label="Mi identidad como paciente" />
+            }
             <app-radio value="tenant" label="Una organización que administro" />
           </app-radio-group>
         </app-form-field>

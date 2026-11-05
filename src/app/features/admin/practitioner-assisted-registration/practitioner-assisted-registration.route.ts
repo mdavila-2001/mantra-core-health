@@ -2,6 +2,7 @@ import type { Route } from '@angular/router';
 
 import { APP_TITLE } from '../../../core/navigation/navigation.types';
 import { seccionRolesGuard } from '../../../core/navigation/section-roles.guard';
+import { recordRouteChunkFailure } from '../../../core/errors/stale-build-recovery';
 import { ErrorRecovery } from '../../error-recovery/error-recovery';
 
 /**
@@ -24,5 +25,8 @@ export const PRACTITIONER_ASSISTED_ROUTE: Route = {
       .then((m) => m.PractitionerAssistedRegistration)
       // Mismo criterio que `chunkFallido` de `app.routes.ts`: si el fragmento no
       // se descarga se muestra la recuperación, que ofrece recargar.
-      .catch(() => ErrorRecovery),
+      .catch((error: unknown) => {
+        recordRouteChunkFailure(error);
+        return ErrorRecovery;
+      }),
 };

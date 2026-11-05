@@ -41,13 +41,13 @@ describe('AdmissionNew', () => {
 
   afterEach(() => verificarHttp());
 
-  it('S1 y S5: Limpieza no ingresa pacientes', async () => {
-    const { harness, acceso, maqueta, raiz, http } = await montar('limpieza');
+  it('S1 y S5: quien no administra la sede no ingresa pacientes', async () => {
+    const { harness, acceso, maqueta, raiz, http } = await montar('medica');
     await harness.navigateByUrl('/inpatient/admissions/new');
     expect(raiz().textContent).toContain('Verificando permisos');
     acceso.listo(maqueta.acceso());
     harness.detectChanges();
-    expect(raiz().textContent).toContain('Ingresar pacientes es tarea de enfermería o admisión');
+    expect(raiz().textContent).toContain('Ingresar pacientes lo hace quien administra la organización o la sede');
     expect(http.match((r) => r.url.includes('attending-practitioners'))).toHaveLength(0);
   });
 

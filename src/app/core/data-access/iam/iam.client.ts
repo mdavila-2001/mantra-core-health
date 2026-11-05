@@ -125,12 +125,8 @@ export class IamClient {
         : { motherLastName: registration.motherLastName }),
       ...(registration.email === undefined ? {} : { email: registration.email }),
       ...(registration.birthDate === undefined ? {} : { birthDate: registration.birthDate }),
-      // El cuerpo se re-proyecta campo por campo y no con un `...registration`
-      // a propósito: `forbidNonWhitelisted` del backend rechaza toda propiedad
-      // que el DTO no declare, así que lo que viaja es exactamente lo acordado
-      // y no lo que alguien haya dejado colgando del objeto de dominio. El
-      // precio es éste: un campo nuevo en `PatientRegistration` no llega solo,
-      // hay que listarlo acá.
+      // Field by field on purpose: the backend's `forbidNonWhitelisted` rejects
+      // undeclared keys, so a new `PatientRegistration` field must be listed here.
       ...(registration.issuerAdministrativeAreaConceptId === undefined
         ? {}
         : {
@@ -475,6 +471,7 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
         taxIdentifier: registration.taxIdentifier,
         legalEntityType: registration.legalEntityType,
         tenantType: 'PHARMACY',
@@ -540,8 +537,10 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
         legalEntityType: registration.legalEntityType,
         tenantType: 'DIAGNOSTIC_CENTER',
+        taxIdentifier: registration.taxIdentifier,
         countryConceptId: registration.countryConceptId,
         jurisdictionConceptId: registration.jurisdictionConceptId,
         diagnosticUnit: {
@@ -715,13 +714,12 @@ export class IamClient {
    * orquestación ni reanudación que hacer.
    */
   assistedRegistration(
-    registration: AssistedPatientRegistration,
+    registration: AssistedPatientRegistration & { readonly allowHomonym?: boolean },
   ): Observable<AssistedRegistrationResult> {
     return this.http
       .post<AssistedRegistrationBody>(this.url('/iam/users/assisted-registration'), {
-        // El nombre viaja en partes y el backend compone el que se muestra: si
-        // el front lo compusiera, la cuenta guardaría una versión y el contrato
-        // otra.
+        // The name travels in parts and the backend composes the visible one:
+        // composing it here would leave the account and the contract disagreeing.
         name: registration.name,
         lastName: registration.lastName,
         ...(registration.middleName === undefined ? {} : { middleName: registration.middleName }),
@@ -737,6 +735,7 @@ export class IamClient {
         ...(registration.legalRepresentativeUserId === undefined
           ? {}
           : { legalRepresentativeUserId: registration.legalRepresentativeUserId }),
+        ...(registration.allowHomonym ? { allowHomonym: true } : {}),
       })
       .pipe(map(toAssistedResult));
   }

@@ -301,12 +301,12 @@ describe('MedicalOrganization', () => {
     const activa = harness.routeNativeElement!.querySelector('[role="tab"][aria-selected="true"]');
     expect(activa?.textContent?.trim()).toBe('Mis vinculaciones');
 
-    // Al abrirse, la pestaña monta «Mis vinculaciones», que pide lo suyo: las
-    // organizaciones a las que puede pedir vincularse (no `/practices`, que
-    // sólo ve la organización activa) y las vinculaciones propias. Que
-    // aparezcan **acá y no antes** es la prueba de que el contenido de una
-    // pestaña cerrada no se instancia.
-    http.expectOne('/practitioners/me/joinable-practices').flush([{ id: 'prac-2', name: 'Hospital Central', practiceType: null }]);
+    // Al abrirse, la pestaña monta «Mis vinculaciones», que pide lo suyo: la
+    // lista de organizaciones para el selector y las vinculaciones propias.
+    // Que aparezcan **acá y no antes** es la prueba de que el contenido de una
+    // pestaña cerrada no se instancia — que es lo que evita pedir `/practices`
+    // dos veces en cada visita al panel.
+    http.expectOne('/practices').flush([PRACTICA]);
     http.expectOne('/practitioners/me/role-assignments').flush([]);
   });
 

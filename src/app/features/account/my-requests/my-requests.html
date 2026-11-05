@@ -1,8 +1,40 @@
-<app-page-header title="Mis solicitudes" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()" />
+<app-page-header
+  title="Mis solicitudes"
+  [subtitle]="
+    pestana() === PESTANA_VINCULOS
+      ? 'Profesionales que pidieron acceder a su historia clínica. Usted elige qué áreas autoriza.'
+      : subtitulo()
+  "
+  [breadcrumbs]="breadcrumbs()"
+/>
 
 <!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
      (`docs/components/composition-rules.md` §5). -->
 <app-card class="mis-solicitudes" variant="outlined" padding="lg" data-testid="mis-solicitudes-card">
+  <!-- The tabs sit above the insurance load: the care-relationship tab (the
+       former «Buzón de solicitudes») does not depend on it. -->
+  <app-tabs
+    [selectedIndex]="pestana()"
+    (selectedIndexChange)="elegirPestana($event)"
+    data-testid="mis-solicitudes-pestanas"
+  >
+    <app-tab [label]="pestanas[0] + (estado().status === 'ready' ? ' (' + decididas().length + ')' : '')">
+      <ng-container [ngTemplateOutlet]="seguros" />
+    </app-tab>
+    <app-tab [label]="pestanas[1] + (estado().status === 'ready' ? ' (' + enEspera().length + ')' : '')">
+      <ng-container [ngTemplateOutlet]="seguros" />
+    </app-tab>
+    <app-tab [label]="pestanas[PESTANA_VINCULOS]">
+      <!-- Content projection would build it even while hidden: load on demand. -->
+      @if (pestana() === PESTANA_VINCULOS) {
+        <app-access-requests [embebido]="true" data-testid="mis-solicitudes-vinculos" />
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<!-- The insurance requests of the active tab (0 or 1). -->
+<ng-template #seguros>
   <app-view-state-host [state]="estado()" (retry)="cargar()">
     @if (estado().status === 'ready') {
       @if (truncada()) {
@@ -10,22 +42,10 @@
           Tiene más solicitudes que las que entran en esta lista. Use el buscador o el período para acotarla.
         </app-alert>
       }
-
-      <app-tabs
-        [selectedIndex]="pestana()"
-        (selectedIndexChange)="elegirPestana($event)"
-        data-testid="mis-solicitudes-pestanas"
-      >
-        <app-tab [label]="pestanas[0] + ' (' + decididas().length + ')'">
-          <ng-container [ngTemplateOutlet]="lista" />
-        </app-tab>
-        <app-tab [label]="pestanas[1] + ' (' + enEspera().length + ')'">
-          <ng-container [ngTemplateOutlet]="lista" />
-        </app-tab>
-      </app-tabs>
+      <ng-container [ngTemplateOutlet]="lista" />
     }
   </app-view-state-host>
-</app-card>
+</ng-template>
 
 <!-- La lista de la pestaña activa: el panel inactivo no se renderiza, así que
      las dos pestañas comparten esta plantilla sin pisarse. -->

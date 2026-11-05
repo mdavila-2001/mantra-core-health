@@ -16,6 +16,7 @@ import { patientFailureMessage } from './patient-failure';
 import type { PickedPatient } from './picked-patient';
 import { PatientRegister } from './patient-register';
 import { SEARCH_HELP, SEARCH_MODES, validateExactSearch, type SearchMode } from './patient-search';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 export type { PickedPatient } from './picked-patient';
 
@@ -33,7 +34,7 @@ const MODOS: readonly SegmentedOption<SearchMode>[] = SEARCH_MODES.map((m) => ({
  */
 @Component({
   selector: 'app-patient-finder',
-  imports: [AccessWhyNot, Alert, AppButton, FormField, Input, PatientRegister, SegmentedControl],
+  imports: [DateStringPicker, AccessWhyNot, Alert, AppButton, FormField, Input, PatientRegister, SegmentedControl],
   templateUrl: './patient-finder.html',
   styleUrl: './patient-finder.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

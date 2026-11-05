@@ -5,7 +5,6 @@ import { catchError, map, of, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
-  JoinablePractice,
   MyRoleAssignment,
   NewOwnSite,
   OwnSitePatch,
@@ -84,21 +83,6 @@ export class PracticeSitesClient {
           throw err;
         }),
       );
-  }
-
-  /**
-   * `GET /practitioners/me/joinable-practices` — las organizaciones a las que
-   * puedo pedir vincularme.
-   *
-   * No es `GET /practices`: esa lectura se acota a la organización **activa**
-   * de la sesión, y quien busca unirse a una nueva todavía no es de ella, así
-   * que el selector de «Pedir una vinculación» salía vacío. Ésta cruza
-   * organizaciones a propósito y deja fuera las ya vinculadas.
-   */
-  listJoinablePractices(): Observable<readonly JoinablePractice[]> {
-    return this.http.get<readonly JoinablePractice[]>(
-      this.url('/practitioners/me/joinable-practices'),
-    );
   }
 
   /**

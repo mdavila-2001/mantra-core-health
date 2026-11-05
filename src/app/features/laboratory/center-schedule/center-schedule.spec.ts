@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CenterScheduleClient } from '../../../core/data-access/diagnostic-units/center-schedule.client';
 import { horarioDeSemana } from '../../../core/data-access/diagnostic-units/center-schedule.rules';
-import type { CenterSchedule, CenterScheduleView } from '../../../core/data-access/diagnostic-units/center-schedule.types';
+import type { CenterBookingPage, CenterSchedule, CenterScheduleView } from '../../../core/data-access/diagnostic-units/center-schedule.types';
 import { CenterSchedulePage } from './center-schedule';
 
 const VISTA: CenterScheduleView = {
@@ -31,7 +31,8 @@ async function montar(cliente: Partial<CenterScheduleClient>) {
   TestBed.configureTestingModule({
     providers: [
       provideRouter([{ path: 'administration/center-schedule', component: CenterSchedulePage }]),
-      { provide: CenterScheduleClient, useValue: cliente },
+      // Today's queue of each line comes from the center's bookings.
+      { provide: CenterScheduleClient, useValue: { getMyBookings: () => of({ items: [], count: 0 }), ...cliente } },
     ],
   });
   const harness = await RouterTestingHarness.create();
@@ -92,5 +93,49 @@ describe('CenterSchedulePage', () => {
     );
     await clic(operativo!);
     expect(setEquipmentStatus).toHaveBeenCalledWith('sur', 'eco-2', 'OPERATIONAL');
+  });
+
+  async function abrirEquipos(cliente: Partial<CenterScheduleClient>) {
+    const m = await montar({ getMySchedule: () => of(VISTA), ...cliente });
+    await m.clic([...m.el.querySelectorAll('[role="tab"]')].find((t) => t.textContent?.trim() === 'Equipos') as HTMLElement);
+    return m;
+  }
+
+  it('agregar un equipo lo manda al servidor con su modalidad', async () => {
+    const addEquipment = vi.fn(() => of(VISTA));
+    const { el, clic } = await abrirEquipos({ addEquipment });
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-agregar"]')!);
+    const nombre = el.querySelector<HTMLInputElement>('[data-testid="centro-equipo-formulario"] input')!;
+    nombre.value = 'Ecógrafo sala 2';
+    nombre.dispatchEvent(new Event('input'));
+    // Focusing the field again lets change detection run, like a person would.
+    await clic(nombre);
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-equipo-guardar"]')!);
+    expect(addEquipment).toHaveBeenCalledWith('sur', { name: 'Ecógrafo sala 2', manufacturer: null, serialNumber: null, modalityCode: 'ECO' });
+  });
+
+  it('un turno propio de equipo viaja con el horario publicado', async () => {
+    const saveSchedule = vi.fn((_unit: string, schedule: CenterSchedule) => of({ ...VISTA, schedule }));
+    const { el, clic, opcion } = await abrirEquipos({ saveSchedule });
+    await clic(opcion('centro-turno-propio-eco-1', 'Sí'));
+    await clic(el.querySelector<HTMLButtonElement>('[data-testid="centro-publicar"]')!);
+    expect(saveSchedule.mock.calls[0]![1].equipment?.map((e) => e.equipmentId)).toEqual(['eco-1']);
+  });
+
+  it('cada equipo muestra la cola de hoy que le toca', async () => {
+    const hoy = new Date();
+    hoy.setHours(9, 0, 0, 0);
+    const turno = { orderId: null, studyName: 'Ecografía abdominal', siteName: null, status: 'CONFIRMED', startsAt: hoy.toISOString(), endsAt: hoy.toISOString() };
+    const page: CenterBookingPage = {
+      items: [
+        { ...turno, bookingId: 'b1', patientName: 'Ana Pérez', equipmentId: 'eco-1' },
+        { ...turno, bookingId: 'b2', patientName: 'Luis Rojas', equipmentId: 'rx-1' },
+      ],
+      count: 2,
+    };
+    const { el } = await abrirEquipos({ getMyBookings: () => of(page) });
+    const cola = el.querySelector('[data-testid="centro-cola-eco-1"]')?.textContent ?? '';
+    expect(cola).toContain('Ana Pérez');
+    expect(cola).not.toContain('Luis Rojas');
   });
 });
