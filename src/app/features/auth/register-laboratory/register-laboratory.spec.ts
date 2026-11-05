@@ -204,6 +204,25 @@ describe('RegisterLaboratory', () => {
     expect(component.form.touched).toBe(true);
   });
 
+  it('pregunta el nombre comercial junto a la razón social, y lo manda sólo si se escribió', () => {
+    // "Mi perfil" shows the trade name, so the sign-up must ask for it.
+    const empresa = component.paginas().find((p) => p.clave === 'empresa');
+    expect(empresa?.campos.map((c) => c.key)).toEqual([
+      'legalName',
+      'tradeName',
+      'companyType',
+      'taxId',
+    ]);
+    expect(empresa?.campos.find((c) => c.key === 'tradeName')?.required).toBeFalsy();
+
+    completarLoObligatorio();
+    component.form.controls.tradeName.setValue('  Laboratorio del Sur  ');
+
+    const cuerpo = enviarConExito();
+
+    expect(cuerpo.organization['tradeName']).toBe('Laboratorio del Sur');
+  });
+
   it('se envía con lo básico y nada más, como DIAGNOSTIC_CENTER', () => {
     completarLoObligatorio();
     expect(component.form.valid).toBe(true);
@@ -215,6 +234,8 @@ describe('RegisterLaboratory', () => {
       legalName: 'Laboratorio Clínico del Sur S.R.L.',
       legalEntityType: 'SRL',
       tenantType: 'DIAGNOSTIC_CENTER',
+      // The written NIT travels on its own, as in the pharmacy sign-up.
+      taxIdentifier: '1023456789',
       // País y jurisdicción: sin ellos la API responde 422 «exige país y jurisdicción».
       countryConceptId: 'concepto-BO',
       jurisdictionConceptId: 'concepto-JURISDICTION_NATIONAL',
@@ -234,6 +255,8 @@ describe('RegisterLaboratory', () => {
         address: { lines: ['Av. Cañoto esq. Ballivián 234'], latitude: -17.7833, longitude: -63.1821 },
       },
     });
+    // No trade name, no key: the legal name acts as the name.
+    expect('tradeName' in cuerpo.organization).toBe(false);
     expect(cuerpo.owner).toEqual({
       email: 'ana.paz@labsur.test',
       password: 'secreto12',
