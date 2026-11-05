@@ -122,6 +122,47 @@ describe('AdmissionStatusCard', () => {
       expect(q('admission-card-submit-error')?.textContent).toContain('Caída');
       expect(q<HTMLButtonElement>('admission-card-submit')?.getAttribute('aria-disabled')).toBe('false');
     });
+
+    it('si ya tenía una solicitud, la relee y la declaración no queda marcada para ella', () => {
+      mountWithoutRequest();
+      attest();
+      q('admission-card-submit')!.click();
+      http
+        .expectOne(SUBMIT_URL)
+        .flush({ reason: 'ADMISSION_ALREADY_EXISTS' }, { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+      // The card rereads the request that already exists…
+      http
+        .expectOne(URL_MIA)
+        .flush(
+          wireMine({
+            status: { code: 'INFORMACION_REQUERIDA', label: 'Información requerida' },
+            canResubmit: true,
+          }),
+        );
+      fixture.detectChanges();
+      expect(q('admission-card-status')?.textContent).toContain('Información requerida');
+      // …and the attestation sent for the refused request does not carry over to its resubmission.
+      expect(q('admission-card-attest')!.querySelector<HTMLInputElement>('input')!.checked).toBe(false);
+      expect(q('admission-card-attest-error')?.textContent).toContain('Marque la declaración');
+      expect(q<HTMLButtonElement>('admission-card-resubmit')?.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('si la API no recibió la declaración, lo dice en el campo y la desmarca', () => {
+      mountWithoutRequest();
+      attest();
+      q('admission-card-submit')!.click();
+      http
+        .expectOne(SUBMIT_URL)
+        .flush({ reason: 'ADMISSION_ATTESTATION_REQUIRED' }, { status: 422, statusText: 'x' });
+      fixture.detectChanges();
+      const hint = q('admission-card-submit-attest-error');
+      expect(hint?.getAttribute('role')).toBe('alert');
+      expect(hint?.textContent).toContain('No recibimos su declaración');
+      expect(q('admission-card-submit-attest')!.querySelector<HTMLInputElement>('input')!.checked).toBe(false);
+      expect(q('admission-card-submit-error')).toBeNull();
+      http.expectNone(URL_MIA);
+    });
   });
 
   describe('un error de red', () => {

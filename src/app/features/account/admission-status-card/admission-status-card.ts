@@ -153,6 +153,9 @@ export class AdmissionStatusCard {
     this.submitting.set(false);
     switch (error.reason) {
       case 'ADMISSION_ALREADY_EXISTS':
+        // The attestation went with a request that was not created: it does
+        // not carry over to whatever the existing one asks for next.
+        this.attested.set(false);
         this.toast.info('Ya tenía una solicitud de verificación: le mostramos su estado.');
         this.load();
         return;
