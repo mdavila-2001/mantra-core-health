@@ -1,0 +1,62 @@
+/* One column on a phone; the status card takes the full width and team/activity sit side by side from tablet. */
+.inicio {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-4);
+}
+
+.inicio__estado {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.inicio__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.inicio__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.inicio__nota {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.inicio__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+}
+
+.inicio__cifras {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+@media (min-width: 650px) {
+  .inicio {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inicio__estado {
+    grid-column: 1 / -1;
+  }
+
+  .inicio__actividad:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .inicio__cifras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
