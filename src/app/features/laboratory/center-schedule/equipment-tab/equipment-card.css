@@ -75,6 +75,8 @@
 
 .card__error {
   margin: 0;
+  padding-inline-start: 0;
+  list-style: none;
   color: var(--text-danger);
 }
 

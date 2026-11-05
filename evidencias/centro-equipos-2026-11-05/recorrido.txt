@@ -1,0 +1,16 @@
+POST …/equipment → 201 body {"typeCode":"CT","manufacturer":"Canon","model":"Aquilion Lightning","serialNumber":"TC-2026-01"}
+PASS · the add request answers 201
+  device in response: 6044929e-242c-4494-ac7a-15b6c7363072 Tomógrafo Canon Aquilion Lightning OPERATIONAL
+PASS · the response carries the new CT device, operational
+PUT …/equipment/6044929e-242c-4494-ac7a-15b6c7363072/schedule → 200 body {"schedule":{"windows":[{"dayOfWeek":1,"startTime":"14:00","endTime":"20:00"},{"dayOfWeek":2,"startTime":"14:00","endTime":"20:00"},{"dayOfWeek":3,"startTime":"14:00","endTime":"20:00"},{"dayOfWeek":4,"startTime":"14:00","endTime":"20:00"},{"dayOfWeek":5,"startTime":"14:00","endTime":"20:00"}],"slotMinutes":30}}
+PASS · the own-hours request answers 200
+PASS · the request carries 14:00–20:00
+after reload, card text: Tomógrafo Canon Aquilion Lightning · Serie TC-2026-01 Cómo se conectan sus datos Operativo Horario propio Sí No Lunes Sí No 14:00 a 20:00 Martes Sí No 14:00 a 2
+PASS · after reload the device is still there, with its serial
+PASS · after reload its own hours are on
+PASS · after reload Monday opens at 14:00
+PASS · the summary shows the new line with its own hours
+PASS · 390 px · Horarios: no horizontal scroll (0px)
+PASS · 390 px · Equipos: no horizontal scroll (0px)
+PASS · 390 px · Ocupación: no horizontal scroll (0px)
+PASS · no console errors

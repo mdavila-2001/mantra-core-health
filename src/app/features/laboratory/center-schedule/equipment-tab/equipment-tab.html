@@ -17,7 +17,7 @@
 
   @if (adding(); as form) {
     <app-equipment-add-form
-      [types]="types()"
+      [types]="offeredTypes()"
       [presetType]="form.presetType"
       [saving]="busy() === ''"
       [error]="addError()"
@@ -44,8 +44,9 @@
           <li>
             <app-equipment-card
               [device]="d"
-              [general]="center().schedule.general"
+              [inherited]="inherited(d)"
               [busy]="busy() !== null"
+              [saving]="busy() === d.id"
               [error]="errorOf(d.id)"
               [linkGlossary]="linkGlossary()"
               (statusChange)="setStatus(d, $event)"
@@ -55,8 +56,12 @@
           </li>
         } @empty {
           <li class="empty" [attr.data-testid]="'equipment-empty-' + m.code">
-            <p class="empty__text">Sin {{ m.devicePlural }} cargados: esta modalidad todavía no da turnos.</p>
-            <button app-button variant="outline" size="sm" [disabled]="typesFailed()" (click)="openAdd(typeFor(m))">Agregar {{ m.deviceSingular }}</button>
+            @if (typeFor(m); as type) {
+              <p class="empty__text">Sin {{ m.devicePlural }} cargados: se reserva con el cupo que declaró el centro. Cárguelos para que cada uno sea una línea con su horario.</p>
+              <button app-button variant="outline" size="sm" (click)="openAdd(type)">Agregar {{ m.deviceSingular }}</button>
+            } @else {
+              <p class="empty__text">Sin {{ m.devicePlural }} cargados: se reserva con el cupo que declaró el centro. El catálogo todavía no tiene este tipo de equipo.</p>
+            }
           </li>
         }
       </ul>
@@ -65,16 +70,18 @@
 
   @if (others().length > 0) {
     <section class="section" aria-label="Otros equipos">
-      <h2 class="section__title">Otros equipos <span class="section__count">· no limitan los turnos</span></h2>
+      <h2 class="section__title">Otros equipos <span class="section__count">· no limitan los turnos de este centro</span></h2>
       <ul class="list" role="list">
         @for (d of others(); track d.id) {
           <li>
             <app-equipment-card
               [device]="d"
-              [general]="center().schedule.general"
+              [inherited]="inherited(d)"
               [busy]="busy() !== null"
+              [saving]="busy() === d.id"
               [error]="errorOf(d.id)"
               [linkGlossary]="linkGlossary()"
+              [schedulable]="false"
               (statusChange)="setStatus(d, $event)"
               (remove)="remove(d)"
             />

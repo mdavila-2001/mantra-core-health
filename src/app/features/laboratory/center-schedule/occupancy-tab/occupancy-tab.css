@@ -22,7 +22,10 @@
   margin: 0;
   font-weight: 600;
   color: var(--text-primary);
-  text-transform: capitalize;
+}
+
+.nav__day::first-letter {
+  text-transform: uppercase;
 }
 
 .lines,

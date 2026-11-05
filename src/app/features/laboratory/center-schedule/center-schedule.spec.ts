@@ -67,7 +67,7 @@ describe('CenterSchedulePage', () => {
     const summary = el.querySelector('[data-testid="centro-resumen"]')?.textContent ?? '';
     expect(summary).toContain('Hasta 1 paciente a la vez (1 ecógrafo en línea)');
     expect(summary).toContain('Ecógrafo portátil');
-    expect(summary).toContain('Sin resonadores cargados');
+    expect(summary).toContain('Sin resonadores cargados: se reserva con el cupo que declaró el centro');
   });
 
   it('sólo una modalidad sin equipos ofrece horario propio, y ese horario se publica', async () => {
@@ -138,6 +138,35 @@ describe('CenterSchedulePage', () => {
     expect(el.querySelector('[data-testid="equipment-error-rx-1"]')?.textContent).toContain('Este equipo ya atendió turnos.');
   });
 
+  it('un equipo de una modalidad que el centro no ofrece sigue a la vista, sin línea, y el catálogo sólo ofrece lo que sirve', async () => {
+    const withOther = {
+      ...VIEW,
+      equipment: [...VIEW.equipment, { id: 'mg-1', name: 'Mamógrafo Hologic', manufacturer: 'Hologic', model: null, modalityCode: 'MG' as const, status: 'OPERATIONAL' as const, glossaryConceptId: null }],
+    };
+    const types = { items: [...TYPES.items, { code: 'MG', label: 'Mamógrafo', modalityCode: 'MG' as const }, { code: 'ANALYZER', label: 'Analizador', modalityCode: null }] };
+    const { el, click, tab } = await mount({ getMySchedule: () => of(withOther), getEquipmentTypes: () => of(types) });
+    await click(tab('Equipos'));
+    expect(el.querySelector('[data-testid="centro-equipo-mg-1"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="equipment-own-mg-1"]')).toBeNull();
+    await click(el.querySelector<HTMLButtonElement>('[data-testid="equipment-add-open"]')!);
+    await click(el.querySelector<HTMLElement>('[data-testid="equipment-add-type"] .select-trigger')!);
+    const offered = [...el.querySelectorAll<HTMLElement>('[role="option"]')].map((o) => o.textContent?.trim());
+    expect(offered).toContain('Resonador');
+    expect(offered).toContain('Analizador (no da turnos)');
+    expect(offered).not.toContain('Mamógrafo');
+  });
+
+  it('el horario propio de un equipo se valida antes de mandarlo', async () => {
+    const saveEquipmentSchedule = vi.fn(() => of(VIEW));
+    const { el, click, tab, option } = await mount({ saveEquipmentSchedule });
+    await click(tab('Equipos'));
+    await click(option('equipment-own-rx-1', 'Sí'));
+    for (const day of [1, 2, 3, 4, 5]) await click(option(`equipment-rx-1-dia-${day}`, 'No'));
+    await click(el.querySelector<HTMLButtonElement>('[data-testid="equipment-save-rx-1"]')!);
+    expect(saveEquipmentSchedule).not.toHaveBeenCalled();
+    expect(el.querySelector('[data-testid="equipment-problems-rx-1"]')?.textContent).toContain('marque al menos un día de atención');
+  });
+
   it('la ocupación agrupa los turnos del día por equipo y aparta los que no tienen uno', async () => {
     const booking = (bookingId: string, equipmentId: string | null) => ({
       bookingId,
@@ -155,6 +184,6 @@ describe('CenterSchedulePage', () => {
     await click(tab('Ocupación'));
     expect(el.querySelector('[data-testid="occupancy-line-eco-1"]')?.textContent).toContain('Ana Pérez');
     expect(el.querySelector('[data-testid="occupancy-line-eco-2"]')?.textContent).toContain('Fuera de línea');
-    expect(el.querySelector('[data-testid="occupancy-line-none"]')?.textContent).toContain('Sin equipo asignado');
+    expect(el.querySelector('[data-testid="occupancy-line-none"]')?.textContent).toContain('Turnos sin equipo asignado');
   });
 });

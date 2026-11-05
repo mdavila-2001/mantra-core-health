@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output, signal } from '@angular/core';
 
+import { validarHorario } from '../../../../core/data-access/diagnostic-units/center-schedule.rules';
 import type { CenterEquipment, EquipmentStatus, ScheduleBlock } from '../../../../core/data-access/diagnostic-units/center-schedule.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Select } from '../../../../shared/components/atoms/select/select';
@@ -23,13 +24,17 @@ import { ScheduleBlockEditor } from '../schedule-block-editor';
 })
 export class EquipmentCard {
   readonly device = input.required<CenterEquipment>();
-  /** The center's general schedule: what the device inherits without its own. */
-  readonly general = input.required<ScheduleBlock>();
-  /** A write is travelling: the controls wait instead of ignoring the choice. */
+  /** What the device follows without its own hours: its modality's or the general schedule. */
+  readonly inherited = input.required<{ readonly block: ScheduleBlock; readonly label: string }>();
+  /** A write is travelling somewhere: the controls wait instead of ignoring the choice. */
   readonly busy = input(false);
+  /** The travelling write is this device's. */
+  readonly saving = input(false);
   /** Whether this device's last write failed, with the server's message. */
   readonly error = input<string | null>(null);
   readonly linkGlossary = input(false);
+  /** `false` for a device of a modality the center offers no study of: it has no line here. */
+  readonly schedulable = input(true);
 
   readonly statusChange = output<EquipmentStatus>();
   readonly scheduleSave = output<ScheduleBlock | null>();
@@ -50,17 +55,45 @@ export class EquipmentCard {
     { value: 'no', label: 'No' },
   ];
 
-  /** Its own hours as being edited; `null` while it follows the general schedule. */
-  protected readonly ownDraft = linkedSignal<ScheduleBlock | null>(() => this.device().schedule ?? null);
+  /**
+   * Its own hours as being edited; `null` while it follows the inherited
+   * ones. An edit in progress survives a write of another device: it only
+   * resets from the server while untouched.
+   */
+  protected readonly ownDraft = linkedSignal<ScheduleBlock | null, ScheduleBlock | null>({
+    source: () => this.device().schedule ?? null,
+    computation: (schedule, previous) =>
+      previous !== undefined && JSON.stringify(previous.value) !== JSON.stringify(previous.source) ? previous.value : schedule,
+  });
   protected readonly mapOpen = signal(false);
   protected readonly confirmRemove = signal(false);
+  protected readonly problems = signal<readonly string[]>([]);
 
-  protected readonly makeAndModel = computed(() => [this.device().manufacturer, this.device().model].filter(Boolean).join(' '));
+  /** Make and model, unless the name already carries them (the API names a device «type make model»). */
+  protected readonly makeAndModel = computed(() => {
+    const text = [this.device().manufacturer, this.device().model].filter(Boolean).join(' ');
+    return text !== '' && !this.device().name.includes(text) ? text : '';
+  });
   protected readonly dirty = computed(() => JSON.stringify(this.ownDraft()) !== JSON.stringify(this.device().schedule ?? null));
-  protected readonly givesAppointments = computed(() => this.device().modalityCode !== null);
+  protected readonly givesAppointments = computed(() => this.schedulable() && this.device().modalityCode !== null);
 
   protected toggleOwn(value: 'si' | 'no'): void {
-    this.ownDraft.set(value === 'si' ? (this.device().schedule ?? this.general()) : null);
+    this.problems.set([]);
+    this.ownDraft.set(value === 'si' ? (this.device().schedule ?? this.inherited().block) : null);
+  }
+
+  protected edit(block: ScheduleBlock): void {
+    this.problems.set([]);
+    this.ownDraft.set(block);
+  }
+
+  /** Checks the hours here, like the «Horarios» tab, before the server sees them. */
+  protected save(): void {
+    const block = this.ownDraft();
+    const problems =
+      block === null ? [] : validarHorario({ general: block, modalities: [], studies: [] }, () => this.device().name).map((p) => p.mensaje);
+    this.problems.set(problems);
+    if (problems.length === 0) this.scheduleSave.emit(block);
   }
 
   protected onStatus(value: EquipmentStatus | null): void {

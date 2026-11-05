@@ -76,10 +76,6 @@
   color: var(--text-secondary);
 }
 
-.item__meta--warn {
-  color: var(--text-danger);
-}
-
 .item__own {
   display: flex;
   flex-wrap: wrap;

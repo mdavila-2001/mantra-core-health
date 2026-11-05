@@ -10,7 +10,7 @@ import type {
 import { deviceDetails, estadosDeEquipos, registeredDevices, turnosDeOrdenes } from '../fixtures/centros';
 import { conflict, forbidden, notFound, reply, unprocessable, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId } from '../mock-store';
-import { bookingsOutsideSchedule, devicesOf, EQUIPMENT_TYPES } from './center-devices.mock';
+import { assignmentsOf, bookingsOutsideSchedule, devicesOf, EQUIPMENT_TYPES } from './center-devices.mock';
 import { UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
 
 /* ============================================================================
@@ -100,7 +100,8 @@ export function registerCenterEquipment(router: MockRouter, deps: CenterEquipmen
     if ('error' in u) return u.error;
     const device = devicesOf(u).find((d) => d.id === request.params['equipmentId']);
     if (device === undefined) return notFound('Equipo no encontrado');
-    if (turnosDeOrdenes.filtrar((t) => t.equipmentId === device.id).length > 0) {
+    const assigned = assignmentsOf(u, deps.scheduleOf(u));
+    if (turnosDeOrdenes.filtrar((t) => t.equipmentId === device.id || assigned.get(t.id) === device.id).length > 0) {
       return conflict('Este equipo ya atendió turnos y conserva su historia: márquelo fuera de servicio.', { equipmentId: device.id });
     }
     deviceDetails.agregar({ ...deviceDetails.get(device.id), id: device.id, removed: true, updatedAt: ahora() });
@@ -120,9 +121,11 @@ export function registerCenterEquipment(router: MockRouter, deps: CenterEquipmen
         return unprocessable('El horario tiene datos incompletos.', problems.map((p) => ({ field: device.id, problem: p.mensaje })));
       }
     }
+    // Who attends each slot is fixed before the change, like the API adopts first.
+    const assigned = assignmentsOf(u, deps.scheduleOf(u));
     const before = deviceDetails.get(device.id);
     deviceDetails.agregar({ ...before, id: device.id, schedule: block, updatedAt: ahora() });
-    const outside = bookingsOutsideSchedule(u, deps.scheduleOf(u), device.id);
+    const outside = bookingsOutsideSchedule(u, deps.scheduleOf(u), device.id, assigned);
     if (outside > 0) {
       deviceDetails.agregar({ ...before, id: device.id, schedule: before?.schedule ?? null, updatedAt: before?.updatedAt ?? ahora() });
       return conflict(

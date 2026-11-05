@@ -19,6 +19,11 @@ const note = (line) => {
   log.push(line);
   console.log(line);
 };
+const failures = [];
+const check = (ok, what) => {
+  note(`${ok ? 'PASS' : 'FAIL'} · ${what}`);
+  if (!ok) failures.push(what);
+};
 
 async function signIn(page) {
   await page.goto(`${B}/auth`, { waitUntil: 'commit', timeout: 180000 });
@@ -44,9 +49,21 @@ async function openPage(page) {
   await page.getByTestId('centro-horarios').waitFor({ timeout: 120000 });
 }
 
-/** Waits for the response of a request whose method and path match. */
-const answer = (page, method, path) =>
-  page.waitForResponse((r) => r.request().method() === method && new URL(r.url()).pathname.endsWith(path), { timeout: 30000 });
+/**
+ * The simulator answers inside the browser: there is no network traffic.
+ * `window.__mockRequests` records what was sent and answered; this waits for
+ * the next entry matching method and path after `click` runs.
+ */
+async function answer(page, method, path, click) {
+  const before = await page.evaluate(() => (window.__mockRequests ?? []).length);
+  await click();
+  const handle = await page.waitForFunction(
+    ([n, m, p]) => (window.__mockRequests ?? []).slice(n).find((r) => r.method === m && r.url.split('?')[0].endsWith(p)) ?? false,
+    [before, method, path],
+    { timeout: 30000 },
+  );
+  return handle.jsonValue();
+}
 
 const errors = [];
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -68,12 +85,12 @@ await page.getByTestId('equipment-add-manufacturer').fill('Canon');
 await page.getByTestId('equipment-add-model').fill('Aquilion Lightning');
 await page.getByTestId('equipment-add-serial').fill('TC-2026-01');
 await page.screenshot({ path: `${OUT}/03-alta-desde-catalogo-1440.png`, fullPage: true });
-const added = answer(page, 'POST', '/equipment');
-await page.getByTestId('equipment-add-submit').click();
-const addResponse = await added;
-note(`POST …/equipment → ${addResponse.status()} body ${addResponse.request().postData()}`);
-const addedDevice = (await addResponse.json()).equipment.find((e) => e.serialNumber === 'TC-2026-01');
+const addResponse = await answer(page, 'POST', '/equipment', () => page.getByTestId('equipment-add-submit').click());
+note(`POST …/equipment → ${addResponse.status} body ${JSON.stringify(addResponse.body)}`);
+check(addResponse.status === 201, 'the add request answers 201');
+const addedDevice = addResponse.respuesta.equipment.find((e) => e.serialNumber === 'TC-2026-01');
 note(`  device in response: ${addedDevice?.id} ${addedDevice?.name} ${addedDevice?.status}`);
+check(addedDevice?.status === 'OPERATIONAL' && addedDevice?.typeCode === 'CT', 'the response carries the new CT device, operational');
 
 // 2. Give the new scanner its own hours: afternoons only.
 await page.getByTestId(`equipment-own-${addedDevice.id}`).getByRole('radio', { name: 'Sí' }).click();
@@ -83,10 +100,12 @@ for (const day of [1, 2, 3, 4, 5]) {
   await page.getByTestId(`equipment-${addedDevice.id}-hasta-${day}`).locator('.select-trigger').click();
   await page.getByRole('option', { name: '20:00', exact: true }).click();
 }
-const saved = answer(page, 'PUT', `/equipment/${addedDevice.id}/schedule`);
-await page.getByTestId(`equipment-save-${addedDevice.id}`).click();
-const saveResponse = await saved;
-note(`PUT …/equipment/${addedDevice.id}/schedule → ${saveResponse.status()} body ${saveResponse.request().postData()}`);
+const saveResponse = await answer(page, 'PUT', `/equipment/${addedDevice.id}/schedule`, () =>
+  page.getByTestId(`equipment-save-${addedDevice.id}`).click(),
+);
+note(`PUT …/equipment/${addedDevice.id}/schedule → ${saveResponse.status} body ${JSON.stringify(saveResponse.body)}`);
+check(saveResponse.status === 200, 'the own-hours request answers 200');
+check(saveResponse.body.schedule.windows.every((w) => w.startTime === '14:00' && w.endTime === '20:00'), 'the request carries 14:00–20:00');
 
 // 3. Reload: both changes come back from the (simulated) server.
 await page.reload({ waitUntil: 'commit' });
@@ -95,13 +114,15 @@ await openTab(page, 'Equipos');
 const card = page.getByTestId(`centro-equipo-${addedDevice.id}`);
 await card.waitFor();
 note(`after reload, card text: ${(await card.innerText()).replace(/\s+/g, ' ').slice(0, 160)}`);
-note(`after reload, own hours on: ${await card.getByRole('radio', { name: 'Sí' }).getAttribute('aria-checked')}`);
+check((await card.innerText()).includes('TC-2026-01'), 'after reload the device is still there, with its serial');
+check((await page.getByTestId(`equipment-own-${addedDevice.id}`).getByRole('radio', { name: 'Sí' }).getAttribute('aria-checked')) === 'true', 'after reload its own hours are on');
+check((await page.getByTestId(`equipment-${addedDevice.id}-desde-1`).innerText()).includes('14:00'), 'after reload Monday opens at 14:00');
 await card.scrollIntoViewIfNeeded();
 await page.screenshot({ path: `${OUT}/04-equipo-con-horario-propio-tras-recarga-1440.png`, fullPage: true });
 
 await openTab(page, 'Horarios');
 const summary = await page.getByTestId('centro-resumen').innerText();
-note(`summary mentions the new line: ${summary.includes('Aquilion') || summary.includes('Tomógrafo Canon')}`);
+check(summary.includes('Aquilion') && summary.includes('Horario propio'), 'the summary shows the new line with its own hours');
 await page.screenshot({ path: `${OUT}/05-asi-queda-por-equipo-1440.png`, fullPage: true });
 
 await openTab(page, 'Ocupación');
@@ -114,10 +135,14 @@ for (const [label, file] of [['Horarios', '07-horarios-390'], ['Equipos', '08-eq
   await openTab(page, label);
   await page.waitForTimeout(300);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  note(`390 px · ${label}: horizontal overflow ${overflow}px`);
+  check(overflow <= 0, `390 px · ${label}: no horizontal scroll (${overflow}px)`);
   await page.screenshot({ path: `${OUT}/${file}.png`, fullPage: true });
 }
 
-note(`console errors: ${errors.length}${errors.length ? ` — ${errors.slice(0, 3).join(' | ')}` : ''}`);
+check(errors.length === 0, `no console errors${errors.length ? ` — ${errors.slice(0, 3).join(' | ')}` : ''}`);
 writeFileSync(`${OUT}/recorrido.txt`, `${log.join('\n')}\n`);
 await browser.close();
+if (failures.length > 0) {
+  console.error(`${failures.length} check(s) failed`);
+  process.exit(1);
+}

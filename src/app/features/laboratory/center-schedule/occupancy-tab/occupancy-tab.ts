@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import type { Subscription } from 'rxjs';
 
 import { CenterScheduleClient } from '../../../../core/data-access/diagnostic-units/center-schedule.client';
 import type { CenterBooking, CenterScheduleView } from '../../../../core/data-access/diagnostic-units/center-schedule.types';
@@ -47,28 +48,37 @@ export class OccupancyTab {
   protected readonly lines = computed<readonly Line[]>(() => {
     const bookings = dataOf(this.state()) ?? [];
     const devices = this.center().equipment.filter((e) => e.modalityCode !== null);
-    const lines: Line[] = devices.map((d) => ({
-      key: d.id,
-      name: d.name,
-      note: d.status === 'OPERATIONAL' ? null : 'Fuera de línea',
-      bookings: bookings.filter((b) => b.equipmentId === d.id),
-    }));
-    const orphan = bookings.filter((b) => !devices.some((d) => d.id === b.equipmentId && d.status === 'OPERATIONAL'));
-    const unattended = orphan.filter((b) => !devices.some((d) => d.id === b.equipmentId));
-    return unattended.length === 0 ? lines : [...lines, { key: 'none', name: 'Sin equipo asignado', note: 'Hay que reprogramarlos', bookings: unattended }];
+    const lines: Line[] = devices.map((d) => {
+      const own = bookings.filter((b) => b.equipmentId === d.id);
+      const note = d.status === 'OPERATIONAL' ? null : own.length > 0 ? 'Fuera de línea: avise a estos pacientes y reprográmelos' : 'Fuera de línea';
+      return { key: d.id, name: d.name, note, bookings: own };
+    });
+    // Without a device yet: taken before devices had lines (the API moves them
+    // to a free device on the center's next change) or of a modality without
+    // devices, which still books on the center's declared quota.
+    const unassigned = bookings.filter((b) => !devices.some((d) => d.id === b.equipmentId));
+    return unassigned.length === 0
+      ? lines
+      : [...lines, { key: 'none', name: 'Turnos sin equipo asignado', note: 'Los atiende el cupo general del centro', bookings: unassigned }];
   });
 
+  /** The read in flight: a newer day cancels it, so a late answer never paints another day. */
+  private pending: Subscription | null = null;
+
   constructor() {
-    // Reads the day again when the day changes or a device change arrives.
+    // Reads the day again when the day changes or a device change arrives
+    // (a change can move bookings between devices).
     effect(() => {
       this.center();
       this.load(this.day());
     });
+    inject(DestroyRef).onDestroy(() => this.pending?.unsubscribe());
   }
 
   protected load(day: Date = this.day()): void {
+    this.pending?.unsubscribe();
     this.state.set(loading());
-    this.client.getMyBookings(day, new Date(day.getTime() + DAY_MS)).subscribe({
+    this.pending = this.client.getMyBookings(day, new Date(day.getTime() + DAY_MS)).subscribe({
       next: (page) => this.state.set(ready(page.items)),
       error: (error: unknown) => this.state.set(errorToViewState(error)),
     });

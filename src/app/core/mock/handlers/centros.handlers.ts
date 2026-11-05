@@ -20,7 +20,7 @@ import { patientById } from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, unprocessable, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId, uuid } from '../mock-store';
 import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
-import { bookingsOutsideSchedule, bookingsWithoutDevice, devicesOf, freeStarts, migrateModalities } from './center-devices.mock';
+import { assignmentsOf, bookingsOutsideSchedule, bookingsWithoutDevice, devicesOf, freeStarts, migrateModalities } from './center-devices.mock';
 import { registerCenterEquipment } from './center-equipment.handlers';
 import { estudiosDe, informes, pacienteDeSesion, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
 
@@ -219,10 +219,10 @@ export function registrarCentros(router: MockRouter): void {
           : (estudiosDelCentro(u).find((e) => e.code === donde)?.name ?? donde),
     );
     if (problemas.length > 0) return unprocessable('El horario tiene datos incompletos.', problemas.map((p) => ({ field: p.donde, problem: p.mensaje })));
-    const before = devicesOf(u).map((d) => ({ id: d.id, detail: deviceDetails.get(d.id) }));
+    const [before, assigned] = [devicesOf(u).map((d) => ({ id: d.id, detail: deviceDetails.get(d.id) })), assignmentsOf(u, horarioDe(u))];
     const conservadas = migrateModalities(u, schedule.modalities, ahora());
     const publicado: CenterSchedule = { ...schedule, modalities: conservadas };
-    const afectados = bookingsOutsideSchedule(u, publicado);
+    const afectados = bookingsOutsideSchedule(u, publicado, undefined, assigned);
     if (afectados > 0) {
       for (const { id, detail } of before) {
         if (detail === undefined) deviceDetails.borrar(id);
@@ -335,7 +335,7 @@ export function registrarCentros(router: MockRouter): void {
       startAt: libre.startAt,
       endAt: libre.endAt,
       createdAt: ahora(),
-      equipmentId: libres.devicesAt.get(libre.startAt)![0]!,
+      ...(libres.devicesAt.has(libre.startAt) ? { equipmentId: libres.devicesAt.get(libre.startAt)![0]! } : {}),
     });
     avisarPorChatDeSoporte(
       r.orden.patientProfileId,

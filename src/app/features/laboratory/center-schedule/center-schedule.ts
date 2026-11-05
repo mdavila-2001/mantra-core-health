@@ -16,18 +16,17 @@ import { OccupancyTab } from './occupancy-tab/occupancy-tab';
 import { ScheduleTab } from './schedule-tab/schedule-tab';
 
 /* ============================================================================
-    Horarios y equipos de un centro de diagnóstico.
+    «Horarios y equipos» of a diagnostic center.
 
-    Cada equipo que da turnos es una línea de producción: atiende en su
-    horario propio o en el general del centro, y los turnos que ve el paciente
-    son la suma de los equipos operativos de cada modalidad. La página carga el
-    centro una vez y cada pestaña le devuelve la vista que contesta el
-    servidor tras cada cambio:
+    Every device that gives appointments is a production line: it attends in
+    its own hours or in the inherited ones, and what the patient sees is the
+    sum of the operational devices of each modality. The page loads the center
+    once and every tab hands back the view the server answers after a change:
 
-      - «Horarios»: el horario general, el de modalidades sin equipos y las
-        excepciones por estudio;
-      - «Equipos»: alta desde el catálogo, estado, horario propio y baja;
-      - «Ocupación»: el día de cada equipo.
+      - «Horarios»: the general schedule, the one of modalities without
+        devices and the study exceptions;
+      - «Equipos»: register from the catalog, status, own hours and removal;
+      - «Ocupación»: the day of each device.
     ========================================================================== */
 
 @Component({

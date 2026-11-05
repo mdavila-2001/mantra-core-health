@@ -12,7 +12,7 @@ import type {
 } from '../../../../core/data-access/diagnostic-units/center-schedule.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { STATUS_LABEL, modalitiesOf, serverMessage, type CenterModality } from '../center-schedule.logic';
+import { inheritedOf, modalitiesOf, otherDevicesOf, serverMessage, type CenterModality } from '../center-schedule.logic';
 import { EquipmentAddForm } from './equipment-add-form';
 import { EquipmentCard } from './equipment-card';
 
@@ -46,8 +46,17 @@ export class EquipmentTab implements OnInit {
   protected readonly errors = signal<Readonly<Record<string, string>>>({});
 
   protected readonly modalities = computed(() => modalitiesOf(this.center()));
-  /** Devices that never limit appointments (analyzers, centrifuges…). */
-  protected readonly others = computed(() => this.center().equipment.filter((e) => e.modalityCode === null));
+  /** Analyzers, and devices of a modality the center offers no study of: they limit no appointment here. */
+  protected readonly others = computed(() => otherDevicesOf(this.center()));
+  /**
+   * The catalog the add form offers: types of the modalities the center
+   * attends, plus the ones that give no appointments. A device of another
+   * modality would serve no study of this center.
+   */
+  protected readonly offeredTypes = computed(() => {
+    const codes = new Set(this.modalities().map((m) => m.code));
+    return this.types().filter((t) => t.modalityCode === null || codes.has(t.modalityCode));
+  });
 
   ngOnInit(): void {
     this.client.getEquipmentTypes().subscribe({
@@ -56,8 +65,8 @@ export class EquipmentTab implements OnInit {
     });
   }
 
-  protected statusLabel(status: EquipmentStatus): string {
-    return STATUS_LABEL[status];
+  protected inherited(device: CenterEquipment): { readonly block: ScheduleBlock; readonly label: string } {
+    return inheritedOf(this.center().schedule, device);
   }
 
   /** The catalog type that serves a modality, to preselect it from its empty state. */

@@ -50,7 +50,7 @@ export type EquipmentStatus = 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE';
 export interface CenterEquipment {
   readonly id: string;
   readonly name: string;
-  /** Código del tipo en el catálogo (`US`, `MR`…); `null` si se cargó fuera de él. */
+  /** Catalog type code (`US`, `MR`…); `null` when registered outside the catalog. */
   readonly typeCode?: string | null;
   readonly manufacturer: string | null;
   readonly model: string | null;
@@ -58,21 +58,21 @@ export interface CenterEquipment {
   /** `null`: no limita turnos (un analizador, una centrífuga). */
   readonly modalityCode: ModalityCode | null;
   readonly status: EquipmentStatus;
-  /** Su horario propio, su línea de producción; `null` mientras sigue el general. */
+  /** Its own hours, its production line; `null` while it follows the inherited ones. */
   readonly schedule?: ScheduleBlock | null;
   /** El concepto del tipo de equipo en el glosario, con su mapa de conexión de datos. */
   readonly glossaryConceptId: string | null;
 }
 
-/** Un tipo del catálogo de `GET /diagnostic-units/me/equipment-types`. */
+/** One type of the catalog of `GET /diagnostic-units/me/equipment-types`. */
 export interface EquipmentType {
   readonly code: string;
   readonly label: string;
-  /** `null`: el tipo no da turnos (un analizador trabaja por lotes). */
+  /** `null`: the type gives no appointments (an analyzer works in batches). */
   readonly modalityCode: ModalityCode | null;
 }
 
-/** Cuerpo de `POST /diagnostic-units/{unitId}/equipment`. */
+/** Body of `POST /diagnostic-units/{unitId}/equipment`. */
 export interface NewEquipment {
   readonly typeCode: string;
   readonly manufacturer?: string;
@@ -80,7 +80,7 @@ export interface NewEquipment {
   readonly serialNumber?: string;
 }
 
-/** Cuerpo de `PATCH /diagnostic-units/{unitId}/equipment/{equipmentId}`: cualquiera de sus campos. */
+/** Body of `PATCH /diagnostic-units/{unitId}/equipment/{equipmentId}`: any of its fields. */
 export interface EquipmentChanges {
   readonly status?: EquipmentStatus;
   readonly manufacturer?: string | null;

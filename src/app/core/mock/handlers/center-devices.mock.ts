@@ -1,4 +1,4 @@
-import { resolveDeviceBlock, turnosDelDia } from '../../data-access/diagnostic-units/center-schedule.rules';
+import { resolveDeviceBlock, resolverHorario, turnosDelDia } from '../../data-access/diagnostic-units/center-schedule.rules';
 import type {
   CenterEquipment,
   CenterSchedule,
@@ -39,6 +39,12 @@ export const EQUIPMENT_TYPES: readonly EquipmentType[] = [
 
 /** A start is no longer offered this close to now. */
 const BOOKING_MARGIN_MINUTES = 30;
+/** Patients per slot of a modality without devices: the API's declared capacity. */
+const DECLARED_CAPACITY = 1;
+
+/** How the API names a device: its type, then make and model. */
+const nameOf = (label: string, manufacturer: string | null, model: string | null): string =>
+  [label, manufacturer, model].filter(Boolean).join(' ');
 
 /** The glossary term of each device type. */
 const GLOSSARY_TERM: Readonly<Record<string, string>> = {
@@ -77,7 +83,7 @@ export function devicesOf(u: UnidadSimulada): CenterEquipment[] {
   const seeded = equipoDe(u).map(
     (e): CenterEquipment => ({
       id: e.id,
-      name: e.type.display,
+      name: nameOf(e.type.display, e.manufacturer, e.model),
       typeCode: e.type.code,
       manufacturer: e.manufacturer,
       model: e.model,
@@ -108,7 +114,7 @@ export function devicesOf(u: UnidadSimulada): CenterEquipment[] {
       const type = EQUIPMENT_TYPES.find((t) => t.code === d.typeCode);
       return {
         id: d.id,
-        name: type?.label ?? 'Equipo',
+        name: nameOf(type?.label ?? 'Equipo', d.manufacturer, d.model),
         typeCode: d.typeCode,
         manufacturer: d.manufacturer,
         model: d.model,
@@ -166,11 +172,14 @@ export function freeStarts(u: UnidadSimulada, schedule: CenterSchedule, studyCod
   const empty: DeviceAvailability = { origin: 'GENERAL', items: [], devicesAt: new Map() };
   if (modalityCode === null) return empty;
   const devices = devicesOf(u);
+  const earliest = Math.max(from.getTime(), Date.now() + BOOKING_MARGIN_MINUTES * 60_000);
+  const slots = turnosDeOrdenes.filtrar((t) => t.unitId === u.id);
+  if (!devices.some((d) => d.modalityCode === modalityCode)) {
+    return declaredStarts(schedule, studyCode, modalityCode, slots, earliest, from, to);
+  }
   const operational = devices.filter((d) => d.modalityCode === modalityCode && d.status === 'OPERATIONAL');
   if (operational.length === 0) return empty;
   const assigned = assignmentsOf(u, schedule, devices);
-  const slots = turnosDeOrdenes.filtrar((t) => t.unitId === u.id);
-  const earliest = Math.max(from.getTime(), Date.now() + BOOKING_MARGIN_MINUTES * 60_000);
   const open = new Map<string, { endAt: string; open: number; free: string[] }>();
   let origin: ScheduleOrigin = 'GENERAL';
   for (const device of operational) {
@@ -197,6 +206,30 @@ export function freeStarts(u: UnidadSimulada, schedule: CenterSchedule, studyCod
   };
 }
 
+/** Like the API without devices: the center's own block and its declared capacity, minus its slots. */
+function declaredStarts(
+  schedule: CenterSchedule,
+  studyCode: string,
+  modalityCode: NonNullable<ReturnType<typeof modalidadDeEstudio>>,
+  slots: readonly TurnoDeOrdenSimulado[],
+  earliest: number,
+  from: Date,
+  to: Date,
+): DeviceAvailability {
+  const { block, origin } = resolverHorario(schedule, studyCode, modalityCode);
+  const items: StudyStart[] = [];
+  const day = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  for (; day.getTime() <= to.getTime(); day.setDate(day.getDate() + 1)) {
+    for (const { inicio, fin } of turnosDelDia(block, day)) {
+      if (inicio.getTime() < earliest || inicio.getTime() > to.getTime()) continue;
+      const taken = slots.filter((t) => t.modalityCode === modalityCode && overlaps(t, inicio.getTime(), fin.getTime())).length;
+      const remaining = DECLARED_CAPACITY - taken;
+      if (remaining > 0) items.push({ startAt: inicio.toISOString(), endAt: fin.toISOString(), remaining, capacity: DECLARED_CAPACITY });
+    }
+  }
+  return { origin, items, devicesAt: new Map() };
+}
+
 /** Future slots left without an operational device: on a device that is down, or that none could adopt. */
 export function bookingsWithoutDevice(u: UnidadSimulada, schedule: CenterSchedule): number {
   const devices = devicesOf(u);
@@ -206,14 +239,24 @@ export function bookingsWithoutDevice(u: UnidadSimulada, schedule: CenterSchedul
     .filtrar((t) => t.unitId === u.id && new Date(t.startAt).getTime() > now)
     .filter((t) => {
       const deviceId = assigned.get(t.id) ?? null;
-      return deviceId === null || devices.find((d) => d.id === deviceId)?.status !== 'OPERATIONAL';
+      // A modality without devices books on the declared quota: nothing is missing.
+      if (deviceId === null) return devices.some((d) => d.modalityCode === t.modalityCode);
+      return devices.find((d) => d.id === deviceId)?.status !== 'OPERATIONAL';
     }).length;
 }
 
-/** Future slots that would not start on a slot of their device (or of the new schedule, without one). */
-export function bookingsOutsideSchedule(u: UnidadSimulada, schedule: CenterSchedule, onlyDevice?: string): number {
+/**
+ * Future slots that would not start on a slot of their device (or of the new
+ * schedule, without one). `assigned` fixes who attends each slot before the
+ * change, like the API adopts legacy slots before checking.
+ */
+export function bookingsOutsideSchedule(
+  u: UnidadSimulada,
+  schedule: CenterSchedule,
+  onlyDevice?: string,
+  assigned: ReadonlyMap<string, string | null> = assignmentsOf(u, schedule),
+): number {
   const devices = devicesOf(u);
-  const assigned = assignmentsOf(u, schedule, devices);
   const now = Date.now();
   return turnosDeOrdenes
     .filtrar((t) => t.unitId === u.id && new Date(t.startAt).getTime() > now)

@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { describeApiFailure } from '../../../core/http/api-failure';
 import {
   describirHorario,
   nombreDelHorarioGeneral,
@@ -12,6 +13,7 @@ import type {
   CenterScheduleView,
   CenterStudy,
   EquipmentStatus,
+  ScheduleBlock,
 } from '../../../core/data-access/diagnostic-units/center-schedule.types';
 import { MODALIDADES, type ModalityCode } from '../../../core/data-access/diagnostic-units/modalidades';
 
@@ -43,18 +45,34 @@ export interface CenterModality {
 
 /** The modalities of the center's studies, in catalog order. */
 export function modalitiesOf(center: CenterScheduleView): CenterModality[] {
-  return MODALIDADES.filter((m) => center.studies.some((s) => s.modalityCode === m.code)).map((m) => {
-    const devices = center.equipment.filter((e) => e.modalityCode === m.code);
-    return {
-      code: m.code,
-      label: m.label,
-      deviceSingular: m.equipmentLabel[0],
-      devicePlural: m.equipmentLabel[1],
-      devices,
-      operational: devices.filter((d) => d.status === 'OPERATIONAL').length,
-      studies: center.studies.filter((s) => s.modalityCode === m.code),
-    };
-  });
+  return MODALIDADES.filter((m) => center.studies.some((s) => s.modalityCode === m.code)).map((m) => modalityOf(center, m.code));
+}
+
+/** Devices that limit no appointment here: analyzers, and devices of a modality the center offers no study of. */
+export function otherDevicesOf(center: CenterScheduleView): CenterEquipment[] {
+  return center.equipment.filter((e) => e.modalityCode === null || !center.studies.some((s) => s.modalityCode === e.modalityCode));
+}
+
+/** The hours a device follows while it has none of its own: its modality's, or the general one. */
+export function inheritedOf(schedule: CenterSchedule, device: CenterEquipment): { readonly block: ScheduleBlock; readonly label: string } {
+  const modality = schedule.modalities.find((m) => m.modalityCode === device.modalityCode);
+  return modality !== undefined
+    ? { block: modality.schedule, label: 'el horario de su modalidad' }
+    : { block: schedule.general, label: 'el horario general del centro' };
+}
+
+function modalityOf(center: CenterScheduleView, code: ModalityCode): CenterModality {
+  const m = MODALIDADES.find((x) => x.code === code)!;
+  const devices = center.equipment.filter((e) => e.modalityCode === m.code);
+  return {
+    code: m.code,
+    label: m.label,
+    deviceSingular: m.equipmentLabel[0],
+    devicePlural: m.equipmentLabel[1],
+    devices,
+    operational: devices.filter((d) => d.status === 'OPERATIONAL').length,
+    studies: center.studies.filter((s) => s.modalityCode === m.code),
+  };
 }
 
 /** One line of «Así queda»: a device, or a modality still without devices. */
@@ -85,10 +103,10 @@ export function summaryOf(modalities: readonly CenterModality[], draft: CenterSc
         ? [
             {
               key: m.code,
-              name: `Sin ${m.devicePlural} cargados`,
+              name: 'Cupo declarado del centro',
               origin: resolverHorario(draft, common.code, m.code).origin === 'MODALITY' ? 'Horario de la modalidad' : general,
               hours: describirHorario(resolverHorario(draft, common.code, m.code).block),
-              idle: true,
+              idle: false,
             },
           ]
         : m.devices.map((d) => {
@@ -96,7 +114,7 @@ export function summaryOf(modalities: readonly CenterModality[], draft: CenterSc
             return {
               key: d.id,
               name: d.name,
-              origin: origin === 'EQUIPMENT' ? 'Horario propio' : general,
+              origin: origin === 'EQUIPMENT' ? 'Horario propio' : origin === 'MODALITY' ? 'Horario de la modalidad' : general,
               hours: describirHorario(block),
               idle: d.status !== 'OPERATIONAL',
             };
@@ -105,7 +123,9 @@ export function summaryOf(modalities: readonly CenterModality[], draft: CenterSc
       code: m.code,
       label: m.label,
       capacity:
-        m.operational === 0
+        m.devices.length === 0
+          ? `Sin ${m.devicePlural} cargados: se reserva con el cupo que declaró el centro`
+          : m.operational === 0
           ? `Sin ${m.devicePlural} operativos: no se dan citas`
           : `Hasta ${m.operational} ${m.operational === 1 ? 'paciente' : 'pacientes'} a la vez (${m.operational} ${m.operational === 1 ? m.deviceSingular : m.devicePlural} en línea)`,
       lines,
@@ -116,11 +136,16 @@ export function summaryOf(modalities: readonly CenterModality[], draft: CenterSc
   });
 }
 
-/** The server's message for a failed write, or the given fallback. */
+/**
+ * The server's words for a refused write (409/422 are business answers the
+ * person can act on, with the problems listed); anything else goes through
+ * the shared catalog, which adds the support code.
+ */
 export function serverMessage(error: unknown, fallback: string): string {
-  if (error instanceof HttpErrorResponse) {
-    const body = error.error as { message?: string } | null;
-    if (typeof body?.message === 'string' && body.message !== '') return body.message;
+  if (error instanceof HttpErrorResponse && (error.status === 409 || error.status === 422)) {
+    const body = error.error as { message?: string; details?: { problems?: readonly { problem?: string }[] } } | null;
+    const problems = (body?.details?.problems ?? []).map((p) => p.problem).filter((p): p is string => typeof p === 'string');
+    if (typeof body?.message === 'string' && body.message !== '') return [body.message, ...problems].join(' ');
   }
-  return fallback;
+  return describeApiFailure(error, fallback);
 }
