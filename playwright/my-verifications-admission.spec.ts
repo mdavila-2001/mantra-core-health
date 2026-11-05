@@ -4,7 +4,7 @@
  * The journey, `UI → request → response → persistence → reload → UI`:
  *
  * 1. the doctor with a request sees its state above the roadmap, and «Títulos»
- *    among the required steps;
+ *    among the required steps, counting university degrees only;
  * 2. each way out lands on its exact section of «Editar perfil»:
  *    habilitaciones, títulos and especialidades;
  * 3. a doctor without a request sends it: the declaration, «Enviar a
@@ -118,8 +118,10 @@ async function addPendingLicenseAndDegree(page: Page): Promise<void> {
 
   await page.getByTestId('credencial-agregar').click();
   const degree = page.getByTestId('alta-titulo-dialogo');
-  await elegirOpcion(degree.getByTestId('credencial-tipo').getByRole('combobox'), 'Diplomado');
-  await degree.getByLabel('Número / título obtenido').fill('Diplomado en salud familiar');
+  // A university degree: the only credential «Títulos» asks for. A diploma would
+  // not touch the step, as the API's admission catalog does not require one.
+  await elegirOpcion(degree.getByTestId('credencial-tipo').getByRole('combobox'), 'Título universitario');
+  await degree.getByLabel('Número / título obtenido').fill('Licenciatura en medicina');
   await degree.getByRole('button', { name: 'Agregar título' }).click();
   await page.getByRole('button', { name: 'Confirmar' }).click();
   await expect(page.getByText('Se agregó el título. Queda pendiente de verificación.')).toBeVisible();
@@ -142,6 +144,12 @@ test('el médico con solicitud ve su estado arriba y «Títulos» entre las etap
   await expect(required.getByTestId('verif-tramo-credentials')).toBeVisible();
   await expect(required.getByTestId('verif-tramo-credentials')).not.toContainText('Opcional');
   await capturar(page, join(EVIDENCE, 'practitioner-01-with-request-1440.png'));
+
+  // The step counts university degrees only: the seeded one, verified.
+  const credentials = required.getByTestId('verif-tramo-credentials');
+  await expect(credentials).toContainText('1 de 1 título universitario con sello');
+  await credentials.scrollIntoViewIfNeeded();
+  await capturar(page, join(EVIDENCE, 'practitioner-01-credentials-step-1440.png'));
   expect(errors).toEqual([]);
 });
 
