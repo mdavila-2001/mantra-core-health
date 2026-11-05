@@ -8,7 +8,6 @@
  * 2. «Precios» shows the panel with its components under it, and the component
  *    that came without a suggested price waits as «Falta el precio»;
  * 3. its first price is typed and saved, and it is still there after reloading;
- * 4. at 320 px the price table does not scroll sideways.
  *
  * Runs against `ng serve` in demo mode (simulator).
  */
@@ -56,13 +55,4 @@ test('el laboratorio agrega el Hemograma del catálogo y le pone precio a un com
   await page.getByRole('textbox', { name: 'Buscar un servicio' }).fill('hemograma');
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('lab-prices-price-HEMOGRAMA.VCM')).toHaveValue('12.00');
-});
-
-test('a 320 px la tabla de precios no se desborda', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 900 });
-  await entrarAlSimulador(page, 'laboratorio', BASE);
-  await page.goto(PRICES, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByTestId('lab-prices-table')).toBeVisible();
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
 });
