@@ -9,9 +9,9 @@
  *    never shows up. Leaving the mode moves nothing; picking a slot asks for
  *    the reason and moves the booking. Both are read on the screen: the
  *    simulator answers inside the app, so there is no request to watch.
- * 3. A doctor with no published agenda does not see «Cupos» either.
+ * 3. A doctor with no published agenda sees the notice and no «Cupos» either.
  * 4. Who hands out appointments keeps «Consultas» and «Cupos».
- * 5. The patient sees neither.
+ * 5. The patient who asks for /schedule lands on the panel, with no agenda tab.
  *
  * Each test signs in on a fresh context, so the simulator state
  * (`sessionStorage`) does not leak: moving the booking in 2 changes nothing
@@ -242,11 +242,9 @@ test.describe('Agenda · quien atiende no tiene «Cupos»', () => {
 
   test('un médico sin agenda publicada tampoco ve «Cupos»', async ({ page }) => {
     await openSchedule(page, 'medico.nuevo');
-    const notPublished = page.getByText('Todavía no publicó su agenda');
-    test.skip(
-      (await notPublished.count()) === 0,
-      'En la maqueta, este médico no llega a /schedule sin agenda propia.',
-    );
+    // The simulator's new doctor has published no agenda: the notice is the
+    // starting point of this test, so its absence is a failure, not a skip.
+    await expect(page.getByText('Todavía no publicó su agenda')).toBeVisible({ timeout: 60_000 });
     await waitForTabs(page);
 
     expect(await tabLabels(page)).toEqual(['Consultas', 'Mis horarios']);
@@ -272,13 +270,21 @@ test.describe('Agenda · quien atiende no tiene «Cupos»', () => {
     expect(errors).toEqual([]);
   });
 
-  test('la paciente no ve «Cupos» ni «Mover a otro horario»', async ({ page }) => {
+  test('la paciente que pide /schedule termina fuera de la agenda, sin ninguna de sus solapas', async ({
+    page,
+  }) => {
+    const errors = watchConsole(page);
     await openSchedule(page, 'paciente');
 
-    expect(await tabLabels(page)).not.toContain('Cupos');
+    // The section guard sends whoever has no role for the agenda to the panel.
+    await page.waitForURL((url) => url.pathname === '/dashboard', { timeout: 30_000 });
+    await expect(page.locator('app-agenda')).toHaveCount(0);
+    const agendaTab = page.getByRole('tab', { name: /^\s*(Consultas|Cupos|Mis horarios)\b/ });
+    await expect(agendaTab).toHaveCount(0);
     await expect(page.locator('[data-action="agenda-reprogramar"]')).toHaveCount(0);
     await expect(page.getByTestId('agenda-reprogramando')).toHaveCount(0);
     mkdirSync(EVIDENCE, { recursive: true });
     await capturar(page, join(EVIDENCE, 'patient-schedule-1440.png'));
+    expect(errors).toEqual([]);
   });
 });
