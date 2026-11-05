@@ -511,7 +511,8 @@ export class SymptomCheck {
       return [];
     }
     const disponibles = new Set(this.especialidadesDisponibles().keys());
-    const lista = recommend(this.sintomasDeLaZona(), disponibles);
+    const sexo = this.siluetaSexo();
+    const lista = recommend(this.sintomasDeLaZona().map((s) => withSpecialtiesForSex(s, sexo)), disponibles);
     const breves = lista.map((r) => ({ ...r, porque: r.porque.slice(0, 2) }));
     return withMedicineFirstGeneral(breves, FIRST_GENERAL, disponibles);
   });
