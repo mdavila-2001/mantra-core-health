@@ -7,6 +7,7 @@ import type { ConceptLabels } from '../../../core/data-access/terminology/termin
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { sello } from '../my-profile/practitioner-profile/practitioner-seal';
+import { optionalCredentialsNote, splitCredentials } from './roadmap-credentials';
 import { ROADMAP_LINKS, untilApproved, type RoadmapLink } from './roadmap-links';
 
 /* ============================================================================
@@ -150,14 +151,7 @@ export function buildRoadmap(
 ): readonly RoadmapStep[] {
   const perfilEstado = sello(etiquetas, perfil.verificationStatusConceptId);
   const matriculas = perfil.licenses.map((l) => sello(etiquetas, l.stateConceptId));
-  // Del concepto de estado, como en «Mi perfil»: `verifiedAt` también se
-  // escribe cuando se RECHAZA, así que leerlo daría «Verificado» a un título
-  // rechazado. El vencimiento cambia el sello, no la decisión.
-  const titulos = perfil.credentials.map((c): StatusSealVariant =>
-    c.expiryDate !== undefined && c.expiryDate < ahora
-      ? 'expired'
-      : sello(etiquetas, c.stateConceptId),
-  );
+  const credentials = splitCredentials(perfil.credentials, etiquetas, ahora);
   const especialidades = perfil.specialties
     .filter((s) => s.validTo === undefined)
     .map((s) => sello(etiquetas, s.verificationStatusConceptId));
@@ -211,21 +205,25 @@ export function buildRoadmap(
       ...untilApproved(combineStates(matriculas), ROADMAP_LINKS.licenses),
       optional: false,
     }),
-    // Required: the API's admission catalog asks every practitioner for a university degree.
+    // Required: the API's admission catalog asks every practitioner for a
+    // university degree, and only for that one (`splitCredentials`).
     paso({
       key: 'credentials',
       title: 'Títulos',
       icon: 'teach',
-      state: combineStates(titulos),
-      detail: cuenta(
-        titulos,
-        'título',
-        'títulos',
-        'Cargue su título universitario para que podamos verificarlo.',
-      ),
+      state: combineStates(credentials.required),
+      detail:
+        cuenta(
+          credentials.required,
+          'título universitario',
+          'títulos universitarios',
+          'Cargue su título universitario para que podamos verificarlo.',
+        ) + optionalCredentialsNote(credentials.optional),
       ...untilApproved(
-        combineStates(titulos),
-        titulos.length === 0 ? ROADMAP_LINKS.firstCredential : ROADMAP_LINKS.credentials,
+        combineStates(credentials.required),
+        credentials.required.length === 0
+          ? ROADMAP_LINKS.firstCredential
+          : ROADMAP_LINKS.credentials,
       ),
       optional: false,
     }),
