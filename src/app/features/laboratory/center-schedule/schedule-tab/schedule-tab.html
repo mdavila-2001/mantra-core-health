@@ -1,0 +1,123 @@
+<div class="panel">
+  <section class="section" aria-labelledby="general-schedule">
+    <div class="section__head">
+      <h2 id="general-schedule" class="section__title" data-testid="centro-horario-general-titulo">{{ generalName() }}</h2>
+      <p class="section__help">
+        Lo hereda cada equipo que no tiene horario propio. Si un equipo atiende en otro horario, póngaselo en la pestaña «Equipos».
+      </p>
+    </div>
+    <app-schedule-block-editor testPrefix="centro-general" [nombre]="generalName()" [block]="draft().general" (blockChange)="setGeneral($event)" />
+  </section>
+
+  @if (withoutDevices().length > 0) {
+    <section class="section" aria-labelledby="modality-defaults">
+      <div class="section__head">
+        <h2 id="modality-defaults" class="section__title">Servicios todavía sin equipos</h2>
+        <p class="section__help">
+          Puede darles un horario propio desde ya. Cuando cargue sus equipos, cada uno lo hereda como su horario.
+        </p>
+      </div>
+      <ul class="list" role="list">
+        @for (m of withoutDevices(); track m.code) {
+          <li class="item" [attr.data-testid]="'centro-modalidad-' + m.code">
+            <div class="item__head">
+              <div>
+                <p class="item__name">{{ m.label }}</p>
+                <p class="item__meta item__meta--warn">Sin {{ m.devicePlural }} cargados · {{ m.studies.length }} {{ m.studies.length === 1 ? 'estudio' : 'estudios' }}</p>
+              </div>
+              <div class="item__own">
+                <span class="item__label">Tiene horario propio</span>
+                <app-segmented-control
+                  [attr.data-testid]="'centro-propio-' + m.code"
+                  [ariaLabel]="m.label + ': ¿tiene horario propio?'"
+                  [options]="yesNo"
+                  [value]="modalityBlock(m.code) !== null ? 'si' : 'no'"
+                  (valueChange)="toggleModality(m.code, $event)"
+                />
+              </div>
+            </div>
+            @if (modalityBlock(m.code); as block) {
+              <app-schedule-block-editor [testPrefix]="'centro-' + m.code" [nombre]="m.label" [block]="block" (blockChange)="setModality(m.code, $event)" />
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <section class="section" aria-labelledby="study-exceptions">
+    <div class="section__head">
+      <h2 id="study-exceptions" class="section__title">Excepciones por estudio</h2>
+      <p class="section__help">Si un estudio puntual se hace en otro horario, cualquiera sea el equipo, agréguele una excepción.</p>
+    </div>
+    <ul class="list" role="list">
+      @for (m of modalities(); track m.code) {
+        <li>
+          <details class="exceptions" [open]="hasException(m)">
+            <summary>{{ m.label }} · {{ m.studies.length }} {{ m.studies.length === 1 ? 'estudio' : 'estudios' }}</summary>
+            <ul class="exceptions__list" role="list">
+              @for (s of m.studies; track s.code) {
+                <li class="exception" [attr.data-testid]="'centro-estudio-' + s.code">
+                  <div class="exception__head">
+                    <span>{{ s.name }}</span>
+                    @if (exceptionOf(s.code)) {
+                      <button app-button variant="ghost" size="sm" (click)="removeException(s.code)">Quitar excepción</button>
+                    } @else {
+                      <button app-button variant="outline" size="sm" (click)="addException(m, s.code)">Horario aparte</button>
+                    }
+                  </div>
+                  @if (exceptionOf(s.code); as block) {
+                    <app-schedule-block-editor [testPrefix]="'centro-' + s.code" [nombre]="s.name" [block]="block" (blockChange)="setException(s.code, $event)" />
+                  }
+                </li>
+              }
+            </ul>
+          </details>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="section" aria-labelledby="summary">
+    <h2 id="summary" class="section__title">Así queda</h2>
+    <ul class="summary" role="list" data-testid="centro-resumen">
+      @for (row of summary(); track row.code) {
+        <li class="summary__row">
+          <p class="summary__name">{{ row.label }}</p>
+          <p class="summary__capacity">{{ row.capacity }}</p>
+          <ul class="summary__lines" role="list">
+            @for (line of row.lines; track line.key) {
+              <li class="summary__line" [class.summary__line--idle]="line.idle">
+                <span class="summary__device">{{ line.name }} <span class="summary__origin">· {{ line.origin }}</span></span>
+                <span class="summary__hours">{{ line.hours }}</span>
+              </li>
+            }
+          </ul>
+          @for (ex of row.exceptions; track ex.name) {
+            <p class="summary__exception">Excepción · {{ ex.name }}: {{ ex.hours }}</p>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+
+  @if (problems().length > 0) {
+    <app-alert tone="error" title="No se pudo publicar" data-testid="centro-problemas">
+      <ul class="problems">
+        @for (p of problems(); track p) {
+          <li>{{ p }}</li>
+        }
+      </ul>
+    </app-alert>
+  }
+  @if (published()) {
+    <app-alert tone="success" title="Horarios publicados" data-testid="centro-publicado">Los pacientes ya ven los horarios nuevos.</app-alert>
+  }
+
+  <div class="actions">
+    <button app-button variant="ghost" [disabled]="!dirty()" (click)="discard()">Descartar cambios</button>
+    <button app-button variant="primary" data-testid="centro-publicar" [disabled]="!dirty()" [isLoading]="saving()" (click)="publish()">
+      Publicar horarios
+    </button>
+  </div>
+</div>

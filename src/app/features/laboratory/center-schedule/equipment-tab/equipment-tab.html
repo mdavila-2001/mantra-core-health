@@ -1,0 +1,86 @@
+<div class="panel">
+  <div class="intro">
+    <p class="intro__text">
+      Cada equipo es una línea de producción: atiende a un paciente por turno, en su horario propio o en el general del centro. Si uno se rompe
+      o entra en mantenimiento, márquelo: deja de ofrecer turnos solo.
+    </p>
+    @if (adding() === null) {
+      <button app-button variant="primary" data-testid="equipment-add-open" [disabled]="typesFailed()" (click)="openAdd(null)">Agregar equipo</button>
+    }
+  </div>
+
+  @if (typesFailed()) {
+    <app-alert tone="warning" title="No se pudo leer el catálogo de equipos" data-testid="equipment-types-error">
+      Puede seguir cambiando el estado y el horario de sus equipos. Para agregar uno, recargue la página en un momento.
+    </app-alert>
+  }
+
+  @if (adding(); as form) {
+    <app-equipment-add-form
+      [types]="types()"
+      [presetType]="form.presetType"
+      [saving]="busy() === ''"
+      [error]="addError()"
+      (add)="add($event)"
+      (dismiss)="adding.set(null)"
+    />
+  }
+
+  @if ((center().bookingsWithoutEquipment ?? 0) > 0) {
+    <app-alert tone="warning" title="Hay turnos sin equipo" data-testid="centro-turnos-sin-equipo">
+      {{ center().bookingsWithoutEquipment }} turno{{ center().bookingsWithoutEquipment === 1 ? '' : 's' }} ya reservado{{ center().bookingsWithoutEquipment === 1 ? '' : 's' }} no
+      tiene{{ center().bookingsWithoutEquipment === 1 ? '' : 'n' }} un equipo operativo que lo{{ center().bookingsWithoutEquipment === 1 ? '' : 's' }} atienda. Avísele a cada
+      paciente y reprográmelo, o vuelva a poner el equipo en servicio. La pestaña «Ocupación» muestra cuáles son.
+    </app-alert>
+  }
+
+  @for (m of modalities(); track m.code) {
+    <section class="section" [attr.aria-label]="m.label" [attr.data-testid]="'equipment-modality-' + m.code">
+      <h2 class="section__title">
+        {{ m.label }} <span class="section__count">· {{ m.operational }} de {{ m.devices.length }} {{ m.devices.length === 1 ? 'operativo' : 'operativos' }}</span>
+      </h2>
+      <ul class="list" role="list">
+        @for (d of m.devices; track d.id) {
+          <li>
+            <app-equipment-card
+              [device]="d"
+              [general]="center().schedule.general"
+              [busy]="busy() !== null"
+              [error]="errorOf(d.id)"
+              [linkGlossary]="linkGlossary()"
+              (statusChange)="setStatus(d, $event)"
+              (scheduleSave)="saveSchedule(d, $event)"
+              (remove)="remove(d)"
+            />
+          </li>
+        } @empty {
+          <li class="empty" [attr.data-testid]="'equipment-empty-' + m.code">
+            <p class="empty__text">Sin {{ m.devicePlural }} cargados: esta modalidad todavía no da turnos.</p>
+            <button app-button variant="outline" size="sm" [disabled]="typesFailed()" (click)="openAdd(typeFor(m))">Agregar {{ m.deviceSingular }}</button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (others().length > 0) {
+    <section class="section" aria-label="Otros equipos">
+      <h2 class="section__title">Otros equipos <span class="section__count">· no limitan los turnos</span></h2>
+      <ul class="list" role="list">
+        @for (d of others(); track d.id) {
+          <li>
+            <app-equipment-card
+              [device]="d"
+              [general]="center().schedule.general"
+              [busy]="busy() !== null"
+              [error]="errorOf(d.id)"
+              [linkGlossary]="linkGlossary()"
+              (statusChange)="setStatus(d, $event)"
+              (remove)="remove(d)"
+            />
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

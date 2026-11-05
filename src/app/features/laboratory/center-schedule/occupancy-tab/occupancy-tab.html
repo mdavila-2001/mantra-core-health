@@ -1,0 +1,38 @@
+<div class="panel">
+  <div class="nav" role="group" aria-label="Día">
+    <button app-button variant="ghost" size="sm" data-testid="occupancy-prev" [disabled]="offset() <= 0" (click)="move(-1)">Día anterior</button>
+    <p class="nav__day" data-testid="occupancy-day" aria-live="polite">
+      {{ offset() === 0 ? 'Hoy, ' : '' }}{{ day() | date: "EEEE d 'de' MMMM" }}
+    </p>
+    <button app-button variant="ghost" size="sm" data-testid="occupancy-next" (click)="move(1)">Día siguiente</button>
+  </div>
+
+  <app-view-state-host [state]="state()" (retry)="load()">
+    <ul class="lines" role="list" data-testid="occupancy-lines">
+      @for (line of lines(); track line.key) {
+        <li class="line" [class.line--off]="line.note !== null" [attr.data-testid]="'occupancy-line-' + line.key">
+          <p class="line__name">
+            {{ line.name }}
+            @if (line.note) {
+              <span class="line__note">· {{ line.note }}</span>
+            }
+          </p>
+          @if (line.bookings.length > 0) {
+            <ol class="line__slots">
+              @for (b of line.bookings; track b.bookingId) {
+                <li class="slot">
+                  <time class="slot__time" [attr.datetime]="b.startsAt">{{ b.startsAt | date: "HH:mm" }}</time>
+                  <span class="slot__who">{{ b.patientName ?? 'Paciente sin nombre' }} · {{ b.studyName ?? 'Estudio' }}</span>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="line__free">Sin turnos reservados este día.</p>
+          }
+        </li>
+      } @empty {
+        <li class="line__free">El centro todavía no tiene equipos que den turnos. Cárguelos en la pestaña «Equipos».</li>
+      }
+    </ul>
+  </app-view-state-host>
+</div>

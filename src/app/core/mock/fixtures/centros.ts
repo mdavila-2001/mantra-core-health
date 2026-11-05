@@ -1,4 +1,4 @@
-import type { CenterSchedule, EquipmentStatus, OrderAppointment } from '../../data-access/diagnostic-units/center-schedule.types';
+import type { CenterSchedule, EquipmentStatus, OrderAppointment, ScheduleBlock } from '../../data-access/diagnostic-units/center-schedule.types';
 import type { ModalityCode } from '../../data-access/diagnostic-units/modalidades';
 import { Coleccion } from '../mock-store';
 
@@ -16,7 +16,11 @@ import { Coleccion } from '../mock-store';
         equipo. Sin fila, el equipo tiene el estado con el que lo genera
         `equipoDe()`.
       - `turnosDeOrdenes`: el turno que resolvió cada orden médica. Su `id` es
-        el de la orden: una orden tiene a lo sumo un turno activo.
+        el de la orden: una orden tiene a lo sumo un turno activo, y guarda el
+        equipo que lo atiende.
+      - `registeredDevices`: los equipos que el centro cargó desde el catálogo.
+      - `deviceDetails`: lo que el centro le cambió a un equipo (marca, modelo,
+        serie, horario propio) o que lo dio de baja.
     ========================================================================== */
 
 export interface HorarioDeCentroSimulado {
@@ -44,11 +48,38 @@ export interface TurnoDeOrdenSimulado {
   readonly startAt: string;
   readonly endAt: string;
   readonly createdAt: string;
+  /** The device that attends it; absent on slots booked before devices had lines. */
+  readonly equipmentId?: string;
+}
+
+/** A device the center registered itself from the type catalog. */
+export interface RegisteredDevice {
+  readonly id: string;
+  readonly unitId: string;
+  readonly typeCode: string;
+  readonly manufacturer: string | null;
+  readonly model: string | null;
+  readonly serialNumber: string | null;
+  readonly createdAt: string;
+}
+
+/** What the center changed on a device; absent fields keep the device's own. */
+export interface DeviceDetail {
+  readonly id: string;
+  readonly manufacturer?: string | null;
+  readonly model?: string | null;
+  readonly serialNumber?: string | null;
+  /** `null`: back on the general schedule. */
+  readonly schedule?: ScheduleBlock | null;
+  readonly removed?: boolean;
+  readonly updatedAt: string;
 }
 
 export const horariosDeCentros = new Coleccion<HorarioDeCentroSimulado>().persistirEn('mock.centros.horarios');
 export const estadosDeEquipos = new Coleccion<EstadoDeEquipoSimulado>().persistirEn('mock.centros.estadosDeEquipos');
 export const turnosDeOrdenes = new Coleccion<TurnoDeOrdenSimulado>().persistirEn('mock.centros.turnosDeOrdenes');
+export const registeredDevices = new Coleccion<RegisteredDevice>().persistirEn('mock.centros.registeredDevices');
+export const deviceDetails = new Coleccion<DeviceDetail>().persistirEn('mock.centros.deviceDetails');
 
 /** Puestos de extracción de un laboratorio: los que limitan su toma de muestras. */
 export const PUESTOS_DE_EXTRACCION = 3;

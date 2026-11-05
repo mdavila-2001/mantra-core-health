@@ -58,6 +58,23 @@ export function resolverHorario(
   return { block: schedule.general, origin: 'GENERAL' };
 }
 
+/**
+ * El horario de un estudio en UN equipo: la excepción del estudio gana (es
+ * una regla del estudio, no de la máquina); después el horario propio del
+ * equipo; después los niveles de {@link resolverHorario}.
+ */
+export function resolveDeviceBlock(
+  schedule: CenterSchedule,
+  device: Pick<CenterEquipment, 'schedule'>,
+  studyCode: string,
+  modalityCode: ModalityCode,
+): HorarioResuelto {
+  const own = schedule.studies.find((s) => s.studyCode === studyCode);
+  if (own !== undefined) return { block: own.schedule, origin: 'STUDY' };
+  if (device.schedule) return { block: device.schedule, origin: 'EQUIPMENT' };
+  return resolverHorario(schedule, '', modalityCode);
+}
+
 /** Si el horario general sigue valiendo para todo o ya es el del resto. */
 export function tieneHorariosPropios(schedule: CenterSchedule): boolean {
   return schedule.modalities.length > 0 || schedule.studies.length > 0;

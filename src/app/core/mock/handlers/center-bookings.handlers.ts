@@ -4,6 +4,8 @@ import { turnosDeOrdenes } from '../fixtures/centros';
 import { patientById } from '../fixtures/people';
 import { notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { destinoDeOrden } from './lab-portal.handlers';
+import { assignmentsOf, devicesOf } from './center-devices.mock';
+import { horarioDe } from './centros.handlers';
 import { labInboxOrders, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
 
 /* ============================================================================
@@ -36,6 +38,8 @@ function statusAt(startsAt: Date, endsAt: Date, now: Date): string {
 
 function bookedFromOrders(u: UnidadSimulada, now: Date): CenterBooking[] {
   const studyByCode = new Map(Object.entries(ESTUDIO).map(([code, id]) => [code, displayOf(id)]));
+  const devices = devicesOf(u);
+  const assigned = assignmentsOf(u, horarioDe(u), devices);
   return turnosDeOrdenes
     .filtrar((t) => t.unitId === u.id)
     .map((t) => ({
@@ -46,6 +50,8 @@ function bookedFromOrders(u: UnidadSimulada, now: Date): CenterBooking[] {
       startsAt: t.startAt,
       endsAt: t.endAt,
       siteName: sitioDe(u).name,
+      equipmentId: assigned.get(t.id) ?? null,
+      equipmentName: devices.find((d) => d.id === assigned.get(t.id))?.name ?? null,
       status: statusAt(new Date(t.startAt), new Date(t.endAt), now),
     }));
 }

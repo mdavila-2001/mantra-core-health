@@ -797,7 +797,7 @@
       "lineas": 509
     },
     "src/app/core/mock/handlers/centros.handlers.ts": {
-      "lineas": 505
+      "lineas": 371
     },
     "src/app/features/account/pharmacy-orders/checkout/checkout.ts": {
       "lineas": 503
@@ -1376,9 +1376,6 @@
       "lineas": 367
     },
     "src/app/features/account/pharmacy-hub/pharmacy-shop/pharmacy-shop.ts": {
-      "lineas": 366
-    },
-    "src/app/features/laboratory/center-schedule/center-schedule.ts": {
       "lineas": 366
     },
     "src/app/features/shell-layout/shell-layout.css": {

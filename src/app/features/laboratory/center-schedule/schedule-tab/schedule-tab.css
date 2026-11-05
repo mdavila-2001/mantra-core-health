@@ -1,0 +1,184 @@
+/* «Horarios» tab: general schedule, defaults for modalities without devices,
+   study exceptions and the device-by-device summary. Mobile-first. */
+
+:host {
+  display: block;
+}
+
+.panel {
+  display: grid;
+  gap: var(--sp-6);
+  padding-block-start: var(--sp-4);
+}
+
+.section,
+.section__head {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.section {
+  gap: var(--sp-3);
+}
+
+.section__title {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.section__help {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.list,
+.summary,
+.summary__lines,
+.exceptions__list {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.item__head,
+.exception__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.item__name,
+.item__meta {
+  margin: 0;
+}
+
+.item__name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.item__meta {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.item__meta--warn {
+  color: var(--text-danger);
+}
+
+.item__own {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.item__own app-segmented-control {
+  /* Grows and never shrinks: at 390 px the control takes the whole row
+     instead of clipping its labels. */
+  flex: 1 0 auto;
+  min-inline-size: 8rem;
+}
+
+.item__label {
+  color: var(--text-secondary);
+}
+
+.exceptions summary {
+  cursor: pointer;
+  color: var(--text-link);
+}
+
+.exceptions__list {
+  margin-block-start: var(--sp-3);
+}
+
+.exception {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-sm);
+}
+
+.summary__row {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-inline-start: 3px solid var(--brand-primary);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+}
+
+.summary__row p {
+  margin: 0;
+}
+
+.summary__name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.summary__capacity,
+.summary__exception,
+.summary__origin {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.summary__lines {
+  gap: var(--sp-1);
+}
+
+.summary__line {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.summary__device {
+  color: var(--text-primary);
+}
+
+.summary__hours {
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+
+.summary__line--idle .summary__hours {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+/* Tablet (--bp-md, 780 px): device and hours on one row. */
+@media (min-width: 780px) {
+  .summary__line {
+    grid-template-columns: minmax(12rem, 1fr) 2fr;
+    align-items: baseline;
+  }
+}
+
+.problems {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}

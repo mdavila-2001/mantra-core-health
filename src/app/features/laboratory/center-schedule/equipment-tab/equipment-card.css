@@ -1,0 +1,96 @@
+/* One device of the center: its data, status, own hours and removal. */
+
+:host {
+  display: block;
+}
+
+.card {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.card__head {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.card__data {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.card__data p {
+  margin: 0;
+}
+
+.card__name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card__meta,
+.card__help {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.card__map {
+  color: var(--text-link);
+  font-size: var(--fs-caption);
+}
+
+.card__map summary {
+  cursor: pointer;
+}
+
+.card__map app-glossary-data-flow {
+  margin-block-start: var(--sp-2);
+  font-size: var(--fs-body);
+}
+
+.card__status {
+  min-inline-size: 12rem;
+}
+
+.card__line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.card__line app-segmented-control {
+  flex: 1 0 auto;
+  min-inline-size: 8rem;
+  max-inline-size: 16rem;
+}
+
+.card__label {
+  color: var(--text-secondary);
+}
+
+.card__error {
+  margin: 0;
+  color: var(--text-danger);
+}
+
+.card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Tablet (--bp-md, 780 px): data on the left, status on the right, top-aligned
+   so an open data map does not leave the status floating mid-card. */
+@media (min-width: 780px) {
+  .card__head {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+  }
+}

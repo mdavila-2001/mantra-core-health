@@ -2,85 +2,50 @@ import {
   capacidadDeModalidad,
   horarioDeSemana,
   nombreDelHorarioGeneral,
-  resolverHorario,
-  turnosDelDia,
   validarHorario,
 } from '../../data-access/diagnostic-units/center-schedule.rules';
 import type {
-  CenterEquipment,
   CenterSchedule,
   CenterScheduleView,
   CenterStudy,
-  EquipmentStatus,
   OrderAppointment,
   OrderBookingOption,
-  StudyStart,
 } from '../../data-access/diagnostic-units/center-schedule.types';
-import {
-  esCodigoDeModalidad,
-  modalidad,
-  modalidadDeEquipo,
-  modalidadDeEstudio,
-  type ModalityCode,
-} from '../../data-access/diagnostic-units/modalidades';
+import { esCodigoDeModalidad, modalidad, modalidadDeEstudio } from '../../data-access/diagnostic-units/modalidades';
 import { reservas, type ReservaSimulada } from '../fixtures/agenda';
-import {
-  definirResolverCitaDeOrden,
-  estadosDeEquipos,
-  horariosDeCentros,
-  PUESTOS_DE_EXTRACCION,
-  turnosDeOrdenes,
-  type TurnoDeOrdenSimulado,
-} from '../fixtures/centros';
+import { definirResolverCitaDeOrden, deviceDetails, horariosDeCentros, turnosDeOrdenes, type TurnoDeOrdenSimulado } from '../fixtures/centros';
 import { orderList } from '../fixtures/clinic';
 import { ACTIVITY, CANAL, BOOKING_STATUS, ESTUDIO, APPOINTMENT_TYPE } from '../fixtures/concepts';
 import { patientById } from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, unprocessable, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId, uuid } from '../mock-store';
 import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
-import { equipoDe, estudiosDe, informes, pacienteDeSesion, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
+import { bookingsOutsideSchedule, bookingsWithoutDevice, devicesOf, freeStarts, migrateModalities } from './center-devices.mock';
+import { registerCenterEquipment } from './center-equipment.handlers';
+import { estudiosDe, informes, pacienteDeSesion, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
 
 /* ============================================================================
     Horarios y equipos de un centro de diagnóstico, y la reserva de un estudio
     desde la orden médica (mockup, 2026-10-06).
 
-    Contrato propuesto, que la API todavía no tiene (PENDIENTES-BACKEND,
-    P-CENTRO-HORARIOS):
+    El contrato de `center-schedule/` en la API (mantra-core-health-api#1342).
+    Los equipos y sus rutas viven en `center-equipment.handlers.ts` y
+    `center-devices.mock.ts`:
 
       GET    /diagnostic-units/me/schedule
       GET    /diagnostic-units/:unitId/schedule
       PUT    /diagnostic-units/:unitId/schedule
-      PATCH  /diagnostic-units/:unitId/equipment/:equipmentId
       GET    /diagnostic-units/:unitId/study-availability?studyCode&from&to
       GET    /diagnostic-results/me/orders/:orderId/booking-options
       POST   /diagnostic-results/me/orders/:orderId/booking
       DELETE /diagnostic-results/me/orders/:orderId/booking
 
-    Las reglas (qué horario vale para un estudio y cuántos pacientes entran por
-    franja) son las de `center-schedule.rules.ts`, las mismas que usa la
-    pantalla del centro.
+    Las reglas de horario son las de `center-schedule.rules.ts`, las mismas que
+    usa la pantalla del centro. Los turnos salen de cada equipo operativo.
     ========================================================================== */
 
 /** Cuántos días hacia adelante se ofrecen turnos. */
 const DIAS_DE_DISPONIBILIDAD = 14;
-/** Un turno que empieza en menos de esto ya no se ofrece. */
-const MARGEN_MINUTOS = 30;
-
-/** El término del glosario de cada tipo de equipo. */
-const TERMINO_DE_EQUIPO: Readonly<Record<string, string>> = {
-  US: 'equipo-ecografo',
-  XR: 'equipo-rayos-x',
-  MR: 'equipo-resonador-magnetico',
-  CT: 'equipo-tomografo',
-  MG: 'equipo-mamografo',
-  DX: 'equipo-densitometro-oseo',
-  ANALYZER: 'equipo-analizador-de-laboratorio',
-  SAMPLING_STATION: 'equipo-puesto-de-extraccion',
-};
-
-/** El id con el que el glosario sirve un término: el mismo que deriva `glossary-shards.ts`. */
-const conceptoDelGlosario = (slug: string | undefined): string | null =>
-  slug === undefined ? null : uuid(`concept-glossary-${slug}`);
 
 const ESTUDIO_POR_CONCEPTO = new Map(Object.entries(ESTUDIO).map(([code, id]) => [id, code]));
 
@@ -98,35 +63,6 @@ export function horarioDeFabrica(u: UnidadSimulada): CenterSchedule {
 
 export function horarioDe(u: UnidadSimulada): CenterSchedule {
   return horariosDeCentros.get(u.id)?.schedule ?? horarioDeFabrica(u);
-}
-
-/** Los equipos del centro con su estado vigente y su modalidad. */
-export function equiposDe(u: UnidadSimulada): readonly CenterEquipment[] {
-  const propios = equipoDe(u).map((e): CenterEquipment => ({
-    id: e.id,
-    name: e.type.display,
-    manufacturer: e.manufacturer,
-    model: e.model,
-    modalityCode: modalidadDeEquipo(e.type.code),
-    status: estadosDeEquipos.get(e.id)?.status ?? (e.operationalStatus.code as EquipmentStatus),
-    glossaryConceptId: conceptoDelGlosario(TERMINO_DE_EQUIPO[e.type.code]),
-  }));
-  if (u.kind !== 'LABORATORY') return propios;
-  // En un laboratorio el turno lo limitan los puestos de extracción, no los
-  // analizadores: la muestra se procesa después, en lote.
-  const puestos = Array.from({ length: PUESTOS_DE_EXTRACCION }, (_, i): CenterEquipment => {
-    const id = uuid(`equipment-${u.id}-puesto-${i}`);
-    return {
-      id,
-      name: `Puesto de extracción ${i + 1}`,
-      manufacturer: null,
-      model: null,
-      modalityCode: 'LAB',
-      status: estadosDeEquipos.get(id)?.status ?? 'OPERATIONAL',
-      glossaryConceptId: conceptoDelGlosario(TERMINO_DE_EQUIPO['SAMPLING_STATION']),
-    };
-  });
-  return [...puestos, ...propios];
 }
 
 /** Los estudios del catálogo de órdenes que ofrece el centro. */
@@ -177,55 +113,15 @@ function esPersonalDelCentro(request: MockRequest, u: UnidadSimulada): boolean {
   return user.key === 'superadmin' || user.tenants.includes(u.tenantId);
 }
 
-/** Turnos de orden activos del centro para una modalidad, en una franja. */
-function ocupados(u: UnidadSimulada, modalityCode: ModalityCode, inicio: number, fin: number, salvoOrden?: string): number {
-  return turnosDeOrdenes.filtrar(
-    (t) =>
-      t.unitId === u.id &&
-      t.modalityCode === modalityCode &&
-      t.id !== salvoOrden &&
-      new Date(t.startAt).getTime() < fin &&
-      new Date(t.endAt).getTime() > inicio,
-  ).length;
-}
-
-/** Los turnos libres de un estudio en el centro, con su cupo. */
-export function disponibilidad(
-  u: UnidadSimulada,
-  studyCode: string,
-  desde: Date,
-  hasta: Date,
-  schedule: CenterSchedule = horarioDe(u),
-  equipos: readonly CenterEquipment[] = equiposDe(u),
-): { readonly origin: 'STUDY' | 'MODALITY' | 'GENERAL'; readonly items: readonly StudyStart[] } {
-  const modalityCode = modalidadDeEstudio(studyCode);
-  if (modalityCode === null) return { origin: 'GENERAL', items: [] };
-  const { block, origin } = resolverHorario(schedule, studyCode, modalityCode);
-  const capacidad = capacidadDeModalidad(equipos, modalityCode);
-  if (capacidad === 0) return { origin, items: [] };
-  const minimo = Math.max(desde.getTime(), Date.now() + MARGEN_MINUTOS * 60_000);
-  const items: StudyStart[] = [];
-  const dia = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate());
-  while (dia.getTime() <= hasta.getTime()) {
-    for (const { inicio, fin } of turnosDelDia(block, dia)) {
-      if (inicio.getTime() < minimo || inicio.getTime() > hasta.getTime()) continue;
-      const libres = capacidad - ocupados(u, modalityCode, inicio.getTime(), fin.getTime());
-      if (libres > 0) items.push({ startAt: inicio.toISOString(), endAt: fin.toISOString(), remaining: libres, capacity: capacidad });
-    }
-    dia.setDate(dia.getDate() + 1);
-  }
-  return { origin, items };
-}
-
 function vistaDelCentro(u: UnidadSimulada): CenterScheduleView {
   return {
-    bookingsWithoutEquipment: turnosSinEquipo(u),
+    bookingsWithoutEquipment: bookingsWithoutDevice(u, horarioDe(u)),
     unitId: u.id,
     unitName: u.name,
     kind: u.kind,
     schedule: horarioDe(u),
     studies: estudiosDelCentro(u),
-    equipment: equiposDe(u),
+    equipment: devicesOf(u),
     updatedAt: horariosDeCentros.get(u.id)?.updatedAt ?? null,
   };
 }
@@ -285,6 +181,7 @@ function ordenDelPaciente(request: MockRequest) {
 
 export function registrarCentros(router: MockRouter): void {
   definirResolverCitaDeOrden(citaDeOrden);
+  registerCenterEquipment(router, { view: vistaDelCentro, scheduleOf: horarioDe });
 
   // El centro de la organización activa: la pantalla del centro no sabe su id
   // de unidad, sabe con qué organización entró.
@@ -312,6 +209,8 @@ export function registrarCentros(router: MockRouter): void {
       modalities: (datos.modalities ?? []).filter((m) => esCodigoDeModalidad(m.modalityCode)),
       studies: (datos.studies ?? []).filter((s) => modalidadDeEstudio(s.studyCode) !== null),
     };
+    // A modality schedule is a default for devices: with devices it becomes
+    // their own hours, and it only stays published while it has none.
     const problemas = validarHorario(schedule, (donde) =>
       donde === 'general'
         ? nombreDelHorarioGeneral(schedule)
@@ -320,27 +219,20 @@ export function registrarCentros(router: MockRouter): void {
           : (estudiosDelCentro(u).find((e) => e.code === donde)?.name ?? donde),
     );
     if (problemas.length > 0) return unprocessable('El horario tiene datos incompletos.', problemas.map((p) => ({ field: p.donde, problem: p.mensaje })));
-    const afectados = turnosFueraDeHorario(u, schedule);
+    const before = devicesOf(u).map((d) => ({ id: d.id, detail: deviceDetails.get(d.id) }));
+    const conservadas = migrateModalities(u, schedule.modalities, ahora());
+    const publicado: CenterSchedule = { ...schedule, modalities: conservadas };
+    const afectados = bookingsOutsideSchedule(u, publicado);
     if (afectados > 0) {
+      for (const { id, detail } of before) {
+        if (detail === undefined) deviceDetails.borrar(id);
+        else deviceDetails.agregar(detail);
+      }
       return conflict(`Hay ${afectados} turno${afectados === 1 ? '' : 's'} reservado${afectados === 1 ? '' : 's'} que quedaría${afectados === 1 ? '' : 'n'} fuera del horario nuevo.`, {
         affectedBookings: afectados,
       });
     }
-    horariosDeCentros.agregar({ id: u.id, schedule, updatedAt: ahora() });
-    return vistaDelCentro(u);
-  });
-
-  router.patch('/diagnostic-units/:unitId/equipment/:equipmentId', (request) => {
-    const u = unidadPorId(request.params['unitId']!);
-    if (u === undefined) return notFound('Centro no encontrado');
-    if (!esPersonalDelCentro(request, u)) return forbidden('Sólo el personal del centro cambia sus equipos.');
-    const equipo = equiposDe(u).find((e) => e.id === request.params['equipmentId']);
-    if (equipo === undefined) return notFound('Equipo no encontrado');
-    const { status } = cuerpo<{ status?: EquipmentStatus }>(request);
-    if (status !== 'OPERATIONAL' && status !== 'MAINTENANCE' && status !== 'OUT_OF_SERVICE') {
-      return unprocessable('Elija un estado: operativo, en mantenimiento o fuera de servicio.');
-    }
-    estadosDeEquipos.agregar({ id: equipo.id, status, updatedAt: ahora() });
+    horariosDeCentros.agregar({ id: u.id, schedule: publicado, updatedAt: ahora() });
     return vistaDelCentro(u);
   });
 
@@ -351,7 +243,7 @@ export function registrarCentros(router: MockRouter): void {
     if (!estudiosDelCentro(u).some((e) => e.code === studyCode)) return notFound('El centro no hace ese estudio');
     const desde = new Date(request.query.get('from') ?? Date.now());
     const hasta = new Date(request.query.get('to') ?? Date.now() + DIAS_DE_DISPONIBILIDAD * 86_400_000);
-    const { origin, items } = disponibilidad(u, studyCode, desde, hasta);
+    const { origin, items } = freeStarts(u, horarioDe(u), studyCode, desde, hasta);
     return { unitId: u.id, studyCode, origin, items };
   });
 
@@ -369,7 +261,7 @@ export function registrarCentros(router: MockRouter): void {
       const estudio = estudiosDelCentro(u).find((e) => e.code === r.studyCode);
       if (estudio === undefined) continue;
       const sitio = sitioDe(u) as { addressText?: string | null };
-      const { items } = disponibilidad(u, r.studyCode, desde, hasta);
+      const { items } = freeStarts(u, horarioDe(u), r.studyCode, desde, hasta);
       options.push({
         unitId: u.id,
         unitName: u.name,
@@ -379,7 +271,7 @@ export function registrarCentros(router: MockRouter): void {
         distanceKm: Number.isFinite(u.lat) && Number.isFinite(u.lng) ? distanciaKm(casa.lat, casa.lng, u.lat, u.lng) : null,
         nextStartAt: items[0]?.startAt ?? null,
         preparation: estudio.preparation,
-        operationalEquipment: capacidadDeModalidad(equiposDe(u), r.modalityCode),
+        operationalEquipment: capacidadDeModalidad(devicesOf(u), r.modalityCode),
       });
     }
     // Primero los que pueden atender pronto; sin turnos, al final.
@@ -403,7 +295,8 @@ export function registrarCentros(router: MockRouter): void {
     if (u === undefined) return notFound('Centro no encontrado');
     const inicio = new Date(startAt ?? '');
     if (Number.isNaN(inicio.getTime())) return unprocessable('Falta el horario elegido.');
-    const libre = disponibilidad(u, r.studyCode, inicio, inicio).items.find((i) => i.startAt === inicio.toISOString());
+    const libres = freeStarts(u, horarioDe(u), r.studyCode, inicio, inicio);
+    const libre = libres.items.find((i) => i.startAt === inicio.toISOString());
     if (libre === undefined) return conflict('Ese horario se acaba de ocupar. Elija otro.', { slotTaken: true });
     const paciente = patientById(r.orden.patientProfileId);
     const estudio = estudiosDelCentro(u).find((e) => e.code === r.studyCode)!;
@@ -442,6 +335,7 @@ export function registrarCentros(router: MockRouter): void {
       startAt: libre.startAt,
       endAt: libre.endAt,
       createdAt: ahora(),
+      equipmentId: libres.devicesAt.get(libre.startAt)![0]!,
     });
     avisarPorChatDeSoporte(
       r.orden.patientProfileId,
@@ -474,31 +368,3 @@ function estudioNombre(code: string): string {
   return code;
 }
 
-/**
- * Turnos de orden futuros que no entrarían en el horario nuevo. Sólo mira el
- * horario: el cupo lo fijan los equipos, y si se mirara acá, un equipo roto
- * con un turno tomado trabaría cualquier publicación —también la de otra
- * modalidad— hasta repararlo. Eso lo avisa {@link turnosSinEquipo}.
- */
-function turnosFueraDeHorario(u: UnidadSimulada, schedule: CenterSchedule): number {
-  const ahoraMs = Date.now();
-  let afectados = 0;
-  for (const t of turnosDeOrdenes.filtrar((x) => x.unitId === u.id && new Date(x.startAt).getTime() > ahoraMs)) {
-    const inicio = new Date(t.startAt);
-    const { block } = resolverHorario(schedule, t.studyCode, t.modalityCode);
-    if (!turnosDelDia(block, inicio).some((x) => x.inicio.getTime() === inicio.getTime())) afectados++;
-  }
-  return afectados;
-}
-
-/** Turnos de orden futuros que quedaron sin un equipo operativo que los atienda. */
-function turnosSinEquipo(u: UnidadSimulada): number {
-  const ahoraMs = Date.now();
-  const equipos = equiposDe(u);
-  let sinEquipo = 0;
-  for (const t of turnosDeOrdenes.filtrar((x) => x.unitId === u.id && new Date(x.startAt).getTime() > ahoraMs)) {
-    const otros = ocupados(u, t.modalityCode, new Date(t.startAt).getTime(), new Date(t.endAt).getTime(), t.id);
-    if (otros >= capacidadDeModalidad(equipos, t.modalityCode)) sinEquipo++;
-  }
-  return sinEquipo;
-}

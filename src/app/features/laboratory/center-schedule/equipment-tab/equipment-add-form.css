@@ -1,0 +1,38 @@
+/* Add a device: one column on the phone, two from the tablet up. */
+
+:host {
+  display: block;
+}
+
+.form {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.form__error {
+  margin: 0;
+  color: var(--text-danger);
+}
+
+.form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}
+
+/* Tablet (--bp-md, 780 px): fields side by side, messages and actions full width. */
+@media (min-width: 780px) {
+  .form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form__error,
+  .form__actions {
+    grid-column: 1 / -1;
+  }
+}

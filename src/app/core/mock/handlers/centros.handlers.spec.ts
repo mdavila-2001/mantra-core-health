@@ -8,7 +8,7 @@ import type {
   StudyAvailability,
 } from '../../data-access/diagnostic-units/center-schedule.types';
 import { horarioDeSemana } from '../../data-access/diagnostic-units/center-schedule.rules';
-import { estadosDeEquipos, horariosDeCentros, turnosDeOrdenes } from '../fixtures/centros';
+import { deviceDetails, estadosDeEquipos, horariosDeCentros, registeredDevices, turnosDeOrdenes } from '../fixtures/centros';
 import { orderList } from '../fixtures/clinic';
 import { messageList } from '../fixtures/community';
 import { ESTUDIO } from '../fixtures/concepts';
@@ -54,7 +54,7 @@ describe('handlers de horarios de centros y reserva por orden', () => {
   };
 
   beforeEach(() => {
-    for (const t of [horariosDeCentros, estadosDeEquipos, turnosDeOrdenes] as const) {
+    for (const t of [horariosDeCentros, estadosDeEquipos, turnosDeOrdenes, registeredDevices, deviceDetails] as const) {
       for (const fila of t.todos()) t.borrar(fila.id);
     }
   });
@@ -78,14 +78,17 @@ describe('handlers de horarios de centros y reserva por orden', () => {
     expect(r.status).toBe(422);
   });
 
-  it('el horario propio de ecografía manda sobre el general y se guarda', () => {
+  it('el horario propio de ecografía pasa a sus ecógrafos y manda sobre el general', () => {
     const vista = llamar<CenterScheduleView>('GET', `/diagnostic-units/${IMAGEN_SUR}/schedule`).body;
     const guardado = llamar<CenterScheduleView>('PUT', `/diagnostic-units/${IMAGEN_SUR}/schedule`, imagen, {
       ...vista.schedule,
       modalities: [{ modalityCode: 'ECO', schedule: horarioDeSemana('14:00', '16:00', 20, [1, 2, 3, 4, 5, 6]) }],
     });
     expect(guardado.status).toBe(200);
-    expect(disponibilidad('STUDY-ECO-ABD').origin).toBe('MODALITY');
+    // Ecografía tiene ecógrafos: su horario es ahora el de cada uno, no el de la modalidad.
+    expect(guardado.body.schedule.modalities).toEqual([]);
+    expect(guardado.body.equipment.filter((e) => e.modalityCode === 'ECO').every((e) => e.schedule?.slotMinutes === 20)).toBe(true);
+    expect(disponibilidad('STUDY-ECO-ABD').origin).toBe('EQUIPMENT');
     expect(disponibilidad('STUDY-RX-TORAX').origin).toBe('GENERAL');
     const horas = new Set(disponibilidad('STUDY-ECO-ABD').items.map((i) => new Date(i.startAt).getHours()));
     expect([...horas].every((h) => h === 14 || h === 15)).toBe(true);

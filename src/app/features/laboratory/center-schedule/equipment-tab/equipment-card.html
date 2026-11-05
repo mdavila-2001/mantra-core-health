@@ -1,0 +1,79 @@
+<article class="card" [attr.data-testid]="'centro-equipo-' + device().id" [attr.aria-label]="device().name">
+  <div class="card__head">
+    <div class="card__data">
+      <p class="card__name">{{ device().name }}</p>
+      @if (makeAndModel() || device().serialNumber) {
+        <p class="card__meta">
+          {{ makeAndModel() }}
+          @if (device().serialNumber) {
+            <span>· Serie {{ device().serialNumber }}</span>
+          }
+        </p>
+      }
+      @if (device().glossaryConceptId; as concept) {
+        <details class="card__map" (toggle)="onMapToggle($event)">
+          <summary>Cómo se conectan sus datos</summary>
+          @if (mapOpen()) {
+            <app-glossary-data-flow [conceptoId]="concept" [enlazar]="linkGlossary()" />
+          }
+        </details>
+      }
+    </div>
+    <app-select
+      class="card__status"
+      [ariaLabel]="'Estado de ' + device().name"
+      [options]="statuses"
+      [value]="device().status"
+      [disabled]="busy()"
+      (valueChange)="onStatus($event)"
+      [attr.data-testid]="'centro-estado-' + device().id"
+    />
+  </div>
+
+  @if (givesAppointments()) {
+    <div class="card__line">
+      <span class="card__label">Horario propio</span>
+      <app-segmented-control
+        [attr.data-testid]="'equipment-own-' + device().id"
+        [ariaLabel]="device().name + ': ¿tiene horario propio?'"
+        [options]="yesNo"
+        [value]="ownDraft() !== null ? 'si' : 'no'"
+        (valueChange)="toggleOwn($event)"
+      />
+    </div>
+    @if (ownDraft(); as block) {
+      <app-schedule-block-editor [testPrefix]="'equipment-' + device().id" [nombre]="device().name" [block]="block" (blockChange)="ownDraft.set($event)" />
+    } @else {
+      <p class="card__help">Atiende en el horario general del centro.</p>
+    }
+  }
+
+  @if (error(); as message) {
+    <p class="card__error" role="alert" [attr.data-testid]="'equipment-error-' + device().id">{{ message }}</p>
+  }
+
+  <div class="card__actions">
+    @if (confirmRemove()) {
+      <span class="card__help">¿Quitar {{ device().name }} del centro?</span>
+      <button app-button variant="ghost" size="sm" (click)="confirmRemove.set(false)">No</button>
+      <button app-button variant="danger" size="sm" [disabled]="busy()" [attr.data-testid]="'equipment-remove-confirm-' + device().id" (click)="remove.emit(); confirmRemove.set(false)">
+        Sí, quitar
+      </button>
+    } @else {
+      <button app-button variant="ghost" size="sm" [disabled]="busy()" [attr.data-testid]="'equipment-remove-' + device().id" (click)="confirmRemove.set(true)">Quitar equipo</button>
+      @if (givesAppointments()) {
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          [disabled]="!dirty()"
+          [isLoading]="busy()"
+          [attr.data-testid]="'equipment-save-' + device().id"
+          (click)="scheduleSave.emit(ownDraft())"
+        >
+          Guardar horario
+        </button>
+      }
+    }
+  </div>
+</article>

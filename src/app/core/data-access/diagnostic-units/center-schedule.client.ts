@@ -7,9 +7,13 @@ import type {
   CenterBookingPage,
   CenterSchedule,
   CenterScheduleView,
+  EquipmentChanges,
   EquipmentStatus,
+  EquipmentType,
+  NewEquipment,
   OrderAppointment,
   OrderBookingOptions,
+  ScheduleBlock,
   StudyAvailability,
 } from './center-schedule.types';
 
@@ -17,9 +21,9 @@ import type {
  * Horarios y equipos de un centro de diagnóstico, y la reserva de un estudio a
  * partir de la orden médica.
  *
- * Contrato que hoy sólo implementa el simulador: ver `PENDIENTES-BACKEND.md`
- * (P-CENTRO-HORARIOS). Los instantes viajan en ISO y se dejan como texto: la
- * pantalla los formatea al mostrar.
+ * Cada equipo que da turnos es una línea de producción con su propio horario:
+ * la API los ofrece y reserva por equipo. Los instantes viajan en ISO y se
+ * dejan como texto: la pantalla los formatea al mostrar.
  */
 @Injectable({ providedIn: 'root' })
 export class CenterScheduleClient {
@@ -55,9 +59,42 @@ export class CenterScheduleClient {
 
   /** `PATCH /diagnostic-units/{unitId}/equipment/{equipmentId}` — operativo o no. */
   setEquipmentStatus(unitId: string, equipmentId: string, status: EquipmentStatus): Observable<CenterScheduleView> {
+    return this.updateEquipment(unitId, equipmentId, { status });
+  }
+
+  /** `GET /diagnostic-units/me/equipment-types` — the catalog a center picks its devices from. */
+  getEquipmentTypes(): Observable<{ readonly items: readonly EquipmentType[] }> {
+    return this.http.get<{ readonly items: readonly EquipmentType[] }>(this.url('/diagnostic-units/me/equipment-types'));
+  }
+
+  /** `POST /diagnostic-units/{unitId}/equipment` — 409 on a serial already used at the site. */
+  addEquipment(unitId: string, body: NewEquipment): Observable<CenterScheduleView> {
+    return this.http.post<CenterScheduleView>(this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/equipment`), body);
+  }
+
+  /** `PATCH /diagnostic-units/{unitId}/equipment/{equipmentId}` — status, make, model, serial. */
+  updateEquipment(unitId: string, equipmentId: string, changes: EquipmentChanges): Observable<CenterScheduleView> {
     return this.http.patch<CenterScheduleView>(
       this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/equipment/${encodeURIComponent(equipmentId)}`),
-      { status },
+      changes,
+    );
+  }
+
+  /** `DELETE /diagnostic-units/{unitId}/equipment/{equipmentId}` — 409 when it already attended bookings. */
+  removeEquipment(unitId: string, equipmentId: string): Observable<CenterScheduleView> {
+    return this.http.delete<CenterScheduleView>(
+      this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/equipment/${encodeURIComponent(equipmentId)}`),
+    );
+  }
+
+  /**
+   * `PUT /diagnostic-units/{unitId}/equipment/{equipmentId}/schedule` — the device's own
+   * hours; `null` puts it back on the general schedule. 409 with `affectedBookings`.
+   */
+  saveEquipmentSchedule(unitId: string, equipmentId: string, schedule: ScheduleBlock | null): Observable<CenterScheduleView> {
+    return this.http.put<CenterScheduleView>(
+      this.url(`/diagnostic-units/${encodeURIComponent(unitId)}/equipment/${encodeURIComponent(equipmentId)}/schedule`),
+      { schedule },
     );
   }
 

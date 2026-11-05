@@ -1,0 +1,31 @@
+<form class="form" data-testid="equipment-add-form" aria-label="Agregar un equipo" (submit)="$event.preventDefault(); submit()">
+  <app-form-field label="Tipo de equipo" [required]="true" [errorMessage]="tried() && typeCode() === null ? 'Elija qué equipo es.' : ''">
+    <app-select
+      ariaLabel="Tipo de equipo"
+      placeholder="Elija del catálogo"
+      [options]="typeOptions()"
+      [value]="typeCode()"
+      [hasError]="tried() && typeCode() === null"
+      (valueChange)="typeCode.set($event)"
+      data-testid="equipment-add-type"
+    />
+  </app-form-field>
+  <app-form-field label="Marca" hint="Opcional, como figura en el equipo.">
+    <app-input ariaLabel="Marca" [(value)]="manufacturer" testId="equipment-add-manufacturer" />
+  </app-form-field>
+  <app-form-field label="Modelo" hint="Opcional.">
+    <app-input ariaLabel="Modelo" [(value)]="model" testId="equipment-add-model" />
+  </app-form-field>
+  <app-form-field label="Número de serie" hint="Opcional. No se repite entre equipos de la sede.">
+    <app-input ariaLabel="Número de serie" [(value)]="serialNumber" testId="equipment-add-serial" />
+  </app-form-field>
+
+  @if (error(); as message) {
+    <p class="form__error" role="alert" data-testid="equipment-add-error">{{ message }}</p>
+  }
+
+  <div class="form__actions">
+    <button app-button type="button" variant="ghost" (click)="dismiss.emit()">Cancelar</button>
+    <button app-button type="submit" variant="primary" [isLoading]="saving()" data-testid="equipment-add-submit">Agregar equipo</button>
+  </div>
+</form>

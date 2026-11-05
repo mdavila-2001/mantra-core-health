@@ -844,16 +844,22 @@ Laboratorios e imagenología (M52).
 > distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
 > quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
 
-### `CenterScheduleClient` — 8 operaciones · maqueta (06/10/2026)
+### `CenterScheduleClient` — 13 operaciones
 
 Horarios y equipos de un centro de diagnóstico, y la reserva **desde la orden**
-del paciente. Hoy sólo los responde la maqueta (`core/mock/handlers/centros.handlers.ts`);
-el pedido al backend está en `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS).
+del paciente. Los responde `center-schedule/` en la API (mantra-core-health-api#1342)
+y, en la maqueta, `core/mock/handlers/centros.handlers.ts`,
+`center-equipment.handlers.ts` y `center-devices.mock.ts`.
 
-- El horario se resuelve **estudio → modalidad → general**: lo que no tiene
-  horario propio usa el general, que entonces se llama «Resto de servicios».
-- El cupo de cada turno es la cantidad de equipos **operativos** de la
-  modalidad (`diagnostic_equipment.operational_status` en el modelo).
+- Cada equipo que da turnos es una **línea de producción**: tiene su horario
+  propio o hereda el general del centro. El horario de un estudio se resuelve
+  **excepción del estudio → horario del equipo → horario de la modalidad → general**.
+  El horario de una modalidad sólo existe mientras la modalidad no tiene equipos;
+  cuando los tiene, pasa a ser el de cada uno.
+- Los turnos libres de un estudio son la unión de los de cada equipo **operativo**
+  de su modalidad, y la reserva queda en el primer equipo libre.
+- El centro carga sus equipos desde el catálogo de tipos; un equipo con turnos no
+  se borra (`409`): se marca fuera de servicio.
 - La reserva no lleva motivo ni descripción: la orden ya dice qué estudio es.
   Un turno ocupado responde `409` con `details.slotTaken`.
 - Las tres operaciones de la orden cuelgan de `/diagnostic-results/me/orders`,
@@ -863,9 +869,14 @@ el pedido al backend está en `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS).
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/diagnostic-units/me/schedule` | `CenterSchedulePage` |
+| `GET` | `/diagnostic-units/me/equipment-types` | `EquipmentTab` (catálogo de tipos) |
+| `GET` | `/diagnostic-units/me/bookings` | `LaboratorySummary` (turnos del día) · `OccupancyTab` (día de cada equipo) |
 | `GET` | `/diagnostic-units/:unitId/schedule` | `CenterSchedulePage` |
-| `PUT` | `/diagnostic-units/:unitId/schedule` | `CenterSchedulePage` (`422` validación · `409` con `affectedBookings`) |
-| `PATCH` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `CenterSchedulePage` (estado del equipo) |
+| `PUT` | `/diagnostic-units/:unitId/schedule` | `ScheduleTab` (`422` validación · `409` con `affectedBookings`) |
+| `POST` | `/diagnostic-units/:unitId/equipment` | `EquipmentTab` (alta; `409` serie repetida) |
+| `PATCH` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `EquipmentTab` (estado, marca, modelo, serie) |
+| `DELETE` | `/diagnostic-units/:unitId/equipment/:equipmentId` | `EquipmentTab` (baja; `409` si atendió turnos) |
+| `PUT` | `/diagnostic-units/:unitId/equipment/:equipmentId/schedule` | `EquipmentTab` (horario propio; `null` vuelve al general) |
 | `GET` | `/diagnostic-units/:unitId/study-availability` | `OrderBooking` |
 | `GET` | `/diagnostic-results/me/orders/:orderId/booking-options` | `OrderBooking` (centros, precio, distancia) |
 | `POST` | `/diagnostic-results/me/orders/:orderId/booking` | `OrderBooking` |

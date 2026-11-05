@@ -4,8 +4,8 @@ import type { ModalityCode } from './modalidades';
     Horarios y equipos de un centro de diagnóstico, y la reserva de un estudio
     a partir de una orden médica.
 
-    Contrato que el simulador implementa y la API real todavía no publica: ver
-    `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS). Los nombres siguen el modelo
+    Contrato de `center-schedule/` en la API (mantra-core-health-api#1342),
+    que el simulador implementa igual. Los nombres siguen el modelo
     (`diagnostic_study_offerings`, `diagnostic_equipment`).
     ========================================================================== */
 
@@ -50,13 +50,42 @@ export type EquipmentStatus = 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE';
 export interface CenterEquipment {
   readonly id: string;
   readonly name: string;
+  /** Código del tipo en el catálogo (`US`, `MR`…); `null` si se cargó fuera de él. */
+  readonly typeCode?: string | null;
   readonly manufacturer: string | null;
   readonly model: string | null;
+  readonly serialNumber?: string | null;
   /** `null`: no limita turnos (un analizador, una centrífuga). */
   readonly modalityCode: ModalityCode | null;
   readonly status: EquipmentStatus;
+  /** Su horario propio, su línea de producción; `null` mientras sigue el general. */
+  readonly schedule?: ScheduleBlock | null;
   /** El concepto del tipo de equipo en el glosario, con su mapa de conexión de datos. */
   readonly glossaryConceptId: string | null;
+}
+
+/** Un tipo del catálogo de `GET /diagnostic-units/me/equipment-types`. */
+export interface EquipmentType {
+  readonly code: string;
+  readonly label: string;
+  /** `null`: el tipo no da turnos (un analizador trabaja por lotes). */
+  readonly modalityCode: ModalityCode | null;
+}
+
+/** Cuerpo de `POST /diagnostic-units/{unitId}/equipment`. */
+export interface NewEquipment {
+  readonly typeCode: string;
+  readonly manufacturer?: string;
+  readonly model?: string;
+  readonly serialNumber?: string;
+}
+
+/** Cuerpo de `PATCH /diagnostic-units/{unitId}/equipment/{equipmentId}`: cualquiera de sus campos. */
+export interface EquipmentChanges {
+  readonly status?: EquipmentStatus;
+  readonly manufacturer?: string | null;
+  readonly model?: string | null;
+  readonly serialNumber?: string | null;
 }
 
 /** Un estudio que el centro ofrece. */
@@ -132,7 +161,7 @@ export interface StudyAvailability {
 }
 
 /** De qué nivel salió el horario que se aplicó a un estudio. */
-export type ScheduleOrigin = 'STUDY' | 'MODALITY' | 'GENERAL';
+export type ScheduleOrigin = 'STUDY' | 'EQUIPMENT' | 'MODALITY' | 'GENERAL';
 
 /** El turno reservado de una orden. */
 export interface OrderAppointment {
@@ -158,6 +187,9 @@ export interface CenterBooking {
   readonly startsAt: string;
   readonly endsAt: string;
   readonly siteName: string | null;
+  /** The device that attends it; `null` on bookings taken before devices had lines. */
+  readonly equipmentId?: string | null;
+  readonly equipmentName?: string | null;
   /** Booking status code as the API sends it (`BOOKED`, `ARRIVED`, `FULFILLED`…). */
   readonly status: string;
 }

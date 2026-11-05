@@ -1,0 +1,87 @@
+/* «Ocupación» tab: one row per device with the slots it attends that day. */
+
+:host {
+  display: block;
+}
+
+.panel {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav__day {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.lines,
+.line__slots {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-inline-start: 3px solid var(--brand-primary);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+}
+
+.line--off {
+  border-inline-start-color: var(--border-default);
+}
+
+.line__name,
+.line__free {
+  margin: 0;
+}
+
+.line__name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.line__note {
+  font-weight: 400;
+  color: var(--text-danger);
+}
+
+.line__free {
+  color: var(--text-secondary);
+}
+
+.line__slots {
+  gap: var(--sp-1);
+}
+
+.slot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.slot__time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.slot__who {
+  color: var(--text-secondary);
+}

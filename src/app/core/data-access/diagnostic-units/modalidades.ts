@@ -85,7 +85,7 @@ export const MODALIDADES: readonly ModalityDefinition[] = [
     code: 'LAB',
     label: 'Toma de muestras',
     equipmentLabel: ['puesto de extracción', 'puestos de extracción'],
-    equipmentCodes: ['SAMPLING_STATION'],
+    equipmentCodes: ['SAMPLING_STATION', 'SAMPLING'],
     glossarySlug: 'modalidad-toma-de-muestras',
   },
 ];
