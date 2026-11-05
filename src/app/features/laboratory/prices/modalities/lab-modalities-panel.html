@@ -1,0 +1,23 @@
+<div class="modalities" data-testid="lab-modalities-panel">
+  <app-alert tone="info" title="Las modalidades no llevan precio">
+    <p class="modalities__text">
+      Son las modalidades que su centro declaró al registrarse. En el directorio público se leen como
+      «este centro hace rayos X», pero no son estudios que un paciente pueda pedir. Lo que se cotiza es
+      cada estudio concreto de la modalidad, por ejemplo «Radiografía de tórax», con su precio de lista y
+      su descuento AloVida.
+    </p>
+    <button app-button type="button" variant="secondary" data-testid="lab-modalities-import" (clicked)="importRequested.emit()">
+      Cargar estudios con su precio (CSV)
+    </button>
+  </app-alert>
+
+  <ul class="modalities__list">
+    @for (modality of modalities(); track modality.id) {
+      <li class="modalities__item" [attr.data-testid]="'lab-modality-' + modality.code">
+        <span class="modalities__name">{{ modality.name }}</span>
+        <code class="modalities__code">{{ modality.code }}</code>
+        <app-badge variant="secondary">Modalidad declarada</app-badge>
+      </li>
+    }
+  </ul>
+</div>

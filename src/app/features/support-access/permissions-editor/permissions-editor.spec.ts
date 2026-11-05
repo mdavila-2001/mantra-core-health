@@ -690,13 +690,13 @@ describe('PermissionsEditor', () => {
     clic(byId('segmentado-advanced'));
     await asentar();
     const campo = campoDeVigencia();
-    expect(campo.value).toBe('2026-12-31');
+    expect(campo.value).toBe('31/12/2026');
 
     campo.value = '';
     campo.dispatchEvent(new Event('input', { bubbles: true }));
     await asentar();
 
-    expect(campoDeVigencia().value).toBe('2026-12-31');
+    expect(campoDeVigencia().value).toBe('31/12/2026');
     expect(texto('vigencia-aviso')).toContain('No se puede quitar la fecha de vencimiento');
     expect(texto('vigencia-aviso')).toContain('quite el permiso y vuelva a darlo');
     // No hay nada que guardar: el borrador sigue igual al guardado.
@@ -708,10 +708,10 @@ describe('PermissionsEditor', () => {
     clic(byId('segmentado-advanced'));
     await asentar();
     const campo = campoDeVigencia();
-    campo.value = '2026-11-30';
+    campo.value = '30/11/2026';
     campo.dispatchEvent(new Event('input', { bubbles: true }));
     await asentar();
-    expect(campoDeVigencia().value).toBe('2026-11-30');
+    expect(campoDeVigencia().value).toBe('30/11/2026');
     expect(byId('vigencia-aviso')).toBeNull();
   });
 

@@ -170,7 +170,7 @@
       "lineas": 1017
     },
     "src/app/core/mock/handlers/lab-portal.handlers.ts": {
-      "lineas": 1015
+      "lineas": 1009
     },
     "src/app/shared/utils/pdf-export/pdf-blocks.ts": {
       "lineas": 1013
@@ -1396,9 +1396,6 @@
     "src/app/features/agenda/my-agenda/month-view/month-view.css": {
       "lineas": 363
     },
-    "src/app/shared/utils/branch-import/branch-import.ts": {
-      "lineas": 363
-    },
     "src/app/core/mock/fixtures/glossary.ts": {
       "lineas": 362
     },
@@ -1440,9 +1437,6 @@
     },
     "src/app/features/organization/pharmacy-inbox/inbox-order/inbox-order.html": {
       "lineas": 358
-    },
-    "src/app/features/laboratory/prices/laboratory-prices.ts": {
-      "lineas": 359
     },
     "src/app/features/laboratory/results/laboratory-results.html": {
       "lineas": 359
@@ -1949,9 +1943,6 @@
       "lineas": 302
     },
     "src/app/features/notifications/notification-center.ts": {
-      "lineas": 302
-    },
-    "src/app/features/pharmacy/opening-hours/pharmacy-opening-hours.ts": {
       "lineas": 302
     },
     "src/app/shared/components/organisms/body-map/body-map.export.ts": {

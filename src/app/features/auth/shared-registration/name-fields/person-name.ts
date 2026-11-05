@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 
 import { joinNames } from '../../../../core/profession/additional-names';
+import { fieldKindValidator } from '../../../../shared/forms/field-kinds';
 import { noSoloEspacios } from '../trimmed-text';
 
 const MIN_PART_NAME = 2;
@@ -35,11 +36,17 @@ export interface NameControls {
 
 export type NameGroup = FormGroup<NameControls>;
 
+/**
+ * Every name part is a person's name (see `@shared/forms/field-kinds`). The
+ * group validates it too, not only `app-input`: drafts fill it by code.
+ */
+const personName = fieldKindValidator('personName');
+
 /** Una casilla de nombre agregada, en blanco. */
 export function nameExtraControl(): FormControl<string> {
   return new FormControl('', {
     nonNullable: true,
-    validators: [Validators.maxLength(MAX_PART_NAME)],
+    validators: [personName, Validators.maxLength(MAX_PART_NAME)],
   });
 }
 
@@ -90,7 +97,7 @@ export function nameGroup(obligatorio: boolean, viajaEnPartes = false): NameGrou
   const parte = (extra: ValidatorFn[]) =>
     new FormControl('', {
       nonNullable: true,
-      validators: [...extra, Validators.maxLength(MAX_PART_NAME)],
+      validators: [...extra, personName, Validators.maxLength(MAX_PART_NAME)],
     });
   return new FormGroup<NameControls>(
     {

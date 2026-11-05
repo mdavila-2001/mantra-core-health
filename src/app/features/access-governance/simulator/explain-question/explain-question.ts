@@ -13,6 +13,7 @@ import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** La pregunta «¿puede esta persona hacer esto, aquí y ahora?». Lo que no se elige se omite. */
 export interface QuestionValue {
@@ -57,7 +58,7 @@ export function partsOf(iso: string | undefined): { date: string; time: string }
  */
 @Component({
   selector: 'app-explain-question',
-  imports: [AppButton, FormField, Input, Select],
+  imports: [DateStringPicker, AppButton, FormField, Input, Select],
   templateUrl: './explain-question.html',
   styleUrl: './explain-question.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

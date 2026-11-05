@@ -1,0 +1,58 @@
+:host {
+  display: grid;
+  gap: var(--sp-6);
+  padding-block-start: var(--sp-4);
+}
+
+.todas__bloque {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.todas__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.todas__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.todas__sedes {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  list-style: none;
+}
+
+.todas__lista {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+
+/* Mobile-first: los campos uno debajo del otro; a lo ancho desde tablet. */
+.todas__par {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.todas__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+  .todas__sedes {
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  }
+
+  .todas__par {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

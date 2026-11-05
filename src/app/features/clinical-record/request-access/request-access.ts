@@ -18,6 +18,7 @@ import { CheckboxGroup } from '../../../shared/components/molecules/checkbox-gro
 import type { OpcionDeCasilla } from '../../../shared/components/molecules/checkbox-group/checkbox-group';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../shared/components/molecules/card/card';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -54,7 +55,7 @@ function conflictoDe(reason: string | undefined): ConflictoDeVinculo {
  */
 @Component({
   selector: 'app-request-access',
-  imports: [Alert, AppButton, CheckboxGroup, FormField, PageHeader, SegmentedControl, Textarea],
+  imports: [Alert, AppButton, Card, CheckboxGroup, FormField, PageHeader, SegmentedControl, Textarea],
   templateUrl: './request-access.html',
   styleUrl: './request-access.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

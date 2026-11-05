@@ -43,6 +43,7 @@
       <div
         class="results__drop"
         [class.results__drop--active]="dragging()"
+        [class.results__drop--picker-open]="pickerOpen()"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
@@ -53,7 +54,15 @@
           <polyline points="7 9 12 4 17 9" />
           <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
         </svg>
-        <p class="results__drop-title">{{ uploadOrder() === null ? 'Elija primero la orden' : 'Arrastre archivos o carpetas enteras acá' }}</p>
+        <p class="results__drop-title">
+          {{
+            pickerOpen()
+              ? 'Elija en la ventana de su dispositivo'
+              : uploadOrder() === null
+                ? 'Elija primero la orden'
+                : 'Arrastre archivos o carpetas enteras acá'
+          }}
+        </p>
         <p class="results__drop-hint">PDF, JPG, PNG, WEBP, GIF, DOCX, XLSX o TXT, <strong>hasta 10 MB</strong> cada uno.</p>
         <div class="results__drop-actions">
           <button app-button [disabled]="uploadOrder() === null" (clicked)="chooseFiles()" data-testid="results-choose-files">Elegir archivos</button>
@@ -63,6 +72,7 @@
         </div>
         <input
           #fileInput
+          appNativeFilePicker
           class="results__hidden-input"
           type="file"
           multiple
@@ -74,6 +84,7 @@
         />
         <input
           #folderInput
+          appNativeFilePicker
           class="results__hidden-input"
           type="file"
           multiple
