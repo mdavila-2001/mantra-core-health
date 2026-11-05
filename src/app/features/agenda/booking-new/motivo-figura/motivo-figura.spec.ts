@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
 
-import { TriageIaClient } from '../../../../core/data-access/triage-ia/triage-ia.client';
 import { ESPERAR_IMAGEN_DE_VISTA } from '../../../../shared/components/organisms/body-map/body-map';
 import { MotivoFigura } from './motivo-figura';
 
@@ -21,8 +21,9 @@ describe('MotivoFigura', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
-        // No triage service: the figure keeps working with the local engine.
-        { provide: TriageIaClient, useValue: { analizar: () => of(null) } },
+        // Real HTTP testing backend: proves the figure never calls a service.
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     });
     const fixture = TestBed.createComponent(Anfitrion);
@@ -95,6 +96,20 @@ describe('MotivoFigura', () => {
     host.motivo.setValue('me duele el pecho y no puedo respirar');
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="reserva-figura-alarma"]')).not.toBeNull();
+  });
+
+  it('reads the reason only with the local engine: no request leaves, however long it waits', async () => {
+    const { fixture, host, el } = montar();
+    host.motivo.setValue('se me durmió la mano y me duele la cabeza');
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    fixture.detectChanges();
+
+    TestBed.inject(HttpTestingController).verify();
+    expect(el.querySelector('[data-testid="reserva-figura-reconocidos"]')?.textContent).toContain(
+      'dolor de cabeza',
+    );
+    expect(el.textContent).not.toContain('Leyendo');
   });
 
   it('sin edición no ofrece síntomas para agregar', () => {
