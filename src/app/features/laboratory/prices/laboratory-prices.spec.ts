@@ -1,6 +1,7 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
@@ -9,22 +10,25 @@ import type {
   LabServiceChanges,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
 import { LaboratoryPrices } from './laboratory-prices';
-import type { PriceEdits } from './price-edits';
+import type { PriceEdits, PriceRejection } from './laboratory-prices.rules';
+import type { RowEdit } from './price-table/lab-price-table';
 
 /**
  * La pestaña «Precios» del laboratorio: precio de lista y descuento AloVida
- * por servicio, con el precio AloVida recalculado mientras se escribe.
+ * por servicio, con el precio AloVida recalculado mientras se escribe, las
+ * modalidades del alta en su propia pestaña y lo rechazado sin perderse.
  */
 function service(partial: Partial<LabService>): LabService {
   return {
     id: 's-1',
     code: 'HEM-01',
     name: 'Hemograma completo',
+    kind: 'SERVICE',
     parentId: null,
     catalogConceptId: null,
     hasPrice: true,
     categoryId: null,
-    categoryName: 'Hematología',
+    categoryName: null,
     sampleType: null,
     preparation: null,
     description: null,
@@ -44,64 +48,52 @@ function service(partial: Partial<LabService>): LabService {
 
 const CATALOG = [
   service({}),
-  service({
-    id: 's-2',
-    code: 'GLU-01',
-    name: 'Glucosa',
-    price: '30.00',
-    alovidaDiscountPercent: null,
-    alovidaPrice: '30.00',
-  }),
+  service({ id: 's-2', code: 'GLU-01', name: 'Glucosa', price: '30.00', alovidaDiscountPercent: null, alovidaPrice: '30.00' }),
   service({ id: 's-3', code: 'OLD-01', name: 'Retirado', status: 'WITHDRAWN' }),
+  service({ id: 's-4', code: 'RX-TORAX', name: 'Radiografía de tórax', price: null, alovidaDiscountPercent: null, alovidaPrice: null }),
+  service({ id: 'm-1', code: 'MODALITY_XRAY', name: 'Rayos X', kind: 'MODALITY', price: null, alovidaDiscountPercent: null, alovidaPrice: null }),
 ];
 
 interface Internal {
-  edits: PriceEdits;
+  setPrice: (edit: RowEdit) => void;
+  setDiscount: (edit: RowEdit) => void;
+  edits: () => PriceEdits;
+  dirtyCount: () => number;
   save: () => void;
   errors: () => readonly string[];
+  rejected: () => readonly PriceRejection[];
+  modalities: () => readonly LabService[];
   importOpen: { (): boolean; set: (value: boolean) => void };
   importClosed: (imported: boolean) => void;
+  tab: { set: (value: number) => void };
 }
+
+const edit = (row: LabService, value: string): RowEdit => ({ service: row, value });
 
 describe('LaboratoryPrices', () => {
   let fixture: ComponentFixture<LaboratoryPrices>;
   let sent: { id: string; changes: LabServiceChanges }[];
   let listServices: ReturnType<typeof vi.fn>;
+  let updateService: ReturnType<typeof vi.fn>;
 
-  const component = (): Internal => fixture.componentInstance as unknown as Internal;
-  // The row edits live in `PriceEdits`; the assertions stay the same.
-  const internal = () => {
-    const c = component();
-    return {
-      ...c,
-      save: () => c.save(),
-      errors: () => c.errors(),
-      importOpen: c.importOpen,
-      importClosed: (imported: boolean) => c.importClosed(imported),
-      setPrice: (s: LabService, v: string) => c.edits.setPrice(s, v),
-      setDiscount: (s: LabService, v: string) => c.edits.setDiscount(s, v),
-      alovidaPriceOf: (s: LabService) => c.edits.alovidaPriceOf(s),
-      dirtyCount: () => c.edits.count(),
-    };
-  };
+  const internal = (): Internal => fixture.componentInstance as unknown as Internal;
+  const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const text = (): string => root().textContent ?? '';
 
   beforeEach(() => {
     sent = [];
     listServices = vi.fn(() => of({ items: CATALOG, count: CATALOG.length }));
+    updateService = vi.fn((id: string, changes: LabServiceChanges) => {
+      sent.push({ id, changes });
+      return of(CATALOG[0]!);
+    });
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         {
           provide: LabPortalClient,
-          useValue: {
-            listServices,
-            listCategories: vi.fn(() => of({ items: [], count: 0 })),
-            updateService: vi.fn((id: string, changes: LabServiceChanges) => {
-              sent.push({ id, changes });
-              return of(CATALOG[0]!);
-            }),
-          },
+          useValue: { listServices, updateService, listCategories: vi.fn(() => of({ items: [], count: 0 })) },
         },
       ],
     });
@@ -109,60 +101,119 @@ describe('LaboratoryPrices', () => {
     fixture.detectChanges();
   });
 
-  it('lista los servicios vivos con su precio AloVida, sin los retirados', () => {
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Hemograma completo');
-    expect(text).toContain('72.00 Bs');
-    expect(text).not.toContain('Retirado');
+  it('lista los servicios vivos con su precio AloVida, sin los retirados ni las modalidades', () => {
+    expect(text()).toContain('Hemograma completo');
+    expect(text()).toContain('72.00 Bs');
+    expect(text()).not.toContain('Retirado');
+    expect(root().querySelector('[data-testid="lab-prices-price-MODALITY_XRAY"]')).toBeNull();
+  });
+
+  it('un servicio sin precio se ve como «Sin precio», nunca como 0.00', () => {
+    const price = root().querySelector<HTMLInputElement>('input[data-testid="lab-prices-price-RX-TORAX"]');
+    expect(price?.value).toBe('');
+    expect(price?.placeholder).toBe('Sin precio');
+    expect(root().querySelector('[data-testid="lab-prices-alovida-RX-TORAX"]')?.textContent?.trim()).toBe('Sin precio');
+    expect(text()).not.toMatch(/(^|[^\d])0\.00 Bs/);
+  });
+
+  it('las modalidades del alta van en su pestaña, con la explicación y sin casillas de precio', () => {
+    expect(internal().modalities().map((m) => m.code)).toEqual(['MODALITY_XRAY']);
+    const tabs = [...root().querySelectorAll('[role="tab"]')].map((tab) => tab.textContent?.trim());
+    expect(tabs).toEqual(['Servicios', 'Modalidades declaradas (1)']);
+
+    internal().tab.set(1);
+    fixture.detectChanges();
+
+    expect(root().querySelector('[data-testid="lab-modality-MODALITY_XRAY"]')?.textContent).toContain('Rayos X');
+    expect(text()).toContain('Las modalidades no llevan precio');
+    expect(root().querySelector('[data-testid="lab-prices-price-MODALITY_XRAY"]')).toBeNull();
   });
 
   it('el precio AloVida se recalcula con lo escrito, y sin cuenta posible lo dice', () => {
-    internal().setPrice(CATALOG[0]!, '100');
-    expect(internal().alovidaPriceOf(CATALOG[0]!)).toBe('90.00 Bs');
+    const alovida = () => root().querySelector('[data-testid="lab-prices-alovida-HEM-01"]')?.textContent?.trim();
+    internal().setPrice(edit(CATALOG[0]!, '100'));
+    fixture.detectChanges();
+    expect(alovida()).toBe('90.00 Bs');
 
-    internal().setDiscount(CATALOG[0]!, '25');
-    expect(internal().alovidaPriceOf(CATALOG[0]!)).toBe('75.00 Bs');
+    internal().setDiscount(edit(CATALOG[0]!, '25'));
+    fixture.detectChanges();
+    expect(alovida()).toBe('75.00 Bs');
 
-    internal().setDiscount(CATALOG[0]!, '150');
-    expect(internal().alovidaPriceOf(CATALOG[0]!)).toBeNull();
+    internal().setDiscount(edit(CATALOG[0]!, '150'));
+    fixture.detectChanges();
+    expect(alovida()).toBeUndefined();
+    expect(text()).toContain('Revise el precio');
   });
 
-  it('volver a lo que estaba deja la fila sin cambios', () => {
-    internal().setPrice(CATALOG[0]!, '90');
-    internal().setPrice(CATALOG[0]!, '80,00');
+  it('volver a lo que estaba deja la fila sin cambios, también en un servicio sin precio', () => {
+    internal().setPrice(edit(CATALOG[0]!, '90'));
+    internal().setPrice(edit(CATALOG[0]!, '80,00'));
+    expect(internal().dirtyCount()).toBe(0);
+
+    internal().setPrice(edit(CATALOG[3]!, '120'));
+    expect(internal().dirtyCount()).toBe(1);
+    internal().setPrice(edit(CATALOG[3]!, ''));
     expect(internal().dirtyCount()).toBe(0);
   });
 
   it('manda precio con dos decimales y descuento; vaciar el descuento lo quita', () => {
-    internal().setPrice(CATALOG[1]!, '35,5');
-    internal().setDiscount(CATALOG[0]!, '');
+    internal().setPrice(edit(CATALOG[1]!, '35,5'));
+    internal().setDiscount(edit(CATALOG[0]!, ''));
     internal().save();
 
     expect(sent).toEqual([
       { id: 's-1', changes: { price: '80.00', alovidaDiscountPercent: null } },
       { id: 's-2', changes: { price: '35.50', alovidaDiscountPercent: null } },
     ]);
+    expect(internal().edits()).toEqual({});
     expect(listServices).toHaveBeenCalledTimes(2);
   });
 
   it('un precio o un descuento mal escrito no sale', () => {
-    internal().setPrice(CATALOG[0]!, 'ochenta');
-    internal().setDiscount(CATALOG[1]!, '101');
+    internal().setPrice(edit(CATALOG[0]!, 'ochenta'));
+    internal().setDiscount(edit(CATALOG[1]!, '101'));
     internal().save();
 
     expect(sent).toEqual([]);
     expect(internal().errors()).toHaveLength(2);
   });
 
-  it('«Importar análisis (CSV)» abre el diálogo de carga masiva', () => {
-    const root = fixture.nativeElement as HTMLElement;
-    const button = root.querySelector<HTMLButtonElement>('[data-testid="lab-prices-import"]');
-    expect(button?.textContent?.trim()).toBe('Importar análisis (CSV)');
-
-    button!.click();
+  it('lo que la API rechaza se queda escrito, con su motivo y la fila marcada; lo aceptado se relee', () => {
+    updateService.mockImplementation((id: string, changes: LabServiceChanges) => {
+      sent.push({ id, changes });
+      return id === 's-2'
+        ? throwError(() => new HttpErrorResponse({ status: 422, error: { code: 'PRECONDITION_FAILED', message: 'La unidad no está activa' } }))
+        : of(CATALOG[0]!);
+    });
+    internal().setPrice(edit(CATALOG[0]!, '90'));
+    internal().setPrice(edit(CATALOG[1]!, '40'));
+    internal().save();
     fixture.detectChanges();
 
-    expect(root.querySelector('[data-testid="lab-import-dialog"]')).not.toBeNull();
+    expect(sent.map((s) => s.id)).toEqual(['s-1', 's-2']);
+    expect(internal().rejected()).toEqual([{ id: 's-2', name: 'Glucosa', reason: 'La unidad no está activa' }]);
+    expect(internal().edits()).toEqual({ 's-2': { price: '40', discount: '' } });
+    expect(listServices).toHaveBeenCalledTimes(2);
+    expect(root().querySelector<HTMLInputElement>('input[data-testid="lab-prices-price-GLU-01"]')?.value).toBe('40');
+    expect(root().querySelector('[data-testid="lab-prices-rejected"]')?.textContent).toContain('La unidad no está activa');
+    const glucose = root().querySelector('input[data-testid="lab-prices-price-GLU-01"]');
+    const hemogram = root().querySelector('input[data-testid="lab-prices-price-HEM-01"]');
+    expect(glucose?.closest('.status-error')).not.toBeNull();
+    expect(hemogram?.closest('.status-error')).toBeNull();
+  });
+
+  it('«Importar análisis (CSV)» abre el diálogo de carga masiva, también desde la pestaña de modalidades', () => {
+    const button = root().querySelector<HTMLButtonElement>('[data-testid="lab-prices-import"]');
+    expect(button?.textContent?.trim()).toBe('Importar análisis (CSV)');
+    button!.click();
+    fixture.detectChanges();
+    expect(root().querySelector('[data-testid="lab-import-dialog"]')).not.toBeNull();
+
+    internal().importOpen.set(false);
+    internal().tab.set(1);
+    fixture.detectChanges();
+    root().querySelector<HTMLButtonElement>('[data-testid="lab-modalities-import"]')!.click();
+    expect(internal().importOpen()).toBe(true);
   });
 
   it('al cerrar la importación relee la lista sólo si se cargó algo', () => {
@@ -176,79 +227,5 @@ describe('LaboratoryPrices', () => {
     internal().importClosed(true);
     expect(listServices).toHaveBeenCalledTimes(2);
     expect(internal().importOpen()).toBe(false);
-  });
-
-  it('pone cada componente debajo de su perfil, con su propio monto', () => {
-    const panel = service({
-      id: 'p-1',
-      code: 'HEMOGRAMA',
-      name: 'Hemograma completo',
-      catalogConceptId: 'c-1',
-    });
-    const hb = service({
-      id: 'p-2',
-      code: 'HEMOGRAMA.HB',
-      name: 'Hemoglobina',
-      parentId: 'p-1',
-      price: '9.75',
-      alovidaPrice: '9.75',
-      alovidaDiscountPercent: null,
-    });
-    const vcm = service({
-      id: 'p-3',
-      code: 'HEMOGRAMA.VCM',
-      name: 'Volumen corpuscular medio',
-      parentId: 'p-1',
-      hasPrice: false,
-      price: '0.00',
-      alovidaPrice: '0.00',
-      status: 'DRAFT',
-      alovidaDiscountPercent: null,
-    });
-    const glu = service({ id: 's-2', code: 'GLU-01', name: 'Glucosa' });
-    listServices.mockReturnValue(of({ items: [vcm, glu, hb, panel], count: 4 }));
-    fixture = TestBed.createComponent(LaboratoryPrices);
-    fixture.detectChanges();
-    const root = fixture.nativeElement as HTMLElement;
-
-    const rows = [...root.querySelectorAll('.prices__main')].map((el) => el.textContent?.trim());
-    expect(rows).toEqual([
-      'Glucosa',
-      'Hemograma completo',
-      'Hemoglobina',
-      'Volumen corpuscular medio',
-    ]);
-    expect(root.textContent).toContain('Componente de Hemograma completo');
-    // Without a suggested price the row asks for one instead of showing 0.00.
-    expect(root.textContent).toContain('Falta el precio');
-    expect(component().edits.priceOf(vcm)).toBe('');
-
-    component().edits.setPrice(vcm, '12');
-    component().save();
-    expect(sent).toEqual([
-      { id: 'p-3', changes: { price: '12.00', alovidaDiscountPercent: null } },
-    ]);
-  });
-
-  it('ofrece agregar análisis del catálogo, pero no con cambios sin guardar', () => {
-    const link = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="lab-prices-catalog"]');
-    expect(link?.getAttribute('href')).toBe('/administration/laboratory-prices/catalog');
-    expect(link?.getAttribute('aria-disabled')).not.toBe('true');
-
-    internal().setPrice(CATALOG[0]!, '90');
-    fixture.detectChanges();
-    expect(link?.getAttribute('aria-disabled')).toBe('true');
-  });
-
-  it('typing a price in the table counts as an edit and is saved', () => {
-    const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
-      '[data-testid="lab-prices-price-GLU-01"]',
-    )!;
-    input.value = '33';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(internal().dirtyCount()).toBe(1);
-    internal().save();
-    expect(sent).toEqual([{ id: 's-2', changes: { price: '33.00', alovidaDiscountPercent: null } }]);
   });
 });

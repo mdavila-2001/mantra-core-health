@@ -1,0 +1,16 @@
+OK   menu has no "Horario y turnos" entry — /my-account, /notification-center, /administration/pharmacy, /administration/pharmacy-catalog, /administration/pharmacy-orders, /administration/pharmacy-campaigns, /administration/pharmacy-branches
+OK   menu keeps "Sucursales"
+OK   old route redirects to ?tab=horario — http://localhost:4313/administration/pharmacy-branches?tab=horario
+OK   bulk tab present
+OK   bulk 24h saved in all checked branches — 3 sites
+OK   after remount, per-branch tab shows 24h declared — Sí, abre las 24 horas
+OK   bulk shift saved in all branches
+OK   repeated bulk shift reports the overlap per branch — Advertencia:Se guardó en 0 de 3 sucursalesSucursal Central: La sede ya tiene un turno activo en ese horarioSucursal Equi
+OK   per-branch tab lists the bulk-created shift — dom, 8 nov · 20:00 → lun, 9 nov · 08:00 Próximo Cancelar
+OK   branches tab renders the table — http://localhost:4313/administration/pharmacy-branches?tab=sucursales
+OK   no horizontal scroll at 390px
+OK   no horizontal scroll at 820px
+OK   no unexpected page/console errors
+OK   no 5xx responses
+
+14/14 OK

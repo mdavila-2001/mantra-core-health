@@ -242,7 +242,53 @@ describe('IamClient', () => {
       expect(req.request.body.organization.pharmacy).toEqual({
         address: 'Av. Cristo Redentor 1234',
       });
+      // No trade name, no key: the legal name acts as the name.
+      expect('tradeName' in req.request.body.organization).toBe(false);
       req.flush({ tenantId: 't', pharmacyId: 'f' });
+    });
+
+    it('el nombre comercial viaja como `tradeName` cuando se declaró', () => {
+      client.registerPharmacyOrganization({ ...alta, tradeName: 'Farmacia Central' }).subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.tradeName).toBe('Farmacia Central');
+      req.flush({ tenantId: 't', pharmacyId: 'f' });
+    });
+  });
+
+  describe('registerLaboratoryOrganization (P51)', () => {
+    const alta = {
+      code: 'LAB-1023456029',
+      legalName: 'Laboratorio del Sur S.R.L.',
+      legalEntityType: 'SRL',
+      countryConceptId: 'pais',
+      jurisdictionConceptId: 'jurisdiccion',
+      taxIdentifier: '1023456029',
+      diagnosticUnit: {
+        name: 'Laboratorio del Sur S.R.L.',
+        diagnosticUnitTypeConceptId: 'u-lab',
+        modalityConceptIds: ['m-lab'],
+        primarySite: { name: 'Casa central', address: { lines: ['Av. Cañoto 234'] } },
+      },
+      owner: { email: 'legal@labsur.test', password: 'secreto12', displayName: 'Ana Paz' },
+      legalRepresentative: { fullName: 'Ana Paz', email: 'legal@labsur.test', idNumber: '4872190' },
+    } as const;
+
+    it('el NIT viaja como `taxIdentifier` y el nombre comercial sólo si se declaró', () => {
+      client.registerLaboratoryOrganization(alta).subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.taxIdentifier).toBe('1023456029');
+      expect('tradeName' in req.request.body.organization).toBe(false);
+      req.flush({ tenantId: 't', diagnosticUnitId: 'du' });
+    });
+
+    it('el nombre comercial viaja como `tradeName` cuando se declaró', () => {
+      client.registerLaboratoryOrganization({ ...alta, tradeName: 'Lab del Sur' }).subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.tradeName).toBe('Lab del Sur');
+      req.flush({ tenantId: 't', diagnosticUnitId: 'du' });
     });
   });
 
@@ -528,6 +574,7 @@ describe('IamClient', () => {
           legalName: 'Laboratorio del Sur',
           legalEntityType: 'UNIPERSONAL',
           timeZone: 'America/La_Paz',
+          taxIdentifier: '1023456029',
           countryConceptId: 'c-bo',
           jurisdictionConceptId: 'j-nac',
           diagnosticUnit: {
@@ -557,6 +604,7 @@ describe('IamClient', () => {
           legalEntityType: 'UNIPERSONAL',
           tenantType: 'DIAGNOSTIC_CENTER',
           timeZone: 'America/La_Paz',
+          taxIdentifier: '1023456029',
           countryConceptId: 'c-bo',
           jurisdictionConceptId: 'j-nac',
           diagnosticUnit: {
@@ -588,6 +636,7 @@ describe('IamClient', () => {
           code: 'LAB_SUR_ABCDE',
           legalName: 'Laboratorio del Sur',
           legalEntityType: 'UNIPERSONAL',
+          taxIdentifier: '1023456029',
           countryConceptId: 'c-bo',
           jurisdictionConceptId: 'j-nac',
           diagnosticUnit: {

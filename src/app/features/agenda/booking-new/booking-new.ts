@@ -38,8 +38,10 @@ import {
   comoMotivoDeConsulta,
 } from '../../../core/symptom-notes/symptom-observations.store';
 import { AGENDA_ROUTE } from '../agenda.routes';
+import { MotivoFigura } from './motivo-figura/motivo-figura';
 import type { TenantScope } from '../../../core/data-access/scheduling/tenant-scope';
 import { FLEXIBLE_PARAM, releerHoraFlexible, retenerHoraFlexible } from './flexible-booking';
+import { bookingToast } from './booking-toast';
 
 /** Largo que declara `ConfirmBookingDto` para el motivo. */
 const MAX_MOTIVO = 500;
@@ -111,6 +113,7 @@ type Entrada = 'DESK' | 'PORTAL';
     FormActions,
     FormField,
     FormSection,
+    MotivoFigura,
     PageHeader,
     ReactiveFormsModule,
     ReferenceCombobox,
@@ -726,14 +729,10 @@ export class BookingNew {
       : this.scheduling.confirmHold(retencion.holdToken, cuerpo, undefined, this.alcance);
 
     peticion.subscribe({
-      next: () => {
+      next: (result) => {
         this.state.set(ready(null));
-        this.toast.success(
-          this.esAutoservicio
-            ? 'Enviamos su solicitud. El profesional la confirma o le propone otro horario.'
-            : `La cita de ${paciente.label} quedó confirmada.`,
-          this.esAutoservicio ? 'Cita solicitada' : 'Reserva confirmada',
-        );
+        const notice = bookingToast(this.esAutoservicio, result, paciente.label);
+        this.toast.success(notice.message, notice.title);
         if (this.esAutoservicio) {
           const precargada = this.observacionPrecargada;
           if (precargada !== null && motivo !== '') {

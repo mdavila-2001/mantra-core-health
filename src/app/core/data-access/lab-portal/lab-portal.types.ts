@@ -10,12 +10,14 @@
 
     Todas las rutas cuelgan de `/diagnostics/lab/…` y no llevan el id del
     laboratorio: lo decide el servidor con el tenant del contexto
-    (`X-Tenant-Id`), igual que la recepción de muestras. The real API publishes
-    them (04/11/2026); the simulator mirrors them for `development,demo`.
+    (`X-Tenant-Id`). The real API publishes them; the simulator mirrors them.
     ========================================================================== */
 
 /** En qué punto de su vida está un servicio del catálogo. */
 export type LabServiceStatus = 'PUBLISHED' | 'DRAFT' | 'WITHDRAWN';
+
+/** `MODALITY`: marcador genérico que el alta crea por modalidad declarada; no se vende ni lleva precio. */
+export type LabServiceKind = 'SERVICE' | 'MODALITY';
 
 /** Un servicio (estudio o perfil) que el laboratorio ofrece. */
 export interface LabService {
@@ -23,6 +25,7 @@ export interface LabService {
   /** Código interno del laboratorio; único dentro de su catálogo. */
   readonly code: string;
   readonly name: string;
+  readonly kind: LabServiceKind;
   /** The panel this service is a component of (Hemoglobina → Hemograma). */
   readonly parentId: string | null;
   /** Study catalog concept it was made from; null for a free-form service. */
@@ -40,19 +43,15 @@ export interface LabService {
   readonly turnaroundHours: number | null;
   readonly requiresMedicalOrder: boolean;
   readonly homeCollection: boolean;
-  /** Precio de lista, como texto exacto con dos decimales. */
-  readonly price: string;
+  /** Precio de lista con dos decimales, o `null` si todavía no tiene precio. */
+  readonly price: string | null;
   /** El descuento para usuarios de AloVida (registro de procesos §2.1.6). */
   readonly alovidaDiscountPercent: number | null;
-  /** Lo que paga un usuario de AloVida: el precio menos el descuento. */
-  readonly alovidaPrice: string;
+  /** Lo que paga un usuario de AloVida: el precio menos el descuento; `null` sin precio. */
+  readonly alovidaPrice: string | null;
   readonly currency: 'BOB';
   readonly status: LabServiceStatus;
-  /**
-   * Si hoy se puede hacer. Es el «hay / no hay» de un servicio: el reactivo se
-   * agotó o el equipo está en mantenimiento. Un servicio no disponible sigue
-   * publicado, pero la vitrina lo muestra como no disponible.
-   */
+  /** Si hoy se puede hacer («hay / no hay»). La API real no lo guarda: siempre `true`. */
   readonly available: boolean;
   readonly updatedAt: string;
 }
@@ -137,7 +136,7 @@ export interface LabSummary {
   readonly resultFiles: number;
   /** Bytes de todo lo subido (sin los retirados). */
   readonly resultBytes: number;
-  readonly byCategory: readonly { readonly category: string; readonly count: number }[];
+  readonly byCategory: readonly { readonly category: string; readonly categoryId: string | null; readonly count: number }[];
   readonly recentActivity: readonly LabActivityEntry[];
 }
 
@@ -267,6 +266,8 @@ export interface LabOrder {
   readonly status: LabOrderStatus;
   /** El motivo de una orden cancelada o rechazada, si se dio. */
   readonly reason: string | null;
+  /** The API admits REJECT now: received, with an open specimen (imaging never). */
+  readonly canReject?: boolean;
   readonly files: readonly LabOrderFile[];
 }
 

@@ -581,9 +581,9 @@ export const MOCK_USERS: readonly MockUser[] = [
     accountKind: 'PERSON',
   },
 
-  // Infraestructura F2/F3 (31/10/2026): el personal del Hospital San Lucas, una
-  // cuenta por rol operativo. El token no trae el rol —es una fila de
-  // `organization_user_assignments` que resuelve la API (`fixtures/inpatient.ts`)—.
+  // Infraestructura F2/F3 (31/10/2026): el personal del Hospital San Lucas.
+  // Desde el 2026-11-05 no hay roles operativos: todas son administradoras de
+  // la sede (`fixtures/inpatient.ts`).
   ...inpatientAccounts(),
 ];
 

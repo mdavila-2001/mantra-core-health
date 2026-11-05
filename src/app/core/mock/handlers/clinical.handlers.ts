@@ -26,7 +26,7 @@ import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
 import { FICHAS_ESTANDAR, type CampoDeFicha } from '../fixtures/standard-sheets.generated';
 import { representaA } from './profiles.handlers';
-import { accesoDeEmergenciaVigente, relacionDelProfesional } from './misc.handlers';
+import { hasCurrentEmergencyAccess, practitionerRelationshipState } from './authz.store';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -44,12 +44,12 @@ export function puedeLeer(request: MockRequest, patientProfileId: string): boole
   // un acceso de emergencia vigente, la historia responde 403.
   if (
     user.practitionerProfileId !== undefined &&
-    relacionDelProfesional(user.practitionerProfileId, patientProfileId) === 'REVOCADA' &&
-    !accesoDeEmergenciaVigente(user.id, patientProfileId)
+    practitionerRelationshipState(user.practitionerProfileId, patientProfileId) === 'REVOCADA' &&
+    !hasCurrentEmergencyAccess(user.id, patientProfileId)
   ) {
     return false;
   }
-  return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN') || accesoDeEmergenciaVigente(user.id, patientProfileId);
+  return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN') || hasCurrentEmergencyAccess(user.id, patientProfileId);
 }
 
 /* ---- el aviso de la ficha (proceso 2.6) ---------------------------------- */

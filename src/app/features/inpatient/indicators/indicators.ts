@@ -9,7 +9,7 @@ import { INDICATOR_FORMULAS } from '../../../core/data-access/adt/inpatient-indi
 import { InfrastructureClient } from '../../../core/data-access/infrastructure/infrastructure.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, empty, forbidden, loading, mapData, ready, stale } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, mapData, ready, stale } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -22,7 +22,7 @@ import { DatePicker } from '../../../shared/components/organisms/date-picker/dat
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { InpatientAccessStore } from '../inpatient-access.store';
-import { CENSUS_ROUTE, DEFAULT_TIME_ZONE, dateKey, keyToDate, shiftDateKey, shortDate, siteMidnight, siteToday, validDateKey } from '../inpatient-presentation';
+import { CENSUS_ROUTE, DEFAULT_TIME_ZONE, dateKey, keyToDate, shiftDateKey, shortDate, siteMidnight, siteToday, validDateKey, noSiteAccess } from '../inpatient-presentation';
 
 const n = (v: number | null | undefined, suffix = '') =>
   v === null || v === undefined || !Number.isFinite(v) ? null : `${v.toLocaleString('es-BO', { maximumFractionDigits: 2 })}${suffix}`;
@@ -94,7 +94,7 @@ export class Indicators {
     const a = this.access.state();
     if (a.status !== 'ready') return a as ViewState<string>;
     const s = this.site();
-    return s === null ? forbidden({ message: 'Su rol no incluye los indicadores de internación.' }) : ready(s.siteId);
+    return s === null ? noSiteAccess('los indicadores de internación') : ready(s.siteId);
   });
 
   private readonly reloads = signal(0);

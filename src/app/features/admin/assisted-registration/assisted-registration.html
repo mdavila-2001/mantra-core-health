@@ -2,7 +2,9 @@
   title="Alta de paciente"
   subtitle="Para quien no puede registrarse por sí mismo."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver" label="Volver a los pacientes" />
+</app-page-header>
 
 @if (result(); as alta) {
   <div class="asistida__resultado" data-testid="alta-paciente-exito">

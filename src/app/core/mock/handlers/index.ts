@@ -6,6 +6,7 @@ import { registrarPiezasVivas } from './runtime-pieces.handlers';
 import { registrarPoliticasGobierno } from './governance-policies.handlers';
 import { MockRouter } from '../mock-router';
 import { activarAceptacionDeDemostracion, registrarAgenda } from './scheduling.handlers';
+import { registerBookingApproval } from './booking-approval.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registerPaymentReceipts } from './payment-receipts.handlers';
@@ -73,6 +74,8 @@ import { registerPractitionerInsurerRequests } from './practitioner-insurer-requ
 import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
+import { registerAuthz } from './authz.handlers';
+import { registerAccessRequests } from './access-requests.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
 import { registrarCatalogoDeModulos } from './authz-modules-catalog.handlers';
 import { registerPermissionsAdmin } from './permissions-admin.handlers';
@@ -95,6 +98,7 @@ import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerRegistrationLogo } from './registration-logo.handlers';
 import { registrarAdmisiones } from './admissions.handlers';
+import { registerOwnAdmissionSubmit } from './own-admission-submit.handlers';
 import { registrarCargasMasivas } from './bulk-imports.handlers';
 import { registerPrescriptionShares } from './prescription-shares.handlers';
 import { registerPharmacyMedicationAvailability } from './pharmacy-medication-availability.handlers';
@@ -120,6 +124,7 @@ export function crearRouterSimulado(): MockRouter {
   registerPrimaryPractitioner(router);
   registerSignatureAndSeal(router);
   registrarAgenda(router);
+  registerBookingApproval(router);
   activarAceptacionDeDemostracion();
   registrarServiciosDeAgenda(router);
   // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
@@ -200,6 +205,8 @@ export function crearRouterSimulado(): MockRouter {
   registrarLaboratorioFarmaceutico(router);
   registerLoyalty(router);
   registrarVarios(router);
+  registerAuthz(router);
+  registerAccessRequests(router);
   registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
   registerGovernance(router);
@@ -215,6 +222,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarFlujos(router);
   registrarAltaDeMedicoAsistida(router);
   registrarAdmisiones(router);
+  registerOwnAdmissionSubmit(router);
   registrarReporteria(router);
   registrarInsights(router);
   registrarInsightsWorkspace(router);

@@ -23,7 +23,7 @@ export async function askOverride(
   const justificacion = await dialogs.confirmWithReason(
     {
       title: 'Forzar la compatibilidad',
-      message: `Se va a ubicar al paciente aunque no cumple: ${reglas}. Queda registrado un incidente de calidad que revisa supervisión.`,
+      message: `Se va a ubicar al paciente aunque no cumple: ${reglas}. Queda registrado un incidente de calidad que revisa la administración.`,
       confirmLabel: 'Forzar con justificación',
       destructive: true,
     },

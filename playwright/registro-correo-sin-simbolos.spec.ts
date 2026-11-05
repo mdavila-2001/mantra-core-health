@@ -29,7 +29,13 @@ test('patient signup email drops spaces and special symbols', async ({ page }) =
   await correo.fill('ana pérez(1);@gmail .com');
   await expect(correo).toHaveValue('anaprez1@gmail.com');
 
-  await correo.fill('ana..paz@gmail.com');
+  await correo.fill('---++++-++--+++++');
+  await expect(correo).toHaveValue('');
+
+  await correo.pressSequentially('--ana..+paz-@gmail.com', { delay: 15 });
+  await expect(correo).toHaveValue('ana.paz@gmail.com');
+
+  await correo.fill('ana@gmail');
   await correo.blur();
   await expect(page.getByText('Ingrese un correo válido.')).toBeVisible();
 

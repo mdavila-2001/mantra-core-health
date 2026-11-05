@@ -1,0 +1,80 @@
+<article class="request" [attr.data-testid]="'access-request-' + item().id">
+  <div class="request__header">
+    <strong class="request__who">{{ item().counterpart.displayName || (role() === 'patient' ? 'Profesional' : 'Paciente') }}</strong>
+    <app-chip variant="neutral" size="sm">{{ kindLabel() }}</app-chip>
+    <app-badge [variant]="status().tone" [value]="status().label" />
+  </div>
+
+  <p class="request__detail">
+    {{ item().direction === 'RECEIVED' ? 'Recibida' : 'Enviada' }} el {{ item().requestedAt | date: 'dd/MM/yyyy' }}
+    @if (item().decidedAt; as decidedAt) {
+      · Decidida el {{ decidedAt | date: 'dd/MM/yyyy' }}
+    }
+  </p>
+
+  @if (item().kind === 'GRANULAR') {
+    <p class="request__specialties" data-testid="access-request-requested">
+      Especialidades pedidas: {{ names(item().requestedSpecialtyConceptIds) }}
+    </p>
+    @if (item().authorizedSpecialtyConceptIds.length > 0) {
+      <p class="request__specialties" data-testid="access-request-authorized">
+        Autorizadas: {{ names(item().authorizedSpecialtyConceptIds) }}
+      </p>
+    }
+  }
+
+  @if (canDecide()) {
+    <div class="request__decision">
+      <app-segmented-control
+        data-testid="access-request-decision"
+        ariaLabel="Su respuesta a esta solicitud"
+        size="md"
+        wrap
+        [options]="choices"
+        [value]="choice()"
+        (valueChange)="choice.set($event)"
+      />
+
+      @if (picksSpecialties()) {
+        <app-form-field
+          label="Qué especialidades le autoriza"
+          [hint]="noneChosen() ? 'Elija al menos una especialidad, o rechace la solicitud.' : ''"
+        >
+          <app-checkbox-group
+            data-testid="access-request-specialties"
+            [options]="specialtyOptions()"
+            [value]="chosenSpecialties()"
+            [disabled]="busy()"
+            (valueChange)="pick($event)"
+          />
+        </app-form-field>
+      }
+
+      <button
+        app-button
+        type="button"
+        data-testid="access-request-confirm"
+        [disabled]="!canConfirm()"
+        [isLoading]="busy()"
+        (clicked)="confirm()"
+      >
+        Confirmar respuesta
+      </button>
+    </div>
+  }
+
+  @if (canRevoke()) {
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      type="button"
+      class="request__revoke"
+      data-testid="access-request-revoke"
+      [isLoading]="busy()"
+      (clicked)="revoked.emit()"
+    >
+      Revocar
+    </button>
+  }
+</article>

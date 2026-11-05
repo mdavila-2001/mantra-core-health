@@ -1,10 +1,8 @@
-import type {
-  LabService,
-  LabServiceChanges,
-} from '../../../core/data-access/lab-portal/lab-portal.types';
+import type { LabService, LabServiceChanges } from '../../../core/data-access/lab-portal/lab-portal.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 
-/** Same cap as the pharmacy catalog: catches an extra zero. */
+/** The same ceiling as the pharmacy catalog: it catches an extra zero. */
 export const PRICE_MAX = 1_000_000;
 
 /** What the person typed in a row, still as text. */
@@ -13,16 +11,14 @@ export interface PriceEdit {
   readonly discount: string;
 }
 
-/** A service that could not be saved, with its reason. */
+/** Unsaved edits by service id. */
+export type PriceEdits = Readonly<Record<string, PriceEdit>>;
+
+/** A row the API refused to save, with its reason. */
 export interface PriceRejection {
+  readonly id: string;
   readonly name: string;
   readonly reason: string;
-}
-
-/** The typed price of a row before any edit; empty while it has no price. */
-export function priceText(service: LabService): string {
-  // An API without `hasPrice` yet means every service has its price.
-  return service.hasPrice !== false ? service.price : '';
 }
 
 export function discountText(service: LabService): string {
@@ -39,7 +35,7 @@ export function parseAmount(text: string): number | 'invalid' {
   return value <= PRICE_MAX ? value : 'invalid';
 }
 
-/** A percentage from 0 to 100; empty means «no discount» (`null`). */
+/** A percentage from 0 to 100; blank means "no discount" (`null`). */
 export function parseDiscount(text: string): number | null | 'invalid' {
   const clean = text.trim().replace(/%$/, '').trim();
   if (clean === '') {
@@ -52,53 +48,66 @@ export function parseDiscount(text: string): number | null | 'invalid' {
   return value <= 100 ? value : 'invalid';
 }
 
-/** Whether an edit brings the row back to what the API has. */
-export function isUnchanged(service: LabService, edit: PriceEdit): boolean {
-  const samePrice =
-    service.hasPrice !== false
-      ? parseAmount(edit.price) === Number(service.price)
-      : edit.price.trim() === '';
-  return samePrice && parseDiscount(edit.discount) === (service.alovidaDiscountPercent ?? null);
+/** The API's reason for a rejected service, or a generic one. */
+export function reasonOf(error: unknown): string {
+  const state = errorToViewState<never>(error);
+  if (state.status === 'validation') {
+    const messages = state.issues.map((issue) => issue.message).filter((m) => m !== '');
+    if (messages.length > 0) {
+      return messages.join(' ');
+    }
+  }
+  return 'message' in state && typeof state.message === 'string' && state.message !== ''
+    ? state.message
+    : 'No se pudo guardar el precio.';
 }
 
 /**
- * Panels first, each followed by its components, so a hemogram reads with its
- * counts under it. A row stays when it, its panel or one of its parts matches.
+ * True when the typed row says the same as the API. An unpriced service
+ * (`price: null`) is unchanged while its price box stays blank: a blank is
+ * "no price", not "0.00".
  */
-export function withComponents(list: readonly LabService[], term: string): readonly LabService[] {
-  const needle = term.trim().toLocaleLowerCase('es');
-  const hit = (s: LabService) =>
-    needle === '' ||
-    [s.name, s.code, s.categoryName].some((text) =>
-      (text ?? '').toLocaleLowerCase('es').includes(needle),
-    );
-  const ids = new Set(list.map((s) => s.id));
-  const byName = (a: LabService, b: LabService) => a.name.localeCompare(b.name, 'es');
-  const children = new Map<string, LabService[]>();
-  for (const s of list) {
-    if (s.parentId !== null && ids.has(s.parentId)) {
-      children.set(s.parentId, [...(children.get(s.parentId) ?? []), s]);
-    }
-  }
-  const partsOf = (id: string) => (children.get(id) ?? []).sort(byName);
-  const rows: LabService[] = [];
-  for (const top of list.filter((s) => s.parentId === null || !ids.has(s.parentId)).sort(byName)) {
-    const parts = partsOf(top.id);
-    if (hit(top)) {
-      rows.push(top, ...parts);
-    } else if (parts.some(hit)) {
-      rows.push(top, ...parts.filter(hit));
-    }
-  }
-  return rows;
+export function isUnchanged(service: LabService, edit: PriceEdit): boolean {
+  const price = parseAmount(edit.price);
+  const samePrice =
+    service.price === null ? edit.price.trim() === '' : price !== 'invalid' && price === Number(service.price);
+  return samePrice && parseDiscount(edit.discount) === service.alovidaDiscountPercent;
 }
 
-/** The PATCH body of each edited row, or the problems that block saving. */
-export function buildChanges(
+/** The edits with this row's text; typing the original value back drops the row. */
+export function withEdit(edits: PriceEdits, service: LabService, edit: PriceEdit): PriceEdits {
+  const { [service.id]: _previous, ...rest } = edits;
+  return isUnchanged(service, edit) ? rest : { ...rest, [service.id]: edit };
+}
+
+/** The edits without the given services (the ones the API already took). */
+export function withoutIds(edits: PriceEdits, ids: readonly string[]): PriceEdits {
+  return Object.fromEntries(Object.entries(edits).filter(([id]) => !ids.includes(id)));
+}
+
+/**
+ * What an AloVida user would pay for the row: the API's figure, the preview of
+ * what was typed, `null` while the service has no price, or `'invalid'` when
+ * the typed text cannot be computed.
+ */
+export function alovidaPreview(service: LabService, edit: PriceEdit | undefined): string | null | 'invalid' {
+  if (edit === undefined) {
+    return service.alovidaPrice === null ? null : withDisplayCurrency(service.alovidaPrice);
+  }
+  const price = parseAmount(edit.price);
+  const discount = parseDiscount(edit.discount);
+  if (price === 'invalid' || discount === 'invalid') {
+    return 'invalid';
+  }
+  return withDisplayCurrency(((price * (100 - (discount ?? 0))) / 100).toFixed(2));
+}
+
+/** What each edited row sends, and what in the typed text is not valid (one sentence per row). */
+export function changesOf(
   services: readonly LabService[],
-  edits: Readonly<Record<string, PriceEdit>>,
-): { changes: { service: LabService; body: LabServiceChanges }[]; problems: string[] } {
-  const changes: { service: LabService; body: LabServiceChanges }[] = [];
+  edits: PriceEdits,
+): { changes: { service: LabService; changes: LabServiceChanges }[]; problems: string[] } {
+  const changes: { service: LabService; changes: LabServiceChanges }[] = [];
   const problems: string[] = [];
   for (const service of services) {
     const edit = edits[service.id];
@@ -114,25 +123,32 @@ export function buildChanges(
     } else if (discount === 'invalid') {
       problems.push(`«${service.name}»: el descuento es un número de 0 a 100, o vacío si no hay.`);
     } else {
-      changes.push({
-        service,
-        body: { price: price.toFixed(2), alovidaDiscountPercent: discount },
-      });
+      changes.push({ service, changes: { price: price.toFixed(2), alovidaDiscountPercent: discount } });
     }
   }
   return { changes, problems };
 }
 
-/** The API's reason for a rejected service, or a generic one. */
-export function reasonOf(error: unknown): string {
-  const state = errorToViewState<never>(error);
-  if (state.status === 'validation') {
-    const messages = state.issues.map((issue) => issue.message).filter((m) => m !== '');
-    if (messages.length > 0) {
-      return messages.join(' ');
+/**
+ * Panels first, each followed by its components, as one group per panel, so a
+ * hemogram reads with its counts under it and a page never splits them. A
+ * group stays when its panel or one of its parts matches the search.
+ */
+export function panelGroups(list: readonly LabService[], term: string): readonly (readonly LabService[])[] {
+  const needle = term.trim().toLocaleLowerCase('es');
+  const hit = (s: LabService) =>
+    needle === '' || [s.name, s.code].some((text) => text.toLocaleLowerCase('es').includes(needle));
+  const byName = (a: LabService, b: LabService) => a.name.localeCompare(b.name, 'es');
+  const ids = new Set(list.map((s) => s.id));
+  const partsOf = (id: string) => list.filter((s) => s.parentId === id).sort(byName);
+  const groups: (readonly LabService[])[] = [];
+  for (const top of list.filter((s) => s.parentId === null || !ids.has(s.parentId)).sort(byName)) {
+    const parts = partsOf(top.id);
+    if (hit(top)) {
+      groups.push([top, ...parts]);
+    } else if (parts.some(hit)) {
+      groups.push([top, ...parts.filter(hit)]);
     }
   }
-  return 'message' in state && typeof state.message === 'string' && state.message !== ''
-    ? state.message
-    : 'No se pudo guardar el precio.';
+  return groups;
 }

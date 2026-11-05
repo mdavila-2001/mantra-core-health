@@ -7,8 +7,8 @@
     page-actions
     routerLink="/administration/laboratory-prices/catalog"
     data-testid="lab-prices-catalog"
-    [disabled]="edits.count() > 0"
-    [attr.title]="edits.count() > 0 ? 'Guarde o descarte los cambios antes de salir' : null"
+    [disabled]="dirtyCount() > 0"
+    [attr.title]="dirtyCount() > 0 ? 'Guarde o descarte los cambios antes de salir' : null"
   >
     Agregar del catálogo
   </a>
@@ -29,79 +29,78 @@
 }
 
 <app-card class="prices" padding="lg" data-testid="lab-prices-card">
-  <div class="prices__panel">
-    @if (errors().length > 0) {
-      <app-alert tone="error" title="Falta resolver esto" data-testid="lab-prices-errors">
-        <ul class="prices__list">
-          @for (error of errors(); track error) {
-            <li>{{ error }}</li>
-          }
-        </ul>
-      </app-alert>
-    }
-
-    @if (rejected().length > 0) {
-      <app-alert
-        tone="warning"
-        title="Estos precios no se guardaron"
-        data-testid="lab-prices-rejected"
-      >
-        <ul class="prices__list">
-          @for (rejection of rejected(); track rejection.name) {
-            <li>
-              <strong>{{ rejection.name }}:</strong> {{ rejection.reason }}
-            </li>
-          }
-        </ul>
-      </app-alert>
-    }
-
-    <app-search-field
-      label="Buscar un servicio"
-      placeholder="Nombre, código o categoría"
-      [value]="term()"
-      (searched)="search($event)"
-    />
-
-    <div class="prices__bar">
-      <p class="prices__hint">Deje el descuento vacío si ese servicio no tiene precio AloVida.</p>
-      <div class="prices__save">
-        @if (edits.count() > 0) {
-          <span class="prices__dirty" role="status">
-            {{
-              edits.count() === 1 ? '1 cambio sin guardar' : edits.count() + ' cambios sin guardar'
-            }}
-          </span>
-          <button
-            app-button
-            variant="ghost"
-            type="button"
-            [disabled]="saving()"
-            (clicked)="discard()"
-          >
-            Descartar
-          </button>
+  <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
+    <app-tab label="Servicios">
+      <div class="prices__panel">
+        @if (errors().length > 0) {
+          <app-alert tone="error" title="Falta resolver esto" data-testid="lab-prices-errors">
+            <ul class="prices__list">
+              @for (error of errors(); track error) {
+                <li>{{ error }}</li>
+              }
+            </ul>
+          </app-alert>
         }
-        <button
-          app-button
-          type="button"
-          [isLoading]="saving()"
-          [disabled]="saving() || edits.count() === 0"
-          (clicked)="save()"
-          data-testid="lab-prices-save"
-        >
-          Guardar cambios
-        </button>
-      </div>
-    </div>
 
-    <app-lab-prices-table
-      [rows]="visible()"
-      [edits]="edits"
-      [names]="names()"
-      (priceChanged)="edits.setPrice($event.service, $event.value)"
-      (discountChanged)="edits.setDiscount($event.service, $event.value)"
-      (retry)="reload()"
-    />
-  </div>
+        @if (rejected().length > 0) {
+          <app-alert tone="warning" title="Estos precios no se guardaron; lo escrito sigue en la tabla" data-testid="lab-prices-rejected">
+            <ul class="prices__list">
+              @for (rejection of rejected(); track rejection.id) {
+                <li><strong>{{ rejection.name }}:</strong> {{ rejection.reason }}</li>
+              }
+            </ul>
+          </app-alert>
+        }
+
+        <app-search-field
+          label="Buscar un servicio"
+          placeholder="Nombre o código"
+          [value]="term()"
+          (searched)="search($event)"
+        />
+
+        <div class="prices__bar">
+          <p class="prices__hint">Deje el precio vacío si todavía no lo cotiza, y el descuento vacío si ese servicio no tiene precio AloVida.</p>
+          <div class="prices__save">
+            @if (dirtyCount() > 0) {
+              <span class="prices__dirty" role="status">
+                {{ dirtyCount() === 1 ? '1 cambio sin guardar' : dirtyCount() + ' cambios sin guardar' }}
+              </span>
+              <button app-button variant="ghost" type="button" [disabled]="saving()" (clicked)="discard()">
+                Descartar
+              </button>
+            }
+            <button
+              app-button
+              type="button"
+              [isLoading]="saving()"
+              [disabled]="saving() || dirtyCount() === 0"
+              (clicked)="save()"
+              data-testid="lab-prices-save"
+            >
+              Guardar cambios
+            </button>
+          </div>
+        </div>
+
+        <app-lab-price-table
+          [state]="pageRows()"
+          [edits]="edits()"
+          [rejected]="rejectedById()"
+          [panelNames]="panelNames()"
+          [cursor]="cursor()"
+          (priceChanged)="setPrice($event)"
+          (discountChanged)="setDiscount($event)"
+          (cursorChanged)="goToCursor($event)"
+          (reload)="reload()"
+        />
+      </div>
+    </app-tab>
+
+    @if (modalities().length > 0) {
+      <app-tab [label]="'Modalidades declaradas (' + modalities().length + ')'">
+        <app-lab-modalities-panel [modalities]="modalities()" (importRequested)="importOpen.set(true)" />
+      </app-tab>
+    }
+  </app-tabs>
 </app-card>

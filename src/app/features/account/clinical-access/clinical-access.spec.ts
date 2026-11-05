@@ -104,6 +104,8 @@ describe('AccountClinicalAccess (BR-20)', () => {
     responder({ careRelationships: [{ ...RELACION, state: 'REVOKED', validTo: '2026-09-26T10:00:00.000Z' }], grants: [] });
     expect(fixture.nativeElement.textContent).toContain('Revocado');
     expect(fixture.nativeElement.querySelector('[data-testid="relacion-revocar-r-1"]')).toBeNull();
+    // Spoken as «usted», like the rest of the patient's screens.
+    expect(avisos).toContain('Revocó el vínculo con Dra. Valeria Rojas.');
   });
 
   it('revocar un acceso concedido usa la ruta de grants del titular', async () => {
@@ -115,6 +117,7 @@ describe('AccountClinicalAccess (BR-20)', () => {
 
     http.expectOne('/authz/me/clinical-access-grants/g-1/revoke').flush({ ok: true });
     responder({ careRelationships: [], grants: [{ ...EMERGENCIA, state: 'REVOKED' }] });
+    expect(avisos).toContain('Revocó el acceso de Dr. Luis Paz.');
   });
 
   it('estado vacío y sin permiso se dicen con palabras', () => {

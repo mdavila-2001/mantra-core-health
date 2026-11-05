@@ -63,36 +63,41 @@ export const OPS_CATALOG: InfrastructureOpsCatalog = {
 
 /* ---- política (§0.3 · permisos F2 y F3) ---------------------------------- */
 
-const ALL_VIEWERS: readonly InfraRoleCode[] = ['SUPERADMIN', 'ORG_ADMIN', 'SITE_ADMIN', 'NURSE', 'ADMISSION', 'HOUSEKEEPING', 'MAINTENANCE'];
+const ADMINS: readonly InfraRoleCode[] = ['ORG_ADMIN', 'SITE_ADMIN'];
+const ALL_VIEWERS: readonly InfraRoleCode[] = ['SUPERADMIN', ...ADMINS];
 
-/** Quién ve al paciente en el tablero (`PATIENT_VIEWERS` de `infra-scope.ts`). */
-export const PATIENT_VIEWERS: readonly InfraRoleCode[] = ['NURSE', 'NURSE_SUPERVISOR', 'ADMISSION'];
+/** Who sees the patient on the board (`PATIENT_VIEWERS` of `infra-scope.ts`). */
+export const PATIENT_VIEWERS: readonly InfraRoleCode[] = ADMINS;
 
-/** Acción → roles: las tablas de `infra-f2.policy.ts` e `infra-f3.policy.ts` de la API. */
+/**
+ * Action → roles: the tables of `infra-f2.policy.ts` and `infra-f3.policy.ts` of the API.
+ * The operative roles (nursing, admission, cleaning, maintenance) were removed on
+ * 2026-11-05: the organization account (and the site admin) operates everything.
+ */
 export const INFRA_POLICY: Readonly<Record<InfraAction, readonly InfraRoleCode[]>> = {
   'f2.board.read': ALL_VIEWERS,
-  'f2.availability.clinical': ['NURSE'],
-  'f2.availability.admin': ['SUPERADMIN', 'ORG_ADMIN', 'SITE_ADMIN'],
-  'f2.availability.maintenance': ['ORG_ADMIN', 'SITE_ADMIN', 'MAINTENANCE'],
-  'f2.hygiene.mark-dirty': ['NURSE', 'HOUSEKEEPING'],
-  'f2.hygiene.mark-contaminated': ['NURSE'],
-  'f2.isolation.set': ['NURSE'],
+  'f2.availability.clinical': ADMINS,
+  'f2.availability.admin': ALL_VIEWERS,
+  'f2.availability.maintenance': ADMINS,
+  'f2.hygiene.mark-dirty': ADMINS,
+  'f2.hygiene.mark-contaminated': ADMINS,
+  'f2.isolation.set': ADMINS,
   'f2.isolation.cohort-approve': ['INFECTION_CONTROL'],
-  'f2.cleaning.read': ['ORG_ADMIN', 'SITE_ADMIN', 'NURSE', 'ADMISSION', 'HOUSEKEEPING'],
-  'f2.cleaning.create': ['NURSE', 'HOUSEKEEPING'],
-  'f2.cleaning.assign': ['NURSE', 'HOUSEKEEPING'],
-  'f2.cleaning.work': ['NURSE', 'HOUSEKEEPING'],
-  'f2.cleaning.inspect': ['NURSE_SUPERVISOR', 'HOUSEKEEPING_SUPERVISOR'],
-  'f2.cleaning.cancel': ['NURSE', 'HOUSEKEEPING'],
+  'f2.cleaning.read': ADMINS,
+  'f2.cleaning.create': ADMINS,
+  'f2.cleaning.assign': ADMINS,
+  'f2.cleaning.work': ADMINS,
+  'f2.cleaning.inspect': ADMINS,
+  'f2.cleaning.cancel': ADMINS,
   'f2.events.read': ALL_VIEWERS,
-  'f3.adt.place': ['NURSE', 'ADMISSION'],
-  'f3.adt.override': ['NURSE_SUPERVISOR'],
-  'f3.adt.read': ['SUPERADMIN', 'ORG_ADMIN', 'SITE_ADMIN', 'NURSE', 'ADMISSION'],
-  'f3.incident.review': ['NURSE_SUPERVISOR', 'INFECTION_CONTROL'],
-  'f3.census.read': ['SUPERADMIN', 'ORG_ADMIN', 'SITE_ADMIN', 'NURSE', 'ADMISSION', 'BILLING'],
-  'f3.census.close': ['ORG_ADMIN', 'SITE_ADMIN', 'NURSE_SUPERVISOR', 'ADMISSION'],
-  'f3.census.adjust': ['ORG_ADMIN', 'SITE_ADMIN', 'NURSE_SUPERVISOR'],
-  'f3.indicators.read': ['SUPERADMIN', 'ORG_ADMIN', 'SITE_ADMIN', 'NURSE', 'ADMISSION', 'BILLING'],
+  'f3.adt.place': ADMINS,
+  'f3.adt.override': ADMINS,
+  'f3.adt.read': ALL_VIEWERS,
+  'f3.incident.review': [...ADMINS, 'INFECTION_CONTROL'],
+  'f3.census.read': [...ALL_VIEWERS, 'BILLING'],
+  'f3.census.close': ADMINS,
+  'f3.census.adjust': ADMINS,
+  'f3.indicators.read': [...ALL_VIEWERS, 'BILLING'],
 };
 
 export function actionsOf(roles: readonly InfraRoleCode[]): InfraAction[] {
@@ -101,7 +106,7 @@ export function actionsOf(roles: readonly InfraRoleCode[]): InfraAction[] {
 
 /* ---- cuentas operativas de la maqueta ------------------------------------- */
 
-/** Las cuentas del hospital: una por rol operativo (`organization_user_assignments`). */
+/** The hospital staff accounts; all are site admins now that operative roles are gone. */
 export const INPATIENT_USERS = {
   enfermeria: uuid('user-enfermeria-sanlucas'),
   supervision: uuid('user-supervision-enfermeria-sanlucas'),
@@ -120,12 +125,12 @@ export interface InfraAssignment {
 export function seedAssignments(sanLucasSiteId: string): InfraAssignment[] {
   const a = (userId: string, roles: readonly InfraRoleCode[]) => ({ userId, siteId: sanLucasSiteId, roles });
   return [
-    a(INPATIENT_USERS.enfermeria, ['NURSE']),
-    a(INPATIENT_USERS.supervision, ['NURSE', 'NURSE_SUPERVISOR']),
-    a(INPATIENT_USERS.admision, ['ADMISSION']),
-    a(INPATIENT_USERS.limpieza, ['HOUSEKEEPING']),
-    a(INPATIENT_USERS.supervisoraLimpieza, ['HOUSEKEEPING', 'HOUSEKEEPING_SUPERVISOR']),
-    a(INPATIENT_USERS.mantenimiento, ['MAINTENANCE']),
+    a(INPATIENT_USERS.enfermeria, ['SITE_ADMIN']),
+    a(INPATIENT_USERS.supervision, ['SITE_ADMIN']),
+    a(INPATIENT_USERS.admision, ['SITE_ADMIN']),
+    a(INPATIENT_USERS.limpieza, ['SITE_ADMIN']),
+    a(INPATIENT_USERS.supervisoraLimpieza, ['SITE_ADMIN']),
+    a(INPATIENT_USERS.mantenimiento, ['SITE_ADMIN']),
   ];
 }
 

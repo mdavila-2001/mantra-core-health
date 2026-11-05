@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.price-table__main {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.price-table__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.price-table__amount {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.price-table__of {
+  display: block;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* A component reads under its panel, indented from the start edge. */
+.price-table__part {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--border-subtle);
+}
+
+.price-table__muted {
+  color: var(--text-secondary);
+}
+
+/* Two decimals and a thousands digit must stay visible in the stacked phone layout. */
+app-input {
+  display: block;
+  min-inline-size: 6.5rem;
+}

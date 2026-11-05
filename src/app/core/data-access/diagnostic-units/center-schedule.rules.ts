@@ -150,6 +150,7 @@ export function validarHorario(schedule: CenterSchedule, nombreDe: (donde: strin
   revisar('general', schedule.general);
   for (const m of schedule.modalities) revisar(m.modalityCode, m.schedule);
   for (const s of schedule.studies) revisar(s.studyCode, s.schedule);
+  for (const e of schedule.equipment ?? []) revisar(e.equipmentId, e.schedule);
   return problemas;
 }
 

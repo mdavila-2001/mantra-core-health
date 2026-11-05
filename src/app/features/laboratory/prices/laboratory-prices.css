@@ -5,6 +5,7 @@
 .prices__panel {
   display: grid;
   gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
 }
 
 .prices__list {

@@ -99,6 +99,7 @@ export type TipoDeControl =
   | 'custom';
 
 import type { ConditionVisible } from './conditional-visibility';
+import type { FieldKind } from '../field-kinds';
 
 /** Un campo del formulario, tal como el motor necesita conocerlo para pintarlo. */
 export interface CampoDeFormulario {
@@ -192,11 +193,8 @@ export interface CampoDeFormulario {
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
 
-  /** Sólo para `text`: nombre de persona, no admite dígitos ni símbolos. */
-  readonly soloLetras?: boolean;
-
-  /** Sólo para `text`: documento, sólo letras y números, sin espacios ni símbolos. */
-  readonly soloAlfanumerico?: boolean;
+  /** `text` only: data kind (filter, validator, message; see `@shared/forms/field-kinds`). */
+  readonly fieldKind?: FieldKind;
 
   /**
    * Sólo para `text`: se llama con el valor del campo cada vez que la persona

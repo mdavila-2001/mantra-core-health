@@ -44,10 +44,7 @@ import { CaseStatusCatalog, toCaseStatusPresentation } from './case-status';
 /** Lo máximo que admite una evidencia. Un documento no pesa más que esto. */
 const MAX_BYTES = 10 * 1024 * 1024;
 
-/**
- * Los cuatro trámites de autoservicio del M27. El backend resuelve el sujeto
- * del token en todos: el trámite solo elige el endpoint, nunca a quién.
- */
+/** Trámites del M27 (el sujeto sale del token); un médico no tiene el de paciente. */
 const TRAMITES = ['patient', 'practitioner', 'license', 'tenant'] as const;
 
 type Tramite = (typeof TRAMITES)[number];
@@ -182,7 +179,10 @@ export class IdentityVerification implements OnDestroy {
 
   protected readonly maxBytes = MAX_BYTES;
 
-  protected readonly tramite = signal<Tramite>('patient');
+  protected readonly esProfesional = computed(() => this.session.practitionerProfileId() !== null);
+  protected readonly tramite = linkedSignal<Tramite>(() =>
+    this.esProfesional() ? 'practitioner' : 'patient',
+  );
 
   protected readonly textos = computed(() => TEXTOS_POR_TRAMITE[this.tramite()]);
 

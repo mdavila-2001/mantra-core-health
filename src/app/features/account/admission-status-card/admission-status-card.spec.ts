@@ -48,6 +48,123 @@ describe('AdmissionStatusCard', () => {
     });
   });
 
+  describe('enviar a verificación (donde la pantalla lo ofrece, sin solicitud)', () => {
+    const SUBMIT_URL = `${URL_MIA}/submit`;
+
+    function mountWithoutRequest(): void {
+      fixture = TestBed.createComponent(AdmissionStatusCard);
+      fixture.componentRef.setInput('allowSubmit', true);
+      fixture.detectChanges();
+      http.expectOne(URL_MIA).flush({ reason: 'ADMISSION_NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+      fixture.detectChanges();
+    }
+
+    function attest(): void {
+      q('admission-card-submit-attest')!.querySelector<HTMLInputElement>('input')!.click();
+      fixture.detectChanges();
+    }
+
+    it('dibuja «Enviar a verificación» con la misma declaración que el reenvío', () => {
+      mountWithoutRequest();
+      expect(el().querySelector('h2')?.textContent).toContain('Enviar a verificación');
+      expect(q('admission-card-submit-attest')?.textContent).toContain('Declaro que los datos y documentos son verídicos.');
+      expect(q('admission-card-status')).toBeNull();
+    });
+
+    it('sin la declaración marcada no manda nada', () => {
+      mountWithoutRequest();
+      expect(q('admission-card-submit-attest-error')?.textContent).toContain('Marque la declaración');
+      q('admission-card-submit')!.click();
+      http.expectNone(SUBMIT_URL);
+    });
+
+    it('con la declaración envía una sola vez, con su versión, y muestra la solicitud enviada', () => {
+      mountWithoutRequest();
+      attest();
+      q('admission-card-submit')!.click();
+      q('admission-card-submit')!.click();
+      const req = http.expectOne(SUBMIT_URL);
+      expect(req.request.body).toEqual({ attested: true, attestationVersion: '2026-10' });
+      req.flush(wireMine({ status: { code: 'ENVIADA', label: 'Enviada' } }));
+      fixture.detectChanges();
+      expect(q('admission-card-status')?.textContent).toContain('Enviada');
+      expect(el().querySelector('h2')?.textContent).toContain('Estado de su verificación');
+    });
+
+    it('un perfil que ya no está pendiente avisa a la pantalla para que relea, y deja de ofrecer el envío', () => {
+      mountWithoutRequest();
+      let notices = 0;
+      fixture.componentInstance.profileChanged.subscribe(() => (notices += 1));
+      attest();
+      q('admission-card-submit')!.click();
+      http.expectOne(SUBMIT_URL).flush({ reason: 'ADMISSION_NOT_PENDING' }, { status: 422, statusText: 'x' });
+      fixture.detectChanges();
+      expect(notices).toBe(1);
+      expect(q('admission-card-not-pending')).not.toBeNull();
+      expect(q('admission-card-submit')).toBeNull();
+    });
+
+    it('sin perfil profesional lo dice con sus palabras, no como «admisión no encontrada»', () => {
+      mountWithoutRequest();
+      attest();
+      q('admission-card-submit')!.click();
+      http.expectOne(SUBMIT_URL).flush({ reason: 'ADMISSION_NOT_FOUND' }, { status: 404, statusText: 'x' });
+      fixture.detectChanges();
+      expect(q('admission-card-submit-error')?.textContent).toContain('no tiene un perfil profesional');
+    });
+
+    it('un fallo inesperado se muestra y deja volver a intentar', () => {
+      mountWithoutRequest();
+      attest();
+      q('admission-card-submit')!.click();
+      http.expectOne(SUBMIT_URL).flush({ message: 'Caída' }, { status: 500, statusText: 'x' });
+      fixture.detectChanges();
+      expect(q('admission-card-submit-error')?.textContent).toContain('Caída');
+      expect(q<HTMLButtonElement>('admission-card-submit')?.getAttribute('aria-disabled')).toBe('false');
+    });
+
+    it('si ya tenía una solicitud, la relee y la declaración no queda marcada para ella', () => {
+      mountWithoutRequest();
+      attest();
+      q('admission-card-submit')!.click();
+      http
+        .expectOne(SUBMIT_URL)
+        .flush({ reason: 'ADMISSION_ALREADY_EXISTS' }, { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+      // The card rereads the request that already exists…
+      http
+        .expectOne(URL_MIA)
+        .flush(
+          wireMine({
+            status: { code: 'INFORMACION_REQUERIDA', label: 'Información requerida' },
+            canResubmit: true,
+          }),
+        );
+      fixture.detectChanges();
+      expect(q('admission-card-status')?.textContent).toContain('Información requerida');
+      // …and the attestation sent for the refused request does not carry over to its resubmission.
+      expect(q('admission-card-attest')!.querySelector<HTMLInputElement>('input')!.checked).toBe(false);
+      expect(q('admission-card-attest-error')?.textContent).toContain('Marque la declaración');
+      expect(q<HTMLButtonElement>('admission-card-resubmit')?.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('si la API no recibió la declaración, lo dice en el campo y la desmarca', () => {
+      mountWithoutRequest();
+      attest();
+      q('admission-card-submit')!.click();
+      http
+        .expectOne(SUBMIT_URL)
+        .flush({ reason: 'ADMISSION_ATTESTATION_REQUIRED' }, { status: 422, statusText: 'x' });
+      fixture.detectChanges();
+      const hint = q('admission-card-submit-attest-error');
+      expect(hint?.getAttribute('role')).toBe('alert');
+      expect(hint?.textContent).toContain('No recibimos su declaración');
+      expect(q('admission-card-submit-attest')!.querySelector<HTMLInputElement>('input')!.checked).toBe(false);
+      expect(q('admission-card-submit-error')).toBeNull();
+      http.expectNone(URL_MIA);
+    });
+  });
+
   describe('un error de red', () => {
     it('se dice en chico y deja reintentar, sin tapar la pantalla', () => {
       montar(null, { status: 500 });

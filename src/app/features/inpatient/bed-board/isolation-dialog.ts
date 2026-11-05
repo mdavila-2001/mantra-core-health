@@ -60,7 +60,7 @@ const MISSING: Readonly<Record<string, string>> = {
           <app-textarea [(value)]="reason" [rows]="3" data-testid="isolation-reason" />
         </app-form-field>
         @if (code() === 'ISO_NONE' && cell().isolation.code !== 'ISO_NONE') {
-          <p class="isolation-dialog__note">Al levantar el aislamiento la cama queda con limpieza terminal pendiente y no se puede asignar hasta la inspección de supervisión.</p>
+          <p class="isolation-dialog__note">Al levantar el aislamiento la cama queda con limpieza terminal pendiente y no se puede asignar hasta que se inspeccione.</p>
         }
       </form>
       <div dialog-actions>
