@@ -96,6 +96,7 @@ import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerRegistrationLogo } from './registration-logo.handlers';
 import { registrarAdmisiones } from './admissions.handlers';
+import { registerOwnAdmissionSubmit } from './own-admission-submit.handlers';
 import { registrarCargasMasivas } from './bulk-imports.handlers';
 import { registerPrescriptionShares } from './prescription-shares.handlers';
 import { registerPharmacyMedicationAvailability } from './pharmacy-medication-availability.handlers';
@@ -217,6 +218,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarFlujos(router);
   registrarAltaDeMedicoAsistida(router);
   registrarAdmisiones(router);
+  registerOwnAdmissionSubmit(router);
   registrarReporteria(router);
   registrarInsights(router);
   registrarInsightsWorkspace(router);

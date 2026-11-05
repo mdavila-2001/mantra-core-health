@@ -62,6 +62,37 @@ describe('VerificationRoadmap', () => {
     expect(byId('verif-resumen')?.textContent).toContain('1 de 3');
   });
 
+  it('every way out keeps its tab and its section: the link carries `?pestana=` and the fragment', () => {
+    render([
+      paso('account'),
+      paso('licenses', {
+        state: 'pending',
+        stateLabel: 'Pendiente',
+        action: {
+          label: 'Revisar mis habilitaciones',
+          route: '/my-account/edit',
+          queryParams: { pestana: 5 },
+          fragment: 'licenses',
+        },
+      }),
+      paso('specialties', {
+        state: 'not-started',
+        optional: true,
+        action: {
+          label: 'Revisar mis especialidades',
+          route: '/my-account/edit',
+          queryParams: { pestana: 0 },
+          fragment: 'specialties',
+        },
+      }),
+    ]);
+
+    expect(byId('verif-siguiente')?.getAttribute('href')).toBe('/my-account/edit?pestana=5#licenses');
+    expect(byId('verif-step-action-specialties')?.getAttribute('href')).toBe(
+      '/my-account/edit?pestana=0#specialties',
+    );
+  });
+
   it('celebrates when every required step is verified and links to pending requests', () => {
     render(
       [

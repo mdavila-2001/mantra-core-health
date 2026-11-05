@@ -1310,6 +1310,7 @@ vocabulario heredado en español y lo traduce en la frontera.
 | `GET` | `/admissions/:id/documents/:fileId` | `AdmissionDocumentViewer` · acceso auditado, devuelve una dirección firmada de vida corta |
 | `GET` | `/profiles/practitioners/me/admission` | `AdmissionStatusCard` (404 si no hay solicitud) |
 | `POST` | `/profiles/practitioners/me/admission/resubmit` | `AdmissionStatusCard` · con atestación |
+| `POST` | `/profiles/practitioners/me/admission/submit` | `AdmissionStatusCard` en «Mis verificaciones» · primera solicitud de un perfil pendiente, con la misma atestación; `ADMISSION_ALREADY_EXISTS` (409), `ADMISSION_NOT_PENDING` y `ADMISSION_ATTESTATION_REQUIRED` (422) |
 
 Errores propios, en `details.reason` (o como `code`): `ADMISSION_STALE` (409),
 `ADMISSION_EVIDENCE_CHANGED` (409), `ADMISSION_ITEM_REQUIRES_SOURCE`,

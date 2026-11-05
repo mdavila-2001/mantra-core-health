@@ -1,8 +1,64 @@
 @if (visible()) {
   <app-card class="verificacion" variant="outlined" padding="lg" data-testid="admission-status-card">
-    <h2 class="verificacion__titulo"><app-nav-icon name="shield" aria-hidden="true" /> Estado de su verificación</h2>
+    <h2 class="verificacion__titulo">
+      <app-nav-icon name="shield" aria-hidden="true" />
+      {{ offersSubmit() ? 'Enviar a verificación' : 'Estado de su verificación' }}
+    </h2>
 
     @switch (state()) {
+      <!-- No request yet, where the screen offers to send it (`allowSubmit`). -->
+      @case ('none') {
+        @if (notPending()) {
+          <app-alert tone="info" data-testid="admission-card-not-pending">
+            Su perfil ya no está pendiente de verificación, así que no hace falta enviar la solicitud. Actualizamos su
+            hoja de ruta.
+          </app-alert>
+        } @else {
+          <p class="verificacion__detalle">
+            Todavía no envió su solicitud de verificación. Al enviarla, el equipo de AloVida revisa sus datos y
+            sus documentos, y le avisa si falta algo.
+          </p>
+          <div class="verificacion__submit" data-testid="admission-card-submit-section">
+            <app-checkbox
+              [label]="attestationText"
+              [checked]="attested()"
+              [hasError]="attestationRefused()"
+              (checkedChange)="onAttest($event)"
+              data-testid="admission-card-submit-attest"
+            />
+            @if (!attested()) {
+              <p
+                id="admission-submit-attest-hint"
+                class="verificacion__problema"
+                [attr.role]="attestationRefused() ? 'alert' : null"
+                data-testid="admission-card-submit-attest-error"
+              >
+                {{
+                  attestationRefused()
+                    ? 'No recibimos su declaración: márquela de nuevo para enviar la solicitud.'
+                    : 'Marque la declaración para poder enviar la solicitud.'
+                }}
+              </p>
+            }
+            @if (submitError(); as problema) {
+              <app-alert tone="error" data-testid="admission-card-submit-error">{{ problema }}</app-alert>
+            }
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [isLoading]="submitting()"
+              [disabled]="submitting() || !attested()"
+              [attr.aria-describedby]="attested() ? null : 'admission-submit-attest-hint'"
+              data-testid="admission-card-submit"
+              (clicked)="submit()"
+            >
+              <app-nav-icon name="share" />
+              Enviar a verificación
+            </button>
+          </div>
+        }
+      }
       @case ('loading') {
         <div aria-busy="true" data-testid="admission-card-loading">
           <app-skeleton variant="text" [lines]="3" />
@@ -71,7 +127,7 @@
                 }
               </p>
               <app-checkbox
-                label="Declaro que los datos y documentos son verídicos."
+                [label]="attestationText"
                 [checked]="attested()"
                 (checkedChange)="onAttest($event)"
                 data-testid="admission-card-attest"
