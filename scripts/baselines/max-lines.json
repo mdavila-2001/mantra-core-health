@@ -982,9 +982,6 @@
     "src/app/core/mock/handlers/support-access.governance.reviews.handlers.ts": {
       "lineas": 454
     },
-    "src/app/features/laboratory-directory/laboratory-detail/laboratory-detail.ts": {
-      "lineas": 452
-    },
     "src/app/features/questionnaires/insights/survey-insights.css": {
       "lineas": 452
     },

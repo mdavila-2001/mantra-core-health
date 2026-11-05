@@ -1,14 +1,41 @@
-/* Sin tope de ancho propio: lo pone `.app-main__inner` y nadie más
-   (`docs/components/composition-rules.md` §5). La tarjeta va centrada y a todo
-   el ancho del área de contenido. */
+/* One shrinkable column: with the grid default (`auto`) the track grows to the
+   min-content of the tab strip and the whole sheet scrolls sideways on a
+   phone. The strip scrolls on its own, with its arrows. */
+.ficha-publica {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* The grid item keeps `min-width: auto` (its min-content) unless told
+   otherwise, which re-widens the track. */
+.ficha-publica > app-view-state-host {
+  min-inline-size: 0;
+}
+
+/* No max width of its own: `.app-main__inner` sets it (`composition-rules.md`
+   §5). The card is centred and spans the content area. */
 .ficha-lab__card {
   display: block;
   inline-size: 100%;
+  min-inline-size: 0;
   margin-inline: auto;
 }
 
-/* El resumen del centro termina; las pestañas empiezan con su aire. */
 .ficha-lab__tabs {
   display: block;
-  margin-block-start: var(--sp-5);
+  min-inline-size: 0;
+  margin-block-start: var(--sp-6);
+}
+
+.ficha-lab__trust {
+  margin: var(--sp-2) 0 0;
+}
+
+/* On the narrowest phones the label wraps instead of being clipped by the
+   header; the button's own minimum height keeps the 44 px touch target. */
+@media (max-width: 40rem) {
+  .ficha-lab__book {
+    max-inline-size: 100%;
+    white-space: normal;
+    text-align: center;
+  }
 }

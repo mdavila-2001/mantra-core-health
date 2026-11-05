@@ -1,0 +1,48 @@
+/* Same frame and rhythm as the loaded sheet, so nothing jumps when it arrives. */
+.sheet-skeleton {
+  padding: var(--sp-6);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+}
+
+/* The container is the card's inner width, as for the real summary. */
+.sheet-skeleton__body {
+  display: grid;
+  gap: var(--sp-5);
+  container-type: inline-size;
+}
+
+.sheet-skeleton__top {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+.sheet-skeleton__lead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.sheet-skeleton__lead > app-skeleton:last-child {
+  flex: 1;
+}
+
+.sheet-skeleton__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(9rem, (100% - 3 * var(--sp-3)) / 4)), 1fr));
+  gap: var(--sp-3);
+}
+
+.sheet-skeleton__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--sp-3);
+}
+
+/* Same split point as `unit-summary.css`. */
+@container (min-width: 75rem) {
+  .sheet-skeleton__top {
+    grid-template-columns: minmax(16rem, 1fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}

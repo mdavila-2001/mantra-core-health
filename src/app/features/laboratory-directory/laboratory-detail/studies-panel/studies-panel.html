@@ -1,0 +1,78 @@
+<section id="estudios" aria-label="Estudios y servicios">
+  <!-- The search belongs to the section, so it sits in its heading and not
+       above the grid, where it would read as a filter of the whole sheet. -->
+  <div class="ficha-publica__encabezado">
+    <app-section-heading
+      class="ficha-publica__titulo"
+      icono="results"
+      titulo="Estudios y precios"
+      [cuantos]="studies().length"
+    />
+
+    @if (studies().length >= SEARCH_THRESHOLD) {
+      <app-search-field
+        class="ficha-publica__buscador"
+        [(value)]="term"
+        label="Buscar en estudios y servicios"
+        placeholder="Buscar estudio"
+      />
+    }
+  </div>
+
+  @if (areas().length > 0) {
+    <app-lab-area-filter class="studies-panel__areas" [areas]="areas()" [total]="studies().length" [(selected)]="area" />
+  }
+
+  <!-- Always in the DOM so screen readers announce changes to it. -->
+  <p class="ficha-publica__cuenta studies-panel__count" role="status">{{ countText() }}</p>
+
+  <!-- Where each price comes from, folded: it is the small print of the list. -->
+  @if (studies().length > 0) {
+  <details class="studies-panel__source">
+    <summary>¿De dónde salen los precios?</summary>
+    <p class="ficha-publica__nota">
+      Cada precio dice de dónde sale: el que publica el centro, el de referencia del INLASA o, donde
+      Bolivia no tiene arancel, el de FONASA (Chile) convertido a bolivianos al tipo de cambio oficial
+      del 01/10/2026. El importe final lo fija el centro y puede cambiar según lo que incluya cada estudio.
+    </p>
+  </details>
+  }
+
+  @if (studies().length === 0) {
+    <div class="ficha-publica__vacio" role="status" data-testid="unit-studies-empty">
+      <p>Este centro todavía no publicó su lista de estudios. Vuelva al directorio para ver otros centros.</p>
+      <a app-button variant="outline" size="sm" routerLink="/laboratory-directory">Volver al directorio</a>
+    </div>
+  } @else if (matches().length === 0) {
+    <div class="ficha-publica__vacio" role="status">
+      @if (area(); as picked) {
+        <p>
+          Ningún estudio de {{ picked }} coincide con «{{ term() }}». Pruebe con otro nombre o busque en
+          todas las áreas.
+        </p>
+        <button app-button variant="outline" size="sm" (clicked)="area.set(null)">Buscar en todas las áreas</button>
+      } @else {
+        <p>
+          Ningún estudio coincide con «{{ term() }}». Pruebe con otro nombre o código, o borre la búsqueda
+          para ver los {{ studies().length }}.
+        </p>
+        <button app-button variant="outline" size="sm" (clicked)="term.set('')">Borrar la búsqueda</button>
+      }
+    </div>
+  } @else {
+    <ul class="rejilla ficha-publica__rejilla" data-testid="unit-studies">
+      @for (study of shown(); track study.id) {
+        <li tabindex="-1"><app-lab-study-card [study]="study" /></li>
+      }
+    </ul>
+
+    @if (remaining() > 0) {
+      <div class="studies-panel__more">
+        <p class="ficha-publica__cuenta" role="status">Mostrando {{ shown().length }} de {{ matches().length }} estudios</p>
+        <button app-button variant="outline" data-testid="unit-studies-more" (clicked)="showMore()">
+          Mostrar {{ nextBatch() }} más
+        </button>
+      </div>
+    }
+  }
+</section>
