@@ -1471,7 +1471,10 @@ describe('Agenda', () => {
     await responder();
 
     const dialogs = TestBed.inject(DialogService);
-    vi.spyOn(dialogs, 'confirmWithReason').mockResolvedValue('El profesional tuvo una urgencia');
+    const confirm = vi
+      .spyOn(dialogs, 'confirmWithReason')
+      .mockResolvedValue('El profesional tuvo una urgencia');
+    const notify = vi.spyOn(TestBed.inject(ToastService), 'success');
 
     const pendiente = interno<(c: unknown) => Promise<void>>('cancelarCita')(primeraCita());
     await harness.fixture.whenStable();
@@ -1490,6 +1493,12 @@ describe('Agenda', () => {
     await pendiente;
 
     expect(citas().status).toBe('ready');
+    // Worded for who attends as well as for who hands out appointments: a time, not a «cupo».
+    expect(confirm.mock.calls[0]![0].message).toContain('el horario queda disponible');
+    expect(notify).toHaveBeenCalledWith(
+      'La cita se canceló y el horario quedó disponible en la agenda.',
+      'Cancelación',
+    );
   });
 
   /**
@@ -1810,7 +1819,10 @@ describe('Agenda', () => {
     await interno<(c: unknown) => Promise<void>>('rechazarCita')(citas().data?.[0]);
     // El `http.verify()` del afterEach falla si algo salió a la red.
 
-    vi.spyOn(dialogs, 'confirmWithReason').mockResolvedValue('La agenda de ese día se cerró');
+    const confirm = vi
+      .spyOn(dialogs, 'confirmWithReason')
+      .mockResolvedValue('La agenda de ese día se cerró');
+    const notify = vi.spyOn(TestBed.inject(ToastService), 'success');
     const pendiente = interno<(c: unknown) => Promise<void>>('rechazarCita')(citas().data?.[0]);
     await harness.fixture.whenStable();
 
@@ -1819,6 +1831,12 @@ describe('Agenda', () => {
     req.flush({ bookingId: 'b-1', capacityReleased: true });
     responderResto();
     await pendiente;
+
+    expect(confirm.mock.calls[0]![0].message).toContain('El horario queda disponible');
+    expect(notify).toHaveBeenCalledWith(
+      'La solicitud se rechazó y el horario quedó disponible.',
+      'Solicitud',
+    );
   });
 
   /* ---- mover la cita (UC-41-08) -------------------------------------------

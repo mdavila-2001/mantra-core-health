@@ -1708,7 +1708,7 @@ export class Agenda {
     const motivo = await this.dialogs.confirmWithReason(
       {
         title: 'Cancelar la cita',
-        message: 'La cita se cancela y el cupo vuelve a la agenda. La cancelación queda auditada.',
+        message: 'La cita se cancela y el horario queda disponible. La cancelación queda auditada.',
         confirmLabel: 'Cancelar la cita',
         cancelLabel: 'Volver',
         destructive: true,
@@ -1731,7 +1731,7 @@ export class Agenda {
           this.operando.set(null);
           this.toast.success(
             resultado.capacityReleased
-              ? 'La cita se canceló y el cupo volvió a la agenda.'
+              ? 'La cita se canceló y el horario quedó disponible en la agenda.'
               : 'La cita se canceló.',
             'Cancelación',
           );
@@ -2216,7 +2216,7 @@ export class Agenda {
     const motivo = await this.dialogs.confirmWithReason(
       {
         title: 'Rechazar la solicitud',
-        message: 'El cupo vuelve a la agenda y el paciente recibe el motivo.',
+        message: 'El horario queda disponible en la agenda y el paciente recibe el motivo.',
         confirmLabel: 'Rechazar',
         cancelLabel: 'Volver',
         destructive: true,
@@ -2235,7 +2235,7 @@ export class Agenda {
     this.scheduling.rejectBooking(cita.id, motivo).subscribe({
       next: () => {
         this.operando.set(null);
-        this.toast.success('La solicitud se rechazó y el cupo volvió a la agenda.', 'Solicitud');
+        this.toast.success('La solicitud se rechazó y el horario quedó disponible.', 'Solicitud');
         this.trasOperar();
       },
       error: (error: unknown) => {
