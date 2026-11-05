@@ -245,6 +245,23 @@ describe('RegisterMedicalCenter', () => {
     req.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
   });
 
+  it('el nombre comercial es opcional y viaja sólo si se escribió', () => {
+    // "Mi perfil" and the directory show the trade name, so the sign-up must ask for it.
+    completar();
+    fixture.componentInstance.submit();
+
+    const sinNombre = http.expectOne(RUTA_ALTA);
+    expect('tradeName' in sinNombre.request.body.organization).toBe(false);
+    sinNombre.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
+
+    fixture.componentInstance.form.controls.tradeName.setValue('  Clínica Norte  ');
+    fixture.componentInstance.submit();
+
+    const conNombre = http.expectOne(RUTA_ALTA);
+    expect(conNombre.request.body.organization.tradeName).toBe('Clínica Norte');
+    conNombre.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
+  });
+
   it('ofrece los cinco tipos médicos del catálogo, en orden, y ninguno ajeno', () => {
     expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
   });
@@ -376,7 +393,7 @@ describe('RegisterMedicalCenter', () => {
       'Su acceso',
     ]);
     expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
-      ['tenantType', 'legalName', 'legalEntityType'],
+      ['tenantType', 'legalName', 'tradeName', 'legalEntityType'],
       ['taxId', 'healthFacilityRegistrationNumber'],
       ['medicalDirectorName', 'medicalDirectorLicense', 'medicalDirectorEmail', 'medicalDirectorPhone'],
       [
@@ -401,13 +418,14 @@ describe('RegisterMedicalCenter', () => {
     expect(Math.max(...paginas.filter((p) => !p.sinPartir).map((p) => p.campos.length))).toBeLessThanOrEqual(4);
   });
 
-  it('el tipo de institución es un desplegable y la primera página reparte sus tres campos en columnas', () => {
+  it('el tipo de institución es un desplegable y la primera página reparte sus cuatro campos de a dos', () => {
     const organizacion = interno().paginas()[0]!;
     const tipo = organizacion.campos.find((c) => c.key === 'tenantType')!;
 
     expect(tipo.control).toBe('select');
     expect(tipo.opcionesEn).toBeUndefined();
-    expect(organizacion.disposicion).toBe('tres-columnas');
+    // Two even rows: three columns left the fourth field alone (client rule 6).
+    expect(organizacion.disposicion).toBe('dos-columnas');
   });
 
   it('cada página con varios campos cortos declara sus columnas (regla 6 del cliente: sin casillas kilométricas)', () => {
@@ -416,7 +434,7 @@ describe('RegisterMedicalCenter', () => {
 
     // La disposición de TODAS las páginas, no sólo de la primera.
     expect(disposicion).toStrictEqual({
-      organizacion: 'tres-columnas',
+      organizacion: 'dos-columnas',
       establecimiento: 'dos-columnas',
       director: 'tres-columnas',
       'documentos-legales': undefined,

@@ -7,6 +7,7 @@ import {
   PROFESSIONAL_LICENSE_MIN,
 } from '../../../core/data-access/iam/medical-facility.rules';
 import { executivesControls } from '../shared-registration/executives';
+import { tradeNameControl } from '../shared-registration/trade-name';
 import type { Coordinates } from '../shared-registration/map-location-picker/map-location-picker';
 import { nameGroup } from '../shared-registration/name-fields/person-name';
 import { passwordValidators } from '../shared-registration/password-policy';
@@ -52,6 +53,7 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
       nonNullable: true,
       validators: [Validators.required, noSoloEspacios, Validators.maxLength(MAX_LEGAL_NAME)],
     }),
+    tradeName: tradeNameControl(),
     legalEntityType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     taxId: new FormControl('', { nonNullable: true, validators: [Validators.required, nitValido] }),
     // --- el establecimiento y su director médico -----------------------------

@@ -77,6 +77,7 @@ import {
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { tradeNameControl, tradeNameField, tradeNameOf } from '../shared-registration/trade-name';
 import { AccountExistsCheck } from '../shared-registration/account-exists-dialog/account-exists-check';
 import { AccountExistsDialog } from '../shared-registration/account-exists-dialog/account-exists-dialog';
 import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
@@ -225,6 +226,7 @@ export class RegisterPharmacy {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
     }),
+    tradeName: tradeNameControl(),
     companyType: new FormControl<string | null>(null, { validators: [Validators.required] }),
     // --- 1.2 · el NIT --------------------------------------------------------
     taxId: new FormControl('', {
@@ -243,17 +245,12 @@ export class RegisterPharmacy {
     healthAuthorityCertificateFileId: new FormControl('', { nonNullable: true }),
     powerOfAttorneyFileId: new FormControl('', { nonNullable: true }),
     // --- 1.6 · dirección legal de la central ---------------------------------
-    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
-    // la central, ver `escribirLocalidadCentral`. Sigue obligatoria porque la
-    // API la exige, y nunca queda vacía con un punto puesto.
+    // Derived from the HQ pin (`escribirLocalidadCentral`, client 26/10/2026); the API requires it.
     addressLines: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
-    // **El punto de la central es obligatorio** (mismo pedido). Vive en el
-    // formulario porque el motor valida de a una página y sólo frena lo que
-    // está en el `FormGroup`. Lo escribe `fijarGpsCentral` con el punto
-    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    // Required HQ pin, kept in the FormGroup so the page validator blocks; set by `fijarGpsCentral`.
     gpsCentral: new FormControl<Coordinates | null>(null, {
       validators: [Validators.required],
     }),
@@ -344,6 +341,7 @@ export class RegisterPharmacy {
             testId: 'registro-farmacia-razon-social',
             mensajeDeError: 'Escriba el nombre o la razón social de la farmacia.',
           },
+          tradeNameField('registro-farmacia-nombre-comercial', 'Farmacia San Martín', 'los clientes'),
           {
             key: 'companyType',
             label: 'Tipo de sociedad',
@@ -1032,6 +1030,7 @@ export class RegisterPharmacy {
     return {
       code: this.codigoDesdeNit(raw.taxId),
       legalName: raw.legalName.trim(),
+      ...tradeNameOf(raw.tradeName),
       legalEntityType: raw.companyType ?? '',
       countryConceptId: concepto(catalogos.pais, DIAGNOSIS_CODES.pais),
       jurisdictionConceptId: concepto(

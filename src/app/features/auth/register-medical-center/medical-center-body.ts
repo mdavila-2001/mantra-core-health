@@ -5,6 +5,7 @@ import type { MedicalFacilitySite } from '../../../core/data-access/iam/medical-
 import type { SucursalDeclarada } from '../shared-registration/branches-editor/branches-editor';
 import { executivesFrom, type ExecutivesRaw } from '../shared-registration/executives';
 import type { Coordinates } from '../shared-registration/map-location-picker/map-location-picker';
+import { tradeNameOf } from '../shared-registration/trade-name';
 import { completeName, nameParts, type NameValue } from '../shared-registration/name-fields/person-name';
 import { medicalCenterCodeFromName } from './medical-center-code';
 
@@ -14,6 +15,7 @@ export const TIME_ZONE = 'America/La_Paz';
 /** Lo que el cuerpo necesita del formulario (`getRawValue()`), tipado a mano para no atarse a su forma exacta. */
 export interface MedicalCenterRaw extends ExecutivesRaw {
   readonly legalName: string;
+  readonly tradeName: string;
   readonly legalEntityType: string;
   readonly taxId: string;
   readonly healthFacilityRegistrationNumber: string;
@@ -85,6 +87,7 @@ export function medicalCenterBody(
     code: medicalCenterCodeFromName(raw.legalName),
     tenantType: tipo,
     legalName: raw.legalName.trim(),
+    ...tradeNameOf(raw.tradeName),
     legalEntityType: raw.legalEntityType,
     timeZone: TIME_ZONE,
     legalDocuments: {

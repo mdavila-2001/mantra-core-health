@@ -216,6 +216,8 @@ describe('RegisterImagingCenter', () => {
     expect(cuerpo.organization).toMatchObject({
       tenantType: 'DIAGNOSTIC_CENTER',
       legalEntityType: 'UNIPERSONAL',
+      // The written NIT travels on its own; the API stores it on the tax document.
+      taxIdentifier: '1023456789',
       countryConceptId: idDeConcepto(DIAGNOSIS_CODES.pais),
       diagnosticUnit: {
         diagnosticUnitTypeConceptId: idDeConcepto(DIAGNOSIS_CODES.imagenes),
@@ -226,12 +228,34 @@ describe('RegisterImagingCenter', () => {
       },
     });
     expect(cuerpo.organization.payer).toBeUndefined();
+    // No trade name, no key: the legal name acts as the name.
+    expect('tradeName' in cuerpo.organization).toBe(false);
     // La central viaja con su dirección y su punto, que es obligatorio.
     expect(cuerpo.organization.diagnosticUnit.primarySite.address).toEqual({
       lines: ['Av. Cañoto esq. Ballivián 234'],
       latitude: -17.7833,
       longitude: -63.1821,
     });
+  });
+
+  it('pregunta el nombre comercial junto a la razón social, y lo manda sólo si se escribió', () => {
+    // "Mi perfil" shows the trade name, so the sign-up must ask for it.
+    const empresa = component.paginas.find((p) => p.clave === 'empresa');
+    expect(empresa?.campos.map((c) => c.key)).toEqual([
+      'legalName',
+      'tradeName',
+      'companyType',
+      'taxId',
+    ]);
+    expect(empresa?.campos.find((c) => c.key === 'tradeName')?.required).toBeFalsy();
+
+    completarLoObligatorio();
+    component.form.controls.tradeName.setValue('  Imágenes del Oriente  ');
+
+    component.submit();
+    const { cuerpo } = atenderElEnvio(4);
+
+    expect(cuerpo.organization.tradeName).toBe('Imágenes del Oriente');
   });
 
   it('sin el punto de la central no sale', () => {
