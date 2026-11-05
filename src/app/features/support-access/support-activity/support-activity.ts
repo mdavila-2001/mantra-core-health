@@ -11,7 +11,6 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -22,6 +21,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
 import { formatDateTime } from '../support-labels';
 import { ACTIVITY_CSV_COLUMNS, activityFileName } from './activity-csv';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /** Cuántas filas se piden por vez (el tope de la API) y cuántas páginas se juntan al exportar, como máximo. */
 const FILAS_POR_PEDIDO = 200;
@@ -65,7 +65,7 @@ const TEXTOS: Readonly<Record<ActivityAudience, { readonly titulo: string; reado
  */
 @Component({
   selector: 'app-support-activity',
-  imports: [AppButton, Badge, Card, DataTable, FilterBar, Input, PageHeader, Pagination],
+  imports: [DateStringPicker, AppButton, Badge, Card, DataTable, FilterBar, PageHeader, Pagination],
   templateUrl: './support-activity.html',
   styleUrl: './support-activity.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -25,7 +25,6 @@ import {
   type SupportAtom,
 } from '../../../../core/data-access/support-access/support-atoms';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Switch } from '../../../../shared/components/atoms/switch/switch';
@@ -46,6 +45,7 @@ import {
   type EditorGrant,
 } from '../editor-grant';
 import type { PlacedIssue } from '../issue-placement';
+import { DateStringPicker } from '@shared/components/organisms/date-picker/date-string-picker';
 
 /**
  * El modo **Avanzado** del editor: sobre **un** permiso a la vez, sus permisos precisos (73, en 7 categorías),
@@ -56,7 +56,7 @@ import type { PlacedIssue } from '../issue-placement';
  */
 @Component({
   selector: 'app-advanced-panel',
-  imports: [Alert, AppButton, AtomPicker, ConditionEditor, Input, Select, Switch],
+  imports: [DateStringPicker, Alert, AppButton, AtomPicker, ConditionEditor, Select, Switch],
   templateUrl: './advanced-panel.html',
   styleUrl: './advanced-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

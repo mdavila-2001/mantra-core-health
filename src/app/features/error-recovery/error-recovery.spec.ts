@@ -1,9 +1,14 @@
-import { signal } from '@angular/core';
+import { ErrorHandler, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { vi } from 'vitest';
 
 import { BUILD_INFO } from '../../core/build/build-info';
 import { ErrorReporter } from '../../core/errors/error-reporter';
+import {
+  recordRouteChunkFailure,
+  StaleBuildRecovery,
+  takeRouteChunkFailure,
+} from '../../core/errors/stale-build-recovery';
 import { ErrorRecovery } from './error-recovery';
 
 /**
@@ -65,5 +70,41 @@ describe('ErrorRecovery', () => {
     boton('Copiar código')!.click();
     await fixture.whenStable();
     expect(root().querySelector('.recuperacion')).not.toBeNull();
+  });
+});
+
+/** Reached through `chunkFallido`: the pending route failure is logged and recovered. */
+describe('ErrorRecovery · fallo de ruta pendiente', () => {
+  let handleError: ReturnType<typeof vi.fn>;
+  let recoverFrom: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    takeRouteChunkFailure();
+    handleError = vi.fn();
+    recoverFrom = vi.fn().mockReturnValue(false);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ErrorHandler, useValue: { handleError } },
+        { provide: StaleBuildRecovery, useValue: { recoverFrom } },
+        { provide: BUILD_INFO, useValue: { version: '0.1.0', commit: 'abc1234' } },
+      ],
+    });
+  });
+
+  it('lo registra y lo pasa a la recuperación', () => {
+    const error = new TypeError('Failed to fetch dynamically imported module: /chunk-A.js');
+    recordRouteChunkFailure(error);
+
+    TestBed.createComponent(ErrorRecovery);
+
+    expect(handleError).toHaveBeenCalledWith(error);
+    expect(recoverFrom).toHaveBeenCalledWith(error);
+  });
+
+  it('abierta directamente (/error), no registra ni recarga nada', () => {
+    TestBed.createComponent(ErrorRecovery).detectChanges();
+
+    expect(handleError).not.toHaveBeenCalled();
+    expect(recoverFrom).not.toHaveBeenCalled();
   });
 });

@@ -78,7 +78,7 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
     // --- los papeles: guardan el `fileId` de la pre-carga, no el archivo -----
     // Los cinco de la empresa son obligatorios; la escritura y la matrícula
     // dejan de serlo según el tipo societario (ver `exigirDocumentos`). El
-    // poder, igual: sólo una unipersonal lo omite.
+    // poder del representante no se relaja nunca: lo exige toda organización.
     constitutionFileId: papel(),
     taxIdentifierFileId: papel(),
     commerceRegistryFileId: papel(),

@@ -4,6 +4,7 @@
     [class.is-dragging]="isDragging()"
     [class.has-files]="files().length > 0"
     [class.is-disabled]="locked()"
+    [class.is-picker-open]="pickerOpen()"
     (dragover)="handleDragOver($event)"
     (dragleave)="handleDragLeave($event)"
     (drop)="handleDrop($event)"
@@ -14,6 +15,7 @@
     <input
       type="file"
       class="native-file-input"
+      appNativeFilePicker
       [id]="controlId()"
       [attr.data-testid]="testId()"
       [attr.aria-labelledby]="labelId()"
