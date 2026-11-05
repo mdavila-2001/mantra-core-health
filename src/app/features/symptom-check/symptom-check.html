@@ -256,6 +256,16 @@
         }
       </ul>
 
+      <!-- Tapping a category shows its specialists right here, where the tap happened. -->
+      @if (especialistasDeLaCategoria().length > 0) {
+        <div class="sintomas__recomendaciones" data-testid="sintomas-especialistas-categoria">
+          <app-symptom-recommendations
+            [recomendaciones]="especialistasDeLaCategoria()"
+            (elegir)="verProfesionales($event)"
+          />
+        </div>
+      }
+
       <!-- El texto libre vive acá, bajo la figura y al lado de ella: la figura es
            alta y esta columna quedaba medio vacía. Antes era una fila entera debajo
            de las dos, que alargaba la pantalla. -->

@@ -372,6 +372,25 @@ describe('SymptomCheck · la silueta', () => {
     expect(html.querySelector('[data-testid="body-map-piel"]')).toBeNull();
     expect(html.querySelector('[data-testid="zona-pecho"]')).toBeNull();
   });
+
+  /** Tapping a shapeless category lists its specialists right away, before picking a symptom. */
+  it('tocar «Ánimo y sueño» muestra sus especialistas, y elegir un síntoma los reemplaza', () => {
+    tocar('zona-animo');
+    http.expectOne((r) => r.url === '/profiles/practitioners').flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    const bloque = () => html.querySelector('[data-testid="sintomas-especialistas-categoria"]');
+    const nombres = Array.from(bloque()?.querySelectorAll('.rejilla__nombre') ?? []).map((n) =>
+      n.textContent?.trim(),
+    );
+    expect(nombres[0]).toBe('Medicina general');
+    expect(nombres).toContain('Psicología');
+    expect(nombres).toContain('Psiquiatría');
+
+    html.querySelector<HTMLButtonElement>('[data-testid="zona-abierta"] button')?.click();
+    fixture.detectChanges();
+    expect(bloque()).toBeNull();
+  });
 });
 
 /**
