@@ -1,0 +1,66 @@
+<app-data-table
+  caption="Precios de los servicios del laboratorio"
+  [state]="state()"
+  [columns]="columns()"
+  [trackBy]="rowId"
+  [rowLabel]="rowLabel"
+  wrapHeaders
+  [cursor]="cursor()"
+  (cursorChanged)="cursorChanged.emit($event)"
+  (retry)="reload.emit()"
+  (refresh)="reload.emit()"
+  data-testid="lab-prices-table"
+/>
+
+<ng-template #nameCell let-service>
+  <span class="price-table__main">{{ service.name }}</span>
+  <code class="price-table__code">{{ service.code }}</code>
+</ng-template>
+
+<ng-template #priceCell let-service>
+  <app-input
+    inputMode="decimal"
+    [placeholder]="service.price === null ? 'Sin precio' : '0.00'"
+    [ariaLabel]="'Precio de lista de ' + service.name + ', en bolivianos'"
+    [value]="priceOf(service)"
+    (valueChange)="emit('price', service, $event)"
+    [hasSuccess]="isEdited(service) && rejectionOf(service) === null"
+    [hasError]="rejectionOf(service) !== null"
+    [testId]="'lab-prices-price-' + service.code"
+  />
+</ng-template>
+
+<ng-template #discountCell let-service>
+  <app-input
+    inputMode="decimal"
+    placeholder="Sin descuento"
+    [ariaLabel]="'Descuento AloVida de ' + service.name + ', en porcentaje'"
+    [value]="discountOf(service)"
+    (valueChange)="emit('discount', service, $event)"
+    [hasSuccess]="isEdited(service) && rejectionOf(service) === null"
+    [hasError]="rejectionOf(service) !== null"
+    [testId]="'lab-prices-discount-' + service.code"
+  />
+</ng-template>
+
+<ng-template #alovidaCell let-service>
+  @switch (previewOf(service)) {
+    @case (null) {
+      <span class="price-table__muted" [attr.data-testid]="'lab-prices-alovida-' + service.code">Sin precio</span>
+    }
+    @case ('invalid') {
+      <span class="price-table__muted">Revise el precio</span>
+    }
+    @default {
+      <span class="price-table__amount" [attr.data-testid]="'lab-prices-alovida-' + service.code">{{ previewOf(service) }}</span>
+    }
+  }
+</ng-template>
+
+<ng-template #statusCell let-service>
+  @if (service.status === 'PUBLISHED') {
+    <app-badge variant="success">Visible</app-badge>
+  } @else {
+    <app-badge variant="info">Borrador</app-badge>
+  }
+</ng-template>
