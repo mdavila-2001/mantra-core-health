@@ -5,13 +5,13 @@
  * device. Proves each mutation UI → request → response → reload → UI, and
  * captures the three tabs at 1440 and 390 px.
  *
- * Usage: `BASE=http://localhost:4300 OUT=evidencias/centro-equipos-2026-11-05 node playwright/centro-equipos-linea-de-produccion.mjs`
+ * Usage: `BASE=http://localhost:4300 OUT=evidencias/center-equipment-2026-11-05 node playwright/center-equipment-production-lines.mjs`
  */
 import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const B = process.env.BASE ?? 'http://localhost:4300';
-const OUT = process.env.OUT ?? 'artifacts/centro-equipos';
+const OUT = process.env.OUT ?? 'artifacts/center-equipment';
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const log = [];
@@ -73,18 +73,18 @@ page.on('pageerror', (e) => errors.push(String(e)));
 
 await signIn(page);
 await openPage(page);
-await page.screenshot({ path: `${OUT}/01-horarios-1440.png`, fullPage: true });
+await page.screenshot({ path: `${OUT}/01-schedule-1440.png`, fullPage: true });
 
 // 1. Register a scanner from the catalog: the CT section shows it after a reload.
 await openTab(page, 'Equipos');
-await page.screenshot({ path: `${OUT}/02-equipos-antes-1440.png`, fullPage: true });
+await page.screenshot({ path: `${OUT}/02-equipment-before-1440.png`, fullPage: true });
 await page.getByTestId('equipment-add-open').click();
 await page.getByTestId('equipment-add-type').locator('.select-trigger').click();
 await page.getByRole('option', { name: 'Tomógrafo' }).click();
 await page.getByTestId('equipment-add-manufacturer').fill('Canon');
 await page.getByTestId('equipment-add-model').fill('Aquilion Lightning');
 await page.getByTestId('equipment-add-serial').fill('TC-2026-01');
-await page.screenshot({ path: `${OUT}/03-alta-desde-catalogo-1440.png`, fullPage: true });
+await page.screenshot({ path: `${OUT}/03-add-from-catalog-1440.png`, fullPage: true });
 const addResponse = await answer(page, 'POST', '/equipment', () => page.getByTestId('equipment-add-submit').click());
 note(`POST …/equipment → ${addResponse.status} body ${JSON.stringify(addResponse.body)}`);
 check(addResponse.status === 201, 'the add request answers 201');
@@ -118,20 +118,20 @@ check((await card.innerText()).includes('TC-2026-01'), 'after reload the device 
 check((await page.getByTestId(`equipment-own-${addedDevice.id}`).getByRole('radio', { name: 'Sí' }).getAttribute('aria-checked')) === 'true', 'after reload its own hours are on');
 check((await page.getByTestId(`equipment-${addedDevice.id}-desde-1`).innerText()).includes('14:00'), 'after reload Monday opens at 14:00');
 await card.scrollIntoViewIfNeeded();
-await page.screenshot({ path: `${OUT}/04-equipo-con-horario-propio-tras-recarga-1440.png`, fullPage: true });
+await page.screenshot({ path: `${OUT}/04-device-own-hours-after-reload-1440.png`, fullPage: true });
 
 await openTab(page, 'Horarios');
 const summary = await page.getByTestId('centro-resumen').innerText();
 check(summary.includes('Aquilion') && summary.includes('Horario propio'), 'the summary shows the new line with its own hours');
-await page.screenshot({ path: `${OUT}/05-asi-queda-por-equipo-1440.png`, fullPage: true });
+await page.screenshot({ path: `${OUT}/05-summary-per-device-1440.png`, fullPage: true });
 
 await openTab(page, 'Ocupación');
 await page.getByTestId('occupancy-lines').waitFor({ timeout: 30000 });
-await page.screenshot({ path: `${OUT}/06-ocupacion-1440.png`, fullPage: true });
+await page.screenshot({ path: `${OUT}/06-occupancy-1440.png`, fullPage: true });
 
 // 4. Phone width: the three tabs without horizontal scroll.
 await page.setViewportSize({ width: 390, height: 844 });
-for (const [label, file] of [['Horarios', '07-horarios-390'], ['Equipos', '08-equipos-390'], ['Ocupación', '09-ocupacion-390']]) {
+for (const [label, file] of [['Horarios', '07-schedule-390'], ['Equipos', '08-equipment-390'], ['Ocupación', '09-occupancy-390']]) {
   await openTab(page, label);
   await page.waitForTimeout(300);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -140,7 +140,7 @@ for (const [label, file] of [['Horarios', '07-horarios-390'], ['Equipos', '08-eq
 }
 
 check(errors.length === 0, `no console errors${errors.length ? ` — ${errors.slice(0, 3).join(' | ')}` : ''}`);
-writeFileSync(`${OUT}/recorrido.txt`, `${log.join('\n')}\n`);
+writeFileSync(`${OUT}/walkthrough.txt`, `${log.join('\n')}\n`);
 await browser.close();
 if (failures.length > 0) {
   console.error(`${failures.length} check(s) failed`);
