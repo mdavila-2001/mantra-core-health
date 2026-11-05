@@ -128,3 +128,27 @@ export function changesOf(
   }
   return { changes, problems };
 }
+
+/**
+ * Panels first, each followed by its components, as one group per panel, so a
+ * hemogram reads with its counts under it and a page never splits them. A
+ * group stays when its panel or one of its parts matches the search.
+ */
+export function panelGroups(list: readonly LabService[], term: string): readonly (readonly LabService[])[] {
+  const needle = term.trim().toLocaleLowerCase('es');
+  const hit = (s: LabService) =>
+    needle === '' || [s.name, s.code].some((text) => text.toLocaleLowerCase('es').includes(needle));
+  const byName = (a: LabService, b: LabService) => a.name.localeCompare(b.name, 'es');
+  const ids = new Set(list.map((s) => s.id));
+  const partsOf = (id: string) => list.filter((s) => s.parentId === id).sort(byName);
+  const groups: (readonly LabService[])[] = [];
+  for (const top of list.filter((s) => s.parentId === null || !ids.has(s.parentId)).sort(byName)) {
+    const parts = partsOf(top.id);
+    if (hit(top)) {
+      groups.push([top, ...parts]);
+    } else if (parts.some(hit)) {
+      groups.push([top, ...parts.filter(hit)]);
+    }
+  }
+  return groups;
+}

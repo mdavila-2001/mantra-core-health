@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 
 import { LabPortalClient } from '../../../core/data-access/lab-portal/lab-portal.client';
@@ -7,6 +8,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
@@ -18,6 +20,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import {
   changesOf,
   discountText,
+  panelGroups,
   reasonOf,
   withEdit,
   withoutIds,
@@ -39,7 +42,20 @@ const PAGE_SIZE = 10;
  */
 @Component({
   selector: 'app-laboratory-prices',
-  imports: [Alert, AppButton, Card, LabModalitiesPanel, LabPriceTable, LabServicesImport, PageHeader, SearchField, Tab, Tabs],
+  imports: [
+    Alert,
+    AppButton,
+    AppButtonLink,
+    Card,
+    LabModalitiesPanel,
+    LabPriceTable,
+    LabServicesImport,
+    PageHeader,
+    RouterLink,
+    SearchField,
+    Tab,
+    Tabs,
+  ],
   templateUrl: './laboratory-prices.html',
   styleUrl: './laboratory-prices.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -66,31 +82,40 @@ export class LaboratoryPrices {
     () => dataOf(this.catalog())?.filter((service) => service.kind === 'MODALITY') ?? [],
   );
 
-  private readonly visible = computed<ViewState<readonly LabService[]>>(() => {
+  /** One group per panel (the panel and its components); modalities are not priced. */
+  private readonly groups = computed<ViewState<readonly (readonly LabService[])[]>>(() => {
     const state = this.catalog();
+    const groupsOf = (all: readonly LabService[]) =>
+      panelGroups(
+        all.filter((service) => service.kind === 'SERVICE'),
+        this.term(),
+      );
     if (state.status !== 'ready') {
-      return state;
+      return mapData(state, groupsOf);
     }
-    const term = this.term().trim().toLocaleLowerCase('es');
-    const list = state.data.filter(
-      (service) =>
-        service.kind === 'SERVICE' &&
-        (term === '' || [service.name, service.code].some((text) => text.toLocaleLowerCase('es').includes(term))),
-    );
+    const list = groupsOf(state.data);
     if (list.length > 0) {
       return ready(list);
     }
-    return term === ''
-      ? empty({ label: 'Importar análisis (CSV)' }, 'Todavía no hay estudios a los que ponerles precio.')
+    return this.term().trim() === ''
+      ? empty(
+          { label: 'Agregue análisis del catálogo', route: '/administration/laboratory-prices/catalog' },
+          'Todavía no hay estudios a los que ponerles precio.',
+        )
       : empty({ label: 'Pruebe con otra palabra' }, `Nada coincide con «${this.term().trim()}».`);
   });
 
+  /** A page is made of whole groups, so a panel never loses its components to the next page. */
   protected readonly pageRows = computed<ViewState<readonly LabService[]>>(() =>
-    mapData(this.visible(), (list) => list.slice(this.offset(), this.offset() + PAGE_SIZE)),
+    mapData(this.groups(), (groups) => groups.slice(this.offset(), this.offset() + PAGE_SIZE).flat()),
+  );
+
+  protected readonly panelNames = computed(
+    () => Object.fromEntries((dataOf(this.catalog()) ?? []).map((service) => [service.id, service.name])),
   );
 
   protected readonly cursor = computed<CursorState>(() => {
-    const total = dataOf(this.visible())?.length ?? 0;
+    const total = dataOf(this.groups())?.length ?? 0;
     return {
       prevCursor: this.offset() > 0 ? String(Math.max(0, this.offset() - PAGE_SIZE)) : null,
       nextCursor: this.offset() + PAGE_SIZE < total ? String(this.offset() + PAGE_SIZE) : null,

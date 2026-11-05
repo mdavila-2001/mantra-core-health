@@ -26,6 +26,12 @@ export interface LabService {
   readonly code: string;
   readonly name: string;
   readonly kind: LabServiceKind;
+  /** The panel this service is a component of (Hemoglobina → Hemograma). */
+  readonly parentId: string | null;
+  /** Study catalog concept it was made from; null for a free-form service. */
+  readonly catalogConceptId: string | null;
+  /** False until it has a price: a catalog item imported without suggestion. */
+  readonly hasPrice: boolean;
   readonly categoryId: string | null;
   readonly categoryName: string | null;
   /** Qué muestra se toma: «Sangre venosa», «Orina», «Heces»… */
@@ -97,34 +103,9 @@ export interface LabCategoryPage {
   readonly count: number;
 }
 
-/* ---- carga masiva ------------------------------------------------------- */
+/* ---- bulk import and study catalog: `lab-import.types.ts` -------------- */
 
-/** Crear lo nuevo y actualizar lo que existe, o sólo actualizar. */
-export type LabImportMode = 'CREATE_OR_UPDATE' | 'UPDATE_ONLY';
-
-/** Una fila ya leída del CSV, con el número de línea para poder señalarla. */
-export interface LabImportRow {
-  readonly line: number;
-  readonly service: LabServiceDraft;
-}
-
-export type LabImportOutcome = 'CREATED' | 'UPDATED' | 'UNCHANGED' | 'REJECTED';
-
-export interface LabImportRowResult {
-  readonly line: number;
-  readonly code: string;
-  readonly outcome: LabImportOutcome;
-  /** Por qué se rechazó, en palabras de persona. */
-  readonly reason: string | null;
-}
-
-export interface LabImportResult {
-  readonly created: number;
-  readonly updated: number;
-  readonly unchanged: number;
-  readonly rejected: number;
-  readonly rows: readonly LabImportRowResult[];
-}
+export type * from './lab-import.types';
 
 /* ---- resumen ------------------------------------------------------------ */
 

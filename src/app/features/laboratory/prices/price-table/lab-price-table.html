@@ -13,8 +13,14 @@
 />
 
 <ng-template #nameCell let-service>
-  <span class="price-table__main">{{ service.name }}</span>
-  <code class="price-table__code">{{ service.code }}</code>
+  <div [class.price-table__part]="service.parentId !== null">
+    <span class="price-table__main">{{ service.name }}</span>
+    @if (panelOf(service); as panel) {
+      <span class="price-table__of">Componente de {{ panel }}</span>
+    } @else {
+      <code class="price-table__code">{{ service.code }}</code>
+    }
+  </div>
 </ng-template>
 
 <ng-template #priceCell let-service>
@@ -60,6 +66,9 @@
 <ng-template #statusCell let-service>
   @if (service.status === 'PUBLISHED') {
     <app-badge variant="success">Visible</app-badge>
+  } @else if (service.hasPrice === false) {
+    <!-- An unpriced catalog item waits out of sight; its first price publishes it. -->
+    <app-badge variant="warning">Falta el precio</app-badge>
   } @else {
     <app-badge variant="info">Borrador</app-badge>
   }

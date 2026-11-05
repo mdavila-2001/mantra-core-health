@@ -25,6 +25,7 @@ import type {
   LabServiceQuery,
   LabSummary,
 } from './lab-portal.types';
+import type { LabCatalog, LabCatalogImportResult } from './lab-import.types';
 
 /** The API caps `limit` at 500; asking for the cap keeps the page count low. */
 const ORDER_PAGE_SIZE = 500;
@@ -74,6 +75,18 @@ export class LabPortalClient {
     return this.http.post<LabImportResult>(this.url('/diagnostics/lab/services/import'), {
       mode,
       rows,
+    });
+  }
+
+  /** The LOINC study catalog with components and suggested prices (4.2). */
+  getCatalog(): Observable<LabCatalog> {
+    return this.http.get<LabCatalog>(this.url('/diagnostics/lab/catalog'));
+  }
+
+  /** Adds catalog análisis: panel, one service per component, suggested prices. */
+  importCatalog(conceptIds: readonly string[]): Observable<LabCatalogImportResult> {
+    return this.http.post<LabCatalogImportResult>(this.url('/diagnostics/lab/catalog/import'), {
+      conceptIds,
     });
   }
 

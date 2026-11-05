@@ -19,6 +19,18 @@
   color: var(--text-primary);
 }
 
+.price-table__of {
+  display: block;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* A component reads under its panel, indented from the start edge. */
+.price-table__part {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--border-subtle);
+}
+
 .price-table__muted {
   color: var(--text-secondary);
 }

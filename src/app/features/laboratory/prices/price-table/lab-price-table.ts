@@ -44,6 +44,8 @@ export class LabPriceTable {
   readonly edits = input<PriceEdits>({});
   /** Reason per service id of the rows the last save refused. */
   readonly rejected = input<Readonly<Record<string, string>>>({});
+  /** Name of every service by id, to say which panel a component belongs to. */
+  readonly panelNames = input<Readonly<Record<string, string>>>({});
   readonly cursor = input<CursorState>({});
 
   readonly priceChanged = output<RowEdit>();
@@ -66,6 +68,10 @@ export class LabPriceTable {
   ]);
 
   protected readonly rowId = (service: LabService): string => service.id;
+  protected panelOf(service: LabService): string | null {
+    return service.parentId === null ? null : (this.panelNames()[service.parentId] ?? null);
+  }
+
   protected readonly rowLabel = (service: LabService): string => service.name;
 
   protected priceOf(service: LabService): string {

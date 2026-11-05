@@ -2,6 +2,16 @@
   title="Precios"
   subtitle="El precio de lista de cada servicio y el descuento para usuarios de AloVida, tal como los ven los pacientes en la plataforma."
 >
+  <a
+    app-button
+    page-actions
+    routerLink="/administration/laboratory-prices/catalog"
+    data-testid="lab-prices-catalog"
+    [disabled]="dirtyCount() > 0"
+    [attr.title]="dirtyCount() > 0 ? 'Guarde o descarte los cambios antes de salir' : null"
+  >
+    Agregar del catálogo
+  </a>
   <button
     app-button
     page-actions
@@ -77,6 +87,7 @@
           [state]="pageRows()"
           [edits]="edits()"
           [rejected]="rejectedById()"
+          [panelNames]="panelNames()"
           [cursor]="cursor()"
           (priceChanged)="setPrice($event)"
           (discountChanged)="setDiscount($event)"
